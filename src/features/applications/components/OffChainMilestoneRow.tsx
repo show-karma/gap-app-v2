@@ -12,7 +12,11 @@ import type { MilestoneStatusEntry } from "@/types/whitelabel-entities";
 import { formatDate } from "@/utilities/formatDate";
 import { INDEXER } from "@/utilities/indexer";
 import { useSubmitMilestoneCompletion } from "../hooks/use-submit-milestone-completion";
-import { isMilestoneCompleted, isMilestoneVerified } from "../lib/milestone-status";
+import {
+  isMilestoneCompleted,
+  isMilestoneLate,
+  isMilestoneVerified,
+} from "../lib/milestone-status";
 import { formatFieldLabel, isMarkdownContent, MILESTONE_CORE_FIELDS } from "../lib/milestone-utils";
 
 const ApplicationMilestoneAIEvaluationBadge = dynamic(
@@ -73,10 +77,11 @@ export function OffChainMilestoneRow({
 
   const isCompletionVerified = isMilestoneVerified(entry);
   const isCompletionSubmitted = isMilestoneCompleted(entry) && !isCompletionVerified;
+  const isLate = isMilestoneLate(entry);
   // Submission requires a milestoneUID (refUID for the on-chain attestation).
   // Slots that haven't been anchored on-chain yet stay read-only.
   const canEdit = isEditable && !isCompletionVerified && !!entry.milestoneUID;
-  const isWaitingForIndexer = isSubmittingTitle(entry.title);
+  const isWaitingForIndexer = isSubmittingTitle(entry.milestoneUID, entry.title);
 
   const completionEntry = entry.completed ?? null;
   const verifiedEntry = entry.verified ?? null;
@@ -159,6 +164,10 @@ export function OffChainMilestoneRow({
             ) : isCompletionSubmitted ? (
               <span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">
                 Completed
+              </span>
+            ) : isLate ? (
+              <span className="text-xs px-2 py-0.5 rounded-full bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300">
+                Late
               </span>
             ) : (
               <span className="text-xs px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-700">

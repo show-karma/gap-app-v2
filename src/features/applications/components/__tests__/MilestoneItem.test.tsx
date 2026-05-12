@@ -11,11 +11,11 @@ describe("MilestoneItem", () => {
     completionCriteria: "Test criteria",
   };
 
-  const mockOnUpdate = jest.fn();
-  const mockOnRemove = jest.fn();
+  const mockOnUpdate = vi.fn();
+  const mockOnRemove = vi.fn();
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("should render milestone fields", () => {

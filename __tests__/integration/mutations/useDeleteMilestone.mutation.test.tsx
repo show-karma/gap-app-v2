@@ -1,29 +1,35 @@
 /**
  * Mutation integration tests for useDeleteMilestone hook.
  *
- * Tests the full mutation lifecycle:
- * - Calls DELETE endpoint via fundingPlatformService.applications.deleteMilestone
- * - Optimistic update removes milestone from cache
- * - Rollback restores cache on error
- * - Shows success/error toasts via useAttestationToast
- * - Invalidates PROJECT_GRANT_MILESTONES query key on success
+ * Milestone deletion is being migrated to on-chain attestations
+ * (revocation via `MilestoneCanceled`) and is not available yet.
+ * Until the attestation flow ships, the hook surfaces a clear
+ * "not available" error rather than pretending to succeed.
+ *
+ * These tests lock in that honest-failure contract:
+ *   - mutation rejects with the documented message
+ *   - cache is rolled back so the row reappears (no false optimism)
+ *   - onSuccess callback never fires
+ *
+ * When the on-chain delete attestation lands, replace this suite with
+ * tests that exercise the real submission flow.
  */
 
 import { act, waitFor } from "@testing-library/react";
-import { HttpResponse, http } from "msw";
 import toast from "react-hot-toast";
-import { useDeleteMilestone } from "@/hooks/useDeleteMilestone";
+import {
+  DELETE_MILESTONE_NOT_AVAILABLE_MESSAGE,
+  useDeleteMilestone,
+} from "@/hooks/useDeleteMilestone";
 import type { GrantMilestoneWithCompletion } from "@/services/milestones";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
-import { installMswLifecycle, server } from "../../msw/server";
+import { installMswLifecycle } from "../../msw/server";
 import { createTestQueryClient, renderHookWithProviders } from "../../utils/render";
 
-// Mock auth token
 vi.mock("@/utilities/auth/token-manager", () => ({
   TokenManager: { getToken: vi.fn().mockResolvedValue("test-token") },
 }));
 
-// Mock toast (useAttestationToast uses react-hot-toast internally)
 vi.mock("react-hot-toast", async () => {
   const actual = await vi.importActual<typeof import("react-hot-toast")>("react-hot-toast");
   return {
@@ -38,7 +44,6 @@ vi.mock("react-hot-toast", async () => {
   };
 });
 
-// Mock errorManager to prevent console noise
 vi.mock("@/components/Utilities/errorManager", () => ({
   errorManager: vi.fn(),
 }));
@@ -69,108 +74,37 @@ describe("useDeleteMilestone (mutation integration)", () => {
     vi.clearAllMocks();
   });
 
-  it("calls DELETE endpoint and shows success toast on success", async () => {
-    let capturedUrl = "";
-    let capturedBody: any = null;
-
-    server.use(
-      http.delete("*/v2/funding-applications/:refNum/milestones", async ({ request, params }) => {
-        capturedUrl = new URL(request.url).pathname;
-        capturedBody = await request.json();
-        return HttpResponse.json({
-          milestoneRemoved: true,
-          completionDeleted: true,
-          onChainRevoked: false,
-        });
-      })
-    );
-
-    const milestone = createMilestoneWithCompletion();
+  it("should_reject_with_not_available_error_until_on_chain_delete_lands", async () => {
     const onSuccess = vi.fn();
+    const milestone = createMilestoneWithCompletion();
 
     const { result } = renderHookWithProviders(() =>
       useDeleteMilestone({ projectId: PROJECT_ID, programId: PROGRAM_ID, onSuccess })
     );
 
     await act(async () => {
-      result.current.deleteMilestone(milestone);
+      await expect(result.current.deleteMilestoneAsync(milestone)).rejects.toThrow(
+        DELETE_MILESTONE_NOT_AVAILABLE_MESSAGE
+      );
     });
 
     await waitFor(() => {
       expect(result.current.isDeleting).toBe(false);
     });
 
-    // Verify API was called with correct URL and body
-    expect(capturedUrl).toBe("/v2/funding-applications/APP-00001-10001/milestones");
-    expect(capturedBody).toEqual({
-      milestoneFieldLabel: "milestone_1",
-      milestoneTitle: "Audit Completion",
-    });
-
-    // Verify success toast was shown
-    expect(toast.success).toHaveBeenCalledWith(
-      expect.stringContaining("Audit Completion"),
-      expect.any(Object)
-    );
-
-    // Verify onSuccess callback was called
-    expect(onSuccess).toHaveBeenCalled();
+    // No success path fired.
+    expect(onSuccess).not.toHaveBeenCalled();
+    expect(toast.success).not.toHaveBeenCalled();
+    // User-facing error surfaced via toast.
+    expect(toast.error).toHaveBeenCalled();
   });
 
-  it("sets isDeleting during the mutation and clears it on completion", async () => {
-    let resolveRequest!: () => void;
-    const requestPromise = new Promise<void>((resolve) => {
-      resolveRequest = resolve;
-    });
-
-    server.use(
-      http.delete("*/v2/funding-applications/:refNum/milestones", async () => {
-        await requestPromise;
-        return HttpResponse.json({
-          milestoneRemoved: true,
-          completionDeleted: true,
-          onChainRevoked: false,
-        });
-      })
-    );
-
-    const milestone = createMilestoneWithCompletion();
-
-    const { result } = renderHookWithProviders(() =>
-      useDeleteMilestone({ projectId: PROJECT_ID, programId: PROGRAM_ID })
-    );
-
-    act(() => {
-      result.current.deleteMilestone(milestone);
-    });
-
-    // isDeleting should be true while request is pending
-    await waitFor(() => {
-      expect(result.current.isDeleting).toBe(true);
-    });
-
-    // Resolve the request
-    resolveRequest();
-
-    // isDeleting should be false once completed
-    await waitFor(() => {
-      expect(result.current.isDeleting).toBe(false);
-    });
-  });
-
-  it("rolls back optimistic update on API error", async () => {
-    server.use(
-      http.delete("*/v2/funding-applications/:refNum/milestones", () =>
-        HttpResponse.json({ error: "Server error" }, { status: 500 })
-      )
-    );
-
+  it("should_roll_back_optimistic_removal_so_the_row_reappears_on_failure", async () => {
     const queryClient = createTestQueryClient();
     const queryKey = QUERY_KEYS.MILESTONES.PROJECT_GRANT_MILESTONES(PROJECT_ID, PROGRAM_ID);
     const milestone = createMilestoneWithCompletion();
     const originalData = { grantMilestones: [milestone] };
 
-    // Pre-populate cache
     queryClient.setQueryData(queryKey, originalData);
 
     const { result } = renderHookWithProviders(
@@ -178,66 +112,11 @@ describe("useDeleteMilestone (mutation integration)", () => {
       { queryClient }
     );
 
-    act(() => {
-      result.current.deleteMilestone(milestone);
+    await act(async () => {
+      await expect(result.current.deleteMilestoneAsync(milestone)).rejects.toThrow();
     });
 
-    // Wait for the error to be processed
-    await waitFor(() => {
-      expect(result.current.isDeleting).toBe(false);
-    });
-
-    // The onError handler should have restored the previous data.
-    // However, the cache may also be invalidated (and thus refetched/cleared).
-    // What matters is the error toast was shown.
-    expect(toast.error).toHaveBeenCalledWith(expect.any(String), expect.any(Object));
-  });
-
-  it("shows error when milestoneRemoved is false", async () => {
-    server.use(
-      http.delete("*/v2/funding-applications/:refNum/milestones", () =>
-        HttpResponse.json({
-          milestoneRemoved: false,
-          completionDeleted: false,
-          onChainRevoked: false,
-        })
-      )
-    );
-
-    const milestone = createMilestoneWithCompletion();
-
-    const { result } = renderHookWithProviders(() =>
-      useDeleteMilestone({ projectId: PROJECT_ID, programId: PROGRAM_ID })
-    );
-
-    act(() => {
-      result.current.deleteMilestone(milestone);
-    });
-
-    await waitFor(() => {
-      expect(result.current.isDeleting).toBe(false);
-    });
-
-    // Should show error toast because milestoneRemoved was false
-    expect(toast.error).toHaveBeenCalled();
-  });
-
-  it("works even without fundingApplicationCompletion (on-chain deletion)", async () => {
-    const milestone = createMilestoneWithCompletion();
-
-    const { result } = renderHookWithProviders(() =>
-      useDeleteMilestone({ projectId: PROJECT_ID, programId: PROGRAM_ID })
-    );
-
-    act(() => {
-      result.current.deleteMilestone(milestone);
-    });
-
-    await waitFor(() => {
-      expect(result.current.isDeleting).toBe(false);
-    });
-
-    // Should show success toast (on-chain deletion doesn't require backend call)
-    expect(toast.success).toHaveBeenCalled();
+    // Cache restored — the user must not see the row vanish on a failure.
+    expect(queryClient.getQueryData(queryKey)).toEqual(originalData);
   });
 });

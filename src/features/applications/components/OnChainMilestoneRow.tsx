@@ -12,7 +12,11 @@ import type { MilestoneStatusEntry } from "@/types/whitelabel-entities";
 import { formatDate } from "@/utilities/formatDate";
 import { PAGES } from "@/utilities/pages";
 import { useSubmitMilestoneCompletion } from "../hooks/use-submit-milestone-completion";
-import { isMilestoneCompleted, isMilestoneVerified } from "../lib/milestone-status";
+import {
+  isMilestoneCompleted,
+  isMilestoneLate,
+  isMilestoneVerified,
+} from "../lib/milestone-status";
 
 interface OnChainMilestoneRowProps {
   /**
@@ -58,10 +62,11 @@ export function OnChainMilestoneRow({
 
   const isVerified = isMilestoneVerified(entry);
   const isCompleted = isMilestoneCompleted(entry) && !isVerified;
+  const isLate = isMilestoneLate(entry);
   // Project-source rows always have a milestoneUID (the indexer only
   // emits them from grant.milestones[], which by construction has UIDs).
   const canEdit = isEditable && !isVerified && !!entry.milestoneUID;
-  const isWaitingForIndexer = isSubmittingTitle(entry.title);
+  const isWaitingForIndexer = isSubmittingTitle(entry.milestoneUID, entry.title);
 
   const completionEntry = entry.completed ?? null;
   const verifiedEntry = entry.verified ?? null;
@@ -135,6 +140,10 @@ export function OnChainMilestoneRow({
             ) : isCompleted ? (
               <span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">
                 Completed
+              </span>
+            ) : isLate ? (
+              <span className="text-xs px-2 py-0.5 rounded-full bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300">
+                Late
               </span>
             ) : (
               <span className="text-xs px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-700">

@@ -14,32 +14,29 @@ export type ApplicationInvoiceConfig = {
 };
 
 /**
- * Fetches invoice configuration for a grant application
+ * Fetches invoice configuration for a grant application.
+ *
+ * `fetchData` returns `[data, error, pageInfo, status]` (see
+ * utilities/fetchData.ts). The earlier code skipped position 0 (the
+ * actual payload) and read position 1 (the error string), so the
+ * happy path silently returned `null` and the invoice UI never
+ * appeared. We accept both wrapped (`{ data: ... }`) and unwrapped
+ * payload shapes for resilience against indexer envelope changes.
  */
 export async function getApplicationInvoiceConfig(
   referenceNumber: string
 ): Promise<ApplicationInvoiceConfig | null> {
-  try {
-    const response = (await fetchData(
-      INDEXER.V2.FUNDING_APPLICATIONS.INVOICE_CONFIG(referenceNumber),
-      "GET"
-    )) as unknown;
+  const [data, error] = await fetchData<
+    ApplicationInvoiceConfig | { data: ApplicationInvoiceConfig }
+  >(INDEXER.V2.FUNDING_APPLICATIONS.INVOICE_CONFIG(referenceNumber), "GET");
 
-    if (Array.isArray(response)) {
-      const [, grantUID, , ,] = response;
-      if (typeof grantUID === "string") {
-        return { grantUID, invoiceRequired: false, milestoneInvoices: [] };
-      }
-      return null;
-    }
+  if (error || !data) return null;
 
-    if (response && typeof response === "object" && "grantUID" in response) {
-      return response as ApplicationInvoiceConfig;
-    }
+  const config =
+    typeof data === "object" && data !== null && "data" in data
+      ? (data as { data: ApplicationInvoiceConfig }).data
+      : (data as ApplicationInvoiceConfig);
 
-    return null;
-  } catch (error) {
-    console.error("Failed to fetch application invoice config:", error);
-    return null;
-  }
+  if (!config?.grantUID) return null;
+  return config;
 }

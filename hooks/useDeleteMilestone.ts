@@ -14,74 +14,66 @@ interface UseDeleteMilestoneParams {
 }
 
 /**
- * Hook for deleting milestones with proper React Query mutation/query relationship
+ * On-chain milestone deletion (revocation of the `Milestone` attestation
+ * via `MilestoneCanceled`) is not yet wired into the SDK + indexer
+ * pipeline — that work is tracked under the Phase 3 follow-up (DEV-234).
+ *
+ * Until the attestation flow ships, this hook fails fast with a clear
+ * "not available yet" error rather than silently pretending success.
+ * The earlier behaviour (return success without doing anything) showed
+ * the milestone disappear from the UI optimistically and then reappear
+ * on the next refetch, which was indistinguishable from a backend bug.
+ *
+ * Callers should keep the integration in place — once the on-chain
+ * delete attestation lands, the mutationFn body is the only thing that
+ * needs to change.
  */
+export const DELETE_MILESTONE_NOT_AVAILABLE_MESSAGE =
+  "Milestone deletion is being migrated to on-chain attestations and isn't available yet. Reach out to the team if you need a milestone removed.";
+
 export const useDeleteMilestone = ({
   projectId,
   programId,
   onSuccess,
 }: UseDeleteMilestoneParams) => {
   const queryClient = useQueryClient();
-  const { startAttestation, showSuccess, showError } = useAttestationToast();
+  const { showError } = useAttestationToast();
 
   const deleteMilestoneMutation = useMutation({
-    mutationFn: async (milestone: GrantMilestoneWithCompletion) => {
-      startAttestation("Deleting milestone...");
-
-      // Deletion uses on-chain milestoneUID
-      // TODO: Implement on-chain milestone deletion via attestation
-      // For now, we'll just return success without calling the backend
-      // This will be replaced with the on-chain deletion flow
-
-      return { milestone, result: { milestoneRemoved: true } };
+    mutationFn: async (_milestone: GrantMilestoneWithCompletion) => {
+      throw new Error(DELETE_MILESTONE_NOT_AVAILABLE_MESSAGE);
     },
     onMutate: async (milestone) => {
-      // Cancel any outgoing refetches to avoid overwriting optimistic update
+      // Snapshot the previous value so the (now always-firing) onError
+      // restores the cache cleanly — without this the consumer would
+      // see the row vanish before the toast appears.
       const queryKey = QUERY_KEYS.MILESTONES.PROJECT_GRANT_MILESTONES(projectId, programId);
       await queryClient.cancelQueries({ queryKey });
-
-      // Snapshot the previous value for rollback
       const previousData = queryClient.getQueryData<ProjectGrantMilestonesResponse | null>(
         queryKey
       );
-
-      // Optimistically update the cache to remove the deleted milestone
       queryClient.setQueryData<ProjectGrantMilestonesResponse | null>(queryKey, (oldData) => {
         if (!oldData || !oldData.grantMilestones || !Array.isArray(oldData.grantMilestones)) {
           return oldData;
         }
-
         return {
           ...oldData,
           grantMilestones: oldData.grantMilestones.filter((m) => m?.uid !== milestone.uid),
         };
       });
-
       return { previousData };
     },
-    onSuccess: (data, _milestone, _context) => {
-      const { milestone: deletedMilestone, result } = data;
-
-      showSuccess(`Milestone "${deletedMilestone.title}" deleted successfully`);
-
-      // Invalidate and refetch to ensure consistency
-      const queryKey = QUERY_KEYS.MILESTONES.PROJECT_GRANT_MILESTONES(projectId, programId);
-      queryClient.invalidateQueries({ queryKey });
-
+    onSuccess: () => {
+      // Unreachable while mutationFn always throws — kept so the wiring
+      // is correct the moment the on-chain delete attestation lands.
       onSuccess?.();
     },
-    onError: (error: any, milestone, context) => {
-      // Rollback optimistic update on error
+    onError: (error: Error, milestone, context) => {
       const queryKey = QUERY_KEYS.MILESTONES.PROJECT_GRANT_MILESTONES(projectId, programId);
       if (context?.previousData) {
         queryClient.setQueryData(queryKey, context.previousData);
       }
-
-      const errorMessage =
-        error?.response?.data?.message || error?.message || "Failed to delete milestone";
-
-      showError(errorMessage);
-
+      showError(error?.message || "Failed to delete milestone");
       errorManager(`Failed to delete milestone "${milestone.title}"`, error, {
         milestoneUID: milestone.uid,
         milestoneTitle: milestone.title,

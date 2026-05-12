@@ -19,3 +19,17 @@ export function isMilestoneCompleted(statusEntry?: MilestoneStatusEntry): boolea
   if (!statusEntry) return false;
   return statusEntry.currentStatus === "completed" || !!statusEntry.completed;
 }
+
+/**
+ * A milestone is "Late" when it has a due date in the past AND has not
+ * yet been completed or verified. Pending future-due milestones stay
+ * Pending; completed/verified milestones never reclassify as Late even
+ * if their due date was in the past at completion time.
+ */
+export function isMilestoneLate(statusEntry?: MilestoneStatusEntry): boolean {
+  if (!statusEntry) return false;
+  if (isMilestoneCompleted(statusEntry) || isMilestoneVerified(statusEntry)) return false;
+  if (!statusEntry.dueDate) return false;
+  const dueMs = new Date(statusEntry.dueDate).getTime();
+  return Number.isFinite(dueMs) && dueMs < Date.now();
+}

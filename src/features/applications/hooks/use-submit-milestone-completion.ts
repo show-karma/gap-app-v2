@@ -66,7 +66,13 @@ export function useSubmitMilestoneCompletion() {
   const { address, chain } = useAccount();
   const { switchChainAsync } = useWallet();
   const { setupChainAndWallet } = useSetupChainAndWallet();
-  const [pendingTitles, setPendingTitles] = useState<Set<string>>(new Set());
+  // Keyed by milestoneUID (preferred — globally unique) with a title
+  // fallback for the edge case of a slot that hasn't been anchored
+  // on-chain yet. Title-only keys collide between same-titled milestones
+  // (a real shape — see APP-2L75H7UQ-RITZ0N's repeated "Milestone 2").
+  const [pendingKeys, setPendingKeys] = useState<Set<string>>(new Set());
+  const pendingKeyFor = (milestoneUID: string, milestoneTitle: string) =>
+    milestoneUID || milestoneTitle;
 
   const mutation = useMutation({
     mutationFn: async (params: SubmitMilestoneCompletionParams) => {
@@ -77,7 +83,8 @@ export function useSubmitMilestoneCompletion() {
       const chainID = params.statusEntry.chainID;
       const grantUID = params.statusEntry.grantUID;
 
-      setPendingTitles((prev) => new Set(prev).add(params.milestoneTitle));
+      const pendingKey = pendingKeyFor(params.milestoneUID, params.milestoneTitle);
+      setPendingKeys((prev) => new Set(prev).add(pendingKey));
 
       try {
         const setup = await setupChainAndWallet({
@@ -186,9 +193,9 @@ export function useSubmitMilestoneCompletion() {
           }
         }
       } finally {
-        setPendingTitles((prev) => {
+        setPendingKeys((prev) => {
           const next = new Set(prev);
-          next.delete(params.milestoneTitle);
+          next.delete(pendingKey);
           return next;
         });
       }
@@ -206,6 +213,7 @@ export function useSubmitMilestoneCompletion() {
   return {
     submit: mutation.mutateAsync,
     isPending: mutation.isPending,
-    isPendingFor: (milestoneTitle: string) => pendingTitles.has(milestoneTitle),
+    isPendingFor: (milestoneUID: string | undefined, milestoneTitle: string) =>
+      pendingKeys.has(pendingKeyFor(milestoneUID ?? "", milestoneTitle)),
   };
 }
