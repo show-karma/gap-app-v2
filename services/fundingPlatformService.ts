@@ -655,6 +655,7 @@ export const fundingApplicationsAPI = {
     evaluation: string;
     promptId: string;
     updatedAt: string;
+    context?: string;
   }> {
     const response = await apiClient.post(
       `/v2/funding-applications/${referenceNumber}/evaluate-internal`,

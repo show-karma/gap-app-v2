@@ -146,6 +146,13 @@ export interface IFundingApplication {
     evaluation?: string;
     promptId?: string;
     evaluatedAt?: string | Date;
+    /**
+     * Markdown block describing the applicant's Karma project track record
+     * that was injected into the AI prompt at evaluation time. Present only
+     * when the program has a karma_profile_link field and the applicant
+     * linked a project. Used by reviewers to audit AI claims.
+     */
+    context?: string;
   };
   appReviewers?: string[]; // Array of program reviewer addresses assigned to this application
   milestoneReviewers?: string[]; // Array of milestone reviewer addresses assigned to this application

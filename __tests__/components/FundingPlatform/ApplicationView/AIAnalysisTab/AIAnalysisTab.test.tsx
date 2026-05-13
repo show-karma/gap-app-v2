@@ -35,6 +35,18 @@ vi.mock("@/components/FundingPlatform/ApplicationView/AIEvaluationButton", () =>
   ),
 }));
 
+vi.mock("@/components/FundingPlatform/ApplicationView/ReEvaluateInternalButton", () => ({
+  ReEvaluateInternalButton: ({ referenceNumber, onEvaluationComplete }: any) => (
+    <button
+      type="button"
+      data-testid="re-evaluate-internal-btn"
+      onClick={onEvaluationComplete}
+    >
+      Re-evaluate
+    </button>
+  ),
+}));
+
 vi.mock("@/utilities/tailwind", () => ({
   cn: (...classes: any[]) => classes.filter(Boolean).join(" "),
 }));
@@ -200,7 +212,10 @@ describe("AIAnalysisTab", () => {
 
       // Should show internal evaluation by default (no click needed)
       expect(screen.getByTestId("internal-evaluation")).toBeInTheDocument();
-      expect(screen.getByTestId("run-internal-btn")).toBeInTheDocument();
+      // When an internal evaluation already exists, the run button becomes
+      // the confirmation-gated re-evaluate button instead of the bare run
+      // button — overwriting a prior reviewer-visible eval is destructive.
+      expect(screen.getByTestId("re-evaluate-internal-btn")).toBeInTheDocument();
     });
 
     it("shows empty state for external evaluation when switching to that tab", async () => {
