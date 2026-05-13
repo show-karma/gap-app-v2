@@ -240,11 +240,7 @@ export function OAuthConsentClient() {
   const interactionUid = searchParams.get("interaction");
   const { ready, authenticated, login, address, user, getAccessToken } = useAuth();
   const signedInLabel =
-    user?.email?.address ||
-    user?.google?.email ||
-    user?.farcaster?.displayName ||
-    user?.farcaster?.username ||
-    (address ? shortenAddress(address) : null);
+    user?.email?.address || user?.google?.email || (address ? shortenAddress(address) : null);
 
   const interactionQuery = useQuery({
     queryKey: ["oauth", "interaction", interactionUid],
