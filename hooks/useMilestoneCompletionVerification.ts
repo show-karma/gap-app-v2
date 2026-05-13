@@ -18,7 +18,7 @@ import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { queryClient } from "@/utilities/query-client";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
-import { retryUntilConditionMet } from "@/utilities/retries";
+import { isAbortError, retryUntilConditionMet } from "@/utilities/retries";
 import { sanitizeObject } from "@/utilities/sanitize";
 
 // Constants
@@ -49,15 +49,6 @@ interface MilestoneInstance {
 /**
  * Hook for handling milestone completion and verification workflow
  */
-function isAbortError(error: unknown): boolean {
-  return (
-    !!error &&
-    typeof error === "object" &&
-    "name" in error &&
-    (error as { name?: unknown }).name === "AbortError"
-  );
-}
-
 export const useMilestoneCompletionVerification = ({
   projectId,
   programId,

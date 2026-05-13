@@ -15,6 +15,12 @@ import { sanitizeObject } from "./sanitize";
  * poll. Without it, an aborted poll iteration still completes its
  * current request before the next abort check fires.
  *
+ * **Caller contract** when passing `signal`: an aborted request lands in
+ * the catch path as an axios cancel error. The function returns the
+ * standard `[null, error, null, status]` tuple in that case; callers
+ * should use `isAbortError(err)` (from `utilities/retries`) when
+ * inspecting the error to distinguish cancellation from real failures.
+ *
  * @template T - Optional type parameter for response data (defaults to any for backward compatibility)
  * @returns Promise<[T, null, any, number] | [null, string, null, number]> - Tuple of [data, error, pageInfo, status]
  */

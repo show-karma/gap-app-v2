@@ -15,18 +15,9 @@ import type { Application, MilestoneStatusEntry } from "@/types/whitelabel-entit
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
-import { retryUntilConditionMet } from "@/utilities/retries";
+import { isAbortError, retryUntilConditionMet } from "@/utilities/retries";
 import { sanitizeObject } from "@/utilities/sanitize";
 import { isUserCancellationError } from "@/utilities/wallet-errors";
-
-function isAbortError(error: unknown): boolean {
-  return (
-    !!error &&
-    typeof error === "object" &&
-    "name" in error &&
-    (error as { name?: unknown }).name === "AbortError"
-  );
-}
 
 export interface InvoiceFile {
   fileKey: string;
@@ -106,9 +97,20 @@ export function useSubmitMilestoneCompletion() {
       const grantUID = params.statusEntry.grantUID;
 
       // Abort any prior in-flight mutation and start a fresh controller
-      // for this submission. Concurrent mutations from the same hook
-      // instance would otherwise share state in confusing ways; the
-      // mutation queue already serializes them, but defensive reset.
+      // for this submission. Required because overwriting `controllerRef.current`
+      // below would orphan the previous controller — the unmount cleanup
+      // can only abort what the ref currently points to.
+      //
+      // Side effect: concurrent submissions on the same hook instance
+      // cancel each other's polls. React Query's `useMutation` does NOT
+      // serialize parallel `mutate()` calls; calling submit() twice fires
+      // both mutationFns in parallel. In practice wallet-driven attestations
+      // serialize at the wallet layer (one popup at a time), so the
+      // post-attestation poll for the cancelled mutation gets dropped —
+      // on-chain state is still correct, only the toast and `router.refresh()`
+      // for the earlier submission are suppressed. If per-milestone
+      // independent cancellation becomes a requirement, switch to a
+      // `Map<pendingKey, AbortController>` keyed by milestoneUID.
       controllerRef.current?.abort();
       const controller = new AbortController();
       controllerRef.current = controller;

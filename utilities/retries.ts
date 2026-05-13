@@ -4,12 +4,33 @@ import { errorManager } from "@/components/Utilities/errorManager";
  * Error thrown when an abort signal cancels a retry loop. Carries
  * `name: "AbortError"` so callers can distinguish abort from condition-
  * never-met or operation-failed cases via a single check.
+ *
+ * **Caller contract**: when the promise rejects, check
+ * `err.name === "AbortError"` (or use `isAbortError`) and treat it as
+ * cancellation, not as a failure. Don't surface toasts or capture to
+ * Sentry — the user navigated away.
  */
 export class RetryAbortedError extends Error {
-  readonly name = "AbortError" as const;
+  readonly name = "AbortError";
   constructor(message = "Retry loop aborted") {
     super(message);
   }
+}
+
+/**
+ * Type guard for AbortSignal-style cancellation errors. Matches both
+ * `RetryAbortedError` (this module) and axios's own AbortError shape,
+ * which both expose `name === "AbortError"`. Use this instead of
+ * `instanceof RetryAbortedError` so callers don't have to know which
+ * abort point fired.
+ */
+export function isAbortError(error: unknown): boolean {
+  return (
+    !!error &&
+    typeof error === "object" &&
+    "name" in error &&
+    (error as { name?: unknown }).name === "AbortError"
+  );
 }
 
 /**
@@ -56,13 +77,14 @@ export async function retry<T>(
  * fires its callback / next-iteration network calls in a zombie state.
  *
  * Cancellation is checked at three points: before the condition fires,
- * before the sleep, and after the sleep resolves. Sleeping is itself
- * abortable via `signal.addEventListener("abort", ...)` so an in-flight
+ * after it resolves, and during the sleep (via an abortable
+ * `setTimeout` wrapper). Sleeping is fully abortable so an in-flight
  * sleep doesn't hold the loop open for the full delay after abort.
  *
- * On abort the function rejects with `RetryAbortedError` (`name:
- * "AbortError"`) — callers should check `err.name === "AbortError"` and
- * swallow it rather than reporting as a real failure.
+ * **Caller contract**: on abort this rejects with `RetryAbortedError`
+ * (`name: "AbortError"`). Use the exported `isAbortError(err)` helper
+ * to distinguish cancellation from real failures. Cancellation should
+ * be swallowed silently (no toast, no Sentry) — the user navigated away.
  */
 export const retryUntilConditionMet = async (
   conditionFn: () => Promise<boolean>,
