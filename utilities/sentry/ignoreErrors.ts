@@ -14,6 +14,16 @@ const walletConnectErrors = [
   "WebSocket connection closed abnormally with code: 3000",
 ];
 
+const walletProviderErrors = [
+  // MetaMask's injected provider throws this when the extension aborts or
+  // rejects the connection handshake (popup dismissed, extension locked,
+  // another wallet extension competing for window.ethereum). Privy's login
+  // modal surfaces a user-facing error for this failure mode, so suppressing
+  // it in Sentry keeps the issue feed actionable.
+  // See https://karma-crypto-inc.sentry.io/issues/7453497949/
+  "Failed to connect to MetaMask",
+];
+
 const browserExtensionErrors = [
   // Browser extensions disconnecting ports (Chrome extensions, wallet extensions)
   // See https://karma-crypto-inc.sentry.io/issues/GAP-FRONTEND-1BA
@@ -31,9 +41,6 @@ const notFoundErrors = ["Project not found", "Community not found"];
 export const sentryIgnoreErrors = [
   // user rejected a confirmation in the wallet
   "rejected the request",
-  // MetaMask can throw this from the injected provider when the extension aborts
-  // or rejects the connection handshake before our app receives a first-party frame.
-  "Failed to connect to MetaMask",
   // React internal error thrown when something outside react modifies the DOM
   // This is usually because of a browser extension or Chrome's built-in translate. There's no action to do.
   // See https://blog.sentry.io/making-your-javascript-projects-less-noisy/#ignore-un-actionable-errors
@@ -43,6 +50,7 @@ export const sentryIgnoreErrors = [
   `TypeError: can't access dead object`,
   ...unsupportedWalletErrors,
   ...walletConnectErrors,
+  ...walletProviderErrors,
   ...browserExtensionErrors,
   ...notFoundErrors,
 ];
