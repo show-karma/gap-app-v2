@@ -10,6 +10,7 @@ const mockReplayConstructor = vi.fn(() => mockReplayInstance);
 const mockLazyLoadIntegration = vi.fn(() => Promise.resolve(mockReplayConstructor));
 const mockCaptureRequestError = vi.fn();
 const mockCaptureRouterTransitionStart = vi.fn();
+const mockCaptureMessage = vi.fn();
 
 vi.mock("@sentry/nextjs", () => ({
   init: mockInit,
@@ -17,6 +18,7 @@ vi.mock("@sentry/nextjs", () => ({
   lazyLoadIntegration: mockLazyLoadIntegration,
   captureRequestError: mockCaptureRequestError,
   captureRouterTransitionStart: mockCaptureRouterTransitionStart,
+  captureMessage: mockCaptureMessage,
 }));
 
 vi.mock("@/utilities/sentry/ignoreErrors", () => ({
@@ -63,16 +65,42 @@ describe("instrumentation-client", () => {
     expect(mockAddIntegration).toHaveBeenCalledWith(mockReplayInstance);
   });
 
-  it("swallows replay lazy-load failures", async () => {
-    mockLazyLoadIntegration.mockImplementationOnce(() => Promise.reject(new Error("load failed")));
+  it("logs and swallows replay lazy-load failures without calling addIntegration", async () => {
+    const loadError = new Error("load failed");
+    mockLazyLoadIntegration.mockImplementationOnce(() => Promise.reject(loadError));
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const randomSpy = vi.spyOn(Math, "random").mockReturnValue(1);
 
     await expect(import("@/instrumentation-client")).resolves.toBeDefined();
     await new Promise(process.nextTick);
 
     expect(mockAddIntegration).not.toHaveBeenCalled();
+    expect(warnSpy).toHaveBeenCalledWith("Sentry Replay lazy-load failed:", loadError);
+    expect(mockCaptureMessage).not.toHaveBeenCalled();
+
+    warnSpy.mockRestore();
+    randomSpy.mockRestore();
   });
 
-  it("does not add replay when Sentry returns a non-constructor", async () => {
+  it("samples replay lazy-load failures into Sentry at the configured rate", async () => {
+    const loadError = new Error("sampled failure");
+    mockLazyLoadIntegration.mockImplementationOnce(() => Promise.reject(loadError));
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const randomSpy = vi.spyOn(Math, "random").mockReturnValue(0);
+
+    await import("@/instrumentation-client");
+    await new Promise(process.nextTick);
+
+    expect(mockCaptureMessage).toHaveBeenCalledWith("Replay lazy-load failed", {
+      level: "warning",
+      extra: { error: "sampled failure" },
+    });
+
+    warnSpy.mockRestore();
+    randomSpy.mockRestore();
+  });
+
+  it("does not add replay when Sentry returns a non-callable", async () => {
     mockLazyLoadIntegration.mockImplementationOnce(() => Promise.resolve(null));
 
     await import("@/instrumentation-client");
