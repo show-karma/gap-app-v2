@@ -137,7 +137,7 @@ interface ConsentGuardArgs {
   redirectingTo: string | null;
 }
 
-function renderConsentGuard(args: ConsentGuardArgs): ReactElement | null {
+function renderConsentGuard(args: ConsentGuardArgs): ReactElement | undefined {
   const {
     interactionUid,
     ready,
@@ -233,7 +233,7 @@ function renderConsentGuard(args: ConsentGuardArgs): ReactElement | null {
       </Layout>
     );
   }
-  return null;
+  return undefined;
 }
 
 export function OAuthConsentClient() {
@@ -311,7 +311,15 @@ export function OAuthConsentClient() {
   });
   if (guard) return guard;
 
-  if (!interactionQuery.data) return null;
+  // Defensive: renderConsentGuard already handles every !interactionQuery.data
+  // branch, but TS narrowing doesn't carry across the function boundary.
+  if (!interactionQuery.data) {
+    return (
+      <Layout>
+        <Skeleton />
+      </Layout>
+    );
+  }
   const client = interactionQuery.data.client;
   const clientName = client?.clientName ?? client?.clientId ?? "Unknown app";
   const logoUri = client?.logoUri ?? null;
