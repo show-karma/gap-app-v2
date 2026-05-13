@@ -46,7 +46,7 @@ function resolveSpec(entry?: MilestoneStatusEntry): BadgeSpec {
   // completed/verified.
   if (isMilestoneVerified(entry)) return { label: "Verified", tone: "success" };
   if (isMilestoneCompleted(entry)) return { label: "Pending Verification", tone: "warning" };
-  if (isMilestoneLate(entry)) return { label: "Past Due", tone: "danger" };
+  if (isMilestoneLate(entry)) return { label: "Late", tone: "danger" };
   return { label: "Pending", tone: "neutral" };
 }
 
@@ -56,7 +56,7 @@ function resolveSpec(entry?: MilestoneStatusEntry): BadgeSpec {
  * `ApplicationContent` / `ApplicationDataView` to give admin reviewers
  * inline status awareness without leaving the application detail page.
  *
- * Status hierarchy: Verified > PendingVerification > PastDue > Pending. The
+ * Status hierarchy: Verified > PendingVerification > Late > Pending. The
  * "PendingVerification" label is the canonical name for a milestone the
  * grantee has marked completed but a reviewer hasn't yet attested as
  * verified — replaces the older "Completed" label which conflated the
