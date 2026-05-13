@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { type ReactElement, useCallback, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
+import { useContributorProfile } from "@/hooks/useContributorProfile";
 import { envVars } from "@/utilities/enviromentVars";
 
 /**
@@ -136,7 +137,7 @@ interface ConsentGuardArgs {
   redirectingTo: string | null;
 }
 
-function renderConsentGuard(args: ConsentGuardArgs): ReactElement | null {
+function renderConsentGuard(args: ConsentGuardArgs): ReactElement | undefined {
   const {
     interactionUid,
     ready,
@@ -232,13 +233,19 @@ function renderConsentGuard(args: ConsentGuardArgs): ReactElement | null {
       </Layout>
     );
   }
-  return null;
+  return undefined;
 }
 
 export function OAuthConsentClient() {
   const searchParams = useSearchParams();
   const interactionUid = searchParams.get("interaction");
-  const { ready, authenticated, login, address, getAccessToken } = useAuth();
+  const { ready, authenticated, login, address, user, getAccessToken } = useAuth();
+  const { profile } = useContributorProfile(address);
+  const signedInLabel =
+    profile?.data?.name ||
+    user?.email?.address ||
+    user?.google?.email ||
+    (address ? shortenAddress(address) : null);
 
   const interactionQuery = useQuery({
     queryKey: ["oauth", "interaction", interactionUid],
@@ -304,7 +311,15 @@ export function OAuthConsentClient() {
   });
   if (guard) return guard;
 
-  if (!interactionQuery.data) return null;
+  // Defensive: renderConsentGuard already handles every !interactionQuery.data
+  // branch, but TS narrowing doesn't carry across the function boundary.
+  if (!interactionQuery.data) {
+    return (
+      <Layout>
+        <Skeleton />
+      </Layout>
+    );
+  }
   const client = interactionQuery.data.client;
   const clientName = client?.clientName ?? client?.clientId ?? "Unknown app";
   const logoUri = client?.logoUri ?? null;
@@ -333,24 +348,50 @@ export function OAuthConsentClient() {
         </div>
       </div>
 
-      <ul className="mt-6 space-y-2 text-sm text-foreground">
-        <li className="flex items-start gap-2">
-          <Bullet />
-          Use the Karma MCP tools on your behalf — view your projects, grants, and impact data.
-        </li>
-        <li className="flex items-start gap-2">
-          <Bullet />
-          Take actions you can take yourself: create projects, post updates, and submit milestone
-          evidence.
-        </li>
-      </ul>
+      <p className="mt-6 text-sm text-foreground">This will allow {clientName} to:</p>
 
-      {address ? (
+      <div className="mt-4 space-y-5 text-sm text-foreground">
+        <div>
+          <p className="font-medium text-foreground">As a grant operator</p>
+          <ul className="mt-2 space-y-2">
+            <li className="flex items-start gap-2">
+              <Bullet />
+              Review programs, milestones, and reports
+            </li>
+          </ul>
+        </div>
+
+        <div>
+          <p className="font-medium text-foreground">As a project or non-profit</p>
+          <ul className="mt-2 space-y-2">
+            <li className="flex items-start gap-2">
+              <Bullet />
+              Search for funders that match your work
+            </li>
+            <li className="flex items-start gap-2">
+              <Bullet />
+              See your projects, grants, milestones, and impact data
+            </li>
+            <li className="flex items-start gap-2">
+              <Bullet />
+              Create and update projects on your behalf
+            </li>
+            <li className="flex items-start gap-2">
+              <Bullet />
+              Post updates and submit milestone evidence
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <p className="mt-6 text-xs text-muted-foreground">
+        {clientName} can only do what you can do. You can revoke access anytime.
+      </p>
+
+      {signedInLabel ? (
         <p className="mt-6 text-xs text-muted-foreground">
           Signed in as{" "}
-          <code className="rounded bg-muted px-1.5 py-0.5 text-foreground">
-            {shortenAddress(address)}
-          </code>
+          <code className="rounded bg-muted px-1.5 py-0.5 text-foreground">{signedInLabel}</code>
         </p>
       ) : null}
 
