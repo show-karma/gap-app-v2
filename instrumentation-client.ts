@@ -32,10 +32,7 @@ Sentry.init({
 // (chunk eviction, network blip, ad-blocker, CSP), the factory call, or
 // `addIntegration` itself — so optional telemetry never crashes the page.
 // The error signature is also filtered via `sentryIgnoreErrors` (defense in
-// depth) and we sample a tiny fraction of failures to Sentry so a regression
-// in `lazyLoadIntegration` itself remains visible.
-const REPLAY_FAILURE_SAMPLE_RATE = 0.001;
-
+// depth) and we keep a console.warn locally for debugging.
 if (typeof window !== "undefined") {
   void Sentry.lazyLoadIntegration("replayIntegration")
     .then((replayIntegration) => {
@@ -47,13 +44,6 @@ if (typeof window !== "undefined") {
     })
     .catch((error) => {
       console.warn("Sentry Replay lazy-load failed:", error);
-
-      if (Math.random() < REPLAY_FAILURE_SAMPLE_RATE) {
-        Sentry.captureMessage("Replay lazy-load failed", {
-          level: "warning",
-          extra: { error: error instanceof Error ? error.message : String(error) },
-        });
-      }
     });
 }
 
