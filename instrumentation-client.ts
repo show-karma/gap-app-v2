@@ -28,10 +28,23 @@ Sentry.init({
 
 // Lazy-load Replay after init — keeps ~400KB out of the shared bundle.
 // The Replay SDK is fetched on-demand and added to the existing Sentry client.
+// The `.catch` below covers any failure in this bootstrap chain — lazy fetch
+// (chunk eviction, network blip, ad-blocker, CSP), the factory call, or
+// `addIntegration` itself — so optional telemetry never crashes the page.
+// The error signature is also filtered via `sentryIgnoreErrors` (defense in
+// depth) and we keep a console.warn locally for debugging.
 if (typeof window !== "undefined") {
-  Sentry.lazyLoadIntegration("replayIntegration").then((replayIntegration) => {
-    Sentry.addIntegration(replayIntegration());
-  });
+  void Sentry.lazyLoadIntegration("replayIntegration")
+    .then((replayIntegration) => {
+      if (typeof replayIntegration !== "function") {
+        return;
+      }
+
+      Sentry.addIntegration(replayIntegration());
+    })
+    .catch((error) => {
+      console.warn("Sentry Replay lazy-load failed:", error);
+    });
 }
 
 export const onRequestError = Sentry.captureRequestError;
