@@ -12,12 +12,12 @@ import { Role } from "@/src/core/rbac/types/role";
 import { CommentTimeline } from "@/src/features/application-comments/components/CommentTimeline";
 import { PublicComments } from "@/src/features/application-comments/components/PublicComments";
 import { ApplicationStatusHistory } from "@/src/features/applications/components/ApplicationStatusHistory";
+import { MilestonesTab } from "@/src/features/applications/components/MilestonesTab";
 import { useApplicationAccess } from "@/src/features/applications/hooks/use-application-access";
 import type { IFundingApplication, ProgramWithFormSchema } from "@/types/funding-platform";
 import type { Application, ApplicationStatus, FundingProgram } from "@/types/whitelabel-entities";
 import { formatDate } from "@/utilities/formatDate";
 import { cn } from "@/utilities/tailwind";
-import { MilestonesTab } from "./components/MilestonesTab";
 import { PostApprovalTab } from "./components/PostApprovalTab";
 
 interface ApplicationPageClientProps {

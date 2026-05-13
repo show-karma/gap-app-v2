@@ -3,10 +3,21 @@
 import { OffChainMilestoneRow } from "@/src/features/applications/components/OffChainMilestoneRow";
 import { OnChainMilestoneRow } from "@/src/features/applications/components/OnChainMilestoneRow";
 import { useApplicationInvoiceConfig } from "@/src/features/applications/hooks/use-application-invoice-config";
-import type { Application } from "@/types/whitelabel-entities";
+import type { MilestoneStatusEntry } from "@/types/whitelabel-entities";
+
+// Narrow structural prop — the tab only needs the milestone-relevant
+// fields. Accepts both the whitelabel `Application` and the admin
+// `IFundingApplication` shapes; status is `string` so any enum union
+// satisfies (the lifecycle check below only inspects "approved").
+export interface MilestonesTabApplication {
+  referenceNumber: string;
+  projectUID?: string;
+  status: string;
+  milestoneStatuses?: MilestoneStatusEntry[];
+}
 
 interface MilestonesTabProps {
-  application: Application;
+  application: MilestonesTabApplication;
   isOwner: boolean;
   invoiceRequired?: boolean;
 }
@@ -34,9 +45,19 @@ export function MilestonesTab({ application, isOwner, invoiceRequired }: Milesto
   const entries = application.milestoneStatuses ?? [];
 
   if (entries.length === 0) {
+    // Lifecycle: status flips to "approved" → project gets created →
+    // grant is attested on-chain → milestones are attested. There's a
+    // transient window where status="approved" but milestoneStatuses
+    // is still empty — "No milestones defined" is wrong copy for that
+    // window because it implies a permanent absence.
+    const isApprovedPipelinePending = application.status?.toLowerCase() === "approved";
     return (
       <div className="rounded-xl border border-border p-6">
-        <p className="text-muted-foreground">No milestones defined for this application.</p>
+        <p className="text-muted-foreground">
+          {isApprovedPipelinePending
+            ? "Setting up milestones… On-chain attestations land within a few minutes of approval."
+            : "No milestones defined for this application."}
+        </p>
       </div>
     );
   }

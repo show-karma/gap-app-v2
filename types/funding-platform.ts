@@ -1,3 +1,5 @@
+import type { MilestoneStatusEntry } from "@/types/whitelabel-entities";
+
 // V2 Status Types
 export type FundingApplicationStatusV2 =
   | "pending"
@@ -154,6 +156,11 @@ export interface IFundingApplication {
   // from submitted form data; falls back to the linked Karma project's title
   // when the application has a projectUID. Omitted when neither yields a value.
   resolvedProjectName?: string;
+  // Server-merged milestone list (application-source slots + project-source
+  // grant milestones, pre-deduped by UID and pre-sorted by status/dueDate).
+  // Populated by the indexer's attachMilestoneStatuses walker. Empty when
+  // projectUID is unset or the linked grant has no milestones yet.
+  milestoneStatuses?: MilestoneStatusEntry[];
   createdAt: string | Date;
   updatedAt: string | Date;
 }
