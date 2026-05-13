@@ -2,6 +2,7 @@ import type { ConnectedWallet } from "@privy-io/react-auth";
 import { createConnector } from "@wagmi/core";
 import type { EIP1193Provider } from "viem";
 import { appNetwork } from "@/utilities/network";
+import { switchChainViaProvider } from "@/utilities/wagmi/switchChainViaProvider";
 
 /**
  * A wagmi connector that bridges a Privy wallet to wagmi's outer config.
@@ -26,7 +27,11 @@ export function privyBridgeConnector(wallet: ConnectedWallet, initialChainId: nu
     async connect(params?) {
       const targetChainId = params?.chainId;
       if (targetChainId && targetChainId !== currentChainId) {
-        await wallet.switchChain(targetChainId);
+        await switchChainViaProvider(
+          wallet,
+          targetChainId,
+          appNetwork.find((c) => c.id === targetChainId)
+        );
         currentChainId = targetChainId;
       }
       currentProvider = (await wallet.getEthereumProvider()) as EIP1193Provider;
@@ -60,11 +65,11 @@ export function privyBridgeConnector(wallet: ConnectedWallet, initialChainId: nu
     },
 
     async switchChain({ chainId: targetChainId }) {
-      await wallet.switchChain(targetChainId);
+      const chain = appNetwork.find((c) => c.id === targetChainId);
+      await switchChainViaProvider(wallet, targetChainId, chain);
       currentChainId = targetChainId;
-      const chain = appNetwork.find((c) => c.id === targetChainId) || appNetwork[0];
       config.emitter.emit("change", { chainId: targetChainId });
-      return chain;
+      return chain ?? appNetwork[0];
     },
 
     onAccountsChanged(accounts) {

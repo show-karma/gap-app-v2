@@ -497,8 +497,10 @@ describe("useZeroDevSigner (real hook)", () => {
       // Primary path uses Privy's provider directly, not wagmi's safeGetWalletClient
       expect(mockSafeGetWalletClient).not.toHaveBeenCalled();
       expect(mockWalletClientToSigner).toHaveBeenCalledWith(mockCreatedClient);
-      // Should switch chain before creating client
-      expect(mockPrivyState.wallets[0].switchChain).toHaveBeenCalledWith(10);
+      // Switches chain via the raw EIP-1193 provider (bypasses Privy's
+      // wallet.switchChain to avoid the Rabby accountsChanged([]) race).
+      expect(mockPrivyState.wallets[0].switchChain).not.toHaveBeenCalled();
+      expect(mockPrivyState.wallets[0].getEthereumProvider).toHaveBeenCalled();
     });
 
     it("should throw if safeGetWalletClient returns an error", async () => {
