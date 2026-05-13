@@ -43,11 +43,23 @@ import {
   useIsFundingPlatformAdmin,
 } from "@/src/core/rbac";
 import { usePermissionContext } from "@/src/core/rbac/context/permission-context";
+import { MilestonesTab } from "@/src/features/applications/components/MilestonesTab";
+import { useMilestonesAdminRefetch } from "@/src/features/applications/hooks/use-milestones-admin-refetch";
 import { layoutTheme } from "@/src/helper/theme";
 import { useApplicationVersionsStore } from "@/store/applicationVersions";
 import type { IFundingApplication } from "@/types/funding-platform";
 import { PAGES } from "@/utilities/pages";
 import { isFundingProgramConfig } from "@/utilities/type-guards";
+
+// Whitelist used when seeding activeTabId from the `?tab=` query
+// param. Keeps unknown values from drifting the polling-gate state
+// away from the actually-rendered tab.
+const KNOWN_TAB_IDS = ["application", "milestones", "ai-analysis", "comments"] as const;
+type KnownTabId = (typeof KNOWN_TAB_IDS)[number];
+
+function isKnownTabId(value: string | null): value is KnownTabId {
+  return value !== null && (KNOWN_TAB_IDS as readonly string[]).includes(value);
+}
 
 export default function ApplicationDetailPage() {
   const router = useRouter();
@@ -82,6 +94,19 @@ export default function ApplicationDetailPage() {
   // View mode state for ApplicationContent
   const [applicationViewMode, setApplicationViewMode] = useState<"details" | "changes">("details");
 
+  // Active-tab id — used to gate the milestones admin refetch hook
+  // (don't poll when admin is looking at AI Analysis or Comments).
+  // Seeded from `?tab=` so deep-links land on the right active id
+  // without waiting for an onChange event. Validated against
+  // KNOWN_TAB_IDS to keep unknown deep-link values from drifting the
+  // state away from the actually-rendered tab. The post-load
+  // reconcile useEffect below also corrects `?tab=milestones` on a
+  // non-approved application (where the Milestones tab is filtered
+  // out at render time).
+  const [activeTabId, setActiveTabId] = useState<KnownTabId>(() =>
+    isKnownTabId(tabParam) ? tabParam : "application"
+  );
+
   // Delete modal state
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
@@ -101,6 +126,28 @@ export default function ApplicationDetailPage() {
     isLoading: isLoadingApplication,
     refetch: refetchApplication,
   } = useApplication(applicationId);
+
+  // Keep the milestones tab fresh on long-lived admin sessions. Active
+  // only when the admin is viewing the Milestones tab AND the
+  // application is approved (the only state in which milestones can
+  // exist on this surface).
+  const isApprovedApplication = application?.status?.toLowerCase() === "approved";
+  useMilestonesAdminRefetch({
+    isActive: activeTabId === "milestones" && isApprovedApplication,
+    refetch: refetchApplication,
+  });
+
+  // Reconcile activeTabId once the application loads: if the seed
+  // came from `?tab=milestones` but this application doesn't expose a
+  // Milestones tab (non-approved), correct to "application" so the
+  // state doesn't lie about what's rendered. Only runs when we know
+  // the application's approval status (i.e. application is loaded).
+  useEffect(() => {
+    if (!application) return;
+    if (activeTabId === "milestones" && !isApprovedApplication) {
+      setActiveTabId("application");
+    }
+  }, [application, activeTabId, isApprovedApplication]);
 
   // Fetch program config
   const { data: program, config } = useProgramConfig(programId);
@@ -456,7 +503,7 @@ export default function ApplicationDetailPage() {
 
           {/* Tab-based Layout */}
           {(() => {
-            const tabs = [
+            const tabs: TabConfig[] = [
               {
                 id: "application",
                 label: "Application",
@@ -472,6 +519,23 @@ export default function ApplicationDetailPage() {
                   </TabPanel>
                 ),
               },
+              // Milestones tab only renders once the application is
+              // approved — pre-approval there's no grant on-chain yet
+              // and `milestoneStatuses[]` is always empty.
+              ...(isApprovedApplication
+                ? [
+                    {
+                      id: "milestones",
+                      label: "Milestones",
+                      icon: TabIcons.Milestones,
+                      content: (
+                        <TabPanel>
+                          <MilestonesTab application={application} isOwner={false} />
+                        </TabPanel>
+                      ),
+                    } satisfies TabConfig,
+                  ]
+                : []),
               {
                 id: "ai-analysis",
                 label: "AI Analysis",
@@ -512,18 +576,25 @@ export default function ApplicationDetailPage() {
                   </TabPanel>
                 ),
               },
-            ] satisfies TabConfig[];
+            ];
 
-            // Derive tab index from the tab id rather than hardcoding "2" —
-            // prevents silent breakage if tabs are reordered.
+            // Derive tab index from the tab id rather than hardcoding —
+            // prevents silent breakage when the Milestones tab is or isn't
+            // present.
             const tabParamIndex = tabParam ? tabs.findIndex((t) => t.id === tabParam) : -1;
             const defaultIndex = tabParamIndex >= 0 ? tabParamIndex : 0;
+
+            const handleTabChange = (index: number) => {
+              const tab = tabs[index];
+              if (tab && isKnownTabId(tab.id)) setActiveTabId(tab.id);
+            };
 
             return (
               <ApplicationTabs
                 connectedToHeader={!milestoneReviewUrl && !selectedStatus}
                 defaultIndex={defaultIndex}
                 tabs={tabs}
+                onChange={handleTabChange}
               />
             );
           })()}

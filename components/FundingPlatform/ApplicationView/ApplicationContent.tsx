@@ -13,6 +13,11 @@ import toast from "react-hot-toast";
 import { KarmaProjectLink } from "@/components/FundingPlatform/shared/KarmaProjectLink";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { useApplicationVersions } from "@/hooks/useFundingPlatform";
+import { MilestoneStatusBadge } from "@/src/features/applications/components/MilestoneStatusBadge";
+import {
+  buildMilestoneStatusIndex,
+  lookupMilestoneStatus,
+} from "@/src/features/applications/lib/milestone-status";
 import { useApplicationVersionsStore } from "@/store/applicationVersions";
 import type { IFundingApplication, ProgramWithFormSchema } from "@/types/funding-platform";
 import { createFieldLabelsMap, createFieldTypeMap } from "@/utilities/form-schema-helpers";
@@ -109,6 +114,11 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
   // Use controlled mode if provided, otherwise use internal state
   const viewMode = controlledViewMode ?? internalViewMode;
   const setViewMode = onViewModeChange ?? setInternalViewMode;
+
+  const milestoneStatusByKey = useMemo(
+    () => buildMilestoneStatusIndex(application.milestoneStatuses),
+    [application.milestoneStatuses]
+  );
 
   // Get UI state from Zustand store
   const { selectedVersion } = useApplicationVersionsStore();
@@ -226,6 +236,13 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
                 (key) => !coreFields.includes(key) && milestone[key]
               );
 
+              const milestoneStatus = lookupMilestoneStatus(
+                milestoneStatusByKey,
+                milestone.milestoneUID,
+                fieldKey,
+                milestone.title
+              );
+
               return (
                 <div
                   key={index}
@@ -233,10 +250,13 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
                 >
                   <div className="space-y-2">
                     {/* Title and Due Date - Core fields with special rendering */}
-                    <div className="flex justify-between items-start">
-                      <h5 className="font-medium text-gray-900 dark:text-gray-100">
-                        {milestone.title}
-                      </h5>
+                    <div className="flex justify-between items-start gap-2">
+                      <div className="flex items-baseline gap-2 flex-wrap">
+                        <h5 className="font-medium text-gray-900 dark:text-gray-100">
+                          {milestone.title}
+                        </h5>
+                        <MilestoneStatusBadge entry={milestoneStatus} />
+                      </div>
                       {milestone.dueDate && (
                         <span className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded">
                           Due: {formatDate(milestone.dueDate)}
