@@ -55,8 +55,14 @@ export function useMilestonesAdminRefetch({
     };
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
+    // Skip the periodic poll when the tab is hidden — visibilitychange
+    // catches the return-to-foreground case, so a hidden tab doesn't
+    // need 60s background refetches piling up. Same as the
+    // visibilitychange handler: only fire on visible.
     const intervalId = window.setInterval(() => {
-      refetch();
+      if (document.visibilityState === "visible") {
+        refetch();
+      }
     }, intervalMs);
 
     return () => {

@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import {
   isMilestoneCompleted,
   isMilestoneLate,
@@ -61,7 +62,16 @@ function resolveSpec(entry?: MilestoneStatusEntry): BadgeSpec {
  * verified — replaces the older "Completed" label which conflated the
  * two states.
  */
-export function MilestoneStatusBadge({ entry, className }: MilestoneStatusBadgeProps) {
+// Memoized — the badge is rendered once per milestone inside two
+// different `.map()` loops (ApplicationContent, ApplicationDataView),
+// and the parent re-renders on unrelated state (view-mode toggles,
+// version changes, Zustand updates). React.memo dodges the per-badge
+// resolveSpec recomputation on those parent updates. Per the project
+// CLAUDE.md convention for list-mapped components.
+export const MilestoneStatusBadge = memo(function MilestoneStatusBadge({
+  entry,
+  className,
+}: MilestoneStatusBadgeProps) {
   const { label, tone } = resolveSpec(entry);
   return (
     <span
@@ -74,4 +84,4 @@ export function MilestoneStatusBadge({ entry, className }: MilestoneStatusBadgeP
       {label}
     </span>
   );
-}
+});

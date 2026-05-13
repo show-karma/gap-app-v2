@@ -24,6 +24,10 @@ function setDocumentVisibility(state: "visible" | "hidden") {
 describe("useMilestonesAdminRefetch", () => {
   beforeEach(() => {
     vi.useFakeTimers();
+    // Reset document.visibilityState every test — Object.defineProperty
+    // on document mutates a global, so a prior test leaving the tab
+    // "hidden" would leak into the next one's polling assertion.
+    setDocumentVisibility("visible");
   });
 
   afterEach(() => {
@@ -61,7 +65,9 @@ describe("useMilestonesAdminRefetch", () => {
     expect(refetch).not.toHaveBeenCalled();
   });
 
-  it("should_refetch_every_interval_while_isActive", () => {
+  it("should_refetch_every_interval_while_isActive_and_document_is_visible", () => {
+    // jsdom defaults visibilityState to "visible", so the polling
+    // fires normally.
     const refetch = vi.fn();
     renderHook(() => useMilestonesAdminRefetch({ isActive: true, refetch, intervalMs: 5_000 }));
 
@@ -74,6 +80,43 @@ describe("useMilestonesAdminRefetch", () => {
       vi.advanceTimersByTime(15_000);
     });
     expect(refetch).toHaveBeenCalledTimes(4);
+  });
+
+  it("should_skip_interval_refetch_when_document_is_hidden", () => {
+    // An admin who walks away from the browser tab shouldn't generate
+    // 60s background refetches piling up. The visibilitychange handler
+    // catches the come-back case; the interval just needs to honor
+    // the same hidden/visible gate.
+    const refetch = vi.fn();
+    renderHook(() => useMilestonesAdminRefetch({ isActive: true, refetch, intervalMs: 5_000 }));
+
+    setDocumentVisibility("hidden");
+
+    act(() => {
+      vi.advanceTimersByTime(60_000);
+    });
+    expect(refetch).not.toHaveBeenCalled();
+  });
+
+  it("should_resume_interval_refetch_when_document_returns_to_visible", () => {
+    // Confirms the gate is per-tick, not per-mount — flipping back to
+    // visible re-engages the polling without remounting the hook.
+    const refetch = vi.fn();
+    renderHook(() => useMilestonesAdminRefetch({ isActive: true, refetch, intervalMs: 5_000 }));
+
+    setDocumentVisibility("hidden");
+    act(() => {
+      vi.advanceTimersByTime(10_000); // 2 hidden ticks, both skipped
+    });
+    expect(refetch).not.toHaveBeenCalled();
+
+    setDocumentVisibility("visible"); // one immediate refetch via visibilitychange
+    expect(refetch).toHaveBeenCalledTimes(1);
+
+    act(() => {
+      vi.advanceTimersByTime(5_000); // one more from the interval
+    });
+    expect(refetch).toHaveBeenCalledTimes(2);
   });
 
   it("should_stop_polling_when_isActive_flips_to_false", () => {

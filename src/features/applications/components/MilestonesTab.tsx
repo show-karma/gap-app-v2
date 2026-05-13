@@ -50,7 +50,7 @@ export function MilestonesTab({ application, isOwner, invoiceRequired }: Milesto
     // transient window where status="approved" but milestoneStatuses
     // is still empty — "No milestones defined" is wrong copy for that
     // window because it implies a permanent absence.
-    const isApprovedPipelinePending = application.status?.toLowerCase() === "approved";
+    const isApprovedPipelinePending = application.status.toLowerCase() === "approved";
     return (
       <div className="rounded-xl border border-border p-6">
         <p className="text-muted-foreground">

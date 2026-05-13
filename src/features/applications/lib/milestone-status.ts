@@ -10,6 +10,14 @@ import type { MilestoneStatusEntry } from "@/types/whitelabel-entities";
  *      same-title milestones across different fields are common (e.g.
  *      two fields each containing a "Milestone 1").
  *
+ * Intra-field same-title collisions (two milestones titled the same
+ * inside the same form field) resolve **first-write-wins**: the
+ * indexer sorts done entries to the bottom and pending by dueDate
+ * ascending, so the first entry on a collision is the one a
+ * displayed badge most likely refers to. Without this, a stale
+ * "Completed" overrides a live "Pending" silently. UID keys still
+ * overwrite (they're unique by construction).
+ *
  * Pair with `lookupMilestoneStatus` at consumer sites — both halves
  * live here so a future keying change touches one file.
  */
@@ -19,7 +27,8 @@ export function buildMilestoneStatusIndex(
   const index = new Map<string, MilestoneStatusEntry>();
   for (const e of entries ?? []) {
     if (e.milestoneUID) index.set(`uid:${e.milestoneUID}`, e);
-    index.set(`label:${e.fieldLabel ?? ""}:${e.title}`, e);
+    const labelKey = `label:${e.fieldLabel ?? ""}:${e.title}`;
+    if (!index.has(labelKey)) index.set(labelKey, e);
   }
   return index;
 }

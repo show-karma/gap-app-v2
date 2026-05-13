@@ -79,6 +79,32 @@ describe("buildMilestoneStatusIndex", () => {
     expect(index.get("uid:0xa")).toBe(a);
     expect(index.get("label:projectMilestones:Beta launch")).toBe(a);
   });
+
+  it("should_resolve_intra_field_same_title_collisions_first_write_wins", () => {
+    // Two un-anchored milestones in the SAME field with the SAME
+    // title. The indexer sorts done entries to the bottom, so the
+    // first hit (pending) is the one a displayed badge most likely
+    // refers to. Last-write-wins would silently stamp the displayed
+    // milestone as "Completed" when the live one is still pending.
+    const pending = makeEntry({
+      milestoneUID: undefined,
+      fieldLabel: "projectMilestones",
+      title: "Milestone 1",
+      currentStatus: "pending",
+    });
+    const completed = makeEntry({
+      milestoneUID: undefined,
+      fieldLabel: "projectMilestones",
+      title: "Milestone 1",
+      currentStatus: "completed",
+      completed: { uid: "c1", createdAt: "2026-01-01" },
+    });
+
+    const index = buildMilestoneStatusIndex([pending, completed]);
+
+    expect(index.get("label:projectMilestones:Milestone 1")).toBe(pending);
+    expect(index.get("label:projectMilestones:Milestone 1")).not.toBe(completed);
+  });
 });
 
 describe("lookupMilestoneStatus", () => {
