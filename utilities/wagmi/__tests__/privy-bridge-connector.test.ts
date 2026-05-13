@@ -4,17 +4,12 @@
  */
 
 // Mock @wagmi/core's createConnector to just call the factory with a mock config.
-// SwitchChainError is left as a real class — tests assert instanceof on it.
-vi.mock("@wagmi/core", async () => {
-  const actual = await vi.importActual<typeof import("@wagmi/core")>("@wagmi/core");
-  return {
-    createConnector: (factory: any) => {
-      const mockEmitter = { emit: vi.fn() };
-      return factory({ emitter: mockEmitter });
-    },
-    SwitchChainError: actual.SwitchChainError,
-  };
-});
+vi.mock("@wagmi/core", () => ({
+  createConnector: (factory: any) => {
+    const mockEmitter = { emit: vi.fn() };
+    return factory({ emitter: mockEmitter });
+  },
+}));
 
 vi.mock("@/utilities/network", () => ({
   appNetwork: [
@@ -33,7 +28,7 @@ vi.mock("@/utilities/network", () => ({
   ],
 }));
 
-import { SwitchChainError } from "@wagmi/core";
+import { SwitchChainError } from "viem";
 import { privyBridgeConnector } from "../privy-bridge-connector";
 
 const mockProvider = { request: vi.fn() };

@@ -1,6 +1,6 @@
 import type { ConnectedWallet } from "@privy-io/react-auth";
-import { createConnector, SwitchChainError } from "@wagmi/core";
-import type { EIP1193Provider } from "viem";
+import { createConnector } from "@wagmi/core";
+import { type EIP1193Provider, SwitchChainError } from "viem";
 import type { Chain } from "viem/chains";
 import { appNetwork } from "@/utilities/network";
 
