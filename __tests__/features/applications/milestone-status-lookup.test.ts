@@ -63,8 +63,8 @@ describe("buildMilestoneStatusIndex", () => {
     const index = buildMilestoneStatusIndex([a, b]);
 
     // Same title across different fields stays disambiguated.
-    expect(index.get("label:projectMilestones:Beta launch")).toBe(a);
-    expect(index.get("label:extraDeliverables:Beta launch")).toBe(b);
+    expect(lookupMilestoneStatus(index, undefined, "projectMilestones", "Beta launch")).toBe(a);
+    expect(lookupMilestoneStatus(index, undefined, "extraDeliverables", "Beta launch")).toBe(b);
   });
 
   it("should_index_by_both_keys_when_milestoneUID_present_and_fieldLabel_present", () => {
@@ -77,7 +77,7 @@ describe("buildMilestoneStatusIndex", () => {
     const index = buildMilestoneStatusIndex([a]);
 
     expect(index.get("uid:0xa")).toBe(a);
-    expect(index.get("label:projectMilestones:Beta launch")).toBe(a);
+    expect(lookupMilestoneStatus(index, undefined, "projectMilestones", "Beta launch")).toBe(a);
   });
 
   it("should_resolve_intra_field_same_title_collisions_first_write_wins", () => {
@@ -102,8 +102,38 @@ describe("buildMilestoneStatusIndex", () => {
 
     const index = buildMilestoneStatusIndex([pending, completed]);
 
-    expect(index.get("label:projectMilestones:Milestone 1")).toBe(pending);
-    expect(index.get("label:projectMilestones:Milestone 1")).not.toBe(completed);
+    const resolved = lookupMilestoneStatus(
+      index,
+      undefined,
+      "projectMilestones",
+      "Milestone 1"
+    );
+    expect(resolved).toBe(pending);
+    expect(resolved).not.toBe(completed);
+  });
+
+  it("should_not_collide_when_title_contains_a_colon", () => {
+    // A plain `${fieldLabel}:${title}` concatenation would key both
+    // entries below to the same string ("label:a:b:c"), silently
+    // overwriting the first. JSON-encoding the tuple keeps the array
+    // boundaries unambiguous so colons in user-input titles can't
+    // forge a colliding key. Titles like "Phase 1: Beta launch" and
+    // "Milestone 2: Testing" are common in real grantee submissions.
+    const titleHasColon = makeEntry({
+      milestoneUID: undefined,
+      fieldLabel: "a",
+      title: "b:c",
+    });
+    const fieldHasColon = makeEntry({
+      milestoneUID: undefined,
+      fieldLabel: "a:b",
+      title: "c",
+    });
+
+    const index = buildMilestoneStatusIndex([titleHasColon, fieldHasColon]);
+
+    expect(lookupMilestoneStatus(index, undefined, "a", "b:c")).toBe(titleHasColon);
+    expect(lookupMilestoneStatus(index, undefined, "a:b", "c")).toBe(fieldHasColon);
   });
 });
 

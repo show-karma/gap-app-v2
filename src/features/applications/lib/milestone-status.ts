@@ -1,14 +1,28 @@
 import type { MilestoneStatusEntry } from "@/types/whitelabel-entities";
 
 /**
+ * Build a stable composite key from (fieldLabel, title). A plain
+ * `${fieldLabel}:${title}` concatenation would collide when title
+ * contains a colon (e.g. "Phase 1: Beta launch") — JSON-encoding the
+ * tuple is the cheapest unambiguous form: array boundaries can't be
+ * forged by content inside the strings.
+ */
+function makeLabelKey(fieldLabel: string | undefined, title: string): string {
+  return `label:${JSON.stringify([fieldLabel ?? "", title])}`;
+}
+
+/**
  * Build a lookup index over `milestoneStatuses[]` keyed two ways:
  *
  *   1. `uid:<milestoneUID>` — primary, used once the slot has been
  *      anchored on-chain.
- *   2. `label:<fieldLabel>:<title>` — fallback for slots that haven't
- *      been anchored yet (no milestoneUID). Includes fieldLabel because
- *      same-title milestones across different fields are common (e.g.
- *      two fields each containing a "Milestone 1").
+ *   2. `label:["<fieldLabel>","<title>"]` — fallback for slots that
+ *      haven't been anchored yet (no milestoneUID). Includes
+ *      fieldLabel because same-title milestones across different
+ *      fields are common (e.g. two fields each containing a
+ *      "Milestone 1"). Encoded via `JSON.stringify` on the tuple so
+ *      colons or quotes inside title/fieldLabel can't fabricate a
+ *      colliding key.
  *
  * Intra-field same-title collisions (two milestones titled the same
  * inside the same form field) resolve **first-write-wins**: the
@@ -27,7 +41,7 @@ export function buildMilestoneStatusIndex(
   const index = new Map<string, MilestoneStatusEntry>();
   for (const e of entries ?? []) {
     if (e.milestoneUID) index.set(`uid:${e.milestoneUID}`, e);
-    const labelKey = `label:${e.fieldLabel ?? ""}:${e.title}`;
+    const labelKey = makeLabelKey(e.fieldLabel, e.title);
     if (!index.has(labelKey)) index.set(labelKey, e);
   }
   return index;
@@ -46,7 +60,7 @@ export function lookupMilestoneStatus(
 ): MilestoneStatusEntry | undefined {
   return (
     (milestoneUID ? index.get(`uid:${milestoneUID}`) : undefined) ??
-    index.get(`label:${fieldLabel ?? ""}:${title}`)
+    index.get(makeLabelKey(fieldLabel, title))
   );
 }
 
