@@ -160,4 +160,21 @@ describe("fetchData", () => {
     expect(pageInfo).toBeNull();
     expect(status).toBe(201);
   });
+
+  it("should_forward_AbortSignal_to_axios_request_config", async () => {
+    // Long-running polls need axios to abort an in-flight request the
+    // moment the caller's signal aborts — otherwise the request
+    // completes its current network round-trip before the loop's next
+    // abort check fires.
+    const mockResponse = { data: { ok: true }, status: 200 };
+    (axios.request as vi.Mock).mockResolvedValue(mockResponse);
+    (TokenManager.getToken as vi.Mock).mockResolvedValue(null);
+
+    const controller = new AbortController();
+    await fetchData("/test-endpoint", "GET", {}, {}, {}, true, false, undefined, controller.signal);
+
+    expect(axios.request).toHaveBeenCalledWith(
+      expect.objectContaining({ signal: controller.signal })
+    );
+  });
 });

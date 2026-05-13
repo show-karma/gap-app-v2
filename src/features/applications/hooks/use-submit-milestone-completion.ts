@@ -3,7 +3,7 @@
 import { MilestoneCompleted } from "@show-karma/karma-gap-sdk/core/class/types/attestations";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import type { Hex } from "viem";
 import { useAccount } from "wagmi";
@@ -15,7 +15,7 @@ import type { Application, MilestoneStatusEntry } from "@/types/whitelabel-entit
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
-import { retryUntilConditionMet } from "@/utilities/retries";
+import { isAbortError, retryUntilConditionMet } from "@/utilities/retries";
 import { sanitizeObject } from "@/utilities/sanitize";
 import { isUserCancellationError } from "@/utilities/wallet-errors";
 
@@ -74,6 +74,19 @@ export function useSubmitMilestoneCompletion() {
   const pendingKeyFor = (milestoneUID: string, milestoneTitle: string) =>
     milestoneUID || milestoneTitle;
 
+  // Tracks the AbortController for any in-flight mutation. React Query
+  // v5 doesn't cancel `mutationFn` on unmount, so the polling loop
+  // would otherwise outlive the component, fire `router.refresh()` on a
+  // route the user already left, and burn ~30 unnecessary network
+  // requests. The controller is re-created at every mutation start and
+  // aborted on cleanup.
+  const controllerRef = useRef<AbortController | null>(null);
+  useEffect(() => {
+    return () => {
+      controllerRef.current?.abort();
+    };
+  }, []);
+
   const mutation = useMutation({
     mutationFn: async (params: SubmitMilestoneCompletionParams) => {
       if (!address) {
@@ -82,6 +95,26 @@ export function useSubmitMilestoneCompletion() {
 
       const chainID = params.statusEntry.chainID;
       const grantUID = params.statusEntry.grantUID;
+
+      // Abort any prior in-flight mutation and start a fresh controller
+      // for this submission. Required because overwriting `controllerRef.current`
+      // below would orphan the previous controller — the unmount cleanup
+      // can only abort what the ref currently points to.
+      //
+      // Side effect: concurrent submissions on the same hook instance
+      // cancel each other's polls. React Query's `useMutation` does NOT
+      // serialize parallel `mutate()` calls; calling submit() twice fires
+      // both mutationFns in parallel. In practice wallet-driven attestations
+      // serialize at the wallet layer (one popup at a time), so the
+      // post-attestation poll for the cancelled mutation gets dropped —
+      // on-chain state is still correct, only the toast and `router.refresh()`
+      // for the earlier submission are suppressed. If per-milestone
+      // independent cancellation becomes a requirement, switch to a
+      // `Map<pendingKey, AbortController>` keyed by milestoneUID.
+      controllerRef.current?.abort();
+      const controller = new AbortController();
+      controllerRef.current = controller;
+      const { signal } = controller;
 
       const pendingKey = pendingKeyFor(params.milestoneUID, params.milestoneTitle);
       setPendingKeys((prev) => new Set(prev).add(pendingKey));
@@ -134,12 +167,24 @@ export function useSubmitMilestoneCompletion() {
         // failing the mutation. The indexer publishes BOTH application
         // and project-source milestones into milestoneStatuses[], so
         // this single poll covers every row in the Milestones tab.
+        //
+        // The signal cancels both the loop's sleep and the in-flight
+        // fetch when the consuming component unmounts mid-poll.
         let indexerCaughtUp = false;
+        let aborted = false;
         try {
           await retryUntilConditionMet(
             async () => {
               const [data] = await fetchData<Application>(
-                INDEXER.V2.FUNDING_APPLICATIONS.GET(params.referenceNumber)
+                INDEXER.V2.FUNDING_APPLICATIONS.GET(params.referenceNumber),
+                "GET",
+                {},
+                {},
+                {},
+                true,
+                false,
+                undefined,
+                signal
               );
               if (!data) return false;
               const entry = data.milestoneStatuses?.find(
@@ -154,13 +199,23 @@ export function useSubmitMilestoneCompletion() {
             },
             undefined,
             30,
-            2000
+            2000,
+            signal
           );
           indexerCaughtUp = true;
-        } catch {
+        } catch (error) {
+          if (isAbortError(error)) {
+            aborted = true;
+          }
           // Polling timed out — the on-chain attestation is still valid,
           // the indexer is just slow. Surface a softer message; the
           // badge will flip on the next page load.
+        }
+
+        // Component unmounted mid-poll. Skip every side-effect that would
+        // hit an unmounted route or surface a toast the user can't see.
+        if (aborted || signal.aborted) {
+          return;
         }
 
         toast.success(
@@ -183,11 +238,13 @@ export function useSubmitMilestoneCompletion() {
               invoiceFileKey: params.invoiceFile.fileKey,
               invoiceFileUrl: params.invoiceFile.fileUrl,
             });
+            if (signal.aborted) return;
             toast.success("Invoice submitted successfully");
             await queryClient.invalidateQueries({
               queryKey: QUERY_KEYS.APPLICATIONS.INVOICE_CONFIG(params.referenceNumber),
             });
           } catch {
+            if (signal.aborted) return;
             // Non-fatal — the on-chain completion already shipped.
             toast.error("Failed to submit invoice");
           }
@@ -201,6 +258,10 @@ export function useSubmitMilestoneCompletion() {
       }
     },
     onError: (error: Error) => {
+      if (isAbortError(error)) {
+        // Component unmounted mid-mutation — silent. No toast, no Sentry.
+        return;
+      }
       if (isUserCancellationError(error)) {
         toast.error("Completion cancelled");
         return;
