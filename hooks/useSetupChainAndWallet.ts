@@ -44,10 +44,10 @@ function isNetworkChangedError(error: unknown): boolean {
     return false;
   }
 
-  const errorWithCode = error as Error & { code?: string };
-
+  // ethers v6 emits `code: "NETWORK_ERROR"` for this case. The message check
+  // is defense in depth for wrappers that strip the code but preserve the text.
   return (
-    errorWithCode.code === "NETWORK_ERROR" ||
+    ("code" in error && (error as { code: unknown }).code === "NETWORK_ERROR") ||
     error.message.toLowerCase().includes("network changed")
   );
 }
@@ -133,7 +133,6 @@ export function useSetupChainAndWallet(): UseSetupChainAndWalletResult {
           throw error;
         }
 
-        console.warn("Wallet network changed during signer setup:", error);
         toast.error("Wallet network changed while preparing the transaction. Please try again.");
 
         return null;

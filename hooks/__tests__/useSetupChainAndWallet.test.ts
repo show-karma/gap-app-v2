@@ -28,8 +28,7 @@ vi.mock("react-hot-toast", () => ({
 
 describe("useSetupChainAndWallet", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
-    vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    vi.resetAllMocks();
 
     mockEnsureCorrectChain.mockResolvedValue({
       success: true,
@@ -44,7 +43,7 @@ describe("useSetupChainAndWallet", () => {
 
     const { result } = renderHook(() => useSetupChainAndWallet());
 
-    let setupResult: Awaited<ReturnType<typeof result.current.setupChainAndWallet>>;
+    let setupResult!: Awaited<ReturnType<typeof result.current.setupChainAndWallet>>;
     await act(async () => {
       setupResult = await result.current.setupChainAndWallet({
         targetChainId: 11155420,
@@ -59,6 +58,7 @@ describe("useSetupChainAndWallet", () => {
       chainId: 11155420,
       isGasless: false,
     });
+    expect(mockGetAttestationSigner).toHaveBeenCalledTimes(1);
   });
 
   it("retries once and succeeds when only the first signer attempt hits a network-changed error", async () => {
@@ -74,7 +74,7 @@ describe("useSetupChainAndWallet", () => {
 
     const { result } = renderHook(() => useSetupChainAndWallet());
 
-    let setupResult: Awaited<ReturnType<typeof result.current.setupChainAndWallet>>;
+    let setupResult!: Awaited<ReturnType<typeof result.current.setupChainAndWallet>>;
     await act(async () => {
       setupResult = await result.current.setupChainAndWallet({
         targetChainId: 11155420,
@@ -103,7 +103,7 @@ describe("useSetupChainAndWallet", () => {
 
     const { result } = renderHook(() => useSetupChainAndWallet());
 
-    let setupResult: Awaited<ReturnType<typeof result.current.setupChainAndWallet>>;
+    let setupResult!: Awaited<ReturnType<typeof result.current.setupChainAndWallet>>;
     await act(async () => {
       setupResult = await result.current.setupChainAndWallet({
         targetChainId: 11155420,
