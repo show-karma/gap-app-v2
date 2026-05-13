@@ -1,8 +1,7 @@
 import type { ConnectedWallet } from "@privy-io/react-auth";
-import { createConnector } from "@wagmi/core";
+import { createConnector, SwitchChainError } from "@wagmi/core";
 import type { EIP1193Provider } from "viem";
 import { appNetwork } from "@/utilities/network";
-import { switchChainViaProvider } from "@/utilities/wagmi/switchChainViaProvider";
 
 /**
  * A wagmi connector that bridges a Privy wallet to wagmi's outer config.
@@ -27,11 +26,7 @@ export function privyBridgeConnector(wallet: ConnectedWallet, initialChainId: nu
     async connect(params?) {
       const targetChainId = params?.chainId;
       if (targetChainId && targetChainId !== currentChainId) {
-        await switchChainViaProvider(
-          wallet,
-          targetChainId,
-          appNetwork.find((c) => c.id === targetChainId)
-        );
+        await wallet.switchChain(targetChainId);
         currentChainId = targetChainId;
       }
       currentProvider = (await wallet.getEthereumProvider()) as EIP1193Provider;
@@ -66,10 +61,32 @@ export function privyBridgeConnector(wallet: ConnectedWallet, initialChainId: nu
 
     async switchChain({ chainId: targetChainId }) {
       const chain = appNetwork.find((c) => c.id === targetChainId);
-      await switchChainViaProvider(wallet, targetChainId, chain);
+      if (!chain) {
+        throw new SwitchChainError(new Error(`Unsupported chainId: ${targetChainId}`));
+      }
+      try {
+        await wallet.switchChain(targetChainId);
+      } catch (err) {
+        // Privy's wallet.switchChain reads `this.wallets` to look up the
+        // current chainId before delegating to the EIP-1193 provider. That
+        // lookup can fail intermittently for some external wallets (observed
+        // with Rabby) and throws this exact message. The wallet's underlying
+        // proxyProvider — cached here as currentProvider on first use — does
+        // not consult `this.wallets`, so we can switch by dispatching the
+        // RPC ourselves. Only fall back on this specific error; rethrow
+        // anything else so genuine failures still surface.
+        if (!isPrivyChainIdLookupError(err)) throw err;
+        const provider =
+          currentProvider ?? ((await wallet.getEthereumProvider()) as EIP1193Provider);
+        currentProvider = provider;
+        await provider.request({
+          method: "wallet_switchEthereumChain",
+          params: [{ chainId: `0x${targetChainId.toString(16)}` }],
+        });
+      }
       currentChainId = targetChainId;
       config.emitter.emit("change", { chainId: targetChainId });
-      return chain ?? appNetwork[0];
+      return chain;
     },
 
     onAccountsChanged(accounts) {
@@ -88,4 +105,8 @@ export function privyBridgeConnector(wallet: ConnectedWallet, initialChainId: nu
       config.emitter.emit("disconnect");
     },
   }));
+}
+
+function isPrivyChainIdLookupError(err: unknown): boolean {
+  return err instanceof Error && err.message === "Unable to determine current chainId.";
 }

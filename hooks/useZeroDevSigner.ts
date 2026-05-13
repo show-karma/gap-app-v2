@@ -31,7 +31,6 @@ import {
   isChainSupportedForGasless,
 } from "@/utilities/gasless";
 import { appNetwork } from "@/utilities/network";
-import { switchChainViaProvider } from "@/utilities/wagmi/switchChainViaProvider";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 
 /**
@@ -209,12 +208,12 @@ export function useZeroDevSigner(): UseZeroDevSignerResult {
       // Fallback: wagmi's getWalletClient for environments where Privy provider isn't available.
       if (externalWallet) {
         try {
+          await externalWallet.switchChain(targetChainId);
+          const provider = await externalWallet.getEthereumProvider();
           const chain = resolveChain(targetChainId);
           if (!chain) {
             throw new Error(`Unsupported chain: ${targetChainId}`);
           }
-          await switchChainViaProvider(externalWallet, targetChainId, chain);
-          const provider = await externalWallet.getEthereumProvider();
           const viemClient = createWalletClient({
             account: externalWallet.address as `0x${string}`,
             chain,
