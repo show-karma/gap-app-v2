@@ -35,10 +35,14 @@ export const getProjectImpacts = async (projectIdOrSlug: string): Promise<Projec
     INDEXER.V2.PROJECTS.IMPACTS(projectIdOrSlug)
   );
 
-  if (error || !data) {
+  if (error) {
     errorManager(`Project Impacts API Error: ${error}`, error, {
       context: "project-impacts.service",
     });
+    return [];
+  }
+
+  if (!Array.isArray(data)) {
     return [];
   }
 
