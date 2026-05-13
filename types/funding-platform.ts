@@ -36,6 +36,7 @@ export interface IMilestoneData {
   dueDate: string;
   fundingRequested?: string; // Optional - funding amount requested for this milestone
   completionCriteria?: string; // Optional - criteria to consider milestone complete
+  milestoneUID?: string; // Populated by the indexer once the slot is anchored on-chain
 }
 
 // Form Field Types (unchanged)

@@ -5,12 +5,15 @@ import { useMemo } from "react";
 import { KarmaProjectLink } from "@/components/FundingPlatform/shared/KarmaProjectLink";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { MilestoneStatusBadge } from "@/src/features/applications/components/MilestoneStatusBadge";
+import {
+  buildMilestoneStatusIndex,
+  lookupMilestoneStatus,
+} from "@/src/features/applications/lib/milestone-status";
 import type {
   IFundingApplication,
   IMilestoneData,
   ProgramWithFormSchema,
 } from "@/types/funding-platform";
-import type { MilestoneStatusEntry } from "@/types/whitelabel-entities";
 import { createFieldLabelsMap, createFieldTypeMap } from "@/utilities/form-schema-helpers";
 import { formatDate } from "@/utilities/formatDate";
 import { formatMilestoneAmount } from "@/utilities/formatMilestoneAmount";
@@ -37,20 +40,10 @@ export const ApplicationDataView: FC<ApplicationDataViewProps> = ({
   const fieldLabels = useMemo(() => createFieldLabelsMap(formSchema), [formSchema]);
   const fieldTypeMap = useMemo(() => createFieldTypeMap(formSchema), [formSchema]);
 
-  // Lookup index over the server-merged milestoneStatuses[]. Keyed by
-  // milestoneUID first (most reliable) with a fallback to
-  // (fieldLabel, title) for application-source slots not yet anchored
-  // on-chain. Same-title milestones across different fields are common
-  // (e.g. two fields each titled "Milestone 1"), so the fieldLabel
-  // half of the fallback key matters.
-  const statusByKey = useMemo(() => {
-    const m = new Map<string, MilestoneStatusEntry>();
-    for (const e of application.milestoneStatuses ?? []) {
-      if (e.milestoneUID) m.set(`uid:${e.milestoneUID}`, e);
-      m.set(`label:${e.fieldLabel ?? ""}:${e.title}`, e);
-    }
-    return m;
-  }, [application.milestoneStatuses]);
+  const statusByKey = useMemo(
+    () => buildMilestoneStatusIndex(application.milestoneStatuses),
+    [application.milestoneStatuses]
+  );
 
   const renderFieldValue = (value: any, fieldKey?: string): JSX.Element => {
     if (Array.isArray(value)) {
@@ -62,10 +55,12 @@ export const ApplicationDataView: FC<ApplicationDataViewProps> = ({
         return (
           <div className="space-y-3">
             {value.map((milestone: IMilestoneData, index) => {
-              const milestoneUID = (milestone as { milestoneUID?: string }).milestoneUID;
-              const status =
-                (milestoneUID && statusByKey.get(`uid:${milestoneUID}`)) ||
-                statusByKey.get(`label:${fieldKey ?? ""}:${milestone.title}`);
+              const status = lookupMilestoneStatus(
+                statusByKey,
+                milestone.milestoneUID,
+                fieldKey,
+                milestone.title
+              );
               return (
                 <div
                   key={index}

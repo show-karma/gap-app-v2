@@ -1,6 +1,47 @@
 import type { MilestoneStatusEntry } from "@/types/whitelabel-entities";
 
 /**
+ * Build a lookup index over `milestoneStatuses[]` keyed two ways:
+ *
+ *   1. `uid:<milestoneUID>` — primary, used once the slot has been
+ *      anchored on-chain.
+ *   2. `label:<fieldLabel>:<title>` — fallback for slots that haven't
+ *      been anchored yet (no milestoneUID). Includes fieldLabel because
+ *      same-title milestones across different fields are common (e.g.
+ *      two fields each containing a "Milestone 1").
+ *
+ * Pair with `lookupMilestoneStatus` at consumer sites — both halves
+ * live here so a future keying change touches one file.
+ */
+export function buildMilestoneStatusIndex(
+  entries?: MilestoneStatusEntry[]
+): Map<string, MilestoneStatusEntry> {
+  const index = new Map<string, MilestoneStatusEntry>();
+  for (const e of entries ?? []) {
+    if (e.milestoneUID) index.set(`uid:${e.milestoneUID}`, e);
+    index.set(`label:${e.fieldLabel ?? ""}:${e.title}`, e);
+  }
+  return index;
+}
+
+/**
+ * Resolve a single milestone's status entry from the index built by
+ * `buildMilestoneStatusIndex`. Prefers UID matching when both sides
+ * have one; falls back to the (fieldLabel, title) composite key.
+ */
+export function lookupMilestoneStatus(
+  index: Map<string, MilestoneStatusEntry>,
+  milestoneUID: string | undefined,
+  fieldLabel: string | undefined,
+  title: string
+): MilestoneStatusEntry | undefined {
+  return (
+    (milestoneUID ? index.get(`uid:${milestoneUID}`) : undefined) ??
+    index.get(`label:${fieldLabel ?? ""}:${title}`)
+  );
+}
+
+/**
  * Display-time status helpers for application milestones.
  *
  * The application detail page reads on-chain status from

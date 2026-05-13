@@ -14,9 +14,12 @@ import { KarmaProjectLink } from "@/components/FundingPlatform/shared/KarmaProje
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { useApplicationVersions } from "@/hooks/useFundingPlatform";
 import { MilestoneStatusBadge } from "@/src/features/applications/components/MilestoneStatusBadge";
+import {
+  buildMilestoneStatusIndex,
+  lookupMilestoneStatus,
+} from "@/src/features/applications/lib/milestone-status";
 import { useApplicationVersionsStore } from "@/store/applicationVersions";
 import type { IFundingApplication, ProgramWithFormSchema } from "@/types/funding-platform";
-import type { MilestoneStatusEntry } from "@/types/whitelabel-entities";
 import { createFieldLabelsMap, createFieldTypeMap } from "@/utilities/form-schema-helpers";
 import { formatDate } from "@/utilities/formatDate";
 import { cn } from "@/utilities/tailwind";
@@ -112,17 +115,10 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
   const viewMode = controlledViewMode ?? internalViewMode;
   const setViewMode = onViewModeChange ?? setInternalViewMode;
 
-  // Lookup index over the server-merged milestoneStatuses[]. Keyed by
-  // milestoneUID first (most reliable) with a (fieldLabel, title)
-  // fallback for application-source slots not yet anchored on-chain.
-  const milestoneStatusByKey = useMemo(() => {
-    const m = new Map<string, MilestoneStatusEntry>();
-    for (const e of application.milestoneStatuses ?? []) {
-      if (e.milestoneUID) m.set(`uid:${e.milestoneUID}`, e);
-      m.set(`label:${e.fieldLabel ?? ""}:${e.title}`, e);
-    }
-    return m;
-  }, [application.milestoneStatuses]);
+  const milestoneStatusByKey = useMemo(
+    () => buildMilestoneStatusIndex(application.milestoneStatuses),
+    [application.milestoneStatuses]
+  );
 
   // Get UI state from Zustand store
   const { selectedVersion } = useApplicationVersionsStore();
@@ -240,10 +236,12 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
                 (key) => !coreFields.includes(key) && milestone[key]
               );
 
-              const milestoneUID = milestone.milestoneUID;
-              const milestoneStatus =
-                (milestoneUID && milestoneStatusByKey.get(`uid:${milestoneUID}`)) ||
-                milestoneStatusByKey.get(`label:${fieldKey ?? ""}:${milestone.title}`);
+              const milestoneStatus = lookupMilestoneStatus(
+                milestoneStatusByKey,
+                milestone.milestoneUID,
+                fieldKey,
+                milestone.title
+              );
 
               return (
                 <div
