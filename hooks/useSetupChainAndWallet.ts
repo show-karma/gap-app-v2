@@ -47,8 +47,30 @@ function isNetworkChangedError(error: unknown): boolean {
   const errorWithCode = error as Error & { code?: string };
 
   return (
-    errorWithCode.code === "NETWORK_ERROR" || error.message.toLowerCase().includes("network changed")
+    errorWithCode.code === "NETWORK_ERROR" ||
+    error.message.toLowerCase().includes("network changed")
   );
+}
+
+// Wallet providers can briefly report the old chain right after a switch,
+// which trips ethers' NETWORK_ERROR guard. A short pause + single retry
+// handles the transient race without bothering the user.
+const NETWORK_CHANGED_RETRY_DELAY_MS = 250;
+
+async function getSignerWithNetworkChangeRetry(
+  getSigner: (chainId: number) => Promise<Signer>,
+  chainId: number
+): Promise<Signer> {
+  try {
+    return await getSigner(chainId);
+  } catch (error) {
+    if (!isNetworkChangedError(error)) {
+      throw error;
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, NETWORK_CHANGED_RETRY_DELAY_MS));
+    return await getSigner(chainId);
+  }
 }
 
 /**
@@ -95,7 +117,7 @@ export function useSetupChainAndWallet(): UseSetupChainAndWalletResult {
       }
 
       try {
-        const walletSigner = await getAttestationSigner(chainId);
+        const walletSigner = await getSignerWithNetworkChangeRetry(getAttestationSigner, chainId);
 
         return {
           gapClient,
@@ -104,13 +126,15 @@ export function useSetupChainAndWallet(): UseSetupChainAndWalletResult {
           isGasless: isGaslessAvailable,
         };
       } catch (error) {
-        console.warn("Failed to prepare wallet signer:", error);
+        // Only swallow NETWORK_ERROR — other failures (unsupported chain, no
+        // wallet, signer construction) are real bugs and must surface to
+        // Sentry instead of being hidden behind a generic toast.
+        if (!isNetworkChangedError(error)) {
+          throw error;
+        }
 
-        toast.error(
-          isNetworkChangedError(error)
-            ? "Wallet network changed while preparing the transaction. Please try again."
-            : "Failed to prepare wallet for this transaction. Please try again."
-        );
+        console.warn("Wallet network changed during signer setup:", error);
+        toast.error("Wallet network changed while preparing the transaction. Please try again.");
 
         return null;
       }
