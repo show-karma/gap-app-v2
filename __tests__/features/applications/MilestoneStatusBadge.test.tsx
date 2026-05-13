@@ -3,7 +3,7 @@
  *
  * The badge resolves a single status string from the four-state
  * hierarchy:
- *   Verified > PendingVerification > Late > Pending
+ *   Verified > PendingVerification > PastDue > Pending
  *
  * Inputs come from the server-merged `milestoneStatuses[]` entry; the
  * tab consumes the same entry shape but a different render. These
@@ -62,7 +62,7 @@ describe("MilestoneStatusBadge", () => {
     expect(screen.getByText("Pending Verification")).toBeInTheDocument();
   });
 
-  it("should_render_Late_when_dueDate_is_past_and_not_completed", () => {
+  it("should_render_Past_Due_when_dueDate_is_past_and_not_completed", () => {
     render(
       <MilestoneStatusBadge
         entry={makeEntry({
@@ -71,12 +71,12 @@ describe("MilestoneStatusBadge", () => {
         })}
       />
     );
-    expect(screen.getByText("Late")).toBeInTheDocument();
+    expect(screen.getByText("Past Due")).toBeInTheDocument();
   });
 
-  it("should_not_render_Late_when_completed_even_if_dueDate_is_past", () => {
-    // A completed milestone never reclassifies as Late — completion
-    // wins over due-date arithmetic.
+  it("should_not_render_Past_Due_when_completed_even_if_dueDate_is_past", () => {
+    // A completed milestone never reclassifies as Past Due —
+    // completion wins over due-date arithmetic.
     render(
       <MilestoneStatusBadge
         entry={makeEntry({
@@ -87,7 +87,7 @@ describe("MilestoneStatusBadge", () => {
       />
     );
     expect(screen.getByText("Pending Verification")).toBeInTheDocument();
-    expect(screen.queryByText("Late")).not.toBeInTheDocument();
+    expect(screen.queryByText("Past Due")).not.toBeInTheDocument();
   });
 
   it("should_render_Pending_when_entry_is_undefined", () => {
