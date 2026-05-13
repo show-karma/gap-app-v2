@@ -125,4 +125,22 @@ describe("privyBridgeConnector", () => {
     await expect(connector.switchChain({ chainId: 10 })).rejects.toThrow("User rejected the request.");
     expect(mockProvider.request).not.toHaveBeenCalled();
   });
+
+  it("connect throws SwitchChainError when initial-chain target is unsupported", async () => {
+    const connector = privyBridgeConnector(mockWallet, 137);
+    await expect(connector.connect({ chainId: 999 })).rejects.toThrow(SwitchChainError);
+    expect(mockWallet.switchChain).not.toHaveBeenCalled();
+  });
+
+  it("connect falls back to direct wallet_switchEthereumChain on Privy lookup error", async () => {
+    mockWallet.switchChain.mockRejectedValueOnce(new Error("Unable to determine current chainId."));
+    const connector = privyBridgeConnector(mockWallet, 137);
+    const result = await connector.connect({ chainId: 10 });
+    expect(mockWallet.switchChain).toHaveBeenCalledWith(10);
+    expect(mockProvider.request).toHaveBeenCalledWith({
+      method: "wallet_switchEthereumChain",
+      params: [{ chainId: "0xa" }],
+    });
+    expect(result.chainId).toBe(10);
+  });
 });

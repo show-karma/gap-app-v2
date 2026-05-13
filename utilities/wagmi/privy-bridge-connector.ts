@@ -1,6 +1,7 @@
 import type { ConnectedWallet } from "@privy-io/react-auth";
 import { createConnector, SwitchChainError } from "@wagmi/core";
 import type { EIP1193Provider } from "viem";
+import type { Chain } from "viem/chains";
 import { appNetwork } from "@/utilities/network";
 
 /**
@@ -18,6 +19,37 @@ export function privyBridgeConnector(wallet: ConnectedWallet, initialChainId: nu
   let currentProvider: EIP1193Provider | null = null;
   let currentChainId = initialChainId;
 
+  // Shared chain-switch flow used by both connect({ chainId }) and switchChain.
+  // Validates the target is in appNetwork, then tries Privy's wallet.switchChain.
+  // Only on Privy's specific "Unable to determine current chainId." lookup
+  // failure does it fall back to a direct wallet_switchEthereumChain RPC on
+  // the cached proxyProvider (which does not consult Privy's internal wallet
+  // store). Callers update currentChainId and emit "change" as appropriate.
+  const performSwitch = async (targetChainId: number): Promise<Chain> => {
+    const chain = appNetwork.find((c) => c.id === targetChainId);
+    if (!chain) {
+      throw new SwitchChainError(new Error(`Unsupported chainId: ${targetChainId}`));
+    }
+    try {
+      await wallet.switchChain(targetChainId);
+    } catch (err) {
+      if (!isPrivyChainIdLookupError(err)) throw err;
+      // Surface a signal so a future change in Privy's error wording — which
+      // would silently disable this fallback — is at least visible in logs.
+      console.warn(
+        "[privy-bridge] Privy wallet.switchChain lookup failed; dispatching wallet_switchEthereumChain via provider"
+      );
+      const provider =
+        currentProvider ?? ((await wallet.getEthereumProvider()) as EIP1193Provider);
+      currentProvider = provider;
+      await provider.request({
+        method: "wallet_switchEthereumChain",
+        params: [{ chainId: `0x${targetChainId.toString(16)}` }],
+      });
+    }
+    return chain;
+  };
+
   return createConnector((config) => ({
     id: "privy-bridge",
     name: "Privy",
@@ -26,7 +58,7 @@ export function privyBridgeConnector(wallet: ConnectedWallet, initialChainId: nu
     async connect(params?) {
       const targetChainId = params?.chainId;
       if (targetChainId && targetChainId !== currentChainId) {
-        await wallet.switchChain(targetChainId);
+        await performSwitch(targetChainId);
         currentChainId = targetChainId;
       }
       currentProvider = (await wallet.getEthereumProvider()) as EIP1193Provider;
@@ -60,35 +92,7 @@ export function privyBridgeConnector(wallet: ConnectedWallet, initialChainId: nu
     },
 
     async switchChain({ chainId: targetChainId }) {
-      const chain = appNetwork.find((c) => c.id === targetChainId);
-      if (!chain) {
-        throw new SwitchChainError(new Error(`Unsupported chainId: ${targetChainId}`));
-      }
-      try {
-        await wallet.switchChain(targetChainId);
-      } catch (err) {
-        // Privy's wallet.switchChain reads `this.wallets` to look up the
-        // current chainId before delegating to the EIP-1193 provider. That
-        // lookup can fail intermittently for some external wallets (observed
-        // with Rabby) and throws this exact message. The wallet's underlying
-        // proxyProvider — cached here as currentProvider on first use — does
-        // not consult `this.wallets`, so we can switch by dispatching the
-        // RPC ourselves. Only fall back on this specific error; rethrow
-        // anything else so genuine failures still surface.
-        if (!isPrivyChainIdLookupError(err)) throw err;
-        // Surface a signal so a future change in Privy's error wording — which
-        // would silently disable this fallback — is at least visible in logs.
-        console.warn(
-          "[privy-bridge] Privy wallet.switchChain lookup failed; dispatching wallet_switchEthereumChain via provider"
-        );
-        const provider =
-          currentProvider ?? ((await wallet.getEthereumProvider()) as EIP1193Provider);
-        currentProvider = provider;
-        await provider.request({
-          method: "wallet_switchEthereumChain",
-          params: [{ chainId: `0x${targetChainId.toString(16)}` }],
-        });
-      }
+      const chain = await performSwitch(targetChainId);
       currentChainId = targetChainId;
       config.emitter.emit("change", { chainId: targetChainId });
       return chain;
