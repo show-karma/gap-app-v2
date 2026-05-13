@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { type ReactElement, useCallback, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
+import { useContributorProfile } from "@/hooks/useContributorProfile";
 import { envVars } from "@/utilities/enviromentVars";
 
 /**
@@ -239,8 +240,12 @@ export function OAuthConsentClient() {
   const searchParams = useSearchParams();
   const interactionUid = searchParams.get("interaction");
   const { ready, authenticated, login, address, user, getAccessToken } = useAuth();
+  const { profile } = useContributorProfile(address);
   const signedInLabel =
-    user?.email?.address || user?.google?.email || (address ? shortenAddress(address) : null);
+    profile?.data?.name ||
+    user?.email?.address ||
+    user?.google?.email ||
+    (address ? shortenAddress(address) : null);
 
   const interactionQuery = useQuery({
     queryKey: ["oauth", "interaction", interactionUid],
