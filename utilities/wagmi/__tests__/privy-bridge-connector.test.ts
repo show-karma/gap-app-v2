@@ -3,13 +3,18 @@
  * Privy wallet state to the outer wagmi config.
  */
 
-// Mock @wagmi/core's createConnector to just call the factory with a mock config
-vi.mock("@wagmi/core", () => ({
-  createConnector: (factory: any) => {
-    const mockEmitter = { emit: vi.fn() };
-    return factory({ emitter: mockEmitter });
-  },
-}));
+// Mock @wagmi/core's createConnector to just call the factory with a mock config.
+// SwitchChainError is left as a real class — tests assert instanceof on it.
+vi.mock("@wagmi/core", async () => {
+  const actual = await vi.importActual<typeof import("@wagmi/core")>("@wagmi/core");
+  return {
+    createConnector: (factory: any) => {
+      const mockEmitter = { emit: vi.fn() };
+      return factory({ emitter: mockEmitter });
+    },
+    SwitchChainError: actual.SwitchChainError,
+  };
+});
 
 vi.mock("@/utilities/network", () => ({
   appNetwork: [
@@ -28,6 +33,7 @@ vi.mock("@/utilities/network", () => ({
   ],
 }));
 
+import { SwitchChainError } from "@wagmi/core";
 import { privyBridgeConnector } from "../privy-bridge-connector";
 
 const mockProvider = { request: vi.fn() };
@@ -92,5 +98,31 @@ describe("privyBridgeConnector", () => {
     const connector = privyBridgeConnector(mockWallet, 137);
     await connector.connect({ chainId: 137 });
     expect(mockWallet.switchChain).not.toHaveBeenCalled();
+  });
+
+  it("switchChain throws SwitchChainError for unsupported chainId", async () => {
+    const connector = privyBridgeConnector(mockWallet, 137);
+    await expect(connector.switchChain({ chainId: 999 })).rejects.toThrow(SwitchChainError);
+    expect(mockWallet.switchChain).not.toHaveBeenCalled();
+    expect(mockProvider.request).not.toHaveBeenCalled();
+  });
+
+  it("switchChain falls back to direct wallet_switchEthereumChain on Privy lookup error", async () => {
+    mockWallet.switchChain.mockRejectedValueOnce(new Error("Unable to determine current chainId."));
+    const connector = privyBridgeConnector(mockWallet, 137);
+    const chain = await connector.switchChain({ chainId: 10 });
+    expect(mockWallet.switchChain).toHaveBeenCalledWith(10);
+    expect(mockProvider.request).toHaveBeenCalledWith({
+      method: "wallet_switchEthereumChain",
+      params: [{ chainId: "0xa" }],
+    });
+    expect(chain.id).toBe(10);
+  });
+
+  it("switchChain rethrows non-lookup errors without dispatching the RPC", async () => {
+    mockWallet.switchChain.mockRejectedValueOnce(new Error("User rejected the request."));
+    const connector = privyBridgeConnector(mockWallet, 137);
+    await expect(connector.switchChain({ chainId: 10 })).rejects.toThrow("User rejected the request.");
+    expect(mockProvider.request).not.toHaveBeenCalled();
   });
 });
