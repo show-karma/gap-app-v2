@@ -76,6 +76,11 @@ export function privyBridgeConnector(wallet: ConnectedWallet, initialChainId: nu
         // RPC ourselves. Only fall back on this specific error; rethrow
         // anything else so genuine failures still surface.
         if (!isPrivyChainIdLookupError(err)) throw err;
+        // Surface a signal so a future change in Privy's error wording — which
+        // would silently disable this fallback — is at least visible in logs.
+        console.warn(
+          "[privy-bridge] Privy wallet.switchChain lookup failed; dispatching wallet_switchEthereumChain via provider"
+        );
         const provider =
           currentProvider ?? ((await wallet.getEthereumProvider()) as EIP1193Provider);
         currentProvider = provider;
@@ -107,6 +112,6 @@ export function privyBridgeConnector(wallet: ConnectedWallet, initialChainId: nu
   }));
 }
 
-function isPrivyChainIdLookupError(err: unknown): boolean {
+export function isPrivyChainIdLookupError(err: unknown): boolean {
   return err instanceof Error && err.message === "Unable to determine current chainId.";
 }
