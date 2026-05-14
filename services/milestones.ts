@@ -126,6 +126,11 @@ export async function fetchApplicationMilestoneEvaluation(
   return data ?? { evaluations: [] };
 }
 
+function stripChainSuffix(programId: string | undefined): string | undefined {
+  if (!programId) return programId;
+  return programId.includes("_") ? programId.split("_")[0] : programId;
+}
+
 async function fetchGrantByProgramId(
   projectUid: string,
   programId: string
@@ -138,7 +143,11 @@ async function fetchGrantByProgramId(
     return undefined;
   }
 
-  return grants.find((g) => g.details?.programId === programId);
+  // Compare in normalized form: grant.details.programId may be stored as
+  // either "1013" or "1013_42161" depending on when the grant was created,
+  // while the caller always passes the chain-stripped form.
+  const normalizedTarget = stripChainSuffix(programId);
+  return grants.find((g) => stripChainSuffix(g.details?.programId) === normalizedTarget);
 }
 
 export async function fetchProjectGrantMilestones(
