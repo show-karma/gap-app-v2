@@ -155,6 +155,11 @@ export const PAGES = {
   FOR_PROJECTS: `/for-projects`,
   SEEDS: `/seeds`,
   SEEDS_FUND: `/seeds/fund`,
+  TEAM: {
+    ONBOARDING: `/onboarding`,
+    DIRECTORY: `/team`,
+    MEMBER: (role: string) => `/team/${role}`,
+  },
 };
 
 /**

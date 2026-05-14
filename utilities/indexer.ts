@@ -790,4 +790,10 @@ export const INDEXER = {
       pageSize: number
     ) => `/v2/sitemap?kind=${kind}&page=${page}&pageSize=${pageSize}`,
   },
+  HERMES: {
+    PROVISION: (slug: string) => `/v2/hermes/orgs/${slug}/provision`,
+    ORG: (slug: string) => `/v2/hermes/orgs/${slug}`,
+    PROFILES: (slug: string) => `/v2/hermes/orgs/${slug}/profiles`,
+    SOUL: (slug: string, profile: string) => `/v2/hermes/orgs/${slug}/profiles/${profile}/soul`,
+  },
 };
