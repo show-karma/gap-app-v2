@@ -71,7 +71,7 @@ describe("MilestoneStatusBadge", () => {
         })}
       />
     );
-    expect(screen.getByText("Late")).toBeInTheDocument();
+    expect(screen.getByText("Past Due")).toBeInTheDocument();
   });
 
   it("should_not_render_Late_when_completed_even_if_dueDate_is_past", () => {
@@ -87,7 +87,7 @@ describe("MilestoneStatusBadge", () => {
       />
     );
     expect(screen.getByText("Pending Verification")).toBeInTheDocument();
-    expect(screen.queryByText("Late")).not.toBeInTheDocument();
+    expect(screen.queryByText("Past Due")).not.toBeInTheDocument();
   });
 
   it("should_render_Pending_when_entry_is_undefined", () => {
