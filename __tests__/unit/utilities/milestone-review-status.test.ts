@@ -124,6 +124,7 @@ describe("MILESTONE_STATUS_CONFIG", () => {
   it("returns correct label for Late milestone", () => {
     const config = MILESTONE_STATUS_CONFIG[MilestoneReviewStatus.Late];
     expect(config.label).toBe("Past Due");
+    expect(config.filterLabel).toBe("Past Due");
     expect(config.badgeColor).toContain("bg-orange");
   });
 });
