@@ -492,7 +492,7 @@ function MilestonesReviewPageContent({
 
   // Only community admins (and staff via admin access) can edit or delete milestones.
   // Milestone reviewers verify completions but cannot mutate milestone definitions.
-  const canEditOrDeleteMilestones = useMemo(() => hasAdminAccess || false, [hasAdminAccess]);
+  const canEditOrDeleteMilestones = hasAdminAccess;
 
   // Delete milestone hook with proper React Query mutation/query relationship
   const { deleteMilestoneAsync, isDeleting } = useDeleteMilestone({
