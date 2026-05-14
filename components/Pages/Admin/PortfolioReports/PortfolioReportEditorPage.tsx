@@ -4,7 +4,6 @@ import { ArrowLeft, Download, Eye, EyeOff, Pencil, RefreshCw } from "lucide-reac
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
-import { DeleteDialog } from "@/components/DeleteDialog";
 import { HtmlReportFrame } from "@/components/Pages/Community/PortfolioReports/HtmlReportFrame";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { Button } from "@/components/ui/button";
@@ -62,20 +61,18 @@ export function PortfolioReportEditorPage({ community, reportId }: Props) {
   const [exportingPdf, setExportingPdf] = useState(false);
   const exportInFlight = useRef(false);
 
-  useEffect(() => {
-    if (showEditDialog && report?.content) {
-      setEditDraft(report.content);
-    }
-  }, [showEditDialog, report?.content]);
-
   // Close the Edit dialog if a regenerate kicks off while it's open —
   // the draft is now stale (it was seeded from pre-regen content) and
-  // saving would clobber the freshly generated report. The user gets a
-  // toast so they know why their dialog disappeared.
+  // saving would clobber the freshly generated report. We also clear
+  // editDraft so a subsequent Regenerate click doesn't surface a
+  // misleading "unsaved edits" warning about content that no longer
+  // exists. The user gets a toast so they know why their dialog
+  // disappeared.
   const isReportRegenerating = report ? isReportGenerating(report) : false;
   useEffect(() => {
     if (showEditDialog && isReportRegenerating) {
       setShowEditDialog(false);
+      setEditDraft("");
       toast("Closed Edit — report is regenerating. Reopen when it finishes.", {
         icon: "ℹ️",
       });
@@ -137,6 +134,9 @@ export function PortfolioReportEditorPage({ community, reportId }: Props) {
     try {
       await updateContentMutation.mutateAsync({ reportId, content: editDraft });
       setShowEditDialog(false);
+      // Clear so the brief window before React Query's cache update
+      // propagates doesn't make `hasUnsavedEdits` falsely true.
+      setEditDraft("");
       toast.success("Report content saved");
     } catch (err) {
       toast.error(`Failed to save: ${err instanceof Error ? err.message : "Unknown error"}`);
@@ -170,16 +170,47 @@ export function PortfolioReportEditorPage({ community, reportId }: Props) {
 
   const runDateLabel = formatRunDate(report.runDate).label;
 
+  // True when the user has typed in the Edit textarea and their local draft
+  // diverges from the server's saved content. We only warn about *user* edits,
+  // not the initial empty state before the dialog has ever been opened.
+  const hasUnsavedEdits = editDraft !== "" && editDraft !== (report.content ?? "");
+
   return (
     <div className="flex h-full flex-col">
-      <DeleteDialog
-        title="This re-runs the agentic generator with the current config and overwrites the existing content. Spends LLM tokens. Continue?"
-        deleteFunction={handleRegenerate}
-        isLoading={regenerateMutation.isPending}
-        externalIsOpen={showRegenerateDialog}
-        externalSetIsOpen={setShowRegenerateDialog}
-        buttonElement={null}
-      />
+      <Dialog open={showRegenerateDialog} onOpenChange={setShowRegenerateDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {hasUnsavedEdits ? "Discard unsaved edits and regenerate?" : "Regenerate report?"}
+            </DialogTitle>
+            <DialogDescription>
+              {hasUnsavedEdits
+                ? "You have unsaved changes in the editor. Regenerating will overwrite the report content and your unsaved edits will be lost. To keep a copy, cancel and export PDF first."
+                : "This re-runs the agentic generator with the current config and overwrites the existing content. Spends LLM tokens."}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowRegenerateDialog(false)}
+              disabled={regenerateMutation.isPending}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleRegenerate}
+              disabled={regenerateMutation.isPending}
+            >
+              {regenerateMutation.isPending
+                ? "Starting…"
+                : hasUnsavedEdits
+                  ? "Discard & regenerate"
+                  : "Continue"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
         <DialogContent className="max-w-4xl">
@@ -243,7 +274,10 @@ export function PortfolioReportEditorPage({ community, reportId }: Props) {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setShowEditDialog(true)}
+            onClick={() => {
+              setEditDraft(report.content ?? "");
+              setShowEditDialog(true);
+            }}
             disabled={generating || !report.content}
           >
             <Pencil className="mr-1 h-3 w-3" />
