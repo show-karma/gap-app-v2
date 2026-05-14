@@ -44,7 +44,7 @@ export function useApplicationLookup(): UseApplicationLookupReturn {
         {},
         {},
         {},
-        false
+        true
       );
 
       if (fetchError || !data) {
