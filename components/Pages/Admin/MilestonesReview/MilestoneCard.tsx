@@ -403,7 +403,7 @@ export function MilestoneCard({
               <PencilSquareIcon className="w-5 h-5 text-gray-500 dark:text-gray-400" />
             </Button>
           )}
-          {canDeleteMilestones && milestone.fundingApplicationCompletion && (
+          {canDeleteMilestones && !hasCompletion && (
             // biome-ignore lint/a11y/noStaticElementInteractions: wrapper needs onBlur to detect focus leaving the menu group; the interactive child is the trigger button below.
             <div className="relative" ref={overflowRef} onBlur={handleOverflowBlur}>
               <button

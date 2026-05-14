@@ -443,6 +443,7 @@ export const INDEXER = {
     },
     EVALUATION: (milestoneUID: string) => `/v2/milestones/${milestoneUID}/evaluation`,
     ON_CHAIN_EDIT: (milestoneUID: string) => `/v2/milestones/${milestoneUID}/on-chain-edit`,
+    ON_CHAIN_DELETE: (milestoneUID: string) => `/v2/milestones/${milestoneUID}/on-chain-delete`,
   },
   CATEGORIES: {
     CREATE: (idOrSlug: string) => `/categories/create/${idOrSlug}`,

@@ -1,10 +1,15 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useAttestationToast } from "@/hooks/useAttestationToast";
+import { useAuth } from "@/hooks/useAuth";
+import { useMixpanel } from "@/hooks/useMixpanel";
 import type {
   GrantMilestoneWithCompletion,
   ProjectGrantMilestonesResponse,
 } from "@/services/milestones";
+import { createAuthenticatedApiClient } from "@/utilities/auth/api-client";
+import { envVars } from "@/utilities/enviromentVars";
+import { INDEXER } from "@/utilities/indexer";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
 
 interface UseDeleteMilestoneParams {
@@ -13,23 +18,11 @@ interface UseDeleteMilestoneParams {
   onSuccess?: () => void;
 }
 
-/**
- * On-chain milestone deletion (revocation of the `Milestone` attestation
- * via `MilestoneCanceled`) is not yet wired into the SDK + indexer
- * pipeline — that work is tracked under the Phase 3 follow-up (DEV-234).
- *
- * Until the attestation flow ships, this hook fails fast with a clear
- * "not available yet" error rather than silently pretending success.
- * The earlier behaviour (return success without doing anything) showed
- * the milestone disappear from the UI optimistically and then reappear
- * on the next refetch, which was indistinguishable from a backend bug.
- *
- * Callers should keep the integration in place — once the on-chain
- * delete attestation lands, the mutationFn body is the only thing that
- * needs to change.
- */
-export const DELETE_MILESTONE_NOT_AVAILABLE_MESSAGE =
-  "Milestone deletion is being migrated to on-chain attestations and isn't available yet. Reach out to the team if you need a milestone removed.";
+interface DeleteMilestoneResponse {
+  milestoneUID: string;
+  revocationSuccess: boolean;
+  revocationTxHash?: string;
+}
 
 export const useDeleteMilestone = ({
   projectId,
@@ -37,23 +30,57 @@ export const useDeleteMilestone = ({
   onSuccess,
 }: UseDeleteMilestoneParams) => {
   const queryClient = useQueryClient();
-  const { showError } = useAttestationToast();
+  const { showError, showSuccess } = useAttestationToast();
+  const { address } = useAuth();
+  const { mixpanel } = useMixpanel();
 
   const deleteMilestoneMutation = useMutation({
-    mutationFn: async (_milestone: GrantMilestoneWithCompletion) => {
-      throw new Error(DELETE_MILESTONE_NOT_AVAILABLE_MESSAGE);
+    mutationFn: async (milestone: GrantMilestoneWithCompletion) => {
+      if (!milestone.chainId) {
+        throw new Error("Cannot delete milestone: missing chainId");
+      }
+      if (!programId) {
+        throw new Error("Cannot delete milestone: missing programId");
+      }
+
+      // The on-chain attester for the revocation is always the Karma admin
+      // wallet, so the only audit trail of who *requested* the delete lives
+      // in product analytics. Tracking before the network call captures
+      // intent even if the request fails downstream.
+      mixpanel.reportEvent({
+        event: "milestone:delete:requested",
+        properties: {
+          requestedBy: address,
+          milestoneUID: milestone.uid,
+          milestoneTitle: milestone.title,
+          programId,
+          chainID: milestone.chainId,
+        },
+      });
+
+      const apiClient = createAuthenticatedApiClient(envVars.NEXT_PUBLIC_GAP_INDEXER_URL, 60000);
+
+      const response = await apiClient.delete<DeleteMilestoneResponse>(
+        INDEXER.MILESTONE.ON_CHAIN_DELETE(milestone.uid),
+        { data: { chainID: milestone.chainId } }
+      );
+
+      if (!response.data.revocationSuccess) {
+        throw new Error(
+          "On-chain milestone revocation failed. Please retry; if it persists, contact support."
+        );
+      }
+
+      return response.data;
     },
     onMutate: async (milestone) => {
-      // Snapshot the previous value so the (now always-firing) onError
-      // restores the cache cleanly — without this the consumer would
-      // see the row vanish before the toast appears.
       const queryKey = QUERY_KEYS.MILESTONES.PROJECT_GRANT_MILESTONES(projectId, programId);
       await queryClient.cancelQueries({ queryKey });
       const previousData = queryClient.getQueryData<ProjectGrantMilestonesResponse | null>(
         queryKey
       );
       queryClient.setQueryData<ProjectGrantMilestonesResponse | null>(queryKey, (oldData) => {
-        if (!oldData || !oldData.grantMilestones || !Array.isArray(oldData.grantMilestones)) {
+        if (!oldData?.grantMilestones || !Array.isArray(oldData.grantMilestones)) {
           return oldData;
         }
         return {
@@ -63,9 +90,18 @@ export const useDeleteMilestone = ({
       });
       return { previousData };
     },
-    onSuccess: () => {
-      // Unreachable while mutationFn always throws — kept so the wiring
-      // is correct the moment the on-chain delete attestation lands.
+    onSuccess: (data, milestone) => {
+      mixpanel.reportEvent({
+        event: "milestone:delete:success",
+        properties: {
+          requestedBy: address,
+          milestoneUID: milestone.uid,
+          programId,
+          chainID: milestone.chainId,
+          revocationTxHash: data.revocationTxHash,
+        },
+      });
+      showSuccess("Milestone deleted");
       onSuccess?.();
     },
     onError: (error: Error, milestone, context) => {
@@ -73,6 +109,16 @@ export const useDeleteMilestone = ({
       if (context?.previousData) {
         queryClient.setQueryData(queryKey, context.previousData);
       }
+      mixpanel.reportEvent({
+        event: "milestone:delete:failed",
+        properties: {
+          requestedBy: address,
+          milestoneUID: milestone.uid,
+          programId,
+          chainID: milestone.chainId,
+          error: error?.message,
+        },
+      });
       showError(error?.message || "Failed to delete milestone");
       errorManager(`Failed to delete milestone "${milestone.title}"`, error, {
         milestoneUID: milestone.uid,

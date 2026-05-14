@@ -490,12 +490,9 @@ function MilestonesReviewPageContent({
     [hasAdminAccess, isMilestoneReviewer]
   );
 
-  // Determine if user can delete milestones
-  // Contract owners, community admins, staff, and milestone reviewers can delete milestones
-  const canDeleteMilestones = useMemo(
-    () => hasAdminAccess || isMilestoneReviewer || false,
-    [hasAdminAccess, isMilestoneReviewer]
-  );
+  // Only community admins (and staff via admin access) can edit or delete milestones.
+  // Milestone reviewers verify completions but cannot mutate milestone definitions.
+  const canEditOrDeleteMilestones = hasAdminAccess;
 
   // Delete milestone hook with proper React Query mutation/query relationship
   const { deleteMilestoneAsync, isDeleting } = useDeleteMilestone({
@@ -973,8 +970,8 @@ function MilestonesReviewPageContent({
                       verificationComment={verificationComment}
                       isVerifying={isVerifying}
                       canVerifyMilestones={canVerifyMilestones}
-                      canDeleteMilestones={canDeleteMilestones}
-                      canEditMilestones={canVerifyMilestones}
+                      canDeleteMilestones={canEditOrDeleteMilestones}
+                      canEditMilestones={canEditOrDeleteMilestones}
                       grantUID={grant?.uid}
                       grantChainID={grant?.chainID}
                       projectUid={project.uid}
