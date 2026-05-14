@@ -46,7 +46,7 @@ function resolveSpec(entry?: MilestoneStatusEntry): BadgeSpec {
   // completed/verified.
   if (isMilestoneVerified(entry)) return { label: "Verified", tone: "success" };
   if (isMilestoneCompleted(entry)) return { label: "Pending Verification", tone: "warning" };
-  if (isMilestoneLate(entry)) return { label: "Late", tone: "danger" };
+  if (isMilestoneLate(entry)) return { label: "Past Due", tone: "danger" };
   return { label: "Pending", tone: "neutral" };
 }
 
