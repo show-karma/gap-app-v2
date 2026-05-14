@@ -33,6 +33,7 @@ import {
   useIsReviewerType,
   usePermissionContext,
 } from "@/src/core/rbac/context/permission-context";
+import { useStaff } from "@/src/core/rbac/hooks/use-staff-bridge";
 import { ReviewerType } from "@/src/core/rbac/types";
 import { useAgentChatStore } from "@/store/agentChat";
 import { formatDate } from "@/utilities/formatDate";
@@ -482,6 +483,7 @@ function MilestonesReviewPageContent({
   const isReviewer = useIsReviewer();
   const isMilestoneReviewer = useIsReviewerType(ReviewerType.MILESTONE);
   const { isLoading: isLoadingReviewer } = usePermissionContext();
+  const { isStaff } = useStaff();
 
   // Determine if user can verify milestones (must be before early returns)
   // Only milestone reviewers, admins, contract owners, and staff can verify/complete/sync
@@ -490,9 +492,10 @@ function MilestonesReviewPageContent({
     [hasAdminAccess, isMilestoneReviewer]
   );
 
-  // Only community admins (and staff via admin access) can edit or delete milestones.
+  // Staff and community admins can edit or delete milestones — matches the
+  // backend service-level auth in milestone-on-chain-{edit,delete}.write.service.
   // Milestone reviewers verify completions but cannot mutate milestone definitions.
-  const canEditOrDeleteMilestones = hasAdminAccess;
+  const canEditOrDeleteMilestones = isStaff || hasAdminAccess;
 
   // Delete milestone hook with proper React Query mutation/query relationship
   const { deleteMilestoneAsync, isDeleting } = useDeleteMilestone({
