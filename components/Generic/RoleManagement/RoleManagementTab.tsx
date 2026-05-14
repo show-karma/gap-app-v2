@@ -19,6 +19,7 @@ import { Spinner } from "@/components/Utilities/Spinner";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { formatDate } from "@/utilities/formatDate";
 import { cn } from "@/utilities/tailwind";
+import { validateSlack, validateTelegram } from "@/utilities/validators";
 import { getMemberRoles, getRoleShortLabel } from "./helpers";
 import type {
   ReviewerRole,
@@ -47,6 +48,18 @@ interface RoleManagementTabProps {
   // Legacy single-role support (backward compatibility)
   selectedRole?: string;
   onRoleChange?: (role: string) => void;
+  /**
+   * Suppress the built-in "+ Add" button in the header.
+   * Use when the parent supplies its own entry point (e.g., a dropdown
+   * that opens a richer picker modal).
+   */
+  hideAddButton?: boolean;
+  /**
+   * Replace the built-in "+ Add" button in the header with a custom node
+   * (e.g., a dropdown menu trigger). Rendered in the same slot, so the
+   * parent doesn't need to duplicate the header layout.
+   */
+  addButtonSlot?: React.ReactNode;
 }
 
 export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
@@ -64,6 +77,8 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
   onEditContact,
   selectedRole,
   onRoleChange,
+  hideAddButton = false,
+  addButtonSlot,
 }) => {
   const [isAddingMember, setIsAddingMember] = useState(false);
   const [removingMemberId, setRemovingMemberId] = useState<string | null>(null);
@@ -124,6 +139,14 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
       if (!walletRegex.test(value)) {
         return "Invalid wallet address format";
       }
+    }
+
+    if (field.type === "telegram" && value && !validateTelegram(value)) {
+      return "Invalid Telegram handle (5-32 letters, digits or underscores, optional @ prefix)";
+    }
+
+    if (field.type === "slack" && value && !validateSlack(value)) {
+      return "Slack value must be between 2 and 254 characters";
     }
 
     return null;
@@ -451,26 +474,32 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
               : `Manage ${config.roleDisplayName.toLowerCase()}s for this resource`}
           </p>
         </div>
-        {canManage && (!config.maxMembers || members.length < config.maxMembers) && (
-          <Button
-            onClick={() => setShowAddForm(!showAddForm)}
-            disabled={isAddingMember}
-            className="flex items-center space-x-2"
-            aria-label={
-              roleOptions && roleOptions.length > 0
-                ? "Add new reviewer"
-                : `Add new ${config.roleDisplayName.toLowerCase()}`
-            }
-            aria-expanded={showAddForm}
-          >
-            <PlusIcon className="h-5 w-5" aria-hidden="true" />
-            <span>
-              {roleOptions && roleOptions.length > 0
-                ? "Add Reviewer"
-                : `Add ${config.roleDisplayName}`}
-            </span>
-          </Button>
-        )}
+        {addButtonSlot && canManage && (!config.maxMembers || members.length < config.maxMembers)
+          ? addButtonSlot
+          : null}
+        {!addButtonSlot &&
+          !hideAddButton &&
+          canManage &&
+          (!config.maxMembers || members.length < config.maxMembers) && (
+            <Button
+              onClick={() => setShowAddForm(!showAddForm)}
+              disabled={isAddingMember}
+              className="flex items-center space-x-2"
+              aria-label={
+                roleOptions && roleOptions.length > 0
+                  ? "Add new reviewer"
+                  : `Add new ${config.roleDisplayName.toLowerCase()}`
+              }
+              aria-expanded={showAddForm}
+            >
+              <PlusIcon className="h-5 w-5" aria-hidden="true" />
+              <span>
+                {roleOptions && roleOptions.length > 0
+                  ? "Add Reviewer"
+                  : `Add ${config.roleDisplayName}`}
+              </span>
+            </Button>
+          )}
       </div>
 
       {/* Add Member Form */}
@@ -710,6 +739,7 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
                                 ))}
                                 <div className="flex items-center space-x-1">
                                   <button
+                                    type="button"
                                     onClick={handleSaveEdit}
                                     disabled={isSavingEdit}
                                     className="p-1 rounded text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 disabled:opacity-50"
@@ -722,6 +752,7 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
                                     )}
                                   </button>
                                   <button
+                                    type="button"
                                     onClick={handleCancelEdit}
                                     disabled={isSavingEdit}
                                     className="p-1 rounded text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50"
@@ -834,6 +865,7 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
                               <div className="flex items-center text-xs text-gray-400 dark:text-gray-500">
                                 <span className="mr-1">Wallet:</span>
                                 <button
+                                  type="button"
                                   onClick={() =>
                                     handleCopyAddress(
                                       (member.publicAddress || member.walletAddress) as string
@@ -872,6 +904,7 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
                       <div className="flex items-center space-x-1 ml-4">
                         {((onEditRoles && roleOptions) || onEditContact) && (
                           <button
+                            type="button"
                             onClick={() => handleStartEdit(member.id)}
                             aria-label={`Edit ${member.name || member.id}`}
                             className={cn(
@@ -885,6 +918,7 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
                           </button>
                         )}
                         <button
+                          type="button"
                           onClick={() => handleRemoveClick(member.id)}
                           disabled={removingMemberId === member.id}
                           aria-label={`Remove ${member.name || member.id}`}
