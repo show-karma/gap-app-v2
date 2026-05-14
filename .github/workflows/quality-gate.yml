@@ -54,7 +54,9 @@ jobs:
 
   static-checks:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    # Build alone takes ~12 min on cold cache; raise headroom so the
+    # job doesn't get cancelled mid-SSG and starve dependents.
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v5
         with:
@@ -89,7 +91,9 @@ jobs:
           NEXT_TELEMETRY_DISABLED: '1'
 
   quality-gate:
-    needs: [static-checks]
+    # static-checks is purely informational (every step is continue-on-error)
+    # so we don't gate on it; baseline-guard is the real prerequisite.
+    needs: [baseline-guard]
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
