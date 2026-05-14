@@ -85,10 +85,10 @@ export function isMilestoneCompleted(statusEntry?: MilestoneStatusEntry): boolea
 }
 
 /**
- * A milestone is "Late" when it has a due date in the past AND has not
- * yet been completed or verified. Pending future-due milestones stay
- * Pending; completed/verified milestones never reclassify as Late even
- * if their due date was in the past at completion time.
+ * A milestone is "Past Due" when it has a due date in the past AND has
+ * not yet been completed or verified. Pending future-due milestones stay
+ * Pending; completed/verified milestones never reclassify as Past Due
+ * even if their due date was in the past at completion time.
  */
 export function isMilestoneLate(statusEntry?: MilestoneStatusEntry): boolean {
   if (!statusEntry) return false;
