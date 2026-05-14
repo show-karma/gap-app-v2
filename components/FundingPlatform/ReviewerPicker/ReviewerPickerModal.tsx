@@ -5,6 +5,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import pluralize from "pluralize";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
+import { Button as KarmaButton } from "@/components/Utilities/Button";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -204,21 +205,14 @@ const ReviewerPickerModal = ({
     mutationFn: async (toSave: SelectedRow[]) => {
       const settled = await Promise.allSettled(
         toSave.map(async (row) => {
+          // The POST `addReviewer` calls upsert user_profile with these fields,
+          // so dirty contact edits on pool rows propagate cross-program without a separate PATCH.
           const basePayload = {
             name: row.name,
             email: row.email,
             telegram: row.telegram || undefined,
             slack: row.slack || undefined,
           };
-
-          // PATCH dirty contact info once (pool rows only) — applies cross-program
-          if (row.kind === "pool" && isRowDirty(row)) {
-            await programReviewersService.updateReviewerContact(programId, {
-              email: row.original.email,
-              telegram: row.telegram || undefined,
-              slack: row.slack || undefined,
-            });
-          }
 
           const calls = row.roles.map((r) =>
             r === "program"
@@ -375,11 +369,17 @@ const ReviewerPickerModal = ({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All programs</SelectItem>
-                {reviewerPrograms.map((p) => (
-                  <SelectItem key={p.programId} value={p.programId}>
-                    {p.name} <span className="text-gray-400">({p.reviewerCount})</span>
-                  </SelectItem>
-                ))}
+                {reviewerPrograms.map((p) => {
+                  const availableCount =
+                    p.programId === programId
+                      ? Math.max(0, p.reviewerCount - assignedSet.size)
+                      : p.reviewerCount;
+                  return (
+                    <SelectItem key={p.programId} value={p.programId}>
+                      {p.name} <span className="text-gray-400">({availableCount})</span>
+                    </SelectItem>
+                  );
+                })}
               </SelectContent>
             </Select>
             <div className="inline-flex rounded-md border border-gray-200 dark:border-gray-700 overflow-hidden h-8 text-xs">
@@ -520,21 +520,17 @@ const ReviewerPickerModal = ({
           >
             Cancel
           </Button>
-          <Button
-            type="button"
+          <KarmaButton
             onClick={handleSave}
             disabled={isSaving || rows.length === 0}
+            isLoading={isSaving}
             data-testid="save-btn"
+            className="flex items-center space-x-2"
           >
-            {isSaving ? (
-              <>
-                <Spinner className="h-4 w-4 mr-2 border-2" />
-                Saving…
-              </>
-            ) : (
-              `Save${rows.length > 0 ? ` (${rows.length} ${pluralize("reviewer", rows.length)})` : ""}`
-            )}
-          </Button>
+            {isSaving
+              ? "Adding…"
+              : `Add${rows.length > 0 ? ` (${rows.length} ${pluralize("reviewer", rows.length)})` : ""}`}
+          </KarmaButton>
         </DialogFooter>
       </DialogContent>
     </Dialog>

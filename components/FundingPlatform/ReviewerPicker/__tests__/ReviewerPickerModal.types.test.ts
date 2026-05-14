@@ -27,7 +27,7 @@ function makePoolRow(overrides: Partial<PoolPickedRow> = {}): PoolPickedRow {
 }
 
 describe("poolRowFromReviewer", () => {
-  it("should_build_pool_row_with_default_role_from_launcher_when_reviewer_has_that_role", () => {
+  it("should_preselect_all_roles_the_reviewer_already_holds", () => {
     const row = poolRowFromReviewer(
       { ...baseReviewer, roles: ["program-reviewer", "milestone-reviewer"] },
       "milestone"
@@ -36,7 +36,8 @@ describe("poolRowFromReviewer", () => {
     expect(row.kind).toBe("pool");
     expect(row.id).toBe(baseReviewer.publicAddress);
     expect(row.publicAddress).toBe(baseReviewer.publicAddress);
-    expect(row.roles).toEqual(["milestone"]);
+    expect(row.roles).toEqual(expect.arrayContaining(["program", "milestone"]));
+    expect(row.roles).toHaveLength(2);
     expect(row.name).toBe("Alice");
     expect(row.email).toBe("alice@example.com");
     expect(row.telegram).toBe("alice_tg");
