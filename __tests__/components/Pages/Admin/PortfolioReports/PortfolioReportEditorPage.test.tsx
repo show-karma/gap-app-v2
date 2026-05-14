@@ -73,7 +73,7 @@ describe("PortfolioReportEditorPage", () => {
     mockUseUpdateReportContent.mockReturnValue({ isPending: false, mutateAsync: vi.fn() } as any);
   });
 
-  describe("edit textarea seeding (Fix #1)", () => {
+  describe("edit textarea seeding", () => {
     it("should_seed_textarea_with_report_content_when_dialog_opens", async () => {
       const user = userEvent.setup();
       mockUsePortfolioReport.mockReturnValue({ data: baseReport, isLoading: false } as any);
@@ -136,7 +136,7 @@ describe("PortfolioReportEditorPage", () => {
     });
   });
 
-  describe("regenerate dialog (Fix #3)", () => {
+  describe("regenerate dialog", () => {
     it("should_show_standard_overwrite_warning_when_no_unsaved_edits_exist", async () => {
       const user = userEvent.setup();
       mockUsePortfolioReport.mockReturnValue({ data: baseReport, isLoading: false } as any);
@@ -200,6 +200,36 @@ describe("PortfolioReportEditorPage", () => {
       expect(
         screen.queryByRole("heading", { name: /discard unsaved edits/i })
       ).not.toBeInTheDocument();
+    });
+
+    it("should_not_show_unsaved_edits_warning_after_a_successful_save", async () => {
+      // Guards the brief window between save success and the React Query
+      // cache update propagating the saved content back into `report.content`.
+      // Without clearing editDraft on save, hasUnsavedEdits would be falsely
+      // true for that window and the dialog would warn about edits the user
+      // just saved.
+      const user = userEvent.setup();
+      const updateMutate = vi.fn().mockResolvedValue(baseReport);
+      mockUseUpdateReportContent.mockReturnValue({
+        isPending: false,
+        mutateAsync: updateMutate,
+      } as any);
+      mockUsePortfolioReport.mockReturnValue({ data: baseReport, isLoading: false } as any);
+
+      render(<PortfolioReportEditorPage community={community} reportId="report-1" />);
+
+      await user.click(screen.getByRole("button", { name: /^edit$/i }));
+      const textarea = screen.getByLabelText(/report html content/i) as HTMLTextAreaElement;
+      await user.clear(textarea);
+      await user.type(textarea, "<p>Edited and saved</p>");
+      await user.click(screen.getByRole("button", { name: /^save$/i }));
+
+      await user.click(screen.getByRole("button", { name: /^regenerate$/i }));
+
+      expect(
+        screen.queryByRole("heading", { name: /discard unsaved edits/i })
+      ).not.toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: /^regenerate report/i })).toBeInTheDocument();
     });
   });
 });

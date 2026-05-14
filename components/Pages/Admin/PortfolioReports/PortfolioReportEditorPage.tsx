@@ -63,12 +63,16 @@ export function PortfolioReportEditorPage({ community, reportId }: Props) {
 
   // Close the Edit dialog if a regenerate kicks off while it's open —
   // the draft is now stale (it was seeded from pre-regen content) and
-  // saving would clobber the freshly generated report. The user gets a
-  // toast so they know why their dialog disappeared.
+  // saving would clobber the freshly generated report. We also clear
+  // editDraft so a subsequent Regenerate click doesn't surface a
+  // misleading "unsaved edits" warning about content that no longer
+  // exists. The user gets a toast so they know why their dialog
+  // disappeared.
   const isReportRegenerating = report ? isReportGenerating(report) : false;
   useEffect(() => {
     if (showEditDialog && isReportRegenerating) {
       setShowEditDialog(false);
+      setEditDraft("");
       toast("Closed Edit — report is regenerating. Reopen when it finishes.", {
         icon: "ℹ️",
       });
@@ -130,6 +134,9 @@ export function PortfolioReportEditorPage({ community, reportId }: Props) {
     try {
       await updateContentMutation.mutateAsync({ reportId, content: editDraft });
       setShowEditDialog(false);
+      // Clear so the brief window before React Query's cache update
+      // propagates doesn't make `hasUnsavedEdits` falsely true.
+      setEditDraft("");
       toast.success("Report content saved");
     } catch (err) {
       toast.error(`Failed to save: ${err instanceof Error ? err.message : "Unknown error"}`);
