@@ -1,0 +1,8 @@
+# Codeowners for quality-gate sensitive files.
+# Changes to the baseline must be reviewed — the PR also requires the
+# `quality-baseline` label (enforced in .github/workflows/quality-gate.yml).
+
+/quality-baseline.json @show-karma/engineering
+/quality-limits.json   @show-karma/engineering
+/scripts/quality-gate.js @show-karma/engineering
+/.github/workflows/quality-gate.yml @show-karma/engineering

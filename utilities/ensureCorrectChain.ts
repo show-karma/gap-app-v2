@@ -43,7 +43,9 @@ export async function ensureCorrectChain({
     resolvedGapClient = getGapClient(targetChainId);
   } catch (e) {
     const message =
-      e instanceof Error ? e.message : `This network (chain ID ${targetChainId}) is not supported yet.`;
+      e instanceof Error
+        ? e.message
+        : `This network (chain ID ${targetChainId}) is not supported yet.`;
     toast.error(message);
     onError?.(e);
     return {

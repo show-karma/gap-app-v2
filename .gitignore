@@ -70,3 +70,7 @@ public/projects.md
 public/communities.md
 public/knowledge/*.md
 .gstack/
+
+# Quality gate ephemeral output (report.md, current.json, jscpd report, etc).
+# The committed baseline is `/quality-baseline.json` at the project root.
+.quality/
