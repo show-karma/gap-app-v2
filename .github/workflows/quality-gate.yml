@@ -54,9 +54,7 @@ jobs:
 
   static-checks:
     runs-on: ubuntu-latest
-    # Build alone takes ~12 min on cold cache; raise headroom so the
-    # job doesn't get cancelled mid-SSG and starve dependents.
-    timeout-minutes: 25
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v5
         with:
@@ -83,12 +81,10 @@ jobs:
       - name: Typecheck
         run: pnpm typecheck
         continue-on-error: true
-
-      - name: Build
-        run: pnpm build
-        continue-on-error: true
-        env:
-          NEXT_TELEMETRY_DISABLED: '1'
+      # Note: we deliberately don't run `pnpm build` here. Vercel already
+      # builds every PR for the preview deploy; running it again in CI
+      # adds ~12 minutes for no extra signal. `pnpm typecheck` covers
+      # compile-time errors, and the test job covers runtime regressions.
 
   quality-gate:
     # static-checks is purely informational (every step is continue-on-error)
