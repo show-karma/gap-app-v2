@@ -14,6 +14,16 @@ const walletConnectErrors = [
   "WebSocket connection closed abnormally with code: 3000",
 ];
 
+const walletProviderErrors = [
+  // MetaMask's injected provider throws this when the extension aborts or
+  // rejects the connection handshake (popup dismissed, extension locked,
+  // another wallet extension competing for window.ethereum). Privy's login
+  // modal surfaces a user-facing error for this failure mode, so suppressing
+  // it in Sentry keeps the issue feed actionable.
+  // See https://karma-crypto-inc.sentry.io/issues/7453497949/
+  "Failed to connect to MetaMask",
+];
+
 const browserExtensionErrors = [
   // Browser extensions disconnecting ports (Chrome extensions, wallet extensions)
   // See https://karma-crypto-inc.sentry.io/issues/GAP-FRONTEND-1BA
@@ -21,6 +31,17 @@ const browserExtensionErrors = [
   // Wallet extensions calling chrome.runtime without proper Extension ID
   // See https://karma-crypto-inc.sentry.io/issues/GAP-FRONTEND-1B8
   "chrome.runtime.sendMessage() called from a webpage must specify an Extension ID",
+];
+
+const sentryInstrumentationErrors = [
+  // Sentry's own lazy-loaded Replay integration occasionally fails to fetch
+  // (chunk eviction after a deploy, network blip, ad-blocker, CSP). Replay is
+  // optional telemetry, so we filter the failure instead of surfacing it as a
+  // top-volume Sentry issue. The catch in `instrumentation-client.ts` handles
+  // the unhandled rejection; this entry is defense-in-depth in case the error
+  // reaches Sentry through a different code path.
+  // See https://karma-crypto-inc.sentry.io/issues/7403099774/
+  "Error when loading integration: replayIntegration",
 ];
 
 // Expected "not found" errors when users access non-existent resources (e.g., deleted projects, old URLs)
@@ -40,6 +61,8 @@ export const sentryIgnoreErrors = [
   `TypeError: can't access dead object`,
   ...unsupportedWalletErrors,
   ...walletConnectErrors,
+  ...walletProviderErrors,
   ...browserExtensionErrors,
+  ...sentryInstrumentationErrors,
   ...notFoundErrors,
 ];

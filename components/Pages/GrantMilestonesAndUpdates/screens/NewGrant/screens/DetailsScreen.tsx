@@ -4,7 +4,6 @@ import type React from "react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { isAddress } from "viem";
-import { useAccount } from "wagmi";
 import { z } from "zod";
 import { DatePicker } from "@/components/Utilities/DatePicker";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
@@ -82,7 +81,6 @@ export const DetailsScreen: React.FC = () => {
   const selectedProject = useProjectStore((state) => state.project);
   const _refreshProject = useProjectStore((state) => state.refreshProject);
   const router = useRouter();
-  const { address, isConnected, connector, chain } = useAccount();
 
   // Fetch grants using dedicated hook
   const { grants } = useProjectGrants(selectedProject?.uid || "");

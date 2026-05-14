@@ -1,29 +1,37 @@
-/**
- * Mutation integration tests for useDeleteMilestone hook.
- *
- * Tests the full mutation lifecycle:
- * - Calls DELETE endpoint via fundingPlatformService.applications.deleteMilestone
- * - Optimistic update removes milestone from cache
- * - Rollback restores cache on error
- * - Shows success/error toasts via useAttestationToast
- * - Invalidates PROJECT_GRANT_MILESTONES query key on success
- */
-
+import { QueryClient } from "@tanstack/react-query";
 import { act, waitFor } from "@testing-library/react";
 import { HttpResponse, http } from "msw";
 import toast from "react-hot-toast";
 import { useDeleteMilestone } from "@/hooks/useDeleteMilestone";
 import type { GrantMilestoneWithCompletion } from "@/services/milestones";
+import { envVars } from "@/utilities/enviromentVars";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
 import { installMswLifecycle, server } from "../../msw/server";
-import { createTestQueryClient, renderHookWithProviders } from "../../utils/render";
+import { renderHookWithProviders } from "../../utils/render";
 
-// Mock auth token
+// Local QueryClient with persistent cache so rollback assertions can read the
+// restored data without racing React Query's garbage collector.
+function createPersistentQueryClient(): QueryClient {
+  return new QueryClient({
+    defaultOptions: {
+      queries: { retry: false, gcTime: Infinity, staleTime: Infinity },
+      mutations: { retry: false },
+    },
+  });
+}
+
 vi.mock("@/utilities/auth/token-manager", () => ({
   TokenManager: { getToken: vi.fn().mockResolvedValue("test-token") },
 }));
 
-// Mock toast (useAttestationToast uses react-hot-toast internally)
+vi.mock("@/hooks/useAuth", () => ({
+  useAuth: () => ({ address: "0xrequester", ready: true }),
+}));
+
+vi.mock("@/hooks/useMixpanel", () => ({
+  useMixpanel: () => ({ mixpanel: { reportEvent: vi.fn() } }),
+}));
+
 vi.mock("react-hot-toast", async () => {
   const actual = await vi.importActual<typeof import("react-hot-toast")>("react-hot-toast");
   return {
@@ -38,7 +46,6 @@ vi.mock("react-hot-toast", async () => {
   };
 });
 
-// Mock errorManager to prevent console noise
 vi.mock("@/components/Utilities/errorManager", () => ({
   errorManager: vi.fn(),
 }));
@@ -47,30 +54,23 @@ installMswLifecycle();
 
 const PROJECT_ID = "project-001";
 const PROGRAM_ID = "program-001";
+const MILESTONE_UID = "milestone-uid-001";
+const INDEXER_BASE = envVars.NEXT_PUBLIC_GAP_INDEXER_URL;
 
-function createMilestoneWithCompletion(
+function createMilestone(
   overrides?: Partial<GrantMilestoneWithCompletion>
 ): GrantMilestoneWithCompletion {
   return {
-    uid: "milestone-uid-001",
+    uid: MILESTONE_UID,
     chainId: 10,
+    programId: PROGRAM_ID,
     title: "Audit Completion",
     description: "Complete security audit",
     dueDate: "2024-12-31T00:00:00Z",
     status: "pending",
     completionDetails: null,
     verificationDetails: null,
-    fundingApplicationCompletion: {
-      id: "completion-1",
-      referenceNumber: "APP-00001-10001",
-      milestoneFieldLabel: "milestone_1",
-      milestoneTitle: "Audit Completion",
-      completionText: "Completed audit",
-      ownerAddress: "0x1234",
-      isVerified: false,
-      createdAt: "2024-06-01T00:00:00Z",
-      updatedAt: "2024-06-01T00:00:00Z",
-    },
+    fundingApplicationCompletion: null,
     ...overrides,
   };
 }
@@ -80,177 +80,120 @@ describe("useDeleteMilestone (mutation integration)", () => {
     vi.clearAllMocks();
   });
 
-  it("calls DELETE endpoint and shows success toast on success", async () => {
-    let capturedUrl = "";
-    let capturedBody: any = null;
+  it("should_resolve_and_invoke_onSuccess_when_backend_revokes_milestone", async () => {
+    const onSuccess = vi.fn();
+    const milestone = createMilestone();
+    const observedBody = vi.fn();
 
     server.use(
-      http.delete("*/v2/funding-applications/:refNum/milestones", async ({ request, params }) => {
-        capturedUrl = new URL(request.url).pathname;
-        capturedBody = await request.json();
-        return HttpResponse.json({
-          milestoneRemoved: true,
-          completionDeleted: true,
-          onChainRevoked: false,
-        });
-      })
+      http.delete(
+        `${INDEXER_BASE}/v2/milestones/:milestoneUID/on-chain-delete`,
+        async ({ params, request }) => {
+          const body = await request.json();
+          observedBody(body);
+          return HttpResponse.json({
+            milestoneUID: params.milestoneUID as string,
+            revocationSuccess: true,
+            revocationTxHash: "0xtx",
+          });
+        }
+      )
     );
-
-    const milestone = createMilestoneWithCompletion();
-    const onSuccess = vi.fn();
 
     const { result } = renderHookWithProviders(() =>
       useDeleteMilestone({ projectId: PROJECT_ID, programId: PROGRAM_ID, onSuccess })
     );
 
     await act(async () => {
-      result.current.deleteMilestone(milestone);
+      await result.current.deleteMilestoneAsync(milestone);
     });
 
     await waitFor(() => {
       expect(result.current.isDeleting).toBe(false);
     });
 
-    // Verify API was called with correct URL and body
-    expect(capturedUrl).toBe("/v2/funding-applications/APP-00001-10001/milestones");
-    expect(capturedBody).toEqual({
-      milestoneFieldLabel: "milestone_1",
-      milestoneTitle: "Audit Completion",
-    });
-
-    // Verify success toast was shown
-    expect(toast.success).toHaveBeenCalledWith(
-      expect.stringContaining("Audit Completion"),
-      expect.any(Object)
-    );
-
-    // Verify onSuccess callback was called
-    expect(onSuccess).toHaveBeenCalled();
+    expect(observedBody).toHaveBeenCalledWith({ chainID: milestone.chainId });
+    expect(onSuccess).toHaveBeenCalledTimes(1);
+    expect(toast.error).not.toHaveBeenCalled();
   });
 
-  it("sets isDeleting during the mutation and clears it on completion", async () => {
-    let resolveRequest!: () => void;
-    const requestPromise = new Promise<void>((resolve) => {
-      resolveRequest = resolve;
-    });
-
-    server.use(
-      http.delete("*/v2/funding-applications/:refNum/milestones", async () => {
-        await requestPromise;
-        return HttpResponse.json({
-          milestoneRemoved: true,
-          completionDeleted: true,
-          onChainRevoked: false,
-        });
-      })
-    );
-
-    const milestone = createMilestoneWithCompletion();
-
-    const { result } = renderHookWithProviders(() =>
-      useDeleteMilestone({ projectId: PROJECT_ID, programId: PROGRAM_ID })
-    );
-
-    act(() => {
-      result.current.deleteMilestone(milestone);
-    });
-
-    // isDeleting should be true while request is pending
-    await waitFor(() => {
-      expect(result.current.isDeleting).toBe(true);
-    });
-
-    // Resolve the request
-    resolveRequest();
-
-    // isDeleting should be false once completed
-    await waitFor(() => {
-      expect(result.current.isDeleting).toBe(false);
-    });
-  });
-
-  it("rolls back optimistic update on API error", async () => {
-    server.use(
-      http.delete("*/v2/funding-applications/:refNum/milestones", () =>
-        HttpResponse.json({ error: "Server error" }, { status: 500 })
-      )
-    );
-
-    const queryClient = createTestQueryClient();
+  it("should_roll_back_optimistic_removal_when_backend_rejects", async () => {
+    const queryClient = createPersistentQueryClient();
     const queryKey = QUERY_KEYS.MILESTONES.PROJECT_GRANT_MILESTONES(PROJECT_ID, PROGRAM_ID);
-    const milestone = createMilestoneWithCompletion();
+    const milestone = createMilestone();
     const originalData = { grantMilestones: [milestone] };
 
-    // Pre-populate cache
     queryClient.setQueryData(queryKey, originalData);
+
+    server.use(
+      http.delete(`${INDEXER_BASE}/v2/milestones/:milestoneUID/on-chain-delete`, () =>
+        HttpResponse.json({ message: "Access denied" }, { status: 403 })
+      )
+    );
 
     const { result } = renderHookWithProviders(
       () => useDeleteMilestone({ projectId: PROJECT_ID, programId: PROGRAM_ID }),
       { queryClient }
     );
 
-    act(() => {
-      result.current.deleteMilestone(milestone);
+    await act(async () => {
+      await expect(result.current.deleteMilestoneAsync(milestone)).rejects.toThrow();
     });
 
-    // Wait for the error to be processed
-    await waitFor(() => {
-      expect(result.current.isDeleting).toBe(false);
-    });
-
-    // The onError handler should have restored the previous data.
-    // However, the cache may also be invalidated (and thus refetched/cleared).
-    // What matters is the error toast was shown.
-    expect(toast.error).toHaveBeenCalledWith(expect.any(String), expect.any(Object));
+    expect(queryClient.getQueryData(queryKey)).toEqual(originalData);
+    expect(toast.error).toHaveBeenCalled();
   });
 
-  it("shows error when milestoneRemoved is false", async () => {
+  it("should_reject_without_calling_backend_when_chainId_is_missing", async () => {
+    const requestSpy = vi.fn();
     server.use(
-      http.delete("*/v2/funding-applications/:refNum/milestones", () =>
+      http.delete(`${INDEXER_BASE}/v2/milestones/:milestoneUID/on-chain-delete`, () => {
+        requestSpy();
+        return HttpResponse.json({}, { status: 200 });
+      })
+    );
+
+    const milestone = createMilestone({ chainId: 0 as unknown as number });
+
+    const { result } = renderHookWithProviders(() =>
+      useDeleteMilestone({ projectId: PROJECT_ID, programId: PROGRAM_ID })
+    );
+
+    await act(async () => {
+      await expect(result.current.deleteMilestoneAsync(milestone)).rejects.toThrow(
+        /missing chainId/
+      );
+    });
+
+    expect(requestSpy).not.toHaveBeenCalled();
+  });
+
+  it("should_treat_revocationSuccess_false_as_failure_and_rollback", async () => {
+    const queryClient = createPersistentQueryClient();
+    const queryKey = QUERY_KEYS.MILESTONES.PROJECT_GRANT_MILESTONES(PROJECT_ID, PROGRAM_ID);
+    const milestone = createMilestone();
+    const originalData = { grantMilestones: [milestone] };
+    queryClient.setQueryData(queryKey, originalData);
+
+    server.use(
+      http.delete(`${INDEXER_BASE}/v2/milestones/:milestoneUID/on-chain-delete`, ({ params }) =>
         HttpResponse.json({
-          milestoneRemoved: false,
-          completionDeleted: false,
-          onChainRevoked: false,
+          milestoneUID: params.milestoneUID as string,
+          revocationSuccess: false,
         })
       )
     );
 
-    const milestone = createMilestoneWithCompletion();
-
-    const { result } = renderHookWithProviders(() =>
-      useDeleteMilestone({ projectId: PROJECT_ID, programId: PROGRAM_ID })
+    const { result } = renderHookWithProviders(
+      () => useDeleteMilestone({ projectId: PROJECT_ID, programId: PROGRAM_ID }),
+      { queryClient }
     );
 
-    act(() => {
-      result.current.deleteMilestone(milestone);
+    await act(async () => {
+      await expect(result.current.deleteMilestoneAsync(milestone)).rejects.toThrow();
     });
 
-    await waitFor(() => {
-      expect(result.current.isDeleting).toBe(false);
-    });
-
-    // Should show error toast because milestoneRemoved was false
-    expect(toast.error).toHaveBeenCalled();
-  });
-
-  it("throws error when fundingApplicationCompletion is missing", async () => {
-    const milestone = createMilestoneWithCompletion({
-      fundingApplicationCompletion: null,
-    });
-
-    const { result } = renderHookWithProviders(() =>
-      useDeleteMilestone({ projectId: PROJECT_ID, programId: PROGRAM_ID })
-    );
-
-    act(() => {
-      result.current.deleteMilestone(milestone);
-    });
-
-    await waitFor(() => {
-      expect(result.current.isDeleting).toBe(false);
-    });
-
-    // Should show error because fundingApplicationCompletion is null
+    expect(queryClient.getQueryData(queryKey)).toEqual(originalData);
     expect(toast.error).toHaveBeenCalled();
   });
 });

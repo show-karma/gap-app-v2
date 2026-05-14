@@ -128,9 +128,9 @@ export function WhitelabelNavbar() {
   return (
     <NavbarPermissionsProvider>
       <nav className="sticky top-0 z-50 border-b border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
-        <div className="mx-auto flex h-16 items-center justify-between px-8 lg:px-24">
+        <div className="mx-auto flex h-16 items-center justify-between px-8 lg:px-8 xl:px-24">
           {/* Brand */}
-          <Link href={"/"} className="flex flex-col items-start">
+          <Link href={"/"} className="flex shrink-0 flex-col items-start">
             <div className="flex items-center gap-2">
               {tenant.assets?.logo ? (
                 tenant.assets.logoDark ? (
@@ -177,7 +177,7 @@ export function WhitelabelNavbar() {
                 </div>
               )}
               {tenant.navigation?.header?.shouldHaveTitle && (
-                <p className="text-lg font-semibold text-zinc-900 dark:text-white">
+                <p className="whitespace-nowrap text-lg font-semibold text-zinc-900 dark:text-white">
                   {tenant.navigation?.header?.title || "Grants Council"}
                 </p>
               )}
@@ -207,7 +207,7 @@ export function WhitelabelNavbar() {
           <div className="hidden items-center gap-1 lg:flex">
             {/* Search */}
             <div className="mr-2">
-              <NavbarSearch />
+              <NavbarSearch placeholder="Search Project" />
             </div>
             {/* My Applications - first when authenticated (matching reference) */}
             {authenticated && (
@@ -365,7 +365,10 @@ export function WhitelabelNavbar() {
           <div className="border-t border-zinc-200 bg-white px-4 py-3 dark:border-zinc-800 dark:bg-zinc-900 lg:hidden">
             {/* Mobile Search */}
             <div className="mb-3">
-              <NavbarSearch onSelectItem={() => setIsMenuOpen(false)} />
+              <NavbarSearch
+                onSelectItem={() => setIsMenuOpen(false)}
+                placeholder="Search Project"
+              />
             </div>
             <div className="space-y-1">
               {authenticated && (

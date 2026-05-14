@@ -120,17 +120,17 @@ export function NavbarUserMenu() {
             ) : (
               <CircleUser className="h-8 w-8 min-h-8 min-w-8 max-h-8 max-w-8 text-muted-foreground" />
             )}
-            {profile?.data?.name ? (
-              <span className="text-sm text-muted-foreground hidden xl:inline px-2">
-                {profile?.data?.name}
-              </span>
-            ) : user?.farcaster ? (
+            {user?.farcaster ? (
               <span className="text-sm text-muted-foreground hidden xl:inline px-2">
                 {user.farcaster.displayName || user.farcaster.username}
               </span>
             ) : getUserEmail(user) ? (
               <span className="text-sm text-muted-foreground hidden xl:inline px-2">
                 {getUserEmail(user)}
+              </span>
+            ) : profile?.data?.name ? (
+              <span className="text-sm text-muted-foreground hidden xl:inline px-2">
+                {profile?.data?.name}
               </span>
             ) : address ? (
               <EthereumAddressToProfileName

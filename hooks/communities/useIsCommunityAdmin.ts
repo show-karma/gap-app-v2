@@ -1,8 +1,8 @@
 import { useEffect } from "react";
 import type { Hex } from "viem";
-import { useAccount } from "wagmi";
 import { useCheckCommunityAdmin } from "@/hooks/communities/useCheckCommunityAdmin";
 import { useCommunityDetails } from "@/hooks/communities/useCommunityDetails";
+import { useAuth } from "@/hooks/useAuth";
 
 interface UseIsCommunityAdminOptions {
   enabled?: boolean;
@@ -30,7 +30,7 @@ export const useIsCommunityAdmin = (
   userAddress?: string | Hex,
   options?: UseIsCommunityAdminOptions
 ) => {
-  const { address: accountAddress } = useAccount();
+  const { address: accountAddress } = useAuth();
   const address = userAddress || accountAddress;
   const communityQuery = useCommunityDetails(communityUIDorSlug);
 

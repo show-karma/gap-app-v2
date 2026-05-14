@@ -3,6 +3,7 @@
 import type { GAP } from "@show-karma/karma-gap-sdk";
 import type { Signer } from "ethers";
 import { useCallback, useMemo } from "react";
+import toast from "react-hot-toast";
 import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import { useZeroDevSigner } from "./useZeroDevSigner";
 
@@ -36,6 +37,40 @@ interface UseSetupChainAndWalletResult {
 
   /** Whether user has an external wallet (MetaMask, etc.) */
   hasExternalWallet: boolean;
+}
+
+function isNetworkChangedError(error: unknown): boolean {
+  if (!(error instanceof Error)) {
+    return false;
+  }
+
+  // ethers v6 emits `code: "NETWORK_ERROR"` for this case. The message check
+  // is defense in depth for wrappers that strip the code but preserve the text.
+  return (
+    ("code" in error && (error as { code: unknown }).code === "NETWORK_ERROR") ||
+    error.message.toLowerCase().includes("network changed")
+  );
+}
+
+// Wallet providers can briefly report the old chain right after a switch,
+// which trips ethers' NETWORK_ERROR guard. A short pause + single retry
+// handles the transient race without bothering the user.
+const NETWORK_CHANGED_RETRY_DELAY_MS = 250;
+
+async function getSignerWithNetworkChangeRetry(
+  getSigner: (chainId: number) => Promise<Signer>,
+  chainId: number
+): Promise<Signer> {
+  try {
+    return await getSigner(chainId);
+  } catch (error) {
+    if (!isNetworkChangedError(error)) {
+      throw error;
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, NETWORK_CHANGED_RETRY_DELAY_MS));
+    return await getSigner(chainId);
+  }
 }
 
 /**
@@ -81,14 +116,27 @@ export function useSetupChainAndWallet(): UseSetupChainAndWalletResult {
         return null;
       }
 
-      const walletSigner = await getAttestationSigner(chainId);
+      try {
+        const walletSigner = await getSignerWithNetworkChangeRetry(getAttestationSigner, chainId);
 
-      return {
-        gapClient,
-        walletSigner,
-        chainId,
-        isGasless: isGaslessAvailable,
-      };
+        return {
+          gapClient,
+          walletSigner,
+          chainId,
+          isGasless: isGaslessAvailable,
+        };
+      } catch (error) {
+        // Only swallow NETWORK_ERROR — other failures (unsupported chain, no
+        // wallet, signer construction) are real bugs and must surface to
+        // Sentry instead of being hidden behind a generic toast.
+        if (!isNetworkChangedError(error)) {
+          throw error;
+        }
+
+        toast.error("Wallet network changed while preparing the transaction. Please try again.");
+
+        return null;
+      }
     },
     [getAttestationSigner, isGaslessAvailable]
   );

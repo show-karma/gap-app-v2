@@ -11,7 +11,7 @@ interface EnsureCorrectChainParams {
 interface EnsureCorrectChainResult {
   success: boolean;
   chainId: number;
-  gapClient: ReturnType<typeof getGapClient>;
+  gapClient: ReturnType<typeof getGapClient> | null;
   error?: string;
 }
 
@@ -31,12 +31,37 @@ export async function ensureCorrectChain({
   switchChainAsync,
   onError,
 }: EnsureCorrectChainParams): Promise<EnsureCorrectChainResult> {
+  // Resolve the SDK client up front. If the chain isn't supported by the
+  // SDK at all, surface that *once* with a friendly toast and bail —
+  // there's no point trying to switch the wallet to a chain we can't
+  // attest against. Returning `gapClient: null` on failure (instead of
+  // calling `getGapClient` again in the catch path) prevents the
+  // double-toast we used to see: one from the wagmi switch failure plus
+  // a second from a re-thrown SDK error.
+  let resolvedGapClient: ReturnType<typeof getGapClient> | null;
+  try {
+    resolvedGapClient = getGapClient(targetChainId);
+  } catch (e) {
+    const message =
+      e instanceof Error
+        ? e.message
+        : `This network (chain ID ${targetChainId}) is not supported yet.`;
+    toast.error(message);
+    onError?.(e);
+    return {
+      success: false,
+      chainId: currentChainId || targetChainId,
+      gapClient: null,
+      error: message,
+    };
+  }
+
   // If we're already on the correct chain, just return the client
   if (currentChainId === targetChainId) {
     return {
       success: true,
       chainId: targetChainId,
-      gapClient: getGapClient(targetChainId),
+      gapClient: resolvedGapClient,
     };
   }
 
@@ -48,7 +73,7 @@ export async function ensureCorrectChain({
     return {
       success: false,
       chainId: currentChainId || targetChainId,
-      gapClient: getGapClient(targetChainId),
+      gapClient: resolvedGapClient,
       error,
     };
   }
@@ -62,7 +87,7 @@ export async function ensureCorrectChain({
     return {
       success: true,
       chainId: targetChainId,
-      gapClient: getGapClient(targetChainId),
+      gapClient: resolvedGapClient,
     };
   } catch (switchError) {
     console.error("Failed to switch chain:", switchError);
@@ -73,7 +98,7 @@ export async function ensureCorrectChain({
     return {
       success: false,
       chainId: currentChainId || targetChainId,
-      gapClient: getGapClient(targetChainId),
+      gapClient: resolvedGapClient,
       error: errorMsg,
     };
   }

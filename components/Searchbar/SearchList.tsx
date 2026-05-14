@@ -1,7 +1,6 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { useAccount } from "wagmi";
 import { useAuth } from "@/hooks/useAuth";
 import type {
   SearchCommunityResult,
@@ -33,8 +32,7 @@ export const SearchList: React.FC<Props> = ({
   onInteractionStart,
   onInteractionEnd,
 }) => {
-  const { isConnected } = useAccount();
-  const { authenticated: isAuth, login } = useAuth();
+  const { authenticated: isAuth, login, isConnected } = useAuth();
   const [shouldOpen, setShouldOpen] = useState(false);
   const router = useRouter();
 

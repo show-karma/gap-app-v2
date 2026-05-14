@@ -15,7 +15,6 @@ import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { useQueryState } from "nuqs";
 import { type FC, useMemo, useRef, useState } from "react";
-import { useAccount } from "wagmi";
 import EthereumAddressToProfileName from "@/components/EthereumAddressToProfileName";
 import { Discord2Icon, Telegram2Icon, Twitter2Icon } from "@/components/Icons";
 import { BlogIcon } from "@/components/Icons/Blog";
@@ -23,6 +22,7 @@ import { DiscussionIcon } from "@/components/Icons/Discussion";
 import { OrganizationIcon } from "@/components/Icons/Organization";
 import { Button } from "@/components/Utilities/Button";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { useAuth } from "@/hooks/useAuth";
 import { formatDate } from "@/utilities/formatDate";
 import { ReadMore } from "@/utilities/ReadMore";
 import { registryHelper } from "./helper";
@@ -49,7 +49,8 @@ export const ManageProgramList: FC<ManageProgramListProps> = ({
   selectProgram,
   isAllowed,
 }) => {
-  const { address } = useAccount();
+  const { address } = useAuth();
+  const normalizedAddress = address?.toLowerCase();
   const searchParams = useSearchParams();
   const [sorting, setSorting] = useState<SortingState>([]);
 
@@ -489,7 +490,7 @@ export const ManageProgramList: FC<ManageProgramListProps> = ({
                 <span
                   key={index}
                   className={`mr-1 inline-flex items-center rounded-md  px-2 py-1 text-xs font-medium text-black ring-1 ring-inset ring-zinc-600/20 ${
-                    admin.toLowerCase() === address?.toLowerCase() ? "bg-blue-100" : "bg-zinc-50"
+                    admin.toLowerCase() === normalizedAddress ? "bg-blue-100" : "bg-zinc-50"
                   }`}
                 >
                   <EthereumAddressToProfileName address={admin.toLowerCase()} />
@@ -598,7 +599,7 @@ export const ManageProgramList: FC<ManageProgramListProps> = ({
     ],
     [
       isAllowed,
-      address?.toLowerCase,
+      normalizedAddress,
       approveOrReject,
       editFn,
       selectProgram,

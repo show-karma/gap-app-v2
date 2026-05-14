@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useTheme } from "next-themes";
 import pluralize from "pluralize";
 import { useState } from "react";
-import { useAccount } from "wagmi";
 /* eslint-disable @next/next/no-img-element */
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import Pagination from "@/components/Utilities/Pagination";
@@ -45,8 +44,7 @@ const pickColor = (index: number) => {
 };
 
 export default function MyProjects() {
-  const { isConnected, address } = useAccount();
-  const { authenticated: isAuth } = useAuth();
+  const { authenticated: isAuth, isConnected, address } = useAuth();
   const { theme: currentTheme } = useTheme();
   const { setIsOnboarding } = useOnboarding();
   const { mixpanel } = useMixpanel();

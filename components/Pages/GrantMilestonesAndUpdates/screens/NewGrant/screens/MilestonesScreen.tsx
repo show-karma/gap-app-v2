@@ -47,8 +47,8 @@ export const MilestonesScreen: React.FC = () => {
   const selectedProject = useProjectStore((state) => state.project);
   const { refetch: refetchGrants } = useProjectGrants(selectedProject?.uid || "");
   const router = useRouter();
-  const { address, isConnected, connector, chain } = useAccount();
-  const { authenticated: isAuth } = useAuth();
+  const { connector, chain } = useAccount();
+  const { authenticated: isAuth, address, isConnected } = useAuth();
   const { gap } = useGap();
   const { smartWalletAddress, setupChainAndWallet } = useSetupChainAndWallet();
   const {

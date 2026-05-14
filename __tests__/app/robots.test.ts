@@ -59,20 +59,12 @@ describe("robots", () => {
   });
 
   describe("sitemaps", () => {
-    it("should reference the main sitemap", () => {
+    it("should reference only the main sitemap index", () => {
       expect(result.sitemap).toContain(`${SITE_URL}/sitemap.xml`);
     });
 
-    it("should reference the projects sitemap", () => {
-      expect(result.sitemap).toContain(`${SITE_URL}/sitemaps/projects/sitemap.xml`);
-    });
-
-    it("should reference the communities sitemap", () => {
-      expect(result.sitemap).toContain(`${SITE_URL}/sitemaps/communities/sitemap.xml`);
-    });
-
-    it("should list exactly 3 sitemaps", () => {
-      expect(result.sitemap).toHaveLength(3);
+    it("should list exactly 1 sitemap entry", () => {
+      expect(result.sitemap).toHaveLength(1);
     });
   });
 

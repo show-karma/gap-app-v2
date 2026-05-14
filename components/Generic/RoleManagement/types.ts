@@ -4,7 +4,7 @@
 export interface RoleFieldConfig {
   name: string;
   label: string;
-  type: "text" | "email" | "wallet";
+  type: "text" | "email" | "wallet" | "telegram" | "slack";
   placeholder?: string;
   required: boolean;
   helperText?: string;

@@ -235,31 +235,29 @@ export function NavbarMobileMenu() {
                 <ExploreContent variant="mobile" onClose={() => setMobileMenuOpen(false)} />
               </div>
 
-              {/* Resources Section - Only when NOT logged in */}
-              {!isLoggedIn && (
-                <div className="border-b border-border py-3">
-                  <MenuSection title="Resources" variant="mobile" />
-                  <ResourcesContent variant="mobile" onClose={() => setMobileMenuOpen(false)} />
-                  <div className="mt-4 pt-4 border-t border-border">
-                    <MenuSection title="Follow" variant="mobile" className="mb-4" />
-                    <div className="flex items-center gap-2">
-                      {socialMediaLinks.map((social) => {
-                        const IconComponent = social.icon;
-                        return (
-                          <ExternalLink
-                            key={social.name}
-                            href={social.href}
-                            className="w-10 h-10 flex items-center justify-center rounded-full transition-colors"
-                            aria-label={social.name}
-                          >
-                            <IconComponent className="w-8 h-8 text-muted-foreground" />
-                          </ExternalLink>
-                        );
-                      })}
-                    </div>
+              {/* Resources Section */}
+              <div className="border-b border-border py-3">
+                <MenuSection title="Resources" variant="mobile" />
+                <ResourcesContent variant="mobile" onClose={() => setMobileMenuOpen(false)} />
+                <div className="mt-4 pt-4 border-t border-border">
+                  <MenuSection title="Follow" variant="mobile" className="mb-4" />
+                  <div className="flex items-center gap-2">
+                    {socialMediaLinks.map((social) => {
+                      const IconComponent = social.icon;
+                      return (
+                        <ExternalLink
+                          key={social.name}
+                          href={social.href}
+                          className="w-10 h-10 flex items-center justify-center rounded-full transition-colors"
+                          aria-label={social.name}
+                        >
+                          <IconComponent className="w-8 h-8 text-muted-foreground" />
+                        </ExternalLink>
+                      );
+                    })}
                   </div>
                 </div>
-              )}
+              </div>
 
               {/* Mobile Auth */}
               {isLoggedIn ? (
@@ -295,24 +293,6 @@ export function NavbarMobileMenu() {
                     <LogOutIcon className={menuStyles.itemIcon} />
                     <span className={menuStyles.itemText}>Log out</span>
                   </button>
-                  <div className="mt-4 pt-4 border-t border-border flex flex-col items-center">
-                    <MenuSection title="Follow" variant="mobile" className="mb-4" />
-                    <div className="flex items-center gap-2">
-                      {socialMediaLinks.map((social) => {
-                        const IconComponent = social.icon;
-                        return (
-                          <ExternalLink
-                            key={social.name}
-                            href={social.href}
-                            className="w-10 h-10 flex items-center justify-center rounded-full transition-colors"
-                            aria-label={social.name}
-                          >
-                            <IconComponent className="w-8 h-8 text-muted-foreground" />
-                          </ExternalLink>
-                        );
-                      })}
-                    </div>
-                  </div>
                 </div>
               ) : null}
             </div>

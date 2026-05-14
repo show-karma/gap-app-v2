@@ -4,8 +4,13 @@ import { type FC, memo } from "react";
 import { MilestoneCardLayout } from "@/components/Shared/ActivityCard/MilestoneCardLayout";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "@/src/components/navigation/Link";
+import { MilestoneLifecycleStatus } from "@/src/features/payout-disbursement";
 import type { CommunityMilestoneUpdate } from "@/types/community-updates";
 import { formatDate } from "@/utilities/formatDate";
+import {
+  getEffectiveMilestoneStatus,
+  MILESTONE_STATUS_LABEL,
+} from "@/utilities/milestones/getEffectiveMilestoneStatus";
 import { cn } from "@/utilities/tailwind";
 import { MilestoneCompletionInfo } from "./MilestoneCompletionInfo";
 
@@ -22,27 +27,14 @@ interface CommunityMilestoneCardProps {
   allocationAmount?: string;
 }
 
-type MilestoneStatusVariant = "completed" | "pastDue" | "pending";
-
-const STATUS_BADGE_CLASSES: Record<MilestoneStatusVariant, string> = {
-  completed: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
-  pastDue: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
-  pending: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
-};
-
-const STATUS_BADGE_LABELS: Record<MilestoneStatusVariant, string> = {
-  completed: "Completed",
-  pastDue: "Past Due",
-  pending: "Pending",
-};
-
-const getStatusVariant = (
-  status: CommunityMilestoneUpdate["status"],
-  dueDate: string | null
-): MilestoneStatusVariant => {
-  if (status === "completed") return "completed";
-  if (dueDate && new Date(dueDate) < new Date()) return "pastDue";
-  return "pending";
+const STATUS_BADGE_CLASSES: Record<MilestoneLifecycleStatus, string> = {
+  [MilestoneLifecycleStatus.COMPLETED]:
+    "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
+  [MilestoneLifecycleStatus.VERIFIED]:
+    "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
+  [MilestoneLifecycleStatus.PAST_DUE]: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
+  [MilestoneLifecycleStatus.PENDING]:
+    "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
 };
 
 const CommunityMilestoneCardComponent: FC<CommunityMilestoneCardProps> = ({
@@ -54,7 +46,7 @@ const CommunityMilestoneCardComponent: FC<CommunityMilestoneCardProps> = ({
   const projectTitle = milestone.project.details?.data?.title;
   const grantTitle = milestone.grant?.details?.data?.title || "Project Milestone";
 
-  const statusVariant = getStatusVariant(milestone.status, milestone.details.dueDate);
+  const effectiveStatus = getEffectiveMilestoneStatus(milestone.status, milestone.details.dueDate);
 
   const header = (
     <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
@@ -77,11 +69,11 @@ const CommunityMilestoneCardComponent: FC<CommunityMilestoneCardProps> = ({
       <div
         className={cn(
           "flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium",
-          STATUS_BADGE_CLASSES[statusVariant]
+          STATUS_BADGE_CLASSES[effectiveStatus]
         )}
       >
         {isCompleted ? <CheckCircleIcon className="h-3 w-3" /> : <ClockIcon className="h-3 w-3" />}
-        {STATUS_BADGE_LABELS[statusVariant]}
+        {MILESTONE_STATUS_LABEL[effectiveStatus]}
       </div>
       {milestone.grantMilestoneIndex != null && milestone.grantMilestoneTotal != null ? (
         <Badge

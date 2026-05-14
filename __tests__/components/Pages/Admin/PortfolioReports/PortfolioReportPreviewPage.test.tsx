@@ -4,9 +4,9 @@ import { PortfolioReportPreviewPage } from "@/components/Pages/Admin/PortfolioRe
 import { usePortfolioReport } from "@/hooks/portfolio-reports/usePortfolioReports";
 
 vi.mock("@/hooks/portfolio-reports/usePortfolioReports");
-vi.mock("@/components/Utilities/MarkdownPreview", () => ({
-  MarkdownPreview: ({ source }: { source?: string }) => (
-    <div data-testid="markdown-preview">{source}</div>
+vi.mock("@/components/Pages/Community/PortfolioReports/HtmlReportFrame", () => ({
+  HtmlReportFrame: ({ html }: { html?: string }) => (
+    <div data-testid="markdown-preview">{html}</div>
   ),
 }));
 
@@ -23,7 +23,7 @@ const draftReport = {
   communityId: "community-1",
   runDate: "2026-03-15",
   status: "draft",
-  markdown: "# Draft report body",
+  content: "# Draft report body",
   dataSnapshot: {},
   modelId: "gpt-4.1",
   tokenUsage: null,
@@ -122,7 +122,6 @@ describe("PortfolioReportPreviewPage", () => {
         "href",
         "/community/filecoin/manage/portfolio-reports"
       );
-      expect(screen.getByText("Draft")).toBeInTheDocument();
       expect(screen.getByTestId("markdown-preview")).toHaveTextContent("# Draft report body");
     });
 

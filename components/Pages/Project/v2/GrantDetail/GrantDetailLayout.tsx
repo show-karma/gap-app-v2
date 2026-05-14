@@ -4,7 +4,6 @@ import { ArrowLeftIcon, PencilSquareIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { useAccount } from "wagmi";
 import { GrantCompleteButton } from "@/components/Pages/GrantMilestonesAndUpdates/GrantCompleteButton";
 import { GrantContext } from "@/components/Pages/GrantMilestonesAndUpdates/GrantContext";
 import { GrantDelete } from "@/components/Pages/GrantMilestonesAndUpdates/GrantDelete";
@@ -39,7 +38,6 @@ export function GrantDetailLayout({ children }: GrantDetailLayoutProps) {
   const params = useParams();
   const pathname = usePathname();
   const router = useRouter();
-  const { address } = useAccount();
 
   const projectIdFromUrl = params.projectId as string;
   const grantUid = params.grantUid as string;
@@ -53,7 +51,7 @@ export function GrantDetailLayout({ children }: GrantDetailLayoutProps) {
   const isAuthorized = isProjectOwner || isProjectAdmin || isContractOwner || isCommunityAdmin;
 
   // Check admin status
-  useIsCommunityAdmin(grant?.data?.communityUID, address, {
+  useIsCommunityAdmin(grant?.data?.communityUID, undefined, {
     zustandSync: { setIsCommunityAdmin },
   });
 

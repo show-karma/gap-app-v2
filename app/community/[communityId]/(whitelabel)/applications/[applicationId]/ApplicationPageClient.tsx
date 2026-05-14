@@ -12,12 +12,12 @@ import { Role } from "@/src/core/rbac/types/role";
 import { CommentTimeline } from "@/src/features/application-comments/components/CommentTimeline";
 import { PublicComments } from "@/src/features/application-comments/components/PublicComments";
 import { ApplicationStatusHistory } from "@/src/features/applications/components/ApplicationStatusHistory";
+import { MilestonesTab } from "@/src/features/applications/components/MilestonesTab";
 import { useApplicationAccess } from "@/src/features/applications/hooks/use-application-access";
 import type { IFundingApplication, ProgramWithFormSchema } from "@/types/funding-platform";
 import type { Application, ApplicationStatus, FundingProgram } from "@/types/whitelabel-entities";
 import { formatDate } from "@/utilities/formatDate";
 import { cn } from "@/utilities/tailwind";
-import { MilestonesTab } from "./components/MilestonesTab";
 import { PostApprovalTab } from "./components/PostApprovalTab";
 
 interface ApplicationPageClientProps {
@@ -54,18 +54,6 @@ const editableStatuses: ApplicationStatus[] = [
   "rejected",
   "resubmitted",
 ];
-
-function isMilestoneArray(
-  value: unknown
-): value is Array<{ title: string; [key: string]: unknown }> {
-  return (
-    Array.isArray(value) &&
-    value.length > 0 &&
-    typeof value[0] === "object" &&
-    value[0] !== null &&
-    "title" in value[0]
-  );
-}
 
 export function ApplicationPageClient({
   communityId,
@@ -110,11 +98,10 @@ export function ApplicationPageClient({
   const programName =
     program?.name || program?.metadata?.title || `Program ${application.programId}`;
 
-  // Check if application has milestone fields
-  const hasMilestones = useMemo(
-    () => Object.values(application.applicationData).some(isMilestoneArray),
-    [application.applicationData]
-  );
+  // The indexer pre-merges application-source + project-source
+  // milestones into `application.milestoneStatuses[]`. Either kind being
+  // present warrants a Milestones tab; the tab itself just iterates.
+  const hasMilestones = (application.milestoneStatuses?.length ?? 0) > 0;
 
   // Check if post-approval form is configured
   const hasPostApprovalSchema =

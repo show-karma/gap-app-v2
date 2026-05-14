@@ -271,7 +271,7 @@ describe("NavbarDesktopNavigation", () => {
       expect(resourcesButton).toBeInTheDocument();
     });
 
-    it('should NOT render "Resources" dropdown when logged in', () => {
+    it('should render "Resources" dropdown when logged in', () => {
       const authFixture = getAuthFixture("authenticated-basic");
       setLocalRefsLoggedIn(authFixture.authState.address);
 
@@ -283,7 +283,7 @@ describe("NavbarDesktopNavigation", () => {
       const resourcesButton = screen.queryByRole("button", {
         name: /resources/i,
       });
-      expect(resourcesButton).not.toBeInTheDocument();
+      expect(resourcesButton).toBeInTheDocument();
     });
 
     it("should have chevron icons on all dropdown triggers", () => {
@@ -475,7 +475,7 @@ describe("NavbarDesktopNavigation", () => {
       // which means the authenticated path is rendering
     });
 
-    it("should NOT show Resources dropdown when logged in", () => {
+    it("should show Resources dropdown when logged in", () => {
       const authFixture = getAuthFixture("authenticated-basic");
 
       renderWithProviders(<NavbarDesktopNavigation />, {
@@ -486,7 +486,7 @@ describe("NavbarDesktopNavigation", () => {
       const resourcesButton = screen.queryByRole("button", {
         name: /resources/i,
       });
-      expect(resourcesButton).not.toBeInTheDocument();
+      expect(resourcesButton).toBeInTheDocument();
     });
 
     it("should render quick action buttons and Explore dropdown when logged in", () => {

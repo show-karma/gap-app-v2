@@ -5,6 +5,21 @@ import type { Signer } from "ethers";
 import { BrowserProvider } from "ethers";
 import { useCallback, useMemo } from "react";
 import { createWalletClient, custom } from "viem";
+import type { Chain } from "viem/chains";
+import {
+  arbitrum,
+  base,
+  baseSepolia,
+  celo,
+  lisk,
+  mainnet,
+  optimism,
+  optimismSepolia,
+  polygon,
+  scroll,
+  sei,
+  sepolia,
+} from "viem/chains";
 import { useChainId } from "wagmi";
 import { usePrivyBridge } from "@/contexts/privy-bridge-context";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
@@ -17,6 +32,33 @@ import {
 } from "@/utilities/gasless";
 import { appNetwork } from "@/utilities/network";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+
+/**
+ * Fallback chain catalog — every chain the SDK + indexer recognise, even
+ * ones that get stripped from `appNetwork` in production builds (testnets
+ * are excluded when NEXT_PUBLIC_ENV === "production"). Using this as a
+ * secondary lookup lets the external-wallet path complete attestations
+ * for on-chain milestones that live on testnets, regardless of the
+ * production-build chain whitelist.
+ */
+const KNOWN_CHAINS: Record<number, Chain> = {
+  [mainnet.id]: mainnet,
+  [optimism.id]: optimism,
+  [arbitrum.id]: arbitrum,
+  [base.id]: base,
+  [celo.id]: celo,
+  [polygon.id]: polygon,
+  [lisk.id]: lisk,
+  [scroll.id]: scroll,
+  [sei.id]: sei,
+  [optimismSepolia.id]: optimismSepolia,
+  [baseSepolia.id]: baseSepolia,
+  [sepolia.id]: sepolia,
+};
+
+function resolveChain(targetChainId: number): Chain | undefined {
+  return appNetwork.find((c) => c.id === targetChainId) ?? KNOWN_CHAINS[targetChainId];
+}
 
 /**
  * Check if user logged in with email/Google (not wallet).
@@ -38,7 +80,7 @@ interface UseZeroDevSignerResult {
    * - For embedded wallet users: Uses gasless transactions (SAME address via EIP-7702)
    * - For external wallet users: Regular wallet (user pays gas)
    */
-  getAttestationSigner: (chainId: number) => Promise<Signer>;
+  getAttestationSigner: (chainId: number | string) => Promise<Signer>;
 
   /** Whether the current user can use gasless transactions (embedded wallet only) */
   isGaslessAvailable: boolean;
@@ -109,7 +151,15 @@ export function useZeroDevSigner(): UseZeroDevSignerResult {
   }, [isEmailOrSocialLogin, embeddedWallet, externalWallet]);
 
   const getAttestationSigner = useCallback(
-    async (targetChainId: number): Promise<Signer> => {
+    async (rawTargetChainId: number | string): Promise<Signer> => {
+      // The chainId can arrive as a string when it originates from the
+      // indexer's JSON-encoded fields. Coerce up-front so downstream
+      // strict-equality checks (`appNetwork.find`, switch cases) work.
+      const targetChainId =
+        typeof rawTargetChainId === "string" ? Number(rawTargetChainId) : rawTargetChainId;
+      if (!Number.isFinite(targetChainId)) {
+        throw new Error(`Invalid chain ID: ${rawTargetChainId}`);
+      }
       // Case 1: Email/Google login with gasless support
       if (isEmailOrSocialLogin && embeddedWallet && isChainSupportedForGasless(targetChainId)) {
         try {
@@ -160,7 +210,7 @@ export function useZeroDevSigner(): UseZeroDevSignerResult {
         try {
           await externalWallet.switchChain(targetChainId);
           const provider = await externalWallet.getEthereumProvider();
-          const chain = appNetwork.find((c) => c.id === targetChainId);
+          const chain = resolveChain(targetChainId);
           if (!chain) {
             throw new Error(`Unsupported chain: ${targetChainId}`);
           }
@@ -174,11 +224,12 @@ export function useZeroDevSigner(): UseZeroDevSignerResult {
             throw new Error("Failed to create signer from Privy wallet client");
           }
           return signer;
-        } catch (privyError) {
-          console.warn(
-            "[External Wallet] Privy provider failed, falling back to wagmi:",
-            privyError
-          );
+        } catch (setupError) {
+          // Don't say "Privy provider failed" here — the failure can be
+          // anything inside the external-wallet setup (switchChain, the
+          // chain catalog lookup, the WalletClient build). Privy is just
+          // one of several things involved.
+          console.warn("[External Wallet] Setup failed, falling back to wagmi:", setupError);
           const { walletClient, error } = await safeGetWalletClient(targetChainId);
 
           if (error || !walletClient) {

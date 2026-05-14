@@ -111,7 +111,7 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({ title, description, index, d
 
       const checkIfAttestationExists = async (callbackFn?: () => void) => {
         // Try to verify deletion with a reasonable timeout (30 retries = ~45 seconds)
-        let deletionConfirmed = false;
+        let _deletionConfirmed = false;
         await retryUntilConditionMet(
           async () => {
             const fetchedGrants = await getProjectGrants(projectIdOrSlug);
@@ -122,7 +122,7 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({ title, description, index, d
               (grantUpdate) => grantUpdate.uid.toLowerCase() === update.uid.toLowerCase()
             );
             if (!stillExists) {
-              deletionConfirmed = true;
+              _deletionConfirmed = true;
             }
             return !stillExists;
           },

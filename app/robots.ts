@@ -30,11 +30,7 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ["/api/", "/admin/", "/super-admin/", "/safe/"],
       },
     ],
-    sitemap: [
-      `${SITE_URL}/sitemap.xml`,
-      `${SITE_URL}/sitemaps/projects/sitemap.xml`,
-      `${SITE_URL}/sitemaps/communities/sitemap.xml`,
-    ],
+    sitemap: [`${SITE_URL}/sitemap.xml`],
     host: SITE_URL,
   };
 }

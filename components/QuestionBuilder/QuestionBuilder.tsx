@@ -86,7 +86,12 @@ interface QuestionBuilderProps {
   hasReviewers?: boolean;
   hasAIConfig?: boolean;
   /** Program data for ProgramDetailsTab - avoids V1 registry fetch */
-  program?: { programId: string; chainID: number; metadata: Record<string, any> } | null;
+  program?: {
+    programId: string;
+    chainID: number;
+    metadata: Record<string, any>;
+    communityUID?: string;
+  } | null;
   /** Whether KYC is enabled for the community - controls visibility of KYC settings tab */
   kycEnabled?: boolean;
 }
@@ -929,7 +934,11 @@ export function QuestionBuilder({
           <div className="p-4 sm:p-6 lg:p-8">
             <div className="max-w-4xl mx-auto">
               {programId && communityId ? (
-                <ReviewerManagementTab programId={programId} readOnly={readOnly} />
+                <ReviewerManagementTab
+                  programId={programId}
+                  readOnly={readOnly}
+                  communityUID={program?.communityUID}
+                />
               ) : (
                 <div className="text-center py-8">
                   <p className="text-gray-500 dark:text-gray-400">

@@ -215,7 +215,7 @@ const features = [
   {
     title: "Milestones & Updates",
     description:
-      "Build your onchain reputation by documenting progress and milestones through Karma's GAP protocol.",
+      "Build your onchain reputation by documenting progress and milestones through Karma's attestation protocol.",
     image: "/images/homepage/builder-features-05.png",
     checklist: ["Add project deliverables", "Add custom metrics to show impact"],
     imageSize: "medium" as const,

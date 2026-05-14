@@ -19,8 +19,8 @@
  * for all deletion paths (off-chain, on-chain, and fallback).
  */
 
-import * as fs from "fs";
-import * as path from "path";
+import * as fs from "node:fs";
+import * as path from "node:path";
 
 describe("MilestoneDelete", () => {
   const componentPath = path.join(

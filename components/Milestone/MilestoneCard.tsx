@@ -4,9 +4,14 @@ import Image from "next/image";
 import { useState } from "react";
 import EthereumAddressToProfileName from "@/components/EthereumAddressToProfileName";
 import { useMilestoneImpactAnswers } from "@/hooks/useMilestoneImpactAnswers";
+import { MilestoneLifecycleStatus } from "@/src/features/payout-disbursement";
 import { useGrantInvoiceRequired } from "@/src/features/payout-disbursement/hooks/use-payout-disbursement";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
 import { formatDate } from "@/utilities/formatDate";
+import {
+  getEffectiveMilestoneStatus,
+  MILESTONE_STATUS_LABEL,
+} from "@/utilities/milestones/getEffectiveMilestoneStatus";
 import { PAGES } from "@/utilities/pages";
 import { ReadMore } from "@/utilities/ReadMore";
 import { cn } from "@/utilities/tailwind";
@@ -105,6 +110,12 @@ export const MilestoneCard = ({ milestone, isAuthorized }: MilestoneCardProps) =
     grantMilestone?.completionDetails?.deliverables ||
     (grantMilestone?.milestone.completed?.data as any)?.deliverables;
 
+  const effectiveStatus = getEffectiveMilestoneStatus(
+    completed ? MilestoneLifecycleStatus.COMPLETED : MilestoneLifecycleStatus.PENDING,
+    endsAt && endsAt > 0 ? endsAt * 1000 : null
+  );
+  const isPastDue = effectiveStatus === MilestoneLifecycleStatus.PAST_DUE;
+
   // Determine border color and tag based on milestone type and status
   const getBorderColor = () => {
     if (completed) return "border-brand-blue";
@@ -118,17 +129,17 @@ export const MilestoneCard = ({ milestone, isAuthorized }: MilestoneCardProps) =
 
   const getStatusColor = () => {
     if (completed) return "bg-brand-blue text-white";
+    if (isPastDue) return "bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-300";
     return "bg-[#FFFAEB] text-[#B54708] dark:bg-[#FFFAEB]/10 dark:text-orange-100";
   };
 
   const getStatusBorder = () => {
     if (completed) return "";
+    if (isPastDue) return "border border-red-200 dark:border-red-900";
     return "border border-[#FEDF89]";
   };
 
-  const getStatusText = () => {
-    return completed ? "Completed" : "Pending";
-  };
+  const getStatusText = () => MILESTONE_STATUS_LABEL[effectiveStatus];
 
   // Function to handle completion for project milestones
   const handleProjectMilestoneCompletion = () => {

@@ -26,6 +26,10 @@ vi.mock("@show-karma/karma-gap-sdk/core/consts", () => ({
     "optimism-sepolia": { chainId: 11155420 },
     optimism: { chainId: 10 },
   },
+  chainIdToNetwork: {
+    11155420: "optimism-sepolia",
+    10: "optimism",
+  },
 }));
 
 vi.mock("@/utilities/enviromentVars", () => ({
@@ -87,7 +91,7 @@ describe("gapClient", () => {
   it("should throw for unsupported chains", async () => {
     const { getGapClient } = await import("@/utilities/gapClient");
 
-    expect(() => getGapClient(999999)).toThrow("GAP::Unsupported chain 999999");
+    expect(() => getGapClient(999999)).toThrow(/network.*999999.*not supported/i);
   });
 
   it("should return a default chain ID", async () => {

@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
-import { useAccount } from "wagmi";
 import { useAuth } from "@/hooks/useAuth";
 import type { FundingProgram } from "@/services/fundingPlatformService";
 import { PermissionsService } from "@/services/permissions.service";
@@ -71,15 +70,14 @@ type ReviewerProgramsResponse = FundingProgram[];
  * ```
  */
 export const usePermissions = (options: PermissionOptions = {}) => {
-  const { address: wagmiAddress } = useAccount();
-  const { authenticated: isAuth, getAccessToken: getToken, ready } = useAuth();
+  const { authenticated: isAuth, getAccessToken: getToken, ready, address } = useAuth();
   const { programId, action, role, enabled = true } = options;
 
   const query = useQuery({
-    queryKey: ["permissions", programId, action, role, wagmiAddress?.toLowerCase() ?? null, isAuth],
+    queryKey: ["permissions", programId, action, role, address?.toLowerCase() ?? null, isAuth],
     queryFn: async () => {
       // These checks are defense-in-depth; the query shouldn't run if !enabled
-      if (!isAuth || !wagmiAddress || !ready) {
+      if (!isAuth || !address || !ready) {
         return {
           hasPermission: false,
           permissions: [],
@@ -185,7 +183,7 @@ export const usePermissions = (options: PermissionOptions = {}) => {
       };
     },
     ...defaultQueryOptions,
-    enabled: enabled && !!isAuth && !!wagmiAddress,
+    enabled: enabled && !!isAuth && !!address,
     staleTime: 1 * 60 * 1000, // Cache for 1 minute
     retry: (failureCount, error) => {
       // Retry only network errors, not auth issues

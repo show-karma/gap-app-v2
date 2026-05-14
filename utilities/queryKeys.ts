@@ -95,6 +95,10 @@ export const QUERY_KEYS = {
   REVIEWERS: {
     PROGRAM: (programId: string) => ["program-reviewers", programId] as const,
     MILESTONE: (programId: string) => ["milestone-reviewers", programId] as const,
+    COMMUNITY: (communityUID: string, programId?: string | null, search?: string | null) =>
+      ["reviewers", "community", communityUID, programId ?? null, search ?? null] as const,
+    COMMUNITY_PROGRAMS: (communityUID: string) =>
+      ["reviewers", "community", communityUID, "programs"] as const,
   },
   CONTRACTS: {
     DEPLOYER: (network: string, contractAddress: string) =>

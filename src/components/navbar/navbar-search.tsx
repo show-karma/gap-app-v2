@@ -10,9 +10,10 @@ import { PAGES } from "@/utilities/pages";
 
 interface NavbarSearchProps {
   onSelectItem?: () => void;
+  placeholder?: string;
 }
 
-export function NavbarSearch({ onSelectItem }: NavbarSearchProps = {}) {
+export function NavbarSearch({ onSelectItem, placeholder }: NavbarSearchProps = {}) {
   const [results, setResults] = useState<UnifiedSearchResponse>({
     communities: [],
     projects: [],
@@ -91,7 +92,7 @@ export function NavbarSearch({ onSelectItem }: NavbarSearchProps = {}) {
         <MagnifyingGlassIcon className="w-4 h-4 text-muted-foreground flex-shrink-0" />
         <input
           type="text"
-          placeholder="Search Project/Community"
+          placeholder={placeholder ?? "Search Project/Community"}
           className="w-full flex-1 text-sm bg-transparent text-foreground placeholder:text-muted-foreground border-none outline-none focus:ring-0 p-0 min-w-0"
           value={searchValue}
           onChange={(e) => handleInputChange(e.target.value)}

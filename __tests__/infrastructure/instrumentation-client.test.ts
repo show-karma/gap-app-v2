@@ -63,6 +63,29 @@ describe("instrumentation-client", () => {
     expect(mockAddIntegration).toHaveBeenCalledWith(mockReplayInstance);
   });
 
+  it("logs and swallows replay lazy-load failures without calling addIntegration", async () => {
+    const loadError = new Error("load failed");
+    mockLazyLoadIntegration.mockImplementationOnce(() => Promise.reject(loadError));
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+
+    await expect(import("@/instrumentation-client")).resolves.toBeDefined();
+    await new Promise(process.nextTick);
+
+    expect(mockAddIntegration).not.toHaveBeenCalled();
+    expect(warnSpy).toHaveBeenCalledWith("Sentry Replay lazy-load failed:", loadError);
+
+    warnSpy.mockRestore();
+  });
+
+  it("does not add replay when Sentry returns a non-callable", async () => {
+    mockLazyLoadIntegration.mockImplementationOnce(() => Promise.resolve(null));
+
+    await import("@/instrumentation-client");
+    await new Promise(process.nextTick);
+
+    expect(mockAddIntegration).not.toHaveBeenCalled();
+  });
+
   it("exports onRequestError and onRouterTransitionStart", async () => {
     const exports = await import("@/instrumentation-client");
 

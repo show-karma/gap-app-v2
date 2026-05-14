@@ -15,10 +15,10 @@ import {
 import dynamic from "next/dynamic";
 import { usePathname, useSearchParams } from "next/navigation";
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
-import { useAccount } from "wagmi";
 import { Button } from "@/components/Utilities/Button";
 import { Badge } from "@/components/ui/badge";
 import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
+import { useAuth } from "@/hooks/useAuth";
 import { useMilestoneAllocationsByGrants } from "@/hooks/useCommunityMilestoneAllocations";
 import { useDeleteMilestone } from "@/hooks/useDeleteMilestone";
 import { useFundingApplicationByProjectUID } from "@/hooks/useFundingApplicationByProjectUID";
@@ -33,6 +33,7 @@ import {
   useIsReviewerType,
   usePermissionContext,
 } from "@/src/core/rbac/context/permission-context";
+import { useStaff } from "@/src/core/rbac/hooks/use-staff-bridge";
 import { ReviewerType } from "@/src/core/rbac/types";
 import { useAgentChatStore } from "@/store/agentChat";
 import { formatDate } from "@/utilities/formatDate";
@@ -474,7 +475,7 @@ function MilestonesReviewPageContent({
   const searchParams = useSearchParams();
   const searchParamsString = searchParams.toString();
 
-  const { address } = useAccount();
+  const { address, ready } = useAuth();
   const { hasAccess: hasAdminAccess, isLoading: isLoadingAdminAccess } =
     useCommunityAdminAccess(communityId);
 
@@ -482,6 +483,7 @@ function MilestonesReviewPageContent({
   const isReviewer = useIsReviewer();
   const isMilestoneReviewer = useIsReviewerType(ReviewerType.MILESTONE);
   const { isLoading: isLoadingReviewer } = usePermissionContext();
+  const { isStaff } = useStaff();
 
   // Determine if user can verify milestones (must be before early returns)
   // Only milestone reviewers, admins, contract owners, and staff can verify/complete/sync
@@ -490,12 +492,10 @@ function MilestonesReviewPageContent({
     [hasAdminAccess, isMilestoneReviewer]
   );
 
-  // Determine if user can delete milestones
-  // Contract owners, community admins, staff, and milestone reviewers can delete milestones
-  const canDeleteMilestones = useMemo(
-    () => hasAdminAccess || isMilestoneReviewer || false,
-    [hasAdminAccess, isMilestoneReviewer]
-  );
+  // Staff and community admins can edit or delete milestones — matches the
+  // backend service-level auth in milestone-on-chain-{edit,delete}.write.service.
+  // Milestone reviewers verify completions but cannot mutate milestone definitions.
+  const canEditOrDeleteMilestones = isStaff || hasAdminAccess;
 
   // Delete milestone hook with proper React Query mutation/query relationship
   const { deleteMilestoneAsync, isDeleting } = useDeleteMilestone({
@@ -529,15 +529,10 @@ function MilestonesReviewPageContent({
     if (fundingApplication?.referenceNumber) {
       return fundingApplication.referenceNumber;
     }
-    // Fallback: extract from any milestone that has funding application completion data
-    const milestones = data?.grantMilestones ?? [];
-    for (const m of milestones) {
-      if (m.fundingApplicationCompletion?.referenceNumber) {
-        return m.fundingApplicationCompletion.referenceNumber;
-      }
-    }
+    // Note: referenceNumber now comes from fundingApplication only
+    // (milestones are identified via on-chain UID, not off-chain reference)
     return undefined;
-  }, [fundingApplication?.referenceNumber, data?.grantMilestones]);
+  }, [fundingApplication?.referenceNumber]);
 
   // Get grant name from first milestone's programId (must be before any returns)
   const grantName = useMemo(() => {
@@ -716,8 +711,11 @@ function MilestonesReviewPageContent({
       [MilestoneReviewStatus.Verified]: grouped.get(MilestoneReviewStatus.Verified)?.length ?? 0,
       [MilestoneReviewStatus.PendingVerification]:
         grouped.get(MilestoneReviewStatus.PendingVerification)?.length ?? 0,
-      [MilestoneReviewStatus.PendingCompletion]:
-        grouped.get(MilestoneReviewStatus.PendingCompletion)?.length ?? 0,
+      [MilestoneReviewStatus.Submitted]: grouped.get(MilestoneReviewStatus.Submitted)?.length ?? 0,
+      [MilestoneReviewStatus.Approved]: grouped.get(MilestoneReviewStatus.Approved)?.length ?? 0,
+      [MilestoneReviewStatus.Rejected]: grouped.get(MilestoneReviewStatus.Rejected)?.length ?? 0,
+      [MilestoneReviewStatus.Pending]: grouped.get(MilestoneReviewStatus.Pending)?.length ?? 0,
+      [MilestoneReviewStatus.Late]: grouped.get(MilestoneReviewStatus.Late)?.length ?? 0,
       [MilestoneReviewStatus.NotStarted]:
         grouped.get(MilestoneReviewStatus.NotStarted)?.length ?? 0,
     };
@@ -729,7 +727,7 @@ function MilestonesReviewPageContent({
   }, [milestones, activeFilter]);
 
   // Show loading while checking authorization
-  if (isLoading || isLoadingReviewer || isLoadingAdminAccess) {
+  if (!ready || isLoading || isLoadingReviewer || isLoadingAdminAccess) {
     return (
       <div className="min-h-screen">
         <div className="px-4 sm:px-6 lg:px-8 py-6">
@@ -975,8 +973,8 @@ function MilestonesReviewPageContent({
                       verificationComment={verificationComment}
                       isVerifying={isVerifying}
                       canVerifyMilestones={canVerifyMilestones}
-                      canDeleteMilestones={canDeleteMilestones}
-                      canEditMilestones={canVerifyMilestones}
+                      canDeleteMilestones={canEditOrDeleteMilestones}
+                      canEditMilestones={canEditOrDeleteMilestones}
                       grantUID={grant?.uid}
                       grantChainID={grant?.chainID}
                       projectUid={project.uid}

@@ -9,6 +9,18 @@ import { sanitizeObject } from "./sanitize";
  * This replaces the complex cookie-based token retrieval with
  * Privy's simplified token management.
  *
+ * The optional `signal` is forwarded to axios so a long-running request
+ * is cancelled when the caller aborts — used by the milestone-completion
+ * polling hook to halt in-flight fetches when a component unmounts mid-
+ * poll. Without it, an aborted poll iteration still completes its
+ * current request before the next abort check fires.
+ *
+ * **Caller contract** when passing `signal`: an aborted request lands in
+ * the catch path as an axios cancel error. The function returns the
+ * standard `[null, error, null, status]` tuple in that case; callers
+ * should use `isAbortError(err)` (from `utilities/retries`) when
+ * inspecting the error to distinguish cancellation from real failures.
+ *
  * @template T - Optional type parameter for response data (defaults to any for backward compatibility)
  * @returns Promise<[T, null, any, number] | [null, string, null, number]> - Tuple of [data, error, pageInfo, status]
  */
@@ -20,7 +32,8 @@ export default async function fetchData<T = any>(
   headers = {},
   isAuthorized = true,
   cache: boolean | undefined = false,
-  baseUrl: string = envVars.NEXT_PUBLIC_GAP_INDEXER_URL
+  baseUrl: string = envVars.NEXT_PUBLIC_GAP_INDEXER_URL,
+  signal?: AbortSignal
 ): Promise<[T, null, any, number] | [null, string, null, number]> {
   try {
     const sanitizedData = sanitizeObject(axiosData);
@@ -38,6 +51,7 @@ export default async function fetchData<T = any>(
       headers: {
         ...headers,
       },
+      signal,
     };
 
     // Add authorization header if needed

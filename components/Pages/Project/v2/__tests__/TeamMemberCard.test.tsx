@@ -15,6 +15,14 @@ vi.mock("wagmi", () => ({
   useAccount: () => ({ address: "0x1234567890123456789012345678901234567890" }),
 }));
 
+// Mock useAuth
+vi.mock("@/hooks/useAuth", () => ({
+  useAuth: () => ({
+    authenticated: true,
+    address: "0x1234567890123456789012345678901234567890",
+  }),
+}));
+
 // Mock project store
 const mockProject = {
   uid: "0x1234567890123456789012345678901234567890" as `0x${string}`,
