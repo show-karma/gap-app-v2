@@ -51,7 +51,7 @@ describe("project-updates.service", () => {
       const result = await getProjectUpdates("project-slug");
 
       expect(result).toEqual(mockResponse);
-      expect(mockFetchData).toHaveBeenCalledWith(expect.stringContaining("project-slug"));
+      expect(mockFetchData.mock.calls[0][0]).toEqual(expect.stringContaining("project-slug"));
     });
 
     it("should append milestoneStatus query param when provided", async () => {
@@ -64,7 +64,7 @@ describe("project-updates.service", () => {
 
       await getProjectUpdates("project-slug", "completed");
 
-      expect(mockFetchData).toHaveBeenCalledWith(
+      expect(mockFetchData.mock.calls[0][0]).toEqual(
         expect.stringContaining("milestoneStatus=completed")
       );
     });
@@ -79,7 +79,9 @@ describe("project-updates.service", () => {
 
       await getProjectUpdates("project-slug");
 
-      expect(mockFetchData).toHaveBeenCalledWith(expect.not.stringContaining("milestoneStatus"));
+      expect(mockFetchData.mock.calls[0][0]).toEqual(
+        expect.not.stringContaining("milestoneStatus")
+      );
     });
 
     it("should return empty response without reporting on 404", async () => {

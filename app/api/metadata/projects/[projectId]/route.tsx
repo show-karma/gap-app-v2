@@ -15,7 +15,7 @@ export async function GET(
   const projectId = (await context.params).projectId;
   const [project, grants] = await Promise.all([
     getProjectCachedData(projectId),
-    getProjectGrants(projectId),
+    getProjectGrants(projectId, { isAuthorized: false }),
   ]);
   if (!project) {
     return new ImageResponse(

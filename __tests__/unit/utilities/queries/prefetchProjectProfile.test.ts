@@ -66,6 +66,11 @@ describe("prefetchProjectProfile", () => {
         updates: true,
         impacts: true,
       });
+      expect(mockGetProjectGrants).toHaveBeenCalledWith(projectId, { isAuthorized: false });
+      expect(mockGetProjectUpdates).toHaveBeenCalledWith(projectId, undefined, {
+        isAuthorized: false,
+      });
+      expect(mockGetProjectImpacts).toHaveBeenCalledWith(projectId, { isAuthorized: false });
       expect(mockQueryClient.prefetchQuery).toHaveBeenCalledTimes(3);
     });
 
