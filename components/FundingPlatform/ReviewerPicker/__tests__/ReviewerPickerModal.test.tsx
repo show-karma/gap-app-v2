@@ -1,13 +1,14 @@
 "use client";
 
 /**
- * ReviewerPickerModal — layout and save-payload tests
+ * ReviewerPickerModal — add-only flow tests
  *
  * Covers:
- * - Two-column layout renders when `applicationAssignment` is provided
- * - Single-column layout renders when `applicationAssignment` is absent
- * - Right-column × button removes address from staged save payload
- * - Save emits union of (kept-on-right) ∪ (selected-on-left)
+ * - Pool items render
+ * - `disabledAddresses` grays pool rows and blocks selection
+ * - Toggling a pool row adds/removes a staged row
+ * - "Select all" / "Unselect all" toggle
+ * - Save adds each new pool selection to the program reviewer service
  */
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -28,9 +29,6 @@ vi.mock("react-hot-toast", () => ({
   toast: { success: vi.fn(), error: vi.fn(), loading: vi.fn(), dismiss: vi.fn() },
 }));
 
-vi.mock("@/services/application-reviewers.service", () => ({
-  applicationReviewersService: { assignReviewers: vi.fn().mockResolvedValue(undefined) },
-}));
 vi.mock("@/services/program-reviewers.service", () => ({
   programReviewersService: { addReviewer: vi.fn().mockResolvedValue(undefined) },
 }));
@@ -140,12 +138,12 @@ vi.mock("@/utilities/queryKeys", () => ({
 
 // ── Test helpers ──────────────────────────────────────────────────────────────
 
-import { applicationReviewersService } from "@/services/application-reviewers.service";
 import type { CommunityReviewer } from "@/services/community-reviewers/community-reviewers.types";
+import { programReviewersService } from "@/services/program-reviewers.service";
 import ReviewerPickerModal from "../ReviewerPickerModal";
 import type { ReviewerPickerModalProps } from "../ReviewerPickerModal.types";
 
-const mockAssignReviewers = vi.mocked(applicationReviewersService.assignReviewers);
+const mockAddProgramReviewer = vi.mocked(programReviewersService.addReviewer);
 
 const poolReviewers: CommunityReviewer[] = [
   {
@@ -217,101 +215,103 @@ function renderModal(props: Partial<ReviewerPickerModalProps> = {}) {
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
-describe("ReviewerPickerModal — layout", () => {
+describe("ReviewerPickerModal — pool rendering and disabled state", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     setupHooks();
   });
 
-  it("renders single-column layout when applicationAssignment is not provided", () => {
+  it("renders all pool reviewers", () => {
     renderModal();
 
-    // In single-column mode there is no "This application" column header.
-    expect(screen.queryByText(/this application/i)).not.toBeInTheDocument();
-    // The pool section header is present.
-    expect(screen.getAllByText(/community pool/i).length).toBeGreaterThanOrEqual(1);
-    // The "Add new reviewer" button is visible in single-column mode.
-    expect(screen.getByTestId("add-new-reviewer-btn")).toBeInTheDocument();
-  });
-
-  it("renders two-column layout when applicationAssignment is provided", () => {
-    renderModal({
-      applicationAssignment: {
-        applicationId: "app-1",
-        currentlyAssigned: ["0xalice"],
-      },
-    });
-
-    // Both column headers must be present.
-    expect(screen.getAllByText(/community pool/i).length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText(/this application/i).length).toBeGreaterThanOrEqual(1);
-
-    // Alice is currently assigned — should appear in the right column.
-    expect(screen.getByTestId("assigned-item-0xalice")).toBeInTheDocument();
-
-    // The "Add new reviewer" dashed-border button should NOT appear in app-assignment mode.
-    expect(screen.queryByTestId("add-new-reviewer-btn")).not.toBeInTheDocument();
-  });
-
-  it("shows pool items in left column in two-column mode", () => {
-    renderModal({
-      applicationAssignment: {
-        applicationId: "app-1",
-        currentlyAssigned: [],
-      },
-    });
-
-    // All three pool reviewers should be listed.
     expect(screen.getByTestId("pool-item-0xalice")).toBeInTheDocument();
     expect(screen.getByTestId("pool-item-0xbob")).toBeInTheDocument();
     expect(screen.getByTestId("pool-item-0xcarol")).toBeInTheDocument();
   });
+
+  it("disables pool rows whose addresses are in disabledAddresses", () => {
+    renderModal({ disabledAddresses: ["0xalice"] });
+
+    expect(screen.getByTestId("pool-item-0xalice")).toBeDisabled();
+    expect(screen.getByTestId("pool-item-0xbob")).not.toBeDisabled();
+  });
+
+  it("does not stage a disabled pool row when clicked", () => {
+    renderModal({ disabledAddresses: ["0xalice"] });
+
+    fireEvent.click(screen.getByTestId("pool-item-0xalice"));
+
+    expect(screen.queryByTestId("selected-row-0xalice")).not.toBeInTheDocument();
+  });
 });
 
-describe("ReviewerPickerModal — right-column × button", () => {
+describe("ReviewerPickerModal — pool toggling", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     setupHooks();
   });
 
-  it("removes address from the right column when × is clicked", () => {
-    renderModal({
-      applicationAssignment: {
-        applicationId: "app-1",
-        currentlyAssigned: ["0xalice", "0xbob"],
-      },
-    });
+  it("adds a row to the selected list when a pool item is clicked", () => {
+    renderModal();
 
-    // Both should be visible initially.
-    expect(screen.getByTestId("assigned-item-0xalice")).toBeInTheDocument();
-    expect(screen.getByTestId("assigned-item-0xbob")).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId("pool-item-0xbob"));
 
-    // Click the × button for Alice.
-    fireEvent.click(screen.getByTestId("unassign-btn-0xalice"));
-
-    // Alice is removed from the right column.
-    expect(screen.queryByTestId("assigned-item-0xalice")).not.toBeInTheDocument();
-    // Bob remains.
-    expect(screen.getByTestId("assigned-item-0xbob")).toBeInTheDocument();
+    expect(screen.getByTestId("selected-row-0xbob")).toBeInTheDocument();
   });
 
-  it("re-enables the removed address in the pool list so it can be re-selected", () => {
-    renderModal({
-      applicationAssignment: {
-        applicationId: "app-1",
-        currentlyAssigned: ["0xalice"],
-      },
-    });
+  it("removes the row when the same pool item is clicked again", () => {
+    renderModal();
 
-    // Alice starts as disabled (already assigned) in the pool.
-    const alicePoolBtn = screen.getByTestId("pool-item-0xalice");
-    expect(alicePoolBtn).toBeDisabled();
+    fireEvent.click(screen.getByTestId("pool-item-0xbob"));
+    expect(screen.getByTestId("selected-row-0xbob")).toBeInTheDocument();
 
-    // Remove Alice from the right column.
-    fireEvent.click(screen.getByTestId("unassign-btn-0xalice"));
+    fireEvent.click(screen.getByTestId("pool-item-0xbob"));
+    expect(screen.queryByTestId("selected-row-0xbob")).not.toBeInTheDocument();
+  });
+});
 
-    // Now Alice should be enabled in the pool.
-    expect(alicePoolBtn).not.toBeDisabled();
+describe("ReviewerPickerModal — Select all / Unselect all", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    setupHooks();
+  });
+
+  it("renders a 'Select all' button by default", () => {
+    renderModal();
+
+    expect(screen.getByTestId("toggle-select-all-pool")).toHaveTextContent(/select all/i);
+  });
+
+  it("stages every selectable pool row when 'Select all' is clicked", () => {
+    renderModal();
+
+    fireEvent.click(screen.getByTestId("toggle-select-all-pool"));
+
+    expect(screen.getByTestId("selected-row-0xalice")).toBeInTheDocument();
+    expect(screen.getByTestId("selected-row-0xbob")).toBeInTheDocument();
+    expect(screen.getByTestId("selected-row-0xcarol")).toBeInTheDocument();
+  });
+
+  it("excludes disabled rows from 'Select all'", () => {
+    renderModal({ disabledAddresses: ["0xalice"] });
+
+    fireEvent.click(screen.getByTestId("toggle-select-all-pool"));
+
+    expect(screen.queryByTestId("selected-row-0xalice")).not.toBeInTheDocument();
+    expect(screen.getByTestId("selected-row-0xbob")).toBeInTheDocument();
+    expect(screen.getByTestId("selected-row-0xcarol")).toBeInTheDocument();
+  });
+
+  it("flips to 'Unselect all' when every selectable row is staged, and unselects on click", () => {
+    renderModal();
+
+    fireEvent.click(screen.getByTestId("toggle-select-all-pool"));
+    expect(screen.getByTestId("toggle-select-all-pool")).toHaveTextContent(/unselect all/i);
+
+    fireEvent.click(screen.getByTestId("toggle-select-all-pool"));
+    expect(screen.queryByTestId("selected-row-0xalice")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("selected-row-0xbob")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("selected-row-0xcarol")).not.toBeInTheDocument();
   });
 });
 
@@ -321,56 +321,26 @@ describe("ReviewerPickerModal — save payload", () => {
     setupHooks();
   });
 
-  it("save emits union of (kept-on-right) ∪ (selected-on-left) via assignReviewers", async () => {
-    // Alice and Bob are currently assigned; user removes Alice and selects Carol from the pool.
-    renderModal({
-      applicationAssignment: {
-        applicationId: "app-1",
-        currentlyAssigned: ["0xalice", "0xbob"],
-      },
-    });
+  it("calls programReviewersService.addReviewer once per staged pool row", async () => {
+    renderModal();
 
-    // Unassign Alice from the right column.
-    fireEvent.click(screen.getByTestId("unassign-btn-0xalice"));
-
-    // Select Carol from the pool (left column).
+    fireEvent.click(screen.getByTestId("pool-item-0xalice"));
     fireEvent.click(screen.getByTestId("pool-item-0xcarol"));
 
-    // Click Save.
     fireEvent.click(screen.getByTestId("save-btn"));
 
     await waitFor(() => {
-      expect(mockAssignReviewers).toHaveBeenCalledTimes(1);
+      expect(mockAddProgramReviewer).toHaveBeenCalledTimes(2);
     });
 
-    const [applicationId, request] = mockAssignReviewers.mock.calls[0];
-    expect(applicationId).toBe("app-1");
-    // Final list should be Bob (kept) + Carol (newly added), Alice removed.
-    const addresses: string[] = request.appReviewerAddresses;
-    expect(addresses).toContain("0xbob");
-    expect(addresses).toContain("0xcarol");
-    expect(addresses).not.toContain("0xalice");
+    const emails = mockAddProgramReviewer.mock.calls.map((call) => call[1].email);
+    expect(emails).toContain("alice@example.com");
+    expect(emails).toContain("carol@example.com");
   });
 
-  it("save with only unassignments (no new selections) calls assignReviewers with reduced list", async () => {
-    renderModal({
-      applicationAssignment: {
-        applicationId: "app-2",
-        currentlyAssigned: ["0xalice", "0xbob"],
-      },
-    });
+  it("disables Save when nothing is staged", () => {
+    renderModal();
 
-    // Remove both.
-    fireEvent.click(screen.getByTestId("unassign-btn-0xalice"));
-    fireEvent.click(screen.getByTestId("unassign-btn-0xbob"));
-
-    fireEvent.click(screen.getByTestId("save-btn"));
-
-    await waitFor(() => {
-      expect(mockAssignReviewers).toHaveBeenCalledTimes(1);
-    });
-
-    const [, request] = mockAssignReviewers.mock.calls[0];
-    expect(request.appReviewerAddresses).toHaveLength(0);
+    expect(screen.getByTestId("save-btn")).toBeDisabled();
   });
 });
