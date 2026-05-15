@@ -62,17 +62,12 @@ const notFoundErrors = ["Project not found", "Community not found"];
 
 // Anonymous-traffic errors. When a logged-out user lands on a public page
 // (e.g. /project/:projectId) and a hook still requests an authorized indexer
-// route, `fetchData` short-circuits with these strings instead of firing the
-// request. The synthetic indexer 401 has the same payload, so we drop both.
-// See DEV-256.
-const anonymousAuthErrors = [
-  // Backend response when a token-less request still reaches the indexer
-  // (e.g. SDK callers we don't control). Kept here so callers built outside
-  // `fetchData` also benefit from the filter.
-  "Authorization header is required",
-  // Sentinel returned by `fetchData` when no Privy token is available.
-  "AUTH_REQUIRED_NO_TOKEN",
-];
+// route without an `Authorization` header, the indexer responds with this
+// 401 payload. Public-profile hooks now pass `isAuthorized: false` so the
+// request fires as anonymous against the indexer's optional-auth routes,
+// but this filter remains as defense-in-depth for SDK callers and any
+// authed-only route still reached without a token. See DEV-256.
+const anonymousAuthErrors = ["Authorization header is required"];
 
 export const sentryIgnoreErrors = [
   // user rejected a confirmation in the wallet

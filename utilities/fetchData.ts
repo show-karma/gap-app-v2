@@ -4,20 +4,6 @@ import { envVars } from "./enviromentVars";
 import { sanitizeObject } from "./sanitize";
 
 /**
- * Stable sentinel returned by `fetchData` when the caller requested an
- * authorized indexer request but no Privy token is available.
- *
- * Without this guard `fetchData` would still fire the request without an
- * `Authorization` header, the indexer would reply with a 401
- * (`Authorization header is required`), and the error would be reported to
- * Sentry. See DEV-256 for the production incident this prevents.
- *
- * Exported so callers (and Sentry's `ignoreErrors` filter) can match against
- * it instead of doing fragile substring checks on a free-form message.
- */
-export const AUTH_REQUIRED_NO_TOKEN_ERROR = "AUTH_REQUIRED_NO_TOKEN";
-
-/**
  * Fetch data utility that uses Privy's TokenManager for authentication
  *
  * This replaces the complex cookie-based token retrieval with
@@ -73,17 +59,10 @@ export default async function fetchData<T = any>(
       // Get token from TokenManager (which uses Privy)
       const token = await TokenManager.getToken();
 
-      // Short-circuit before firing a token-less request to the indexer.
-      // Previously this branch silently sent the request anyway, producing
-      // a 401 (`Authorization header is required`) that polluted Sentry on
-      // every anonymous visit to a public page (DEV-256). Returning the
-      // stable error tuple here keeps caller error-handling unchanged.
-      if (!token) {
-        return [null, AUTH_REQUIRED_NO_TOKEN_ERROR, null, 401];
+      if (token) {
+        requestConfig.headers.Authorization = `Bearer ${token}`;
+        requestConfig.timeout = 360000;
       }
-
-      requestConfig.headers.Authorization = `Bearer ${token}`;
-      requestConfig.timeout = 360000;
     }
 
     const res = await axios.request<T & { pageInfo?: any }>(requestConfig);

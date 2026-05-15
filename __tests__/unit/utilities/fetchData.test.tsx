@@ -1,6 +1,6 @@
 import axios from "axios";
 import { TokenManager } from "@/utilities/auth/token-manager";
-import fetchData, { AUTH_REQUIRED_NO_TOKEN_ERROR } from "@/utilities/fetchData";
+import fetchData from "@/utilities/fetchData";
 
 vi.mock("axios");
 vi.mock("@/utilities/auth/token-manager");
@@ -39,16 +39,21 @@ describe("fetchData", () => {
     expect(status).toBe(200);
   });
 
-  it("should short-circuit with a synthetic 401 when isAuthorized=true and no token is available (DEV-256)", async () => {
+  it("should fire a header-less request when isAuthorized=true but no token is available", async () => {
+    // Many indexer routes use `optionalAuthentication`, so a missing token must
+    // not block the request — the backend responds as anonymous.
+    const mockResponse = { data: { result: "public-ok" }, status: 200 };
+    (axios.request as vi.Mock).mockResolvedValue(mockResponse);
     (TokenManager.getToken as vi.Mock).mockResolvedValue(null);
 
-    const [resData, error, pageInfo, status] = await fetchData("/test-endpoint");
+    const [resData, error, , status] = await fetchData("/test-endpoint");
 
-    expect(axios.request).not.toHaveBeenCalled();
-    expect(resData).toBeNull();
-    expect(error).toBe(AUTH_REQUIRED_NO_TOKEN_ERROR);
-    expect(pageInfo).toBeNull();
-    expect(status).toBe(401);
+    expect(axios.request).toHaveBeenCalledTimes(1);
+    const calledWith = (axios.request as vi.Mock).mock.calls[0][0];
+    expect(calledWith.headers.Authorization).toBeUndefined();
+    expect(resData).toEqual({ result: "public-ok" });
+    expect(error).toBeNull();
+    expect(status).toBe(200);
   });
 
   it("should fire an anonymous request when isAuthorized=false even with no token", async () => {
