@@ -113,12 +113,7 @@ export interface BrandData {
   sensitiveTopics?: string;
 }
 
-export type WorkTaskStatus =
-  | "queued"
-  | "working"
-  | "blocked"
-  | "ready-for-review"
-  | "done";
+export type WorkTaskStatus = "queued" | "working" | "blocked" | "done";
 
 export interface WorkTask {
   id: string;

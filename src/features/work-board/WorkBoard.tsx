@@ -1,5 +1,14 @@
 "use client";
 
+import {
+  DndContext,
+  type DragEndEvent,
+  PointerSensor,
+  useDraggable,
+  useDroppable,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
 import { useMemo, useState } from "react";
 import {
   useCreateWorkTask,
@@ -19,8 +28,14 @@ const COLUMNS: Array<{ status: WorkTaskStatus; label: string }> = [
   { status: "queued", label: "Queued" },
   { status: "working", label: "Working" },
   { status: "blocked", label: "Blocked" },
-  { status: "ready-for-review", label: "Ready for review" },
   { status: "done", label: "Done" },
+];
+
+const USER_DROPPABLE_STATUSES: WorkTaskStatus[] = [
+  "queued",
+  "working",
+  "blocked",
+  "done",
 ];
 
 interface Props {
@@ -34,12 +49,27 @@ export function WorkBoard({ slug }: Props) {
   const [openTaskId, setOpenTaskId] = useState<string | null>(null);
   const [showNew, setShowNew] = useState(false);
 
+  // Require a small drag distance before drag starts so card clicks
+  // (which open the drawer) still work normally.
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const targetStatus = event.over?.id as WorkTaskStatus | undefined;
+    const taskId = event.active.id as string;
+    if (!targetStatus) return;
+    if (!USER_DROPPABLE_STATUSES.includes(targetStatus)) return;
+    const current = (tasks ?? []).find((t) => t.id === taskId);
+    if (!current || current.status === targetStatus) return;
+    update.mutate({ taskId, status: targetStatus });
+  };
+
   const byStatus = useMemo(() => {
     const groups: Record<WorkTaskStatus, WorkTask[]> = {
       queued: [],
       working: [],
       blocked: [],
-      "ready-for-review": [],
       done: [],
     };
     for (const t of tasks ?? []) {
@@ -51,7 +81,7 @@ export function WorkBoard({ slug }: Props) {
 
   if (isLoading) {
     return (
-      <div className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-5">
+      <div className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-4">
         {COLUMNS.map((c) => (
           <div key={c.status} className="h-64 animate-pulse rounded bg-gray-100" />
         ))}
@@ -105,20 +135,22 @@ export function WorkBoard({ slug }: Props) {
         />
       ) : null}
 
-      <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-5">
-        {COLUMNS.map((col) => (
-          <Column
-            key={col.status}
-            label={col.label}
-            status={col.status}
-            tasks={byStatus[col.status]}
-            onOpen={(id) => setOpenTaskId(id)}
-            onMove={(taskId, status) =>
-              update.mutate({ taskId, status })
-            }
-          />
-        ))}
-      </div>
+      <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+        <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-4">
+          {COLUMNS.map((col) => (
+            <Column
+              key={col.status}
+              label={col.label}
+              status={col.status}
+              tasks={byStatus[col.status]}
+              onOpen={(id) => setOpenTaskId(id)}
+              onMove={(taskId, status) =>
+                update.mutate({ taskId, status })
+              }
+            />
+          ))}
+        </div>
+      </DndContext>
 
       {openTaskId ? (
         <WorkTaskDrawer
@@ -144,8 +176,23 @@ function Column({
   onOpen: (id: string) => void;
   onMove: (taskId: string, status: WorkTaskStatus) => void;
 }) {
+  const droppable = USER_DROPPABLE_STATUSES.includes(status);
+  const { setNodeRef, isOver } = useDroppable({
+    id: status,
+    disabled: !droppable,
+  });
+
   return (
-    <div className="rounded-lg border bg-gray-50 p-3">
+    <div
+      ref={setNodeRef}
+      className={`rounded-lg border p-3 transition-colors ${
+        isOver && droppable
+          ? "border-black bg-gray-100"
+          : droppable
+            ? "border-gray-200 bg-gray-50"
+            : "border-dashed border-gray-200 bg-gray-50/60"
+      }`}
+    >
       <div className="flex items-baseline justify-between">
         <h3 className="text-sm font-semibold">{label}</h3>
         <span className="text-xs text-gray-500">{tasks.length}</span>
@@ -153,31 +200,75 @@ function Column({
       <ul className="mt-3 space-y-2">
         {tasks.length === 0 ? (
           <li className="rounded border border-dashed border-gray-200 px-3 py-6 text-center text-xs text-gray-400">
-            Nothing here
+            {droppable ? "Drop here" : "Nothing here"}
           </li>
         ) : null}
         {tasks.map((t) => (
-          <li key={t.id}>
-            <button
-              type="button"
-              onClick={() => onOpen(t.id)}
-              className="block w-full rounded border bg-white p-3 text-left shadow-sm transition hover:shadow"
-            >
-              <div className="text-sm font-medium">{t.title}</div>
-              {t.assignee ? (
-                <div className="mt-1 text-xs text-gray-500">
-                  {TEAM_ROLE_LABELS[t.assignee as TeamRole] ?? t.assignee}
-                </div>
-              ) : null}
-              <StatusMover
-                current={status}
-                onMove={(next) => onMove(t.id, next)}
-              />
-            </button>
-          </li>
+          <TaskCard
+            key={t.id}
+            task={t}
+            currentStatus={status}
+            onOpen={onOpen}
+            onMove={onMove}
+          />
         ))}
       </ul>
     </div>
+  );
+}
+
+function TaskCard({
+  task,
+  currentStatus,
+  onOpen,
+  onMove,
+}: {
+  task: WorkTask;
+  currentStatus: WorkTaskStatus;
+  onOpen: (id: string) => void;
+  onMove: (taskId: string, status: WorkTaskStatus) => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, isDragging } =
+    useDraggable({ id: task.id });
+
+  const style = transform
+    ? {
+        transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+      }
+    : undefined;
+
+  return (
+    <li
+      ref={setNodeRef}
+      style={style}
+      className={isDragging ? "opacity-50" : ""}
+    >
+      <div
+        {...listeners}
+        {...attributes}
+        role="button"
+        tabIndex={0}
+        onClick={() => onOpen(task.id)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onOpen(task.id);
+          }
+        }}
+        className="block w-full cursor-grab rounded border bg-white p-3 text-left shadow-sm transition hover:shadow active:cursor-grabbing"
+      >
+        <div className="text-sm font-medium">{task.title}</div>
+        {task.assignee ? (
+          <div className="mt-1 text-xs text-gray-500">
+            {TEAM_ROLE_LABELS[task.assignee as TeamRole] ?? task.assignee}
+          </div>
+        ) : null}
+        <StatusMover
+          current={currentStatus}
+          onMove={(next) => onMove(task.id, next)}
+        />
+      </div>
+    </li>
   );
 }
 
@@ -188,11 +279,7 @@ function StatusMover({
   current: WorkTaskStatus;
   onMove: (next: WorkTaskStatus) => void;
 }) {
-  // Users can set: queued, blocked, ready-for-review, done. "working" is
-  // dispatcher-only.
-  const targets = (
-    ["queued", "blocked", "ready-for-review", "done"] as WorkTaskStatus[]
-  ).filter((s) => s !== current);
+  const targets = USER_DROPPABLE_STATUSES.filter((s) => s !== current);
 
   return (
     <div className="mt-2 flex flex-wrap gap-1">
