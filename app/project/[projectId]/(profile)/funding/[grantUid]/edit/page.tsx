@@ -16,7 +16,7 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   const { projectId, grantUid } = await params;
   const [projectInfo, grants] = await Promise.all([
     getProjectCachedData(projectId),
-    getProjectGrants(projectId),
+    getProjectGrants(projectId, { isAuthorized: false }),
   ]);
 
   if (!projectInfo) {
