@@ -63,8 +63,9 @@ describe("OrganizationJsonLd", () => {
     it("should include social profiles in sameAs", () => {
       const { container } = render(<OrganizationJsonLd />);
       const schema = getOrganizationSchema(container);
-      expect(schema.sameAs).toContain("https://twitter.com/karmahq_");
+      expect(schema.sameAs).toContain("https://x.com/karmahq_");
       expect(schema.sameAs).toContain("https://github.com/show-karma");
+      expect(schema.sameAs).not.toContain("https://twitter.com/karmahq_");
     });
   });
 

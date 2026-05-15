@@ -182,7 +182,7 @@ describe("Menu Items Configuration", () => {
     it("should have valid configuration", () => {
       expect(resourcesItems).toBeDefined();
       expect(Array.isArray(resourcesItems)).toBe(true);
-      expect(resourcesItems.length).toBeGreaterThanOrEqual(3);
+      expect(resourcesItems.length).toBe(4);
     });
 
     it("should have core properties for each item", () => {

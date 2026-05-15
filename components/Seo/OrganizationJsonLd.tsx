@@ -9,11 +9,7 @@ const organizationSchema = {
   logo: `${SITE_URL}/logo/karma-logo.svg`,
   description: DEFAULT_DESCRIPTION,
   email: "info@karmahq.xyz",
-  sameAs: [
-    "https://x.com/karmahq_",
-    "https://twitter.com/karmahq_",
-    "https://github.com/show-karma",
-  ],
+  sameAs: ["https://x.com/karmahq_", "https://github.com/show-karma"],
 };
 
 const webApplicationSchema = {
