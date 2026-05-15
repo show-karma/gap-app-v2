@@ -61,12 +61,7 @@ const TIME_RANGE_OPTIONS: { value: TimeRange; label: string }[] = [
  */
 export function ProjectActivityChart({ className, embedded = false }: ProjectActivityChartProps) {
   const { project } = useProjectStore();
-  const { allUpdates: milestones, isLoading } = useProjectProfile(
-    project?.uid || "",
-    undefined,
-    undefined,
-    { isAuthorized: false }
-  );
+  const { allUpdates: milestones, isLoading } = useProjectProfile(project?.uid || "");
 
   // Track visibility to prevent chart rendering when container is hidden (e.g., lg:hidden on mobile header)
   // This prevents Recharts warnings about width(0) and height(0) when chart is in a hidden container

@@ -1,11 +1,11 @@
 /**
- * Regression coverage for DEV-257.
+ * Coverage for the `isAuthorized` opt-out on project-profile services.
  *
- * The public project-profile SSR/prefetch path must request grants, updates,
- * and impacts WITHOUT an Authorization header so the server-rendered code
- * never touches the browser-only `TokenManager`. Reaching for the token on
- * the server was the original cause of `Error: Connection closed.` events
- * on `/project/:projectId/funding`.
+ * Production callers no longer pass `isAuthorized: false` — TokenManager
+ * works on both client and server, so authenticated visitors should always
+ * send their bearer token. The option remains for explicit anonymous calls
+ * (e.g. SDK consumers or future feature flags); these tests lock in that
+ * the flag is correctly forwarded to `fetchData` when callers do opt out.
  */
 
 import { getProjectGrants } from "../project-grants.service";

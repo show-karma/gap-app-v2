@@ -48,18 +48,9 @@ export const ProjectRoadmap = ({ project: propProject }: ProjectRoadmapProps) =>
 
   const project = propProject || zustandProject;
 
-  // Use API endpoint for all updates, milestones, and grant milestones.
-  // The roadmap renders on the public /project/:projectId route — skip the
-  // bearer token so anonymous traffic stays off the auth-required path.
-  const { milestones: apiMilestones = [], isLoading } = useProjectUpdates(
-    projectId as string,
-    undefined,
-    undefined,
-    { isAuthorized: false }
-  );
+  const { milestones: apiMilestones = [], isLoading } = useProjectUpdates(projectId as string);
 
-  // Use dedicated API endpoint for impacts (same public-profile rationale)
-  const { impacts } = useProjectImpacts(projectId as string, { isAuthorized: false });
+  const { impacts } = useProjectImpacts(projectId as string);
 
   const { setIsProgressModalOpen, setProgressModalScreen } = useProgressModalStore();
 

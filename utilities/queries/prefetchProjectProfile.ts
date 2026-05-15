@@ -31,25 +31,24 @@ export interface PrefetchResult {
  */
 export const prefetchProjectProfileData = cache(
   async (queryClient: QueryClient, projectId: string): Promise<PrefetchResult> => {
-    // The public project-profile path runs server-side during SSR/streaming.
-    // Touching `TokenManager` there (browser-only) caused the streamed response
-    // to abort and surfaced as `Error: Connection closed.` in Sentry on
-    // `/project/:projectId/funding`. Always request unauthenticated for the
-    // public prefetch — authenticated client hooks will hydrate after.
+    // TokenManager.getServerToken() reads the Privy auth cookie via
+    // `next/headers`, so authenticated visitors get role-scoped data
+    // (drafts, admin-only fields) during SSR. Anonymous visitors fall
+    // through to header-less requests against optional-auth routes.
     const results = await Promise.allSettled([
       queryClient.prefetchQuery({
         queryKey: QUERY_KEYS.PROJECT.GRANTS(projectId),
-        queryFn: () => getProjectGrants(projectId, { isAuthorized: false }),
+        queryFn: () => getProjectGrants(projectId),
         staleTime: 5 * 60 * 1000,
       }),
       queryClient.prefetchQuery({
         queryKey: QUERY_KEYS.PROJECT.UPDATES(projectId),
-        queryFn: () => getProjectUpdates(projectId, undefined, { isAuthorized: false }),
+        queryFn: () => getProjectUpdates(projectId),
         staleTime: 5 * 60 * 1000,
       }),
       queryClient.prefetchQuery({
         queryKey: QUERY_KEYS.PROJECT.IMPACTS(projectId),
-        queryFn: () => getProjectImpacts(projectId, { isAuthorized: false }),
+        queryFn: () => getProjectImpacts(projectId),
         staleTime: 5 * 60 * 1000,
       }),
     ]);
@@ -80,7 +79,7 @@ export const prefetchProjectProfileData = cache(
  * Uses React.cache() for request deduplication.
  */
 export const getProjectGrantsCached = cache(async (projectId: string) => {
-  return getProjectGrants(projectId, { isAuthorized: false });
+  return getProjectGrants(projectId);
 });
 
 /**
@@ -88,7 +87,7 @@ export const getProjectGrantsCached = cache(async (projectId: string) => {
  * Uses React.cache() for request deduplication.
  */
 export const getProjectUpdatesCached = cache(async (projectId: string) => {
-  return getProjectUpdates(projectId, undefined, { isAuthorized: false });
+  return getProjectUpdates(projectId);
 });
 
 /**
@@ -96,5 +95,5 @@ export const getProjectUpdatesCached = cache(async (projectId: string) => {
  * Uses React.cache() for request deduplication.
  */
 export const getProjectImpactsCached = cache(async (projectId: string) => {
-  return getProjectImpacts(projectId, { isAuthorized: false });
+  return getProjectImpacts(projectId);
 });

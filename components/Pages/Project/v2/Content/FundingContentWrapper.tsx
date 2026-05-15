@@ -14,12 +14,7 @@ import { FundingContent } from "../FundingPage/FundingContent";
  */
 export function FundingContentWrapper() {
   const { projectId } = useParams();
-  const { project, isProjectLoading, isError, refetch } = useProjectProfile(
-    projectId as string,
-    undefined,
-    undefined,
-    { isAuthorized: false }
-  );
+  const { project, isProjectLoading, isError, refetch } = useProjectProfile(projectId as string);
 
   if (isProjectLoading) {
     return <FundingContentSkeleton />;

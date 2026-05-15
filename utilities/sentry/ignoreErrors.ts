@@ -61,12 +61,11 @@ const sentryInstrumentationErrors = [
 const notFoundErrors = ["Project not found", "Community not found"];
 
 // Anonymous-traffic errors. When a logged-out user lands on a public page
-// (e.g. /project/:projectId) and a hook still requests an authorized indexer
-// route without an `Authorization` header, the indexer responds with this
-// 401 payload. Public-profile hooks now pass `isAuthorized: false` so the
-// request fires as anonymous against the indexer's optional-auth routes,
-// but this filter remains as defense-in-depth for SDK callers and any
-// authed-only route still reached without a token. See DEV-256.
+// (e.g. /project/:projectId), some indexer routes (or SDK callers) still
+// hit auth-required paths without a bearer token and the backend replies
+// with this 401 payload. Filter it out — the request itself isn't broken,
+// it just happened on a path that doesn't support anonymous access. See
+// DEV-256.
 const anonymousAuthErrors = ["Authorization header is required"];
 
 export const sentryIgnoreErrors = [

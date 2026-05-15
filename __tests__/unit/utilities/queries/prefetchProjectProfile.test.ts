@@ -66,11 +66,11 @@ describe("prefetchProjectProfile", () => {
         updates: true,
         impacts: true,
       });
-      expect(mockGetProjectGrants).toHaveBeenCalledWith(projectId, { isAuthorized: false });
-      expect(mockGetProjectUpdates).toHaveBeenCalledWith(projectId, undefined, {
-        isAuthorized: false,
-      });
-      expect(mockGetProjectImpacts).toHaveBeenCalledWith(projectId, { isAuthorized: false });
+      // Prefetch lets TokenManager.getServerToken() pull the Privy cookie
+      // when present, so authenticated visitors get role-scoped data.
+      expect(mockGetProjectGrants).toHaveBeenCalledWith(projectId);
+      expect(mockGetProjectUpdates).toHaveBeenCalledWith(projectId);
+      expect(mockGetProjectImpacts).toHaveBeenCalledWith(projectId);
       expect(mockQueryClient.prefetchQuery).toHaveBeenCalledTimes(3);
     });
 
