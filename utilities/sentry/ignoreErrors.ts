@@ -60,6 +60,14 @@ const sentryInstrumentationErrors = [
 // See https://karma-crypto-inc.sentry.io/issues/7205405990
 const notFoundErrors = ["Project not found", "Community not found"];
 
+// Anonymous-traffic errors. When a logged-out user lands on a public page
+// (e.g. /project/:projectId), some indexer routes (or SDK callers) still
+// hit auth-required paths without a bearer token and the backend replies
+// with this 401 payload. Filter it out — the request itself isn't broken,
+// it just happened on a path that doesn't support anonymous access. See
+// DEV-256.
+const anonymousAuthErrors = ["Authorization header is required"];
+
 export const sentryIgnoreErrors = [
   // user rejected a confirmation in the wallet
   "rejected the request",
@@ -77,4 +85,5 @@ export const sentryIgnoreErrors = [
   ...sentryInstrumentationErrors,
   ...notFoundErrors,
   ...streamingAbortErrors,
+  ...anonymousAuthErrors,
 ];

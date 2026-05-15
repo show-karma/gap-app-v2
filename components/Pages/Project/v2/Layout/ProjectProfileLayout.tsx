@@ -131,7 +131,6 @@ export function ProjectProfileLayout({
     }
   }, [inviteCode, hasOpenedInviteModal, openContributorProfileModal]);
 
-  // Use unified hook for all project profile data
   const { project, isProjectLoading, isLoading, isError, isVerified, stats } = useProjectProfile(
     projectId as string
   );

@@ -48,11 +48,8 @@ export const ProjectRoadmap = ({ project: propProject }: ProjectRoadmapProps) =>
 
   const project = propProject || zustandProject;
 
-  // Use API endpoint for all updates, milestones, and grant milestones
-  // API now returns grant title and community info directly
   const { milestones: apiMilestones = [], isLoading } = useProjectUpdates(projectId as string);
 
-  // Use dedicated API endpoint for impacts
   const { impacts } = useProjectImpacts(projectId as string);
 
   const { setIsProgressModalOpen, setProgressModalScreen } = useProgressModalStore();

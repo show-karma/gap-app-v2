@@ -375,11 +375,23 @@ const sortByDateDescending = (milestones: UnifiedMilestone[]): UnifiedMilestone[
  * @param filters - Optional extra filters forwarded to the indexer
  * @returns Object containing unified milestones, loading state, error, and refetch function
  */
+interface UseProjectUpdatesOptions {
+  /**
+   * Whether the request should attach a Privy bearer token. Defaults to
+   * `true` for backward compatibility. Public profile callers MUST pass
+   * `false` so anonymous client refetches don't trip the indexer's
+   * `Authorization header is required` 401 path.
+   */
+  isAuthorized?: boolean;
+}
+
 export function useProjectUpdates(
   projectIdOrSlug: string,
   milestoneStatus?: "pending" | "completed" | "verified",
-  filters?: UpdatesFeedFilters
+  filters?: UpdatesFeedFilters,
+  options: UseProjectUpdatesOptions = {}
 ) {
+  const { isAuthorized = true } = options;
   // Build a stable query key that includes all active filter values so that
   // React Query invalidates the cache whenever any filter changes.
   const queryKey = [
@@ -400,7 +412,8 @@ export function useProjectUpdates(
     refetch: originalRefetch,
   } = useQuery<UpdatesApiResponse>({
     queryKey,
-    queryFn: () => getProjectUpdates(projectIdOrSlug, milestoneStatus, filters),
+    queryFn: () =>
+      getProjectUpdates(projectIdOrSlug, milestoneStatus, { ...filters, isAuthorized }),
     enabled: !!projectIdOrSlug,
     staleTime: 5 * 60 * 1000,
     placeholderData: keepPreviousData,

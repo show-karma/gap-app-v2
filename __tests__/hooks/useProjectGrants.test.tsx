@@ -133,6 +133,32 @@ describe("useProjectGrants", () => {
     });
   });
 
+  describe("auth options (DEV-256)", () => {
+    it("forwards isAuthorized=false to getProjectGrants for public callers", async () => {
+      mockGetProjectGrants.mockResolvedValue([]);
+
+      renderHookWithProviders(() => useProjectGrants("test-project", { isAuthorized: false }));
+
+      await waitFor(() => {
+        expect(mockGetProjectGrants).toHaveBeenCalledWith("test-project", {
+          isAuthorized: false,
+        });
+      });
+    });
+
+    it("defaults to isAuthorized=true when no options are provided", async () => {
+      mockGetProjectGrants.mockResolvedValue([]);
+
+      renderHookWithProviders(() => useProjectGrants("test-project"));
+
+      await waitFor(() => {
+        expect(mockGetProjectGrants).toHaveBeenCalledWith("test-project", {
+          isAuthorized: true,
+        });
+      });
+    });
+  });
+
   describe("query key isolation", () => {
     it("uses different query keys for different projects", async () => {
       mockGetProjectGrants.mockResolvedValue([grant1]);

@@ -19,4 +19,8 @@ describe("sentryIgnoreErrors", () => {
     expect(matches("WebSocket connection failed")).toBe(false);
     expect(matches("Database connection refused")).toBe(false);
   });
+
+  it("suppresses anonymous Authorization header errors (DEV-256)", () => {
+    expect(matches("Authorization header is required")).toBe(true);
+  });
 });
