@@ -54,14 +54,17 @@ export default async function fetchData<T = any>(
       signal,
     };
 
-    // Add authorization header if needed
-    if (isIndexerUrl && isAuthorized) {
-      // Get token from TokenManager (which uses Privy)
-      const token = await TokenManager.getToken();
+    // Indexer requests get a generous timeout regardless of token presence.
+    // Anonymous calls hit optional-auth routes and shouldn't run unbounded
+    // (axios defaults to 0 = no timeout) just because no Privy token exists.
+    if (isIndexerUrl) {
+      requestConfig.timeout = 360000;
 
-      if (token) {
-        requestConfig.headers.Authorization = `Bearer ${token}`;
-        requestConfig.timeout = 360000;
+      if (isAuthorized) {
+        const token = await TokenManager.getToken();
+        if (token) {
+          requestConfig.headers.Authorization = `Bearer ${token}`;
+        }
       }
     }
 

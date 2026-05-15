@@ -66,6 +66,7 @@ describe("fetchData", () => {
     expect(axios.request).toHaveBeenCalledTimes(1);
     const calledWith = (axios.request as vi.Mock).mock.calls[0][0];
     expect(calledWith.headers.Authorization).toBeUndefined();
+    expect(TokenManager.getToken).not.toHaveBeenCalled();
     expect(resData).toEqual({ result: "public" });
     expect(error).toBeNull();
     expect(status).toBe(200);
