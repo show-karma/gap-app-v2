@@ -1,11 +1,13 @@
 "use client";
 
 import { ArrowDownTrayIcon, FunnelIcon } from "@heroicons/react/24/outline";
+import { useMutation } from "@tanstack/react-query";
 // eslint-disable-next-line import/no-extraneous-dependencies
 import debounce from "lodash.debounce";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import pluralize from "pluralize";
 import { type FC, useCallback, useEffect, useMemo, useState } from "react";
+import { toast } from "react-hot-toast";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { Button } from "@/components/Utilities/Button";
 import {
@@ -210,6 +212,22 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
     router.replace(newUrl, { scroll: false });
   }, [filters, sortBy, sortOrder, pathname, router, searchParams]);
 
+  const statusChangeMutation = useMutation({
+    mutationFn: (vars: {
+      applicationId: string;
+      status: string;
+      note?: string;
+      approvedAmount?: string;
+      approvedCurrency?: string;
+    }) => updateApplicationStatus(vars),
+    onSuccess: () => {
+      refetch();
+    },
+    onError: () => {
+      toast.error("Failed to update application status. Please try again.");
+    },
+  });
+
   const handleStatusChange = useCallback(
     async (
       applicationId: string,
@@ -217,23 +235,16 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
       note?: string,
       approvedAmount?: string,
       approvedCurrency?: string
-    ) => {
-      try {
-        await updateApplicationStatus({
-          applicationId,
-          status,
-          note,
-          approvedAmount,
-          approvedCurrency,
-        });
-        // Refetch to get updated data
-        refetch();
-        // Call parent's onStatusChange if provided
-      } catch (error) {
-        console.error("Failed to update application status:", error);
-      }
+    ): Promise<void> => {
+      await statusChangeMutation.mutateAsync({
+        applicationId,
+        status,
+        note,
+        approvedAmount,
+        approvedCurrency,
+      });
     },
-    [updateApplicationStatus, refetch]
+    [statusChangeMutation]
   );
 
   const handleExport = useCallback(

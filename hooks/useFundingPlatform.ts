@@ -370,7 +370,7 @@ export const useFundingApplications = (programId: string, filters: IApplicationF
     error: applicationsQuery.error, // Only show error if applications query fails, stats are optional
     statsError: statsQuery.error, // Separate error for stats (non-blocking)
     submitApplication: submitApplicationMutation.mutate,
-    updateApplicationStatus: updateStatusMutation.mutate,
+    updateApplicationStatus: updateStatusMutation.mutateAsync,
     isSubmitting: submitApplicationMutation.isPending,
     isUpdatingStatus: updateStatusMutation.isPending,
     refetch: () => {
