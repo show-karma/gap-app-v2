@@ -4,12 +4,22 @@
 
 import * as Sentry from "@sentry/nextjs";
 import { sentryIgnoreErrors } from "./utilities/sentry/ignoreErrors";
+import { isTransientNetworkError } from "./utilities/sentry/transientErrors";
 
 Sentry.init({
   enabled: process.env.NEXT_PUBLIC_VERCEL_ENV === "production",
   dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
   ignoreErrors: sentryIgnoreErrors,
   integrations: [],
+  // Defence in depth for transient Axios "Network Error" events that
+  // bubble through code paths bypassing `errorManager` (raw React errors,
+  // third-party SDK fetches). See DEV-236 / GAP-FRONTEND-13P.
+  beforeSend(event, hint) {
+    if (isTransientNetworkError(hint?.originalException)) {
+      return null;
+    }
+    return event;
+  },
 
   // Define how likely traces are sampled. Adjust this value in production, or use tracesSampler for greater control.
   tracesSampleRate: 0.01,

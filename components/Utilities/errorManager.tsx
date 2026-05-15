@@ -1,4 +1,5 @@
 import * as Sentry from "@sentry/nextjs";
+import { isTransientNetworkError } from "@/utilities/sentry/transientErrors";
 
 // Lazy import toast to avoid issues in server components
 let toast: typeof import("react-hot-toast").default | null = null;
@@ -68,6 +69,15 @@ export const errorManager = (
       }
     }
   }
+  // Transient browser-side network errors (offline, CORS preflight, ad-
+  // blocker, navigation abort) produce stacks that are pure minified Axios
+  // bundle frames with no actionable signal. They get retried by React
+  // Query and surface to the user as an error UI, so drop them on the
+  // floor for Sentry. See DEV-236 / GAP-FRONTEND-13P.
+  if (isTransientNetworkError(error)) {
+    return;
+  }
+
   const errorToCapture = error?.originalError || error?.message;
   Sentry.captureException(error, {
     extra: {
