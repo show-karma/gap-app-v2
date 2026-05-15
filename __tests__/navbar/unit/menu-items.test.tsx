@@ -182,28 +182,25 @@ describe("Menu Items Configuration", () => {
     it("should have valid configuration", () => {
       expect(resourcesItems).toBeDefined();
       expect(Array.isArray(resourcesItems)).toBe(true);
-      expect(resourcesItems.length).toBe(3);
+      expect(resourcesItems.length).toBeGreaterThanOrEqual(3);
     });
 
-    it("should have all required properties for each item", () => {
+    it("should have core properties for each item", () => {
       resourcesItems.forEach((item) => {
         expect(item).toHaveProperty("href");
         expect(item).toHaveProperty("icon");
         expect(item).toHaveProperty("title");
-        expect(item).toHaveProperty("external");
-        expect(item).toHaveProperty("showArrow");
       });
     });
 
-    it("should have external flag set to true for all items", () => {
+    it("should mark external links explicitly", () => {
       resourcesItems.forEach((item) => {
-        expect(item.external).toBe(true);
-      });
-    });
-
-    it("should have showArrow flag set to true for all items", () => {
-      resourcesItems.forEach((item) => {
-        expect(item.showArrow).toBe(true);
+        if (item.external) {
+          expect(item.showArrow).toBe(true);
+          expect(item.href).toMatch(/^https?:\/\//);
+        } else {
+          expect(item.href).toMatch(/^\//);
+        }
       });
     });
 
@@ -221,10 +218,11 @@ describe("Menu Items Configuration", () => {
       expect(blogItem?.external).toBe(true);
     });
 
-    it("should have valid external URLs", () => {
-      resourcesItems.forEach((item) => {
-        expect(item.href).toMatch(/^https?:\/\//);
-      });
+    it('should contain "For AI Agents" item as an internal link', () => {
+      const forAgentsItem = resourcesItems.find((item) => item.title === "For AI Agents");
+      expect(forAgentsItem).toBeDefined();
+      expect(forAgentsItem?.href).toBe(PAGES.FOR_AGENTS);
+      expect(forAgentsItem?.external).toBeFalsy();
     });
   });
 

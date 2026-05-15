@@ -147,6 +147,14 @@ describe("app/sitemaps/static/sitemap.ts", () => {
     }
   });
 
+  it("includes the MCP connect and For AI Agents pages", async () => {
+    const { default: staticSitemap } = await import("@/app/sitemaps/static/sitemap");
+    const entries = staticSitemap();
+    const urls = entries.map((e) => e.url);
+    expect(urls).toContain(`${SITE_URL}/mcp/connect`);
+    expect(urls).toContain(`${SITE_URL}/for-agents`);
+  });
+
   it("sets homepage priority to 1 and changeFrequency to daily", async () => {
     const { default: staticSitemap } = await import("@/app/sitemaps/static/sitemap");
     const entries = staticSitemap();
