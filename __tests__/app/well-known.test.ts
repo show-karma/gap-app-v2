@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/nextjs";
 import { SITE_URL } from "@/utilities/meta";
 
 const INDEXER_URL = "http://localhost:4000";
@@ -87,6 +88,10 @@ describe("/.well-known/mcp-tools.json route handler", () => {
     vi.restoreAllMocks();
   });
 
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it("proxies the upstream /v2/mcp/tools response when it succeeds", async () => {
     const upstream = { tools: [{ name: "get_project_details" }] };
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: async () => upstream }));
@@ -99,7 +104,7 @@ describe("/.well-known/mcp-tools.json route handler", () => {
   });
 
   it("returns an empty fallback with status 502 when upstream responds non-OK", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false }));
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false, status: 503 }));
 
     const { GET } = await import("@/app/.well-known/mcp-tools.json/route");
     const res = await GET();
@@ -124,5 +129,109 @@ describe("/.well-known/mcp-tools.json route handler", () => {
     const { GET } = await import("@/app/.well-known/mcp-tools.json/route");
     const res = await GET();
     expect(res.headers.get("Access-Control-Allow-Origin")).toBe("*");
+  });
+
+  it("sets Cache-Control: no-store on 502 from upstream throw", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("ECONNREFUSED")));
+
+    const { GET } = await import("@/app/.well-known/mcp-tools.json/route");
+    const res = await GET();
+    expect(res.status).toBe(502);
+    expect(res.headers.get("Cache-Control")).toBe("no-store");
+  });
+
+  it("sets Cache-Control: no-store on 502 from non-OK upstream", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false, status: 503 }));
+
+    const { GET } = await import("@/app/.well-known/mcp-tools.json/route");
+    const res = await GET();
+    expect(res.status).toBe(502);
+    expect(res.headers.get("Cache-Control")).toBe("no-store");
+  });
+
+  it("sets Cache-Control: public, max-age=3600 on success", async () => {
+    const upstream = { tools: [{ name: "get_project_details" }] };
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: async () => upstream }));
+
+    const { GET } = await import("@/app/.well-known/mcp-tools.json/route");
+    const res = await GET();
+    expect(res.status).toBe(200);
+    expect(res.headers.get("Cache-Control")).toBe("public, max-age=3600");
+  });
+
+  it("captures the upstream throw to Sentry with the route tag", async () => {
+    const fetchError = new Error("ECONNREFUSED");
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(fetchError));
+
+    const { GET } = await import("@/app/.well-known/mcp-tools.json/route");
+    await GET();
+
+    expect(Sentry.captureException).toHaveBeenCalledWith(fetchError, {
+      tags: { route: "well-known/mcp-tools" },
+    });
+  });
+
+  it("captures non-OK upstream responses to Sentry with the route tag", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false, status: 503 }));
+
+    const { GET } = await import("@/app/.well-known/mcp-tools.json/route");
+    await GET();
+
+    expect(Sentry.captureException).toHaveBeenCalledWith(
+      expect.objectContaining({ message: "Upstream /v2/mcp/tools returned 503" }),
+      expect.objectContaining({
+        tags: { route: "well-known/mcp-tools" },
+        extra: { status: 503 },
+      })
+    );
+  });
+
+  it("OPTIONS returns 204 with CORS headers", async () => {
+    const { OPTIONS } = await import("@/app/.well-known/mcp-tools.json/route");
+    const res = await OPTIONS();
+    expect(res.status).toBe(204);
+    expect(res.headers.get("Access-Control-Allow-Origin")).toBe("*");
+    expect(res.headers.get("Access-Control-Allow-Methods")).toContain("OPTIONS");
+  });
+});
+
+describe("getIndexerBaseUrl helper", () => {
+  beforeEach(() => {
+    vi.resetModules();
+    vi.restoreAllMocks();
+  });
+
+  afterEach(() => {
+    vi.resetModules();
+    vi.restoreAllMocks();
+  });
+
+  it("returns the configured indexer URL when set", async () => {
+    const { getIndexerBaseUrl } = await import("@/utilities/wellKnown");
+    expect(getIndexerBaseUrl()).toBe(INDEXER_URL);
+  });
+
+  it("throws when NEXT_PUBLIC_GAP_INDEXER_URL is undefined", async () => {
+    vi.doMock("@/utilities/enviromentVars", () => ({
+      envVars: { NEXT_PUBLIC_GAP_INDEXER_URL: undefined },
+    }));
+    const { getIndexerBaseUrl } = await import("@/utilities/wellKnown");
+    expect(() => getIndexerBaseUrl()).toThrow(/NEXT_PUBLIC_GAP_INDEXER_URL is not set/);
+  });
+
+  it("throws when NEXT_PUBLIC_GAP_INDEXER_URL is an empty string", async () => {
+    vi.doMock("@/utilities/enviromentVars", () => ({
+      envVars: { NEXT_PUBLIC_GAP_INDEXER_URL: "" },
+    }));
+    const { getIndexerBaseUrl } = await import("@/utilities/wellKnown");
+    expect(() => getIndexerBaseUrl()).toThrow(/NEXT_PUBLIC_GAP_INDEXER_URL is not set/);
+  });
+
+  it("throws when NEXT_PUBLIC_GAP_INDEXER_URL is whitespace only", async () => {
+    vi.doMock("@/utilities/enviromentVars", () => ({
+      envVars: { NEXT_PUBLIC_GAP_INDEXER_URL: "   " },
+    }));
+    const { getIndexerBaseUrl } = await import("@/utilities/wellKnown");
+    expect(() => getIndexerBaseUrl()).toThrow(/NEXT_PUBLIC_GAP_INDEXER_URL is not set/);
   });
 });
