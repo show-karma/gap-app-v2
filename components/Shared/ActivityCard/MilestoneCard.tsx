@@ -222,10 +222,6 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
     (projectMilestone?.completed?.data as any)?.deliverables ||
     (grantMilestone?.milestone.completed?.data as any)?.deliverables;
 
-  // See computeMilestoneCardCompletionGate for the full rule. Briefly: a
-  // completed milestone-shaped entry always renders the "Milestone Update"
-  // section, even with no narrative, so the timeline keeps surfacing the
-  // completion event and renderMilestoneCompletion can show "—".
   const { showSection: showCompletionSection, showTimelineHeader: showCompletionTimelineHeader } =
     computeMilestoneCardCompletionGate({
       type,
