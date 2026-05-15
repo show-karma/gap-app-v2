@@ -14,6 +14,7 @@ const EMPTY_KYC_MAP = new Map<string, KycStatusResponse | null>();
 
 interface ApplicationTableProps {
   programId: string;
+  communityUID?: string;
   applications: IFundingApplication[];
   sortBy?: IApplicationFilters["sortBy"];
   sortOrder?: IApplicationFilters["sortOrder"];
@@ -53,6 +54,7 @@ interface ApplicationTableProps {
 
 const ApplicationTableComponent: FC<ApplicationTableProps> = ({
   programId,
+  communityUID,
   applications,
   sortBy,
   sortOrder,
@@ -211,6 +213,7 @@ const ApplicationTableComponent: FC<ApplicationTableProps> = ({
           <ApplicationTableRow
             key={application.referenceNumber}
             programId={programId}
+            communityUID={communityUID}
             application={application}
             showAIScoreColumn={showAIScoreColumn}
             showInternalAIScoreColumn={showInternalAIScoreColumn}
