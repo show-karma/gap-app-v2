@@ -298,7 +298,7 @@ export const MilestonesList: FC<MilestonesListProps> = ({ grant }) => {
           </div>
 
           <div className="mt-3 flex w-full flex-col gap-6">
-            {selectedTabArray.map((item, idx) => {
+            {selectedTabArray.map((item) => {
               if (item.type === "update") {
                 const updatesArray = generalArray.filter((i) => i.type === "update");
                 const updatesIndex = updatesArray.findIndex(
