@@ -81,9 +81,7 @@ describe("getProjectMemberRoles", () => {
   it("labels members without admin status as Member", async () => {
     mockState.projectOwnerReturn = OWNER;
 
-    const roles = await getProjectMemberRoles(
-      buildProject({ members: [OWNER, PLAIN_MEMBER] })
-    );
+    const roles = await getProjectMemberRoles(buildProject({ members: [OWNER, PLAIN_MEMBER] }));
 
     expect(roles[PLAIN_MEMBER]).toBe("Member");
   });

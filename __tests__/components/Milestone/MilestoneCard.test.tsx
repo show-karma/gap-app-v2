@@ -174,27 +174,35 @@ describe("MilestoneCard", () => {
 
   describe("Rendering - Basic Elements", () => {
     it("should render milestone card with title", () => {
-      render(<MilestoneCard milestone={mockProjectMilestone} isAuthorized={false} canEdit={false} />);
+      render(
+        <MilestoneCard milestone={mockProjectMilestone} isAuthorized={false} canEdit={false} />
+      );
 
       expect(screen.getByText("Test Project Milestone")).toBeInTheDocument();
     });
 
     it("should render milestone description", () => {
-      render(<MilestoneCard milestone={mockProjectMilestone} isAuthorized={false} canEdit={false} />);
+      render(
+        <MilestoneCard milestone={mockProjectMilestone} isAuthorized={false} canEdit={false} />
+      );
 
       const description = screen.getByTestId("read-more");
       expect(description).toHaveTextContent("This is a test milestone description");
     });
 
     it("should render milestone badge", () => {
-      render(<MilestoneCard milestone={mockProjectMilestone} isAuthorized={false} canEdit={false} />);
+      render(
+        <MilestoneCard milestone={mockProjectMilestone} isAuthorized={false} canEdit={false} />
+      );
 
       expect(screen.getByText("Milestone")).toBeInTheDocument();
       expect(screen.getByAltText("Milestone")).toBeInTheDocument();
     });
 
     it("should render creation date and attester", () => {
-      render(<MilestoneCard milestone={mockProjectMilestone} isAuthorized={false} canEdit={false} />);
+      render(
+        <MilestoneCard milestone={mockProjectMilestone} isAuthorized={false} canEdit={false} />
+      );
 
       expect(screen.getByText(/Created on/i)).toBeInTheDocument();
       expect(screen.getByText(/by$/i)).toBeInTheDocument();
@@ -205,19 +213,25 @@ describe("MilestoneCard", () => {
 
   describe("Status Rendering", () => {
     it('should display "Pending" status for incomplete milestone', () => {
-      render(<MilestoneCard milestone={mockProjectMilestone} isAuthorized={false} canEdit={false} />);
+      render(
+        <MilestoneCard milestone={mockProjectMilestone} isAuthorized={false} canEdit={false} />
+      );
 
       expect(screen.getByText("Pending")).toBeInTheDocument();
     });
 
     it('should display "Completed" status for complete milestone', () => {
-      render(<MilestoneCard milestone={mockCompletedMilestone} isAuthorized={false} canEdit={false} />);
+      render(
+        <MilestoneCard milestone={mockCompletedMilestone} isAuthorized={false} canEdit={false} />
+      );
 
       expect(screen.getByText("Completed")).toBeInTheDocument();
     });
 
     it("should apply correct styling for pending status", () => {
-      render(<MilestoneCard milestone={mockProjectMilestone} isAuthorized={false} canEdit={false} />);
+      render(
+        <MilestoneCard milestone={mockProjectMilestone} isAuthorized={false} canEdit={false} />
+      );
 
       const statusBadge = screen.getByText("Pending");
       expect(statusBadge.className).toContain("bg-[#FFFAEB]");
@@ -225,7 +239,9 @@ describe("MilestoneCard", () => {
     });
 
     it("should apply correct styling for completed status", () => {
-      render(<MilestoneCard milestone={mockCompletedMilestone} isAuthorized={false} canEdit={false} />);
+      render(
+        <MilestoneCard milestone={mockCompletedMilestone} isAuthorized={false} canEdit={false} />
+      );
 
       const statusBadge = screen.getByText("Completed");
       expect(statusBadge.className).toContain("bg-brand-blue");
@@ -260,7 +276,9 @@ describe("MilestoneCard", () => {
     });
 
     it("should not display due date for project milestones", () => {
-      render(<MilestoneCard milestone={mockProjectMilestone} isAuthorized={false} canEdit={false} />);
+      render(
+        <MilestoneCard milestone={mockProjectMilestone} isAuthorized={false} canEdit={false} />
+      );
 
       expect(screen.queryByText(/Due by/i)).not.toBeInTheDocument();
     });
@@ -304,7 +322,9 @@ describe("MilestoneCard", () => {
         ],
       } as unknown as UnifiedMilestone;
 
-      render(<MilestoneCard milestone={milestoneWithMergedGrants} isAuthorized={false} canEdit={false} />);
+      render(
+        <MilestoneCard milestone={milestoneWithMergedGrants} isAuthorized={false} canEdit={false} />
+      );
 
       expect(screen.getByText("Grant Alpha")).toBeInTheDocument();
       expect(screen.getByText("Grant Beta")).toBeInTheDocument();
@@ -332,7 +352,11 @@ describe("MilestoneCard", () => {
       } as unknown as UnifiedMilestone;
 
       const { container } = render(
-        <MilestoneCard milestone={milestoneWithUnsortedGrants} isAuthorized={false} canEdit={false} />
+        <MilestoneCard
+          milestone={milestoneWithUnsortedGrants}
+          isAuthorized={false}
+          canEdit={false}
+        />
       );
 
       const grants = screen.getAllByText(/Grant$/);
@@ -343,13 +367,17 @@ describe("MilestoneCard", () => {
 
   describe("Completion Information", () => {
     it("should display completion reason when milestone is completed", () => {
-      render(<MilestoneCard milestone={mockCompletedMilestone} isAuthorized={false} canEdit={false} />);
+      render(
+        <MilestoneCard milestone={mockCompletedMilestone} isAuthorized={false} canEdit={false} />
+      );
 
       expect(screen.getByText("Milestone completed successfully")).toBeInTheDocument();
     });
 
     it("should display proof of work link when available", () => {
-      render(<MilestoneCard milestone={mockCompletedMilestone} isAuthorized={false} canEdit={false} />);
+      render(
+        <MilestoneCard milestone={mockCompletedMilestone} isAuthorized={false} canEdit={false} />
+      );
 
       expect(screen.getByText("Proof of Work")).toBeInTheDocument();
       const proofLink = screen.getByText("https://github.com/proof");
@@ -358,7 +386,9 @@ describe("MilestoneCard", () => {
     });
 
     it("should not display completion info for incomplete milestones", () => {
-      render(<MilestoneCard milestone={mockProjectMilestone} isAuthorized={false} canEdit={false} />);
+      render(
+        <MilestoneCard milestone={mockProjectMilestone} isAuthorized={false} canEdit={false} />
+      );
 
       expect(screen.queryByText(/Proof of Work/i)).not.toBeInTheDocument();
     });
@@ -395,7 +425,9 @@ describe("MilestoneCard", () => {
       } as unknown as UnifiedMilestone;
 
       // Component should render without crashing even with deliverables in data
-      render(<MilestoneCard milestone={milestoneWithDeliverables} isAuthorized={false} canEdit={false} />);
+      render(
+        <MilestoneCard milestone={milestoneWithDeliverables} isAuthorized={false} canEdit={false} />
+      );
 
       // Verify the milestone renders successfully
       expect(screen.getByText("Test Project Milestone")).toBeInTheDocument();
@@ -447,7 +479,13 @@ describe("MilestoneCard", () => {
           },
         } as unknown as UnifiedMilestone;
 
-        render(<MilestoneCard milestone={milestoneWithDeliverable} isAuthorized={false} canEdit={false} />);
+        render(
+          <MilestoneCard
+            milestone={milestoneWithDeliverable}
+            isAuthorized={false}
+            canEdit={false}
+          />
+        );
 
         const proofLink = screen.getByText("Moviemeter.io/home");
         expect(proofLink).toHaveAttribute("href", "https://Moviemeter.io/home");
@@ -494,7 +532,13 @@ describe("MilestoneCard", () => {
           },
         } as unknown as UnifiedMilestone;
 
-        render(<MilestoneCard milestone={milestoneWithDeliverable} isAuthorized={false} canEdit={false} />);
+        render(
+          <MilestoneCard
+            milestone={milestoneWithDeliverable}
+            isAuthorized={false}
+            canEdit={false}
+          />
+        );
 
         const proofLink = screen.getByText("https://example.com/proof");
         expect(proofLink).toHaveAttribute("href", "https://example.com/proof");
@@ -541,7 +585,13 @@ describe("MilestoneCard", () => {
           },
         } as unknown as UnifiedMilestone;
 
-        render(<MilestoneCard milestone={milestoneWithDeliverable} isAuthorized={false} canEdit={false} />);
+        render(
+          <MilestoneCard
+            milestone={milestoneWithDeliverable}
+            isAuthorized={false}
+            canEdit={false}
+          />
+        );
 
         const proofLink = screen.getByText("http://example.com/proof");
         expect(proofLink).toHaveAttribute("href", "http://example.com/proof");
@@ -567,14 +617,22 @@ describe("MilestoneCard", () => {
           },
         } as unknown as UnifiedMilestone;
 
-        render(<MilestoneCard milestone={milestoneWithoutProtocol} isAuthorized={false} canEdit={false} />);
+        render(
+          <MilestoneCard
+            milestone={milestoneWithoutProtocol}
+            isAuthorized={false}
+            canEdit={false}
+          />
+        );
 
         const proofLink = screen.getByText("github.com/user/repo");
         expect(proofLink).toHaveAttribute("href", "https://github.com/user/repo");
       });
 
       it("should not modify proof of work URLs that already have https://", () => {
-        render(<MilestoneCard milestone={mockCompletedMilestone} isAuthorized={false} canEdit={false} />);
+        render(
+          <MilestoneCard milestone={mockCompletedMilestone} isAuthorized={false} canEdit={false} />
+        );
 
         const proofLink = screen.getByText("https://github.com/proof");
         expect(proofLink).toHaveAttribute("href", "https://github.com/proof");
@@ -598,7 +656,9 @@ describe("MilestoneCard", () => {
           },
         } as unknown as UnifiedMilestone;
 
-        render(<MilestoneCard milestone={milestoneWithHttp} isAuthorized={false} canEdit={false} />);
+        render(
+          <MilestoneCard milestone={milestoneWithHttp} isAuthorized={false} canEdit={false} />
+        );
 
         const proofLink = screen.getByText("http://example.com/proof");
         expect(proofLink).toHaveAttribute("href", "http://example.com/proof");
@@ -656,7 +716,9 @@ describe("MilestoneCard", () => {
           },
         } as unknown as UnifiedMilestone;
 
-        render(<MilestoneCard milestone={milestoneWithMetrics} isAuthorized={false} canEdit={false} />);
+        render(
+          <MilestoneCard milestone={milestoneWithMetrics} isAuthorized={false} canEdit={false} />
+        );
 
         const proofLink = screen.getByText("example.com/metric-proof");
         expect(proofLink).toHaveAttribute("href", "https://example.com/metric-proof");
@@ -712,7 +774,9 @@ describe("MilestoneCard", () => {
           },
         } as unknown as UnifiedMilestone;
 
-        render(<MilestoneCard milestone={milestoneWithMetrics} isAuthorized={false} canEdit={false} />);
+        render(
+          <MilestoneCard milestone={milestoneWithMetrics} isAuthorized={false} canEdit={false} />
+        );
 
         const proofLink = screen.getByText("https://example.com/metric-proof");
         expect(proofLink).toHaveAttribute("href", "https://example.com/metric-proof");
@@ -768,7 +832,9 @@ describe("MilestoneCard", () => {
           },
         } as unknown as UnifiedMilestone;
 
-        render(<MilestoneCard milestone={milestoneWithMetrics} isAuthorized={false} canEdit={false} />);
+        render(
+          <MilestoneCard milestone={milestoneWithMetrics} isAuthorized={false} canEdit={false} />
+        );
 
         const proofLink = screen.getByText("http://example.com/metric-proof");
         expect(proofLink).toHaveAttribute("href", "http://example.com/metric-proof");
@@ -778,7 +844,9 @@ describe("MilestoneCard", () => {
 
   describe("Authorization and Options Menu", () => {
     it("should not display options menu when not authorized", () => {
-      render(<MilestoneCard milestone={mockProjectMilestone} isAuthorized={false} canEdit={false} />);
+      render(
+        <MilestoneCard milestone={mockProjectMilestone} isAuthorized={false} canEdit={false} />
+      );
 
       // The dynamic component mock would be rendered if options menu is shown
       expect(screen.queryByTestId("mocked-dynamic-component")).not.toBeInTheDocument();
@@ -806,7 +874,13 @@ describe("MilestoneCard", () => {
         description: "",
       } as unknown as UnifiedMilestone;
 
-      render(<MilestoneCard milestone={milestoneWithoutDescription} isAuthorized={false} canEdit={false} />);
+      render(
+        <MilestoneCard
+          milestone={milestoneWithoutDescription}
+          isAuthorized={false}
+          canEdit={false}
+        />
+      );
 
       expect(screen.queryByTestId("read-more")).not.toBeInTheDocument();
     });
@@ -824,7 +898,9 @@ describe("MilestoneCard", () => {
         },
       } as unknown as UnifiedMilestone;
 
-      render(<MilestoneCard milestone={milestoneWithoutAttester} isAuthorized={false} canEdit={false} />);
+      render(
+        <MilestoneCard milestone={milestoneWithoutAttester} isAuthorized={false} canEdit={false} />
+      );
 
       expect(screen.getByTestId("ens-avatar")).toBeInTheDocument();
     });
@@ -850,7 +926,9 @@ describe("MilestoneCard", () => {
         },
       } as unknown as UnifiedMilestone;
 
-      render(<MilestoneCard milestone={milestoneWithoutImage} isAuthorized={false} canEdit={false} />);
+      render(
+        <MilestoneCard milestone={milestoneWithoutImage} isAuthorized={false} canEdit={false} />
+      );
 
       expect(screen.getByText("Test Grant Program")).toBeInTheDocument();
     });
@@ -873,7 +951,13 @@ describe("MilestoneCard", () => {
         },
       } as unknown as UnifiedMilestone;
 
-      render(<MilestoneCard milestone={milestoneWithoutGrantTitle} isAuthorized={false} canEdit={false} />);
+      render(
+        <MilestoneCard
+          milestone={milestoneWithoutGrantTitle}
+          isAuthorized={false}
+          canEdit={false}
+        />
+      );
 
       // Should not render empty grant link
       expect(screen.queryByText("Test Grant Program")).not.toBeInTheDocument();
@@ -892,7 +976,9 @@ describe("MilestoneCard", () => {
     });
 
     it("should have external links with proper security attributes", () => {
-      render(<MilestoneCard milestone={mockCompletedMilestone} isAuthorized={false} canEdit={false} />);
+      render(
+        <MilestoneCard milestone={mockCompletedMilestone} isAuthorized={false} canEdit={false} />
+      );
 
       const proofLink = screen.getByText("https://github.com/proof");
       expect(proofLink).toHaveAttribute("target", "_blank");
@@ -900,7 +986,9 @@ describe("MilestoneCard", () => {
     });
 
     it("should have alt text for milestone icon", () => {
-      render(<MilestoneCard milestone={mockProjectMilestone} isAuthorized={false} canEdit={false} />);
+      render(
+        <MilestoneCard milestone={mockProjectMilestone} isAuthorized={false} canEdit={false} />
+      );
 
       const icon = screen.getByAltText("Milestone");
       expect(icon).toBeInTheDocument();
@@ -918,7 +1006,9 @@ describe("MilestoneCard", () => {
     });
 
     it("should have dark mode classes for text elements", () => {
-      render(<MilestoneCard milestone={mockProjectMilestone} isAuthorized={false} canEdit={false} />);
+      render(
+        <MilestoneCard milestone={mockProjectMilestone} isAuthorized={false} canEdit={false} />
+      );
 
       const title = screen.getByText("Test Project Milestone");
       expect(title.className).toContain("dark:text-zinc-100");

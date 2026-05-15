@@ -24,7 +24,7 @@ const PROJECT_RESOLVER_ABI = [
 const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 
 export const getProjectMemberRoles = async (
-  project: ProjectResponse,
+  project: ProjectResponse
 ): Promise<Record<string, Member["role"]>> => {
   const roles: Record<string, Member["role"]> = {};
   if (!project) return roles;
@@ -69,7 +69,7 @@ export const getProjectMemberRoles = async (
   }
 
   const uniqueAddresses = Array.from(
-    new Set([...(ownerAddress ? [ownerAddress] : []), ...memberAddresses]),
+    new Set([...(ownerAddress ? [ownerAddress] : []), ...memberAddresses])
   );
 
   await Promise.all(
@@ -84,7 +84,7 @@ export const getProjectMemberRoles = async (
       } catch {
         roles[addr] = "Member";
       }
-    }),
+    })
   );
 
   return roles;
