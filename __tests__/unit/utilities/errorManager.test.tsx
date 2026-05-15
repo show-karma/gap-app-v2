@@ -63,4 +63,25 @@ describe("errorManager", () => {
       },
     });
   });
+
+  it("should NOT capture transient axios Network Error (DEV-236)", () => {
+    const networkErr = Object.assign(new Error("Network Error"), { code: "ERR_NETWORK" });
+
+    errorManager("Project Grants API Error: Network Error", networkErr, {
+      context: "project-grants.service",
+    });
+
+    expect(Sentry.captureException).not.toHaveBeenCalled();
+  });
+
+  it("should still capture HTTP errors (e.g. 500) that carry a response", () => {
+    const httpErr = {
+      message: "Request failed with status code 500",
+      response: { status: 500 },
+    };
+
+    errorManager("Project Grants API Error", httpErr);
+
+    expect(Sentry.captureException).toHaveBeenCalled();
+  });
 });

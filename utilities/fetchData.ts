@@ -52,6 +52,11 @@ export default async function fetchData<T = any>(
         ...headers,
       },
       signal,
+      // Default timeout for all requests so a hung connection surfaces as
+      // an axios error the data layer can retry instead of leaving the UI
+      // in an indefinite loading state. Authorized indexer requests below
+      // keep their longer ceiling for legacy long-poll endpoints.
+      timeout: 30000,
     };
 
     // Indexer requests get a generous timeout regardless of token presence.
