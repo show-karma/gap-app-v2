@@ -1,4 +1,5 @@
-import { AGENT_FAQS, CURATED_TOOLS, USE_CASES } from "@/components/Pages/ForAgents/content";
+import { AGENT_FAQS, STATIC_FALLBACK_TOOLS, USE_CASES } from "@/components/Pages/ForAgents/content";
+import { CATEGORY_LABELS } from "@/components/Pages/ForAgents/types";
 
 describe("AGENT_FAQS content", () => {
   it("provides at least four entries", () => {
@@ -26,14 +27,38 @@ describe("USE_CASES content", () => {
   });
 });
 
-describe("CURATED_TOOLS content", () => {
-  it("provides at least six tools", () => {
-    expect(CURATED_TOOLS.length).toBeGreaterThanOrEqual(6);
+describe("STATIC_FALLBACK_TOOLS content", () => {
+  it("provides a small representative fallback (5-6 tools)", () => {
+    expect(STATIC_FALLBACK_TOOLS.length).toBeGreaterThanOrEqual(5);
+    expect(STATIC_FALLBACK_TOOLS.length).toBeLessThanOrEqual(8);
   });
 
   it("uses snake_case names consistent with MCP tool naming", () => {
-    for (const tool of CURATED_TOOLS) {
+    for (const tool of STATIC_FALLBACK_TOOLS) {
       expect(tool.name).toMatch(/^[a-z]+(_[a-z]+)+$/);
     }
+  });
+
+  it("marks every fallback tool as anonymous (requiresAuth=false)", () => {
+    for (const tool of STATIC_FALLBACK_TOOLS) {
+      expect(tool.requiresAuth).toBe(false);
+    }
+  });
+
+  it("uses categories that exist in CATEGORY_LABELS", () => {
+    for (const tool of STATIC_FALLBACK_TOOLS) {
+      expect(CATEGORY_LABELS[tool.category]).toBeDefined();
+    }
+  });
+
+  it("has a non-empty description for every tool", () => {
+    for (const tool of STATIC_FALLBACK_TOOLS) {
+      expect(tool.description.length).toBeGreaterThan(0);
+    }
+  });
+
+  it("covers more than one category for visual variety", () => {
+    const categories = new Set(STATIC_FALLBACK_TOOLS.map((t) => t.category));
+    expect(categories.size).toBeGreaterThan(1);
   });
 });

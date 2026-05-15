@@ -3,10 +3,13 @@
  * structured data (FAQPage). Co-located with the page sections so the
  * schema and the page never drift apart.
  *
- * Tool list is hand-curated from gap-indexer's ANONYMOUS_TOOL_NAMES and
- * deliberately STATIC — we do not fetch /v2/mcp/tools at build time to
- * keep the marketing surface decoupled from indexer uptime.
+ * The tool catalog is fetched live from gap-indexer's `/v2/mcp/tools`
+ * endpoint at request time (1h ISR). `STATIC_FALLBACK_TOOLS` below is the
+ * fallback the page renders only when that upstream is down at build or
+ * revalidation time.
  */
+
+import type { PublicToolMetadata } from "./types";
 
 export interface AgentFaqEntry {
   question: string;
@@ -17,11 +20,6 @@ export interface UseCaseCard {
   title: string;
   description: string;
   example: string;
-}
-
-export interface CuratedTool {
-  name: string;
-  description: string;
 }
 
 export const AGENT_FAQS: AgentFaqEntry[] = [
@@ -71,37 +69,52 @@ export const USE_CASES: UseCaseCard[] = [
   },
 ];
 
-export const CURATED_TOOLS: CuratedTool[] = [
+/**
+ * Fallback only — rendered when the live `/v2/mcp/tools` fetch fails at
+ * build or revalidation time. Keep small and representative across the
+ * main categories. The full live list comes from the indexer.
+ */
+export const STATIC_FALLBACK_TOOLS: PublicToolMetadata[] = [
   {
     name: "get_project_details",
+    alias: "karma_project_get_details",
     description: "Fetch full metadata, team, links, and grant history for a single project.",
-  },
-  {
-    name: "list_project_milestones",
-    description: "List milestones for a project, with completion status and evidence links.",
-  },
-  {
-    name: "search_projects",
-    description: "Search across the project registry by name, ecosystem, or keyword.",
+    category: "project",
+    requiresAuth: false,
   },
   {
     name: "list_funding_programs",
+    alias: "karma_program_list",
     description: "Browse open and historical funding programs across Karma's communities.",
+    category: "program",
+    requiresAuth: false,
   },
   {
-    name: "get_program_applications",
-    description: "Read the applications submitted to a given program (admin/reviewer scope).",
+    name: "list_program_applications",
+    alias: "karma_application_list",
+    description: "Read the applications submitted to a given program.",
+    category: "application",
+    requiresAuth: false,
   },
   {
-    name: "list_grant_disbursements",
+    name: "list_project_milestones",
+    alias: "karma_milestone_list",
+    description: "List milestones for a project, with completion status and evidence links.",
+    category: "milestone",
+    requiresAuth: false,
+  },
+  {
+    name: "list_grant_payouts",
+    alias: "karma_payout_list",
     description: "Track payouts and on-chain disbursements tied to a grant.",
+    category: "payout",
+    requiresAuth: false,
   },
   {
-    name: "get_community_impact",
-    description: "Aggregate impact metrics, attestations, and outcome reports for a community.",
-  },
-  {
-    name: "list_my_projects",
-    description: "Return the authenticated user's projects, applications, and review queue.",
+    name: "search_knowledge_base",
+    alias: undefined,
+    description: "Search Karma's documentation and grantee guides.",
+    category: "knowledge",
+    requiresAuth: false,
   },
 ];
