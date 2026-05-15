@@ -77,13 +77,14 @@ describe("GrantMilestoneOptionsMenu", () => {
     vi.clearAllMocks();
   });
 
-  it("shows Edit option for pending milestones", async () => {
+  it("shows Edit option for pending milestones when canEdit is true", async () => {
     const user = userEvent.setup();
     render(
       <GrantMilestoneOptionsMenu
         milestone={mockPendingMilestone}
         completeFn={mockCompleteFn}
         alreadyCompleted={false}
+        canEdit={true}
       />
     );
 
@@ -95,6 +96,24 @@ describe("GrantMilestoneOptionsMenu", () => {
     expect(screen.getByText("Delete")).toBeInTheDocument();
   });
 
+  it("hides Edit option when canEdit is false (non-owner)", async () => {
+    const user = userEvent.setup();
+    render(
+      <GrantMilestoneOptionsMenu
+        milestone={mockPendingMilestone}
+        completeFn={mockCompleteFn}
+        alreadyCompleted={false}
+        canEdit={false}
+      />
+    );
+
+    await user.click(screen.getByRole("button", { name: "Open milestone actions" }));
+
+    expect(screen.queryByText("Edit")).not.toBeInTheDocument();
+    expect(screen.getByText("Mark as Complete")).toBeInTheDocument();
+    expect(screen.getByText("Delete")).toBeInTheDocument();
+  });
+
   it("hides Edit option for completed milestones", async () => {
     const user = userEvent.setup();
     render(
@@ -102,6 +121,7 @@ describe("GrantMilestoneOptionsMenu", () => {
         milestone={mockCompletedMilestone}
         completeFn={mockCompleteFn}
         alreadyCompleted={true}
+        canEdit={true}
       />
     );
 
@@ -118,6 +138,7 @@ describe("GrantMilestoneOptionsMenu", () => {
         milestone={mockPendingMilestone}
         completeFn={mockCompleteFn}
         alreadyCompleted={false}
+        canEdit={true}
       />
     );
 
@@ -135,6 +156,7 @@ describe("GrantMilestoneOptionsMenu", () => {
         milestone={mockCompletedMilestone}
         completeFn={mockCompleteFn}
         alreadyCompleted={true}
+        canEdit={true}
       />
     );
 
@@ -150,6 +172,7 @@ describe("GrantMilestoneOptionsMenu", () => {
         milestone={mockPendingMilestone}
         completeFn={mockCompleteFn}
         alreadyCompleted={false}
+        canEdit={true}
       />
     );
 
@@ -163,6 +186,7 @@ describe("GrantMilestoneOptionsMenu", () => {
         milestone={mockPendingMilestone}
         completeFn={mockCompleteFn}
         alreadyCompleted={false}
+        canEdit={true}
       />
     );
 

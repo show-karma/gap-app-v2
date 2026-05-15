@@ -12,9 +12,8 @@ export const useMemberRoles = () => {
 
   return useQuery<Record<string, Member["role"]>>({
     queryKey: ["memberRoles", project?.uid],
-    queryFn: () =>
-      project && projectInstance ? getProjectMemberRoles(project, projectInstance) : {},
-    enabled: !!project && !!projectInstance,
+    queryFn: () => (project ? getProjectMemberRoles(project) : {}),
+    enabled: !!project,
     ...defaultQueryOptions,
   });
 };

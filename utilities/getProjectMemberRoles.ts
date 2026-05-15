@@ -1,4 +1,3 @@
-import type { Project } from "@show-karma/karma-gap-sdk/core/class/entities/Project";
 import { chainIdToNetwork, Networks } from "@show-karma/karma-gap-sdk/core/consts";
 import { ethers } from "ethers";
 import type { Project as ProjectResponse } from "@/types/v2/project";
@@ -26,16 +25,29 @@ const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 
 export const getProjectMemberRoles = async (
   project: ProjectResponse,
-  _projectInstance: Project
 ): Promise<Record<string, Member["role"]>> => {
   const roles: Record<string, Member["role"]> = {};
   if (!project) return roles;
+
+  const indexerOwner = project.owner?.toLowerCase();
+  const memberAddresses = (project.members || [])
+    .map((m) => m.address?.toLowerCase())
+    .filter((a): a is string => Boolean(a));
 
   const networkName = chainIdToNetwork[project.chainID as keyof typeof chainIdToNetwork];
   const network = networkName ? Networks[networkName as keyof typeof Networks] : undefined;
   const resolverAddress = network?.contracts.projectResolver;
   const rpcUrl = getRPCUrlByChainId(project.chainID);
-  if (!resolverAddress || !rpcUrl) return roles;
+
+  // If we can't reach the resolver (chain not in Networks, or RPC missing),
+  // we can't confirm admins on-chain. Still label the Owner from the indexer
+  // so the Team panel doesn't render every member as an unlabelled "Member" —
+  // that misleads users about who created the project. Other members fall
+  // through with no label (better than guessing "Admin" without on-chain data).
+  if (!resolverAddress || !rpcUrl) {
+    if (indexerOwner) roles[indexerOwner] = "Owner";
+    return roles;
+  }
 
   const rpcProvider = new ethers.JsonRpcProvider(rpcUrl);
   const resolver = new ethers.Contract(resolverAddress, PROJECT_RESOLVER_ABI, rpcProvider);
@@ -52,16 +64,12 @@ export const getProjectMemberRoles = async (
   } catch {
     // Network failure → leave ownerAddress undefined; we'll fall back below
   }
-  if (!ownerAddress && project.owner) {
-    ownerAddress = project.owner.toLowerCase();
+  if (!ownerAddress && indexerOwner) {
+    ownerAddress = indexerOwner;
   }
 
-  const memberAddresses = (project.members || [])
-    .map((m) => m.address?.toLowerCase())
-    .filter((a): a is string => Boolean(a));
-
   const uniqueAddresses = Array.from(
-    new Set([...(ownerAddress ? [ownerAddress] : []), ...memberAddresses])
+    new Set([...(ownerAddress ? [ownerAddress] : []), ...memberAddresses]),
   );
 
   await Promise.all(
@@ -76,7 +84,7 @@ export const getProjectMemberRoles = async (
       } catch {
         roles[addr] = "Member";
       }
-    })
+    }),
   );
 
   return roles;

@@ -61,7 +61,7 @@ describe("getProjectMemberRoles", () => {
     mockState.projectOwnerReturn = OWNER;
     mockState.projectAdminsByAddr[OWNER] = false;
 
-    const roles = await getProjectMemberRoles(buildProject(), {} as any);
+    const roles = await getProjectMemberRoles(buildProject());
 
     expect(roles[OWNER]).toBe("Owner");
   });
@@ -71,7 +71,7 @@ describe("getProjectMemberRoles", () => {
     mockState.projectAdminsByAddr[ADMIN_A] = true;
     mockState.projectAdminsByAddr[ADMIN_B] = true;
 
-    const roles = await getProjectMemberRoles(buildProject(), {} as any);
+    const roles = await getProjectMemberRoles(buildProject());
 
     expect(roles[ADMIN_A]).toBe("Admin");
     expect(roles[ADMIN_B]).toBe("Admin");
@@ -82,8 +82,7 @@ describe("getProjectMemberRoles", () => {
     mockState.projectOwnerReturn = OWNER;
 
     const roles = await getProjectMemberRoles(
-      buildProject({ members: [OWNER, PLAIN_MEMBER] }),
-      {} as any
+      buildProject({ members: [OWNER, PLAIN_MEMBER] })
     );
 
     expect(roles[PLAIN_MEMBER]).toBe("Member");
@@ -93,20 +92,22 @@ describe("getProjectMemberRoles", () => {
     mockState.projectOwnerReturn = "0x0000000000000000000000000000000000000000";
 
     const roles = await getProjectMemberRoles(
-      buildProject({ owner: OWNER, members: [OWNER, ADMIN_A] }),
-      {} as any
+      buildProject({ owner: OWNER, members: [OWNER, ADMIN_A] })
     );
 
     expect(roles[OWNER]).toBe("Owner");
   });
 
-  it("returns empty map when no RPC URL is configured", async () => {
+  it("labels the indexer Owner even when no RPC URL is configured (no admin info)", async () => {
     const rpcMod = await import("@/utilities/rpcClient");
     vi.mocked(rpcMod.getRPCUrlByChainId).mockReturnValueOnce(undefined);
 
-    const roles = await getProjectMemberRoles(buildProject(), {} as any);
+    const roles = await getProjectMemberRoles(
+      buildProject({ owner: OWNER, members: [OWNER, ADMIN_A] })
+    );
 
-    expect(roles).toEqual({});
+    expect(roles[OWNER]).toBe("Owner");
+    expect(roles[ADMIN_A]).toBeUndefined();
   });
 
   it("does not produce a second Owner label when the resolver claims an admin is also the owner", async () => {
@@ -117,7 +118,7 @@ describe("getProjectMemberRoles", () => {
     mockState.projectAdminsByAddr[ADMIN_A] = true;
     mockState.projectAdminsByAddr[ADMIN_B] = true;
 
-    const roles = await getProjectMemberRoles(buildProject(), {} as any);
+    const roles = await getProjectMemberRoles(buildProject());
 
     const ownerLabels = Object.entries(roles).filter(([, role]) => role === "Owner");
     expect(ownerLabels).toHaveLength(1);

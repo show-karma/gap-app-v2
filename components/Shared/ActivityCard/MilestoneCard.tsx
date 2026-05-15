@@ -102,12 +102,7 @@ const MilestoneAIEvaluationBadge = dynamic(
 interface MilestoneCardProps {
   milestone: UnifiedMilestone;
   isAuthorized: boolean;
-  /**
-   * Whether the connected wallet can edit/revoke this milestone on-chain.
-   * Tighter than `isAuthorized`: gated by Gap.sol's attester/recipient check.
-   * Project admins and team members may have isAuthorized=true but canEdit=false.
-   */
-  canEdit?: boolean;
+  canEdit: boolean;
   allocationAmount?: string;
   hideTimelineMarker?: boolean;
 }
@@ -138,7 +133,7 @@ const getActivityTypeLabel = (type: string): string => {
 export const MilestoneCard: FC<MilestoneCardProps> = ({
   milestone,
   isAuthorized,
-  canEdit = false,
+  canEdit,
   allocationAmount,
   hideTimelineMarker = false,
 }) => {
@@ -175,15 +170,11 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
     | { title?: string; programId?: string }
     | undefined;
   const grantTitle = grantDetails?.title;
-  const _programId = grantDetails?.programId;
 
   // Check if invoice is required for this grant
   const { data: invoiceCheckData } = useGrantInvoiceRequired(
     isAuthorized && type === "grant" ? grantUID : undefined
   );
-  const _communityData = grantMilestone?.grant.community?.details as
-    | { name?: string; imageURL?: string }
-    | undefined;
   const endsAt = milestone.endsAt;
 
   const handleViewInvoice = useCallback(async () => {
@@ -476,35 +467,30 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
                   <ShareIcon className="h-5 w-5" />
                 </ExternalLink>
 
-                {canEdit && (
-                  <>
-                    {/* Edit Button — gated by on-chain revoke rule (Gap.sol) */}
-                    <Button
-                      className="flex flex-row gap-1 bg-transparent text-sm font-semibold text-muted-foreground hover:bg-transparent hover:opacity-75  h-6 w-6 p-0 items-center justify-center"
-                      onClick={() => handleEditing(true)}
-                    >
-                      <PencilSquareIcon className="h-5 w-5" />
-                    </Button>
+                {/* Edit Button */}
+                <Button
+                  className="flex flex-row gap-1 bg-transparent text-sm font-semibold text-muted-foreground hover:bg-transparent hover:opacity-75  h-6 w-6 p-0 items-center justify-center"
+                  onClick={() => handleEditing(true)}
+                >
+                  <PencilSquareIcon className="h-5 w-5" />
+                </Button>
 
-                    {/* Revoke Completion Button — same on-chain gate as Edit */}
-                    <DeleteDialog
-                      deleteFunction={handleUndoCompletion}
-                      isLoading={isUndoing}
-                      title={
-                        <p className="font-normal">
-                          Are you sure you want to revoke the completion of <b>{milestone.title}</b>
-                          ?
-                        </p>
-                      }
-                      buttonElement={{
-                        text: "",
-                        icon: <TrashIcon className="h-5 w-5" />,
-                        styleClass:
-                          "bg-transparent text-sm font-semibold text-red-500 hover:bg-transparent hover:opacity-75 h-6 w-6 p-0 items-center justify-center",
-                      }}
-                    />
-                  </>
-                )}
+                {/* Revoke Completion Button */}
+                <DeleteDialog
+                  deleteFunction={handleUndoCompletion}
+                  isLoading={isUndoing}
+                  title={
+                    <p className="font-normal">
+                      Are you sure you want to revoke the completion of <b>{milestone.title}</b>?
+                    </p>
+                  }
+                  buttonElement={{
+                    text: "",
+                    icon: <TrashIcon className="h-5 w-5" />,
+                    styleClass:
+                      "bg-transparent text-sm font-semibold text-red-500 hover:bg-transparent hover:opacity-75 h-6 w-6 p-0 items-center justify-center",
+                  }}
+                />
               </div>
             ) : undefined
           }

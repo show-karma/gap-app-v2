@@ -21,11 +21,18 @@ export const canEditMilestone = (
   if (!milestone || !connectedAddress) return false;
 
   const me = connectedAddress.toLowerCase();
+  const grantMilestone = milestone.source?.grantMilestone?.milestone;
+  const projectMilestone = milestone.source?.projectMilestone;
+  // Includes both the creation attestation (Edit / dropdown menu) and the
+  // completion attestation (Revoke Completion) — Gap.sol::_multiRevoke
+  // checks the *target* attestation's own attester/recipient.
   const candidates = [
-    milestone.source?.grantMilestone?.milestone?.recipient,
-    milestone.source?.grantMilestone?.milestone?.attester,
-    milestone.source?.projectMilestone?.recipient,
-    milestone.source?.projectMilestone?.attester,
+    grantMilestone?.recipient,
+    grantMilestone?.attester,
+    grantMilestone?.completed?.attester,
+    projectMilestone?.recipient,
+    projectMilestone?.attester,
+    projectMilestone?.completed?.attester,
   ];
 
   return candidates.some((addr) => addr?.toLowerCase() === me);

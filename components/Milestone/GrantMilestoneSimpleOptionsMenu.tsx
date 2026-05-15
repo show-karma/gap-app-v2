@@ -18,17 +18,13 @@ const buttonClassName = `group border-none ring-none font-normal bg-transparent 
 
 interface GrantMilestoneSimpleOptionsMenuProps {
   milestone: UnifiedMilestone;
-  /**
-   * Whether the connected wallet can edit/revoke the milestone on-chain.
-   * Hides the Edit button when false (Gap.sol would revert otherwise).
-   * Delete keeps an off-chain fallback path so it stays visible.
-   */
-  canEdit?: boolean;
+  // Hides Edit when the connected wallet can't pass Gap.sol's revoke rule
+  canEdit: boolean;
 }
 
 export const GrantMilestoneSimpleOptionsMenu = ({
   milestone,
-  canEdit = false,
+  canEdit,
 }: GrantMilestoneSimpleOptionsMenuProps) => {
   const { isDeleting, multiGrantDelete } = useMilestone();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);

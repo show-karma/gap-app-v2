@@ -26,18 +26,15 @@ interface GrantMilestoneOptionsMenuProps {
   milestone: UnifiedMilestone;
   completeFn: (completeState: boolean) => void;
   alreadyCompleted: boolean;
-  /**
-   * Whether the connected wallet can edit/revoke the milestone on-chain.
-   * Hides the Edit menu item when false; Mark Complete and Delete stay.
-   */
-  canEdit?: boolean;
+  // Hides Edit when the connected wallet can't pass Gap.sol's revoke rule
+  canEdit: boolean;
 }
 
 export const GrantMilestoneOptionsMenu = ({
   milestone,
   completeFn,
   alreadyCompleted,
-  canEdit = false,
+  canEdit,
 }: GrantMilestoneOptionsMenuProps) => {
   const { isDeleting, multiGrantDelete } = useMilestone();
   const [isEditOpen, setIsEditOpen] = useState(false);
