@@ -46,17 +46,18 @@ export const ProjectUpdateFormBlock = ({ onClose, updateId }: ProjectUpdateFormB
     // surface the user is currently viewing.
     const uid = project?.uid?.toLowerCase();
     const slug = project?.details?.slug?.toLowerCase();
-    await queryClient.invalidateQueries({
-      predicate: (query) => {
-        if (query.queryKey[0] !== "project-updates") return false;
-        const id = (query.queryKey[1] as string | undefined)?.toLowerCase();
-        return id === uid || id === slug;
-      },
-    });
-    // No router.refresh() — the invalidation already refetched fresh data.
-    // router.refresh() would re-render the server component and race with
-    // the client-side cache, potentially showing stale data.
-    onClose?.();
+    try {
+      await queryClient.invalidateQueries({
+        predicate: (query) => {
+          if (query.queryKey[0] !== "project-updates") return false;
+          const id = (query.queryKey[1] as string | undefined)?.toLowerCase();
+          return id === uid || id === slug;
+        },
+      });
+    } finally {
+      // Always close the dialog — the next mount will refetch if invalidation failed.
+      onClose?.();
+    }
   };
 
   // Show loading state while fetching data in edit mode
