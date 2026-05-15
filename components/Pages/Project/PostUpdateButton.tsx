@@ -39,7 +39,7 @@ export function PostUpdateButton({ className }: PostUpdateButtonProps) {
       )}
       data-testid="post-update-button"
     >
-      <PenLine className="h-4 w-4" />
+      <PenLine className="size-4" />
       Post an update
     </Button>
   );

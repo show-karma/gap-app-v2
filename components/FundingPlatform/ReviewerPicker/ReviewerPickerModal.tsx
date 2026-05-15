@@ -1,9 +1,9 @@
 "use client";
 
-import { MagnifyingGlassIcon, PlusIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { MagnifyingGlassIcon, PlusIcon } from "@heroicons/react/24/outline";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import pluralize from "pluralize";
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 import { Button as KarmaButton } from "@/components/Utilities/Button";
 import { Spinner } from "@/components/Utilities/Spinner";
@@ -43,11 +43,12 @@ import type {
 } from "./ReviewerPickerModal.types";
 import {
   emptyNewRow,
-  isRowDirty,
   poolRowFromReviewer,
   roleSelectionFromCommunityRole,
 } from "./ReviewerPickerModal.types";
+import { RoleBadge } from "./RoleBadge";
 import { validateReviewerRow } from "./reviewer-validation";
+import { SelectedRowCard } from "./SelectedRowCard";
 
 const DEBOUNCE_DELAY_MS = 250;
 
@@ -57,26 +58,6 @@ function generateNewRowId(): string {
   }
   return `new-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 }
-
-// ─── Role badge ──────────────────────────────────────────────────────────────
-
-function RoleBadge({ role }: { role: CommunityReviewerRole }) {
-  const isApp = role === "program-reviewer";
-  return (
-    <span
-      className={cn(
-        "inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide",
-        isApp
-          ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
-          : "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300"
-      )}
-    >
-      {isApp ? "App" : "Milestone"}
-    </span>
-  );
-}
-
-// ─── Component ───────────────────────────────────────────────────────────────
 
 const ReviewerPickerModal = ({
   open,
@@ -468,7 +449,7 @@ const ReviewerPickerModal = ({
 
           {/* Pool */}
           <div className="flex items-center justify-between mb-2">
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
               Community pool
             </p>
             <button
@@ -511,7 +492,7 @@ const ReviewerPickerModal = ({
                         isDisabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer",
                         isSelected
                           ? "bg-blue-50 dark:bg-blue-900/20"
-                          : !isDisabled && "hover:bg-gray-50 dark:hover:bg-gray-800/50"
+                          : !isDisabled && "hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
                       )}
                       data-testid={`pool-item-${r.publicAddress}`}
                     >
@@ -533,7 +514,7 @@ const ReviewerPickerModal = ({
                             ))}
                           </span>
                           {isDisabled && (
-                            <span className="inline-flex items-center rounded-full bg-gray-100 dark:bg-gray-800 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-gray-600 dark:text-gray-300">
+                            <span className="inline-flex items-center rounded-full bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-zinc-600 dark:text-zinc-300">
                               Already in program
                             </span>
                           )}
@@ -587,139 +568,6 @@ const ReviewerPickerModal = ({
     </Dialog>
   );
 };
-
-// ─── Selected row card ───────────────────────────────────────────────────────
-
-interface SelectedRowCardProps {
-  row: SelectedRow;
-  onFieldChange: (
-    id: string,
-    field: "name" | "email" | "telegram" | "slack",
-    value: string
-  ) => void;
-  onToggleRole: (id: string, role: ReviewerRoleSelection) => void;
-  onRemove: (id: string) => void;
-}
-
-const SelectedRowCard = memo(function SelectedRowCard({
-  row,
-  onFieldChange,
-  onToggleRole,
-  onRemove,
-}: SelectedRowCardProps) {
-  const isPool = row.kind === "pool";
-  const hasError = !!row.error;
-  const dirty = isPool && isRowDirty(row);
-
-  return (
-    <div
-      className={cn(
-        "rounded-lg border bg-white dark:bg-gray-900/60 p-3",
-        hasError ? "border-red-300 dark:border-red-700" : "border-gray-200 dark:border-gray-700"
-      )}
-      data-testid={`selected-row-${row.id}`}
-    >
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex-1 min-w-0">
-          {isPool ? (
-            <div className="flex items-center gap-2">
-              <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-                {row.name || row.email}
-              </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{row.email}</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 gap-2">
-              <Input
-                value={row.name}
-                onChange={(e) => onFieldChange(row.id, "name", e.target.value)}
-                placeholder="Name *"
-                className="h-9 text-sm"
-                aria-label="Reviewer name"
-              />
-              <Input
-                value={row.email}
-                onChange={(e) => onFieldChange(row.id, "email", e.target.value)}
-                placeholder="Email *"
-                className="h-9 text-sm"
-                aria-label="Reviewer email"
-              />
-            </div>
-          )}
-        </div>
-        <button
-          type="button"
-          onClick={() => onRemove(row.id)}
-          className="p-1 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
-          aria-label="Remove reviewer"
-          data-testid={`remove-row-${row.id}`}
-        >
-          <XMarkIcon className="h-4 w-4" />
-        </button>
-      </div>
-
-      <div className="mt-2 grid grid-cols-2 gap-2">
-        <Input
-          value={row.telegram}
-          onChange={(e) => onFieldChange(row.id, "telegram", e.target.value)}
-          placeholder="Telegram (optional)"
-          className="h-8 text-xs"
-          aria-label="Telegram"
-        />
-        <Input
-          value={row.slack}
-          onChange={(e) => onFieldChange(row.id, "slack", e.target.value)}
-          placeholder="Slack (optional)"
-          className="h-8 text-xs"
-          aria-label="Slack"
-        />
-      </div>
-
-      <div className="mt-2 flex items-center justify-between gap-2 flex-wrap">
-        <div className="flex items-center gap-3">
-          <label
-            htmlFor={`role-program-${row.id}`}
-            className="inline-flex items-center gap-1.5 text-xs text-gray-700 dark:text-gray-300 cursor-pointer"
-          >
-            <Checkbox
-              id={`role-program-${row.id}`}
-              checked={row.roles.includes("program")}
-              onCheckedChange={() => onToggleRole(row.id, "program")}
-              aria-label="App reviewer role"
-            />
-            App reviewer
-          </label>
-          <label
-            htmlFor={`role-milestone-${row.id}`}
-            className="inline-flex items-center gap-1.5 text-xs text-gray-700 dark:text-gray-300 cursor-pointer"
-          >
-            <Checkbox
-              id={`role-milestone-${row.id}`}
-              checked={row.roles.includes("milestone")}
-              onCheckedChange={() => onToggleRole(row.id, "milestone")}
-              aria-label="Milestone reviewer role"
-            />
-            Milestone reviewer
-          </label>
-        </div>
-        {dirty && (
-          <span className="text-[10px] text-amber-700 dark:text-amber-400">
-            Contact edits apply across all programs.
-          </span>
-        )}
-      </div>
-
-      {hasError && (
-        <p
-          className="mt-2 text-xs text-red-600 dark:text-red-400"
-          data-testid={`row-error-${row.id}`}
-        >
-          {row.error}
-        </p>
-      )}
-    </div>
-  );
-});
 
 export default ReviewerPickerModal;
 

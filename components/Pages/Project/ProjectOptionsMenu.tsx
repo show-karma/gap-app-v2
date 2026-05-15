@@ -282,7 +282,7 @@ export const ProjectOptionsMenu = () => {
             <button
               type="button"
               aria-label="Project settings"
-              className="inline-flex items-center justify-center h-10 w-10 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 dark:focus:ring-offset-zinc-900"
+              className="inline-flex items-center justify-center size-10 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 dark:focus:ring-offset-zinc-900"
               data-testid="project-options-menu"
             >
               <Cog6ToothIcon className="h-5 w-5" aria-hidden="true" />
