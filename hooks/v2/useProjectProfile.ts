@@ -50,7 +50,7 @@ export interface UseProjectProfileResult extends ProjectProfileData, ProjectProf
  * @param filters - Optional extra filters forwarded to the indexer
  * @returns Aggregated project profile data with loading/error states
  */
-export interface UseProjectProfileOptions {
+interface UseProjectProfileOptions {
   /**
    * Whether secondary data fetches (grants/updates/impacts) should attach
    * a Privy bearer token. Defaults to `true`. Public profile callers MUST

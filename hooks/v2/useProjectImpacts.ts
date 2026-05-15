@@ -3,7 +3,7 @@ import { getProjectImpacts, type ProjectImpact } from "@/services/project-impact
 import { queryClient } from "@/utilities/query-client";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
 
-export interface UseProjectImpactsOptions {
+interface UseProjectImpactsOptions {
   /**
    * Whether the request should attach a Privy bearer token. Defaults to
    * `true` for backward compatibility. Public profile callers MUST pass

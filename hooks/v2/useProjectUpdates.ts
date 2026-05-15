@@ -375,7 +375,7 @@ const sortByDateDescending = (milestones: UnifiedMilestone[]): UnifiedMilestone[
  * @param filters - Optional extra filters forwarded to the indexer
  * @returns Object containing unified milestones, loading state, error, and refetch function
  */
-export interface UseProjectUpdatesOptions {
+interface UseProjectUpdatesOptions {
   /**
    * Whether the request should attach a Privy bearer token. Defaults to
    * `true` for backward compatibility. Public profile callers MUST pass

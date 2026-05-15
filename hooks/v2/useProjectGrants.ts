@@ -4,7 +4,7 @@ import type { Grant } from "@/types/v2/grant";
 import { queryClient } from "@/utilities/query-client";
 import { createProjectQueryPredicate, QUERY_KEYS } from "@/utilities/queryKeys";
 
-export interface UseProjectGrantsOptions {
+interface UseProjectGrantsOptions {
   /**
    * Whether the request should attach a Privy bearer token.
    * Defaults to `true` for backward compatibility. Public pages (e.g. the
