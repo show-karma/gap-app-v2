@@ -20,6 +20,24 @@ const getToast = () => {
   return toast;
 };
 
+// Checks whether the error's code/message (or its originalError's code/message)
+// contains a given substring, case-insensitive. Centralizes the triple-
+// optional-chain pattern used throughout this module so the main function
+// stays under biome's cognitive-complexity ceiling.
+type ErrorLike = {
+  code?: string;
+  message?: string;
+  originalError?: { code?: string; message?: string };
+};
+const errorContains = (error: ErrorLike | null | undefined, needle: string): boolean => {
+  const n = needle.toLowerCase();
+  return (
+    !!error?.originalError?.code?.toLowerCase()?.includes(n) ||
+    !!error?.originalError?.message?.toLowerCase()?.includes(n) ||
+    !!error?.message?.toLowerCase()?.includes(n)
+  );
+};
+
 export const errorManager = (
   errorMessage: string,
   error: any,
@@ -29,19 +47,11 @@ export const errorManager = (
   }
 ) => {
   if (error?.originalError || error?.message) {
-    const wasRejected =
-      error?.originalError?.code?.toLowerCase()?.includes("reject") ||
-      error?.originalError?.message?.toLowerCase()?.includes("reject") ||
-      error?.message?.toLowerCase()?.includes("reject");
-    const couldNotSwitchChain =
-      error?.originalError?.code?.toLowerCase()?.includes("switch chain") ||
-      error?.originalError?.message?.toLowerCase()?.includes("switch chain") ||
-      error?.message?.toLowerCase()?.includes("switch chain");
-    if (wasRejected) {
+    if (errorContains(error, "reject")) {
       return;
     }
     const targetNetwork = extra?.targetNetwork;
-    if (couldNotSwitchChain) {
+    if (errorContains(error, "switch chain")) {
       const toastInstance = getToast();
       if (toastInstance) {
         toastInstance.error(
@@ -52,10 +62,7 @@ export const errorManager = (
     }
   }
   if (toastError?.error) {
-    const wasRPCIssue =
-      error?.originalError?.code?.toLowerCase()?.includes("rpc error") ||
-      error?.originalError?.message?.toLowerCase()?.includes("rpc error") ||
-      error?.message?.toLowerCase()?.includes("rpc error");
+    const wasRPCIssue = errorContains(error, "rpc error");
     const toastInstance = getToast();
     if (toastInstance) {
       if (wasRPCIssue) {
