@@ -279,6 +279,7 @@ describe("ZeroDevProvider", () => {
 
       expect(mockGetTransactionCount).toHaveBeenCalledWith({
         address: mockSigner.address,
+        blockTag: "pending",
       });
       expect(mockSigner.signAuthorization).toHaveBeenCalledWith(
         expect.objectContaining({ nonce: 5 })
