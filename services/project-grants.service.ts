@@ -3,7 +3,7 @@ import type { Grant } from "@/types/v2/grant";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
-export interface GetProjectGrantsOptions {
+interface GetProjectGrantsOptions {
   /**
    * Whether the request should attach a Privy auth token. Defaults to `true`
    * to preserve existing authenticated behaviour. The public project-profile

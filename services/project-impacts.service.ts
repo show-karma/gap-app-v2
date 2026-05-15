@@ -24,7 +24,7 @@ export interface ProjectImpact {
   updatedAt?: string;
 }
 
-export interface GetProjectImpactsOptions {
+interface GetProjectImpactsOptions {
   /**
    * Whether the request should attach a Privy auth token. Defaults to `true`.
    * Public SSR/prefetch callers pass `false` so the server-rendered path does
