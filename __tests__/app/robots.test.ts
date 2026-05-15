@@ -15,7 +15,21 @@ describe("robots", () => {
 
   it("should allow the root path for wildcard rule", () => {
     const rule = Array.isArray(result.rules) ? result.rules[0] : result.rules;
-    expect(rule.allow).toBe("/");
+    expect(rule.allow).toContain("/");
+  });
+
+  it("should allow /.well-known/ for wildcard rule", () => {
+    const rule = Array.isArray(result.rules) ? result.rules[0] : result.rules;
+    expect(rule.allow).toContain("/.well-known/");
+  });
+
+  it("should allow /.well-known/ for every AI crawler rule", () => {
+    const rules = result.rules as Array<Record<string, unknown>>;
+    const aiCrawlers = ["GPTBot", "ClaudeBot", "PerplexityBot", "Google-Extended"];
+    for (const crawler of aiCrawlers) {
+      const rule = rules.find((r) => r.userAgent === crawler);
+      expect(rule?.allow).toContain("/.well-known/");
+    }
   });
 
   describe("disallow rules", () => {

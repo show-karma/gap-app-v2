@@ -4,6 +4,19 @@
 
 Karma is a platform where ecosystems allocate funding, track milestones, and measure impact, while builders share progress, earn reputation, and get discovered for more opportunities. Karma supports Optimism, Arbitrum One, Polygon, Base, Celo, Scroll, Lisk, Sei.
 
+## For AI Agents
+- MCP endpoint: https://gapapi.karmahq.xyz/v2/mcp
+- Setup guide: https://www.karmahq.xyz/mcp/connect
+- For-agents overview: https://www.karmahq.xyz/for-agents
+- OpenAPI spec (JSON): https://gapapi.karmahq.xyz/v2/docs/json
+- API docs (Swagger UI): https://gapapi.karmahq.xyz/v2/docs
+- Plugin manifest: https://www.karmahq.xyz/.well-known/ai-plugin.json
+- MCP server discovery: https://www.karmahq.xyz/.well-known/mcp.json
+- Public tool catalog: https://www.karmahq.xyz/.well-known/mcp-tools.json
+- Auth: OAuth (interactive) or `x-api-key` header (headless)
+- Supported clients: Claude Desktop, Cursor, Codex CLI, any MCP 2025-11-25+ compliant client
+- Contact: info@karmahq.xyz
+
 ## Landing Pages
 - [Home](https://www.karmahq.xyz/): Ecosystems use Karma to fund projects transparently. Builders use it to share progress, earn reputation, and get discovered.
 - [For Funders](https://www.karmahq.xyz/funders): From intake to impact, Karma gives funders the tools to allocate grants, track milestones, measure outcomes, and grow their ecosystems.
