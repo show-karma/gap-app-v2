@@ -83,7 +83,8 @@ export function UpdatesContent({ className }: UpdatesContentProps) {
   const { allUpdates, milestonesCount, completedCount, isUpdating } = useProjectProfile(
     projectId as string,
     apiMilestoneStatus,
-    feedFilters
+    feedFilters,
+    { isAuthorized: false }
   );
 
   // Count items per filter category for badge counters

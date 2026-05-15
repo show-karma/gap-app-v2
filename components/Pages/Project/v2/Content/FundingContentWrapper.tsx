@@ -9,7 +9,9 @@ import { FundingContent } from "../FundingPage/FundingContent";
  */
 export function FundingContentWrapper() {
   const { projectId } = useParams();
-  const { project, isLoading } = useProjectProfile(projectId as string);
+  const { project, isLoading } = useProjectProfile(projectId as string, undefined, undefined, {
+    isAuthorized: false,
+  });
 
   if (isLoading || !project) {
     return <div className="animate-pulse text-gray-500">Loading funding...</div>;

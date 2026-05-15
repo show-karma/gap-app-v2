@@ -1,6 +1,6 @@
 import axios from "axios";
 import { TokenManager } from "@/utilities/auth/token-manager";
-import fetchData from "@/utilities/fetchData";
+import fetchData, { AUTH_REQUIRED_NO_TOKEN_ERROR } from "@/utilities/fetchData";
 
 vi.mock("axios");
 vi.mock("@/utilities/auth/token-manager");
@@ -18,17 +18,17 @@ describe("fetchData", () => {
     vi.clearAllMocks();
   });
 
-  it("should make a successful GET request", async () => {
+  it("should make a successful GET request when an auth token is available", async () => {
     const mockResponse = { data: { result: "success" }, status: 200 };
     (axios.request as vi.Mock).mockResolvedValue(mockResponse);
-    (TokenManager.getToken as vi.Mock).mockResolvedValue(null);
+    (TokenManager.getToken as vi.Mock).mockResolvedValue("test-token");
 
     const [resData, error, pageInfo, status] = await fetchData("/test-endpoint");
 
     expect(axios.request).toHaveBeenCalledWith({
       url: "https://test-api.com/test-endpoint",
       method: "GET",
-      headers: {},
+      headers: { Authorization: "Bearer test-token" },
       data: {},
       timeout: 360000,
       params: {},
@@ -36,6 +36,33 @@ describe("fetchData", () => {
     expect(resData).toEqual({ result: "success" });
     expect(error).toBeNull();
     expect(pageInfo).toBeNull();
+    expect(status).toBe(200);
+  });
+
+  it("should short-circuit with a synthetic 401 when isAuthorized=true and no token is available (DEV-256)", async () => {
+    (TokenManager.getToken as vi.Mock).mockResolvedValue(null);
+
+    const [resData, error, pageInfo, status] = await fetchData("/test-endpoint");
+
+    expect(axios.request).not.toHaveBeenCalled();
+    expect(resData).toBeNull();
+    expect(error).toBe(AUTH_REQUIRED_NO_TOKEN_ERROR);
+    expect(pageInfo).toBeNull();
+    expect(status).toBe(401);
+  });
+
+  it("should fire an anonymous request when isAuthorized=false even with no token", async () => {
+    const mockResponse = { data: { result: "public" }, status: 200 };
+    (axios.request as vi.Mock).mockResolvedValue(mockResponse);
+    (TokenManager.getToken as vi.Mock).mockResolvedValue(null);
+
+    const [resData, error, , status] = await fetchData("/test-endpoint", "GET", {}, {}, {}, false);
+
+    expect(axios.request).toHaveBeenCalledTimes(1);
+    const calledWith = (axios.request as vi.Mock).mock.calls[0][0];
+    expect(calledWith.headers.Authorization).toBeUndefined();
+    expect(resData).toEqual({ result: "public" });
+    expect(error).toBeNull();
     expect(status).toBe(200);
   });
 
@@ -75,7 +102,7 @@ describe("fetchData", () => {
   it("should handle network errors", async () => {
     const mockError = new Error("Network Error");
     (axios.request as vi.Mock).mockRejectedValue(mockError);
-    (TokenManager.getToken as vi.Mock).mockResolvedValue(null);
+    (TokenManager.getToken as vi.Mock).mockResolvedValue("test-token");
 
     const [resData, error, pageInfo, status] = await fetchData("/test-endpoint");
 
@@ -97,6 +124,7 @@ describe("fetchData", () => {
       },
     };
     (axios.request as vi.Mock).mockRejectedValue(mockError);
+    (TokenManager.getToken as vi.Mock).mockResolvedValue("test-token");
 
     const [resData, error, pageInfo, status] = await fetchData("/test-endpoint");
 
@@ -116,7 +144,7 @@ describe("fetchData", () => {
       },
     };
     (axios.request as vi.Mock).mockRejectedValue(mockError);
-    (TokenManager.getToken as vi.Mock).mockResolvedValue(null);
+    (TokenManager.getToken as vi.Mock).mockResolvedValue("test-token");
 
     const [resData, error, pageInfo, status] = await fetchData("/test-endpoint");
 
@@ -136,7 +164,7 @@ describe("fetchData", () => {
       },
     };
     (axios.request as vi.Mock).mockRejectedValue(mockError);
-    (TokenManager.getToken as vi.Mock).mockResolvedValue(null);
+    (TokenManager.getToken as vi.Mock).mockResolvedValue("test-token");
 
     const [resData, error, pageInfo, status] = await fetchData("/test-endpoint");
 
@@ -168,7 +196,7 @@ describe("fetchData", () => {
     // abort check fires.
     const mockResponse = { data: { ok: true }, status: 200 };
     (axios.request as vi.Mock).mockResolvedValue(mockResponse);
-    (TokenManager.getToken as vi.Mock).mockResolvedValue(null);
+    (TokenManager.getToken as vi.Mock).mockResolvedValue("test-token");
 
     const controller = new AbortController();
     await fetchData("/test-endpoint", "GET", {}, {}, {}, true, false, undefined, controller.signal);

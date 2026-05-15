@@ -175,7 +175,9 @@ describe("useProjectUpdates", () => {
     });
 
     await waitFor(() => {
-      expect(mockGetProjectUpdates).toHaveBeenCalledWith("test-project", "completed", undefined);
+      expect(mockGetProjectUpdates).toHaveBeenCalledWith("test-project", "completed", {
+        isAuthorized: true,
+      });
     });
   });
 
@@ -192,7 +194,9 @@ describe("useProjectUpdates", () => {
     });
 
     await waitFor(() => {
-      expect(mockGetProjectUpdates).toHaveBeenCalledWith("test-project", undefined, undefined);
+      expect(mockGetProjectUpdates).toHaveBeenCalledWith("test-project", undefined, {
+        isAuthorized: true,
+      });
     });
   });
 
@@ -216,7 +220,30 @@ describe("useProjectUpdates", () => {
     });
 
     await waitFor(() => {
-      expect(mockGetProjectUpdates).toHaveBeenCalledWith("test-project", undefined, filters);
+      expect(mockGetProjectUpdates).toHaveBeenCalledWith("test-project", undefined, {
+        ...filters,
+        isAuthorized: true,
+      });
+    });
+  });
+
+  it("forwards isAuthorized=false to getProjectUpdates for public callers", async () => {
+    mockGetProjectUpdates.mockResolvedValueOnce({
+      projectUpdates: [],
+      projectMilestones: [],
+      grantMilestones: [],
+      grantUpdates: [],
+    });
+
+    renderHook(
+      () => useProjectUpdates("test-project", undefined, undefined, { isAuthorized: false }),
+      { wrapper: createWrapper(queryClient) }
+    );
+
+    await waitFor(() => {
+      expect(mockGetProjectUpdates).toHaveBeenCalledWith("test-project", undefined, {
+        isAuthorized: false,
+      });
     });
   });
 

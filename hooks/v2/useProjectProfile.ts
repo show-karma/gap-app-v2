@@ -50,11 +50,23 @@ export interface UseProjectProfileResult extends ProjectProfileData, ProjectProf
  * @param filters - Optional extra filters forwarded to the indexer
  * @returns Aggregated project profile data with loading/error states
  */
+export interface UseProjectProfileOptions {
+  /**
+   * Whether secondary data fetches (grants/updates/impacts) should attach
+   * a Privy bearer token. Defaults to `true`. Public profile callers MUST
+   * pass `false` to keep anonymous traffic off the auth-required path.
+   */
+  isAuthorized?: boolean;
+}
+
 export function useProjectProfile(
   projectId: string,
   milestoneStatus?: "pending" | "completed" | "verified",
-  filters?: UpdatesFeedFilters
+  filters?: UpdatesFeedFilters,
+  options: UseProjectProfileOptions = {}
 ): UseProjectProfileResult {
+  const { isAuthorized = true } = options;
+
   // Fetch core project data
   const { project, isLoading: isProjectLoading, isError, error } = useProject(projectId);
 
@@ -63,7 +75,7 @@ export function useProjectProfile(
     grants,
     isLoading: isGrantsLoading,
     refetch: refetchGrants,
-  } = useProjectGrants(project?.uid || projectId);
+  } = useProjectGrants(project?.uid || projectId, { isAuthorized });
 
   // Fetch updates and milestones (pass milestoneStatus and extra filters for server-side filtering)
   const {
@@ -71,14 +83,14 @@ export function useProjectProfile(
     isLoading: isUpdatesLoading,
     isFetching: isUpdatesFetching,
     refetch: refetchUpdates,
-  } = useProjectUpdates(projectId, milestoneStatus, filters);
+  } = useProjectUpdates(projectId, milestoneStatus, filters, { isAuthorized });
 
   // Fetch impacts
   const {
     impacts = [],
     isLoading: isImpactsLoading,
     refetch: refetchImpacts,
-  } = useProjectImpacts(projectId);
+  } = useProjectImpacts(projectId, { isAuthorized });
 
   // Split loading states: core project vs secondary data
   const isSecondaryLoading = isGrantsLoading || isUpdatesLoading || isImpactsLoading;

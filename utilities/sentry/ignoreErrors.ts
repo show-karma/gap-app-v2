@@ -60,6 +60,20 @@ const sentryInstrumentationErrors = [
 // See https://karma-crypto-inc.sentry.io/issues/7205405990
 const notFoundErrors = ["Project not found", "Community not found"];
 
+// Anonymous-traffic errors. When a logged-out user lands on a public page
+// (e.g. /project/:projectId) and a hook still requests an authorized indexer
+// route, `fetchData` short-circuits with these strings instead of firing the
+// request. The synthetic indexer 401 has the same payload, so we drop both.
+// See DEV-256.
+const anonymousAuthErrors = [
+  // Backend response when a token-less request still reaches the indexer
+  // (e.g. SDK callers we don't control). Kept here so callers built outside
+  // `fetchData` also benefit from the filter.
+  "Authorization header is required",
+  // Sentinel returned by `fetchData` when no Privy token is available.
+  "AUTH_REQUIRED_NO_TOKEN",
+];
+
 export const sentryIgnoreErrors = [
   // user rejected a confirmation in the wallet
   "rejected the request",
@@ -77,4 +91,5 @@ export const sentryIgnoreErrors = [
   ...sentryInstrumentationErrors,
   ...notFoundErrors,
   ...streamingAbortErrors,
+  ...anonymousAuthErrors,
 ];

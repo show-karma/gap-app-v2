@@ -13,9 +13,13 @@ export const ProjectActivity = () => {
   const { isProjectAdmin } = useProjectStore();
   const { projectId } = useParams();
 
-  // Use dedicated hooks for updates and impacts
-  const { milestones = [] } = useProjectUpdates(projectId as string);
-  const { impacts = [] } = useProjectImpacts(projectId as string);
+  // Use dedicated hooks for updates and impacts. This component renders on
+  // the public /project/:projectId route, so skip the bearer token to keep
+  // anonymous refetches off the auth-required code path.
+  const { milestones = [] } = useProjectUpdates(projectId as string, undefined, undefined, {
+    isAuthorized: false,
+  });
+  const { impacts = [] } = useProjectImpacts(projectId as string, { isAuthorized: false });
 
   const [selectedTab, setSelectedTab] = useState(0);
 

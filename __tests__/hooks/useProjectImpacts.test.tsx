@@ -133,6 +133,32 @@ describe("useProjectImpacts", () => {
     });
   });
 
+  describe("auth options (DEV-256)", () => {
+    it("forwards isAuthorized=false to getProjectImpacts for public callers", async () => {
+      mockGetProjectImpacts.mockResolvedValue([]);
+
+      renderHookWithProviders(() => useProjectImpacts("test-project", { isAuthorized: false }));
+
+      await waitFor(() => {
+        expect(mockGetProjectImpacts).toHaveBeenCalledWith("test-project", {
+          isAuthorized: false,
+        });
+      });
+    });
+
+    it("defaults to isAuthorized=true when no options are provided", async () => {
+      mockGetProjectImpacts.mockResolvedValue([]);
+
+      renderHookWithProviders(() => useProjectImpacts("test-project"));
+
+      await waitFor(() => {
+        expect(mockGetProjectImpacts).toHaveBeenCalledWith("test-project", {
+          isAuthorized: true,
+        });
+      });
+    });
+  });
+
   describe("impact data structure", () => {
     it("preserves verified attestations", async () => {
       const impact = createMockImpact({

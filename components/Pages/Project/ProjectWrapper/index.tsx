@@ -28,8 +28,10 @@ export const ProjectWrapper = ({ projectId }: ProjectWrapperProps) => {
 
   const { project } = useProject(projectId);
 
-  // Fetch grants using dedicated hook
-  const { grants } = useProjectGrants(project?.uid || projectId);
+  // Fetch grants using dedicated hook. The /project/:projectId route is
+  // publicly accessible, so we never attach a bearer token here — anonymous
+  // refetches would otherwise trip the indexer's auth-required path.
+  const { grants } = useProjectGrants(project?.uid || projectId, { isAuthorized: false });
 
   // Start hook for permissions
   useProjectPermissions();

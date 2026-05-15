@@ -13,7 +13,9 @@ export function AboutContentWrapper() {
   const { projectId } = useParams();
   const searchParams = useSearchParams();
   const scrollTo = searchParams.get("scrollTo");
-  const { project, isLoading } = useProjectProfile(projectId as string);
+  const { project, isLoading } = useProjectProfile(projectId as string, undefined, undefined, {
+    isAuthorized: false,
+  });
 
   // Handle smooth scroll to section based on query parameter
   useEffect(() => {

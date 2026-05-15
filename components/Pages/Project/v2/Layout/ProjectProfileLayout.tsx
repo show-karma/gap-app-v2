@@ -131,9 +131,14 @@ export function ProjectProfileLayout({
     }
   }, [inviteCode, hasOpenedInviteModal, openContributorProfileModal]);
 
-  // Use unified hook for all project profile data
+  // Use unified hook for all project profile data. The /project/:projectId
+  // route is publicly accessible — skip the bearer token so anonymous
+  // client refetches don't trip the indexer's auth-required path.
   const { project, isProjectLoading, isLoading, isError, isVerified, stats } = useProjectProfile(
-    projectId as string
+    projectId as string,
+    undefined,
+    undefined,
+    { isAuthorized: false }
   );
 
   // Initialize project permissions in store (for authorization checks in ContentTabs)
