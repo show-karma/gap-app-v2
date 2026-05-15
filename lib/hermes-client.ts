@@ -1,52 +1,39 @@
 import { createAuthenticatedApiClient } from "@/utilities/auth/api-client";
 import { INDEXER } from "@/utilities/indexer";
 
-// Internal team-role identifiers. Six are user-facing in the directory.
-// `orchestrator` is the Team Lead and intentionally hidden from the roster
-// (it appears as part of the "team" abstraction, not a clickable employee).
-export const TEAM_ROLES = [
-  "orchestrator",
-  "prospect-researcher",
-  "grant-writer",
-  "marketing",
-  "accounting",
-  "tech",
-  "operations",
-] as const;
+// Internal team-role identifiers. Four user-facing employees total — small
+// enough for a 2-person ED to manage. ED leads the list and acts as the
+// catch-all for cross-role or strategic asks that don't fit a specialist.
+//
+// The internal slug for ED stays `orchestrator` because Hermes' kanban
+// dispatcher and the bundled `kanban-orchestrator` skill key off that
+// profile name. The "ED" framing is UI-only.
+export const TEAM_ROLES = ["orchestrator", "fundraiser", "communications", "operations"] as const;
 export type TeamRole = (typeof TEAM_ROLES)[number];
 
-// Orchestrator (Team Lead) leads the list — it's where the user starts when
-// they want the AI workforce to plan + decompose a goal across specialists.
+// ED leads the list — it's where the user starts for goals that don't map
+// cleanly to a single specialist.
 export const VISIBLE_TEAM_ROLES: TeamRole[] = [
   "orchestrator",
-  "prospect-researcher",
-  "grant-writer",
-  "marketing",
-  "accounting",
-  "tech",
+  "fundraiser",
+  "communications",
   "operations",
 ];
 
 // Product-language labels — never leak Hermes terms ("profile", "SOUL") to
 // the UI copy. Renderers use these.
 export const TEAM_ROLE_LABELS: Record<TeamRole, string> = {
-  orchestrator: "Team Lead",
-  "prospect-researcher": "Prospect Researcher",
-  "grant-writer": "Grant Writer",
-  marketing: "Marketing",
-  accounting: "Accounting",
-  tech: "Tech",
+  orchestrator: "ED",
+  fundraiser: "Fundraiser",
+  communications: "Communications",
   operations: "Operations",
 };
 
 export const TEAM_ROLE_DESCRIPTIONS: Record<TeamRole, string> = {
-  orchestrator: "Plans and assigns work across the team.",
-  "prospect-researcher": "Finds grant opportunities and maintains the funding pipeline.",
-  "grant-writer": "Drafts LOIs, proposals, narratives, and grant reports.",
-  marketing: "Donor communications, newsletters, social, and impact stories.",
-  accounting: "Budget narratives, reconciliation, and financial report support.",
-  tech: "Website updates, automation, data cleanup, and integrations.",
-  operations: "Process support, vendor coordination drafts, and meeting prep.",
+  orchestrator: "Plans work across the team and handles anything that doesn't fit a specialist.",
+  fundraiser: "Finds funders, qualifies prospects, and drafts LOIs, proposals, and grant reports.",
+  communications: "Donor communications, newsletters, social content, and impact stories.",
+  operations: "Process support, finance support, vendor coordination, and tech upkeep.",
 };
 
 export interface HermesOrgResponse {
