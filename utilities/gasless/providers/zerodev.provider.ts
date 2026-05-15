@@ -107,11 +107,19 @@ export class ZeroDevProvider implements IGaslessProvider {
 
     const implementationAddress = this.getKernelImplementationAddress();
 
-    // Sign the EIP-7702 authorization
+    // EIP-7702 binds the authorization to the authority EOA's current
+    // transaction count — the bundler rejects any tuple whose `nonce`
+    // doesn't match on-chain state, so it must be fetched, not hardcoded.
+    // (A hardcoded `0` happens to work for the very first delegation per
+    // chain and silently fails for every one after.)
+    const eoaNonce = await publicClient.getTransactionCount({
+      address: signer.address,
+    });
+
     const authorization = await signer.signAuthorization({
       contractAddress: implementationAddress,
       chainId,
-      nonce: 0,
+      nonce: eoaNonce,
     });
 
     // Create kernel account with EIP-7702

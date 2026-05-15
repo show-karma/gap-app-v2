@@ -79,8 +79,17 @@ vi.mock("@account-kit/smart-contracts", () => ({
 }));
 
 // Mock viem
+// createPublicClient must expose getTransactionCount: the ZeroDev EIP-7702
+// path fetches the EOA's current nonce from the public client and passes
+// it into the signed authorization tuple. vi.hoisted lets the factory
+// reference the spy without TDZ issues from vi.mock hoisting.
+const { mockGetTransactionCount } = vi.hoisted(() => ({
+  mockGetTransactionCount: vi.fn().mockResolvedValue(0),
+}));
 vi.mock("viem", () => ({
-  createPublicClient: vi.fn().mockReturnValue({}),
+  createPublicClient: vi.fn().mockReturnValue({
+    getTransactionCount: mockGetTransactionCount,
+  }),
   http: vi.fn().mockReturnValue({}),
 }));
 
@@ -242,6 +251,38 @@ describe("ZeroDevProvider", () => {
 
       expect(result).not.toBeNull();
       expect(mockSigner.signAuthorization).toHaveBeenCalled();
+    });
+
+    it("should pass the EOA's current on-chain nonce into the EIP-7702 authorization", async () => {
+      // Regression: a hardcoded nonce: 0 silently broke every gasless
+      // attestation after the first per-chain because the bundler
+      // rejected the stale authorization. The provider must read the
+      // EOA's transaction count from the public client and forward it.
+      mockGetTransactionCount.mockResolvedValueOnce(5);
+
+      const config = {
+        provider: "zerodev" as const,
+        chain: optimism,
+        rpcUrl: "https://rpc.optimism.test",
+        enabled: true,
+        zerodev: {
+          projectId: "test-project-id",
+          useEIP7702: true,
+        },
+      };
+
+      await provider.createClient({
+        chainId: optimism.id,
+        signer: mockSigner,
+        config,
+      });
+
+      expect(mockGetTransactionCount).toHaveBeenCalledWith({
+        address: mockSigner.address,
+      });
+      expect(mockSigner.signAuthorization).toHaveBeenCalledWith(
+        expect.objectContaining({ nonce: 5 })
+      );
     });
 
     it("should create regular client when EIP-7702 is disabled", async () => {

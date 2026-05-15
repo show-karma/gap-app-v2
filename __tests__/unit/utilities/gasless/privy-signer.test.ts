@@ -273,7 +273,23 @@ describe("Privy Signer", () => {
       expect(result.chainId).toBe(42220);
     });
 
-    it("should use default nonce of 0", async () => {
+    it("should throw if nonce is not provided", async () => {
+      // A missing nonce used to silently default to 0, which is only
+      // valid on the EOA's very first EIP-7702 delegation and was
+      // rejected by the bundler on every subsequent call. The signer
+      // now requires the caller to supply the authority's current
+      // on-chain nonce explicitly.
+      const signer = await createPrivySignerForGasless(mockEmbeddedWallet, 10);
+
+      await expect(
+        signer.signAuthorization!({
+          contractAddress: "0xabcdef1234567890abcdef1234567890abcdef12" as `0x${string}`,
+          chainId: 10,
+        })
+      ).rejects.toThrow("EIP-7702 signAuthorization requires an explicit nonce");
+    });
+
+    it("should preserve a non-zero nonce", async () => {
       const mockSignature =
         "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1b";
       mockProvider.request.mockResolvedValue(mockSignature);
@@ -282,10 +298,10 @@ describe("Privy Signer", () => {
       const result = await signer.signAuthorization!({
         contractAddress: "0xabcdef1234567890abcdef1234567890abcdef12" as `0x${string}`,
         chainId: 10,
-        // nonce not specified, should default to 0
+        nonce: 7,
       });
 
-      expect(result.nonce).toBe(0);
+      expect(result.nonce).toBe(7);
     });
 
     it("should correctly parse signature components for v=27", async () => {
