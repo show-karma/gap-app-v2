@@ -670,7 +670,10 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
                 }
 
                 // Let the share dialog render before any route transition.
-                if (pathname !== updatesPath) {
+                // Only redirect for new activities. Edits should leave the user
+                // on whatever page they came from (e.g. the funding page) so
+                // they see the in-place refresh.
+                if (!isEditMode && pathname !== updatesPath) {
                   setTimeout(() => {
                     router.push(updatesPath);
                   }, 250);

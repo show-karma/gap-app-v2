@@ -41,8 +41,18 @@ export const ProjectUpdateFormBlock = ({ onClose, updateId }: ProjectUpdateFormB
     // invalidateQueries marks the cache stale AND triggers a background refetch.
     // Awaiting it ensures the refetch completes before we close the dialog,
     // so the updates list shows the new activity immediately.
+    // Invalidate every cached project-updates query for this project — the hook
+    // is keyed by whichever identifier the page used (uid on the project page,
+    // slug on the funding page), so a single-key invalidation can miss the
+    // surface the user is currently viewing.
+    const uid = project?.uid?.toLowerCase();
+    const slug = project?.details?.slug?.toLowerCase();
     await queryClient.invalidateQueries({
-      queryKey: QUERY_KEYS.PROJECT.UPDATES(project?.uid || ""),
+      predicate: (query) => {
+        if (query.queryKey[0] !== "project-updates") return false;
+        const id = (query.queryKey[1] as string | undefined)?.toLowerCase();
+        return id === uid || id === slug;
+      },
     });
     // No router.refresh() — the invalidation already refetched fresh data.
     // router.refresh() would re-render the server component and race with
