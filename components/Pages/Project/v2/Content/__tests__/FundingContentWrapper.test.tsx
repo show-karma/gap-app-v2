@@ -1,7 +1,10 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { useProjectProfile } from "@/hooks/v2/useProjectProfile";
+import type { Project } from "@/types/v2/project";
 import { FundingContentWrapper } from "../FundingContentWrapper";
+
+type ProjectProfileResult = ReturnType<typeof useProjectProfile>;
 
 vi.mock("next/navigation", () => ({
   useParams: () => ({ projectId: "test-project" }),
@@ -23,20 +26,20 @@ vi.mock("../../FundingPage/FundingContent", () => ({
 
 const useProjectProfileMock = vi.mocked(useProjectProfile);
 
-function setup(overrides: Partial<ReturnType<typeof useProjectProfile>>) {
+function setup(overrides: Partial<ProjectProfileResult>) {
   useProjectProfileMock.mockReturnValue({
     project: null,
     isProjectLoading: false,
     isError: false,
     refetch: vi.fn(),
-  } as unknown as ReturnType<typeof useProjectProfile>);
+  } as unknown as ProjectProfileResult);
   useProjectProfileMock.mockReturnValueOnce({
     project: null,
     isProjectLoading: false,
     isError: false,
     refetch: vi.fn(),
     ...overrides,
-  } as unknown as ReturnType<typeof useProjectProfile>);
+  } as unknown as ProjectProfileResult);
 }
 
 describe("FundingContentWrapper", () => {
@@ -66,7 +69,7 @@ describe("FundingContentWrapper", () => {
 
   it("renders the funding content when the project is loaded", () => {
     setup({
-      project: { uid: "0x123", details: { title: "P" } } as any,
+      project: { uid: "0x123", details: { title: "P" } } as unknown as Project,
       isProjectLoading: false,
       isError: false,
     });

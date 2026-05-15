@@ -23,10 +23,10 @@ export function FundingContentWrapper() {
   if (isError || !project) {
     return (
       <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-zinc-100">
+        <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
           Couldn&apos;t load funding details
         </h2>
-        <p className="max-w-md text-sm text-gray-600 dark:text-zinc-400">
+        <p className="max-w-md text-sm text-zinc-600 dark:text-zinc-400">
           We hit a network issue while loading this project. Check your connection and try again.
         </p>
         <button
