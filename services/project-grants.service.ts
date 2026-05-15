@@ -3,6 +3,18 @@ import type { Grant } from "@/types/v2/grant";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
+export interface GetProjectGrantsOptions {
+  /**
+   * Whether the request should attach a Privy auth token. Defaults to `true`
+   * to preserve existing authenticated behaviour. The public project-profile
+   * SSR/prefetch path explicitly passes `false` to avoid touching the
+   * browser-only `TokenManager` on the server, which is the root cause of
+   * `Error: Connection closed.` events on `/project/:projectId/funding`.
+   */
+  isAuthorized?: boolean;
+  signal?: AbortSignal;
+}
+
 /**
  * Fetches grants for a project using V2 endpoint
  *
@@ -15,9 +27,21 @@ import { INDEXER } from "@/utilities/indexer";
  * - Dates are returned as ISO strings (not MongoDB objects)
  * - Supports both UID and slug identifiers
  */
-export const getProjectGrants = async (projectIdOrSlug: string): Promise<Grant[]> => {
+export const getProjectGrants = async (
+  projectIdOrSlug: string,
+  options: GetProjectGrantsOptions = {}
+): Promise<Grant[]> => {
+  const { isAuthorized = true, signal } = options;
   const [data, error, , status] = await fetchData<Grant | Grant[]>(
-    INDEXER.V2.PROJECTS.GRANTS(projectIdOrSlug)
+    INDEXER.V2.PROJECTS.GRANTS(projectIdOrSlug),
+    "GET",
+    {},
+    {},
+    {},
+    isAuthorized,
+    false,
+    undefined,
+    signal
   );
 
   if (error || !data) {
