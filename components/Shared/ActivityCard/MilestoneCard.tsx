@@ -38,6 +38,7 @@ import { SHARE_TEXTS } from "@/utilities/share/text";
 import { cn } from "@/utilities/tailwind";
 import { ActivityActionsWrapper } from "./ActivityActionsWrapper";
 import { ActivityAttribution } from "./ActivityAttribution";
+import { GrantAssociation } from "./GrantAssociation";
 import { MilestoneCardLayout } from "./MilestoneCardLayout";
 import { computeMilestoneCardCompletionGate } from "./milestone-card-gating";
 import { PostedInfoTooltip } from "./PostedInfoTooltip";
@@ -221,10 +222,6 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
     (projectMilestone?.completed?.data as any)?.deliverables ||
     (grantMilestone?.milestone.completed?.data as any)?.deliverables;
 
-  // See computeMilestoneCardCompletionGate for the full rule. Briefly: a
-  // completed milestone-shaped entry always renders the "Milestone Update"
-  // section, even with no narrative, so the timeline keeps surfacing the
-  // completion event and renderMilestoneCompletion can show "—".
   const { showSection: showCompletionSection, showTimelineHeader: showCompletionTimelineHeader } =
     computeMilestoneCardCompletionGate({
       type,
@@ -529,6 +526,8 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
           {grantTitle}
         </Link>
       </div>
+    ) : type === "activity" && milestone.projectUpdate ? (
+      <GrantAssociation projectUpdate={milestone.projectUpdate} />
     ) : undefined;
 
   const showStatusBadge = type === "milestone" || type === "grant";
