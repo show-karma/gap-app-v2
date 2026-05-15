@@ -8,6 +8,7 @@ import { EditUpdateDialog } from "../../Pages/Project/Updates/EditUpdateDialog";
 import { ActivityAttribution } from "./ActivityAttribution";
 import { ActivityMenu } from "./ActivityMenu";
 import { ActivityStatusHeader } from "./ActivityStatusHeader";
+import { GrantAssociation } from "./GrantAssociation";
 import { PostedInfoTooltip } from "./PostedInfoTooltip";
 
 interface ProjectUpdateCardProps {
@@ -69,6 +70,7 @@ export const ProjectUpdateCard: FC<ProjectUpdateCardProps> = ({ update, index, i
             <PostedInfoTooltip date={update.createdAt} attester={update.recipient} />
           </div>
           {title && <p className="text-xl font-semibold text-foreground">{title}</p>}
+          <GrantAssociation projectUpdate={update} />
         </div>
 
         {description && (

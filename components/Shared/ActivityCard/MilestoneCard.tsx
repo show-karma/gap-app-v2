@@ -38,6 +38,7 @@ import { SHARE_TEXTS } from "@/utilities/share/text";
 import { cn } from "@/utilities/tailwind";
 import { ActivityActionsWrapper } from "./ActivityActionsWrapper";
 import { ActivityAttribution } from "./ActivityAttribution";
+import { GrantAssociation } from "./GrantAssociation";
 import { MilestoneCardLayout } from "./MilestoneCardLayout";
 import { computeMilestoneCardCompletionGate } from "./milestone-card-gating";
 import { PostedInfoTooltip } from "./PostedInfoTooltip";
@@ -529,6 +530,8 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
           {grantTitle}
         </Link>
       </div>
+    ) : type === "activity" && milestone.projectUpdate ? (
+      <GrantAssociation projectUpdate={milestone.projectUpdate} />
     ) : undefined;
 
   const showStatusBadge = type === "milestone" || type === "grant";
