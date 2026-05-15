@@ -113,11 +113,13 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
   const { config } = useProgramConfig(programId);
   const { data: promptsData } = useProgramPrompts(programId);
 
-  // Fetch programs to derive communityUID (needed for the reviewer picker modal)
+  // Fetch programs to derive communityUID (needed for the reviewer picker modal).
+  // `programId` may arrive as `"programId_chainId"`, so normalize before matching.
+  const normalizedProgramId = useMemo(() => programId.split("_")[0], [programId]);
   const { programs } = useFundingPrograms(communityId);
   const communityUID = useMemo(
-    () => programs.find((p) => p.programId === programId)?.communityUID,
-    [programs, programId]
+    () => programs.find((p) => p.programId === normalizedProgramId)?.communityUID,
+    [programs, normalizedProgramId]
   );
 
   // Fetch reviewers for the program
