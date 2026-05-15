@@ -61,8 +61,11 @@ export const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMil
   data.projectMilestones.forEach((milestone: ProjectMilestone) => {
     // A milestone is completed if status is "completed" (completionDetails may or may not be present)
     const isCompleted = milestone.status === "completed" || milestone.status === "verified";
-    // Use recipient from API (the milestone owner)
-    const attester = milestone.recipient || "";
+    const milestoneAny = milestone as any;
+    const recipient = milestone.recipient || "";
+    // Display attribution falls back to recipient when the on-chain attester
+    // isn't present (Karma backend-signed milestones expose attester separately).
+    const attester = milestoneAny.attester || recipient;
 
     unified.push({
       uid: milestone.uid,
@@ -89,6 +92,7 @@ export const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMil
         projectMilestone: {
           uid: milestone.uid,
           attester,
+          recipient,
           completed: isCompleted
             ? {
                 createdAt: milestone.completionDetails?.completedAt || milestone.createdAt || "",
@@ -107,17 +111,17 @@ export const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMil
   data.grantMilestones.forEach((milestone: GrantMilestoneWithDetails) => {
     // A milestone is completed if status is "completed" (completionDetails may or may not be present)
     const isCompleted = milestone.status === "completed" || milestone.status === "verified";
-    // Use recipient from API (the milestone owner), with extensive fallbacks
-    // The API may include additional fields not in the type definition
+    // Recipient is the on-chain milestone owner (passes Gap.sol's revoke gate).
+    // Attester may differ (Karma backend-signed milestones use a service wallet);
+    // display attribution falls back to recipient when attester is unavailable.
     const milestoneAny = milestone as any;
-    const attester =
+    const recipient =
       milestone.recipient ||
-      milestoneAny.attester ||
       milestone.completionDetails?.completedBy ||
       milestone.fundingApplicationCompletion?.ownerAddress ||
-      milestoneAny.data?.attester ||
       milestoneAny.data?.recipient ||
       "";
+    const attester = milestoneAny.attester || milestoneAny.data?.attester || recipient;
     // Off-chain completions use fundingApplicationCompletion instead of completionDetails
     const appCompletion = milestone.fundingApplicationCompletion;
     const chainID =
@@ -195,6 +199,7 @@ export const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMil
             chainID,
             refUID: grantInfo?.uid || "",
             attester,
+            recipient,
             title: milestone.title,
             description: milestone.description,
             endsAt: milestoneEndsAt,

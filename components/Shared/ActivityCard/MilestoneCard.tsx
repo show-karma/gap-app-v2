@@ -102,6 +102,12 @@ const MilestoneAIEvaluationBadge = dynamic(
 interface MilestoneCardProps {
   milestone: UnifiedMilestone;
   isAuthorized: boolean;
+  /**
+   * Whether the connected wallet can edit/revoke this milestone on-chain.
+   * Tighter than `isAuthorized`: gated by Gap.sol's attester/recipient check.
+   * Project admins and team members may have isAuthorized=true but canEdit=false.
+   */
+  canEdit?: boolean;
   allocationAmount?: string;
   hideTimelineMarker?: boolean;
 }
@@ -132,6 +138,7 @@ const getActivityTypeLabel = (type: string): string => {
 export const MilestoneCard: FC<MilestoneCardProps> = ({
   milestone,
   isAuthorized,
+  canEdit = false,
   allocationAmount,
   hideTimelineMarker = false,
 }) => {
@@ -469,30 +476,35 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
                   <ShareIcon className="h-5 w-5" />
                 </ExternalLink>
 
-                {/* Edit Button */}
-                <Button
-                  className="flex flex-row gap-1 bg-transparent text-sm font-semibold text-muted-foreground hover:bg-transparent hover:opacity-75  h-6 w-6 p-0 items-center justify-center"
-                  onClick={() => handleEditing(true)}
-                >
-                  <PencilSquareIcon className="h-5 w-5" />
-                </Button>
+                {canEdit && (
+                  <>
+                    {/* Edit Button — gated by on-chain revoke rule (Gap.sol) */}
+                    <Button
+                      className="flex flex-row gap-1 bg-transparent text-sm font-semibold text-muted-foreground hover:bg-transparent hover:opacity-75  h-6 w-6 p-0 items-center justify-center"
+                      onClick={() => handleEditing(true)}
+                    >
+                      <PencilSquareIcon className="h-5 w-5" />
+                    </Button>
 
-                {/* Revoke Completion Button */}
-                <DeleteDialog
-                  deleteFunction={handleUndoCompletion}
-                  isLoading={isUndoing}
-                  title={
-                    <p className="font-normal">
-                      Are you sure you want to revoke the completion of <b>{milestone.title}</b>?
-                    </p>
-                  }
-                  buttonElement={{
-                    text: "",
-                    icon: <TrashIcon className="h-5 w-5" />,
-                    styleClass:
-                      "bg-transparent text-sm font-semibold text-red-500 hover:bg-transparent hover:opacity-75 h-6 w-6 p-0 items-center justify-center",
-                  }}
-                />
+                    {/* Revoke Completion Button — same on-chain gate as Edit */}
+                    <DeleteDialog
+                      deleteFunction={handleUndoCompletion}
+                      isLoading={isUndoing}
+                      title={
+                        <p className="font-normal">
+                          Are you sure you want to revoke the completion of <b>{milestone.title}</b>
+                          ?
+                        </p>
+                      }
+                      buttonElement={{
+                        text: "",
+                        icon: <TrashIcon className="h-5 w-5" />,
+                        styleClass:
+                          "bg-transparent text-sm font-semibold text-red-500 hover:bg-transparent hover:opacity-75 h-6 w-6 p-0 items-center justify-center",
+                      }}
+                    />
+                  </>
+                )}
               </div>
             ) : undefined
           }
@@ -610,7 +622,7 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
         {type === "milestone" && projectMilestone ? (
           <ObjectiveSimpleOptionsMenu objectiveId={projectMilestone.uid} />
         ) : type === "grant" && grantMilestone ? (
-          <GrantMilestoneSimpleOptionsMenu milestone={milestone} />
+          <GrantMilestoneSimpleOptionsMenu milestone={milestone} canEdit={canEdit} />
         ) : null}
       </>
     ) : null;

@@ -26,12 +26,18 @@ interface GrantMilestoneOptionsMenuProps {
   milestone: UnifiedMilestone;
   completeFn: (completeState: boolean) => void;
   alreadyCompleted: boolean;
+  /**
+   * Whether the connected wallet can edit/revoke the milestone on-chain.
+   * Hides the Edit menu item when false; Mark Complete and Delete stay.
+   */
+  canEdit?: boolean;
 }
 
 export const GrantMilestoneOptionsMenu = ({
   milestone,
   completeFn,
   alreadyCompleted,
+  canEdit = false,
 }: GrantMilestoneOptionsMenuProps) => {
   const { isDeleting, multiGrantDelete } = useMilestone();
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -66,7 +72,7 @@ export const GrantMilestoneOptionsMenu = ({
             className="absolute right-0 mt-2 w-48 origin-top-right divide-y divide-gray-100 rounded-md bg-white dark:bg-zinc-800 shadow-lg ring-1 ring-black/5 focus:outline-none z-50"
           >
             <div className="flex flex-col gap-1 px-1 py-1">
-              {isPending ? (
+              {isPending && canEdit ? (
                 <Menu.Item>
                   <Button className={buttonClassName} onClick={() => setIsEditOpen(true)}>
                     <PencilSquareIcon className="w-5 h-5" />
