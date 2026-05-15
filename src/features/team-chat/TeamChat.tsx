@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { CornerDownLeftIcon, SquareIcon } from "lucide-react";
+import { type KeyboardEvent, useCallback, useEffect, useRef, useState } from "react";
 import { type ChatMessage, useChat } from "@/hooks/useChat";
 import { TEAM_ROLE_LABELS, type TeamRole } from "@/lib/hermes-client";
 import {
@@ -11,12 +12,6 @@ import {
 } from "@/src/components/ai-elements/conversation";
 import { Message, MessageContent } from "@/src/components/ai-elements/message";
 import { MessageResponse } from "@/src/components/ai-elements/message-response";
-import {
-  PromptInput,
-  PromptInputBody,
-  PromptInputSubmit,
-  PromptInputTextarea,
-} from "@/src/components/ai-elements/prompt-input";
 
 interface Props {
   slug: string;
@@ -26,11 +21,13 @@ interface Props {
 export function TeamChat({ slug, role }: Props) {
   const { messages, sending, send, stop } = useChat(slug, role);
 
-  const handleSubmit = (message: { text?: string }) => {
-    const text = (message.text ?? "").trim();
-    if (!text || sending) return;
-    send(text);
-  };
+  const handleSubmit = useCallback(
+    (text: string) => {
+      if (!text || sending) return;
+      send(text);
+    },
+    [sending, send]
+  );
 
   return (
     <div className="flex h-[72vh] flex-col rounded-lg border bg-white">
@@ -49,31 +46,12 @@ export function TeamChat({ slug, role }: Props) {
       </Conversation>
 
       <div className="border-t bg-gray-50/60 p-3">
-        <PromptInput
+        <ChatComposer
+          placeholder={`Message ${TEAM_ROLE_LABELS[role]}`}
+          isStreaming={sending}
           onSubmit={handleSubmit}
-          // Per-prompt accept attachments are wired via the existing
-          // component; we disable for v1 to keep the chat surface narrow.
-          accept=""
-        >
-          <PromptInputBody>
-            <PromptInputTextarea
-              placeholder={`Message ${TEAM_ROLE_LABELS[role]}`}
-              maxLength={8000}
-            />
-            <div className="mt-2 flex items-center justify-end gap-2">
-              {sending ? (
-                <button
-                  type="button"
-                  onClick={stop}
-                  className="rounded border bg-white px-3 py-1.5 text-sm"
-                >
-                  Stop
-                </button>
-              ) : null}
-              <PromptInputSubmit status={sending ? "streaming" : undefined} disabled={sending} />
-            </div>
-          </PromptInputBody>
-        </PromptInput>
+          onStop={stop}
+        />
       </div>
     </div>
   );
@@ -88,9 +66,14 @@ function ChatTurn({ message, role }: { message: ChatMessage; role: TeamRole }) {
           <p className="whitespace-pre-wrap">{message.content}</p>
         ) : (
           <>
+            {(message.tools ?? []).length > 0 ? (
+              <ToolActivity
+                tools={message.tools ?? []}
+                isStreaming={message.state === "streaming"}
+              />
+            ) : null}
             {message.content ? <MessageResponse>{message.content}</MessageResponse> : null}
-            {message.state === "streaming" ? <StreamingPulse /> : null}
-            {(message.tools ?? []).length > 0 ? <ToolActivity tools={message.tools ?? []} /> : null}
+            {message.state === "streaming" && !message.content ? <StreamingPulse /> : null}
             {message.state === "error" && message.errorMessage ? (
               <div className="mt-2 text-xs text-red-600">{message.errorMessage}</div>
             ) : null}
@@ -115,54 +98,125 @@ function StreamingPulse() {
   );
 }
 
-function ToolActivity({ tools }: { tools: NonNullable<ChatMessage["tools"]> }) {
-  const [open, setOpen] = useState(false);
-  const running = tools.filter((t) => t.state === "running").length;
-  const completed = tools.filter((t) => t.state === "completed").length;
+function ToolActivity({
+  tools,
+  isStreaming,
+}: {
+  tools: NonNullable<ChatMessage["tools"]>;
+  isStreaming: boolean;
+}) {
   return (
-    <div className="mt-3 rounded border border-gray-200 bg-gray-50/80 px-3 py-2 text-xs">
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center justify-between text-gray-600"
-        aria-expanded={open}
-      >
-        <span>
-          {running > 0
-            ? `Using tools — ${completed} done, ${running} running`
-            : `Used ${completed} tool${completed === 1 ? "" : "s"}`}
-        </span>
-        <span aria-hidden>{open ? "−" : "+"}</span>
-      </button>
-      {open ? (
-        <ul className="mt-2 space-y-1 text-gray-600">
-          {tools.map((t) => (
-            <li key={t.id} className="flex items-baseline justify-between gap-2">
-              <span className="truncate">
-                <span className="font-mono">{t.tool}</span>
-                {t.preview ? <span className="ml-1 text-gray-500">{t.preview}</span> : null}
-              </span>
-              <span
-                className={`shrink-0 ${
-                  t.state === "error"
-                    ? "text-red-600"
-                    : t.state === "running"
-                      ? "text-gray-500"
-                      : "text-gray-400"
-                }`}
-              >
-                {t.state === "running"
-                  ? "…"
-                  : t.state === "error"
-                    ? "failed"
-                    : t.durationMs
-                      ? `${t.durationMs}ms`
-                      : "done"}
-              </span>
-            </li>
-          ))}
-        </ul>
+    <div className="mb-3 rounded border border-gray-200 bg-gray-50/80 px-3 py-2 text-xs">
+      <ul className="space-y-1 text-gray-700">
+        {tools.map((t) => (
+          <li key={t.id} className="flex items-baseline justify-between gap-3">
+            <span className="min-w-0 flex-1 truncate">
+              <span className="font-mono text-gray-800">{t.tool}</span>
+              {t.preview ? <span className="ml-2 text-gray-500">{t.preview}</span> : null}
+            </span>
+            <ToolDuration tool={t} />
+          </li>
+        ))}
+      </ul>
+      {isStreaming ? (
+        <div className="mt-2 flex items-center gap-1 text-[10px] text-gray-400">
+          <span className="h-1 w-1 animate-pulse rounded-full bg-gray-400 [animation-delay:0ms]" />
+          <span className="h-1 w-1 animate-pulse rounded-full bg-gray-400 [animation-delay:150ms]" />
+          <span className="h-1 w-1 animate-pulse rounded-full bg-gray-400 [animation-delay:300ms]" />
+        </div>
       ) : null}
+    </div>
+  );
+}
+
+function ToolDuration({ tool }: { tool: NonNullable<ChatMessage["tools"]>[number] }) {
+  if (tool.state === "running") {
+    return <span className="shrink-0 text-gray-500">running…</span>;
+  }
+  if (tool.state === "error") {
+    return <span className="shrink-0 text-red-600">failed</span>;
+  }
+  return (
+    <span className="shrink-0 text-gray-400">
+      {tool.durationMs ? `${tool.durationMs}ms` : "done"}
+    </span>
+  );
+}
+
+interface ComposerProps {
+  placeholder: string;
+  isStreaming: boolean;
+  onSubmit: (text: string) => void;
+  onStop: () => void;
+}
+
+function ChatComposer({ placeholder, isStreaming, onSubmit, onStop }: ComposerProps) {
+  const [value, setValue] = useState("");
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const resize = useCallback(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = "0px";
+    el.style.height = `${Math.min(el.scrollHeight, 160)}px`;
+  }, []);
+
+  useEffect(() => {
+    resize();
+  }, [resize]);
+
+  const submit = useCallback(() => {
+    const text = value.trim();
+    if (!text || isStreaming) return;
+    onSubmit(text);
+    setValue("");
+    requestAnimationFrame(resize);
+  }, [value, isStreaming, onSubmit, resize]);
+
+  const handleKey = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey && !e.metaKey && !e.ctrlKey) {
+      e.preventDefault();
+      submit();
+    }
+  };
+
+  const canSubmit = value.trim().length > 0 && !isStreaming;
+
+  return (
+    <div className="flex items-end gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 focus-within:border-gray-400">
+      <textarea
+        ref={textareaRef}
+        value={value}
+        onChange={(e) => {
+          setValue(e.target.value);
+          resize();
+        }}
+        onKeyDown={handleKey}
+        placeholder={placeholder}
+        rows={1}
+        maxLength={8000}
+        className="min-h-[24px] flex-1 resize-none border-0 bg-transparent text-sm leading-6 outline-none placeholder:text-gray-400"
+      />
+      {isStreaming ? (
+        <button
+          type="button"
+          onClick={onStop}
+          aria-label="Stop generating"
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-gray-900 text-white hover:bg-gray-700"
+        >
+          <SquareIcon className="h-3.5 w-3.5" />
+        </button>
+      ) : (
+        <button
+          type="button"
+          onClick={submit}
+          disabled={!canSubmit}
+          aria-label="Send message"
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-brand-blue text-white disabled:cursor-not-allowed disabled:bg-gray-300"
+        >
+          <CornerDownLeftIcon className="h-3.5 w-3.5" />
+        </button>
+      )}
     </div>
   );
 }
