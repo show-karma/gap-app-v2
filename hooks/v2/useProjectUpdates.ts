@@ -61,11 +61,10 @@ export const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMil
   data.projectMilestones.forEach((milestone: ProjectMilestone) => {
     // A milestone is completed if status is "completed" (completionDetails may or may not be present)
     const isCompleted = milestone.status === "completed" || milestone.status === "verified";
-    const milestoneAny = milestone as any;
     const recipient = milestone.recipient || "";
     // Display attribution falls back to recipient when the on-chain attester
     // isn't present (Karma backend-signed milestones expose attester separately).
-    const attester = milestoneAny.attester || recipient;
+    const attester = (milestone as { attester?: string }).attester || recipient;
 
     unified.push({
       uid: milestone.uid,

@@ -13,7 +13,6 @@ import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { Skeleton } from "@/components/Utilities/Skeleton";
 import { useAuth } from "@/hooks/useAuth";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
-import { useProjectInstance } from "@/hooks/useProjectInstance";
 import { useTeamProfiles } from "@/hooks/useTeamProfiles";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useENS } from "@/store/ens";
@@ -38,9 +37,6 @@ export const MemberCard = ({ member }: { member: string }) => {
   const { address } = useAuth();
   const isAuthorized = isProjectOwner || isContractOwner;
   const _isAdminOrAbove = isProjectOwner || isContractOwner || isProjectAdmin;
-  const { project: projectInstance } = useProjectInstance(
-    project?.details?.slug || project?.uid || ""
-  );
   const { openModal } = useContributorProfileModalStore();
 
   const {
