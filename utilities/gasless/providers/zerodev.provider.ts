@@ -107,11 +107,9 @@ export class ZeroDevProvider implements IGaslessProvider {
 
     const implementationAddress = this.getKernelImplementationAddress();
 
-    // EIP-7702 binds the authorization to the authority EOA's current
-    // transaction count — the bundler rejects any tuple whose `nonce`
-    // doesn't match on-chain state, so it must be fetched, not hardcoded.
-    // `pending` matches viem's own `prepareAuthorization` and handles
-    // the edge case where the EOA already has a tx in the mempool.
+    // EIP-7702 binds the authorization to the EOA's current nonce; a
+    // hardcoded value gets rejected by the bundler. `pending` matches
+    // viem's `prepareAuthorization`.
     const eoaNonce = await publicClient.getTransactionCount({
       address: signer.address,
       blockTag: "pending",

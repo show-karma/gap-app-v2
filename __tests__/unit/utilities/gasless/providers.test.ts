@@ -78,11 +78,9 @@ vi.mock("@account-kit/smart-contracts", () => ({
   }),
 }));
 
-// Mock viem
-// createPublicClient must expose getTransactionCount: the ZeroDev EIP-7702
-// path fetches the EOA's current nonce from the public client and passes
-// it into the signed authorization tuple. vi.hoisted lets the factory
-// reference the spy without TDZ issues from vi.mock hoisting.
+// Mock viem. The ZeroDev EIP-7702 path reads `getTransactionCount` to
+// build the authorization, so the mock client exposes it via a hoisted
+// spy the tests can re-stub per case.
 const { mockGetTransactionCount } = vi.hoisted(() => ({
   mockGetTransactionCount: vi.fn().mockResolvedValue(0),
 }));
@@ -284,6 +282,90 @@ describe("ZeroDevProvider", () => {
       expect(mockSigner.signAuthorization).toHaveBeenCalledWith(
         expect.objectContaining({ nonce: 5 })
       );
+    });
+
+    it("should re-read the EOA nonce on every createClient call (no caching)", async () => {
+      // A future change that memoizes the nonce across calls would
+      // silently reintroduce the original bug for users who land more
+      // than one UserOp per session. Asserting freshness here is the
+      // cheapest guardrail.
+      mockGetTransactionCount.mockResolvedValueOnce(2).mockResolvedValueOnce(3);
+
+      const config = {
+        provider: "zerodev" as const,
+        chain: optimism,
+        rpcUrl: "https://rpc.optimism.test",
+        enabled: true,
+        zerodev: {
+          projectId: "test-project-id",
+          useEIP7702: true,
+        },
+      };
+
+      await provider.createClient({ chainId: optimism.id, signer: mockSigner, config });
+      await provider.createClient({ chainId: optimism.id, signer: mockSigner, config });
+
+      expect(mockGetTransactionCount).toHaveBeenCalledTimes(2);
+      const signAuthCalls = (mockSigner.signAuthorization as vi.Mock).mock.calls;
+      expect(signAuthCalls[0][0].nonce).toBe(2);
+      expect(signAuthCalls[1][0].nonce).toBe(3);
+    });
+
+    it("should fetch the nonce before signing the authorization", async () => {
+      // Ordering matters: signing must happen against a freshly-fetched
+      // nonce. If a refactor ever reversed these, the test would catch
+      // the regression even if both calls still appeared to "work."
+      const order: string[] = [];
+      mockGetTransactionCount.mockImplementationOnce(async () => {
+        order.push("fetch");
+        return 4;
+      });
+      (mockSigner.signAuthorization as vi.Mock).mockImplementationOnce(async () => {
+        order.push("sign");
+        return {
+          contractAddress: "0xKernelImplementation",
+          address: "0xKernelImplementation",
+          chainId: optimism.id,
+          nonce: 4,
+          r: "0x1234",
+          s: "0x5678",
+          v: 28n,
+          yParity: 1,
+        };
+      });
+
+      const config = {
+        provider: "zerodev" as const,
+        chain: optimism,
+        rpcUrl: "https://rpc.optimism.test",
+        enabled: true,
+        zerodev: { projectId: "test-project-id", useEIP7702: true },
+      };
+
+      await provider.createClient({ chainId: optimism.id, signer: mockSigner, config });
+
+      expect(order).toEqual(["fetch", "sign"]);
+    });
+
+    it("should fail closed (no fallback nonce) when getTransactionCount errors", async () => {
+      // Safety: if the public RPC errors, the provider must NOT
+      // silently fall back to a hardcoded nonce. The original bug
+      // would resurface under transient network failure if a future
+      // refactor added a try/catch around the fetch.
+      mockGetTransactionCount.mockRejectedValueOnce(new Error("RPC down"));
+
+      const config = {
+        provider: "zerodev" as const,
+        chain: optimism,
+        rpcUrl: "https://rpc.optimism.test",
+        enabled: true,
+        zerodev: { projectId: "test-project-id", useEIP7702: true },
+      };
+
+      await expect(
+        provider.createClient({ chainId: optimism.id, signer: mockSigner, config })
+      ).rejects.toThrow();
+      expect(mockSigner.signAuthorization).not.toHaveBeenCalled();
     });
 
     it("should create regular client when EIP-7702 is disabled", async () => {
