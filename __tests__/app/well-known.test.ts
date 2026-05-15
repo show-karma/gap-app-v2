@@ -5,7 +5,11 @@ const INDEXER_URL = "http://localhost:4000";
 
 describe("/.well-known/ai-plugin.json route handler", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.restoreAllMocks();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   it("returns the ChatGPT plugin manifest with name_for_human=Karma", async () => {
@@ -48,9 +52,25 @@ describe("/.well-known/ai-plugin.json route handler", () => {
     expect(res.headers.get("Access-Control-Allow-Origin")).toBe("*");
     expect(res.headers.get("Access-Control-Allow-Methods")).toContain("GET");
   });
+
+  it("OPTIONS returns 204 with CORS headers", async () => {
+    const { OPTIONS } = await import("@/app/.well-known/ai-plugin.json/route");
+    const res = await OPTIONS();
+    expect(res.status).toBe(204);
+    expect(res.headers.get("Access-Control-Allow-Origin")).toBe("*");
+    expect(res.headers.get("Access-Control-Allow-Methods")).toContain("OPTIONS");
+  });
 });
 
 describe("/.well-known/mcp.json route handler", () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it("declares a single 'karma' MCP server with http transport", async () => {
     const { GET } = await import("@/app/.well-known/mcp.json/route");
     const res = GET();
@@ -80,6 +100,14 @@ describe("/.well-known/mcp.json route handler", () => {
     const { GET } = await import("@/app/.well-known/mcp.json/route");
     const res = GET();
     expect(res.headers.get("Access-Control-Allow-Origin")).toBe("*");
+  });
+
+  it("OPTIONS returns 204 with CORS headers", async () => {
+    const { OPTIONS } = await import("@/app/.well-known/mcp.json/route");
+    const res = await OPTIONS();
+    expect(res.status).toBe(204);
+    expect(res.headers.get("Access-Control-Allow-Origin")).toBe("*");
+    expect(res.headers.get("Access-Control-Allow-Methods")).toContain("OPTIONS");
   });
 });
 
