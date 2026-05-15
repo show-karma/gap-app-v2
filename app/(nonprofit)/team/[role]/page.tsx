@@ -10,6 +10,7 @@ import {
   TEAM_ROLES,
   type TeamRole,
 } from "@/lib/hermes-client";
+import { TeamChat } from "@/src/features/team-chat/TeamChat";
 import { PAGES } from "@/utilities/pages";
 
 type TabId = "chat" | "about" | "settings";
@@ -175,20 +176,7 @@ function ChatTab({ slug, role }: { slug: string | undefined; role: TeamRole }) {
   if (!slug) {
     return <p className="text-sm text-gray-600">Set up your team first.</p>;
   }
-  // Chat goes through a Next route handler at /api/team/[slug]/[role]/chat
-  // — wired up but a full streaming UI ships next. Today this tab shows
-  // a placeholder, not a broken connection.
-  return (
-    <div className="rounded border bg-gray-50 p-6 text-sm text-gray-700">
-      <p>
-        Chat with {TEAM_ROLE_LABELS[role]} is coming up next. The backend proxy is wired (
-        <code className="rounded bg-white px-1">
-          /api/team/{slug}/{role}/chat
-        </code>
-        ) — the streaming UI ships in the next iteration.
-      </p>
-    </div>
-  );
+  return <TeamChat slug={slug} role={role} />;
 }
 
 function SettingsTab({ role }: { role: TeamRole }) {

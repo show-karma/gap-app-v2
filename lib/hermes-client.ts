@@ -15,7 +15,10 @@ export const TEAM_ROLES = [
 ] as const;
 export type TeamRole = (typeof TEAM_ROLES)[number];
 
+// Orchestrator (Team Lead) leads the list — it's where the user starts when
+// they want the AI workforce to plan + decompose a goal across specialists.
 export const VISIBLE_TEAM_ROLES: TeamRole[] = [
+  "orchestrator",
   "prospect-researcher",
   "grant-writer",
   "marketing",
@@ -166,9 +169,7 @@ export const hermesClient = {
     slug: string,
     topic: OrgBrainTopic
   ): Promise<OrgBrainResponse<TData>> {
-    const { data } = await api.get<OrgBrainResponse<TData>>(
-      INDEXER.HERMES.BRAIN(slug, topic)
-    );
+    const { data } = await api.get<OrgBrainResponse<TData>>(INDEXER.HERMES.BRAIN(slug, topic));
     return data;
   },
 
@@ -181,16 +182,12 @@ export const hermesClient = {
   },
 
   async listWorkTasks(slug: string): Promise<WorkTask[]> {
-    const { data } = await api.get<{ tasks: WorkTask[] }>(
-      INDEXER.HERMES.WORK_TASKS(slug)
-    );
+    const { data } = await api.get<{ tasks: WorkTask[] }>(INDEXER.HERMES.WORK_TASKS(slug));
     return data.tasks;
   },
 
   async getWorkTask(slug: string, taskId: string): Promise<WorkTask> {
-    const { data } = await api.get<WorkTask>(
-      INDEXER.HERMES.WORK_TASK(slug, taskId)
-    );
+    const { data } = await api.get<WorkTask>(INDEXER.HERMES.WORK_TASK(slug, taskId));
     return data;
   },
 
@@ -198,36 +195,39 @@ export const hermesClient = {
     slug: string,
     input: { title: string; description?: string; assignee?: string }
   ): Promise<WorkTask> {
-    const { data } = await api.post<WorkTask>(
-      INDEXER.HERMES.WORK_TASKS(slug),
-      input
-    );
+    const { data } = await api.post<WorkTask>(INDEXER.HERMES.WORK_TASKS(slug), input);
     return data;
   },
 
-  async updateWorkTaskStatus(
-    slug: string,
-    taskId: string,
-    status: WorkTaskStatus
-  ): Promise<void> {
+  async updateWorkTaskStatus(slug: string, taskId: string, status: WorkTaskStatus): Promise<void> {
     await api.put(INDEXER.HERMES.WORK_TASK_STATUS(slug, taskId), { status });
   },
 
-  async listWorkTaskComments(
-    slug: string,
-    taskId: string
-  ): Promise<WorkTaskComment[]> {
+  async listWorkTaskComments(slug: string, taskId: string): Promise<WorkTaskComment[]> {
     const { data } = await api.get<{ comments: WorkTaskComment[] }>(
       INDEXER.HERMES.WORK_TASK_COMMENTS(slug, taskId)
     );
     return data.comments;
   },
 
-  async addWorkTaskComment(
+  async startChat(
     slug: string,
-    taskId: string,
-    body: string
-  ): Promise<WorkTaskComment> {
+    role: TeamRole,
+    message: string,
+    previousResponseId?: string
+  ): Promise<{ runId: string; sessionId: string }> {
+    const { data } = await api.post<{ runId: string; sessionId: string }>(
+      INDEXER.HERMES.CHAT_START(slug, role),
+      { message, previousResponseId }
+    );
+    return data;
+  },
+
+  async stopChatRun(slug: string, role: TeamRole, runId: string): Promise<void> {
+    await api.post(INDEXER.HERMES.CHAT_RUN_STOP(slug, role, runId), {});
+  },
+
+  async addWorkTaskComment(slug: string, taskId: string, body: string): Promise<WorkTaskComment> {
     const { data } = await api.post<WorkTaskComment>(
       INDEXER.HERMES.WORK_TASK_COMMENTS(slug, taskId),
       { body }
