@@ -78,6 +78,67 @@ export interface UpdateAboutInput {
   content: string;
 }
 
+export type OrgBrainTopic = "mission" | "brand";
+
+export interface OrgBrainResponse<TData = Record<string, unknown>> {
+  topic: OrgBrainTopic;
+  exists: boolean;
+  data: TData;
+}
+
+export interface MissionData {
+  legalName?: string;
+  ein?: string;
+  missionStatement?: string;
+  website?: string;
+  theoryOfChange?: string;
+  targetPopulation?: string;
+  geographicScope?: string;
+  yearFounded?: string;
+  fiscalSponsor?: string;
+  leadership?: Array<{ name: string; role: string }>;
+}
+
+export interface BrandData {
+  voice?: string;
+  tones?: {
+    donor_email?: string;
+    proposal?: string;
+    social?: string;
+  };
+  boilerplates?: Array<{ name: string; body: string }>;
+  wordDos?: string[];
+  wordDonts?: string[];
+  taglines?: string[];
+  sensitiveTopics?: string;
+}
+
+export type WorkTaskStatus =
+  | "queued"
+  | "working"
+  | "blocked"
+  | "ready-for-review"
+  | "done";
+
+export interface WorkTask {
+  id: string;
+  title: string;
+  description?: string;
+  status: WorkTaskStatus;
+  assignee?: string;
+  parentId?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface WorkTaskComment {
+  id: string;
+  taskId: string;
+  author?: string;
+  body: string;
+  createdAt: string;
+}
+
 // Single instance reused across hooks. The shared API client handles auth
 // (Bearer token) and 401 refresh — see utilities/auth/api-client.ts.
 const api = createAuthenticatedApiClient();
@@ -104,6 +165,79 @@ export const hermesClient = {
     await api.put(INDEXER.HERMES.SOUL(input.slug, input.role), {
       content: input.content,
     });
+  },
+
+  async getOrgBrain<TData = Record<string, unknown>>(
+    slug: string,
+    topic: OrgBrainTopic
+  ): Promise<OrgBrainResponse<TData>> {
+    const { data } = await api.get<OrgBrainResponse<TData>>(
+      INDEXER.HERMES.BRAIN(slug, topic)
+    );
+    return data;
+  },
+
+  async putOrgBrain(
+    slug: string,
+    topic: OrgBrainTopic,
+    payload: MissionData | BrandData
+  ): Promise<void> {
+    await api.put(INDEXER.HERMES.BRAIN(slug, topic), payload);
+  },
+
+  async listWorkTasks(slug: string): Promise<WorkTask[]> {
+    const { data } = await api.get<{ tasks: WorkTask[] }>(
+      INDEXER.HERMES.WORK_TASKS(slug)
+    );
+    return data.tasks;
+  },
+
+  async getWorkTask(slug: string, taskId: string): Promise<WorkTask> {
+    const { data } = await api.get<WorkTask>(
+      INDEXER.HERMES.WORK_TASK(slug, taskId)
+    );
+    return data;
+  },
+
+  async createWorkTask(
+    slug: string,
+    input: { title: string; description?: string; assignee?: string }
+  ): Promise<WorkTask> {
+    const { data } = await api.post<WorkTask>(
+      INDEXER.HERMES.WORK_TASKS(slug),
+      input
+    );
+    return data;
+  },
+
+  async updateWorkTaskStatus(
+    slug: string,
+    taskId: string,
+    status: WorkTaskStatus
+  ): Promise<void> {
+    await api.put(INDEXER.HERMES.WORK_TASK_STATUS(slug, taskId), { status });
+  },
+
+  async listWorkTaskComments(
+    slug: string,
+    taskId: string
+  ): Promise<WorkTaskComment[]> {
+    const { data } = await api.get<{ comments: WorkTaskComment[] }>(
+      INDEXER.HERMES.WORK_TASK_COMMENTS(slug, taskId)
+    );
+    return data.comments;
+  },
+
+  async addWorkTaskComment(
+    slug: string,
+    taskId: string,
+    body: string
+  ): Promise<WorkTaskComment> {
+    const { data } = await api.post<WorkTaskComment>(
+      INDEXER.HERMES.WORK_TASK_COMMENTS(slug, taskId),
+      { body }
+    );
+    return data;
   },
 
   async provision(input: ProvisionOrgInput): Promise<HermesOrgResponse> {

@@ -795,5 +795,14 @@ export const INDEXER = {
     ORG: (slug: string) => `/v2/hermes/orgs/${slug}`,
     PROFILES: (slug: string) => `/v2/hermes/orgs/${slug}/profiles`,
     SOUL: (slug: string, profile: string) => `/v2/hermes/orgs/${slug}/profiles/${profile}/soul`,
+    BRAIN: (slug: string, topic: "mission" | "brand") =>
+      `/v2/hermes/orgs/${slug}/brain/${topic}`,
+    WORK_TASKS: (slug: string) => `/v2/hermes/orgs/${slug}/work/tasks`,
+    WORK_TASK: (slug: string, taskId: string) =>
+      `/v2/hermes/orgs/${slug}/work/tasks/${taskId}`,
+    WORK_TASK_STATUS: (slug: string, taskId: string) =>
+      `/v2/hermes/orgs/${slug}/work/tasks/${taskId}/status`,
+    WORK_TASK_COMMENTS: (slug: string, taskId: string) =>
+      `/v2/hermes/orgs/${slug}/work/tasks/${taskId}/comments`,
   },
 };

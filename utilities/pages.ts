@@ -160,6 +160,8 @@ export const PAGES = {
     DIRECTORY: `/team`,
     MEMBER: (role: string) => `/team/${role}`,
   },
+  ORG: `/org`,
+  WORK: `/work`,
 };
 
 /**
