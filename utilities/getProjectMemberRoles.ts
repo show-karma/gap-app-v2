@@ -32,7 +32,7 @@ export const getProjectMemberRoles = async (
   if (!project) return roles;
 
   const networkName = chainIdToNetwork[project.chainID as keyof typeof chainIdToNetwork];
-  const network = networkName ? Networks[networkName] : undefined;
+  const network = networkName ? Networks[networkName as keyof typeof Networks] : undefined;
   const resolverAddress = network?.contracts.projectResolver;
   const rpcUrl = getRPCUrlByChainId(project.chainID);
   if (!resolverAddress || !rpcUrl) return roles;
