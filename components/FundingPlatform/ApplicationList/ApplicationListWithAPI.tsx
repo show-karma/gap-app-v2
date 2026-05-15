@@ -11,6 +11,7 @@ import { Button } from "@/components/Utilities/Button";
 import {
   useApplicationExport,
   useFundingApplications,
+  useFundingPrograms,
   useProgramConfig,
 } from "@/hooks/useFundingPlatform";
 import { useKycBatchStatusesByAppRef, useKycConfig } from "@/hooks/useKycStatus";
@@ -109,6 +110,13 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
   // Fetch program config and prompts to determine AI column visibility
   const { config } = useProgramConfig(programId);
   const { data: promptsData } = useProgramPrompts(programId);
+
+  // Fetch programs to derive communityUID (needed for the reviewer picker modal)
+  const { programs } = useFundingPrograms(communityId);
+  const communityUID = useMemo(
+    () => programs.find((p) => p.programId === programId)?.communityUID,
+    [programs, programId]
+  );
 
   // Fetch reviewers for the program
   const {
@@ -470,6 +478,7 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
       >
         <ApplicationList
           programId={programId}
+          communityUID={communityUID}
           applications={applications}
           isLoading={isLoading && applications.length === 0}
           onApplicationSelect={onApplicationSelect}

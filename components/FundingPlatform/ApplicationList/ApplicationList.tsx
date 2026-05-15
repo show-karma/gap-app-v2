@@ -13,6 +13,7 @@ import { ApplicationTable } from "./ApplicationTable";
 const EMPTY_KYC_MAP = new Map<string, KycStatusResponse | null>();
 
 interface IApplicationListComponentProps extends IApplicationListProps {
+  communityUID?: string;
   applications: IFundingApplication[];
   isLoading?: boolean;
   onStatusChange?: (
@@ -55,6 +56,7 @@ interface IApplicationListComponentProps extends IApplicationListProps {
 
 const ApplicationListComponent: FC<IApplicationListComponentProps> = ({
   programId,
+  communityUID,
   applications,
   isLoading = false,
   onApplicationSelect,
@@ -167,6 +169,7 @@ const ApplicationListComponent: FC<IApplicationListComponentProps> = ({
         ) : (
           <ApplicationTable
             programId={programId}
+            communityUID={communityUID}
             applications={paginatedApplications}
             sortBy={sortBy}
             sortOrder={sortOrder}

@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { type FC, useCallback, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 import InviteReviewerModal, {
@@ -9,6 +10,11 @@ import { type DropdownItem, MultiSelectDropdown } from "@/components/Utilities/M
 import { ReviewerType, useReviewerAssignment } from "@/hooks/useReviewerAssignment";
 import type { AddMilestoneReviewerRequest } from "@/services/milestone-reviewers.service";
 import type { AddReviewerRequest } from "@/services/program-reviewers.service";
+
+const ReviewerPickerModal = dynamic(
+  () => import("@/components/FundingPlatform/ReviewerPicker/ReviewerPickerModal"),
+  { ssr: false }
+);
 
 /**
  * Shared base interface for reviewer types
@@ -26,6 +32,10 @@ export interface ReviewerBase {
 
 interface ReviewerAssignmentDropdownProps {
   programId: string;
+  /** When provided, the "Add reviewer" empty action opens the ReviewerPickerModal
+   *  (same component used by the question-builder), instead of the legacy
+   *  InviteReviewerModal. */
+  communityUID?: string;
   applicationId: string;
   availableReviewers: ReviewerBase[];
   assignedReviewerAddresses: string[];
@@ -39,6 +49,7 @@ interface ReviewerAssignmentDropdownProps {
 
 export const ReviewerAssignmentDropdown: FC<ReviewerAssignmentDropdownProps> = ({
   programId,
+  communityUID,
   applicationId,
   availableReviewers,
   assignedReviewerAddresses,
@@ -48,6 +59,7 @@ export const ReviewerAssignmentDropdown: FC<ReviewerAssignmentDropdownProps> = (
   isAddingReviewer = false,
 }) => {
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+  const [isPickerOpen, setIsPickerOpen] = useState(false);
 
   // Use custom hook for assignment logic
   const { assignReviewers, isLoading } = useReviewerAssignment({
@@ -79,8 +91,7 @@ export const ReviewerAssignmentDropdown: FC<ReviewerAssignmentDropdownProps> = (
     [assignedReviewerAddresses]
   );
 
-  const reviewerActionLabel =
-    reviewerType === ReviewerType.APP ? "Add application reviewer" : "Add milestone reviewer";
+  const reviewerActionLabel = "Add reviewer";
 
   const handleInvited = useCallback(
     async (reviewer: InvitedReviewer) => {
@@ -101,6 +112,28 @@ export const ReviewerAssignmentDropdown: FC<ReviewerAssignmentDropdownProps> = (
     [assignReviewers, normalizedAssignedAddresses]
   );
 
+  const pickerReviewerType = reviewerType === ReviewerType.APP ? "program" : "milestone";
+
+  // Disabled (grayed) pool rows in the picker: every reviewer already in the
+  // program pool (those are exactly `availableReviewers` for the current type).
+  // Application-assigned reviewers are a subset of these and inherit the disabled
+  // treatment automatically.
+  const disabledPoolAddresses = useMemo(
+    () =>
+      availableReviewers
+        .map((r) => r.publicAddress?.toLowerCase())
+        .filter((addr): addr is string => Boolean(addr)),
+    [availableReviewers]
+  );
+
+  const handleEmptyAction = () => {
+    if (communityUID) {
+      setIsPickerOpen(true);
+    } else {
+      setIsInviteModalOpen(true);
+    }
+  };
+
   return (
     <>
       <MultiSelectDropdown
@@ -113,17 +146,31 @@ export const ReviewerAssignmentDropdown: FC<ReviewerAssignmentDropdownProps> = (
         disabled={isLoading}
         isLoading={isLoading}
         emptyActionLabel={reviewerActionLabel}
-        onEmptyAction={() => setIsInviteModalOpen(true)}
+        onEmptyAction={handleEmptyAction}
       />
-      <InviteReviewerModal
-        programId={programId}
-        isOpen={isInviteModalOpen}
-        onClose={() => setIsInviteModalOpen(false)}
-        reviewerType={reviewerType}
-        onInviteReviewer={onAddReviewer}
-        isInviting={isAddingReviewer}
-        onInvited={handleInvited}
-      />
+      {communityUID ? (
+        <ReviewerPickerModal
+          open={isPickerOpen}
+          onOpenChange={setIsPickerOpen}
+          communityUID={communityUID}
+          programId={programId}
+          reviewerType={pickerReviewerType}
+          assignedAddresses={[]}
+          disabledAddresses={disabledPoolAddresses}
+          initialMode="pool"
+          onCompleted={onAssignmentChange}
+        />
+      ) : (
+        <InviteReviewerModal
+          programId={programId}
+          isOpen={isInviteModalOpen}
+          onClose={() => setIsInviteModalOpen(false)}
+          reviewerType={reviewerType}
+          onInviteReviewer={onAddReviewer}
+          isInviting={isAddingReviewer}
+          onInvited={handleInvited}
+        />
+      )}
     </>
   );
 };

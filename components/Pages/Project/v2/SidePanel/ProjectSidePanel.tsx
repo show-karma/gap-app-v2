@@ -1,14 +1,7 @@
 "use client";
 
-import { PenLine } from "lucide-react";
 import dynamic from "next/dynamic";
 import type React from "react";
-import { Button } from "@/components/ui/button";
-import { useAuth } from "@/hooks/useAuth";
-import { usePermissionsQuery } from "@/src/core/rbac/hooks/use-permissions";
-import { Role } from "@/src/core/rbac/types";
-import { useOwnerStore, useProjectStore } from "@/store";
-import { useProgressModalStore } from "@/store/modals/progress";
 import type { Project } from "@/types/v2/project";
 import { cn } from "@/utilities/tailwind";
 import { useDonationVisibility } from "./DonateSection";
@@ -38,60 +31,14 @@ function Separator() {
   return <div className="h-px w-full bg-border" />;
 }
 
-/**
- * ProjectSidePanel is the desktop-only side panel containing:
- * - Post an update button (for authorized users)
- * - Main card with Donate, Endorse, Subscribe sections
- * - Separate Quick links card
- *
- * Width: 400px (fixed)
- * Visibility: Desktop only (lg: breakpoint)
- * Matches Figma design with neutral colors and 12px border radius
- */
-export function ProjectSidePanel({
-  project,
-  isVerified,
-  className,
-  serverSidePanel,
-}: ProjectSidePanelProps) {
-  const { setIsProgressModalOpen } = useProgressModalStore();
-
-  // Authorization checks for Post an update button
-  const isOwner = useOwnerStore((state) => state.isOwner);
-  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
-  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
-  const { authenticated } = useAuth();
-  const { data: permissions, isLoading: isPermissionsLoading } = usePermissionsQuery(
-    {},
-    { enabled: authenticated }
-  );
-  const isSuperAdmin = permissions?.roles?.roles?.includes(Role.SUPER_ADMIN) ?? false;
-
-  const isAuthorized =
-    isOwner || isProjectAdmin || isProjectOwner || (!isPermissionsLoading && isSuperAdmin);
+export function ProjectSidePanel({ project, isVerified, className }: ProjectSidePanelProps) {
   const showDonateSection = useDonationVisibility(project);
-
-  const handlePostUpdate = () => {
-    setIsProgressModalOpen(true);
-  };
 
   return (
     <aside
       className={cn("hidden lg:flex flex-col gap-4 w-[400px] shrink-0", className)}
       data-testid="project-side-panel"
     >
-      {/* Post an update button - only for authorized users */}
-      {isAuthorized && (
-        <Button
-          onClick={handlePostUpdate}
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center justify-center gap-2 py-5"
-          data-testid="post-update-button"
-        >
-          <PenLine className="h-4 w-4" />
-          Post an update
-        </Button>
-      )}
-
       {/* Outer card: profile + actions together */}
       <div className="flex flex-col rounded-xl border bg-secondary gap-2 p-2">
         {/* Inner white profile card — always render the full client version once

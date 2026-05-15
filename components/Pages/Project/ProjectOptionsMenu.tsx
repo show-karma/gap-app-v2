@@ -3,7 +3,6 @@
 import {
   ArrowDownOnSquareIcon,
   ArrowsRightLeftIcon,
-  ChevronDownIcon,
   Cog6ToothIcon,
   CurrencyDollarIcon,
   FingerPrintIcon,
@@ -282,12 +281,11 @@ export const ProjectOptionsMenu = () => {
           <DropdownMenuTrigger asChild>
             <button
               type="button"
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-white font-medium text-sm hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 dark:focus:ring-offset-zinc-900"
+              aria-label="Project settings"
+              className="inline-flex items-center justify-center h-10 w-10 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 dark:focus:ring-offset-zinc-900"
               data-testid="project-options-menu"
             >
               <Cog6ToothIcon className="h-5 w-5" aria-hidden="true" />
-              <span className="hidden sm:inline">Project Settings</span>
-              <ChevronDownIcon className="h-4 w-4" aria-hidden="true" />
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56 max-h-96 overflow-y-auto">

@@ -85,6 +85,7 @@ const ReviewerPickerModal = ({
   programId,
   reviewerType,
   assignedAddresses,
+  disabledAddresses,
   onCompleted,
   initialMode = "pool",
 }: ReviewerPickerModalProps) => {
@@ -133,6 +134,10 @@ const ReviewerPickerModal = ({
     () => new Set(assignedAddresses.map((a) => a.toLowerCase())),
     [assignedAddresses]
   );
+  const disabledSet = useMemo(
+    () => new Set((disabledAddresses ?? []).map((a) => a.toLowerCase())),
+    [disabledAddresses]
+  );
   const selectedAddressSet = useMemo(
     () => new Set(rows.flatMap((r) => (r.kind === "pool" ? [r.publicAddress.toLowerCase()] : []))),
     [rows]
@@ -160,6 +165,7 @@ const ReviewerPickerModal = ({
 
   const handleTogglePool = useCallback(
     (reviewer: CommunityReviewer) => {
+      if (disabledSet.has(reviewer.publicAddress.toLowerCase())) return;
       const existing = rows.find((r) => r.id === reviewer.publicAddress);
       if (existing) {
         handleRemoveRow(reviewer.publicAddress);
@@ -167,8 +173,32 @@ const ReviewerPickerModal = ({
         setRows((prev) => [...prev, poolRowFromReviewer(reviewer, defaultRole)]);
       }
     },
-    [rows, handleRemoveRow, defaultRole]
+    [rows, handleRemoveRow, defaultRole, disabledSet]
   );
+
+  // Bulk select/unselect every non-disabled, visible pool row.
+  const selectablePoolItems = useMemo(
+    () => visiblePoolItems.filter((r) => !disabledSet.has(r.publicAddress.toLowerCase())),
+    [visiblePoolItems, disabledSet]
+  );
+  const isAllSelected =
+    selectablePoolItems.length > 0 &&
+    selectablePoolItems.every((r) => selectedAddressSet.has(r.publicAddress.toLowerCase()));
+  const handleToggleAll = useCallback(() => {
+    if (selectablePoolItems.length === 0) return;
+    if (isAllSelected) {
+      const selectableIds = new Set(selectablePoolItems.map((r) => r.publicAddress));
+      setRows((prev) => prev.filter((r) => !(r.kind === "pool" && selectableIds.has(r.id))));
+      return;
+    }
+    setRows((prev) => {
+      const existingIds = new Set(prev.map((r) => r.id));
+      const toAdd = selectablePoolItems
+        .filter((r) => !existingIds.has(r.publicAddress))
+        .map((r) => poolRowFromReviewer(r, defaultRole));
+      return [...prev, ...toAdd];
+    });
+  }, [selectablePoolItems, isAllSelected, defaultRole]);
 
   const handleFieldChange = useCallback(
     (id: string, field: "name" | "email" | "telegram" | "slack", value: string) => {
@@ -437,9 +467,20 @@ const ReviewerPickerModal = ({
           </button>
 
           {/* Pool */}
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2">
-            Community pool
-          </p>
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+              Community pool
+            </p>
+            <button
+              type="button"
+              onClick={handleToggleAll}
+              disabled={selectablePoolItems.length === 0}
+              className="text-[11px] font-medium text-brand-blue hover:underline disabled:opacity-40 disabled:no-underline disabled:cursor-not-allowed"
+              data-testid="toggle-select-all-pool"
+            >
+              {isAllSelected ? "Unselect all" : "Select all"}
+            </button>
+          </div>
           {isPoolLoading ? (
             <div className="flex items-center justify-center py-10">
               <Spinner className="h-6 w-6" />
@@ -457,21 +498,26 @@ const ReviewerPickerModal = ({
             <ul className="space-y-1 pb-4">
               {visiblePoolItems.map((r) => {
                 const isSelected = selectedAddressSet.has(r.publicAddress.toLowerCase());
+                const isDisabled = disabledSet.has(r.publicAddress.toLowerCase());
                 return (
                   <li key={r.publicAddress}>
                     <button
                       type="button"
                       onClick={() => handleTogglePool(r)}
+                      disabled={isDisabled}
+                      aria-disabled={isDisabled}
                       className={cn(
-                        "w-full flex items-center gap-3 px-3 py-2 rounded-md text-left transition-colors cursor-pointer",
+                        "w-full flex items-center gap-3 px-3 py-2 rounded-md text-left transition-colors",
+                        isDisabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer",
                         isSelected
                           ? "bg-blue-50 dark:bg-blue-900/20"
-                          : "hover:bg-gray-50 dark:hover:bg-gray-800/50"
+                          : !isDisabled && "hover:bg-gray-50 dark:hover:bg-gray-800/50"
                       )}
                       data-testid={`pool-item-${r.publicAddress}`}
                     >
                       <Checkbox
-                        checked={isSelected}
+                        checked={isDisabled || isSelected}
+                        disabled={isDisabled}
                         tabIndex={-1}
                         aria-label={`Select ${r.name || r.email}`}
                         className="pointer-events-none"
@@ -486,6 +532,11 @@ const ReviewerPickerModal = ({
                               <RoleBadge key={role} role={role} />
                             ))}
                           </span>
+                          {isDisabled && (
+                            <span className="inline-flex items-center rounded-full bg-gray-100 dark:bg-gray-800 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-gray-600 dark:text-gray-300">
+                              Already in program
+                            </span>
+                          )}
                         </div>
                         <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
                           {r.email}

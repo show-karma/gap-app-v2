@@ -553,7 +553,7 @@ describe("ReviewerAssignmentDropdown", () => {
 
       expect(screen.getByTestId("multi-select-dropdown")).toBeInTheDocument();
       expect(screen.queryByTestId(/option-/)).not.toBeInTheDocument();
-      expect(screen.getByTestId("empty-action")).toHaveTextContent("Add application reviewer");
+      expect(screen.getByTestId("empty-action")).toHaveTextContent("Add reviewer");
     });
 
     it("should handle empty assigned reviewers", () => {
@@ -608,7 +608,7 @@ describe("ReviewerAssignmentDropdown", () => {
         reviewerType: ReviewerType.APP,
       });
 
-      expect(screen.getByTestId("empty-action")).toHaveTextContent("Add application reviewer");
+      expect(screen.getByTestId("empty-action")).toHaveTextContent("Add reviewer");
     });
 
     it("should open the invite modal from the action when reviewers are available", () => {

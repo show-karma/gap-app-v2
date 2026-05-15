@@ -130,6 +130,12 @@ export interface ReviewerPickerModalProps {
   reviewerType: "program" | "milestone";
   /** Wallet addresses already assigned to this program — hidden in left pane. */
   assignedAddresses: string[];
+  /**
+   * Wallet addresses that should be shown but visually disabled (grayed) in the pool.
+   * Used by the application page to indicate reviewers already in the program and/or
+   * already assigned to the current application.
+   */
+  disabledAddresses?: string[];
   /** Called after a fully-successful save so the parent can refetch/show a toast. */
   onCompleted?: () => void;
   /**
