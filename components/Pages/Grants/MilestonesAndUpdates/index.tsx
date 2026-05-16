@@ -3,10 +3,9 @@
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import { useParams } from "next/navigation";
-import { useMemo } from "react";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { useTracksForProgram } from "@/hooks/useTracks";
-import { useProjectUpdates } from "@/hooks/v2/useProjectUpdates";
+import { useGrantLinkedActivities } from "@/hooks/v2/useGrantLinkedActivities";
 import type { Track } from "@/services/tracks";
 import { useIsCommunityAdmin } from "@/src/core/rbac/context/permission-context";
 import { useOwnerStore, useProjectStore } from "@/store";
@@ -225,18 +224,10 @@ export default function MilestonesAndUpdates() {
   const project = useProjectStore((state) => state.project);
   const { openProgressModalWithScreen } = useProgressModalStore();
   const params = useParams();
-  const projectIdentifier = (params?.projectId as string) || "";
-  const { rawData: projectUpdatesData } = useProjectUpdates(projectIdentifier);
-  const linkedActivitiesCount = useMemo(() => {
-    const all = projectUpdatesData?.projectUpdates || [];
-    const grantUidLower = grant?.uid?.toLowerCase();
-    if (!grantUidLower) return 0;
-    return all.filter((update) =>
-      update.associations?.funding?.some((f) => f.uid?.toLowerCase() === grantUidLower)
-    ).length;
-  }, [projectUpdatesData, grant?.uid]);
+  const projectIdentifier = typeof params?.projectId === "string" ? params.projectId : "";
+  const linkedActivities = useGrantLinkedActivities(projectIdentifier, grant?.uid);
   const hasMilestonesOrUpdates =
-    grant?.milestones?.length || grant?.updates?.length || linkedActivitiesCount;
+    grant?.milestones?.length || grant?.updates?.length || linkedActivities.length;
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isContractOwner = useOwnerStore((state) => state.isOwner);
