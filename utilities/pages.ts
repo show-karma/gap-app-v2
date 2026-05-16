@@ -162,6 +162,7 @@ export const PAGES = {
   },
   ORG: `/org`,
   WORK: `/work`,
+  SKILLS: `/skills`,
 };
 
 /**

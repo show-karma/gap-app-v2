@@ -810,5 +810,10 @@ export const INDEXER = {
       `/v2/hermes/orgs/${slug}/profiles/${profile}/chat/${runId}/events`,
     CHAT_RUN_STOP: (slug: string, profile: string, runId: string) =>
       `/v2/hermes/orgs/${slug}/profiles/${profile}/chat/${runId}/stop`,
+    SKILLS_AVAILABLE: (slug: string) => `/v2/hermes/orgs/${slug}/skills/available`,
+    PROFILE_SKILLS: (slug: string, profile: string) =>
+      `/v2/hermes/orgs/${slug}/profiles/${profile}/skills`,
+    PROFILE_SKILL: (slug: string, profile: string, namespace: string, skillId: string) =>
+      `/v2/hermes/orgs/${slug}/profiles/${profile}/skills/${namespace}/${skillId}`,
   },
 };

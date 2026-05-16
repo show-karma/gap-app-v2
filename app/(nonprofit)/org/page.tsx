@@ -2,6 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { NonprofitPageHeader } from "@/src/features/nonprofit/PageHeader";
 import { BrandForm } from "@/src/features/org-brain/BrandForm";
 import { MissionForm } from "@/src/features/org-brain/MissionForm";
 import { PAGES } from "@/utilities/pages";
@@ -39,23 +40,21 @@ export default function OrgBrainPage() {
   }
 
   return (
-    <main className="mx-auto max-w-4xl px-6 py-12">
-      <header>
-        <h1 className="text-2xl font-semibold">Org Brain</h1>
-        <p className="mt-2 text-sm text-gray-600">
-          The shared context your team uses in every conversation. Saved here,
-          referenced everywhere.
-        </p>
-      </header>
+    <main className="mx-auto max-w-4xl px-6 py-10">
+      <NonprofitPageHeader
+        eyebrow="Context"
+        title="Org Brain"
+        description="The shared context your team uses in every conversation. Saved here, referenced everywhere."
+      />
 
-      <nav className="mt-8 flex gap-1 border-b" role="tablist">
+      <div className="mt-8 flex gap-1 border-b border-gray-200" role="tablist">
         <TabButton active={tab === "mission"} onClick={() => setTab("mission")}>
           Mission
         </TabButton>
         <TabButton active={tab === "brand"} onClick={() => setTab("brand")}>
           Brand
         </TabButton>
-      </nav>
+      </div>
 
       <section className="mt-8">
         {tab === "mission" ? <MissionForm slug={slug} /> : <BrandForm slug={slug} />}
@@ -79,10 +78,10 @@ function TabButton({
       role="tab"
       aria-selected={active}
       onClick={onClick}
-      className={`px-4 py-2 text-sm font-medium ${
+      className={`-mb-px border-b-2 px-4 py-2 text-sm transition ${
         active
-          ? "border-b-2 border-black text-black"
-          : "text-gray-500 hover:text-gray-700"
+          ? "border-gray-900 font-semibold text-gray-900"
+          : "border-transparent text-gray-500 hover:text-gray-900"
       }`}
     >
       {children}

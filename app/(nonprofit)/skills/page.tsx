@@ -2,25 +2,31 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { TEAM_ROLES, type TeamRole } from "@/lib/hermes-client";
 import { NonprofitPageHeader } from "@/src/features/nonprofit/PageHeader";
-import { WorkBoard } from "@/src/features/work-board/WorkBoard";
+import { SkillsMarketplace } from "@/src/features/skills/SkillsMarketplace";
 import { PAGES } from "@/utilities/pages";
 
-export default function WorkPage() {
+export default function SkillsMarketplacePage() {
   const params = useSearchParams();
   const router = useRouter();
   const [slug, setSlug] = useState<string | undefined>(undefined);
+  const [role, setRole] = useState<TeamRole>("orchestrator");
 
   useEffect(() => {
     setSlug(params.get("slug") ?? undefined);
+    const candidate = params.get("role");
+    if (candidate && (TEAM_ROLES as readonly string[]).includes(candidate)) {
+      setRole(candidate as TeamRole);
+    }
   }, [params]);
 
   if (!slug) {
     return (
       <main className="mx-auto max-w-3xl px-6 py-16">
-        <h1 className="text-2xl font-semibold">Work</h1>
+        <h1 className="text-2xl font-semibold">Skills marketplace</h1>
         <p className="mt-4 text-gray-700">
-          Set up your team first to see what they&apos;re working on.
+          Set up your team first to install skills for an employee.
         </p>
         <button
           type="button"
@@ -34,16 +40,13 @@ export default function WorkPage() {
   }
 
   return (
-    <main className="mx-auto max-w-7xl px-6 py-10">
+    <main className="mx-auto max-w-6xl px-6 py-10">
       <NonprofitPageHeader
-        eyebrow="Kanban"
-        title="Work board"
-        description="Everything your team is doing. Drop new tasks here, watch them move across columns, leave a comment to nudge."
+        eyebrow="Marketplace"
+        title="Skills marketplace"
+        description="Browse skills bundled in this Hermes instance. Pick an employee, then install — they'll use it on the next chat turn."
       />
-
-      <div className="mt-8">
-        <WorkBoard slug={slug} />
-      </div>
+      <SkillsMarketplace slug={slug} role={role} onRoleChange={setRole} />
     </main>
   );
 }

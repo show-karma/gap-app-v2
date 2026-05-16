@@ -116,6 +116,25 @@ export interface WorkTask {
   updatedAt?: string;
 }
 
+export interface HermesSkillSummary {
+  id: string;
+  namespace: string;
+  name: string;
+  description: string | null;
+  version: string | null;
+  tags: string[];
+}
+
+export interface HermesSkillInstallResult {
+  installed: boolean;
+  skill: HermesSkillSummary | null;
+}
+
+export interface HermesSkillUninstallResult {
+  removed: boolean;
+  id: string;
+}
+
 export interface WorkTaskComment {
   id: string;
   taskId: string;
@@ -218,6 +237,44 @@ export const hermesClient = {
     const { data } = await api.post<WorkTaskComment>(
       INDEXER.HERMES.WORK_TASK_COMMENTS(slug, taskId),
       { body }
+    );
+    return data;
+  },
+
+  async listAvailableSkills(slug: string): Promise<HermesSkillSummary[]> {
+    const { data } = await api.get<{ skills: HermesSkillSummary[] }>(
+      INDEXER.HERMES.SKILLS_AVAILABLE(slug)
+    );
+    return data.skills;
+  },
+
+  async listProfileSkills(slug: string, profile: TeamRole): Promise<HermesSkillSummary[]> {
+    const { data } = await api.get<{ skills: HermesSkillSummary[] }>(
+      INDEXER.HERMES.PROFILE_SKILLS(slug, profile)
+    );
+    return data.skills;
+  },
+
+  async installProfileSkill(
+    slug: string,
+    profile: TeamRole,
+    skillId: string
+  ): Promise<HermesSkillInstallResult> {
+    const { data } = await api.post<HermesSkillInstallResult>(
+      INDEXER.HERMES.PROFILE_SKILLS(slug, profile),
+      { id: skillId }
+    );
+    return data;
+  },
+
+  async uninstallProfileSkill(
+    slug: string,
+    profile: TeamRole,
+    namespace: string,
+    skillId: string
+  ): Promise<HermesSkillUninstallResult> {
+    const { data } = await api.delete<HermesSkillUninstallResult>(
+      INDEXER.HERMES.PROFILE_SKILL(slug, profile, namespace, skillId)
     );
     return data;
   },

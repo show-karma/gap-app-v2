@@ -1,5 +1,6 @@
 "use client";
 
+import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -10,10 +11,12 @@ import {
   TEAM_ROLES,
   type TeamRole,
 } from "@/lib/hermes-client";
+import { ErrorState } from "@/src/features/nonprofit/EmptyState";
+import { SkillsTab } from "@/src/features/skills/SkillsTab";
 import { TeamChat } from "@/src/features/team-chat/TeamChat";
 import { PAGES } from "@/utilities/pages";
 
-type TabId = "chat" | "about" | "settings";
+type TabId = "chat" | "about" | "skills" | "settings";
 
 export default function TeamMemberPage() {
   const params = useParams<{ role: string }>();
@@ -43,18 +46,27 @@ export default function TeamMemberPage() {
     <main className="mx-auto max-w-3xl px-6 py-10">
       <Link
         href={`${PAGES.TEAM.DIRECTORY}${slug ? `?slug=${slug}` : ""}`}
-        className="text-sm text-gray-600 hover:underline"
+        className="inline-flex items-center gap-1 text-sm text-gray-500 transition hover:text-gray-900"
       >
-        ← Back to team
+        <ArrowLeft className="h-3.5 w-3.5" aria-hidden />
+        Back to team
       </Link>
-      <h1 className="mt-2 text-2xl font-semibold">{TEAM_ROLE_LABELS[role]}</h1>
-      <p className="mt-1 text-sm text-gray-600">{TEAM_ROLE_DESCRIPTIONS[role]}</p>
+      <div className="mt-3">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-emerald-700">
+          Employee
+        </p>
+        <h1 className="mt-1 text-[28px] font-semibold leading-tight tracking-tight text-gray-900">
+          {TEAM_ROLE_LABELS[role]}
+        </h1>
+        <p className="mt-1.5 max-w-2xl text-sm text-gray-600">{TEAM_ROLE_DESCRIPTIONS[role]}</p>
+      </div>
 
-      <nav className="mt-6 flex gap-1 border-b">
+      <nav className="mt-6 flex gap-1 border-b border-gray-200">
         {(
           [
             { id: "chat", label: "Chat" },
             { id: "about", label: "About" },
+            { id: "skills", label: "Skills" },
             { id: "settings", label: "Settings" },
           ] as const
         ).map((t) => (
@@ -64,8 +76,8 @@ export default function TeamMemberPage() {
             onClick={() => setTab(t.id)}
             className={`-mb-px border-b-2 px-4 py-2 text-sm transition ${
               tab === t.id
-                ? "border-black font-semibold text-black"
-                : "border-transparent text-gray-600 hover:text-black"
+                ? "border-gray-900 font-semibold text-gray-900"
+                : "border-transparent text-gray-500 hover:text-gray-900"
             }`}
           >
             {t.label}
@@ -78,6 +90,8 @@ export default function TeamMemberPage() {
           <AboutTab slug={slug} role={role} />
         ) : tab === "chat" ? (
           <ChatTab slug={slug} role={role} />
+        ) : tab === "skills" ? (
+          <SkillsTab slug={slug} role={role} />
         ) : (
           <SettingsTab role={role} />
         )}
@@ -107,25 +121,18 @@ function AboutTab({ slug, role }: { slug: string | undefined; role: TeamRole }) 
     return (
       <div className="space-y-3">
         <div className="h-4 w-2/3 animate-pulse rounded bg-gray-200" />
-        <div className="h-64 animate-pulse rounded border bg-gray-100" />
+        <div className="h-64 animate-pulse rounded-xl border border-gray-200 bg-gray-50" />
       </div>
     );
   }
 
   if (query.isError) {
     return (
-      <div className="rounded border border-red-200 bg-red-50 p-4">
-        <p className="text-sm text-red-700">
-          Couldn&apos;t load this team member&apos;s About text.
-        </p>
-        <button
-          type="button"
-          onClick={() => query.refetch()}
-          className="mt-3 rounded border px-3 py-1 text-sm"
-        >
-          Try again
-        </button>
-      </div>
+      <ErrorState
+        title="Couldn't load this employee's About text"
+        body="The Hermes container didn't respond. Check it's running, then retry."
+        onRetry={() => query.refetch()}
+      />
     );
   }
 
@@ -134,39 +141,42 @@ function AboutTab({ slug, role }: { slug: string | undefined; role: TeamRole }) 
 
   return (
     <div>
-      <p className="mb-2 text-sm text-gray-600">
-        This is how {TEAM_ROLE_LABELS[role]} thinks about their role. Edits take effect on the next
-        chat turn.
-      </p>
-      <textarea
-        value={current}
-        onChange={(e) => setDraft(e.target.value)}
-        rows={16}
-        className="w-full rounded border p-3 font-mono text-sm leading-6"
-        placeholder="Describe how this team member should behave..."
-      />
-      <div className="mt-3 flex items-center gap-3">
-        <button
-          type="button"
-          disabled={!dirty || mutation.isPending}
-          onClick={() =>
-            mutation.mutate({ role, content: current }, { onSuccess: () => setDraft(null) })
-          }
-          className="rounded bg-black px-4 py-2 text-sm text-white disabled:cursor-not-allowed disabled:bg-gray-300"
-        >
-          {mutation.isPending ? "Saving…" : "Save changes"}
-        </button>
-        {dirty ? (
+      <div className="rounded-xl border border-gray-200 bg-gray-50/40 p-1 shadow-sm">
+        <textarea
+          value={current}
+          onChange={(e) => setDraft(e.target.value)}
+          rows={16}
+          className="block w-full resize-y rounded-lg bg-white p-4 font-mono text-sm leading-6 text-gray-900 outline-none transition focus:ring-2 focus:ring-gray-200"
+          placeholder={`Describe how ${TEAM_ROLE_LABELS[role]} should behave, what their voice sounds like, what they care about...`}
+        />
+      </div>
+      <div className="mt-3 flex items-center justify-between">
+        <p className="text-xs text-gray-500">
+          {dirty
+            ? "Unsaved changes — they apply on the next chat turn."
+            : "Saved. Edits apply on the next chat turn."}
+        </p>
+        <div className="flex items-center gap-2">
+          {dirty ? (
+            <button
+              type="button"
+              onClick={() => setDraft(null)}
+              className="rounded-md border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-700 transition hover:bg-gray-50"
+            >
+              Discard
+            </button>
+          ) : null}
           <button
             type="button"
-            onClick={() => setDraft(null)}
-            className="text-sm text-gray-600 hover:underline"
+            disabled={!dirty || mutation.isPending}
+            onClick={() =>
+              mutation.mutate({ role, content: current }, { onSuccess: () => setDraft(null) })
+            }
+            className="rounded-md bg-gray-900 px-3 py-1.5 text-sm font-medium text-white shadow-sm transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:shadow-none"
           >
-            Discard
+            {mutation.isPending ? "Saving…" : "Save changes"}
           </button>
-        ) : (
-          <span className="text-xs text-gray-500">No unsaved changes</span>
-        )}
+        </div>
       </div>
     </div>
   );
@@ -181,16 +191,31 @@ function ChatTab({ slug, role }: { slug: string | undefined; role: TeamRole }) {
 
 function SettingsTab({ role }: { role: TeamRole }) {
   return (
-    <dl className="grid grid-cols-3 gap-4 rounded border bg-white p-5 text-sm">
-      <dt className="font-medium text-gray-600">Role</dt>
-      <dd className="col-span-2">{TEAM_ROLE_LABELS[role]}</dd>
-      <dt className="font-medium text-gray-600">Responsibilities</dt>
-      <dd className="col-span-2 text-gray-700">{TEAM_ROLE_DESCRIPTIONS[role]}</dd>
-      <dt className="font-medium text-gray-600">Karma protocol access</dt>
-      <dd className="col-span-2">
-        Enabled — this employee can read and write Karma records consistent with their
-        responsibilities.
-      </dd>
-    </dl>
+    <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
+      <dl className="divide-y divide-gray-100">
+        <Row label="Role" value={TEAM_ROLE_LABELS[role]} />
+        <Row label="Responsibilities" value={TEAM_ROLE_DESCRIPTIONS[role]} />
+        <Row
+          label="Karma protocol access"
+          value={
+            <span className="inline-flex items-center gap-2">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden />
+              <span>
+                Enabled — read and write records consistent with this employee's responsibilities.
+              </span>
+            </span>
+          }
+        />
+      </dl>
+    </div>
+  );
+}
+
+function Row({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <div className="grid grid-cols-3 gap-4 px-5 py-4 text-sm">
+      <dt className="font-medium text-gray-500">{label}</dt>
+      <dd className="col-span-2 text-gray-900">{value}</dd>
+    </div>
   );
 }

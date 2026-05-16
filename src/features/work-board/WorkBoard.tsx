@@ -9,12 +9,17 @@ import {
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
-import { useMemo, useState } from "react";
 import {
-  useCreateWorkTask,
-  useUpdateWorkTaskStatus,
-  useWorkTasks,
-} from "@/hooks/useWorkBoard";
+  CheckCircle2,
+  Circle,
+  CircleDotDashed,
+  GripVertical,
+  type LucideIcon,
+  OctagonAlert,
+  Plus,
+} from "lucide-react";
+import { useMemo, useState } from "react";
+import { useCreateWorkTask, useUpdateWorkTaskStatus, useWorkTasks } from "@/hooks/useWorkBoard";
 import {
   TEAM_ROLE_LABELS,
   type TeamRole,
@@ -22,28 +27,38 @@ import {
   type WorkTask,
   type WorkTaskStatus,
 } from "@/lib/hermes-client";
+import { ErrorState } from "@/src/features/nonprofit/EmptyState";
 import { WorkTaskDrawer } from "./WorkTaskDrawer";
 
-const COLUMNS: Array<{ status: WorkTaskStatus; label: string }> = [
-  { status: "queued", label: "Queued" },
-  { status: "working", label: "Working" },
-  { status: "blocked", label: "Blocked" },
-  { status: "done", label: "Done" },
+interface ColumnSpec {
+  status: WorkTaskStatus;
+  label: string;
+  dot: string;
+  icon: LucideIcon;
+}
+
+const COLUMNS: ColumnSpec[] = [
+  { status: "queued", label: "Queued", dot: "bg-gray-400", icon: Circle },
+  { status: "working", label: "Working", dot: "bg-sky-500", icon: CircleDotDashed },
+  { status: "blocked", label: "Blocked", dot: "bg-amber-500", icon: OctagonAlert },
+  { status: "done", label: "Done", dot: "bg-emerald-500", icon: CheckCircle2 },
 ];
 
-const USER_DROPPABLE_STATUSES: WorkTaskStatus[] = [
-  "queued",
-  "working",
-  "blocked",
-  "done",
-];
+const USER_DROPPABLE_STATUSES: WorkTaskStatus[] = ["queued", "working", "blocked", "done"];
+
+const ROLE_TINT: Record<TeamRole, string> = {
+  orchestrator: "bg-emerald-50 text-emerald-700 ring-emerald-100",
+  fundraiser: "bg-amber-50 text-amber-800 ring-amber-100",
+  communications: "bg-sky-50 text-sky-700 ring-sky-100",
+  operations: "bg-violet-50 text-violet-700 ring-violet-100",
+};
 
 interface Props {
   slug: string;
 }
 
 export function WorkBoard({ slug }: Props) {
-  const { data: tasks, isLoading, isError, error, refetch } = useWorkTasks(slug);
+  const { data: tasks, isLoading, isError, refetch } = useWorkTasks(slug);
   const create = useCreateWorkTask(slug);
   const update = useUpdateWorkTaskStatus(slug);
   const [openTaskId, setOpenTaskId] = useState<string | null>(null);
@@ -51,9 +66,7 @@ export function WorkBoard({ slug }: Props) {
 
   // Require a small drag distance before drag starts so card clicks
   // (which open the drawer) still work normally.
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 6 } })
-  );
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
 
   const handleDragEnd = (event: DragEndEvent) => {
     const targetStatus = event.over?.id as WorkTaskStatus | undefined;
@@ -81,9 +94,12 @@ export function WorkBoard({ slug }: Props) {
 
   if (isLoading) {
     return (
-      <div className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
         {COLUMNS.map((c) => (
-          <div key={c.status} className="h-64 animate-pulse rounded bg-gray-100" />
+          <div
+            key={c.status}
+            className="h-64 animate-pulse rounded-xl border border-gray-200 bg-gray-50"
+          />
         ))}
       </div>
     );
@@ -91,35 +107,31 @@ export function WorkBoard({ slug }: Props) {
 
   if (isError) {
     return (
-      <div className="mt-8 rounded border border-red-200 bg-red-50 p-6">
-        <p className="text-sm text-red-700">
-          {error instanceof Error ? error.message : "Failed to load tasks"}
-        </p>
-        <button
-          type="button"
-          onClick={() => refetch()}
-          className="mt-3 rounded border px-3 py-1 text-sm"
-        >
-          Retry
-        </button>
-      </div>
+      <ErrorState
+        title="Couldn't load tasks"
+        body="The Hermes container didn't respond. Check it's running, then retry."
+        onRetry={() => refetch()}
+      />
     );
   }
 
-  const empty = (tasks ?? []).length === 0;
+  const total = (tasks ?? []).length;
 
   return (
     <>
-      <div className="mt-6 flex items-center justify-between">
-        <p className="text-sm text-gray-600">
-          {empty ? "No tasks yet — add the first one to kick off your team." : null}
+      <div className="mb-5 flex items-center justify-between gap-4">
+        <p className="text-sm text-gray-500">
+          {total === 0
+            ? "No tasks yet. Add the first one to kick off your team."
+            : `${total} ${total === 1 ? "task" : "tasks"} across the board.`}
         </p>
         <button
           type="button"
           onClick={() => setShowNew(true)}
-          className="rounded bg-black px-4 py-2 text-sm font-medium text-white"
+          className="inline-flex items-center gap-1.5 rounded-md bg-gray-900 px-3 py-1.5 text-sm font-medium text-white shadow-sm transition hover:bg-gray-800"
         >
-          + New task
+          <Plus className="h-3.5 w-3.5" aria-hidden />
+          New task
         </button>
       </div>
 
@@ -136,78 +148,77 @@ export function WorkBoard({ slug }: Props) {
       ) : null}
 
       <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-        <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
           {COLUMNS.map((col) => (
             <Column
               key={col.status}
-              label={col.label}
-              status={col.status}
+              spec={col}
               tasks={byStatus[col.status]}
               onOpen={(id) => setOpenTaskId(id)}
-              onMove={(taskId, status) =>
-                update.mutate({ taskId, status })
-              }
+              onMove={(taskId, status) => update.mutate({ taskId, status })}
             />
           ))}
         </div>
       </DndContext>
 
       {openTaskId ? (
-        <WorkTaskDrawer
-          slug={slug}
-          taskId={openTaskId}
-          onClose={() => setOpenTaskId(null)}
-        />
+        <WorkTaskDrawer slug={slug} taskId={openTaskId} onClose={() => setOpenTaskId(null)} />
       ) : null}
     </>
   );
 }
 
 function Column({
-  label,
-  status,
+  spec,
   tasks,
   onOpen,
   onMove,
 }: {
-  label: string;
-  status: WorkTaskStatus;
+  spec: ColumnSpec;
   tasks: WorkTask[];
   onOpen: (id: string) => void;
   onMove: (taskId: string, status: WorkTaskStatus) => void;
 }) {
-  const droppable = USER_DROPPABLE_STATUSES.includes(status);
+  const droppable = USER_DROPPABLE_STATUSES.includes(spec.status);
   const { setNodeRef, isOver } = useDroppable({
-    id: status,
+    id: spec.status,
     disabled: !droppable,
   });
 
   return (
     <div
       ref={setNodeRef}
-      className={`rounded-lg border p-3 transition-colors ${
-        isOver && droppable
-          ? "border-black bg-gray-100"
-          : droppable
-            ? "border-gray-200 bg-gray-50"
-            : "border-dashed border-gray-200 bg-gray-50/60"
+      className={`rounded-xl border p-3 transition-colors ${
+        isOver && droppable ? "border-gray-900 bg-gray-100" : "border-gray-200 bg-gray-50/60"
       }`}
     >
-      <div className="flex items-baseline justify-between">
-        <h3 className="text-sm font-semibold">{label}</h3>
-        <span className="text-xs text-gray-500">{tasks.length}</span>
+      <div className="flex items-center justify-between px-1">
+        <div className="flex items-center gap-2">
+          <span className={`h-1.5 w-1.5 rounded-full ${spec.dot}`} aria-hidden />
+          <h3 className="text-sm font-semibold text-gray-900">{spec.label}</h3>
+        </div>
+        <span className="rounded-full bg-white px-1.5 py-0.5 text-[11px] font-medium tabular-nums text-gray-500 ring-1 ring-gray-200">
+          {tasks.length}
+        </span>
       </div>
       <ul className="mt-3 space-y-2">
         {tasks.length === 0 ? (
-          <li className="rounded border border-dashed border-gray-200 px-3 py-6 text-center text-xs text-gray-400">
-            {droppable ? "Drop here" : "Nothing here"}
+          <li
+            className={`rounded-lg border border-dashed px-3 py-8 text-center text-xs ${
+              isOver && droppable
+                ? "border-gray-900 bg-white text-gray-700"
+                : "border-gray-200 text-gray-400"
+            }`}
+          >
+            <spec.icon className="mx-auto mb-1.5 h-4 w-4 text-gray-300" aria-hidden />
+            {droppable ? "Drag tasks here" : "Nothing here"}
           </li>
         ) : null}
         {tasks.map((t) => (
           <TaskCard
             key={t.id}
             task={t}
-            currentStatus={status}
+            currentStatus={spec.status}
             onOpen={onOpen}
             onMove={onMove}
           />
@@ -228,46 +239,57 @@ function TaskCard({
   onOpen: (id: string) => void;
   onMove: (taskId: string, status: WorkTaskStatus) => void;
 }) {
-  const { attributes, listeners, setNodeRef, transform, isDragging } =
-    useDraggable({ id: task.id });
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: task.id,
+  });
 
   const style = transform
     ? {
         transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
       }
     : undefined;
+  const assigneeLabel = task.assignee
+    ? (TEAM_ROLE_LABELS[task.assignee as TeamRole] ?? task.assignee)
+    : null;
+  const assigneeTint =
+    task.assignee && (task.assignee as TeamRole) in ROLE_TINT
+      ? ROLE_TINT[task.assignee as TeamRole]
+      : "bg-gray-50 text-gray-700 ring-gray-200";
 
   return (
     <li
       ref={setNodeRef}
       style={style}
-      className={isDragging ? "opacity-50" : ""}
+      className={`group relative rounded-lg border border-gray-200 bg-white shadow-sm transition hover:border-gray-300 hover:shadow-md ${
+        isDragging ? "opacity-50" : ""
+      }`}
     >
-      <div
+      <button
         {...listeners}
         {...attributes}
-        role="button"
-        tabIndex={0}
-        onClick={() => onOpen(task.id)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            e.preventDefault();
-            onOpen(task.id);
-          }
-        }}
-        className="block w-full cursor-grab rounded border bg-white p-3 text-left shadow-sm transition hover:shadow active:cursor-grabbing"
+        type="button"
+        aria-label="Drag handle"
+        className="absolute -left-0.5 top-3 z-10 hidden cursor-grab text-gray-300 active:cursor-grabbing group-hover:block"
       >
-        <div className="text-sm font-medium">{task.title}</div>
-        {task.assignee ? (
-          <div className="mt-1 text-xs text-gray-500">
-            {TEAM_ROLE_LABELS[task.assignee as TeamRole] ?? task.assignee}
+        <GripVertical className="h-4 w-4" aria-hidden />
+      </button>
+      <button
+        type="button"
+        onClick={() => onOpen(task.id)}
+        className="block w-full rounded-t-lg p-3 text-left"
+      >
+        <div className="pl-1 text-sm font-medium leading-snug text-gray-900">{task.title}</div>
+        {assigneeLabel ? (
+          <div className="mt-2 pl-1">
+            <span
+              className={`inline-flex items-center rounded-md px-1.5 py-0.5 text-[10px] font-medium ring-1 ${assigneeTint}`}
+            >
+              {assigneeLabel}
+            </span>
           </div>
         ) : null}
-        <StatusMover
-          current={currentStatus}
-          onMove={(next) => onMove(task.id, next)}
-        />
-      </div>
+      </button>
+      <StatusMover current={currentStatus} onMove={(next) => onMove(task.id, next)} />
     </li>
   );
 }
@@ -279,29 +301,26 @@ function StatusMover({
   current: WorkTaskStatus;
   onMove: (next: WorkTaskStatus) => void;
 }) {
-  const targets = USER_DROPPABLE_STATUSES.filter((s) => s !== current);
+  const targets = COLUMNS.filter((c) => c.status !== current);
 
   return (
-    <div className="mt-2 flex flex-wrap gap-1">
+    <div className="flex flex-wrap items-center gap-1 border-t border-gray-100 px-3 py-2 opacity-0 transition group-hover:opacity-100 focus-within:opacity-100">
+      <span className="text-[10px] font-medium uppercase tracking-wider text-gray-400">
+        Move to
+      </span>
       {targets.map((t) => (
-        <span
-          key={t}
-          role="button"
-          tabIndex={0}
+        <button
+          key={t.status}
+          type="button"
           onClick={(e) => {
             e.stopPropagation();
-            onMove(t);
+            onMove(t.status);
           }}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.stopPropagation();
-              onMove(t);
-            }
-          }}
-          className="cursor-pointer rounded border bg-gray-50 px-2 py-0.5 text-[10px] text-gray-600 hover:bg-gray-100"
+          className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] text-gray-600 transition hover:bg-gray-100 hover:text-gray-900"
         >
-          → {t}
-        </span>
+          <span className={`h-1 w-1 rounded-full ${t.dot}`} aria-hidden />
+          {t.label}
+        </button>
       ))}
     </div>
   );
@@ -312,11 +331,7 @@ function NewTaskForm({
   onCancel,
   pending,
 }: {
-  onSubmit: (input: {
-    title: string;
-    description?: string;
-    assignee?: string;
-  }) => void;
+  onSubmit: (input: { title: string; description?: string; assignee?: string }) => void;
   onCancel: () => void;
   pending: boolean;
 }) {
@@ -334,14 +349,15 @@ function NewTaskForm({
           assignee: assignee || undefined,
         });
       }}
-      className="mt-4 rounded border bg-white p-4"
+      className="mb-5 rounded-xl border border-gray-200 bg-white p-4 shadow-sm"
     >
       <input
+        // biome-ignore lint/a11y/noAutofocus: the form is user-triggered and focusing is expected
         autoFocus
         value={title}
         onChange={(e) => setTitle(e.target.value)}
-        placeholder="Task title"
-        className="w-full rounded border px-3 py-2 text-sm"
+        placeholder="Task title — what needs doing?"
+        className="block w-full rounded-md border border-gray-200 px-3 py-2 text-sm shadow-sm transition focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-100"
         required
         maxLength={500}
       />
@@ -350,7 +366,7 @@ function NewTaskForm({
         onChange={(e) => setDescription(e.target.value)}
         placeholder="Optional description"
         rows={3}
-        className="mt-3 w-full rounded border px-3 py-2 text-sm"
+        className="mt-3 block w-full rounded-md border border-gray-200 px-3 py-2 text-sm shadow-sm transition focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-100"
         maxLength={8000}
       />
       <div className="mt-3 flex flex-wrap items-center gap-3">
@@ -359,7 +375,7 @@ function NewTaskForm({
           <select
             value={assignee}
             onChange={(e) => setAssignee(e.target.value)}
-            className="ml-2 rounded border px-2 py-1 text-sm"
+            className="ml-1 rounded-md border border-gray-200 bg-white px-2 py-1 text-sm shadow-sm"
           >
             <option value="">Unassigned</option>
             {VISIBLE_TEAM_ROLES.map((role) => (
@@ -373,14 +389,14 @@ function NewTaskForm({
           <button
             type="button"
             onClick={onCancel}
-            className="rounded border px-3 py-1.5 text-sm"
+            className="rounded-md border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-700 transition hover:bg-gray-50"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={pending || !title.trim()}
-            className="rounded bg-black px-3 py-1.5 text-sm text-white disabled:bg-gray-300"
+            className="rounded-md bg-gray-900 px-3 py-1.5 text-sm font-medium text-white shadow-sm transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:shadow-none"
           >
             {pending ? "Adding…" : "Add task"}
           </button>
