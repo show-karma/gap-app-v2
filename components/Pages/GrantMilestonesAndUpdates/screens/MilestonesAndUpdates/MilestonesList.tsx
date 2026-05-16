@@ -255,7 +255,7 @@ export const MilestonesList: FC<MilestonesListProps> = ({ grant }) => {
     if (Array.isArray(completed)) return completed.length > 0;
     return !!completed;
   }).length;
-  const updatesLength = completedMilestonesCount + (updates?.length || 0);
+  const updatesLength = completedMilestonesCount + (updates?.length || 0) + linkedActivities.length;
   const milestonesCounter = milestones?.length || 0;
 
   return (
@@ -292,7 +292,7 @@ export const MilestonesList: FC<MilestonesListProps> = ({ grant }) => {
             <div className="flex flex-row flex-wrap gap-5">
               <p className="text-base font-normal text-gray-500 max-sm:text-sm">
                 {milestonesCounter} {pluralize("Milestone", milestonesCounter)}, {updatesLength}{" "}
-                {pluralize("update", updatesLength)} in this grant
+                {pluralize("Update", updatesLength)} in this grant
               </p>
             </div>
           </div>
