@@ -6,7 +6,8 @@ import { Spinner } from "@/components/Utilities/Spinner";
 import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
 import { useCommunityDetails } from "@/hooks/communities/useCommunityDetails";
 import { useCommunityPrograms } from "@/hooks/usePrograms";
-import { MESSAGES } from "@/utilities/messages";
+import { AccessDenied } from "@/src/components/ui/AccessDenied";
+import { communityAdminDenial } from "@/src/components/ui/access-denied-presets";
 
 export default function ProgramScoresPage() {
   const { communityId } = useParams() as { communityId: string };
@@ -24,12 +25,7 @@ export default function ProgramScoresPage() {
   }
 
   if (!hasAccess) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen text-center">
-        <h1 className="text-2xl font-bold text-gray-900 mb-4">Access Denied</h1>
-        <p className="text-gray-600">{MESSAGES.ADMIN.NOT_AUTHORIZED(communityId)}</p>
-      </div>
-    );
+    return <AccessDenied {...communityAdminDenial(community?.details?.name)} />;
   }
 
   return (

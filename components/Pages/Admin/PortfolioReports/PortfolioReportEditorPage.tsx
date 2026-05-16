@@ -24,6 +24,8 @@ import {
   useUpdateReportContent,
 } from "@/hooks/portfolio-reports/usePortfolioReports";
 import { downloadReportPdf } from "@/services/portfolio-reports.service";
+import { AccessDenied } from "@/src/components/ui/AccessDenied";
+import { communityAdminDenial } from "@/src/components/ui/access-denied-presets";
 import { isReportGenerating } from "@/types/portfolio-report";
 import type { Community } from "@/types/v2/community";
 import { PAGES } from "@/utilities/pages";
@@ -87,11 +89,13 @@ export function PortfolioReportEditorPage({ community, reportId }: Props) {
     );
   }
 
-  if (!hasAccess || !report) {
+  if (!hasAccess) {
+    return <AccessDenied {...communityAdminDenial(community.details?.name)} />;
+  }
+
+  if (!report) {
     return (
-      <div className="flex items-center justify-center p-12 text-zinc-500">
-        {!hasAccess ? "You don't have permission to view this page." : "Report not found."}
-      </div>
+      <div className="flex items-center justify-center p-12 text-zinc-500">Report not found.</div>
     );
   }
 

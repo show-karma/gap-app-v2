@@ -4,7 +4,8 @@ import { useParams } from "next/navigation";
 import { Skeleton } from "@/components/Utilities/Skeleton";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { useCommunityDetails } from "@/hooks/communities/useCommunityDetails";
-import { Link } from "@/src/components/navigation/Link";
+import { AccessDenied } from "@/src/components/ui/AccessDenied";
+import { manageLayoutDenial } from "@/src/components/ui/access-denied-presets";
 import { usePermissionContext } from "@/src/core/rbac/context/permission-context";
 import { useOwnerStore } from "@/store/owner";
 import { PAGES } from "@/utilities/pages";
@@ -80,20 +81,10 @@ export function ManageLayoutShell({ children }: { children: React.ReactNode }) {
 
   if (!hasManageAccess) {
     return (
-      <div className="flex w-full min-h-[60vh] items-center justify-center">
-        <div className="text-center">
-          <p className="text-lg font-medium text-gray-900 dark:text-white mb-2">Access Denied</p>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-            You don&apos;t have permission to access this area.
-          </p>
-          <Link
-            href={PAGES.COMMUNITY.ALL_GRANTS(communityId)}
-            className="text-sm font-medium text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300"
-          >
-            Go to Community
-          </Link>
-        </div>
-      </div>
+      <AccessDenied
+        {...manageLayoutDenial(community?.details?.name)}
+        cta={{ label: "Go to Community", href: PAGES.COMMUNITY.ALL_GRANTS(communityId) }}
+      />
     );
   }
 
