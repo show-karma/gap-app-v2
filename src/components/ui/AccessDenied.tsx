@@ -43,7 +43,7 @@ function labelFor(role: Role | string): string {
 
 function DenialSkeleton() {
   return (
-    <div className="container py-16 flex items-center justify-center min-h-[60vh]">
+    <div className="container py-16 flex items-center justify-center min-h-[calc(100vh-8rem)]">
       <Card className="max-w-lg w-full">
         <CardContent className="py-12 px-8">
           <div className="animate-pulse space-y-4">
@@ -127,7 +127,7 @@ export function AccessDenied({
   const buttonLabel = cta?.label ?? (authenticated ? "Go to Home" : "Sign In");
 
   return (
-    <div className="container py-16 flex items-center justify-center min-h-[60vh]">
+    <div className="container py-16 flex items-center justify-center min-h-[calc(100vh-8rem)]">
       <Card className="max-w-lg">
         <CardContent className="text-center py-12 px-8">
           <div className="mb-6 flex justify-center">
