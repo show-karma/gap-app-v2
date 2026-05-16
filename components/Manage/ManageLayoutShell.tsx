@@ -5,8 +5,8 @@ import { Skeleton } from "@/components/Utilities/Skeleton";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { useCommunityDetails } from "@/hooks/communities/useCommunityDetails";
 import { AccessDenied } from "@/src/components/ui/AccessDenied";
+import { manageLayoutDenial } from "@/src/components/ui/access-denied-presets";
 import { usePermissionContext } from "@/src/core/rbac/context/permission-context";
-import { Role } from "@/src/core/rbac/types";
 import { useOwnerStore } from "@/store/owner";
 import { PAGES } from "@/utilities/pages";
 import { ManageBreadcrumbs } from "./ManageBreadcrumbs";
@@ -82,14 +82,7 @@ export function ManageLayoutShell({ children }: { children: React.ReactNode }) {
   if (!hasManageAccess) {
     return (
       <AccessDenied
-        requiredRoles={[
-          Role.COMMUNITY_ADMIN,
-          Role.PROGRAM_ADMIN,
-          Role.PROGRAM_REVIEWER,
-          Role.REGISTRY_ADMIN,
-          "Community Owner",
-        ]}
-        contactLabel={`a community administrator of ${community?.details?.name ?? "this community"}`}
+        {...manageLayoutDenial(community?.details?.name)}
         cta={{ label: "Go to Community", href: PAGES.COMMUNITY.ALL_GRANTS(communityId) }}
       />
     );

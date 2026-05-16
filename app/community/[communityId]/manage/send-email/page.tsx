@@ -6,7 +6,7 @@ import { Spinner } from "@/components/Utilities/Spinner";
 import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
 import { useFundingPrograms } from "@/hooks/useFundingPlatform";
 import { AccessDenied } from "@/src/components/ui/AccessDenied";
-import { Role } from "@/src/core/rbac/types";
+import { communityAdminDenial } from "@/src/components/ui/access-denied-presets";
 import { SendEmailComposer } from "./SendEmailComposer";
 
 function SendEmailContent({ communityId }: { communityId: string }) {
@@ -128,12 +128,7 @@ export default function SendEmailPage() {
   }
 
   if (!hasAccess) {
-    return (
-      <AccessDenied
-        requiredRoles={[Role.COMMUNITY_ADMIN, Role.SUPER_ADMIN]}
-        contactLabel="a community administrator"
-      />
-    );
+    return <AccessDenied {...communityAdminDenial()} />;
   }
 
   return <SendEmailContent communityId={communityId} />;

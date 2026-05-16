@@ -10,7 +10,7 @@ import { Spinner } from "@/components/Utilities/Spinner";
 import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
 import { useKycConfig, useSaveKycConfig } from "@/hooks/useKycStatus";
 import { AccessDenied } from "@/src/components/ui/AccessDenied";
-import { Role } from "@/src/core/rbac/types";
+import { communityAdminDenial } from "@/src/components/ui/access-denied-presets";
 import { KycProviderType } from "@/types/kyc";
 import type { Community } from "@/types/v2/community";
 import { envVars } from "@/utilities/enviromentVars";
@@ -134,8 +134,7 @@ export function KycSettingsPage({ community }: KycSettingsPageProps) {
     return (
       <AccessDenied
         title="KYC settings access required"
-        requiredRoles={[Role.COMMUNITY_ADMIN, Role.SUPER_ADMIN]}
-        contactLabel={`a community administrator of ${community.details?.name ?? "this community"}`}
+        {...communityAdminDenial(community.details?.name)}
       />
     );
   }

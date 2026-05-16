@@ -26,6 +26,7 @@ import { useProjectGrantMilestones } from "@/hooks/useProjectGrantMilestones";
 import type { GrantMilestoneWithCompletion, MilestoneEvaluationItem } from "@/services/milestones";
 import { Link } from "@/src/components/navigation/Link";
 import { AccessDenied } from "@/src/components/ui/AccessDenied";
+import { milestoneReviewDenial } from "@/src/components/ui/access-denied-presets";
 import {
   PermissionProvider,
   useIsReviewer,
@@ -33,7 +34,7 @@ import {
   usePermissionContext,
 } from "@/src/core/rbac/context/permission-context";
 import { useStaff } from "@/src/core/rbac/hooks/use-staff-bridge";
-import { ReviewerType, Role } from "@/src/core/rbac/types";
+import { ReviewerType } from "@/src/core/rbac/types";
 import { useAgentChatStore } from "@/store/agentChat";
 import { formatDate } from "@/utilities/formatDate";
 import { PAGES } from "@/utilities/pages";
@@ -747,13 +748,7 @@ function MilestonesReviewPageContent({
     return (
       <AccessDenied
         title="Milestone review access required"
-        requiredRoles={[
-          Role.COMMUNITY_ADMIN,
-          Role.SUPER_ADMIN,
-          Role.PROGRAM_REVIEWER,
-          "Contract Owner",
-        ]}
-        contactLabel="a community administrator"
+        {...milestoneReviewDenial()}
         cta={{ label: "Back to Milestones Report", href: PAGES.ADMIN.MILESTONES(communityId) }}
       />
     );

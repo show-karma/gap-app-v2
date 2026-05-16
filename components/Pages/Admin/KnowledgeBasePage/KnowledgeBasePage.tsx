@@ -8,7 +8,7 @@ import { Button } from "@/components/Utilities/Button";
 import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
 import { useKnowledgeSources } from "@/hooks/knowledge-base/useKnowledgeSources";
 import { AccessDenied } from "@/src/components/ui/AccessDenied";
-import { Role } from "@/src/core/rbac/types";
+import { communityAdminDenial } from "@/src/components/ui/access-denied-presets";
 import type { Community } from "@/types/v2/community";
 import type { KnowledgeSource, KnowledgeSourceKind } from "@/types/v2/knowledge-base";
 
@@ -88,8 +88,7 @@ export function KnowledgeBasePage({ community }: Props) {
       <PageFrame>
         <AccessDenied
           title="Knowledge base access required"
-          requiredRoles={[Role.COMMUNITY_ADMIN, Role.SUPER_ADMIN]}
-          contactLabel={`a community administrator of ${community.details?.name ?? "this community"}`}
+          {...communityAdminDenial(community.details?.name)}
         />
       </PageFrame>
     );

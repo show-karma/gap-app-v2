@@ -6,7 +6,7 @@ import { Spinner } from "@/components/Utilities/Spinner";
 import { useAuth } from "@/hooks/useAuth";
 import { useFaucetAdmin } from "@/hooks/useFaucetAdmin";
 import { AccessDenied } from "@/src/components/ui/AccessDenied";
-import { Role } from "@/src/core/rbac/types";
+import { faucetAdminDenial } from "@/src/components/ui/access-denied-presets";
 import { PAGES } from "@/utilities/pages";
 
 export default function FaucetAdminLayout({ children }: { children: React.ReactNode }) {
@@ -35,13 +35,7 @@ export default function FaucetAdminLayout({ children }: { children: React.ReactN
   }
 
   if (!isAdmin) {
-    return (
-      <AccessDenied
-        title="Faucet admin access required"
-        requiredRoles={[Role.SUPER_ADMIN]}
-        contactLabel="the platform team"
-      />
-    );
+    return <AccessDenied title="Faucet admin access required" {...faucetAdminDenial()} />;
   }
 
   return <>{children}</>;

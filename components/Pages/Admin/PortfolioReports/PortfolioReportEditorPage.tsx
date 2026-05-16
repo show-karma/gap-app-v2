@@ -25,7 +25,7 @@ import {
 } from "@/hooks/portfolio-reports/usePortfolioReports";
 import { downloadReportPdf } from "@/services/portfolio-reports.service";
 import { AccessDenied } from "@/src/components/ui/AccessDenied";
-import { Role } from "@/src/core/rbac/types";
+import { communityAdminDenial } from "@/src/components/ui/access-denied-presets";
 import { isReportGenerating } from "@/types/portfolio-report";
 import type { Community } from "@/types/v2/community";
 import { PAGES } from "@/utilities/pages";
@@ -90,12 +90,7 @@ export function PortfolioReportEditorPage({ community, reportId }: Props) {
   }
 
   if (!hasAccess) {
-    return (
-      <AccessDenied
-        requiredRoles={[Role.COMMUNITY_ADMIN, Role.SUPER_ADMIN]}
-        contactLabel={`a community administrator of ${community.details?.name ?? "this community"}`}
-      />
-    );
+    return <AccessDenied {...communityAdminDenial(community.details?.name)} />;
   }
 
   if (!report) {

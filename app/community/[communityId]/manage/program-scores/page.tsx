@@ -7,7 +7,7 @@ import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAc
 import { useCommunityDetails } from "@/hooks/communities/useCommunityDetails";
 import { useCommunityPrograms } from "@/hooks/usePrograms";
 import { AccessDenied } from "@/src/components/ui/AccessDenied";
-import { Role } from "@/src/core/rbac/types";
+import { communityAdminDenial } from "@/src/components/ui/access-denied-presets";
 
 export default function ProgramScoresPage() {
   const { communityId } = useParams() as { communityId: string };
@@ -25,12 +25,7 @@ export default function ProgramScoresPage() {
   }
 
   if (!hasAccess) {
-    return (
-      <AccessDenied
-        requiredRoles={[Role.COMMUNITY_ADMIN, Role.SUPER_ADMIN]}
-        contactLabel={`a community administrator of ${community?.details?.name ?? "this community"}`}
-      />
-    );
+    return <AccessDenied {...communityAdminDenial(community?.details?.name)} />;
   }
 
   return (
