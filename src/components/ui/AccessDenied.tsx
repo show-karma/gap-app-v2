@@ -58,6 +58,58 @@ function DenialSkeleton() {
   );
 }
 
+interface DenialBodyProps {
+  authenticated: boolean;
+  requiredRoles?: ReadonlyArray<Role | string>;
+  requiredList: string | null;
+  currentRolesOverride?: ReadonlyArray<Role>;
+  detectedRoles: ReadonlyArray<Role>;
+  contactLabel?: string;
+  message?: string;
+}
+
+function DenialBody({
+  authenticated,
+  requiredRoles,
+  requiredList,
+  currentRolesOverride,
+  detectedRoles,
+  contactLabel,
+  message,
+}: DenialBodyProps) {
+  if (!requiredList) {
+    return (
+      <p className="text-muted-foreground mb-8">
+        {message ?? "You don't have permission to view this page."}
+      </p>
+    );
+  }
+
+  const roleWord = requiredRoles && requiredRoles.length === 1 ? "role" : "roles";
+
+  if (!authenticated) {
+    return (
+      <p className="text-muted-foreground mb-8">
+        You need to sign in to view this page. This page requires {requiredList} {roleWord}.
+      </p>
+    );
+  }
+
+  const currentRoles =
+    currentRolesOverride ?? detectedRoles.filter((r) => r !== Role.GUEST && r !== Role.NONE);
+  const currentList =
+    currentRoles.length > 0
+      ? formatList(currentRoles.map((r) => ROLE_LABELS[r]))
+      : ROLE_LABELS[Role.NONE];
+
+  return (
+    <p className="text-muted-foreground mb-8">
+      You don&apos;t have access to this page. You need {requiredList} {roleWord}. Your account has:{" "}
+      {currentList}.{contactLabel ? ` Please contact ${contactLabel}.` : ""}
+    </p>
+  );
+}
+
 export function AccessDenied({
   title = "Access Denied",
   message,
@@ -78,39 +130,6 @@ export function AccessDenied({
 
   const requiredList =
     requiredRoles && requiredRoles.length > 0 ? formatList(requiredRoles.map(labelFor)) : null;
-
-  let body: React.ReactNode;
-  if (requiredList) {
-    if (!authenticated) {
-      body = (
-        <p className="text-muted-foreground mb-8">
-          You need to sign in to view this page. This page requires {requiredList}{" "}
-          {requiredRoles && requiredRoles.length === 1 ? "role" : "roles"}.
-        </p>
-      );
-    } else {
-      const currentRoles =
-        currentRolesOverride ??
-        detectedRoles.roles.filter((r) => r !== Role.GUEST && r !== Role.NONE);
-      const currentList =
-        currentRoles.length > 0
-          ? formatList(currentRoles.map((r) => ROLE_LABELS[r]))
-          : ROLE_LABELS[Role.NONE];
-      body = (
-        <p className="text-muted-foreground mb-8">
-          You don&apos;t have access to this page. You need {requiredList}{" "}
-          {requiredRoles && requiredRoles.length === 1 ? "role" : "roles"}. Your account has:{" "}
-          {currentList}.{contactLabel ? ` Please contact ${contactLabel}.` : ""}
-        </p>
-      );
-    }
-  } else {
-    body = (
-      <p className="text-muted-foreground mb-8">
-        {message ?? "You don't have permission to view this page."}
-      </p>
-    );
-  }
 
   const handleClick = () => {
     if (cta) {
@@ -137,7 +156,15 @@ export function AccessDenied({
           </div>
 
           <h1 className="text-2xl font-bold mb-4">{title}</h1>
-          {body}
+          <DenialBody
+            authenticated={authenticated}
+            requiredRoles={requiredRoles}
+            requiredList={requiredList}
+            currentRolesOverride={currentRolesOverride}
+            detectedRoles={detectedRoles.roles}
+            contactLabel={contactLabel}
+            message={message}
+          />
 
           <Button type="button" onClick={handleClick}>
             <LogIn className="w-4 h-4 mr-2" />
