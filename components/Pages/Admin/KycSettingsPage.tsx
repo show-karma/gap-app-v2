@@ -9,10 +9,11 @@ import { Button } from "@/components/Utilities/Button";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
 import { useKycConfig, useSaveKycConfig } from "@/hooks/useKycStatus";
+import { AccessDenied } from "@/src/components/ui/AccessDenied";
+import { Role } from "@/src/core/rbac/types";
 import { KycProviderType } from "@/types/kyc";
 import type { Community } from "@/types/v2/community";
 import { envVars } from "@/utilities/enviromentVars";
-import { MESSAGES } from "@/utilities/messages";
 
 // Use enum values for provider type validation
 const providerTypeValues = Object.values(KycProviderType) as [string, ...string[]];
@@ -129,12 +130,13 @@ export function KycSettingsPage({ community }: KycSettingsPageProps) {
     );
   }
 
-  // Show access denied if user is not an admin
   if (!hasAccess) {
     return (
-      <div className="flex w-full items-center justify-center h-96">
-        <p className="text-lg">{MESSAGES.ADMIN.NOT_AUTHORIZED(communityUID)}</p>
-      </div>
+      <AccessDenied
+        title="KYC settings access required"
+        requiredRoles={[Role.COMMUNITY_ADMIN, Role.SUPER_ADMIN]}
+        contactLabel={`a community administrator of ${community.details?.name ?? "this community"}`}
+      />
     );
   }
 

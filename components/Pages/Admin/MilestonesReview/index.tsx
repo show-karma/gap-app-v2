@@ -6,10 +6,8 @@ import {
   AtSymbolIcon,
   ChatBubbleLeftRightIcon,
   CheckCircleIcon,
-  ChevronLeftIcon,
   ClockIcon,
   DocumentTextIcon,
-  ExclamationTriangleIcon,
   SparklesIcon,
 } from "@heroicons/react/20/solid";
 import dynamic from "next/dynamic";
@@ -27,6 +25,7 @@ import { useMilestoneEvaluation } from "@/hooks/useMilestoneEvaluation";
 import { useProjectGrantMilestones } from "@/hooks/useProjectGrantMilestones";
 import type { GrantMilestoneWithCompletion, MilestoneEvaluationItem } from "@/services/milestones";
 import { Link } from "@/src/components/navigation/Link";
+import { AccessDenied } from "@/src/components/ui/AccessDenied";
 import {
   PermissionProvider,
   useIsReviewer,
@@ -34,7 +33,7 @@ import {
   usePermissionContext,
 } from "@/src/core/rbac/context/permission-context";
 import { useStaff } from "@/src/core/rbac/hooks/use-staff-bridge";
-import { ReviewerType } from "@/src/core/rbac/types";
+import { ReviewerType, Role } from "@/src/core/rbac/types";
 import { useAgentChatStore } from "@/store/agentChat";
 import { formatDate } from "@/utilities/formatDate";
 import { PAGES } from "@/utilities/pages";
@@ -746,32 +745,19 @@ function MilestonesReviewPageContent({
 
   if (!isAuthorized) {
     return (
-      <div className="min-h-screen">
-        <div className="px-4 sm:px-6 lg:px-8 py-6">
-          <div className="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 rounded-lg p-6">
-            <div className="flex items-center gap-3 mb-3">
-              <ExclamationTriangleIcon className="h-6 w-6 text-red-600 dark:text-red-400" />
-              <h3 className="text-red-800 dark:text-red-200 font-semibold text-lg">
-                Unauthorized Access
-              </h3>
-            </div>
-            <p className="text-red-600 dark:text-red-400 mb-4">
-              {!address
-                ? "You must be logged in to access this page."
-                : "You do not have permission to access this page. Only community administrators, contract owners, staff, and program reviewers can review milestones."}
-            </p>
-            <Link href={PAGES.ADMIN.MILESTONES(communityId)}>
-              <Button className="flex flex-row items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white">
-                <ChevronLeftIcon className="h-5 w-5" />
-                Back to Milestones Report
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </div>
+      <AccessDenied
+        title="Milestone review access required"
+        requiredRoles={[
+          Role.COMMUNITY_ADMIN,
+          Role.SUPER_ADMIN,
+          Role.PROGRAM_REVIEWER,
+          "Contract Owner",
+        ]}
+        contactLabel="a community administrator"
+        cta={{ label: "Back to Milestones Report", href: PAGES.ADMIN.MILESTONES(communityId) }}
+      />
     );
   }
-
   if (error || !data) {
     return (
       <div className="min-h-screen">

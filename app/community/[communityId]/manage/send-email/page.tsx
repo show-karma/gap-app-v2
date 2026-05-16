@@ -5,7 +5,8 @@ import { useParams } from "next/navigation";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
 import { useFundingPrograms } from "@/hooks/useFundingPlatform";
-import { MESSAGES } from "@/utilities/messages";
+import { AccessDenied } from "@/src/components/ui/AccessDenied";
+import { Role } from "@/src/core/rbac/types";
 import { SendEmailComposer } from "./SendEmailComposer";
 
 function SendEmailContent({ communityId }: { communityId: string }) {
@@ -128,12 +129,10 @@ export default function SendEmailPage() {
 
   if (!hasAccess) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Access Denied</h1>
-        <p className="text-gray-600 dark:text-gray-400">
-          {MESSAGES.ADMIN.NOT_AUTHORIZED(communityId)}
-        </p>
-      </div>
+      <AccessDenied
+        requiredRoles={[Role.COMMUNITY_ADMIN, Role.SUPER_ADMIN]}
+        contactLabel="a community administrator"
+      />
     );
   }
 

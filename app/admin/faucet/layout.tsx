@@ -5,6 +5,8 @@ import { useEffect } from "react";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { useAuth } from "@/hooks/useAuth";
 import { useFaucetAdmin } from "@/hooks/useFaucetAdmin";
+import { AccessDenied } from "@/src/components/ui/AccessDenied";
+import { Role } from "@/src/core/rbac/types";
 import { PAGES } from "@/utilities/pages";
 
 export default function FaucetAdminLayout({ children }: { children: React.ReactNode }) {
@@ -34,16 +36,11 @@ export default function FaucetAdminLayout({ children }: { children: React.ReactN
 
   if (!isAdmin) {
     return (
-      <div className="flex h-screen w-full items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-200 mb-4">
-            Access Denied
-          </h2>
-          <p className="text-gray-600 dark:text-gray-400">
-            You do not have permission to access the faucet admin panel.
-          </p>
-        </div>
-      </div>
+      <AccessDenied
+        title="Faucet admin access required"
+        requiredRoles={[Role.SUPER_ADMIN]}
+        contactLabel="the platform team"
+      />
     );
   }
 

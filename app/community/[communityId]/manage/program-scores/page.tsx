@@ -6,7 +6,8 @@ import { Spinner } from "@/components/Utilities/Spinner";
 import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
 import { useCommunityDetails } from "@/hooks/communities/useCommunityDetails";
 import { useCommunityPrograms } from "@/hooks/usePrograms";
-import { MESSAGES } from "@/utilities/messages";
+import { AccessDenied } from "@/src/components/ui/AccessDenied";
+import { Role } from "@/src/core/rbac/types";
 
 export default function ProgramScoresPage() {
   const { communityId } = useParams() as { communityId: string };
@@ -25,10 +26,10 @@ export default function ProgramScoresPage() {
 
   if (!hasAccess) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen text-center">
-        <h1 className="text-2xl font-bold text-gray-900 mb-4">Access Denied</h1>
-        <p className="text-gray-600">{MESSAGES.ADMIN.NOT_AUTHORIZED(communityId)}</p>
-      </div>
+      <AccessDenied
+        requiredRoles={[Role.COMMUNITY_ADMIN, Role.SUPER_ADMIN]}
+        contactLabel={`a community administrator of ${community?.details?.name ?? "this community"}`}
+      />
     );
   }
 
