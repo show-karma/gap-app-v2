@@ -90,9 +90,8 @@ export function AccessDenied({
       );
     } else {
       const currentRoles =
-        currentRolesOverride && currentRolesOverride.length > 0
-          ? currentRolesOverride
-          : detectedRoles.roles.filter((r) => r !== Role.GUEST && r !== Role.NONE);
+        currentRolesOverride ??
+        detectedRoles.roles.filter((r) => r !== Role.GUEST && r !== Role.NONE);
       const currentList =
         currentRoles.length > 0
           ? formatList(currentRoles.map((r) => ROLE_LABELS[r]))

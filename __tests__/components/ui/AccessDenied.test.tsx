@@ -14,11 +14,13 @@ vi.mock("@/hooks/useAuth", () => ({
   useAuth: vi.fn(),
 }));
 
+const mockUsePermissionContext = vi.fn(() => ({
+  roles: { primaryRole: "GUEST", roles: ["GUEST"], reviewerTypes: [] },
+  isLoading: false,
+}));
+
 vi.mock("@/src/core/rbac/context/permission-context", () => ({
-  usePermissionContext: vi.fn(() => ({
-    roles: { primaryRole: "GUEST", roles: ["GUEST"], reviewerTypes: [] },
-    isLoading: false,
-  })),
+  usePermissionContext: () => mockUsePermissionContext(),
 }));
 
 // lucide-react icons need to be mocked in jsdom
