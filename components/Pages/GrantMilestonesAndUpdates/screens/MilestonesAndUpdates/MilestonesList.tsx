@@ -4,7 +4,7 @@ import { type FC, useEffect, useMemo, useState } from "react";
 import { ActivityCard } from "@/components/Shared/ActivityCard";
 import { Button } from "@/components/Utilities/Button";
 import { getTokenByAddressAndChain } from "@/constants/supportedTokens";
-import { useProjectUpdates } from "@/hooks/v2/useProjectUpdates";
+import { useGrantLinkedActivities } from "@/hooks/v2/useGrantLinkedActivities";
 import { usePayoutConfigByGrantPublic } from "@/src/features/payout-disbursement/hooks/use-payout-disbursement";
 import type { Grant } from "@/types/v2/grant";
 import type { UnifiedMilestone, ProjectUpdate as V2ProjectUpdate } from "@/types/v2/roadmap";
@@ -58,19 +58,8 @@ const TabButton: FC<TabButtonProps> = ({ handleSelection, tab, tabName, selected
 export const MilestonesList: FC<MilestonesListProps> = ({ grant }) => {
   const { milestones, updates } = grant;
   const params = useParams();
-  // Use the URL projectId segment so we share the React Query cache key with
-  // the project page's useProjectUpdates(projectId) call. Mutations on either
-  // page invalidate the same key.
-  const projectIdentifier = (params?.projectId as string) || "";
-  const { rawData: projectUpdatesData } = useProjectUpdates(projectIdentifier);
-
-  const linkedActivities: V2ProjectUpdate[] = useMemo(() => {
-    const all = projectUpdatesData?.projectUpdates || [];
-    const grantUidLower = grant.uid?.toLowerCase();
-    return all.filter((update) =>
-      update.associations?.funding?.some((f) => f.uid?.toLowerCase() === grantUidLower)
-    );
-  }, [projectUpdatesData, grant.uid]);
+  const projectIdentifier = typeof params?.projectId === "string" ? params.projectId : "";
+  const linkedActivities = useGrantLinkedActivities(projectIdentifier, grant.uid);
 
   const { data: payoutConfig } = usePayoutConfigByGrantPublic(grant.uid);
 
@@ -255,7 +244,7 @@ export const MilestonesList: FC<MilestonesListProps> = ({ grant }) => {
     if (Array.isArray(completed)) return completed.length > 0;
     return !!completed;
   }).length;
-  const updatesLength = completedMilestonesCount + (updates?.length || 0);
+  const updatesLength = completedMilestonesCount + (updates?.length || 0) + linkedActivities.length;
   const milestonesCounter = milestones?.length || 0;
 
   return (
@@ -292,7 +281,7 @@ export const MilestonesList: FC<MilestonesListProps> = ({ grant }) => {
             <div className="flex flex-row flex-wrap gap-5">
               <p className="text-base font-normal text-gray-500 max-sm:text-sm">
                 {milestonesCounter} {pluralize("Milestone", milestonesCounter)}, {updatesLength}{" "}
-                {pluralize("update", updatesLength)} in this grant
+                {pluralize("Update", updatesLength)} in this grant
               </p>
             </div>
           </div>
