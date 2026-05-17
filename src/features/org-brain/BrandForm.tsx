@@ -11,98 +11,24 @@ interface Props {
 
 interface BrandFormShape {
   voice: string;
-  tones: { donor_email: string; proposal: string; social: string };
-  boilerplates: string;
-  wordDos: string;
-  wordDonts: string;
-  taglines: string;
-  sensitiveTopics: string;
-}
-
-const EMPTY: BrandFormShape = {
-  voice: "",
-  tones: { donor_email: "", proposal: "", social: "" },
-  boilerplates: "",
-  wordDos: "",
-  wordDonts: "",
-  taglines: "",
-  sensitiveTopics: "",
-};
-
-function toForm(data: BrandData | undefined): BrandFormShape {
-  if (!data) return EMPTY;
-  return {
-    voice: data.voice ?? "",
-    tones: {
-      donor_email: data.tones?.donor_email ?? "",
-      proposal: data.tones?.proposal ?? "",
-      social: data.tones?.social ?? "",
-    },
-    boilerplates: (data.boilerplates ?? [])
-      .map((b) => b.body)
-      .join("\n\n"),
-    wordDos: (data.wordDos ?? []).join(", "),
-    wordDonts: (data.wordDonts ?? []).join(", "),
-    taglines: (data.taglines ?? []).join("\n"),
-    sensitiveTopics: data.sensitiveTopics ?? "",
-  };
-}
-
-function fromForm(values: BrandFormShape): BrandData {
-  const splitLines = (s: string) =>
-    s
-      .split(/\n\s*\n/)
-      .map((x) => x.trim())
-      .filter(Boolean);
-  const splitCsv = (s: string) =>
-    s
-      .split(",")
-      .map((x) => x.trim())
-      .filter(Boolean);
-  const splitNl = (s: string) =>
-    s
-      .split("\n")
-      .map((x) => x.trim())
-      .filter(Boolean);
-  return {
-    voice: values.voice.trim() || undefined,
-    tones: {
-      donor_email: values.tones.donor_email.trim() || undefined,
-      proposal: values.tones.proposal.trim() || undefined,
-      social: values.tones.social.trim() || undefined,
-    },
-    boilerplates: splitLines(values.boilerplates).map((body, i) => ({
-      name: `Boilerplate ${i + 1}`,
-      body,
-    })),
-    wordDos: splitCsv(values.wordDos),
-    wordDonts: splitCsv(values.wordDonts),
-    taglines: splitNl(values.taglines),
-    sensitiveTopics: values.sensitiveTopics.trim() || undefined,
-  };
 }
 
 export function BrandForm({ slug }: Props) {
-  const { data, isLoading, isError, error, refetch } = useOrgBrain<BrandData>(
-    slug,
-    "brand"
-  );
+  const { data, isLoading, isError, error, refetch } = useOrgBrain<BrandData>(slug, "brand");
   const update = useUpdateBrand(slug);
 
   const { register, handleSubmit, reset, formState } = useForm<BrandFormShape>({
-    defaultValues: EMPTY,
+    defaultValues: { voice: "" },
   });
 
   useEffect(() => {
-    if (data) reset(toForm(data.data));
+    if (data) reset({ voice: data.data?.voice ?? "" });
   }, [data, reset]);
 
   if (isLoading) {
     return (
       <div className="space-y-3">
         <div className="h-24 animate-pulse rounded bg-gray-100" />
-        <div className="h-10 animate-pulse rounded bg-gray-100" />
-        <div className="h-10 animate-pulse rounded bg-gray-100" />
       </div>
     );
   }
@@ -126,94 +52,37 @@ export function BrandForm({ slug }: Props) {
 
   return (
     <form
-      onSubmit={handleSubmit((values) => update.mutate(fromForm(values)))}
+      onSubmit={handleSubmit((values) =>
+        // Merge with whatever else was on disk so we don't blow away fields
+        // that were set by another client (or by us before we slimmed the UI).
+        update.mutate({
+          ...(data?.data ?? {}),
+          voice: values.voice.trim() || undefined,
+        })
+      )}
       className="space-y-6"
     >
-      <Field
-        label="Brand voice"
-        hint="A short description of how the org sounds (e.g. warm, plainspoken, urgent)."
-      >
+      <label className="block">
+        <span className="text-sm font-medium text-gray-900">Brand voice</span>
+        <span className="mt-1 block text-xs text-gray-500">
+          A short description of how the org sounds (e.g. warm, plainspoken, urgent). Employees read
+          this before any substantive writing goes out.
+        </span>
         <textarea
           {...register("voice")}
-          rows={2}
-          className="mt-1 w-full rounded border px-3 py-2 text-sm"
-        />
-      </Field>
-
-      <fieldset className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <legend className="col-span-full text-sm font-medium">Tone by channel</legend>
-        <Field label="Donor email">
-          <input
-            {...register("tones.donor_email")}
-            className="mt-1 w-full rounded border px-3 py-2 text-sm"
-          />
-        </Field>
-        <Field label="Proposal">
-          <input
-            {...register("tones.proposal")}
-            className="mt-1 w-full rounded border px-3 py-2 text-sm"
-          />
-        </Field>
-        <Field label="Social">
-          <input
-            {...register("tones.social")}
-            className="mt-1 w-full rounded border px-3 py-2 text-sm"
-          />
-        </Field>
-      </fieldset>
-
-      <Field
-        label="Boilerplate paragraphs"
-        hint="One paragraph per block, separated by a blank line."
-      >
-        <textarea
-          {...register("boilerplates")}
           rows={6}
-          className="mt-1 w-full rounded border px-3 py-2 text-sm font-mono"
+          placeholder="Warm but unsentimental. Concrete numbers over abstract claims. Never corporate."
+          className="mt-2 w-full rounded-lg border border-gray-200 bg-white p-3 text-sm text-gray-900 shadow-sm outline-none transition focus:border-gray-300 focus:ring-2 focus:ring-gray-100"
         />
-      </Field>
-
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <Field label="Words / phrases to use" hint="Comma-separated.">
-          <input
-            {...register("wordDos")}
-            className="mt-1 w-full rounded border px-3 py-2 text-sm"
-          />
-        </Field>
-        <Field label="Words / phrases to avoid" hint="Comma-separated.">
-          <input
-            {...register("wordDonts")}
-            className="mt-1 w-full rounded border px-3 py-2 text-sm"
-          />
-        </Field>
-      </div>
-
-      <Field label="Taglines" hint="One per line.">
-        <textarea
-          {...register("taglines")}
-          rows={3}
-          className="mt-1 w-full rounded border px-3 py-2 text-sm"
-        />
-      </Field>
-
-      <Field
-        label="Sensitive topics or framing notes"
-        hint="What employees should escalate to humans before writing about."
-      >
-        <textarea
-          {...register("sensitiveTopics")}
-          rows={3}
-          className="mt-1 w-full rounded border px-3 py-2 text-sm"
-        />
-      </Field>
+      </label>
 
       <div className="flex items-center gap-3 border-t pt-4">
         <button
           type="submit"
           disabled={update.isPending || !formState.isDirty}
-          className="rounded bg-black px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:bg-gray-300"
+          className="rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:shadow-none"
         >
-          {update.isPending ? "Saving…" : "Save brand"}
+          {update.isPending ? "Saving…" : "Save"}
         </button>
         {update.isError ? (
           <span className="text-sm text-red-600">
@@ -222,23 +91,5 @@ export function BrandForm({ slug }: Props) {
         ) : null}
       </div>
     </form>
-  );
-}
-
-function Field({
-  label,
-  hint,
-  children,
-}: {
-  label: string;
-  hint?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <label className="block">
-      <span className="text-sm font-medium">{label}</span>
-      {children}
-      {hint ? <span className="mt-1 block text-xs text-gray-500">{hint}</span> : null}
-    </label>
   );
 }
