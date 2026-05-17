@@ -130,6 +130,13 @@ export interface HermesSkillInstallResult {
   skill: HermesSkillSummary | null;
 }
 
+export interface HermesUploadSummary {
+  sha256: string;
+  filename: string;
+  mime: string | null;
+  size: number;
+}
+
 export interface HermesSkillUninstallResult {
   removed: boolean;
   id: string;
@@ -277,6 +284,74 @@ export const hermesClient = {
       INDEXER.HERMES.PROFILE_SKILL(slug, profile, namespace, skillId)
     );
     return data;
+  },
+
+  async listChatUploads(slug: string, profile: TeamRole): Promise<HermesUploadSummary[]> {
+    const { data } = await api.get<{ files: HermesUploadSummary[] }>(
+      INDEXER.HERMES.CHAT_UPLOADS(slug, profile)
+    );
+    return data.files;
+  },
+
+  async uploadChatFile(slug: string, profile: TeamRole, file: File): Promise<HermesUploadSummary> {
+    const form = new FormData();
+    form.append("file", file, file.name);
+    const { data } = await api.post<HermesUploadSummary>(
+      INDEXER.HERMES.CHAT_UPLOADS(slug, profile),
+      form
+    );
+    return data;
+  },
+
+  async deleteChatFile(
+    slug: string,
+    profile: TeamRole,
+    sha256: string
+  ): Promise<{ removed: boolean; sha256: string }> {
+    const { data } = await api.delete<{ removed: boolean; sha256: string }>(
+      INDEXER.HERMES.CHAT_UPLOAD(slug, profile, sha256)
+    );
+    return data;
+  },
+
+  chatDownloadUrl(slug: string, profile: TeamRole, sha256: string): string {
+    return INDEXER.HERMES.CHAT_UPLOAD(slug, profile, sha256);
+  },
+
+  async listTaskAttachments(slug: string, taskId: string): Promise<HermesUploadSummary[]> {
+    const { data } = await api.get<{ files: HermesUploadSummary[] }>(
+      INDEXER.HERMES.TASK_ATTACHMENTS(slug, taskId)
+    );
+    return data.files;
+  },
+
+  async uploadTaskAttachment(
+    slug: string,
+    taskId: string,
+    file: File
+  ): Promise<HermesUploadSummary> {
+    const form = new FormData();
+    form.append("file", file, file.name);
+    const { data } = await api.post<HermesUploadSummary>(
+      INDEXER.HERMES.TASK_ATTACHMENTS(slug, taskId),
+      form
+    );
+    return data;
+  },
+
+  async deleteTaskAttachment(
+    slug: string,
+    taskId: string,
+    sha256: string
+  ): Promise<{ removed: boolean; sha256: string }> {
+    const { data } = await api.delete<{ removed: boolean; sha256: string }>(
+      INDEXER.HERMES.TASK_ATTACHMENT(slug, taskId, sha256)
+    );
+    return data;
+  },
+
+  taskAttachmentDownloadUrl(slug: string, taskId: string, sha256: string): string {
+    return INDEXER.HERMES.TASK_ATTACHMENT(slug, taskId, sha256);
   },
 
   async provision(input: ProvisionOrgInput): Promise<HermesOrgResponse> {

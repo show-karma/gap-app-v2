@@ -1,7 +1,15 @@
 "use client";
 
 import { useState } from "react";
+import {
+  useDeleteTaskAttachment,
+  useTaskAttachments,
+  useUploadTaskAttachment,
+} from "@/hooks/useUploads";
 import { useAddWorkComment, useWorkTask } from "@/hooks/useWorkBoard";
+import { hermesClient } from "@/lib/hermes-client";
+import { AttachmentList } from "@/src/features/uploads/AttachmentList";
+import { UploadButton } from "@/src/features/uploads/UploadButton";
 
 interface Props {
   slug: string;
@@ -12,6 +20,9 @@ interface Props {
 export function WorkTaskDrawer({ slug, taskId, onClose }: Props) {
   const { data, isLoading, isError, error } = useWorkTask(slug, taskId);
   const addComment = useAddWorkComment(slug, taskId);
+  const attachments = useTaskAttachments(slug, taskId);
+  const uploadAttachment = useUploadTaskAttachment(slug, taskId);
+  const deleteAttachment = useDeleteTaskAttachment(slug, taskId);
   const [body, setBody] = useState("");
 
   return (
@@ -23,7 +34,7 @@ export function WorkTaskDrawer({ slug, taskId, onClose }: Props) {
       <header className="flex items-start justify-between">
         <div>
           <h2 className="text-lg font-semibold">
-            {isLoading ? "Loading…" : data?.title ?? "Task"}
+            {isLoading ? "Loading…" : (data?.title ?? "Task")}
           </h2>
           {data ? (
             <div className="mt-1 text-xs text-gray-500">
@@ -48,17 +59,30 @@ export function WorkTaskDrawer({ slug, taskId, onClose }: Props) {
       ) : null}
 
       {data?.description ? (
-        <p className="mt-4 whitespace-pre-wrap text-sm text-gray-700">
-          {data.description}
-        </p>
+        <p className="mt-4 whitespace-pre-wrap text-sm text-gray-700">{data.description}</p>
       ) : null}
+
+      <section className="mt-6">
+        <div className="mb-2 flex items-center justify-between">
+          <h3 className="text-sm font-semibold">Attachments</h3>
+          <UploadButton
+            isUploading={uploadAttachment.isPending}
+            onSelect={(file) => uploadAttachment.mutate(file)}
+          />
+        </div>
+        <AttachmentList
+          files={attachments.data ?? []}
+          downloadUrl={(sha) => hermesClient.taskAttachmentDownloadUrl(slug, taskId, sha)}
+          onDelete={(sha) => deleteAttachment.mutate(sha)}
+          pendingDeleteSha={deleteAttachment.isPending ? deleteAttachment.variables : undefined}
+          emptyLabel={attachments.isLoading ? "Loading…" : "No attachments yet"}
+        />
+      </section>
 
       <section className="mt-8">
         <h3 className="text-sm font-semibold">Comments</h3>
         {data && (data.comments ?? []).length === 0 ? (
-          <p className="mt-3 text-sm text-gray-500">
-            No comments yet. Add the first one below.
-          </p>
+          <p className="mt-3 text-sm text-gray-500">No comments yet. Add the first one below.</p>
         ) : null}
         <ul className="mt-3 space-y-3">
           {(data?.comments ?? []).map((c) => (

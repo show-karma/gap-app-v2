@@ -1,9 +1,10 @@
 "use client";
 
-import { CornerDownLeftIcon, SquareIcon } from "lucide-react";
+import { CornerDownLeftIcon, SquareIcon, X } from "lucide-react";
 import { type KeyboardEvent, useCallback, useEffect, useRef, useState } from "react";
 import { type ChatMessage, useChat } from "@/hooks/useChat";
-import { TEAM_ROLE_LABELS, type TeamRole } from "@/lib/hermes-client";
+import { useUploadChatFile } from "@/hooks/useUploads";
+import { type HermesUploadSummary, TEAM_ROLE_LABELS, type TeamRole } from "@/lib/hermes-client";
 import {
   Conversation,
   ConversationContent,
@@ -12,6 +13,7 @@ import {
 } from "@/src/components/ai-elements/conversation";
 import { Message, MessageContent } from "@/src/components/ai-elements/message";
 import { MessageResponse } from "@/src/components/ai-elements/message-response";
+import { UploadButton } from "@/src/features/uploads/UploadButton";
 
 interface Props {
   slug: string;
@@ -21,12 +23,25 @@ interface Props {
 export function TeamChat({ slug, role }: Props) {
   const { messages, sending, send, stop } = useChat(slug, role);
 
+  // Pending attachments live on the composer until sent — once the user
+  // hits send, they're inlined into the message text as file paths so
+  // the agent can read them via Hermes' file tool. The blob itself stays
+  // on disk (content-addressed) so the same file isn't re-uploaded if
+  // they want to reference it again.
+  const [pending, setPending] = useState<HermesUploadSummary[]>([]);
+
   const handleSubmit = useCallback(
     (text: string) => {
-      if (!text || sending) return;
-      send(text);
+      if (sending) return;
+      const attachmentLines = pending.map(
+        (f) => `[Attached file: ${f.filename} (sha256:${f.sha256})]`
+      );
+      const composed = [...attachmentLines, text].filter(Boolean).join("\n");
+      if (!composed) return;
+      send(composed);
+      setPending([]);
     },
-    [sending, send]
+    [sending, send, pending]
   );
 
   return (
@@ -47,10 +62,15 @@ export function TeamChat({ slug, role }: Props) {
 
       <div className="border-t bg-gray-50/60 p-3">
         <ChatComposer
+          slug={slug}
+          role={role}
           placeholder={`Message ${TEAM_ROLE_LABELS[role]}`}
           isStreaming={sending}
           onSubmit={handleSubmit}
           onStop={stop}
+          pending={pending}
+          onAttach={(f) => setPending((cur) => [...cur, f])}
+          onRemoveAttachment={(sha) => setPending((cur) => cur.filter((f) => f.sha256 !== sha))}
         />
       </div>
     </div>
@@ -144,15 +164,31 @@ function ToolDuration({ tool }: { tool: NonNullable<ChatMessage["tools"]>[number
 }
 
 interface ComposerProps {
+  slug: string;
+  role: TeamRole;
   placeholder: string;
   isStreaming: boolean;
   onSubmit: (text: string) => void;
   onStop: () => void;
+  pending: HermesUploadSummary[];
+  onAttach: (file: HermesUploadSummary) => void;
+  onRemoveAttachment: (sha256: string) => void;
 }
 
-function ChatComposer({ placeholder, isStreaming, onSubmit, onStop }: ComposerProps) {
+function ChatComposer({
+  slug,
+  role,
+  placeholder,
+  isStreaming,
+  onSubmit,
+  onStop,
+  pending,
+  onAttach,
+  onRemoveAttachment,
+}: ComposerProps) {
   const [value, setValue] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const upload = useUploadChatFile(slug, role);
 
   const resize = useCallback(() => {
     const el = textareaRef.current;
@@ -167,11 +203,14 @@ function ChatComposer({ placeholder, isStreaming, onSubmit, onStop }: ComposerPr
 
   const submit = useCallback(() => {
     const text = value.trim();
-    if (!text || isStreaming) return;
+    // Allow send when there's text OR pending attachments — attachment-only
+    // messages are valid ("here's the file, look at it").
+    if (!text && pending.length === 0) return;
+    if (isStreaming) return;
     onSubmit(text);
     setValue("");
     requestAnimationFrame(resize);
-  }, [value, isStreaming, onSubmit, resize]);
+  }, [value, isStreaming, onSubmit, resize, pending.length]);
 
   const handleKey = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey && !e.metaKey && !e.ctrlKey) {
@@ -180,43 +219,70 @@ function ChatComposer({ placeholder, isStreaming, onSubmit, onStop }: ComposerPr
     }
   };
 
-  const canSubmit = value.trim().length > 0 && !isStreaming;
+  const canSubmit = (value.trim().length > 0 || pending.length > 0) && !isStreaming;
 
   return (
-    <div className="flex items-end gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 focus-within:border-gray-400">
-      <textarea
-        ref={textareaRef}
-        value={value}
-        onChange={(e) => {
-          setValue(e.target.value);
-          resize();
-        }}
-        onKeyDown={handleKey}
-        placeholder={placeholder}
-        rows={1}
-        maxLength={8000}
-        className="min-h-[24px] flex-1 resize-none border-0 bg-transparent text-sm leading-6 outline-none placeholder:text-gray-400"
-      />
-      {isStreaming ? (
-        <button
-          type="button"
-          onClick={onStop}
-          aria-label="Stop generating"
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-gray-900 text-white hover:bg-gray-700"
-        >
-          <SquareIcon className="h-3.5 w-3.5" />
-        </button>
-      ) : (
-        <button
-          type="button"
-          onClick={submit}
-          disabled={!canSubmit}
-          aria-label="Send message"
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-brand-blue text-white disabled:cursor-not-allowed disabled:bg-gray-300"
-        >
-          <CornerDownLeftIcon className="h-3.5 w-3.5" />
-        </button>
-      )}
+    <div className="flex flex-col gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 focus-within:border-gray-400">
+      {pending.length > 0 ? (
+        <ul className="flex flex-wrap gap-1.5 border-b border-gray-100 pb-2">
+          {pending.map((f) => (
+            <li
+              key={f.sha256}
+              className="inline-flex items-center gap-1 rounded-md bg-gray-100 px-2 py-0.5 text-[11px]"
+            >
+              <span className="max-w-[160px] truncate font-medium text-gray-800">{f.filename}</span>
+              <button
+                type="button"
+                onClick={() => onRemoveAttachment(f.sha256)}
+                className="rounded p-0.5 text-gray-500 hover:bg-gray-200 hover:text-gray-900"
+                aria-label={`Remove ${f.filename}`}
+              >
+                <X className="h-3 w-3" aria-hidden />
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+      <div className="flex items-end gap-2">
+        <textarea
+          ref={textareaRef}
+          value={value}
+          onChange={(e) => {
+            setValue(e.target.value);
+            resize();
+          }}
+          onKeyDown={handleKey}
+          placeholder={placeholder}
+          rows={1}
+          maxLength={8000}
+          className="min-h-[24px] flex-1 resize-none border-0 bg-transparent text-sm leading-6 outline-none placeholder:text-gray-400"
+        />
+        <UploadButton
+          label=""
+          isUploading={upload.isPending}
+          onSelect={(file) => upload.mutate(file, { onSuccess: onAttach })}
+        />
+        {isStreaming ? (
+          <button
+            type="button"
+            onClick={onStop}
+            aria-label="Stop generating"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-gray-900 text-white hover:bg-gray-700"
+          >
+            <SquareIcon className="h-3.5 w-3.5" />
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={submit}
+            disabled={!canSubmit}
+            aria-label="Send message"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-brand-blue text-white disabled:cursor-not-allowed disabled:bg-gray-300"
+          >
+            <CornerDownLeftIcon className="h-3.5 w-3.5" />
+          </button>
+        )}
+      </div>
     </div>
   );
 }

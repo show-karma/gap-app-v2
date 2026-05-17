@@ -815,5 +815,13 @@ export const INDEXER = {
       `/v2/hermes/orgs/${slug}/profiles/${profile}/skills`,
     PROFILE_SKILL: (slug: string, profile: string, namespace: string, skillId: string) =>
       `/v2/hermes/orgs/${slug}/profiles/${profile}/skills/${namespace}/${skillId}`,
+    CHAT_UPLOADS: (slug: string, profile: string) =>
+      `/v2/hermes/orgs/${slug}/profiles/${profile}/uploads`,
+    CHAT_UPLOAD: (slug: string, profile: string, sha256: string) =>
+      `/v2/hermes/orgs/${slug}/profiles/${profile}/uploads/${sha256}`,
+    TASK_ATTACHMENTS: (slug: string, taskId: string) =>
+      `/v2/hermes/orgs/${slug}/work/tasks/${taskId}/attachments`,
+    TASK_ATTACHMENT: (slug: string, taskId: string, sha256: string) =>
+      `/v2/hermes/orgs/${slug}/work/tasks/${taskId}/attachments/${sha256}`,
   },
 };
