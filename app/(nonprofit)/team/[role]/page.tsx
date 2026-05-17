@@ -8,11 +8,13 @@ import { useTeamMemberAbout, useUpdateTeamMemberAbout } from "@/hooks/useTeam";
 import {
   TEAM_ROLE_DESCRIPTIONS,
   TEAM_ROLE_LABELS,
+  TEAM_ROLE_LONG_LABELS,
   TEAM_ROLES,
   type TeamRole,
 } from "@/lib/hermes-client";
 import { ErrorState } from "@/src/features/nonprofit/EmptyState";
 import { SkillsTab } from "@/src/features/skills/SkillsTab";
+import { RoleAvatar } from "@/src/features/team/RoleAvatar";
 import { TeamChat } from "@/src/features/team-chat/TeamChat";
 import { PAGES } from "@/utilities/pages";
 
@@ -22,7 +24,7 @@ export default function TeamMemberPage() {
   const params = useParams<{ role: string }>();
   const search = useSearchParams();
   const [slug, setSlug] = useState<string | undefined>(undefined);
-  const [tab, setTab] = useState<TabId>("about");
+  const [tab, setTab] = useState<TabId>("chat");
   const role = (params?.role ?? "") as TeamRole;
   const isKnownRole = TEAM_ROLES.includes(role);
 
@@ -51,14 +53,22 @@ export default function TeamMemberPage() {
         <ArrowLeft className="h-3.5 w-3.5" aria-hidden />
         Back to team
       </Link>
-      <div className="mt-3">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-emerald-700">
-          Employee
-        </p>
-        <h1 className="mt-1 text-[28px] font-semibold leading-tight tracking-tight text-gray-900">
-          {TEAM_ROLE_LABELS[role]}
-        </h1>
-        <p className="mt-1.5 max-w-2xl text-sm text-gray-600">{TEAM_ROLE_DESCRIPTIONS[role]}</p>
+      <div className="mt-4 flex items-start gap-4">
+        <RoleAvatar role={role} size={56} className="shrink-0" />
+        <div className="min-w-0 flex-1">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-emerald-700">
+            Employee
+          </p>
+          <div className="mt-1.5 flex items-baseline gap-3">
+            <h1 className="text-[28px] font-bold leading-none tracking-[-0.02em] text-gray-900">
+              {TEAM_ROLE_LABELS[role]}
+            </h1>
+            <span className="text-sm text-gray-500">{TEAM_ROLE_LONG_LABELS[role]}</span>
+          </div>
+          <p className="mt-2 max-w-2xl text-sm leading-[1.5] text-gray-600">
+            {TEAM_ROLE_DESCRIPTIONS[role]}
+          </p>
+        </div>
       </div>
 
       <nav className="mt-6 flex gap-1 border-b border-gray-200">
@@ -141,15 +151,13 @@ function AboutTab({ slug, role }: { slug: string | undefined; role: TeamRole }) 
 
   return (
     <div>
-      <div className="rounded-xl border border-gray-200 bg-gray-50/40 p-1 shadow-sm">
-        <textarea
-          value={current}
-          onChange={(e) => setDraft(e.target.value)}
-          rows={16}
-          className="block w-full resize-y rounded-lg bg-white p-4 font-mono text-sm leading-6 text-gray-900 outline-none transition focus:ring-2 focus:ring-gray-200"
-          placeholder={`Describe how ${TEAM_ROLE_LABELS[role]} should behave, what their voice sounds like, what they care about...`}
-        />
-      </div>
+      <textarea
+        value={current}
+        onChange={(e) => setDraft(e.target.value)}
+        rows={20}
+        className="block w-full resize-y rounded-xl border border-gray-200 bg-white p-[18px] font-sans text-[14px] leading-[1.6] text-gray-900 shadow-sm outline-none transition focus:border-gray-300 focus:ring-2 focus:ring-gray-100"
+        placeholder={`Describe how ${TEAM_ROLE_LABELS[role]} should behave, what their voice sounds like, what they care about...`}
+      />
       <div className="mt-3 flex items-center justify-between">
         <p className="text-xs text-gray-500">
           {dirty
