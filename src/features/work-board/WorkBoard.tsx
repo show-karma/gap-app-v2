@@ -17,10 +17,13 @@ import {
   type LucideIcon,
   OctagonAlert,
   Plus,
+  X,
 } from "lucide-react";
 import { useMemo, useState } from "react";
+import { toast } from "react-hot-toast";
 import { useCreateWorkTask, useUpdateWorkTaskStatus, useWorkTasks } from "@/hooks/useWorkBoard";
 import {
+  hermesClient,
   TEAM_ROLE_LABELS,
   type TeamRole,
   VISIBLE_TEAM_ROLES,
@@ -28,6 +31,7 @@ import {
   type WorkTaskStatus,
 } from "@/lib/hermes-client";
 import { ErrorState } from "@/src/features/nonprofit/EmptyState";
+import { UploadButton } from "@/src/features/uploads/UploadButton";
 import { WorkTaskDrawer } from "./WorkTaskDrawer";
 
 interface ColumnSpec {
@@ -137,9 +141,30 @@ export function WorkBoard({ slug }: Props) {
 
       {showNew ? (
         <NewTaskForm
-          onSubmit={(input) =>
+          onSubmit={(input, files) =>
             create.mutate(input, {
-              onSuccess: () => setShowNew(false),
+              onSuccess: async (task) => {
+                if (files.length > 0) {
+                  // Upload files to the freshly-minted task id. Sequential
+                  // keeps audit log ordering deterministic and avoids
+                  // hammering the per-task file-count cap with one bulk
+                  // burst. Failures don't roll back the task — it's still
+                  // useful without the attachments — but each is surfaced
+                  // via the upload helper's toast so the user can retry.
+                  for (const f of files) {
+                    try {
+                      await hermesClient.uploadTaskAttachment(slug, task.id, f);
+                    } catch (err) {
+                      toast.error(
+                        err instanceof Error
+                          ? `Couldn't attach ${f.name}: ${err.message}`
+                          : `Couldn't attach ${f.name}`
+                      );
+                    }
+                  }
+                }
+                setShowNew(false);
+              },
             })
           }
           onCancel={() => setShowNew(false)}
@@ -331,23 +356,32 @@ function NewTaskForm({
   onCancel,
   pending,
 }: {
-  onSubmit: (input: { title: string; description?: string; assignee?: string }) => void;
+  onSubmit: (
+    input: { title: string; description?: string; assignee?: string },
+    files: File[]
+  ) => void;
   onCancel: () => void;
   pending: boolean;
 }) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [assignee, setAssignee] = useState<string>("");
+  // Files are held locally until submit because the task id doesn't exist
+  // yet — uploads happen in the parent's onSuccess once the task is created.
+  const [files, setFiles] = useState<File[]>([]);
   return (
     <form
       onSubmit={(e) => {
         e.preventDefault();
         if (!title.trim()) return;
-        onSubmit({
-          title: title.trim(),
-          description: description.trim() || undefined,
-          assignee: assignee || undefined,
-        });
+        onSubmit(
+          {
+            title: title.trim(),
+            description: description.trim() || undefined,
+            assignee: assignee || undefined,
+          },
+          files
+        );
       }}
       className="mb-5 rounded-xl border border-gray-200 bg-white p-4 shadow-sm"
     >
@@ -369,6 +403,26 @@ function NewTaskForm({
         className="mt-3 block w-full rounded-md border border-gray-200 px-3 py-2 text-sm shadow-sm transition focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-100"
         maxLength={8000}
       />
+      {files.length > 0 ? (
+        <ul className="mt-3 flex flex-wrap gap-1.5">
+          {files.map((f, idx) => (
+            <li
+              key={`${f.name}-${f.lastModified}-${idx}`}
+              className="inline-flex items-center gap-1 rounded-md bg-gray-100 px-2 py-0.5 text-[11px]"
+            >
+              <span className="max-w-[160px] truncate font-medium text-gray-800">{f.name}</span>
+              <button
+                type="button"
+                onClick={() => setFiles((cur) => cur.filter((_, i) => i !== idx))}
+                className="rounded p-0.5 text-gray-500 hover:bg-gray-200 hover:text-gray-900"
+                aria-label={`Remove ${f.name}`}
+              >
+                <X className="h-3 w-3" aria-hidden />
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : null}
       <div className="mt-3 flex flex-wrap items-center gap-3">
         <label className="text-xs text-gray-600">
           Assign to{" "}
@@ -385,6 +439,7 @@ function NewTaskForm({
             ))}
           </select>
         </label>
+        <UploadButton onSelect={(f) => setFiles((cur) => [...cur, f])} />
         <div className="ml-auto flex gap-2">
           <button
             type="button"
@@ -398,7 +453,13 @@ function NewTaskForm({
             disabled={pending || !title.trim()}
             className="rounded-md bg-gray-900 px-3 py-1.5 text-sm font-medium text-white shadow-sm transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:shadow-none"
           >
-            {pending ? "Adding…" : "Add task"}
+            {pending
+              ? files.length > 0
+                ? "Adding & attaching…"
+                : "Adding…"
+              : files.length > 0
+                ? `Add task with ${files.length} ${files.length === 1 ? "file" : "files"}`
+                : "Add task"}
           </button>
         </div>
       </div>
