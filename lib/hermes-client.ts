@@ -296,9 +296,13 @@ export const hermesClient = {
   async uploadChatFile(slug: string, profile: TeamRole, file: File): Promise<HermesUploadSummary> {
     const form = new FormData();
     form.append("file", file, file.name);
+    // Force axios to compute the multipart boundary by clearing the default
+    // application/json Content-Type from api-client.ts — otherwise the
+    // indexer route rejects the request as 406 / can't parse the body.
     const { data } = await api.post<HermesUploadSummary>(
       INDEXER.HERMES.CHAT_UPLOADS(slug, profile),
-      form
+      form,
+      { headers: { "Content-Type": "multipart/form-data" } }
     );
     return data;
   },
@@ -334,7 +338,8 @@ export const hermesClient = {
     form.append("file", file, file.name);
     const { data } = await api.post<HermesUploadSummary>(
       INDEXER.HERMES.TASK_ATTACHMENTS(slug, taskId),
-      form
+      form,
+      { headers: { "Content-Type": "multipart/form-data" } }
     );
     return data;
   },
