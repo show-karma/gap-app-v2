@@ -36,6 +36,14 @@ export const TEAM_ROLE_DESCRIPTIONS: Record<TeamRole, string> = {
   operations: "Process support, finance support, vendor coordination, and tech upkeep.",
 };
 
+// Longer titles shown beside the short role label on the Team grid card.
+export const TEAM_ROLE_LONG_LABELS: Record<TeamRole, string> = {
+  orchestrator: "Executive Director",
+  fundraiser: "Fundraising Lead",
+  communications: "Communications Lead",
+  operations: "Operations Lead",
+};
+
 export interface HermesOrgResponse {
   id: string;
   slug: string;

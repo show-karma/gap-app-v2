@@ -1,28 +1,11 @@
 "use client";
 
-import { ArrowUpRight } from "lucide-react";
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useTeamOrg } from "@/hooks/useTeam";
-import {
-  TEAM_ROLE_DESCRIPTIONS,
-  TEAM_ROLE_LABELS,
-  type TeamRole,
-  VISIBLE_TEAM_ROLES,
-} from "@/lib/hermes-client";
-import { NonprofitPageHeader } from "@/src/features/nonprofit/PageHeader";
+import { VISIBLE_TEAM_ROLES } from "@/lib/hermes-client";
+import { CrewCard } from "@/src/features/team/CrewCard";
 import { PAGES } from "@/utilities/pages";
-
-// Initial + a single accent color per role. Letter monograms read as real
-// people on a real team (Linear, Figma, Notion all do this) and skip the
-// "icon-in-colored-rounded-square" SaaS-template look.
-const ROLE_VISUALS: Record<TeamRole, { initial: string; bg: string; text: string }> = {
-  orchestrator: { initial: "E", bg: "bg-emerald-100", text: "text-emerald-900" },
-  fundraiser: { initial: "F", bg: "bg-amber-100", text: "text-amber-900" },
-  communications: { initial: "C", bg: "bg-sky-100", text: "text-sky-900" },
-  operations: { initial: "O", bg: "bg-violet-100", text: "text-violet-900" },
-};
 
 function StatusDot({ status }: { status: string }) {
   const color =
@@ -107,44 +90,35 @@ export default function TeamDirectoryPage() {
 
   return (
     <main className="mx-auto max-w-5xl px-6 py-10">
-      <NonprofitPageHeader
-        eyebrow="Team"
-        title="Your AI employees"
-        description="Each employee owns a slice of your nonprofit. Open one to chat, set their About, or manage their skills."
-        actions={<StatusDot status={org?.status ?? "unknown"} />}
-      />
+      <div className="flex items-end justify-between gap-6">
+        <div className="max-w-xl">
+          <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-emerald-600">
+            Your Team
+          </div>
+          <h1 className="text-[34px] font-bold leading-[1.05] tracking-[-0.025em] text-gray-900">
+            Four teammates on the case
+            {slug ? (
+              <>
+                {" "}
+                for <span className="text-gray-900">{slug}</span>.
+              </>
+            ) : (
+              "."
+            )}
+          </h1>
+          <p className="mt-3 text-sm leading-[1.5] text-gray-500">
+            Tap a card to chat. They each own a slice — fundraising, comms, ops — and report to ED.
+          </p>
+        </div>
+        <StatusDot status={org?.status ?? "unknown"} />
+      </div>
 
-      <ul className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {VISIBLE_TEAM_ROLES.map((role: TeamRole) => {
-          const visual = ROLE_VISUALS[role];
-          return (
-            <li key={role}>
-              <Link
-                href={`${PAGES.TEAM.MEMBER(role)}?slug=${slug}`}
-                className="group relative block h-full rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-gray-300 hover:shadow-md"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div
-                    className={`grid h-10 w-10 place-items-center rounded-full ${visual.bg} ${visual.text} font-semibold`}
-                    aria-hidden
-                  >
-                    {visual.initial}
-                  </div>
-                  <ArrowUpRight
-                    className="h-4 w-4 text-gray-300 transition group-hover:text-gray-700"
-                    aria-hidden
-                  />
-                </div>
-                <div className="mt-4 text-base font-semibold text-gray-900">
-                  {TEAM_ROLE_LABELS[role]}
-                </div>
-                <p className="mt-1.5 text-sm leading-relaxed text-gray-600">
-                  {TEAM_ROLE_DESCRIPTIONS[role]}
-                </p>
-              </Link>
-            </li>
-          );
-        })}
+      <ul className="mt-8 grid grid-cols-1 gap-[18px] md:grid-cols-2">
+        {VISIBLE_TEAM_ROLES.map((role) => (
+          <li key={role}>
+            <CrewCard role={role} slug={slug} />
+          </li>
+        ))}
       </ul>
     </main>
   );
