@@ -45,7 +45,6 @@ vi.mock("@/components/Utilities/MarkdownPreview", () => ({
   MarkdownPreview: ({ source }: { source: string }) => (
     <div data-testid="markdown-preview">{source}</div>
   ),
-  inlineDescriptionMarkdownComponents: {},
 }));
 
 // Mock the service that fetches paginated projects

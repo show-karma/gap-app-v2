@@ -85,7 +85,6 @@ vi.mock("@/components/Utilities/MarkdownPreview", () => ({
   MarkdownPreview: ({ source }: { source: string }) => (
     <span data-testid="markdown-preview">{source}</span>
   ),
-  inlineDescriptionMarkdownComponents: {},
 }));
 
 vi.mock("@/components/Utilities/ProfilePicture", () => ({

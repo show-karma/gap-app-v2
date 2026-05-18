@@ -201,7 +201,6 @@ vi.mock("@/components/Utilities/MarkdownPreview", () => ({
   MarkdownPreview: ({ source }: { source?: string }) => (
     <div data-testid="markdown-preview">{source ?? ""}</div>
   ),
-  inlineDescriptionMarkdownComponents: {},
 }));
 
 vi.mock("@/components/Utilities/LoadingOverlay", () => ({

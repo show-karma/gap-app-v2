@@ -23,7 +23,6 @@ vi.mock("@/components/Utilities/MarkdownPreview", () => ({
       <p>{source}</p>
     </div>
   ),
-  inlineDescriptionMarkdownComponents: {},
 }));
 
 // Mock the dynamic import of MDEditor

@@ -12,6 +12,8 @@ import { cn } from "@/utilities/tailwind";
 interface MarkdownPreviewProps {
   source?: string;
   className?: string;
+  /** "inline" strips Streamdown's table chrome (toolbar + card) for help text + submitted answers. */
+  variant?: "default" | "inline";
   // biome-ignore lint/suspicious/noExplicitAny: matches @uiw allowElement call-site signatures
   allowElement?: (element: any, index: number, parent: any) => boolean;
   // biome-ignore lint/suspicious/noExplicitAny: ComponentType<any> makes destructured params explicit-any, avoiding noImplicitAny errors at call sites
@@ -38,16 +40,11 @@ function countCells(pipeRow: string): number {
   }).length;
 }
 
-/**
- * Compact table/th/td overrides for inline contexts (form field descriptions,
- * submitted answers, builder previews). Skips Streamdown's default table card
- * wrapper and copy/download toolbar — those are designed for AI-streamed
- * data tables, not inline help text.
- *
- * Pass via the `components` prop of `MarkdownPreview` for any rendering that
- * should look like prose, not a hero data table.
- */
-export const inlineDescriptionMarkdownComponents = {
+// Compact table/th/td overrides applied when `variant="inline"`. Skips
+// Streamdown's default table card wrapper and copy/download toolbar — those
+// are designed for AI-streamed data tables, not inline help text or
+// submitted-answer rendering.
+const inlineTableComponents = {
   table: ({ children, ...props }: React.ComponentProps<"table">) => (
     <table
       className="w-full border-collapse text-[0.8em] my-2 border border-zinc-200 dark:border-zinc-700 rounded"
@@ -116,6 +113,7 @@ function completeMissingTableSeparators(source: string): string {
 export const MarkdownPreview = ({
   source,
   className,
+  variant,
   allowElement,
   components,
 }: MarkdownPreviewProps) => {
@@ -155,9 +153,10 @@ export const MarkdownPreview = ({
           {children}
         </p>
       ),
+      ...(variant === "inline" ? inlineTableComponents : {}),
       ...(components as Partial<Components>),
     }),
-    [components]
+    [components, variant]
   );
 
   if (!source) return null;

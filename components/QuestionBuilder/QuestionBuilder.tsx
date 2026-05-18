@@ -45,7 +45,7 @@ import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAc
 import { useUpdateProgramEnrollment } from "@/hooks/useFundingPlatform";
 import type { FormField, FormSchema } from "@/types/question-builder";
 import { MarkdownEditor } from "../Utilities/MarkdownEditor";
-import { inlineDescriptionMarkdownComponents, MarkdownPreview } from "../Utilities/MarkdownPreview";
+import { MarkdownPreview } from "../Utilities/MarkdownPreview";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
 import { AIPromptConfiguration } from "./AIPromptConfiguration";
 import { FieldEditor } from "./FieldEditor";
@@ -1074,14 +1074,8 @@ const SortableFieldItem = React.memo(function SortableFieldItem({
                 {field.description && (
                   <MarkdownPreview
                     className="text-sm text-gray-500 dark:text-gray-400 mt-1"
-                    components={{
-                      ...inlineDescriptionMarkdownComponents,
-                      p: ({ children }) => (
-                        <span className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                          {children}
-                        </span>
-                      ),
-                    }}
+                    variant="inline"
+                    components={{ p: ({ children }) => <span className="mt-1">{children}</span> }}
                     source={field.description}
                   />
                 )}
