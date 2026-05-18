@@ -191,6 +191,7 @@ export type UnifiedMilestoneSource = {
   projectMilestone?: {
     uid: string;
     attester?: string;
+    recipient?: string;
     completed?: {
       createdAt: string;
       attester?: string;

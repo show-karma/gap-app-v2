@@ -103,6 +103,7 @@ const MilestoneAIEvaluationBadge = dynamic(
 interface MilestoneCardProps {
   milestone: UnifiedMilestone;
   isAuthorized: boolean;
+  canEdit: boolean;
   allocationAmount?: string;
   hideTimelineMarker?: boolean;
 }
@@ -133,6 +134,7 @@ const getActivityTypeLabel = (type: string): string => {
 export const MilestoneCard: FC<MilestoneCardProps> = ({
   milestone,
   isAuthorized,
+  canEdit,
   allocationAmount,
   hideTimelineMarker = false,
 }) => {
@@ -169,15 +171,11 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
     | { title?: string; programId?: string }
     | undefined;
   const grantTitle = grantDetails?.title;
-  const _programId = grantDetails?.programId;
 
   // Check if invoice is required for this grant
   const { data: invoiceCheckData } = useGrantInvoiceRequired(
     isAuthorized && type === "grant" ? grantUID : undefined
   );
-  const _communityData = grantMilestone?.grant.community?.details as
-    | { name?: string; imageURL?: string }
-    | undefined;
   const endsAt = milestone.endsAt;
 
   const handleViewInvoice = useCallback(async () => {
@@ -609,7 +607,7 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
         {type === "milestone" && projectMilestone ? (
           <ObjectiveSimpleOptionsMenu objectiveId={projectMilestone.uid} />
         ) : type === "grant" && grantMilestone ? (
-          <GrantMilestoneSimpleOptionsMenu milestone={milestone} />
+          <GrantMilestoneSimpleOptionsMenu milestone={milestone} canEdit={canEdit} />
         ) : null}
       </>
     ) : null;

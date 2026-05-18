@@ -55,9 +55,10 @@ const GrantMilestoneCompletion = dynamic(
 interface MilestoneCardProps {
   milestone: UnifiedMilestone;
   isAuthorized: boolean;
+  canEdit: boolean;
 }
 
-export const MilestoneCard = ({ milestone, isAuthorized }: MilestoneCardProps) => {
+export const MilestoneCard = ({ milestone, isAuthorized, canEdit }: MilestoneCardProps) => {
   const [isCompleting, setIsCompleting] = useState(false);
 
   const handleCompleting = (isCompleting: boolean) => {
@@ -224,6 +225,7 @@ export const MilestoneCard = ({ milestone, isAuthorized }: MilestoneCardProps) =
               milestone={milestone}
               completeFn={handleCompleting}
               alreadyCompleted={!!completed}
+              canEdit={canEdit}
             />
           ) : null}
         </div>
