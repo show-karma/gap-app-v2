@@ -97,6 +97,32 @@ describe("app/sitemap.xml/route.ts — sitemap index GET handler", () => {
     expect(xml).toContain(`${SITE_URL}/sitemaps/funding-programs/sitemap/1.xml`);
   });
 
+  it("emits <lastmod> values without fractional seconds (Google parser strictness)", async () => {
+    mockFetchSitemapCounts.mockResolvedValue(null);
+
+    const { GET } = await import("@/app/sitemap.xml/route");
+    const res = await GET();
+    const xml = await res.text();
+
+    const lastmodMatches = xml.match(/<lastmod>([^<]+)<\/lastmod>/g) ?? [];
+    expect(lastmodMatches.length).toBeGreaterThan(0);
+    for (const tag of lastmodMatches) {
+      expect(tag).not.toMatch(/\.\d{3}Z/);
+      expect(tag).toMatch(/<lastmod>\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z<\/lastmod>/);
+    }
+  });
+
+  it("sets Content-Type, Content-Disposition, and Cache-Control matching child sitemaps", async () => {
+    mockFetchSitemapCounts.mockResolvedValue(null);
+
+    const { GET } = await import("@/app/sitemap.xml/route");
+    const res = await GET();
+
+    expect(res.headers.get("Content-Type")).toBe("application/xml");
+    expect(res.headers.get("Content-Disposition")).toBe("inline");
+    expect(res.headers.get("Cache-Control")).toBe("public, max-age=0, must-revalidate");
+  });
+
   it("falls back to 1 chunk per kind when fetchSitemapCounts returns null", async () => {
     mockFetchSitemapCounts.mockResolvedValue(null);
 

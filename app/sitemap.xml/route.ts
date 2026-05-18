@@ -9,8 +9,15 @@ interface SitemapEntry {
   lastmod: string;
 }
 
+function formatLastmod(date: Date): string {
+  // W3C Datetime without fractional seconds — Google's sitemap parser is
+  // strict here and has been observed to reject the default ISO 8601 form
+  // with milliseconds (e.g. "2026-05-18T16:08:48.340Z").
+  return date.toISOString().replace(/\.\d{3}Z$/, "Z");
+}
+
 function buildSitemapIndex(entries: SitemapEntry[]): string {
-  const now = new Date().toISOString();
+  const now = formatLastmod(new Date());
   const items = entries
     .map(
       (e) =>
@@ -22,7 +29,7 @@ function buildSitemapIndex(entries: SitemapEntry[]): string {
 }
 
 export async function GET(): Promise<Response> {
-  const now = new Date().toISOString();
+  const now = formatLastmod(new Date());
   const entries: SitemapEntry[] = [];
 
   // Static pages sitemap
@@ -80,8 +87,13 @@ export async function GET(): Promise<Response> {
 
   return new Response(xml, {
     headers: {
-      "Content-Type": "application/xml; charset=utf-8",
-      "Cache-Control": "public, max-age=3600, stale-while-revalidate=86400",
+      // Match the headers Next.js emits for the child sitemaps under
+      // app/sitemaps/*/sitemap.ts. The previous "application/xml; charset=utf-8"
+      // caused GSC to classify this file as Type=Unknown and report
+      // "Couldn't fetch" even though the XML validated against siteindex.xsd.
+      "Content-Type": "application/xml",
+      "Content-Disposition": "inline",
+      "Cache-Control": "public, max-age=0, must-revalidate",
     },
   });
 }
