@@ -11,7 +11,10 @@ import {
 import { type FC, type JSX, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { KarmaProjectLink } from "@/components/FundingPlatform/shared/KarmaProjectLink";
-import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
+import {
+  inlineDescriptionMarkdownComponents,
+  MarkdownPreview,
+} from "@/components/Utilities/MarkdownPreview";
 import { useApplicationVersions } from "@/hooks/useFundingPlatform";
 import { MilestoneStatusBadge } from "@/src/features/applications/components/MilestoneStatusBadge";
 import {
@@ -267,7 +270,10 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
                     {/* Description - Core field with markdown */}
                     {milestone.description && (
                       <div className="text-xs text-gray-600 dark:text-gray-400 prose prose-xs dark:prose-invert max-w-none">
-                        <MarkdownPreview source={milestone.description} />
+                        <MarkdownPreview
+                          source={milestone.description}
+                          components={inlineDescriptionMarkdownComponents}
+                        />
                       </div>
                     )}
 
@@ -291,7 +297,10 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
                                 {label}:
                               </div>
                               <div className="text-gray-600 dark:text-gray-400 prose prose-xs dark:prose-invert max-w-none">
-                                <MarkdownPreview source={String(fieldValue)} />
+                                <MarkdownPreview
+                                  source={String(fieldValue)}
+                                  components={inlineDescriptionMarkdownComponents}
+                                />
                               </div>
                             </>
                           ) : (
@@ -351,7 +360,7 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
     // Default: render as markdown
     return (
       <div className="prose prose-sm dark:prose-invert max-w-none">
-        <MarkdownPreview source={String(value)} />
+        <MarkdownPreview source={String(value)} components={inlineDescriptionMarkdownComponents} />
       </div>
     );
   };

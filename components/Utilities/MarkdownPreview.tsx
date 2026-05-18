@@ -26,6 +26,76 @@ type CodePluginType = typeof import("@streamdown/code").code;
 type RemarkBreaksType = typeof import("remark-breaks").default;
 type RemarkGfmType = typeof import("remark-gfm").default;
 
+const TABLE_ROW_RE = /^\s*\|.+\|\s*$/;
+const TABLE_SEPARATOR_RE = /^\s*\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)+\|?\s*$/;
+
+// GFM requires a `|---|---|` separator row directly under the header. Many
+// form authors write only the header row and expect it to render as a table.
+// Detect those cases and inject a separator so remark-gfm picks it up.
+function countCells(pipeRow: string): number {
+  return pipeRow.split("|").filter((c, idx, arr) => {
+    if (idx === 0 && c.trim() === "") return false;
+    if (idx === arr.length - 1 && c.trim() === "") return false;
+    return true;
+  }).length;
+}
+
+// Bypass Streamdown's default table chrome (copy/download toolbar + card
+// wrapper) for inline help text. Renders compact, plain HTML tables that
+// inherit the surrounding text color and pick up `markdown.module.css` styles.
+export const inlineDescriptionMarkdownComponents = {
+  table: ({ children, ...props }: { children?: React.ReactNode }) => (
+    <table
+      className="w-full border-collapse text-[0.8em] my-2 border border-zinc-200 dark:border-zinc-700 rounded"
+      {...props}
+    >
+      {children}
+    </table>
+  ),
+  th: ({ children, ...props }: { children?: React.ReactNode }) => (
+    <th
+      className="text-left font-semibold px-2 py-1 border-b border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/40"
+      {...props}
+    >
+      {children}
+    </th>
+  ),
+  td: ({ children, ...props }: { children?: React.ReactNode }) => (
+    <td className="px-2 py-1 border-b border-zinc-200/60 dark:border-zinc-700/60" {...props}>
+      {children}
+    </td>
+  ),
+};
+
+function completeMissingTableSeparators(source: string): string {
+  if (!source.includes("|")) return source;
+
+  const lines = source.split("\n");
+  const out: string[] = [];
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    out.push(line);
+
+    if (!TABLE_ROW_RE.test(line)) continue;
+
+    const prev = lines[i - 1];
+    const isFirstPipeRow =
+      prev === undefined || (!TABLE_ROW_RE.test(prev) && !TABLE_SEPARATOR_RE.test(prev));
+    if (!isFirstPipeRow) continue;
+
+    const next = lines[i + 1];
+    if (next !== undefined && TABLE_SEPARATOR_RE.test(next)) continue;
+
+    const cellCount = countCells(line);
+    if (cellCount < 2) continue;
+
+    out.push(`| ${Array(cellCount).fill("---").join(" | ")} |`);
+  }
+
+  return out.join("\n");
+}
+
 export const MarkdownPreview = ({
   source,
   className,
@@ -71,6 +141,8 @@ export const MarkdownPreview = ({
     ...(components as Partial<Components>),
   };
 
+  const preparedSource = completeMissingTableSeparators(source);
+
   return (
     <div
       className="preview w-full max-w-full text-foreground"
@@ -84,7 +156,7 @@ export const MarkdownPreview = ({
         allowElement={allowElement ?? undefined}
         components={mergedComponents}
       >
-        {source}
+        {preparedSource}
       </StreamdownComponent>
     </div>
   );

@@ -10,7 +10,10 @@ import { KarmaProfileLinkInput } from "@/components/FundingPlatform/FormFields/K
 import { MilestoneInput } from "@/components/FundingPlatform/FormFields/MilestoneInput";
 import { Button } from "@/components/Utilities/Button";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
-import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
+import {
+  inlineDescriptionMarkdownComponents,
+  MarkdownPreview,
+} from "@/components/Utilities/MarkdownPreview";
 import type { IFormField, IFormSchema } from "@/types/funding-platform";
 import { cn } from "@/utilities/tailwind";
 import { PROJECT_UID_REGEX } from "@/utilities/validation";
@@ -648,7 +651,10 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{field.label}</h3>
           {field.description && (
             <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-              <MarkdownPreview source={field.description} />
+              <MarkdownPreview
+                source={field.description}
+                components={inlineDescriptionMarkdownComponents}
+              />
             </div>
           )}
         </div>

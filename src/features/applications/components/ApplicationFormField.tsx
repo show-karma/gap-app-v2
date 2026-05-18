@@ -3,7 +3,10 @@
 import type { Control, FieldPath, UseFormTrigger } from "react-hook-form";
 import { Controller } from "react-hook-form";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
-import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
+import {
+  inlineDescriptionMarkdownComponents,
+  MarkdownPreview,
+} from "@/components/Utilities/MarkdownPreview";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,7 +27,7 @@ function FieldDescription({ source }: { source: string }) {
   if (!source) return null;
   return (
     <div className="text-xs text-zinc-500 dark:text-zinc-400 [&_p]:text-xs [&_p]:text-zinc-500 dark:[&_p]:text-zinc-400">
-      <MarkdownPreview source={source} />
+      <MarkdownPreview source={source} components={inlineDescriptionMarkdownComponents} />
     </div>
   );
 }

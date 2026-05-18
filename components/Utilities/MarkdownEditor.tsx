@@ -4,7 +4,10 @@ import { Eye, EyeOff, Loader2 } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useTheme } from "next-themes";
 import { type FC, useCallback, useEffect, useMemo, useState } from "react";
-import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
+import {
+  inlineDescriptionMarkdownComponents,
+  MarkdownPreview,
+} from "@/components/Utilities/MarkdownPreview";
 import { cn } from "@/utilities/tailwind";
 
 // Constants for content validation and performance
@@ -224,7 +227,9 @@ export const MarkdownEditor: FC<MarkdownEditorProps> = ({
       </div>
 
       {description && (
-        <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">{description}</p>
+        <div className="text-sm text-gray-600 dark:text-gray-400 mb-2 [&_p]:text-sm [&_p]:text-gray-600 dark:[&_p]:text-gray-400">
+          <MarkdownPreview source={description} components={inlineDescriptionMarkdownComponents} />
+        </div>
       )}
 
       {/* Content validation warnings */}

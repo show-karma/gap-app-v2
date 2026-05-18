@@ -3,7 +3,10 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/Utilities/Button";
-import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
+import {
+  inlineDescriptionMarkdownComponents,
+  MarkdownPreview,
+} from "@/components/Utilities/MarkdownPreview";
 import type { FormSchema } from "@/types/question-builder";
 
 interface QuestionFormRendererProps {
@@ -329,7 +332,10 @@ export function QuestionFormRenderer({
                 </h3>
                 {field.description && (
                   <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                    <MarkdownPreview source={field.description} />
+                    <MarkdownPreview
+                      source={field.description}
+                      components={inlineDescriptionMarkdownComponents}
+                    />
                   </div>
                 )}
               </div>
@@ -344,7 +350,12 @@ export function QuestionFormRenderer({
               </div>
 
               {field.description && (
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">{field.description}</p>
+                <div className="text-sm text-gray-500 dark:text-gray-400 mb-2 [&_p]:text-sm [&_p]:text-gray-500 dark:[&_p]:text-gray-400">
+                  <MarkdownPreview
+                    source={field.description}
+                    components={inlineDescriptionMarkdownComponents}
+                  />
+                </div>
               )}
 
               {renderField(field)}
