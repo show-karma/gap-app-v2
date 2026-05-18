@@ -3,12 +3,14 @@
 import {
   DndContext,
   type DragEndEvent,
+  KeyboardSensor,
   PointerSensor,
   useDraggable,
   useDroppable,
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
+import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import {
   CheckCircle2,
   Circle,
@@ -19,7 +21,8 @@ import {
   Plus,
   X,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import pluralize from "pluralize";
+import { memo, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 import { useCreateWorkTask, useUpdateWorkTaskStatus, useWorkTasks } from "@/hooks/useWorkBoard";
 import {
@@ -30,7 +33,7 @@ import {
   type WorkTask,
   type WorkTaskStatus,
 } from "@/lib/hermes-client";
-import { ErrorState } from "@/src/features/nonprofit/EmptyState";
+import { TeamErrorState } from "@/src/features/nonprofit/TeamErrorState";
 import { UploadButton } from "@/src/features/uploads/UploadButton";
 import { WorkTaskDrawer } from "./WorkTaskDrawer";
 
@@ -70,7 +73,10 @@ export function WorkBoard({ slug }: Props) {
 
   // Require a small drag distance before drag starts so card clicks
   // (which open the drawer) still work normally.
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
 
   const handleDragEnd = (event: DragEndEvent) => {
     const targetStatus = event.over?.id as WorkTaskStatus | undefined;
@@ -110,13 +116,7 @@ export function WorkBoard({ slug }: Props) {
   }
 
   if (isError) {
-    return (
-      <ErrorState
-        title="Couldn't load tasks"
-        body="The Hermes container didn't respond. Check it's running, then retry."
-        onRetry={() => refetch()}
-      />
-    );
+    return <TeamErrorState onRetry={() => refetch()} />;
   }
 
   const total = (tasks ?? []).length;
@@ -127,7 +127,7 @@ export function WorkBoard({ slug }: Props) {
         <p className="text-sm text-gray-500">
           {total === 0
             ? "No tasks yet. Add the first one to kick off your team."
-            : `${total} ${total === 1 ? "task" : "tasks"} across the board.`}
+            : `${total} ${pluralize("task", total)} across the board.`}
         </p>
         <button
           type="button"
@@ -193,7 +193,7 @@ export function WorkBoard({ slug }: Props) {
   );
 }
 
-function Column({
+const Column = memo(function Column({
   spec,
   tasks,
   onOpen,
@@ -251,9 +251,9 @@ function Column({
       </ul>
     </div>
   );
-}
+});
 
-function TaskCard({
+const TaskCard = memo(function TaskCard({
   task,
   currentStatus,
   onOpen,
@@ -317,7 +317,7 @@ function TaskCard({
       <StatusMover current={currentStatus} onMove={(next) => onMove(task.id, next)} />
     </li>
   );
-}
+});
 
 function StatusMover({
   current,
@@ -458,7 +458,7 @@ function NewTaskForm({
                 ? "Adding & attaching…"
                 : "Adding…"
               : files.length > 0
-                ? `Add task with ${files.length} ${files.length === 1 ? "file" : "files"}`
+                ? `Add task with ${files.length} ${pluralize("file", files.length)}`
                 : "Add task"}
           </button>
         </div>

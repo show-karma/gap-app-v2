@@ -117,10 +117,34 @@ export function useAddWorkComment(slug: string, taskId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (body: string) => hermesClient.addWorkTaskComment(slug, taskId, body),
+    onMutate: async (body: string) => {
+      await qc.cancelQueries({ queryKey: workKeys.task(slug, taskId) });
+      const previous = qc.getQueryData<WorkTask & { comments: WorkTaskComment[] }>(
+        workKeys.task(slug, taskId)
+      );
+      const optimistic: WorkTaskComment = {
+        id: `optimistic-${Date.now()}`,
+        taskId,
+        body,
+        createdAt: new Date().toISOString(),
+      };
+      if (previous) {
+        qc.setQueryData<WorkTask & { comments: WorkTaskComment[] }>(workKeys.task(slug, taskId), {
+          ...previous,
+          comments: [...(previous.comments ?? []), optimistic],
+        });
+      }
+      return { previous };
+    },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: workKeys.task(slug, taskId) });
       toast.success("Comment added");
     },
-    onError: (err) => toast.error(err instanceof Error ? err.message : "Could not comment"),
+    onError: (err, _body, ctx) => {
+      if (ctx?.previous !== undefined) {
+        qc.setQueryData(workKeys.task(slug, taskId), ctx.previous);
+      }
+      toast.error(err instanceof Error ? err.message : "Could not comment");
+    },
   });
 }
