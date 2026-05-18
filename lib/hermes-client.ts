@@ -383,6 +383,10 @@ export const hermesClient = {
     return data;
   },
 
+  async archiveWorkTask(slug: string, taskId: string): Promise<void> {
+    await api.delete(INDEXER.HERMES.WORK_TASK(slug, taskId));
+  },
+
   async deleteTaskAttachment(
     slug: string,
     taskId: string,

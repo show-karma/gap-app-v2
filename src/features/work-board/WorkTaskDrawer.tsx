@@ -1,12 +1,14 @@
 "use client";
 
+import { TrashIcon } from "@heroicons/react/24/outline";
 import { useState } from "react";
+import { DeleteDialog } from "@/components/DeleteDialog";
 import {
   useDeleteTaskAttachment,
   useTaskAttachments,
   useUploadTaskAttachment,
 } from "@/hooks/useUploads";
-import { useAddWorkComment, useWorkTask } from "@/hooks/useWorkBoard";
+import { useAddWorkComment, useArchiveWorkTask, useWorkTask } from "@/hooks/useWorkBoard";
 import { hermesClient } from "@/lib/hermes-client";
 import { AttachmentList } from "@/src/features/uploads/AttachmentList";
 import { UploadButton } from "@/src/features/uploads/UploadButton";
@@ -21,10 +23,13 @@ interface Props {
 export function WorkTaskDrawer({ slug, taskId, onClose }: Props) {
   const { data, isLoading, isError, error } = useWorkTask(slug, taskId);
   const addComment = useAddWorkComment(slug, taskId);
+  const archiveTask = useArchiveWorkTask(slug);
   const attachments = useTaskAttachments(slug, taskId);
   const uploadAttachment = useUploadTaskAttachment(slug, taskId);
   const deleteAttachment = useDeleteTaskAttachment(slug, taskId);
   const [body, setBody] = useState("");
+
+  const isRunning = data?.activity?.currentRun?.status === "running";
 
   return (
     <aside
@@ -43,14 +48,43 @@ export function WorkTaskDrawer({ slug, taskId, onClose }: Props) {
             </div>
           ) : null}
         </div>
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label="Close"
-          className="rounded p-1 text-gray-500 hover:bg-gray-100"
-        >
-          ×
-        </button>
+        <div className="flex items-center gap-1">
+          {data ? (
+            <DeleteDialog
+              title={
+                <>
+                  Delete this task?
+                  <p className="mt-2 text-sm font-normal text-gray-600">
+                    {isRunning
+                      ? "A worker is actively running this task. Wait for it to finish, then try again."
+                      : "The task will be removed from the board. Its history (comments, runs) stays in Hermes."}
+                  </p>
+                </>
+              }
+              isLoading={archiveTask.isPending}
+              deleteFunction={async () => {
+                if (isRunning) {
+                  throw new Error("Cannot delete a running task");
+                }
+                await archiveTask.mutateAsync(taskId);
+              }}
+              afterFunction={onClose}
+              buttonElement={{
+                icon: <TrashIcon className="h-4 w-4" />,
+                text: "",
+                styleClass: "text-gray-500 hover:bg-gray-100 disabled:opacity-50",
+              }}
+            />
+          ) : null}
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close"
+            className="rounded p-1 text-gray-500 hover:bg-gray-100"
+          >
+            ×
+          </button>
+        </div>
       </header>
 
       {isError ? (

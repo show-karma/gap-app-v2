@@ -81,6 +81,34 @@ export function useUpdateWorkTaskStatus(slug: string) {
   });
 }
 
+export function useArchiveWorkTask(slug: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (taskId: string) => hermesClient.archiveWorkTask(slug, taskId),
+    onMutate: async (taskId) => {
+      await qc.cancelQueries({ queryKey: workKeys.list(slug) });
+      const previous = qc.getQueryData<WorkTask[]>(workKeys.list(slug));
+      if (previous) {
+        qc.setQueryData<WorkTask[]>(
+          workKeys.list(slug),
+          previous.filter((t) => t.id !== taskId)
+        );
+      }
+      return { previous };
+    },
+    onError: (err, _taskId, ctx) => {
+      if (ctx?.previous) {
+        qc.setQueryData(workKeys.list(slug), ctx.previous);
+      }
+      toast.error(err instanceof Error ? err.message : "Could not delete task");
+    },
+    onSuccess: () => {
+      toast.success("Task deleted");
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: workKeys.list(slug) }),
+  });
+}
+
 export function useAddWorkComment(slug: string, taskId: string) {
   const qc = useQueryClient();
   return useMutation({
