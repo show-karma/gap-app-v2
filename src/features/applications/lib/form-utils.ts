@@ -132,7 +132,7 @@ export function transformDataForDisplay(
           mappedData[q.id] = "";
           break;
         case "checkbox":
-          mappedData[q.id] = false;
+          mappedData[q.id] = [];
           break;
         default:
           break;

@@ -268,17 +268,43 @@ export function ApplicationFormField({
 
           case "checkbox":
             return (
-              <div className="flex items-center gap-2" data-field-id={question.id}>
-                <Checkbox
-                  checked={!!field.value}
-                  onCheckedChange={(checked) => field.onChange(checked)}
-                  disabled={disabled}
-                  id={question.id}
-                />
-                <Label htmlFor={question.id} className="cursor-pointer">
+              <div className="w-full flex flex-col gap-2" data-field-id={question.id}>
+                <Label>
                   {question.label}
                   {question.required && <span className="text-destructive ml-0.5">*</span>}
                 </Label>
+                {question.description && (
+                  <FieldDescription source={question.description as string} />
+                )}
+                <div className="space-y-2 rounded-md border border-input p-3">
+                  {question.options?.map((option) => {
+                    const values = (field.value as string[]) || [];
+                    const isChecked = values.includes(option.value);
+                    return (
+                      <div key={option.value} className="flex items-center gap-2 cursor-pointer">
+                        <Checkbox
+                          id={`${question.id}-${option.value}`}
+                          checked={isChecked}
+                          onCheckedChange={(checked) => {
+                            const current = (field.value as string[]) || [];
+                            if (checked) {
+                              field.onChange([...current, option.value]);
+                            } else {
+                              field.onChange(current.filter((v) => v !== option.value));
+                            }
+                          }}
+                          disabled={disabled}
+                        />
+                        <label
+                          htmlFor={`${question.id}-${option.value}`}
+                          className="text-sm cursor-pointer"
+                        >
+                          {option.label}
+                        </label>
+                      </div>
+                    );
+                  })}
+                </div>
                 {error && <p className="text-sm text-destructive">{error}</p>}
               </div>
             );
