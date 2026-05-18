@@ -1,4 +1,6 @@
 import { createAuthenticatedApiClient } from "@/utilities/auth/api-client";
+import { TokenManager } from "@/utilities/auth/token-manager";
+import { envVars } from "@/utilities/enviromentVars";
 import { INDEXER } from "@/utilities/indexer";
 
 // Internal team-role identifiers. Four user-facing employees total — small
@@ -404,5 +406,25 @@ export const hermesClient = {
       sessionToken: input.sessionToken,
     });
     return data;
+  },
+
+  /** Open the SSE event stream for a chat run via an authenticated fetch.
+   *  axios doesn't support streaming, so we use fetch with the same auth
+   *  source as the axios interceptor (TokenManager.getAuthHeader). */
+  async openChatStream(
+    slug: string,
+    role: TeamRole,
+    runId: string,
+    signal: AbortSignal
+  ): Promise<ReadableStream<Uint8Array>> {
+    const authHeaders = await TokenManager.getAuthHeader();
+    const res = await fetch(
+      `${envVars.NEXT_PUBLIC_GAP_INDEXER_URL}${INDEXER.HERMES.CHAT_RUN_EVENTS(slug, role, runId)}`,
+      { method: "GET", headers: { Accept: "text/event-stream", ...authHeaders }, signal }
+    );
+    if (!res.ok || !res.body) {
+      throw new Error(`Stream failed (${res.status})`);
+    }
+    return res.body;
   },
 };

@@ -2,8 +2,6 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { hermesClient, type TeamRole } from "@/lib/hermes-client";
-import { envVars } from "@/utilities/enviromentVars";
-import { INDEXER } from "@/utilities/indexer";
 
 export interface ChatToolActivity {
   id: string;
@@ -81,33 +79,6 @@ function makeId(): string {
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
-/** Open the SSE event stream for a chat run via an authenticated fetch.
- *  axios doesn't support streaming, so we use fetch with the same auth
- *  token that createAuthenticatedApiClient would attach via its interceptors. */
-async function openChatStream(
-  slug: string,
-  role: TeamRole,
-  runId: string,
-  signal: AbortSignal
-): Promise<ReadableStream<Uint8Array>> {
-  const { TokenManager } = await import("@/utilities/auth/token-manager");
-  const token = await TokenManager.getToken();
-
-  const headers: Record<string, string> = { Accept: "text/event-stream" };
-  if (token) {
-    headers.Authorization = token.startsWith("Bearer ") ? token : `Bearer ${token}`;
-  }
-
-  const res = await fetch(
-    `${envVars.NEXT_PUBLIC_GAP_INDEXER_URL}${INDEXER.HERMES.CHAT_RUN_EVENTS(slug, role, runId)}`,
-    { method: "GET", headers, signal }
-  );
-  if (!res.ok || !res.body) {
-    throw new Error(`Stream failed (${res.status})`);
-  }
-  return res.body;
-}
-
 export function useChat(slug: string | undefined, role: TeamRole) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   // Use refs for transient state that should not cause dep-array churn.
@@ -166,7 +137,7 @@ export function useChat(slug: string | undefined, role: TeamRole) {
         // 2. Open the authenticated SSE event stream.
         const controller = new AbortController();
         abortRef.current = controller;
-        const body = await openChatStream(slug, role, runId, controller.signal);
+        const body = await hermesClient.openChatStream(slug, role, runId, controller.signal);
 
         // 3. Translate SSE events into message updates.
         for await (const event of iterSseEvents(body, controller.signal)) {
