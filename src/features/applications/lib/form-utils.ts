@@ -120,6 +120,12 @@ export function transformDataForDisplay(
   const mappedData = mapLabelsToFields(apiData, questions);
 
   for (const q of questions) {
+    if (q.type === "checkbox" && !Array.isArray(mappedData[q.id])) {
+      // Pre-fix data stored checkbox as a boolean; reset to empty selection
+      // since there are no options to map the old boolean onto.
+      mappedData[q.id] = [];
+      continue;
+    }
     if (!(q.id in mappedData)) {
       switch (q.type) {
         case "text":
@@ -130,9 +136,6 @@ export function transformDataForDisplay(
         case "select":
         case "radio":
           mappedData[q.id] = "";
-          break;
-        case "checkbox":
-          mappedData[q.id] = [];
           break;
         default:
           break;
