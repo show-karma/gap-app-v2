@@ -12,8 +12,7 @@ import {
 
 const brainKeys = {
   all: ["org-brain"] as const,
-  topic: (slug: string, topic: OrgBrainTopic) =>
-    [...brainKeys.all, slug, topic] as const,
+  topic: (slug: string, topic: OrgBrainTopic) => [...brainKeys.all, slug, topic] as const,
 };
 
 export function useOrgBrain<TData = Record<string, unknown>>(
@@ -30,17 +29,17 @@ export function useOrgBrain<TData = Record<string, unknown>>(
 export function useUpdateMission(slug: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (payload: MissionData) =>
-      hermesClient.putOrgBrain(slug, "mission", payload),
+    mutationFn: (payload: MissionData) => hermesClient.putOrgBrain(slug, "mission", payload),
     onMutate: async (payload) => {
       await qc.cancelQueries({ queryKey: brainKeys.topic(slug, "mission") });
       const previous = qc.getQueryData<OrgBrainResponse<MissionData>>(
         brainKeys.topic(slug, "mission")
       );
-      qc.setQueryData<OrgBrainResponse<MissionData>>(
-        brainKeys.topic(slug, "mission"),
-        { topic: "mission", exists: true, data: payload }
-      );
+      qc.setQueryData<OrgBrainResponse<MissionData>>(brainKeys.topic(slug, "mission"), {
+        topic: "mission",
+        exists: true,
+        data: payload,
+      });
       return { previous };
     },
     onError: (err, _payload, ctx) => {
@@ -50,25 +49,22 @@ export function useUpdateMission(slug: string) {
       toast.error(err instanceof Error ? err.message : "Could not save");
     },
     onSuccess: () => toast.success("Mission saved"),
-    onSettled: () =>
-      qc.invalidateQueries({ queryKey: brainKeys.topic(slug, "mission") }),
+    onSettled: () => qc.invalidateQueries({ queryKey: brainKeys.all }),
   });
 }
 
 export function useUpdateBrand(slug: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (payload: BrandData) =>
-      hermesClient.putOrgBrain(slug, "brand", payload),
+    mutationFn: (payload: BrandData) => hermesClient.putOrgBrain(slug, "brand", payload),
     onMutate: async (payload) => {
       await qc.cancelQueries({ queryKey: brainKeys.topic(slug, "brand") });
-      const previous = qc.getQueryData<OrgBrainResponse<BrandData>>(
-        brainKeys.topic(slug, "brand")
-      );
-      qc.setQueryData<OrgBrainResponse<BrandData>>(
-        brainKeys.topic(slug, "brand"),
-        { topic: "brand", exists: true, data: payload }
-      );
+      const previous = qc.getQueryData<OrgBrainResponse<BrandData>>(brainKeys.topic(slug, "brand"));
+      qc.setQueryData<OrgBrainResponse<BrandData>>(brainKeys.topic(slug, "brand"), {
+        topic: "brand",
+        exists: true,
+        data: payload,
+      });
       return { previous };
     },
     onError: (err, _payload, ctx) => {
@@ -78,7 +74,6 @@ export function useUpdateBrand(slug: string) {
       toast.error(err instanceof Error ? err.message : "Could not save");
     },
     onSuccess: () => toast.success("Brand saved"),
-    onSettled: () =>
-      qc.invalidateQueries({ queryKey: brainKeys.topic(slug, "brand") }),
+    onSettled: () => qc.invalidateQueries({ queryKey: brainKeys.all }),
   });
 }

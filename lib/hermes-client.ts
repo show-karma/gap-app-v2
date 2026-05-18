@@ -11,14 +11,8 @@ import { INDEXER } from "@/utilities/indexer";
 export const TEAM_ROLES = ["orchestrator", "fundraiser", "communications", "operations"] as const;
 export type TeamRole = (typeof TEAM_ROLES)[number];
 
-// ED leads the list — it's where the user starts for goals that don't map
-// cleanly to a single specialist.
-export const VISIBLE_TEAM_ROLES: TeamRole[] = [
-  "orchestrator",
-  "fundraiser",
-  "communications",
-  "operations",
-];
+/** All user-facing roles in display order. Alias for TEAM_ROLES kept for consumers. */
+export const VISIBLE_TEAM_ROLES: TeamRole[] = [...TEAM_ROLES];
 
 // Product-language labels — never leak Hermes terms ("profile", "SOUL") to
 // the UI copy. Renderers use these.

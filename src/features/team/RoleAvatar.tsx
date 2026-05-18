@@ -1,45 +1,10 @@
 "use client";
 
-import { memo } from "react";
+import { memo, useId } from "react";
 import type { TeamRole } from "@/lib/hermes-client";
+import { ROLE_PALETTES } from "./role-config";
 
-// Pastel role palettes ported from the design bundle. Hex values match the
-// approved Variation B mocks — Tailwind doesn't have a perfect mapping for
-// these tints, so we keep them as raw colors and let Tailwind handle the
-// structural classes.
-export const ROLE_PALETTES: Record<
-  TeamRole,
-  { bg: string; bgDeep: string; stroke: string; ink: string; accent: string }
-> = {
-  orchestrator: {
-    bg: "#D7F5E5",
-    bgDeep: "#CDEEDA",
-    stroke: "#86E3B5",
-    ink: "#166534",
-    accent: "#22C55E",
-  },
-  fundraiser: {
-    bg: "#FAEFC4",
-    bgDeep: "#F5E6B4",
-    stroke: "#F1D582",
-    ink: "#92400E",
-    accent: "#F59E0B",
-  },
-  communications: {
-    bg: "#DBE7F8",
-    bgDeep: "#CFDEF4",
-    stroke: "#A6C2EE",
-    ink: "#1E40AF",
-    accent: "#3B82F6",
-  },
-  operations: {
-    bg: "#E6E0FB",
-    bgDeep: "#DCD3F7",
-    stroke: "#BFB0F0",
-    ink: "#5B21B6",
-    accent: "#8B5CF6",
-  },
-};
+export { ROLE_PALETTES };
 
 interface Props {
   role: TeamRole;
@@ -120,6 +85,7 @@ function Shoulders({ ink, collar }: { ink: string; collar: string }) {
 
 function AvatarED({ size, palette, className }: AvatarProps) {
   const { ink, bg, accent } = palette;
+  const clipId = useId();
   return (
     <svg
       width={size}
@@ -131,13 +97,13 @@ function AvatarED({ size, palette, className }: AvatarProps) {
     >
       <title>Executive Director avatar</title>
       <defs>
-        <clipPath id="ed-clip">
+        <clipPath id={clipId}>
           <circle cx="28" cy="28" r="28" />
         </clipPath>
       </defs>
       <circle cx="28" cy="28" r="28" fill={bg} />
       <ellipse cx="28" cy="40" rx="22" ry="6" fill={accent} fillOpacity={0.1} />
-      <g clipPath="url(#ed-clip)">
+      <g clipPath={`url(#${clipId})`}>
         <Shoulders ink={ink} collar={bg} />
         <path
           d="M15 25c0-7.5 5.8-12.5 13-12.5S41 17.5 41 25v5.2c0 7.5-5.8 12-13 12s-13-4.5-13-12z"
@@ -173,6 +139,7 @@ function AvatarED({ size, palette, className }: AvatarProps) {
 
 function AvatarFund({ size, palette, className }: AvatarProps) {
   const { ink, bg, accent } = palette;
+  const clipId = useId();
   return (
     <svg
       width={size}
@@ -184,13 +151,13 @@ function AvatarFund({ size, palette, className }: AvatarProps) {
     >
       <title>Fundraiser avatar</title>
       <defs>
-        <clipPath id="fund-clip">
+        <clipPath id={clipId}>
           <circle cx="28" cy="28" r="28" />
         </clipPath>
       </defs>
       <circle cx="28" cy="28" r="28" fill={bg} />
       <ellipse cx="28" cy="40" rx="22" ry="6" fill={accent} fillOpacity={0.1} />
-      <g clipPath="url(#fund-clip)">
+      <g clipPath={`url(#${clipId})`}>
         <Shoulders ink={ink} collar={bg} />
         <path
           d="M15 26c0-7.2 5.8-12 13-12s13 4.8 13 12v3.5c0 7.5-5.8 12.5-13 12.5s-13-5-13-12.5z"
@@ -224,6 +191,7 @@ function AvatarFund({ size, palette, className }: AvatarProps) {
 
 function AvatarComms({ size, palette, className }: AvatarProps) {
   const { ink, bg, accent } = palette;
+  const clipId = useId();
   return (
     <svg
       width={size}
@@ -235,13 +203,13 @@ function AvatarComms({ size, palette, className }: AvatarProps) {
     >
       <title>Communications avatar</title>
       <defs>
-        <clipPath id="comms-clip">
+        <clipPath id={clipId}>
           <circle cx="28" cy="28" r="28" />
         </clipPath>
       </defs>
       <circle cx="28" cy="28" r="28" fill={bg} />
       <ellipse cx="28" cy="40" rx="22" ry="6" fill={accent} fillOpacity={0.1} />
-      <g clipPath="url(#comms-clip)">
+      <g clipPath={`url(#${clipId})`}>
         <Shoulders ink={ink} collar={bg} />
         <path
           d="M15 24c0-7.6 5.8-13 13-13s13 5.4 13 13v6.6c0 7.4-5.8 12-13 12s-13-4.6-13-12z"
@@ -272,6 +240,7 @@ function AvatarComms({ size, palette, className }: AvatarProps) {
 
 function AvatarOps({ size, palette, className }: AvatarProps) {
   const { ink, bg, accent } = palette;
+  const clipId = useId();
   return (
     <svg
       width={size}
@@ -283,13 +252,13 @@ function AvatarOps({ size, palette, className }: AvatarProps) {
     >
       <title>Operations avatar</title>
       <defs>
-        <clipPath id="ops-clip">
+        <clipPath id={clipId}>
           <circle cx="28" cy="28" r="28" />
         </clipPath>
       </defs>
       <circle cx="28" cy="28" r="28" fill={bg} />
       <ellipse cx="28" cy="40" rx="22" ry="6" fill={accent} fillOpacity={0.1} />
-      <g clipPath="url(#ops-clip)">
+      <g clipPath={`url(#${clipId})`}>
         <Shoulders ink={ink} collar={bg} />
         <path
           d="M14 26c0-7.5 6-13 14-13s14 5.5 14 13v4.5c0 7.5-6 12.5-14 12.5s-14-5-14-12.5z"

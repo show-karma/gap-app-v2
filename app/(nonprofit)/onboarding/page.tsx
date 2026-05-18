@@ -84,7 +84,7 @@ export default function OnboardingPage() {
             type="url"
             value={containerUrl}
             onChange={(e) => setContainerUrl(e.target.value)}
-            placeholder="https://hermes-acme.karma.xyz"
+            placeholder="https://team-acme.karma.xyz"
             className="block w-full rounded-md border-0 bg-transparent py-2 pl-0 pr-3 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none"
             required
           />
@@ -93,7 +93,7 @@ export default function OnboardingPage() {
         <Field
           id="sessionToken"
           label="Runtime session token"
-          hint="From the runtime's welcome banner. Stored encrypted — we never log this."
+          hint="From the runtime's welcome banner. Stored encrypted in our backend and never exposed in logs."
           icon={<KeyRound className="h-4 w-4" aria-hidden />}
           required
         >
@@ -102,7 +102,8 @@ export default function OnboardingPage() {
             type="password"
             value={sessionToken}
             onChange={(e) => setSessionToken(e.target.value)}
-            placeholder="••••••••••••••••"
+            placeholder="Runtime session token"
+            autoComplete="new-password"
             className="block w-full rounded-md border-0 bg-transparent py-2 pl-0 pr-3 font-mono text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none"
             required
             minLength={16}
