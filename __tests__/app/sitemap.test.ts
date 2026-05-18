@@ -97,6 +97,38 @@ describe("app/sitemap.xml/route.ts — sitemap index GET handler", () => {
     expect(xml).toContain(`${SITE_URL}/sitemaps/funding-programs/sitemap/1.xml`);
   });
 
+  it("returns a valid sitemapindex even if fetchSitemapCounts hangs (timeout fallback)", async () => {
+    // Never resolves — simulates a stalled indexer call.
+    mockFetchSitemapCounts.mockImplementation(() => new Promise(() => {}));
+
+    const { GET } = await import("@/app/sitemap.xml/route");
+    const start = Date.now();
+    const res = await GET();
+    const elapsed = Date.now() - start;
+    const xml = await res.text();
+
+    // Should resolve well under the function's maxDuration thanks to the
+    // 4s internal timeout in withTimeout.
+    expect(elapsed).toBeLessThan(8000);
+    expect(res.status).toBe(200);
+    expect(xml).toContain("<sitemapindex");
+    expect(xml).toContain(`${SITE_URL}/sitemaps/static/sitemap.xml`);
+    expect(xml).toContain(`${SITE_URL}/sitemaps/communities/sitemap.xml`);
+  }, 10000);
+
+  it("returns a valid sitemapindex when fetchSitemapCounts rejects (error fallback)", async () => {
+    mockFetchSitemapCounts.mockRejectedValue(new Error("upstream boom"));
+
+    const { GET } = await import("@/app/sitemap.xml/route");
+    const res = await GET();
+    const xml = await res.text();
+
+    expect(res.status).toBe(200);
+    expect(xml).toContain("<sitemapindex");
+    expect(xml).toContain(`${SITE_URL}/sitemaps/static/sitemap.xml`);
+    expect(xml).toContain(`${SITE_URL}/sitemaps/communities/sitemap.xml`);
+  });
+
   it("emits <lastmod> values without fractional seconds (Google parser strictness)", async () => {
     mockFetchSitemapCounts.mockResolvedValue(null);
 
