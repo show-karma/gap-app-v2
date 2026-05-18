@@ -10,6 +10,7 @@ import { useAddWorkComment, useWorkTask } from "@/hooks/useWorkBoard";
 import { hermesClient } from "@/lib/hermes-client";
 import { AttachmentList } from "@/src/features/uploads/AttachmentList";
 import { UploadButton } from "@/src/features/uploads/UploadButton";
+import { ActivityPanel } from "./ActivityPanel";
 
 interface Props {
   slug: string;
@@ -61,6 +62,11 @@ export function WorkTaskDrawer({ slug, taskId, onClose }: Props) {
       {data?.description ? (
         <p className="mt-4 whitespace-pre-wrap text-sm text-gray-700">{data.description}</p>
       ) : null}
+
+      <section className="mt-6">
+        <h3 className="mb-2 text-sm font-semibold">Activity</h3>
+        <ActivityPanel activity={data?.activity} />
+      </section>
 
       <section className="mt-6">
         <div className="mb-2 flex items-center justify-between">

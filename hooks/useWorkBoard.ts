@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-hot-toast";
 import {
   hermesClient,
+  type WorkActivity,
   type WorkTask,
   type WorkTaskComment,
   type WorkTaskStatus,
@@ -25,16 +26,19 @@ export function useWorkTasks(slug: string | undefined) {
 }
 
 export function useWorkTask(slug: string | undefined, taskId: string | undefined) {
-  return useQuery<WorkTask & { comments: WorkTaskComment[] }>({
+  return useQuery<WorkTask & { comments: WorkTaskComment[]; activity?: WorkActivity }>({
     queryKey: workKeys.task(slug ?? "anon", taskId ?? "anon"),
     enabled: Boolean(slug && taskId),
     queryFn: async () => {
       const task = (await hermesClient.getWorkTask(
         slug as string,
         taskId as string
-      )) as WorkTask & { comments: WorkTaskComment[] };
+      )) as WorkTask & { comments: WorkTaskComment[]; activity?: WorkActivity };
       return task;
     },
+    // Poll while the drawer is open so heartbeat updates land without a
+    // manual refresh. 8s matches Hermes' heartbeat cadence loosely.
+    refetchInterval: 8_000,
   });
 }
 
@@ -47,8 +51,7 @@ export function useCreateWorkTask(slug: string) {
       qc.invalidateQueries({ queryKey: workKeys.list(slug) });
       toast.success("Task added");
     },
-    onError: (err) =>
-      toast.error(err instanceof Error ? err.message : "Could not add task"),
+    onError: (err) => toast.error(err instanceof Error ? err.message : "Could not add task"),
   });
 }
 
@@ -63,9 +66,7 @@ export function useUpdateWorkTaskStatus(slug: string) {
       if (previous) {
         qc.setQueryData<WorkTask[]>(
           workKeys.list(slug),
-          previous.map((t) =>
-            t.id === input.taskId ? { ...t, status: input.status } : t
-          )
+          previous.map((t) => (t.id === input.taskId ? { ...t, status: input.status } : t))
         );
       }
       return { previous };
@@ -83,13 +84,11 @@ export function useUpdateWorkTaskStatus(slug: string) {
 export function useAddWorkComment(slug: string, taskId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (body: string) =>
-      hermesClient.addWorkTaskComment(slug, taskId, body),
+    mutationFn: (body: string) => hermesClient.addWorkTaskComment(slug, taskId, body),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: workKeys.task(slug, taskId) });
       toast.success("Comment added");
     },
-    onError: (err) =>
-      toast.error(err instanceof Error ? err.message : "Could not comment"),
+    onError: (err) => toast.error(err instanceof Error ? err.message : "Could not comment"),
   });
 }

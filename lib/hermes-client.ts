@@ -124,6 +124,35 @@ export interface WorkTask {
   updatedAt?: string;
 }
 
+// Activity feed for "what's the worker actually doing?" — populated only
+// on the single-task endpoint, not the list. currentRun is null if Hermes
+// never dispatched the task (typically: still in queued/triage).
+export interface WorkActivityEvent {
+  id: number;
+  runId: number | null;
+  kind: string;
+  note: string | null;
+  createdAt: number;
+}
+
+export interface WorkActivity {
+  currentRun: {
+    id: number;
+    profile: string | null;
+    status: string;
+    workerPid: number | null;
+    startedAt: number | null;
+    endedAt: number | null;
+    lastHeartbeatAt: number | null;
+    claimExpires: number | null;
+    consecutiveFailures: number;
+    lastError: string | null;
+  } | null;
+  latestHeartbeatNote: string | null;
+  recentEvents: WorkActivityEvent[];
+  runCount: number;
+}
+
 export interface HermesSkillSummary {
   id: string;
   namespace: string;
@@ -207,8 +236,10 @@ export const hermesClient = {
     return data.tasks;
   },
 
-  async getWorkTask(slug: string, taskId: string): Promise<WorkTask> {
-    const { data } = await api.get<WorkTask>(INDEXER.HERMES.WORK_TASK(slug, taskId));
+  async getWorkTask(slug: string, taskId: string): Promise<WorkTask & { activity?: WorkActivity }> {
+    const { data } = await api.get<WorkTask & { activity?: WorkActivity }>(
+      INDEXER.HERMES.WORK_TASK(slug, taskId)
+    );
     return data;
   },
 
