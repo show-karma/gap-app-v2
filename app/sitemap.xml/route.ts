@@ -3,10 +3,28 @@ import type { SitemapKind } from "@/utilities/sitemap";
 import { computeChunkCount, fetchSitemapCounts, SITEMAP_PAGE_SIZE } from "@/utilities/sitemap";
 
 export const revalidate = 3600;
+// Cold starts can push the upstream counts fetch close to Vercel's default 10s
+// limit. Allow more headroom so a slow indexer round-trip never produces a
+// 504 — Googlebot interprets that as "Couldn't fetch".
+export const maxDuration = 30;
+
+const COUNTS_TIMEOUT_MS = 4000;
 
 interface SitemapEntry {
   loc: string;
   lastmod: string;
+}
+
+async function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<T>((resolve) => {
+    timer = setTimeout(() => resolve(fallback), ms);
+  });
+  try {
+    return await Promise.race([promise, timeout]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
 }
 
 function formatLastmod(date: Date): string {
@@ -38,8 +56,11 @@ export async function GET(): Promise<Response> {
   // Communities sitemap (single file, not chunked)
   entries.push({ loc: `${SITE_URL}/sitemaps/communities/sitemap.xml`, lastmod: now });
 
-  // Chunked sitemaps — fetch counts to know how many chunks per kind
-  const counts = await fetchSitemapCounts();
+  // Chunked sitemaps — fetch counts to know how many chunks per kind. Bound
+  // the call so a slow indexer cannot stall the response past Googlebot's
+  // patience. On timeout, fall back to null and chunk counts default to 0
+  // (static + communities entries still render).
+  const counts = await withTimeout(fetchSitemapCounts(), COUNTS_TIMEOUT_MS, null);
 
   const kindConfig: Array<{
     kind: SitemapKind;
