@@ -12,7 +12,7 @@ import {
   TEAM_ROLES,
   type TeamRole,
 } from "@/lib/hermes-client";
-import { ErrorState } from "@/src/features/nonprofit/EmptyState";
+import { TeamErrorState } from "@/src/features/nonprofit/TeamErrorState";
 import { SkillsTab } from "@/src/features/skills/SkillsTab";
 import { RoleAvatar } from "@/src/features/team/RoleAvatar";
 import { TeamChat } from "@/src/features/team-chat/TeamChat";
@@ -138,13 +138,7 @@ function AboutTab({ slug, role }: { slug: string; role: TeamRole }) {
   }
 
   if (query.isError) {
-    return (
-      <ErrorState
-        title="Couldn't load this employee's About text"
-        body="Your team didn't respond. Check your connection, then retry."
-        onRetry={() => query.refetch()}
-      />
-    );
+    return <TeamErrorState onRetry={() => query.refetch()} />;
   }
 
   const current = draft ?? query.data ?? "";

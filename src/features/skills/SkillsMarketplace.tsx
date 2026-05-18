@@ -9,7 +9,8 @@ import {
   type TeamRole,
   VISIBLE_TEAM_ROLES,
 } from "@/lib/hermes-client";
-import { EmptyState, ErrorState } from "@/src/features/nonprofit/EmptyState";
+import { EmptyState } from "@/src/features/nonprofit/EmptyState";
+import { TeamErrorState } from "@/src/features/nonprofit/TeamErrorState";
 
 interface Props {
   slug: string;
@@ -109,11 +110,7 @@ export function SkillsMarketplace({ slug, role, onRoleChange }: Props) {
           {catalog.isLoading ? (
             <Skeleton />
           ) : catalog.isError ? (
-            <ErrorState
-              title="Couldn't load the catalog"
-              body="The Hermes container didn't respond. Check it's running, then retry."
-              onRetry={() => catalog.refetch()}
-            />
+            <TeamErrorState onRetry={() => catalog.refetch()} />
           ) : filtered.length === 0 ? (
             <EmptyBox query={query} totalCount={(catalog.data ?? []).length} />
           ) : (
@@ -221,8 +218,8 @@ function EmptyBox({ query, totalCount }: { query: string; totalCount: number }) 
     return (
       <EmptyState
         icon={Package}
-        title="No skills bundled"
-        body="This Hermes container ships without any skills. Add some to the seed image, rebuild, and they'll show up here."
+        title="No tools available yet"
+        body="No tools available yet. Ask your admin to add some."
       />
     );
   }

@@ -3,9 +3,11 @@
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { memo } from "react";
+import { DeleteDialog } from "@/components/DeleteDialog";
 import { useProfileSkills, useUninstallSkill } from "@/hooks/useSkills";
 import { type HermesSkillSummary, TEAM_ROLE_LABELS, type TeamRole } from "@/lib/hermes-client";
-import { EmptyState, ErrorState } from "@/src/features/nonprofit/EmptyState";
+import { EmptyState } from "@/src/features/nonprofit/EmptyState";
+import { TeamErrorState } from "@/src/features/nonprofit/TeamErrorState";
 import { PAGES } from "@/utilities/pages";
 
 interface Props {
@@ -34,13 +36,7 @@ export function SkillsTab({ slug, role }: Props) {
   }
 
   if (query.isError) {
-    return (
-      <ErrorState
-        title="Couldn't load skills"
-        body="The Hermes container didn't respond. Check it's running, then retry."
-        onRetry={() => query.refetch()}
-      />
-    );
+    return <TeamErrorState onRetry={() => query.refetch()} />;
   }
 
   const skills = query.data ?? [];
@@ -149,15 +145,19 @@ const SkillRow = memo(function SkillRow({ skill, isPending, onRemove }: RowProps
             </ul>
           ) : null}
         </div>
-        <button
-          type="button"
-          onClick={onRemove}
-          disabled={isPending}
-          className="shrink-0 rounded-md border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:border-gray-300 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
-          aria-label={`Remove ${skill.name}`}
-        >
-          {isPending ? "Removing…" : "Remove"}
-        </button>
+        <DeleteDialog
+          title={`Remove ${skill.name}?`}
+          isLoading={isPending}
+          deleteFunction={async () => {
+            onRemove();
+          }}
+          buttonElement={{
+            text: isPending ? "Removing…" : "Remove",
+            icon: null,
+            styleClass:
+              "shrink-0 rounded-md border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:border-gray-300 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50",
+          }}
+        />
       </div>
     </li>
   );

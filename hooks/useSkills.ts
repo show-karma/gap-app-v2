@@ -35,6 +35,18 @@ export function useInstallSkill(slug: string, role: TeamRole) {
   const qc = useQueryClient();
   return useMutation<HermesSkillInstallResult, Error, string>({
     mutationFn: (skillId) => hermesClient.installProfileSkill(slug, role, skillId),
+    onMutate: async (skillId) => {
+      await qc.cancelQueries({ queryKey: skillKeys.profile(slug, role) });
+      const previous = qc.getQueryData<HermesSkillSummary[]>(skillKeys.profile(slug, role));
+      const available = qc.getQueryData<HermesSkillSummary[]>(skillKeys.available(slug));
+      const skillMeta = available?.find((s) => s.id === skillId);
+      if (skillMeta) {
+        qc.setQueryData<HermesSkillSummary[]>(skillKeys.profile(slug, role), (current) =>
+          current ? [...current, skillMeta] : [skillMeta]
+        );
+      }
+      return { previous };
+    },
     onSuccess: (result) => {
       if (result.installed) {
         toast.success(`Installed ${result.skill?.name ?? "skill"}`);
@@ -42,7 +54,11 @@ export function useInstallSkill(slug: string, role: TeamRole) {
         toast(`${result.skill?.name ?? "Skill"} already installed`);
       }
     },
-    onError: (err) => {
+    onError: (err, _vars, ctx) => {
+      const previous = (ctx as { previous?: HermesSkillSummary[] } | undefined)?.previous;
+      if (previous !== undefined) {
+        qc.setQueryData(skillKeys.profile(slug, role), previous);
+      }
       toast.error(err instanceof Error ? err.message : "Install failed");
     },
     onSettled: () => qc.invalidateQueries({ queryKey: skillKeys.profile(slug, role) }),
