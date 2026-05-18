@@ -16,11 +16,11 @@ vi.mock("next-themes", () => ({
 // Mock md-editor-rt CSS (lazy-loaded inside dynamic import)
 vi.mock("md-editor-rt/lib/style.css", () => ({}));
 
-// Mock MarkdownPreview used in preview toggle mode
+// Mock MarkdownPreview used in preview toggle mode and description rendering
 vi.mock("@/components/Utilities/MarkdownPreview", () => ({
   MarkdownPreview: ({ source }: { source?: string }) => (
     <div data-testid="markdown-preview">
-      <p>Preview: {source}</p>
+      <p>{source}</p>
     </div>
   ),
 }));
@@ -93,10 +93,15 @@ describe("MarkdownEditor", () => {
       expect(screen.getByText("*")).toBeInTheDocument();
     });
 
-    it("should render description when provided", () => {
+    it("should render description when provided", async () => {
       render(<MarkdownEditor description="This is a description" id="test-editor" />);
 
-      expect(screen.getByText("This is a description")).toBeInTheDocument();
+      await waitFor(
+        () => {
+          expect(screen.getByText("This is a description")).toBeInTheDocument();
+        },
+        { timeout: 3000 }
+      );
     });
 
     it("should render error message when error is provided", () => {

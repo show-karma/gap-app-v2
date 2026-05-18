@@ -329,7 +329,7 @@ export function QuestionFormRenderer({
                 </h3>
                 {field.description && (
                   <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                    <MarkdownPreview source={field.description} />
+                    <MarkdownPreview source={field.description} variant="inline" />
                   </div>
                 )}
               </div>
@@ -344,7 +344,9 @@ export function QuestionFormRenderer({
               </div>
 
               {field.description && (
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">{field.description}</p>
+                <div className="text-sm text-gray-500 dark:text-gray-400 mb-2">
+                  <MarkdownPreview source={field.description} variant="inline" />
+                </div>
               )}
 
               {renderField(field)}

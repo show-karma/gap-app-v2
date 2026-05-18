@@ -648,7 +648,7 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{field.label}</h3>
           {field.description && (
             <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-              <MarkdownPreview source={field.description} />
+              <MarkdownPreview source={field.description} variant="inline" />
             </div>
           )}
         </div>

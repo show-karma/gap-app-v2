@@ -23,8 +23,8 @@ interface ApplicationFormFieldProps {
 function FieldDescription({ source }: { source: string }) {
   if (!source) return null;
   return (
-    <div className="text-xs text-zinc-500 dark:text-zinc-400 [&_p]:text-xs [&_p]:text-zinc-500 dark:[&_p]:text-zinc-400">
-      <MarkdownPreview source={source} />
+    <div className="text-xs text-zinc-500 dark:text-zinc-400">
+      <MarkdownPreview source={source} variant="inline" />
     </div>
   );
 }

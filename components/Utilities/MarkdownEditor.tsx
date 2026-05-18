@@ -224,7 +224,9 @@ export const MarkdownEditor: FC<MarkdownEditorProps> = ({
       </div>
 
       {description && (
-        <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">{description}</p>
+        <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+          <MarkdownPreview source={description} variant="inline" />
+        </div>
       )}
 
       {/* Content validation warnings */}
