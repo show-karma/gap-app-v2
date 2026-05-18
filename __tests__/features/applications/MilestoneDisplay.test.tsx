@@ -5,6 +5,7 @@ import type { MilestoneData } from "@/types/whitelabel-entities";
 // Mock MarkdownPreview to render plain text
 vi.mock("@/components/Utilities/MarkdownPreview", () => ({
   MarkdownPreview: ({ source }: { source: string }) => <span>{source}</span>,
+  inlineDescriptionMarkdownComponents: {},
 }));
 
 // Mock formatMilestoneTitle to return title as-is (tested separately)

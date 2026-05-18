@@ -182,6 +182,7 @@ vi.mock("@/components/Utilities/Button", () => ({
 
 vi.mock("@/components/Utilities/MarkdownPreview", () => ({
   MarkdownPreview: () => null,
+  inlineDescriptionMarkdownComponents: {},
 }));
 
 vi.mock("@/components/Utilities/LoadingOverlay", () => ({

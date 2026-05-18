@@ -32,6 +32,7 @@ vi.mock("@/components/Utilities/ExternalLink", () => ({
 
 vi.mock("@/components/Utilities/MarkdownPreview", () => ({
   MarkdownPreview: ({ source }: any) => <div data-testid="markdown-preview">{source}</div>,
+  inlineDescriptionMarkdownComponents: {},
 }));
 
 vi.mock("@/components/Pages/Project/Grants/components/GrantPercentage", () => ({

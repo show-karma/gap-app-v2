@@ -38,6 +38,7 @@ vi.mock("@/components/Utilities/ProfilePicture", () => ({
 // Mock MarkdownPreview component
 vi.mock("@/components/Utilities/MarkdownPreview", () => ({
   MarkdownPreview: ({ source }: any) => <div data-testid="markdown-preview">{source}</div>,
+  inlineDescriptionMarkdownComponents: {},
 }));
 
 // Mock TrackTags component

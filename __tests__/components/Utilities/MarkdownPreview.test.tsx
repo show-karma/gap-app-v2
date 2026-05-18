@@ -36,6 +36,22 @@ describe("MarkdownPreview", () => {
       const { container } = render(<MarkdownPreview source="hello" />);
       expect(container.innerHTML).not.toBe("");
     });
+
+    it("renders plain-text fallback (not skeleton) on first paint", () => {
+      // First render is synchronous; Streamdown loads after useEffect resolves.
+      // The plain-text fallback should appear immediately, not an animated
+      // skeleton bar — avoids a regression on apply pages where many short
+      // description fields used to render instantly as <p>{source}</p>.
+      const { container } = render(<MarkdownPreview source="Plain description text" />);
+      expect(container.textContent).toContain("Plain description text");
+      expect(container.querySelector(".animate-pulse")).not.toBeInTheDocument();
+    });
+
+    it("fallback preserves newlines via whitespace-pre-wrap", () => {
+      const { container } = render(<MarkdownPreview source={"line one\nline two"} />);
+      const span = container.querySelector(".whitespace-pre-wrap");
+      expect(span).toBeInTheDocument();
+    });
   });
 
   describe("streamdown rendering", () => {
