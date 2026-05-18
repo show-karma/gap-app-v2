@@ -85,13 +85,13 @@ describe("useTeamMemberAbout", () => {
   it("loads About content for a known role", async () => {
     mockClient.getAbout.mockResolvedValue("You are warm.");
 
-    const { result } = renderHook(() => useTeamMemberAbout("acme", "grant-writer"), {
+    const { result } = renderHook(() => useTeamMemberAbout("acme", "fundraiser"), {
       wrapper: createWrapper(),
     });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(result.current.data).toBe("You are warm.");
-    expect(mockClient.getAbout).toHaveBeenCalledWith("acme", "grant-writer");
+    expect(mockClient.getAbout).toHaveBeenCalledWith("acme", "fundraiser");
   });
 });
 
@@ -104,7 +104,7 @@ describe("useUpdateTeamMemberAbout", () => {
     mockClient.updateAbout.mockResolvedValue(undefined);
 
     const wrapper = createWrapper();
-    const { result: aboutResult } = renderHook(() => useTeamMemberAbout("acme", "grant-writer"), {
+    const { result: aboutResult } = renderHook(() => useTeamMemberAbout("acme", "fundraiser"), {
       wrapper,
     });
 
@@ -115,12 +115,12 @@ describe("useUpdateTeamMemberAbout", () => {
       wrapper,
     });
 
-    result.current.mutate({ role: "grant-writer", content: "new" });
+    result.current.mutate({ role: "fundraiser", content: "new" });
 
     await waitFor(() =>
       expect(mockClient.updateAbout).toHaveBeenCalledWith({
         slug: "acme",
-        role: "grant-writer",
+        role: "fundraiser",
         content: "new",
       })
     );
@@ -133,7 +133,7 @@ describe("useUpdateTeamMemberAbout", () => {
       wrapper: createWrapper(),
     });
 
-    result.current.mutate({ role: "grant-writer", content: "new" });
+    result.current.mutate({ role: "fundraiser", content: "new" });
 
     await waitFor(() => expect(result.current.isError).toBe(true));
   });

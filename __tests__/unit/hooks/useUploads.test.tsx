@@ -32,6 +32,11 @@ vi.mock("@/lib/hermes-client", () => ({
   },
 }));
 
+// Typed helper so mocks don't require `as any` casts.
+const mockClient = hermesClient as {
+  [K in keyof typeof hermesClient]: ReturnType<typeof vi.fn>;
+};
+
 vi.mock("react-hot-toast", () => ({
   toast: Object.assign(vi.fn(), { error: vi.fn(), success: vi.fn() }),
 }));
@@ -56,7 +61,7 @@ beforeEach(() => {
 
 describe("useChatUploads", () => {
   it("fetches the chat uploads list for the (slug, role) tuple", async () => {
-    (hermesClient.listChatUploads as any).mockResolvedValue([
+    mockClient.listChatUploads.mockResolvedValue([
       { sha256: "a".repeat(64), filename: "x.txt", mime: null, size: 1 },
     ]);
 
@@ -78,7 +83,7 @@ describe("useChatUploads", () => {
 
 describe("useUploadChatFile", () => {
   it("invalidates the chat uploads list after a successful upload", async () => {
-    (hermesClient.uploadChatFile as any).mockResolvedValue({
+    mockClient.uploadChatFile.mockResolvedValue({
       sha256: "a".repeat(64),
       filename: "x.txt",
       mime: null,
@@ -99,7 +104,7 @@ describe("useUploadChatFile", () => {
   });
 
   it("surfaces upload errors via toast and does not throw", async () => {
-    (hermesClient.uploadChatFile as any).mockRejectedValue(new Error("413"));
+    mockClient.uploadChatFile.mockRejectedValue(new Error("413"));
     const qc = makeClient();
     const { result } = renderHook(() => useUploadChatFile("acme", "fundraiser"), {
       wrapper: wrap(qc),
@@ -112,7 +117,7 @@ describe("useUploadChatFile", () => {
 
 describe("useDeleteChatFile", () => {
   it("invalidates the list after a successful delete", async () => {
-    (hermesClient.deleteChatFile as any).mockResolvedValue({
+    mockClient.deleteChatFile.mockResolvedValue({
       removed: true,
       sha256: "a".repeat(64),
     });
@@ -133,7 +138,7 @@ describe("useDeleteChatFile", () => {
 
 describe("useTaskAttachments", () => {
   it("scopes the cache key by (slug, taskId)", async () => {
-    (hermesClient.listTaskAttachments as any).mockResolvedValue([]);
+    mockClient.listTaskAttachments.mockResolvedValue([]);
     const { result } = renderHook(() => useTaskAttachments("acme", "t_abc"), {
       wrapper: wrap(makeClient()),
     });
@@ -151,7 +156,7 @@ describe("useTaskAttachments", () => {
 
 describe("useUploadTaskAttachment", () => {
   it("invalidates the task attachments list after success", async () => {
-    (hermesClient.uploadTaskAttachment as any).mockResolvedValue({
+    mockClient.uploadTaskAttachment.mockResolvedValue({
       sha256: "b".repeat(64),
       filename: "y.txt",
       mime: null,
@@ -174,7 +179,7 @@ describe("useUploadTaskAttachment", () => {
 
 describe("useDeleteTaskAttachment", () => {
   it("invalidates the task attachments list after success", async () => {
-    (hermesClient.deleteTaskAttachment as any).mockResolvedValue({
+    mockClient.deleteTaskAttachment.mockResolvedValue({
       removed: true,
       sha256: "c".repeat(64),
     });
