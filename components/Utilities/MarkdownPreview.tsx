@@ -161,12 +161,13 @@ export const MarkdownPreview = ({
 
   if (!source) return null;
 
-  // Plain-text fallback while Streamdown's dynamic import resolves. Most
-  // descriptions are plain prose — the fallback avoids a full-width skeleton
-  // pulse on every field during cold loads, and the cached second render
-  // upgrades to rich markdown instantly.
+  // Plain-text fallback while Streamdown's dynamic import resolves. Block-level
+  // wrapper matches the final render's outer `<div>` so the swap doesn't reflow
+  // surrounding layout on cold load.
   if (!StreamdownComponent || !codePlugin || !remarkBreaksPlugin || !remarkGfmPlugin) {
-    return <span className={cn("whitespace-pre-wrap", className)}>{source}</span>;
+    return (
+      <div className={cn("preview w-full max-w-full whitespace-pre-wrap", className)}>{source}</div>
+    );
   }
 
   return (

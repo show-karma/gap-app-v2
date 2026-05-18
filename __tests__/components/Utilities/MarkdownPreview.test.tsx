@@ -47,10 +47,9 @@ describe("MarkdownPreview", () => {
       expect(container.querySelector(".animate-pulse")).not.toBeInTheDocument();
     });
 
-    it("fallback preserves newlines via whitespace-pre-wrap", () => {
+    it("fallback preserves the literal source (newlines + markdown syntax)", () => {
       const { container } = render(<MarkdownPreview source={"line one\nline two"} />);
-      const span = container.querySelector(".whitespace-pre-wrap");
-      expect(span).toBeInTheDocument();
+      expect(container.textContent).toBe("line one\nline two");
     });
   });
 

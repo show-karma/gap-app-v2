@@ -980,6 +980,10 @@ export function QuestionBuilder({
   );
 }
 
+const fieldPreviewMarkdownComponents = {
+  p: ({ children }: { children?: React.ReactNode }) => <span className="mt-1">{children}</span>,
+};
+
 interface SortableFieldItemProps {
   field: FormField;
   index: number;
@@ -1075,7 +1079,7 @@ const SortableFieldItem = React.memo(function SortableFieldItem({
                   <MarkdownPreview
                     className="text-sm text-gray-500 dark:text-gray-400 mt-1"
                     variant="inline"
-                    components={{ p: ({ children }) => <span className="mt-1">{children}</span> }}
+                    components={fieldPreviewMarkdownComponents}
                     source={field.description}
                   />
                 )}
