@@ -227,7 +227,7 @@ export const MarkdownEditor: FC<MarkdownEditorProps> = ({
       </div>
 
       {description && (
-        <div className="text-sm text-gray-600 dark:text-gray-400 mb-2 [&_p]:text-sm [&_p]:text-gray-600 dark:[&_p]:text-gray-400">
+        <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">
           <MarkdownPreview source={description} components={inlineDescriptionMarkdownComponents} />
         </div>
       )}

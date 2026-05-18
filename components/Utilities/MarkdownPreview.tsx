@@ -2,7 +2,7 @@
 
 import { useTheme } from "next-themes";
 import type { ComponentType } from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { Components } from "streamdown";
 import styles from "@/styles/markdown.module.css";
 import { cn } from "@/utilities/tailwind";
@@ -28,10 +28,8 @@ type RemarkGfmType = typeof import("remark-gfm").default;
 
 const TABLE_ROW_RE = /^\s*\|.+\|\s*$/;
 const TABLE_SEPARATOR_RE = /^\s*\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)+\|?\s*$/;
+const FENCE_RE = /^\s*(```|~~~)/;
 
-// GFM requires a `|---|---|` separator row directly under the header. Many
-// form authors write only the header row and expect it to render as a table.
-// Detect those cases and inject a separator so remark-gfm picks it up.
 function countCells(pipeRow: string): number {
   return pipeRow.split("|").filter((c, idx, arr) => {
     if (idx === 0 && c.trim() === "") return false;
@@ -40,11 +38,17 @@ function countCells(pipeRow: string): number {
   }).length;
 }
 
-// Bypass Streamdown's default table chrome (copy/download toolbar + card
-// wrapper) for inline help text. Renders compact, plain HTML tables that
-// inherit the surrounding text color and pick up `markdown.module.css` styles.
+/**
+ * Compact table/th/td overrides for inline contexts (form field descriptions,
+ * submitted answers, builder previews). Skips Streamdown's default table card
+ * wrapper and copy/download toolbar — those are designed for AI-streamed
+ * data tables, not inline help text.
+ *
+ * Pass via the `components` prop of `MarkdownPreview` for any rendering that
+ * should look like prose, not a hero data table.
+ */
 export const inlineDescriptionMarkdownComponents = {
-  table: ({ children, ...props }: { children?: React.ReactNode }) => (
+  table: ({ children, ...props }: React.ComponentProps<"table">) => (
     <table
       className="w-full border-collapse text-[0.8em] my-2 border border-zinc-200 dark:border-zinc-700 rounded"
       {...props}
@@ -52,7 +56,7 @@ export const inlineDescriptionMarkdownComponents = {
       {children}
     </table>
   ),
-  th: ({ children, ...props }: { children?: React.ReactNode }) => (
+  th: ({ children, ...props }: React.ComponentProps<"th">) => (
     <th
       className="text-left font-semibold px-2 py-1 border-b border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/40"
       {...props}
@@ -60,22 +64,33 @@ export const inlineDescriptionMarkdownComponents = {
       {children}
     </th>
   ),
-  td: ({ children, ...props }: { children?: React.ReactNode }) => (
+  td: ({ children, ...props }: React.ComponentProps<"td">) => (
     <td className="px-2 py-1 border-b border-zinc-200/60 dark:border-zinc-700/60" {...props}>
       {children}
     </td>
   ),
 };
 
+// GFM requires a `|---|---|` separator row directly under the header. Form
+// authors often write only the header row and expect it to render as a table;
+// inject the separator so remark-gfm picks it up. Skips fenced code blocks so
+// we don't mangle code samples containing pipes.
 function completeMissingTableSeparators(source: string): string {
   if (!source.includes("|")) return source;
 
   const lines = source.split("\n");
   const out: string[] = [];
+  let inFence = false;
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
     out.push(line);
+
+    if (FENCE_RE.test(line)) {
+      inFence = !inFence;
+      continue;
+    }
+    if (inFence) continue;
 
     if (!TABLE_ROW_RE.test(line)) continue;
 
@@ -87,6 +102,8 @@ function completeMissingTableSeparators(source: string): string {
     const next = lines[i + 1];
     if (next !== undefined && TABLE_SEPARATOR_RE.test(next)) continue;
 
+    // Single-column tables (`| x |`) are ambiguous with prose containing a
+    // pipe, so we leave them as text.
     const cellCount = countCells(line);
     if (cellCount < 2) continue;
 
@@ -126,22 +143,32 @@ export const MarkdownPreview = ({
       });
   }, []);
 
+  const preparedSource = useMemo(
+    () => (source ? completeMissingTableSeparators(source) : ""),
+    [source]
+  );
+
+  const mergedComponents = useMemo<Components>(
+    () => ({
+      p: ({ children }) => (
+        <p className="mb-2" style={{ backgroundColor: "transparent", color: "currentColor" }}>
+          {children}
+        </p>
+      ),
+      ...(components as Partial<Components>),
+    }),
+    [components]
+  );
+
   if (!source) return null;
 
+  // Plain-text fallback while Streamdown's dynamic import resolves. Most
+  // descriptions are plain prose — the fallback avoids a full-width skeleton
+  // pulse on every field during cold loads, and the cached second render
+  // upgrades to rich markdown instantly.
   if (!StreamdownComponent || !codePlugin || !remarkBreaksPlugin || !remarkGfmPlugin) {
-    return <div className="animate-pulse bg-gray-200 dark:bg-gray-700 rounded h-4 w-full" />;
+    return <span className={cn("whitespace-pre-wrap", className)}>{source}</span>;
   }
-
-  const mergedComponents: Components = {
-    p: ({ children }) => (
-      <p className="mb-2" style={{ backgroundColor: "transparent", color: "currentColor" }}>
-        {children}
-      </p>
-    ),
-    ...(components as Partial<Components>),
-  };
-
-  const preparedSource = completeMissingTableSeparators(source);
 
   return (
     <div

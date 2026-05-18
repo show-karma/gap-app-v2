@@ -80,6 +80,26 @@ describe("MarkdownPreview table rendering (regression)", () => {
     );
   });
 
+  it("does not inject a separator inside fenced code blocks", async () => {
+    const source = `Here is a code sample:
+
+\`\`\`
+| a | b |
+some other text
+\`\`\``;
+
+    const { container } = render(<MarkdownPreview source={source} />);
+
+    await waitFor(
+      () => {
+        const pre = container.querySelector("pre");
+        expect(pre).toBeInTheDocument();
+      },
+      { timeout: 3000 }
+    );
+    expect(container.querySelector("table")).not.toBeInTheDocument();
+  });
+
   it("auto-completes table separated by paragraph + newline", async () => {
     const source = `Nominate 2-3 metrics — externally verifiable, tied to your milestones.
 

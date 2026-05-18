@@ -350,7 +350,7 @@ export function QuestionFormRenderer({
               </div>
 
               {field.description && (
-                <div className="text-sm text-gray-500 dark:text-gray-400 mb-2 [&_p]:text-sm [&_p]:text-gray-500 dark:[&_p]:text-gray-400">
+                <div className="text-sm text-gray-500 dark:text-gray-400 mb-2">
                   <MarkdownPreview
                     source={field.description}
                     components={inlineDescriptionMarkdownComponents}
