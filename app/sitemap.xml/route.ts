@@ -17,11 +17,12 @@ interface SitemapEntry {
 
 async function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T> {
   let timer: ReturnType<typeof setTimeout> | undefined;
+  const guardedPromise = promise.catch(() => fallback);
   const timeout = new Promise<T>((resolve) => {
     timer = setTimeout(() => resolve(fallback), ms);
   });
   try {
-    return await Promise.race([promise, timeout]);
+    return await Promise.race([guardedPromise, timeout]);
   } finally {
     if (timer) clearTimeout(timer);
   }
