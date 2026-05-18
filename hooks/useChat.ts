@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { hermesClient, type TeamRole } from "@/lib/hermes-client";
-import { TokenManager } from "@/utilities/auth/token-manager";
 import { envVars } from "@/utilities/enviromentVars";
 import { INDEXER } from "@/utilities/indexer";
 
@@ -34,13 +33,6 @@ interface SseEvent {
   duration?: number;
   error?: boolean;
   message?: string;
-}
-
-interface State {
-  messages: ChatMessage[];
-  // Identifies the run currently streaming (used for stop).
-  activeRunId: string | null;
-  sending: boolean;
 }
 
 // Naive line-buffered SSE parser. fetch().body is a ReadableStream of bytes;
@@ -89,12 +81,42 @@ function makeId(): string {
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
+/** Open the SSE event stream for a chat run via an authenticated fetch.
+ *  axios doesn't support streaming, so we use fetch with the same auth
+ *  token that createAuthenticatedApiClient would attach via its interceptors. */
+async function openChatStream(
+  slug: string,
+  role: TeamRole,
+  runId: string,
+  signal: AbortSignal
+): Promise<ReadableStream<Uint8Array>> {
+  const { TokenManager } = await import("@/utilities/auth/token-manager");
+  const token = await TokenManager.getToken();
+
+  const headers: Record<string, string> = { Accept: "text/event-stream" };
+  if (token) {
+    headers.Authorization = token.startsWith("Bearer ") ? token : `Bearer ${token}`;
+  }
+
+  const res = await fetch(
+    `${envVars.NEXT_PUBLIC_GAP_INDEXER_URL}${INDEXER.HERMES.CHAT_RUN_EVENTS(slug, role, runId)}`,
+    { method: "GET", headers, signal }
+  );
+  if (!res.ok || !res.body) {
+    throw new Error(`Stream failed (${res.status})`);
+  }
+  return res.body;
+}
+
 export function useChat(slug: string | undefined, role: TeamRole) {
-  const [state, setState] = useState<State>({
-    messages: [],
-    activeRunId: null,
-    sending: false,
-  });
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  // Use refs for transient state that should not cause dep-array churn.
+  const sendingRef = useRef(false);
+  const activeRunIdRef = useRef<string | null>(null);
+  // Expose as state only for re-render triggers (UI needs to reflect these).
+  const [sending, setSending] = useState(false);
+  const [activeRunId, setActiveRunId] = useState<string | null>(null);
+
   const abortRef = useRef<AbortController | null>(null);
   const previousResponseRef = useRef<string | undefined>(undefined);
 
@@ -107,7 +129,7 @@ export function useChat(slug: string | undefined, role: TeamRole) {
 
   const send = useCallback(
     async (text: string) => {
-      if (!slug || !text.trim() || state.sending) return;
+      if (!slug || !text.trim() || sendingRef.current) return;
 
       const userMessage: ChatMessage = {
         id: makeId(),
@@ -123,11 +145,10 @@ export function useChat(slug: string | undefined, role: TeamRole) {
         tools: [],
         state: "streaming",
       };
-      setState((s) => ({
-        ...s,
-        messages: [...s.messages, userMessage, placeholder],
-        sending: true,
-      }));
+
+      sendingRef.current = true;
+      setSending(true);
+      setMessages((s) => [...s, userMessage, placeholder]);
 
       try {
         // 1. Start a run on the gap-indexer chat proxy.
@@ -138,53 +159,28 @@ export function useChat(slug: string | undefined, role: TeamRole) {
           previousResponseRef.current
         );
         previousResponseRef.current = runId;
-        setState((s) => ({
-          ...s,
-          activeRunId: runId,
-          messages: s.messages.map((m) => (m.id === assistantId ? { ...m, runId } : m)),
-        }));
+        activeRunIdRef.current = runId;
+        setActiveRunId(runId);
+        setMessages((s) => s.map((m) => (m.id === assistantId ? { ...m, runId } : m)));
 
-        // 2. Open the SSE event stream. Attach the Bearer token when we have
-        //    one — the indexer's AUTH_BYPASS_FOR_TESTING path also lets dev
-        //    sessions through without one, mirroring the axios client.
-        const token = await TokenManager.getToken();
-        const headers: Record<string, string> = {
-          Accept: "text/event-stream",
-        };
-        if (token) {
-          headers.Authorization = token.startsWith("Bearer ") ? token : `Bearer ${token}`;
-        }
+        // 2. Open the authenticated SSE event stream.
         const controller = new AbortController();
         abortRef.current = controller;
-        const res = await fetch(
-          `${envVars.NEXT_PUBLIC_GAP_INDEXER_URL}${INDEXER.HERMES.CHAT_RUN_EVENTS(slug, role, runId)}`,
-          {
-            method: "GET",
-            headers,
-            signal: controller.signal,
-          }
-        );
-        if (!res.ok || !res.body) {
-          throw new Error(`Stream failed (${res.status})`);
-        }
+        const body = await openChatStream(slug, role, runId, controller.signal);
 
         // 3. Translate SSE events into message updates.
-        for await (const event of iterSseEvents(res.body, controller.signal)) {
-          setState((s) => ({
-            ...s,
-            messages: s.messages.map((m) =>
-              m.id === assistantId ? applyEventToMessage(m, event) : m
-            ),
-          }));
+        for await (const event of iterSseEvents(body, controller.signal)) {
+          setMessages((s) =>
+            s.map((m) => (m.id === assistantId ? applyEventToMessage(m, event) : m))
+          );
           if (event.event === "run.completed" || event.event === "run.failed") {
             break;
           }
         }
       } catch (err) {
         const wasCancelled = err instanceof DOMException && err.name === "AbortError";
-        setState((s) => ({
-          ...s,
-          messages: s.messages.map((m) =>
+        setMessages((s) =>
+          s.map((m) =>
             m.id === assistantId
               ? {
                   ...m,
@@ -196,37 +192,39 @@ export function useChat(slug: string | undefined, role: TeamRole) {
                       : "Stream failed",
                 }
               : m
-          ),
-        }));
+          )
+        );
       } finally {
-        setState((s) => ({
-          ...s,
-          sending: false,
-          activeRunId: null,
-          messages: s.messages.map((m) =>
+        sendingRef.current = false;
+        activeRunIdRef.current = null;
+        setSending(false);
+        setActiveRunId(null);
+        setMessages((s) =>
+          s.map((m) =>
             m.id === assistantId && m.state === "streaming" ? { ...m, state: "complete" } : m
-          ),
-        }));
+          )
+        );
         abortRef.current = null;
       }
     },
-    [role, slug, state.sending]
+    // sendingRef and activeRunIdRef are refs — excluded from deps intentionally.
+    [role, slug]
   );
 
   const stop = useCallback(async () => {
-    if (!slug || !state.activeRunId) return;
+    if (!slug || !activeRunIdRef.current) return;
     try {
-      await hermesClient.stopChatRun(slug, role, state.activeRunId);
+      await hermesClient.stopChatRun(slug, role, activeRunIdRef.current);
     } catch {
       // Even if the upstream stop fails, abort the local stream.
     }
     abortRef.current?.abort();
-  }, [role, slug, state.activeRunId]);
+  }, [role, slug]);
 
   return {
-    messages: state.messages,
-    sending: state.sending,
-    activeRunId: state.activeRunId,
+    messages,
+    sending,
+    activeRunId,
     send,
     stop,
   };

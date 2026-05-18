@@ -1,7 +1,7 @@
 "use client";
 
 import { CornerDownLeftIcon, SquareIcon, X } from "lucide-react";
-import { type KeyboardEvent, useCallback, useEffect, useRef, useState } from "react";
+import { type KeyboardEvent, memo, useCallback, useEffect, useRef, useState } from "react";
 import { type ChatMessage, useChat } from "@/hooks/useChat";
 import { useUploadChatFile } from "@/hooks/useUploads";
 import { type HermesUploadSummary, TEAM_ROLE_LABELS, type TeamRole } from "@/lib/hermes-client";
@@ -77,7 +77,13 @@ export function TeamChat({ slug, role }: Props) {
   );
 }
 
-function ChatTurn({ message, role }: { message: ChatMessage; role: TeamRole }) {
+const ChatTurn = memo(function ChatTurn({
+  message,
+  role,
+}: {
+  message: ChatMessage;
+  role: TeamRole;
+}) {
   const from: "user" | "assistant" = message.role;
   return (
     <Message from={from}>
@@ -107,7 +113,7 @@ function ChatTurn({ message, role }: { message: ChatMessage; role: TeamRole }) {
       </MessageContent>
     </Message>
   );
-}
+});
 
 function StreamingPulse() {
   return (
