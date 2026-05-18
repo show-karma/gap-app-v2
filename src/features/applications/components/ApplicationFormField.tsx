@@ -61,7 +61,7 @@ function MultiOptionCheckboxGroup({
         {question.required && <span className="text-destructive ml-0.5">*</span>}
       </Label>
       {question.description && <FieldDescription source={question.description as string} />}
-      <div className="space-y-2 rounded-md border border-input p-3">
+      <div className="space-y-2">
         {question.options?.map((option) => (
           <div key={option.value} className="flex items-center gap-2">
             <Checkbox
