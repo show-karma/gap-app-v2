@@ -2,8 +2,8 @@
 
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import { useParams, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
+import { useState } from "react";
 import { useTeamMemberAbout, useUpdateTeamMemberAbout } from "@/hooks/useTeam";
 import {
   TEAM_ROLE_DESCRIPTIONS,
@@ -20,24 +20,29 @@ import { PAGES } from "@/utilities/pages";
 
 type TabId = "chat" | "about" | "skills" | "settings";
 
-export default function TeamMemberPage() {
-  const params = useParams<{ role: string }>();
-  const search = useSearchParams();
-  const [slug, setSlug] = useState<string | undefined>(undefined);
-  const [tab, setTab] = useState<TabId>("chat");
-  const role = (params?.role ?? "") as TeamRole;
-  const isKnownRole = TEAM_ROLES.includes(role);
+// Module-level constant avoids recreating the array on every render (P2-5).
+const MEMBER_TABS = [
+  { id: "chat", label: "Chat" },
+  { id: "about", label: "About" },
+  { id: "skills", label: "Skills" },
+  { id: "settings", label: "Settings" },
+] as const satisfies readonly { id: TabId; label: string }[];
 
-  useEffect(() => {
-    setSlug(search.get("slug") ?? undefined);
-  }, [search]);
+export default function TeamMemberPage() {
+  const { slug, role: roleParam } = useParams<{ slug: string; role: string }>();
+  const [tab, setTab] = useState<TabId>("chat");
+  const role = roleParam as TeamRole;
+  const isKnownRole = TEAM_ROLES.includes(role);
 
   if (!isKnownRole) {
     return (
       <main className="mx-auto max-w-3xl px-6 py-16">
         <h1 className="text-2xl font-semibold">Team member not found</h1>
         <p className="mt-3 text-gray-700">We don&apos;t recognize this role on your team.</p>
-        <Link href={PAGES.TEAM.DIRECTORY} className="mt-6 inline-block rounded border px-4 py-2">
+        <Link
+          href={PAGES.TEAM.DIRECTORY(slug)}
+          className="mt-6 inline-block rounded border px-4 py-2"
+        >
           Back to team
         </Link>
       </main>
@@ -47,7 +52,7 @@ export default function TeamMemberPage() {
   return (
     <main className="mx-auto max-w-3xl px-6 py-10">
       <Link
-        href={`${PAGES.TEAM.DIRECTORY}${slug ? `?slug=${slug}` : ""}`}
+        href={PAGES.TEAM.DIRECTORY(slug)}
         className="inline-flex items-center gap-1 text-sm text-gray-500 transition hover:text-gray-900"
       >
         <ArrowLeft className="h-3.5 w-3.5" aria-hidden />
@@ -71,18 +76,16 @@ export default function TeamMemberPage() {
         </div>
       </div>
 
-      <nav className="mt-6 flex gap-1 border-b border-gray-200">
-        {(
-          [
-            { id: "chat", label: "Chat" },
-            { id: "about", label: "About" },
-            { id: "skills", label: "Skills" },
-            { id: "settings", label: "Settings" },
-          ] as const
-        ).map((t) => (
+      {/* Tab bar — full ARIA per P2-2 */}
+      <div className="mt-6 flex gap-1 border-b border-gray-200" role="tablist">
+        {MEMBER_TABS.map((t) => (
           <button
             key={t.id}
             type="button"
+            role="tab"
+            id={`tab-${t.id}`}
+            aria-selected={tab === t.id}
+            aria-controls={`panel-${t.id}`}
             onClick={() => setTab(t.id)}
             className={`-mb-px border-b-2 px-4 py-2 text-sm transition ${
               tab === t.id
@@ -93,39 +96,37 @@ export default function TeamMemberPage() {
             {t.label}
           </button>
         ))}
-      </nav>
+      </div>
 
-      <section className="mt-6">
-        {tab === "about" ? (
-          <AboutTab slug={slug} role={role} />
-        ) : tab === "chat" ? (
-          <ChatTab slug={slug} role={role} />
-        ) : tab === "skills" ? (
-          <SkillsTab slug={slug} role={role} />
-        ) : (
-          <SettingsTab role={role} />
-        )}
-      </section>
+      {/* Tab panels — each gets role="tabpanel", id, aria-labelledby per P2-2 */}
+      {MEMBER_TABS.map((t) => (
+        <section
+          key={t.id}
+          role="tabpanel"
+          id={`panel-${t.id}`}
+          aria-labelledby={`tab-${t.id}`}
+          hidden={tab !== t.id}
+          className="mt-6"
+        >
+          {t.id === "about" && tab === "about" ? (
+            <AboutTab slug={slug} role={role} />
+          ) : t.id === "chat" && tab === "chat" ? (
+            <ChatTab slug={slug} role={role} />
+          ) : t.id === "skills" && tab === "skills" ? (
+            <SkillsTab slug={slug} role={role} />
+          ) : t.id === "settings" && tab === "settings" ? (
+            <SettingsTab role={role} />
+          ) : null}
+        </section>
+      ))}
     </main>
   );
 }
 
-function AboutTab({ slug, role }: { slug: string | undefined; role: TeamRole }) {
+function AboutTab({ slug, role }: { slug: string; role: TeamRole }) {
   const query = useTeamMemberAbout(slug, role);
-  const mutation = useUpdateTeamMemberAbout(slug ?? "");
+  const mutation = useUpdateTeamMemberAbout(slug);
   const [draft, setDraft] = useState<string | null>(null);
-
-  if (!slug) {
-    return (
-      <p className="text-sm text-gray-600">
-        Set your team up via{" "}
-        <Link href={PAGES.TEAM.ONBOARDING} className="font-medium underline">
-          onboarding
-        </Link>{" "}
-        first.
-      </p>
-    );
-  }
 
   if (query.isLoading) {
     return (
@@ -140,7 +141,7 @@ function AboutTab({ slug, role }: { slug: string | undefined; role: TeamRole }) 
     return (
       <ErrorState
         title="Couldn't load this employee's About text"
-        body="The Hermes container didn't respond. Check it's running, then retry."
+        body="Your team didn't respond. Check your connection, then retry."
         onRetry={() => query.refetch()}
       />
     );
@@ -190,10 +191,7 @@ function AboutTab({ slug, role }: { slug: string | undefined; role: TeamRole }) 
   );
 }
 
-function ChatTab({ slug, role }: { slug: string | undefined; role: TeamRole }) {
-  if (!slug) {
-    return <p className="text-sm text-gray-600">Set up your team first.</p>;
-  }
+function ChatTab({ slug, role }: { slug: string; role: TeamRole }) {
   return <TeamChat slug={slug} role={role} />;
 }
 

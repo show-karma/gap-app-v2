@@ -21,17 +21,23 @@ const teamKeys = {
 
 export function useTeamOrg(slug: string | undefined) {
   return useQuery<HermesOrgResponse>({
-    queryKey: teamKeys.org(slug ?? "anon"),
-    enabled: Boolean(slug),
-    queryFn: () => hermesClient.getOrg(slug as string),
+    queryKey: slug ? teamKeys.org(slug) : teamKeys.all,
+    enabled: !!slug,
+    queryFn: () => {
+      if (!slug) throw new Error("slug required");
+      return hermesClient.getOrg(slug);
+    },
   });
 }
 
 export function useTeamMemberAbout(slug: string | undefined, role: TeamRole) {
   return useQuery<string>({
-    queryKey: teamKeys.about(slug ?? "anon", role),
-    enabled: Boolean(slug),
-    queryFn: () => hermesClient.getAbout(slug as string, role),
+    queryKey: slug ? teamKeys.about(slug, role) : teamKeys.all,
+    enabled: !!slug,
+    queryFn: () => {
+      if (!slug) throw new Error("slug required");
+      return hermesClient.getAbout(slug, role);
+    },
   });
 }
 

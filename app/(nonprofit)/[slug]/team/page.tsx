@@ -1,11 +1,9 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
 import { useTeamOrg } from "@/hooks/useTeam";
 import { VISIBLE_TEAM_ROLES } from "@/lib/hermes-client";
 import { CrewCard } from "@/src/features/team/CrewCard";
-import { PAGES } from "@/utilities/pages";
 
 function StatusDot({ status }: { status: string }) {
   const color =
@@ -24,38 +22,10 @@ function StatusDot({ status }: { status: string }) {
   );
 }
 
-// Surfaces the six visible employees as a roster. The slug for "which org's
-// team" is currently driven by ?slug=... query param — in a follow-up this
-// will move to a dedicated /[slug]/team route once we wire org → user
-// mapping on the indexer side.
 export default function TeamDirectoryPage() {
-  const params = useSearchParams();
+  const { slug } = useParams<{ slug: string }>();
   const router = useRouter();
-  const [slug, setSlug] = useState<string | undefined>(undefined);
-
-  useEffect(() => {
-    setSlug(params.get("slug") ?? undefined);
-  }, [params]);
-
   const { data: org, isLoading, isError, error } = useTeamOrg(slug);
-
-  if (!slug) {
-    return (
-      <main className="mx-auto max-w-3xl px-6 py-16">
-        <h1 className="text-2xl font-semibold">Your Team</h1>
-        <p className="mt-4 text-gray-700">
-          You don&apos;t have a team set up yet. Walk through onboarding to create yours.
-        </p>
-        <button
-          type="button"
-          onClick={() => router.push(PAGES.TEAM.ONBOARDING)}
-          className="mt-6 rounded bg-black px-4 py-2 text-white"
-        >
-          Set up my team
-        </button>
-      </main>
-    );
-  }
 
   if (isLoading) {
     return (
@@ -96,15 +66,7 @@ export default function TeamDirectoryPage() {
             Your Team
           </div>
           <h1 className="text-[34px] font-bold leading-[1.05] tracking-[-0.025em] text-gray-900">
-            Four teammates on the case
-            {slug ? (
-              <>
-                {" "}
-                for <span className="text-gray-900">{slug}</span>.
-              </>
-            ) : (
-              "."
-            )}
+            Four teammates on the case for <span className="text-gray-900">{slug}</span>.
           </h1>
           <p className="mt-3 text-sm leading-[1.5] text-gray-500">
             Tap a card to chat. They each own a slice — fundraising, comms, ops — and report to ED.

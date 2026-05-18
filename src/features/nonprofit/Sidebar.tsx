@@ -2,67 +2,68 @@
 
 import { Building2, Compass, KanbanSquare, type LucideIcon, Puzzle, Users } from "lucide-react";
 import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useParams, usePathname } from "next/navigation";
 import { PAGES } from "@/utilities/pages";
 
 interface NavLink {
-  href: string;
+  href: (slug: string) => string;
   label: string;
   icon: LucideIcon;
-  match: (pathname: string) => boolean;
-  show: (slug: string | undefined) => boolean;
+  match: (pathname: string, slug: string) => boolean;
+  /** Show only when slug is present (i.e., team is set up), except onboarding */
+  requiresSlug: boolean;
 }
 
 const NAV: NavLink[] = [
   {
-    href: PAGES.TEAM.ONBOARDING,
+    href: () => PAGES.TEAM.ONBOARDING,
     label: "Onboarding",
     icon: Compass,
     match: (p) => p === PAGES.TEAM.ONBOARDING,
-    show: (slug) => !slug,
+    requiresSlug: false,
   },
   {
-    href: PAGES.TEAM.DIRECTORY,
+    href: (slug) => PAGES.TEAM.DIRECTORY(slug),
     label: "Team",
     icon: Users,
-    match: (p) => p === PAGES.TEAM.DIRECTORY || p.startsWith(`${PAGES.TEAM.DIRECTORY}/`),
-    show: (slug) => Boolean(slug),
+    match: (p, slug) =>
+      p === PAGES.TEAM.DIRECTORY(slug) || p.startsWith(`${PAGES.TEAM.DIRECTORY(slug)}/`),
+    requiresSlug: true,
   },
   {
-    href: PAGES.ORG,
+    href: (slug) => PAGES.ORG(slug),
     label: "Org Brain",
     icon: Building2,
-    match: (p) => p === PAGES.ORG,
-    show: (slug) => Boolean(slug),
+    match: (p, slug) => p === PAGES.ORG(slug),
+    requiresSlug: true,
   },
   {
-    href: PAGES.WORK,
+    href: (slug) => PAGES.WORK(slug),
     label: "Work",
     icon: KanbanSquare,
-    match: (p) => p === PAGES.WORK,
-    show: (slug) => Boolean(slug),
+    match: (p, slug) => p === PAGES.WORK(slug),
+    requiresSlug: true,
   },
   {
-    href: PAGES.SKILLS,
+    href: (slug) => PAGES.SKILLS(slug),
     label: "Skills",
     icon: Puzzle,
-    match: (p) => p === PAGES.SKILLS || p.startsWith(`${PAGES.SKILLS}/`),
-    show: (slug) => Boolean(slug),
+    match: (p, slug) => p === PAGES.SKILLS(slug) || p.startsWith(`${PAGES.SKILLS(slug)}/`),
+    requiresSlug: true,
   },
 ];
 
 export function NonprofitSidebar() {
   const pathname = usePathname();
-  const params = useSearchParams();
-  const [slug, setSlug] = useState<string | undefined>(undefined);
+  // Slug comes from the URL segment — undefined on the /onboarding route
+  // which sits outside the [slug] dynamic segment.
+  const params = useParams<{ slug?: string }>();
+  const slug = params.slug;
 
-  useEffect(() => {
-    setSlug(params.get("slug") ?? undefined);
-  }, [params]);
-
-  const qs = slug ? `?slug=${slug}` : "";
-  const visible = NAV.filter((link) => link.show(slug) || link.match(pathname));
+  const visible = NAV.filter((link) => {
+    if (!link.requiresSlug) return true;
+    return Boolean(slug);
+  });
 
   return (
     <aside className="hidden w-60 shrink-0 border-r border-gray-200 bg-gray-50/40 md:block">
@@ -82,12 +83,13 @@ export function NonprofitSidebar() {
         </div>
         <ul className="space-y-0.5">
           {visible.map((link) => {
-            const active = link.match(pathname);
+            const href = link.href(slug ?? "");
+            const active = slug ? link.match(pathname, slug) : pathname === PAGES.TEAM.ONBOARDING;
             const Icon = link.icon;
             return (
-              <li key={link.href}>
+              <li key={link.label}>
                 <Link
-                  href={`${link.href}${qs}`}
+                  href={href}
                   className={`group flex items-center gap-2.5 rounded-md px-3 py-2 text-sm transition ${
                     active ? "bg-gray-900 text-white shadow-sm" : "text-gray-700 hover:bg-gray-100"
                   }`}

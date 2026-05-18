@@ -18,22 +18,26 @@ const workKeys = {
 
 export function useWorkTasks(slug: string | undefined) {
   return useQuery<WorkTask[]>({
-    queryKey: workKeys.list(slug ?? "anon"),
-    enabled: Boolean(slug),
-    queryFn: () => hermesClient.listWorkTasks(slug as string),
+    queryKey: slug ? workKeys.list(slug) : workKeys.all,
+    enabled: !!slug,
+    queryFn: () => {
+      if (!slug) throw new Error("slug required");
+      return hermesClient.listWorkTasks(slug);
+    },
     refetchInterval: 15_000,
   });
 }
 
 export function useWorkTask(slug: string | undefined, taskId: string | undefined) {
   return useQuery<WorkTask & { comments: WorkTaskComment[]; activity?: WorkActivity }>({
-    queryKey: workKeys.task(slug ?? "anon", taskId ?? "anon"),
-    enabled: Boolean(slug && taskId),
+    queryKey: slug && taskId ? workKeys.task(slug, taskId) : workKeys.all,
+    enabled: !!(slug && taskId),
     queryFn: async () => {
-      const task = (await hermesClient.getWorkTask(
-        slug as string,
-        taskId as string
-      )) as WorkTask & { comments: WorkTaskComment[]; activity?: WorkActivity };
+      if (!slug || !taskId) throw new Error("slug and taskId required");
+      const task = (await hermesClient.getWorkTask(slug, taskId)) as WorkTask & {
+        comments: WorkTaskComment[];
+        activity?: WorkActivity;
+      };
       return task;
     },
     // Poll while the drawer is open so heartbeat updates land without a

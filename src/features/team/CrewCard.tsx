@@ -26,7 +26,7 @@ export const CrewCard = memo(function CrewCard({ role, slug }: Props) {
   const palette = ROLE_PALETTES[role];
   const { data: skills } = useProfileSkills(slug, role);
   const skillCount = skills?.length;
-  const href = `${PAGES.TEAM.MEMBER(role)}?slug=${slug}`;
+  const href = PAGES.TEAM.MEMBER(slug, role);
   const initial = TEAM_ROLE_LABELS[role].charAt(0);
 
   return (

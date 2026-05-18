@@ -157,12 +157,12 @@ export const PAGES = {
   SEEDS_FUND: `/seeds/fund`,
   TEAM: {
     ONBOARDING: `/onboarding`,
-    DIRECTORY: `/team`,
-    MEMBER: (role: string) => `/team/${role}`,
+    DIRECTORY: (slug: string) => `/${slug}/team`,
+    MEMBER: (slug: string, role: string) => `/${slug}/team/${role}`,
   },
-  ORG: `/org`,
-  WORK: `/work`,
-  SKILLS: `/skills`,
+  ORG: (slug: string) => `/${slug}/org`,
+  WORK: (slug: string) => `/${slug}/work`,
+  SKILLS: (slug: string) => `/${slug}/skills`,
 };
 
 /**
