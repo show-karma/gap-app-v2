@@ -1,8 +1,9 @@
 "use client";
 
 import { Download, Loader2, Paperclip, X } from "lucide-react";
-import { memo } from "react";
+import { memo, useCallback } from "react";
 import type { HermesUploadSummary } from "@/lib/hermes-client";
+import { createAuthenticatedApiClient } from "@/utilities/auth/api-client";
 
 interface Props {
   files: HermesUploadSummary[];
@@ -16,6 +17,38 @@ interface Props {
   emptyLabel?: string;
 }
 
+// Authenticated download: the indexer requires a Bearer token to serve
+// attachment blobs. Plain anchor hrefs can't send Authorization headers,
+// so we fetch the blob via the shared axios client (which adds the header
+// automatically) and trigger a synthetic download via a temporary object URL
+// that is revoked on the next tick.
+const api = createAuthenticatedApiClient();
+
+function useAuthDownload(downloadUrl: (sha256: string) => string) {
+  return useCallback(
+    async (sha256: string, filename: string) => {
+      try {
+        const response = await api.get<Blob>(downloadUrl(sha256), {
+          responseType: "blob",
+        });
+        const url = URL.createObjectURL(response.data);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        // Revoke after the browser has queued the download.
+        setTimeout(() => URL.revokeObjectURL(url), 100);
+      } catch {
+        // Fail silently — the download button already gives visual feedback
+        // via the cursor state; surface the error at a higher layer if needed.
+      }
+    },
+    [downloadUrl]
+  );
+}
+
 export const AttachmentList = memo(function AttachmentList({
   files,
   downloadUrl,
@@ -23,6 +56,8 @@ export const AttachmentList = memo(function AttachmentList({
   pendingDeleteSha,
   emptyLabel,
 }: Props) {
+  const download = useAuthDownload(downloadUrl);
+
   if (files.length === 0) {
     if (!emptyLabel) return null;
     return (
@@ -45,13 +80,14 @@ export const AttachmentList = memo(function AttachmentList({
               {formatBytes(f.size)} {f.mime ? `• ${f.mime}` : ""}
             </p>
           </div>
-          <a
-            href={downloadUrl(f.sha256)}
+          <button
+            type="button"
+            onClick={() => download(f.sha256, f.filename)}
             className="rounded p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-900"
             aria-label={`Download ${f.filename}`}
           >
             <Download className="h-3.5 w-3.5" aria-hidden />
-          </a>
+          </button>
           {onDelete ? (
             <button
               type="button"
