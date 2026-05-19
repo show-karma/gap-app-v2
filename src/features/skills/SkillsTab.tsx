@@ -41,7 +41,7 @@ export function SkillsTab({ slug, role }: Props) {
   }
 
   const skills = query.data ?? [];
-  const marketplaceHref = `${PAGES.SKILLS}?slug=${slug}&role=${role}`;
+  const marketplaceHref = `${PAGES.SKILLS}?${new URLSearchParams({ slug, role }).toString()}`;
 
   return (
     <div className="space-y-5">

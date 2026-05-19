@@ -112,10 +112,12 @@ export function SkillsMarketplace({ slug, role, onRoleChange }: Props) {
         </div>
 
         <div className="mt-5">
-          {catalog.isLoading ? (
+          {catalog.isLoading || installed.isLoading ? (
             <SkeletonGrid />
           ) : catalog.isError ? (
             <TeamErrorState onRetry={() => catalog.refetch()} />
+          ) : installed.isError ? (
+            <TeamErrorState onRetry={() => installed.refetch()} />
           ) : filtered.length === 0 ? (
             <EmptyBox query={query} totalCount={(catalog.data ?? []).length} />
           ) : (

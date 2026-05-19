@@ -89,7 +89,13 @@ export function useUninstallSkill(slug: string, role: TeamRole) {
       }
       toast.error(err instanceof Error ? err.message : "Uninstall failed");
     },
-    onSuccess: () => toast.success("Skill removed"),
+    onSuccess: (result) => {
+      if (result.removed) {
+        toast.success("Skill removed");
+      } else {
+        toast("Skill was already absent");
+      }
+    },
     onSettled: () => qc.invalidateQueries({ queryKey: skillKeys.profile(slug, role) }),
   });
 }
