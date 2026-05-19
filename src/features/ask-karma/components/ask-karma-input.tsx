@@ -61,10 +61,10 @@ export function AskKarmaInput({
         "relative flex w-full items-end gap-2 rounded-xl border border-zinc-200 bg-white px-3 py-2",
         "shadow-sm transition-all duration-200 ease-out",
         "hover:border-zinc-300 hover:shadow-md",
-        "focus-within:border-emerald-400 focus-within:ring-2 focus-within:ring-emerald-200/60",
+        "focus-within:border-[rgb(var(--color-primary))] focus-within:ring-2 focus-within:ring-[rgb(var(--color-primary))]/30",
         "focus-within:shadow-[0_0_0_4px_rgba(167,243,208,0.15)]",
         "dark:border-zinc-800 dark:bg-zinc-900",
-        "dark:hover:border-zinc-700 dark:focus-within:border-emerald-700 dark:focus-within:ring-emerald-900/40"
+        "dark:hover:border-zinc-700 dark:focus-within:border-[rgb(var(--color-primary-dark))] dark:focus-within:ring-[rgb(var(--color-primary-dark))]/30"
       )}
     >
       <textarea
@@ -74,7 +74,7 @@ export function AskKarmaInput({
         rows={1}
         maxLength={CHAT_INPUT_MAX_LENGTH}
         placeholder={placeholder}
-        aria-label="Message Karma Assistant"
+        aria-label="Message AI Assistant"
         className={cn(
           "max-h-40 min-h-[24px] flex-1 resize-none bg-transparent text-sm",
           "text-zinc-900 placeholder:text-zinc-400 outline-none",
@@ -106,7 +106,7 @@ export function AskKarmaInput({
             "flex h-8 w-8 items-center justify-center rounded-full transition-all duration-200 ease-out",
             "active:scale-90 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:scale-100",
             canSend
-              ? "bg-emerald-600 text-white shadow-sm hover:scale-110 hover:bg-emerald-700 hover:shadow-md dark:bg-emerald-500 dark:hover:bg-emerald-400"
+              ? "bg-[rgb(var(--color-primary))] text-white shadow-sm hover:scale-110 hover:bg-[rgb(var(--color-primary-dark))] hover:shadow-md dark:bg-[rgb(var(--color-primary))] dark:hover:bg-[rgb(var(--color-primary-light))]"
               : "bg-zinc-100 text-zinc-400 dark:bg-zinc-800 dark:text-zinc-500"
           )}
         >

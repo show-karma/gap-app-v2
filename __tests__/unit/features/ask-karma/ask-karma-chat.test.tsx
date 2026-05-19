@@ -19,7 +19,7 @@ const config: AskKarmaConfig = {
   exampleQuestions: [],
   featuredTopicsHeading: "Topics",
   featuredTopics: [],
-  assistantTitle: "Karma Assistant",
+  assistantTitle: "AI Assistant",
   assistantSubtitle: "Here to help 24/7",
 };
 
@@ -50,7 +50,7 @@ describe("AskKarmaChat", () => {
         onBack={vi.fn()}
       />
     );
-    expect(screen.getByRole("heading", { name: "Karma Assistant" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "AI Assistant" })).toBeInTheDocument();
     expect(screen.getByText("Here to help 24/7")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /back to topics/i })).toBeInTheDocument();
   });

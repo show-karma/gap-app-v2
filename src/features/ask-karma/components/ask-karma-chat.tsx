@@ -60,7 +60,7 @@ const MessageBubble = memo(function MessageBubble({ message }: MessageBubbleProp
           "animate-in zoom-in-90 duration-200",
           isUser
             ? "bg-zinc-900 text-zinc-50 dark:bg-zinc-100 dark:text-zinc-900"
-            : "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300"
+            : "bg-[rgb(var(--color-primary))]/10 text-[rgb(var(--color-primary-dark))] dark:bg-[rgb(var(--color-primary-dark))]/30 dark:text-[rgb(var(--color-primary-light))]"
         )}
         aria-hidden="true"
       >
@@ -174,21 +174,21 @@ function ThinkingPanel({ title, toolHistory }: ThinkingPanelProps) {
       className="flex items-start gap-3 animate-in fade-in slide-in-from-bottom-1 duration-300"
     >
       <div
-        className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300"
+        className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[rgb(var(--color-primary))]/10 text-[rgb(var(--color-primary-dark))] dark:bg-[rgb(var(--color-primary-dark))]/30 dark:text-[rgb(var(--color-primary-light))]"
         aria-hidden="true"
       >
         <SparklesIcon className="h-4 w-4 animate-pulse" />
         {/* Subtle outer-ring breathing pulse — communicates "working" without
             shouting like a spinner would. */}
-        <span className="pointer-events-none absolute inset-0 rounded-full ring-2 ring-emerald-400/40 animate-ping" />
+        <span className="pointer-events-none absolute inset-0 rounded-full ring-2 ring-[rgb(var(--color-primary))]/40 animate-ping" />
       </div>
       <div className="flex flex-col gap-2 rounded-2xl rounded-tl-sm border border-zinc-200 bg-white px-4 py-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium text-zinc-900 dark:text-zinc-50">{title}</span>
           <span className="flex items-center gap-1" aria-hidden="true">
-            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500 [animation-delay:0ms]" />
-            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500 [animation-delay:150ms]" />
-            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500 [animation-delay:300ms]" />
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[rgb(var(--color-primary))]/50 [animation-delay:0ms]" />
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[rgb(var(--color-primary))]/50 [animation-delay:150ms]" />
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[rgb(var(--color-primary))]/50 [animation-delay:300ms]" />
           </span>
         </div>
         <span className="text-xs italic text-zinc-500 dark:text-zinc-400">{activityLabel}</span>
@@ -253,7 +253,7 @@ export function AskKarmaChat({
       >
         <div className="flex items-center gap-3">
           <div
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 transition-transform duration-300 hover:scale-105 dark:bg-emerald-900/40 dark:text-emerald-300"
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-[rgb(var(--color-primary))]/10 text-[rgb(var(--color-primary-dark))] transition-transform duration-300 hover:scale-105 dark:bg-[rgb(var(--color-primary-dark))]/30 dark:text-[rgb(var(--color-primary-light))]"
             aria-hidden="true"
           >
             <SparklesIcon className="h-5 w-5" />
@@ -269,12 +269,12 @@ export function AskKarmaChat({
           type="button"
           onClick={onBack}
           className={cn(
-            "group flex items-center gap-1.5 rounded-md px-2 py-1 text-sm font-medium text-emerald-700",
+            "group flex items-center gap-1.5 rounded-md px-2 py-1 text-sm font-medium text-[rgb(var(--color-primary-dark))]",
             "transition-all duration-200 ease-out",
-            "hover:bg-emerald-50 hover:text-emerald-900 hover:gap-2",
+            "hover:bg-[rgb(var(--color-primary))]/5 hover:text-zinc-900 hover:gap-2",
             "active:scale-95",
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300",
-            "dark:text-emerald-400 dark:hover:bg-emerald-950/40 dark:hover:text-emerald-200"
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-primary))]/50",
+            "dark:text-[rgb(var(--color-primary-light))] dark:hover:bg-[rgb(var(--color-primary-dark))]/30 dark:hover:text-[rgb(var(--color-primary-light))]"
           )}
         >
           <ArrowLeftIcon
@@ -293,7 +293,7 @@ export function AskKarmaChat({
               "animate-in fade-in duration-500"
             )}
           >
-            <SparklesIcon className="h-8 w-8 text-emerald-500" aria-hidden="true" />
+            <SparklesIcon className="h-8 w-8 text-[rgb(var(--color-primary))]" aria-hidden="true" />
             <p className="text-sm text-zinc-600 dark:text-zinc-300">
               Ask a question to get started.
             </p>
