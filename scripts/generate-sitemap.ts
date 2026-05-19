@@ -50,6 +50,14 @@ function formatLastmod(date: Date): string {
   return date.toISOString().replace(/\.\d{3}Z$/, "Z");
 }
 
+function logInfo(message: string): void {
+  process.stdout.write(`${message}\n`);
+}
+
+function logWarn(message: string): void {
+  process.stderr.write(`${message}\n`);
+}
+
 function computeChunkCount(total: number): number {
   if (total <= 0) return FALLBACK_CHUNKS_PER_KIND;
   return Math.ceil(total / SITEMAP_PAGE_SIZE);
@@ -76,7 +84,7 @@ async function fetchCounts(baseUrl: string): Promise<SitemapCounts | null> {
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       const isLast = attempt === COUNTS_MAX_ATTEMPTS;
-      console.warn(
+      logWarn(
         `[sitemap-gen] counts fetch attempt ${attempt}/${COUNTS_MAX_ATTEMPTS} failed: ${message}${
           isLast ? "" : " — retrying"
         }`
@@ -123,14 +131,14 @@ async function main() {
 
   const baseUrl = process.env.NEXT_PUBLIC_GAP_INDEXER_URL;
   if (!baseUrl) {
-    console.warn(
+    logWarn(
       "[sitemap-gen] NEXT_PUBLIC_GAP_INDEXER_URL is not set — writing fallback sitemapindex."
     );
   }
 
   const counts = baseUrl ? await fetchCounts(baseUrl) : null;
   if (!counts) {
-    console.warn(
+    logWarn(
       "[sitemap-gen] Using fallback counts (one chunk per kind). Build will succeed; Google will discover additional chunks on next deploy."
     );
   }
@@ -141,10 +149,11 @@ async function main() {
   fs.writeFileSync(outPath, xml, "utf-8");
 
   const entryCount = (xml.match(/<sitemap>/g) ?? []).length;
-  console.log(`[sitemap-gen] Wrote ${outPath} (${entryCount} entries)`);
+  logInfo(`[sitemap-gen] Wrote ${outPath} (${entryCount} entries)`);
 }
 
 main().catch((err) => {
-  console.error("[sitemap-gen] Fatal error:", err);
+  const message = err instanceof Error ? (err.stack ?? err.message) : String(err);
+  logWarn(`[sitemap-gen] Fatal error: ${message}`);
   process.exit(1);
 });
