@@ -772,39 +772,18 @@ describe("useAgentStream", () => {
   });
 
   describe("tool history tracking", () => {
-    it("registers a tool_use entry from a stream_event content_block_start", async () => {
-      const sseText = formatSSE([
-        {
-          type: "stream_event",
-          event: {
-            type: "content_block_start",
-            content_block: { type: "tool_use", id: "toolu_1", name: "aggregate_grants" },
-          },
-        },
-      ]);
-      mockFetch.mockResolvedValue(createStreamResponse(sseText));
-
-      const { result } = renderHook(() => useAgentStream(), { wrapper });
-      await act(async () => {
-        await result.current.sendMessage("Find grants");
-      });
-
-      const assistantMsg = useAgentChatStore
-        .getState()
-        .messages.find((m) => m.role === "assistant");
-      expect(assistantMsg?.toolHistory).toEqual([
-        { id: "toolu_1", name: "aggregate_grants", status: "running" },
-      ]);
-    });
-
-    it("registers tool_use entries from a full assistant message as a backstop", async () => {
+    it("registers tool_use entries from an assistant message and strips the MCP prefix", async () => {
+      // Real indexer emits: assistant.message.content[] with tool_use blocks
+      // named "mcp__<server>__<tool>". The hook layer strips the prefix
+      // when emitting tool_result, so the frontend must do the same on
+      // tool_use to keep names matchable.
       const sseText = formatSSE([
         {
           type: "assistant",
           message: {
             content: [
               { type: "text", text: "Looking into that…" },
-              { type: "tool_use", id: "toolu_a", name: "run_sql" },
+              { type: "tool_use", id: "toolu_a", name: "mcp__gap-tools__run_sql" },
             ],
           },
         },
@@ -827,18 +806,31 @@ describe("useAgentStream", () => {
     });
 
     it("dedupes when the same tool appears in both stream_event and assistant event", async () => {
+      // Defensive: stream_event tool_use is forward-compat with a future
+      // indexer that forwards raw Anthropic stream events. Today's indexer
+      // does not, but the dedupe must still work for the day it does.
       const sseText = formatSSE([
         {
           type: "stream_event",
           event: {
             type: "content_block_start",
-            content_block: { type: "tool_use", id: "toolu_same", name: "search_grants" },
+            content_block: {
+              type: "tool_use",
+              id: "toolu_same",
+              name: "mcp__gap-tools__search_grants",
+            },
           },
         },
         {
           type: "assistant",
           message: {
-            content: [{ type: "tool_use", id: "toolu_same", name: "search_grants" }],
+            content: [
+              {
+                type: "tool_use",
+                id: "toolu_same",
+                name: "mcp__gap-tools__search_grants",
+              },
+            ],
           },
         },
       ]);
@@ -853,21 +845,29 @@ describe("useAgentStream", () => {
         .getState()
         .messages.find((m) => m.role === "assistant");
       expect(assistantMsg?.toolHistory).toHaveLength(1);
+      expect(assistantMsg?.toolHistory?.[0].name).toBe("search_grants");
     });
 
-    it("marks a tool as success when tool_result arrives without is_error", async () => {
+    it("marks a tool success on tool_result without tool_use_id by matching tool_name (current indexer)", async () => {
+      // Today's indexer does NOT include tool_use_id on tool_result events
+      // — only tool_name. The frontend falls back to matching the oldest
+      // still-running tool with that base name.
       const sseText = formatSSE([
         {
-          type: "stream_event",
-          event: {
-            type: "content_block_start",
-            content_block: { type: "tool_use", id: "toolu_x", name: "aggregate_grants" },
+          type: "assistant",
+          message: {
+            content: [
+              {
+                type: "tool_use",
+                id: "toolu_x",
+                name: "mcp__gap-tools__aggregate_grants",
+              },
+            ],
           },
         },
         {
           type: "tool_result",
           tool_name: "aggregate_grants",
-          tool_use_id: "toolu_x",
           result: { count: 12 },
         },
       ]);
@@ -884,13 +884,82 @@ describe("useAgentStream", () => {
       expect(assistantMsg?.toolHistory?.[0].status).toBe("success");
     });
 
-    it("marks a tool as error when tool_result carries is_error=true", async () => {
+    it("matches multiple parallel runs of the same tool oldest-first", async () => {
+      // run_sql called twice in a row; tool_result events arrive in the
+      // same sequence the tools were invoked. Oldest-first matching keeps
+      // the order consistent.
       const sseText = formatSSE([
         {
-          type: "stream_event",
-          event: {
-            type: "content_block_start",
-            content_block: { type: "tool_use", id: "toolu_y", name: "run_sql" },
+          type: "assistant",
+          message: {
+            content: [
+              { type: "tool_use", id: "toolu_1", name: "mcp__gap-tools__run_sql" },
+              { type: "tool_use", id: "toolu_2", name: "mcp__gap-tools__run_sql" },
+            ],
+          },
+        },
+        { type: "tool_result", tool_name: "run_sql", result: { ok: true } },
+        { type: "tool_result", tool_name: "run_sql", result: { ok: true } },
+      ]);
+      mockFetch.mockResolvedValue(createStreamResponse(sseText));
+
+      const { result } = renderHook(() => useAgentStream(), { wrapper });
+      await act(async () => {
+        await result.current.sendMessage("ok");
+      });
+
+      const tools = useAgentChatStore
+        .getState()
+        .messages.find((m) => m.role === "assistant")?.toolHistory;
+      expect(tools).toHaveLength(2);
+      expect(tools?.[0]).toMatchObject({ id: "toolu_1", status: "success" });
+      expect(tools?.[1]).toMatchObject({ id: "toolu_2", status: "success" });
+    });
+
+    it("prefers tool_use_id over name fallback when the indexer provides it", async () => {
+      // Forward-compat with the indexer fix that surfaces tool_use_id.
+      // When the id is present we trust it — even if a stale running
+      // tool with the same name happens to be older.
+      const sseText = formatSSE([
+        {
+          type: "assistant",
+          message: {
+            content: [
+              { type: "tool_use", id: "toolu_first", name: "mcp__gap-tools__run_sql" },
+              { type: "tool_use", id: "toolu_second", name: "mcp__gap-tools__run_sql" },
+            ],
+          },
+        },
+        // Result targets the SECOND tool_use explicitly, even though
+        // both are still "running".
+        {
+          type: "tool_result",
+          tool_name: "run_sql",
+          tool_use_id: "toolu_second",
+          result: { ok: true },
+        },
+      ]);
+      mockFetch.mockResolvedValue(createStreamResponse(sseText));
+
+      const { result } = renderHook(() => useAgentStream(), { wrapper });
+      await act(async () => {
+        await result.current.sendMessage("ok");
+      });
+
+      const tools = useAgentChatStore
+        .getState()
+        .messages.find((m) => m.role === "assistant")?.toolHistory;
+      expect(tools?.[0]).toMatchObject({ id: "toolu_first", status: "running" });
+      expect(tools?.[1]).toMatchObject({ id: "toolu_second", status: "success" });
+    });
+
+    it("marks a tool error when tool_result carries is_error=true", async () => {
+      // Forward-compat with the indexer fix that also surfaces is_error.
+      const sseText = formatSSE([
+        {
+          type: "assistant",
+          message: {
+            content: [{ type: "tool_use", id: "toolu_y", name: "mcp__gap-tools__run_sql" }],
           },
         },
         {

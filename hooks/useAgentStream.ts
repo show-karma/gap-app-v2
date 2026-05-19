@@ -66,10 +66,23 @@ function extractDeltaText(event: SSEEvent): string {
 }
 
 /**
+ * The Agent SDK exposes MCP tools to the model under prefixed names of the
+ * form `mcp__<server>__<tool>` so multiple MCP servers can coexist. The
+ * indexer's post-tool-use hook strips the prefix before emitting
+ * `tool_result` events, so we strip it here too — otherwise the prefixed
+ * tool_use names and the unprefixed tool_result names would never match.
+ */
+const MCP_TOOL_PREFIX_RE = /^mcp__[^_]+__/;
+function stripMcpPrefix(name: string): string {
+  return name.replace(MCP_TOOL_PREFIX_RE, "");
+}
+
+/**
  * Returns the tool_use {id, name} when a stream_event represents a
- * content_block_start opening a tool_use block. Anthropic emits this BEFORE
- * the full `assistant` event lands, so surfacing it lets the UI show the
- * tool as "running" the moment the agent decides to call it.
+ * content_block_start opening a tool_use block. The current indexer routes
+ * SDK messages through directly and does NOT yield raw stream_event-shaped
+ * payloads, so this branch is defensive — keeps the parser correct if a
+ * future indexer version forwards Anthropic's raw streaming events.
  */
 function extractToolUseStart(event: SSEEvent): { id: string; name: string } | null {
   const streamEvent = event.event as Record<string, unknown> | undefined;
@@ -78,13 +91,14 @@ function extractToolUseStart(event: SSEEvent): { id: string; name: string } | nu
     | { type?: string; id?: string; name?: string }
     | undefined;
   if (block?.type !== "tool_use" || !block.id || !block.name) return null;
-  return { id: block.id, name: block.name };
+  return { id: block.id, name: stripMcpPrefix(block.name) };
 }
 
 /**
- * Extract every tool_use block from a full assistant message event. Used as
- * a backstop for tool entries that may have missed the per-event stream
- * channel (out-of-order delivery, reconnect, etc.).
+ * Extract every tool_use block from a full assistant message event. Today's
+ * indexer wraps the Agent SDK's `assistant` event raw, so this is the
+ * primary tool-use source for the UI — each turn arrives as one assistant
+ * message containing text + zero or more tool_use blocks.
  */
 function extractToolUsesFromAssistantMessage(event: SSEEvent): Array<{ id: string; name: string }> {
   const message = event.message as Record<string, unknown> | undefined;
@@ -92,7 +106,7 @@ function extractToolUsesFromAssistantMessage(event: SSEEvent): Array<{ id: strin
   const contentBlocks = message.content as Array<{ type: string; id?: string; name?: string }>;
   return contentBlocks
     .filter((b) => b.type === "tool_use" && b.id && b.name)
-    .map((b) => ({ id: b.id as string, name: b.name as string }));
+    .map((b) => ({ id: b.id as string, name: stripMcpPrefix(b.name as string) }));
 }
 
 function extractToolResultData(raw: unknown): Record<string, unknown> {
@@ -331,14 +345,25 @@ export function useAgentStream() {
                 ) {
                   newSlugRef.current = resultData.newSlug;
                 }
-                // Mark the matching tool entry's status. tool_use_id is
-                // the Anthropic SDK's identifier that ties result back to
-                // the originating tool_use block. If it's missing we skip
-                // the update silently — the entry will just stay "running"
-                // until the turn completes, which is acceptable degradation.
-                if (toolUseId) {
+                // Resolve which toolHistory entry this result corresponds to.
+                // Preferred path: the indexer forwards `tool_use_id` (added
+                // in a follow-up indexer change). Fallback: match by name
+                // — find the oldest still-running entry with this base
+                // name. Oldest-first because tools are called sequentially
+                // in agent flow and their results arrive in the same order.
+                let targetId = toolUseId;
+                if (!targetId && toolName) {
+                  const lastAssistant = useAgentChatStore
+                    .getState()
+                    .messages.findLast((m) => m.role === "assistant");
+                  const running = lastAssistant?.toolHistory?.find(
+                    (t) => t.status === "running" && t.name === toolName
+                  );
+                  targetId = running?.id;
+                }
+                if (targetId) {
                   store.updateToolStatusOnLastAssistantMessage(
-                    toolUseId,
+                    targetId,
                     isError ? "error" : "success"
                   );
                 }
