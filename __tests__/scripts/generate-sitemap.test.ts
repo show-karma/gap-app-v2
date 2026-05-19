@@ -17,16 +17,25 @@ function runScript(env: NodeJS.ProcessEnv): string {
 
 describe("generate-sitemap", () => {
   let originalContents: string | null = null;
+  let hadOriginalFile = false;
+
+  function snapshot() {
+    hadOriginalFile = fs.existsSync(OUTPUT);
+    originalContents = hadOriginalFile ? fs.readFileSync(OUTPUT, "utf-8") : null;
+  }
 
   afterEach(() => {
-    if (originalContents !== null) {
+    if (hadOriginalFile && originalContents !== null) {
       fs.writeFileSync(OUTPUT, originalContents, "utf-8");
-      originalContents = null;
+    } else if (!hadOriginalFile && fs.existsSync(OUTPUT)) {
+      fs.unlinkSync(OUTPUT);
     }
+    originalContents = null;
+    hadOriginalFile = false;
   });
 
   it("falls back to a minimal sitemapindex when the indexer is unreachable", () => {
-    originalContents = fs.existsSync(OUTPUT) ? fs.readFileSync(OUTPUT, "utf-8") : "";
+    snapshot();
 
     const xml = runScript({ NEXT_PUBLIC_GAP_INDEXER_URL: "http://127.0.0.1:9" });
 
@@ -39,7 +48,7 @@ describe("generate-sitemap", () => {
   }, 30_000);
 
   it("emits lastmod values without fractional seconds (Google parser strictness)", () => {
-    originalContents = fs.existsSync(OUTPUT) ? fs.readFileSync(OUTPUT, "utf-8") : "";
+    snapshot();
 
     const xml = runScript({ NEXT_PUBLIC_GAP_INDEXER_URL: "http://127.0.0.1:9" });
 

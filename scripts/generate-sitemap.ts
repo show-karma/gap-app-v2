@@ -5,6 +5,8 @@ const PROJECT_ROOT = path.resolve(__dirname, "..");
 const SITE_URL = "https://www.karmahq.xyz";
 const SITEMAP_PAGE_SIZE = 5000;
 const COUNTS_TIMEOUT_MS = 8000;
+const COUNTS_MAX_ATTEMPTS = 3;
+const COUNTS_RETRY_BACKOFF_MS = 1000;
 const FALLBACK_CHUNKS_PER_KIND = 1;
 
 type SitemapKind = "projects" | "impacts" | "grants" | "milestones" | "funding-programs";
@@ -53,25 +55,37 @@ function computeChunkCount(total: number): number {
   return Math.ceil(total / SITEMAP_PAGE_SIZE);
 }
 
-async function fetchCounts(baseUrl: string): Promise<SitemapCounts | null> {
+async function fetchCountsOnce(baseUrl: string): Promise<SitemapCounts | null> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), COUNTS_TIMEOUT_MS);
   try {
     const res = await fetch(`${baseUrl}/v2/sitemap/counts`, { signal: controller.signal });
     if (!res.ok) {
-      console.warn(`[sitemap-gen] counts fetch failed: HTTP ${res.status}`);
-      return null;
+      throw new Error(`HTTP ${res.status}`);
     }
     return (await res.json()) as SitemapCounts;
-  } catch (err) {
-    console.warn(
-      "[sitemap-gen] counts fetch error:",
-      err instanceof Error ? err.message : String(err)
-    );
-    return null;
   } finally {
     clearTimeout(timer);
   }
+}
+
+async function fetchCounts(baseUrl: string): Promise<SitemapCounts | null> {
+  for (let attempt = 1; attempt <= COUNTS_MAX_ATTEMPTS; attempt++) {
+    try {
+      return await fetchCountsOnce(baseUrl);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      const isLast = attempt === COUNTS_MAX_ATTEMPTS;
+      console.warn(
+        `[sitemap-gen] counts fetch attempt ${attempt}/${COUNTS_MAX_ATTEMPTS} failed: ${message}${
+          isLast ? "" : " — retrying"
+        }`
+      );
+      if (isLast) return null;
+      await new Promise((resolve) => setTimeout(resolve, COUNTS_RETRY_BACKOFF_MS * attempt));
+    }
+  }
+  return null;
 }
 
 function buildXml(counts: SitemapCounts | null): string {
