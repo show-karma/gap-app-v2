@@ -3,14 +3,13 @@ import { useQuery } from "@tanstack/react-query";
 import { ChevronLeftIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useParams, usePathname } from "next/navigation";
+import { useParams, usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { HeaderStatsCards } from "@/components/Community/HeaderStatsCards";
 import { CommunityPageNavigator } from "@/components/Pages/Communities/CommunityPageNavigator";
 import { BorderBeam } from "@/components/ui/border-beam";
 import { useDominantColor } from "@/hooks/useDominantColor";
 import { layoutTheme } from "@/src/helper/theme";
-import { useAgentChatStore } from "@/store/agentChat";
 import type { Community } from "@/types/v2/community";
 import { communityColors } from "@/utilities/communityColors";
 import { PAGES } from "@/utilities/pages";
@@ -89,25 +88,18 @@ const NormalCommunityHeader = ({ community }: { community: Community }) => {
   const params = useParams();
   const communityId = (params?.communityId as string) || community?.details?.slug || "";
   const [isMac, setIsMac] = useState(false);
-  const setChatOpen = useAgentChatStore((s) => s.setOpen);
-  const setAgentContext = useAgentChatStore((s) => s.setAgentContext);
+  const router = useRouter();
   const communityName = community?.details?.name || "";
 
-  const openKarmaAssistant = useCallback(() => {
-    if (communityId) {
-      setAgentContext({ communityId });
-    }
-    setChatOpen(true);
-    // Wait for the chat shell + input to mount before focusing.
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        const editor = document.querySelector<HTMLElement>(
-          '[role="textbox"][aria-label="Chat message"]'
-        );
-        editor?.focus();
-      });
-    });
-  }, [communityId, setAgentContext, setChatOpen]);
+  const openAskKarma = useCallback(() => {
+    // The dedicated /ask-karma page replaces the prior floating chat
+    // bubble for this entry point. We still want the keyboard shortcut
+    // and the visible "Ask Karma" pill to land users on the same surface
+    // so they get the full-page experience (start view + chat view +
+    // tool activity panel) rather than the bubble.
+    const target = communityId ? PAGES.COMMUNITY.ASK_KARMA(communityId) : PAGES.ASK_KARMA;
+    router.push(target);
+  }, [communityId, router]);
 
   useEffect(() => {
     if (typeof navigator !== "undefined") {
@@ -129,12 +121,12 @@ const NormalCommunityHeader = ({ community }: { community: Community }) => {
       const mod = isMac ? e.metaKey : e.ctrlKey;
       if (mod && (e.key === "k" || e.key === "K")) {
         e.preventDefault();
-        openKarmaAssistant();
+        openAskKarma();
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isMac, openKarmaAssistant]);
+  }, [isMac, openAskKarma]);
   const { isWhitelabel, config } = useWhitelabel();
   const uid = (community as Community)?.uid?.toLowerCase() || "";
   const slug = community?.details?.slug?.toLowerCase() || "";
@@ -285,7 +277,7 @@ const NormalCommunityHeader = ({ community }: { community: Community }) => {
         >
           <button
             type="button"
-            onClick={openKarmaAssistant}
+            onClick={openAskKarma}
             aria-label={`Ask Karma about ${communityName || "this community"}`}
             className="group relative overflow-hidden inline-flex items-center gap-2 pl-2.5 pr-3.5 py-2 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-full text-[13px] font-medium text-gray-900 dark:text-white shadow-[0_1px_2px_rgba(0,0,0,0.04)] hover:border-brand-500 hover:shadow-[0_0_0_3px_rgba(46,209,168,0.12)] transition-all"
           >

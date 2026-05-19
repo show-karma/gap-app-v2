@@ -63,6 +63,10 @@ const NAVIGATION_ITEMS: readonly NavigationItem[] = [
     path: (communityId: string) => PAGES.COMMUNITY.PROJECTS(communityId),
     title: () => "View funded projects",
     Icon: SquareUser,
+    // "View funded projects" is the default-active tab when no other tab
+    // claims the route — exclude every other community subpath, including
+    // /ask-karma, so visiting the assistant doesn't make this tab look
+    // selected.
     isActive: (pathname: string) =>
       !pathname.includes("/impact") &&
       !pathname.includes("/project-discovery") &&
@@ -71,7 +75,8 @@ const NAVIGATION_ITEMS: readonly NavigationItem[] = [
       !pathname.includes("/funding-opportunities") &&
       !pathname.includes("/browse-applications") &&
       !pathname.includes("/financials") &&
-      !pathname.includes("/reports"),
+      !pathname.includes("/reports") &&
+      !pathname.includes("/ask-karma"),
   },
   {
     id: "milestone-updates",
