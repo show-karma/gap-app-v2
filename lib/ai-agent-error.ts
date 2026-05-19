@@ -19,15 +19,11 @@ interface ApiErrorBody {
 }
 
 // Converts errors from the AI agent API client into something safe to render to
-// users. Axios surfaces raw "Request failed with status code 401" strings that
-// leak implementation detail; this maps known statuses to friendly copy and
-// prefers the server's `message` field when it's present.
+// users. We always prefer the friendly status copy over backend-supplied
+// `message` fields, because those tend to be Python tracebacks, axios noise,
+// or internal IDs that leak implementation detail.
 export function humanizeApiError(err: unknown, fallback = "Something went wrong"): string {
   if (err instanceof AxiosError) {
-    const body = err.response?.data as ApiErrorBody | undefined;
-    if (body && typeof body.message === "string" && body.message.trim()) {
-      return body.message;
-    }
     const status = err.response?.status;
     if (status && STATUS_MESSAGES[status]) {
       return STATUS_MESSAGES[status];
@@ -35,9 +31,26 @@ export function humanizeApiError(err: unknown, fallback = "Something went wrong"
     if (err.code === "ERR_NETWORK") {
       return "Couldn't reach the server. Check your connection.";
     }
+    const body = err.response?.data as ApiErrorBody | undefined;
+    if (body && typeof body.message === "string" && isUserSafeMessage(body.message)) {
+      return body.message;
+    }
   }
-  if (err instanceof Error && err.message && !err.message.startsWith("Request failed")) {
+  if (err instanceof Error && err.message && isUserSafeMessage(err.message)) {
     return err.message;
   }
   return fallback;
+}
+
+// Heuristic: short, sentence-like strings without stack-trace markers are safe
+// to render. Anything that looks like a traceback, JSON payload, or generic
+// transport noise gets swallowed in favor of the fallback copy.
+function isUserSafeMessage(msg: string): boolean {
+  const trimmed = msg.trim();
+  if (!trimmed) return false;
+  if (trimmed.length > 200) return false;
+  if (trimmed.startsWith("Request failed")) return false;
+  if (/\bTraceback\b|\bError:\s*at\s|^\s*at\s|\n\s+at\s/.test(trimmed)) return false;
+  if (trimmed.startsWith("{") || trimmed.startsWith("[")) return false;
+  return true;
 }

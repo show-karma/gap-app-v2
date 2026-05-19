@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { aiAgentClient, type TeamRole } from "@/lib/ai-agent-client";
+import { humanizeApiError } from "@/lib/ai-agent-error";
 
 export interface ChatToolActivity {
   id: string;
@@ -158,9 +159,7 @@ export function useChat(slug: string | undefined, role: TeamRole) {
                   state: wasCancelled ? "cancelled" : "error",
                   errorMessage: wasCancelled
                     ? undefined
-                    : err instanceof Error
-                      ? err.message
-                      : "Stream failed",
+                    : humanizeApiError(err, "Your team couldn't reply. Try again."),
                 }
               : m
           )
@@ -242,7 +241,7 @@ function applyEventToMessage(message: ChatMessage, event: SseEvent): ChatMessage
       return {
         ...message,
         state: "error",
-        errorMessage: event.message ?? "Run failed",
+        errorMessage: "Your team couldn't reply. Try again.",
       };
     default:
       return message;
