@@ -1,10 +1,12 @@
 "use client";
 
-import { AlertCircle, Globe, Hash, KeyRound, Loader2 } from "lucide-react";
+import { AlertCircle, ArrowRight, Globe, Hash, KeyRound, Loader2, Users } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type ReactNode, useState } from "react";
+import { Skeleton } from "@/components/Utilities/Skeleton";
 import { Input } from "@/components/ui/input";
-import { useProvisionOrg } from "@/hooks/useTeam";
+import { useMyOrgs, useProvisionOrg } from "@/hooks/useTeam";
 import { humanizeApiError } from "@/lib/hermes-error";
 import { PAGES } from "@/utilities/pages";
 
@@ -15,12 +17,57 @@ import { PAGES } from "@/utilities/pages";
 export default function OnboardingPage() {
   const router = useRouter();
   const provision = useProvisionOrg();
+  const myOrgs = useMyOrgs();
   const [slug, setSlug] = useState("");
   const [containerUrl, setContainerUrl] = useState("");
   const [sessionToken, setSessionToken] = useState("");
   const [communityId, setCommunityId] = useState("");
 
   const canSubmit = slug && containerUrl && sessionToken && !provision.isPending;
+
+  if (myOrgs.isLoading) {
+    return (
+      <main className="mx-auto max-w-2xl px-6 py-12 space-y-4">
+        <Skeleton className="h-8 w-64 rounded" />
+        <Skeleton className="h-4 w-80 rounded" />
+        <Skeleton className="h-40 w-full rounded" />
+      </main>
+    );
+  }
+
+  const existingOrg = myOrgs.data?.[0];
+  if (existingOrg) {
+    return (
+      <main className="mx-auto max-w-2xl px-6 py-12">
+        <div className="rounded-2xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-8 shadow-sm">
+          <div className="flex items-center gap-3">
+            <span className="grid h-10 w-10 place-items-center rounded-lg bg-gray-900 dark:bg-zinc-100 text-white dark:text-zinc-900">
+              <Users className="h-5 w-5" aria-hidden />
+            </span>
+            <div>
+              <h1 className="text-xl font-semibold text-gray-900 dark:text-zinc-100">
+                You already have a team
+              </h1>
+              <p className="mt-1 text-sm text-gray-600 dark:text-zinc-400">
+                Your AI team{" "}
+                <span className="font-mono text-gray-900 dark:text-zinc-100">
+                  {existingOrg.slug}
+                </span>{" "}
+                is already set up.
+              </p>
+            </div>
+          </div>
+          <Link
+            href={PAGES.TEAM.DIRECTORY(existingOrg.slug)}
+            className="mt-6 inline-flex items-center justify-center gap-2 rounded-md bg-gray-900 dark:bg-zinc-100 px-4 py-2.5 text-sm font-medium text-white dark:text-zinc-900 shadow-sm transition hover:bg-gray-800 dark:hover:bg-zinc-200"
+          >
+            Open your team
+            <ArrowRight className="h-4 w-4" aria-hidden />
+          </Link>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="mx-auto max-w-2xl px-6 py-12">
