@@ -90,10 +90,18 @@ const TENANT_CONFIGS: Partial<Record<KnownTenantId, AskKarmaConfig>> = {
         icon: "settings",
         title: "Navigate filpgf.io",
         links: [
-          // TODO(ask-karma-filecoin): replace placeholder hrefs with real destinations
-          { label: "ProPGF Grantee Guide", href: "https://filpgf.io/propgf", isExternal: true },
-          { label: "Milestone Reviewer Guide", href: "https://filpgf.io/propgf", isExternal: true },
-          { label: "FAQs", href: "https://filpgf.io/propgf", isExternal: true },
+          {
+            label: "ProPGF Grantee Guide",
+            href: "https://docs.gap.karmahq.xyz/how-to-guides/partners/filecoin/propgf-grantee-guide",
+            isExternal: true,
+          },
+          {
+            label: "Milestone Reviewer Guide",
+            href: "https://docs.gap.karmahq.xyz/how-to-guides/partners/filecoin/milestone-reviewer-guide",
+            isExternal: true,
+          },
+          // No href → greyed out ("coming soon")
+          { label: "FAQs" },
         ],
       },
       {
@@ -119,8 +127,8 @@ const TENANT_CONFIGS: Partial<Record<KnownTenantId, AskKarmaConfig>> = {
             href: "https://www.filecoin.io/blog/the-2026-filecoin-network-strategy",
             isExternal: true,
           },
-          // TODO(ask-karma-filecoin): replace placeholder href with real destination
-          { label: "ProPGF Project Impact", href: "https://filpgf.io/propgf", isExternal: true },
+          // No href → greyed out ("coming soon")
+          { label: "ProPGF Project Impact" },
         ],
       },
       {
