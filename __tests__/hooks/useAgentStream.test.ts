@@ -771,11 +771,6 @@ describe("useAgentStream", () => {
     });
   });
 
-  // Tool history tracking lives in useAgentStream.tool-tracking.test.ts to
-  // keep this file under its size limit. See that file for SSE → toolHistory
-  // pipeline coverage (tool_use extraction, MCP prefix stripping, name-based
-  // fallback matching, error mapping).
-
   describe("sendConfirmation", () => {
     it("should update tool result status to approved and send approval message", async () => {
       // First, set up a message with a pending tool result
