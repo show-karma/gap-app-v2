@@ -40,17 +40,27 @@ export const WELL_KNOWN_ERROR_HEADERS = {
 } as const;
 
 /**
- * Returns the indexer base URL or throws if it is unset.
+ * Returns the indexer base URL or throws if it is unset or malformed.
  *
  * The /.well-known/* route handlers depend on this URL at build time
  * (`force-static` + ISR). A misconfigured deploy without
  * NEXT_PUBLIC_GAP_INDEXER_URL would otherwise ship `undefined/v2/...` to
  * production. This helper makes that fail loudly during `next build`.
+ *
+ * Format validation via `URL.canParse` catches missing schemes
+ * (`gapapi.karmahq.xyz` instead of `https://gapapi.karmahq.xyz`) and
+ * structurally invalid URLs. It does NOT catch typos with a valid scheme
+ * (e.g. `https://gapap.karmahq.xyz`) — those still ship.
  */
 export function getIndexerBaseUrl(): string {
   const url = envVars.NEXT_PUBLIC_GAP_INDEXER_URL;
   if (!url || typeof url !== "string" || url.trim() === "") {
     throw new Error("NEXT_PUBLIC_GAP_INDEXER_URL is not set. Required for /.well-known/* routes.");
+  }
+  if (!URL.canParse(url)) {
+    throw new Error(
+      `NEXT_PUBLIC_GAP_INDEXER_URL is not a valid URL: "${url}". Expected a fully-qualified URL like https://gapapi.karmahq.xyz.`
+    );
   }
   return url;
 }

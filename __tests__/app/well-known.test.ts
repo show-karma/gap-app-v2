@@ -276,4 +276,20 @@ describe("getIndexerBaseUrl helper", () => {
     const { getIndexerBaseUrl } = await import("@/utilities/wellKnown");
     expect(() => getIndexerBaseUrl()).toThrow(/NEXT_PUBLIC_GAP_INDEXER_URL is not set/);
   });
+
+  it("throws when NEXT_PUBLIC_GAP_INDEXER_URL has no scheme", async () => {
+    vi.doMock("@/utilities/enviromentVars", () => ({
+      envVars: { NEXT_PUBLIC_GAP_INDEXER_URL: "gapapi.karmahq.xyz" },
+    }));
+    const { getIndexerBaseUrl } = await import("@/utilities/wellKnown");
+    expect(() => getIndexerBaseUrl()).toThrow(/is not a valid URL/);
+  });
+
+  it("throws when NEXT_PUBLIC_GAP_INDEXER_URL is structurally malformed", async () => {
+    vi.doMock("@/utilities/enviromentVars", () => ({
+      envVars: { NEXT_PUBLIC_GAP_INDEXER_URL: "https://" },
+    }));
+    const { getIndexerBaseUrl } = await import("@/utilities/wellKnown");
+    expect(() => getIndexerBaseUrl()).toThrow(/is not a valid URL/);
+  });
 });
