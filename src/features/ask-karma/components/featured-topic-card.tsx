@@ -51,20 +51,32 @@ export function FeaturedTopicCard({ topic }: FeaturedTopicCardProps) {
       {topic.links && topic.links.length > 0 && (
         <ul className="flex flex-col gap-2">
           {topic.links.map((link) => (
-            <li key={`${link.label}-${link.href}`}>
-              <Link
-                href={link.href}
-                target={link.isExternal ? "_blank" : undefined}
-                rel={link.isExternal ? "noopener noreferrer" : undefined}
-                className={cn(
-                  "inline-flex items-center text-sm font-medium text-[rgb(var(--color-primary-dark))]",
-                  "underline-offset-4 transition-all duration-150",
-                  "hover:underline hover:translate-x-0.5",
-                  "dark:text-[rgb(var(--color-primary-light))]"
-                )}
-              >
-                {link.label}
-              </Link>
+            <li key={`${link.label}-${link.href ?? ""}`}>
+              {link.href ? (
+                <Link
+                  href={link.href}
+                  target={link.isExternal ? "_blank" : undefined}
+                  rel={link.isExternal ? "noopener noreferrer" : undefined}
+                  className={cn(
+                    "inline-flex items-center text-sm font-medium text-[rgb(var(--color-primary-dark))]",
+                    "underline-offset-4 transition-all duration-150",
+                    "hover:underline hover:translate-x-0.5",
+                    "dark:text-[rgb(var(--color-primary-light))]"
+                  )}
+                >
+                  {link.label}
+                </Link>
+              ) : (
+                // "Coming soon" — render the label but muted and
+                // non-interactive so users can see it's a planned topic
+                // without it pretending to be navigable.
+                <span
+                  aria-disabled="true"
+                  className="inline-flex cursor-not-allowed items-center text-sm font-medium text-zinc-400 dark:text-zinc-600"
+                >
+                  {link.label}
+                </span>
+              )}
             </li>
           ))}
         </ul>
