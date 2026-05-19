@@ -112,6 +112,11 @@ function ToolHistoryRow({ tool }: { tool: ToolHistoryEvent }) {
       className="flex items-center gap-2 text-xs"
     >
       <span aria-hidden="true" className="inline-flex h-3.5 w-3.5 items-center justify-center">
+        {/* Status icons keep their universal semantic colours — emerald for
+            success, red for failure — even on tenants whose brand colour
+            differs. Reading "✓" as success is a stronger UX cue than
+            matching the tenant palette. Do NOT swap these for
+            --color-primary in a tenant-theming pass. */}
         {tool.status === "success" && (
           <CheckIcon className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
         )}
