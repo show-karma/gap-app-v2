@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { AskKarmaPage } from "@/src/features/ask-karma/components/ask-karma-page";
 import { getAskKarmaConfig } from "@/src/features/ask-karma/config";
 import { SITE_URL, twitterMeta } from "@/utilities/meta";
+import { PAGES } from "@/utilities/pages";
 import { getWhitelabelContext } from "@/utilities/whitelabel-server";
 
 async function resolveTenant() {
@@ -20,11 +21,11 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title,
     description,
-    alternates: { canonical: "/ask-karma" },
+    alternates: { canonical: PAGES.ASK_KARMA },
     twitter: { ...twitterMeta, title, description },
     openGraph: {
       type: "website",
-      url: `${SITE_URL}/ask-karma`,
+      url: `${SITE_URL}${PAGES.ASK_KARMA}`,
       title,
       description,
     },
@@ -33,7 +34,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function RootAskKarmaPage() {
   const { tenantId, communitySlug } = await resolveTenant();
-  const config = getAskKarmaConfig(tenantId, communitySlug ?? null);
+  const config = getAskKarmaConfig(tenantId);
 
   return <AskKarmaPage config={config} communityId={communitySlug} />;
 }

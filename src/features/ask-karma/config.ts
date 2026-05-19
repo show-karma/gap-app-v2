@@ -1,4 +1,4 @@
-import type { TenantId } from "@/src/infrastructure/types/tenant";
+import { isKnownTenant, type KnownTenantId } from "@/src/infrastructure/types/tenant";
 import type { AskKarmaConfig } from "./types";
 
 const DEFAULT_CONFIG: AskKarmaConfig = {
@@ -21,6 +21,7 @@ const DEFAULT_CONFIG: AskKarmaConfig = {
       title: "Open Funding Rounds",
       description: "Browse active programs accepting applications",
       links: [
+        // TODO(ask-karma): replace placeholder hrefs with real destinations
         { label: "View open rounds", href: "/funding-opportunities" },
         { label: "How applications work", href: "/" },
       ],
@@ -35,6 +36,7 @@ const DEFAULT_CONFIG: AskKarmaConfig = {
       icon: "settings",
       title: "Project Management",
       links: [
+        // TODO(ask-karma): replace placeholder hrefs with real destinations
         { label: "Submit a milestone update", href: "/my-projects" },
         { label: "Update project profile", href: "/my-projects" },
         { label: "FAQs", href: "/" },
@@ -45,12 +47,12 @@ const DEFAULT_CONFIG: AskKarmaConfig = {
   assistantSubtitle: "Here to help 24/7",
 };
 
-const TENANT_CONFIGS: Partial<Record<TenantId, AskKarmaConfig>> = {
+// Tenant-specific configs override DEFAULT_CONFIG. Shared boilerplate fields
+// (assistantTitle, subheading, etc.) flow through the spread so future
+// per-tenant configs stay minimal — override only what differs.
+const TENANT_CONFIGS: Partial<Record<KnownTenantId, AskKarmaConfig>> = {
   filecoin: {
-    heading: "Ask us anything",
-    subheading: "Learn how funding works, track project progress, and discover ecosystem insights.",
-    inputPlaceholder: "Questions? Ask the Karma Assistant",
-    examplesIntro: "Some examples to get the juices flowing:",
+    ...DEFAULT_CONFIG,
     exampleQuestions: [
       "How do I submit a milestone update for my project?",
       "Why can't I access the project I am reviewing?",
@@ -59,12 +61,12 @@ const TENANT_CONFIGS: Partial<Record<TenantId, AskKarmaConfig>> = {
       "What is the typical payment timeline after invoice submission?",
       "Are there retrospective reports from previous funding rounds?",
     ],
-    featuredTopicsHeading: "Check out these featured topics",
     featuredTopics: [
       {
         icon: "dollar",
         title: "The Next ProPGF Round (General Track)",
         links: [
+          // TODO(ask-karma-filecoin): replace placeholder hrefs with real destinations
           { label: "Round 3 Announcement", href: "https://filpgf.io/propgf", isExternal: true },
           { label: "Selection Committee", href: "https://filpgf.io/propgf", isExternal: true },
           {
@@ -84,6 +86,7 @@ const TENANT_CONFIGS: Partial<Record<TenantId, AskKarmaConfig>> = {
         icon: "settings",
         title: "Navigate filpgf.io",
         links: [
+          // TODO(ask-karma-filecoin): replace placeholder hrefs with real destinations
           { label: "ProPGF Grantee Guide", href: "https://filpgf.io/propgf", isExternal: true },
           { label: "Milestone Reviewer Guide", href: "https://filpgf.io/propgf", isExternal: true },
           { label: "FAQs", href: "https://filpgf.io/propgf", isExternal: true },
@@ -93,6 +96,7 @@ const TENANT_CONFIGS: Partial<Record<TenantId, AskKarmaConfig>> = {
         icon: "document",
         title: "Focus Areas",
         links: [
+          // TODO(ask-karma-filecoin): replace placeholder hrefs with real destinations
           { label: "Large Data Onboarding", href: "https://filpgf.io/propgf", isExternal: true },
           { label: "Filecoin Onchain Cloud", href: "https://filpgf.io/propgf", isExternal: true },
           { label: "Fil.one", href: "https://filpgf.io/propgf", isExternal: true },
@@ -102,6 +106,7 @@ const TENANT_CONFIGS: Partial<Record<TenantId, AskKarmaConfig>> = {
         icon: "chart",
         title: "Metrics and Strategy",
         links: [
+          // TODO(ask-karma-filecoin): replace placeholder hrefs with real destinations
           { label: "2026 Network Strategy", href: "https://filpgf.io/propgf", isExternal: true },
           { label: "ProPGF Project Impact", href: "https://filpgf.io/propgf", isExternal: true },
         ],
@@ -115,17 +120,18 @@ const TENANT_CONFIGS: Partial<Record<TenantId, AskKarmaConfig>> = {
         ],
       },
     ],
-    assistantTitle: "Karma Assistant",
-    assistantSubtitle: "Here to help 24/7",
   },
 };
 
-export function getAskKarmaConfig(
-  tenantId?: TenantId | string | null,
-  _communitySlug?: string | null
-): AskKarmaConfig {
-  if (tenantId && TENANT_CONFIGS[tenantId as TenantId]) {
-    return TENANT_CONFIGS[tenantId as TenantId] as AskKarmaConfig;
+/**
+ * Resolve the ask-karma config for a tenant. Accepts either a known tenant
+ * id or an arbitrary community slug — falls through to DEFAULT_CONFIG when
+ * the lookup key isn't a known tenant. The `isKnownTenant` type guard keeps
+ * the table lookup type-safe without an `as` cast.
+ */
+export function getAskKarmaConfig(lookupKey?: string | null): AskKarmaConfig {
+  if (lookupKey && isKnownTenant(lookupKey)) {
+    return TENANT_CONFIGS[lookupKey] ?? DEFAULT_CONFIG;
   }
   return DEFAULT_CONFIG;
 }

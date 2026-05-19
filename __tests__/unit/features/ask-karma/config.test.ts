@@ -28,6 +28,21 @@ describe("getAskKarmaConfig", () => {
     expect(config.featuredTopics.some((t) => t.title.includes("ProPGF"))).toBe(true);
   });
 
+  it("returns the default config for a known tenant that has no override", () => {
+    // optimism is a known tenant id but isn't in TENANT_CONFIGS — should
+    // fall through to DEFAULT_CONFIG, not throw or return undefined.
+    const config = getAskKarmaConfig("optimism");
+    expect(config.heading).toBe("Ask us anything");
+    expect(config.assistantTitle).toBe("Karma Assistant");
+  });
+
+  it("returns the default config for an arbitrary community slug (not a known tenant)", () => {
+    // An unrecognized community slug must NOT match a tenant config by
+    // coincidence — the isKnownTenant guard is what enforces this.
+    const config = getAskKarmaConfig("some-random-community-uid-or-slug");
+    expect(config).toEqual(getAskKarmaConfig());
+  });
+
   it("returns featured topics that are well-formed", () => {
     const config = getAskKarmaConfig("filecoin");
     for (const topic of config.featuredTopics) {

@@ -160,6 +160,17 @@ export const PAGES = {
 };
 
 /**
+ * Detects pathnames that belong to the ask-karma feature — both the root
+ * `/ask-karma` route and the community-scoped `/community/<slug>/ask-karma`
+ * route. Lives next to the route constants so any rename here updates the
+ * detection automatically.
+ */
+const ASK_KARMA_COMMUNITY_PATTERN = /^\/community\/[^/]+\/ask-karma$/;
+export function isAskKarmaPathname(pathname: string): boolean {
+  return pathname === PAGES.ASK_KARMA || ASK_KARMA_COMMUNITY_PATTERN.test(pathname);
+}
+
+/**
  * First path segments under /community/[communityId]/ that should be rewritten
  * in whitelabel mode. Derived from PAGES.COMMUNITY route definitions and
  * filesystem route directories. This is the single source of truth — used by

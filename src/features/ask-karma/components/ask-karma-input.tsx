@@ -65,7 +65,7 @@ export function AskKarmaInput({
         onKeyDown={handleKeyDown}
         rows={1}
         placeholder={placeholder}
-        aria-label={placeholder}
+        aria-label="Message Karma Assistant"
         className={cn(
           "max-h-40 min-h-[24px] flex-1 resize-none bg-transparent text-sm",
           "text-zinc-900 placeholder:text-zinc-400 outline-none",

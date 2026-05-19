@@ -182,7 +182,7 @@ export function AskKarmaStart({ config, onSubmit }: AskKarmaStartProps) {
           onKeyDown={handleKeyDown}
           readOnly={inputDisabled}
           placeholder={config.inputPlaceholder}
-          aria-label={config.inputPlaceholder}
+          aria-label="Ask Karma Assistant a question"
           data-testid="ask-karma-search-input"
           className={cn(
             "w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 pr-12 text-sm",
