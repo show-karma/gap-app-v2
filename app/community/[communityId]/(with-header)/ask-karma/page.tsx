@@ -18,7 +18,7 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   }
 
   const communityName = community.details.name;
-  const title = `Ask ${communityName} — AI Assistant`;
+  const title = `Ask ${communityName} — Karma Assistant`;
   const description = `Ask anything about ${communityName} — funding rounds, project progress, milestones, and ecosystem insights.`;
 
   return {

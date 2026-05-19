@@ -7,7 +7,7 @@ describe("getAskKarmaConfig", () => {
     expect(config.heading).toBe("Ask us anything");
     expect(config.exampleQuestions.length).toBeGreaterThan(0);
     expect(config.featuredTopics.length).toBeGreaterThan(0);
-    expect(config.assistantTitle).toBe("AI Assistant");
+    expect(config.assistantTitle).toBe("Karma Assistant");
   });
 
   it("returns the default config when the tenant id is unknown", () => {

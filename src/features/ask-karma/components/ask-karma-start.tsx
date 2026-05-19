@@ -199,7 +199,7 @@ export function AskKarmaStart({ config, onSubmit }: AskKarmaStartProps) {
         />
         <button
           type="submit"
-          aria-label="Ask the AI Assistant"
+          aria-label="Ask the Karma Assistant"
           className={cn(
             "absolute right-2 top-1/2 -translate-y-1/2",
             "flex h-8 w-8 items-center justify-center rounded-full",

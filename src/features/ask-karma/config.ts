@@ -4,7 +4,7 @@ import type { AskKarmaConfig } from "./types";
 const DEFAULT_CONFIG: AskKarmaConfig = {
   heading: "Ask us anything",
   subheading: "Learn how funding works, track project progress, and discover ecosystem insights.",
-  inputPlaceholder: "Questions? Ask the AI Assistant",
+  inputPlaceholder: "Questions? Ask the Karma Assistant",
   examplesIntro: "Some examples to get the juices flowing:",
   exampleQuestions: [
     "How do I submit a milestone update for my project?",
@@ -41,7 +41,7 @@ const DEFAULT_CONFIG: AskKarmaConfig = {
       ],
     },
   ],
-  assistantTitle: "AI Assistant",
+  assistantTitle: "Karma Assistant",
   assistantSubtitle: "Here to help 24/7",
 };
 
@@ -49,7 +49,7 @@ const TENANT_CONFIGS: Partial<Record<TenantId, AskKarmaConfig>> = {
   filecoin: {
     heading: "Ask us anything",
     subheading: "Learn how funding works, track project progress, and discover ecosystem insights.",
-    inputPlaceholder: "Questions? Ask the AI Assistant",
+    inputPlaceholder: "Questions? Ask the Karma Assistant",
     examplesIntro: "Some examples to get the juices flowing:",
     exampleQuestions: [
       "How do I submit a milestone update for my project?",
@@ -115,7 +115,7 @@ const TENANT_CONFIGS: Partial<Record<TenantId, AskKarmaConfig>> = {
         ],
       },
     ],
-    assistantTitle: "AI Assistant",
+    assistantTitle: "Karma Assistant",
     assistantSubtitle: "Here to help 24/7",
   },
 };

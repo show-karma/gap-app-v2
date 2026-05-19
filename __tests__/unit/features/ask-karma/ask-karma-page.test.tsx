@@ -33,7 +33,7 @@ const config: AskKarmaConfig = {
   exampleQuestions: ["Hi?"],
   featuredTopicsHeading: "Topics",
   featuredTopics: [],
-  assistantTitle: "AI Assistant",
+  assistantTitle: "Karma Assistant",
   assistantSubtitle: "Here to help 24/7",
 };
 
