@@ -1,6 +1,6 @@
 "use client";
 
-import { Building2, Compass, KanbanSquare, type LucideIcon, Puzzle, Users } from "lucide-react";
+import { Building2, KanbanSquare, type LucideIcon, Puzzle, Users } from "lucide-react";
 import Link from "next/link";
 import { useParams, usePathname } from "next/navigation";
 import { PAGES } from "@/utilities/pages";
@@ -10,46 +10,33 @@ interface NavLink {
   label: string;
   icon: LucideIcon;
   match: (pathname: string, slug: string) => boolean;
-  /** Show only when slug is present (i.e., team is set up), except onboarding */
-  requiresSlug: boolean;
 }
 
 const NAV: NavLink[] = [
-  {
-    href: () => PAGES.TEAM.ONBOARDING,
-    label: "Onboarding",
-    icon: Compass,
-    match: (p) => p === PAGES.TEAM.ONBOARDING,
-    requiresSlug: false,
-  },
   {
     href: (slug) => PAGES.TEAM.DIRECTORY(slug),
     label: "Team",
     icon: Users,
     match: (p, slug) =>
       p === PAGES.TEAM.DIRECTORY(slug) || p.startsWith(`${PAGES.TEAM.DIRECTORY(slug)}/`),
-    requiresSlug: true,
   },
   {
     href: (slug) => PAGES.ORG(slug),
     label: "Org Brain",
     icon: Building2,
     match: (p, slug) => p === PAGES.ORG(slug),
-    requiresSlug: true,
   },
   {
     href: (slug) => PAGES.WORK(slug),
     label: "Work",
     icon: KanbanSquare,
     match: (p, slug) => p === PAGES.WORK(slug),
-    requiresSlug: true,
   },
   {
     href: (slug) => PAGES.SKILLS(slug),
     label: "Skills",
     icon: Puzzle,
     match: (p, slug) => p === PAGES.SKILLS(slug) || p.startsWith(`${PAGES.SKILLS(slug)}/`),
-    requiresSlug: true,
   },
 ];
 
@@ -60,10 +47,9 @@ export function NonprofitSidebar() {
   const params = useParams<{ slug?: string }>();
   const slug = params.slug;
 
-  const visible = NAV.filter((link) => {
-    if (!link.requiresSlug) return true;
-    return Boolean(slug);
-  });
+  // Without a slug we're on a non-team route (e.g. /onboarding) — nothing
+  // in the sidebar applies yet.
+  const visible = slug ? NAV : [];
 
   return (
     <aside className="hidden w-60 shrink-0 border-r border-gray-200 dark:border-zinc-800 bg-gray-50/40 dark:bg-zinc-900 md:block">
@@ -84,7 +70,7 @@ export function NonprofitSidebar() {
         <ul className="space-y-0.5">
           {visible.map((link) => {
             const href = link.href(slug ?? "");
-            const active = slug ? link.match(pathname, slug) : pathname === PAGES.TEAM.ONBOARDING;
+            const active = slug ? link.match(pathname, slug) : false;
             const Icon = link.icon;
             return (
               <li key={link.label}>
