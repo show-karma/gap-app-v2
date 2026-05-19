@@ -3,12 +3,12 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-hot-toast";
 import {
+  aiAgentClient,
   type BrandData,
-  hermesClient,
   type MissionData,
   type OrgBrainResponse,
   type OrgBrainTopic,
-} from "@/lib/hermes-client";
+} from "@/lib/ai-agent-client";
 
 const brainKeys = {
   all: ["org-brain"] as const,
@@ -22,14 +22,14 @@ export function useOrgBrain<TData = Record<string, unknown>>(
   return useQuery<OrgBrainResponse<TData>>({
     queryKey: brainKeys.topic(slug ?? "anon", topic),
     enabled: Boolean(slug),
-    queryFn: () => hermesClient.getOrgBrain<TData>(slug as string, topic),
+    queryFn: () => aiAgentClient.getOrgBrain<TData>(slug as string, topic),
   });
 }
 
 export function useUpdateMission(slug: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (payload: MissionData) => hermesClient.putOrgBrain(slug, "mission", payload),
+    mutationFn: (payload: MissionData) => aiAgentClient.putOrgBrain(slug, "mission", payload),
     onMutate: async (payload) => {
       await qc.cancelQueries({ queryKey: brainKeys.topic(slug, "mission") });
       const previous = qc.getQueryData<OrgBrainResponse<MissionData>>(
@@ -56,7 +56,7 @@ export function useUpdateMission(slug: string) {
 export function useUpdateBrand(slug: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (payload: BrandData) => hermesClient.putOrgBrain(slug, "brand", payload),
+    mutationFn: (payload: BrandData) => aiAgentClient.putOrgBrain(slug, "brand", payload),
     onMutate: async (payload) => {
       await qc.cancelQueries({ queryKey: brainKeys.topic(slug, "brand") });
       const previous = qc.getQueryData<OrgBrainResponse<BrandData>>(brainKeys.topic(slug, "brand"));

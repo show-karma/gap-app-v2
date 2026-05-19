@@ -1,6 +1,6 @@
 "use client";
 
-import { humanizeApiError } from "@/lib/hermes-error";
+import { humanizeApiError } from "@/lib/ai-agent-error";
 
 export default function AITeamListError({
   error,

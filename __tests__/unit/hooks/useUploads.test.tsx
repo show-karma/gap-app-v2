@@ -2,7 +2,7 @@
  * @file Tests for useUploads hooks (chat uploads + task attachments).
  *
  * Cache invalidation and the per-mutation success/error paths are the
- * load-bearing behavior — the actual HTTP work happens inside hermesClient
+ * load-bearing behavior — the actual HTTP work happens inside the agent backend client
  * which has its own unit tests at the indexer layer.
  */
 
@@ -19,10 +19,10 @@ import {
   useUploadChatFile,
   useUploadTaskAttachment,
 } from "@/hooks/useUploads";
-import { hermesClient } from "@/lib/hermes-client";
+import { aiAgentClient } from "@/lib/ai-agent-client";
 
-vi.mock("@/lib/hermes-client", () => ({
-  hermesClient: {
+vi.mock("@/lib/ai-agent-client", () => ({
+  aiAgentClient: {
     listChatUploads: vi.fn(),
     uploadChatFile: vi.fn(),
     deleteChatFile: vi.fn(),
@@ -33,8 +33,8 @@ vi.mock("@/lib/hermes-client", () => ({
 }));
 
 // Typed helper so mocks don't require `as any` casts.
-const mockClient = hermesClient as {
-  [K in keyof typeof hermesClient]: ReturnType<typeof vi.fn>;
+const mockClient = aiAgentClient as {
+  [K in keyof typeof aiAgentClient]: ReturnType<typeof vi.fn>;
 };
 
 vi.mock("react-hot-toast", () => ({
@@ -70,14 +70,14 @@ describe("useChatUploads", () => {
     });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(result.current.data).toHaveLength(1);
-    expect(hermesClient.listChatUploads).toHaveBeenCalledWith("acme", "fundraiser");
+    expect(aiAgentClient.listChatUploads).toHaveBeenCalledWith("acme", "fundraiser");
   });
 
   it("is disabled until a slug is provided", () => {
     renderHook(() => useChatUploads(undefined, "fundraiser"), {
       wrapper: wrap(makeClient()),
     });
-    expect(hermesClient.listChatUploads).not.toHaveBeenCalled();
+    expect(aiAgentClient.listChatUploads).not.toHaveBeenCalled();
   });
 });
 
@@ -143,14 +143,14 @@ describe("useTaskAttachments", () => {
       wrapper: wrap(makeClient()),
     });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(hermesClient.listTaskAttachments).toHaveBeenCalledWith("acme", "t_abc");
+    expect(aiAgentClient.listTaskAttachments).toHaveBeenCalledWith("acme", "t_abc");
   });
 
   it("is disabled if either slug or taskId is missing", () => {
     renderHook(() => useTaskAttachments("acme", undefined), {
       wrapper: wrap(makeClient()),
     });
-    expect(hermesClient.listTaskAttachments).not.toHaveBeenCalled();
+    expect(aiAgentClient.listTaskAttachments).not.toHaveBeenCalled();
   });
 });
 

@@ -9,10 +9,10 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
 import type React from "react";
 import { useInstallSkill, useUninstallSkill } from "@/hooks/useSkills";
-import { type HermesSkillSummary, hermesClient } from "@/lib/hermes-client";
+import { type AIAgentSkillSummary, aiAgentClient } from "@/lib/ai-agent-client";
 
-vi.mock("@/lib/hermes-client", () => ({
-  hermesClient: {
+vi.mock("@/lib/ai-agent-client", () => ({
+  aiAgentClient: {
     listAvailableSkills: vi.fn(),
     listProfileSkills: vi.fn(),
     installProfileSkill: vi.fn(),
@@ -24,8 +24,8 @@ vi.mock("react-hot-toast", () => ({
   toast: Object.assign(vi.fn(), { error: vi.fn(), success: vi.fn() }),
 }));
 
-const mockClient = hermesClient as {
-  [K in keyof typeof hermesClient]: ReturnType<typeof vi.fn>;
+const mockClient = aiAgentClient as {
+  [K in keyof typeof aiAgentClient]: ReturnType<typeof vi.fn>;
 };
 
 function wrap(client: QueryClient) {
@@ -40,10 +40,10 @@ function makeClient() {
   });
 }
 
-const PROFILE_KEY = ["hermes-skills", "profile", "acme", "fundraiser"];
-const AVAILABLE_KEY = ["hermes-skills", "available", "acme"];
+const PROFILE_KEY = ["ai-agent-skills", "profile", "acme", "fundraiser"];
+const AVAILABLE_KEY = ["ai-agent-skills", "available", "acme"];
 
-const installedSkills: HermesSkillSummary[] = [
+const installedSkills: AIAgentSkillSummary[] = [
   {
     id: "grant-tracker/grant-tracker",
     namespace: "grant-tracker",
@@ -54,7 +54,7 @@ const installedSkills: HermesSkillSummary[] = [
   },
 ];
 
-const availableSkill: HermesSkillSummary = {
+const availableSkill: AIAgentSkillSummary = {
   id: "email-drafter/email-drafter",
   namespace: "email-drafter",
   name: "Email Drafter",
@@ -75,8 +75,8 @@ describe("useInstallSkill", () => {
     });
 
     const qc = makeClient();
-    qc.setQueryData<HermesSkillSummary[]>(PROFILE_KEY, installedSkills);
-    qc.setQueryData<HermesSkillSummary[]>(AVAILABLE_KEY, [availableSkill]);
+    qc.setQueryData<AIAgentSkillSummary[]>(PROFILE_KEY, installedSkills);
+    qc.setQueryData<AIAgentSkillSummary[]>(AVAILABLE_KEY, [availableSkill]);
 
     const { result } = renderHook(() => useInstallSkill("acme", "fundraiser"), {
       wrapper: wrap(qc),
@@ -85,7 +85,7 @@ describe("useInstallSkill", () => {
     result.current.mutate("email-drafter/email-drafter");
 
     await waitFor(() => {
-      const skills = qc.getQueryData<HermesSkillSummary[]>(PROFILE_KEY);
+      const skills = qc.getQueryData<AIAgentSkillSummary[]>(PROFILE_KEY);
       expect(skills?.some((s) => s.id === availableSkill.id)).toBe(true);
     });
 
@@ -96,8 +96,8 @@ describe("useInstallSkill", () => {
     mockClient.installProfileSkill.mockRejectedValue(new Error("install failed"));
 
     const qc = makeClient();
-    qc.setQueryData<HermesSkillSummary[]>(PROFILE_KEY, installedSkills);
-    qc.setQueryData<HermesSkillSummary[]>(AVAILABLE_KEY, [availableSkill]);
+    qc.setQueryData<AIAgentSkillSummary[]>(PROFILE_KEY, installedSkills);
+    qc.setQueryData<AIAgentSkillSummary[]>(AVAILABLE_KEY, [availableSkill]);
 
     const { result } = renderHook(() => useInstallSkill("acme", "fundraiser"), {
       wrapper: wrap(qc),
@@ -107,7 +107,7 @@ describe("useInstallSkill", () => {
 
     await waitFor(() => expect(result.current.isError).toBe(true));
 
-    const skills = qc.getQueryData<HermesSkillSummary[]>(PROFILE_KEY);
+    const skills = qc.getQueryData<AIAgentSkillSummary[]>(PROFILE_KEY);
     // Rolled back — only the original skill remains
     expect(skills).toHaveLength(1);
     expect(skills?.[0].id).toBe("grant-tracker/grant-tracker");
@@ -120,8 +120,8 @@ describe("useInstallSkill", () => {
     });
 
     const qc = makeClient();
-    qc.setQueryData<HermesSkillSummary[]>(PROFILE_KEY, installedSkills);
-    qc.setQueryData<HermesSkillSummary[]>(AVAILABLE_KEY, []); // empty available list
+    qc.setQueryData<AIAgentSkillSummary[]>(PROFILE_KEY, installedSkills);
+    qc.setQueryData<AIAgentSkillSummary[]>(AVAILABLE_KEY, []); // empty available list
 
     const { result } = renderHook(() => useInstallSkill("acme", "fundraiser"), {
       wrapper: wrap(qc),
@@ -131,7 +131,7 @@ describe("useInstallSkill", () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-    const skills = qc.getQueryData<HermesSkillSummary[]>(PROFILE_KEY);
+    const skills = qc.getQueryData<AIAgentSkillSummary[]>(PROFILE_KEY);
     // Cache unchanged since skill wasn't in available list
     expect(skills).toHaveLength(1);
   });
@@ -145,7 +145,7 @@ describe("useUninstallSkill", () => {
     });
 
     const qc = makeClient();
-    qc.setQueryData<HermesSkillSummary[]>(PROFILE_KEY, installedSkills);
+    qc.setQueryData<AIAgentSkillSummary[]>(PROFILE_KEY, installedSkills);
 
     const { result } = renderHook(() => useUninstallSkill("acme", "fundraiser"), {
       wrapper: wrap(qc),
@@ -154,7 +154,7 @@ describe("useUninstallSkill", () => {
     result.current.mutate({ namespace: "grant-tracker", skillId: "grant-tracker" });
 
     await waitFor(() => {
-      const skills = qc.getQueryData<HermesSkillSummary[]>(PROFILE_KEY);
+      const skills = qc.getQueryData<AIAgentSkillSummary[]>(PROFILE_KEY);
       expect(skills?.some((s) => s.id === "grant-tracker/grant-tracker")).toBe(false);
     });
 
@@ -165,7 +165,7 @@ describe("useUninstallSkill", () => {
     mockClient.uninstallProfileSkill.mockRejectedValue(new Error("uninstall failed"));
 
     const qc = makeClient();
-    qc.setQueryData<HermesSkillSummary[]>(PROFILE_KEY, installedSkills);
+    qc.setQueryData<AIAgentSkillSummary[]>(PROFILE_KEY, installedSkills);
 
     const { result } = renderHook(() => useUninstallSkill("acme", "fundraiser"), {
       wrapper: wrap(qc),
@@ -175,7 +175,7 @@ describe("useUninstallSkill", () => {
 
     await waitFor(() => expect(result.current.isError).toBe(true));
 
-    const skills = qc.getQueryData<HermesSkillSummary[]>(PROFILE_KEY);
+    const skills = qc.getQueryData<AIAgentSkillSummary[]>(PROFILE_KEY);
     expect(skills?.some((s) => s.id === "grant-tracker/grant-tracker")).toBe(true);
   });
 });

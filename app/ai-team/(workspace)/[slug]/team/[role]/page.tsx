@@ -19,7 +19,7 @@ import {
   TEAM_ROLE_LONG_LABELS,
   TEAM_ROLES,
   type TeamRole,
-} from "@/lib/hermes-client";
+} from "@/lib/ai-agent-client";
 import { TeamErrorState } from "@/src/features/nonprofit/TeamErrorState";
 import { SkillsTab } from "@/src/features/skills/SkillsTab";
 import { RoleAvatar } from "@/src/features/team/RoleAvatar";

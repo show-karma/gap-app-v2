@@ -7,7 +7,7 @@ import { INDEXER } from "@/utilities/indexer";
 // enough for a 2-person ED to manage. ED leads the list and acts as the
 // catch-all for cross-role or strategic asks that don't fit a specialist.
 //
-// The internal slug for ED stays `orchestrator` because Hermes' kanban
+// The internal slug for ED stays `orchestrator` because the agent backend's kanban
 // dispatcher and the bundled `kanban-orchestrator` skill key off that
 // profile name. The "ED" framing is UI-only.
 export const TEAM_ROLES = ["orchestrator", "fundraiser", "communications", "operations"] as const;
@@ -16,7 +16,7 @@ export type TeamRole = (typeof TEAM_ROLES)[number];
 /** All user-facing roles in display order. Alias for TEAM_ROLES kept for consumers. */
 export const VISIBLE_TEAM_ROLES: TeamRole[] = [...TEAM_ROLES];
 
-// Product-language labels — never leak Hermes terms ("profile", "SOUL") to
+// Product-language labels — never leak AI agent internal terms ("profile", "SOUL") to
 // the UI copy. Renderers use these.
 export const TEAM_ROLE_LABELS: Record<TeamRole, string> = {
   orchestrator: "ED",
@@ -40,7 +40,7 @@ export const TEAM_ROLE_LONG_LABELS: Record<TeamRole, string> = {
   operations: "Operations Lead",
 };
 
-export interface HermesOrgResponse {
+export interface AIAgentOrgResponse {
   id: string;
   slug: string;
   communityId: string | null;
@@ -51,7 +51,7 @@ export interface HermesOrgResponse {
   updatedAt: string;
 }
 
-export interface HermesMyOrg {
+export interface AIAgentMyOrg {
   id: string;
   slug: string;
   status: string;
@@ -59,7 +59,7 @@ export interface HermesMyOrg {
   joinedAt: string;
 }
 
-export interface HermesProfileResponse {
+export interface AIAgentProfileResponse {
   name: string;
   path?: string;
   is_default?: boolean;
@@ -129,7 +129,7 @@ export interface WorkTask {
 }
 
 // Activity feed for "what's the worker actually doing?" — populated only
-// on the single-task endpoint, not the list. currentRun is null if Hermes
+// on the single-task endpoint, not the list. currentRun is null if the agent backend
 // never dispatched the task (typically: still in queued/triage).
 export interface WorkActivityEvent {
   id: number;
@@ -157,7 +157,7 @@ export interface WorkActivity {
   runCount: number;
 }
 
-export interface HermesSkillSummary {
+export interface AIAgentSkillSummary {
   id: string;
   namespace: string;
   name: string;
@@ -166,19 +166,19 @@ export interface HermesSkillSummary {
   tags: string[];
 }
 
-export interface HermesSkillInstallResult {
+export interface AIAgentSkillInstallResult {
   installed: boolean;
-  skill: HermesSkillSummary | null;
+  skill: AIAgentSkillSummary | null;
 }
 
-export interface HermesUploadSummary {
+export interface AIAgentUploadSummary {
   sha256: string;
   filename: string;
   mime: string | null;
   size: number;
 }
 
-export interface HermesSkillUninstallResult {
+export interface AIAgentSkillUninstallResult {
   removed: boolean;
   id: string;
 }
@@ -195,31 +195,31 @@ export interface WorkTaskComment {
 // (Bearer token) and 401 refresh — see utilities/auth/api-client.ts.
 const api = createAuthenticatedApiClient();
 
-export const hermesClient = {
-  async getMyOrgs(): Promise<HermesMyOrg[]> {
-    const { data } = await api.get<{ orgs: HermesMyOrg[] }>(INDEXER.HERMES.MY_ORGS);
+export const aiAgentClient = {
+  async getMyOrgs(): Promise<AIAgentMyOrg[]> {
+    const { data } = await api.get<{ orgs: AIAgentMyOrg[] }>(INDEXER.AI_AGENT.MY_ORGS);
     return data.orgs;
   },
 
-  async getOrg(slug: string): Promise<HermesOrgResponse> {
-    const { data } = await api.get<HermesOrgResponse>(INDEXER.HERMES.ORG(slug));
+  async getOrg(slug: string): Promise<AIAgentOrgResponse> {
+    const { data } = await api.get<AIAgentOrgResponse>(INDEXER.AI_AGENT.ORG(slug));
     return data;
   },
 
-  async listProfiles(slug: string): Promise<HermesProfileResponse[]> {
-    const { data } = await api.get<{ profiles: HermesProfileResponse[] }>(
-      INDEXER.HERMES.PROFILES(slug)
+  async listProfiles(slug: string): Promise<AIAgentProfileResponse[]> {
+    const { data } = await api.get<{ profiles: AIAgentProfileResponse[] }>(
+      INDEXER.AI_AGENT.PROFILES(slug)
     );
     return data.profiles;
   },
 
   async getAbout(slug: string, role: TeamRole): Promise<string> {
-    const { data } = await api.get<{ content: string }>(INDEXER.HERMES.SOUL(slug, role));
+    const { data } = await api.get<{ content: string }>(INDEXER.AI_AGENT.SOUL(slug, role));
     return data.content;
   },
 
   async updateAbout(input: UpdateAboutInput): Promise<void> {
-    await api.put(INDEXER.HERMES.SOUL(input.slug, input.role), {
+    await api.put(INDEXER.AI_AGENT.SOUL(input.slug, input.role), {
       content: input.content,
     });
   },
@@ -228,7 +228,7 @@ export const hermesClient = {
     slug: string,
     topic: OrgBrainTopic
   ): Promise<OrgBrainResponse<TData>> {
-    const { data } = await api.get<OrgBrainResponse<TData>>(INDEXER.HERMES.BRAIN(slug, topic));
+    const { data } = await api.get<OrgBrainResponse<TData>>(INDEXER.AI_AGENT.BRAIN(slug, topic));
     return data;
   },
 
@@ -237,17 +237,17 @@ export const hermesClient = {
     topic: OrgBrainTopic,
     payload: MissionData | BrandData
   ): Promise<void> {
-    await api.put(INDEXER.HERMES.BRAIN(slug, topic), payload);
+    await api.put(INDEXER.AI_AGENT.BRAIN(slug, topic), payload);
   },
 
   async listWorkTasks(slug: string): Promise<WorkTask[]> {
-    const { data } = await api.get<{ tasks: WorkTask[] }>(INDEXER.HERMES.WORK_TASKS(slug));
+    const { data } = await api.get<{ tasks: WorkTask[] }>(INDEXER.AI_AGENT.WORK_TASKS(slug));
     return data.tasks;
   },
 
   async getWorkTask(slug: string, taskId: string): Promise<WorkTask & { activity?: WorkActivity }> {
     const { data } = await api.get<WorkTask & { activity?: WorkActivity }>(
-      INDEXER.HERMES.WORK_TASK(slug, taskId)
+      INDEXER.AI_AGENT.WORK_TASK(slug, taskId)
     );
     return data;
   },
@@ -256,17 +256,17 @@ export const hermesClient = {
     slug: string,
     input: { title: string; description?: string; assignee?: string }
   ): Promise<WorkTask> {
-    const { data } = await api.post<WorkTask>(INDEXER.HERMES.WORK_TASKS(slug), input);
+    const { data } = await api.post<WorkTask>(INDEXER.AI_AGENT.WORK_TASKS(slug), input);
     return data;
   },
 
   async updateWorkTaskStatus(slug: string, taskId: string, status: WorkTaskStatus): Promise<void> {
-    await api.put(INDEXER.HERMES.WORK_TASK_STATUS(slug, taskId), { status });
+    await api.put(INDEXER.AI_AGENT.WORK_TASK_STATUS(slug, taskId), { status });
   },
 
   async listWorkTaskComments(slug: string, taskId: string): Promise<WorkTaskComment[]> {
     const { data } = await api.get<{ comments: WorkTaskComment[] }>(
-      INDEXER.HERMES.WORK_TASK_COMMENTS(slug, taskId)
+      INDEXER.AI_AGENT.WORK_TASK_COMMENTS(slug, taskId)
     );
     return data.comments;
   },
@@ -278,34 +278,34 @@ export const hermesClient = {
     previousResponseId?: string
   ): Promise<{ runId: string; sessionId: string }> {
     const { data } = await api.post<{ runId: string; sessionId: string }>(
-      INDEXER.HERMES.CHAT_START(slug, role),
+      INDEXER.AI_AGENT.CHAT_START(slug, role),
       { message, previousResponseId }
     );
     return data;
   },
 
   async stopChatRun(slug: string, role: TeamRole, runId: string): Promise<void> {
-    await api.post(INDEXER.HERMES.CHAT_RUN_STOP(slug, role, runId), {});
+    await api.post(INDEXER.AI_AGENT.CHAT_RUN_STOP(slug, role, runId), {});
   },
 
   async addWorkTaskComment(slug: string, taskId: string, body: string): Promise<WorkTaskComment> {
     const { data } = await api.post<WorkTaskComment>(
-      INDEXER.HERMES.WORK_TASK_COMMENTS(slug, taskId),
+      INDEXER.AI_AGENT.WORK_TASK_COMMENTS(slug, taskId),
       { body }
     );
     return data;
   },
 
-  async listAvailableSkills(slug: string): Promise<HermesSkillSummary[]> {
-    const { data } = await api.get<{ skills: HermesSkillSummary[] }>(
-      INDEXER.HERMES.SKILLS_AVAILABLE(slug)
+  async listAvailableSkills(slug: string): Promise<AIAgentSkillSummary[]> {
+    const { data } = await api.get<{ skills: AIAgentSkillSummary[] }>(
+      INDEXER.AI_AGENT.SKILLS_AVAILABLE(slug)
     );
     return data.skills;
   },
 
-  async listProfileSkills(slug: string, profile: TeamRole): Promise<HermesSkillSummary[]> {
-    const { data } = await api.get<{ skills: HermesSkillSummary[] }>(
-      INDEXER.HERMES.PROFILE_SKILLS(slug, profile)
+  async listProfileSkills(slug: string, profile: TeamRole): Promise<AIAgentSkillSummary[]> {
+    const { data } = await api.get<{ skills: AIAgentSkillSummary[] }>(
+      INDEXER.AI_AGENT.PROFILE_SKILLS(slug, profile)
     );
     return data.skills;
   },
@@ -314,9 +314,9 @@ export const hermesClient = {
     slug: string,
     profile: TeamRole,
     skillId: string
-  ): Promise<HermesSkillInstallResult> {
-    const { data } = await api.post<HermesSkillInstallResult>(
-      INDEXER.HERMES.PROFILE_SKILLS(slug, profile),
+  ): Promise<AIAgentSkillInstallResult> {
+    const { data } = await api.post<AIAgentSkillInstallResult>(
+      INDEXER.AI_AGENT.PROFILE_SKILLS(slug, profile),
       { id: skillId }
     );
     return data;
@@ -327,28 +327,28 @@ export const hermesClient = {
     profile: TeamRole,
     namespace: string,
     skillId: string
-  ): Promise<HermesSkillUninstallResult> {
-    const { data } = await api.delete<HermesSkillUninstallResult>(
-      INDEXER.HERMES.PROFILE_SKILL(slug, profile, namespace, skillId)
+  ): Promise<AIAgentSkillUninstallResult> {
+    const { data } = await api.delete<AIAgentSkillUninstallResult>(
+      INDEXER.AI_AGENT.PROFILE_SKILL(slug, profile, namespace, skillId)
     );
     return data;
   },
 
-  async listChatUploads(slug: string, profile: TeamRole): Promise<HermesUploadSummary[]> {
-    const { data } = await api.get<{ files: HermesUploadSummary[] }>(
-      INDEXER.HERMES.CHAT_UPLOADS(slug, profile)
+  async listChatUploads(slug: string, profile: TeamRole): Promise<AIAgentUploadSummary[]> {
+    const { data } = await api.get<{ files: AIAgentUploadSummary[] }>(
+      INDEXER.AI_AGENT.CHAT_UPLOADS(slug, profile)
     );
     return data.files;
   },
 
-  async uploadChatFile(slug: string, profile: TeamRole, file: File): Promise<HermesUploadSummary> {
+  async uploadChatFile(slug: string, profile: TeamRole, file: File): Promise<AIAgentUploadSummary> {
     const form = new FormData();
     form.append("file", file, file.name);
     // Force axios to compute the multipart boundary by clearing the default
     // application/json Content-Type from api-client.ts — otherwise the
     // indexer route rejects the request as 406 / can't parse the body.
-    const { data } = await api.post<HermesUploadSummary>(
-      INDEXER.HERMES.CHAT_UPLOADS(slug, profile),
+    const { data } = await api.post<AIAgentUploadSummary>(
+      INDEXER.AI_AGENT.CHAT_UPLOADS(slug, profile),
       form,
       { headers: { "Content-Type": "multipart/form-data" } }
     );
@@ -361,18 +361,18 @@ export const hermesClient = {
     sha256: string
   ): Promise<{ removed: boolean; sha256: string }> {
     const { data } = await api.delete<{ removed: boolean; sha256: string }>(
-      INDEXER.HERMES.CHAT_UPLOAD(slug, profile, sha256)
+      INDEXER.AI_AGENT.CHAT_UPLOAD(slug, profile, sha256)
     );
     return data;
   },
 
   chatDownloadUrl(slug: string, profile: TeamRole, sha256: string): string {
-    return INDEXER.HERMES.CHAT_UPLOAD(slug, profile, sha256);
+    return INDEXER.AI_AGENT.CHAT_UPLOAD(slug, profile, sha256);
   },
 
-  async listTaskAttachments(slug: string, taskId: string): Promise<HermesUploadSummary[]> {
-    const { data } = await api.get<{ files: HermesUploadSummary[] }>(
-      INDEXER.HERMES.TASK_ATTACHMENTS(slug, taskId)
+  async listTaskAttachments(slug: string, taskId: string): Promise<AIAgentUploadSummary[]> {
+    const { data } = await api.get<{ files: AIAgentUploadSummary[] }>(
+      INDEXER.AI_AGENT.TASK_ATTACHMENTS(slug, taskId)
     );
     return data.files;
   },
@@ -381,11 +381,11 @@ export const hermesClient = {
     slug: string,
     taskId: string,
     file: File
-  ): Promise<HermesUploadSummary> {
+  ): Promise<AIAgentUploadSummary> {
     const form = new FormData();
     form.append("file", file, file.name);
-    const { data } = await api.post<HermesUploadSummary>(
-      INDEXER.HERMES.TASK_ATTACHMENTS(slug, taskId),
+    const { data } = await api.post<AIAgentUploadSummary>(
+      INDEXER.AI_AGENT.TASK_ATTACHMENTS(slug, taskId),
       form,
       { headers: { "Content-Type": "multipart/form-data" } }
     );
@@ -393,7 +393,7 @@ export const hermesClient = {
   },
 
   async archiveWorkTask(slug: string, taskId: string): Promise<void> {
-    await api.delete(INDEXER.HERMES.WORK_TASK(slug, taskId));
+    await api.delete(INDEXER.AI_AGENT.WORK_TASK(slug, taskId));
   },
 
   async deleteTaskAttachment(
@@ -402,17 +402,17 @@ export const hermesClient = {
     sha256: string
   ): Promise<{ removed: boolean; sha256: string }> {
     const { data } = await api.delete<{ removed: boolean; sha256: string }>(
-      INDEXER.HERMES.TASK_ATTACHMENT(slug, taskId, sha256)
+      INDEXER.AI_AGENT.TASK_ATTACHMENT(slug, taskId, sha256)
     );
     return data;
   },
 
   taskAttachmentDownloadUrl(slug: string, taskId: string, sha256: string): string {
-    return INDEXER.HERMES.TASK_ATTACHMENT(slug, taskId, sha256);
+    return INDEXER.AI_AGENT.TASK_ATTACHMENT(slug, taskId, sha256);
   },
 
-  async provision(input: ProvisionOrgInput): Promise<HermesOrgResponse> {
-    const { data } = await api.post<HermesOrgResponse>(INDEXER.HERMES.PROVISION(input.slug), {
+  async provision(input: ProvisionOrgInput): Promise<AIAgentOrgResponse> {
+    const { data } = await api.post<AIAgentOrgResponse>(INDEXER.AI_AGENT.PROVISION(input.slug), {
       slug: input.slug,
       communityId: input.communityId ?? null,
       containerUrl: input.containerUrl,
@@ -432,7 +432,7 @@ export const hermesClient = {
   ): Promise<ReadableStream<Uint8Array>> {
     const authHeaders = await TokenManager.getAuthHeader();
     const res = await fetch(
-      `${envVars.NEXT_PUBLIC_GAP_INDEXER_URL}${INDEXER.HERMES.CHAT_RUN_EVENTS(slug, role, runId)}`,
+      `${envVars.NEXT_PUBLIC_GAP_INDEXER_URL}${INDEXER.AI_AGENT.CHAT_RUN_EVENTS(slug, role, runId)}`,
       { method: "GET", headers: { Accept: "text/event-stream", ...authHeaders }, signal }
     );
     if (!res.ok || !res.body) {

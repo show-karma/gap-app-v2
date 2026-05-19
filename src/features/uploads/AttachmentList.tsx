@@ -2,11 +2,11 @@
 
 import { Download, Loader2, Paperclip, X } from "lucide-react";
 import { memo, useCallback } from "react";
-import type { HermesUploadSummary } from "@/lib/hermes-client";
+import type { AIAgentUploadSummary } from "@/lib/ai-agent-client";
 import { createAuthenticatedApiClient } from "@/utilities/auth/api-client";
 
 interface Props {
-  files: HermesUploadSummary[];
+  files: AIAgentUploadSummary[];
   /** Where each file streams from. The server returns it with
    *  Content-Disposition: attachment so the browser downloads. */
   downloadUrl: (sha256: string) => string;

@@ -4,7 +4,7 @@ import { AlertCircle, Plus, Users } from "lucide-react";
 import Link from "next/link";
 import { Skeleton } from "@/components/Utilities/Skeleton";
 import { useMyOrgs } from "@/hooks/useTeam";
-import { humanizeApiError } from "@/lib/hermes-error";
+import { humanizeApiError } from "@/lib/ai-agent-error";
 import { PAGES } from "@/utilities/pages";
 
 export default function AITeamListPage() {

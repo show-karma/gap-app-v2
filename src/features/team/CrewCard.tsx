@@ -9,7 +9,7 @@ import {
   TEAM_ROLE_LABELS,
   TEAM_ROLE_LONG_LABELS,
   type TeamRole,
-} from "@/lib/hermes-client";
+} from "@/lib/ai-agent-client";
 import { PAGES } from "@/utilities/pages";
 import { ROLE_PALETTES, RoleAvatar } from "./RoleAvatar";
 

@@ -10,14 +10,14 @@ import { renderHook, waitFor } from "@testing-library/react";
 import type React from "react";
 import { useUpdateBrand, useUpdateMission } from "@/hooks/useOrgBrain";
 import {
+  aiAgentClient,
   type BrandData,
-  hermesClient,
   type MissionData,
   type OrgBrainResponse,
-} from "@/lib/hermes-client";
+} from "@/lib/ai-agent-client";
 
-vi.mock("@/lib/hermes-client", () => ({
-  hermesClient: {
+vi.mock("@/lib/ai-agent-client", () => ({
+  aiAgentClient: {
     getOrgBrain: vi.fn(),
     putOrgBrain: vi.fn(),
   },
@@ -27,8 +27,8 @@ vi.mock("react-hot-toast", () => ({
   toast: Object.assign(vi.fn(), { error: vi.fn(), success: vi.fn() }),
 }));
 
-const mockClient = hermesClient as {
-  [K in keyof typeof hermesClient]: ReturnType<typeof vi.fn>;
+const mockClient = aiAgentClient as {
+  [K in keyof typeof aiAgentClient]: ReturnType<typeof vi.fn>;
 };
 
 function wrap(client: QueryClient) {

@@ -18,7 +18,7 @@ interface ApiErrorBody {
   message?: unknown;
 }
 
-// Converts errors from the hermes API client into something safe to render to
+// Converts errors from the AI agent API client into something safe to render to
 // users. Axios surfaces raw "Request failed with status code 401" strings that
 // leak implementation detail; this maps known statuses to friendly copy and
 // prefers the server's `message` field when it's present.

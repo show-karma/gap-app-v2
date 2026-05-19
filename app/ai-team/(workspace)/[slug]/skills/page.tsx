@@ -2,7 +2,7 @@
 
 import { useParams } from "next/navigation";
 import { useState } from "react";
-import { TEAM_ROLES, type TeamRole } from "@/lib/hermes-client";
+import { TEAM_ROLES, type TeamRole } from "@/lib/ai-agent-client";
 import { NonprofitPageHeader } from "@/src/features/nonprofit/PageHeader";
 import { SkillsMarketplace } from "@/src/features/skills/SkillsMarketplace";
 

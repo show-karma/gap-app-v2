@@ -31,13 +31,13 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useCreateWorkTask, useUpdateWorkTaskStatus, useWorkTasks } from "@/hooks/useWorkBoard";
 import {
-  hermesClient,
+  aiAgentClient,
   TEAM_ROLE_LABELS,
   type TeamRole,
   VISIBLE_TEAM_ROLES,
   type WorkTask,
   type WorkTaskStatus,
-} from "@/lib/hermes-client";
+} from "@/lib/ai-agent-client";
 import { TeamErrorState } from "@/src/features/nonprofit/TeamErrorState";
 import { UploadButton } from "@/src/features/uploads/UploadButton";
 import { WorkTaskDrawer } from "./WorkTaskDrawer";
@@ -162,7 +162,7 @@ export function WorkBoard({ slug }: Props) {
                   // via the upload helper's toast so the user can retry.
                   for (const f of files) {
                     try {
-                      await hermesClient.uploadTaskAttachment(slug, task.id, f);
+                      await aiAgentClient.uploadTaskAttachment(slug, task.id, f);
                     } catch (err) {
                       toast.error(
                         err instanceof Error

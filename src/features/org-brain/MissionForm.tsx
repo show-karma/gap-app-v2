@@ -8,8 +8,8 @@ import { Skeleton } from "@/components/Utilities/Skeleton";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useOrgBrain, useUpdateMission } from "@/hooks/useOrgBrain";
-import type { MissionData } from "@/lib/hermes-client";
-import { humanizeApiError } from "@/lib/hermes-error";
+import type { MissionData } from "@/lib/ai-agent-client";
+import { humanizeApiError } from "@/lib/ai-agent-error";
 
 interface Props {
   slug: string;

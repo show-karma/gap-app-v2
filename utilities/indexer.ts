@@ -790,7 +790,7 @@ export const INDEXER = {
       pageSize: number
     ) => `/v2/sitemap?kind=${kind}&page=${page}&pageSize=${pageSize}`,
   },
-  HERMES: {
+  AI_AGENT: {
     PROVISION: (slug: string) => `/v2/hermes/orgs/${slug}/provision`,
     MY_ORGS: `/v2/hermes/orgs/mine`,
     ORG: (slug: string) => `/v2/hermes/orgs/${slug}`,

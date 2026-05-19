@@ -6,7 +6,7 @@ import { memo } from "react";
 import { DeleteDialog } from "@/components/DeleteDialog";
 import { Skeleton } from "@/components/Utilities/Skeleton";
 import { useProfileSkills, useUninstallSkill } from "@/hooks/useSkills";
-import { type HermesSkillSummary, TEAM_ROLE_LABELS, type TeamRole } from "@/lib/hermes-client";
+import { type AIAgentSkillSummary, TEAM_ROLE_LABELS, type TeamRole } from "@/lib/ai-agent-client";
 import { EmptyState } from "@/src/features/nonprofit/EmptyState";
 import { TeamErrorState } from "@/src/features/nonprofit/TeamErrorState";
 import { PAGES } from "@/utilities/pages";
@@ -107,7 +107,7 @@ export function SkillsTab({ slug, role }: Props) {
 }
 
 interface RowProps {
-  skill: HermesSkillSummary;
+  skill: AIAgentSkillSummary;
   isPending: boolean;
   onRemove: () => void;
 }

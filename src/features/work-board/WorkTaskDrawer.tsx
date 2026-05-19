@@ -12,8 +12,8 @@ import {
   useUploadTaskAttachment,
 } from "@/hooks/useUploads";
 import { useAddWorkComment, useArchiveWorkTask, useWorkTask } from "@/hooks/useWorkBoard";
-import { hermesClient } from "@/lib/hermes-client";
-import { humanizeApiError } from "@/lib/hermes-error";
+import { aiAgentClient } from "@/lib/ai-agent-client";
+import { humanizeApiError } from "@/lib/ai-agent-error";
 import { AttachmentList } from "@/src/features/uploads/AttachmentList";
 import { UploadButton } from "@/src/features/uploads/UploadButton";
 import { ActivityPanel } from "./ActivityPanel";
@@ -61,7 +61,7 @@ export function WorkTaskDrawer({ slug, taskId, onClose }: Props) {
                   <p className="mt-2 text-sm font-normal text-gray-600 dark:text-zinc-400">
                     {isRunning
                       ? "A worker is actively running this task. Wait for it to finish, then try again."
-                      : "The task will be removed from the board. Its history (comments, runs) stays in Hermes."}
+                      : "The task will be removed from the board. Its history (comments, runs) stays in the agent backend."}
                   </p>
                 </>
               }
@@ -117,7 +117,7 @@ export function WorkTaskDrawer({ slug, taskId, onClose }: Props) {
         </div>
         <AttachmentList
           files={attachments.data ?? []}
-          downloadUrl={(sha) => hermesClient.taskAttachmentDownloadUrl(slug, taskId, sha)}
+          downloadUrl={(sha) => aiAgentClient.taskAttachmentDownloadUrl(slug, taskId, sha)}
           onDelete={(sha) => deleteAttachment.mutate(sha)}
           pendingDeleteSha={deleteAttachment.isPending ? deleteAttachment.variables : undefined}
           emptyLabel={attachments.isLoading ? "Loading…" : "No attachments yet"}

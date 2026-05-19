@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { hermesClient, type TeamRole } from "@/lib/hermes-client";
+import { aiAgentClient, type TeamRole } from "@/lib/ai-agent-client";
 
 export interface ChatToolActivity {
   id: string;
@@ -123,7 +123,7 @@ export function useChat(slug: string | undefined, role: TeamRole) {
 
       try {
         // 1. Start a run on the gap-indexer chat proxy.
-        const { runId } = await hermesClient.startChat(
+        const { runId } = await aiAgentClient.startChat(
           slug,
           role,
           text.trim(),
@@ -137,7 +137,7 @@ export function useChat(slug: string | undefined, role: TeamRole) {
         // 2. Open the authenticated SSE event stream.
         const controller = new AbortController();
         abortRef.current = controller;
-        const body = await hermesClient.openChatStream(slug, role, runId, controller.signal);
+        const body = await aiAgentClient.openChatStream(slug, role, runId, controller.signal);
 
         // 3. Translate SSE events into message updates.
         for await (const event of iterSseEvents(body, controller.signal)) {
@@ -185,7 +185,7 @@ export function useChat(slug: string | undefined, role: TeamRole) {
   const stop = useCallback(async () => {
     if (!slug || !activeRunIdRef.current) return;
     try {
-      await hermesClient.stopChatRun(slug, role, activeRunIdRef.current);
+      await aiAgentClient.stopChatRun(slug, role, activeRunIdRef.current);
     } catch {
       // Even if the upstream stop fails, abort the local stream.
     }

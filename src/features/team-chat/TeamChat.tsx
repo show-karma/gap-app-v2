@@ -4,7 +4,7 @@ import { CornerDownLeftIcon, SquareIcon, X } from "lucide-react";
 import { type KeyboardEvent, memo, useCallback, useEffect, useRef, useState } from "react";
 import { type ChatMessage, useChat } from "@/hooks/useChat";
 import { useUploadChatFile } from "@/hooks/useUploads";
-import { type HermesUploadSummary, TEAM_ROLE_LABELS, type TeamRole } from "@/lib/hermes-client";
+import { type AIAgentUploadSummary, TEAM_ROLE_LABELS, type TeamRole } from "@/lib/ai-agent-client";
 import {
   Conversation,
   ConversationContent,
@@ -25,10 +25,10 @@ export function TeamChat({ slug, role }: Props) {
 
   // Pending attachments live on the composer until sent — once the user
   // hits send, they're inlined into the message text as file paths so
-  // the agent can read them via Hermes' file tool. The blob itself stays
+  // the agent can read them via the agent backend's file tool. The blob itself stays
   // on disk (content-addressed) so the same file isn't re-uploaded if
   // they want to reference it again.
-  const [pending, setPending] = useState<HermesUploadSummary[]>([]);
+  const [pending, setPending] = useState<AIAgentUploadSummary[]>([]);
 
   const handleSubmit = useCallback(
     (text: string) => {
@@ -178,8 +178,8 @@ interface ComposerProps {
   isStreaming: boolean;
   onSubmit: (text: string) => void;
   onStop: () => void;
-  pending: HermesUploadSummary[];
-  onAttach: (file: HermesUploadSummary) => void;
+  pending: AIAgentUploadSummary[];
+  onAttach: (file: AIAgentUploadSummary) => void;
   onRemoveAttachment: (sha256: string) => void;
 }
 

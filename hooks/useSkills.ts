@@ -3,45 +3,45 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-hot-toast";
 import {
-  type HermesSkillInstallResult,
-  type HermesSkillSummary,
-  hermesClient,
+  type AIAgentSkillInstallResult,
+  type AIAgentSkillSummary,
+  aiAgentClient,
   type TeamRole,
-} from "@/lib/hermes-client";
+} from "@/lib/ai-agent-client";
 
 const skillKeys = {
-  all: ["hermes-skills"] as const,
+  all: ["ai-agent-skills"] as const,
   available: (slug: string) => [...skillKeys.all, "available", slug] as const,
   profile: (slug: string, role: TeamRole) => [...skillKeys.all, "profile", slug, role] as const,
 };
 
 export function useAvailableSkills(slug: string | undefined) {
-  return useQuery<HermesSkillSummary[]>({
+  return useQuery<AIAgentSkillSummary[]>({
     queryKey: skillKeys.available(slug ?? "anon"),
     enabled: Boolean(slug),
-    queryFn: () => hermesClient.listAvailableSkills(slug as string),
+    queryFn: () => aiAgentClient.listAvailableSkills(slug as string),
   });
 }
 
 export function useProfileSkills(slug: string | undefined, role: TeamRole) {
-  return useQuery<HermesSkillSummary[]>({
+  return useQuery<AIAgentSkillSummary[]>({
     queryKey: skillKeys.profile(slug ?? "anon", role),
     enabled: Boolean(slug),
-    queryFn: () => hermesClient.listProfileSkills(slug as string, role),
+    queryFn: () => aiAgentClient.listProfileSkills(slug as string, role),
   });
 }
 
 export function useInstallSkill(slug: string, role: TeamRole) {
   const qc = useQueryClient();
-  return useMutation<HermesSkillInstallResult, Error, string>({
-    mutationFn: (skillId) => hermesClient.installProfileSkill(slug, role, skillId),
+  return useMutation<AIAgentSkillInstallResult, Error, string>({
+    mutationFn: (skillId) => aiAgentClient.installProfileSkill(slug, role, skillId),
     onMutate: async (skillId) => {
       await qc.cancelQueries({ queryKey: skillKeys.profile(slug, role) });
-      const previous = qc.getQueryData<HermesSkillSummary[]>(skillKeys.profile(slug, role));
-      const available = qc.getQueryData<HermesSkillSummary[]>(skillKeys.available(slug));
+      const previous = qc.getQueryData<AIAgentSkillSummary[]>(skillKeys.profile(slug, role));
+      const available = qc.getQueryData<AIAgentSkillSummary[]>(skillKeys.available(slug));
       const skillMeta = available?.find((s) => s.id === skillId);
       if (skillMeta) {
-        qc.setQueryData<HermesSkillSummary[]>(skillKeys.profile(slug, role), (current) =>
+        qc.setQueryData<AIAgentSkillSummary[]>(skillKeys.profile(slug, role), (current) =>
           current ? [...current, skillMeta] : [skillMeta]
         );
       }
@@ -55,7 +55,7 @@ export function useInstallSkill(slug: string, role: TeamRole) {
       }
     },
     onError: (err, _vars, ctx) => {
-      const previous = (ctx as { previous?: HermesSkillSummary[] } | undefined)?.previous;
+      const previous = (ctx as { previous?: AIAgentSkillSummary[] } | undefined)?.previous;
       if (previous !== undefined) {
         qc.setQueryData(skillKeys.profile(slug, role), previous);
       }
@@ -73,17 +73,17 @@ export function useUninstallSkill(slug: string, role: TeamRole) {
     { namespace: string; skillId: string }
   >({
     mutationFn: ({ namespace, skillId }) =>
-      hermesClient.uninstallProfileSkill(slug, role, namespace, skillId),
+      aiAgentClient.uninstallProfileSkill(slug, role, namespace, skillId),
     onMutate: async ({ namespace, skillId }) => {
       await qc.cancelQueries({ queryKey: skillKeys.profile(slug, role) });
-      const previous = qc.getQueryData<HermesSkillSummary[]>(skillKeys.profile(slug, role));
-      qc.setQueryData<HermesSkillSummary[]>(skillKeys.profile(slug, role), (current) =>
+      const previous = qc.getQueryData<AIAgentSkillSummary[]>(skillKeys.profile(slug, role));
+      qc.setQueryData<AIAgentSkillSummary[]>(skillKeys.profile(slug, role), (current) =>
         (current ?? []).filter((s) => s.id !== `${namespace}/${skillId}`)
       );
       return { previous };
     },
     onError: (err, _vars, ctx) => {
-      const previous = (ctx as { previous?: HermesSkillSummary[] } | undefined)?.previous;
+      const previous = (ctx as { previous?: AIAgentSkillSummary[] } | undefined)?.previous;
       if (previous !== undefined) {
         qc.setQueryData(skillKeys.profile(slug, role), previous);
       }

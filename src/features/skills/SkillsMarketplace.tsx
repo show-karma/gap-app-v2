@@ -6,11 +6,11 @@ import { Button } from "@/components/Utilities/Button";
 import { Skeleton } from "@/components/Utilities/Skeleton";
 import { useAvailableSkills, useInstallSkill, useProfileSkills } from "@/hooks/useSkills";
 import {
-  type HermesSkillSummary,
+  type AIAgentSkillSummary,
   TEAM_ROLE_LABELS,
   type TeamRole,
   VISIBLE_TEAM_ROLES,
-} from "@/lib/hermes-client";
+} from "@/lib/ai-agent-client";
 import { EmptyState } from "@/src/features/nonprofit/EmptyState";
 import { TeamErrorState } from "@/src/features/nonprofit/TeamErrorState";
 
@@ -138,7 +138,7 @@ export function SkillsMarketplace({ slug, role, onRoleChange }: Props) {
 }
 
 interface CardProps {
-  skill: HermesSkillSummary;
+  skill: AIAgentSkillSummary;
   alreadyInstalled: boolean;
   isPending: boolean;
   onInstall: () => void;

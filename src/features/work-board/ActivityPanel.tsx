@@ -13,13 +13,13 @@ import {
   Radio,
 } from "lucide-react";
 import { memo } from "react";
-import type { WorkActivity, WorkActivityEvent } from "@/lib/hermes-client";
+import type { WorkActivity, WorkActivityEvent } from "@/lib/ai-agent-client";
 
 interface Props {
   activity?: WorkActivity;
 }
 
-// Renders Hermes' run + event stream as human-readable status. Empty UI
+// Renders the agent backend's run + event stream as human-readable status. Empty UI
 // returns null so a never-dispatched task doesn't show "no activity" noise.
 export const ActivityPanel = memo(function ActivityPanel({ activity }: Props) {
   if (!activity) return null;

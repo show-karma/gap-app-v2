@@ -1,7 +1,7 @@
 "use client";
 
 import { memo, useId } from "react";
-import type { TeamRole } from "@/lib/hermes-client";
+import type { TeamRole } from "@/lib/ai-agent-client";
 import { ROLE_PALETTES } from "./role-config";
 
 export { ROLE_PALETTES };

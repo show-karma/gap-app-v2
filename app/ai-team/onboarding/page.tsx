@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { type ReactNode, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { useProvisionOrg } from "@/hooks/useTeam";
-import { humanizeApiError } from "@/lib/hermes-error";
+import { humanizeApiError } from "@/lib/ai-agent-error";
 import { PAGES } from "@/utilities/pages";
 
 // Phase 1 wizard: collects the four fields gap-indexer's

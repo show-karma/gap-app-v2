@@ -7,13 +7,14 @@ import {
   useTeamOrg,
   useUpdateTeamMemberAbout,
 } from "@/hooks/useTeam";
-import { hermesClient } from "@/lib/hermes-client";
+import { aiAgentClient } from "@/lib/ai-agent-client";
 
-vi.mock("@/lib/hermes-client", async () => {
-  const mod = await vi.importActual<typeof import("@/lib/hermes-client")>("@/lib/hermes-client");
+vi.mock("@/lib/ai-agent-client", async () => {
+  const mod =
+    await vi.importActual<typeof import("@/lib/ai-agent-client")>("@/lib/ai-agent-client");
   return {
     ...mod,
-    hermesClient: {
+    aiAgentClient: {
       getOrg: vi.fn(),
       listProfiles: vi.fn(),
       getAbout: vi.fn(),
@@ -36,8 +37,8 @@ function createWrapper() {
   );
 }
 
-const mockClient = hermesClient as unknown as Record<
-  keyof typeof hermesClient,
+const mockClient = aiAgentClient as unknown as Record<
+  keyof typeof aiAgentClient,
   ReturnType<typeof vi.fn>
 >;
 

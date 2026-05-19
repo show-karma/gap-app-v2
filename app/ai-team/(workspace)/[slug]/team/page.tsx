@@ -4,8 +4,8 @@ import { useParams, useRouter } from "next/navigation";
 import pluralize from "pluralize";
 import { Skeleton } from "@/components/Utilities/Skeleton";
 import { useTeamOrg } from "@/hooks/useTeam";
-import { VISIBLE_TEAM_ROLES } from "@/lib/hermes-client";
-import { humanizeApiError } from "@/lib/hermes-error";
+import { VISIBLE_TEAM_ROLES } from "@/lib/ai-agent-client";
+import { humanizeApiError } from "@/lib/ai-agent-error";
 import { CrewCard } from "@/src/features/team/CrewCard";
 
 function StatusDot({ status }: { status: string }) {

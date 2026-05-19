@@ -21,11 +21,11 @@ vi.mock("@/utilities/auth/api-client", () => ({
   }),
 }));
 
-import type { HermesUploadSummary } from "@/lib/hermes-client";
+import type { AIAgentUploadSummary } from "@/lib/ai-agent-client";
 // ─── Import component AFTER mocks ────────────────────────────────────────────
 import { AttachmentList } from "@/src/features/uploads/AttachmentList";
 
-const files: HermesUploadSummary[] = [
+const files: AIAgentUploadSummary[] = [
   {
     sha256: "a".repeat(64),
     filename: "report.pdf",

@@ -7,8 +7,8 @@ import { Button } from "@/components/Utilities/Button";
 import { Skeleton } from "@/components/Utilities/Skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { useOrgBrain, useUpdateBrand } from "@/hooks/useOrgBrain";
-import type { BrandData } from "@/lib/hermes-client";
-import { humanizeApiError } from "@/lib/hermes-error";
+import type { BrandData } from "@/lib/ai-agent-client";
+import { humanizeApiError } from "@/lib/ai-agent-error";
 
 interface Props {
   slug: string;

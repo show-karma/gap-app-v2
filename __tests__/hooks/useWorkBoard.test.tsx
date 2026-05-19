@@ -13,10 +13,10 @@ import {
   useArchiveWorkTask,
   useUpdateWorkTaskStatus,
 } from "@/hooks/useWorkBoard";
-import { hermesClient, type WorkTask, type WorkTaskComment } from "@/lib/hermes-client";
+import { aiAgentClient, type WorkTask, type WorkTaskComment } from "@/lib/ai-agent-client";
 
-vi.mock("@/lib/hermes-client", () => ({
-  hermesClient: {
+vi.mock("@/lib/ai-agent-client", () => ({
+  aiAgentClient: {
     listWorkTasks: vi.fn(),
     updateWorkTaskStatus: vi.fn(),
     archiveWorkTask: vi.fn(),
@@ -29,8 +29,8 @@ vi.mock("react-hot-toast", () => ({
   toast: Object.assign(vi.fn(), { error: vi.fn(), success: vi.fn() }),
 }));
 
-const mockClient = hermesClient as {
-  [K in keyof typeof hermesClient]: ReturnType<typeof vi.fn>;
+const mockClient = aiAgentClient as {
+  [K in keyof typeof aiAgentClient]: ReturnType<typeof vi.fn>;
 };
 
 function wrap(client: QueryClient) {

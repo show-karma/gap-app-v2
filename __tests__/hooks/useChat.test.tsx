@@ -1,24 +1,24 @@
 /**
  * @file Tests for the useChat streaming hook.
  *
- * We mock hermesClient so no network calls happen.
+ * We mock aiAgentClient so no network calls happen.
  * The SSE body is simulated with a ReadableStream that we control.
  */
 
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { useChat } from "@/hooks/useChat";
-import { hermesClient } from "@/lib/hermes-client";
+import { aiAgentClient } from "@/lib/ai-agent-client";
 
-vi.mock("@/lib/hermes-client", () => ({
-  hermesClient: {
+vi.mock("@/lib/ai-agent-client", () => ({
+  aiAgentClient: {
     startChat: vi.fn(),
     openChatStream: vi.fn(),
     stopChatRun: vi.fn(),
   },
 }));
 
-const mockClient = hermesClient as {
-  [K in keyof typeof hermesClient]: ReturnType<typeof vi.fn>;
+const mockClient = aiAgentClient as {
+  [K in keyof typeof aiAgentClient]: ReturnType<typeof vi.fn>;
 };
 
 // Helper: build a ReadableStream that emits SSE frames then closes.

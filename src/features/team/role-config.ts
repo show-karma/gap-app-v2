@@ -1,4 +1,4 @@
-import type { TeamRole } from "@/lib/hermes-client";
+import type { TeamRole } from "@/lib/ai-agent-client";
 
 /** Pastel role palettes ported from the design bundle. */
 export const ROLE_PALETTES: Record<

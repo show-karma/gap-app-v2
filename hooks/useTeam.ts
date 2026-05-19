@@ -3,13 +3,13 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-hot-toast";
 import {
-  type HermesMyOrg,
-  type HermesOrgResponse,
-  hermesClient,
+  type AIAgentMyOrg,
+  type AIAgentOrgResponse,
+  aiAgentClient,
   type ProvisionOrgInput,
   type TeamRole,
   type UpdateAboutInput,
-} from "@/lib/hermes-client";
+} from "@/lib/ai-agent-client";
 import { useAuth } from "./useAuth";
 
 // Query key factory — single source of truth for cache identity and
@@ -27,20 +27,20 @@ const teamKeys = {
 // team instead of re-running the provisioning form.
 export function useMyOrgs() {
   const { authenticated, ready } = useAuth();
-  return useQuery<HermesMyOrg[]>({
+  return useQuery<AIAgentMyOrg[]>({
     queryKey: teamKeys.myOrgs(),
     enabled: ready && authenticated,
-    queryFn: () => hermesClient.getMyOrgs(),
+    queryFn: () => aiAgentClient.getMyOrgs(),
   });
 }
 
 export function useTeamOrg(slug: string | undefined) {
-  return useQuery<HermesOrgResponse>({
+  return useQuery<AIAgentOrgResponse>({
     queryKey: slug ? teamKeys.org(slug) : teamKeys.all,
     enabled: !!slug,
     queryFn: () => {
       if (!slug) throw new Error("slug required");
-      return hermesClient.getOrg(slug);
+      return aiAgentClient.getOrg(slug);
     },
   });
 }
@@ -51,7 +51,7 @@ export function useTeamMemberAbout(slug: string | undefined, role: TeamRole) {
     enabled: !!slug,
     queryFn: () => {
       if (!slug) throw new Error("slug required");
-      return hermesClient.getAbout(slug, role);
+      return aiAgentClient.getAbout(slug, role);
     },
   });
 }
@@ -64,7 +64,7 @@ export function useUpdateTeamMemberAbout(slug: string) {
 
   return useMutation({
     mutationFn: (input: Omit<UpdateAboutInput, "slug">) =>
-      hermesClient.updateAbout({ ...input, slug }),
+      aiAgentClient.updateAbout({ ...input, slug }),
     onMutate: async (input) => {
       await qc.cancelQueries({ queryKey: teamKeys.about(slug, input.role) });
       const previous = qc.getQueryData<string>(teamKeys.about(slug, input.role));
@@ -90,7 +90,7 @@ export function useProvisionOrg() {
   const qc = useQueryClient();
 
   return useMutation({
-    mutationFn: (input: ProvisionOrgInput) => hermesClient.provision(input),
+    mutationFn: (input: ProvisionOrgInput) => aiAgentClient.provision(input),
     onSuccess: (org) => {
       qc.setQueryData(teamKeys.org(org.slug), org);
       qc.invalidateQueries({ queryKey: teamKeys.all });
