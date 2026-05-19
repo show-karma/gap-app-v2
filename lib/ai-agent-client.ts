@@ -1,7 +1,7 @@
 import { createAuthenticatedApiClient } from "@/utilities/auth/api-client";
 import { TokenManager } from "@/utilities/auth/token-manager";
 import { envVars } from "@/utilities/enviromentVars";
-import { INDEXER } from "@/utilities/indexer";
+import { AI_AGENT_INDEXER } from "@/utilities/indexer-ai-agent";
 
 // Internal team-role identifiers. Four user-facing employees total — small
 // enough for a 2-person ED to manage. ED leads the list and acts as the
@@ -59,7 +59,7 @@ export interface AIAgentMyOrg {
   joinedAt: string;
 }
 
-export interface AIAgentProfileResponse {
+interface AIAgentProfileResponse {
   name: string;
   path?: string;
   is_default?: boolean;
@@ -178,7 +178,7 @@ export interface AIAgentUploadSummary {
   size: number;
 }
 
-export interface AIAgentSkillUninstallResult {
+interface AIAgentSkillUninstallResult {
   removed: boolean;
   id: string;
 }
@@ -197,29 +197,29 @@ const api = createAuthenticatedApiClient();
 
 export const aiAgentClient = {
   async getMyOrgs(): Promise<AIAgentMyOrg[]> {
-    const { data } = await api.get<{ orgs: AIAgentMyOrg[] }>(INDEXER.AI_AGENT.MY_ORGS);
+    const { data } = await api.get<{ orgs: AIAgentMyOrg[] }>(AI_AGENT_INDEXER.MY_ORGS);
     return data.orgs;
   },
 
   async getOrg(slug: string): Promise<AIAgentOrgResponse> {
-    const { data } = await api.get<AIAgentOrgResponse>(INDEXER.AI_AGENT.ORG(slug));
+    const { data } = await api.get<AIAgentOrgResponse>(AI_AGENT_INDEXER.ORG(slug));
     return data;
   },
 
   async listProfiles(slug: string): Promise<AIAgentProfileResponse[]> {
     const { data } = await api.get<{ profiles: AIAgentProfileResponse[] }>(
-      INDEXER.AI_AGENT.PROFILES(slug)
+      AI_AGENT_INDEXER.PROFILES(slug)
     );
     return data.profiles;
   },
 
   async getAbout(slug: string, role: TeamRole): Promise<string> {
-    const { data } = await api.get<{ content: string }>(INDEXER.AI_AGENT.SOUL(slug, role));
+    const { data } = await api.get<{ content: string }>(AI_AGENT_INDEXER.SOUL(slug, role));
     return data.content;
   },
 
   async updateAbout(input: UpdateAboutInput): Promise<void> {
-    await api.put(INDEXER.AI_AGENT.SOUL(input.slug, input.role), {
+    await api.put(AI_AGENT_INDEXER.SOUL(input.slug, input.role), {
       content: input.content,
     });
   },
@@ -228,7 +228,7 @@ export const aiAgentClient = {
     slug: string,
     topic: OrgBrainTopic
   ): Promise<OrgBrainResponse<TData>> {
-    const { data } = await api.get<OrgBrainResponse<TData>>(INDEXER.AI_AGENT.BRAIN(slug, topic));
+    const { data } = await api.get<OrgBrainResponse<TData>>(AI_AGENT_INDEXER.BRAIN(slug, topic));
     return data;
   },
 
@@ -237,17 +237,17 @@ export const aiAgentClient = {
     topic: OrgBrainTopic,
     payload: MissionData | BrandData
   ): Promise<void> {
-    await api.put(INDEXER.AI_AGENT.BRAIN(slug, topic), payload);
+    await api.put(AI_AGENT_INDEXER.BRAIN(slug, topic), payload);
   },
 
   async listWorkTasks(slug: string): Promise<WorkTask[]> {
-    const { data } = await api.get<{ tasks: WorkTask[] }>(INDEXER.AI_AGENT.WORK_TASKS(slug));
+    const { data } = await api.get<{ tasks: WorkTask[] }>(AI_AGENT_INDEXER.WORK_TASKS(slug));
     return data.tasks;
   },
 
   async getWorkTask(slug: string, taskId: string): Promise<WorkTask & { activity?: WorkActivity }> {
     const { data } = await api.get<WorkTask & { activity?: WorkActivity }>(
-      INDEXER.AI_AGENT.WORK_TASK(slug, taskId)
+      AI_AGENT_INDEXER.WORK_TASK(slug, taskId)
     );
     return data;
   },
@@ -256,12 +256,12 @@ export const aiAgentClient = {
     slug: string,
     input: { title: string; description?: string; assignee?: string }
   ): Promise<WorkTask> {
-    const { data } = await api.post<WorkTask>(INDEXER.AI_AGENT.WORK_TASKS(slug), input);
+    const { data } = await api.post<WorkTask>(AI_AGENT_INDEXER.WORK_TASKS(slug), input);
     return data;
   },
 
   async updateWorkTaskStatus(slug: string, taskId: string, status: WorkTaskStatus): Promise<void> {
-    await api.put(INDEXER.AI_AGENT.WORK_TASK_STATUS(slug, taskId), { status });
+    await api.put(AI_AGENT_INDEXER.WORK_TASK_STATUS(slug, taskId), { status });
   },
 
   async updateWorkTaskAssignee(
@@ -269,7 +269,7 @@ export const aiAgentClient = {
     taskId: string,
     assignee: string | null
   ): Promise<WorkTask> {
-    const { data } = await api.put<WorkTask>(INDEXER.AI_AGENT.WORK_TASK_ASSIGNEE(slug, taskId), {
+    const { data } = await api.put<WorkTask>(AI_AGENT_INDEXER.WORK_TASK_ASSIGNEE(slug, taskId), {
       assignee,
     });
     return data;
@@ -277,7 +277,7 @@ export const aiAgentClient = {
 
   async listWorkTaskComments(slug: string, taskId: string): Promise<WorkTaskComment[]> {
     const { data } = await api.get<{ comments: WorkTaskComment[] }>(
-      INDEXER.AI_AGENT.WORK_TASK_COMMENTS(slug, taskId)
+      AI_AGENT_INDEXER.WORK_TASK_COMMENTS(slug, taskId)
     );
     return data.comments;
   },
@@ -289,19 +289,19 @@ export const aiAgentClient = {
     previousResponseId?: string
   ): Promise<{ runId: string; sessionId: string }> {
     const { data } = await api.post<{ runId: string; sessionId: string }>(
-      INDEXER.AI_AGENT.CHAT_START(slug, role),
+      AI_AGENT_INDEXER.CHAT_START(slug, role),
       { message, previousResponseId }
     );
     return data;
   },
 
   async stopChatRun(slug: string, role: TeamRole, runId: string): Promise<void> {
-    await api.post(INDEXER.AI_AGENT.CHAT_RUN_STOP(slug, role, runId), {});
+    await api.post(AI_AGENT_INDEXER.CHAT_RUN_STOP(slug, role, runId), {});
   },
 
   async addWorkTaskComment(slug: string, taskId: string, body: string): Promise<WorkTaskComment> {
     const { data } = await api.post<WorkTaskComment>(
-      INDEXER.AI_AGENT.WORK_TASK_COMMENTS(slug, taskId),
+      AI_AGENT_INDEXER.WORK_TASK_COMMENTS(slug, taskId),
       { body }
     );
     return data;
@@ -309,14 +309,14 @@ export const aiAgentClient = {
 
   async listAvailableSkills(slug: string): Promise<AIAgentSkillSummary[]> {
     const { data } = await api.get<{ skills: AIAgentSkillSummary[] }>(
-      INDEXER.AI_AGENT.SKILLS_AVAILABLE(slug)
+      AI_AGENT_INDEXER.SKILLS_AVAILABLE(slug)
     );
     return data.skills;
   },
 
   async listProfileSkills(slug: string, profile: TeamRole): Promise<AIAgentSkillSummary[]> {
     const { data } = await api.get<{ skills: AIAgentSkillSummary[] }>(
-      INDEXER.AI_AGENT.PROFILE_SKILLS(slug, profile)
+      AI_AGENT_INDEXER.PROFILE_SKILLS(slug, profile)
     );
     return data.skills;
   },
@@ -327,7 +327,7 @@ export const aiAgentClient = {
     skillId: string
   ): Promise<AIAgentSkillInstallResult> {
     const { data } = await api.post<AIAgentSkillInstallResult>(
-      INDEXER.AI_AGENT.PROFILE_SKILLS(slug, profile),
+      AI_AGENT_INDEXER.PROFILE_SKILLS(slug, profile),
       { id: skillId }
     );
     return data;
@@ -340,14 +340,14 @@ export const aiAgentClient = {
     skillId: string
   ): Promise<AIAgentSkillUninstallResult> {
     const { data } = await api.delete<AIAgentSkillUninstallResult>(
-      INDEXER.AI_AGENT.PROFILE_SKILL(slug, profile, namespace, skillId)
+      AI_AGENT_INDEXER.PROFILE_SKILL(slug, profile, namespace, skillId)
     );
     return data;
   },
 
   async listChatUploads(slug: string, profile: TeamRole): Promise<AIAgentUploadSummary[]> {
     const { data } = await api.get<{ files: AIAgentUploadSummary[] }>(
-      INDEXER.AI_AGENT.CHAT_UPLOADS(slug, profile)
+      AI_AGENT_INDEXER.CHAT_UPLOADS(slug, profile)
     );
     return data.files;
   },
@@ -359,7 +359,7 @@ export const aiAgentClient = {
     // application/json Content-Type from api-client.ts — otherwise the
     // indexer route rejects the request as 406 / can't parse the body.
     const { data } = await api.post<AIAgentUploadSummary>(
-      INDEXER.AI_AGENT.CHAT_UPLOADS(slug, profile),
+      AI_AGENT_INDEXER.CHAT_UPLOADS(slug, profile),
       form,
       { headers: { "Content-Type": "multipart/form-data" } }
     );
@@ -372,18 +372,18 @@ export const aiAgentClient = {
     sha256: string
   ): Promise<{ removed: boolean; sha256: string }> {
     const { data } = await api.delete<{ removed: boolean; sha256: string }>(
-      INDEXER.AI_AGENT.CHAT_UPLOAD(slug, profile, sha256)
+      AI_AGENT_INDEXER.CHAT_UPLOAD(slug, profile, sha256)
     );
     return data;
   },
 
   chatDownloadUrl(slug: string, profile: TeamRole, sha256: string): string {
-    return INDEXER.AI_AGENT.CHAT_UPLOAD(slug, profile, sha256);
+    return AI_AGENT_INDEXER.CHAT_UPLOAD(slug, profile, sha256);
   },
 
   async listTaskAttachments(slug: string, taskId: string): Promise<AIAgentUploadSummary[]> {
     const { data } = await api.get<{ files: AIAgentUploadSummary[] }>(
-      INDEXER.AI_AGENT.TASK_ATTACHMENTS(slug, taskId)
+      AI_AGENT_INDEXER.TASK_ATTACHMENTS(slug, taskId)
     );
     return data.files;
   },
@@ -396,7 +396,7 @@ export const aiAgentClient = {
     const form = new FormData();
     form.append("file", file, file.name);
     const { data } = await api.post<AIAgentUploadSummary>(
-      INDEXER.AI_AGENT.TASK_ATTACHMENTS(slug, taskId),
+      AI_AGENT_INDEXER.TASK_ATTACHMENTS(slug, taskId),
       form,
       { headers: { "Content-Type": "multipart/form-data" } }
     );
@@ -404,7 +404,7 @@ export const aiAgentClient = {
   },
 
   async archiveWorkTask(slug: string, taskId: string): Promise<void> {
-    await api.delete(INDEXER.AI_AGENT.WORK_TASK(slug, taskId));
+    await api.delete(AI_AGENT_INDEXER.WORK_TASK(slug, taskId));
   },
 
   async deleteTaskAttachment(
@@ -413,17 +413,17 @@ export const aiAgentClient = {
     sha256: string
   ): Promise<{ removed: boolean; sha256: string }> {
     const { data } = await api.delete<{ removed: boolean; sha256: string }>(
-      INDEXER.AI_AGENT.TASK_ATTACHMENT(slug, taskId, sha256)
+      AI_AGENT_INDEXER.TASK_ATTACHMENT(slug, taskId, sha256)
     );
     return data;
   },
 
   taskAttachmentDownloadUrl(slug: string, taskId: string, sha256: string): string {
-    return INDEXER.AI_AGENT.TASK_ATTACHMENT(slug, taskId, sha256);
+    return AI_AGENT_INDEXER.TASK_ATTACHMENT(slug, taskId, sha256);
   },
 
   async provision(input: ProvisionOrgInput): Promise<AIAgentOrgResponse> {
-    const { data } = await api.post<AIAgentOrgResponse>(INDEXER.AI_AGENT.PROVISION(input.slug), {
+    const { data } = await api.post<AIAgentOrgResponse>(AI_AGENT_INDEXER.PROVISION(input.slug), {
       slug: input.slug,
       communityId: input.communityId ?? null,
       containerUrl: input.containerUrl,
@@ -443,7 +443,7 @@ export const aiAgentClient = {
   ): Promise<ReadableStream<Uint8Array>> {
     const authHeaders = await TokenManager.getAuthHeader();
     const res = await fetch(
-      `${envVars.NEXT_PUBLIC_GAP_INDEXER_URL}${INDEXER.AI_AGENT.CHAT_RUN_EVENTS(slug, role, runId)}`,
+      `${envVars.NEXT_PUBLIC_GAP_INDEXER_URL}${AI_AGENT_INDEXER.CHAT_RUN_EVENTS(slug, role, runId)}`,
       { method: "GET", headers: { Accept: "text/event-stream", ...authHeaders }, signal }
     );
     if (!res.ok || !res.body) {
