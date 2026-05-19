@@ -8,6 +8,7 @@ import {
   KeyRound,
   LogOutIcon,
   Settings,
+  Users,
 } from "lucide-react";
 import Link from "next/link";
 import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
@@ -25,6 +26,7 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { useContributorProfile } from "@/hooks/useContributorProfile";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
+import { useMyOrgs } from "@/hooks/useTeam";
 import { useApiKeyManagementModalStore } from "@/store/modals/apiKeyManagement";
 import { useContributorProfileModalStore } from "@/store/modals/contributorProfile";
 import { PAGES } from "@/utilities/pages";
@@ -92,6 +94,12 @@ export function NavbarUserMenu() {
   const { openModal: openProfileModal } = useContributorProfileModalStore();
   const { openModal: openApiKeyModal } = useApiKeyManagementModalStore();
   const [, copyToClipboard] = useCopyToClipboard();
+
+  // Route the user to their first team's directory if they have one;
+  // otherwise drop them into the provisioning flow.
+  const { data: myOrgs } = useMyOrgs();
+  const aiTeamHref =
+    myOrgs && myOrgs.length > 0 ? PAGES.TEAM.DIRECTORY(myOrgs[0].slug) : PAGES.TEAM.ONBOARDING;
 
   if (!ready) {
     return <NavbarUserSkeleton />;
@@ -188,6 +196,12 @@ export function NavbarUserMenu() {
           </div>
           <hr className="h-[1px] w-full border-border" />
           <div className="flex flex-col w-full">
+            <MenubarItem asChild className="w-full cursor-pointer">
+              <Link href={aiTeamHref} className="flex items-center gap-2 w-full">
+                <Users className={menuStyles.itemIcon} />
+                <span className={menuStyles.itemText}>AI Team</span>
+              </Link>
+            </MenubarItem>
             <MenubarItem asChild className="w-full cursor-pointer">
               <Link href={PAGES.DASHBOARD} className="flex items-center gap-2 w-full">
                 <FolderKanban className={menuStyles.itemIcon} />
