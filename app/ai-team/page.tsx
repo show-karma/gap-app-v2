@@ -11,7 +11,7 @@ export default function AITeamListPage() {
   const { data, isLoading, isError, error, refetch } = useMyOrgs();
 
   return (
-    <main className="mx-auto max-w-4xl px-6 py-12">
+    <main className="w-full">
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-[28px] font-semibold leading-tight tracking-tight text-gray-900 dark:text-zinc-100">
@@ -32,7 +32,7 @@ export default function AITeamListPage() {
       </div>
 
       {isLoading ? (
-        <div className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           <Skeleton className="h-28 rounded-2xl" />
           <Skeleton className="h-28 rounded-2xl" />
         </div>
@@ -73,7 +73,7 @@ export default function AITeamListPage() {
           </Link>
         </div>
       ) : (
-        <ul className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <ul className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {data.map((org) => (
             <li key={org.id}>
               <Link

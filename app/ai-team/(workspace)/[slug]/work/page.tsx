@@ -8,7 +8,7 @@ export default function WorkPage() {
   const { slug } = useParams<{ slug: string }>();
 
   return (
-    <main className="mx-auto max-w-7xl px-6 py-10">
+    <main className="w-full">
       <NonprofitPageHeader
         eyebrow="Work board"
         title="Work board"

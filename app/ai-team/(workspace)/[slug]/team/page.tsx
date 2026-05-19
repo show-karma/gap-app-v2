@@ -32,7 +32,7 @@ export default function TeamDirectoryPage() {
 
   if (isLoading) {
     return (
-      <main className="mx-auto max-w-5xl px-6 py-12">
+      <main className="w-full">
         <Skeleton className="h-8 w-64 rounded" />
         <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {VISIBLE_TEAM_ROLES.map((role) => (
@@ -45,7 +45,7 @@ export default function TeamDirectoryPage() {
 
   if (isError) {
     return (
-      <main className="mx-auto max-w-3xl px-6 py-16">
+      <main className="w-full">
         <h1 className="text-2xl font-semibold">Couldn&apos;t load your team</h1>
         <p className="mt-3 text-sm text-red-600">
           {humanizeApiError(error, "We couldn't load your team. Try again in a moment.")}
@@ -62,7 +62,7 @@ export default function TeamDirectoryPage() {
   }
 
   return (
-    <main className="mx-auto max-w-5xl px-6 py-10">
+    <main className="w-full">
       <div className="flex items-end justify-between gap-6">
         <div className="max-w-xl">
           <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-emerald-600">
@@ -79,7 +79,7 @@ export default function TeamDirectoryPage() {
         <StatusDot status={org?.status ?? "unknown"} />
       </div>
 
-      <ul className="mt-8 grid grid-cols-1 gap-[18px] md:grid-cols-2">
+      <ul className="mt-8 grid grid-cols-1 gap-[18px] md:grid-cols-2 lg:grid-cols-3">
         {VISIBLE_TEAM_ROLES.map((role) => (
           <li key={role}>
             <CrewCard role={role} slug={slug} />

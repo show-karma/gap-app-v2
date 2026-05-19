@@ -12,7 +12,7 @@ export default function SkillsMarketplacePage() {
   const [role, setRole] = useState<TeamRole>(TEAM_ROLES[0]);
 
   return (
-    <main className="mx-auto max-w-6xl px-6 py-10">
+    <main className="w-full">
       <NonprofitPageHeader
         eyebrow="Marketplace"
         title="Skills marketplace"

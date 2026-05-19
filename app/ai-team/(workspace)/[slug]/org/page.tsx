@@ -10,7 +10,7 @@ export default function OrgBrainPage() {
   const { slug } = useParams<{ slug: string }>();
 
   return (
-    <main className="mx-auto max-w-4xl px-6 py-10">
+    <main className="w-full">
       <NonprofitPageHeader
         eyebrow="Context"
         title="Org Brain"
