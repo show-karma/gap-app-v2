@@ -344,4 +344,84 @@ describe("MarkdownEditor", () => {
       expect(button).toHaveAttribute("aria-label", "Show preview");
     });
   });
+
+  // Regression tests for PR #1451 — md-editor-rt builds `#${id} .cm-scroller`
+  // and runs querySelector on it. CSS identifiers can't start with a digit,
+  // so an id like "21_project_summary" (derived from a form field labelled
+  // "21. Project Summary") would crash the Edit Application modal with a
+  // SyntaxError. The component prefixes a `_` only when the id starts with
+  // a digit, and uses the same safe id for both `label htmlFor` and the
+  // underlying MdEditor so the label/control binding stays intact.
+  describe("Safe ID Handling (digit-leading ids)", () => {
+    it("should prefix the underlying editor id with `_` when the id starts with a digit", () => {
+      render(<MarkdownEditor label="21. Project Summary" id="21_project_summary" />);
+
+      const textarea = screen.getByTestId("md-editor-textarea");
+      expect(textarea).toHaveAttribute("id", "_21_project_summary");
+    });
+
+    it("should prefix the label htmlFor with `_` when the id starts with a digit", () => {
+      render(<MarkdownEditor label="21. Project Summary" id="21_project_summary" />);
+
+      const label = screen.getByText(/21\. Project Summary/);
+      expect(label).toHaveAttribute("for", "_21_project_summary");
+    });
+
+    it("should keep label htmlFor and editor id in sync when prefixed", () => {
+      render(<MarkdownEditor label="9 Lives" id="9_lives" />);
+
+      const label = screen.getByText(/9 Lives/);
+      const textarea = screen.getByTestId("md-editor-textarea");
+
+      const labelFor = label.getAttribute("for");
+      const editorId = textarea.getAttribute("id");
+      expect(labelFor).toBe(editorId);
+      expect(labelFor).toBe("_9_lives");
+    });
+
+    it("should not prefix the id when it starts with a letter", () => {
+      render(<MarkdownEditor label="Project Summary" id="project_summary" />);
+
+      const textarea = screen.getByTestId("md-editor-textarea");
+      const label = screen.getByText("Project Summary");
+      expect(textarea).toHaveAttribute("id", "project_summary");
+      expect(label).toHaveAttribute("for", "project_summary");
+    });
+
+    it("should not prefix the id when it starts with an underscore", () => {
+      render(<MarkdownEditor label="Hidden" id="_already_safe" />);
+
+      const textarea = screen.getByTestId("md-editor-textarea");
+      expect(textarea).toHaveAttribute("id", "_already_safe");
+    });
+
+    it.each([
+      ["0_zero_indexed", "_0_zero_indexed"],
+      ["1question", "_1question"],
+      ["42-answer", "_42-answer"],
+      ["9", "_9"],
+    ])("should prefix `%s` to `%s`", (input, expected) => {
+      render(<MarkdownEditor label="Field" id={input} />);
+
+      const textarea = screen.getByTestId("md-editor-textarea");
+      expect(textarea).toHaveAttribute("id", expected);
+    });
+
+    it("should produce an id that is a valid CSS selector when prefixed", () => {
+      render(<MarkdownEditor label="21. Project Summary" id="21_project_summary" />);
+
+      const textarea = screen.getByTestId("md-editor-textarea");
+      const editorId = textarea.getAttribute("id");
+      expect(editorId).toBeTruthy();
+
+      // The whole point of the fix: `document.querySelector(`#${editorId} .cm-scroller`)`
+      // must NOT throw the SyntaxError that md-editor-rt's internal call raised
+      // when ids started with a digit.
+      expect(() => document.querySelector(`#${editorId} .cm-scroller`)).not.toThrow();
+    });
+
+    it("should not crash when no id is supplied", () => {
+      expect(() => render(<MarkdownEditor label="No id field" />)).not.toThrow();
+    });
+  });
 });
