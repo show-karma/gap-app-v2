@@ -1,6 +1,7 @@
 "use client";
 
-import { AlertCircle, Globe, Hash, KeyRound, Loader2 } from "lucide-react";
+import { AlertCircle, ArrowLeft, Globe, Hash, KeyRound, Loader2 } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type ReactNode, useState } from "react";
 import { Input } from "@/components/ui/input";
@@ -24,7 +25,14 @@ export default function OnboardingPage() {
 
   return (
     <main className="mx-auto max-w-2xl px-6 py-12">
-      <div>
+      <Link
+        href={PAGES.TEAM.LIST}
+        className="inline-flex items-center gap-1 text-sm text-gray-500 dark:text-zinc-400 transition hover:text-gray-900 dark:hover:text-zinc-100"
+      >
+        <ArrowLeft className="h-3.5 w-3.5" aria-hidden />
+        Back to teams
+      </Link>
+      <div className="mt-4">
         <h1 className="mt-1 text-[28px] font-semibold leading-tight tracking-tight text-gray-900 dark:text-zinc-100">
           Set up your AI team
         </h1>
