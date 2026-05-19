@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import { Button } from "@/components/Utilities/Button";
 import { Skeleton } from "@/components/Utilities/Skeleton";
+import { Textarea } from "@/components/ui/textarea";
 import { useOrgBrain, useUpdateBrand } from "@/hooks/useOrgBrain";
 import type { BrandData } from "@/lib/hermes-client";
 
@@ -38,8 +39,8 @@ export function BrandForm({ slug }: Props) {
 
   if (isError) {
     return (
-      <div className="rounded border border-red-200 bg-red-50 p-4">
-        <p className="text-sm text-red-700">
+      <div className="rounded border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/30 p-4">
+        <p className="text-sm text-red-700 dark:text-red-400">
           {error instanceof Error ? error.message : "Failed to load brand"}
         </p>
         <Button type="button" variant="secondary" onClick={() => refetch()} className="mt-3">
@@ -67,21 +68,27 @@ export function BrandForm({ slug }: Props) {
       )}
       className="space-y-6"
     >
-      <label className="block">
-        <span className="text-sm font-medium text-gray-900">Brand voice</span>
-        <span className="mt-1 block text-xs text-gray-500">
+      <div>
+        <label
+          htmlFor="brand-voice"
+          className="block text-sm font-medium text-gray-900 dark:text-zinc-100"
+        >
+          Brand voice
+        </label>
+        <p className="mt-1 text-xs text-gray-500 dark:text-zinc-400">
           A short description of how the org sounds (e.g. warm, plainspoken, urgent). Employees read
           this before any substantive writing goes out.
-        </span>
-        <textarea
+        </p>
+        <Textarea
+          id="brand-voice"
           {...register("voice")}
           rows={6}
           placeholder="Warm but unsentimental. Concrete numbers over abstract claims. Never corporate."
-          className="mt-2 w-full rounded-lg border border-gray-200 bg-white p-3 text-sm text-gray-900 shadow-sm outline-none transition focus:border-gray-300 focus:ring-2 focus:ring-gray-100"
+          className="mt-2 bg-white dark:bg-zinc-900 p-3 text-gray-900 dark:text-zinc-100"
         />
-      </label>
+      </div>
 
-      <div className="flex items-center gap-3 border-t pt-4">
+      <div className="flex items-center gap-3 border-t dark:border-zinc-800 pt-4">
         <Button
           type="submit"
           variant="primary"

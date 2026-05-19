@@ -27,6 +27,8 @@ import { toast } from "react-hot-toast";
 import { Button } from "@/components/Utilities/Button";
 import { type DropdownItem, MultiSelectDropdown } from "@/components/Utilities/MultiSelectDropdown";
 import { Skeleton } from "@/components/Utilities/Skeleton";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { useCreateWorkTask, useUpdateWorkTaskStatus, useWorkTasks } from "@/hooks/useWorkBoard";
 import {
   hermesClient,
@@ -63,10 +65,14 @@ const ROLE_DROPDOWN_ITEMS: DropdownItem[] = [
 ];
 
 const ROLE_TINT: Record<TeamRole, string> = {
-  orchestrator: "bg-emerald-50 text-emerald-700 ring-emerald-100",
-  fundraiser: "bg-amber-50 text-amber-800 ring-amber-100",
-  communications: "bg-sky-50 text-sky-700 ring-sky-100",
-  operations: "bg-violet-50 text-violet-700 ring-violet-100",
+  orchestrator:
+    "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 ring-emerald-100 dark:ring-emerald-900",
+  fundraiser:
+    "bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-400 ring-amber-100 dark:ring-amber-900",
+  communications:
+    "bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-400 ring-sky-100 dark:ring-sky-900",
+  operations:
+    "bg-violet-50 dark:bg-violet-950/40 text-violet-700 dark:text-violet-400 ring-violet-100 dark:ring-violet-900",
 };
 
 interface Props {
@@ -130,7 +136,7 @@ export function WorkBoard({ slug }: Props) {
   return (
     <>
       <div className="mb-5 flex items-center justify-between gap-4">
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-gray-500 dark:text-zinc-400">
           {total === 0
             ? "No tasks yet. Add the first one to kick off your team."
             : `${total} ${pluralize("task", total)} across the board.`}
@@ -217,15 +223,17 @@ const Column = memo(function Column({
     <div
       ref={setNodeRef}
       className={`rounded-xl border p-3 transition-colors ${
-        isOver && droppable ? "border-gray-900 bg-gray-100" : "border-gray-200 bg-gray-50/60"
+        isOver && droppable
+          ? "border-gray-900 dark:border-zinc-300 bg-gray-100 dark:bg-zinc-700"
+          : "border-gray-200 dark:border-zinc-800 bg-gray-50/60 dark:bg-zinc-800/60"
       }`}
     >
       <div className="flex items-center justify-between px-1">
         <div className="flex items-center gap-2">
           <span className={`h-1.5 w-1.5 rounded-full ${spec.dot}`} aria-hidden />
-          <h3 className="text-sm font-semibold text-gray-900">{spec.label}</h3>
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-zinc-100">{spec.label}</h3>
         </div>
-        <span className="rounded-full bg-white px-1.5 py-0.5 text-[11px] font-medium tabular-nums text-gray-500 ring-1 ring-gray-200">
+        <span className="rounded-full bg-white dark:bg-zinc-700 px-1.5 py-0.5 text-[11px] font-medium tabular-nums text-gray-500 dark:text-zinc-400 ring-1 ring-gray-200 dark:ring-zinc-600">
           {tasks.length}
         </span>
       </div>
@@ -234,8 +242,8 @@ const Column = memo(function Column({
           <li
             className={`rounded-lg border border-dashed px-3 py-8 text-center text-xs ${
               isOver && droppable
-                ? "border-gray-900 bg-white text-gray-700"
-                : "border-gray-200 text-gray-400"
+                ? "border-gray-900 dark:border-zinc-300 bg-white dark:bg-zinc-800 text-gray-700 dark:text-zinc-300"
+                : "border-gray-200 dark:border-zinc-700 text-gray-400 dark:text-zinc-500"
             }`}
           >
             <spec.icon className="mx-auto mb-1.5 h-4 w-4 text-gray-300" aria-hidden />
@@ -282,13 +290,13 @@ const TaskCard = memo(function TaskCard({
   const assigneeTint =
     task.assignee && (task.assignee as TeamRole) in ROLE_TINT
       ? ROLE_TINT[task.assignee as TeamRole]
-      : "bg-gray-50 text-gray-700 ring-gray-200";
+      : "bg-gray-50 dark:bg-zinc-800 text-gray-700 dark:text-zinc-300 ring-gray-200 dark:ring-zinc-700";
 
   return (
     <li
       ref={setNodeRef}
       style={style}
-      className={`group relative rounded-lg border border-gray-200 bg-white shadow-sm transition hover:border-gray-300 hover:shadow-md ${
+      className={`group relative rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm transition hover:border-gray-300 dark:hover:border-zinc-600 hover:shadow-md ${
         isDragging ? "opacity-50" : ""
       }`}
     >
@@ -297,7 +305,7 @@ const TaskCard = memo(function TaskCard({
         {...attributes}
         type="button"
         aria-label="Drag handle"
-        className="absolute -left-0.5 top-3 z-10 hidden cursor-grab text-gray-300 active:cursor-grabbing group-hover:block"
+        className="absolute -left-0.5 top-3 z-10 hidden cursor-grab text-gray-300 dark:text-zinc-600 active:cursor-grabbing group-hover:block"
       >
         <GripVertical className="h-4 w-4" aria-hidden />
       </button>
@@ -306,7 +314,9 @@ const TaskCard = memo(function TaskCard({
         onClick={() => onOpen(task.id)}
         className="block w-full rounded-t-lg p-3 text-left"
       >
-        <div className="pl-1 text-sm font-medium leading-snug text-gray-900">{task.title}</div>
+        <div className="pl-1 text-sm font-medium leading-snug text-gray-900 dark:text-zinc-100">
+          {task.title}
+        </div>
         {assigneeLabel ? (
           <div className="mt-2 pl-1">
             <span
@@ -332,8 +342,8 @@ function StatusMover({
   const targets = COLUMNS.filter((c) => c.status !== current);
 
   return (
-    <div className="flex flex-wrap items-center gap-1 border-t border-gray-100 px-3 py-2 opacity-0 transition group-hover:opacity-100 focus-within:opacity-100">
-      <span className="text-[10px] font-medium uppercase tracking-wider text-gray-400">
+    <div className="flex flex-wrap items-center gap-1 border-t border-gray-100 dark:border-zinc-700 px-3 py-2 opacity-0 transition group-hover:opacity-100 focus-within:opacity-100">
+      <span className="text-[10px] font-medium uppercase tracking-wider text-gray-400 dark:text-zinc-500">
         Move to
       </span>
       {targets.map((t) => (
@@ -344,7 +354,7 @@ function StatusMover({
             e.stopPropagation();
             onMove(t.status);
           }}
-          className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] text-gray-600 transition hover:bg-gray-100 hover:text-gray-900"
+          className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] text-gray-600 dark:text-zinc-400 transition hover:bg-gray-100 dark:hover:bg-zinc-700 hover:text-gray-900 dark:hover:text-zinc-100"
         >
           <span className={`h-1 w-1 rounded-full ${t.dot}`} aria-hidden />
           {t.label}
@@ -386,24 +396,23 @@ function NewTaskForm({
           files
         );
       }}
-      className="mb-5 rounded-xl border border-gray-200 bg-white p-4 shadow-sm"
+      className="mb-5 rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-sm"
     >
-      <input
+      <Input
         // biome-ignore lint/a11y/noAutofocus: the form is user-triggered and focusing is expected
         autoFocus
         value={title}
         onChange={(e) => setTitle(e.target.value)}
         placeholder="Task title — what needs doing?"
-        className="block w-full rounded-md border border-gray-200 px-3 py-2 text-sm shadow-sm transition focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-100"
         required
         maxLength={500}
       />
-      <textarea
+      <Textarea
         value={description}
         onChange={(e) => setDescription(e.target.value)}
         placeholder="Optional description"
         rows={3}
-        className="mt-3 block w-full rounded-md border border-gray-200 px-3 py-2 text-sm shadow-sm transition focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-100"
+        className="mt-3"
         maxLength={8000}
       />
       {files.length > 0 ? (
@@ -411,13 +420,15 @@ function NewTaskForm({
           {files.map((f, idx) => (
             <li
               key={`${f.name}-${f.lastModified}-${idx}`}
-              className="inline-flex items-center gap-1 rounded-md bg-gray-100 px-2 py-0.5 text-[11px]"
+              className="inline-flex items-center gap-1 rounded-md bg-gray-100 dark:bg-zinc-800 px-2 py-0.5 text-[11px]"
             >
-              <span className="max-w-[160px] truncate font-medium text-gray-800">{f.name}</span>
+              <span className="max-w-[160px] truncate font-medium text-gray-800 dark:text-zinc-200">
+                {f.name}
+              </span>
               <button
                 type="button"
                 onClick={() => setFiles((cur) => cur.filter((_, i) => i !== idx))}
-                className="rounded p-0.5 text-gray-500 hover:bg-gray-200 hover:text-gray-900"
+                className="rounded p-0.5 text-gray-500 dark:text-zinc-400 hover:bg-gray-200 dark:hover:bg-zinc-700 hover:text-gray-900 dark:hover:text-zinc-100"
                 aria-label={`Remove ${f.name}`}
               >
                 <X className="h-3 w-3" aria-hidden />
@@ -427,7 +438,7 @@ function NewTaskForm({
         </ul>
       ) : null}
       <div className="mt-3 flex flex-wrap items-center gap-3">
-        <div className="flex items-center gap-2 text-xs text-gray-600">
+        <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-zinc-400">
           <span>Assign to</span>
           <MultiSelectDropdown
             items={ROLE_DROPDOWN_ITEMS}

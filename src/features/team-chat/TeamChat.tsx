@@ -45,7 +45,7 @@ export function TeamChat({ slug, role }: Props) {
   );
 
   return (
-    <div className="flex h-[72vh] flex-col rounded-lg border bg-white">
+    <div className="flex h-[72vh] flex-col rounded-lg border dark:border-zinc-800 bg-white dark:bg-zinc-900">
       <Conversation className="flex-1">
         <ConversationContent>
           {messages.length === 0 ? (
@@ -60,7 +60,7 @@ export function TeamChat({ slug, role }: Props) {
         <ConversationScrollButton />
       </Conversation>
 
-      <div className="border-t bg-gray-50/60 p-3">
+      <div className="border-t dark:border-zinc-800 bg-gray-50/60 dark:bg-zinc-800/60 p-3">
         <ChatComposer
           slug={slug}
           role={role}
@@ -104,7 +104,7 @@ const ChatTurn = memo(function ChatTurn({
               <div className="mt-2 text-xs text-red-600">{message.errorMessage}</div>
             ) : null}
             {message.state === "cancelled" ? (
-              <div className="mt-2 text-xs text-gray-500">
+              <div className="mt-2 text-xs text-gray-500 dark:text-zinc-400">
                 Stopped by you. {TEAM_ROLE_LABELS[role]} can pick up from here.
               </div>
             ) : null}
@@ -119,7 +119,7 @@ function StreamingPulse() {
   return (
     <output
       aria-label="thinking"
-      className="ml-0.5 inline-block h-3 w-1.5 animate-pulse rounded bg-gray-400 align-middle"
+      className="ml-0.5 inline-block h-3 w-1.5 animate-pulse rounded bg-gray-400 dark:bg-zinc-500 align-middle"
     />
   );
 }
@@ -132,23 +132,25 @@ function ToolActivity({
   isStreaming: boolean;
 }) {
   return (
-    <div className="mb-3 rounded border border-gray-200 bg-gray-50/80 px-3 py-2 text-xs">
-      <ul className="space-y-1 text-gray-700">
+    <div className="mb-3 rounded border border-gray-200 dark:border-zinc-700 bg-gray-50/80 dark:bg-zinc-800/80 px-3 py-2 text-xs">
+      <ul className="space-y-1 text-gray-700 dark:text-zinc-300">
         {tools.map((t) => (
           <li key={t.id} className="flex items-baseline justify-between gap-3">
             <span className="min-w-0 flex-1 truncate">
-              <span className="font-mono text-gray-800">{t.tool}</span>
-              {t.preview ? <span className="ml-2 text-gray-500">{t.preview}</span> : null}
+              <span className="font-mono text-gray-800 dark:text-zinc-200">{t.tool}</span>
+              {t.preview ? (
+                <span className="ml-2 text-gray-500 dark:text-zinc-400">{t.preview}</span>
+              ) : null}
             </span>
             <ToolDuration tool={t} />
           </li>
         ))}
       </ul>
       {isStreaming ? (
-        <div className="mt-2 flex items-center gap-1 text-[10px] text-gray-400">
-          <span className="h-1 w-1 animate-pulse rounded-full bg-gray-400 [animation-delay:0ms]" />
-          <span className="h-1 w-1 animate-pulse rounded-full bg-gray-400 [animation-delay:150ms]" />
-          <span className="h-1 w-1 animate-pulse rounded-full bg-gray-400 [animation-delay:300ms]" />
+        <div className="mt-2 flex items-center gap-1 text-[10px] text-gray-400 dark:text-zinc-500">
+          <span className="h-1 w-1 animate-pulse rounded-full bg-gray-400 dark:bg-zinc-500 [animation-delay:0ms]" />
+          <span className="h-1 w-1 animate-pulse rounded-full bg-gray-400 dark:bg-zinc-500 [animation-delay:150ms]" />
+          <span className="h-1 w-1 animate-pulse rounded-full bg-gray-400 dark:bg-zinc-500 [animation-delay:300ms]" />
         </div>
       ) : null}
     </div>
@@ -157,13 +159,13 @@ function ToolActivity({
 
 function ToolDuration({ tool }: { tool: NonNullable<ChatMessage["tools"]>[number] }) {
   if (tool.state === "running") {
-    return <span className="shrink-0 text-gray-500">running…</span>;
+    return <span className="shrink-0 text-gray-500 dark:text-zinc-400">running…</span>;
   }
   if (tool.state === "error") {
     return <span className="shrink-0 text-red-600">failed</span>;
   }
   return (
-    <span className="shrink-0 text-gray-400">
+    <span className="shrink-0 text-gray-400 dark:text-zinc-500">
       {tool.durationMs ? `${tool.durationMs}ms` : "done"}
     </span>
   );
@@ -228,19 +230,21 @@ function ChatComposer({
   const canSubmit = (value.trim().length > 0 || pending.length > 0) && !isStreaming;
 
   return (
-    <div className="flex flex-col gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 focus-within:border-gray-400">
+    <div className="flex flex-col gap-2 rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 focus-within:border-gray-400 dark:focus-within:border-zinc-500">
       {pending.length > 0 ? (
-        <ul className="flex flex-wrap gap-1.5 border-b border-gray-100 pb-2">
+        <ul className="flex flex-wrap gap-1.5 border-b border-gray-100 dark:border-zinc-700 pb-2">
           {pending.map((f) => (
             <li
               key={f.sha256}
-              className="inline-flex items-center gap-1 rounded-md bg-gray-100 px-2 py-0.5 text-[11px]"
+              className="inline-flex items-center gap-1 rounded-md bg-gray-100 dark:bg-zinc-800 px-2 py-0.5 text-[11px]"
             >
-              <span className="max-w-[160px] truncate font-medium text-gray-800">{f.filename}</span>
+              <span className="max-w-[160px] truncate font-medium text-gray-800 dark:text-zinc-200">
+                {f.filename}
+              </span>
               <button
                 type="button"
                 onClick={() => onRemoveAttachment(f.sha256)}
-                className="rounded p-0.5 text-gray-500 hover:bg-gray-200 hover:text-gray-900"
+                className="rounded p-0.5 text-gray-500 dark:text-zinc-400 hover:bg-gray-200 dark:hover:bg-zinc-700 hover:text-gray-900 dark:hover:text-zinc-100"
                 aria-label={`Remove ${f.filename}`}
               >
                 <X className="h-3 w-3" aria-hidden />
@@ -261,7 +265,7 @@ function ChatComposer({
           placeholder={placeholder}
           rows={1}
           maxLength={8000}
-          className="min-h-[24px] flex-1 resize-none border-0 bg-transparent text-sm leading-6 outline-none placeholder:text-gray-400"
+          className="min-h-[24px] flex-1 resize-none border-0 bg-transparent text-sm leading-6 text-gray-900 dark:text-zinc-100 outline-none placeholder:text-gray-400 dark:placeholder:text-zinc-500"
         />
         <UploadButton
           label=""
@@ -273,7 +277,7 @@ function ChatComposer({
             type="button"
             onClick={onStop}
             aria-label="Stop generating"
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-gray-900 text-white hover:bg-gray-700"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-gray-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:bg-gray-700 dark:hover:bg-zinc-200"
           >
             <SquareIcon className="h-3.5 w-3.5" />
           </button>

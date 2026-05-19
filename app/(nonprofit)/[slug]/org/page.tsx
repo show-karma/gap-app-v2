@@ -18,7 +18,7 @@ export default function OrgBrainPage() {
       />
 
       <Tabs defaultTab="mission">
-        <div className="mt-8 flex gap-1 border-b border-gray-200">
+        <div className="mt-8 flex gap-1 border-b border-gray-200 dark:border-zinc-800">
           <TabTrigger value="mission" className="-mb-px border-b-2 rounded-none px-4 py-2 text-sm">
             Mission
           </TabTrigger>

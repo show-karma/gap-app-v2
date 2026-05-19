@@ -3,6 +3,7 @@
 import { AlertCircle, Globe, Hash, KeyRound, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { type ReactNode, useState } from "react";
+import { Input } from "@/components/ui/input";
 import { useProvisionOrg } from "@/hooks/useTeam";
 import { PAGES } from "@/utilities/pages";
 
@@ -23,20 +24,17 @@ export default function OnboardingPage() {
   return (
     <main className="mx-auto max-w-2xl px-6 py-12">
       <div>
-        <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-gray-500">
-          Setup · Step 1 of 1
-        </p>
-        <h1 className="mt-1 text-[28px] font-semibold leading-tight tracking-tight text-gray-900">
+        <h1 className="mt-1 text-[28px] font-semibold leading-tight tracking-tight text-gray-900 dark:text-zinc-100">
           Set up your AI team
         </h1>
-        <p className="mt-2 max-w-md text-sm text-gray-600">
+        <p className="mt-2 max-w-md text-sm text-gray-600 dark:text-zinc-400">
           Your nonprofit gets a dedicated AI team running in its own private container. Connect to
           it once and we&apos;ll handle the rest.
         </p>
       </div>
 
       <form
-        className="mt-10 space-y-5 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm"
+        className="mt-10 space-y-5 rounded-2xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 shadow-sm"
         onSubmit={(e) => {
           e.preventDefault();
           if (!canSubmit) return;
@@ -49,7 +47,7 @@ export default function OnboardingPage() {
             },
             {
               onSuccess: (org) => {
-                router.push(`${PAGES.TEAM.DIRECTORY}?slug=${org.slug}`);
+                router.push(PAGES.TEAM.DIRECTORY(org.slug));
               },
             }
           );
@@ -62,12 +60,12 @@ export default function OnboardingPage() {
           icon={<Hash className="h-4 w-4" aria-hidden />}
           required
         >
-          <input
+          <Input
             id="slug"
             value={slug}
             onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))}
             placeholder="acme-nonprofit"
-            className="block w-full rounded-md border-0 bg-transparent py-2 pl-0 pr-3 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none"
+            className="h-auto rounded-none border-0 bg-transparent py-2 pl-0 pr-3 text-sm text-gray-900 dark:text-zinc-100 shadow-none placeholder:text-gray-400 dark:placeholder:text-zinc-600 focus-visible:ring-0"
             required
           />
         </Field>
@@ -79,13 +77,13 @@ export default function OnboardingPage() {
           icon={<Globe className="h-4 w-4" aria-hidden />}
           required
         >
-          <input
+          <Input
             id="containerUrl"
             type="url"
             value={containerUrl}
             onChange={(e) => setContainerUrl(e.target.value)}
             placeholder="https://team-acme.karma.xyz"
-            className="block w-full rounded-md border-0 bg-transparent py-2 pl-0 pr-3 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none"
+            className="h-auto rounded-none border-0 bg-transparent py-2 pl-0 pr-3 text-sm text-gray-900 dark:text-zinc-100 shadow-none placeholder:text-gray-400 dark:placeholder:text-zinc-600 focus-visible:ring-0"
             required
           />
         </Field>
@@ -97,14 +95,14 @@ export default function OnboardingPage() {
           icon={<KeyRound className="h-4 w-4" aria-hidden />}
           required
         >
-          <input
+          <Input
             id="sessionToken"
             type="password"
             value={sessionToken}
             onChange={(e) => setSessionToken(e.target.value)}
             placeholder="Runtime session token"
             autoComplete="new-password"
-            className="block w-full rounded-md border-0 bg-transparent py-2 pl-0 pr-3 font-mono text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none"
+            className="h-auto rounded-none border-0 bg-transparent py-2 pl-0 pr-3 font-mono text-sm text-gray-900 dark:text-zinc-100 shadow-none placeholder:text-gray-400 dark:placeholder:text-zinc-600 focus-visible:ring-0"
             required
             minLength={16}
           />
@@ -116,19 +114,22 @@ export default function OnboardingPage() {
           hint="Optional — link this team to an existing community for shared admin."
           icon={<Hash className="h-4 w-4" aria-hidden />}
         >
-          <input
+          <Input
             id="communityId"
             value={communityId}
             onChange={(e) => setCommunityId(e.target.value)}
             placeholder="Leave blank to skip"
-            className="block w-full rounded-md border-0 bg-transparent py-2 pl-0 pr-3 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none"
+            className="h-auto rounded-none border-0 bg-transparent py-2 pl-0 pr-3 text-sm text-gray-900 dark:text-zinc-100 shadow-none placeholder:text-gray-400 dark:placeholder:text-zinc-600 focus-visible:ring-0"
           />
         </Field>
 
         {provision.isError ? (
-          <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50/50 px-4 py-3">
-            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-700" aria-hidden />
-            <p className="text-sm text-amber-900">
+          <div className="flex items-start gap-2 rounded-lg border border-amber-200 dark:border-amber-900/50 bg-amber-50/50 dark:bg-amber-950/30 px-4 py-3">
+            <AlertCircle
+              className="mt-0.5 h-4 w-4 shrink-0 text-amber-700 dark:text-amber-400"
+              aria-hidden
+            />
+            <p className="text-sm text-amber-900 dark:text-amber-300">
               {provision.error instanceof Error ? provision.error.message : "Setup failed"}
             </p>
           </div>
@@ -137,7 +138,7 @@ export default function OnboardingPage() {
         <button
           type="submit"
           disabled={!canSubmit}
-          className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-gray-900 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:shadow-none"
+          className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-gray-900 dark:bg-zinc-100 py-2.5 text-sm font-medium text-white dark:text-zinc-900 shadow-sm transition hover:bg-gray-800 dark:hover:bg-zinc-200 disabled:cursor-not-allowed disabled:bg-gray-300 dark:disabled:bg-zinc-700 disabled:shadow-none"
         >
           {provision.isPending ? (
             <>
@@ -150,7 +151,7 @@ export default function OnboardingPage() {
         </button>
       </form>
 
-      <p className="mt-5 text-center text-xs text-gray-500">
+      <p className="mt-5 text-center text-xs text-gray-500 dark:text-zinc-400">
         Don&apos;t have a runtime yet? Talk to ops — they&apos;ll spin one up for you.
       </p>
     </main>
@@ -169,21 +170,23 @@ interface FieldProps {
 function Field({ id, label, hint, icon, required, children }: FieldProps) {
   return (
     <div>
-      <label htmlFor={id} className="block text-sm font-medium text-gray-900">
+      <label htmlFor={id} className="block text-sm font-medium text-gray-900 dark:text-zinc-100">
         {label}
         {required ? null : (
-          <span className="ml-1.5 text-xs font-normal text-gray-400">Optional</span>
+          <span className="ml-1.5 text-xs font-normal text-gray-400 dark:text-zinc-500">
+            Optional
+          </span>
         )}
       </label>
-      <div className="mt-1.5 flex items-center rounded-lg border border-gray-200 bg-white shadow-sm transition focus-within:border-gray-400 focus-within:ring-2 focus-within:ring-gray-100">
+      <div className="mt-1.5 flex items-center rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 shadow-sm transition focus-within:border-gray-400 dark:focus-within:border-zinc-500 focus-within:ring-2 focus-within:ring-gray-100 dark:focus-within:ring-zinc-700">
         {icon ? (
-          <span className="pointer-events-none flex h-9 w-9 shrink-0 items-center justify-center text-gray-400">
+          <span className="pointer-events-none flex h-9 w-9 shrink-0 items-center justify-center text-gray-400 dark:text-zinc-500">
             {icon}
           </span>
         ) : null}
         {children}
       </div>
-      {hint ? <p className="mt-1.5 text-xs text-gray-500">{hint}</p> : null}
+      {hint ? <p className="mt-1.5 text-xs text-gray-500 dark:text-zinc-400">{hint}</p> : null}
     </div>
   );
 }

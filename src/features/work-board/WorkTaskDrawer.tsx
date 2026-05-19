@@ -5,6 +5,7 @@ import { useState } from "react";
 import { toast } from "react-hot-toast";
 import { DeleteDialog } from "@/components/DeleteDialog";
 import { Button } from "@/components/Utilities/Button";
+import { Textarea } from "@/components/ui/textarea";
 import {
   useDeleteTaskAttachment,
   useTaskAttachments,
@@ -35,7 +36,7 @@ export function WorkTaskDrawer({ slug, taskId, onClose }: Props) {
 
   return (
     <aside
-      className="fixed inset-y-0 right-0 z-50 w-full max-w-lg overflow-y-auto border-l bg-white p-6 shadow-2xl"
+      className="fixed inset-y-0 right-0 z-50 w-full max-w-lg overflow-y-auto border-l dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 shadow-2xl"
       role="dialog"
       aria-label="Task details"
     >
@@ -45,7 +46,7 @@ export function WorkTaskDrawer({ slug, taskId, onClose }: Props) {
             {isLoading ? "Loading…" : (data?.title ?? "Task")}
           </h2>
           {data ? (
-            <div className="mt-1 text-xs text-gray-500">
+            <div className="mt-1 text-xs text-gray-500 dark:text-zinc-400">
               {data.status} · {data.assignee ?? "Unassigned"}
             </div>
           ) : null}
@@ -56,7 +57,7 @@ export function WorkTaskDrawer({ slug, taskId, onClose }: Props) {
               title={
                 <>
                   Delete this task?
-                  <p className="mt-2 text-sm font-normal text-gray-600">
+                  <p className="mt-2 text-sm font-normal text-gray-600 dark:text-zinc-400">
                     {isRunning
                       ? "A worker is actively running this task. Wait for it to finish, then try again."
                       : "The task will be removed from the board. Its history (comments, runs) stays in Hermes."}
@@ -74,7 +75,8 @@ export function WorkTaskDrawer({ slug, taskId, onClose }: Props) {
               buttonElement={{
                 icon: <TrashIcon className="h-4 w-4" />,
                 text: "",
-                styleClass: "text-gray-500 hover:bg-gray-100 disabled:opacity-50",
+                styleClass:
+                  "text-gray-500 dark:text-zinc-400 hover:bg-gray-100 dark:hover:bg-zinc-800 disabled:opacity-50",
               }}
             />
           ) : null}
@@ -82,7 +84,7 @@ export function WorkTaskDrawer({ slug, taskId, onClose }: Props) {
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="rounded p-1 text-gray-500 hover:bg-gray-100"
+            className="rounded p-1 text-gray-500 dark:text-zinc-400 hover:bg-gray-100 dark:hover:bg-zinc-800"
           >
             ×
           </button>
@@ -96,7 +98,9 @@ export function WorkTaskDrawer({ slug, taskId, onClose }: Props) {
       ) : null}
 
       {data?.description ? (
-        <p className="mt-4 whitespace-pre-wrap text-sm text-gray-700">{data.description}</p>
+        <p className="mt-4 whitespace-pre-wrap text-sm text-gray-700 dark:text-zinc-300">
+          {data.description}
+        </p>
       ) : null}
 
       <section className="mt-6">
@@ -124,12 +128,19 @@ export function WorkTaskDrawer({ slug, taskId, onClose }: Props) {
       <section className="mt-8">
         <h3 className="text-sm font-semibold">Comments</h3>
         {data && (data.comments ?? []).length === 0 ? (
-          <p className="mt-3 text-sm text-gray-500">No comments yet. Add the first one below.</p>
+          <p className="mt-3 text-sm text-gray-500 dark:text-zinc-400">
+            No comments yet. Add the first one below.
+          </p>
         ) : null}
         <ul className="mt-3 space-y-3">
           {(data?.comments ?? []).map((c) => (
-            <li key={c.id} className="rounded border bg-gray-50 p-3 text-sm">
-              <div className="text-xs text-gray-500">{c.author ?? "anonymous"}</div>
+            <li
+              key={c.id}
+              className="rounded border dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800 p-3 text-sm"
+            >
+              <div className="text-xs text-gray-500 dark:text-zinc-400">
+                {c.author ?? "anonymous"}
+              </div>
               <p className="mt-1 whitespace-pre-wrap">{c.body}</p>
             </li>
           ))}
@@ -147,13 +158,12 @@ export function WorkTaskDrawer({ slug, taskId, onClose }: Props) {
             });
           }}
         >
-          <textarea
+          <Textarea
             value={body}
             onChange={(e) => setBody(e.target.value)}
             placeholder="Add a comment"
             rows={3}
             maxLength={8000}
-            className="w-full rounded border px-3 py-2 text-sm"
           />
           <Button
             type="submit"

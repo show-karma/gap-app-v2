@@ -66,17 +66,17 @@ export function NonprofitSidebar() {
   });
 
   return (
-    <aside className="hidden w-60 shrink-0 border-r border-gray-200 bg-gray-50/40 md:block">
+    <aside className="hidden w-60 shrink-0 border-r border-gray-200 dark:border-zinc-800 bg-gray-50/40 dark:bg-zinc-900 md:block">
       <nav className="sticky top-0 px-3 py-6">
         <div className="px-3 pb-5">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-gray-400">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-gray-400 dark:text-zinc-500">
             Workspace
           </p>
           <div className="mt-1 flex items-center gap-2">
-            <span className="grid h-7 w-7 place-items-center rounded-md bg-gray-900 text-[11px] font-semibold text-white">
+            <span className="grid h-7 w-7 place-items-center rounded-md bg-gray-900 dark:bg-zinc-100 text-[11px] font-semibold text-white dark:text-zinc-900">
               {(slug?.[0] ?? "?").toUpperCase()}
             </span>
-            <span className="truncate text-sm font-semibold text-gray-900">
+            <span className="truncate text-sm font-semibold text-gray-900 dark:text-zinc-100">
               {slug ?? "Not set up"}
             </span>
           </div>
@@ -91,13 +91,17 @@ export function NonprofitSidebar() {
                 <Link
                   href={href}
                   className={`group flex items-center gap-2.5 rounded-md px-3 py-2 text-sm transition ${
-                    active ? "bg-gray-900 text-white shadow-sm" : "text-gray-700 hover:bg-gray-100"
+                    active
+                      ? "bg-gray-900 dark:bg-zinc-100 text-white dark:text-zinc-900 shadow-sm"
+                      : "text-gray-700 dark:text-zinc-300 hover:bg-gray-100 dark:hover:bg-zinc-800"
                   }`}
                   aria-current={active ? "page" : undefined}
                 >
                   <Icon
                     className={`h-4 w-4 shrink-0 ${
-                      active ? "text-white" : "text-gray-400 group-hover:text-gray-700"
+                      active
+                        ? "text-white dark:text-zinc-900"
+                        : "text-gray-400 dark:text-zinc-500 group-hover:text-gray-700 dark:group-hover:text-zinc-300"
                     }`}
                     aria-hidden
                   />

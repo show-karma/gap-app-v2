@@ -61,7 +61,7 @@ export const AttachmentList = memo(function AttachmentList({
   if (files.length === 0) {
     if (!emptyLabel) return null;
     return (
-      <p className="flex items-center gap-1.5 text-xs text-gray-400">
+      <p className="flex items-center gap-1.5 text-xs text-gray-400 dark:text-zinc-500">
         <Paperclip className="h-3 w-3" aria-hidden />
         {emptyLabel}
       </p>
@@ -72,18 +72,18 @@ export const AttachmentList = memo(function AttachmentList({
       {files.map((f) => (
         <li
           key={f.sha256}
-          className="flex items-center justify-between gap-3 rounded-md border border-gray-200 bg-white px-2.5 py-1.5 text-xs"
+          className="flex items-center justify-between gap-3 rounded-md border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2.5 py-1.5 text-xs"
         >
           <div className="min-w-0 flex-1">
-            <p className="truncate font-medium text-gray-900">{f.filename}</p>
-            <p className="text-[10px] text-gray-500 tabular-nums">
+            <p className="truncate font-medium text-gray-900 dark:text-zinc-100">{f.filename}</p>
+            <p className="text-[10px] text-gray-500 dark:text-zinc-400 tabular-nums">
               {formatBytes(f.size)} {f.mime ? `• ${f.mime}` : ""}
             </p>
           </div>
           <button
             type="button"
             onClick={() => download(f.sha256, f.filename)}
-            className="rounded p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-900"
+            className="rounded p-1 text-gray-500 dark:text-zinc-400 hover:bg-gray-100 dark:hover:bg-zinc-800 hover:text-gray-900 dark:hover:text-zinc-100"
             aria-label={`Download ${f.filename}`}
           >
             <Download className="h-3.5 w-3.5" aria-hidden />
@@ -93,7 +93,7 @@ export const AttachmentList = memo(function AttachmentList({
               type="button"
               onClick={() => onDelete(f.sha256)}
               disabled={pendingDeleteSha === f.sha256}
-              className="rounded p-1 text-gray-500 hover:bg-red-50 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+              className="rounded p-1 text-gray-500 dark:text-zinc-400 hover:bg-red-50 dark:hover:bg-red-950/30 hover:text-red-700 dark:hover:text-red-400 disabled:cursor-not-allowed disabled:opacity-50"
               aria-label={`Remove ${f.filename}`}
             >
               {pendingDeleteSha === f.sha256 ? (

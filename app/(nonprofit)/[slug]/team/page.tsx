@@ -17,7 +17,7 @@ function StatusDot({ status }: { status: string }) {
           ? "bg-red-500"
           : "bg-gray-400";
   return (
-    <span className="inline-flex items-center gap-1.5 text-xs text-gray-600">
+    <span className="inline-flex items-center gap-1.5 text-xs text-gray-600 dark:text-zinc-400">
       <span className={`h-1.5 w-1.5 rounded-full ${color}`} aria-hidden />
       <span className="capitalize">{status}</span>
     </span>
@@ -52,7 +52,7 @@ export default function TeamDirectoryPage() {
         <button
           type="button"
           onClick={() => router.refresh()}
-          className="mt-6 rounded border px-4 py-2"
+          className="mt-6 rounded border dark:border-zinc-700 px-4 py-2 dark:text-zinc-300"
         >
           Try again
         </button>
@@ -67,11 +67,11 @@ export default function TeamDirectoryPage() {
           <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-emerald-600">
             Your Team
           </div>
-          <h1 className="text-[34px] font-bold leading-[1.05] tracking-[-0.025em] text-gray-900">
+          <h1 className="text-[34px] font-bold leading-[1.05] tracking-[-0.025em] text-gray-900 dark:text-zinc-100">
             {VISIBLE_TEAM_ROLES.length} {pluralize("teammate", VISIBLE_TEAM_ROLES.length)} on the
-            case for <span className="text-gray-900">{slug}</span>.
+            case for <span className="text-gray-900 dark:text-zinc-100">{slug}</span>.
           </h1>
-          <p className="mt-3 text-sm leading-[1.5] text-gray-500">
+          <p className="mt-3 text-sm leading-[1.5] text-gray-500 dark:text-zinc-400">
             Tap a card to chat. They each own a slice — fundraising, comms, ops — and report to ED.
           </p>
         </div>

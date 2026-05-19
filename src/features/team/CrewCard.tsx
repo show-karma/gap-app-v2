@@ -32,7 +32,7 @@ export const CrewCard = memo(function CrewCard({ role, slug }: Props) {
   return (
     <Link
       href={href}
-      className="group relative block overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg"
+      className="group relative block overflow-hidden rounded-2xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg"
     >
       {/* Hero band: pastel fill, dot pattern, big serif letter backdrop, avatar inset. */}
       <div
@@ -78,25 +78,25 @@ export const CrewCard = memo(function CrewCard({ role, slug }: Props) {
       <div className="px-[18px] pt-4 pb-[18px]">
         <div className="mb-1.5 flex items-center justify-between gap-2.5">
           <div className="flex min-w-0 items-baseline gap-2.5">
-            <h3 className="text-[20px] font-bold tracking-tight text-gray-900">
+            <h3 className="text-[20px] font-bold tracking-tight text-gray-900 dark:text-zinc-100">
               {TEAM_ROLE_LABELS[role]}
             </h3>
-            <span className="truncate text-[12.5px] text-gray-500">
+            <span className="truncate text-[12.5px] text-gray-500 dark:text-zinc-400">
               {TEAM_ROLE_LONG_LABELS[role]}
             </span>
           </div>
-          <span className="inline-flex shrink-0 items-center gap-1 text-[11.5px] text-gray-500">
+          <span className="inline-flex shrink-0 items-center gap-1 text-[11.5px] text-gray-500 dark:text-zinc-400">
             <Puzzle className="h-[11px] w-[11px]" aria-hidden />
             {typeof skillCount === "number" ? skillCount : "—"}
           </span>
         </div>
 
-        <p className="mb-[18px] min-h-[42px] text-[13.5px] leading-[1.55] text-gray-600">
+        <p className="mb-[18px] min-h-[42px] text-[13.5px] leading-[1.55] text-gray-600 dark:text-zinc-400">
           {TEAM_ROLE_DESCRIPTIONS[role]}
         </p>
 
         <div className="flex items-center gap-2">
-          <span className="inline-flex flex-1 items-center justify-center gap-2 rounded-[10px] bg-gray-900 px-[14px] py-[10px] text-[13.5px] font-medium text-white">
+          <span className="inline-flex flex-1 items-center justify-center gap-2 rounded-[10px] bg-gray-900 dark:bg-zinc-100 px-[14px] py-[10px] text-[13.5px] font-medium text-white dark:text-zinc-900">
             <MessageSquare className="h-[13px] w-[13px]" aria-hidden />
             Chat with {TEAM_ROLE_LABELS[role]}
           </span>
@@ -120,7 +120,7 @@ function IconStep({ children, label }: { children: React.ReactNode; label: strin
   return (
     <span
       title={label}
-      className="grid h-9 w-9 place-items-center rounded-[10px] border border-gray-200 bg-white text-gray-500"
+      className="grid h-9 w-9 place-items-center rounded-[10px] border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-500 dark:text-zinc-400"
     >
       <span className="sr-only">{label}</span>
       {children}

@@ -11,6 +11,7 @@ import { z } from "zod";
 import { Button } from "@/components/Utilities/Button";
 import { Skeleton } from "@/components/Utilities/Skeleton";
 import { TabContent, Tabs, TabTrigger } from "@/components/Utilities/Tabs";
+import { Textarea } from "@/components/ui/textarea";
 import { useTeamMemberAbout, useUpdateTeamMemberAbout } from "@/hooks/useTeam";
 import {
   TEAM_ROLE_DESCRIPTIONS,
@@ -49,10 +50,12 @@ export default function TeamMemberPage() {
     return (
       <main className="mx-auto max-w-3xl px-6 py-16">
         <h1 className="text-2xl font-semibold">Team member not found</h1>
-        <p className="mt-3 text-gray-700">We don&apos;t recognize this role on your team.</p>
+        <p className="mt-3 text-gray-700 dark:text-zinc-300">
+          We don&apos;t recognize this role on your team.
+        </p>
         <Link
           href={PAGES.TEAM.DIRECTORY(slug)}
-          className="mt-6 inline-block rounded border px-4 py-2"
+          className="mt-6 inline-block rounded border dark:border-zinc-700 px-4 py-2 dark:text-zinc-300"
         >
           Back to team
         </Link>
@@ -64,7 +67,7 @@ export default function TeamMemberPage() {
     <main className="mx-auto max-w-3xl px-6 py-10">
       <Link
         href={PAGES.TEAM.DIRECTORY(slug)}
-        className="inline-flex items-center gap-1 text-sm text-gray-500 transition hover:text-gray-900"
+        className="inline-flex items-center gap-1 text-sm text-gray-500 dark:text-zinc-400 transition hover:text-gray-900 dark:hover:text-zinc-100"
       >
         <ArrowLeft className="h-3.5 w-3.5" aria-hidden />
         Back to team
@@ -76,19 +79,21 @@ export default function TeamMemberPage() {
             Employee
           </p>
           <div className="mt-1.5 flex items-baseline gap-3">
-            <h1 className="text-[28px] font-bold leading-none tracking-[-0.02em] text-gray-900">
+            <h1 className="text-[28px] font-bold leading-none tracking-[-0.02em] text-gray-900 dark:text-zinc-100">
               {TEAM_ROLE_LABELS[role]}
             </h1>
-            <span className="text-sm text-gray-500">{TEAM_ROLE_LONG_LABELS[role]}</span>
+            <span className="text-sm text-gray-500 dark:text-zinc-400">
+              {TEAM_ROLE_LONG_LABELS[role]}
+            </span>
           </div>
-          <p className="mt-2 max-w-2xl text-sm leading-[1.5] text-gray-600">
+          <p className="mt-2 max-w-2xl text-sm leading-[1.5] text-gray-600 dark:text-zinc-400">
             {TEAM_ROLE_DESCRIPTIONS[role]}
           </p>
         </div>
       </div>
 
       <Tabs defaultTab="chat">
-        <div className="mt-6 flex gap-1 border-b border-gray-200">
+        <div className="mt-6 flex gap-1 border-b border-gray-200 dark:border-zinc-800">
           {MEMBER_TABS.map((t) => (
             <TabTrigger
               key={t.id}
@@ -162,14 +167,14 @@ function AboutTab({ slug, role }: { slug: string; role: TeamRole }) {
         )
       )}
     >
-      <textarea
+      <Textarea
         {...register("content")}
         rows={20}
-        className="block w-full resize-y rounded-xl border border-gray-200 bg-white p-[18px] font-sans text-[14px] leading-[1.6] text-gray-900 shadow-sm outline-none transition focus:border-gray-300 focus:ring-2 focus:ring-gray-100"
+        className="resize-y rounded-xl bg-white dark:bg-zinc-900 p-[18px] font-sans text-[14px] leading-[1.6] text-gray-900 dark:text-zinc-100"
         placeholder={`Describe how ${TEAM_ROLE_LABELS[role]} should behave, what their voice sounds like, what they care about...`}
       />
       <div className="mt-3 flex items-center justify-between">
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-gray-500 dark:text-zinc-400">
           {formState.isDirty
             ? "Unsaved changes — they apply on the next chat turn."
             : "Saved. Edits apply on the next chat turn."}
@@ -200,8 +205,8 @@ function ChatTab({ slug, role }: { slug: string; role: TeamRole }) {
 
 function SettingsTab({ role }: { role: TeamRole }) {
   return (
-    <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
-      <dl className="divide-y divide-gray-100">
+    <div className="rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm">
+      <dl className="divide-y divide-gray-100 dark:divide-zinc-800">
         <Row label="Role" value={TEAM_ROLE_LABELS[role]} />
         <Row label="Responsibilities" value={TEAM_ROLE_DESCRIPTIONS[role]} />
         <Row
@@ -223,8 +228,8 @@ function SettingsTab({ role }: { role: TeamRole }) {
 function Row({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="grid grid-cols-3 gap-4 px-5 py-4 text-sm">
-      <dt className="font-medium text-gray-500">{label}</dt>
-      <dd className="col-span-2 text-gray-900">{value}</dd>
+      <dt className="font-medium text-gray-500 dark:text-zinc-400">{label}</dt>
+      <dd className="col-span-2 text-gray-900 dark:text-zinc-100">{value}</dd>
     </div>
   );
 }
