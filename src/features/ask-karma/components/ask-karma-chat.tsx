@@ -76,6 +76,49 @@ const MessageBubble = memo(function MessageBubble({ message }: MessageBubbleProp
   );
 });
 
+/**
+ * Streaming placeholder shown while the assistant has been added to the
+ * store but no tokens have arrived yet. Replaces the prior bare-dot
+ * indicator with a real attribution surface (avatar, agent name, status)
+ * so users know who is responding and what is happening.
+ *
+ * role="status" + aria-live="polite" let assistive tech announce the
+ * waiting state without interrupting current focus.
+ */
+function ThinkingPanel({ title }: { title: string }) {
+  return (
+    // <output> has implicit role="status" + aria-live="polite" — a native
+    // a11y signal that assistive tech announces the waiting state without
+    // interrupting focus. Cleaner than div + ARIA attributes.
+    <output
+      data-testid="ask-karma-thinking"
+      aria-label={`${title} is thinking`}
+      className="flex items-start gap-3 animate-in fade-in slide-in-from-bottom-1 duration-300"
+    >
+      <div
+        className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300"
+        aria-hidden="true"
+      >
+        <SparklesIcon className="h-4 w-4 animate-pulse" />
+        {/* Subtle outer-ring breathing pulse — communicates "working" without
+            shouting like a spinner would. */}
+        <span className="pointer-events-none absolute inset-0 rounded-full ring-2 ring-emerald-400/40 animate-ping" />
+      </div>
+      <div className="flex flex-col gap-1.5 rounded-2xl rounded-tl-sm border border-zinc-200 bg-white px-4 py-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium text-zinc-900 dark:text-zinc-50">{title}</span>
+          <span className="flex items-center gap-1" aria-hidden="true">
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500 [animation-delay:0ms]" />
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500 [animation-delay:150ms]" />
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500 [animation-delay:300ms]" />
+          </span>
+        </div>
+        <span className="text-xs italic text-zinc-500 dark:text-zinc-400">thinking…</span>
+      </div>
+    </output>
+  );
+}
+
 interface AskKarmaChatProps {
   config: AskKarmaConfig;
   messages: ChatMessage[];
@@ -169,28 +212,17 @@ export function AskKarmaChat({
           </div>
         )}
 
-        {messages.map((message) => (
-          <MessageBubble key={message.id} message={message} />
-        ))}
+        {messages.map((message) => {
+          // While the agent stream is warming up the assistant message
+          // exists with `content: ""` — rendering MessageBubble at that
+          // point produces a hollow rounded box stacked on top of the
+          // thinking panel. Skip the empty placeholder; the thinking
+          // panel below carries the visual.
+          if (message.role === "assistant" && !message.content) return null;
+          return <MessageBubble key={message.id} message={message} />;
+        })}
 
-        {showThinking && (
-          <div
-            className="flex items-start gap-3 animate-in fade-in duration-200"
-            data-testid="thinking-dots"
-          >
-            <div
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300"
-              aria-hidden="true"
-            >
-              <SparklesIcon className="h-4 w-4" />
-            </div>
-            <div className="flex items-center gap-1 rounded-2xl rounded-tl-sm border border-zinc-200 bg-white px-4 py-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-zinc-400 [animation-delay:0ms]" />
-              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-zinc-400 [animation-delay:150ms]" />
-              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-zinc-400 [animation-delay:300ms]" />
-            </div>
-          </div>
-        )}
+        {showThinking && <ThinkingPanel title={config.assistantTitle} />}
 
         {error && (
           <div

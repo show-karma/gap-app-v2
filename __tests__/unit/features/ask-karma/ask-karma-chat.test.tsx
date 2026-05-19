@@ -108,7 +108,7 @@ describe("AskKarmaChat", () => {
         onBack={vi.fn()}
       />
     );
-    expect(screen.getByTestId("thinking-dots")).toBeInTheDocument();
+    expect(screen.getByTestId("ask-karma-thinking")).toBeInTheDocument();
   });
 
   it("does not show thinking dots once the assistant has streamed content", () => {
@@ -126,7 +126,54 @@ describe("AskKarmaChat", () => {
         onBack={vi.fn()}
       />
     );
-    expect(screen.queryByTestId("thinking-dots")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("ask-karma-thinking")).not.toBeInTheDocument();
+  });
+
+  it("does not render an empty bubble for an assistant placeholder", () => {
+    // The stream adds the assistant message to the store with content=""
+    // before tokens arrive. Without the suppression, a hollow rounded
+    // bubble would stack on top of the thinking panel.
+    const messages: ChatMessage[] = [
+      buildMsg({ id: "u1", role: "user", content: "Hi", timestamp: Date.now() }),
+      buildMsg({ id: "a1", role: "assistant", content: "", timestamp: Date.now() }),
+    ];
+    render(
+      <AskKarmaChat
+        config={config}
+        messages={messages}
+        isStreaming={true}
+        error={null}
+        onSend={vi.fn()}
+        onStop={vi.fn()}
+        onBack={vi.fn()}
+      />
+    );
+    // User bubble still renders; assistant bubble does NOT.
+    expect(screen.getByTestId("ask-karma-message-user")).toBeInTheDocument();
+    expect(screen.queryByTestId("ask-karma-message-assistant")).not.toBeInTheDocument();
+    // Thinking panel takes the assistant's visual slot instead.
+    expect(screen.getByTestId("ask-karma-thinking")).toBeInTheDocument();
+  });
+
+  it("surfaces the configured assistant title in the thinking panel", () => {
+    render(
+      <AskKarmaChat
+        config={{ ...config, assistantTitle: "Filecoin Assistant" }}
+        messages={[buildMsg({ id: "a1", role: "assistant", content: "", timestamp: Date.now() })]}
+        isStreaming={true}
+        error={null}
+        onSend={vi.fn()}
+        onStop={vi.fn()}
+        onBack={vi.fn()}
+      />
+    );
+    const panel = screen.getByTestId("ask-karma-thinking");
+    // Tenant override flows through to the visible name + a11y label.
+    expect(panel).toHaveTextContent("Filecoin Assistant");
+    expect(panel).toHaveAttribute("aria-label", "Filecoin Assistant is thinking");
+    // <output> has implicit role="status" — query by role to confirm the
+    // a11y semantics regardless of whether the role is set explicitly.
+    expect(screen.getByRole("status")).toBe(panel);
   });
 
   it("renders error alert when error is present", () => {
