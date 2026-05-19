@@ -24,6 +24,9 @@ import {
 import pluralize from "pluralize";
 import { memo, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
+import { Button } from "@/components/Utilities/Button";
+import { type DropdownItem, MultiSelectDropdown } from "@/components/Utilities/MultiSelectDropdown";
+import { Skeleton } from "@/components/Utilities/Skeleton";
 import { useCreateWorkTask, useUpdateWorkTaskStatus, useWorkTasks } from "@/hooks/useWorkBoard";
 import {
   hermesClient,
@@ -52,6 +55,12 @@ const COLUMNS: ColumnSpec[] = [
 ];
 
 const USER_DROPPABLE_STATUSES: WorkTaskStatus[] = ["queued", "working", "blocked", "done"];
+
+// Module-level to avoid recreating on every render.
+const ROLE_DROPDOWN_ITEMS: DropdownItem[] = [
+  { id: "", label: "Unassigned" },
+  ...VISIBLE_TEAM_ROLES.map((role) => ({ id: role, label: TEAM_ROLE_LABELS[role] })),
+];
 
 const ROLE_TINT: Record<TeamRole, string> = {
   orchestrator: "bg-emerald-50 text-emerald-700 ring-emerald-100",
@@ -106,10 +115,7 @@ export function WorkBoard({ slug }: Props) {
     return (
       <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
         {COLUMNS.map((c) => (
-          <div
-            key={c.status}
-            className="h-64 animate-pulse rounded-xl border border-gray-200 bg-gray-50"
-          />
+          <Skeleton key={c.status} className="h-64 rounded-xl border border-gray-200" />
         ))}
       </div>
     );
@@ -129,20 +135,17 @@ export function WorkBoard({ slug }: Props) {
             ? "No tasks yet. Add the first one to kick off your team."
             : `${total} ${pluralize("task", total)} across the board.`}
         </p>
-        <button
-          type="button"
-          onClick={() => setShowNew(true)}
-          className="inline-flex items-center gap-1.5 rounded-md bg-gray-900 px-3 py-1.5 text-sm font-medium text-white shadow-sm transition hover:bg-gray-800"
-        >
+        <Button type="button" variant="primary" onClick={() => setShowNew(true)}>
           <Plus className="h-3.5 w-3.5" aria-hidden />
           New task
-        </button>
+        </Button>
       </div>
 
       {showNew ? (
         <NewTaskForm
           onSubmit={(input, files) =>
             create.mutate(input, {
+              // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: sequential upload loop is intentionally verbose for audit-log ordering
               onSuccess: async (task) => {
                 if (files.length > 0) {
                   // Upload files to the freshly-minted task id. Sequential
@@ -424,43 +427,31 @@ function NewTaskForm({
         </ul>
       ) : null}
       <div className="mt-3 flex flex-wrap items-center gap-3">
-        <label className="text-xs text-gray-600">
-          Assign to{" "}
-          <select
-            value={assignee}
-            onChange={(e) => setAssignee(e.target.value)}
-            className="ml-1 rounded-md border border-gray-200 bg-white px-2 py-1 text-sm shadow-sm"
-          >
-            <option value="">Unassigned</option>
-            {VISIBLE_TEAM_ROLES.map((role) => (
-              <option key={role} value={role}>
-                {TEAM_ROLE_LABELS[role]}
-              </option>
-            ))}
-          </select>
-        </label>
+        <div className="flex items-center gap-2 text-xs text-gray-600">
+          <span>Assign to</span>
+          <MultiSelectDropdown
+            items={ROLE_DROPDOWN_ITEMS}
+            selectedIds={assignee ? [assignee] : []}
+            onChange={(ids) => setAssignee(ids[ids.length - 1] ?? "")}
+            placeholder="Unassigned"
+            className="w-40"
+          />
+        </div>
         <UploadButton onSelect={(f) => setFiles((cur) => [...cur, f])} />
         <div className="ml-auto flex gap-2">
-          <button
-            type="button"
-            onClick={onCancel}
-            className="rounded-md border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-700 transition hover:bg-gray-50"
-          >
+          <Button type="button" variant="secondary" onClick={onCancel}>
             Cancel
-          </button>
-          <button
+          </Button>
+          <Button
             type="submit"
+            variant="primary"
+            isLoading={pending}
             disabled={pending || !title.trim()}
-            className="rounded-md bg-gray-900 px-3 py-1.5 text-sm font-medium text-white shadow-sm transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:shadow-none"
           >
-            {pending
-              ? files.length > 0
-                ? "Adding & attaching…"
-                : "Adding…"
-              : files.length > 0
-                ? `Add task with ${files.length} ${pluralize("file", files.length)}`
-                : "Add task"}
-          </button>
+            {files.length > 0
+              ? `Add task with ${files.length} ${pluralize("file", files.length)}`
+              : "Add task"}
+          </Button>
         </div>
       </div>
     </form>

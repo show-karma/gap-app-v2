@@ -1,6 +1,8 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
+import pluralize from "pluralize";
+import { Skeleton } from "@/components/Utilities/Skeleton";
 import { useTeamOrg } from "@/hooks/useTeam";
 import { VISIBLE_TEAM_ROLES } from "@/lib/hermes-client";
 import { CrewCard } from "@/src/features/team/CrewCard";
@@ -30,10 +32,10 @@ export default function TeamDirectoryPage() {
   if (isLoading) {
     return (
       <main className="mx-auto max-w-5xl px-6 py-12">
-        <div className="h-8 w-64 animate-pulse rounded bg-gray-200" />
+        <Skeleton className="h-8 w-64 rounded" />
         <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {VISIBLE_TEAM_ROLES.map((role) => (
-            <div key={role} className="h-32 animate-pulse rounded border bg-gray-100" />
+            <Skeleton key={role} className="h-32 rounded border" />
           ))}
         </div>
       </main>
@@ -66,7 +68,8 @@ export default function TeamDirectoryPage() {
             Your Team
           </div>
           <h1 className="text-[34px] font-bold leading-[1.05] tracking-[-0.025em] text-gray-900">
-            Four teammates on the case for <span className="text-gray-900">{slug}</span>.
+            {VISIBLE_TEAM_ROLES.length} {pluralize("teammate", VISIBLE_TEAM_ROLES.length)} on the
+            case for <span className="text-gray-900">{slug}</span>.
           </h1>
           <p className="mt-3 text-sm leading-[1.5] text-gray-500">
             Tap a card to chat. They each own a slice — fundraising, comms, ops — and report to ED.

@@ -4,6 +4,7 @@ import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { memo } from "react";
 import { DeleteDialog } from "@/components/DeleteDialog";
+import { Skeleton } from "@/components/Utilities/Skeleton";
 import { useProfileSkills, useUninstallSkill } from "@/hooks/useSkills";
 import { type HermesSkillSummary, TEAM_ROLE_LABELS, type TeamRole } from "@/lib/hermes-client";
 import { EmptyState } from "@/src/features/nonprofit/EmptyState";
@@ -166,9 +167,9 @@ const SkillRow = memo(function SkillRow({ skill, isPending, onRemove }: RowProps
 function SkillsSkeleton() {
   return (
     <div className="space-y-3">
-      <div className="h-5 w-1/3 animate-pulse rounded bg-gray-200" />
-      <div className="h-24 animate-pulse rounded-xl border border-gray-200 bg-gray-50" />
-      <div className="h-24 animate-pulse rounded-xl border border-gray-200 bg-gray-50" />
+      <Skeleton className="h-5 w-1/3 rounded" />
+      <Skeleton className="h-24 rounded-xl border border-gray-200" />
+      <Skeleton className="h-24 rounded-xl border border-gray-200" />
     </div>
   );
 }
