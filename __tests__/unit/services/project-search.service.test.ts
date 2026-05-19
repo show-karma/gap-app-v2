@@ -116,6 +116,27 @@ describe("project-search.service", () => {
         expect.stringContaining(encodeURIComponent("test & project"))
       );
     });
+
+    it("should unwrap paginated envelope { payload, pagination }", async () => {
+      mockFetchData.mockResolvedValueOnce([
+        { payload: mockProjects, pagination: { total: 2, page: 1, limit: 10 } },
+        null,
+        null,
+        200,
+      ]);
+
+      const result = await searchProjects("test");
+
+      expect(result).toEqual(mockProjects);
+    });
+
+    it("should return empty array when response has unexpected shape", async () => {
+      mockFetchData.mockResolvedValueOnce([{ unexpected: "shape" }, null, null, 200]);
+
+      const result = await searchProjects("test");
+
+      expect(result).toEqual([]);
+    });
   });
 
   describe("searchProjectsV2 alias", () => {
