@@ -22,13 +22,13 @@ const SAMPLE_TOOLS: PublicToolMetadata[] = [
 
 describe("fetchToolCatalog", () => {
   beforeEach(() => {
-    vi.restoreAllMocks();
-    vi.mocked(Sentry.captureException).mockClear();
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
   });
 
   afterEach(() => {
-    vi.restoreAllMocks();
-    vi.mocked(Sentry.captureException).mockClear();
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
   });
 
   it("returns the live tools when upstream responds with a populated tools array", async () => {
@@ -138,6 +138,9 @@ describe("fetchToolCatalog", () => {
 
     const result = await fetchWithUnset();
 
+    // The error comes from the shared `getIndexerBaseUrl()` helper now;
+    // we only assert that fallback engages and Sentry was called for the
+    // unset-env-var path — the specific wording belongs to wellKnown's tests.
     expect(result).toEqual(STATIC_FALLBACK_TOOLS);
     expect(SentryReimport.captureException).toHaveBeenCalledWith(
       expect.objectContaining({ message: expect.stringContaining("NEXT_PUBLIC_GAP_INDEXER_URL") }),

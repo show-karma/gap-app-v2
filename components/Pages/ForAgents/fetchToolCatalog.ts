@@ -1,5 +1,5 @@
 import * as Sentry from "@sentry/nextjs";
-import { envVars } from "@/utilities/enviromentVars";
+import { getIndexerBaseUrl } from "@/utilities/wellKnown";
 import { STATIC_FALLBACK_TOOLS } from "./content";
 import type { PublicToolMetadata } from "./types";
 
@@ -18,6 +18,9 @@ const REVALIDATE_SECONDS = 3600;
  *   - Captures every failure to Sentry with the
  *     `for-agents/tool-catalog` component tag (matches the existing
  *     `mcp-tools.json/route.ts` pattern).
+ *   - Uses the shared `getIndexerBaseUrl()` helper, so an unset/empty
+ *     `NEXT_PUBLIC_GAP_INDEXER_URL` throws — caught here and falls back
+ *     to `STATIC_FALLBACK_TOOLS`.
  *
  * Build-time behaviour: at `next build` there is no live indexer, so the
  * fetch fails fast, the fallback list ships, and the build still succeeds.
@@ -25,12 +28,7 @@ const REVALIDATE_SECONDS = 3600;
  */
 export async function fetchToolCatalog(): Promise<PublicToolMetadata[]> {
   try {
-    const baseUrl = envVars.NEXT_PUBLIC_GAP_INDEXER_URL;
-    if (!baseUrl || typeof baseUrl !== "string" || baseUrl.trim() === "") {
-      throw new Error("NEXT_PUBLIC_GAP_INDEXER_URL is not set");
-    }
-
-    const res = await fetch(`${baseUrl}/v2/mcp/tools`, {
+    const res = await fetch(`${getIndexerBaseUrl()}/v2/mcp/tools`, {
       next: { revalidate: REVALIDATE_SECONDS },
       signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
     });

@@ -8,9 +8,24 @@
  */
 import { envVars } from "./enviromentVars";
 
-export const WELL_KNOWN_CORS_HEADERS = {
+/**
+ * Shared CORS preflight fields. The success and error variants below differ
+ * only in their `Cache-Control` directive — everything else is identical.
+ *
+ * `Access-Control-Max-Age: 86400` (24h) caches the preflight result in the
+ * browser so subsequent cross-origin GETs do not re-run OPTIONS on every
+ * request. We don't advertise `Access-Control-Allow-Headers` — these
+ * discovery routes don't accept custom request headers, and listing
+ * headers we don't honour would be misleading.
+ */
+const BASE_CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, OPTIONS",
+  "Access-Control-Max-Age": "86400",
+} as const;
+
+export const WELL_KNOWN_CORS_HEADERS = {
+  ...BASE_CORS_HEADERS,
   "Cache-Control": "public, max-age=3600",
 } as const;
 
@@ -20,8 +35,7 @@ export const WELL_KNOWN_CORS_HEADERS = {
  * cache an upstream blip for an hour.
  */
 export const WELL_KNOWN_ERROR_HEADERS = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, OPTIONS",
+  ...BASE_CORS_HEADERS,
   "Cache-Control": "no-store",
 } as const;
 

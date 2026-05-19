@@ -5,11 +5,13 @@ const INDEXER_URL = "http://localhost:4000";
 
 describe("/.well-known/ai-plugin.json route handler", () => {
   beforeEach(() => {
-    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
   });
 
   afterEach(() => {
-    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
   });
 
   it("returns the ChatGPT plugin manifest with name_for_human=Karma", async () => {
@@ -51,6 +53,7 @@ describe("/.well-known/ai-plugin.json route handler", () => {
     const res = GET();
     expect(res.headers.get("Access-Control-Allow-Origin")).toBe("*");
     expect(res.headers.get("Access-Control-Allow-Methods")).toContain("GET");
+    expect(res.headers.get("Access-Control-Max-Age")).toBe("86400");
   });
 
   it("OPTIONS returns 204 with CORS headers", async () => {
@@ -59,16 +62,19 @@ describe("/.well-known/ai-plugin.json route handler", () => {
     expect(res.status).toBe(204);
     expect(res.headers.get("Access-Control-Allow-Origin")).toBe("*");
     expect(res.headers.get("Access-Control-Allow-Methods")).toContain("OPTIONS");
+    expect(res.headers.get("Access-Control-Max-Age")).toBe("86400");
   });
 });
 
 describe("/.well-known/mcp.json route handler", () => {
   beforeEach(() => {
-    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
   });
 
   afterEach(() => {
-    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
   });
 
   it("declares a single 'karma' MCP server with http transport", async () => {
@@ -100,6 +106,7 @@ describe("/.well-known/mcp.json route handler", () => {
     const { GET } = await import("@/app/.well-known/mcp.json/route");
     const res = GET();
     expect(res.headers.get("Access-Control-Allow-Origin")).toBe("*");
+    expect(res.headers.get("Access-Control-Max-Age")).toBe("86400");
   });
 
   it("OPTIONS returns 204 with CORS headers", async () => {
@@ -108,16 +115,19 @@ describe("/.well-known/mcp.json route handler", () => {
     expect(res.status).toBe(204);
     expect(res.headers.get("Access-Control-Allow-Origin")).toBe("*");
     expect(res.headers.get("Access-Control-Allow-Methods")).toContain("OPTIONS");
+    expect(res.headers.get("Access-Control-Max-Age")).toBe("86400");
   });
 });
 
 describe("/.well-known/mcp-tools.json route handler", () => {
   beforeEach(() => {
-    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
   });
 
   afterEach(() => {
-    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
   });
 
   it("proxies the upstream /v2/mcp/tools response when it succeeds", async () => {
@@ -157,6 +167,7 @@ describe("/.well-known/mcp-tools.json route handler", () => {
     const { GET } = await import("@/app/.well-known/mcp-tools.json/route");
     const res = await GET();
     expect(res.headers.get("Access-Control-Allow-Origin")).toBe("*");
+    expect(res.headers.get("Access-Control-Max-Age")).toBe("86400");
   });
 
   it("sets Cache-Control: no-store on 502 from upstream throw", async () => {
@@ -220,18 +231,21 @@ describe("/.well-known/mcp-tools.json route handler", () => {
     expect(res.status).toBe(204);
     expect(res.headers.get("Access-Control-Allow-Origin")).toBe("*");
     expect(res.headers.get("Access-Control-Allow-Methods")).toContain("OPTIONS");
+    expect(res.headers.get("Access-Control-Max-Age")).toBe("86400");
   });
 });
 
 describe("getIndexerBaseUrl helper", () => {
   beforeEach(() => {
     vi.resetModules();
-    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
   });
 
   afterEach(() => {
     vi.resetModules();
-    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
   });
 
   it("returns the configured indexer URL when set", async () => {
