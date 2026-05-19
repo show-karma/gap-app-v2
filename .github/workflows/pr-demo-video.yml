@@ -128,40 +128,79 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p demo-output
-          REPORT="e2e-demos-results/report.json"
-          if [ ! -f "$REPORT" ]; then
-            echo "No Playwright JSON report — nothing to publish"
-            echo "count=0" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          # Resolve (demo-name, video-path) pairs from the JSON report so we
-          # don't have to guess the spec name from Playwright's output dir.
-          node -e '
-            const fs = require("fs");
-            const path = require("path");
-            const r = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
-            const out = [];
-            const walk = (suites) => {
-              for (const s of suites || []) {
-                for (const spec of s.specs || []) {
-                  const file = spec.file || s.file || "";
-                  const name = path.basename(file).replace(/\.demo\.ts$/, "");
-                  for (const t of spec.tests || []) {
-                    for (const res of t.results || []) {
-                      for (const a of res.attachments || []) {
-                        if (a.name === "video" && a.path) {
-                          out.push(name + "\t" + a.path);
+          REPORT="e2e-demos-report.json"
+          RESULTS_DIR="e2e-demos-results"
+
+          # Primary path: resolve (demo-name, video-path) pairs from the JSON
+          # report so we don't have to guess the spec name from Playwright's
+          # output dir. Some Playwright/reporter combinations don't include
+          # video attachments for passing tests, so we keep a filesystem
+          # fallback below.
+          if [ -f "$REPORT" ]; then
+            node -e '
+              const fs = require("fs");
+              const path = require("path");
+              const r = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
+              const out = [];
+              const walk = (suites) => {
+                for (const s of suites || []) {
+                  for (const spec of s.specs || []) {
+                    const file = spec.file || s.file || "";
+                    const name = path.basename(file).replace(/\.demo\.ts$/, "");
+                    for (const t of spec.tests || []) {
+                      for (const res of t.results || []) {
+                        for (const a of res.attachments || []) {
+                          const isVideo =
+                            a.name === "video" ||
+                            (a.contentType && a.contentType.startsWith("video/"));
+                          if (isVideo && a.path) {
+                            out.push(name + "\t" + a.path);
+                          }
                         }
                       }
                     }
                   }
+                  if (s.suites) walk(s.suites);
                 }
-                if (s.suites) walk(s.suites);
-              }
-            };
-            walk(r.suites || []);
-            process.stdout.write(out.join("\n"));
-          ' "$REPORT" > /tmp/demo-manifest.tsv
+              };
+              walk(r.suites || []);
+              process.stdout.write(out.join("\n"));
+            ' "$REPORT" > /tmp/demo-manifest.tsv
+          else
+            echo "No Playwright JSON report at $REPORT — using filesystem fallback"
+            : > /tmp/demo-manifest.tsv
+          fi
+
+          if [ ! -s /tmp/demo-manifest.tsv ] && [ -d "$RESULTS_DIR" ]; then
+            echo "JSON report had no video attachments — scanning $RESULTS_DIR for *.webm"
+            # Playwright writes one subdir per (spec, test, project) under
+            # outputDir, each containing video.webm. The subdir name starts
+            # with the kebab-cased spec filename, which is what we use to
+            # name the MP4 and look up the description.
+            shopt -s nullglob
+            for webm in "$RESULTS_DIR"/*/*.webm; do
+              dir=$(basename "$(dirname "$webm")")
+              # Match the longest spec name that prefixes the dir name.
+              best=""
+              for spec in e2e/demos/*.demo.ts; do
+                stem=$(basename "$spec" .demo.ts)
+                case "$dir" in
+                  "$stem"-*|"$stem")
+                    if [ ${#stem} -gt ${#best} ]; then best="$stem"; fi
+                    ;;
+                esac
+              done
+              if [ -z "$best" ]; then
+                echo "No matching spec for $dir — skipping"
+                continue
+              fi
+              printf '%s\t%s\n' "$best" "$webm" >> /tmp/demo-manifest.tsv
+            done
+            shopt -u nullglob
+          fi
+
+          echo "Manifest contents:"
+          cat /tmp/demo-manifest.tsv || true
 
           count=0
           while IFS=$'\t' read -r name webm; do
@@ -178,6 +217,17 @@ jobs:
           done < /tmp/demo-manifest.tsv
           echo "count=$count" >> "$GITHUB_OUTPUT"
           ls -la demo-output
+
+      - name: Upload demo diagnostics
+        if: always() && steps.detect.outputs.exists == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: demo-diagnostics
+          path: |
+            e2e-demos-report.json
+            e2e-demos-results/**
+          if-no-files-found: ignore
+          retention-days: 7
 
       - name: Push videos to pr-demo-assets branch
         if: steps.detect.outputs.exists == 'true' && steps.convert.outputs.count != '0'
