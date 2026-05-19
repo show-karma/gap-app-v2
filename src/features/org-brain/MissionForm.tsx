@@ -2,7 +2,6 @@
 
 import { useEffect } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
-import { toast } from "react-hot-toast";
 import { Button } from "@/components/Utilities/Button";
 import { Skeleton } from "@/components/Utilities/Skeleton";
 import { Input } from "@/components/ui/input";
@@ -70,10 +69,7 @@ export function MissionForm({ slug }: Props) {
           ...values,
           leadership: (values.leadership ?? []).filter((l) => l.name?.trim()),
         };
-        update.mutate(trimmed, {
-          onSuccess: () => toast.success("Mission saved."),
-          onError: (err) => toast.error(err instanceof Error ? err.message : "Save failed"),
-        });
+        update.mutate(trimmed);
       })}
       className="space-y-6"
     >

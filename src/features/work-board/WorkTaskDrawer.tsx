@@ -5,18 +5,29 @@ import { useState } from "react";
 import { toast } from "react-hot-toast";
 import { DeleteDialog } from "@/components/DeleteDialog";
 import { Button } from "@/components/Utilities/Button";
+import { type DropdownItem, MultiSelectDropdown } from "@/components/Utilities/MultiSelectDropdown";
 import { Textarea } from "@/components/ui/textarea";
 import {
   useDeleteTaskAttachment,
   useTaskAttachments,
   useUploadTaskAttachment,
 } from "@/hooks/useUploads";
-import { useAddWorkComment, useArchiveWorkTask, useWorkTask } from "@/hooks/useWorkBoard";
-import { aiAgentClient } from "@/lib/ai-agent-client";
+import {
+  useAddWorkComment,
+  useArchiveWorkTask,
+  useUpdateWorkTaskAssignee,
+  useWorkTask,
+} from "@/hooks/useWorkBoard";
+import { aiAgentClient, TEAM_ROLE_LABELS, VISIBLE_TEAM_ROLES } from "@/lib/ai-agent-client";
 import { humanizeApiError } from "@/lib/ai-agent-error";
 import { AttachmentList } from "@/src/features/uploads/AttachmentList";
 import { UploadButton } from "@/src/features/uploads/UploadButton";
 import { ActivityPanel } from "./ActivityPanel";
+
+const ASSIGNEE_DROPDOWN_ITEMS: DropdownItem[] = [
+  { id: "", label: "Unassigned" },
+  ...VISIBLE_TEAM_ROLES.map((role) => ({ id: role, label: TEAM_ROLE_LABELS[role] })),
+];
 
 interface Props {
   slug: string;
@@ -28,6 +39,7 @@ export function WorkTaskDrawer({ slug, taskId, onClose }: Props) {
   const { data, isLoading, isError, error } = useWorkTask(slug, taskId);
   const addComment = useAddWorkComment(slug, taskId);
   const archiveTask = useArchiveWorkTask(slug);
+  const updateAssignee = useUpdateWorkTaskAssignee(slug, taskId);
   const attachments = useTaskAttachments(slug, taskId);
   const uploadAttachment = useUploadTaskAttachment(slug, taskId);
   const deleteAttachment = useDeleteTaskAttachment(slug, taskId);
@@ -47,9 +59,9 @@ export function WorkTaskDrawer({ slug, taskId, onClose }: Props) {
             {isLoading ? "Loading…" : (data?.title ?? "Task")}
           </h2>
           {data ? (
-            <div className="mt-1 text-xs text-gray-500 dark:text-zinc-400">
-              {data.status} · {data.assignee ?? "Unassigned"}
-            </div>
+            <p className="mt-1 text-xs text-gray-500 dark:text-zinc-400">
+              Status: <span className="font-medium">{data.status}</span>
+            </p>
           ) : null}
         </div>
         <div className="flex items-center gap-1">
@@ -94,6 +106,24 @@ export function WorkTaskDrawer({ slug, taskId, onClose }: Props) {
 
       {isError ? (
         <p className="mt-6 text-sm text-red-600">{humanizeApiError(error, "Failed to load")}</p>
+      ) : null}
+
+      {data ? (
+        <div className="mt-4 flex items-center gap-3 text-xs text-gray-600 dark:text-zinc-300">
+          <span className="text-gray-500 dark:text-zinc-400">Assignee</span>
+          <MultiSelectDropdown
+            items={ASSIGNEE_DROPDOWN_ITEMS}
+            selectedIds={data.assignee ? [data.assignee] : [""]}
+            onChange={(ids) => {
+              const next = ids[ids.length - 1] ?? "";
+              const normalized = next || null;
+              if ((data.assignee ?? null) === normalized) return;
+              updateAssignee.mutate(normalized);
+            }}
+            placeholder="Unassigned"
+            className="w-56"
+          />
+        </div>
       ) : null}
 
       {data?.description ? (

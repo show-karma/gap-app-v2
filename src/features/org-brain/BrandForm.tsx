@@ -2,7 +2,6 @@
 
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { toast } from "react-hot-toast";
 import { Button } from "@/components/Utilities/Button";
 import { Skeleton } from "@/components/Utilities/Skeleton";
 import { Textarea } from "@/components/ui/textarea";
@@ -56,16 +55,10 @@ export function BrandForm({ slug }: Props) {
       onSubmit={handleSubmit((values) =>
         // Merge with whatever else was on disk so we don't blow away fields
         // that were set by another client (or by us before we slimmed the UI).
-        update.mutate(
-          {
-            ...(data?.data ?? {}),
-            voice: values.voice.trim() || undefined,
-          },
-          {
-            onSuccess: () => toast.success("Brand saved."),
-            onError: (err) => toast.error(err instanceof Error ? err.message : "Save failed"),
-          }
-        )
+        update.mutate({
+          ...(data?.data ?? {}),
+          voice: values.voice.trim() || undefined,
+        })
       )}
       className="space-y-6"
     >

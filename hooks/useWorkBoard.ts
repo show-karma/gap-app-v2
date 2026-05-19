@@ -85,6 +85,43 @@ export function useUpdateWorkTaskStatus(slug: string) {
   });
 }
 
+export function useUpdateWorkTaskAssignee(slug: string, taskId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (assignee: string | null) =>
+      aiAgentClient.updateWorkTaskAssignee(slug, taskId, assignee),
+    onMutate: async (assignee) => {
+      await qc.cancelQueries({ queryKey: workKeys.list(slug) });
+      await qc.cancelQueries({ queryKey: workKeys.task(slug, taskId) });
+      const previousList = qc.getQueryData<WorkTask[]>(workKeys.list(slug));
+      const previousTask = qc.getQueryData<WorkTask>(workKeys.task(slug, taskId));
+      if (previousList) {
+        qc.setQueryData<WorkTask[]>(
+          workKeys.list(slug),
+          previousList.map((t) => (t.id === taskId ? { ...t, assignee: assignee ?? undefined } : t))
+        );
+      }
+      if (previousTask) {
+        qc.setQueryData<WorkTask>(workKeys.task(slug, taskId), {
+          ...previousTask,
+          assignee: assignee ?? undefined,
+        });
+      }
+      return { previousList, previousTask };
+    },
+    onError: (err, _assignee, ctx) => {
+      if (ctx?.previousList) qc.setQueryData(workKeys.list(slug), ctx.previousList);
+      if (ctx?.previousTask) qc.setQueryData(workKeys.task(slug, taskId), ctx.previousTask);
+      toast.error(err instanceof Error ? err.message : "Could not reassign task");
+    },
+    onSuccess: () => toast.success("Task reassigned"),
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey: workKeys.list(slug) });
+      qc.invalidateQueries({ queryKey: workKeys.task(slug, taskId) });
+    },
+  });
+}
+
 export function useArchiveWorkTask(slug: string) {
   const qc = useQueryClient();
   return useMutation({

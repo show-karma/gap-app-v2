@@ -21,8 +21,9 @@ import {
   Plus,
   X,
 } from "lucide-react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import pluralize from "pluralize";
-import { memo, useMemo, useState } from "react";
+import { memo, useCallback, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 import { Button } from "@/components/Utilities/Button";
 import { type DropdownItem, MultiSelectDropdown } from "@/components/Utilities/MultiSelectDropdown";
@@ -83,7 +84,23 @@ export function WorkBoard({ slug }: Props) {
   const { data: tasks, isLoading, isError, refetch } = useWorkTasks(slug);
   const create = useCreateWorkTask(slug);
   const update = useUpdateWorkTaskStatus(slug);
-  const [openTaskId, setOpenTaskId] = useState<string | null>(null);
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const openTaskId = searchParams.get("task");
+  const setOpenTaskId = useCallback(
+    (id: string | null) => {
+      const params = new URLSearchParams(searchParams.toString());
+      if (id) {
+        params.set("task", id);
+      } else {
+        params.delete("task");
+      }
+      const query = params.toString();
+      router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+    },
+    [pathname, router, searchParams]
+  );
   const [showNew, setShowNew] = useState(false);
 
   // Require a small drag distance before drag starts so card clicks

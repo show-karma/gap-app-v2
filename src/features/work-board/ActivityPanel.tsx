@@ -140,7 +140,7 @@ function EventTimeline({ events }: { events: WorkActivityEvent[] }) {
                   {meta.label}
                 </p>
                 {ev.note ? (
-                  <p className="mt-0.5 line-clamp-3 text-[11.5px] text-gray-600 dark:text-zinc-400">
+                  <p className="mt-0.5 whitespace-pre-wrap break-words text-[11.5px] text-gray-600 dark:text-zinc-400">
                     {ev.note}
                   </p>
                 ) : null}

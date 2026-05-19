@@ -11,6 +11,7 @@ import type React from "react";
 import {
   useAddWorkComment,
   useArchiveWorkTask,
+  useUpdateWorkTaskAssignee,
   useUpdateWorkTaskStatus,
 } from "@/hooks/useWorkBoard";
 import { aiAgentClient, type WorkTask, type WorkTaskComment } from "@/lib/ai-agent-client";
@@ -19,6 +20,7 @@ vi.mock("@/lib/ai-agent-client", () => ({
   aiAgentClient: {
     listWorkTasks: vi.fn(),
     updateWorkTaskStatus: vi.fn(),
+    updateWorkTaskAssignee: vi.fn(),
     archiveWorkTask: vi.fn(),
     addWorkTaskComment: vi.fn(),
     getWorkTask: vi.fn(),
@@ -141,6 +143,75 @@ describe("useAddWorkComment", () => {
 
     const task = qc.getQueryData<typeof baseTask>(TASK_KEY);
     expect(task?.comments).toHaveLength(0);
+  });
+});
+
+describe("useUpdateWorkTaskAssignee", () => {
+  const TASK_KEY = ["work", "task", "acme", "t1"];
+
+  it("optimistically updates assignee in both list and task caches", async () => {
+    mockClient.updateWorkTaskAssignee.mockResolvedValue({
+      id: "t1",
+      title: "First task",
+      status: "queued",
+      assignee: "fundraiser",
+    });
+    const qc = makeClient();
+    qc.setQueryData<WorkTask[]>(WORK_LIST_KEY, sampleTasks);
+    qc.setQueryData<WorkTask>(TASK_KEY, sampleTasks[0]);
+
+    const { result } = renderHook(() => useUpdateWorkTaskAssignee("acme", "t1"), {
+      wrapper: wrap(qc),
+    });
+
+    result.current.mutate("fundraiser");
+
+    await waitFor(() => {
+      const tasks = qc.getQueryData<WorkTask[]>(WORK_LIST_KEY);
+      expect(tasks?.find((t) => t.id === "t1")?.assignee).toBe("fundraiser");
+      const task = qc.getQueryData<WorkTask>(TASK_KEY);
+      expect(task?.assignee).toBe("fundraiser");
+    });
+  });
+
+  it("rolls back assignee on error", async () => {
+    mockClient.updateWorkTaskAssignee.mockRejectedValue(new Error("nope"));
+    const qc = makeClient();
+    qc.setQueryData<WorkTask[]>(WORK_LIST_KEY, sampleTasks);
+
+    const { result } = renderHook(() => useUpdateWorkTaskAssignee("acme", "t1"), {
+      wrapper: wrap(qc),
+    });
+
+    result.current.mutate("fundraiser");
+
+    await waitFor(() => expect(result.current.isError).toBe(true));
+
+    const tasks = qc.getQueryData<WorkTask[]>(WORK_LIST_KEY);
+    expect(tasks?.find((t) => t.id === "t1")?.assignee).toBeUndefined();
+  });
+
+  it("passes null through when unassigning", async () => {
+    mockClient.updateWorkTaskAssignee.mockResolvedValue({
+      id: "t1",
+      title: "First task",
+      status: "queued",
+      assignee: null,
+    });
+    const qc = makeClient();
+    qc.setQueryData<WorkTask[]>(WORK_LIST_KEY, [
+      { id: "t1", title: "First task", status: "queued", assignee: "fundraiser" },
+    ]);
+
+    const { result } = renderHook(() => useUpdateWorkTaskAssignee("acme", "t1"), {
+      wrapper: wrap(qc),
+    });
+
+    result.current.mutate(null);
+
+    await waitFor(() => {
+      expect(mockClient.updateWorkTaskAssignee).toHaveBeenCalledWith("acme", "t1", null);
+    });
   });
 });
 

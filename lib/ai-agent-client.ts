@@ -264,6 +264,17 @@ export const aiAgentClient = {
     await api.put(INDEXER.AI_AGENT.WORK_TASK_STATUS(slug, taskId), { status });
   },
 
+  async updateWorkTaskAssignee(
+    slug: string,
+    taskId: string,
+    assignee: string | null
+  ): Promise<WorkTask> {
+    const { data } = await api.put<WorkTask>(INDEXER.AI_AGENT.WORK_TASK_ASSIGNEE(slug, taskId), {
+      assignee,
+    });
+    return data;
+  },
+
   async listWorkTaskComments(slug: string, taskId: string): Promise<WorkTaskComment[]> {
     const { data } = await api.get<{ comments: WorkTaskComment[] }>(
       INDEXER.AI_AGENT.WORK_TASK_COMMENTS(slug, taskId)

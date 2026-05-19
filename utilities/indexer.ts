@@ -801,6 +801,8 @@ export const INDEXER = {
     WORK_TASK: (slug: string, taskId: string) => `/v2/hermes/orgs/${slug}/work/tasks/${taskId}`,
     WORK_TASK_STATUS: (slug: string, taskId: string) =>
       `/v2/hermes/orgs/${slug}/work/tasks/${taskId}/status`,
+    WORK_TASK_ASSIGNEE: (slug: string, taskId: string) =>
+      `/v2/hermes/orgs/${slug}/work/tasks/${taskId}/assignee`,
     WORK_TASK_COMMENTS: (slug: string, taskId: string) =>
       `/v2/hermes/orgs/${slug}/work/tasks/${taskId}/comments`,
     CHAT_START: (slug: string, profile: string) =>
