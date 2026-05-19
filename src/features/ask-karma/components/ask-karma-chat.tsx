@@ -156,7 +156,7 @@ function ThinkingPanel({ title, toolHistory }: ThinkingPanelProps) {
   // the most recent tool of any status, falling back to the generic
   // "thinking…" copy. Mirrors karmagrants' "searching 140,221 filings…"
   // status line at the top of their thinking box.
-  const runningTool = toolHistory?.findLast?.((t) => t.status === "running");
+  const runningTool = toolHistory?.findLast((t) => t.status === "running");
   const latestTool = toolHistory?.[toolHistory.length - 1];
   const activityLabel = runningTool
     ? `running ${humanizeToolName(runningTool.name)}…`
