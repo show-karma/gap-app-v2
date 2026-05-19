@@ -1,3 +1,4 @@
+import { envVars } from "@/utilities/enviromentVars";
 import { fetchToolCatalog } from "../fetchToolCatalog";
 import {
   CATEGORY_DISPLAY_ORDER,
@@ -93,7 +94,7 @@ function EmptyCatalogFallback() {
     <div className="rounded-xl border border-border bg-card p-6 text-center text-sm text-muted-foreground">
       Tool catalog is temporarily unavailable. Browse the live{" "}
       <a
-        href="https://gapapi.karmahq.xyz/v2/docs"
+        href={`${envVars.NEXT_PUBLIC_GAP_INDEXER_URL}/v2/docs`}
         target="_blank"
         rel="noopener noreferrer"
         className="font-medium text-primary underline-offset-4 hover:underline"

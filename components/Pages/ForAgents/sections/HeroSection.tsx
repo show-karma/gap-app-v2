@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { envVars } from "@/utilities/enviromentVars";
 import { PAGES } from "@/utilities/pages";
 
 export function HeroSection() {
@@ -22,7 +23,7 @@ export function HeroSection() {
           Connect your AI app
         </Link>
         <a
-          href="https://gapapi.karmahq.xyz/v2/docs"
+          href={`${envVars.NEXT_PUBLIC_GAP_INDEXER_URL}/v2/docs`}
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center justify-center rounded-lg border border-border px-5 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-muted"
