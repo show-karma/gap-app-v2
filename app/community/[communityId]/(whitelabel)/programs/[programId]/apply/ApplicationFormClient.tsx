@@ -103,13 +103,13 @@ export function ApplicationFormClient({
   // Validate access code via API
   const validateAccessCode = useCallback(
     async (code: string): Promise<boolean> => {
-      const [result, err] = await fetchData<boolean>(
+      const [result, err] = await fetchData<{ valid: boolean }>(
         `/v2/funding-applications/${programId}/validate-access-code`,
         "POST",
         { accessCode: code }
       );
       if (err) return false;
-      return Boolean(result);
+      return result?.valid === true;
     },
     [programId]
   );

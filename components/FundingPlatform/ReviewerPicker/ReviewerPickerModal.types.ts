@@ -82,16 +82,11 @@ export function poolRowFromReviewer(
 ): PoolPickedRow {
   const telegram = reviewer.telegram ?? "";
   const slack = reviewer.slack ?? "";
-  const defaultAsCommunityRole: CommunityReviewerRole =
-    defaultRole === "milestone" ? "milestone-reviewer" : "program-reviewer";
-  // Prefer the launcher's role when the reviewer already has it; otherwise
-  // fall back to the reviewer's existing role so the chip doesn't pre-check
-  // a role the reviewer isn't associated with.
-  const initialRole: ReviewerRoleSelection = reviewer.roles.includes(defaultAsCommunityRole)
-    ? defaultRole
-    : reviewer.roles[0]
-      ? roleSelectionFromCommunityRole(reviewer.roles[0])
-      : defaultRole;
+  // Pre-check every role the reviewer already holds in the community pool
+  // so a multi-role pick (e.g. App + Milestone) is preserved on save.
+  const dedupedRoles = Array.from(new Set(reviewer.roles.map(roleSelectionFromCommunityRole)));
+  const initialRoles: ReviewerRoleSelection[] =
+    dedupedRoles.length > 0 ? dedupedRoles : [defaultRole];
   return {
     kind: "pool",
     id: reviewer.publicAddress,
@@ -100,7 +95,7 @@ export function poolRowFromReviewer(
     email: reviewer.email,
     telegram,
     slack,
-    roles: [initialRole],
+    roles: initialRoles,
     original: {
       name: reviewer.name,
       email: reviewer.email,
@@ -135,6 +130,12 @@ export interface ReviewerPickerModalProps {
   reviewerType: "program" | "milestone";
   /** Wallet addresses already assigned to this program — hidden in left pane. */
   assignedAddresses: string[];
+  /**
+   * Wallet addresses that should be shown but visually disabled (grayed) in the pool.
+   * Used by the application page to indicate reviewers already in the program and/or
+   * already assigned to the current application.
+   */
+  disabledAddresses?: string[];
   /** Called after a fully-successful save so the parent can refetch/show a toast. */
   onCompleted?: () => void;
   /**

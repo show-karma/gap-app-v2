@@ -17,6 +17,19 @@ export function isValidRole(role: string): role is Role {
   return ROLE_VALUES.has(role as Role);
 }
 
+export const ROLE_LABELS: Record<Role, string> = {
+  [Role.SUPER_ADMIN]: "Staff",
+  [Role.REGISTRY_ADMIN]: "Registry Admin",
+  [Role.COMMUNITY_ADMIN]: "Community Admin",
+  [Role.PROGRAM_ADMIN]: "Program Admin",
+  [Role.PROGRAM_CREATOR]: "Program Creator",
+  [Role.PROGRAM_REVIEWER]: "Program Reviewer",
+  [Role.MILESTONE_REVIEWER]: "Milestone Reviewer",
+  [Role.APPLICANT]: "Applicant",
+  [Role.GUEST]: "Guest",
+  [Role.NONE]: "No assigned role",
+};
+
 export const ROLE_HIERARCHY: Record<Role, number> = {
   [Role.NONE]: -1,
   [Role.GUEST]: 0,

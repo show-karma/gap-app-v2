@@ -39,6 +39,7 @@ export const PAGES = {
     REPORTS: (community: string) => `/community/${community}/reports`,
     REPORT_DETAIL: (community: string, runDate: string) =>
       `/community/${community}/reports/${encodeURIComponent(runDate)}`,
+    ASK_KARMA: (community: string) => `/community/${community}/ask-karma`,
   },
   MY_PROJECTS: `/my-projects`,
   MY_REVIEWS: `/my-reviews`,
@@ -164,7 +165,19 @@ export const PAGES = {
   ORG: (slug: string) => `/ai-teams/${slug}/org`,
   WORK: (slug: string) => `/ai-teams/${slug}/work`,
   SKILLS: (slug: string) => `/ai-teams/${slug}/skills`,
+  ASK_KARMA: `/ask-karma`,
 };
+
+/**
+ * Detects pathnames that belong to the ask-karma feature — both the root
+ * `/ask-karma` route and the community-scoped `/community/<slug>/ask-karma`
+ * route. Lives next to the route constants so any rename here updates the
+ * detection automatically.
+ */
+const ASK_KARMA_COMMUNITY_PATTERN = /^\/community\/[^/]+\/ask-karma$/;
+export function isAskKarmaPathname(pathname: string): boolean {
+  return pathname === PAGES.ASK_KARMA || ASK_KARMA_COMMUNITY_PATTERN.test(pathname);
+}
 
 /**
  * First path segments under /community/[communityId]/ that should be rewritten
@@ -187,6 +200,7 @@ export const COMMUNITY_SUB_ROUTE_SEGMENTS: ReadonlySet<string> = new Set([
   "updates",
   // Direct route directories under /community/[communityId]/
   "admin",
+  "ask-karma",
   "karma-ai",
   "manage",
 ]);

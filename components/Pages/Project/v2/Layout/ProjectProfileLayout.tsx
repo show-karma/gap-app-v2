@@ -46,6 +46,11 @@ const ProjectOptionsMenu = dynamic(
   { ssr: false }
 );
 
+const PostUpdateButton = dynamic(
+  () => import("@/components/Pages/Project/PostUpdateButton").then((mod) => mod.PostUpdateButton),
+  { ssr: false }
+);
+
 const EndorsementsListDialog = dynamic(
   () => import("../EndorsementsListDialog").then((mod) => mod.EndorsementsListDialog),
   { ssr: false }
@@ -131,7 +136,6 @@ export function ProjectProfileLayout({
     }
   }, [inviteCode, hasOpenedInviteModal, openContributorProfileModal]);
 
-  // Use unified hook for all project profile data
   const { project, isProjectLoading, isLoading, isError, isVerified, stats } = useProjectProfile(
     projectId as string
   );
@@ -316,8 +320,9 @@ export function ProjectProfileLayout({
           <SidebarProfileCard project={project} isVerified={isVerified} />
         </div>
 
-        {/* Mobile: Project Settings - right aligned */}
-        <div className="lg:hidden flex justify-end">
+        {/* Mobile: Post an update + Project Settings - right aligned */}
+        <div className="lg:hidden flex justify-end items-center gap-2">
+          <PostUpdateButton />
           <ProjectOptionsMenu />
         </div>
 
@@ -352,8 +357,9 @@ export function ProjectProfileLayout({
             className="flex flex-col gap-6 flex-1 min-w-0"
             data-testid="project-main-content-area"
           >
-            {/* Desktop: Project Settings above tabs */}
-            <div className="hidden lg:flex lg:justify-end">
+            {/* Desktop: Post an update + Project Settings above tabs */}
+            <div className="hidden lg:flex lg:justify-end items-center gap-2">
+              <PostUpdateButton />
               <ProjectOptionsMenu />
             </div>
 

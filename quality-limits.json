@@ -1,0 +1,39 @@
+{
+  "$schema": "./scripts/quality-limits.schema.json",
+  "description": "Per-glob size budgets enforced by scripts/quality-gate.js. Files already over the limit are tracked in quality-baseline.json and may not grow further.",
+  "fileLimits": [
+    {
+      "glob": "**/*.test.{ts,tsx}",
+      "maxLines": 800,
+      "maxBytes": 60000,
+      "description": "Test files — split into focused modules above the limit."
+    },
+    {
+      "glob": "**/*.{ts,tsx}",
+      "maxLines": 600,
+      "maxBytes": 40000,
+      "exclude": [
+        "**/*.test.{ts,tsx}",
+        "**/*.stories.{ts,tsx}",
+        "scripts/**",
+        ".next/**",
+        "node_modules/**"
+      ],
+      "description": "Production source files."
+    }
+  ],
+  "thresholds": {
+    "coverage": {
+      "lines": 0,
+      "statements": 0,
+      "functions": 0,
+      "branches": 0
+    },
+    "duplication": {
+      "maxPercent": 100
+    },
+    "reactDoctor": {
+      "minScore": 0
+    }
+  }
+}

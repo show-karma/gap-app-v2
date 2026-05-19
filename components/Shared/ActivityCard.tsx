@@ -8,8 +8,10 @@ import type {
   IProjectUpdate,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import type { FC } from "react";
+import { useAuth } from "@/hooks/useAuth";
 import { useOwnerStore, useProjectStore } from "@/store";
 import type { ConversionGrantUpdate, ProjectUpdate, UnifiedMilestone } from "@/types/v2/roadmap";
+import { canEditMilestone } from "@/utilities/milestones/canEditMilestone";
 import { EndorsementCard } from "./ActivityCard/EndorsementCard";
 import { FundingReceivedCard } from "./ActivityCard/FundingReceivedCard";
 import { MilestoneCard } from "./ActivityCard/MilestoneCard";
@@ -53,7 +55,14 @@ interface ActivityCardProps {
 export const ActivityCard: FC<ActivityCardProps> = ({ activity, isAuthorized = false }) => {
   const isOwner = useOwnerStore((state) => state.isOwner);
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
+  const { address } = useAuth();
   const isAuthenticatedUser = isOwner || isProjectAdmin || isAuthorized;
+
+  // Edit/revoke is gated by Gap.sol::_multiRevoke which only accepts the
+  // attestation's attester, recipient, or the contract owner — not project
+  // admins or team members. See utilities/milestones/canEditMilestone.
+  const canEdit =
+    activity.type === "milestone" ? canEditMilestone(activity.data, address, isOwner) : false;
 
   return (
     <div className="flex flex-col w-full">
@@ -85,6 +94,7 @@ export const ActivityCard: FC<ActivityCardProps> = ({ activity, isAuthorized = f
         <MilestoneCard
           milestone={activity.data}
           isAuthorized={isAuthenticatedUser}
+          canEdit={canEdit}
           allocationAmount={activity.allocationAmount}
           hideTimelineMarker={activity.hideTimelineMarker}
         />

@@ -13,7 +13,6 @@ export const ProjectActivity = () => {
   const { isProjectAdmin } = useProjectStore();
   const { projectId } = useParams();
 
-  // Use dedicated hooks for updates and impacts
   const { milestones = [] } = useProjectUpdates(projectId as string);
   const { impacts = [] } = useProjectImpacts(projectId as string);
 

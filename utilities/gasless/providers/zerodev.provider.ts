@@ -107,11 +107,18 @@ export class ZeroDevProvider implements IGaslessProvider {
 
     const implementationAddress = this.getKernelImplementationAddress();
 
-    // Sign the EIP-7702 authorization
+    // EIP-7702 binds the authorization to the EOA's current nonce; a
+    // hardcoded value gets rejected by the bundler. `pending` matches
+    // viem's `prepareAuthorization`.
+    const eoaNonce = await publicClient.getTransactionCount({
+      address: signer.address,
+      blockTag: "pending",
+    });
+
     const authorization = await signer.signAuthorization({
       contractAddress: implementationAddress,
       chainId,
-      nonce: 0,
+      nonce: eoaNonce,
     });
 
     // Create kernel account with EIP-7702

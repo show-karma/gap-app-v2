@@ -1,9 +1,13 @@
+import { useParams } from "next/navigation";
 import pluralize from "pluralize";
 import { type FC, useEffect, useMemo, useState } from "react";
+import { ActivityCard } from "@/components/Shared/ActivityCard";
 import { Button } from "@/components/Utilities/Button";
 import { getTokenByAddressAndChain } from "@/constants/supportedTokens";
+import { useGrantLinkedActivities } from "@/hooks/v2/useGrantLinkedActivities";
 import { usePayoutConfigByGrantPublic } from "@/src/features/payout-disbursement/hooks/use-payout-disbursement";
 import type { Grant } from "@/types/v2/grant";
+import type { UnifiedMilestone, ProjectUpdate as V2ProjectUpdate } from "@/types/v2/roadmap";
 import { normalizeTimestamp } from "@/utilities/formatDate";
 import { formatMilestoneAmount } from "@/utilities/formatMilestoneAmount";
 import { buildGrantMilestoneOrderMap } from "@/utilities/milestones/assignGrantMilestoneOrder";
@@ -53,6 +57,9 @@ const TabButton: FC<TabButtonProps> = ({ handleSelection, tab, tabName, selected
 
 export const MilestonesList: FC<MilestonesListProps> = ({ grant }) => {
   const { milestones, updates } = grant;
+  const params = useParams();
+  const projectIdentifier = typeof params?.projectId === "string" ? params.projectId : "";
+  const linkedActivities = useGrantLinkedActivities(projectIdentifier, grant.uid);
 
   const { data: payoutConfig } = usePayoutConfigByGrantPublic(grant.uid);
 
@@ -126,14 +133,23 @@ export const MilestonesList: FC<MilestonesListProps> = ({ grant }) => {
       });
     });
 
+    linkedActivities.forEach((activity) => {
+      merged.push({
+        object: activity,
+        date: getTimestampMs(activity.createdAt),
+        type: "activity",
+      });
+    });
+
     // Sort descending by date (newest first)
     return merged.sort((a, b) => b.date - a.date);
-  }, [updates, milestones]);
+  }, [updates, milestones, linkedActivities]);
 
   // Helper to properly check if a milestone is completed
   // API may return empty array [] which is truthy in JS but means not completed
   const isCompleted = (item: any): boolean => {
     if (item.type === "update") return true; // Updates are always "completed"
+    if (item.type === "activity") return true; // Activities are stateless; treat as completed
     const completed = item.object.completed;
     if (Array.isArray(completed)) return completed.length > 0;
     return !!completed;
@@ -182,6 +198,17 @@ export const MilestonesList: FC<MilestonesListProps> = ({ grant }) => {
       return item.date; // fallback to pre-computed date (endsAt or createdAt)
     };
 
+    // Bucket 1: completed milestones, sorted by completion date desc.
+    // Bucket 2: everything else (pending milestones, grant updates, activities),
+    // sorted by createdAt desc. Activities use their own createdAt.
+    const completedMilestoneBucket = unsortedCompleted
+      .filter((item) => item.type === "milestone")
+      .sort((a, b) => getCompletedDate(b) - getCompletedDate(a));
+
+    const restBucket = generalArray
+      .filter((item) => !(item.type === "milestone" && isCompleted(item)))
+      .sort((a, b) => getAllDate(b) - getAllDate(a));
+
     return {
       // Completed: descending by completion/creation date (newest first)
       completedMilestones: [...unsortedCompleted].sort(
@@ -189,8 +216,8 @@ export const MilestonesList: FC<MilestonesListProps> = ({ grant }) => {
       ),
       // Pending: ascending by due date (soonest first)
       pendingMilestones: [...unsortedPending].sort((a, b) => getPendingDate(a) - getPendingDate(b)),
-      // All: descending by date (newest first)
-      allMilestones: [...generalArray].sort((a, b) => getAllDate(b) - getAllDate(a)),
+      // All: completed milestones first, then everything else by createdAt desc
+      allMilestones: [...completedMilestoneBucket, ...restBucket],
     };
   }, [generalArray]);
 
@@ -217,7 +244,7 @@ export const MilestonesList: FC<MilestonesListProps> = ({ grant }) => {
     if (Array.isArray(completed)) return completed.length > 0;
     return !!completed;
   }).length;
-  const updatesLength = completedMilestonesCount + (updates?.length || 0);
+  const updatesLength = completedMilestonesCount + (updates?.length || 0) + linkedActivities.length;
   const milestonesCounter = milestones?.length || 0;
 
   return (
@@ -254,7 +281,7 @@ export const MilestonesList: FC<MilestonesListProps> = ({ grant }) => {
             <div className="flex flex-row flex-wrap gap-5">
               <p className="text-base font-normal text-gray-500 max-sm:text-sm">
                 {milestonesCounter} {pluralize("Milestone", milestonesCounter)}, {updatesLength}{" "}
-                {pluralize("update", updatesLength)} in this grant
+                {pluralize("Update", updatesLength)} in this grant
               </p>
             </div>
           </div>
@@ -278,6 +305,28 @@ export const MilestonesList: FC<MilestonesListProps> = ({ grant }) => {
                     description={item.object?.text}
                     date={item.object.createdAt}
                     update={item.object}
+                  />
+                );
+              }
+
+              if (item.type === "activity") {
+                const activity = item.object as V2ProjectUpdate;
+                const unified: UnifiedMilestone = {
+                  uid: activity.uid,
+                  chainID: 0,
+                  refUID: "",
+                  type: "activity",
+                  title: activity.title,
+                  description: activity.description,
+                  completed: false,
+                  createdAt: activity.createdAt || new Date().toISOString(),
+                  projectUpdate: activity,
+                  source: { type: "update" },
+                };
+                return (
+                  <ActivityCard
+                    key={activity.uid}
+                    activity={{ type: "milestone", data: unified }}
                   />
                 );
               }

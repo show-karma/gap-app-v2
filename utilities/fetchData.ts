@@ -52,18 +52,25 @@ export default async function fetchData<T = any>(
         ...headers,
       },
       signal,
+      // Default timeout for all requests so a hung connection surfaces as
+      // an axios error the data layer can retry instead of leaving the UI
+      // in an indefinite loading state. Authorized indexer requests below
+      // keep their longer ceiling for legacy long-poll endpoints.
+      timeout: 30000,
     };
 
-    // Add authorization header if needed
-    if (isIndexerUrl && isAuthorized) {
-      // Get token from TokenManager (which uses Privy)
-      const token = await TokenManager.getToken();
-
-      if (token) {
-        requestConfig.headers.Authorization = `Bearer ${token}`;
-      }
-
+    // Indexer requests get a generous timeout regardless of token presence.
+    // Anonymous calls hit optional-auth routes and shouldn't run unbounded
+    // (axios defaults to 0 = no timeout) just because no Privy token exists.
+    if (isIndexerUrl) {
       requestConfig.timeout = 360000;
+
+      if (isAuthorized) {
+        const token = await TokenManager.getToken();
+        if (token) {
+          requestConfig.headers.Authorization = `Bearer ${token}`;
+        }
+      }
     }
 
     const res = await axios.request<T & { pageInfo?: any }>(requestConfig);
