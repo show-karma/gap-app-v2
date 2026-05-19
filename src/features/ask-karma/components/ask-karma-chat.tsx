@@ -1,12 +1,34 @@
 "use client";
 
-import { AlertCircleIcon, ArrowLeftIcon, SparklesIcon, UserIcon } from "lucide-react";
+import {
+  AlertCircleIcon,
+  ArrowLeftIcon,
+  CheckIcon,
+  Loader2Icon,
+  SparklesIcon,
+  UserIcon,
+  XIcon,
+} from "lucide-react";
 import { memo, useEffect, useRef } from "react";
 import { MessageResponse } from "@/src/components/ai-elements/message-response";
-import type { ChatMessage } from "@/store/agentChat";
+import type { ChatMessage, ToolHistoryEvent } from "@/store/agentChat";
 import { cn } from "@/utilities/tailwind";
 import type { AskKarmaConfig } from "../types";
 import { AskKarmaInput } from "./ask-karma-input";
+
+/**
+ * Turn an agent tool identifier (`aggregate_grants`, `searchGrants`) into a
+ * human-readable label ("aggregate grants", "search grants"). Lower-cased
+ * to match the karmagrants visual reference; if the model emits a name we
+ * don't recognise we still render it so the list stays informative.
+ */
+function humanizeToolName(name: string): string {
+  return name
+    .replace(/[_-]+/g, " ")
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .toLowerCase()
+    .trim();
+}
 
 function formatTime(timestamp: number): string {
   return new Intl.DateTimeFormat("en-US", {
@@ -77,22 +99,78 @@ const MessageBubble = memo(function MessageBubble({ message }: MessageBubbleProp
 });
 
 /**
+ * Single row of the tool activity list. Three states map 1:1 to icons:
+ *   running → ⟳ (spinning loader, zinc)
+ *   success → ✓ (emerald check)
+ *   error   → ✗ (red x)
+ */
+function ToolHistoryRow({ tool }: { tool: ToolHistoryEvent }) {
+  return (
+    <li
+      data-testid="ask-karma-tool-row"
+      data-tool-status={tool.status}
+      className="flex items-center gap-2 text-xs"
+    >
+      <span aria-hidden="true" className="inline-flex h-3.5 w-3.5 items-center justify-center">
+        {tool.status === "success" && (
+          <CheckIcon className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+        )}
+        {tool.status === "error" && (
+          <XIcon className="h-3.5 w-3.5 text-red-600 dark:text-red-400" />
+        )}
+        {tool.status === "running" && (
+          <Loader2Icon className="h-3.5 w-3.5 animate-spin text-zinc-500 dark:text-zinc-400" />
+        )}
+      </span>
+      <span
+        className={cn(
+          "font-mono text-zinc-700 dark:text-zinc-300",
+          tool.status === "error" && "text-red-700 dark:text-red-300"
+        )}
+      >
+        {humanizeToolName(tool.name)}
+      </span>
+      {/* a11y status sentence — visually hidden but read out per row */}
+      <span className="sr-only">{tool.status}</span>
+    </li>
+  );
+}
+
+interface ThinkingPanelProps {
+  title: string;
+  toolHistory?: ToolHistoryEvent[];
+}
+
+/**
  * Streaming placeholder shown while the assistant has been added to the
  * store but no tokens have arrived yet. Replaces the prior bare-dot
- * indicator with a real attribution surface (avatar, agent name, status)
- * so users know who is responding and what is happening.
+ * indicator with a real attribution surface (avatar, agent name, current
+ * activity, and the running tool list) so users know who is responding
+ * and what is happening.
  *
- * role="status" + aria-live="polite" let assistive tech announce the
- * waiting state without interrupting current focus.
+ * <output> gives us implicit role="status" + aria-live="polite" so
+ * assistive tech announces the waiting state without interrupting focus.
  */
-function ThinkingPanel({ title }: { title: string }) {
+function ThinkingPanel({ title, toolHistory }: ThinkingPanelProps) {
+  // The current "activity" — the most recent running tool, falling back to
+  // the most recent tool of any status, falling back to the generic
+  // "thinking…" copy. Mirrors karmagrants' "searching 140,221 filings…"
+  // status line at the top of their thinking box.
+  const runningTool = toolHistory?.findLast?.((t) => t.status === "running");
+  const latestTool = toolHistory?.[toolHistory.length - 1];
+  const activityLabel = runningTool
+    ? `running ${humanizeToolName(runningTool.name)}…`
+    : latestTool
+      ? `${humanizeToolName(latestTool.name)}…`
+      : "thinking…";
+
   return (
     // <output> has implicit role="status" + aria-live="polite" — a native
     // a11y signal that assistive tech announces the waiting state without
     // interrupting focus. Cleaner than div + ARIA attributes.
     <output
       data-testid="ask-karma-thinking"
-      aria-label={`${title} is thinking`}
+      aria-label={`${title} is ${activityLabel.replace(/…$/, "")}`}
       className="flex items-start gap-3 animate-in fade-in slide-in-from-bottom-1 duration-300"
     >
       <div
@@ -104,7 +182,7 @@ function ThinkingPanel({ title }: { title: string }) {
             shouting like a spinner would. */}
         <span className="pointer-events-none absolute inset-0 rounded-full ring-2 ring-emerald-400/40 animate-ping" />
       </div>
-      <div className="flex flex-col gap-1.5 rounded-2xl rounded-tl-sm border border-zinc-200 bg-white px-4 py-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="flex flex-col gap-2 rounded-2xl rounded-tl-sm border border-zinc-200 bg-white px-4 py-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium text-zinc-900 dark:text-zinc-50">{title}</span>
           <span className="flex items-center gap-1" aria-hidden="true">
@@ -113,7 +191,17 @@ function ThinkingPanel({ title }: { title: string }) {
             <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500 [animation-delay:300ms]" />
           </span>
         </div>
-        <span className="text-xs italic text-zinc-500 dark:text-zinc-400">thinking…</span>
+        <span className="text-xs italic text-zinc-500 dark:text-zinc-400">{activityLabel}</span>
+        {toolHistory && toolHistory.length > 0 && (
+          <ul
+            data-testid="ask-karma-tool-list"
+            className="mt-1 flex flex-col gap-1 border-t border-zinc-100 pt-2 dark:border-zinc-800"
+          >
+            {toolHistory.map((tool) => (
+              <ToolHistoryRow key={tool.id} tool={tool} />
+            ))}
+          </ul>
+        )}
       </div>
     </output>
   );
@@ -222,7 +310,9 @@ export function AskKarmaChat({
           return <MessageBubble key={message.id} message={message} />;
         })}
 
-        {showThinking && <ThinkingPanel title={config.assistantTitle} />}
+        {showThinking && (
+          <ThinkingPanel title={config.assistantTitle} toolHistory={lastMessage?.toolHistory} />
+        )}
 
         {error && (
           <div

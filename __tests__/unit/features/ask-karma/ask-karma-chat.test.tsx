@@ -176,6 +176,100 @@ describe("AskKarmaChat", () => {
     expect(screen.getByRole("status")).toBe(panel);
   });
 
+  it("renders the tool history list with status icons when tools are present", () => {
+    const messages: ChatMessage[] = [
+      buildMsg({
+        id: "a1",
+        role: "assistant",
+        content: "",
+        timestamp: Date.now(),
+        toolHistory: [
+          { id: "tu1", name: "aggregate_grants", status: "success" },
+          { id: "tu2", name: "run_sql", status: "error" },
+          { id: "tu3", name: "run_sql", status: "running" },
+        ],
+      }),
+    ];
+    render(
+      <AskKarmaChat
+        config={config}
+        messages={messages}
+        isStreaming={true}
+        error={null}
+        onSend={vi.fn()}
+        onStop={vi.fn()}
+        onBack={vi.fn()}
+      />
+    );
+
+    const list = screen.getByTestId("ask-karma-tool-list");
+    expect(list).toBeInTheDocument();
+    const rows = screen.getAllByTestId("ask-karma-tool-row");
+    expect(rows).toHaveLength(3);
+    // Status attribute lets a snapshot-free assertion confirm the order +
+    // mapping without coupling to icon node structure.
+    expect(rows[0]).toHaveAttribute("data-tool-status", "success");
+    expect(rows[1]).toHaveAttribute("data-tool-status", "error");
+    expect(rows[2]).toHaveAttribute("data-tool-status", "running");
+    // snake_case -> "snake case" humanisation
+    expect(rows[0]).toHaveTextContent("aggregate grants");
+    expect(rows[1]).toHaveTextContent("run sql");
+  });
+
+  it("uses the running tool as the activity label, falling back to 'thinking…'", () => {
+    const { rerender } = render(
+      <AskKarmaChat
+        config={config}
+        messages={[buildMsg({ id: "a1", role: "assistant", content: "", timestamp: Date.now() })]}
+        isStreaming={true}
+        error={null}
+        onSend={vi.fn()}
+        onStop={vi.fn()}
+        onBack={vi.fn()}
+      />
+    );
+    // No tools yet → generic copy.
+    expect(screen.getByTestId("ask-karma-thinking")).toHaveTextContent("thinking…");
+
+    rerender(
+      <AskKarmaChat
+        config={config}
+        messages={[
+          buildMsg({
+            id: "a1",
+            role: "assistant",
+            content: "",
+            timestamp: Date.now(),
+            toolHistory: [{ id: "tu1", name: "run_sql", status: "running" }],
+          }),
+        ]}
+        isStreaming={true}
+        error={null}
+        onSend={vi.fn()}
+        onStop={vi.fn()}
+        onBack={vi.fn()}
+      />
+    );
+    expect(screen.getByTestId("ask-karma-thinking")).toHaveTextContent("running run sql…");
+  });
+
+  it("does not render the tool list when toolHistory is empty or undefined", () => {
+    render(
+      <AskKarmaChat
+        config={config}
+        messages={[buildMsg({ id: "a1", role: "assistant", content: "", timestamp: Date.now() })]}
+        isStreaming={true}
+        error={null}
+        onSend={vi.fn()}
+        onStop={vi.fn()}
+        onBack={vi.fn()}
+      />
+    );
+    // Thinking panel exists; tool list does NOT.
+    expect(screen.getByTestId("ask-karma-thinking")).toBeInTheDocument();
+    expect(screen.queryByTestId("ask-karma-tool-list")).not.toBeInTheDocument();
+  });
+
   it("renders error alert when error is present", () => {
     render(
       <AskKarmaChat

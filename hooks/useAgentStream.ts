@@ -65,6 +65,36 @@ function extractDeltaText(event: SSEEvent): string {
   return "";
 }
 
+/**
+ * Returns the tool_use {id, name} when a stream_event represents a
+ * content_block_start opening a tool_use block. Anthropic emits this BEFORE
+ * the full `assistant` event lands, so surfacing it lets the UI show the
+ * tool as "running" the moment the agent decides to call it.
+ */
+function extractToolUseStart(event: SSEEvent): { id: string; name: string } | null {
+  const streamEvent = event.event as Record<string, unknown> | undefined;
+  if (!streamEvent || streamEvent.type !== "content_block_start") return null;
+  const block = streamEvent.content_block as
+    | { type?: string; id?: string; name?: string }
+    | undefined;
+  if (block?.type !== "tool_use" || !block.id || !block.name) return null;
+  return { id: block.id, name: block.name };
+}
+
+/**
+ * Extract every tool_use block from a full assistant message event. Used as
+ * a backstop for tool entries that may have missed the per-event stream
+ * channel (out-of-order delivery, reconnect, etc.).
+ */
+function extractToolUsesFromAssistantMessage(event: SSEEvent): Array<{ id: string; name: string }> {
+  const message = event.message as Record<string, unknown> | undefined;
+  if (!message?.content) return [];
+  const contentBlocks = message.content as Array<{ type: string; id?: string; name?: string }>;
+  return contentBlocks
+    .filter((b) => b.type === "tool_use" && b.id && b.name)
+    .map((b) => ({ id: b.id as string, name: b.name as string }));
+}
+
 function extractToolResultData(raw: unknown): Record<string, unknown> {
   const blocks = Array.isArray(raw) ? raw : (raw as Record<string, unknown>)?.content;
   if (Array.isArray(blocks)) {
@@ -241,6 +271,14 @@ export function useAgentStream() {
                   streamingContentRef.current += delta;
                   store.updateLastAssistantMessage(streamingContentRef.current);
                 }
+                // Surface tool calls as soon as the agent opens the block —
+                // before the full assistant turn lands, so the thinking
+                // panel can show "⟳ search grants" while the tool is still
+                // running rather than after-the-fact.
+                const toolStart = extractToolUseStart(event);
+                if (toolStart) {
+                  store.appendToolUseToLastAssistantMessage(toolStart);
+                }
                 break;
               }
               case "assistant": {
@@ -248,6 +286,14 @@ export function useAgentStream() {
                 if (text) {
                   streamingContentRef.current = text;
                   store.updateLastAssistantMessage(text);
+                }
+                // Backstop tool extraction — if the stream channel missed a
+                // content_block_start (out-of-order delivery, reconnect),
+                // the full assistant event still carries every tool_use
+                // block. appendToolUse de-dupes by id, so it's safe to call
+                // both here and in the stream_event handler above.
+                for (const tool of extractToolUsesFromAssistantMessage(event)) {
+                  store.appendToolUseToLastAssistantMessage(tool);
                 }
                 break;
               }
@@ -268,6 +314,8 @@ export function useAgentStream() {
               }
               case "tool_result": {
                 const toolName = event.tool_name as string;
+                const toolUseId = event.tool_use_id as string | undefined;
+                const isError = Boolean(event.is_error);
                 const resultData = extractToolResultData(event.result);
                 if (toolName?.startsWith("preview_")) {
                   store.updateLastAssistantToolResult({
@@ -282,6 +330,17 @@ export function useAgentStream() {
                   typeof resultData.newSlug === "string"
                 ) {
                   newSlugRef.current = resultData.newSlug;
+                }
+                // Mark the matching tool entry's status. tool_use_id is
+                // the Anthropic SDK's identifier that ties result back to
+                // the originating tool_use block. If it's missing we skip
+                // the update silently — the entry will just stay "running"
+                // until the turn completes, which is acceptable degradation.
+                if (toolUseId) {
+                  store.updateToolStatusOnLastAssistantMessage(
+                    toolUseId,
+                    isError ? "error" : "success"
+                  );
                 }
                 break;
               }

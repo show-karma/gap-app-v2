@@ -771,6 +771,150 @@ describe("useAgentStream", () => {
     });
   });
 
+  describe("tool history tracking", () => {
+    it("registers a tool_use entry from a stream_event content_block_start", async () => {
+      const sseText = formatSSE([
+        {
+          type: "stream_event",
+          event: {
+            type: "content_block_start",
+            content_block: { type: "tool_use", id: "toolu_1", name: "aggregate_grants" },
+          },
+        },
+      ]);
+      mockFetch.mockResolvedValue(createStreamResponse(sseText));
+
+      const { result } = renderHook(() => useAgentStream(), { wrapper });
+      await act(async () => {
+        await result.current.sendMessage("Find grants");
+      });
+
+      const assistantMsg = useAgentChatStore
+        .getState()
+        .messages.find((m) => m.role === "assistant");
+      expect(assistantMsg?.toolHistory).toEqual([
+        { id: "toolu_1", name: "aggregate_grants", status: "running" },
+      ]);
+    });
+
+    it("registers tool_use entries from a full assistant message as a backstop", async () => {
+      const sseText = formatSSE([
+        {
+          type: "assistant",
+          message: {
+            content: [
+              { type: "text", text: "Looking into that…" },
+              { type: "tool_use", id: "toolu_a", name: "run_sql" },
+            ],
+          },
+        },
+      ]);
+      mockFetch.mockResolvedValue(createStreamResponse(sseText));
+
+      const { result } = renderHook(() => useAgentStream(), { wrapper });
+      await act(async () => {
+        await result.current.sendMessage("query the db");
+      });
+
+      const assistantMsg = useAgentChatStore
+        .getState()
+        .messages.find((m) => m.role === "assistant");
+      expect(assistantMsg?.toolHistory?.[0]).toMatchObject({
+        id: "toolu_a",
+        name: "run_sql",
+        status: "running",
+      });
+    });
+
+    it("dedupes when the same tool appears in both stream_event and assistant event", async () => {
+      const sseText = formatSSE([
+        {
+          type: "stream_event",
+          event: {
+            type: "content_block_start",
+            content_block: { type: "tool_use", id: "toolu_same", name: "search_grants" },
+          },
+        },
+        {
+          type: "assistant",
+          message: {
+            content: [{ type: "tool_use", id: "toolu_same", name: "search_grants" }],
+          },
+        },
+      ]);
+      mockFetch.mockResolvedValue(createStreamResponse(sseText));
+
+      const { result } = renderHook(() => useAgentStream(), { wrapper });
+      await act(async () => {
+        await result.current.sendMessage("ok");
+      });
+
+      const assistantMsg = useAgentChatStore
+        .getState()
+        .messages.find((m) => m.role === "assistant");
+      expect(assistantMsg?.toolHistory).toHaveLength(1);
+    });
+
+    it("marks a tool as success when tool_result arrives without is_error", async () => {
+      const sseText = formatSSE([
+        {
+          type: "stream_event",
+          event: {
+            type: "content_block_start",
+            content_block: { type: "tool_use", id: "toolu_x", name: "aggregate_grants" },
+          },
+        },
+        {
+          type: "tool_result",
+          tool_name: "aggregate_grants",
+          tool_use_id: "toolu_x",
+          result: { count: 12 },
+        },
+      ]);
+      mockFetch.mockResolvedValue(createStreamResponse(sseText));
+
+      const { result } = renderHook(() => useAgentStream(), { wrapper });
+      await act(async () => {
+        await result.current.sendMessage("ok");
+      });
+
+      const assistantMsg = useAgentChatStore
+        .getState()
+        .messages.find((m) => m.role === "assistant");
+      expect(assistantMsg?.toolHistory?.[0].status).toBe("success");
+    });
+
+    it("marks a tool as error when tool_result carries is_error=true", async () => {
+      const sseText = formatSSE([
+        {
+          type: "stream_event",
+          event: {
+            type: "content_block_start",
+            content_block: { type: "tool_use", id: "toolu_y", name: "run_sql" },
+          },
+        },
+        {
+          type: "tool_result",
+          tool_name: "run_sql",
+          tool_use_id: "toolu_y",
+          is_error: true,
+          result: "SELECT failed",
+        },
+      ]);
+      mockFetch.mockResolvedValue(createStreamResponse(sseText));
+
+      const { result } = renderHook(() => useAgentStream(), { wrapper });
+      await act(async () => {
+        await result.current.sendMessage("ok");
+      });
+
+      const assistantMsg = useAgentChatStore
+        .getState()
+        .messages.find((m) => m.role === "assistant");
+      expect(assistantMsg?.toolHistory?.[0].status).toBe("error");
+    });
+  });
+
   describe("sendConfirmation", () => {
     it("should update tool result status to approved and send approval message", async () => {
       // First, set up a message with a pending tool result
