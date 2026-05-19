@@ -51,6 +51,14 @@ export interface HermesOrgResponse {
   updatedAt: string;
 }
 
+export interface HermesMyOrg {
+  id: string;
+  slug: string;
+  status: string;
+  role: string;
+  joinedAt: string;
+}
+
 export interface HermesProfileResponse {
   name: string;
   path?: string;
@@ -188,6 +196,11 @@ export interface WorkTaskComment {
 const api = createAuthenticatedApiClient();
 
 export const hermesClient = {
+  async getMyOrgs(): Promise<HermesMyOrg[]> {
+    const { data } = await api.get<{ orgs: HermesMyOrg[] }>(INDEXER.HERMES.MY_ORGS);
+    return data.orgs;
+  },
+
   async getOrg(slug: string): Promise<HermesOrgResponse> {
     const { data } = await api.get<HermesOrgResponse>(INDEXER.HERMES.ORG(slug));
     return data;

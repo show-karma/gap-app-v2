@@ -3,21 +3,36 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-hot-toast";
 import {
+  type HermesMyOrg,
   type HermesOrgResponse,
   hermesClient,
   type ProvisionOrgInput,
   type TeamRole,
   type UpdateAboutInput,
 } from "@/lib/hermes-client";
+import { useAuth } from "./useAuth";
 
 // Query key factory — single source of truth for cache identity and
 // invalidation across hooks. Matches the existing pattern in this codebase
 // (see hooks/communities/* for the convention).
 const teamKeys = {
   all: ["team"] as const,
+  myOrgs: () => [...teamKeys.all, "mine"] as const,
   org: (slug: string) => [...teamKeys.all, "org", slug] as const,
   about: (slug: string, role: TeamRole) => [...teamKeys.all, "about", slug, role] as const,
 };
+
+// Lists every org the signed-in user is a member of. Used by the avatar
+// dropdown and the onboarding page to route the user to their existing
+// team instead of re-running the provisioning form.
+export function useMyOrgs() {
+  const { authenticated, ready } = useAuth();
+  return useQuery<HermesMyOrg[]>({
+    queryKey: teamKeys.myOrgs(),
+    enabled: ready && authenticated,
+    queryFn: () => hermesClient.getMyOrgs(),
+  });
+}
 
 export function useTeamOrg(slug: string | undefined) {
   return useQuery<HermesOrgResponse>({

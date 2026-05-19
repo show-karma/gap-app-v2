@@ -792,6 +792,7 @@ export const INDEXER = {
   },
   HERMES: {
     PROVISION: (slug: string) => `/v2/hermes/orgs/${slug}/provision`,
+    MY_ORGS: `/v2/hermes/orgs/mine`,
     ORG: (slug: string) => `/v2/hermes/orgs/${slug}`,
     PROFILES: (slug: string) => `/v2/hermes/orgs/${slug}/profiles`,
     SOUL: (slug: string, profile: string) => `/v2/hermes/orgs/${slug}/profiles/${profile}/soul`,
