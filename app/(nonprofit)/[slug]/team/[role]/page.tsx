@@ -1,9 +1,16 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useState } from "react";
+import { useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "react-hot-toast";
+import { z } from "zod";
+import { Button } from "@/components/Utilities/Button";
+import { Skeleton } from "@/components/Utilities/Skeleton";
+import { TabContent, Tabs, TabTrigger } from "@/components/Utilities/Tabs";
 import { useTeamMemberAbout, useUpdateTeamMemberAbout } from "@/hooks/useTeam";
 import {
   TEAM_ROLE_DESCRIPTIONS,
@@ -18,6 +25,11 @@ import { RoleAvatar } from "@/src/features/team/RoleAvatar";
 import { TeamChat } from "@/src/features/team-chat/TeamChat";
 import { PAGES } from "@/utilities/pages";
 
+const aboutSchema = z.object({
+  content: z.string(),
+});
+type AboutFormShape = z.infer<typeof aboutSchema>;
+
 type TabId = "chat" | "about" | "skills" | "settings";
 
 // Module-level constant avoids recreating the array on every render (P2-5).
@@ -30,7 +42,6 @@ const MEMBER_TABS = [
 
 export default function TeamMemberPage() {
   const { slug, role: roleParam } = useParams<{ slug: string; role: string }>();
-  const [tab, setTab] = useState<TabId>("chat");
   const role = roleParam as TeamRole;
   const isKnownRole = TEAM_ROLES.includes(role);
 
@@ -76,49 +87,34 @@ export default function TeamMemberPage() {
         </div>
       </div>
 
-      {/* Tab bar — full ARIA per P2-2 */}
-      <div className="mt-6 flex gap-1 border-b border-gray-200" role="tablist">
-        {MEMBER_TABS.map((t) => (
-          <button
-            key={t.id}
-            type="button"
-            role="tab"
-            id={`tab-${t.id}`}
-            aria-selected={tab === t.id}
-            aria-controls={`panel-${t.id}`}
-            onClick={() => setTab(t.id)}
-            className={`-mb-px border-b-2 px-4 py-2 text-sm transition ${
-              tab === t.id
-                ? "border-gray-900 font-semibold text-gray-900"
-                : "border-transparent text-gray-500 hover:text-gray-900"
-            }`}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
+      <Tabs defaultTab="chat">
+        <div className="mt-6 flex gap-1 border-b border-gray-200">
+          {MEMBER_TABS.map((t) => (
+            <TabTrigger
+              key={t.id}
+              value={t.id}
+              className="-mb-px border-b-2 rounded-none px-4 py-2 text-sm"
+            >
+              {t.label}
+            </TabTrigger>
+          ))}
+        </div>
 
-      {/* Tab panels — each gets role="tabpanel", id, aria-labelledby per P2-2 */}
-      {MEMBER_TABS.map((t) => (
-        <section
-          key={t.id}
-          role="tabpanel"
-          id={`panel-${t.id}`}
-          aria-labelledby={`tab-${t.id}`}
-          hidden={tab !== t.id}
-          className="mt-6"
-        >
-          {t.id === "about" && tab === "about" ? (
-            <AboutTab slug={slug} role={role} />
-          ) : t.id === "chat" && tab === "chat" ? (
+        <div className="mt-6">
+          <TabContent value="chat">
             <ChatTab slug={slug} role={role} />
-          ) : t.id === "skills" && tab === "skills" ? (
+          </TabContent>
+          <TabContent value="about">
+            <AboutTab slug={slug} role={role} />
+          </TabContent>
+          <TabContent value="skills">
             <SkillsTab slug={slug} role={role} />
-          ) : t.id === "settings" && tab === "settings" ? (
+          </TabContent>
+          <TabContent value="settings">
             <SettingsTab role={role} />
-          ) : null}
-        </section>
-      ))}
+          </TabContent>
+        </div>
+      </Tabs>
     </main>
   );
 }
@@ -126,13 +122,23 @@ export default function TeamMemberPage() {
 function AboutTab({ slug, role }: { slug: string; role: TeamRole }) {
   const query = useTeamMemberAbout(slug, role);
   const mutation = useUpdateTeamMemberAbout(slug);
-  const [draft, setDraft] = useState<string | null>(null);
+
+  const { register, handleSubmit, reset, formState } = useForm<AboutFormShape>({
+    resolver: zodResolver(aboutSchema),
+    defaultValues: { content: "" },
+  });
+
+  useEffect(() => {
+    if (query.data !== undefined) {
+      reset({ content: query.data ?? "" });
+    }
+  }, [query.data, reset]);
 
   if (query.isLoading) {
     return (
       <div className="space-y-3">
-        <div className="h-4 w-2/3 animate-pulse rounded bg-gray-200" />
-        <div className="h-64 animate-pulse rounded-xl border border-gray-200 bg-gray-50" />
+        <Skeleton className="h-4 w-2/3 rounded" />
+        <Skeleton className="h-64 rounded-xl border border-gray-200" />
       </div>
     );
   }
@@ -141,47 +147,50 @@ function AboutTab({ slug, role }: { slug: string; role: TeamRole }) {
     return <TeamErrorState onRetry={() => query.refetch()} />;
   }
 
-  const current = draft ?? query.data ?? "";
-  const dirty = draft !== null && draft !== query.data;
-
   return (
-    <div>
+    <form
+      onSubmit={handleSubmit((values) =>
+        mutation.mutate(
+          { role, content: values.content },
+          {
+            onSuccess: () => {
+              toast.success("Saved. Edits apply on the next chat turn.");
+              reset({ content: values.content });
+            },
+            onError: (err) => toast.error(err instanceof Error ? err.message : "Save failed"),
+          }
+        )
+      )}
+    >
       <textarea
-        value={current}
-        onChange={(e) => setDraft(e.target.value)}
+        {...register("content")}
         rows={20}
         className="block w-full resize-y rounded-xl border border-gray-200 bg-white p-[18px] font-sans text-[14px] leading-[1.6] text-gray-900 shadow-sm outline-none transition focus:border-gray-300 focus:ring-2 focus:ring-gray-100"
         placeholder={`Describe how ${TEAM_ROLE_LABELS[role]} should behave, what their voice sounds like, what they care about...`}
       />
       <div className="mt-3 flex items-center justify-between">
         <p className="text-xs text-gray-500">
-          {dirty
+          {formState.isDirty
             ? "Unsaved changes — they apply on the next chat turn."
             : "Saved. Edits apply on the next chat turn."}
         </p>
         <div className="flex items-center gap-2">
-          {dirty ? (
-            <button
-              type="button"
-              onClick={() => setDraft(null)}
-              className="rounded-md border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-700 transition hover:bg-gray-50"
-            >
+          {formState.isDirty ? (
+            <Button type="button" variant="secondary" onClick={() => reset()}>
               Discard
-            </button>
+            </Button>
           ) : null}
-          <button
-            type="button"
-            disabled={!dirty || mutation.isPending}
-            onClick={() =>
-              mutation.mutate({ role, content: current }, { onSuccess: () => setDraft(null) })
-            }
-            className="rounded-md bg-gray-900 px-3 py-1.5 text-sm font-medium text-white shadow-sm transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:shadow-none"
+          <Button
+            type="submit"
+            variant="primary"
+            isLoading={mutation.isPending}
+            disabled={!formState.isDirty || mutation.isPending}
           >
-            {mutation.isPending ? "Saving…" : "Save changes"}
-          </button>
+            Save changes
+          </Button>
         </div>
       </div>
-    </div>
+    </form>
   );
 }
 
