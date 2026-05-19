@@ -89,4 +89,29 @@ describe("AskKarmaInput", () => {
     // Value is intentional and asserted so it can't be lowered silently.
     expect(textarea).toHaveAttribute("maxLength", "4000");
   });
+
+  it("ignores Enter while IME composition is active", async () => {
+    const { fireEvent } = await import("@testing-library/react");
+    const onSubmit = vi.fn();
+    render(<AskKarmaInput onSubmit={onSubmit} isStreaming={false} />);
+    const textarea = screen.getByPlaceholderText("Type your message...") as HTMLTextAreaElement;
+    // Manually set value (fireEvent.change to avoid userEvent typing one
+    // char at a time — we only care about the Enter behaviour).
+    fireEvent.change(textarea, { target: { value: "konnichiwa" } });
+    // CJK users press Enter to confirm a composition candidate. The
+    // KeyboardEvent's `isComposing` flag propagates to event.nativeEvent
+    // in React's synthetic event.
+    fireEvent.keyDown(textarea, { key: "Enter", isComposing: true });
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  it("submits on Enter when IME composition is not active", async () => {
+    const { fireEvent } = await import("@testing-library/react");
+    const onSubmit = vi.fn();
+    render(<AskKarmaInput onSubmit={onSubmit} isStreaming={false} />);
+    const textarea = screen.getByPlaceholderText("Type your message...") as HTMLTextAreaElement;
+    fireEvent.change(textarea, { target: { value: "hello" } });
+    fireEvent.keyDown(textarea, { key: "Enter" });
+    expect(onSubmit).toHaveBeenCalledWith("hello");
+  });
 });

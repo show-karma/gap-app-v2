@@ -40,6 +40,10 @@ export function AskKarmaInput({
 
   const handleKeyDown = useCallback(
     (event: KeyboardEvent<HTMLTextAreaElement>) => {
+      // CJK / IME users press Enter to confirm a composition candidate;
+      // without this guard, that confirmation also submits the half-typed
+      // message and breaks the input for those locales.
+      if (event.nativeEvent.isComposing) return;
       if (event.key === "Enter" && !event.shiftKey) {
         event.preventDefault();
         send();

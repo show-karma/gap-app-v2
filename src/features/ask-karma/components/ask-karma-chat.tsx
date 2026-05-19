@@ -98,9 +98,16 @@ export function AskKarmaChat({
   const endRef = useRef<HTMLDivElement>(null);
   const lastContent = messages[messages.length - 1]?.content;
 
+  // During streaming, `lastContent` ticks on every token — smooth scrolling
+  // on each tick produces visible jank. Use instant (`"auto"`) scroll while
+  // streaming so the viewport keeps up with the stream, and smooth scroll
+  // when idle for normal message turnover.
   useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-  }, [lastContent]);
+    endRef.current?.scrollIntoView({
+      behavior: isStreaming ? "auto" : "smooth",
+      block: "end",
+    });
+  }, [isStreaming, lastContent, messages.length]);
 
   const lastMessage = messages[messages.length - 1];
   const showThinking = isStreaming && lastMessage?.role === "assistant" && !lastMessage.content;

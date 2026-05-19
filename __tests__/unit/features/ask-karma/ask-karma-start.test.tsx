@@ -162,6 +162,20 @@ describe("AskKarmaStart — direct input submissions", () => {
     // and tested so we notice if it changes silently.
     expect(input).toHaveAttribute("maxLength", "500");
   });
+
+  it("ignores Enter while IME composition is active", async () => {
+    const { fireEvent } = await import("@testing-library/react");
+    const onSubmit = vi.fn();
+    render(<AskKarmaStart config={config} onSubmit={onSubmit} />);
+    const input = screen.getByTestId("ask-karma-search-input") as HTMLInputElement;
+    fireEvent.change(input, { target: { value: "konnichiwa" } });
+    // IME composition active — Enter must NOT submit.
+    fireEvent.keyDown(input, { key: "Enter", isComposing: true });
+    expect(onSubmit).not.toHaveBeenCalled();
+    // Now release composition and press Enter again — should submit.
+    fireEvent.keyDown(input, { key: "Enter" });
+    expect(onSubmit).toHaveBeenCalledWith("konnichiwa");
+  });
 });
 
 describe("AskKarmaStart — reduced motion", () => {

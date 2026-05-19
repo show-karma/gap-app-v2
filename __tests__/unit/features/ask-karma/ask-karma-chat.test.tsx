@@ -163,6 +163,50 @@ describe("AskKarmaChat", () => {
     expect(onBack).toHaveBeenCalledTimes(1);
   });
 
+  it("uses instant scroll (behavior: auto) while streaming to avoid jank", () => {
+    const scrollSpy = vi.fn();
+    Element.prototype.scrollIntoView = scrollSpy;
+    const messages: ChatMessage[] = [
+      buildMsg({ id: "a1", role: "assistant", content: "Streaming...", timestamp: Date.now() }),
+    ];
+    render(
+      <AskKarmaChat
+        config={config}
+        messages={messages}
+        isStreaming={true}
+        error={null}
+        onSend={vi.fn()}
+        onStop={vi.fn()}
+        onBack={vi.fn()}
+      />
+    );
+    expect(scrollSpy).toHaveBeenCalled();
+    const lastCallArg = scrollSpy.mock.calls.at(-1)?.[0];
+    expect(lastCallArg).toMatchObject({ behavior: "auto" });
+  });
+
+  it("uses smooth scroll when not streaming", () => {
+    const scrollSpy = vi.fn();
+    Element.prototype.scrollIntoView = scrollSpy;
+    const messages: ChatMessage[] = [
+      buildMsg({ id: "a1", role: "assistant", content: "Done.", timestamp: Date.now() }),
+    ];
+    render(
+      <AskKarmaChat
+        config={config}
+        messages={messages}
+        isStreaming={false}
+        error={null}
+        onSend={vi.fn()}
+        onStop={vi.fn()}
+        onBack={vi.fn()}
+      />
+    );
+    expect(scrollSpy).toHaveBeenCalled();
+    const lastCallArg = scrollSpy.mock.calls.at(-1)?.[0];
+    expect(lastCallArg).toMatchObject({ behavior: "smooth" });
+  });
+
   it("forwards textarea submissions to onSend", async () => {
     const user = userEvent.setup();
     const onSend = vi.fn();

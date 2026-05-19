@@ -185,6 +185,22 @@ describe("AskKarmaPage", () => {
     expect(useAgentChatStore.getState().agentContext).toBeNull();
   });
 
+  it("locks pointer events and marks aria-hidden on the start view during fade-out", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    render(<AskKarmaPage config={config} />);
+
+    await user.click(screen.getByRole("button", { name: config.exampleQuestions[0] }));
+    await advanceChipFlow(config.exampleQuestions[0]);
+
+    const startView = screen.getByTestId("ask-karma-start-view");
+    expect(startView).toHaveAttribute("data-view-state", "leaving-start");
+    expect(startView).toHaveAttribute("aria-hidden", "true");
+    // pointer-events-none class is what blocks click forwarding in the
+    // browser; assert it so a refactor that drops it gets caught.
+    expect(startView.className).toContain("pointer-events-none");
+  });
+
   it("does not trigger another view transition when already in chat", async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
