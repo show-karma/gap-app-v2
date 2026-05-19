@@ -12,7 +12,7 @@ import { useDominantColor } from "@/hooks/useDominantColor";
 import { layoutTheme } from "@/src/helper/theme";
 import type { Community } from "@/types/v2/community";
 import { communityColors } from "@/utilities/communityColors";
-import { PAGES } from "@/utilities/pages";
+import { isAskKarmaPathname, PAGES } from "@/utilities/pages";
 import { getCommunityStats } from "@/utilities/queries/v2/getCommunityData";
 import { cn } from "@/utilities/tailwind";
 import { useWhitelabel } from "@/utilities/whitelabel-context";
@@ -89,6 +89,8 @@ const NormalCommunityHeader = ({ community }: { community: Community }) => {
   const communityId = (params?.communityId as string) || community?.details?.slug || "";
   const [isMac, setIsMac] = useState(false);
   const router = useRouter();
+  const headerPathname = usePathname() ?? "";
+  const isOnAskKarma = isAskKarmaPathname(headerPathname);
   const communityName = community?.details?.name || "";
 
   const openAskKarma = useCallback(() => {
@@ -279,7 +281,20 @@ const NormalCommunityHeader = ({ community }: { community: Community }) => {
             type="button"
             onClick={openAskKarma}
             aria-label={`Ask Karma about ${communityName || "this community"}`}
-            className="group relative overflow-hidden inline-flex items-center gap-2 pl-2.5 pr-3.5 py-2 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-full text-[13px] font-medium text-gray-900 dark:text-white shadow-[0_1px_2px_rgba(0,0,0,0.04)] hover:border-brand-500 hover:shadow-[0_0_0_3px_rgba(46,209,168,0.12)] transition-all"
+            // Active state when the user is already on the ask-karma page —
+            // mirrors the hover affordance so the pill reads as "you are
+            // here". `aria-current="page"` surfaces the same to assistive
+            // tech without depending on the visual treatment.
+            aria-current={isOnAskKarma ? "page" : undefined}
+            className={cn(
+              "group relative overflow-hidden inline-flex items-center gap-2 pl-2.5 pr-3.5 py-2",
+              "bg-white dark:bg-zinc-900 rounded-full text-[13px] font-medium",
+              "text-gray-900 dark:text-white shadow-[0_1px_2px_rgba(0,0,0,0.04)]",
+              "transition-all",
+              isOnAskKarma
+                ? "border border-brand-500 shadow-[0_0_0_3px_rgba(46,209,168,0.12)]"
+                : "border border-gray-200 dark:border-zinc-800 hover:border-brand-500 hover:shadow-[0_0_0_3px_rgba(46,209,168,0.12)]"
+            )}
           >
             <Image
               src="/logo/logo-dark.png"
