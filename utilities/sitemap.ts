@@ -4,7 +4,7 @@ import { INDEXER } from "@/utilities/indexer";
 
 export const SITEMAP_PAGE_SIZE = 5000;
 
-export type SitemapKind = "projects" | "impacts" | "grants" | "milestones" | "funding-programs";
+type SitemapKind = "projects" | "impacts" | "grants" | "milestones" | "funding-programs";
 
 export interface SitemapCounts {
   projects: number;
