@@ -156,13 +156,14 @@ export const PAGES = {
   SEEDS: `/seeds`,
   SEEDS_FUND: `/seeds/fund`,
   TEAM: {
-    ONBOARDING: `/onboarding`,
-    DIRECTORY: (slug: string) => `/${slug}/team`,
-    MEMBER: (slug: string, role: string) => `/${slug}/team/${role}`,
+    LIST: `/ai-team`,
+    ONBOARDING: `/ai-team/onboarding`,
+    DIRECTORY: (slug: string) => `/ai-team/${slug}/team`,
+    MEMBER: (slug: string, role: string) => `/ai-team/${slug}/team/${role}`,
   },
-  ORG: (slug: string) => `/${slug}/org`,
-  WORK: (slug: string) => `/${slug}/work`,
-  SKILLS: (slug: string) => `/${slug}/skills`,
+  ORG: (slug: string) => `/ai-team/${slug}/org`,
+  WORK: (slug: string) => `/ai-team/${slug}/work`,
+  SKILLS: (slug: string) => `/ai-team/${slug}/skills`,
 };
 
 /**

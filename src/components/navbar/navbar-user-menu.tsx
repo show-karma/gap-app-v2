@@ -27,7 +27,6 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { useContributorProfile } from "@/hooks/useContributorProfile";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
-import { useMyOrgs } from "@/hooks/useTeam";
 import { useApiKeyManagementModalStore } from "@/store/modals/apiKeyManagement";
 import { useContributorProfileModalStore } from "@/store/modals/contributorProfile";
 import { PAGES } from "@/utilities/pages";
@@ -95,12 +94,6 @@ export function NavbarUserMenu() {
   const { openModal: openProfileModal } = useContributorProfileModalStore();
   const { openModal: openApiKeyModal } = useApiKeyManagementModalStore();
   const [, copyToClipboard] = useCopyToClipboard();
-
-  // Route the user to their first team's directory if they have one;
-  // otherwise drop them into the provisioning flow.
-  const { data: myOrgs } = useMyOrgs();
-  const aiTeamHref =
-    myOrgs && myOrgs.length > 0 ? PAGES.TEAM.DIRECTORY(myOrgs[0].slug) : PAGES.TEAM.ONBOARDING;
 
   if (!ready) {
     return <NavbarUserSkeleton />;
@@ -199,7 +192,7 @@ export function NavbarUserMenu() {
           <div className="flex flex-col w-full">
             <MenubarItem asChild className="w-full cursor-pointer">
               <Link
-                href={aiTeamHref}
+                href={PAGES.TEAM.LIST}
                 className="relative flex items-center gap-2 w-full overflow-hidden rounded-sm"
               >
                 <Users className={menuStyles.itemIcon} />
