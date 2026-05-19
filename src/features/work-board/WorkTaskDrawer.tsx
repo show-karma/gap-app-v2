@@ -2,7 +2,9 @@
 
 import { TrashIcon } from "@heroicons/react/24/outline";
 import { useState } from "react";
+import { toast } from "react-hot-toast";
 import { DeleteDialog } from "@/components/DeleteDialog";
+import { Button } from "@/components/Utilities/Button";
 import {
   useDeleteTaskAttachment,
   useTaskAttachments,
@@ -140,6 +142,8 @@ export function WorkTaskDrawer({ slug, taskId, onClose }: Props) {
             if (!body.trim()) return;
             addComment.mutate(body.trim(), {
               onSuccess: () => setBody(""),
+              onError: (err) =>
+                toast.error(err instanceof Error ? err.message : "Failed to post comment"),
             });
           }}
         >
@@ -151,13 +155,15 @@ export function WorkTaskDrawer({ slug, taskId, onClose }: Props) {
             maxLength={8000}
             className="w-full rounded border px-3 py-2 text-sm"
           />
-          <button
+          <Button
             type="submit"
+            variant="primary"
+            isLoading={addComment.isPending}
             disabled={!body.trim() || addComment.isPending}
-            className="mt-2 rounded bg-black px-3 py-1.5 text-sm text-white disabled:bg-gray-300"
+            className="mt-2"
           >
-            {addComment.isPending ? "Posting…" : "Post comment"}
-          </button>
+            Post comment
+          </Button>
         </form>
       </section>
     </aside>
