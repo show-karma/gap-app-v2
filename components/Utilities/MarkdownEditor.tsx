@@ -117,6 +117,11 @@ export const MarkdownEditor: FC<MarkdownEditorProps> = ({
   // setValue→onChange→re-render cycle that trips React's max-update-depth.
   const safeValue = value ?? "";
 
+  // md-editor-rt builds `#${id} .cm-scroller` and runs querySelector on it.
+  // CSS identifiers can't start with a digit, so an id like "21_project_summary"
+  // (derived from a label like "21. Project Summary") throws SyntaxError.
+  const safeId = id && /^[0-9]/.test(id) ? `_${id}` : id;
+
   const { resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
@@ -200,7 +205,10 @@ export const MarkdownEditor: FC<MarkdownEditorProps> = ({
       {/* Header with label and preview toggle */}
       <div className="flex items-center justify-between mb-2">
         {label && (
-          <label htmlFor={id} className="block text-sm font-bold text-black dark:text-zinc-100">
+          <label
+            htmlFor={safeId}
+            className="block text-sm font-bold text-black dark:text-zinc-100"
+          >
             {label} {isRequired && <span className="text-red-500">*</span>}
           </label>
         )}
@@ -250,7 +258,7 @@ export const MarkdownEditor: FC<MarkdownEditorProps> = ({
           </div>
         ) : (
           <MdEditor
-            id={id}
+            id={safeId}
             className={cn(
               "flex-1",
               error && "border-red-500 dark:border-red-500",
