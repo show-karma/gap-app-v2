@@ -4,8 +4,8 @@ import { getGapClient } from "@/utilities/gapClient";
 interface EnsureCorrectChainParams {
   targetChainId: number;
   currentChainId?: number;
-  switchChainAsync?: (params: { chainId: number }) => Promise<any>;
-  onError?: (error: any) => void;
+  switchChainAsync?: (params: { chainId: number }) => Promise<unknown>;
+  onError?: (error: unknown) => void;
 }
 
 interface EnsureCorrectChainResult {

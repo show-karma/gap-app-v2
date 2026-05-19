@@ -205,10 +205,7 @@ export const MarkdownEditor: FC<MarkdownEditorProps> = ({
       {/* Header with label and preview toggle */}
       <div className="flex items-center justify-between mb-2">
         {label && (
-          <label
-            htmlFor={safeId}
-            className="block text-sm font-bold text-black dark:text-zinc-100"
-          >
+          <label htmlFor={safeId} className="block text-sm font-bold text-black dark:text-zinc-100">
             {label} {isRequired && <span className="text-red-500">*</span>}
           </label>
         )}

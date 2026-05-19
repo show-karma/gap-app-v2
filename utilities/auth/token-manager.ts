@@ -20,6 +20,7 @@ export class TokenManager {
   private static cachedToken: string | null = null;
   private static cacheExpiry = 0;
   private static pendingRequest: Promise<string | null> | null = null;
+  private static instanceReadyResolvers: Array<() => void> = [];
 
   /**
    * Set the Privy instance to use for token operations
@@ -30,6 +31,31 @@ export class TokenManager {
       TokenManager.clearCache();
     }
     TokenManager.privyInstance = privy;
+    if (privy?.getAccessToken) {
+      const resolvers = TokenManager.instanceReadyResolvers;
+      TokenManager.instanceReadyResolvers = [];
+      for (const resolve of resolvers) {
+        resolve();
+      }
+    }
+  }
+
+  // Resolves once a Privy instance with getAccessToken has been registered,
+  // or after `timeoutMs` if Privy never finishes bootstrapping (e.g. the SDK
+  // failed to load). Lets API calls fired on cold page load wait for auth
+  // bootstrap instead of racing it and 401'ing.
+  private static waitForInstance(timeoutMs = 3000): Promise<void> {
+    if (TokenManager.privyInstance?.getAccessToken) return Promise.resolve();
+    return new Promise<void>((resolve) => {
+      let settled = false;
+      const done = () => {
+        if (settled) return;
+        settled = true;
+        resolve();
+      };
+      TokenManager.instanceReadyResolvers.push(done);
+      setTimeout(done, timeoutMs);
+    });
   }
 
   /**
@@ -116,6 +142,13 @@ export class TokenManager {
     // return the same promise instead of making parallel getAccessToken() calls
     if (TokenManager.pendingRequest) {
       return TokenManager.pendingRequest;
+    }
+
+    // Client-side: wait briefly for Privy bootstrap if it hasn't run yet.
+    // Fixes 401 race when a page mounts an authenticated query before any
+    // component has called useAuth() to register the Privy instance.
+    if (!TokenManager.privyInstance?.getAccessToken) {
+      await TokenManager.waitForInstance();
     }
 
     // Client-side: Use Privy instance
