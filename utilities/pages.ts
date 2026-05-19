@@ -39,6 +39,7 @@ export const PAGES = {
     REPORTS: (community: string) => `/community/${community}/reports`,
     REPORT_DETAIL: (community: string, runDate: string) =>
       `/community/${community}/reports/${encodeURIComponent(runDate)}`,
+    ASK_KARMA: (community: string) => `/community/${community}/ask-karma`,
   },
   MY_PROJECTS: `/my-projects`,
   MY_REVIEWS: `/my-reviews`,
@@ -155,6 +156,7 @@ export const PAGES = {
   FOR_PROJECTS: `/for-projects`,
   SEEDS: `/seeds`,
   SEEDS_FUND: `/seeds/fund`,
+  ASK_KARMA: `/ask-karma`,
 };
 
 /**
@@ -178,6 +180,7 @@ export const COMMUNITY_SUB_ROUTE_SEGMENTS: ReadonlySet<string> = new Set([
   "updates",
   // Direct route directories under /community/[communityId]/
   "admin",
+  "ask-karma",
   "karma-ai",
   "manage",
 ]);

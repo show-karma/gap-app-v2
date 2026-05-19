@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { usePathname } from "next/navigation";
 
 const Toaster = dynamic(() => import("react-hot-toast").then((mod) => mod.Toaster), { ssr: false });
 
@@ -63,6 +64,14 @@ export function DeferredLayoutComponents({ toasterConfig }: DeferredLayoutCompon
   // is what caused the profile-modal bug at app.filpgf.io (see issue
   // "fix-profile-on-app-filpgf"). The dialogs are loaded via next/dynamic
   // with ssr:false, so the chunk cost is paid only when first rendered.
+  const pathname = usePathname() ?? "";
+  // The ask-karma page is itself a full-screen chat surface; the floating
+  // bubble would be a redundant second entry point that shares the same
+  // Zustand store and would mirror whatever conversation is happening on
+  // the page. Hide it on ask-karma routes only.
+  const isAskKarmaRoute =
+    pathname === "/ask-karma" || /\/community\/[^/]+\/ask-karma$/.test(pathname);
+
   return (
     <>
       <Toaster {...toasterConfig} />
@@ -73,7 +82,7 @@ export function DeferredLayoutComponents({ toasterConfig }: DeferredLayoutCompon
       <ContributorProfileDialog />
       <ApiKeyManagementModal />
       <OnboardingDialog />
-      <AgentChatBubble />
+      {!isAskKarmaRoute && <AgentChatBubble />}
     </>
   );
 }
