@@ -102,12 +102,7 @@ describe("buildMilestoneStatusIndex", () => {
 
     const index = buildMilestoneStatusIndex([pending, completed]);
 
-    const resolved = lookupMilestoneStatus(
-      index,
-      undefined,
-      "projectMilestones",
-      "Milestone 1"
-    );
+    const resolved = lookupMilestoneStatus(index, undefined, "projectMilestones", "Milestone 1");
     expect(resolved).toBe(pending);
     expect(resolved).not.toBe(completed);
   });
@@ -158,9 +153,7 @@ describe("lookupMilestoneStatus", () => {
     });
     const index = buildMilestoneStatusIndex([a]);
 
-    expect(
-      lookupMilestoneStatus(index, undefined, "projectMilestones", "Beta launch")
-    ).toBe(a);
+    expect(lookupMilestoneStatus(index, undefined, "projectMilestones", "Beta launch")).toBe(a);
   });
 
   it("should_fall_back_to_label_composite_when_uid_does_not_hit", () => {
@@ -173,9 +166,7 @@ describe("lookupMilestoneStatus", () => {
     });
     const index = buildMilestoneStatusIndex([a]);
 
-    expect(
-      lookupMilestoneStatus(index, "0xstale", "projectMilestones", "Beta launch")
-    ).toBe(a);
+    expect(lookupMilestoneStatus(index, "0xstale", "projectMilestones", "Beta launch")).toBe(a);
   });
 
   it("should_return_undefined_when_neither_key_hits", () => {

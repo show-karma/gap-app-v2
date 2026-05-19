@@ -117,7 +117,9 @@ describe("privyBridgeConnector", () => {
   it("switchChain rethrows non-lookup errors without dispatching the RPC", async () => {
     mockWallet.switchChain.mockRejectedValueOnce(new Error("User rejected the request."));
     const connector = privyBridgeConnector(mockWallet, 137);
-    await expect(connector.switchChain({ chainId: 10 })).rejects.toThrow("User rejected the request.");
+    await expect(connector.switchChain({ chainId: 10 })).rejects.toThrow(
+      "User rejected the request."
+    );
     expect(mockProvider.request).not.toHaveBeenCalled();
   });
 
