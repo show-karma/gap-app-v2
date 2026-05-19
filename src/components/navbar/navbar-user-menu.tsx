@@ -16,6 +16,7 @@ import EthereumAddressToProfileName from "@/components/EthereumAddressToProfileN
 import { DiscordIcon, TelegramIcon, TwitterIcon } from "@/components/Icons";
 import { ParagraphIcon } from "@/components/Icons/Paragraph";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { BorderBeam } from "@/components/ui/border-beam";
 import {
   Menubar,
   MenubarContent,
@@ -197,9 +198,13 @@ export function NavbarUserMenu() {
           <hr className="h-[1px] w-full border-border" />
           <div className="flex flex-col w-full">
             <MenubarItem asChild className="w-full cursor-pointer">
-              <Link href={aiTeamHref} className="flex items-center gap-2 w-full">
+              <Link
+                href={aiTeamHref}
+                className="relative flex items-center gap-2 w-full overflow-hidden rounded-sm"
+              >
                 <Users className={menuStyles.itemIcon} />
                 <span className={menuStyles.itemText}>AI Team</span>
+                <BorderBeam size={60} duration={5} colorFrom="#ffaa40" colorTo="#9c40ff" />
               </Link>
             </MenubarItem>
             <MenubarItem asChild className="w-full cursor-pointer">
