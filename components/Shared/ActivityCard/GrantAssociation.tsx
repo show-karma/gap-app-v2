@@ -6,7 +6,7 @@ import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
 import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { useProjectStore } from "@/store";
-import type { UnifiedMilestone } from "@/types/v2/roadmap";
+import type { UnifiedMilestone, ProjectUpdate as V2ProjectUpdate } from "@/types/v2/roadmap";
 import { PAGES } from "@/utilities/pages";
 
 // Shared UI component for rendering grant items
@@ -43,6 +43,9 @@ interface GrantAssociationProps {
   // For milestones (new functionality)
   milestone?: UnifiedMilestone;
 
+  // For V2 project updates (associations.funding[])
+  projectUpdate?: V2ProjectUpdate;
+
   // Styling options
   className?: string;
 }
@@ -51,6 +54,7 @@ export const GrantAssociation = ({
   update,
   index,
   milestone,
+  projectUpdate,
   className = "",
 }: GrantAssociationProps) => {
   const containerClass = `flex flex-row w-max flex-wrap gap-2 ${className}`;
@@ -58,6 +62,37 @@ export const GrantAssociation = ({
 
   // Fetch grants using dedicated hook
   const { grants } = useProjectGrants(project?.uid || "");
+
+  // Handle V2 project update — uses associations.funding[]
+  if (projectUpdate) {
+    const fundingLinks = projectUpdate.associations?.funding || [];
+    if (fundingLinks.length === 0) return null;
+
+    const projectSlug = project?.details?.slug || project?.uid || "";
+    const matched = fundingLinks
+      .map((funding) => {
+        const grant = grants.find((g) => g.uid?.toLowerCase() === funding.uid?.toLowerCase());
+        return { funding, grant };
+      })
+      .filter((entry) => entry.funding.uid);
+
+    if (matched.length === 0) return null;
+
+    return (
+      <div className={containerClass}>
+        {matched.map(({ funding, grant }) => (
+          <GrantItem
+            key={`activity-grant-${projectUpdate.uid}-${funding.uid}`}
+            href={PAGES.PROJECT.MILESTONES_AND_UPDATES(projectSlug, funding.uid || "")}
+            title={grant?.details?.title || funding.name || "Untitled Grant"}
+            communityImage={grant?.community?.details?.imageURL}
+            communityName={grant?.community?.details?.name}
+            keyPrefix={`activity-grant-${projectUpdate.uid}-${funding.uid}`}
+          />
+        ))}
+      </div>
+    );
+  }
 
   // Handle milestone data
   if (milestone) {

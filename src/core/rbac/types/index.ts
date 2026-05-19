@@ -14,5 +14,6 @@ export {
   isValidRole,
   ReviewerType,
   ROLE_HIERARCHY,
+  ROLE_LABELS,
   Role,
 } from "./role";

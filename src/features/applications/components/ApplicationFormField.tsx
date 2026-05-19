@@ -23,8 +23,60 @@ interface ApplicationFormFieldProps {
 function FieldDescription({ source }: { source: string }) {
   if (!source) return null;
   return (
-    <div className="text-xs text-zinc-500 dark:text-zinc-400 [&_p]:text-xs [&_p]:text-zinc-500 dark:[&_p]:text-zinc-400">
-      <MarkdownPreview source={source} />
+    <div className="text-xs text-zinc-500 dark:text-zinc-400">
+      <MarkdownPreview source={source} variant="inline" />
+    </div>
+  );
+}
+
+interface MultiOptionCheckboxGroupProps {
+  question: ApplicationQuestion;
+  value: unknown;
+  onChange: (next: string[]) => void;
+  disabled?: boolean;
+  error?: string;
+}
+
+function MultiOptionCheckboxGroup({
+  question,
+  value,
+  onChange,
+  disabled,
+  error,
+}: MultiOptionCheckboxGroupProps) {
+  const selected: string[] = Array.isArray(value) ? value : [];
+
+  const toggleOption = (optionValue: string, checked: boolean) => {
+    if (checked) {
+      onChange([...selected, optionValue]);
+    } else {
+      onChange(selected.filter((v) => v !== optionValue));
+    }
+  };
+
+  return (
+    <div className="w-full flex flex-col gap-2" data-field-id={question.id}>
+      <Label>
+        {question.label}
+        {question.required && <span className="text-destructive ml-0.5">*</span>}
+      </Label>
+      {question.description && <FieldDescription source={question.description as string} />}
+      <div className="space-y-2">
+        {question.options?.map((option) => (
+          <div key={option.value} className="flex items-center gap-2">
+            <Checkbox
+              id={`${question.id}-${option.value}`}
+              checked={selected.includes(option.value)}
+              onCheckedChange={(checked) => toggleOption(option.value, checked === true)}
+              disabled={disabled}
+            />
+            <label htmlFor={`${question.id}-${option.value}`} className="text-sm cursor-pointer">
+              {option.label}
+            </label>
+          </div>
+        ))}
+      </div>
+      {error && <p className="text-sm text-destructive">{error}</p>}
     </div>
   );
 }
@@ -179,46 +231,15 @@ export function ApplicationFormField({
             );
 
           case "multiselect":
+          case "checkbox":
             return (
-              <div className="w-full flex flex-col gap-2" data-field-id={question.id}>
-                <Label>
-                  {question.label}
-                  {question.required && <span className="text-destructive ml-0.5">*</span>}
-                </Label>
-                {question.description && (
-                  <FieldDescription source={question.description as string} />
-                )}
-                <div className="space-y-2 rounded-md border border-input p-3">
-                  {question.options?.map((option) => {
-                    const values = (field.value as string[]) || [];
-                    const isChecked = values.includes(option.value);
-                    return (
-                      <div key={option.value} className="flex items-center gap-2 cursor-pointer">
-                        <Checkbox
-                          id={`${question.id}-${option.value}`}
-                          checked={isChecked}
-                          onCheckedChange={(checked) => {
-                            const current = (field.value as string[]) || [];
-                            if (checked) {
-                              field.onChange([...current, option.value]);
-                            } else {
-                              field.onChange(current.filter((v) => v !== option.value));
-                            }
-                          }}
-                          disabled={disabled}
-                        />
-                        <label
-                          htmlFor={`${question.id}-${option.value}`}
-                          className="text-sm cursor-pointer"
-                        >
-                          {option.label}
-                        </label>
-                      </div>
-                    );
-                  })}
-                </div>
-                {error && <p className="text-sm text-destructive">{error}</p>}
-              </div>
+              <MultiOptionCheckboxGroup
+                question={question}
+                value={field.value}
+                onChange={field.onChange}
+                disabled={disabled}
+                error={error}
+              />
             );
 
           case "date":
@@ -264,23 +285,6 @@ export function ApplicationFormField({
                 question={question}
                 disabled={disabled}
               />
-            );
-
-          case "checkbox":
-            return (
-              <div className="flex items-center gap-2" data-field-id={question.id}>
-                <Checkbox
-                  checked={!!field.value}
-                  onCheckedChange={(checked) => field.onChange(checked)}
-                  disabled={disabled}
-                  id={question.id}
-                />
-                <Label htmlFor={question.id} className="cursor-pointer">
-                  {question.label}
-                  {question.required && <span className="text-destructive ml-0.5">*</span>}
-                </Label>
-                {error && <p className="text-sm text-destructive">{error}</p>}
-              </div>
             );
 
           case "radio": {

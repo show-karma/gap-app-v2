@@ -273,7 +273,23 @@ describe("Privy Signer", () => {
       expect(result.chainId).toBe(42220);
     });
 
-    it("should use default nonce of 0", async () => {
+    it("should throw if nonce is not provided", async () => {
+      // A missing nonce used to silently default to 0, which is only
+      // valid on the EOA's very first EIP-7702 delegation and was
+      // rejected by the bundler on every subsequent call. The signer
+      // now requires the caller to supply the authority's current
+      // on-chain nonce explicitly.
+      const signer = await createPrivySignerForGasless(mockEmbeddedWallet, 10);
+
+      await expect(
+        signer.signAuthorization!({
+          contractAddress: "0xabcdef1234567890abcdef1234567890abcdef12" as `0x${string}`,
+          chainId: 10,
+        })
+      ).rejects.toThrow("EIP-7702 signAuthorization requires an explicit nonce");
+    });
+
+    it("should preserve a non-zero nonce", async () => {
       const mockSignature =
         "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1b";
       mockProvider.request.mockResolvedValue(mockSignature);
@@ -282,10 +298,10 @@ describe("Privy Signer", () => {
       const result = await signer.signAuthorization!({
         contractAddress: "0xabcdef1234567890abcdef1234567890abcdef12" as `0x${string}`,
         chainId: 10,
-        // nonce not specified, should default to 0
+        nonce: 7,
       });
 
-      expect(result.nonce).toBe(0);
+      expect(result.nonce).toBe(7);
     });
 
     it("should correctly parse signature components for v=27", async () => {
@@ -320,6 +336,50 @@ describe("Privy Signer", () => {
 
       expect(result.yParity).toBe(1);
       expect(result.v).toBe(28n);
+    });
+
+    it("should sign a different hash when the nonce changes", async () => {
+      // The whole bug was about the nonce not making it into the
+      // signed payload. Guard against a regression where the nonce is
+      // returned in metadata but not actually mixed into the hash.
+      const mockSignature =
+        "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1b";
+      mockProvider.request.mockResolvedValue(mockSignature);
+
+      const signer = await createPrivySignerForGasless(mockEmbeddedWallet, 10);
+      const params = {
+        contractAddress: "0xabcdef1234567890abcdef1234567890abcdef12" as `0x${string}`,
+        chainId: 10,
+      };
+      await signer.signAuthorization!({ ...params, nonce: 0 });
+      await signer.signAuthorization!({ ...params, nonce: 1 });
+      await signer.signAuthorization!({ ...params, nonce: 256 });
+
+      const hashes = mockProvider.request.mock.calls
+        .filter((call: unknown[]) => (call[0] as { method: string }).method === "secp256k1_sign")
+        .map((call: unknown[]) => (call[0] as { params: string[] }).params[0]);
+
+      expect(hashes).toHaveLength(3);
+      expect(new Set(hashes).size).toBe(3);
+    });
+
+    it("should accept nonces beyond a single byte (RLP encoding edge case)", async () => {
+      // numberToHex must produce a valid RLP-encodable hex regardless
+      // of magnitude. Wallets that have been around long enough to
+      // surface this bug are also long-lived enough to have multi-byte
+      // nonces.
+      const mockSignature =
+        "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1b";
+      mockProvider.request.mockResolvedValue(mockSignature);
+
+      const signer = await createPrivySignerForGasless(mockEmbeddedWallet, 10);
+      const result = await signer.signAuthorization!({
+        contractAddress: "0xabcdef1234567890abcdef1234567890abcdef12" as `0x${string}`,
+        chainId: 10,
+        nonce: 65537,
+      });
+
+      expect(result.nonce).toBe(65537);
     });
   });
 });

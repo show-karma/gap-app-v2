@@ -267,7 +267,7 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
                     {/* Description - Core field with markdown */}
                     {milestone.description && (
                       <div className="text-xs text-gray-600 dark:text-gray-400 prose prose-xs dark:prose-invert max-w-none">
-                        <MarkdownPreview source={milestone.description} />
+                        <MarkdownPreview source={milestone.description} variant="inline" />
                       </div>
                     )}
 
@@ -291,7 +291,7 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
                                 {label}:
                               </div>
                               <div className="text-gray-600 dark:text-gray-400 prose prose-xs dark:prose-invert max-w-none">
-                                <MarkdownPreview source={String(fieldValue)} />
+                                <MarkdownPreview source={String(fieldValue)} variant="inline" />
                               </div>
                             </>
                           ) : (
@@ -351,7 +351,7 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
     // Default: render as markdown
     return (
       <div className="prose prose-sm dark:prose-invert max-w-none">
-        <MarkdownPreview source={String(value)} />
+        <MarkdownPreview source={String(value)} variant="inline" />
       </div>
     );
   };

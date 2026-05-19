@@ -3,14 +3,40 @@ import type { SitemapKind } from "@/utilities/sitemap";
 import { computeChunkCount, fetchSitemapCounts, SITEMAP_PAGE_SIZE } from "@/utilities/sitemap";
 
 export const revalidate = 3600;
+// Cold starts can push the upstream counts fetch close to Vercel's default 10s
+// limit. Allow more headroom so a slow indexer round-trip never produces a
+// 504 — Googlebot interprets that as "Couldn't fetch".
+export const maxDuration = 30;
+
+const COUNTS_TIMEOUT_MS = 4000;
 
 interface SitemapEntry {
   loc: string;
   lastmod: string;
 }
 
+async function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const guardedPromise = promise.catch(() => fallback);
+  const timeout = new Promise<T>((resolve) => {
+    timer = setTimeout(() => resolve(fallback), ms);
+  });
+  try {
+    return await Promise.race([guardedPromise, timeout]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
+
+function formatLastmod(date: Date): string {
+  // W3C Datetime without fractional seconds — Google's sitemap parser is
+  // strict here and has been observed to reject the default ISO 8601 form
+  // with milliseconds (e.g. "2026-05-18T16:08:48.340Z").
+  return date.toISOString().replace(/\.\d{3}Z$/, "Z");
+}
+
 function buildSitemapIndex(entries: SitemapEntry[]): string {
-  const now = new Date().toISOString();
+  const now = formatLastmod(new Date());
   const items = entries
     .map(
       (e) =>
@@ -22,7 +48,7 @@ function buildSitemapIndex(entries: SitemapEntry[]): string {
 }
 
 export async function GET(): Promise<Response> {
-  const now = new Date().toISOString();
+  const now = formatLastmod(new Date());
   const entries: SitemapEntry[] = [];
 
   // Static pages sitemap
@@ -31,8 +57,11 @@ export async function GET(): Promise<Response> {
   // Communities sitemap (single file, not chunked)
   entries.push({ loc: `${SITE_URL}/sitemaps/communities/sitemap.xml`, lastmod: now });
 
-  // Chunked sitemaps — fetch counts to know how many chunks per kind
-  const counts = await fetchSitemapCounts();
+  // Chunked sitemaps — fetch counts to know how many chunks per kind. Bound
+  // the call so a slow indexer cannot stall the response past Googlebot's
+  // patience. On timeout, fall back to null and chunk counts default to 0
+  // (static + communities entries still render).
+  const counts = await withTimeout(fetchSitemapCounts(), COUNTS_TIMEOUT_MS, null);
 
   const kindConfig: Array<{
     kind: SitemapKind;
@@ -80,8 +109,13 @@ export async function GET(): Promise<Response> {
 
   return new Response(xml, {
     headers: {
-      "Content-Type": "application/xml; charset=utf-8",
-      "Cache-Control": "public, max-age=3600, stale-while-revalidate=86400",
+      // Match the headers Next.js emits for the child sitemaps under
+      // app/sitemaps/*/sitemap.ts. The previous "application/xml; charset=utf-8"
+      // caused GSC to classify this file as Type=Unknown and report
+      // "Couldn't fetch" even though the XML validated against siteindex.xsd.
+      "Content-Type": "application/xml",
+      "Content-Disposition": "inline",
+      "Cache-Control": "public, max-age=0, must-revalidate",
     },
   });
 }

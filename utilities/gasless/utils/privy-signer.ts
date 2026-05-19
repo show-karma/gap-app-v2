@@ -161,7 +161,15 @@ export async function createPrivySignerForGasless(
       }
 
       const authChainId = authorization.chainId ?? chainId;
-      const authNonce = authorization.nonce ?? 0;
+      // Refuse a missing nonce instead of silently defaulting. Every
+      // EIP-7702 authorization must be bound to the authority EOA's
+      // current transaction count; a wrong nonce isn't caught at sign
+      // time — it's rejected at the bundler — so a default would just
+      // hide the mistake until then.
+      if (authorization.nonce === undefined) {
+        throw new Error("EIP-7702 signAuthorization requires an explicit nonce");
+      }
+      const authNonce = authorization.nonce;
 
       // Hash the authorization data according to EIP-7702 spec
       const hash = hashAuthorization({

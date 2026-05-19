@@ -2,8 +2,10 @@
 
 import dynamic from "next/dynamic";
 import Image from "next/image";
+import { useParams } from "next/navigation";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { useTracksForProgram } from "@/hooks/useTracks";
+import { useGrantLinkedActivities } from "@/hooks/v2/useGrantLinkedActivities";
 import type { Track } from "@/services/tracks";
 import { useIsCommunityAdmin } from "@/src/core/rbac/context/permission-context";
 import { useOwnerStore, useProjectStore } from "@/store";
@@ -221,7 +223,11 @@ export default function MilestonesAndUpdates() {
   const { grant } = useGrantStore();
   const project = useProjectStore((state) => state.project);
   const { openProgressModalWithScreen } = useProgressModalStore();
-  const hasMilestonesOrUpdates = grant?.milestones?.length || grant?.updates?.length;
+  const params = useParams();
+  const projectIdentifier = typeof params?.projectId === "string" ? params.projectId : "";
+  const linkedActivities = useGrantLinkedActivities(projectIdentifier, grant?.uid);
+  const hasMilestonesOrUpdates =
+    grant?.milestones?.length || grant?.updates?.length || linkedActivities.length;
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isContractOwner = useOwnerStore((state) => state.isOwner);
