@@ -2,6 +2,9 @@
 
 import { useEffect } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
+import { toast } from "react-hot-toast";
+import { Button } from "@/components/Utilities/Button";
+import { Skeleton } from "@/components/Utilities/Skeleton";
 import { useOrgBrain, useUpdateMission } from "@/hooks/useOrgBrain";
 import type { MissionData } from "@/lib/hermes-client";
 
@@ -23,10 +26,7 @@ const EMPTY: MissionData = {
 };
 
 export function MissionForm({ slug }: Props) {
-  const { data, isLoading, isError, error, refetch } = useOrgBrain<MissionData>(
-    slug,
-    "mission"
-  );
+  const { data, isLoading, isError, error, refetch } = useOrgBrain<MissionData>(slug, "mission");
   const update = useUpdateMission(slug);
 
   const form = useForm<MissionData>({ defaultValues: EMPTY });
@@ -40,9 +40,9 @@ export function MissionForm({ slug }: Props) {
   if (isLoading) {
     return (
       <div className="space-y-3">
-        <div className="h-10 animate-pulse rounded bg-gray-100" />
-        <div className="h-10 animate-pulse rounded bg-gray-100" />
-        <div className="h-24 animate-pulse rounded bg-gray-100" />
+        <Skeleton className="h-10 rounded" />
+        <Skeleton className="h-10 rounded" />
+        <Skeleton className="h-24 rounded" />
       </div>
     );
   }
@@ -53,13 +53,9 @@ export function MissionForm({ slug }: Props) {
         <p className="text-sm text-red-700">
           {error instanceof Error ? error.message : "Failed to load mission"}
         </p>
-        <button
-          type="button"
-          onClick={() => refetch()}
-          className="mt-3 rounded border px-3 py-1 text-sm"
-        >
+        <Button type="button" variant="secondary" onClick={() => refetch()} className="mt-3">
           Retry
-        </button>
+        </Button>
       </div>
     );
   }
@@ -71,7 +67,10 @@ export function MissionForm({ slug }: Props) {
           ...values,
           leadership: (values.leadership ?? []).filter((l) => l.name?.trim()),
         };
-        update.mutate(trimmed);
+        update.mutate(trimmed, {
+          onSuccess: () => toast.success("Mission saved."),
+          onError: (err) => toast.error(err instanceof Error ? err.message : "Save failed"),
+        });
       })}
       className="space-y-6"
     >
@@ -183,31 +182,22 @@ export function MissionForm({ slug }: Props) {
       </fieldset>
 
       <div className="flex items-center gap-3 border-t pt-4">
-        <button
+        <Button
           type="submit"
+          variant="primary"
+          isLoading={update.isPending}
           disabled={update.isPending || !formState.isDirty}
-          className="rounded bg-black px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:bg-gray-300"
         >
-          {update.isPending ? "Saving…" : "Save mission"}
-        </button>
-        {update.isError ? (
-          <span className="text-sm text-red-600">
-            {update.error instanceof Error ? update.error.message : "Save failed"}
-          </span>
-        ) : null}
+          Save mission
+        </Button>
       </div>
     </form>
   );
 }
 
-function Field({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
+    // biome-ignore lint/a11y/noLabelWithoutControl: children always contains the input; Biome can't infer this statically
     <label className="block">
       <span className="text-sm font-medium">{label}</span>
       {children}

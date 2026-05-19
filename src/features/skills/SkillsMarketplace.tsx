@@ -2,6 +2,8 @@
 
 import { Check, Package, Plus, Search } from "lucide-react";
 import { memo, useMemo, useState } from "react";
+import { Button } from "@/components/Utilities/Button";
+import { Skeleton } from "@/components/Utilities/Skeleton";
 import { useAvailableSkills, useInstallSkill, useProfileSkills } from "@/hooks/useSkills";
 import {
   type HermesSkillSummary,
@@ -53,28 +55,29 @@ export function SkillsMarketplace({ slug, role, onRoleChange }: Props) {
             </p>
           </div>
         </div>
+        {/* biome-ignore lint/a11y/useSemanticElements: inline button group, fieldset would break flex layout */}
         <div
-          className="mt-3 inline-flex rounded-lg border border-gray-200 bg-white p-1 shadow-sm"
-          role="tablist"
+          role="group"
           aria-label="Pick employee"
+          className="mt-3 inline-flex rounded-lg border border-gray-200 bg-white p-1 shadow-sm"
         >
           {VISIBLE_TEAM_ROLES.map((r) => {
             const active = r === role;
             return (
-              <button
+              <Button
                 key={r}
                 type="button"
+                variant="custom"
                 onClick={() => onRoleChange(r)}
-                role="tab"
-                aria-selected={active}
+                aria-pressed={active}
                 className={`rounded-md px-3 py-1.5 text-sm transition ${
                   active
                     ? "bg-gray-900 text-white shadow"
-                    : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                    : "bg-transparent text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                 }`}
               >
                 {TEAM_ROLE_LABELS[r]}
-              </button>
+              </Button>
             );
           })}
         </div>
@@ -108,7 +111,7 @@ export function SkillsMarketplace({ slug, role, onRoleChange }: Props) {
 
         <div className="mt-5">
           {catalog.isLoading ? (
-            <Skeleton />
+            <SkeletonGrid />
           ) : catalog.isError ? (
             <TeamErrorState onRetry={() => catalog.refetch()} />
           ) : filtered.length === 0 ? (
@@ -188,26 +191,30 @@ const SkillCard = memo(function SkillCard({
             Installed
           </span>
         ) : (
-          <button
+          <Button
             type="button"
+            variant="primary"
+            isLoading={isPending}
             onClick={onInstall}
             disabled={isPending}
-            className="inline-flex items-center gap-1.5 rounded-md bg-gray-900 px-3 py-1.5 text-xs font-medium text-white shadow-sm transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
+            className="text-xs"
           >
             <Plus className="h-3.5 w-3.5" aria-hidden />
             {isPending ? "Installing…" : "Install"}
-          </button>
+          </Button>
         )}
       </div>
     </li>
   );
 });
 
-function Skeleton() {
+function SkeletonGrid() {
   return (
     <ul className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
       {[0, 1, 2, 3, 4, 5].map((i) => (
-        <li key={i} className="h-44 animate-pulse rounded-xl border border-gray-200 bg-gray-50" />
+        <li key={i}>
+          <Skeleton className="h-44 rounded-xl border border-gray-200" />
+        </li>
       ))}
     </ul>
   );

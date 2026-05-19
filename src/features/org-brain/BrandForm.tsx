@@ -2,6 +2,9 @@
 
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "react-hot-toast";
+import { Button } from "@/components/Utilities/Button";
+import { Skeleton } from "@/components/Utilities/Skeleton";
 import { useOrgBrain, useUpdateBrand } from "@/hooks/useOrgBrain";
 import type { BrandData } from "@/lib/hermes-client";
 
@@ -28,7 +31,7 @@ export function BrandForm({ slug }: Props) {
   if (isLoading) {
     return (
       <div className="space-y-3">
-        <div className="h-24 animate-pulse rounded bg-gray-100" />
+        <Skeleton className="h-24 rounded" />
       </div>
     );
   }
@@ -39,13 +42,9 @@ export function BrandForm({ slug }: Props) {
         <p className="text-sm text-red-700">
           {error instanceof Error ? error.message : "Failed to load brand"}
         </p>
-        <button
-          type="button"
-          onClick={() => refetch()}
-          className="mt-3 rounded border px-3 py-1 text-sm"
-        >
+        <Button type="button" variant="secondary" onClick={() => refetch()} className="mt-3">
           Retry
-        </button>
+        </Button>
       </div>
     );
   }
@@ -55,10 +54,16 @@ export function BrandForm({ slug }: Props) {
       onSubmit={handleSubmit((values) =>
         // Merge with whatever else was on disk so we don't blow away fields
         // that were set by another client (or by us before we slimmed the UI).
-        update.mutate({
-          ...(data?.data ?? {}),
-          voice: values.voice.trim() || undefined,
-        })
+        update.mutate(
+          {
+            ...(data?.data ?? {}),
+            voice: values.voice.trim() || undefined,
+          },
+          {
+            onSuccess: () => toast.success("Brand saved."),
+            onError: (err) => toast.error(err instanceof Error ? err.message : "Save failed"),
+          }
+        )
       )}
       className="space-y-6"
     >
@@ -77,18 +82,14 @@ export function BrandForm({ slug }: Props) {
       </label>
 
       <div className="flex items-center gap-3 border-t pt-4">
-        <button
+        <Button
           type="submit"
+          variant="primary"
+          isLoading={update.isPending}
           disabled={update.isPending || !formState.isDirty}
-          className="rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:shadow-none"
         >
-          {update.isPending ? "Saving…" : "Save"}
-        </button>
-        {update.isError ? (
-          <span className="text-sm text-red-600">
-            {update.error instanceof Error ? update.error.message : "Save failed"}
-          </span>
-        ) : null}
+          Save
+        </Button>
       </div>
     </form>
   );
