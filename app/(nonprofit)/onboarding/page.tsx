@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { type ReactNode, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { useProvisionOrg } from "@/hooks/useTeam";
+import { humanizeApiError } from "@/lib/hermes-error";
 import { PAGES } from "@/utilities/pages";
 
 // Phase 1 wizard: collects the four fields gap-indexer's
@@ -130,7 +131,7 @@ export default function OnboardingPage() {
               aria-hidden
             />
             <p className="text-sm text-amber-900 dark:text-amber-300">
-              {provision.error instanceof Error ? provision.error.message : "Setup failed"}
+              {humanizeApiError(provision.error, "Setup failed")}
             </p>
           </div>
         ) : null}

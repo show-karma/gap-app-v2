@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/Utilities/Skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { useOrgBrain, useUpdateBrand } from "@/hooks/useOrgBrain";
 import type { BrandData } from "@/lib/hermes-client";
+import { humanizeApiError } from "@/lib/hermes-error";
 
 interface Props {
   slug: string;
@@ -41,7 +42,7 @@ export function BrandForm({ slug }: Props) {
     return (
       <div className="rounded border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/30 p-4">
         <p className="text-sm text-red-700 dark:text-red-400">
-          {error instanceof Error ? error.message : "Failed to load brand"}
+          {humanizeApiError(error, "Failed to load brand")}
         </p>
         <Button type="button" variant="secondary" onClick={() => refetch()} className="mt-3">
           Retry

@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useOrgBrain, useUpdateMission } from "@/hooks/useOrgBrain";
 import type { MissionData } from "@/lib/hermes-client";
+import { humanizeApiError } from "@/lib/hermes-error";
 
 interface Props {
   slug: string;
@@ -53,7 +54,7 @@ export function MissionForm({ slug }: Props) {
     return (
       <div className="rounded border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/30 p-4">
         <p className="text-sm text-red-700 dark:text-red-400">
-          {error instanceof Error ? error.message : "Failed to load mission"}
+          {humanizeApiError(error, "Failed to load mission")}
         </p>
         <Button type="button" variant="secondary" onClick={() => refetch()} className="mt-3">
           Retry

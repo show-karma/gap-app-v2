@@ -13,6 +13,7 @@ import {
 } from "@/hooks/useUploads";
 import { useAddWorkComment, useArchiveWorkTask, useWorkTask } from "@/hooks/useWorkBoard";
 import { hermesClient } from "@/lib/hermes-client";
+import { humanizeApiError } from "@/lib/hermes-error";
 import { AttachmentList } from "@/src/features/uploads/AttachmentList";
 import { UploadButton } from "@/src/features/uploads/UploadButton";
 import { ActivityPanel } from "./ActivityPanel";
@@ -92,9 +93,7 @@ export function WorkTaskDrawer({ slug, taskId, onClose }: Props) {
       </header>
 
       {isError ? (
-        <p className="mt-6 text-sm text-red-600">
-          {error instanceof Error ? error.message : "Failed to load"}
-        </p>
+        <p className="mt-6 text-sm text-red-600">{humanizeApiError(error, "Failed to load")}</p>
       ) : null}
 
       {data?.description ? (

@@ -5,6 +5,7 @@ import pluralize from "pluralize";
 import { Skeleton } from "@/components/Utilities/Skeleton";
 import { useTeamOrg } from "@/hooks/useTeam";
 import { VISIBLE_TEAM_ROLES } from "@/lib/hermes-client";
+import { humanizeApiError } from "@/lib/hermes-error";
 import { CrewCard } from "@/src/features/team/CrewCard";
 
 function StatusDot({ status }: { status: string }) {
@@ -47,7 +48,7 @@ export default function TeamDirectoryPage() {
       <main className="mx-auto max-w-3xl px-6 py-16">
         <h1 className="text-2xl font-semibold">Couldn&apos;t load your team</h1>
         <p className="mt-3 text-sm text-red-600">
-          {error instanceof Error ? error.message : "Unknown error"}
+          {humanizeApiError(error, "We couldn't load your team. Try again in a moment.")}
         </p>
         <button
           type="button"
