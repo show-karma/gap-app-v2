@@ -416,7 +416,6 @@ function NewTaskForm({
       className="mb-5 rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-sm"
     >
       <Input
-        // biome-ignore lint/a11y/noAutofocus: the form is user-triggered and focusing is expected
         autoFocus
         value={title}
         onChange={(e) => setTitle(e.target.value)}
