@@ -96,7 +96,10 @@ export function AskKarmaPage({ config, communityId }: AskKarmaPageProps) {
           data-testid="ask-karma-chat-view"
           data-view-state={view}
           className={cn(
-            "h-[calc(100vh-180px)] min-h-[520px] py-6",
+            // 100dvh (dynamic viewport) avoids the iOS Safari quirk where
+            // 100vh ignores the on-screen keyboard. Fallback min-h keeps
+            // the layout sane on older browsers that don't support dvh.
+            "h-[calc(100dvh-180px)] min-h-[520px] py-6",
             view === "leaving-chat"
               ? "animate-out fade-out slide-out-to-bottom-2 duration-200"
               : "animate-in fade-in slide-in-from-bottom-3 duration-300"

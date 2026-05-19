@@ -11,6 +11,10 @@ interface AskKarmaInputProps {
   placeholder?: string;
 }
 
+// Hard cap on a single chat turn. Generous (~1k tokens of English) but
+// prevents pasted-document-sized prompts from being submitted accidentally.
+const CHAT_INPUT_MAX_LENGTH = 4000;
+
 export function AskKarmaInput({
   onSubmit,
   onStop,
@@ -64,6 +68,7 @@ export function AskKarmaInput({
         onChange={(event) => setValue(event.target.value)}
         onKeyDown={handleKeyDown}
         rows={1}
+        maxLength={CHAT_INPUT_MAX_LENGTH}
         placeholder={placeholder}
         aria-label="Message Karma Assistant"
         className={cn(

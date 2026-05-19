@@ -82,4 +82,11 @@ describe("AskKarmaInput", () => {
     render(<AskKarmaInput onSubmit={vi.fn()} isStreaming={false} placeholder="Ask anything…" />);
     expect(screen.getByPlaceholderText("Ask anything…")).toBeInTheDocument();
   });
+
+  it("caps chat message length to prevent oversized prompts", () => {
+    render(<AskKarmaInput onSubmit={vi.fn()} isStreaming={false} />);
+    const textarea = screen.getByPlaceholderText("Type your message...");
+    // Value is intentional and asserted so it can't be lowered silently.
+    expect(textarea).toHaveAttribute("maxLength", "4000");
+  });
 });

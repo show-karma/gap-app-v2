@@ -11,9 +11,15 @@ import {
   useState,
 } from "react";
 import { cn } from "@/utilities/tailwind";
+import { usePrefersReducedMotion } from "../hooks/use-prefers-reduced-motion";
 import type { AskKarmaConfig } from "../types";
 import { FeaturedTopicCard } from "./featured-topic-card";
 import { FlyingChip, type FlyingChipRect } from "./flying-chip";
+
+// Hard cap on free-text input. Roughly matches a generous tweet length and
+// well below the LLM's prompt window — protects against accidental paste of
+// a huge document into the search bar.
+const INPUT_MAX_LENGTH = 500;
 
 interface AskKarmaStartProps {
   config: AskKarmaConfig;
@@ -58,6 +64,7 @@ export function AskKarmaStart({ config, onSubmit }: AskKarmaStartProps) {
   const [typedValue, setTypedValue] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
   const submitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const prefersReducedMotion = usePrefersReducedMotion();
 
   // Drive the auto-type effect. Owns its own setInterval and a follow-up
   // setTimeout for the post-type pause. Both are cleaned up on unmount or
@@ -123,6 +130,14 @@ export function AskKarmaStart({ config, onSubmit }: AskKarmaStartProps) {
   const handleChipClick = useCallback(
     (question: string, event: ReactMouseEvent<HTMLButtonElement>) => {
       if (phase !== "idle") return;
+      // Vestibular-safety: skip the fly+type animation entirely for users who
+      // have opted into reduced motion. The chip-fly is a 300ms+ viewport
+      // translation which is exactly the kind of motion `prefers-reduced-
+      // motion: reduce` is meant to suppress. Submit directly instead.
+      if (prefersReducedMotion) {
+        onSubmit(question);
+        return;
+      }
       const chipEl = event.currentTarget;
       const inputEl = inputRef.current;
       // Defensive fallback: if we can't measure either rect (e.g. JSDOM in
@@ -140,7 +155,7 @@ export function AskKarmaStart({ config, onSubmit }: AskKarmaStartProps) {
       setTypedValue("");
       setPhase("flying");
     },
-    [onSubmit, phase]
+    [onSubmit, phase, prefersReducedMotion]
   );
 
   const handleFlyArrive = useCallback(() => {
@@ -181,6 +196,7 @@ export function AskKarmaStart({ config, onSubmit }: AskKarmaStartProps) {
           }}
           onKeyDown={handleKeyDown}
           readOnly={inputDisabled}
+          maxLength={INPUT_MAX_LENGTH}
           placeholder={config.inputPlaceholder}
           aria-label="Ask Karma Assistant a question"
           data-testid="ask-karma-search-input"

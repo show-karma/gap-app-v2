@@ -153,6 +153,66 @@ describe("AskKarmaStart — direct input submissions", () => {
     await user.keyboard("{Enter}");
     expect(onSubmit).not.toHaveBeenCalled();
   });
+
+  it("caps free-text input length to prevent oversized prompts", () => {
+    render(<AskKarmaStart config={config} onSubmit={vi.fn()} />);
+    const input = screen.getByTestId("ask-karma-search-input");
+    // Hard cap surfaced via the HTML maxLength attribute so the browser
+    // itself rejects keystrokes/pastes past the limit. Value is intentional
+    // and tested so we notice if it changes silently.
+    expect(input).toHaveAttribute("maxLength", "500");
+  });
+});
+
+describe("AskKarmaStart — reduced motion", () => {
+  beforeEach(() => {
+    // Override the global matchMedia stub from __tests__/setup.ts so the
+    // hook reports the user preferring reduced motion.
+    Object.defineProperty(window, "matchMedia", {
+      writable: true,
+      value: vi.fn().mockImplementation((query: string) => ({
+        matches: query === "(prefers-reduced-motion: reduce)",
+        media: query,
+        onchange: null,
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+      })),
+    });
+  });
+
+  afterEach(() => {
+    // Restore the default (matches: false) stub so other tests stay in the
+    // "motion-allowed" world.
+    Object.defineProperty(window, "matchMedia", {
+      writable: true,
+      value: vi.fn().mockImplementation((query: string) => ({
+        matches: false,
+        media: query,
+        onchange: null,
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+      })),
+    });
+  });
+
+  it("submits the chip text immediately without flying chip animation", async () => {
+    const user = userEvent.setup();
+    const onSubmit = vi.fn();
+    render(<AskKarmaStart config={config} onSubmit={onSubmit} />);
+
+    await user.click(screen.getByRole("button", { name: config.exampleQuestions[0] }));
+
+    expect(onSubmit).toHaveBeenCalledWith(config.exampleQuestions[0]);
+    // Critical: the chip clone never renders — confirms the motion path
+    // was bypassed, not just visually suppressed.
+    expect(screen.queryByTestId("ask-karma-flying-chip")).not.toBeInTheDocument();
+  });
 });
 
 describe("AskKarmaStart — chip click animation", () => {
