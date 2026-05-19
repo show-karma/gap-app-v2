@@ -15,7 +15,7 @@ async function resolveTenant() {
 
 export async function generateMetadata(): Promise<Metadata> {
   const { tenantName } = await resolveTenant();
-  const title = `Ask ${tenantName} — Karma Assistant`;
+  const title = `Ask ${tenantName} — AI Assistant`;
   const description = `Ask anything about ${tenantName} — funding rounds, project progress, milestones, and ecosystem insights.`;
 
   return {

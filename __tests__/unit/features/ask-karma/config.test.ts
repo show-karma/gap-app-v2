@@ -7,7 +7,7 @@ describe("getAskKarmaConfig", () => {
     expect(config.heading).toBe("Ask us anything");
     expect(config.exampleQuestions.length).toBeGreaterThan(0);
     expect(config.featuredTopics.length).toBeGreaterThan(0);
-    expect(config.assistantTitle).toBe("Karma Assistant");
+    expect(config.assistantTitle).toBe("AI Assistant");
   });
 
   it("returns the default config when the tenant id is unknown", () => {
@@ -33,7 +33,7 @@ describe("getAskKarmaConfig", () => {
     // fall through to DEFAULT_CONFIG, not throw or return undefined.
     const config = getAskKarmaConfig("optimism");
     expect(config.heading).toBe("Ask us anything");
-    expect(config.assistantTitle).toBe("Karma Assistant");
+    expect(config.assistantTitle).toBe("AI Assistant");
   });
 
   it("returns the default config for an arbitrary community slug (not a known tenant)", () => {

@@ -7,6 +7,20 @@ export interface ToolResultData {
   status?: "pending" | "approved" | "denied";
 }
 
+/**
+ * Per-tool entry tracked alongside an assistant message. Populated as the
+ * agent calls tools mid-turn so consumers (e.g. the ask-karma thinking
+ * panel) can render a "✓ aggregate grants / ⟳ run sql" style activity list.
+ *
+ * `id` is the Anthropic SDK `tool_use_id` — links each running entry to its
+ * matching tool_result event when it lands.
+ */
+export interface ToolHistoryEvent {
+  id: string;
+  name: string;
+  status: "running" | "success" | "error";
+}
+
 export interface ChatMessage {
   id: string;
   role: "user" | "assistant" | "system";
@@ -14,6 +28,8 @@ export interface ChatMessage {
   timestamp: number;
   /** For preview/commit tool results rendered as confirmation cards */
   toolResult?: ToolResultData;
+  /** Ordered list of tool calls made by the agent during this assistant turn */
+  toolHistory?: ToolHistoryEvent[];
   isStreaming?: boolean;
   /** Langfuse trace ID — only present on assistant messages once the backend emits it */
   traceId?: string;
@@ -91,6 +107,16 @@ interface AgentChatStore {
   finalizeLastAssistantMessage: () => void;
   updateLastAssistantToolResult: (toolResult: ToolResultData) => void;
   updateMessageToolResultStatus: (messageId: string, status: "approved" | "denied") => void;
+  /** Append a new tool_use entry (status "running") to the last assistant
+   *  message. No-op if there is no assistant message in the store yet, or
+   *  if a tool with the same id already exists. */
+  appendToolUseToLastAssistantMessage: (event: Pick<ToolHistoryEvent, "id" | "name">) => void;
+  /** Update the status of an existing tool entry on the last assistant
+   *  message — matches by tool id. No-op if the id isn't found. */
+  updateToolStatusOnLastAssistantMessage: (
+    toolId: string,
+    status: ToolHistoryEvent["status"]
+  ) => void;
   setLastAssistantTraceId: (traceId: string) => void;
   setMessageRating: (messageId: string, rating: 1 | -1) => void;
   setRatingCommentBoxOpenForMessageId: (messageId: string | null) => void;
@@ -168,6 +194,36 @@ export const useAgentChatStore = create<AgentChatStore>((set) => ({
           : msg
       ),
     })),
+
+  appendToolUseToLastAssistantMessage: (event) =>
+    set((state) => {
+      const messages = [...state.messages];
+      const lastIdx = messages.length - 1;
+      if (lastIdx < 0 || messages[lastIdx].role !== "assistant") return state;
+      const existing = messages[lastIdx].toolHistory ?? [];
+      // Anthropic sometimes re-emits the same assistant content block on
+      // reconnects/retries — guard against duplicate entries by tool id.
+      if (existing.some((e) => e.id === event.id)) return state;
+      messages[lastIdx] = {
+        ...messages[lastIdx],
+        toolHistory: [...existing, { id: event.id, name: event.name, status: "running" }],
+      };
+      return { messages };
+    }),
+
+  updateToolStatusOnLastAssistantMessage: (toolId, status) =>
+    set((state) => {
+      const messages = [...state.messages];
+      const lastIdx = messages.length - 1;
+      if (lastIdx < 0 || messages[lastIdx].role !== "assistant") return state;
+      const existing = messages[lastIdx].toolHistory ?? [];
+      const idx = existing.findIndex((e) => e.id === toolId);
+      if (idx === -1) return state;
+      const next = [...existing];
+      next[idx] = { ...next[idx], status };
+      messages[lastIdx] = { ...messages[lastIdx], toolHistory: next };
+      return { messages };
+    }),
 
   setLastAssistantTraceId: (traceId) =>
     set((state) => {

@@ -74,9 +74,9 @@ export function FlyingChip({ text, startRect, endRect, durationMs, onArrive }: F
       data-testid="ask-karma-flying-chip"
       className={cn(
         "pointer-events-none fixed z-[9999] flex items-center overflow-hidden whitespace-nowrap",
-        "rounded-full border border-emerald-300 bg-emerald-50 px-3.5 py-1.5",
-        "text-sm font-medium text-emerald-900 shadow-lg shadow-emerald-300/40",
-        "dark:border-emerald-700 dark:bg-emerald-950/70 dark:text-emerald-100 dark:shadow-emerald-900/40"
+        "rounded-full border border-[rgb(var(--color-primary))]/40 bg-[rgb(var(--color-primary))]/5 px-3.5 py-1.5",
+        "text-sm font-medium text-zinc-900 shadow-lg shadow-[rgb(var(--color-primary))]/30",
+        "dark:border-[rgb(var(--color-primary-dark))] dark:bg-[rgb(var(--color-primary-dark))]/50 dark:text-zinc-50 dark:shadow-[rgb(var(--color-primary-dark))]/30"
       )}
       style={{
         left: target.left,

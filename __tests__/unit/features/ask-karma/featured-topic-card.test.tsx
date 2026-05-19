@@ -93,6 +93,45 @@ describe("FeaturedTopicCard", () => {
     expect(screen.getByRole("heading", { name: "Open Funding Rounds" })).toBeInTheDocument();
   });
 
+  it("renders a link without href as a muted, non-interactive label", () => {
+    render(
+      <FeaturedTopicCard
+        topic={{
+          icon: "dollar",
+          title: "Coming Soon Section",
+          links: [{ label: "Round 3 Announcement" }, { label: "Selection Committee" }],
+        }}
+      />
+    );
+    // No anchors rendered for href-less entries.
+    expect(screen.queryByRole("link", { name: "Round 3 Announcement" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Selection Committee" })).not.toBeInTheDocument();
+    // Labels still appear so users see the topic, marked as disabled for a11y.
+    const round3 = screen.getByText("Round 3 Announcement");
+    expect(round3).toHaveAttribute("aria-disabled", "true");
+    expect(round3.tagName).toBe("SPAN");
+  });
+
+  it("mixes linked and disabled entries in the same topic", () => {
+    render(
+      <FeaturedTopicCard
+        topic={{
+          icon: "dollar",
+          title: "Round info",
+          links: [
+            { label: "Round 3 Announcement" },
+            { label: "Retro reports", href: "https://example.com/retro", isExternal: true },
+          ],
+        }}
+      />
+    );
+    expect(screen.getByText("Round 3 Announcement")).toHaveAttribute("aria-disabled", "true");
+    expect(screen.getByRole("link", { name: "Retro reports" })).toHaveAttribute(
+      "href",
+      "https://example.com/retro"
+    );
+  });
+
   it("renders both links and CTA when both provided", () => {
     render(
       <FeaturedTopicCard

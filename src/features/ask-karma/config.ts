@@ -4,7 +4,7 @@ import type { AskKarmaConfig } from "./types";
 const DEFAULT_CONFIG: AskKarmaConfig = {
   heading: "Ask us anything",
   subheading: "Learn how funding works, track project progress, and discover ecosystem insights.",
-  inputPlaceholder: "Questions? Ask the Karma Assistant",
+  inputPlaceholder: "Questions? Ask the AI Assistant",
   examplesIntro: "Some examples to get the juices flowing:",
   exampleQuestions: [
     "How do I submit a milestone update for my project?",
@@ -43,7 +43,7 @@ const DEFAULT_CONFIG: AskKarmaConfig = {
       ],
     },
   ],
-  assistantTitle: "Karma Assistant",
+  assistantTitle: "AI Assistant",
   assistantSubtitle: "Here to help 24/7",
 };
 
@@ -66,9 +66,10 @@ const TENANT_CONFIGS: Partial<Record<KnownTenantId, AskKarmaConfig>> = {
         icon: "dollar",
         title: "The Next ProPGF Round (General Track)",
         links: [
-          // TODO(ask-karma-filecoin): replace placeholder hrefs with real destinations
-          { label: "Round 3 Announcement", href: "https://filpgf.io/propgf", isExternal: true },
-          { label: "Selection Committee", href: "https://filpgf.io/propgf", isExternal: true },
+          // No href → renders as "coming soon" (muted, non-interactive)
+          { label: "Round 3 Announcement" },
+          { label: "Selection Committee" },
+          // TODO(ask-karma-filecoin): replace placeholder href with real destination
           {
             label: "Retro from previous rounds",
             href: "https://filpgf.io/propgf",
@@ -80,7 +81,10 @@ const TENANT_CONFIGS: Partial<Record<KnownTenantId, AskKarmaConfig>> = {
         icon: "trending-up",
         title: "Track Active Projects",
         description: "Review the progress of funded projects in ProPGF",
-        cta: { label: "View Funded Projects", href: "/projects" },
+        // Community-scoped path so users stay inside Filecoin's project list
+        // regardless of which domain they're on (whitelabel rewrites the
+        // /community/filecoin prefix away automatically).
+        cta: { label: "View Funded Projects", href: "/community/filecoin/projects" },
       },
       {
         icon: "settings",
@@ -96,18 +100,26 @@ const TENANT_CONFIGS: Partial<Record<KnownTenantId, AskKarmaConfig>> = {
         icon: "document",
         title: "Focus Areas",
         links: [
-          // TODO(ask-karma-filecoin): replace placeholder hrefs with real destinations
+          // TODO(ask-karma-filecoin): replace placeholder href with real destination
           { label: "Large Data Onboarding", href: "https://filpgf.io/propgf", isExternal: true },
-          { label: "Filecoin Onchain Cloud", href: "https://filpgf.io/propgf", isExternal: true },
-          { label: "Fil.one", href: "https://filpgf.io/propgf", isExternal: true },
+          {
+            label: "Filecoin Onchain Cloud",
+            href: "https://filecoin.cloud/",
+            isExternal: true,
+          },
+          { label: "Fil.one", href: "https://fil.one", isExternal: true },
         ],
       },
       {
         icon: "chart",
         title: "Metrics and Strategy",
         links: [
-          // TODO(ask-karma-filecoin): replace placeholder hrefs with real destinations
-          { label: "2026 Network Strategy", href: "https://filpgf.io/propgf", isExternal: true },
+          {
+            label: "2026 Network Strategy",
+            href: "https://www.filecoin.io/blog/the-2026-filecoin-network-strategy",
+            isExternal: true,
+          },
+          // TODO(ask-karma-filecoin): replace placeholder href with real destination
           { label: "ProPGF Project Impact", href: "https://filpgf.io/propgf", isExternal: true },
         ],
       },

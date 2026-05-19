@@ -202,24 +202,25 @@ export function AskKarmaStart({ config, onSubmit }: AskKarmaStartProps) {
           readOnly={inputDisabled}
           maxLength={INPUT_MAX_LENGTH}
           placeholder={config.inputPlaceholder}
-          aria-label="Ask Karma Assistant a question"
+          aria-label="Ask AI Assistant a question"
           data-testid="ask-karma-search-input"
           className={cn(
             "w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 pr-12 text-sm",
             "text-zinc-900 placeholder:text-zinc-400",
             "shadow-sm transition-all duration-200",
             "hover:border-zinc-300 hover:shadow-md",
-            "focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-200/60",
+            "focus:border-[rgb(var(--color-primary))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-primary))]/30",
             "focus:shadow-[0_0_0_4px_rgba(167,243,208,0.15)]",
-            phase === "typing" && "border-emerald-400 ring-2 ring-emerald-200/60",
+            phase === "typing" &&
+              "border-[rgb(var(--color-primary))] ring-2 ring-[rgb(var(--color-primary))]/30",
             "dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-50",
             "dark:placeholder:text-zinc-500 dark:hover:border-zinc-700",
-            "dark:focus:border-emerald-700 dark:focus:ring-emerald-900/40"
+            "dark:focus:border-[rgb(var(--color-primary-dark))] dark:focus:ring-[rgb(var(--color-primary-dark))]/30"
           )}
         />
         <button
           type="submit"
-          aria-label="Ask the Karma Assistant"
+          aria-label="Ask the AI Assistant"
           className={cn(
             "absolute right-2 top-1/2 -translate-y-1/2",
             "flex h-8 w-8 items-center justify-center rounded-full",
@@ -227,7 +228,7 @@ export function AskKarmaStart({ config, onSubmit }: AskKarmaStartProps) {
             "hover:scale-110 active:scale-90",
             "disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:scale-100",
             !submitDisabled
-              ? "bg-emerald-600 text-white shadow-sm hover:bg-emerald-700 hover:shadow-md dark:bg-emerald-500 dark:hover:bg-emerald-400"
+              ? "bg-[rgb(var(--color-primary))] text-white shadow-sm hover:bg-[rgb(var(--color-primary-dark))] hover:shadow-md dark:bg-[rgb(var(--color-primary))] dark:hover:bg-[rgb(var(--color-primary-light))]"
               : "bg-zinc-100 text-zinc-400 dark:bg-zinc-800 dark:text-zinc-500"
           )}
           disabled={submitDisabled}
@@ -264,12 +265,12 @@ export function AskKarmaStart({ config, onSubmit }: AskKarmaStartProps) {
                   "rounded-full border border-zinc-200 bg-zinc-50 px-3.5 py-1.5 text-sm",
                   "text-zinc-800 transition-all duration-200 ease-out",
                   "hover:-translate-y-0.5 hover:scale-[1.02]",
-                  "hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-900 hover:shadow-sm",
+                  "hover:border-[rgb(var(--color-primary))]/30 hover:bg-[rgb(var(--color-primary))]/5 hover:text-zinc-900 hover:shadow-sm",
                   "active:translate-y-0 active:scale-100",
-                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-primary))]/50",
                   "disabled:cursor-default disabled:opacity-60 disabled:hover:translate-y-0 disabled:hover:scale-100 disabled:hover:bg-zinc-50 disabled:hover:border-zinc-200 disabled:hover:text-zinc-800 disabled:hover:shadow-none",
                   "dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200",
-                  "dark:hover:border-emerald-800 dark:hover:bg-emerald-950/40 dark:hover:text-emerald-100",
+                  "dark:hover:border-[rgb(var(--color-primary-dark))] dark:hover:bg-[rgb(var(--color-primary-dark))]/30 dark:hover:text-zinc-50",
                   "dark:disabled:hover:bg-zinc-900 dark:disabled:hover:border-zinc-800 dark:disabled:hover:text-zinc-200"
                 )}
               >
