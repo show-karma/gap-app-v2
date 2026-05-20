@@ -35,6 +35,8 @@ const staticPages = [
   "/knowledge/project-profiles-software-vs-nonsoftware",
   "/knowledge/onchain-project-profiles",
   "/knowledge/how-funders-use-project-profiles",
+  "/mcp/connect",
+  "/for-agents",
   "/privacy-policy",
   "/terms-and-conditions",
   "/dashboard",

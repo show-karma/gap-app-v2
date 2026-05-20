@@ -154,6 +154,8 @@ export const PAGES = {
   FOUNDATIONS: `/foundations`,
   FUNDERS: `/funders`,
   FOR_PROJECTS: `/for-projects`,
+  FOR_AGENTS: `/for-agents`,
+  MCP_CONNECT: `/mcp/connect`,
   SEEDS: `/seeds`,
   SEEDS_FUND: `/seeds/fund`,
   TEAM: {

@@ -5,6 +5,7 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { envVars } from "@/utilities/enviromentVars";
+import { CONNECT_STEPS, MCP_FAQS } from "./content";
 
 interface SupportedClient {
   name: string;
@@ -100,6 +101,26 @@ export function McpConnectPage() {
       </section>
 
       <section>
+        <h2 className="text-lg font-semibold text-foreground">How to connect</h2>
+        <ol className="mt-4 space-y-3">
+          {CONNECT_STEPS.map((step, index) => (
+            <li key={step.name} className="flex gap-4 rounded-xl border border-border bg-card p-5">
+              <span
+                aria-hidden
+                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary"
+              >
+                {index + 1}
+              </span>
+              <div>
+                <h3 className="text-base font-semibold text-foreground">{step.name}</h3>
+                <p className="mt-1 text-sm text-muted-foreground">{step.text}</p>
+              </div>
+            </li>
+          ))}
+        </ol>
+      </section>
+
+      <section>
         <h2 className="text-lg font-semibold text-foreground">Supported apps</h2>
         <ul className="mt-4 space-y-3">
           {SUPPORTED_CLIENTS.map((client) => (
@@ -133,6 +154,18 @@ export function McpConnectPage() {
             </li>
           ))}
         </ul>
+      </section>
+
+      <section>
+        <h2 className="text-lg font-semibold text-foreground">Frequently asked questions</h2>
+        <dl className="mt-4 space-y-3">
+          {MCP_FAQS.map((faq) => (
+            <div key={faq.question} className="rounded-xl border border-border bg-card p-5">
+              <dt className="text-base font-semibold text-foreground">{faq.question}</dt>
+              <dd className="mt-1 text-sm text-muted-foreground">{faq.answer}</dd>
+            </div>
+          ))}
+        </dl>
       </section>
     </main>
   );
