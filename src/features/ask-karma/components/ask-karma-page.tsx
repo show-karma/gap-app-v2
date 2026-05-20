@@ -1,6 +1,6 @@
 "use client";
 
-import { LogOutIcon } from "lucide-react";
+import { ArrowLeftIcon } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useAgentStream } from "@/hooks/useAgentStream";
@@ -84,7 +84,7 @@ export function AskKarmaPage({ config, communityId }: AskKarmaPageProps) {
 
   return (
     <div className="mx-auto w-full max-w-5xl px-4 sm:px-6 lg:px-8">
-      <div className="flex items-center justify-end pt-6">
+      <div className="flex items-center justify-start pt-6">
         <Link
           href={communityExitHref}
           data-testid="ask-karma-go-to-community"
@@ -97,11 +97,11 @@ export function AskKarmaPage({ config, communityId }: AskKarmaPageProps) {
             "dark:text-[rgb(var(--color-primary-light))] dark:hover:bg-[rgb(var(--color-primary-dark))]/30 dark:hover:text-[rgb(var(--color-primary-light))]"
           )}
         >
-          Go to community view
-          <LogOutIcon
-            className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5"
+          <ArrowLeftIcon
+            className="h-4 w-4 transition-transform duration-200 group-hover:-translate-x-0.5"
             aria-hidden="true"
           />
+          Go to community view
         </Link>
       </div>
       {showStart && (

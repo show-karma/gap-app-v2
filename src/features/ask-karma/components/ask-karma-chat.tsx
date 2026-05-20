@@ -246,7 +246,12 @@ export function AskKarmaChat({
   }, [isStreaming, lastContent, messages.length]);
 
   const lastMessage = messages[messages.length - 1];
-  const showThinking = isStreaming && lastMessage?.role === "assistant" && !lastMessage.content;
+  // Keep the thinking panel + tool list visible for the entire duration
+  // of the stream, not just the pre-first-token window. Multi-turn agents
+  // emit one assistant event per turn; between turns (while a tool is
+  // running) content is present but the agent is still working. Hiding
+  // the indicator there falsely signals "done".
+  const showThinking = isStreaming && lastMessage?.role === "assistant";
 
   return (
     <div className="flex h-full flex-col">

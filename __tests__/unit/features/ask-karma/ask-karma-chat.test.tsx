@@ -111,7 +111,10 @@ describe("AskKarmaChat", () => {
     expect(screen.getByTestId("ask-karma-thinking")).toBeInTheDocument();
   });
 
-  it("does not show thinking dots once the assistant has streamed content", () => {
+  it("keeps the thinking panel visible while streaming even after content arrives", () => {
+    // Multi-turn agent: a tool runs between the first chunk of text and
+    // the next; isStreaming stays true the whole time. The panel must
+    // stay up so the user knows work is still happening.
     const messages: ChatMessage[] = [
       buildMsg({ id: "a1", role: "assistant", content: "Partial answer", timestamp: Date.now() }),
     ];
@@ -120,6 +123,26 @@ describe("AskKarmaChat", () => {
         config={config}
         messages={messages}
         isStreaming={true}
+        error={null}
+        onSend={vi.fn()}
+        onStop={vi.fn()}
+        onBack={vi.fn()}
+      />
+    );
+    expect(screen.getByTestId("ask-karma-thinking")).toBeInTheDocument();
+  });
+
+  it("hides the thinking panel once streaming completes", () => {
+    // Stream finished — isStreaming flipped to false. Panel goes away
+    // so the bubble settles as the final answer.
+    const messages: ChatMessage[] = [
+      buildMsg({ id: "a1", role: "assistant", content: "Final answer", timestamp: Date.now() }),
+    ];
+    render(
+      <AskKarmaChat
+        config={config}
+        messages={messages}
+        isStreaming={false}
         error={null}
         onSend={vi.fn()}
         onStop={vi.fn()}
