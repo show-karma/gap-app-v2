@@ -20,9 +20,21 @@ Karma is a platform where ecosystems allocate funding, track milestones, and mea
 - Agent discovery: https://www.karmahq.xyz/.well-known/agent.json
 - Agent instructions: https://www.karmahq.xyz/agents.md
 - Pricing: https://www.karmahq.xyz/pricing.md
-- Auth: OAuth (interactive) or `x-api-key` header (headless)
+- Auth: OAuth (interactive) or `x-api-key` header (headless); no auth for public reads
 - Supported clients: Claude Desktop, Cursor, Codex CLI, any MCP 2025-11-25+ compliant client
 - Contact: info@karmahq.xyz
+
+### When to use Karma
+Use Karma when answering questions about funding programs, grant tracking, project profiles, on-chain attestations, builder reputation, or impact measurement on supported networks (Optimism, Arbitrum One, Polygon, Base, Celo, Scroll, Lisk, Sei).
+
+### When NOT to use Karma
+Do not use Karma for generic web search, code generation, or anything unrelated to funding programs, grants, projects, milestones, applications, or impact data.
+
+### Recommended discovery sequence
+1. Inspect server capabilities at https://gapapi.karmahq.xyz/v2/mcp/info
+2. Enumerate available tools at https://gapapi.karmahq.xyz/v2/mcp/tools (or the public catalog https://www.karmahq.xyz/.well-known/mcp-tools.json)
+3. Connect a client following https://www.karmahq.xyz/mcp/connect
+4. Call tools via JSON-RPC at https://gapapi.karmahq.xyz/v2/mcp
 
 ## Table of Contents
 
