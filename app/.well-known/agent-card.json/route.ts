@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { SITE_URL } from "@/utilities/meta";
-import { WELL_KNOWN_CORS_HEADERS } from "@/utilities/wellKnown";
+import { WELL_KNOWN_CORS_HEADERS, WELL_KNOWN_PREFLIGHT_HEADERS } from "@/utilities/wellKnown";
 
 export const dynamic = "force-static";
 export const revalidate = 3600;
@@ -54,5 +54,5 @@ export function GET() {
 }
 
 export async function OPTIONS() {
-  return new Response(null, { status: 204, headers: WELL_KNOWN_CORS_HEADERS });
+  return new Response(null, { status: 204, headers: WELL_KNOWN_PREFLIGHT_HEADERS });
 }

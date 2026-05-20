@@ -40,6 +40,25 @@ export const WELL_KNOWN_ERROR_HEADERS = {
 } as const;
 
 /**
+ * Headers for OPTIONS preflight (204 No Content) responses. Deliberately
+ * omits `Cache-Control` — browsers cache preflight results via
+ * `Access-Control-Max-Age` (already 86400s), not `Cache-Control`. Setting
+ * `public, max-age=3600` on a 204 body is conceptually wrong and tells
+ * downstream caches to retain an empty response keyed on URL.
+ */
+export const WELL_KNOWN_PREFLIGHT_HEADERS = {
+  ...BASE_CORS_HEADERS,
+} as const;
+
+/**
+ * MCP protocol version this server speaks. Centralized here so the apex
+ * surfaces stay in lockstep — `mcp/server-card.json`, `agents.md`
+ * (manually), and tests all reference the same value. Bump in one place
+ * when the spec advances.
+ */
+export const MCP_PROTOCOL_VERSION = "2025-11-25";
+
+/**
  * Returns the indexer base URL or throws if it is unset or malformed.
  *
  * The /.well-known/* route handlers depend on this URL at build time

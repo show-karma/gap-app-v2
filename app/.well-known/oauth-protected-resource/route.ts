@@ -4,6 +4,7 @@ import {
   getIndexerBaseUrl,
   WELL_KNOWN_CORS_HEADERS,
   WELL_KNOWN_ERROR_HEADERS,
+  WELL_KNOWN_PREFLIGHT_HEADERS,
 } from "@/utilities/wellKnown";
 
 export const dynamic = "force-static";
@@ -61,5 +62,5 @@ export async function GET() {
 }
 
 export async function OPTIONS() {
-  return new Response(null, { status: 204, headers: WELL_KNOWN_CORS_HEADERS });
+  return new Response(null, { status: 204, headers: WELL_KNOWN_PREFLIGHT_HEADERS });
 }

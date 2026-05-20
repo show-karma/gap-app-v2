@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import { SITE_URL } from "@/utilities/meta";
-import { getIndexerBaseUrl, WELL_KNOWN_CORS_HEADERS } from "@/utilities/wellKnown";
+import {
+  getIndexerBaseUrl,
+  MCP_PROTOCOL_VERSION,
+  WELL_KNOWN_CORS_HEADERS,
+  WELL_KNOWN_PREFLIGHT_HEADERS,
+} from "@/utilities/wellKnown";
 
 export const dynamic = "force-static";
 export const revalidate = 3600;
@@ -14,6 +19,16 @@ export const revalidate = 3600;
  * canonical server URL on the indexer, references to the OpenAPI spec and
  * connect docs on the apex, and accepted auth schemes (OAuth metadata
  * URL + API-key header). Refine after the next orank rescan.
+ *
+ * `protocolVersion` reads from MCP_PROTOCOL_VERSION in utilities/wellKnown
+ * so a spec bump touches one constant, not three files.
+ *
+ * Distinct from /.well-known/mcp.json: that file uses the Claude Desktop /
+ * Cursor LOCAL CONFIG shape (`mcpServers.karma: { url, transport, auth }`)
+ * and is what MCP-client registries crawl. This server-card.json is the
+ * Ora-preferred discovery shape (flat metadata + alternateNames + nested
+ * `authentication` object). Both link out to the same MCP endpoint; they
+ * exist to satisfy two different crawler conventions, not to duplicate.
  */
 
 export function GET() {
@@ -23,7 +38,7 @@ export function GET() {
     name: "gap-tools",
     alternateNames: ["karma-gap-tools"],
     version: "1.0.0",
-    protocolVersion: "2025-11-25",
+    protocolVersion: MCP_PROTOCOL_VERSION,
     transport: "http",
     url: `${apiUrl}/v2/mcp`,
     documentation: `${SITE_URL}/mcp/connect`,
@@ -47,5 +62,5 @@ export function GET() {
 }
 
 export async function OPTIONS() {
-  return new Response(null, { status: 204, headers: WELL_KNOWN_CORS_HEADERS });
+  return new Response(null, { status: 204, headers: WELL_KNOWN_PREFLIGHT_HEADERS });
 }
