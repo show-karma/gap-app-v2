@@ -23,11 +23,11 @@ describe("/.well-known/ai-plugin.json route handler", () => {
     expect(body.name_for_model).toBe("karma");
   });
 
-  it("points api.url at the indexer's OpenAPI spec", async () => {
+  it("points api.url at the apex openapi.json proxy", async () => {
     const { GET } = await import("@/app/.well-known/ai-plugin.json/route");
     const res = GET();
     const body = await res.json();
-    expect(body.api.url).toBe(`${INDEXER_URL}/v2/docs/json`);
+    expect(body.api.url).toBe(`${SITE_URL}/openapi.json`);
     expect(body.api.type).toBe("openapi");
   });
 

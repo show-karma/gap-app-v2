@@ -23,7 +23,7 @@ export function GET() {
     },
     api: {
       type: "openapi",
-      url: `${apiUrl}/v2/docs/json`,
+      url: `${SITE_URL}/openapi.json`,
     },
     logo_url: `${SITE_URL}/logo/karma-logo.svg`,
     contact_email: "info@karmahq.xyz",
