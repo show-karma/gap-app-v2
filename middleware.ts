@@ -294,12 +294,7 @@ function agentModeResponse(): NextResponse {
       oauth2: "https://www.karmahq.xyz/.well-known/oauth-protected-resource",
       apiKey: { header: "x-api-key" },
     },
-    capabilities: [
-      "discover programs",
-      "read projects",
-      "audit milestones",
-      "submit applications",
-    ],
+    capabilities: ["discover programs", "read projects", "audit milestones", "submit applications"],
     documentation: "https://www.karmahq.xyz/for-agents",
   };
   return NextResponse.json(body, {

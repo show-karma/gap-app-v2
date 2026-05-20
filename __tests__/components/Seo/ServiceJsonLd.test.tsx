@@ -36,8 +36,8 @@ describe("ServiceJsonLd", () => {
     const { container } = render(<ServiceJsonLd />);
     const ld = extractJsonLd(container);
     const catalog = ld.hasOfferCatalog as { itemListElement: Array<Record<string, unknown>> };
-    const names = catalog.itemListElement.map(
-      (item) => ((item.itemOffered as Record<string, unknown>).name as string).toLowerCase()
+    const names = catalog.itemListElement.map((item) =>
+      ((item.itemOffered as Record<string, unknown>).name as string).toLowerCase()
     );
     expect(names.some((n) => n.includes("intake"))).toBe(true);
     expect(names.some((n) => n.includes("milestone"))).toBe(true);

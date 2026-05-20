@@ -60,9 +60,7 @@ export default async function PricingPage() {
       <p className={styles.p}>Custom pricing for:</p>
       <ul className={styles.ul}>
         <li className={styles.li}>Whitelabel deployments on your own domain and brand</li>
-        <li className={styles.li}>
-          Dedicated funding programs with custom evaluation workflows
-        </li>
+        <li className={styles.li}>Dedicated funding programs with custom evaluation workflows</li>
         <li className={styles.li}>AI-assisted evaluation at scale</li>
         <li className={styles.li}>Custom integrations and SLA support</li>
         <li className={styles.li}>Reviewer and milestone management workflows</li>
@@ -87,9 +85,8 @@ export default async function PricingPage() {
         >
           gapapi.karmahq.xyz/v2/*
         </a>{" "}
-        and the MCP server at gapapi.karmahq.xyz/v2/mcp are free to use under fair-use rate
-        limits. Rate-limit headers are returned on every response. Heavy programmatic access
-        should contact{" "}
+        and the MCP server at gapapi.karmahq.xyz/v2/mcp are free to use under fair-use rate limits.
+        Rate-limit headers are returned on every response. Heavy programmatic access should contact{" "}
         <a className={styles.a} href="mailto:info@karmahq.xyz">
           info@karmahq.xyz
         </a>{" "}

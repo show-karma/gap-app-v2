@@ -65,7 +65,7 @@ describe("middleware Accept: text/markdown content negotiation on /", () => {
 
   it("still emits the Link discovery header on a markdown rewrite", async () => {
     const response = await middleware(createRequest("/", "text/markdown"));
-    expect(response?.headers.get("Link")).toContain("rel=\"sitemap\"");
+    expect(response?.headers.get("Link")).toContain('rel="sitemap"');
   });
 });
 
