@@ -708,6 +708,11 @@ export const INDEXER = {
       UPDATE: (slug: string) => `/v2/community-configs/${slug}`,
       TELEGRAM_PAIR_START: (slug: string) => `/v2/community-configs/${slug}/telegram-pair/start`,
       TELEGRAM_PAIR_VERIFY: (slug: string) => `/v2/community-configs/${slug}/telegram-pair/verify`,
+      // Public endpoint — no auth required. Returns per-community
+      // Markdown overrides for the AccessDenied page body. See
+      // gap-indexer/docs/adr/0001-per-community-access-denied-messages.md.
+      ACCESS_DENIED_MESSAGES: (slugOrUid: string) =>
+        `/v2/community-configs/${slugOrUid}/access-denied-messages`,
     },
   },
   GRANTS: {

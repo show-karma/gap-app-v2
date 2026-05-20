@@ -749,6 +749,7 @@ function MilestonesReviewPageContent({
       <AccessDenied
         title="Milestone review access required"
         {...milestoneReviewDenial()}
+        communitySlug={communityId}
         cta={{ label: "Back to Milestones Report", href: PAGES.ADMIN.MILESTONES(communityId) }}
       />
     );

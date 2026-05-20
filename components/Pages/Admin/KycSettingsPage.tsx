@@ -135,6 +135,8 @@ export function KycSettingsPage({ community }: KycSettingsPageProps) {
       <AccessDenied
         title="KYC settings access required"
         {...communityAdminDenial(community.details?.name)}
+        communitySlug={community.details?.slug || community.uid}
+        communityName={community.details?.name}
       />
     );
   }

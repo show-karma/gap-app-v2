@@ -90,7 +90,13 @@ export function PortfolioReportEditorPage({ community, reportId }: Props) {
   }
 
   if (!hasAccess) {
-    return <AccessDenied {...communityAdminDenial(community.details?.name)} />;
+    return (
+      <AccessDenied
+        {...communityAdminDenial(community.details?.name)}
+        communitySlug={community.details?.slug || community.uid}
+        communityName={community.details?.name}
+      />
+    );
   }
 
   if (!report) {

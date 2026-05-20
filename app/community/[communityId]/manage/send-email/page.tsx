@@ -128,7 +128,7 @@ export default function SendEmailPage() {
   }
 
   if (!hasAccess) {
-    return <AccessDenied {...communityAdminDenial()} />;
+    return <AccessDenied {...communityAdminDenial()} communitySlug={communityId} />;
   }
 
   return <SendEmailContent communityId={communityId} />;

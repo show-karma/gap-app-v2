@@ -83,6 +83,8 @@ export function ManageLayoutShell({ children }: { children: React.ReactNode }) {
     return (
       <AccessDenied
         {...manageLayoutDenial(community?.details?.name)}
+        communitySlug={communityId}
+        communityName={community?.details?.name}
         cta={{ label: "Go to Community", href: PAGES.COMMUNITY.ALL_GRANTS(communityId) }}
       />
     );
