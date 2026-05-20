@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { customMetadata } from "@/utilities/meta";
+import { PAGES } from "@/utilities/pages";
 import { getWhitelabelContext } from "@/utilities/whitelabel-server";
 
 export const metadata: Metadata = customMetadata({
@@ -80,11 +81,11 @@ export default async function AboutPage() {
       <p className={styles.p}>
         Karma exposes an MCP (Model Context Protocol) server so AI agents can discover programs,
         draft applications, audit milestones, and analyze impact data directly. See our{" "}
-        <Link className={styles.a} href="/mcp/connect">
+        <Link className={styles.a} href={PAGES.MCP_CONNECT}>
           MCP setup guide
         </Link>{" "}
         and the{" "}
-        <Link className={styles.a} href="/for-agents">
+        <Link className={styles.a} href={PAGES.FOR_AGENTS}>
           For AI Agents
         </Link>{" "}
         landing page.

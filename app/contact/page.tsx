@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { customMetadata } from "@/utilities/meta";
+import { PAGES } from "@/utilities/pages";
 import { getWhitelabelContext } from "@/utilities/whitelabel-server";
 
 export const metadata: Metadata = customMetadata({
@@ -69,7 +70,7 @@ export default async function ContactPage() {
           API documentation
         </a>{" "}
         and the{" "}
-        <Link className={styles.a} href="/mcp/connect">
+        <Link className={styles.a} href={PAGES.MCP_CONNECT}>
           MCP setup guide
         </Link>
         .
