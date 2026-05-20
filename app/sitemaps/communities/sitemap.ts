@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { chosenCommunities } from "@/utilities/chosenCommunities";
+import { formatSitemapLastmod } from "@/utilities/sitemap";
 
 const communitySubPages = [
   "funding-opportunities",
@@ -12,7 +13,7 @@ const communitySubPages = [
 ] as const;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const now = new Date().toISOString();
+  const now = formatSitemapLastmod();
 
   return chosenCommunities().flatMap((community) => {
     const identifier = community.slug || community.uid;
