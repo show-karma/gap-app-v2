@@ -16,6 +16,7 @@ import { GoogleAnalytics } from "@next/third-parties/google";
 import { ThemeProvider } from "next-themes";
 import { DeferredLayoutComponents } from "@/components/DeferredLayoutComponents";
 import { OrganizationJsonLd } from "@/components/Seo/OrganizationJsonLd";
+import { SpeakableJsonLd } from "@/components/Seo/SpeakableJsonLd";
 import { PermissionsProvider } from "@/components/Utilities/PermissionsProvider";
 import PrivyProviderWrapper from "@/components/Utilities/PrivyProviderWrapper";
 import { TenantStoreInitializer } from "@/components/Utilities/TenantStoreInitializer";
@@ -168,6 +169,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           </PrivyProviderWrapper>
         </ThemeProvider>
         {!isWhitelabel && <OrganizationJsonLd />}
+        {!isWhitelabel && <SpeakableJsonLd />}
       </body>
     </html>
   );
