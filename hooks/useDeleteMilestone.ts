@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import type { AxiosError } from "axios";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useAuth } from "@/hooks/useAuth";
@@ -22,6 +23,63 @@ interface DeleteMilestoneResponse {
   milestoneUID: string;
   revocationSuccess: boolean;
   revocationTxHash?: string;
+}
+
+interface BackendErrorBody {
+  error?: string;
+  message?: string;
+}
+
+const SUPPORT_HINT = "If this looks wrong, contact support.";
+const REVOCATION_RETRY_MESSAGE =
+  "On-chain milestone revocation failed. Please retry; if it persists, contact support.";
+
+export class MilestoneRevocationFailedError extends Error {
+  constructor(milestoneTitle: string) {
+    super(REVOCATION_RETRY_MESSAGE);
+    this.name = "MilestoneRevocationFailedError";
+    this.milestoneTitle = milestoneTitle;
+  }
+  milestoneTitle: string;
+}
+
+export function deleteMilestoneErrorMessage(error: unknown, milestoneTitle: string): string {
+  if (error instanceof MilestoneRevocationFailedError) {
+    return error.message;
+  }
+
+  const axiosError = error as AxiosError<BackendErrorBody> | undefined;
+  const status = axiosError?.response?.status;
+  const raw = axiosError?.response?.data?.message ?? "";
+
+  if (status === 409) {
+    if (raw.startsWith("Cannot delete milestone that is already completed")) {
+      return `"${milestoneTitle}" already has a completion and can't be deleted. Reject the completion first.`;
+    }
+    if (raw.startsWith("Milestone is already revoked")) {
+      return `"${milestoneTitle}" is already deleted on-chain. Refresh the page to update the list.`;
+    }
+    if (raw.startsWith("Milestone not found")) {
+      return `"${milestoneTitle}" was not found on-chain. It may have been removed already — refresh the page.`;
+    }
+    return raw || `"${milestoneTitle}" can't be deleted right now. ${SUPPORT_HINT}`;
+  }
+
+  if (status === 403) {
+    return "You don't have permission to delete this milestone.";
+  }
+
+  if (status === 503) {
+    return "The indexer couldn't read the milestone right now. Try again in a moment.";
+  }
+
+  if (status === 500 && raw.toLowerCase().includes("insufficient funds")) {
+    return "Karma admin wallet is out of gas on this chain. We've been alerted.";
+  }
+
+  if (raw) return raw;
+  if (error instanceof Error && error.message) return error.message;
+  return "Failed to delete milestone.";
 }
 
 export const useDeleteMilestone = ({
@@ -66,9 +124,7 @@ export const useDeleteMilestone = ({
       );
 
       if (!response.data.revocationSuccess) {
-        throw new Error(
-          "On-chain milestone revocation failed. Please retry; if it persists, contact support."
-        );
+        throw new MilestoneRevocationFailedError(milestone.title);
       }
 
       return response.data;
@@ -109,6 +165,12 @@ export const useDeleteMilestone = ({
       if (context?.previousData) {
         queryClient.setQueryData(queryKey, context.previousData);
       }
+
+      const axiosError = error as AxiosError<BackendErrorBody> | undefined;
+      const status = axiosError?.response?.status;
+      const backendMessage = axiosError?.response?.data?.message;
+      const userMessage = deleteMilestoneErrorMessage(error, milestone.title);
+
       mixpanel.reportEvent({
         event: "milestone:delete:failed",
         properties: {
@@ -116,14 +178,22 @@ export const useDeleteMilestone = ({
           milestoneUID: milestone.uid,
           programId,
           chainID: milestone.chainId,
-          error: error?.message,
+          error: userMessage,
+          backendStatus: status,
+          backendMessage,
         },
       });
-      showError(error?.message || "Failed to delete milestone");
-      errorManager(`Failed to delete milestone "${milestone.title}"`, error, {
-        milestoneUID: milestone.uid,
-        milestoneTitle: milestone.title,
-      });
+      showError(userMessage);
+
+      const isUserActionable = status === 403 || status === 409;
+      if (!isUserActionable) {
+        errorManager(`Failed to delete milestone "${milestone.title}"`, error, {
+          milestoneUID: milestone.uid,
+          milestoneTitle: milestone.title,
+          backendStatus: status,
+          backendMessage,
+        });
+      }
     },
   });
 
