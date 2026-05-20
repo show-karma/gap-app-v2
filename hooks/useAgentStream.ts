@@ -65,6 +65,50 @@ function extractDeltaText(event: SSEEvent): string {
   return "";
 }
 
+/**
+ * The Agent SDK exposes MCP tools to the model under prefixed names of the
+ * form `mcp__<server>__<tool>` so multiple MCP servers can coexist. The
+ * indexer's post-tool-use hook strips the prefix before emitting
+ * `tool_result` events, so we strip it here too — otherwise the prefixed
+ * tool_use names and the unprefixed tool_result names would never match.
+ */
+const MCP_TOOL_PREFIX_RE = /^mcp__[^_]+__/;
+function stripMcpPrefix(name: string): string {
+  return name.replace(MCP_TOOL_PREFIX_RE, "");
+}
+
+/**
+ * Returns the tool_use {id, name} when a stream_event represents a
+ * content_block_start opening a tool_use block. The current indexer routes
+ * SDK messages through directly and does NOT yield raw stream_event-shaped
+ * payloads, so this branch is defensive — keeps the parser correct if a
+ * future indexer version forwards Anthropic's raw streaming events.
+ */
+function extractToolUseStart(event: SSEEvent): { id: string; name: string } | null {
+  const streamEvent = event.event as Record<string, unknown> | undefined;
+  if (!streamEvent || streamEvent.type !== "content_block_start") return null;
+  const block = streamEvent.content_block as
+    | { type?: string; id?: string; name?: string }
+    | undefined;
+  if (block?.type !== "tool_use" || !block.id || !block.name) return null;
+  return { id: block.id, name: stripMcpPrefix(block.name) };
+}
+
+/**
+ * Extract every tool_use block from a full assistant message event. Today's
+ * indexer wraps the Agent SDK's `assistant` event raw, so this is the
+ * primary tool-use source for the UI — each turn arrives as one assistant
+ * message containing text + zero or more tool_use blocks.
+ */
+function extractToolUsesFromAssistantMessage(event: SSEEvent): Array<{ id: string; name: string }> {
+  const message = event.message as Record<string, unknown> | undefined;
+  if (!message?.content) return [];
+  const contentBlocks = message.content as Array<{ type: string; id?: string; name?: string }>;
+  return contentBlocks
+    .filter((b) => b.type === "tool_use" && b.id && b.name)
+    .map((b) => ({ id: b.id as string, name: stripMcpPrefix(b.name as string) }));
+}
+
 function extractToolResultData(raw: unknown): Record<string, unknown> {
   const blocks = Array.isArray(raw) ? raw : (raw as Record<string, unknown>)?.content;
   if (Array.isArray(blocks)) {
@@ -241,6 +285,14 @@ export function useAgentStream() {
                   streamingContentRef.current += delta;
                   store.updateLastAssistantMessage(streamingContentRef.current);
                 }
+                // Surface tool calls as soon as the agent opens the block —
+                // before the full assistant turn lands, so the thinking
+                // panel can show "⟳ search grants" while the tool is still
+                // running rather than after-the-fact.
+                const toolStart = extractToolUseStart(event);
+                if (toolStart) {
+                  store.appendToolUseToLastAssistantMessage(toolStart);
+                }
                 break;
               }
               case "assistant": {
@@ -248,6 +300,14 @@ export function useAgentStream() {
                 if (text) {
                   streamingContentRef.current = text;
                   store.updateLastAssistantMessage(text);
+                }
+                // Backstop tool extraction — if the stream channel missed a
+                // content_block_start (out-of-order delivery, reconnect),
+                // the full assistant event still carries every tool_use
+                // block. appendToolUse de-dupes by id, so it's safe to call
+                // both here and in the stream_event handler above.
+                for (const tool of extractToolUsesFromAssistantMessage(event)) {
+                  store.appendToolUseToLastAssistantMessage(tool);
                 }
                 break;
               }
@@ -268,6 +328,8 @@ export function useAgentStream() {
               }
               case "tool_result": {
                 const toolName = event.tool_name as string;
+                const toolUseId = event.tool_use_id as string | undefined;
+                const isError = Boolean(event.is_error);
                 const resultData = extractToolResultData(event.result);
                 if (toolName?.startsWith("preview_")) {
                   store.updateLastAssistantToolResult({
@@ -282,6 +344,28 @@ export function useAgentStream() {
                   typeof resultData.newSlug === "string"
                 ) {
                   newSlugRef.current = resultData.newSlug;
+                }
+                // Resolve which toolHistory entry this result corresponds to.
+                // Preferred path: the indexer forwards `tool_use_id` (added
+                // in a follow-up indexer change). Fallback: match by name
+                // — find the oldest still-running entry with this base
+                // name. Oldest-first because tools are called sequentially
+                // in agent flow and their results arrive in the same order.
+                let targetId = toolUseId;
+                if (!targetId && toolName) {
+                  const lastAssistant = useAgentChatStore
+                    .getState()
+                    .messages.findLast((m) => m.role === "assistant");
+                  const running = lastAssistant?.toolHistory?.find(
+                    (t) => t.status === "running" && t.name === toolName
+                  );
+                  targetId = running?.id;
+                }
+                if (targetId) {
+                  store.updateToolStatusOnLastAssistantMessage(
+                    targetId,
+                    isError ? "error" : "success"
+                  );
                 }
                 break;
               }

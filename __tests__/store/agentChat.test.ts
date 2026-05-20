@@ -517,6 +517,146 @@ describe("useAgentChatStore", () => {
     });
   });
 
+  describe("appendToolUseToLastAssistantMessage", () => {
+    function seedAssistant() {
+      act(() => {
+        useAgentChatStore.getState().addMessage({
+          id: "a1",
+          role: "assistant",
+          content: "",
+          timestamp: 1,
+        });
+      });
+    }
+
+    it("creates the toolHistory array on first append", () => {
+      seedAssistant();
+      act(() => {
+        useAgentChatStore.getState().appendToolUseToLastAssistantMessage({
+          id: "toolu_1",
+          name: "aggregate_grants",
+        });
+      });
+      const msg = useAgentChatStore.getState().messages[0];
+      expect(msg.toolHistory).toEqual([
+        { id: "toolu_1", name: "aggregate_grants", status: "running" },
+      ]);
+    });
+
+    it("appends additional tool entries in order", () => {
+      seedAssistant();
+      act(() => {
+        useAgentChatStore
+          .getState()
+          .appendToolUseToLastAssistantMessage({ id: "toolu_1", name: "aggregate_grants" });
+        useAgentChatStore
+          .getState()
+          .appendToolUseToLastAssistantMessage({ id: "toolu_2", name: "run_sql" });
+      });
+      const tools = useAgentChatStore.getState().messages[0].toolHistory;
+      expect(tools).toHaveLength(2);
+      expect(tools?.map((t) => t.id)).toEqual(["toolu_1", "toolu_2"]);
+    });
+
+    it("dedupes by tool id — re-emitted events do not duplicate entries", () => {
+      seedAssistant();
+      act(() => {
+        useAgentChatStore
+          .getState()
+          .appendToolUseToLastAssistantMessage({ id: "toolu_1", name: "aggregate_grants" });
+        useAgentChatStore
+          .getState()
+          .appendToolUseToLastAssistantMessage({ id: "toolu_1", name: "aggregate_grants" });
+      });
+      expect(useAgentChatStore.getState().messages[0].toolHistory).toHaveLength(1);
+    });
+
+    it("is a no-op when there is no assistant message in the store", () => {
+      act(() => {
+        useAgentChatStore.getState().addMessage({
+          id: "u1",
+          role: "user",
+          content: "Hi",
+          timestamp: 1,
+        });
+        useAgentChatStore
+          .getState()
+          .appendToolUseToLastAssistantMessage({ id: "toolu_1", name: "search_grants" });
+      });
+      expect(useAgentChatStore.getState().messages[0].toolHistory).toBeUndefined();
+    });
+
+    it("is a no-op when the last message is from the user, not the assistant", () => {
+      seedAssistant();
+      act(() => {
+        useAgentChatStore.getState().addMessage({
+          id: "u2",
+          role: "user",
+          content: "Hi again",
+          timestamp: 2,
+        });
+        useAgentChatStore
+          .getState()
+          .appendToolUseToLastAssistantMessage({ id: "toolu_1", name: "search_grants" });
+      });
+      // First message (assistant) untouched; user message has no tools.
+      expect(useAgentChatStore.getState().messages[0].toolHistory).toBeUndefined();
+      expect(useAgentChatStore.getState().messages[1].toolHistory).toBeUndefined();
+    });
+  });
+
+  describe("updateToolStatusOnLastAssistantMessage", () => {
+    function seedAssistantWithTool() {
+      act(() => {
+        useAgentChatStore.getState().addMessage({
+          id: "a1",
+          role: "assistant",
+          content: "",
+          timestamp: 1,
+        });
+        useAgentChatStore
+          .getState()
+          .appendToolUseToLastAssistantMessage({ id: "toolu_1", name: "aggregate_grants" });
+      });
+    }
+
+    it("updates the matching tool's status to success", () => {
+      seedAssistantWithTool();
+      act(() => {
+        useAgentChatStore.getState().updateToolStatusOnLastAssistantMessage("toolu_1", "success");
+      });
+      expect(useAgentChatStore.getState().messages[0].toolHistory).toEqual([
+        { id: "toolu_1", name: "aggregate_grants", status: "success" },
+      ]);
+    });
+
+    it("updates the matching tool's status to error", () => {
+      seedAssistantWithTool();
+      act(() => {
+        useAgentChatStore.getState().updateToolStatusOnLastAssistantMessage("toolu_1", "error");
+      });
+      expect(useAgentChatStore.getState().messages[0].toolHistory?.[0].status).toBe("error");
+    });
+
+    it("is a no-op when the tool id is not present", () => {
+      seedAssistantWithTool();
+      act(() => {
+        useAgentChatStore
+          .getState()
+          .updateToolStatusOnLastAssistantMessage("toolu_does_not_exist", "success");
+      });
+      expect(useAgentChatStore.getState().messages[0].toolHistory?.[0].status).toBe("running");
+    });
+
+    it("is a no-op when there is no assistant message", () => {
+      // Nothing seeded. The action should be safe to call.
+      act(() => {
+        useAgentChatStore.getState().updateToolStatusOnLastAssistantMessage("toolu_1", "success");
+      });
+      expect(useAgentChatStore.getState().messages).toEqual([]);
+    });
+  });
+
   describe("setStreaming", () => {
     it("should set streaming to true", () => {
       act(() => {

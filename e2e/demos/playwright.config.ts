@@ -11,7 +11,7 @@ export default defineConfig({
   retries: 0,
   reporter: [
     ["list"],
-    ["json", { outputFile: path.resolve(__dirname, "../../e2e-demos-results/report.json") }],
+    ["json", { outputFile: path.resolve(__dirname, "../../e2e-demos-report.json") }],
   ],
   outputDir: path.resolve(__dirname, "../../e2e-demos-results"),
 
