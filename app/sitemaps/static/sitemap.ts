@@ -40,6 +40,7 @@ const staticPages = [
   "/for-agents",
   "/about",
   "/contact",
+  "/pricing",
   "/privacy-policy",
   "/terms-and-conditions",
   "/dashboard",
