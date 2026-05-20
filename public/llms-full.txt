@@ -8,7 +8,7 @@ Karma is a platform where ecosystems allocate funding, track milestones, and mea
 - MCP endpoint: https://gapapi.karmahq.xyz/v2/mcp
 - Setup guide: https://www.karmahq.xyz/mcp/connect
 - For-agents overview: https://www.karmahq.xyz/for-agents
-- OpenAPI spec (JSON): https://gapapi.karmahq.xyz/v2/docs/json
+- OpenAPI spec (JSON): https://www.karmahq.xyz/openapi.json
 - API docs (Swagger UI): https://gapapi.karmahq.xyz/v2/docs
 - Plugin manifest: https://www.karmahq.xyz/.well-known/ai-plugin.json
 - MCP server discovery: https://www.karmahq.xyz/.well-known/mcp.json
@@ -116,7 +116,7 @@ Add your organization
 ## Developer Docs
 
 - [API Documentation](https://gapapi.karmahq.xyz/v2/docs): REST API docs for projects, communities, grants, and attestations
-- [OpenAPI JSON](https://gapapi.karmahq.xyz/v2/docs/json)
+- [OpenAPI JSON](https://www.karmahq.xyz/openapi.json)
 - Authentication: use Privy JWT in `Authorization: Bearer <token>` for protected endpoints
 - Public reads are available for key listing endpoints (projects, communities, grants)
 

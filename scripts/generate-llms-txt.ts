@@ -42,7 +42,11 @@ const SITE_URL = "https://www.karmahq.xyz";
 const SITEMAP_URL = `${SITE_URL}/sitemap.xml`;
 const PROJECT_NAME = "Karma";
 const API_DOCS_URL = "https://gapapi.karmahq.xyz/v2/docs";
-const API_SPEC_URL = "https://gapapi.karmahq.xyz/v2/docs/json";
+// Apex proxy of the indexer's OpenAPI spec; agent crawlers (Ora, etc.)
+// probe predictable apex paths, so we publish under the marketing
+// domain rather than the API subdomain. Implementation lives in
+// app/openapi.json/route.ts and proxies ${gap-indexer}/v2/docs/json.
+const API_SPEC_URL = "https://www.karmahq.xyz/openapi.json";
 const FIRECRAWL_SCRAPE_URL =
   process.env.FIRECRAWL_SCRAPE_URL || "https://api.firecrawl.dev/v1/scrape";
 const FIRECRAWL_API_KEY = process.env.FIRECRAWL_API_KEY || "";
