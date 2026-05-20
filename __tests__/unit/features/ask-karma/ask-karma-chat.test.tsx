@@ -11,30 +11,6 @@ vi.mock("@/src/components/ai-elements/message-response", () => ({
   ),
 }));
 
-vi.mock("next/link", () => ({
-  __esModule: true,
-  default: ({
-    href,
-    children,
-    ...rest
-  }: { href: string; children: React.ReactNode } & Record<string, unknown>) => (
-    <a href={href} {...rest}>
-      {children}
-    </a>
-  ),
-}));
-
-// useWhitelabel drives the community-exit href. Default to non-whitelabel
-// so the explicit /community/<id> path is used; individual tests override.
-const mockUseWhitelabel = vi.fn(() => ({ isWhitelabel: false }));
-vi.mock("@/utilities/whitelabel-context", () => ({
-  useWhitelabel: () => mockUseWhitelabel(),
-}));
-
-beforeEach(() => {
-  mockUseWhitelabel.mockReturnValue({ isWhitelabel: false });
-});
-
 const config: AskKarmaConfig = {
   heading: "Ask Karma",
   subheading: "Sub",
@@ -326,61 +302,6 @@ describe("AskKarmaChat", () => {
     );
     await user.click(screen.getByRole("button", { name: /back to topics/i }));
     expect(onBack).toHaveBeenCalledTimes(1);
-  });
-
-  it("renders the Go-to-community CTA pointing at /community/<id> on the main domain", () => {
-    render(
-      <AskKarmaChat
-        config={config}
-        communityId="filecoin"
-        messages={[]}
-        isStreaming={false}
-        error={null}
-        onSend={vi.fn()}
-        onStop={vi.fn()}
-        onBack={vi.fn()}
-      />
-    );
-    const cta = screen.getByTestId("ask-karma-go-to-community");
-    expect(cta).toHaveAttribute("href", "/community/filecoin");
-    expect(cta).toHaveTextContent("Go to community view");
-  });
-
-  it("points the Go-to-community CTA at site root when on a whitelabel surface", () => {
-    // Whitelabel domain: the community IS the root, so /community/<slug>
-    // would be redirected back to / anyway. Skip the redirect by routing
-    // directly to root.
-    mockUseWhitelabel.mockReturnValueOnce({ isWhitelabel: true });
-    render(
-      <AskKarmaChat
-        config={config}
-        communityId="filecoin"
-        messages={[]}
-        isStreaming={false}
-        error={null}
-        onSend={vi.fn()}
-        onStop={vi.fn()}
-        onBack={vi.fn()}
-      />
-    );
-    expect(screen.getByTestId("ask-karma-go-to-community")).toHaveAttribute("href", "/");
-  });
-
-  it("falls back to site root when there is no community in scope", () => {
-    // Root /ask-karma surface — no community context to navigate back to,
-    // so leaving lands at the site root.
-    render(
-      <AskKarmaChat
-        config={config}
-        messages={[]}
-        isStreaming={false}
-        error={null}
-        onSend={vi.fn()}
-        onStop={vi.fn()}
-        onBack={vi.fn()}
-      />
-    );
-    expect(screen.getByTestId("ask-karma-go-to-community")).toHaveAttribute("href", "/");
   });
 
   it("uses instant scroll (behavior: auto) while streaming to avoid jank", () => {

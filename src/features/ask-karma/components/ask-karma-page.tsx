@@ -1,9 +1,12 @@
 "use client";
 
+import { LogOutIcon } from "lucide-react";
+import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useAgentStream } from "@/hooks/useAgentStream";
 import { useAgentChatStore } from "@/store/agentChat";
 import { cn } from "@/utilities/tailwind";
+import { useWhitelabel } from "@/utilities/whitelabel-context";
 import type { AskKarmaConfig } from "../types";
 import { AskKarmaChat } from "./ask-karma-chat";
 import { AskKarmaStart } from "./ask-karma-start";
@@ -72,8 +75,35 @@ export function AskKarmaPage({ config, communityId }: AskKarmaPageProps) {
   const showChat = view === "chat" || view === "leaving-chat";
   const isLeaving = view === "leaving-start" || view === "leaving-chat";
 
+  // Page-level exit CTA. Lives on the page wrapper (not inside either view)
+  // so it stays put across the start↔chat crossfade and is reachable from
+  // either surface. Whitelabel: community is the root → "/"; main domain:
+  // explicit /community/<slug>; root /ask-karma fallback: "/".
+  const { isWhitelabel } = useWhitelabel();
+  const communityExitHref = isWhitelabel || !communityId ? "/" : `/community/${communityId}`;
+
   return (
     <div className="mx-auto w-full max-w-5xl px-4 sm:px-6 lg:px-8">
+      <div className="flex items-center justify-end pt-6">
+        <Link
+          href={communityExitHref}
+          data-testid="ask-karma-go-to-community"
+          className={cn(
+            "group flex items-center gap-1.5 rounded-md px-2 py-1 text-sm font-medium text-[rgb(var(--color-primary-dark))]",
+            "transition-all duration-200 ease-out",
+            "hover:bg-[rgb(var(--color-primary))]/5 hover:text-zinc-900 hover:gap-2",
+            "active:scale-95",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-primary))]/50",
+            "dark:text-[rgb(var(--color-primary-light))] dark:hover:bg-[rgb(var(--color-primary-dark))]/30 dark:hover:text-[rgb(var(--color-primary-light))]"
+          )}
+        >
+          Go to community view
+          <LogOutIcon
+            className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5"
+            aria-hidden="true"
+          />
+        </Link>
+      </div>
       {showStart && (
         <div
           key="start"
@@ -118,7 +148,6 @@ export function AskKarmaPage({ config, communityId }: AskKarmaPageProps) {
         >
           <AskKarmaChat
             config={config}
-            communityId={communityId}
             messages={messages}
             isStreaming={isStreaming}
             error={error}
