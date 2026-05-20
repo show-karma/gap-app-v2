@@ -20,7 +20,12 @@ export function useApplicationForm(
   const {
     control,
     handleSubmit,
-    formState: { errors, isDirty, isValid },
+    // Subscribe ONLY to `errors`. Reading `isValid` (or `isDirty`) from
+    // formState makes RHF run the resolver on every state change to keep
+    // those proxy props fresh — including useFieldArray.append, which
+    // would flag every required sub-field on a fresh milestone the moment
+    // the user clicked "Add Milestone", before they had a chance to type.
+    formState: { errors },
     setValue,
     getValues,
     trigger,
@@ -29,7 +34,13 @@ export function useApplicationForm(
   } = useForm<ApplicationFormData>({
     resolver: zodResolver(schema),
     defaultValues: options?.initialData || {},
-    mode: "onBlur",
+    // mode: 'onSubmit' — RHF's useFieldArray has an internal effect that
+    // fires the resolver on every append/remove whenever mode != 'onSubmit',
+    // regardless of submission state. That made clicking "Add Milestone"
+    // immediately flag every required sub-field on the new (empty) row.
+    // The custom Inputs/MarkdownEditor in MilestoneItem don't propagate
+    // onBlur to RHF anyway, so onBlur mode was a no-op in practice.
+    mode: "onSubmit",
   });
 
   useEffect(() => {
@@ -89,8 +100,6 @@ export function useApplicationForm(
         },
         {} as Record<string, string>
       ),
-      isValid,
-      isDirty,
     },
 
     updateField,

@@ -251,7 +251,7 @@ export function QuestionFormRenderer({
                   htmlFor={`milestone-funding-requested-${index}`}
                   className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
                 >
-                  Funding Requested (Optional)
+                  Funding Requested *
                 </label>
                 <input
                   id={`milestone-funding-requested-${index}`}
@@ -269,7 +269,7 @@ export function QuestionFormRenderer({
                   htmlFor={`milestone-completion-criteria-${index}`}
                   className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
                 >
-                  Completion Criteria (Optional)
+                  Completion Criteria *
                 </label>
                 <textarea
                   id={`milestone-completion-criteria-${index}`}

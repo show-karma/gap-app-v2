@@ -183,14 +183,15 @@ export const MilestoneInput: FC<MilestoneInputProps> = ({
                 }}
               />
 
-              {/* Funding Requested - Optional */}
+              {/* Funding Requested */}
               <Controller
                 name={`${fieldKey}.${index}.fundingRequested`}
                 control={control}
+                rules={{ required: "Funding requested is required" }}
                 render={({ field: fundingField, fieldState }) => (
                   <div>
                     <label htmlFor={`${fieldKey}-${index}-fundingRequested`} className={labelStyle}>
-                      Funding Requested (Optional)
+                      Funding Requested *
                     </label>
                     <input
                       {...fundingField}
@@ -210,19 +211,20 @@ export const MilestoneInput: FC<MilestoneInputProps> = ({
                 )}
               />
 
-              {/* Completion Criteria - Optional */}
+              {/* Completion Criteria */}
               <Controller
                 name={`${fieldKey}.${index}.completionCriteria`}
                 control={control}
+                rules={{ required: "Completion criteria is required" }}
                 render={({ field: criteriaField, fieldState }) => (
                   <MarkdownEditor
-                    label="Completion Criteria (Optional)"
+                    label="Completion Criteria"
                     placeholder="Define criteria for milestone completion"
                     value={criteriaField.value || ""}
                     onChange={criteriaField.onChange}
                     onBlur={criteriaField.onBlur}
                     error={fieldState.error?.message}
-                    isRequired={false}
+                    isRequired
                     isDisabled={isLoading}
                     id={`${fieldKey}-${index}-completionCriteria`}
                     height={150}
