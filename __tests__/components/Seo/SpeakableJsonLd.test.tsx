@@ -1,6 +1,5 @@
 import { render } from "@testing-library/react";
 import { SpeakableJsonLd } from "@/components/Seo/SpeakableJsonLd";
-import { SITE_URL } from "@/utilities/meta";
 
 function extractJsonLd(container: HTMLElement): Record<string, unknown> {
   const script = container.querySelector('script[type="application/ld+json"]');
@@ -11,11 +10,14 @@ function extractJsonLd(container: HTMLElement): Record<string, unknown> {
 }
 
 describe("SpeakableJsonLd", () => {
-  it("renders a WebPage schema with @id pointing at the site root", () => {
+  it("renders a WebPage schema without a hardcoded @id", () => {
+    // The component ships in the root layout, i.e. on every page —
+    // pinning @id to a single URL would mis-attribute the speakable
+    // selectors. Crawlers infer the resource identity from the page URL.
     const { container } = render(<SpeakableJsonLd />);
     const schema = extractJsonLd(container);
     expect(schema["@type"]).toBe("WebPage");
-    expect(schema["@id"]).toBe(SITE_URL);
+    expect(schema["@id"]).toBeUndefined();
   });
 
   it("declares a SpeakableSpecification with a cssSelector array", () => {

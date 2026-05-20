@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { customMetadata } from "@/utilities/meta";
+import { getWhitelabelContext } from "@/utilities/whitelabel-server";
 
 export const metadata: Metadata = customMetadata({
-  title: "About",
+  title: "About Karma",
   description:
     "Karma is a platform that helps ecosystems allocate funding transparently and helps builders share progress, earn reputation, and get discovered.",
   path: "/about",
@@ -18,7 +20,13 @@ const styles = {
   a: "text-blue-500 underline",
 };
 
-export default function AboutPage() {
+export default async function AboutPage() {
+  // Karma-branded marketing copy — hide on whitelabel tenants so a
+  // partner's own /about isn't shadowed by ours. Matches the gate on
+  // OrganizationJsonLd in app/layout.tsx.
+  const { isWhitelabel } = await getWhitelabelContext();
+  if (isWhitelabel) notFound();
+
   return (
     <main className="mx-auto max-w-3xl px-6 py-12">
       <h1 className={styles.h1}>About Karma</h1>
@@ -84,7 +92,10 @@ export default function AboutPage() {
 
       <h2 className={styles.h2}>Contact</h2>
       <p className={styles.p}>
-        For partnership inquiries, support, or general questions: info@karmahq.xyz
+        For partnership inquiries, support, or general questions:{" "}
+        <a className={styles.a} href="mailto:info@karmahq.xyz">
+          info@karmahq.xyz
+        </a>
       </p>
     </main>
   );

@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { customMetadata } from "@/utilities/meta";
+import { getWhitelabelContext } from "@/utilities/whitelabel-server";
 
 export const metadata: Metadata = customMetadata({
-  title: "Contact",
+  title: "Contact Karma",
   description:
     "Contact Karma — partnership inquiries, support, security disclosures, and developer documentation.",
   path: "/contact",
@@ -16,7 +18,10 @@ const styles = {
   a: "text-blue-500 underline",
 };
 
-export default function ContactPage() {
+export default async function ContactPage() {
+  const { isWhitelabel } = await getWhitelabelContext();
+  if (isWhitelabel) notFound();
+
   return (
     <main className="mx-auto max-w-3xl px-6 py-12">
       <h1 className={styles.h1}>Contact Karma</h1>
@@ -31,8 +36,12 @@ export default function ContactPage() {
 
       <h2 className={styles.h2}>Funders</h2>
       <p className={styles.p}>
-        Running a grants program and want to use Karma? Email info@karmahq.xyz with details about
-        your ecosystem, program structure, and rough budget. We respond within 1-2 business days.
+        Running a grants program and want to use Karma? Email{" "}
+        <a className={styles.a} href="mailto:info@karmahq.xyz">
+          info@karmahq.xyz
+        </a>{" "}
+        with details about your ecosystem, program structure, and rough budget. We respond within
+        1-2 business days.
       </p>
 
       <h2 className={styles.h2}>Builders</h2>
@@ -68,8 +77,11 @@ export default function ContactPage() {
 
       <h2 className={styles.h2}>Reporting issues</h2>
       <p className={styles.p}>
-        For security disclosures, email info@karmahq.xyz with subject &ldquo;Security:&rdquo;. For
-        platform bugs or feature requests, mention us at{" "}
+        For security disclosures, email{" "}
+        <a className={styles.a} href="mailto:info@karmahq.xyz?subject=Security%3A">
+          info@karmahq.xyz
+        </a>{" "}
+        with subject &ldquo;Security:&rdquo;. For platform bugs or feature requests, mention us at{" "}
         <a
           className={styles.a}
           href="https://x.com/karmahq_"
@@ -81,7 +93,7 @@ export default function ContactPage() {
         or open an issue on{" "}
         <a
           className={styles.a}
-          href="https://github.com/show-karma"
+          href="https://github.com/show-karma/gap-app-v2/issues"
           target="_blank"
           rel="noopener noreferrer"
         >

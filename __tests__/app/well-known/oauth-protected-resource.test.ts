@@ -8,12 +8,6 @@ describe("/.well-known/oauth-protected-resource route handler", () => {
     vi.clearAllMocks();
   });
 
-  afterEach(() => {
-    vi.resetModules();
-    vi.unstubAllGlobals();
-    vi.clearAllMocks();
-  });
-
   it("returns 200 with a static RFC 9728 metadata document", async () => {
     const { GET } = await import("@/app/.well-known/oauth-protected-resource/route");
     const res = GET();
@@ -88,19 +82,40 @@ describe("/.well-known/oauth-protected-resource route handler", () => {
     expect(res.headers.get("Access-Control-Allow-Methods")).toContain("OPTIONS");
     expect(res.headers.get("Access-Control-Max-Age")).toBe("86400");
   });
+});
 
-  // Placed last so the per-test doMock can't leak into other tests that
-  // rely on the global setup-mocks env (vi.doMock persists module cache
-  // overrides even when vi.resetModules() runs in beforeEach).
-  it("throws when NEXT_PUBLIC_GAP_OAUTH_URL is unset", async () => {
+// Isolated suite for the env-var-missing path. vi.doMock leaks across
+// tests within the same describe even with vi.resetModules() in
+// beforeEach, so the assertion lives in its own describe block with its
+// own lifecycle. This makes test order non-load-bearing.
+describe("/.well-known/oauth-protected-resource route handler — missing env", () => {
+  beforeEach(() => {
+    vi.resetModules();
     vi.doMock("@/utilities/enviromentVars", () => ({
       envVars: {
         NEXT_PUBLIC_GAP_INDEXER_URL: "http://localhost:4000",
         NEXT_PUBLIC_GAP_OAUTH_URL: "",
       },
     }));
-    const { GET } = await import("@/app/.well-known/oauth-protected-resource/route");
-    expect(() => GET()).toThrow(/NEXT_PUBLIC_GAP_OAUTH_URL is not set/);
+  });
+
+  afterEach(() => {
     vi.doUnmock("@/utilities/enviromentVars");
+    vi.resetModules();
+  });
+
+  it("throws and tags the Sentry capture when NEXT_PUBLIC_GAP_OAUTH_URL is unset", async () => {
+    const Sentry = await import("@sentry/nextjs");
+    const captureSpy = vi.spyOn(Sentry, "captureException");
+
+    const { GET } = await import("@/app/.well-known/oauth-protected-resource/route");
+
+    expect(() => GET()).toThrow(/NEXT_PUBLIC_GAP_OAUTH_URL is not set/);
+    expect(captureSpy).toHaveBeenCalledWith(
+      expect.any(Error),
+      expect.objectContaining({
+        tags: { route: "well-known/oauth-protected-resource" },
+      })
+    );
   });
 });

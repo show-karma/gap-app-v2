@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/nextjs";
 import { NextResponse } from "next/server";
 import { envVars } from "@/utilities/enviromentVars";
 import {
@@ -26,10 +27,19 @@ export const revalidate = 3600;
 
 export function GET() {
   const issuer = envVars.NEXT_PUBLIC_GAP_OAUTH_URL;
-  if (!issuer || typeof issuer !== "string" || issuer.trim() === "") {
-    throw new Error(
+  if (!issuer || issuer.trim() === "") {
+    // Capture explicitly so Sentry alerts carry the route tag. The
+    // default unhandled-error capture wouldn't — and we'd lose the
+    // operational visibility the previous proxy route had via its
+    // upstream Sentry.captureException calls. With `force-static`
+    // this also surfaces a misconfigured env var at build time.
+    const err = new Error(
       "NEXT_PUBLIC_GAP_OAUTH_URL is not set. Required for /.well-known/oauth-protected-resource."
     );
+    Sentry.captureException(err, {
+      tags: { route: "well-known/oauth-protected-resource" },
+    });
+    throw err;
   }
   const resource = `${getIndexerBaseUrl()}/v2/mcp`;
 
