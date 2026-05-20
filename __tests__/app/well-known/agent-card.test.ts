@@ -22,6 +22,23 @@ describe("/.well-known/agent-card.json route handler", () => {
     expect(body.agent.description.length).toBeGreaterThan(0);
   });
 
+  it("also exposes name and description at the root for AEO crawlers (Ora)", async () => {
+    const { GET } = await import("@/app/.well-known/agent-card.json/route");
+    const res = GET();
+    const body = await res.json();
+    expect(body.name).toBe("Karma");
+    expect(typeof body.description).toBe("string");
+    expect(body.description.length).toBeGreaterThan(0);
+  });
+
+  it("keeps root-level and nested name/description in lockstep", async () => {
+    const { GET } = await import("@/app/.well-known/agent-card.json/route");
+    const res = GET();
+    const body = await res.json();
+    expect(body.name).toBe(body.agent.name);
+    expect(body.description).toBe(body.agent.description);
+  });
+
   it("points url and documentationUrl at the apex marketing domain", async () => {
     const { GET } = await import("@/app/.well-known/agent-card.json/route");
     const res = GET();

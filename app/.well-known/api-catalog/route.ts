@@ -45,6 +45,24 @@ export function GET() {
             type: "application/json",
           },
         ],
+        item: [
+          {
+            href: `${SITE_URL}/openapi.json`,
+            type: "application/json",
+          },
+          {
+            href: `${apiUrl}/v2/docs`,
+            type: "text/html",
+          },
+          {
+            href: `${SITE_URL}/.well-known/mcp.json`,
+            type: "application/json",
+          },
+          {
+            href: `${SITE_URL}/.well-known/mcp/server-card.json`,
+            type: "application/json",
+          },
+        ],
       },
     ],
   };

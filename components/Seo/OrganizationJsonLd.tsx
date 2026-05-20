@@ -9,7 +9,23 @@ const organizationSchema = {
   logo: `${SITE_URL}/logo/karma-logo.svg`,
   description: DEFAULT_DESCRIPTION,
   email: "info@karmahq.xyz",
-  sameAs: ["https://x.com/karmahq_", "https://github.com/show-karma"],
+  contactPoint: {
+    "@type": "ContactPoint",
+    contactType: "customer service",
+    email: "info@karmahq.xyz",
+    areaServed: "Worldwide",
+    availableLanguage: ["English"],
+  },
+  address: {
+    "@type": "PostalAddress",
+    addressCountry: "US",
+  },
+  sameAs: [
+    "https://x.com/karmahq_",
+    "https://github.com/show-karma",
+    "https://linkedin.com/company/karmahq",
+    "https://crunchbase.com/organization/karmahq",
+  ],
 };
 
 const webApplicationSchema = {

@@ -25,6 +25,14 @@ describe("/.well-known/mcp/server-card.json route handler", () => {
     expect(body.version).toBe("1.0.0");
   });
 
+  it("exposes a top-level description so AEO crawlers (Ora) can index it", async () => {
+    const { GET } = await import("@/app/.well-known/mcp/server-card.json/route");
+    const res = GET();
+    const body = await res.json();
+    expect(typeof body.description).toBe("string");
+    expect(body.description.length).toBeGreaterThan(0);
+  });
+
   it("references human docs and OpenAPI on the apex marketing domain", async () => {
     const { GET } = await import("@/app/.well-known/mcp/server-card.json/route");
     const res = GET();

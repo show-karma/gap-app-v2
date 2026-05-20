@@ -67,6 +67,34 @@ describe("OrganizationJsonLd", () => {
       expect(schema.sameAs).toContain("https://github.com/show-karma");
       expect(schema.sameAs).not.toContain("https://twitter.com/karmahq_");
     });
+
+    it("should include LinkedIn and Crunchbase entity URLs in sameAs", () => {
+      const { container } = render(<OrganizationJsonLd />);
+      const schema = getOrganizationSchema(container);
+      expect(schema.sameAs).toContain("https://linkedin.com/company/karmahq");
+      expect(schema.sameAs).toContain("https://crunchbase.com/organization/karmahq");
+    });
+
+    it("should expose a customer-service contactPoint", () => {
+      const { container } = render(<OrganizationJsonLd />);
+      const schema = getOrganizationSchema(container);
+      expect(schema.contactPoint).toEqual({
+        "@type": "ContactPoint",
+        contactType: "customer service",
+        email: "info@karmahq.xyz",
+        areaServed: "Worldwide",
+        availableLanguage: ["English"],
+      });
+    });
+
+    it("should expose a PostalAddress with US country", () => {
+      const { container } = render(<OrganizationJsonLd />);
+      const schema = getOrganizationSchema(container);
+      expect(schema.address).toEqual({
+        "@type": "PostalAddress",
+        addressCountry: "US",
+      });
+    });
   });
 
   describe("WebApplication schema", () => {

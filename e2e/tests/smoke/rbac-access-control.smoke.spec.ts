@@ -15,7 +15,10 @@ async function expectAccessBlocked(page: Page, originalPath: string): Promise<vo
 
   const showsDenialText = await page
     .getByText(
-      /sign in|connect wallet|log in|access denied|not authorized|forbidden|only.*admin.*can view|isnt.*admin|need to be an admin/i
+      // Covers both the legacy "Access Denied / not authorized" copy and the
+      // RBAC-aware copy introduced by PR #1441 ("You're almost there / needs
+      // a role your account doesn't have yet / Reach out to ... admin").
+      /sign in|connect wallet|log in|access denied|not authorized|forbidden|only.*admin.*can view|isnt.*admin|need to be an admin|almost there|needs a role|reach out to/i
     )
     .first()
     .waitFor({ timeout: 5000 })

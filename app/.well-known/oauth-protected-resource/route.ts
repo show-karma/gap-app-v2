@@ -1,9 +1,9 @@
 import * as Sentry from "@sentry/nextjs";
 import { NextResponse } from "next/server";
+import { envVars } from "@/utilities/enviromentVars";
 import {
   getIndexerBaseUrl,
   WELL_KNOWN_CORS_HEADERS,
-  WELL_KNOWN_ERROR_HEADERS,
   WELL_KNOWN_PREFLIGHT_HEADERS,
 } from "@/utilities/wellKnown";
 
@@ -13,52 +13,46 @@ export const revalidate = 3600;
 /**
  * RFC 9728 OAuth Protected Resource Metadata at the apex.
  *
- * RFC 9728 §3.1 puts the canonical document at
- * `${resource}/.well-known/oauth-protected-resource/<resource-path>` —
- * which for Karma's MCP server lives on the indexer at
- * `${indexer}/.well-known/oauth-protected-resource/v2/mcp`. Ora and other
- * agent crawlers, however, probe the root-rooted apex path
- * `https://www.karmahq.xyz/.well-known/oauth-protected-resource`, so we
- * proxy the indexer's document here. Hourly-revalidated ISR, 5s timeout,
- * Sentry-captured on failure, no-cache 502 fallback. Same shape as the
- * /openapi.json and /.well-known/mcp-tools.json proxies.
+ * Served directly from gap-app-v2 rather than proxying gap-indexer's
+ * canonical endpoint. Rationale: the document is essentially static
+ * config (resource URL + authorization server URL + scopes + signing
+ * algs) — no per-request data — so the upstream round-trip is wasted
+ * cost. Previously we proxied, but the gap-indexer route silently
+ * 404'd in production (registration failed to take effect post-deploy)
+ * and fired a Sentry alert on every probe.
+ *
+ * Authorization server URL is sourced from NEXT_PUBLIC_GAP_OAUTH_URL.
+ * Resource URL is the MCP endpoint on the indexer.
  */
 
-const FALLBACK_BODY = { error: "upstream_unavailable" };
-const UPSTREAM_TIMEOUT_MS = 5000;
-
-export async function GET() {
-  try {
-    const res = await fetch(`${getIndexerBaseUrl()}/.well-known/oauth-protected-resource/v2/mcp`, {
-      next: { revalidate: 3600 },
-      signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
-    });
-
-    if (!res.ok) {
-      Sentry.captureException(
-        new Error(`Upstream /.well-known/oauth-protected-resource/v2/mcp returned ${res.status}`),
-        {
-          tags: { route: "well-known/oauth-protected-resource" },
-          extra: { status: res.status },
-        }
-      );
-      return NextResponse.json(FALLBACK_BODY, {
-        status: 502,
-        headers: WELL_KNOWN_ERROR_HEADERS,
-      });
-    }
-
-    const body = await res.json();
-    return NextResponse.json(body, { headers: WELL_KNOWN_CORS_HEADERS });
-  } catch (err) {
+export function GET() {
+  const issuer = envVars.NEXT_PUBLIC_GAP_OAUTH_URL;
+  if (!issuer || issuer.trim() === "") {
+    // Capture explicitly so Sentry alerts carry the route tag. The
+    // default unhandled-error capture wouldn't — and we'd lose the
+    // operational visibility the previous proxy route had via its
+    // upstream Sentry.captureException calls. With `force-static`
+    // this also surfaces a misconfigured env var at build time.
+    const err = new Error(
+      "NEXT_PUBLIC_GAP_OAUTH_URL is not set. Required for /.well-known/oauth-protected-resource."
+    );
     Sentry.captureException(err, {
       tags: { route: "well-known/oauth-protected-resource" },
     });
-    return NextResponse.json(FALLBACK_BODY, {
-      status: 502,
-      headers: WELL_KNOWN_ERROR_HEADERS,
-    });
+    throw err;
   }
+  const resource = `${getIndexerBaseUrl()}/v2/mcp`;
+
+  const body = {
+    resource,
+    authorization_servers: [issuer],
+    scopes_supported: ["mcp"],
+    bearer_methods_supported: ["header"],
+    resource_signing_alg_values_supported: ["RS256"],
+    resource_documentation: `${issuer}/.well-known/oauth-authorization-server`,
+  };
+
+  return NextResponse.json(body, { headers: WELL_KNOWN_CORS_HEADERS });
 }
 
 export async function OPTIONS() {

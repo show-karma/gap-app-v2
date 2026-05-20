@@ -51,6 +51,7 @@ vi.mock("next/navigation", () => ({
 vi.mock("@/utilities/enviromentVars", () => ({
   envVars: {
     NEXT_PUBLIC_GAP_INDEXER_URL: "http://localhost:4000",
+    NEXT_PUBLIC_GAP_OAUTH_URL: "https://oauth.test.karmahq.xyz",
     NEXT_PUBLIC_ENV: "development",
     isDev: false,
     NEXT_PUBLIC_KARMA_API: "https://api.karmahq.xyz/api",
