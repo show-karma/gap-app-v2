@@ -90,17 +90,15 @@ describe("/ask-karma (root) page", () => {
     expect(props.config.exampleQuestions.some((q: string) => q.includes("fil.one"))).toBe(true);
   });
 
-  it("generateMetadata produces a tenant-aware title", async () => {
-    mockGetWhitelabelContext.mockResolvedValueOnce({
-      isWhitelabel: true,
-      communitySlug: "filecoin",
-      config: { domain: "app.filpgf.io", communitySlug: "filecoin", tenantId: "filecoin" },
-      tenantConfig: { id: "filecoin", name: "Filecoin" },
-    });
-    const { generateMetadata } = await import("@/app/ask-karma/page");
-    const meta = await generateMetadata();
-    expect(meta.title).toContain("Filecoin");
-    expect(meta.alternates?.canonical).toBe("/ask-karma");
+  it("metadata is static 'Ask Karma' even on a whitelabel surface", async () => {
+    // Tenant-agnostic by design: the agent is Karma regardless of
+    // which whitelabel the user arrived on. The on-page chrome still
+    // uses the community's branding — only the page metadata is fixed.
+    const { metadata } = await import("@/app/ask-karma/page");
+    expect(metadata.title).toBe("Ask Karma");
+    expect(metadata.alternates?.canonical).toBe("/ask-karma");
+    // Description must not include any tenant name.
+    expect(metadata.description).not.toMatch(/Filecoin|Optimism|Karma\s/i);
   });
 });
 
@@ -142,7 +140,9 @@ describe("/community/[communityId]/ask-karma (community) page", () => {
     vi.doUnmock("next/navigation");
   });
 
-  it("generateMetadata produces a community-aware title", async () => {
+  it("generateMetadata returns the static 'Ask Karma' title with a community-scoped canonical", async () => {
+    // Title is intentionally tenant-agnostic; only the canonical URL
+    // changes per community so search engines can dedupe per surface.
     vi.resetModules();
     vi.doMock("@/utilities/queries/v2/getCommunityData", () => ({
       getCommunityDetails: vi
@@ -155,8 +155,9 @@ describe("/community/[communityId]/ask-karma (community) page", () => {
     const meta = await generateMetadata({
       params: Promise.resolve({ communityId: "filecoin" }),
     });
-    expect(meta.title).toContain("Filecoin");
+    expect(meta.title).toBe("Ask Karma");
     expect(meta.alternates?.canonical).toBe("/community/filecoin/ask-karma");
+    expect(meta.description).not.toMatch(/Filecoin/i);
     vi.doUnmock("@/utilities/queries/v2/getCommunityData");
   });
 });
