@@ -97,8 +97,10 @@ describe("/ask-karma (root) page", () => {
     const { metadata } = await import("@/app/ask-karma/page");
     expect(metadata.title).toBe("Ask Karma");
     expect(metadata.alternates?.canonical).toBe("/ask-karma");
-    // Description must not include any tenant name.
-    expect(metadata.description).not.toMatch(/Filecoin|Optimism|Karma\s/i);
+    // Rule: no tenant-name interpolation in the description. "Karma" is
+    // intentionally NOT in this list — it's the product name, not a tenant,
+    // and is allowed in copy ("Ask Karma about …", etc.).
+    expect(metadata.description).not.toMatch(/Filecoin|Optimism/i);
   });
 });
 
