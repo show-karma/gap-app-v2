@@ -1,12 +1,25 @@
 "use client";
 
 import { AlertTriangle, LogIn } from "lucide-react";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
+import { useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { useAccessDeniedMessages } from "@/hooks/useAccessDeniedMessages";
 import { useAuth } from "@/hooks/useAuth";
 import { usePermissionContext } from "@/src/core/rbac/context/permission-context";
 import { isValidRole, ROLE_LABELS, Role } from "@/src/core/rbac/types";
+import {
+  ACCESS_DENIED_DEFAULT_MESSAGES,
+  substituteAccessDeniedTemplate,
+} from "@/utilities/accessDeniedTemplate";
+import { envVars } from "@/utilities/enviromentVars";
+
+const MarkdownPreview = dynamic(
+  () => import("@/components/Utilities/MarkdownPreview").then((m) => m.MarkdownPreview),
+  { ssr: false }
+);
 
 interface AccessDeniedCta {
   label: string;
@@ -18,10 +31,18 @@ interface AccessDeniedProps {
   message?: string;
   returnUrl?: string;
   requiredRoles?: ReadonlyArray<Role | string>;
-  contactLabel?: string;
   currentRolesOverride?: ReadonlyArray<Role>;
   isLoading?: boolean;
   cta?: AccessDeniedCta;
+  /**
+   * When provided, fetch the per-community Markdown overrides for the
+   * AccessDenied body (public endpoint) and render the matching
+   * scenario string instead of the hard-coded copy. Null/empty
+   * messages fall back to the existing default so existing callers
+   * keep working without changes.
+   */
+  communitySlug?: string;
+  communityName?: string;
 }
 
 function formatList(items: ReadonlyArray<string>): string {
@@ -60,90 +81,118 @@ function DenialSkeleton() {
 
 interface DenialBodyProps {
   authenticated: boolean;
-  requiredRoles?: ReadonlyArray<Role | string>;
-  requiredList: string | null;
-  currentRolesOverride?: ReadonlyArray<Role>;
-  detectedRoles: ReadonlyArray<Role>;
-  contactLabel?: string;
   message?: string;
+  customMessage?: string | null;
+  communityName?: string;
 }
 
-function DenialBody({
-  authenticated,
-  requiredRoles,
-  requiredList,
-  currentRolesOverride,
-  detectedRoles,
-  contactLabel,
-  message,
-}: DenialBodyProps) {
-  if (!requiredList) {
-    return (
-      <p className="text-muted-foreground mb-8">
-        {message ?? "You don't have permission to view this page."}
-      </p>
-    );
-  }
+// Fallback noun when no community context is available. Kept here
+// (not at the call site) so every default branch reads the same.
+const COMMUNITY_FALLBACK = "community";
 
-  const roleWord = requiredRoles && requiredRoles.length === 1 ? "role" : "roles";
-
-  if (!authenticated) {
-    return (
-      <p className="text-muted-foreground mb-8">
-        You need to sign in to view this page. This page requires {requiredList} {roleWord}.
-      </p>
-    );
-  }
-
-  const currentRoles =
-    currentRolesOverride ?? detectedRoles.filter((r) => r !== Role.GUEST && r !== Role.NONE);
-  const currentList =
-    currentRoles.length > 0
-      ? formatList(currentRoles.map((r) => ROLE_LABELS[r]))
-      : ROLE_LABELS[Role.NONE];
-
+function CustomMarkdownBody({ source }: { source: string }) {
   return (
-    <p className="text-muted-foreground mb-8">
-      You don&apos;t have access to this page. You need {requiredList} {roleWord}. Your account has:{" "}
-      {currentList}.{contactLabel ? ` Please contact ${contactLabel}.` : ""}
-    </p>
+    <div className="text-muted-foreground mb-8 text-left" data-testid="access-denied-custom">
+      <MarkdownPreview source={source} variant="inline" />
+    </div>
   );
 }
 
+function DenialBody({ authenticated, message, customMessage, communityName }: DenialBodyProps) {
+  if (customMessage) {
+    return <CustomMarkdownBody source={customMessage} />;
+  }
+  if (message) {
+    return <p className="text-muted-foreground mb-8">{message}</p>;
+  }
+  const communityLabel = communityName ?? COMMUNITY_FALLBACK;
+  const fallback = authenticated
+    ? substituteAccessDeniedTemplate(ACCESS_DENIED_DEFAULT_MESSAGES.forbidden, {
+        communityName: communityLabel,
+        communitySlug: "",
+        appUrl: "",
+        requiredRoles: "",
+        currentRoles: "",
+      })
+    : ACCESS_DENIED_DEFAULT_MESSAGES.unauthenticated;
+  return <CustomMarkdownBody source={fallback} />;
+}
+
 export function AccessDenied({
-  title = "Access Denied",
+  title,
   message,
   returnUrl = "/",
   requiredRoles,
-  contactLabel,
   currentRolesOverride,
   isLoading,
   cta,
+  communitySlug,
+  communityName,
 }: AccessDeniedProps) {
   const { authenticated, login } = useAuth();
   const router = useRouter();
   const { roles: detectedRoles, isLoading: isRbacLoading } = usePermissionContext();
-
-  if (isLoading || isRbacLoading) {
-    return <DenialSkeleton />;
-  }
+  const { data: customMessages, isLoading: isCustomLoading } = useAccessDeniedMessages(
+    communitySlug,
+    !!communitySlug
+  );
 
   const requiredList =
     requiredRoles && requiredRoles.length > 0 ? formatList(requiredRoles.map(labelFor)) : null;
 
+  const customMessage = useMemo(() => {
+    if (!communitySlug || !customMessages) return null;
+    const raw = authenticated
+      ? customMessages.forbiddenMessage
+      : customMessages.unauthenticatedMessage;
+    if (!raw) return null;
+    const visibleRoles =
+      currentRolesOverride ??
+      detectedRoles.roles.filter((r) => r !== Role.GUEST && r !== Role.NONE);
+    return substituteAccessDeniedTemplate(raw, {
+      communityName: communityName ?? COMMUNITY_FALLBACK,
+      communitySlug,
+      appUrl: envVars.VERCEL_URL,
+      requiredRoles: requiredList ?? "",
+      currentRoles: authenticated
+        ? visibleRoles.length > 0
+          ? formatList(visibleRoles.map((r) => ROLE_LABELS[r]))
+          : ROLE_LABELS[Role.NONE]
+        : null,
+    });
+  }, [
+    communitySlug,
+    communityName,
+    customMessages,
+    authenticated,
+    currentRolesOverride,
+    detectedRoles.roles,
+    requiredList,
+  ]);
+
+  if (isLoading || isRbacLoading || (communitySlug && isCustomLoading)) {
+    return <DenialSkeleton />;
+  }
+
   const handleClick = () => {
-    if (cta) {
-      router.push(cta.href);
-      return;
-    }
     if (!authenticated) {
       login();
+      return;
+    }
+    if (cta) {
+      router.push(cta.href);
       return;
     }
     router.push(returnUrl);
   };
 
-  const buttonLabel = cta?.label ?? (authenticated ? "Go to Home" : "Sign In");
+  // `cta` is a post-login redirect target — only honor it once the visitor is
+  // signed in. Unauthenticated users always see the Sign In button.
+  const buttonLabel = authenticated ? (cta?.label ?? "Go to Home") : "Sign In";
+  // The title is part of the Markdown body (bold first line), so we only
+  // render a separate h1 when a caller explicitly passes `title` — e.g.
+  // page-specific headings like "Faucet admin access required".
+  const resolvedTitle = title ?? null;
 
   return (
     <div className="w-full mx-auto py-16 flex items-center justify-center min-h-[calc(100vh-8rem)]">
@@ -155,15 +204,12 @@ export function AccessDenied({
             </div>
           </div>
 
-          <h1 className="text-2xl font-bold mb-4">{title}</h1>
+          {resolvedTitle ? <h1 className="text-2xl font-bold mb-4">{resolvedTitle}</h1> : null}
           <DenialBody
             authenticated={authenticated}
-            requiredRoles={requiredRoles}
-            requiredList={requiredList}
-            currentRolesOverride={currentRolesOverride}
-            detectedRoles={detectedRoles.roles}
-            contactLabel={contactLabel}
             message={message}
+            customMessage={customMessage}
+            communityName={communityName}
           />
 
           <Button type="button" onClick={handleClick}>

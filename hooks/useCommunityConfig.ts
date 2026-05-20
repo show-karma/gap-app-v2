@@ -27,6 +27,14 @@ export interface CommunityConfig {
   telegramEnabled?: boolean;
   slackWebhookUrls?: string[];
   slackEnabled?: boolean;
+  /**
+   * Per-community Markdown overrides for the AccessDenied page body.
+   * `undefined` = don't touch on PUT; `null` = clear back to default.
+   * Token contract enforced server-side. See
+   * gap-indexer/docs/adr/0001-per-community-access-denied-messages.md.
+   */
+  accessDeniedUnauthenticatedMessage?: string | null;
+  accessDeniedForbiddenMessage?: string | null;
 }
 
 export const useCommunityConfig = (slug: string, enabled: boolean = true) => {
@@ -95,6 +103,10 @@ export const useCommunityConfigMutation = () => {
     onSettled: (_, __, { slug }) => {
       // Always refetch after error or success to ensure we have the latest
       queryClient.invalidateQueries({ queryKey: ["community-config", slug] });
+      // Public AccessDenied cache lives under a separate key; invalidate
+      // it too so the editor preview + any open AccessDenied pages pick
+      // up the new messages without a hard reload.
+      queryClient.invalidateQueries({ queryKey: ["access-denied-messages", slug] });
     },
   });
 };

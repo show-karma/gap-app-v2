@@ -89,6 +89,8 @@ export function KnowledgeBasePage({ community }: Props) {
         <AccessDenied
           title="Knowledge base access required"
           {...communityAdminDenial(community.details?.name)}
+          communitySlug={community.details?.slug || community.uid}
+          communityName={community.details?.name}
         />
       </PageFrame>
     );

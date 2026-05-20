@@ -34,6 +34,7 @@ const SEGMENT_LABELS: Record<string, string> = {
   "kyc-settings": "KYC/KYB Settings",
   "notification-settings": "Notification Settings",
   "knowledge-base": "Knowledge Base",
+  "access-denied-messages": "Access Denied Page",
   impact: "Impact",
 };
 

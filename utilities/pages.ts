@@ -112,6 +112,8 @@ export const PAGES = {
     NOTIFICATION_SETTINGS: (community: string) =>
       `/community/${community}/manage/notification-settings`,
     KNOWLEDGE_BASE: (community: string) => `/community/${community}/manage/knowledge-base`,
+    ACCESS_DENIED_MESSAGES: (community: string) =>
+      `/community/${community}/manage/access-denied-messages`,
     PROGRAM_SCORES: (community: string) => `/community/${community}/manage/program-scores`,
     SEND_EMAIL: (community: string) => `/community/${community}/manage/send-email`,
     PORTFOLIO_REPORTS: (community: string) => `/community/${community}/manage/portfolio-reports`,
