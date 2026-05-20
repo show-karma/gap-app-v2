@@ -10,13 +10,6 @@ export interface ApplicationFormErrors {
   [questionId: string]: string;
 }
 
-export interface ApplicationFormState {
-  data: ApplicationFormData;
-  errors: ApplicationFormErrors;
-  isValid: boolean;
-  isDirty: boolean;
-}
-
 export interface UseApplicationSubmitReturn {
   submit: (
     programId: string,

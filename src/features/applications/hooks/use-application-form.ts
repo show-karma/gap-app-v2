@@ -100,11 +100,6 @@ export function useApplicationForm(
         },
         {} as Record<string, string>
       ),
-      // Derived from errors map instead of subscribing to formState.isValid
-      // — see destructure comment above. Nothing downstream actually reads
-      // these (verified via grep), so a derived approximation is enough.
-      isValid: Object.keys(errors).length === 0,
-      isDirty: false,
     },
 
     updateField,
