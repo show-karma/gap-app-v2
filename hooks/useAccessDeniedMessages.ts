@@ -1,6 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import fetchData from "@/utilities/fetchData";
-import { INDEXER } from "@/utilities/indexer";
+
+// Public endpoint — no auth header. Returns per-community Markdown
+// overrides for the AccessDenied page body. Lives here (not in
+// INDEXER) because it's the only caller — keeps the umbrella
+// constants file from growing past its size budget.
+const ACCESS_DENIED_MESSAGES_URL = (s: string) =>
+  `/v2/community-configs/${s}/access-denied-messages`;
 
 /**
  * Per-community Markdown overrides for the AccessDenied page body.
@@ -8,7 +14,7 @@ import { INDEXER } from "@/utilities/indexer";
  * the hard-coded fallback in that case. See
  * gap-indexer/docs/adr/0001-per-community-access-denied-messages.md.
  */
-export interface AccessDeniedMessages {
+interface AccessDeniedMessages {
   unauthenticatedMessage: string | null;
   forbiddenMessage: string | null;
 }
@@ -32,7 +38,7 @@ export const useAccessDeniedMessages = (
         return { unauthenticatedMessage: null, forbiddenMessage: null };
       }
       const [data, error] = await fetchData(
-        INDEXER.COMMUNITY.CONFIG.ACCESS_DENIED_MESSAGES(slugOrUid),
+        ACCESS_DENIED_MESSAGES_URL(slugOrUid),
         "GET",
         {},
         {},

@@ -7,7 +7,6 @@ vi.mock("@/utilities/fetchData", () => ({
 }));
 
 import { useAccessDeniedMessages } from "@/hooks/useAccessDeniedMessages";
-import { INDEXER } from "@/utilities/indexer";
 
 describe("useAccessDeniedMessages", () => {
   beforeEach(() => {
@@ -25,7 +24,7 @@ describe("useAccessDeniedMessages", () => {
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
     expect(mockFetchData).toHaveBeenCalledWith(
-      INDEXER.COMMUNITY.CONFIG.ACCESS_DENIED_MESSAGES("octant"),
+      "/v2/community-configs/octant/access-denied-messages",
       "GET",
       {},
       {},

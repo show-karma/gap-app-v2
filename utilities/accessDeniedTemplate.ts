@@ -13,7 +13,7 @@
  * the substitution then leaves `{{currentRoles}}` literal, matching
  * the backend validator behavior for that scenario.
  */
-export interface AccessDeniedTemplateVars {
+interface AccessDeniedTemplateVars {
   communityName: string;
   communitySlug: string;
   appUrl: string;
@@ -52,7 +52,7 @@ export const ACCESS_DENIED_DEFAULT_MESSAGES: Record<AccessDeniedScenario, string
     "**You're almost there**\n\nYou're signed in, but this page needs a role your account doesn't have yet. Reach out to a {{communityName}} admin and they can get you set up.",
 };
 
-export interface AccessDeniedTemplateValidationResult {
+interface AccessDeniedTemplateValidationResult {
   readonly unknownTokens: readonly string[];
   readonly disallowedTokens: readonly string[];
 }
