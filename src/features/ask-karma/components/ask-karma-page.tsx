@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useAgentStream } from "@/hooks/useAgentStream";
 import { useAgentChatStore } from "@/store/agentChat";
+import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 import { useWhitelabel } from "@/utilities/whitelabel-context";
 import type { AskKarmaConfig } from "../types";
@@ -77,10 +78,12 @@ export function AskKarmaPage({ config, communityId }: AskKarmaPageProps) {
 
   // Page-level exit CTA. Lives on the page wrapper (not inside either view)
   // so it stays put across the start↔chat crossfade and is reachable from
-  // either surface. Whitelabel: community is the root → "/"; main domain:
-  // explicit /community/<slug>; root /ask-karma fallback: "/".
+  // either surface. Whitelabel: community IS the root → "/"; main domain:
+  // explicit community root via the PAGES helper (CLAUDE.md rule: never
+  // hardcode route strings); root /ask-karma fallback: "/".
   const { isWhitelabel } = useWhitelabel();
-  const communityExitHref = isWhitelabel || !communityId ? "/" : `/community/${communityId}`;
+  const communityExitHref =
+    isWhitelabel || !communityId ? "/" : PAGES.COMMUNITY.ALL_GRANTS(communityId);
 
   return (
     <div className="mx-auto w-full max-w-5xl px-4 sm:px-6 lg:px-8">
