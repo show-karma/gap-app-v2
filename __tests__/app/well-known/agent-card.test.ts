@@ -50,19 +50,21 @@ describe("/.well-known/agent-card.json route handler", () => {
     expect(body.agent.authentication.schemes).toEqual(expect.arrayContaining(["oauth2", "apiKey"]));
   });
 
-  it("exposes a skills array with id+name+description for each entry", async () => {
+  it("points skillsDiscovery at the live mcp-tools.json catalog (no hardcoded skills)", async () => {
     const { GET } = await import("@/app/.well-known/agent-card.json/route");
     const res = GET();
     const body = await res.json();
-    expect(Array.isArray(body.agent.skills)).toBe(true);
-    expect(body.agent.skills.length).toBeGreaterThan(0);
-    for (const skill of body.agent.skills) {
-      expect(typeof skill.id).toBe("string");
-      expect(typeof skill.name).toBe("string");
-      expect(typeof skill.description).toBe("string");
-    }
-    const ids = body.agent.skills.map((s: { id: string }) => s.id);
-    expect(ids).toEqual(expect.arrayContaining(["discover-funding", "submit-application"]));
+    expect(body.agent.skillsDiscovery).toBeDefined();
+    expect(body.agent.skillsDiscovery.url).toBe(`${SITE_URL}/.well-known/mcp-tools.json`);
+    expect(body.agent.skillsDiscovery.format).toBe("mcp-public-tool-list");
+    expect(typeof body.agent.skillsDiscovery.description).toBe("string");
+  });
+
+  it("does NOT enumerate a static skills array (single source of truth is the indexer)", async () => {
+    const { GET } = await import("@/app/.well-known/agent-card.json/route");
+    const res = GET();
+    const body = await res.json();
+    expect(body.agent.skills).toBeUndefined();
   });
 
   it("sets wide-open CORS headers so agent crawlers can read it", async () => {

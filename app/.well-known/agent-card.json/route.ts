@@ -10,9 +10,14 @@ export const revalidate = 3600;
  *
  * Schema reference: https://github.com/google-a2a/a2a-spec — the spec is
  * evolving, so we ship a best-effort shape with the conventional
- * top-level `agent` envelope, provider info, capability flags, accepted
- * auth schemes, and a short list of high-level skills. Static + ISR like
- * the other discovery routes — no upstream dependency.
+ * top-level `agent` envelope, provider info, capability flags, and
+ * accepted auth schemes. Static + ISR like the other discovery routes.
+ *
+ * Skills/tools are intentionally NOT enumerated here. The single source
+ * of truth is the indexer's tool registry, surfaced at
+ * /.well-known/mcp-tools.json (auto-derived from factory definitions).
+ * `skillsDiscovery` points agents at that catalog instead of duplicating
+ * a hand-curated list that drifts from reality.
  */
 
 export function GET() {
@@ -36,31 +41,12 @@ export function GET() {
       authentication: {
         schemes: ["oauth2", "apiKey"],
       },
-      skills: [
-        {
-          id: "discover-funding",
-          name: "Discover funding programs",
-          description:
-            "Search open programs across communities, by chain, category, deadline, or budget.",
-        },
-        {
-          id: "read-project",
-          name: "Read project details",
-          description: "Project profile, team, milestones, grants, and impact indicators.",
-        },
-        {
-          id: "submit-application",
-          name: "Submit a grant application",
-          description:
-            "Draft, validate, and submit applications to funding programs (OAuth required).",
-        },
-        {
-          id: "audit-milestones",
-          name: "Audit milestone delivery",
-          description:
-            "List pending, overdue, and recently-completed milestones across a program or project.",
-        },
-      ],
+      skillsDiscovery: {
+        url: `${SITE_URL}/.well-known/mcp-tools.json`,
+        format: "mcp-public-tool-list",
+        description:
+          "Live tool catalog derived from the MCP server's registered tools — no hand-maintained skills list to drift.",
+      },
     },
   };
 

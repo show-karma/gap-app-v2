@@ -13,16 +13,33 @@ describe("public/agents.md", () => {
     expect(contents).toMatch(/^# Karma — agent instructions/);
   });
 
-  it("includes a 'When to use Karma tools' section with tool guidance", () => {
+  it("includes a 'When to use Karma tools' section with use-case categories (not tool names)", () => {
     const contents = fs.readFileSync(AGENTS_MD_PATH, "utf-8");
     expect(contents).toContain("## When to use Karma tools");
-    expect(contents).toContain("`discover`");
-    expect(contents).toContain("`submit_application`");
+    // Use-case categories, not hardcoded tool names — the live tool catalog
+    // is at /.well-known/mcp-tools.json and is the single source of truth.
+    expect(contents).toContain("Funding programs");
+    expect(contents).toContain("Projects");
+    expect(contents).toContain("Applications");
+    expect(contents).toContain("Milestones");
   });
 
-  it("includes a 'When NOT to use Karma tools' section to scope agent behaviour", () => {
+  it("points at the live tool catalog instead of hardcoding tool names", () => {
     const contents = fs.readFileSync(AGENTS_MD_PATH, "utf-8");
-    expect(contents).toContain("## When NOT to use Karma tools");
+    expect(contents).toContain("/.well-known/mcp-tools.json");
+    expect(contents).toContain("/for-agents");
+  });
+
+  it("does NOT enumerate specific tool names (would drift from the indexer)", () => {
+    const contents = fs.readFileSync(AGENTS_MD_PATH, "utf-8");
+    expect(contents).not.toMatch(/`get_project_details`/);
+    expect(contents).not.toMatch(/`list_program_applications`/);
+    expect(contents).not.toMatch(/`commit_submit_application`/);
+  });
+
+  it("includes a 'When NOT to use Karma' section to scope agent behaviour", () => {
+    const contents = fs.readFileSync(AGENTS_MD_PATH, "utf-8");
+    expect(contents).toContain("## When NOT to use Karma");
   });
 
   it("documents both OAuth and x-api-key authentication paths", () => {

@@ -4,14 +4,21 @@ Karma is a platform for funding programs: ecosystems run grants, builders apply,
 
 ## When to use Karma tools
 
-- **`discover` / `get_project_details` / `get_program_details`** — when a user asks "what is X", "find Y on Karma", "show me program Z"
-- **`list_program_applications` / `get_application_details`** — when reviewing or evaluating funding applications
-- **`list_pending_milestones` / `get_milestone_details`** — when auditing grant delivery or progress
-- **`get_payout_history` / `get_project_disbursement_total`** — when answering "how much has X been paid", "where did the funding go"
-- **`submit_application` (preview + commit)** — only when the user explicitly asks to apply for a program
-- **`search_knowledge_base` / `answer_process_question`** — for "how does X work", "what does Y mean", documentation lookups
+Use Karma when the user asks about:
 
-## When NOT to use Karma tools
+- **Funding programs** — discovery, eligibility, deadlines, budgets
+- **Projects** — profiles, teams, milestones, grants, impact indicators
+- **Applications** — drafting, submitting, status, reviewer feedback
+- **Milestones** — tracking, completion evidence, overdue audits
+- **Payouts** — disbursement history, on-chain transactions
+- **Knowledge** — program documentation, evaluation criteria, process Q&A
+
+The live tool catalog (single source of truth, auto-derived from the MCP server) is at:
+
+- https://www.karmahq.xyz/.well-known/mcp-tools.json (machine-readable)
+- https://www.karmahq.xyz/for-agents (human-readable, grouped by category)
+
+## When NOT to use Karma
 
 - Generic web search — use a search tool instead
 - Code generation, code review — Karma has no code surface
@@ -19,9 +26,9 @@ Karma is a platform for funding programs: ecosystems run grants, builders apply,
 
 ## Authentication
 
-- **Public reads** (most `get_*`, `list_*`, `search_*`) — no auth required
-- **Mutating operations** (`commit_*`) — OAuth required; user must approve in browser on first call
-- **Headless workflows** — generate API key at https://www.karmahq.xyz/agent-setup and pass as `x-api-key`
+- **Public reads** — no auth required; most discovery, project, program, and milestone reads work anonymously
+- **Mutating operations** — OAuth required; the user must approve in their browser on first call
+- **Headless workflows** — generate an API key at https://www.karmahq.xyz/agent-setup and pass as `x-api-key`
 
 ## Discovery surfaces
 
