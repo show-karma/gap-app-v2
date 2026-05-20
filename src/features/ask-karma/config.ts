@@ -2,9 +2,9 @@ import { isKnownTenant, type KnownTenantId } from "@/src/infrastructure/types/te
 import type { AskKarmaConfig } from "./types";
 
 const DEFAULT_CONFIG: AskKarmaConfig = {
-  heading: "Ask us anything",
+  heading: "Ask Karma",
   subheading: "Learn how funding works, track project progress, and discover ecosystem insights.",
-  inputPlaceholder: "Questions? Ask the AI Assistant",
+  inputPlaceholder: "Questions? Ask the Karma Assistant",
   examplesIntro: "Some examples to get the juices flowing:",
   exampleQuestions: [
     "How do I submit a milestone update for my project?",
@@ -43,7 +43,7 @@ const DEFAULT_CONFIG: AskKarmaConfig = {
       ],
     },
   ],
-  assistantTitle: "AI Assistant",
+  assistantTitle: "Karma Assistant",
   assistantSubtitle: "Here to help 24/7",
 };
 

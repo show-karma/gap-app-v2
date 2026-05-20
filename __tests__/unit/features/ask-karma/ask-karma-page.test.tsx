@@ -24,7 +24,7 @@ vi.mock("@/src/components/ai-elements/message-response", () => ({
 }));
 
 const config: AskKarmaConfig = {
-  heading: "Ask us anything",
+  heading: "Ask Karma",
   subheading: "Sub",
   inputPlaceholder: "Ask…",
   examplesIntro: "Examples:",
@@ -33,7 +33,7 @@ const config: AskKarmaConfig = {
   exampleQuestions: ["Hi?"],
   featuredTopicsHeading: "Topics",
   featuredTopics: [],
-  assistantTitle: "AI Assistant",
+  assistantTitle: "Karma Assistant",
   assistantSubtitle: "Here to help 24/7",
 };
 

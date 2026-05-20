@@ -5,14 +5,17 @@ import {
   ArrowLeftIcon,
   CheckIcon,
   Loader2Icon,
+  LogOutIcon,
   SparklesIcon,
   UserIcon,
   XIcon,
 } from "lucide-react";
+import Link from "next/link";
 import { memo, useEffect, useRef } from "react";
 import { MessageResponse } from "@/src/components/ai-elements/message-response";
 import type { ChatMessage, ToolHistoryEvent } from "@/store/agentChat";
 import { cn } from "@/utilities/tailwind";
+import { useWhitelabel } from "@/utilities/whitelabel-context";
 import type { AskKarmaConfig } from "../types";
 import { AskKarmaInput } from "./ask-karma-input";
 
@@ -214,6 +217,12 @@ function ThinkingPanel({ title, toolHistory }: ThinkingPanelProps) {
 
 interface AskKarmaChatProps {
   config: AskKarmaConfig;
+  /**
+   * The community slug — when present, the "Go to community view" CTA
+   * routes back to the community root. Absent on the standalone
+   * /ask-karma route, in which case the CTA points at site root.
+   */
+  communityId?: string;
   messages: ChatMessage[];
   isStreaming: boolean;
   error: string | null;
@@ -224,6 +233,7 @@ interface AskKarmaChatProps {
 
 export function AskKarmaChat({
   config,
+  communityId,
   messages,
   isStreaming,
   error,
@@ -231,6 +241,13 @@ export function AskKarmaChat({
   onStop,
   onBack,
 }: AskKarmaChatProps) {
+  // The ask-karma page now stands alone (no community header / nav above
+  // it), so the chat view's header carries the community-exit CTA itself.
+  // On a whitelabel surface the community lives at the domain root, so
+  // route there directly; otherwise keep the explicit /community/<slug>
+  // path. Falls back to "/" if no communityId is in scope (root route).
+  const { isWhitelabel } = useWhitelabel();
+  const communityExitHref = isWhitelabel || !communityId ? "/" : `/community/${communityId}`;
   const endRef = useRef<HTMLDivElement>(null);
   const lastContent = messages[messages.length - 1]?.content;
 
@@ -270,24 +287,52 @@ export function AskKarmaChat({
             <p className="text-xs text-zinc-500 dark:text-zinc-400">{config.assistantSubtitle}</p>
           </div>
         </div>
-        <button
-          type="button"
-          onClick={onBack}
-          className={cn(
-            "group flex items-center gap-1.5 rounded-md px-2 py-1 text-sm font-medium text-[rgb(var(--color-primary-dark))]",
-            "transition-all duration-200 ease-out",
-            "hover:bg-[rgb(var(--color-primary))]/5 hover:text-zinc-900 hover:gap-2",
-            "active:scale-95",
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-primary))]/50",
-            "dark:text-[rgb(var(--color-primary-light))] dark:hover:bg-[rgb(var(--color-primary-dark))]/30 dark:hover:text-[rgb(var(--color-primary-light))]"
-          )}
-        >
-          <ArrowLeftIcon
-            className="h-4 w-4 transition-transform duration-200 group-hover:-translate-x-0.5"
-            aria-hidden="true"
-          />
-          Back to topics
-        </button>
+        <div className="flex items-center gap-1 sm:gap-2">
+          {/* Ghost secondary: keeps the chat→start internal nav reachable.
+              Subtle styling so it doesn't compete with the primary exit
+              CTA next to it. */}
+          <button
+            type="button"
+            onClick={onBack}
+            data-testid="ask-karma-back-to-topics"
+            className={cn(
+              "group flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-zinc-500",
+              "transition-all duration-200 ease-out",
+              "hover:bg-zinc-100 hover:text-zinc-900 hover:gap-2",
+              "active:scale-95",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-300",
+              "dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+            )}
+          >
+            <ArrowLeftIcon
+              className="h-3.5 w-3.5 transition-transform duration-200 group-hover:-translate-x-0.5"
+              aria-hidden="true"
+            />
+            Back to topics
+          </button>
+          {/* Primary exit CTA — leaves the ask-karma page entirely back to
+              the community surface. Whitelabel domains land at "/" since
+              their community IS the root; otherwise the explicit
+              /community/<slug> path. */}
+          <Link
+            href={communityExitHref}
+            data-testid="ask-karma-go-to-community"
+            className={cn(
+              "group flex items-center gap-1.5 rounded-md px-2 py-1 text-sm font-medium text-[rgb(var(--color-primary-dark))]",
+              "transition-all duration-200 ease-out",
+              "hover:bg-[rgb(var(--color-primary))]/5 hover:text-zinc-900 hover:gap-2",
+              "active:scale-95",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-primary))]/50",
+              "dark:text-[rgb(var(--color-primary-light))] dark:hover:bg-[rgb(var(--color-primary-dark))]/30 dark:hover:text-[rgb(var(--color-primary-light))]"
+            )}
+          >
+            <LogOutIcon
+              className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5"
+              aria-hidden="true"
+            />
+            Go to community view
+          </Link>
+        </div>
       </header>
 
       <div className="flex flex-1 flex-col gap-6 overflow-y-auto py-6">

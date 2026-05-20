@@ -202,7 +202,7 @@ export function AskKarmaStart({ config, onSubmit }: AskKarmaStartProps) {
           readOnly={inputDisabled}
           maxLength={INPUT_MAX_LENGTH}
           placeholder={config.inputPlaceholder}
-          aria-label="Ask AI Assistant a question"
+          aria-label="Ask Karma Assistant a question"
           data-testid="ask-karma-search-input"
           className={cn(
             "w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 pr-12 text-sm",
@@ -220,7 +220,7 @@ export function AskKarmaStart({ config, onSubmit }: AskKarmaStartProps) {
         />
         <button
           type="submit"
-          aria-label="Ask the AI Assistant"
+          aria-label="Ask the Karma Assistant"
           className={cn(
             "absolute right-2 top-1/2 -translate-y-1/2",
             "flex h-8 w-8 items-center justify-center rounded-full",

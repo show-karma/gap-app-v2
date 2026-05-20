@@ -118,6 +118,7 @@ export function AskKarmaPage({ config, communityId }: AskKarmaPageProps) {
         >
           <AskKarmaChat
             config={config}
+            communityId={communityId}
             messages={messages}
             isStreaming={isStreaming}
             error={error}
