@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { CONNECT_STEPS, MCP_FAQS } from "@/components/Pages/McpConnect/content";
 import { McpConnectPage } from "@/components/Pages/McpConnect/McpConnectPage";
+import { BreadcrumbJsonLd } from "@/components/Seo/BreadcrumbJsonLd";
 import { FAQJsonLd } from "@/components/Seo/FAQJsonLd";
 import { HowToJsonLd } from "@/components/Seo/HowToJsonLd";
 import { SoftwareApplicationJsonLd } from "@/components/Seo/SoftwareApplicationJsonLd";
@@ -16,6 +17,12 @@ export const metadata: Metadata = customMetadata({
 export default function Page() {
   return (
     <>
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Home", url: "/" },
+          { name: "MCP setup", url: "/mcp/connect" },
+        ]}
+      />
       <SoftwareApplicationJsonLd />
       <FAQJsonLd questions={MCP_FAQS} />
       <HowToJsonLd

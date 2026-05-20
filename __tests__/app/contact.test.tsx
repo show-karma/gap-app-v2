@@ -34,6 +34,18 @@ describe("app/contact/page.tsx", () => {
       mailtoLinks.some((link) => link.getAttribute("href")?.startsWith("mailto:info@karmahq.xyz"))
     ).toBe(true);
   });
+
+  it("emits a BreadcrumbList JSON-LD pointing Home → Contact", async () => {
+    const { container } = await renderContactPage();
+    const ld = container.querySelector('script[type="application/ld+json"]');
+    expect(ld).not.toBeNull();
+    const json = JSON.parse(ld?.textContent ?? "{}");
+    expect(json["@type"]).toBe("BreadcrumbList");
+    const items = json.itemListElement as Array<{ name: string; item: string }>;
+    expect(items[0].name).toBe("Home");
+    expect(items[1].name).toBe("Contact");
+    expect(items[1].item).toContain("/contact");
+  });
 });
 
 describe("app/contact/page.tsx whitelabel gating", () => {
