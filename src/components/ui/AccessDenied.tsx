@@ -150,7 +150,7 @@ export function AccessDenied({
       currentRolesOverride ??
       detectedRoles.roles.filter((r) => r !== Role.GUEST && r !== Role.NONE);
     return substituteAccessDeniedTemplate(raw, {
-      communityName: communityName ?? "",
+      communityName: communityName ?? COMMUNITY_FALLBACK,
       communitySlug,
       appUrl: envVars.VERCEL_URL,
       requiredRoles: requiredList ?? "",

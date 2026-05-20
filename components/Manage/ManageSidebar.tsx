@@ -174,6 +174,7 @@ const NAV_GROUPS: NavGroup[] = [
         matchSegment: "access-denied-messages",
         label: "Access Denied Page",
         icon: ShieldAlert,
+        communityAdminOnly: true,
       },
     ],
   },
