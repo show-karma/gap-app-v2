@@ -13,6 +13,13 @@ Karma is a platform where ecosystems allocate funding, track milestones, and mea
 - Plugin manifest: https://www.karmahq.xyz/.well-known/ai-plugin.json
 - MCP server discovery: https://www.karmahq.xyz/.well-known/mcp.json
 - Public tool catalog: https://www.karmahq.xyz/.well-known/mcp-tools.json
+- Agent card (A2A): https://www.karmahq.xyz/.well-known/agent-card.json
+- MCP server card: https://www.karmahq.xyz/.well-known/mcp/server-card.json
+- API catalog (RFC 9727): https://www.karmahq.xyz/.well-known/api-catalog
+- OAuth protected resource (RFC 9728): https://www.karmahq.xyz/.well-known/oauth-protected-resource
+- Agent discovery: https://www.karmahq.xyz/.well-known/agent.json
+- Agent instructions: https://www.karmahq.xyz/agents.md
+- Pricing: https://www.karmahq.xyz/pricing.md
 - Auth: OAuth (interactive) or `x-api-key` header (headless)
 - Supported clients: Claude Desktop, Cursor, Codex CLI, any MCP 2025-11-25+ compliant client
 - Contact: info@karmahq.xyz
