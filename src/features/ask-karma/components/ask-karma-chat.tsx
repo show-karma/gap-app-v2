@@ -246,7 +246,12 @@ export function AskKarmaChat({
   }, [isStreaming, lastContent, messages.length]);
 
   const lastMessage = messages[messages.length - 1];
-  const showThinking = isStreaming && lastMessage?.role === "assistant" && !lastMessage.content;
+  // Keep the thinking panel + tool list visible for the entire duration
+  // of the stream, not just the pre-first-token window. Multi-turn agents
+  // emit one assistant event per turn; between turns (while a tool is
+  // running) content is present but the agent is still working. Hiding
+  // the indicator there falsely signals "done".
+  const showThinking = isStreaming && lastMessage?.role === "assistant";
 
   return (
     <div className="flex h-full flex-col">
@@ -270,16 +275,20 @@ export function AskKarmaChat({
             <p className="text-xs text-zinc-500 dark:text-zinc-400">{config.assistantSubtitle}</p>
           </div>
         </div>
+        {/* The community-exit CTA lives at the page level (AskKarmaPage)
+            so it stays put across the start↔chat crossfade. The chat
+            header only needs its own internal-nav button. */}
         <button
           type="button"
           onClick={onBack}
+          data-testid="ask-karma-back-to-topics"
           className={cn(
-            "group flex items-center gap-1.5 rounded-md px-2 py-1 text-sm font-medium text-[rgb(var(--color-primary-dark))]",
+            "group flex items-center gap-1.5 rounded-md px-2 py-1 text-sm font-medium text-zinc-500",
             "transition-all duration-200 ease-out",
-            "hover:bg-[rgb(var(--color-primary))]/5 hover:text-zinc-900 hover:gap-2",
+            "hover:bg-zinc-100 hover:text-zinc-900 hover:gap-2",
             "active:scale-95",
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-primary))]/50",
-            "dark:text-[rgb(var(--color-primary-light))] dark:hover:bg-[rgb(var(--color-primary-dark))]/30 dark:hover:text-[rgb(var(--color-primary-light))]"
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-300",
+            "dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
           )}
         >
           <ArrowLeftIcon

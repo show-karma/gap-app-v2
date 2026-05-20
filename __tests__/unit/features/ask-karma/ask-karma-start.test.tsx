@@ -29,9 +29,9 @@ vi.mock("@/components/ui/button", () => ({
 }));
 
 const config: AskKarmaConfig = {
-  heading: "Ask us anything",
+  heading: "Ask Karma",
   subheading: "Learn how funding works.",
-  inputPlaceholder: "Questions? Ask the AI Assistant",
+  inputPlaceholder: "Questions? Ask the Karma Assistant",
   examplesIntro: "Some examples to get the juices flowing:",
   exampleQuestions: ["How do I submit a milestone?", "Why can't I access a project?"],
   featuredTopicsHeading: "Check out these featured topics",
@@ -48,7 +48,7 @@ const config: AskKarmaConfig = {
       cta: { label: "View Funded Projects", href: "/projects" },
     },
   ],
-  assistantTitle: "AI Assistant",
+  assistantTitle: "Karma Assistant",
   assistantSubtitle: "Here to help 24/7",
 };
 
@@ -138,7 +138,7 @@ describe("AskKarmaStart — direct input submissions", () => {
     render(<AskKarmaStart config={config} onSubmit={onSubmit} />);
     const input = screen.getByPlaceholderText(config.inputPlaceholder);
     await user.type(input, "Hello there");
-    await user.click(screen.getByLabelText("Ask the AI Assistant"));
+    await user.click(screen.getByLabelText("Ask the Karma Assistant"));
     expect(onSubmit).toHaveBeenCalledWith("Hello there");
   });
 
@@ -146,7 +146,7 @@ describe("AskKarmaStart — direct input submissions", () => {
     const user = userEvent.setup();
     const onSubmit = vi.fn();
     render(<AskKarmaStart config={config} onSubmit={onSubmit} />);
-    const button = screen.getByLabelText("Ask the AI Assistant");
+    const button = screen.getByLabelText("Ask the Karma Assistant");
     expect(button).toBeDisabled();
     const input = screen.getByPlaceholderText(config.inputPlaceholder);
     await user.type(input, "   ");

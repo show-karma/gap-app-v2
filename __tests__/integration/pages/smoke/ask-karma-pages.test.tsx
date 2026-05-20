@@ -69,7 +69,7 @@ describe("/ask-karma (root) page", () => {
   it("renders AskKarmaPage with the default config when not on a whitelabel", async () => {
     await renderAsyncPage(() => import("@/app/ask-karma/page"), {});
     expect(screen.getByTestId("ask-karma-page")).toBeInTheDocument();
-    expect(screen.getByTestId("ask-karma-page")).toHaveAttribute("data-heading", "Ask us anything");
+    expect(screen.getByTestId("ask-karma-page")).toHaveAttribute("data-heading", "Ask Karma");
     expect(askKarmaPageSpy).toHaveBeenCalled();
     const props = askKarmaPageSpy.mock.calls[0][0];
     expect(props.communityId).toBeUndefined();
@@ -85,8 +85,9 @@ describe("/ask-karma (root) page", () => {
     await renderAsyncPage(() => import("@/app/ask-karma/page"), {});
     const props = askKarmaPageSpy.mock.calls[0][0];
     expect(props.communityId).toBe("filecoin");
-    // Filecoin gets the bespoke config — the heading still says "Ask us
-    // anything" but the example questions array differs from the default.
+    // Filecoin gets the bespoke config — the heading reads "Ask Karma"
+    // (same across all tenants), but the example questions array carries
+    // filecoin-specific prompts.
     expect(props.config.exampleQuestions.some((q: string) => q.includes("fil.one"))).toBe(true);
   });
 
@@ -106,10 +107,9 @@ describe("/ask-karma (root) page", () => {
 
 describe("/community/[communityId]/ask-karma (community) page", () => {
   it("renders AskKarmaPage with the community id from params", async () => {
-    await renderAsyncPage(
-      () => import("@/app/community/[communityId]/(with-header)/ask-karma/page"),
-      { params: Promise.resolve({ communityId: "filecoin" }) }
-    );
+    await renderAsyncPage(() => import("@/app/community/[communityId]/ask-karma/page"), {
+      params: Promise.resolve({ communityId: "filecoin" }),
+    });
     expect(screen.getByTestId("ask-karma-page")).toBeInTheDocument();
     expect(screen.getByTestId("ask-karma-page")).toHaveAttribute("data-community-id", "filecoin");
     const props = askKarmaPageSpy.mock.calls[0][0];
@@ -131,7 +131,7 @@ describe("/community/[communityId]/ask-karma (community) page", () => {
     }));
 
     await expect(
-      renderAsyncPage(() => import("@/app/community/[communityId]/(with-header)/ask-karma/page"), {
+      renderAsyncPage(() => import("@/app/community/[communityId]/ask-karma/page"), {
         params: Promise.resolve({ communityId: "unknown" }),
       })
     ).rejects.toThrow();
@@ -151,9 +151,7 @@ describe("/community/[communityId]/ask-karma (community) page", () => {
         .fn()
         .mockResolvedValue({ uid: "0x123", details: { name: "Filecoin", slug: "filecoin" } }),
     }));
-    const { generateMetadata } = await import(
-      "@/app/community/[communityId]/(with-header)/ask-karma/page"
-    );
+    const { generateMetadata } = await import("@/app/community/[communityId]/ask-karma/page");
     const meta = await generateMetadata({
       params: Promise.resolve({ communityId: "filecoin" }),
     });

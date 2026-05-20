@@ -4,15 +4,15 @@ import { getAskKarmaConfig } from "@/src/features/ask-karma/config";
 describe("getAskKarmaConfig", () => {
   it("returns the default config when no tenant id is provided", () => {
     const config = getAskKarmaConfig();
-    expect(config.heading).toBe("Ask us anything");
+    expect(config.heading).toBe("Ask Karma");
     expect(config.exampleQuestions.length).toBeGreaterThan(0);
     expect(config.featuredTopics.length).toBeGreaterThan(0);
-    expect(config.assistantTitle).toBe("AI Assistant");
+    expect(config.assistantTitle).toBe("Karma Assistant");
   });
 
   it("returns the default config when the tenant id is unknown", () => {
     const config = getAskKarmaConfig("not-a-real-tenant");
-    expect(config.heading).toBe("Ask us anything");
+    expect(config.heading).toBe("Ask Karma");
   });
 
   it("returns the default config for null or undefined", () => {
@@ -32,8 +32,8 @@ describe("getAskKarmaConfig", () => {
     // optimism is a known tenant id but isn't in TENANT_CONFIGS — should
     // fall through to DEFAULT_CONFIG, not throw or return undefined.
     const config = getAskKarmaConfig("optimism");
-    expect(config.heading).toBe("Ask us anything");
-    expect(config.assistantTitle).toBe("AI Assistant");
+    expect(config.heading).toBe("Ask Karma");
+    expect(config.assistantTitle).toBe("Karma Assistant");
   });
 
   it("returns the default config for an arbitrary community slug (not a known tenant)", () => {

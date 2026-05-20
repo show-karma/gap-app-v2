@@ -74,7 +74,7 @@ export function AskKarmaInput({
         rows={1}
         maxLength={CHAT_INPUT_MAX_LENGTH}
         placeholder={placeholder}
-        aria-label="Message AI Assistant"
+        aria-label="Message Karma Assistant"
         className={cn(
           "max-h-40 min-h-[24px] flex-1 resize-none bg-transparent text-sm",
           "text-zinc-900 placeholder:text-zinc-400 outline-none",

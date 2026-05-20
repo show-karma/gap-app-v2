@@ -23,8 +23,29 @@ vi.mock("@/src/components/ai-elements/message-response", () => ({
   ),
 }));
 
+vi.mock("next/link", () => ({
+  __esModule: true,
+  default: ({
+    href,
+    children,
+    ...rest
+  }: { href: string; children: React.ReactNode } & Record<string, unknown>) => (
+    <a href={href} {...rest}>
+      {children}
+    </a>
+  ),
+}));
+
+// useWhitelabel drives the page-level exit CTA target. Default to non-
+// whitelabel so the explicit /community/<id> path is used; individual
+// tests override via mockReturnValueOnce.
+const mockUseWhitelabel = vi.fn(() => ({ isWhitelabel: false }));
+vi.mock("@/utilities/whitelabel-context", () => ({
+  useWhitelabel: () => mockUseWhitelabel(),
+}));
+
 const config: AskKarmaConfig = {
-  heading: "Ask us anything",
+  heading: "Ask Karma",
   subheading: "Sub",
   inputPlaceholder: "Ask…",
   examplesIntro: "Examples:",
@@ -33,7 +54,7 @@ const config: AskKarmaConfig = {
   exampleQuestions: ["Hi?"],
   featuredTopicsHeading: "Topics",
   featuredTopics: [],
-  assistantTitle: "AI Assistant",
+  assistantTitle: "Karma Assistant",
   assistantSubtitle: "Here to help 24/7",
 };
 
@@ -222,5 +243,54 @@ describe("AskKarmaPage", () => {
     await user.keyboard("{Enter}");
     expect(mockSendMessage).toHaveBeenCalledWith("Follow-up");
     expect(screen.getByTestId("ask-karma-chat-view")).toHaveAttribute("data-view-state", "chat");
+  });
+
+  describe("Go to community view CTA", () => {
+    beforeEach(() => {
+      mockUseWhitelabel.mockReturnValue({ isWhitelabel: false });
+    });
+
+    it("renders on the start view and points at /community/<id> on the main domain", () => {
+      render(<AskKarmaPage config={config} communityId="filecoin" />);
+      // CTA is at page level — present immediately, before any view switch.
+      expect(screen.getByTestId("ask-karma-start-view")).toBeInTheDocument();
+      const cta = screen.getByTestId("ask-karma-go-to-community");
+      expect(cta).toHaveAttribute("href", "/community/filecoin");
+      expect(cta).toHaveTextContent("Go to community view");
+    });
+
+    it("stays present after transitioning to the chat view", async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+      render(<AskKarmaPage config={config} communityId="filecoin" />);
+
+      await user.click(screen.getByRole("button", { name: config.exampleQuestions[0] }));
+      await advanceChipFlow(config.exampleQuestions[0]);
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(VIEW_LEAVE_MS + 30);
+      });
+
+      expect(screen.getByTestId("ask-karma-chat-view")).toBeInTheDocument();
+      // Same CTA, same href — survives the crossfade.
+      expect(screen.getByTestId("ask-karma-go-to-community")).toHaveAttribute(
+        "href",
+        "/community/filecoin"
+      );
+    });
+
+    it("points at site root on a whitelabel surface", () => {
+      // Use the persistent override (not mockReturnValueOnce) because
+      // testing-library + React 18 may invoke the hook more than once
+      // during a single render, and we want every call within this test
+      // to report whitelabel mode.
+      mockUseWhitelabel.mockReturnValue({ isWhitelabel: true });
+      render(<AskKarmaPage config={config} communityId="filecoin" />);
+      expect(screen.getByTestId("ask-karma-go-to-community")).toHaveAttribute("href", "/");
+    });
+
+    it("falls back to site root when no community is in scope", () => {
+      render(<AskKarmaPage config={config} />);
+      expect(screen.getByTestId("ask-karma-go-to-community")).toHaveAttribute("href", "/");
+    });
   });
 });
