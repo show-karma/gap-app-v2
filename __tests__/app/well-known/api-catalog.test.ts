@@ -49,6 +49,30 @@ describe("/.well-known/api-catalog route handler", () => {
     ]);
   });
 
+  it("exposes an 'item' array per RFC 9727 with at least 4 entries", async () => {
+    const { GET } = await import("@/app/.well-known/api-catalog/route");
+    const res = GET();
+    const body = await res.json();
+    const item = body.linkset[0].item;
+    expect(Array.isArray(item)).toBe(true);
+    expect(item.length).toBeGreaterThanOrEqual(4);
+    for (const entry of item) {
+      expect(typeof entry.href).toBe("string");
+      expect(typeof entry.type).toBe("string");
+    }
+  });
+
+  it("includes the apex OpenAPI, indexer docs, mcp.json, and mcp/server-card.json in 'item'", async () => {
+    const { GET } = await import("@/app/.well-known/api-catalog/route");
+    const res = GET();
+    const body = await res.json();
+    const hrefs = body.linkset[0].item.map((entry: { href: string }) => entry.href);
+    expect(hrefs).toContain(`${SITE_URL}/openapi.json`);
+    expect(hrefs).toContain(`${INDEXER_URL}/v2/docs`);
+    expect(hrefs).toContain(`${SITE_URL}/.well-known/mcp.json`);
+    expect(hrefs).toContain(`${SITE_URL}/.well-known/mcp/server-card.json`);
+  });
+
   it("sets wide-open CORS headers", async () => {
     const { GET } = await import("@/app/.well-known/api-catalog/route");
     const res = GET();

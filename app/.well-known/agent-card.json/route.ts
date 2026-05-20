@@ -21,11 +21,19 @@ export const revalidate = 3600;
  */
 
 export function GET() {
+  // Ora and similar AEO crawlers look at the root for `name` and
+  // `description`, while A2A consumers expect the nested `agent` envelope.
+  // We expose both — same values, no drift.
+  const name = "Karma";
+  const description =
+    "Discover funding programs, projects, milestones, and impact data. Submit applications, track grants, and post updates via an MCP server with OAuth.";
+
   const body = {
+    name,
+    description,
     agent: {
-      name: "Karma",
-      description:
-        "Discover funding programs, projects, milestones, and impact data. Submit applications, track grants, and post updates via an MCP server with OAuth.",
+      name,
+      description,
       url: SITE_URL,
       version: "1.0.0",
       documentationUrl: `${SITE_URL}/mcp/connect`,

@@ -37,6 +37,8 @@ export function GET() {
   const body = {
     name: "gap-tools",
     alternateNames: ["karma-gap-tools"],
+    description:
+      "MCP server for Karma — discover funding programs, projects, milestones, grants, and impact data across 8 blockchain networks. Read-only public tools without auth; OAuth or API-key for mutations.",
     version: "1.0.0",
     protocolVersion: MCP_PROTOCOL_VERSION,
     transport: "http",
