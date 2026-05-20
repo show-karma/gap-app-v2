@@ -11,12 +11,12 @@
 
 import type { PublicToolMetadata } from "./types";
 
-export interface AgentFaqEntry {
+interface AgentFaqEntry {
   question: string;
   answer: string;
 }
 
-export interface UseCaseCard {
+interface UseCaseCard {
   title: string;
   description: string;
   example: string;

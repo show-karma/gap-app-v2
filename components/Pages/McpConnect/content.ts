@@ -4,12 +4,12 @@
  * module guarantees the schema and the page never drift apart.
  */
 
-export interface FaqEntry {
+interface FaqEntry {
   question: string;
   answer: string;
 }
 
-export interface ConnectStep {
+interface ConnectStep {
   name: string;
   text: string;
 }
