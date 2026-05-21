@@ -1,14 +1,8 @@
 "use client";
 
 import {
-  Bot,
   ExternalLink,
-  FileBadge,
-  FileText,
-  FolderOpen,
   GitBranch,
-  Globe,
-  Network,
   Pause,
   Pencil,
   Play,
@@ -28,9 +22,9 @@ import {
   KNOWLEDGE_SOURCE_KIND_LABELS,
   KNOWLEDGE_SOURCE_KIND_SHORT,
   type KnowledgeSource,
-  type KnowledgeSourceKind,
 } from "@/types/v2/knowledge-base";
 import { EditSourceDialog } from "./EditSourceDialog";
+import { KIND_STYLES } from "./SourceRow.kinds";
 
 interface Props {
   source: KnowledgeSource;
@@ -39,48 +33,6 @@ interface Props {
    * the row aligns flush with the list container's top edge. */
   isFirst?: boolean;
 }
-
-// ── Kind metadata ────────────────────────────────────────────────────────────
-//
-// The design renders each kind glyph in a neutral square tile rather than a
-// tinted circle — quieter rhythm down the list. We keep a soft tint on the
-// glyph itself so admins can still scan kinds at a glance.
-
-interface KindStyle {
-  Icon: ComponentType<{
-    className?: string;
-    "aria-hidden"?: boolean;
-    strokeWidth?: number;
-  }>;
-  fg: string;
-}
-
-const KIND_STYLES: Record<KnowledgeSourceKind, KindStyle> = {
-  url: {
-    Icon: Globe,
-    fg: "text-sky-600 dark:text-sky-400",
-  },
-  sitemap: {
-    Icon: Network,
-    fg: "text-violet-600 dark:text-violet-400",
-  },
-  gdrive_file: {
-    Icon: FileText,
-    fg: "text-emerald-600 dark:text-emerald-400",
-  },
-  gdrive_folder: {
-    Icon: FolderOpen,
-    fg: "text-amber-600 dark:text-amber-400",
-  },
-  pdf_url: {
-    Icon: FileBadge,
-    fg: "text-rose-600 dark:text-rose-400",
-  },
-  agentic_site: {
-    Icon: Bot,
-    fg: "text-violet-600 dark:text-violet-400",
-  },
-};
 
 // ── Status meta ──────────────────────────────────────────────────────────────
 //
