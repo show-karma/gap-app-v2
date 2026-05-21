@@ -1,6 +1,16 @@
 import type { MetadataRoute } from "next";
 import { SITE_URL } from "@/utilities/meta";
 
+/**
+ * Robots configuration as a typed `MetadataRoute.Robots` object.
+ *
+ * Lives in `utilities/` rather than `app/robots.ts` because the
+ * production server serves robots.txt from `app/robots.txt/route.ts`
+ * (the route handler appends a NLWeb `Schemamap:` directive that
+ * `MetadataRoute.Robots` doesn't model). This module is the typed
+ * source of truth — both the route handler and existing unit tests
+ * import from here.
+ */
 export default function robots(): MetadataRoute.Robots {
   return {
     rules: [

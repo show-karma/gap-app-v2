@@ -1,5 +1,5 @@
-import robotsConfig from "@/app/robots";
 import { SITE_URL } from "@/utilities/meta";
+import robotsConfig from "@/utilities/robots-config";
 
 export const dynamic = "force-static";
 export const revalidate = 3600;
