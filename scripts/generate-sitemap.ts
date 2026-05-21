@@ -163,8 +163,15 @@ async function fetchUrls(
   return null;
 }
 
-function buildIndexXml(kindConfigs: KindConfig[]): string {
+function buildSitemapIndex(locs: string[]): string {
   const now = formatLastmod(new Date());
+  const items = locs
+    .map((loc) => `  <sitemap>\n    <loc>${loc}</loc>\n    <lastmod>${now}</lastmod>\n  </sitemap>`)
+    .join("\n");
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${items}\n</sitemapindex>\n`;
+}
+
+function buildIndexXml(kindConfigs: KindConfig[]): string {
   const entries: string[] = [];
 
   entries.push(`${SITE_URL}/sitemaps/static/sitemap.xml`);
@@ -177,11 +184,16 @@ function buildIndexXml(kindConfigs: KindConfig[]): string {
     }
   }
 
-  const items = entries
-    .map((loc) => `  <sitemap>\n    <loc>${loc}</loc>\n    <lastmod>${now}</lastmod>\n  </sitemap>`)
-    .join("\n");
+  return buildSitemapIndex(entries);
+}
 
-  return `<?xml version="1.0" encoding="UTF-8"?>\n<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${items}\n</sitemapindex>\n`;
+function buildKindIndexXml(config: KindConfig): string {
+  const chunkCount = computeChunkCount(config.total);
+  const locs: string[] = [];
+  for (let i = 1; i <= chunkCount; i++) {
+    locs.push(`${SITE_URL}/sitemaps/${config.path}/sitemap/${i}.xml`);
+  }
+  return buildSitemapIndex(locs);
 }
 
 function buildUrlsetXml(urls: string[], priority: number, changeFrequency: string): string {
@@ -312,6 +324,14 @@ async function main() {
 
   const indexEntryCount = (indexXml.match(/<sitemap>/g) ?? []).length;
   logInfo(`[sitemap-gen] Wrote ${indexPath} (${indexEntryCount} entries)`);
+
+  for (const config of kindConfigs) {
+    const kindIndexXml = buildKindIndexXml(config);
+    const kindIndexPath = path.join(PROJECT_ROOT, "public", `sitemap-${config.path}.xml`);
+    fs.writeFileSync(kindIndexPath, kindIndexXml, "utf-8");
+    const kindEntries = (kindIndexXml.match(/<sitemap>/g) ?? []).length;
+    logInfo(`[sitemap-gen] Wrote ${kindIndexPath} (${kindEntries} entries)`);
+  }
 
   await writeChildSitemaps(baseUrl, kindConfigs);
 }
