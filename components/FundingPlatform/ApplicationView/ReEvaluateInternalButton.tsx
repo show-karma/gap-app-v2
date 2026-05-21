@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { useReEvaluateInternalAI } from "@/hooks/useReEvaluateInternalAI";
 
-export interface ReEvaluateInternalButtonProps {
+interface ReEvaluateInternalButtonProps {
   referenceNumber: string;
   onEvaluationComplete?: () => void | Promise<void>;
   disabled?: boolean;

@@ -29,9 +29,15 @@ vi.mock("@/components/FundingPlatform/ApplicationView/EvaluationComponents", () 
 }));
 
 vi.mock("@heroicons/react/24/outline", () => ({
-  ChevronDownIcon: (props: any) => <svg data-testid="chevron-icon" {...props} />,
-  ClockIcon: (props: any) => <svg data-testid="clock-icon" {...props} />,
-  LockClosedIcon: (props: any) => <svg data-testid="lock-icon" {...props} />,
+  ChevronDownIcon: (props: React.SVGProps<SVGSVGElement>) => (
+    <svg data-testid="chevron-icon" {...props} />
+  ),
+  ClockIcon: (props: React.SVGProps<SVGSVGElement>) => (
+    <svg data-testid="clock-icon" {...props} />
+  ),
+  LockClosedIcon: (props: React.SVGProps<SVGSVGElement>) => (
+    <svg data-testid="lock-icon" {...props} />
+  ),
 }));
 
 vi.mock("@/components/Utilities/MarkdownPreview", () => ({
@@ -41,7 +47,7 @@ vi.mock("@/components/Utilities/MarkdownPreview", () => ({
 }));
 
 vi.mock("@/utilities/tailwind", () => ({
-  cn: (...classes: any[]) => classes.filter(Boolean).join(" "),
+  cn: (...classes: unknown[]) => classes.filter(Boolean).join(" "),
 }));
 
 describe("InternalAIEvaluationDisplay", () => {
