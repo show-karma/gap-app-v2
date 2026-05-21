@@ -35,6 +35,7 @@ const formatStatus = (status: string): string => {
 
 interface ApplicationTableRowProps {
   programId: string;
+  communityUID?: string;
   application: IFundingApplication;
   showAIScoreColumn: boolean;
   showInternalAIScoreColumn: boolean;
@@ -78,6 +79,7 @@ const getStatusBadge = (status: string) => (
 
 const ApplicationTableRowComponent: FC<ApplicationTableRowProps> = ({
   programId,
+  communityUID,
   application,
   showAIScoreColumn,
   showInternalAIScoreColumn,
@@ -209,6 +211,7 @@ const ApplicationTableRowComponent: FC<ApplicationTableRowProps> = ({
             <div onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
               <ReviewerAssignmentDropdown
                 programId={programId}
+                communityUID={communityUID}
                 applicationId={application.referenceNumber}
                 availableReviewers={programReviewers}
                 assignedReviewerAddresses={application.appReviewers || []}
@@ -226,6 +229,7 @@ const ApplicationTableRowComponent: FC<ApplicationTableRowProps> = ({
             <div onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
               <ReviewerAssignmentDropdown
                 programId={programId}
+                communityUID={communityUID}
                 applicationId={application.referenceNumber}
                 availableReviewers={milestoneReviewers}
                 assignedReviewerAddresses={application.milestoneReviewers || []}

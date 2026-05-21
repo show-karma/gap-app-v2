@@ -1,0 +1,27 @@
+{
+  "threshold": 100,
+  "reporters": ["json", "console"],
+  "output": "./.quality/jscpd",
+  "ignore": [
+    "**/node_modules/**",
+    "**/.next/**",
+    "**/dist/**",
+    "**/coverage/**",
+    "**/__tests__/**",
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "**/*.stories.ts",
+    "**/*.stories.tsx",
+    "**/*.snap",
+    "**/*.d.ts",
+    "**/widget/**",
+    "**/e2e/**",
+    "**/.storybook/**",
+    "**/scripts/generate-llms-txt.ts"
+  ],
+  "format": ["typescript", "tsx", "javascript", "jsx"],
+  "absolute": false,
+  "gitignore": true,
+  "minLines": 30,
+  "minTokens": 80
+}

@@ -4,6 +4,8 @@ import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useAttestationToast } from "@/hooks/useAttestationToast";
+import { useAuth } from "@/hooks/useAuth";
+import { useMixpanel } from "@/hooks/useMixpanel";
 import { useProjectStore } from "@/store";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
 import { createAuthenticatedApiClient } from "@/utilities/auth/api-client";
@@ -50,6 +52,8 @@ export const useMilestoneEdit = (options?: UseMilestoneEditOptions) => {
   const projectUid = options?.projectUid || storeProject?.uid || "";
   const projectSlug = options?.projectSlug || storeProject?.details?.slug || "";
   const { refetch: refetchGrants } = useProjectGrants(projectUid);
+  const { address: authAddress } = useAuth();
+  const { mixpanel } = useMixpanel();
 
   const invalidateAllProjectQueries = async () => {
     const invalidations: Promise<void>[] = [];
@@ -117,6 +121,19 @@ export const useMilestoneEdit = (options?: UseMilestoneEditOptions) => {
     setIsEditing(true);
     showLoading("Editing milestone...");
 
+    // The on-chain attester for the new+revoke attestations is the Karma
+    // admin wallet, so audit of who *requested* the edit lives in analytics.
+    mixpanel.reportEvent({
+      event: "milestone:edit:requested",
+      properties: {
+        requestedBy: authAddress,
+        milestoneUID: milestone.uid,
+        milestoneTitle: milestone.title,
+        programId,
+        chainID: milestone.chainID,
+      },
+    });
+
     try {
       const apiClient = createAuthenticatedApiClient(envVars.NEXT_PUBLIC_GAP_INDEXER_URL, 60000);
 
@@ -162,8 +179,30 @@ export const useMilestoneEdit = (options?: UseMilestoneEditOptions) => {
       );
 
       await invalidateAllProjectQueries();
+      mixpanel.reportEvent({
+        event: "milestone:edit:success",
+        properties: {
+          requestedBy: authAddress,
+          milestoneUID: milestone.uid,
+          newMilestoneUID: response.data.newMilestoneUID,
+          programId,
+          chainID: milestone.chainID,
+          txHash: response.data.txHash,
+          revocationSuccess: response.data.revocationSuccess,
+        },
+      });
       showSuccess("Milestone edited successfully!");
     } catch (error) {
+      mixpanel.reportEvent({
+        event: "milestone:edit:failed",
+        properties: {
+          requestedBy: authAddress,
+          milestoneUID: milestone.uid,
+          programId,
+          chainID: milestone.chainID,
+          error: error instanceof Error ? error.message : String(error),
+        },
+      });
       showError("There was an error editing the milestone");
       errorManager("Error editing milestone", error, {
         milestoneData: milestone,

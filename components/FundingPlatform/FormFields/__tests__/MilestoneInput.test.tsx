@@ -120,9 +120,9 @@ describe("MilestoneInput Component", () => {
       const addButton = screen.getByRole("button", { name: /add milestone/i });
       fireEvent.click(addButton);
 
-      expect(screen.getByLabelText(/funding requested \(optional\)/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/funding requested \*/i)).toBeInTheDocument();
       // MarkdownEditor doesn't have proper label association, check for label text
-      expect(screen.getByText(/completion criteria \(optional\)/i)).toBeInTheDocument();
+      expect(screen.getByText(/^completion criteria$/i)).toBeInTheDocument();
     });
 
     it("should accept text input for funding requested field", () => {
@@ -131,7 +131,7 @@ describe("MilestoneInput Component", () => {
       const addButton = screen.getByRole("button", { name: /add milestone/i });
       fireEvent.click(addButton);
 
-      const fundingInput = screen.getByLabelText(/funding requested \(optional\)/i);
+      const fundingInput = screen.getByLabelText(/funding requested \*/i);
       fireEvent.change(fundingInput, { target: { value: "$5,000 USD" } });
 
       expect(fundingInput).toHaveValue("$5,000 USD");
@@ -143,7 +143,7 @@ describe("MilestoneInput Component", () => {
       const addButton = screen.getByRole("button", { name: /add milestone/i });
       fireEvent.click(addButton);
 
-      const fundingInput = screen.getByLabelText(/funding requested \(optional\)/i);
+      const fundingInput = screen.getByLabelText(/funding requested \*/i);
 
       const formats = ["$5,000", "5000", "5000 USD", "€5,000"];
 
@@ -290,11 +290,11 @@ describe("MilestoneInput Component", () => {
       const addButton = screen.getByRole("button", { name: /add milestone/i });
       fireEvent.click(addButton);
 
-      const fundingInput = screen.getByLabelText(/funding requested \(optional\)/i);
+      const fundingInput = screen.getByLabelText(/funding requested \*/i);
       expect(fundingInput).toHaveValue("");
 
       // MarkdownEditor doesn't have proper label association, just verify label exists
-      expect(screen.getByText(/completion criteria \(optional\)/i)).toBeInTheDocument();
+      expect(screen.getByText(/^completion criteria$/i)).toBeInTheDocument();
     });
   });
 

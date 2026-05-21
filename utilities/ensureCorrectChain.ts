@@ -4,8 +4,8 @@ import { getGapClient } from "@/utilities/gapClient";
 interface EnsureCorrectChainParams {
   targetChainId: number;
   currentChainId?: number;
-  switchChainAsync?: (params: { chainId: number }) => Promise<any>;
-  onError?: (error: any) => void;
+  switchChainAsync?: (params: { chainId: number }) => Promise<unknown>;
+  onError?: (error: unknown) => void;
 }
 
 interface EnsureCorrectChainResult {
@@ -43,7 +43,9 @@ export async function ensureCorrectChain({
     resolvedGapClient = getGapClient(targetChainId);
   } catch (e) {
     const message =
-      e instanceof Error ? e.message : `This network (chain ID ${targetChainId}) is not supported yet.`;
+      e instanceof Error
+        ? e.message
+        : `This network (chain ID ${targetChainId}) is not supported yet.`;
     toast.error(message);
     onError?.(e);
     return {

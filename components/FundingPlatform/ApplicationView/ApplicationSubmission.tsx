@@ -284,8 +284,8 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
             title: z.string().min(1, "Milestone title is required"),
             description: z.string().min(1, "Milestone description is required"),
             dueDate: z.string().min(1, "Due date is required"),
-            fundingRequested: z.string().optional(),
-            completionCriteria: z.string().optional(),
+            fundingRequested: z.string().min(1, "Funding requested is required"),
+            completionCriteria: z.string().min(1, "Completion criteria is required"),
           });
 
           // Build array schema with min/max validations
@@ -648,7 +648,7 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{field.label}</h3>
           {field.description && (
             <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-              <MarkdownPreview source={field.description} />
+              <MarkdownPreview source={field.description} variant="inline" />
             </div>
           )}
         </div>

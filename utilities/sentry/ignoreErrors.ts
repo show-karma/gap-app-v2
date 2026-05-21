@@ -33,6 +33,17 @@ const browserExtensionErrors = [
   "chrome.runtime.sendMessage() called from a webpage must specify an Extension ID",
 ];
 
+// Next.js throws `Error: Connection closed.` when a streaming SSR/RSC response
+// is aborted — most commonly because the user navigated away before the
+// stream finished, or a route prefetch was cancelled mid-flight. The error is
+// internal to Next's React server-renderer and there's no user-visible
+// failure (the client either renders the new route or retries the fetch).
+// Surfaced on `/project/:projectId/funding` because the profile page
+// prefetches grants/updates/impacts in parallel, multiplying the abort
+// surface area.
+// See https://karma-crypto-inc.sentry.io/issues/7104802234/ (DEV-257)
+const streamingAbortErrors = [/^Error: Connection closed\.?$/i, "Connection closed."];
+
 const sentryInstrumentationErrors = [
   // Sentry's own lazy-loaded Replay integration occasionally fails to fetch
   // (chunk eviction after a deploy, network blip, ad-blocker, CSP). Replay is
@@ -48,6 +59,14 @@ const sentryInstrumentationErrors = [
 // These are normal 404-type scenarios, not bugs worth tracking
 // See https://karma-crypto-inc.sentry.io/issues/7205405990
 const notFoundErrors = ["Project not found", "Community not found"];
+
+// Anonymous-traffic errors. When a logged-out user lands on a public page
+// (e.g. /project/:projectId), some indexer routes (or SDK callers) still
+// hit auth-required paths without a bearer token and the backend replies
+// with this 401 payload. Filter it out — the request itself isn't broken,
+// it just happened on a path that doesn't support anonymous access. See
+// DEV-256.
+const anonymousAuthErrors = ["Authorization header is required"];
 
 export const sentryIgnoreErrors = [
   // user rejected a confirmation in the wallet
@@ -65,4 +84,6 @@ export const sentryIgnoreErrors = [
   ...browserExtensionErrors,
   ...sentryInstrumentationErrors,
   ...notFoundErrors,
+  ...streamingAbortErrors,
+  ...anonymousAuthErrors,
 ];

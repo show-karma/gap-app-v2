@@ -1,6 +1,7 @@
 import {
   BanknoteArrowDown,
   BellDot,
+  Bot,
   GalleryThumbnails,
   Github,
   GoalIcon,
@@ -135,5 +136,11 @@ export const resourcesItems: MenuItem[] = [
     title: "Skills",
     external: true,
     showArrow: true,
+  },
+  {
+    href: PAGES.FOR_AGENTS,
+    icon: Bot,
+    title: "For AI Agents",
+    description: "Connect Karma to Claude, Cursor, and Codex via MCP",
   },
 ];

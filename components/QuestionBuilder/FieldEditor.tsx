@@ -222,10 +222,7 @@ export function FieldEditor({
                 htmlFor="milestone-funding-requested"
                 className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
               >
-                Funding Requested{" "}
-                <span className="text-green-600 dark:text-green-400 text-xs font-normal">
-                  (Optional)
-                </span>
+                Funding Requested <span className="text-red-500">*</span>
               </label>
               <input
                 id="milestone-funding-requested"
@@ -241,10 +238,7 @@ export function FieldEditor({
                 htmlFor="milestone-completion-criteria"
                 className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
               >
-                Completion Criteria{" "}
-                <span className="text-green-600 dark:text-green-400 text-xs font-normal">
-                  (Optional)
-                </span>
+                Completion Criteria <span className="text-red-500">*</span>
               </label>
               <textarea
                 id="milestone-completion-criteria"

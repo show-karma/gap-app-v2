@@ -6,28 +6,42 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       {
         userAgent: "*",
-        allow: "/",
+        allow: ["/", "/.well-known/"],
         disallow: ["/api/", "/admin/", "/super-admin/", "/safe/"],
       },
       {
         userAgent: "GPTBot",
-        allow: ["/", "/llms.txt", "/llms-full.txt"],
+        allow: ["/", "/.well-known/", "/llms.txt", "/llms-full.txt", "/agents.md"],
+        disallow: ["/api/", "/admin/", "/super-admin/", "/safe/"],
+      },
+      {
+        userAgent: "ChatGPT-User",
+        allow: ["/", "/.well-known/", "/llms.txt", "/llms-full.txt", "/agents.md"],
         disallow: ["/api/", "/admin/", "/super-admin/", "/safe/"],
       },
       {
         userAgent: "ClaudeBot",
-        allow: ["/", "/llms.txt", "/llms-full.txt"],
+        allow: ["/", "/.well-known/", "/llms.txt", "/llms-full.txt", "/agents.md"],
         disallow: ["/api/", "/admin/", "/super-admin/", "/safe/"],
       },
       {
         userAgent: "PerplexityBot",
-        allow: ["/", "/llms.txt", "/llms-full.txt"],
+        allow: ["/", "/.well-known/", "/llms.txt", "/llms-full.txt", "/agents.md"],
         disallow: ["/api/", "/admin/", "/super-admin/", "/safe/"],
       },
       {
         userAgent: "Google-Extended",
-        allow: ["/", "/llms.txt", "/llms-full.txt"],
+        allow: ["/", "/.well-known/", "/llms.txt", "/llms-full.txt", "/agents.md"],
         disallow: ["/api/", "/admin/", "/super-admin/", "/safe/"],
+      },
+      // Training-only crawlers: no answer-engine value, full disallow.
+      {
+        userAgent: "CCBot",
+        disallow: ["/"],
+      },
+      {
+        userAgent: "Bytespider",
+        disallow: ["/"],
       },
     ],
     sitemap: [`${SITE_URL}/sitemap.xml`],

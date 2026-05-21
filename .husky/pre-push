@@ -1,0 +1,7 @@
+#!/usr/bin/env sh
+# Pre-push: ensure the branch typechecks before push.
+# Tests are NOT run here — they are full-suite-only on this codebase due to
+# pre-existing failures (issue #1306). CI runs the test suite on PR.
+# Use --no-verify to skip in emergencies.
+
+pnpm typecheck

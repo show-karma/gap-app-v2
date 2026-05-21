@@ -280,9 +280,9 @@ export function MilestoneCard({
     setIsCompletionExpanded((v) => !v);
   }, []);
 
-  const handleDeleteDialogOpenChange = useCallback((open: boolean) => {
-    if (open) setIsOverflowOpen(false);
-    setIsDeleteDialogOpen(open);
+  const handleDeleteMenuClick = useCallback(() => {
+    setIsOverflowOpen(false);
+    setIsDeleteDialogOpen(true);
   }, []);
 
   const handleOverflowBlur = useCallback((e: React.FocusEvent) => {
@@ -403,46 +403,53 @@ export function MilestoneCard({
               <PencilSquareIcon className="w-5 h-5 text-gray-500 dark:text-gray-400" />
             </Button>
           )}
-          {canDeleteMilestones && milestone.fundingApplicationCompletion && (
-            // biome-ignore lint/a11y/noStaticElementInteractions: wrapper needs onBlur to detect focus leaving the menu group; the interactive child is the trigger button below.
-            <div className="relative" ref={overflowRef} onBlur={handleOverflowBlur}>
-              <button
-                type="button"
-                onClick={handleToggleOverflow}
-                onKeyDown={handleOverflowKeyDown}
-                className="p-1 rounded hover:bg-gray-100 dark:hover:bg-zinc-700 transition-colors"
-                aria-label="More actions"
-                aria-haspopup="menu"
-                aria-expanded={isOverflowOpen}
-              >
-                <EllipsisVerticalIcon className="w-5 h-5 text-gray-500 dark:text-gray-400" />
-              </button>
-              {isOverflowOpen && (
-                <div
-                  role="menu"
+          {canDeleteMilestones && !hasCompletion && (
+            <>
+              {/* biome-ignore lint/a11y/noStaticElementInteractions: wrapper needs onBlur to detect focus leaving the menu group; the interactive child is the trigger button below. */}
+              <div className="relative" ref={overflowRef} onBlur={handleOverflowBlur}>
+                <button
+                  type="button"
+                  onClick={handleToggleOverflow}
                   onKeyDown={handleOverflowKeyDown}
-                  className="absolute right-0 top-full mt-1 z-10 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-md shadow-lg py-1 min-w-[140px]"
+                  className="p-1 rounded hover:bg-gray-100 dark:hover:bg-zinc-700 transition-colors"
+                  aria-label="More actions"
+                  aria-haspopup="menu"
+                  aria-expanded={isOverflowOpen}
                 >
-                  <DeleteDialog
-                    deleteFunction={() => onDeleteMilestone(milestone)}
-                    isLoading={isDeleting}
-                    title={
-                      <p className="font-normal">
-                        Are you sure you want to delete <b>{milestone.title}</b> milestone?
-                      </p>
-                    }
-                    buttonElement={{
-                      text: "Delete",
-                      icon: <TrashIcon className="w-4 h-4" />,
-                      styleClass:
-                        "flex items-center gap-2 w-full px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 text-left",
-                    }}
-                    externalIsOpen={isDeleteDialogOpen}
-                    externalSetIsOpen={handleDeleteDialogOpenChange}
-                  />
-                </div>
-              )}
-            </div>
+                  <EllipsisVerticalIcon className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+                </button>
+                {isOverflowOpen && (
+                  <div
+                    role="menu"
+                    onKeyDown={handleOverflowKeyDown}
+                    className="absolute right-0 top-full mt-1 z-10 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-md shadow-lg py-1 min-w-[140px]"
+                  >
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={handleDeleteMenuClick}
+                      className="flex items-center gap-2 w-full px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 text-left"
+                    >
+                      <TrashIcon className="w-4 h-4" />
+                      Delete
+                    </button>
+                  </div>
+                )}
+              </div>
+              {/* Rendered outside the overflow menu so closing the menu doesn't unmount the dialog mid-open. */}
+              <DeleteDialog
+                deleteFunction={() => onDeleteMilestone(milestone)}
+                isLoading={isDeleting}
+                title={
+                  <p className="font-normal">
+                    Are you sure you want to delete <b>{milestone.title}</b> milestone?
+                  </p>
+                }
+                buttonElement={null}
+                externalIsOpen={isDeleteDialogOpen}
+                externalSetIsOpen={setIsDeleteDialogOpen}
+              />
+            </>
           )}
         </div>
       </div>

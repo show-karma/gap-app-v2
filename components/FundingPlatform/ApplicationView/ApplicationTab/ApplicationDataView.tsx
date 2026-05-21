@@ -4,6 +4,11 @@ import type { FC, JSX } from "react";
 import { useMemo } from "react";
 import { KarmaProjectLink } from "@/components/FundingPlatform/shared/KarmaProjectLink";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
+import { MilestoneStatusBadge } from "@/src/features/applications/components/MilestoneStatusBadge";
+import {
+  buildMilestoneStatusIndex,
+  lookupMilestoneStatus,
+} from "@/src/features/applications/lib/milestone-status";
 import type {
   IFundingApplication,
   IMilestoneData,
@@ -35,6 +40,11 @@ export const ApplicationDataView: FC<ApplicationDataViewProps> = ({
   const fieldLabels = useMemo(() => createFieldLabelsMap(formSchema), [formSchema]);
   const fieldTypeMap = useMemo(() => createFieldTypeMap(formSchema), [formSchema]);
 
+  const statusByKey = useMemo(
+    () => buildMilestoneStatusIndex(application.milestoneStatuses),
+    [application.milestoneStatuses]
+  );
+
   const renderFieldValue = (value: any, fieldKey?: string): JSX.Element => {
     if (Array.isArray(value)) {
       // Check if it's an array of milestones
@@ -44,47 +54,56 @@ export const ApplicationDataView: FC<ApplicationDataViewProps> = ({
       if (isMilestoneArray) {
         return (
           <div className="space-y-3">
-            {value.map((milestone: IMilestoneData, index) => (
-              <div
-                key={index}
-                className="bg-gray-50 dark:bg-zinc-700/50 rounded-lg p-4 border border-gray-200 dark:border-gray-600"
-              >
-                <div className="space-y-2">
-                  <div className="flex justify-between items-start gap-4">
-                    <div className="flex items-baseline gap-2 flex-wrap">
-                      <h5 className="font-medium text-gray-900 dark:text-gray-100">
-                        {milestone.title}
-                      </h5>
-                      {formatMilestoneAmount(milestone.fundingRequested) && (
-                        <span className="text-sm text-zinc-500 dark:text-zinc-400">
-                          {formatMilestoneAmount(milestone.fundingRequested)}
+            {value.map((milestone: IMilestoneData, index) => {
+              const status = lookupMilestoneStatus(
+                statusByKey,
+                milestone.milestoneUID,
+                fieldKey,
+                milestone.title
+              );
+              return (
+                <div
+                  key={index}
+                  className="bg-gray-50 dark:bg-zinc-700/50 rounded-lg p-4 border border-gray-200 dark:border-gray-600"
+                >
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-start gap-4">
+                      <div className="flex items-baseline gap-2 flex-wrap">
+                        <h5 className="font-medium text-gray-900 dark:text-gray-100">
+                          {milestone.title}
+                        </h5>
+                        <MilestoneStatusBadge entry={status} />
+                        {formatMilestoneAmount(milestone.fundingRequested) && (
+                          <span className="text-sm text-zinc-500 dark:text-zinc-400">
+                            {formatMilestoneAmount(milestone.fundingRequested)}
+                          </span>
+                        )}
+                      </div>
+                      {milestone.dueDate && (
+                        <span className="text-xs bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-200 px-2 py-1 rounded flex-shrink-0">
+                          Due: {formatDate(milestone.dueDate)}
                         </span>
                       )}
                     </div>
-                    {milestone.dueDate && (
-                      <span className="text-xs bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-200 px-2 py-1 rounded flex-shrink-0">
-                        Due: {formatDate(milestone.dueDate)}
-                      </span>
+                    {milestone.description && (
+                      <div className="text-sm text-gray-600 dark:text-gray-400 prose prose-sm dark:prose-invert max-w-none">
+                        <MarkdownPreview source={milestone.description} />
+                      </div>
+                    )}
+                    {milestone.completionCriteria && (
+                      <div className="text-sm">
+                        <span className="font-medium text-gray-700 dark:text-gray-300">
+                          Completion Criteria:
+                        </span>
+                        <div className="text-gray-600 dark:text-gray-400 prose prose-sm dark:prose-invert max-w-none mt-1">
+                          <MarkdownPreview source={milestone.completionCriteria} />
+                        </div>
+                      </div>
                     )}
                   </div>
-                  {milestone.description && (
-                    <div className="text-sm text-gray-600 dark:text-gray-400 prose prose-sm dark:prose-invert max-w-none">
-                      <MarkdownPreview source={milestone.description} />
-                    </div>
-                  )}
-                  {milestone.completionCriteria && (
-                    <div className="text-sm">
-                      <span className="font-medium text-gray-700 dark:text-gray-300">
-                        Completion Criteria:
-                      </span>
-                      <div className="text-gray-600 dark:text-gray-400 prose prose-sm dark:prose-invert max-w-none mt-1">
-                        <MarkdownPreview source={milestone.completionCriteria} />
-                      </div>
-                    </div>
-                  )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         );
       }

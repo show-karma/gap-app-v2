@@ -1,12 +1,14 @@
 "use client";
 
-import { AlertCircle, FileBadge, FileText, Globe, Plus, Search, Sparkles } from "lucide-react";
+import { AlertCircle, FileBadge, FileText, Globe, Plus, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 import { AddSourceDialog } from "@/components/Pages/Admin/KnowledgeBasePage/AddSourceDialog";
 import { SourceRow } from "@/components/Pages/Admin/KnowledgeBasePage/SourceRow";
 import { Button } from "@/components/Utilities/Button";
 import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
 import { useKnowledgeSources } from "@/hooks/knowledge-base/useKnowledgeSources";
+import { AccessDenied } from "@/src/components/ui/AccessDenied";
+import { communityAdminDenial } from "@/src/components/ui/access-denied-presets";
 import type { Community } from "@/types/v2/community";
 import type { KnowledgeSource, KnowledgeSourceKind } from "@/types/v2/knowledge-base";
 
@@ -84,7 +86,12 @@ export function KnowledgeBasePage({ community }: Props) {
   if (!hasAccess) {
     return (
       <PageFrame>
-        <AccessDeniedCard />
+        <AccessDenied
+          title="Knowledge base access required"
+          {...communityAdminDenial(community.details?.name)}
+          communitySlug={community.details?.slug || community.uid}
+          communityName={community.details?.name}
+        />
       </PageFrame>
     );
   }
@@ -488,22 +495,6 @@ function ErrorBlock({ message, onRetry }: { message: string; onRetry: () => void
       >
         Retry
       </button>
-    </div>
-  );
-}
-
-function AccessDeniedCard() {
-  return (
-    <div className="mx-auto mt-12 max-w-lg rounded-2xl border border-stone-200 bg-white p-8 text-center dark:border-zinc-800 dark:bg-zinc-900/40">
-      <Sparkles
-        aria-hidden="true"
-        className="mx-auto mb-3 h-6 w-6 text-stone-400 dark:text-zinc-600"
-      />
-      <h2 className="text-lg font-semibold text-stone-900 dark:text-zinc-100">Admin only</h2>
-      <p className="mt-2 text-sm text-stone-600 dark:text-zinc-400">
-        Only community admins can manage knowledge sources. Ask a community admin if you need
-        access.
-      </p>
     </div>
   );
 }

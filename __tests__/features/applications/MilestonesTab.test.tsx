@@ -59,7 +59,7 @@ vi.mock("@/src/features/applications/components/OnChainMilestoneRow", () => ({
   ),
 }));
 
-import { MilestonesTab } from "@/app/community/[communityId]/(whitelabel)/applications/[applicationId]/components/MilestonesTab";
+import { MilestonesTab } from "@/src/features/applications/components/MilestonesTab";
 
 const REF = "REF-MS-1";
 const PROJECT_UID = "0xproject1";
@@ -97,15 +97,42 @@ beforeEach(() => {
 });
 
 describe("MilestonesTab", () => {
-  it("should_render_empty_state_when_milestoneStatuses_is_empty", () => {
-    render(<MilestonesTab application={makeApplication()} isOwner={false} />);
+  it("should_render_setting_up_state_when_application_approved_but_milestoneStatuses_empty", () => {
+    // Lifecycle window: status flips to "approved" → project created →
+    // grant attested → milestones attested. "No milestones defined" is
+    // wrong copy for that transient window — it implies permanent
+    // absence.
+    render(
+      <MilestonesTab
+        application={makeApplication({ status: "approved", milestoneStatuses: [] })}
+        isOwner={false}
+      />
+    );
+
+    expect(screen.getByText(/Setting up milestones/i)).toBeInTheDocument();
+    expect(screen.queryByText(/No milestones defined/i)).not.toBeInTheDocument();
+  });
+
+  it("should_render_no_milestones_defined_when_unapproved_and_milestoneStatuses_empty", () => {
+    // Pre-approval there's no grant on-chain yet; the empty state copy
+    // should reflect "no milestones to show", not the post-approval
+    // transient hint.
+    render(
+      <MilestonesTab
+        application={makeApplication({ status: "pending", milestoneStatuses: [] })}
+        isOwner={false}
+      />
+    );
 
     expect(screen.getByText(/No milestones defined for this application/i)).toBeInTheDocument();
-    expect(screen.queryAllByTestId(/-row$/)).toHaveLength(0);
+    expect(screen.queryByText(/Setting up milestones/i)).not.toBeInTheDocument();
   });
 
   it("should_render_empty_state_when_milestoneStatuses_is_undefined", () => {
-    const application = makeApplication({ milestoneStatuses: undefined });
+    const application = makeApplication({
+      status: "pending",
+      milestoneStatuses: undefined,
+    });
     render(<MilestonesTab application={application} isOwner={false} />);
 
     expect(screen.getByText(/No milestones defined for this application/i)).toBeInTheDocument();

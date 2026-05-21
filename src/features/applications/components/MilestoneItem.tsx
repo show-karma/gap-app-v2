@@ -128,7 +128,7 @@ export const MilestoneItem: React.FC<MilestoneItemProps> = ({
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor={`milestone-funding-${index}`}>Funding Requested (Optional)</Label>
+        <Label htmlFor={`milestone-funding-${index}`}>Funding Requested *</Label>
         <Input
           id={`milestone-funding-${index}`}
           placeholder="e.g., $5,000 USD or 5000"
@@ -143,12 +143,12 @@ export const MilestoneItem: React.FC<MilestoneItemProps> = ({
       </div>
 
       <MarkdownEditor
-        label="Completion Criteria (Optional)"
+        label="Completion Criteria"
         placeholder="Define criteria for milestone completion"
         value={milestone.completionCriteria || ""}
         onChange={(value) => handleFieldChange("completionCriteria", value)}
         isDisabled={disabled}
-        isRequired={false}
+        isRequired
         error={errors?.completionCriteria?.message}
       />
 

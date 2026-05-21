@@ -69,9 +69,9 @@ export const MILESTONE_STATUS_CONFIG: Record<
     stepperColor: "bg-gray-500",
   },
   [MilestoneReviewStatus.Late]: {
-    label: "Late",
+    label: "Past Due",
     badgeColor: "bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300",
-    filterLabel: "Late",
+    filterLabel: "Past Due",
     icon: "arrow-path",
     stepperColor: "bg-orange-500",
   },

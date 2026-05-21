@@ -102,13 +102,11 @@ export default function FundingOpportunitiesPage() {
               : "Funding opportunities"
           }
           title={
-            stats.totalPool > 0 ? (
+            programs.length > 0 ? (
               <>
-                ${formatCurrency(stats.totalPool)} available
+                Grant Funding Available
                 <br />
-                <span className="text-brand-500 dark:text-brand-400">
-                  across {programs.length} {pluralize("program", programs.length)}.
-                </span>
+                <span className="text-brand-500 dark:text-brand-400">Across Multiple Programs</span>
               </>
             ) : (
               <>Funding opportunities</>

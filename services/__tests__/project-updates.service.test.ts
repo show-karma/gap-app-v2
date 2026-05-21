@@ -44,14 +44,30 @@ beforeEach(() => {
 describe("getProjectUpdates — URL construction", () => {
   it("calls the base URL when no options are given", async () => {
     await getProjectUpdates("my-project");
-    expect(mockFetchData).toHaveBeenCalledWith("/v2/projects/my-project/updates");
+    expect(mockFetchData.mock.calls[0][0]).toBe("/v2/projects/my-project/updates");
   });
 
   it("appends milestoneStatus to the query string", async () => {
     await getProjectUpdates("my-project", "completed");
-    expect(mockFetchData).toHaveBeenCalledWith(
+    expect(mockFetchData.mock.calls[0][0]).toBe(
       "/v2/projects/my-project/updates?milestoneStatus=completed"
     );
+  });
+
+  it("defaults to isAuthorized=true on the fetchData call", async () => {
+    await getProjectUpdates("my-project");
+    expect(mockFetchData.mock.calls[0][5]).toBe(true);
+  });
+
+  it("forwards isAuthorized=false to fetchData when callers opt out", async () => {
+    await getProjectUpdates("my-project", undefined, { isAuthorized: false });
+    expect(mockFetchData.mock.calls[0][5]).toBe(false);
+  });
+
+  it("forwards an AbortSignal to fetchData when provided", async () => {
+    const controller = new AbortController();
+    await getProjectUpdates("my-project", undefined, { signal: controller.signal });
+    expect(mockFetchData.mock.calls[0][8]).toBe(controller.signal);
   });
 
   it("appends dateFrom and dateTo to the query string", async () => {

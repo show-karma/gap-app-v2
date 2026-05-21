@@ -6,7 +6,6 @@ import { ProjectUpdateForm } from "@/components/Forms/ProjectUpdate";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { useProjectUpdates } from "@/hooks/v2/useProjectUpdates";
 import { useProjectStore } from "@/store";
-import { QUERY_KEYS } from "@/utilities/queryKeys";
 
 interface ProjectUpdateFormBlockProps {
   onClose?: () => void;
@@ -41,13 +40,24 @@ export const ProjectUpdateFormBlock = ({ onClose, updateId }: ProjectUpdateFormB
     // invalidateQueries marks the cache stale AND triggers a background refetch.
     // Awaiting it ensures the refetch completes before we close the dialog,
     // so the updates list shows the new activity immediately.
-    await queryClient.invalidateQueries({
-      queryKey: QUERY_KEYS.PROJECT.UPDATES(project?.uid || ""),
-    });
-    // No router.refresh() — the invalidation already refetched fresh data.
-    // router.refresh() would re-render the server component and race with
-    // the client-side cache, potentially showing stale data.
-    onClose?.();
+    // Invalidate every cached project-updates query for this project — the hook
+    // is keyed by whichever identifier the page used (uid on the project page,
+    // slug on the funding page), so a single-key invalidation can miss the
+    // surface the user is currently viewing.
+    const uid = project?.uid?.toLowerCase();
+    const slug = project?.details?.slug?.toLowerCase();
+    try {
+      await queryClient.invalidateQueries({
+        predicate: (query) => {
+          if (query.queryKey[0] !== "project-updates") return false;
+          const id = (query.queryKey[1] as string | undefined)?.toLowerCase();
+          return id === uid || id === slug;
+        },
+      });
+    } finally {
+      // Always close the dialog — the next mount will refetch if invalidation failed.
+      onClose?.();
+    }
   };
 
   // Show loading state while fetching data in edit mode

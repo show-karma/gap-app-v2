@@ -13,7 +13,6 @@ import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { Skeleton } from "@/components/Utilities/Skeleton";
 import { useAuth } from "@/hooks/useAuth";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
-import { useProjectInstance } from "@/hooks/useProjectInstance";
 import { useTeamProfiles } from "@/hooks/useTeamProfiles";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useENS } from "@/store/ens";
@@ -47,9 +46,6 @@ export function TeamMemberCard({ member, className }: TeamMemberCardProps) {
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const { address } = useAuth();
   const isAuthorized = isProjectOwner || isContractOwner;
-  const { project: projectInstance } = useProjectInstance(
-    project?.details?.slug || project?.uid || ""
-  );
   const { openModal } = useContributorProfileModalStore();
 
   const {
@@ -58,9 +54,8 @@ export function TeamMemberCard({ member, className }: TeamMemberCardProps) {
     isFetching: isFetchingRoles,
   } = useQuery<Record<string, Member["role"]>>({
     queryKey: ["memberRoles", project?.uid],
-    queryFn: () =>
-      project && projectInstance ? getProjectMemberRoles(project, projectInstance) : {},
-    enabled: !!project && !!projectInstance,
+    queryFn: () => (project ? getProjectMemberRoles(project) : {}),
+    enabled: !!project,
     staleTime: 1000 * 60 * 5,
   });
 

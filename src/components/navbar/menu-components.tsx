@@ -1,5 +1,6 @@
 import { ArrowUpRight } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { cn } from "@/utilities/tailwind";
 import { MenuItemClient } from "./menu-item-client";
@@ -152,20 +153,23 @@ export function ResourcesContent({ variant = "desktop", onClose }: ResourcesCont
   if (variant === "mobile") {
     return (
       <>
-        {resourcesItems.map((item) => (
-          <ExternalLink
-            key={item.href}
-            href={item.href}
-            className="flex items-center justify-between px-0 py-3 rounded-md hover:bg-accent"
-            onClick={onClose}
-          >
-            <div className="flex items-center gap-2">
-              <item.icon className={menuStyles.itemIcon} />
-              <span className={menuStyles.itemText}>{item.title}</span>
-            </div>
-            <ArrowUpRight className={menuStyles.itemIcon} />
-          </ExternalLink>
-        ))}
+        {resourcesItems.map((item) => {
+          const LinkComponent = item.external ? ExternalLink : Link;
+          return (
+            <LinkComponent
+              key={item.href}
+              href={item.href}
+              className="flex items-center justify-between px-0 py-3 rounded-md hover:bg-accent"
+              onClick={onClose}
+            >
+              <div className="flex items-center gap-2">
+                <item.icon className={menuStyles.itemIcon} />
+                <span className={menuStyles.itemText}>{item.title}</span>
+              </div>
+              {item.external ? <ArrowUpRight className={menuStyles.itemIcon} /> : null}
+            </LinkComponent>
+          );
+        })}
       </>
     );
   }

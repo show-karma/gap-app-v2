@@ -39,6 +39,7 @@ export const PAGES = {
     REPORTS: (community: string) => `/community/${community}/reports`,
     REPORT_DETAIL: (community: string, runDate: string) =>
       `/community/${community}/reports/${encodeURIComponent(runDate)}`,
+    ASK_KARMA: (community: string) => `/community/${community}/ask-karma`,
   },
   MY_PROJECTS: `/my-projects`,
   MY_REVIEWS: `/my-reviews`,
@@ -111,6 +112,8 @@ export const PAGES = {
     NOTIFICATION_SETTINGS: (community: string) =>
       `/community/${community}/manage/notification-settings`,
     KNOWLEDGE_BASE: (community: string) => `/community/${community}/manage/knowledge-base`,
+    ACCESS_DENIED_MESSAGES: (community: string) =>
+      `/community/${community}/manage/access-denied-messages`,
     PROGRAM_SCORES: (community: string) => `/community/${community}/manage/program-scores`,
     SEND_EMAIL: (community: string) => `/community/${community}/manage/send-email`,
     PORTFOLIO_REPORTS: (community: string) => `/community/${community}/manage/portfolio-reports`,
@@ -153,9 +156,32 @@ export const PAGES = {
   FOUNDATIONS: `/foundations`,
   FUNDERS: `/funders`,
   FOR_PROJECTS: `/for-projects`,
+  FOR_AGENTS: `/for-agents`,
+  MCP_CONNECT: `/mcp/connect`,
   SEEDS: `/seeds`,
   SEEDS_FUND: `/seeds/fund`,
+  TEAM: {
+    LIST: `/ai-teams`,
+    ONBOARDING: `/ai-teams/onboarding`,
+    DIRECTORY: (slug: string) => `/ai-teams/${slug}/team`,
+    MEMBER: (slug: string, role: string) => `/ai-teams/${slug}/team/${role}`,
+  },
+  ORG: (slug: string) => `/ai-teams/${slug}/org`,
+  WORK: (slug: string) => `/ai-teams/${slug}/work`,
+  SKILLS: (slug: string) => `/ai-teams/${slug}/skills`,
+  ASK_KARMA: `/ask-karma`,
 };
+
+/**
+ * Detects pathnames that belong to the ask-karma feature — both the root
+ * `/ask-karma` route and the community-scoped `/community/<slug>/ask-karma`
+ * route. Lives next to the route constants so any rename here updates the
+ * detection automatically.
+ */
+const ASK_KARMA_COMMUNITY_PATTERN = /^\/community\/[^/]+\/ask-karma$/;
+export function isAskKarmaPathname(pathname: string): boolean {
+  return pathname === PAGES.ASK_KARMA || ASK_KARMA_COMMUNITY_PATTERN.test(pathname);
+}
 
 /**
  * First path segments under /community/[communityId]/ that should be rewritten
@@ -178,6 +204,7 @@ export const COMMUNITY_SUB_ROUTE_SEGMENTS: ReadonlySet<string> = new Set([
   "updates",
   // Direct route directories under /community/[communityId]/
   "admin",
+  "ask-karma",
   "karma-ai",
   "manage",
 ]);

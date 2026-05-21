@@ -9,6 +9,13 @@ import { INDEXER } from "@/utilities/indexer";
  */
 export interface GetProjectUpdatesOptions extends UpdatesFeedFilters {
   milestoneStatus?: "pending" | "completed" | "verified";
+  /**
+   * Whether the request should attach a Privy auth token. Defaults to `true`.
+   * Public SSR/prefetch callers pass `false` so the server-rendered path does
+   * not touch the browser-only `TokenManager`.
+   */
+  isAuthorized?: boolean;
+  signal?: AbortSignal;
 }
 
 /**
@@ -80,7 +87,7 @@ function buildUpdatesQueryString(opts: GetProjectUpdatesOptions): string {
 export const getProjectUpdates = async (
   projectIdOrSlug: string,
   milestoneStatus?: "pending" | "completed" | "verified",
-  filters?: UpdatesFeedFilters
+  filters?: GetProjectUpdatesOptions
 ): Promise<UpdatesApiResponse> => {
   const emptyResponse: UpdatesApiResponse = {
     projectUpdates: [],
@@ -89,11 +96,22 @@ export const getProjectUpdates = async (
     grantUpdates: [],
   };
 
+  const { isAuthorized = true, signal, ...queryFilters } = filters ?? {};
   const baseUrl = INDEXER.V2.PROJECTS.UPDATES(projectIdOrSlug);
-  const qs = buildUpdatesQueryString({ milestoneStatus, ...filters });
+  const qs = buildUpdatesQueryString({ milestoneStatus, ...queryFilters });
   const url = `${baseUrl}${qs}`;
 
-  const [data, error, , status] = await fetchData<UpdatesApiResponse>(url);
+  const [data, error, , status] = await fetchData<UpdatesApiResponse>(
+    url,
+    "GET",
+    {},
+    {},
+    {},
+    isAuthorized,
+    false,
+    undefined,
+    signal
+  );
 
   if (error || !data) {
     // Missing project routes are expected for unknown slugs and should not be sent to Sentry.

@@ -3,6 +3,10 @@ import type { Project as ProjectResponse } from "@/types/v2/project";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
+type SearchProjectsApiResponse =
+  | ProjectResponse[]
+  | { payload: ProjectResponse[]; pagination?: unknown };
+
 /**
  * Search projects using V2 API endpoint
  *
@@ -17,7 +21,7 @@ export const searchProjects = async (query: string, limit?: number): Promise<Pro
     return [];
   }
 
-  const [data, error] = await fetchData<ProjectResponse[]>(
+  const [data, error] = await fetchData<SearchProjectsApiResponse>(
     INDEXER.V2.PROJECTS.SEARCH(query, limit)
   );
 
@@ -28,7 +32,17 @@ export const searchProjects = async (query: string, limit?: number): Promise<Pro
     return [];
   }
 
-  return data;
+  // Backend switched from a flat array to a paginated envelope ({ payload, pagination }).
+  // Handle both shapes so older deployments and tests keep working.
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(data.payload)) return data.payload;
+
+  errorManager(
+    "Project Search API returned unexpected shape",
+    new Error("Unexpected response shape"),
+    { context: "project-search.service", responseKeys: Object.keys(data) }
+  );
+  return [];
 };
 
 // Alias for backward compatibility during migration

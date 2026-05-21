@@ -211,6 +211,11 @@ export const INDEXER = {
     MILESTONE_REVIEWERS: {
       LIST: (programId: string) => `/v2/programs/${programId}/milestone-reviewers`,
     },
+    COMMUNITIES: {
+      REVIEWERS: (communityUID: string) => `/v2/communities/${communityUID}/reviewers`,
+      REVIEWER_PROGRAMS: (communityUID: string) =>
+        `/v2/communities/${communityUID}/reviewer-programs`,
+    },
     REGISTRY: {
       GET_ALL: "/v2/program-registry/search",
       GET_BY_ID: (programId: string) => `/v2/program-registry/${programId}`,
@@ -443,6 +448,7 @@ export const INDEXER = {
     },
     EVALUATION: (milestoneUID: string) => `/v2/milestones/${milestoneUID}/evaluation`,
     ON_CHAIN_EDIT: (milestoneUID: string) => `/v2/milestones/${milestoneUID}/on-chain-edit`,
+    ON_CHAIN_DELETE: (milestoneUID: string) => `/v2/milestones/${milestoneUID}/on-chain-delete`,
   },
   CATEGORIES: {
     CREATE: (idOrSlug: string) => `/categories/create/${idOrSlug}`,

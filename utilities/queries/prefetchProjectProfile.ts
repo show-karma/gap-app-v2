@@ -31,6 +31,10 @@ export interface PrefetchResult {
  */
 export const prefetchProjectProfileData = cache(
   async (queryClient: QueryClient, projectId: string): Promise<PrefetchResult> => {
+    // TokenManager.getServerToken() reads the Privy auth cookie via
+    // `next/headers`, so authenticated visitors get role-scoped data
+    // (drafts, admin-only fields) during SSR. Anonymous visitors fall
+    // through to header-less requests against optional-auth routes.
     const results = await Promise.allSettled([
       queryClient.prefetchQuery({
         queryKey: QUERY_KEYS.PROJECT.GRANTS(projectId),

@@ -15,6 +15,7 @@ import {
   Home,
   LayoutGrid,
   Mail,
+  ShieldAlert,
   Tag,
   TrendingUp,
 } from "lucide-react";
@@ -167,6 +168,13 @@ const NAV_GROUPS: NavGroup[] = [
         matchSegment: "knowledge-base",
         label: "Knowledge Base",
         icon: BookOpen,
+      },
+      {
+        href: PAGES.ADMIN.ACCESS_DENIED_MESSAGES,
+        matchSegment: "access-denied-messages",
+        label: "Access Denied Page",
+        icon: ShieldAlert,
+        communityAdminOnly: true,
       },
     ],
   },

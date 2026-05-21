@@ -18,10 +18,13 @@ const buttonClassName = `group border-none ring-none font-normal bg-transparent 
 
 interface GrantMilestoneSimpleOptionsMenuProps {
   milestone: UnifiedMilestone;
+  // Hides Edit when the connected wallet can't pass Gap.sol's revoke rule
+  canEdit: boolean;
 }
 
 export const GrantMilestoneSimpleOptionsMenu = ({
   milestone,
+  canEdit,
 }: GrantMilestoneSimpleOptionsMenuProps) => {
   const { isDeleting, multiGrantDelete } = useMilestone();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -33,12 +36,14 @@ export const GrantMilestoneSimpleOptionsMenu = ({
 
   return (
     <div className="flex flex-row items-center gap-1">
-      <Button
-        className={cn(buttonClassName, "w-max p-2")}
-        onClick={() => setIsEditDialogOpen(true)}
-      >
-        <PencilSquareIcon className="h-5 w-5" aria-hidden="true" />
-      </Button>
+      {canEdit && (
+        <Button
+          className={cn(buttonClassName, "w-max p-2")}
+          onClick={() => setIsEditDialogOpen(true)}
+        >
+          <PencilSquareIcon className="h-5 w-5" aria-hidden="true" />
+        </Button>
+      )}
       <DeleteDialog
         title={
           milestone.mergedGrants && milestone.mergedGrants.length > 1

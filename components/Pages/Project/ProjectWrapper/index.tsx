@@ -28,7 +28,6 @@ export const ProjectWrapper = ({ projectId }: ProjectWrapperProps) => {
 
   const { project } = useProject(projectId);
 
-  // Fetch grants using dedicated hook
   const { grants } = useProjectGrants(project?.uid || projectId);
 
   // Start hook for permissions

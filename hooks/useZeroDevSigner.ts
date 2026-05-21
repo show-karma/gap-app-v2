@@ -5,6 +5,7 @@ import type { Signer } from "ethers";
 import { BrowserProvider } from "ethers";
 import { useCallback, useMemo } from "react";
 import { createWalletClient, custom } from "viem";
+import type { Chain } from "viem/chains";
 import {
   arbitrum,
   base,
@@ -19,7 +20,6 @@ import {
   sei,
   sepolia,
 } from "viem/chains";
-import type { Chain } from "viem/chains";
 import { useChainId } from "wagmi";
 import { usePrivyBridge } from "@/contexts/privy-bridge-context";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
@@ -229,10 +229,7 @@ export function useZeroDevSigner(): UseZeroDevSignerResult {
           // anything inside the external-wallet setup (switchChain, the
           // chain catalog lookup, the WalletClient build). Privy is just
           // one of several things involved.
-          console.warn(
-            "[External Wallet] Setup failed, falling back to wagmi:",
-            setupError
-          );
+          console.warn("[External Wallet] Setup failed, falling back to wagmi:", setupError);
           const { walletClient, error } = await safeGetWalletClient(targetChainId);
 
           if (error || !walletClient) {

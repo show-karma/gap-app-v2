@@ -39,8 +39,7 @@ export function privyBridgeConnector(wallet: ConnectedWallet, initialChainId: nu
       console.warn(
         "[privy-bridge] Privy wallet.switchChain lookup failed; dispatching wallet_switchEthereumChain via provider"
       );
-      const provider =
-        currentProvider ?? ((await wallet.getEthereumProvider()) as EIP1193Provider);
+      const provider = currentProvider ?? ((await wallet.getEthereumProvider()) as EIP1193Provider);
       currentProvider = provider;
       await provider.request({
         method: "wallet_switchEthereumChain",
