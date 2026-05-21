@@ -225,3 +225,24 @@ export const FUNDING_PLATFORM_PAGES = (tenantId: string, _domain?: string) => {
         : `${domain}/browse-applications`,
   };
 };
+
+// ── Non-Profits / grant-atlas migration ──────────────────────────────────────
+// Route constants for the /non-profits feature area being ported from
+// grant-atlas (karmagrants.org). Phase 1 scaffold — routes will be wired to
+// Next.js pages in Phase 2.
+
+export const NON_PROFITS_PAGES = {
+  HOME: "/non-profits" as const,
+  SEARCH: (id: string) => `/non-profits/search/${id}`,
+  FOUNDATION: (id: string, searchId?: string) =>
+    `/non-profits/foundations/${id}${searchId ? `?searchId=${searchId}` : ""}`,
+  NONPROFIT: (id: string, search?: { searchId?: string; grantId?: string }): string => {
+    const params = new URLSearchParams();
+    if (search?.searchId) params.set("searchId", search.searchId);
+    if (search?.grantId) params.set("grantId", search.grantId);
+    const qs = params.toString();
+    return `/non-profits/nonprofits/${id}${qs ? `?${qs}` : ""}`;
+  },
+  GRANT: (id: string, searchId?: string) =>
+    `/non-profits/grants/${id}${searchId ? `?searchId=${searchId}` : ""}`,
+} as const;
