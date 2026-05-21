@@ -5,6 +5,7 @@ import type { IFundingApplication, ProgramWithFormSchema } from "@/types/funding
 import { AIEvaluationDisplay } from "../AIEvaluation";
 import AIEvaluationButton from "../AIEvaluationButton";
 import { InternalAIEvaluationDisplay } from "../InternalAIEvaluation";
+import { ReEvaluateInternalButton } from "../ReEvaluateInternalButton";
 import { type AIAnalysisSubTabId, AIAnalysisSubTabs } from "./AIAnalysisSubTabs";
 import { EmptyEvaluationState } from "./EmptyEvaluationState";
 
@@ -49,14 +50,22 @@ export const AIAnalysisTab: FC<AIAnalysisTabProps> = ({
       <div className="flex items-center justify-between gap-4">
         <AIAnalysisSubTabs activeTab={activeSubTab} onTabChange={setActiveSubTab} />
 
-        {/* Run button for current tab - only shown if user can run evaluations */}
-        {canRunEvaluation && (
-          <AIEvaluationButton
-            referenceNumber={referenceNumber}
-            onEvaluationComplete={onEvaluationComplete}
-            isInternal={activeSubTab === "internal"}
-          />
-        )}
+        {/* Run / re-run button for the current tab. When re-running an
+            existing internal evaluation, we require explicit confirmation
+            since the prior evaluation is overwritten. */}
+        {canRunEvaluation &&
+          (activeSubTab === "internal" && hasInternalEvaluation ? (
+            <ReEvaluateInternalButton
+              referenceNumber={referenceNumber}
+              onEvaluationComplete={onEvaluationComplete}
+            />
+          ) : (
+            <AIEvaluationButton
+              referenceNumber={referenceNumber}
+              onEvaluationComplete={onEvaluationComplete}
+              isInternal={activeSubTab === "internal"}
+            />
+          ))}
       </div>
 
       {/* Content based on active sub-tab */}
@@ -77,6 +86,7 @@ export const AIAnalysisTab: FC<AIAnalysisTabProps> = ({
       ) : hasInternalEvaluation ? (
         <InternalAIEvaluationDisplay
           evaluation={application.internalAIEvaluation?.evaluation || null}
+          context={application.internalAIEvaluation?.context || null}
           programName={program?.name}
         />
       ) : (
