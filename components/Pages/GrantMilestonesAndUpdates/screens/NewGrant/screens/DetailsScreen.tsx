@@ -36,7 +36,7 @@ const _defaultFundUsage = `| Budget Item    | % of Allocated funding |
 const baseSchema = z.object({
   startDate: z
     .date({
-      required_error: MESSAGES.GRANT.FORM.DATE,
+      error: MESSAGES.GRANT.FORM.DATE,
     })
     .optional(),
   receivedDate: z.date().optional(),
@@ -44,7 +44,8 @@ const baseSchema = z.object({
 });
 
 // Define additional fields for grant flow
-const grantSchema = baseSchema.extend({
+const grantSchema = z.object({
+  ...baseSchema.shape,
   description: z.string().min(1, { message: "Description is required" }),
   amount: z.string().optional(),
   linkToProposal: z

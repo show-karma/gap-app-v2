@@ -29,10 +29,10 @@ const editMilestoneSchema = z.object({
   description: z.string().max(5000, "Description must be less than 5000 characters").optional(),
   startsAt: z.string().optional(),
   endsAt: z.string().optional(),
-  priority: z.preprocess(
-    (v) => (v === "" ? undefined : v),
-    z.coerce.number().min(0).max(10).optional()
-  ),
+  priority: z
+    .union([z.literal(""), z.coerce.number().min(0).max(10)])
+    .transform((v) => (v === "" ? undefined : v))
+    .optional(),
 });
 
 type EditMilestoneFormData = z.infer<typeof editMilestoneSchema>;

@@ -48,7 +48,7 @@ const milestoneSchema = z.object({
   dates: z
     .object({
       endsAt: z.date({
-        required_error: "End date is required",
+        error: "End date is required",
       }),
       startsAt: z.date().optional(),
     })

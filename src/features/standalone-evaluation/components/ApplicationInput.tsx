@@ -26,7 +26,7 @@ export function ApplicationInput({ onRun, isRunning, disabled }: ApplicationInpu
   const handleRun = () => {
     const parsed = sessionEvaluateSchema.safeParse({ applicationText });
     if (!parsed.success) {
-      setError(parsed.error.errors[0]?.message ?? "Invalid application text");
+      setError(parsed.error.issues[0]?.message ?? "Invalid application text");
       return;
     }
     setError(null);

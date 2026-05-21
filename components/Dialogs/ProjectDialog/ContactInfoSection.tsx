@@ -171,9 +171,7 @@ export const ContactInfoSection: FC<ContactInfoSectionProps> = ({
           code: "custom",
           message: "E-mail already exists in your list",
         });
-        return false;
       }
-      return true;
     });
 
   type FormType = z.infer<typeof subscriptionShema>;

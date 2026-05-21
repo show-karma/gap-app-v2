@@ -49,7 +49,7 @@ export function buildMilestoneSchema(q: ApplicationQuestion) {
   const maxMilestones = q.validation?.maxMilestones || Number.POSITIVE_INFINITY;
 
   if (q.required) {
-    let fieldSchema: z.ZodTypeAny = z
+    let fieldSchema: z.ZodType = z
       .union([z.array(milestoneSchema), z.undefined(), z.null()])
       .refine((val) => val !== undefined && val !== null, {
         message: "This field is required",
