@@ -27,7 +27,6 @@ interface DeleteMilestoneResponse {
 }
 
 interface BackendErrorBody {
-  error?: string;
   message?: string;
 }
 
