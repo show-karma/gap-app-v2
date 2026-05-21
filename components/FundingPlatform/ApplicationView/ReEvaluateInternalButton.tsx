@@ -95,5 +95,3 @@ export const ReEvaluateInternalButton: FC<ReEvaluateInternalButtonProps> = ({
     </>
   );
 };
-
-export default ReEvaluateInternalButton;

@@ -237,62 +237,34 @@ describe("InternalAIEvaluationDisplay", () => {
     });
 
     it("should_render_audit_toggle_when_context_provided", () => {
-      render(
-        <InternalAIEvaluationDisplay
-          evaluation='{"score": 8}'
-          context={sampleContext}
-        />
-      );
+      render(<InternalAIEvaluationDisplay evaluation='{"score": 8}' context={sampleContext} />);
 
       expect(screen.getByText("Karma profile context used")).toBeInTheDocument();
     });
 
     it("should_NOT_render_audit_section_when_context_is_null", () => {
-      render(
-        <InternalAIEvaluationDisplay
-          evaluation='{"score": 8}'
-          context={null}
-        />
-      );
+      render(<InternalAIEvaluationDisplay evaluation='{"score": 8}' context={null} />);
 
-      expect(
-        screen.queryByText("Karma profile context used")
-      ).not.toBeInTheDocument();
+      expect(screen.queryByText("Karma profile context used")).not.toBeInTheDocument();
     });
 
     it("should_NOT_render_audit_section_when_context_prop_omitted", () => {
       render(<InternalAIEvaluationDisplay evaluation='{"score": 8}' />);
 
-      expect(
-        screen.queryByText("Karma profile context used")
-      ).not.toBeInTheDocument();
+      expect(screen.queryByText("Karma profile context used")).not.toBeInTheDocument();
     });
 
     it("should_be_collapsed_by_default_so_audit_does_not_dominate_the_view", () => {
-      render(
-        <InternalAIEvaluationDisplay
-          evaluation='{"score": 8}'
-          context={sampleContext}
-        />
-      );
+      render(<InternalAIEvaluationDisplay evaluation='{"score": 8}' context={sampleContext} />);
 
       // Toggle is rendered but content is not (collapsed = no MarkdownPreview)
-      expect(
-        screen.getByText("Karma profile context used")
-      ).toBeInTheDocument();
-      expect(
-        screen.queryByTestId("markdown-preview")
-      ).not.toBeInTheDocument();
+      expect(screen.getByText("Karma profile context used")).toBeInTheDocument();
+      expect(screen.queryByTestId("markdown-preview")).not.toBeInTheDocument();
     });
 
     it("should_expand_to_show_markdown_when_toggle_clicked", async () => {
       const user = userEvent.setup();
-      render(
-        <InternalAIEvaluationDisplay
-          evaluation='{"score": 8}'
-          context={sampleContext}
-        />
-      );
+      render(<InternalAIEvaluationDisplay evaluation='{"score": 8}' context={sampleContext} />);
 
       await user.click(screen.getByText("Karma profile context used"));
 
@@ -303,35 +275,21 @@ describe("InternalAIEvaluationDisplay", () => {
 
     it("should_collapse_again_on_second_click_for_toggle_behavior", async () => {
       const user = userEvent.setup();
-      render(
-        <InternalAIEvaluationDisplay
-          evaluation='{"score": 8}'
-          context={sampleContext}
-        />
-      );
+      render(<InternalAIEvaluationDisplay evaluation='{"score": 8}' context={sampleContext} />);
 
       const toggle = screen.getByText("Karma profile context used");
       await user.click(toggle);
       expect(screen.getByTestId("markdown-preview")).toBeInTheDocument();
 
       await user.click(toggle);
-      expect(
-        screen.queryByTestId("markdown-preview")
-      ).not.toBeInTheDocument();
+      expect(screen.queryByTestId("markdown-preview")).not.toBeInTheDocument();
     });
 
     it("should_expose_aria_expanded_state_for_screen_readers", async () => {
       const user = userEvent.setup();
-      render(
-        <InternalAIEvaluationDisplay
-          evaluation='{"score": 8}'
-          context={sampleContext}
-        />
-      );
+      render(<InternalAIEvaluationDisplay evaluation='{"score": 8}' context={sampleContext} />);
 
-      const button = screen
-        .getByText("Karma profile context used")
-        .closest("button");
+      const button = screen.getByText("Karma profile context used").closest("button");
       expect(button).toHaveAttribute("aria-expanded", "false");
 
       await user.click(button!);
@@ -340,16 +298,11 @@ describe("InternalAIEvaluationDisplay", () => {
 
     it("should_render_audit_section_below_the_evaluation_content_not_above", () => {
       const { container } = render(
-        <InternalAIEvaluationDisplay
-          evaluation='{"score": 8}'
-          context={sampleContext}
-        />
+        <InternalAIEvaluationDisplay evaluation='{"score": 8}' context={sampleContext} />
       );
 
       const evalDisplay = screen.getByTestId("evaluation-display");
-      const auditToggle = screen
-        .getByText("Karma profile context used")
-        .closest("button");
+      const auditToggle = screen.getByText("Karma profile context used").closest("button");
 
       expect(evalDisplay).toBeInTheDocument();
       expect(auditToggle).toBeInTheDocument();

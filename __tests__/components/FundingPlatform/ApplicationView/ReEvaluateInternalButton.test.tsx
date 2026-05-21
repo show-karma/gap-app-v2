@@ -21,11 +21,9 @@ const mockApi = fundingApplicationsAPI as unknown as {
   runInternalAIEvaluation: ReturnType<typeof vi.fn>;
 };
 
-function renderButton(props: {
-  referenceNumber?: string;
-  onEvaluationComplete?: () => void;
-  disabled?: boolean;
-} = {}) {
+function renderButton(
+  props: { referenceNumber?: string; onEvaluationComplete?: () => void; disabled?: boolean } = {}
+) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });

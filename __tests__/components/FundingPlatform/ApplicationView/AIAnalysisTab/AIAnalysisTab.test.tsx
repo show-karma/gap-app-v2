@@ -37,11 +37,7 @@ vi.mock("@/components/FundingPlatform/ApplicationView/AIEvaluationButton", () =>
 
 vi.mock("@/components/FundingPlatform/ApplicationView/ReEvaluateInternalButton", () => ({
   ReEvaluateInternalButton: ({ referenceNumber, onEvaluationComplete }: any) => (
-    <button
-      type="button"
-      data-testid="re-evaluate-internal-btn"
-      onClick={onEvaluationComplete}
-    >
+    <button type="button" data-testid="re-evaluate-internal-btn" onClick={onEvaluationComplete}>
       Re-evaluate
     </button>
   ),
@@ -343,6 +339,29 @@ describe("AIAnalysisTab", () => {
 
       const externalBtn = screen.getByTestId("run-external-btn");
       externalBtn.click();
+
+      expect(mockCallback).toHaveBeenCalled();
+    });
+
+    it("passes onEvaluationComplete callback to re-evaluate button", async () => {
+      const mockCallback = vi.fn();
+      const appWithInternal: Partial<IFundingApplication> = {
+        ...mockApplication,
+        internalAIEvaluation: {
+          evaluation: '{"score": 90}',
+        },
+      };
+
+      render(
+        <AIAnalysisTab
+          application={appWithInternal as IFundingApplication}
+          program={mockProgram as ProgramWithFormSchema}
+          onEvaluationComplete={mockCallback}
+        />
+      );
+
+      const reEvaluateBtn = screen.getByTestId("re-evaluate-internal-btn");
+      reEvaluateBtn.click();
 
       expect(mockCallback).toHaveBeenCalled();
     });
