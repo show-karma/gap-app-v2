@@ -42,10 +42,9 @@ const staticPages = [
   "/contact",
   "/privacy-policy",
   "/terms-and-conditions",
-  "/dashboard",
 ];
 
-const lowPriorityPages = ["/privacy-policy", "/terms-and-conditions", "/dashboard"];
+const lowPriorityPages = ["/privacy-policy", "/terms-and-conditions"];
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const lastModified = formatSitemapLastmod();
