@@ -186,7 +186,7 @@ export const anvilFixture = base.extend<
 >({
   // Worker-scoped: one Anvil process per worker
   _anvilWorker: [
-    async (_: unknown, use) => {
+    async (_unused: unknown, use) => {
       const instance = await startAnvil();
       await use(instance);
       instance.process.kill("SIGTERM");
