@@ -333,6 +333,17 @@ async function main() {
     logInfo(`[sitemap-gen] Wrote ${kindIndexPath} (${kindEntries} entries)`);
   }
 
+  const singletonIndexes: Array<{ name: string; loc: string }> = [
+    { name: "sitemap-static.xml", loc: `${SITE_URL}/sitemaps/static/sitemap.xml` },
+    { name: "sitemap-communities.xml", loc: `${SITE_URL}/sitemaps/communities/sitemap.xml` },
+  ];
+  for (const { name, loc } of singletonIndexes) {
+    const xml = buildSitemapIndex([loc]);
+    const outPath = path.join(PROJECT_ROOT, "public", name);
+    fs.writeFileSync(outPath, xml, "utf-8");
+    logInfo(`[sitemap-gen] Wrote ${outPath} (1 entries)`);
+  }
+
   await writeChildSitemaps(baseUrl, kindConfigs);
 }
 
