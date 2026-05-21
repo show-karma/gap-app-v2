@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertCircle, FileBadge, FileText, Globe, Plus, Search } from "lucide-react";
+import { AlertCircle, Bot, FileBadge, FileText, Globe, Plus, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 import { AddSourceDialog } from "@/components/Pages/Admin/KnowledgeBasePage/AddSourceDialog";
 import { SourceRow } from "@/components/Pages/Admin/KnowledgeBasePage/SourceRow";
@@ -300,6 +300,12 @@ const QUICK_PICKS: Array<{
     label: "PDF URL",
     Icon: FileBadge,
     fg: "text-rose-600 dark:text-rose-400",
+  },
+  {
+    kind: "agentic_site",
+    label: "Skill manifest",
+    Icon: Bot,
+    fg: "text-violet-600 dark:text-violet-400",
   },
 ];
 

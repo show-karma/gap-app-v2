@@ -1,7 +1,7 @@
 "use client";
 
 import * as Dialog from "@radix-ui/react-dialog";
-import { FileBadge, FileText, GitBranch, Globe, Info, ShieldCheck, X } from "lucide-react";
+import { Bot, FileBadge, FileText, GitBranch, Globe, Info, ShieldCheck, X } from "lucide-react";
 import { type ComponentType, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { Button } from "@/components/Utilities/Button";
@@ -58,12 +58,19 @@ const KIND_OPTIONS: KindOption[] = [
     blurb: "A PDF served from a public URL",
     fg: "text-rose-600 dark:text-rose-400",
   },
+  {
+    kind: "agentic_site",
+    Icon: Bot,
+    blurb: "Register a site that publishes a SKILL.md manifest for AI agents",
+    fg: "text-violet-600 dark:text-violet-400",
+  },
 ];
 
 const PLACEHOLDER_BY_KIND: Partial<Record<KnowledgeSourceKind, string>> = {
   gdrive_file: "https://docs.google.com/document/d/<doc-id>/edit",
   url: "https://docs.example.com/intro",
   pdf_url: "https://example.com/whitepaper.pdf",
+  agentic_site: "https://example.com (or https://example.com/SKILL.md)",
 };
 
 const DEFAULT_KIND: KnowledgeSourceKind = "gdrive_file";
@@ -213,7 +220,9 @@ export function AddSourceDialog({ communityIdOrSlug, open, onOpenChange, initial
                       ? "Google Doc URL or ID"
                       : kind === "pdf_url"
                         ? "PDF URL"
-                        : "Web page URL"
+                        : kind === "agentic_site"
+                          ? "Site URL"
+                          : "Web page URL"
                   }
                   hint={KNOWLEDGE_SOURCE_KIND_HINTS[kind] ?? "Provide a publicly-accessible URL."}
                   htmlFor="kb-external"
@@ -232,7 +241,11 @@ export function AddSourceDialog({ communityIdOrSlug, open, onOpenChange, initial
 
                 <FormField
                   label="Purpose (optional)"
-                  hint="One sentence on what this source is for. Prepended to each chunk at embed time so the chatbot ranks it higher when a question matches the intent. Not shown in citations."
+                  hint={
+                    kind === "agentic_site"
+                      ? "One sentence on when this manifest applies. Sent alongside the SKILL.md text so the chatbot uses it to decide whether to draw on this source."
+                      : "One sentence on what this source is for. Prepended to each chunk at embed time so the chatbot ranks it higher when a question matches the intent. Not shown in citations."
+                  }
                   htmlFor="kb-goal"
                 >
                   <div className="relative">
@@ -240,7 +253,11 @@ export function AddSourceDialog({ communityIdOrSlug, open, onOpenChange, initial
                       id="kb-goal"
                       value={goal}
                       onChange={(e) => setGoal(e.target.value.slice(0, GOAL_MAX))}
-                      placeholder="Reference for grant applicants reviewing milestone formats."
+                      placeholder={
+                        kind === "agentic_site"
+                          ? "Use this when users ask how to query Filecoin protocol data."
+                          : "Reference for grant applicants reviewing milestone formats."
+                      }
                       maxLength={GOAL_MAX}
                       rows={3}
                       className="block w-full resize-y rounded-md border border-stone-300 bg-white px-3 py-2 pb-5 text-[13px] leading-relaxed text-stone-900 placeholder-stone-400 transition focus:border-sky-500 focus:outline-none focus:ring-[3px] focus:ring-sky-500/20 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder-zinc-500 dark:focus:border-sky-400 dark:focus:ring-sky-400/20"
@@ -262,7 +279,7 @@ export function AddSourceDialog({ communityIdOrSlug, open, onOpenChange, initial
               <PublicAccessReminder kind={kind} />
               {kind === "gdrive_file" && followLinks ? (
                 <FollowLinksScopeNote />
-              ) : (
+              ) : kind === "agentic_site" ? null : (
                 <OneSourceAtATimeNote />
               )}
             </div>
@@ -362,6 +379,18 @@ function PublicAccessReminder({ kind }: { kind: KnowledgeSourceKind }) {
             The page must load without a sign-in wall, paywall, or required cookies. Karma converts
             the page&apos;s HTML to markdown — pages that render content via JavaScript only may
             return empty.
+          </p>
+        ) : kind === "agentic_site" ? (
+          <p>
+            <strong className="font-semibold text-stone-800 dark:text-zinc-200">
+              SKILL.md must be publicly accessible.
+            </strong>{" "}
+            Paste the site root and Karma will fetch{" "}
+            <code className="rounded bg-stone-100 px-1 py-px font-mono text-[11.5px] text-stone-800 dark:bg-zinc-800 dark:text-zinc-200">
+              /SKILL.md
+            </code>{" "}
+            from it, or paste the full SKILL.md URL directly. The manifest is sent to the chatbot as
+            instructions — it is not chunked or embedded.
           </p>
         ) : (
           <p>

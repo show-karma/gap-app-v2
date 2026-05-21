@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Bot,
   ExternalLink,
   FileBadge,
   FileText,
@@ -74,6 +75,10 @@ const KIND_STYLES: Record<KnowledgeSourceKind, KindStyle> = {
   pdf_url: {
     Icon: FileBadge,
     fg: "text-rose-600 dark:text-rose-400",
+  },
+  agentic_site: {
+    Icon: Bot,
+    fg: "text-violet-600 dark:text-violet-400",
   },
 };
 
@@ -570,6 +575,7 @@ function externalHref(source: KnowledgeSource): string | null {
   switch (source.kind) {
     case "url":
     case "pdf_url":
+    case "agentic_site":
       return id.startsWith("http://") || id.startsWith("https://") ? id : null;
     case "gdrive_file":
       // Admins paste either the share URL or a bare doc ID. If it's

@@ -1,4 +1,10 @@
-export type KnowledgeSourceKind = "gdrive_folder" | "gdrive_file" | "url" | "sitemap" | "pdf_url";
+export type KnowledgeSourceKind =
+  | "gdrive_folder"
+  | "gdrive_file"
+  | "url"
+  | "sitemap"
+  | "pdf_url"
+  | "agentic_site";
 
 export type KnowledgeSyncStatus = "syncing" | "success" | "partial" | "failed";
 
@@ -90,6 +96,7 @@ export const KNOWLEDGE_SOURCE_KIND_LABELS: Record<KnowledgeSourceKind, string> =
   url: "Web page",
   sitemap: "Sitemap (sitemap.xml)",
   pdf_url: "PDF (URL)",
+  agentic_site: "Skill manifest",
 };
 
 // Three-letter shorthand for the row's mono meta strip — matches the
@@ -101,6 +108,7 @@ export const KNOWLEDGE_SOURCE_KIND_SHORT: Record<KnowledgeSourceKind, string> = 
   url: "Web",
   sitemap: "Map",
   pdf_url: "PDF",
+  agentic_site: "Manifest",
 };
 
 export const KNOWLEDGE_SOURCE_KIND_HINTS: Record<KnowledgeSourceKind, string> = {
@@ -110,4 +118,5 @@ export const KNOWLEDGE_SOURCE_KIND_HINTS: Record<KnowledgeSourceKind, string> = 
   url: "Full URL of the page (e.g. https://docs.example.com/intro). Must load without sign-in.",
   sitemap: "Currently disabled in the UI; tracked in docs/features.",
   pdf_url: "Direct URL to a publicly-accessible PDF file (no auth or session cookies required).",
+  agentic_site: "A site that publishes a SKILL.md for AI agents.",
 };
