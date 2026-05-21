@@ -230,7 +230,7 @@ const NormalCommunityHeader = ({ community }: { community: Community }) => {
         </Link>
       </nav>
       <div className="relative flex flex-row gap-5 flex-wrap max-lg:flex-col items-center max-lg:items-stretch w-full">
-        <div className="flex h-max shrink-0 flex-row items-center justify-start gap-[18px] min-w-0 max-lg:w-full">
+        <div className="flex h-max flex-row items-center justify-start gap-[18px] min-w-0 max-lg:w-full lg:flex-1 lg:basis-0 2xl:flex-none 2xl:basis-auto 2xl:shrink-0">
           <div
             className="flex items-center justify-center rounded-[18px] shrink-0 shadow-[0_10px_30px_-10px_rgba(0,144,255,0.5),inset_0_1px_0_rgba(255,255,255,0.2)] max-lg:w-14 max-lg:h-14 animate-scale-in"
             style={{ backgroundColor: logoBg, width: 72, height: 72, animationDelay: "60ms" }}
@@ -262,7 +262,7 @@ const NormalCommunityHeader = ({ community }: { community: Community }) => {
           </div>
         </div>
         <div
-          className="flex-1 min-w-0 animate-fade-in-up max-lg:w-full max-lg:flex-none"
+          className="min-w-0 animate-fade-in-up max-lg:w-full max-lg:flex-none lg:flex-1 lg:basis-0 2xl:basis-auto"
           style={{ animationDelay: "180ms" }}
         >
           <HeaderStatsCards
@@ -280,7 +280,7 @@ const NormalCommunityHeader = ({ community }: { community: Community }) => {
           />
         </div>
         <div
-          className="flex items-center gap-2 max-lg:w-full max-lg:justify-center lg:basis-full lg:justify-end xl:basis-auto xl:shrink-0 animate-fade-in-up"
+          className="flex items-center gap-2 max-lg:w-full max-lg:justify-center lg:basis-full lg:justify-end 2xl:basis-auto 2xl:shrink-0 animate-fade-in-up"
           style={{ animationDelay: "240ms" }}
         >
           <button

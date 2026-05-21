@@ -81,6 +81,15 @@ export const chosenCommunities = (forceProduction: boolean = false): ChosenCommu
       },
     },
     {
+      name: "UNICEF",
+      slug: "unicef",
+      uid: "0x6168436c69922c0658f4c2d76d9c890afa1c7fce2dc7110721ce907e68e0085a",
+      imageURL: {
+        light: "/logos/karma-gap-unicef.jpg",
+        dark: "/logos/karma-gap-unicef.jpg",
+      },
+    },
+    {
       name: "Octant",
       slug: "octant",
       uid: "0xcb67cd16cbdf4e9c3b6ed4c8f9424411a48be796d690750afc84f9288e7c7996",
