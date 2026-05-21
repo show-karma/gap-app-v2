@@ -36,7 +36,13 @@ vi.mock("@/components/FundingPlatform/ApplicationView/AIEvaluationButton", () =>
 }));
 
 vi.mock("@/components/FundingPlatform/ApplicationView/ReEvaluateInternalButton", () => ({
-  ReEvaluateInternalButton: ({ referenceNumber, onEvaluationComplete }: any) => (
+  ReEvaluateInternalButton: ({
+    onEvaluationComplete,
+  }: {
+    referenceNumber: string;
+    onEvaluationComplete?: () => void | Promise<void>;
+    disabled?: boolean;
+  }) => (
     <button type="button" data-testid="re-evaluate-internal-btn" onClick={onEvaluationComplete}>
       Re-evaluate
     </button>
