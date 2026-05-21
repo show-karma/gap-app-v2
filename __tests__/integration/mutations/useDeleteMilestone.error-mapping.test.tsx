@@ -91,9 +91,8 @@ function renderHook() {
 }
 
 function lastToastErrorMessage(): string | undefined {
-  const calls = (toast.error as unknown as { mock: { calls: unknown[][] } }).mock.calls;
-  const last = calls.at(-1);
-  return last?.[0] as string | undefined;
+  const last = vi.mocked(toast.error).mock.calls.at(-1);
+  return last?.[0];
 }
 
 async function expectToastErrorEventually(expected: string): Promise<void> {
@@ -304,7 +303,7 @@ describe("useDeleteMilestone (error mapping)", () => {
     await waitFor(() => {
       expect(errorManager).toHaveBeenCalled();
     });
-    const call = (errorManager as unknown as { mock: { calls: unknown[][] } }).mock.calls.at(-1);
+    const call = vi.mocked(errorManager).mock.calls.at(-1);
     const extras = call?.[2] as { backendStatus?: number; backendMessage?: string } | undefined;
     expect(extras?.backendStatus).toBe(500);
     expect(extras?.backendMessage).toContain("Failed to revoke milestone");

@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { AxiosError } from "axios";
+import axios from "axios";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useAuth } from "@/hooks/useAuth";
@@ -34,13 +35,26 @@ const SUPPORT_HINT = "If this looks wrong, contact support.";
 const REVOCATION_RETRY_MESSAGE =
   "On-chain milestone revocation failed. Please retry; if it persists, contact support.";
 
+// Backend exception message prefixes from
+// app/modules/v2/services/milestone-on-chain-delete/write/milestone-on-chain-delete.write.service.ts.
+// If the backend rewords these, the matching test cases here will fail in CI.
+const BACKEND_409_ALREADY_COMPLETED = "Cannot delete milestone that is already completed";
+const BACKEND_409_ALREADY_REVOKED = "Milestone is already revoked";
+const BACKEND_409_NOT_FOUND = "Milestone not found";
+const BACKEND_500_INSUFFICIENT_FUNDS = "insufficient funds";
+
 export class MilestoneRevocationFailedError extends Error {
+  milestoneTitle: string;
+
   constructor(milestoneTitle: string) {
     super(REVOCATION_RETRY_MESSAGE);
     this.name = "MilestoneRevocationFailedError";
     this.milestoneTitle = milestoneTitle;
   }
-  milestoneTitle: string;
+}
+
+function asAxiosError(error: unknown): AxiosError<BackendErrorBody> | undefined {
+  return axios.isAxiosError<BackendErrorBody>(error) ? error : undefined;
 }
 
 export function deleteMilestoneErrorMessage(error: unknown, milestoneTitle: string): string {
@@ -48,18 +62,18 @@ export function deleteMilestoneErrorMessage(error: unknown, milestoneTitle: stri
     return error.message;
   }
 
-  const axiosError = error as AxiosError<BackendErrorBody> | undefined;
+  const axiosError = asAxiosError(error);
   const status = axiosError?.response?.status;
   const raw = axiosError?.response?.data?.message ?? "";
 
   if (status === 409) {
-    if (raw.startsWith("Cannot delete milestone that is already completed")) {
+    if (raw.startsWith(BACKEND_409_ALREADY_COMPLETED)) {
       return `"${milestoneTitle}" already has a completion and can't be deleted. Reject the completion first.`;
     }
-    if (raw.startsWith("Milestone is already revoked")) {
+    if (raw.startsWith(BACKEND_409_ALREADY_REVOKED)) {
       return `"${milestoneTitle}" is already deleted on-chain. Refresh the page to update the list.`;
     }
-    if (raw.startsWith("Milestone not found")) {
+    if (raw.startsWith(BACKEND_409_NOT_FOUND)) {
       return `"${milestoneTitle}" was not found on-chain. It may have been removed already — refresh the page.`;
     }
     return raw || `"${milestoneTitle}" can't be deleted right now. ${SUPPORT_HINT}`;
@@ -73,7 +87,7 @@ export function deleteMilestoneErrorMessage(error: unknown, milestoneTitle: stri
     return "The indexer couldn't read the milestone right now. Try again in a moment.";
   }
 
-  if (status === 500 && raw.toLowerCase().includes("insufficient funds")) {
+  if (status === 500 && raw.toLowerCase().includes(BACKEND_500_INSUFFICIENT_FUNDS)) {
     return "Karma admin wallet is out of gas on this chain. We've been alerted.";
   }
 
@@ -166,7 +180,7 @@ export const useDeleteMilestone = ({
         queryClient.setQueryData(queryKey, context.previousData);
       }
 
-      const axiosError = error as AxiosError<BackendErrorBody> | undefined;
+      const axiosError = asAxiosError(error);
       const status = axiosError?.response?.status;
       const backendMessage = axiosError?.response?.data?.message;
       const userMessage = deleteMilestoneErrorMessage(error, milestone.title);
@@ -178,7 +192,9 @@ export const useDeleteMilestone = ({
           milestoneUID: milestone.uid,
           programId,
           chainID: milestone.chainId,
-          error: userMessage,
+          // Stable axios prose keeps Mixpanel funnel grouping intact; `userMessage` ships the human copy.
+          error: error?.message,
+          userMessage,
           backendStatus: status,
           backendMessage,
         },
