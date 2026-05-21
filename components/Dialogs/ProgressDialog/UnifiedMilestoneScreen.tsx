@@ -71,7 +71,7 @@ const milestoneSchema = z.object({
 type MilestoneFormData = z.infer<typeof milestoneSchema>;
 
 export const UnifiedMilestoneScreen = () => {
-  const { project } = useProjectStore();
+  const project = useProjectStore((state) => state.project);
   const { closeProgressModal, preSelectedGrantId, setPreSelectedGrantId } = useProgressModalStore();
   const [selectedGrantIds, setSelectedGrantIds] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);

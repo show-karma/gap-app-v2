@@ -35,8 +35,8 @@ import { TrackExplanations } from "./CompletionRequirements/TrackExplanations";
 const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
 
 export const GrantCompletion: FC = () => {
-  const { grant } = useGrantStore();
-  const { project } = useProjectStore();
+  const grant = useGrantStore((state) => state.grant);
+  const project = useProjectStore((state) => state.project);
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isContractOwner = useOwnerStore((state) => state.isOwner);

@@ -42,8 +42,11 @@ export function GrantDetailLayout({ children }: GrantDetailLayoutProps) {
   const projectIdFromUrl = params.projectId as string;
   const grantUid = params.grantUid as string;
 
-  const { grant, setGrant, loading, setLoading } = useGrantStore();
-  const { project: storedProject } = useProjectStore();
+  const grant = useGrantStore((state) => state.grant);
+  const setGrant = useGrantStore((state) => state.setGrant);
+  const loading = useGrantStore((state) => state.loading);
+  const setLoading = useGrantStore((state) => state.setLoading);
+  const storedProject = useProjectStore((state) => state.project);
   const { isProjectAdmin, isProjectOwner } = useProjectPermissions();
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin);

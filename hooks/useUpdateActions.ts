@@ -45,7 +45,8 @@ export const useUpdateActions = (update: UpdateType) => {
   const { chain } = useAccount();
   const { switchChainAsync } = useWallet();
   const { setupChainAndWallet } = useSetupChainAndWallet();
-  const { project, isProjectOwner } = useProjectStore();
+  const project = useProjectStore((state) => state.project);
+  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const projectIdOrSlug = project?.details?.slug || project?.uid || "";
   const isOwner = useOwnerStore((state) => state.isOwner);
   const isOnChainAuthorized = isProjectOwner || isOwner;

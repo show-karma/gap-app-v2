@@ -13,7 +13,7 @@ interface DemoteMemberDialogProps {
 
 export const DemoteMemberDialog: FC<DemoteMemberDialogProps> = ({ memberAddress }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const { project } = useProjectStore();
+  const project = useProjectStore((state) => state.project);
   const { teamProfiles } = useTeamProfiles(project);
   const { execute, isLoading } = useMemberRoleChange("demote");
 

@@ -48,9 +48,9 @@ export const useGrantCompletionRevoke = ({ grant, project }: UseGrantCompletionR
     useAttestationToast();
   const projectIdOrSlug = project?.details?.slug || project?.uid || "";
   const { refetch: refetchGrants } = useProjectGrants(projectIdOrSlug);
-  const { refreshGrant } = useGrantStore();
-  const { isProjectOwner } = useProjectStore();
-  const { isOwner: isContractOwner } = useOwnerStore();
+  const refreshGrant = useGrantStore((state) => state.refreshGrant);
+  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
+  const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isOnChainAuthorized = isProjectOwner || isContractOwner;
   const { performOffChainRevoke } = useOffChainRevoke();
 

@@ -35,7 +35,7 @@ export const LinkOSOProfileButton: FC<LinkOSOProfileButtonProps> = ({
   const isCommunityAdmin = useIsCommunityAdmin();
   const { address } = useAccount();
   const isAuthorized = isOwner || isProjectOwner || isCommunityAdmin;
-  const { refreshProject } = useProjectStore();
+  const refreshProject = useProjectStore((state) => state.refreshProject);
   const [isOpen, setIsOpen] = useState(false);
   const [ids, setIds] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);

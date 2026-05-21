@@ -58,7 +58,7 @@ export const GrantAssociation = ({
   className = "",
 }: GrantAssociationProps) => {
   const containerClass = `flex flex-row w-max flex-wrap gap-2 ${className}`;
-  const { project } = useProjectStore();
+  const project = useProjectStore((state) => state.project);
 
   // Fetch grants using dedicated hook
   const { grants } = useProjectGrants(project?.uid || "");

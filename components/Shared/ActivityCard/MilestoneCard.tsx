@@ -152,7 +152,7 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
       setIsUndoing(false);
     }
   };
-  const { project } = useProjectStore();
+  const project = useProjectStore((state) => state.project);
   const { projectId } = useParams();
   const { refetch } = useProjectUpdates(projectId as string);
 

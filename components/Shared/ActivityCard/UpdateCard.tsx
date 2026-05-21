@@ -53,7 +53,7 @@ interface UpdateCardProps {
 }
 
 export const UpdateCard: FC<UpdateCardProps> = ({ update, index, isAuthorized }) => {
-  const { project } = useProjectStore();
+  const project = useProjectStore((state) => state.project);
   const {
     isDeletingUpdate,
     isEditDialogOpen,

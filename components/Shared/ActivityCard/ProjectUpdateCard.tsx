@@ -18,7 +18,7 @@ interface ProjectUpdateCardProps {
 }
 
 export const ProjectUpdateCard: FC<ProjectUpdateCardProps> = ({ update, index, isAuthorized }) => {
-  const { project } = useProjectStore();
+  const project = useProjectStore((state) => state.project);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   const canEdit = true;

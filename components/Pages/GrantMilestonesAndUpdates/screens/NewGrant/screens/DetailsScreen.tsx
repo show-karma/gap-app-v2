@@ -89,7 +89,7 @@ export const DetailsScreen: React.FC = () => {
   const { gap } = useGap();
   const { updateGrant, isLoading: isUpdatingGrant } = useGrant();
   const isCommunityAdmin = useIsCommunityAdmin();
-  const { isOwner } = useOwnerStore();
+  const isOwner = useOwnerStore((state) => state.isOwner);
   const [_isLoading, _setIsLoading] = useState(false);
   const isAuthorized = isOwner || isCommunityAdmin;
   const params = useParams();

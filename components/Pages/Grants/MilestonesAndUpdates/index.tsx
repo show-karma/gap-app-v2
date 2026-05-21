@@ -220,7 +220,7 @@ const MilestonesList = dynamic(
 );
 
 export default function MilestonesAndUpdates() {
-  const { grant } = useGrantStore();
+  const grant = useGrantStore((state) => state.grant);
   const project = useProjectStore((state) => state.project);
   const { openProgressModalWithScreen } = useProgressModalStore();
   const params = useParams();
