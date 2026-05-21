@@ -32,9 +32,7 @@ vi.mock("@heroicons/react/24/outline", () => ({
   ChevronDownIcon: (props: React.SVGProps<SVGSVGElement>) => (
     <svg data-testid="chevron-icon" {...props} />
   ),
-  ClockIcon: (props: React.SVGProps<SVGSVGElement>) => (
-    <svg data-testid="clock-icon" {...props} />
-  ),
+  ClockIcon: (props: React.SVGProps<SVGSVGElement>) => <svg data-testid="clock-icon" {...props} />,
   LockClosedIcon: (props: React.SVGProps<SVGSVGElement>) => (
     <svg data-testid="lock-icon" {...props} />
   ),

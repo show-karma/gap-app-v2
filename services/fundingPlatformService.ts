@@ -24,8 +24,6 @@ const API_BASE = envVars.NEXT_PUBLIC_GAP_INDEXER_URL || "http://localhost:4000";
 // Keep apiClient for mutations and special cases (blob downloads)
 const apiClient = createAuthenticatedApiClient(API_BASE, 30000);
 
-export type RunInternalAIEvaluationResponse = { success: boolean; referenceNumber: string; evaluation: string; promptId: string; updatedAt: string; context?: string };
-
 /**
  * Remove lone UTF-16 surrogate code units that can trigger UTF-8 serialization failures downstream.
  */
@@ -644,14 +642,17 @@ export const fundingApplicationsAPI = {
   },
 
   /**
-   * Run internal AI evaluation on an existing application by reference number (Admin/Reviewer only).
-   * This evaluation is NOT visible to applicants and is used for internal review purposes only.
-   * Requires internalLangfusePromptId to be configured in the program's AI config.
-   *
-   * @param referenceNumber - The application reference number
-   * @returns Promise resolving to internal evaluation results
+   * Run internal AI evaluation on an application (Admin/Reviewer only). Hidden from applicants.
+   * Requires internalLangfusePromptId on the program's AI config.
    */
-  async runInternalAIEvaluation(referenceNumber: string): Promise<RunInternalAIEvaluationResponse> {
+  async runInternalAIEvaluation(referenceNumber: string): Promise<{
+    success: boolean;
+    referenceNumber: string;
+    evaluation: string;
+    promptId: string;
+    updatedAt: string;
+    context?: string;
+  }> {
     const response = await apiClient.post(
       `/v2/funding-applications/${referenceNumber}/evaluate-internal`,
       {},
