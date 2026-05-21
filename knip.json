@@ -21,13 +21,19 @@
     "!coverage/**",
     "!.quality/**"
   ],
-  "ignore": ["next-env.d.ts", "**/*.d.ts"],
+  "ignore": [
+    "next-env.d.ts",
+    "**/*.d.ts",
+    "src/features/non-profits/lib/api.ts",
+    "src/features/non-profits/types/philanthropy.ts"
+  ],
   "ignoreDependencies": [
     "@biomejs/biome",
     "postcss",
     "tailwindcss",
     "@tailwindcss/forms",
     "@tailwindcss/typography",
-    "tailwindcss-animate"
+    "tailwindcss-animate",
+    "motion"
   ]
 }
