@@ -13,6 +13,7 @@ import {
 import { type ComponentType, memo, useState } from "react";
 import toast from "react-hot-toast";
 import { DeleteDialog } from "@/components/DeleteDialog";
+import { KIND_STYLES } from "@/components/Pages/Admin/KnowledgeBasePage/SourceRow.kinds";
 import {
   useDeleteKnowledgeSource,
   useResyncKnowledgeSource,
@@ -24,7 +25,6 @@ import {
   type KnowledgeSource,
 } from "@/types/v2/knowledge-base";
 import { EditSourceDialog } from "./EditSourceDialog";
-import { KIND_STYLES } from "./SourceRow.kinds";
 
 interface Props {
   source: KnowledgeSource;
