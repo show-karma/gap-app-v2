@@ -44,7 +44,16 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ["/"],
       },
     ],
-    sitemap: [`${SITE_URL}/sitemap.xml`],
+    sitemap: [
+      `${SITE_URL}/sitemap.xml`,
+      `${SITE_URL}/sitemaps/static/sitemap.xml`,
+      `${SITE_URL}/sitemaps/communities/sitemap.xml`,
+      `${SITE_URL}/sitemaps/projects/sitemap/1.xml`,
+      `${SITE_URL}/sitemaps/grants/sitemap/1.xml`,
+      `${SITE_URL}/sitemaps/impacts/sitemap/1.xml`,
+      `${SITE_URL}/sitemaps/milestones/sitemap/1.xml`,
+      `${SITE_URL}/sitemaps/funding-programs/sitemap/1.xml`,
+    ],
     host: SITE_URL,
   };
 }

@@ -96,12 +96,23 @@ describe("robots", () => {
   });
 
   describe("sitemaps", () => {
-    it("should reference only the main sitemap index", () => {
-      expect(result.sitemap).toContain(`${SITE_URL}/sitemap.xml`);
+    const expected = [
+      `${SITE_URL}/sitemap.xml`,
+      `${SITE_URL}/sitemaps/static/sitemap.xml`,
+      `${SITE_URL}/sitemaps/communities/sitemap.xml`,
+      `${SITE_URL}/sitemaps/projects/sitemap/1.xml`,
+      `${SITE_URL}/sitemaps/grants/sitemap/1.xml`,
+      `${SITE_URL}/sitemaps/impacts/sitemap/1.xml`,
+      `${SITE_URL}/sitemaps/milestones/sitemap/1.xml`,
+      `${SITE_URL}/sitemaps/funding-programs/sitemap/1.xml`,
+    ];
+
+    it.each(expected)("should reference %s", (url) => {
+      expect(result.sitemap).toContain(url);
     });
 
-    it("should list exactly 1 sitemap entry", () => {
-      expect(result.sitemap).toHaveLength(1);
+    it("should list all child sitemaps alongside the index", () => {
+      expect(result.sitemap).toHaveLength(expected.length);
     });
   });
 
