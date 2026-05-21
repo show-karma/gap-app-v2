@@ -2,7 +2,11 @@ import type { MetadataRoute } from "next";
 import { envVars } from "@/utilities/enviromentVars";
 import { INDEXER } from "@/utilities/indexer";
 
-export const SITEMAP_PAGE_SIZE = 5000;
+// Google Search Console fails to fetch sitemaps above ~1MB / 5000 URLs in
+// practice, despite the official 50MB / 50,000 URL limit. Probes confirmed
+// 1000 URLs (~170KB) and 2664 URLs (~470KB) succeed; 5000 URLs (~1.35MB)
+// returns "Sitemap could not be read".
+export const SITEMAP_PAGE_SIZE = 1000;
 
 type SitemapKind = "projects" | "impacts" | "grants" | "milestones" | "funding-programs";
 
