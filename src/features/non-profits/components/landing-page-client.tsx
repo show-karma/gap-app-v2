@@ -7,7 +7,7 @@
  *
  * Phase 2 changes:
  * - Router: useNavigate (TanStack Router) → useRouter (next/navigation)
- * - Search: navigates to NON_PROFITS_PAGES.SEARCH(sessionId) via nanoid
+ * - Search: createSession(query) in the store, then navigate to SEARCH(id)
  * - Nav: lp-nav section removed — renders inside gap-app-v2 global chrome
  * - Clipboard: navigator.clipboard → useCopyToClipboard hook
  * - CSS: lp-* classes from styles/non-profits-landing.css (route-scoped import)
@@ -16,11 +16,11 @@
 
 import "../../../../styles/non-profits-landing.css";
 
-import { nanoid } from "nanoid";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { NON_PROFITS_PAGES } from "@/utilities/pages";
+import { useSearchSessionStore } from "../store/search-session";
 
 // ————————————————————————— Landing stats —————————————————————————
 // Keep in sync with the indexer until an index-stats endpoint exists.
@@ -1092,9 +1092,10 @@ export function LandingPageClient() {
     (query: string) => {
       const trimmed = query.trim();
       if (!trimmed) return;
-      // Generate a stable session id; Phase 3 will replace this with a
-      // real session from the streaming API response.
-      const sessionId = nanoid();
+      // Persist the query in the session store before navigating so the search
+      // workbench (ChatView) can read it via getSession(searchId) and run the
+      // initial query. Skipping this drops the query on navigation.
+      const sessionId = useSearchSessionStore.getState().createSession(trimmed);
       router.push(NON_PROFITS_PAGES.SEARCH(sessionId), { scroll: false });
     },
     [router]
