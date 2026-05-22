@@ -4,7 +4,8 @@
  *
  * Covers MetaMask (code 4001, "User rejected"), Privy embedded wallet
  * ("Signature rejected"), and other common wallet providers ("user denied",
- * "user cancelled"). Also unwraps errors nested under `originalError`.
+ * "user cancelled", "user canceled"). Also unwraps errors nested under
+ * `originalError`.
  */
 export function isUserCancellationError(error: unknown): boolean {
   const err = error as Record<string, any> | null | undefined;
@@ -17,6 +18,7 @@ export function isUserCancellationError(error: unknown): boolean {
       msg.includes("user rejected") ||
       msg.includes("user denied") ||
       msg.includes("user cancelled") ||
+      msg.includes("user canceled") ||
       msg.includes("signature rejected") ||
       layer?.name === "UserRejectedRequestError"
     );

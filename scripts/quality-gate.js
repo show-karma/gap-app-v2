@@ -63,6 +63,11 @@ const FLAGS = {
   },
 };
 
+// Pinned react-doctor version. The reactDoctor section of
+// quality-baseline.json is captured against this exact version — bump both in
+// the same (quality-baseline-labelled) PR, never independently.
+const REACT_DOCTOR_VERSION = "0.2.2";
+
 // ── utils ───────────────────────────────────────────────────────────────────
 const log = (...a) => console.log("[quality]", ...a);
 const warn = (...a) => console.warn("[quality:warn]", ...a);
@@ -229,7 +234,13 @@ function collectReactDoctor() {
   ensureDir(REPORT_DIR);
   const outPath = path.join(REPORT_DIR, "react-doctor.json");
   // react-doctor supports JSON output via --json flag.
-  const res = runCapture("npx", ["-y", "react-doctor@latest", ".", "--json"], { shell: false });
+  // Pin the version: `@latest` makes the gate non-deterministic — a new
+  // react-doctor release silently re-categorizes findings and inflates the
+  // error count, failing every PR with a regression that no PR introduced.
+  // The baseline is captured against this exact version; bump both together.
+  const res = runCapture("npx", ["-y", `react-doctor@${REACT_DOCTOR_VERSION}`, ".", "--json"], {
+    shell: false,
+  });
   let parsed = null;
   // Prefer stdout JSON, else any file it wrote.
   const start = res.stdout.indexOf("{");

@@ -3,10 +3,15 @@ import * as path from "node:path";
 
 const PROJECT_ROOT = path.resolve(__dirname, "..");
 const SITE_URL = "https://www.karmahq.xyz";
-const SITEMAP_PAGE_SIZE = 5000;
+// Must match SITEMAP_PAGE_SIZE in utilities/sitemap.ts. GSC fails on >~1MB / 5000 URLs.
+const SITEMAP_PAGE_SIZE = 1000;
 const COUNTS_TIMEOUT_MS = 8000;
+const URLS_TIMEOUT_MS = 15_000;
 const COUNTS_MAX_ATTEMPTS = 3;
+const URLS_MAX_ATTEMPTS = 3;
 const COUNTS_RETRY_BACKOFF_MS = 1000;
+const URLS_RETRY_BACKOFF_MS = 750;
+const URLS_CONCURRENCY = 4;
 const FALLBACK_CHUNKS_PER_KIND = 1;
 
 type SitemapKind = "projects" | "impacts" | "grants" | "milestones" | "funding-programs";
@@ -17,6 +22,18 @@ interface SitemapCounts {
   grants: number;
   milestones: number;
   fundingPrograms: number;
+}
+
+interface KindConfig {
+  kind: SitemapKind;
+  total: number;
+  path: string;
+  priority: number;
+  changeFrequency: "daily" | "weekly" | "monthly";
+}
+
+interface SitemapUrlsResponse {
+  urls?: string[];
 }
 
 function loadEnvFile(filePath: string) {
@@ -63,6 +80,15 @@ function computeChunkCount(total: number): number {
   return Math.ceil(total / SITEMAP_PAGE_SIZE);
 }
 
+function escapeXml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
+}
+
 async function fetchCountsOnce(baseUrl: string): Promise<SitemapCounts | null> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), COUNTS_TIMEOUT_MS);
@@ -96,33 +122,134 @@ async function fetchCounts(baseUrl: string): Promise<SitemapCounts | null> {
   return null;
 }
 
-function buildXml(counts: SitemapCounts | null): string {
+async function fetchUrlsOnce(baseUrl: string, kind: SitemapKind, page: number): Promise<string[]> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), URLS_TIMEOUT_MS);
+  try {
+    const res = await fetch(
+      `${baseUrl}/v2/sitemap?kind=${kind}&page=${page}&pageSize=${SITEMAP_PAGE_SIZE}`,
+      { signal: controller.signal }
+    );
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}`);
+    }
+    const data = (await res.json()) as SitemapUrlsResponse;
+    return data.urls ?? [];
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function fetchUrls(
+  baseUrl: string,
+  kind: SitemapKind,
+  page: number
+): Promise<string[] | null> {
+  for (let attempt = 1; attempt <= URLS_MAX_ATTEMPTS; attempt++) {
+    try {
+      return await fetchUrlsOnce(baseUrl, kind, page);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      const isLast = attempt === URLS_MAX_ATTEMPTS;
+      logWarn(
+        `[sitemap-gen] urls fetch ${kind}/${page} attempt ${attempt}/${URLS_MAX_ATTEMPTS} failed: ${message}${
+          isLast ? "" : " — retrying"
+        }`
+      );
+      if (isLast) return null;
+      await new Promise((resolve) => setTimeout(resolve, URLS_RETRY_BACKOFF_MS * attempt));
+    }
+  }
+  return null;
+}
+
+function buildSitemapIndex(locs: string[]): string {
   const now = formatLastmod(new Date());
+  const items = locs
+    .map((loc) => `  <sitemap>\n    <loc>${loc}</loc>\n    <lastmod>${now}</lastmod>\n  </sitemap>`)
+    .join("\n");
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${items}\n</sitemapindex>\n`;
+}
+
+function buildIndexXml(kindConfigs: KindConfig[]): string {
   const entries: string[] = [];
 
   entries.push(`${SITE_URL}/sitemaps/static/sitemap.xml`);
   entries.push(`${SITE_URL}/sitemaps/communities/sitemap.xml`);
 
-  const kindConfig: Array<{ kind: SitemapKind; total: number; path: string }> = [
-    { kind: "projects", total: counts?.projects ?? 0, path: "projects" },
-    { kind: "impacts", total: counts?.impacts ?? 0, path: "impacts" },
-    { kind: "grants", total: counts?.grants ?? 0, path: "grants" },
-    { kind: "milestones", total: counts?.milestones ?? 0, path: "milestones" },
-    { kind: "funding-programs", total: counts?.fundingPrograms ?? 0, path: "funding-programs" },
-  ];
-
-  for (const { total, path: kindPath } of kindConfig) {
+  for (const { path: kindPath, total } of kindConfigs) {
     const chunkCount = computeChunkCount(total);
     for (let i = 1; i <= chunkCount; i++) {
       entries.push(`${SITE_URL}/sitemaps/${kindPath}/sitemap/${i}.xml`);
     }
   }
 
-  const items = entries
-    .map((loc) => `  <sitemap>\n    <loc>${loc}</loc>\n    <lastmod>${now}</lastmod>\n  </sitemap>`)
+  return buildSitemapIndex(entries);
+}
+
+function buildUrlsetXml(urls: string[], priority: number, changeFrequency: string): string {
+  const now = formatLastmod(new Date());
+  const items = urls
+    .map(
+      (url) =>
+        `  <url>\n    <loc>${escapeXml(url)}</loc>\n    <lastmod>${now}</lastmod>\n    <changefreq>${changeFrequency}</changefreq>\n    <priority>${priority}</priority>\n  </url>`
+    )
     .join("\n");
 
-  return `<?xml version="1.0" encoding="UTF-8"?>\n<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${items}\n</sitemapindex>\n`;
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${items}\n</urlset>\n`;
+}
+
+async function writeChildSitemaps(
+  baseUrl: string | undefined,
+  kindConfigs: KindConfig[]
+): Promise<void> {
+  interface Job {
+    config: KindConfig;
+    chunkId: number;
+    outPath: string;
+  }
+
+  const jobs: Job[] = [];
+  for (const config of kindConfigs) {
+    const chunkCount = computeChunkCount(config.total);
+    // Reset the kind's output directory so stale chunks from a previous build
+    // (when chunk count was higher) do not linger.
+    const kindDir = path.join(PROJECT_ROOT, "public", "sitemaps", config.path, "sitemap");
+    fs.rmSync(kindDir, { recursive: true, force: true });
+    fs.mkdirSync(kindDir, { recursive: true });
+
+    for (let i = 1; i <= chunkCount; i++) {
+      jobs.push({
+        config,
+        chunkId: i,
+        outPath: path.join(kindDir, `${i}.xml`),
+      });
+    }
+  }
+
+  let cursor = 0;
+  let writtenWithUrls = 0;
+  let writtenEmpty = 0;
+
+  async function worker() {
+    while (cursor < jobs.length) {
+      const index = cursor++;
+      const job = jobs[index];
+      const urls = baseUrl ? await fetchUrls(baseUrl, job.config.kind, job.chunkId) : null;
+      const effectiveUrls = urls ?? [];
+      const xml = buildUrlsetXml(effectiveUrls, job.config.priority, job.config.changeFrequency);
+      fs.writeFileSync(job.outPath, xml, "utf-8");
+      if (effectiveUrls.length > 0) writtenWithUrls++;
+      else writtenEmpty++;
+    }
+  }
+
+  const workers = Array.from({ length: Math.min(URLS_CONCURRENCY, jobs.length) }, () => worker());
+  await Promise.all(workers);
+
+  logInfo(
+    `[sitemap-gen] Wrote ${jobs.length} child sitemap(s): ${writtenWithUrls} with URLs, ${writtenEmpty} empty.`
+  );
 }
 
 async function main() {
@@ -143,13 +270,60 @@ async function main() {
     );
   }
 
-  const xml = buildXml(counts);
-  const outPath = path.join(PROJECT_ROOT, "public", "sitemap.xml");
-  fs.mkdirSync(path.dirname(outPath), { recursive: true });
-  fs.writeFileSync(outPath, xml, "utf-8");
+  const kindConfigs: KindConfig[] = [
+    {
+      kind: "projects",
+      total: counts?.projects ?? 0,
+      path: "projects",
+      priority: 0.8,
+      changeFrequency: "daily",
+    },
+    {
+      kind: "impacts",
+      total: counts?.impacts ?? 0,
+      path: "impacts",
+      priority: 0.7,
+      changeFrequency: "weekly",
+    },
+    {
+      kind: "grants",
+      total: counts?.grants ?? 0,
+      path: "grants",
+      priority: 0.6,
+      changeFrequency: "weekly",
+    },
+    {
+      kind: "milestones",
+      total: counts?.milestones ?? 0,
+      path: "milestones",
+      priority: 0.5,
+      changeFrequency: "weekly",
+    },
+    {
+      kind: "funding-programs",
+      total: counts?.fundingPrograms ?? 0,
+      path: "funding-programs",
+      priority: 0.6,
+      changeFrequency: "weekly",
+    },
+  ];
 
-  const entryCount = (xml.match(/<sitemap>/g) ?? []).length;
-  logInfo(`[sitemap-gen] Wrote ${outPath} (${entryCount} entries)`);
+  const indexXml = buildIndexXml(kindConfigs);
+  const publicDir = path.join(PROJECT_ROOT, "public");
+  const indexPath = path.join(publicDir, "sitemap.xml");
+  fs.mkdirSync(publicDir, { recursive: true });
+  fs.writeFileSync(indexPath, indexXml, "utf-8");
+
+  const indexEntryCount = (indexXml.match(/<sitemap>/g) ?? []).length;
+  logInfo(`[sitemap-gen] Wrote ${indexPath} (${indexEntryCount} entries)`);
+
+  // Alias served at a distinct URL so GSC's per-URL fetch-state machine treats it as
+  // a fresh submission, independent of any stuck backoff on /sitemap.xml.
+  const aliasPath = path.join(publicDir, "sitemap-index.xml");
+  fs.writeFileSync(aliasPath, indexXml, "utf-8");
+  logInfo(`[sitemap-gen] Wrote ${aliasPath} (${indexEntryCount} entries)`);
+
+  await writeChildSitemaps(baseUrl, kindConfigs);
 }
 
 main().catch((err) => {
