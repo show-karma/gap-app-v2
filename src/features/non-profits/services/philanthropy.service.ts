@@ -87,4 +87,19 @@ export const philanthropyService = {
   getGrant(id: string): ResultAsync<Grant, AppError> {
     return apiFetch(NON_PROFITS_API.PHILANTHROPY.GRANTS.GET(id), GrantSchema);
   },
+
+  submitFeedback(
+    traceId: string,
+    value: number,
+    comment?: string
+  ): ResultAsync<{ success: boolean }, AppError> {
+    const body = {
+      traceId,
+      value,
+      comment: comment?.trim() || undefined,
+    };
+    return apiFetch(NON_PROFITS_API.PHILANTHROPY.FEEDBACK, z.unknown(), "POST", body).map(() => ({
+      success: true,
+    }));
+  },
 };

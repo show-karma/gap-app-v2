@@ -11,7 +11,7 @@
 import { Clock, Trash2, X } from "lucide-react";
 import Link from "next/link";
 import pluralize from "pluralize";
-import { memo, useState } from "react";
+import { memo, useCallback, useEffect, useState } from "react";
 import { DeleteDialog } from "@/components/DeleteDialog";
 import { NON_PROFITS_PAGES } from "@/utilities/pages";
 import {
@@ -60,6 +60,20 @@ export function SearchHistoryPanel({ open, onClose }: { open: boolean; onClose: 
   const { data: entries = [], isLoading, isError } = useSearchHistoryList();
   const { mutateAsync: clearAll, isPending: isClearing } = useClearSearchHistory();
   const [confirmClearOpen, setConfirmClearOpen] = useState(false);
+
+  // Escape key closes the panel.
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    },
+    [onClose]
+  );
+
+  useEffect(() => {
+    if (!open) return;
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [open, handleKeyDown]);
 
   if (!open) return null;
 

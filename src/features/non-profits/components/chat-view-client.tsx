@@ -20,15 +20,12 @@ import {
   Bookmark,
   BookmarkCheck,
   Building2,
-  Check,
   ChevronDown,
   Clock,
   HandCoins,
   Landmark,
   MapPin,
   Sparkles,
-  Wrench,
-  X,
 } from "lucide-react";
 import Link from "next/link";
 import pluralize from "pluralize";
@@ -43,7 +40,6 @@ import {
   ConversationScrollButton,
 } from "@/src/components/ai-elements/conversation";
 import { Message, MessageContent } from "@/src/components/ai-elements/message";
-import { MessageResponse } from "@/src/components/ai-elements/message-response";
 import {
   PromptInput,
   PromptInputBody,
@@ -62,12 +58,16 @@ import {
   useResearchTray,
 } from "../hooks/use-research-tray";
 import { searchHistoryService } from "../services/search-history.service";
+import type { FieldRect, PageTransitionFields } from "../store/page-transition";
+import { usePageTransitionStore } from "../store/page-transition";
 import { type ChatTurn, EMPTY_MESSAGES, usePhilanthropyStore } from "../store/philanthropy";
 import { useSearchSessionStore } from "../store/search-session";
 import type { PhilanthropyEntityType, RankedEntity } from "../types/philanthropy";
 import { AttachmentsPanel } from "./attachments-panel";
 import { BookmarksDrawer } from "./bookmarks-drawer";
 import { ConnectorNudge } from "./connector-nudge";
+import { NarrativeBlock } from "./narrative-block";
+import { ProgressView } from "./progress-view";
 import { SearchHistoryPanel } from "./search-history-panel";
 
 // ── Entity presentation constants ──────────────────────────────────────────
@@ -158,10 +158,6 @@ function getEntityHref(entity: RankedEntity, searchId?: string): string {
   }
 }
 
-function formatToolName(tool: string): string {
-  return tool.replace(/^mcp__[^_]+__/, "").replace(/_/g, " ");
-}
-
 // ── Sub-components ──────────────────────────────────────────────────────────
 
 const CompactEntityCard = memo(function CompactEntityCard({
@@ -173,24 +169,55 @@ const CompactEntityCard = memo(function CompactEntityCard({
 }) {
   const Icon = ENTITY_ICON[entity.entityType];
   const href = getEntityHref(entity, searchId);
+  const cardRef = useRef<HTMLDivElement>(null);
+  const setTransition = usePageTransitionStore((s) => s.set);
 
   const meta: string[] = [];
   if (entity.totalAssets) meta.push(`$${formatCurrency(entity.totalAssets)} assets`);
   if (entity.amount) meta.push(`$${formatCurrency(entity.amount)} grant`);
   if (entity.location) meta.push(entity.location);
 
+  const handleLinkClick = useCallback(() => {
+    if (!cardRef.current) return;
+    const fieldEls = cardRef.current.querySelectorAll<HTMLElement>("[data-field]");
+    const collected: Partial<PageTransitionFields> & { name?: FieldRect } = {};
+    for (const el of fieldEls) {
+      const key = el.dataset.field as keyof PageTransitionFields | undefined;
+      if (!key) continue;
+      const rect = el.getBoundingClientRect();
+      const entry: FieldRect = {
+        text: el.textContent?.trim() ?? "",
+        x: rect.left,
+        y: rect.top,
+        width: rect.width,
+        height: rect.height,
+      };
+      collected[key] = entry;
+    }
+    if (collected.name) {
+      setTransition(entity.id, entity.entityType, collected as PageTransitionFields);
+    }
+  }, [entity.id, entity.entityType, setTransition]);
+
   return (
-    <div className="group relative flex items-start gap-3 rounded-lg border border-zinc-200 bg-white p-3 transition-all hover:border-zinc-300 hover:bg-zinc-50 hover:shadow-sm dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-zinc-700 dark:hover:bg-zinc-800">
-      <Link href={href} className="contents">
+    <div
+      ref={cardRef}
+      className="group relative flex items-start gap-3 rounded-lg border border-zinc-200 bg-white p-3 transition-all hover:border-zinc-300 hover:bg-zinc-50 hover:shadow-sm dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-zinc-700 dark:hover:bg-zinc-800"
+    >
+      <Link href={href} className="contents" onClick={handleLinkClick}>
         <div className="flex size-9 shrink-0 items-center justify-center rounded-md bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400">
           <Icon className="size-4" />
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-2">
-            <p className="truncate text-sm font-medium text-zinc-900 group-hover:text-brand-emphasis dark:text-zinc-100">
+            <p
+              data-field="name"
+              className="truncate text-sm font-medium text-zinc-900 group-hover:text-brand-emphasis dark:text-zinc-100"
+            >
               {entity.name ?? "Unnamed"}
             </p>
             <span
+              data-field="badge"
               className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${ENTITY_BADGE_CLASS[entity.entityType]}`}
             >
               {ENTITY_LABEL[entity.entityType]}
@@ -205,8 +232,13 @@ const CompactEntityCard = memo(function CompactEntityCard({
             <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-zinc-500 dark:text-zinc-400">
               {meta.map((m, i) => (
                 <span key={`${entity.id}-meta-${i}`} className="inline-flex items-center gap-1">
-                  {i === meta.length - 1 && entity.location === m && <MapPin className="size-3" />}
-                  {m}
+                  {i === meta.length - 1 && entity.location === m && (
+                    <>
+                      <MapPin className="size-3" />
+                      <span data-field="location">{m}</span>
+                    </>
+                  )}
+                  {!(i === meta.length - 1 && entity.location === m) && m}
                 </span>
               ))}
             </div>
@@ -245,67 +277,6 @@ function EntityList({ entities, searchId }: { entities: RankedEntity[]; searchId
   );
 }
 
-function ProgressView({ progress }: { progress: NonNullable<ChatTurn["progress"]> }) {
-  const { toolHistory, latestThought, matchedNames } = progress;
-  const hasAnything = toolHistory.length > 0 || latestThought !== null || matchedNames.length > 0;
-
-  if (!hasAnything) {
-    return (
-      <div className="inline-flex items-center gap-1.5 text-xs text-zinc-400">
-        <Spinner className="size-3" />
-        searching 140,221 filings…
-      </div>
-    );
-  }
-
-  return (
-    <div className="mt-1 flex flex-col gap-2 rounded-lg border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-800 dark:bg-zinc-900/50">
-      {toolHistory.length > 0 && (
-        <ul className="flex flex-col gap-1">
-          {toolHistory.map((entry, i) => (
-            <li
-              key={`${entry.tool}-${i}`}
-              className="flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-400"
-            >
-              <span className="flex size-4 shrink-0 items-center justify-center">
-                {entry.status === "running" && <Spinner className="size-3" />}
-                {entry.status === "completed" && (
-                  <Check className="size-3 text-emerald-600 dark:text-emerald-400" />
-                )}
-                {entry.status === "failed" && (
-                  <X className="size-3 text-red-600 dark:text-red-400" />
-                )}
-              </span>
-              <Wrench className="size-3 shrink-0 text-zinc-400" />
-              <span className="font-mono">{formatToolName(entry.tool)}</span>
-            </li>
-          ))}
-        </ul>
-      )}
-      {latestThought && (
-        <p className="text-xs italic text-zinc-500 dark:text-zinc-400">{latestThought}</p>
-      )}
-      {matchedNames.length > 0 && (
-        <div className="flex flex-wrap gap-1">
-          {matchedNames.slice(0, 12).map((name) => (
-            <span
-              key={name}
-              className="rounded-full bg-brand px-2 py-0.5 text-[10px] font-medium text-white dark:bg-brand/20 dark:text-brand-subtle"
-            >
-              {name}
-            </span>
-          ))}
-          {matchedNames.length > 12 && (
-            <span className="text-[10px] text-zinc-500 dark:text-zinc-400">
-              +{matchedNames.length - 12} more
-            </span>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-
 const AssistantTurn = memo(function AssistantTurn({
   turn,
   searchId,
@@ -338,7 +309,14 @@ const AssistantTurn = memo(function AssistantTurn({
           </div>
         )}
         {isStreaming && turn.progress && <ProgressView progress={turn.progress} />}
-        {hasNarrative && <MessageResponse>{turn.narrative}</MessageResponse>}
+        {hasNarrative && (
+          <NarrativeBlock
+            narrative={turn.narrative}
+            entities={[...turn.entities]}
+            traceId={turn.traceId}
+            status={turn.status}
+          />
+        )}
         {turn.entities.length > 0 && (
           <EntityList entities={[...turn.entities]} searchId={searchId} />
         )}
