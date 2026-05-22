@@ -4,7 +4,7 @@ import { SparklesIcon } from "@heroicons/react/24/outline";
 import { type FC, useState } from "react";
 import toast from "react-hot-toast";
 import { Button } from "@/components/Utilities/Button";
-import { fundingApplicationsAPI } from "@/services/fundingPlatformService";
+import { runKarmaProfileEvaluation } from "@/services/karmaProfileEvaluationService";
 
 interface RunKarmaProfileButtonProps {
   referenceNumber: string;
@@ -32,7 +32,7 @@ export const RunKarmaProfileButton: FC<RunKarmaProfileButtonProps> = ({
     if (disabled || isEvaluating) return;
     setIsEvaluating(true);
     try {
-      await fundingApplicationsAPI.runKarmaProfileEvaluation(referenceNumber);
+      await runKarmaProfileEvaluation(referenceNumber);
       toast.success("Track-record evaluation completed");
       if (onEvaluationComplete) {
         try {

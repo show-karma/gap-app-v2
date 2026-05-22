@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { fundingApplicationsAPI } from "@/services/fundingPlatformService";
+import { runKarmaProfileEvaluation } from "@/services/karmaProfileEvaluationService";
 
 interface UseReEvaluateKarmaProfileAIOptions {
   onSuccess?: () => void | Promise<void>;
@@ -24,7 +24,7 @@ export function useReEvaluateKarmaProfileAI({
 
   return useMutation({
     mutationFn: (referenceNumber: string) =>
-      fundingApplicationsAPI.runKarmaProfileEvaluation(referenceNumber),
+      runKarmaProfileEvaluation(referenceNumber),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["funding-application"] });
       await queryClient.invalidateQueries({ queryKey: ["applications"] });
