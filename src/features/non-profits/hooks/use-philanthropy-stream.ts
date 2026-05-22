@@ -118,7 +118,7 @@ interface StreamResult {
 }
 
 /** Live event payloads surfaced from the SSE stream while the agent runs. */
-export interface StreamProgressEvent {
+interface StreamProgressEvent {
   kind:
     | "interpreted_query"
     | "assistant_text"

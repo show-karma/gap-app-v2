@@ -11,7 +11,7 @@ import { type SearchHistoryEntry, searchHistoryService } from "../services/searc
 
 const SEARCH_HISTORY_KEY = ["non-profits-search-history"] as const;
 
-export function useSearchHistory(id: string) {
+function useSearchHistory(id: string) {
   return useQuery({
     queryKey: [...SEARCH_HISTORY_KEY, id],
     queryFn: () => resultToPromise(searchHistoryService.getById(id)),

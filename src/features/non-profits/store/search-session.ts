@@ -10,7 +10,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-export interface SearchSession {
+interface SearchSession {
   id: string;
   query: string;
 }
