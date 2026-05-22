@@ -12,7 +12,10 @@
  * a breaking store refactor in Phase 3. They are not called in Phase 2.
  */
 import { create } from "zustand";
+import type { AgentAttachment } from "../lib/agentic-philanthropy";
 import type { Citation, QueryIntent, QueryPagination, RankedEntity } from "../types/philanthropy";
+
+export type { AgentAttachment };
 
 // ── Stable empty-state constants ────────────────────────────────────────────
 // Use these as fallbacks in selectors, never inline `?? []` or `?? {}`.
@@ -25,14 +28,7 @@ export const EMPTY_ATTACHMENTS: ReadonlyArray<AgentAttachment> = [];
 
 // ── Domain types ────────────────────────────────────────────────────────────
 
-export interface AgentAttachment {
-  /** Filename for the download (e.g. "prospects.csv"). */
-  name: string;
-  /** Data URL or object URL for the file content. */
-  url: string;
-  /** MIME type (e.g. "text/csv"). */
-  mimeType: string;
-}
+// AgentAttachment is re-exported from the agentic-philanthropy lib above.
 
 interface ToolHistoryEntry {
   tool: string;
