@@ -9,8 +9,8 @@
     "branches": 0
   },
   "duplication": {
-    "percent": 1.35,
-    "fragments": 70
+    "percent": 1.38,
+    "fragments": 71
   },
   "violations": {
     "biome": 1276,
@@ -412,7 +412,7 @@
       "maxBytes": 40000
     },
     "src/features/non-profits/components/landing-page-client.tsx": {
-      "lines": 1123,
+      "lines": 1124,
       "bytes": 42027,
       "maxLines": 600,
       "maxBytes": 40000
@@ -481,16 +481,16 @@
   "reactDoctor": {
     "score": 0,
     "errors": 61,
-    "warnings": 3258,
+    "warnings": 3262,
     "byCategory": {
       "Accessibility": 268,
       "Architecture": 1180,
-      "Correctness": 398,
+      "Correctness": 399,
       "Next.js": 146,
       "Server": 6,
-      "State & Effects": 676,
+      "State & Effects": 677,
       "TanStack Query": 30,
-      "Performance": 602,
+      "Performance": 604,
       "Bundle Size": 10,
       "Security": 3
     }
