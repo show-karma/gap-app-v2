@@ -1,5 +1,5 @@
 import * as Sentry from "@sentry/nextjs";
-import { isTransientNetworkError } from "@/utilities/sentry/transientErrors";
+import { isTransientHttpError, isTransientNetworkError } from "@/utilities/sentry/transientErrors";
 
 // Lazy import toast to avoid issues in server components
 let toast: typeof import("react-hot-toast").default | null = null;
@@ -82,6 +82,14 @@ export const errorManager = (
   // Query and surface to the user as an error UI, so drop them on the
   // floor for Sentry. See DEV-236 / GAP-FRONTEND-13P.
   if (isTransientNetworkError(error)) {
+    return;
+  }
+
+  // Transient upstream gateway failures (indexer 504/502/503/408). These
+  // crash SSR fetch paths with a minified, frontend-unactionable stack and
+  // are tracked on the infra/indexer side, not here. See DEV-271 /
+  // GAP-FRONTEND-1R1.
+  if (isTransientHttpError(error)) {
     return;
   }
 
