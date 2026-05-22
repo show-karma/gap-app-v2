@@ -351,11 +351,14 @@ export function ChatView({ searchId }: { searchId?: string }) {
   );
 
   // New chat: abort active stream + reset chat store, STAY on current URL.
+  // Clear the session's seed query so the initial-query effect (re-armed by
+  // resetting the ref below) doesn't immediately re-run the original query.
   const onNewChat = useCallback(() => {
     abort();
     reset();
+    if (searchId) useSearchSessionStore.getState().clearSession(searchId);
     initialQueryRanRef.current = false;
-  }, [abort, reset]);
+  }, [abort, reset, searchId]);
 
   const showEmpty = messages.length === 0 && !isSearching;
   const lastTurn = messages[messages.length - 1];

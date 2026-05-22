@@ -21,6 +21,7 @@ interface SearchSessionStore {
   createSession: (query: string) => string;
   setSession: (id: string, query: string) => void;
   getSession: (id: string) => SearchSession | undefined;
+  clearSession: (id: string) => void;
   setCurrentId: (id: string | null) => void;
 }
 
@@ -76,6 +77,13 @@ export const useSearchSessionStore = create<SearchSessionStore>()(
       },
 
       getSession: (id: string) => get().sessions[id],
+
+      clearSession: (id: string) => {
+        const { sessions, currentId } = get();
+        if (!(id in sessions)) return;
+        const { [id]: _removed, ...rest } = sessions;
+        set({ sessions: rest, currentId: currentId === id ? null : currentId });
+      },
 
       setCurrentId: (id) => set({ currentId: id }),
     }),

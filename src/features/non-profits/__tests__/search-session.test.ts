@@ -52,6 +52,32 @@ describe("useSearchSessionStore", () => {
     expect(result).toBeUndefined();
   });
 
+  it("clearSession removes the session and resets currentId when it was current", () => {
+    const id = useSearchSessionStore.getState().createSession("foundations to clear");
+    expect(useSearchSessionStore.getState().currentId).toBe(id);
+
+    useSearchSessionStore.getState().clearSession(id);
+    expect(useSearchSessionStore.getState().getSession(id)).toBeUndefined();
+    expect(useSearchSessionStore.getState().currentId).toBeNull();
+  });
+
+  it("clearSession leaves other sessions and currentId intact", () => {
+    const keep = useSearchSessionStore.getState().createSession("keep me");
+    useSearchSessionStore.getState().setSession("drop-me", "drop me");
+    useSearchSessionStore.getState().setCurrentId(keep);
+
+    useSearchSessionStore.getState().clearSession("drop-me");
+    expect(useSearchSessionStore.getState().getSession("drop-me")).toBeUndefined();
+    expect(useSearchSessionStore.getState().getSession(keep)).toBeDefined();
+    expect(useSearchSessionStore.getState().currentId).toBe(keep);
+  });
+
+  it("clearSession is a no-op for an unknown id", () => {
+    const id = useSearchSessionStore.getState().createSession("still here");
+    useSearchSessionStore.getState().clearSession("nonexistent");
+    expect(useSearchSessionStore.getState().getSession(id)).toBeDefined();
+  });
+
   it("createSession trims old sessions when MAX_SESSIONS (50) is reached", () => {
     // Seed 50 sessions
     for (let i = 0; i < 50; i += 1) {

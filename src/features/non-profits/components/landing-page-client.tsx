@@ -1092,9 +1092,8 @@ export function LandingPageClient() {
     (query: string) => {
       const trimmed = query.trim();
       if (!trimmed) return;
-      // Persist the query in the session store before navigating so the search
-      // workbench (ChatView) can read it via getSession(searchId) and run the
-      // initial query. Skipping this drops the query on navigation.
+      // Persist the query so the workbench (ChatView) can read it via
+      // getSession(searchId) and run it; skipping this drops the query.
       const sessionId = useSearchSessionStore.getState().createSession(trimmed);
       router.push(NON_PROFITS_PAGES.SEARCH(sessionId), { scroll: false });
     },
