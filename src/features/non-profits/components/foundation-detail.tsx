@@ -1,17 +1,9 @@
 "use client";
 
 /**
- * Foundation detail page component — ported from
- * grant-atlas src/features/grant-atlas/components/foundation-detail.tsx.
- *
- * Key adaptations from grant-atlas:
- * - TanStack Router `Link` → Next.js `Link` from next/link
- * - PAGES.FOUNDATION/NONPROFIT/GRANT → NON_PROFITS_PAGES.*
- * - ~/... imports → @/... imports
- * - brand-* color classes already exist in gap-app-v2's tailwind.config.js
- * - Sort state is client-local `useState` (not URL params)
- * - searchId flows via `useSearchParams` (read only)
- * - Not-found is rendered inline (no server-side notFound())
+ * Foundation detail page component — ported from grant-atlas.
+ * Key adaptations: Next.js Link, NON_PROFITS_PAGES constants, @/ imports,
+ * client-local sort state, searchId via useSearchParams, inline not-found.
  */
 
 import "@/src/features/non-profits/styles/non-profits-detail.css";
@@ -36,7 +28,7 @@ import {
   TrendingUp,
   Users,
 } from "lucide-react";
-import { motion } from "motion/react";
+import { MotionConfig, motion } from "motion/react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import pluralize from "pluralize";
@@ -1224,172 +1216,174 @@ export function FoundationDetail({ id }: { id: string }) {
   );
 
   return (
-    <div className="w-full">
-      {/* Hero header */}
-      <div className="animate-entrance" style={{ animationDelay: "0s" }}>
-        {foundationLoading ? (
-          <HeroSkeleton />
-        ) : (
-          <FoundationHero
-            id={id}
-            name={foundation?.name ?? ""}
-            ein={foundation?.ein ?? ""}
-            location={foundation?.location ?? null}
-            description={foundation?.description ?? null}
-            latestFilingYear={latestFinancials?.filingYear}
-            breadcrumbs={
-              <PageBreadcrumbs
-                currentLabel={foundation?.name ?? "Foundation"}
-                searchId={searchId}
-              />
-            }
-          />
-        )}
-      </div>
+    <MotionConfig reducedMotion="user">
+      <div className="w-full">
+        {/* Hero header */}
+        <div className="animate-entrance" style={{ animationDelay: "0s" }}>
+          {foundationLoading ? (
+            <HeroSkeleton />
+          ) : (
+            <FoundationHero
+              id={id}
+              name={foundation?.name ?? ""}
+              ein={foundation?.ein ?? ""}
+              location={foundation?.location ?? null}
+              description={foundation?.description ?? null}
+              latestFilingYear={latestFinancials?.filingYear}
+              breadcrumbs={
+                <PageBreadcrumbs
+                  currentLabel={foundation?.name ?? "Foundation"}
+                  searchId={searchId}
+                />
+              }
+            />
+          )}
+        </div>
 
-      {/* Stat cards grid */}
-      <div
-        className="animate-entrance border-b border-zinc-200 bg-zinc-50 px-4 py-6 dark:border-zinc-800 dark:bg-zinc-950"
-        style={{ animationDelay: "0.07s" }}
-      >
-        {foundationLoading || financialsLoading ? (
-          <StatGridSkeleton />
-        ) : (
-          <FoundationStatGrid
-            selectedFinancials={selectedFinancials}
-            totalAssets={foundation?.totalAssets}
-            grantsCount={filteredGrants?.length}
-            totalGrantAmount={totalGrantAmount}
-            grantsLoading={grantsLoading}
-            officersCount={filteredOfficers?.length}
-            officersLoading={officersLoading}
-            availableYears={sortedYears}
-            selectedYear={selectedYear}
-            onYearChange={setSelectedYear}
-          />
-        )}
-      </div>
-
-      {/* Mobile tab bar — visible below xl */}
-      <div
-        className="animate-entrance sticky top-0 z-10 border-b border-zinc-200 bg-white px-4 xl:hidden dark:border-zinc-800 dark:bg-zinc-950"
-        style={{ animationDelay: `${2 * 0.07}s` }}
-      >
-        <nav className="flex gap-1" aria-label="Data sections">
-          {mobileTabs.map((tab) => (
-            <button
-              key={tab.key}
-              type="button"
-              onClick={() => setMobileTab(tab.key)}
-              className={`flex flex-1 items-center justify-center gap-1.5 border-b-2 px-3 py-3 text-sm font-medium transition-colors ${
-                mobileTab === tab.key
-                  ? "border-brand-500 text-brand-600 dark:border-brand-400 dark:text-brand-400"
-                  : "border-transparent text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
-              }`}
-            >
-              {tab.icon}
-              {tab.label}
-            </button>
-          ))}
-        </nav>
-      </div>
-
-      {/* Mobile tabbed content — visible below xl */}
-      <div
-        className="animate-entrance px-4 py-6 xl:hidden"
-        style={{ animationDelay: `${3 * 0.07}s` }}
-      >
-        {mobileTab === "grants" && grantsTable}
-        {mobileTab === "officers" && officersTable}
-        {mobileTab === "financials" && financialsTable}
-      </div>
-
-      {/* Desktop side-by-side layout — visible at xl and above */}
-      <div
-        className="animate-entrance hidden px-4 py-6 xl:block"
-        style={{ animationDelay: `${3 * 0.07}s` }}
-      >
-        {/* Collapsed section pills — visible when a section is expanded */}
-        <motion.div
-          initial={false}
-          animate={{ height: expanded ? "auto" : 0, opacity: expanded ? 1 : 0 }}
-          transition={{ duration: 0.35, ease: [0.25, 0.1, 0.25, 1] }}
-          className="overflow-hidden"
+        {/* Stat cards grid */}
+        <div
+          className="animate-entrance border-b border-zinc-200 bg-zinc-50 px-4 py-6 dark:border-zinc-800 dark:bg-zinc-950"
+          style={{ animationDelay: "0.07s" }}
         >
-          <div className="mb-4 flex gap-2">
-            {mobileTabs
-              .filter((tab) => tab.key !== expanded)
-              .map((tab) => (
-                <button
-                  key={tab.key}
-                  type="button"
-                  onClick={() => setExpanded(tab.key)}
-                  className="flex items-center gap-2 rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-2.5 text-sm font-medium text-zinc-600 transition-all hover:border-zinc-300 hover:bg-zinc-100 hover:text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:border-zinc-600 dark:hover:bg-zinc-700 dark:hover:text-zinc-200"
-                >
-                  {tab.icon}
-                  {tab.label}
-                  <Maximize2 className="ml-1 size-3 text-zinc-400" />
-                </button>
-              ))}
+          {foundationLoading || financialsLoading ? (
+            <StatGridSkeleton />
+          ) : (
+            <FoundationStatGrid
+              selectedFinancials={selectedFinancials}
+              totalAssets={foundation?.totalAssets}
+              grantsCount={filteredGrants?.length}
+              totalGrantAmount={totalGrantAmount}
+              grantsLoading={grantsLoading}
+              officersCount={filteredOfficers?.length}
+              officersLoading={officersLoading}
+              availableYears={sortedYears}
+              selectedYear={selectedYear}
+              onYearChange={setSelectedYear}
+            />
+          )}
+        </div>
+
+        {/* Mobile tab bar — visible below xl */}
+        <div
+          className="animate-entrance sticky top-0 z-10 border-b border-zinc-200 bg-white px-4 xl:hidden dark:border-zinc-800 dark:bg-zinc-950"
+          style={{ animationDelay: `${2 * 0.07}s` }}
+        >
+          <nav className="flex gap-1" aria-label="Data sections">
+            {mobileTabs.map((tab) => (
+              <button
+                key={tab.key}
+                type="button"
+                onClick={() => setMobileTab(tab.key)}
+                className={`flex flex-1 items-center justify-center gap-1.5 border-b-2 px-3 py-3 text-sm font-medium transition-colors ${
+                  mobileTab === tab.key
+                    ? "border-brand-500 text-brand-600 dark:border-brand-400 dark:text-brand-400"
+                    : "border-transparent text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+                }`}
+              >
+                {tab.icon}
+                {tab.label}
+              </button>
+            ))}
+          </nav>
+        </div>
+
+        {/* Mobile tabbed content — visible below xl */}
+        <div
+          className="animate-entrance px-4 py-6 xl:hidden"
+          style={{ animationDelay: `${3 * 0.07}s` }}
+        >
+          {mobileTab === "grants" && grantsTable}
+          {mobileTab === "officers" && officersTable}
+          {mobileTab === "financials" && financialsTable}
+        </div>
+
+        {/* Desktop side-by-side layout — visible at xl and above */}
+        <div
+          className="animate-entrance hidden px-4 py-6 xl:block"
+          style={{ animationDelay: `${3 * 0.07}s` }}
+        >
+          {/* Collapsed section pills — visible when a section is expanded */}
+          <motion.div
+            initial={false}
+            animate={{ height: expanded ? "auto" : 0, opacity: expanded ? 1 : 0 }}
+            transition={{ duration: 0.35, ease: [0.25, 0.1, 0.25, 1] }}
+            className="overflow-hidden"
+          >
+            <div className="mb-4 flex gap-2">
+              {mobileTabs
+                .filter((tab) => tab.key !== expanded)
+                .map((tab) => (
+                  <button
+                    key={tab.key}
+                    type="button"
+                    onClick={() => setExpanded(tab.key)}
+                    className="flex items-center gap-2 rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-2.5 text-sm font-medium text-zinc-600 transition-all hover:border-zinc-300 hover:bg-zinc-100 hover:text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:border-zinc-600 dark:hover:bg-zinc-700 dark:hover:text-zinc-200"
+                  >
+                    {tab.icon}
+                    {tab.label}
+                    <Maximize2 className="ml-1 size-3 text-zinc-400" />
+                  </button>
+                ))}
+            </div>
+          </motion.div>
+
+          <div className="flex gap-6 xl:flex-row">
+            {/* Grants column */}
+            <motion.div
+              initial={false}
+              animate={{
+                flex: expanded === "grants" ? "1 1 100%" : expanded ? "0 0 0%" : "1 1 60%",
+                opacity: expanded && expanded !== "grants" ? 0 : 1,
+              }}
+              transition={{ duration: 0.5, ease: [0.25, 0.1, 0.25, 1] }}
+              className="min-w-0 overflow-hidden"
+            >
+              {grantsTable}
+            </motion.div>
+
+            {/* Officers + Financials column */}
+            <motion.div
+              initial={false}
+              animate={{
+                flex:
+                  expanded === "officers" || expanded === "financials"
+                    ? "1 1 100%"
+                    : expanded
+                      ? "0 0 0%"
+                      : "1 1 40%",
+                opacity: expanded === "grants" ? 0 : 1,
+              }}
+              transition={{ duration: 0.5, ease: [0.25, 0.1, 0.25, 1] }}
+              className="flex min-w-0 flex-col gap-6 overflow-hidden"
+            >
+              <motion.div
+                initial={false}
+                animate={{
+                  height: expanded === "financials" ? 0 : "auto",
+                  opacity: expanded === "financials" ? 0 : 1,
+                  marginBottom: expanded === "financials" ? 0 : undefined,
+                }}
+                transition={{ duration: 0.5, ease: [0.25, 0.1, 0.25, 1] }}
+                className="overflow-hidden"
+              >
+                {officersTable}
+              </motion.div>
+
+              <motion.div
+                initial={false}
+                animate={{
+                  height: expanded === "officers" ? 0 : "auto",
+                  opacity: expanded === "officers" ? 0 : 1,
+                }}
+                transition={{ duration: 0.5, ease: [0.25, 0.1, 0.25, 1] }}
+                className="overflow-hidden"
+              >
+                {financialsTable}
+              </motion.div>
+            </motion.div>
           </div>
-        </motion.div>
-
-        <div className="flex gap-6 xl:flex-row">
-          {/* Grants column */}
-          <motion.div
-            initial={false}
-            animate={{
-              flex: expanded === "grants" ? "1 1 100%" : expanded ? "0 0 0%" : "1 1 60%",
-              opacity: expanded && expanded !== "grants" ? 0 : 1,
-            }}
-            transition={{ duration: 0.5, ease: [0.25, 0.1, 0.25, 1] }}
-            className="min-w-0 overflow-hidden"
-          >
-            {grantsTable}
-          </motion.div>
-
-          {/* Officers + Financials column */}
-          <motion.div
-            initial={false}
-            animate={{
-              flex:
-                expanded === "officers" || expanded === "financials"
-                  ? "1 1 100%"
-                  : expanded
-                    ? "0 0 0%"
-                    : "1 1 40%",
-              opacity: expanded === "grants" ? 0 : 1,
-            }}
-            transition={{ duration: 0.5, ease: [0.25, 0.1, 0.25, 1] }}
-            className="flex min-w-0 flex-col gap-6 overflow-hidden"
-          >
-            <motion.div
-              initial={false}
-              animate={{
-                height: expanded === "financials" ? 0 : "auto",
-                opacity: expanded === "financials" ? 0 : 1,
-                marginBottom: expanded === "financials" ? 0 : undefined,
-              }}
-              transition={{ duration: 0.5, ease: [0.25, 0.1, 0.25, 1] }}
-              className="overflow-hidden"
-            >
-              {officersTable}
-            </motion.div>
-
-            <motion.div
-              initial={false}
-              animate={{
-                height: expanded === "officers" ? 0 : "auto",
-                opacity: expanded === "officers" ? 0 : 1,
-              }}
-              transition={{ duration: 0.5, ease: [0.25, 0.1, 0.25, 1] }}
-              className="overflow-hidden"
-            >
-              {financialsTable}
-            </motion.div>
-          </motion.div>
         </div>
       </div>
-    </div>
+    </MotionConfig>
   );
 }

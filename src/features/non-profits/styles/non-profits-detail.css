@@ -23,3 +23,9 @@
 .animate-entrance {
   animation: entrance-fade-in 0.45s cubic-bezier(0.25, 0.1, 0.25, 1) both;
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-entrance {
+    animation: none;
+  }
+}

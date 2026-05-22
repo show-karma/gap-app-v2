@@ -19,7 +19,7 @@ export interface FieldRect {
   height: number;
 }
 
-interface PageTransitionFields {
+export interface PageTransitionFields {
   name: FieldRect;
   badge?: FieldRect;
   location?: FieldRect;

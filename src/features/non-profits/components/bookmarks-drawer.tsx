@@ -12,7 +12,7 @@ import { Building2, ChevronRight, HandCoins, Landmark, X } from "lucide-react";
 import Link from "next/link";
 import pluralize from "pluralize";
 import type React from "react";
-import { memo, useState } from "react";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { DeleteDialog } from "@/components/DeleteDialog";
 import { NON_PROFITS_PAGES } from "@/utilities/pages";
 import {
@@ -101,6 +101,28 @@ export function BookmarksDrawer({ open, onClose }: { open: boolean; onClose: () 
   const { data: items = [], isLoading, isError } = useResearchTray();
   const { mutateAsync: clearAll, isPending: isClearing } = useClearResearchTray();
   const [confirmClearOpen, setConfirmClearOpen] = useState(false);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+
+  // Escape key closes the drawer.
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    },
+    [onClose]
+  );
+
+  useEffect(() => {
+    if (!open) return;
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [open, handleKeyDown]);
+
+  // Move focus into the drawer when it opens.
+  useEffect(() => {
+    if (open) {
+      closeButtonRef.current?.focus();
+    }
+  }, [open]);
 
   return (
     <>
@@ -140,12 +162,14 @@ export function BookmarksDrawer({ open, onClose }: { open: boolean; onClose: () 
                 type="button"
                 onClick={() => setConfirmClearOpen(true)}
                 disabled={isClearing}
+                aria-label="Clear all bookmarks"
                 className="text-xs text-zinc-400 transition-colors hover:text-zinc-600 dark:hover:text-zinc-300 disabled:opacity-50"
               >
                 Clear all
               </button>
             )}
             <button
+              ref={closeButtonRef}
               type="button"
               onClick={onClose}
               aria-label="Close bookmarks"
