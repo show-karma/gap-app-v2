@@ -13,7 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { NavbarUserSkeleton } from "@/src/components/navbar/navbar-user-skeleton";
-import { PAGES } from "@/utilities/pages";
+import { NON_PROFITS_PAGES, PAGES } from "@/utilities/pages";
 import { SOCIALS } from "@/utilities/socials";
 import { cn } from "@/utilities/tailwind";
 import { Logo } from "../shared/logo";
@@ -166,6 +166,10 @@ export function NavbarDesktopNavigation() {
             <ExploreContent variant="desktop" />
           </DropdownMenuContent>
         </DropdownMenu>
+        {/* Grow Nonprofits */}
+        <Link href={NON_PROFITS_PAGES.HOME} className={menuStyles.trigger}>
+          Grow Nonprofits
+        </Link>
       </div>
 
       {!isLoggedIn ? (

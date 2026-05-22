@@ -45,14 +45,14 @@ export async function generateMetadata({
 
   if (!foundation?.name) {
     return customMetadata({
-      title: "Foundation — Grant Atlas",
+      title: "Foundation — Grow Nonprofits",
       description: "View foundation details, grants, officers, and financials.",
       path: `/non-profits/foundations/${id}`,
     });
   }
 
   return customMetadata({
-    title: `${foundation.name} — Grant Atlas`,
+    title: `${foundation.name} — Grow Nonprofits`,
     description:
       foundation.description ??
       `Explore grants, officers, and financial data for ${foundation.name}.`,

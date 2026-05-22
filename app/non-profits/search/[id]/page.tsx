@@ -3,7 +3,7 @@ import { ChatViewDynamic } from "@/src/features/non-profits/components/chat-view
 import { customMetadata } from "@/utilities/meta";
 
 export const metadata: Metadata = customMetadata({
-  title: "Search — Grant Atlas",
+  title: "Search — Grow Nonprofits",
   description:
     "AI-powered philanthropic prospecting. Find funders, explore foundations, and research grants in plain English.",
   path: "/non-profits/search",
