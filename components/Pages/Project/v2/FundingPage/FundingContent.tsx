@@ -265,7 +265,7 @@ export function FundingContent({ project, className }: FundingContentProps) {
   const { grants, isLoading } = useProjectGrants(project.uid || "");
 
   // Sort grants by creation date (most recent first)
-  const sortedGrants = [...grants].sort((a, b) => {
+  const sortedGrants = grants.toSorted((a, b) => {
     const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
     const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
     return dateB - dateA;
