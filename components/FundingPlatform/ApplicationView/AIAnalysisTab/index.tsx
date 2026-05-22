@@ -5,28 +5,36 @@ import type { IFundingApplication, ProgramWithFormSchema } from "@/types/funding
 import { AIEvaluationDisplay } from "../AIEvaluation";
 import AIEvaluationButton from "../AIEvaluationButton";
 import { InternalAIEvaluationDisplay } from "../InternalAIEvaluation";
+import { KarmaProfileEvaluationDisplay } from "../KarmaProfileEvaluation";
 import { ReEvaluateInternalButton } from "../ReEvaluateInternalButton";
+import { ReEvaluateKarmaProfileButton } from "../ReEvaluateKarmaProfileButton";
 import { type AIAnalysisSubTabId, AIAnalysisSubTabs } from "./AIAnalysisSubTabs";
 import { EmptyEvaluationState } from "./EmptyEvaluationState";
 
 export interface AIAnalysisTabProps {
-  /** The funding application to display evaluations for */
   application: IFundingApplication;
-  /** The program for context (optional) */
   program?: ProgramWithFormSchema;
-  /** Callback when evaluation is completed (to refresh data) */
   onEvaluationComplete?: () => void;
-  /** Whether to show the run evaluation button (default: true) */
   canRunEvaluation?: boolean;
 }
 
-function getDefaultTab(hasExternal: boolean, hasInternal: boolean): AIAnalysisSubTabId {
-  return !hasExternal && hasInternal ? "internal" : "external";
+function getDefaultTab(
+  hasExternal: boolean,
+  hasInternal: boolean,
+  hasInsights: boolean
+): AIAnalysisSubTabId {
+  if (hasExternal) return "external";
+  if (hasInternal) return "internal";
+  if (hasInsights) return "insights";
+  return "external";
 }
 
 /**
- * AI Analysis tab component that displays AI evaluations for a funding application.
- * Uses sub-tabs to switch between external (visible to applicants) and internal (reviewer-only) evaluations.
+ * AI Analysis tab. Three sub-tabs:
+ * - External: applicant-visible
+ * - Internal: reviewer-only proposal critique
+ * - Applications Insights: reviewer-only track-record verdict on the linked
+ *   Karma project (independent of Internal — see karma-profile-insights-tab.md)
  */
 export const AIAnalysisTab: FC<AIAnalysisTabProps> = ({
   application,
@@ -36,41 +44,70 @@ export const AIAnalysisTab: FC<AIAnalysisTabProps> = ({
 }) => {
   const hasExternalEvaluation = Boolean(application.aiEvaluation?.evaluation);
   const hasInternalEvaluation = Boolean(application.internalAIEvaluation?.evaluation);
+  const insightsRecord = application.karmaProfileEvaluation;
+  // Any non-undefined Insights record (including SKIPPED) counts as "has run"
+  // so we route to the Insights tab by default if it's the only one with
+  // signal — keeps the UI from looking empty when reviewers click into apps
+  // that only have a track-record verdict.
+  const hasInsightsRecord = Boolean(insightsRecord);
+  const hasInsightsEvaluation = Boolean(insightsRecord?.evaluation);
 
-  // Determine initial tab based on which evaluations exist
   const [activeSubTab, setActiveSubTab] = useState<AIAnalysisSubTabId>(() =>
-    getDefaultTab(hasExternalEvaluation, hasInternalEvaluation)
+    getDefaultTab(hasExternalEvaluation, hasInternalEvaluation, hasInsightsRecord)
   );
 
   const referenceNumber = application.referenceNumber || application.id;
 
+  const renderRunButton = () => {
+    if (!canRunEvaluation) return null;
+
+    if (activeSubTab === "internal" && hasInternalEvaluation) {
+      return (
+        <ReEvaluateInternalButton
+          referenceNumber={referenceNumber}
+          onEvaluationComplete={onEvaluationComplete}
+        />
+      );
+    }
+
+    if (activeSubTab === "insights" && hasInsightsEvaluation) {
+      return (
+        <ReEvaluateKarmaProfileButton
+          referenceNumber={referenceNumber}
+          onEvaluationComplete={onEvaluationComplete}
+        />
+      );
+    }
+
+    // For first-time runs (external, internal without prior eval, or
+    // insights without a completed prior). The Insights button uses
+    // isInternal=false because the AIEvaluationButton's "isInternal" flag
+    // only routes between External and Internal endpoints — Insights has
+    // its own endpoint, which is reached via the dedicated re-evaluate
+    // button. For now we hide the run button on Insights until an eval
+    // exists; admins trigger via the resubmit flow or wait for auto-fire.
+    if (activeSubTab === "insights") {
+      return null;
+    }
+
+    return (
+      <AIEvaluationButton
+        referenceNumber={referenceNumber}
+        onEvaluationComplete={onEvaluationComplete}
+        isInternal={activeSubTab === "internal"}
+      />
+    );
+  };
+
   return (
     <div className="space-y-6">
-      {/* Sub-tab Navigation */}
       <div className="flex items-center justify-between gap-4">
         <AIAnalysisSubTabs activeTab={activeSubTab} onTabChange={setActiveSubTab} />
-
-        {/* Run / re-run button for the current tab. When re-running an
-            existing internal evaluation, we require explicit confirmation
-            since the prior evaluation is overwritten. */}
-        {canRunEvaluation &&
-          (activeSubTab === "internal" && hasInternalEvaluation ? (
-            <ReEvaluateInternalButton
-              referenceNumber={referenceNumber}
-              onEvaluationComplete={onEvaluationComplete}
-            />
-          ) : (
-            <AIEvaluationButton
-              referenceNumber={referenceNumber}
-              onEvaluationComplete={onEvaluationComplete}
-              isInternal={activeSubTab === "internal"}
-            />
-          ))}
+        {renderRunButton()}
       </div>
 
-      {/* Content based on active sub-tab */}
-      {activeSubTab === "external" ? (
-        hasExternalEvaluation ? (
+      {activeSubTab === "external" &&
+        (hasExternalEvaluation ? (
           <AIEvaluationDisplay
             evaluation={application.aiEvaluation?.evaluation || null}
             isLoading={false}
@@ -82,17 +119,30 @@ export const AIAnalysisTab: FC<AIAnalysisTabProps> = ({
             title="No External Evaluation Yet"
             description="Run an AI evaluation to get automated feedback visible to the applicant."
           />
-        )
-      ) : hasInternalEvaluation ? (
-        <InternalAIEvaluationDisplay
-          evaluation={application.internalAIEvaluation?.evaluation || null}
-          context={application.internalAIEvaluation?.context || null}
+        ))}
+
+      {activeSubTab === "internal" &&
+        (hasInternalEvaluation ? (
+          <InternalAIEvaluationDisplay
+            evaluation={application.internalAIEvaluation?.evaluation || null}
+            context={application.internalAIEvaluation?.context || null}
+            programName={program?.name}
+          />
+        ) : (
+          <EmptyEvaluationState
+            title="No Internal Evaluation Yet"
+            description="Run an internal AI evaluation for reviewer-only insights and analysis."
+          />
+        ))}
+
+      {activeSubTab === "insights" && (
+        <KarmaProfileEvaluationDisplay
+          evaluation={insightsRecord?.evaluation || null}
+          context={insightsRecord?.context || null}
+          status={insightsRecord?.status}
+          evaluatedAt={insightsRecord?.evaluatedAt}
+          skipReason={insightsRecord?.skipReason}
           programName={program?.name}
-        />
-      ) : (
-        <EmptyEvaluationState
-          title="No Internal Evaluation Yet"
-          description="Run an internal AI evaluation for reviewer-only insights and analysis."
         />
       )}
     </div>

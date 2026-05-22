@@ -662,6 +662,35 @@ export const fundingApplicationsAPI = {
   },
 
   /**
+   * Run Karma Profile (track-record) AI evaluation. Independent of the
+   * Internal evaluation. Admin-only. The aggregator can take up to ~120s
+   * on cache miss, so the timeout matches Internal's.
+   */
+  async runKarmaProfileEvaluation(referenceNumber: string): Promise<{
+    success: boolean;
+    referenceNumber: string;
+    status: "pending" | "in_progress" | "completed" | "failed" | "skipped";
+    evaluation: string;
+    promptId: string;
+    evaluatedAt: string;
+    context: string;
+    contextHash: string;
+    skipReason?:
+      | "no_field_configured"
+      | "uid_empty"
+      | "uid_invalid"
+      | "project_not_found"
+      | "aggregator_failed";
+  }> {
+    const response = await apiClient.post(
+      `/v2/funding-applications/${referenceNumber}/evaluate-karma-profile`,
+      {},
+      { timeout: 150000 }
+    );
+    return response.data;
+  },
+
+  /**
    * Delete a milestone from a funding application (Milestone reviewers only)
    */
   async deleteMilestone(
