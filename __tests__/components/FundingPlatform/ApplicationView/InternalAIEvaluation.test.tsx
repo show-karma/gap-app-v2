@@ -1,6 +1,5 @@
 import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import { EvaluationDisplay } from "@/components/FundingPlatform/ApplicationView/EvaluationComponents";
 import {
   getPriorityColor,
@@ -231,5 +230,4 @@ describe("InternalAIEvaluationDisplay", () => {
       expect(screen.getByText("Internal evaluation pending")).toBeInTheDocument();
     });
   });
-
 });

@@ -15,7 +15,7 @@ vi.mock("@/components/Utilities/MarkdownPreview", () => ({
 }));
 
 vi.mock("@/utilities/tailwind", () => ({
-  cn: (...classes: any[]) => classes.filter(Boolean).join(" "),
+  cn: (...classes: unknown[]) => classes.filter(Boolean).join(" "),
 }));
 
 const baseProps = {
@@ -167,7 +167,9 @@ describe("KarmaProfileEvaluationDisplay — schema-agnostic renderer", () => {
 
   describe("Top-level primitives", () => {
     it("renders bare top-level numbers without crashing", () => {
-      renderWith(42 as any);
+      // Render a top-level non-object value through the raw evaluation string
+      // path; mirrors what would happen if the LLM returned a bare number.
+      render(<KarmaProfileEvaluationDisplay {...baseProps} evaluation="42" />);
       expect(screen.getByText("42")).toBeInTheDocument();
     });
   });
