@@ -6,11 +6,12 @@ import { urlRegex } from "@/utilities/regexs/urlRegex";
  * Preprocessor for optional numeric fields.
  * z.coerce.number().optional() coerces "" to 0 instead of undefined.
  * This handles empty strings and undefined correctly by converting them to undefined.
+ * Uses z.pipe() instead of z.preprocess() (removed in Zod v4).
  */
-const optionalNumber = z.preprocess(
-  (val) => (val === "" || val === undefined || val === null ? undefined : Number(val)),
-  z.number().optional()
-);
+const optionalNumber = z
+  .union([z.literal(""), z.string(), z.number(), z.null(), z.undefined()])
+  .transform((val) => (val === "" || val === null || val === undefined ? undefined : Number(val)))
+  .pipe(z.number().optional());
 
 export const OPPORTUNITY_TYPE_OPTIONS = [
   { value: "grant", label: "Grant" },
@@ -204,13 +205,9 @@ export const createProgramSchema = z
       .optional()
       .or(z.literal("")),
     amountDistributed: optionalNumber,
-    description: z
-      .string({
-        required_error: MESSAGES.REGISTRY.FORM.DESCRIPTION,
-      })
-      .min(3, {
-        message: MESSAGES.REGISTRY.FORM.DESCRIPTION,
-      }),
+    description: z.string().min(3, {
+      message: MESSAGES.REGISTRY.FORM.DESCRIPTION,
+    }),
     networkToCreate: optionalNumber,
     budget: optionalNumber,
     minGrantSize: optionalNumber,

@@ -186,7 +186,8 @@ export const anvilFixture = base.extend<
 >({
   // Worker-scoped: one Anvil process per worker
   _anvilWorker: [
-    async (_: unknown, use) => {
+    // biome-ignore lint/correctness/noEmptyPattern: Playwright worker fixtures require {} destructuring even with no fixture deps
+    async ({}: unknown, use) => {
       const instance = await startAnvil();
       await use(instance);
       instance.process.kill("SIGTERM");

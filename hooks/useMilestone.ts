@@ -87,8 +87,8 @@ export const useMilestone = () => {
   const { refetch } = useProjectUpdates(projectId as string);
   const { refetch: refetchGrants } = useProjectGrants(project?.uid || "");
   const router = useRouter();
-  const { isProjectOwner } = useProjectStore();
-  const { isOwner: isContractOwner } = useOwnerStore();
+  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
+  const isContractOwner = useOwnerStore((state) => state.isOwner);
   const { openShareDialog } = useShareDialogStore();
   const _isOnChainAuthorized = isProjectOwner || isContractOwner;
   const { performOffChainRevoke } = useOffChainRevoke();

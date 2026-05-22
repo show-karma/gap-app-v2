@@ -6,7 +6,7 @@ const booleanEnvVar = z
   .string()
   .transform((v) => v === "true")
   .optional()
-  .default("false");
+  .default(false);
 
 // --- Client env schema (NEXT_PUBLIC_* vars, inlined at build time) ---
 
@@ -77,7 +77,7 @@ function stripEmptyStrings(obj: Record<string, unknown>): Record<string, unknown
  * @returns Parsed and validated environment variables.
  * @throws {Error} If validation fails, listing each invalid variable.
  */
-export function validateEnv<T extends z.ZodTypeAny>(
+export function validateEnv<T extends z.ZodType>(
   schema: T,
   data: Record<string, unknown>,
   label: string

@@ -76,7 +76,7 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
 }) => {
   const labelStyle = cn(labelStyleDefault, labelStyleProps);
   const inputStyle = cn(inputStyleDefault, inputStyleProps);
-  const { setGrant } = useGrantStore((state) => state);
+  const setGrant = useGrantStore((state) => state.setGrant);
 
   const { address } = useAccount();
   const { chain } = useAccount();

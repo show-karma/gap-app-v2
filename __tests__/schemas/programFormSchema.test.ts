@@ -42,7 +42,7 @@ describe("createProgramSchema", () => {
 
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.errors[0].message).toBe("Program name must be at least 3 characters");
+        expect(result.error.issues[0].message).toBe("Program name must be at least 3 characters");
       }
     });
 
@@ -56,7 +56,7 @@ describe("createProgramSchema", () => {
 
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.errors[0].message).toBe("Program name must be at most 50 characters");
+        expect(result.error.issues[0].message).toBe("Program name must be at most 50 characters");
       }
     });
 
@@ -108,7 +108,7 @@ describe("createProgramSchema", () => {
 
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.errors[0].message).toBe("Description is required");
+        expect(result.error.issues[0].message).toBe("Description is required");
       }
     });
 
@@ -148,7 +148,7 @@ describe("createProgramSchema", () => {
 
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.errors[0].message).toBe("Short description is required");
+        expect(result.error.issues[0].message).toBe("Short description is required");
       }
     });
 
@@ -162,7 +162,7 @@ describe("createProgramSchema", () => {
 
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.errors[0].message).toBe(
+        expect(result.error.issues[0].message).toBe(
           "Short description must be at most 100 characters"
         );
       }
@@ -263,8 +263,8 @@ describe("createProgramSchema", () => {
 
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.errors[0].message).toBe("Start date must be before the end date");
-        expect(result.error.errors[0].path).toEqual(["dates", "startsAt"]);
+        expect(result.error.issues[0].message).toBe("Start date must be before the end date");
+        expect(result.error.issues[0].path).toEqual(["dates", "startsAt"]);
       }
     });
 
@@ -337,7 +337,7 @@ describe("createProgramSchema", () => {
       expect(result.success).toBe(false);
       if (!result.success) {
         // Find the budget error message
-        const budgetError = result.error.errors.find(
+        const budgetError = result.error.issues.find(
           (err) => err.path.includes("budget") || err.message.includes("positive number")
         );
         expect(budgetError?.message).toBe("Budget must be a positive number");
@@ -460,7 +460,7 @@ describe("createProgramSchema", () => {
 
       expect(result.success).toBe(false);
       if (!result.success) {
-        const adminError = result.error.errors.find((err) => err.path.includes("adminEmails"));
+        const adminError = result.error.issues.find((err) => err.path.includes("adminEmails"));
         expect(adminError?.message).toBe("At least one admin email is required");
       }
     });
@@ -477,7 +477,7 @@ describe("createProgramSchema", () => {
 
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.errors.some((err) => err.path[0] === "adminEmails")).toBe(true);
+        expect(result.error.issues.some((err) => err.path[0] === "adminEmails")).toBe(true);
       }
     });
 
@@ -522,7 +522,7 @@ describe("createProgramSchema", () => {
 
       expect(result.success).toBe(false);
       if (!result.success) {
-        const emailError = result.error.errors.find((err) => err.path.includes("financeEmails"));
+        const emailError = result.error.issues.find((err) => err.path.includes("financeEmails"));
         expect(emailError?.message).toBe("At least one finance email is required");
       }
     });
@@ -569,7 +569,7 @@ describe("updateProgramSchema", () => {
 
     expect(result.success).toBe(false);
     if (!result.success) {
-      const adminError = result.error.errors.find((err) => err.path.includes("adminEmails"));
+      const adminError = result.error.issues.find((err) => err.path.includes("adminEmails"));
       expect(adminError?.message).toBe("At least one admin email is required");
     }
   });
@@ -586,7 +586,7 @@ describe("updateProgramSchema", () => {
 
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(result.error.errors.some((err) => err.path[0] === "adminEmails")).toBe(true);
+      expect(result.error.issues.some((err) => err.path[0] === "adminEmails")).toBe(true);
     }
   });
 
@@ -629,7 +629,7 @@ describe("updateProgramSchema", () => {
 
     expect(result.success).toBe(false);
     if (!result.success) {
-      const financeError = result.error.errors.find((err) => err.path.includes("financeEmails"));
+      const financeError = result.error.issues.find((err) => err.path.includes("financeEmails"));
       expect(financeError?.message).toBe("At least one finance email is required");
     }
   });

@@ -10,7 +10,7 @@ import type { UnifiedMilestone } from "@/types/v2/roadmap";
 import { cn } from "@/utilities/tailwind";
 
 export const ProjectActivity = () => {
-  const { isProjectAdmin } = useProjectStore();
+  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const { projectId } = useParams();
 
   const { milestones = [] } = useProjectUpdates(projectId as string);

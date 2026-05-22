@@ -51,7 +51,7 @@ export function TemplateSavePanel({
       feedbackInstructions: session.feedbackHistory,
     });
     if (!parsed.success) {
-      setError(parsed.error.errors[0]?.message ?? "Invalid template");
+      setError(parsed.error.issues[0]?.message ?? "Invalid template");
       return;
     }
     setError(null);

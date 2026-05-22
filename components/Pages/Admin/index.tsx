@@ -24,7 +24,7 @@ import { RemoveAdmin } from "./RemoveAdminDialog";
 
 export const CommunitiesToAdmin = () => {
   const { communities: communitiesToAdmin, isLoading } = useCommunitiesStore();
-  const { isOwner } = useOwnerStore();
+  const isOwner = useOwnerStore((state) => state.isOwner);
   const { data, isLoading: isLoadingCommunities, refetch } = useAllCommunitiesWithAdmins();
 
   const communities = data?.communities ?? [];

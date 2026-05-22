@@ -20,7 +20,7 @@ export const useContractAddressSave = ({ projectUid, onSuccess }: UseContractAdd
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { address } = useAccount();
-  const { refreshProject } = useProjectStore();
+  const refreshProject = useProjectStore((state) => state.refreshProject);
   const { validateAll, invalidContracts, setInvalidContracts } = useContractAddressValidation({
     projectUid,
   });

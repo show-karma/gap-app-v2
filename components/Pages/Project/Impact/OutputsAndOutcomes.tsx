@@ -117,7 +117,8 @@ export const OutputsAndOutcomes = ({
   columns = 1,
   collapsible = false,
 }: OutputsAndOutcomesProps = {}) => {
-  const { project, isProjectOwner } = useProjectStore();
+  const project = useProjectStore((state) => state.project);
+  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
 
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isCommunityAdmin = useIsCommunityAdmin();

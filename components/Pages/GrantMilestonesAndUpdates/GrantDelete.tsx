@@ -33,9 +33,10 @@ export const GrantDelete: FC<GrantDeleteProps> = ({ grant }) => {
   const { startAttestation, changeStepperStep, setIsStepper, showSuccess, showError } =
     useAttestationToast();
 
-  const { project, isProjectOwner } = useProjectStore();
+  const project = useProjectStore((state) => state.project);
+  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const { refetch: refetchGrants, grants } = useProjectGrants(project?.uid || "");
-  const { isOwner: isContractOwner } = useOwnerStore();
+  const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isOnChainAuthorized = isProjectOwner || isContractOwner;
   const { gap } = useGap();
   const { performOffChainRevoke } = useOffChainRevoke();

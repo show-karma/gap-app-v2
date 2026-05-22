@@ -11,7 +11,7 @@ import { Dropdown } from "./Dropdown";
 import { NoGrant } from "./NoGrant";
 
 export const MilestoneUpdateScreen = () => {
-  const { project } = useProjectStore();
+  const project = useProjectStore((state) => state.project);
   const { closeProgressModal } = useProgressModalStore();
   const [selectedGrant, setSelectedGrant] = useState<Grant | undefined>();
   const [selectedMilestone, setSelectedMilestone] = useState<GrantMilestone | undefined>();
