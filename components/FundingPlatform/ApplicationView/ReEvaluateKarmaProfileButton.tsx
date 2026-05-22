@@ -71,8 +71,8 @@ export const ReEvaluateKarmaProfileButton: FC<ReEvaluateKarmaProfileButtonProps>
             <DialogTitle>Re-run track-record evaluation?</DialogTitle>
             <DialogDescription>
               This overwrites the existing track-record evaluation with a fresh run against the
-              latest Karma project state (new completed milestones, new grants, etc.) and the latest
-              configured prompt. The previous evaluation will be lost.
+              latest Karma project state (new completed milestones, new grants, etc.). The previous
+              evaluation will be lost.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
