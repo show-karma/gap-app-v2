@@ -21,6 +21,14 @@ export const SearchHistoryEntrySchema = z.object({
 export type SearchHistoryEntry = z.infer<typeof SearchHistoryEntrySchema>;
 
 export const searchHistoryService = {
+  list(limit = 20): ResultAsync<SearchHistoryEntry[], AppError> {
+    return apiFetch(
+      `${NON_PROFITS_API.SEARCH_HISTORY.LIST}?limit=${limit}`,
+      z.array(SearchHistoryEntrySchema),
+      "GET"
+    );
+  },
+
   create(query: string): ResultAsync<SearchHistoryEntry, AppError> {
     return apiFetch(NON_PROFITS_API.SEARCH_HISTORY.CREATE, SearchHistoryEntrySchema, "POST", {
       query,
@@ -29,5 +37,13 @@ export const searchHistoryService = {
 
   getById(id: string): ResultAsync<SearchHistoryEntry, AppError> {
     return apiFetch(NON_PROFITS_API.SEARCH_HISTORY.GET(id), SearchHistoryEntrySchema, "GET");
+  },
+
+  deleteOne(id: string): ResultAsync<void, AppError> {
+    return apiFetch(NON_PROFITS_API.SEARCH_HISTORY.DELETE(id), z.void(), "DELETE");
+  },
+
+  clearAll(): ResultAsync<void, AppError> {
+    return apiFetch(NON_PROFITS_API.SEARCH_HISTORY.CLEAR, z.void(), "DELETE");
   },
 };

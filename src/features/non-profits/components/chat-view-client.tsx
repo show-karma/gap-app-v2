@@ -17,9 +17,12 @@
  */
 
 import {
+  Bookmark,
+  BookmarkCheck,
   Building2,
   Check,
   ChevronDown,
+  Clock,
   HandCoins,
   Landmark,
   MapPin,
@@ -32,6 +35,7 @@ import pluralize from "pluralize";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { Spinner } from "@/components/ui/spinner";
+import { useAuth } from "@/hooks/useAuth";
 import {
   Conversation,
   ConversationContent,
@@ -52,11 +56,19 @@ import {
 import formatCurrency from "@/utilities/formatCurrency";
 import { NON_PROFITS_PAGES } from "@/utilities/pages";
 import { usePhilanthropySearch } from "../hooks/use-philanthropy-stream";
+import {
+  useAddToResearchTray,
+  useRemoveFromResearchTray,
+  useResearchTray,
+} from "../hooks/use-research-tray";
+import { searchHistoryService } from "../services/search-history.service";
 import { type ChatTurn, EMPTY_MESSAGES, usePhilanthropyStore } from "../store/philanthropy";
 import { useSearchSessionStore } from "../store/search-session";
 import type { PhilanthropyEntityType, RankedEntity } from "../types/philanthropy";
 import { AttachmentsPanel } from "./attachments-panel";
+import { BookmarksDrawer } from "./bookmarks-drawer";
 import { ConnectorNudge } from "./connector-nudge";
+import { SearchHistoryPanel } from "./search-history-panel";
 
 // ── Entity presentation constants ──────────────────────────────────────────
 
@@ -79,6 +91,50 @@ const ENTITY_BADGE_CLASS: Record<PhilanthropyEntityType, string> = {
 };
 
 const INITIAL_VISIBLE_ENTITIES = 5;
+
+// ── BookmarkButton ──────────────────────────────────────────────────────────
+// Isolated component so it can call hooks without prop-drilling tray state.
+
+const BookmarkButton = memo(function BookmarkButton({ entity }: { entity: RankedEntity }) {
+  const { authenticated, login } = useAuth();
+  const { data: tray = [] } = useResearchTray();
+  const { mutate: addToTray, isPending: isAdding } = useAddToResearchTray();
+  const { mutate: removeFromTray, isPending: isRemoving } = useRemoveFromResearchTray();
+
+  const trayEntry = tray.find((e) => e.entityId === entity.id);
+  const isBookmarked = Boolean(trayEntry);
+
+  const toggle = useCallback(() => {
+    if (!authenticated) {
+      login();
+      return;
+    }
+    if (isBookmarked && trayEntry) {
+      removeFromTray(trayEntry.id);
+    } else {
+      addToTray(entity);
+    }
+  }, [authenticated, login, isBookmarked, trayEntry, removeFromTray, addToTray, entity]);
+
+  return (
+    <button
+      type="button"
+      onClick={(e) => {
+        e.preventDefault();
+        toggle();
+      }}
+      aria-label={isBookmarked ? "Remove from bookmarks" : "Add to bookmarks"}
+      disabled={isAdding || isRemoving}
+      className="shrink-0 rounded p-1 text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-brand dark:hover:bg-zinc-800 dark:hover:text-brand-subtle disabled:opacity-50"
+    >
+      {isBookmarked ? (
+        <BookmarkCheck className="size-3.5 text-brand" />
+      ) : (
+        <Bookmark className="size-3.5" />
+      )}
+    </button>
+  );
+});
 
 // ── Inline starter prompts (LOCKED decision — do NOT use suggested-queries.tsx) ──
 
@@ -124,41 +180,41 @@ const CompactEntityCard = memo(function CompactEntityCard({
   if (entity.location) meta.push(entity.location);
 
   return (
-    <Link
-      href={href}
-      className="group flex items-start gap-3 rounded-lg border border-zinc-200 bg-white p-3 transition-all hover:border-zinc-300 hover:bg-zinc-50 hover:shadow-sm dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-zinc-700 dark:hover:bg-zinc-800"
-    >
-      <div className="flex size-9 shrink-0 items-center justify-center rounded-md bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400">
-        <Icon className="size-4" />
-      </div>
-      <div className="min-w-0 flex-1">
-        <div className="flex items-start justify-between gap-2">
-          <p className="truncate text-sm font-medium text-zinc-900 group-hover:text-brand-emphasis dark:text-zinc-100">
-            {entity.name ?? "Unnamed"}
-          </p>
-          <span
-            className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${ENTITY_BADGE_CLASS[entity.entityType]}`}
-          >
-            {ENTITY_LABEL[entity.entityType]}
-          </span>
+    <div className="group relative flex items-start gap-3 rounded-lg border border-zinc-200 bg-white p-3 transition-all hover:border-zinc-300 hover:bg-zinc-50 hover:shadow-sm dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-zinc-700 dark:hover:bg-zinc-800">
+      <Link href={href} className="contents">
+        <div className="flex size-9 shrink-0 items-center justify-center rounded-md bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400">
+          <Icon className="size-4" />
         </div>
-        {entity.description && (
-          <p className="mt-0.5 line-clamp-2 text-xs text-zinc-500 dark:text-zinc-400">
-            {entity.description}
-          </p>
-        )}
-        {meta.length > 0 && (
-          <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-zinc-500 dark:text-zinc-400">
-            {meta.map((m, i) => (
-              <span key={`${entity.id}-meta-${i}`} className="inline-flex items-center gap-1">
-                {i === meta.length - 1 && entity.location === m && <MapPin className="size-3" />}
-                {m}
-              </span>
-            ))}
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start justify-between gap-2">
+            <p className="truncate text-sm font-medium text-zinc-900 group-hover:text-brand-emphasis dark:text-zinc-100">
+              {entity.name ?? "Unnamed"}
+            </p>
+            <span
+              className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${ENTITY_BADGE_CLASS[entity.entityType]}`}
+            >
+              {ENTITY_LABEL[entity.entityType]}
+            </span>
           </div>
-        )}
-      </div>
-    </Link>
+          {entity.description && (
+            <p className="mt-0.5 line-clamp-2 text-xs text-zinc-500 dark:text-zinc-400">
+              {entity.description}
+            </p>
+          )}
+          {meta.length > 0 && (
+            <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-zinc-500 dark:text-zinc-400">
+              {meta.map((m, i) => (
+                <span key={`${entity.id}-meta-${i}`} className="inline-flex items-center gap-1">
+                  {i === meta.length - 1 && entity.location === m && <MapPin className="size-3" />}
+                  {m}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      </Link>
+      <BookmarkButton entity={entity} />
+    </div>
   );
 });
 
@@ -311,12 +367,17 @@ export function ChatView({ searchId }: { searchId?: string }) {
   const isSearching = usePhilanthropyStore((s) => s.isSearching);
   const reset = usePhilanthropyStore((s) => s.reset);
   const { search, abort } = usePhilanthropySearch();
+  const { authenticated, login } = useAuth();
 
   const [input, setInput] = useState("");
+  const [trayOpen, setTrayOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
   const initialQueryRanRef = useRef(false);
 
   // First-time load: when arriving on /non-profits/search/[id] with an empty
   // thread, grab the initial query from the search session store and run it.
+  // Fallback: if the local session is missing (shared link / cold load),
+  // fetch via searchHistoryService.getById() to seed the search.
   useEffect(() => {
     if (initialQueryRanRef.current) return;
     if (!searchId) return;
@@ -324,12 +385,27 @@ export function ChatView({ searchId }: { searchId?: string }) {
       initialQueryRanRef.current = true;
       return;
     }
-    // Access sessions via getState() — never as a reactive selector (object).
+    // Fast path: local session store
     const session = useSearchSessionStore.getState().getSession(searchId);
-    const initialQuery = session?.query?.trim();
-    if (!initialQuery) return;
+    const localQuery = session?.query?.trim();
+    if (localQuery) {
+      initialQueryRanRef.current = true;
+      void search(localQuery, 1, { chat: true });
+      return;
+    }
+    // Fallback: fetch from server (shared link / cold load)
     initialQueryRanRef.current = true;
-    void search(initialQuery, 1, { chat: true });
+    void searchHistoryService.getById(searchId).match(
+      (entry) => {
+        const remoteQuery = entry.query?.trim();
+        if (!remoteQuery) return;
+        useSearchSessionStore.getState().setSession(searchId, remoteQuery);
+        void search(remoteQuery, 1, { chat: true });
+      },
+      () => {
+        /* 404 or error — render empty workbench, degrade gracefully */
+      }
+    );
   }, [searchId, messages.length, search]);
 
   const onSubmit = useCallback(
@@ -369,7 +445,7 @@ export function ChatView({ searchId }: { searchId?: string }) {
 
   return (
     <div className="flex h-[calc(100vh-4rem)] flex-col">
-      {/* Top bar with new-chat affordance */}
+      {/* Top bar with new-chat affordance + tray/history controls */}
       {messages.length > 0 && (
         <div className="flex items-center justify-between border-b border-zinc-200 px-4 py-2 dark:border-zinc-800">
           <div className="flex items-center gap-2 text-sm">
@@ -383,15 +459,49 @@ export function ChatView({ searchId }: { searchId?: string }) {
               </span>
             )}
           </div>
-          <button
-            type="button"
-            onClick={onNewChat}
-            className="rounded-md border border-zinc-200 bg-white px-3 py-1 text-xs font-medium text-zinc-600 transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800"
-          >
-            New chat
-          </button>
+          <div className="flex items-center gap-1.5">
+            <div className="relative">
+              <button
+                type="button"
+                aria-label="Search history"
+                onClick={() => {
+                  if (!authenticated) {
+                    login();
+                    return;
+                  }
+                  setHistoryOpen((v) => !v);
+                }}
+                className="rounded-md border border-zinc-200 bg-white p-1.5 text-zinc-500 transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800"
+              >
+                <Clock className="size-3.5" />
+              </button>
+              <SearchHistoryPanel open={historyOpen} onClose={() => setHistoryOpen(false)} />
+            </div>
+            <button
+              type="button"
+              aria-label="Bookmarks"
+              onClick={() => {
+                if (!authenticated) {
+                  login();
+                  return;
+                }
+                setTrayOpen(true);
+              }}
+              className="rounded-md border border-zinc-200 bg-white p-1.5 text-zinc-500 transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800"
+            >
+              <Bookmark className="size-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={onNewChat}
+              className="rounded-md border border-zinc-200 bg-white px-3 py-1 text-xs font-medium text-zinc-600 transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800"
+            >
+              New chat
+            </button>
+          </div>
         </div>
       )}
+      <BookmarksDrawer open={trayOpen} onClose={() => setTrayOpen(false)} />
 
       <Conversation className="flex-1">
         <ConversationContent className="mx-auto w-full max-w-3xl">
