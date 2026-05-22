@@ -111,7 +111,6 @@ export function InternalAIEvaluationDisplay({
           </div>
         )}
       </div>
-
     </div>
   );
 }

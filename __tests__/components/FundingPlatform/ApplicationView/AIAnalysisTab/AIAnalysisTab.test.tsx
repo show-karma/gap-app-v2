@@ -75,11 +75,7 @@ vi.mock("@/components/FundingPlatform/ApplicationView/RunKarmaProfileButton", ()
     onEvaluationComplete?: () => void | Promise<void>;
     disabled?: boolean;
   }) => (
-    <button
-      type="button"
-      data-testid="run-karma-profile-btn"
-      onClick={onEvaluationComplete}
-    >
+    <button type="button" data-testid="run-karma-profile-btn" onClick={onEvaluationComplete}>
       Run Insights
     </button>
   ),
@@ -560,9 +556,7 @@ describe("AIAnalysisTab", () => {
       await user.click(screen.getByText("Applications Insights"));
 
       expect(screen.getByTestId("run-karma-profile-btn")).toBeInTheDocument();
-      expect(
-        screen.queryByTestId("re-evaluate-karma-profile-btn")
-      ).not.toBeInTheDocument();
+      expect(screen.queryByTestId("re-evaluate-karma-profile-btn")).not.toBeInTheDocument();
     });
 
     it("shows re-evaluate button when status is skipped (so admin can retry)", async () => {
