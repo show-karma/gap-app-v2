@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import dynamic from "next/dynamic";
+import { LandingPageDynamic } from "@/src/features/non-profits/components/landing-page-dynamic";
 import { customMetadata } from "@/utilities/meta";
 
 export const metadata: Metadata = customMetadata({
@@ -9,14 +9,6 @@ export const metadata: Metadata = customMetadata({
   path: "/non-profits",
 });
 
-const LandingPageClient = dynamic(
-  () =>
-    import("@/src/features/non-profits/components/landing-page-client").then(
-      (m) => m.LandingPageClient
-    ),
-  { ssr: false }
-);
-
 export default function NonProfitsPage() {
-  return <LandingPageClient />;
+  return <LandingPageDynamic />;
 }
