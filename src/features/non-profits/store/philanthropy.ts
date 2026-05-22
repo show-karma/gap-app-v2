@@ -34,7 +34,7 @@ export interface AgentAttachment {
   mimeType: string;
 }
 
-export interface ToolHistoryEntry {
+interface ToolHistoryEntry {
   tool: string;
   status: "running" | "completed" | "failed";
   durationMs: number | null;
