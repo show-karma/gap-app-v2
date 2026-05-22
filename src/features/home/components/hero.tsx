@@ -51,8 +51,7 @@ export function Hero() {
             )}
           >
             Run grants, hackathons, and RFPs with a lean team. AI-powered evaluation, automated
-            milestone tracking, and real-time impact reporting so you can focus on funding what
-            matters.
+            milestone tracking, and real-time impact reporting so you can focus on funding outcomes.
           </p>
         </ScrollReveal>
 
