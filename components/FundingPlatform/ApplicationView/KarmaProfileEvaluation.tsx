@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  ChartBarIcon,
-  CheckCircleIcon,
-  ClockIcon,
-  ExclamationTriangleIcon,
-  SparklesIcon,
-} from "@heroicons/react/24/outline";
+import { ChartBarIcon, ClockIcon } from "@heroicons/react/24/outline";
 import type { FC } from "react";
 import { KarmaProfileContextSection } from "./KarmaProfileContextSection";
 
@@ -19,23 +13,8 @@ type KarmaProfileSkipReason =
   | "project_not_found"
   | "aggregator_failed";
 
-type Verdict = "strong" | "mixed" | "limited" | "no_history";
-type HistoryDepth = "first_time" | "emerging" | "established";
-
-interface ParsedEvaluation {
-  verdict?: Verdict;
-  history_depth?: HistoryDepth;
-  narrative?: string;
-  strengths?: string[];
-  red_flags?: string[];
-  stats?: {
-    total_grants?: number;
-    completed_grants?: number;
-    total_milestones?: number;
-    completed_milestones?: number;
-    past_due_milestones?: number;
-  };
-}
+type JsonPrimitive = string | number | boolean | null;
+type JsonValue = JsonPrimitive | JsonValue[] | { [key: string]: JsonValue };
 
 interface KarmaProfileEvaluationDisplayProps {
   evaluation: string | null;
@@ -59,39 +38,6 @@ const SKIP_COPY: Record<KarmaProfileSkipReason, string> = {
     "The track-record aggregator failed to build the context. Try Re-evaluate, or check Sentry for the underlying error.",
 };
 
-// Verdict styling — color-coded so reviewers can scan from a distance.
-const VERDICT_STYLE: Record<
-  Verdict,
-  { label: string; chip: string; ring: string }
-> = {
-  strong: {
-    label: "Strong track record",
-    chip: "bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300",
-    ring: "ring-green-200 dark:ring-green-800",
-  },
-  mixed: {
-    label: "Mixed track record",
-    chip: "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300",
-    ring: "ring-amber-200 dark:ring-amber-800",
-  },
-  limited: {
-    label: "Limited track record",
-    chip: "bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-300",
-    ring: "ring-orange-200 dark:ring-orange-800",
-  },
-  no_history: {
-    label: "No prior history",
-    chip: "bg-gray-100 text-gray-700 dark:bg-zinc-800 dark:text-gray-300",
-    ring: "ring-gray-200 dark:ring-zinc-700",
-  },
-};
-
-const HISTORY_DEPTH_LABEL: Record<HistoryDepth, string> = {
-  first_time: "First-time applicant",
-  emerging: "Emerging history",
-  established: "Established history",
-};
-
 function formatEvaluatedAt(value: string | Date | undefined): string | null {
   if (!value) return null;
   const date = value instanceof Date ? value : new Date(value);
@@ -100,22 +46,21 @@ function formatEvaluatedAt(value: string | Date | undefined): string | null {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
-function safeParse(json: string): ParsedEvaluation | null {
+function safeParse(json: string): JsonValue | null {
   try {
-    const parsed = JSON.parse(json);
-    if (typeof parsed === "object" && parsed !== null) return parsed as ParsedEvaluation;
-    return null;
+    return JSON.parse(json) as JsonValue;
   } catch {
     return null;
   }
 }
 
 /**
- * Renders the Karma Profile (track-record) AI evaluation for an application.
- * Purpose-built layout for the verdict/narrative/strengths/red_flags/stats
- * schema produced by the hardcoded Insights prompt — color-coded verdict
- * chip, two-column strengths/red-flags grid, stats as compact tiles, raw
- * aggregator markdown collapsible as the audit trail.
+ * Renders the Karma Profile (track-record) AI evaluation. The component is
+ * schema-agnostic: whatever shape the LLM returns gets rendered through a
+ * generic JSON walker. Strings get a paragraph treatment, primitives get a
+ * label/value row, string arrays get bullet lists, nested primitive maps get
+ * a stats tile grid, nested objects recurse. No field names are hardcoded —
+ * the prompt can evolve without the renderer following along.
  */
 export const KarmaProfileEvaluationDisplay: FC<KarmaProfileEvaluationDisplayProps> = ({
   evaluation,
@@ -205,7 +150,8 @@ function CompletedState({
   context: string | null;
 }) {
   const parsed = safeParse(evaluation);
-  if (!parsed) {
+
+  if (parsed === null) {
     return (
       <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
         <p className="text-sm text-red-600 dark:text-red-400">
@@ -216,25 +162,8 @@ function CompletedState({
   }
 
   return (
-    <div className="space-y-4">
-      <HeadlineRow verdict={parsed.verdict} historyDepth={parsed.history_depth} />
-
-      {parsed.narrative ? <Narrative text={parsed.narrative} /> : null}
-
-      <div className="grid gap-4 md:grid-cols-2">
-        <BulletList
-          title="Strengths"
-          items={parsed.strengths ?? []}
-          accent="positive"
-        />
-        <BulletList
-          title="Red flags"
-          items={parsed.red_flags ?? []}
-          accent="negative"
-        />
-      </div>
-
-      <StatsRow stats={parsed.stats ?? {}} />
+    <div className="space-y-5">
+      <JsonNode value={parsed} depth={0} />
 
       <p className="text-xs text-gray-400 dark:text-gray-500">
         AI-generated. Verify counts and dates against the source data below before quoting them.
@@ -251,128 +180,183 @@ function CompletedState({
   );
 }
 
-function HeadlineRow({
-  verdict,
-  historyDepth,
+// ───────────────────────────────────────────────────────────────────
+// Generic JSON renderer
+// ───────────────────────────────────────────────────────────────────
+
+function humanize(key: string): string {
+  return key
+    .replace(/[_-]+/g, " ")
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+function isPlainObject(v: unknown): v is Record<string, JsonValue> {
+  return typeof v === "object" && v !== null && !Array.isArray(v);
+}
+
+function isPrimitive(v: unknown): v is JsonPrimitive {
+  return v === null || ["string", "number", "boolean"].includes(typeof v);
+}
+
+function isStringArray(v: unknown): v is string[] {
+  return Array.isArray(v) && v.length > 0 && v.every((x) => typeof x === "string");
+}
+
+function isPrimitiveMap(v: unknown): v is Record<string, JsonPrimitive> {
+  return (
+    isPlainObject(v) &&
+    Object.keys(v).length > 0 &&
+    Object.values(v).every(isPrimitive)
+  );
+}
+
+function formatPrimitive(value: JsonPrimitive): string {
+  if (value === null) return "—";
+  if (typeof value === "boolean") return value ? "Yes" : "No";
+  if (typeof value === "string") return value.trim().length === 0 ? "—" : humanizeValue(value);
+  return String(value);
+}
+
+/**
+ * If a string looks like an enum slug (snake_case, no spaces, short), humanize
+ * it — "no_history" → "No history". Plain prose stays untouched.
+ */
+function humanizeValue(value: string): string {
+  if (value.length > 40) return value;
+  if (/\s/.test(value)) return value;
+  if (!/^[a-z][a-z0-9_-]*$/i.test(value)) return value;
+  return humanize(value);
+}
+
+/** Recursive renderer entry. Picks a layout based on the value's shape. */
+function JsonNode({
+  value,
+  depth,
+  parentKey,
 }: {
-  verdict?: Verdict;
-  historyDepth?: HistoryDepth;
+  value: JsonValue;
+  depth: number;
+  parentKey?: string;
 }) {
-  const verdictStyle = verdict ? VERDICT_STYLE[verdict] : VERDICT_STYLE.no_history;
-  return (
-    <div className="flex flex-wrap items-center gap-2">
-      <span
-        className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium ring-1 ring-inset ${verdictStyle.chip} ${verdictStyle.ring}`}
-      >
-        <SparklesIcon className="w-4 h-4" />
-        {verdictStyle.label}
-      </span>
-      {historyDepth ? (
-        <span className="inline-flex items-center rounded-full bg-blue-50 dark:bg-blue-900/30 px-3 py-1 text-xs font-medium text-blue-700 dark:text-blue-300 ring-1 ring-inset ring-blue-200 dark:ring-blue-800">
-          {HISTORY_DEPTH_LABEL[historyDepth]}
-        </span>
-      ) : null}
-    </div>
-  );
+  if (isPrimitive(value)) {
+    return <ValueLine value={value} />;
+  }
+  if (isStringArray(value)) {
+    return <BulletList items={value} />;
+  }
+  if (isPrimitiveMap(value)) {
+    return <StatsGrid entries={value} />;
+  }
+  if (Array.isArray(value)) {
+    return (
+      <div className="space-y-3">
+        {value.map((item, idx) => (
+          <ArrayItem key={`${parentKey ?? "item"}-${idx}`} value={item} depth={depth + 1} />
+        ))}
+      </div>
+    );
+  }
+  if (isPlainObject(value)) {
+    const entries = Object.entries(value);
+    return (
+      <div className="space-y-5">
+        {entries.map(([key, child]) => (
+          <Section key={key} title={humanize(key)} keyName={key}>
+            <JsonNode value={child} depth={depth + 1} parentKey={key} />
+          </Section>
+        ))}
+      </div>
+    );
+  }
+  return null;
 }
 
-function Narrative({ text }: { text: string }) {
-  return (
-    <div className="rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 p-4">
-      <p className="text-sm leading-relaxed text-gray-700 dark:text-gray-200">{text}</p>
-    </div>
-  );
-}
-
-function BulletList({
+function Section({
   title,
-  items,
-  accent,
+  keyName,
+  children,
 }: {
   title: string;
-  items: string[];
-  accent: "positive" | "negative";
+  keyName: string;
+  children: React.ReactNode;
 }) {
-  const Icon = accent === "positive" ? CheckCircleIcon : ExclamationTriangleIcon;
-  const headerColor =
-    accent === "positive"
-      ? "text-green-700 dark:text-green-300"
-      : "text-red-700 dark:text-red-300";
-  const iconColor =
-    accent === "positive"
-      ? "text-green-500 dark:text-green-400"
-      : "text-red-500 dark:text-red-400";
-  const borderColor =
-    accent === "positive"
-      ? "border-green-100 dark:border-green-900/40"
-      : "border-red-100 dark:border-red-900/40";
-
+  // Heading style scales with key depth in a subtle way — top-level sections
+  // get a stronger title. We don't switch on the key name itself.
   return (
-    <div className={`rounded-lg border ${borderColor} bg-white dark:bg-zinc-900/40 p-4`}>
-      <div className={`flex items-center gap-2 mb-3 ${headerColor}`}>
-        <Icon className="w-4 h-4" />
-        <h4 className="text-sm font-semibold">{title}</h4>
-      </div>
-      {items.length === 0 ? (
-        <p className="text-xs text-gray-400 dark:text-gray-500 italic">
-          {accent === "positive" ? "No notable strengths identified." : "No red flags identified."}
+    <section aria-label={keyName} className="space-y-2">
+      <h4 className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+        {title}
+      </h4>
+      <div>{children}</div>
+    </section>
+  );
+}
+
+function ValueLine({ value }: { value: JsonPrimitive }) {
+  if (typeof value === "string" && value.length > 80) {
+    // Long string → paragraph in a soft card so prose has room to breathe.
+    return (
+      <div className="rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 p-4">
+        <p className="text-sm leading-relaxed text-gray-700 dark:text-gray-200 whitespace-pre-wrap">
+          {value}
         </p>
-      ) : (
-        <ul className="space-y-2">
-          {items.map((item, idx) => (
-            <li key={`${accent}-${idx}`} className="flex items-start gap-2">
-              <span className={`mt-1.5 w-1 h-1 flex-shrink-0 rounded-full ${iconColor.replace("text-", "bg-")}`} />
-              <span className="text-sm text-gray-700 dark:text-gray-200">{item}</span>
-            </li>
-          ))}
-        </ul>
-      )}
+      </div>
+    );
+  }
+  return (
+    <p className="text-sm text-gray-900 dark:text-gray-100">
+      {formatPrimitive(value)}
+    </p>
+  );
+}
+
+function BulletList({ items }: { items: string[] }) {
+  return (
+    <ul className="space-y-1.5">
+      {items.map((item, idx) => (
+        <li key={idx} className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-200">
+          <span className="mt-2 w-1 h-1 flex-shrink-0 rounded-full bg-gray-400 dark:bg-gray-500" />
+          <span className="leading-relaxed">{item}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function StatsGrid({ entries }: { entries: Record<string, JsonPrimitive> }) {
+  const tiles = Object.entries(entries);
+  return (
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
+      {tiles.map(([key, value]) => (
+        <div
+          key={key}
+          className="rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900/40 px-3 py-2"
+        >
+          <div className="text-2xl font-semibold text-gray-900 dark:text-gray-100 leading-tight">
+            {formatPrimitive(value)}
+          </div>
+          <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{humanize(key)}</div>
+        </div>
+      ))}
     </div>
   );
 }
 
-function StatsRow({
-  stats,
-}: {
-  stats: NonNullable<ParsedEvaluation["stats"]>;
-}) {
-  const tiles: { label: string; value: number; tone: "neutral" | "positive" | "warning" }[] = [
-    { label: "Total grants", value: stats.total_grants ?? 0, tone: "neutral" },
-    {
-      label: "Completed grants",
-      value: stats.completed_grants ?? 0,
-      tone: (stats.completed_grants ?? 0) > 0 ? "positive" : "neutral",
-    },
-    { label: "Total milestones", value: stats.total_milestones ?? 0, tone: "neutral" },
-    {
-      label: "Completed milestones",
-      value: stats.completed_milestones ?? 0,
-      tone: (stats.completed_milestones ?? 0) > 0 ? "positive" : "neutral",
-    },
-    {
-      label: "Past due",
-      value: stats.past_due_milestones ?? 0,
-      tone: (stats.past_due_milestones ?? 0) > 0 ? "warning" : "neutral",
-    },
-  ];
-
-  const toneClass = {
-    neutral: "text-gray-900 dark:text-gray-100",
-    positive: "text-green-600 dark:text-green-400",
-    warning: "text-red-600 dark:text-red-400",
-  } as const;
-
+function ArrayItem({ value, depth }: { value: JsonValue; depth: number }) {
+  if (isPrimitive(value)) {
+    return (
+      <div className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-200">
+        <span className="mt-2 w-1 h-1 flex-shrink-0 rounded-full bg-gray-400 dark:bg-gray-500" />
+        <span className="leading-relaxed">{formatPrimitive(value)}</span>
+      </div>
+    );
+  }
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
-      {tiles.map((tile) => (
-        <div
-          key={tile.label}
-          className="rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900/40 px-3 py-2"
-        >
-          <div className={`text-2xl font-semibold ${toneClass[tile.tone]}`}>{tile.value}</div>
-          <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{tile.label}</div>
-        </div>
-      ))}
+    <div className="rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900/40 p-3">
+      <JsonNode value={value} depth={depth} />
     </div>
   );
 }
