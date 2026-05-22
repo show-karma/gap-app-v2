@@ -1,33 +1,36 @@
 import { render, screen } from "@testing-library/react";
-import ContactPage, { metadata } from "@/app/contact/page";
+import PricingPage, { metadata } from "@/app/pricing/page";
 
 vi.mock("@/utilities/whitelabel-server", () => ({
   getWhitelabelContext: vi.fn().mockResolvedValue({ isWhitelabel: false }),
 }));
 
-async function renderContactPage() {
-  const element = await ContactPage();
+async function renderPricingPage() {
+  const element = await PricingPage();
   return render(element);
 }
 
-describe("app/contact/page.tsx", () => {
-  it("renders the Contact Karma H1", async () => {
-    await renderContactPage();
-    expect(screen.getByRole("heading", { level: 1, name: /contact karma/i })).toBeInTheDocument();
+describe("app/pricing/page.tsx", () => {
+  it("renders the Pricing H1", async () => {
+    await renderPricingPage();
+    expect(screen.getByRole("heading", { level: 1, name: /^pricing$/i })).toBeInTheDocument();
   });
 
-  it("includes substantive body content (>500 chars)", async () => {
-    const { container } = await renderContactPage();
-    expect(container.textContent?.length ?? 0).toBeGreaterThan(500);
-  });
-
-  it("declares the canonical /contact path in metadata", () => {
+  it("declares the canonical /pricing path in metadata", () => {
     const canonical = (metadata.alternates?.canonical ?? "") as string;
-    expect(canonical).toBe("/contact");
+    expect(canonical).toBe("/pricing");
   });
 
-  it("exposes the info@karmahq.xyz contact mailto link", async () => {
-    await renderContactPage();
+  it("includes both the Free tier and Ecosystem sections", async () => {
+    await renderPricingPage();
+    expect(screen.getByRole("heading", { level: 2, name: /free tier/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { level: 2, name: /ecosystem and enterprise/i })
+    ).toBeInTheDocument();
+  });
+
+  it("includes the info@karmahq.xyz mailto contact link", async () => {
+    await renderPricingPage();
     const mailtoLinks = screen.getAllByRole("link", { name: /info@karmahq\.xyz/i });
     expect(mailtoLinks.length).toBeGreaterThanOrEqual(1);
     expect(
@@ -35,20 +38,19 @@ describe("app/contact/page.tsx", () => {
     ).toBe(true);
   });
 
-  it("emits a BreadcrumbList JSON-LD pointing Home → Contact", async () => {
-    const { container } = await renderContactPage();
+  it("emits a BreadcrumbList JSON-LD pointing Home → Pricing", async () => {
+    const { container } = await renderPricingPage();
     const ld = container.querySelector('script[type="application/ld+json"]');
     expect(ld).not.toBeNull();
     const json = JSON.parse(ld?.textContent ?? "{}");
     expect(json["@type"]).toBe("BreadcrumbList");
     const items = json.itemListElement as Array<{ name: string; item: string }>;
-    expect(items[0].name).toBe("Home");
-    expect(items[1].name).toBe("Contact");
-    expect(items[1].item).toContain("/contact");
+    expect(items[1].name).toBe("Pricing");
+    expect(items[1].item).toContain("/pricing");
   });
 });
 
-describe("app/contact/page.tsx whitelabel gating", () => {
+describe("app/pricing/page.tsx whitelabel gating", () => {
   it("calls notFound() when rendered on a whitelabel tenant", async () => {
     const { getWhitelabelContext } = await import("@/utilities/whitelabel-server");
     (getWhitelabelContext as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
@@ -56,7 +58,7 @@ describe("app/contact/page.tsx whitelabel gating", () => {
     });
     const { notFound } = await import("next/navigation");
 
-    await ContactPage().catch(() => {
+    await PricingPage().catch(() => {
       // notFound() throws a NEXT_HTTP_ERROR_FALLBACK; swallow it here.
     });
 

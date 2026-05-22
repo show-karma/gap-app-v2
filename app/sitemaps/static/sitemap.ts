@@ -38,8 +38,10 @@ const staticPages = [
   "/knowledge/how-funders-use-project-profiles",
   "/mcp/connect",
   "/for-agents",
+  "/developers",
   "/about",
   "/contact",
+  "/pricing",
   "/privacy-policy",
   "/terms-and-conditions",
 ];

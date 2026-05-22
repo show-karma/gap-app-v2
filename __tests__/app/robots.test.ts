@@ -1,5 +1,5 @@
-import robots from "@/app/robots";
 import { SITE_URL } from "@/utilities/meta";
+import robots from "@/utilities/robots-config";
 
 describe("robots", () => {
   const result = robots();

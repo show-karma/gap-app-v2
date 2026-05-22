@@ -1,4 +1,7 @@
+import * as Sentry from "@sentry/nextjs";
 import { NextResponse } from "next/server";
+import { STATIC_FALLBACK_TOOLS } from "@/components/Pages/ForAgents/content";
+import type { PublicToolMetadata } from "@/components/Pages/ForAgents/types";
 import { SITE_URL } from "@/utilities/meta";
 import {
   getIndexerBaseUrl,
@@ -9,6 +12,39 @@ import {
 
 export const dynamic = "force-static";
 export const revalidate = 3600;
+
+const UPSTREAM_TIMEOUT_MS = 5000;
+
+/**
+ * Best-effort fetch of the live MCP tool catalog from the indexer.
+ * Mirrors the pattern in `app/.well-known/mcp-tools.json/route.ts` and
+ * `components/Pages/ForAgents/fetchToolCatalog.ts`: 5s timeout,
+ * Sentry-tagged on failure, fall back to `STATIC_FALLBACK_TOOLS` so the
+ * server-card always carries a non-empty `tools[]` array even when the
+ * upstream is down at build or revalidation time.
+ */
+async function fetchTools(): Promise<PublicToolMetadata[]> {
+  try {
+    const res = await fetch(`${getIndexerBaseUrl()}/v2/mcp/tools`, {
+      next: { revalidate: 3600 },
+      signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
+    });
+    if (!res.ok) {
+      throw new Error(`upstream ${res.status}`);
+    }
+    const data = (await res.json()) as { tools?: unknown };
+    const tools = Array.isArray(data?.tools) ? (data.tools as PublicToolMetadata[]) : [];
+    if (tools.length === 0) {
+      throw new Error("upstream returned empty tools array");
+    }
+    return tools;
+  } catch (err) {
+    Sentry.captureException(err, {
+      tags: { route: "well-known/mcp-server-card" },
+    });
+    return STATIC_FALLBACK_TOOLS;
+  }
+}
 
 /**
  * MCP server-card discovery document at the Ora-preferred nested path
@@ -31,8 +67,9 @@ export const revalidate = 3600;
  * exist to satisfy two different crawler conventions, not to duplicate.
  */
 
-export function GET() {
+export async function GET() {
   const apiUrl = getIndexerBaseUrl();
+  const tools = await fetchTools();
 
   const body = {
     name: "gap-tools",
@@ -57,6 +94,15 @@ export function GET() {
       name: "Karma",
       url: SITE_URL,
       email: "info@karmahq.xyz",
+    },
+    // Inline the live tool catalog so AEO crawlers (Ora) credit the
+    // server card with an enumerable capability list rather than just
+    // a discovery pointer. `toolsDiscovery` keeps the canonical pointer
+    // alongside, so consumers know where the source of truth lives.
+    tools,
+    toolsDiscovery: {
+      url: `${SITE_URL}/.well-known/mcp-tools.json`,
+      format: "mcp-public-tool-list",
     },
   };
 

@@ -33,6 +33,18 @@ describe("app/about/page.tsx", () => {
     expect(mcpLink.getAttribute("href")).toBe("/mcp/connect");
     expect(forAgentsLink.getAttribute("href")).toBe("/for-agents");
   });
+
+  it("emits a BreadcrumbList JSON-LD pointing Home → About", async () => {
+    const { container } = await renderAboutPage();
+    const ld = container.querySelector('script[type="application/ld+json"]');
+    expect(ld).not.toBeNull();
+    const json = JSON.parse(ld?.textContent ?? "{}");
+    expect(json["@type"]).toBe("BreadcrumbList");
+    const items = json.itemListElement as Array<{ name: string; item: string }>;
+    expect(items[0].name).toBe("Home");
+    expect(items[1].name).toBe("About");
+    expect(items[1].item).toContain("/about");
+  });
 });
 
 describe("app/about/page.tsx whitelabel gating", () => {

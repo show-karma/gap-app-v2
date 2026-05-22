@@ -210,7 +210,100 @@ export async function middleware(request: NextRequest) {
     }
   }
 
+  // --- AEO surfaces on `/` ---
+  // The three behaviours below all key on the home route: content
+  // negotiation for markdown, the `?mode=agent` JSON view, and the
+  // RFC 8288 `Link` discovery headers. Keeping them grouped here
+  // (after the rest of the standard middleware) keeps the apex
+  // page-render path untouched for every other route.
+  if (path === "/") {
+    // 1. `?mode=agent` short-circuit — returns structured JSON metadata
+    //    so AI agents can fetch a machine-readable description of
+    //    Karma without parsing the marketing HTML.
+    if (request.nextUrl.searchParams.get("mode") === "agent") {
+      return agentModeResponse();
+    }
+
+    // 2. Content negotiation — if the client explicitly asks for
+    //    markdown, rewrite to /index.md so the response body is the
+    //    flat markdown homepage rather than the JSX-rendered marketing
+    //    page. The Accept header check is conservative: only matches
+    //    when text/markdown is present (any q-value handling is left
+    //    to the upstream cache).
+    const accept = request.headers.get("accept") || "";
+    if (accept.toLowerCase().includes("text/markdown")) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/index.md";
+      const rewrite = NextResponse.rewrite(url);
+      applyAeoHeaders(rewrite, path);
+      return rewrite;
+    }
+
+    // 3. Standard pass-through with discovery headers attached.
+    const response = NextResponse.next();
+    applyAeoHeaders(response, path);
+    return response;
+  }
+
   return NextResponse.next();
+}
+
+/**
+ * RFC 8288 `Link` header values advertised on the home page so
+ * crawlers can discover Karma's structured surfaces without scraping
+ * the HTML for `<link rel=...>` tags. Mirrors the schema-map.xml
+ * feed list but in a header-friendly form.
+ *
+ * `Vary: Accept` is set unconditionally so caches differentiate the
+ * markdown variant from the HTML variant served at the same URL.
+ */
+const AEO_LINK_HEADER = [
+  '</sitemap.xml>; rel="sitemap"; type="application/xml"',
+  '</index.md>; rel="alternate"; type="text/markdown"',
+  '</openapi.json>; rel="service-desc"; type="application/json"',
+  '</.well-known/api-catalog>; rel="describedby"; type="application/json"',
+  '</llms.txt>; rel="alternate"; type="text/plain; charset=utf-8"',
+].join(", ");
+
+function applyAeoHeaders(response: NextResponse, path: string) {
+  if (path !== "/") return;
+  // Don't override an existing `Link` header set further upstream.
+  if (!response.headers.get("link")) {
+    response.headers.set("Link", AEO_LINK_HEADER);
+  }
+  const existingVary = response.headers.get("vary");
+  response.headers.set("Vary", existingVary ? `${existingVary}, Accept` : "Accept");
+}
+
+/**
+ * JSON envelope returned when the home route is requested with
+ * `?mode=agent`. Centralized so the shape is easy to test and the
+ * middleware code path stays small.
+ */
+function agentModeResponse(): NextResponse {
+  const body = {
+    name: "Karma",
+    description: "AI-powered funding software for grants, hackathons, RFPs.",
+    endpoints: {
+      openapi: "https://www.karmahq.xyz/openapi.json",
+      mcp: "https://gapapi.karmahq.xyz/v2/mcp",
+      llms: "https://www.karmahq.xyz/llms.txt",
+      agentCard: "https://www.karmahq.xyz/.well-known/agent-card.json",
+    },
+    auth: {
+      oauth2: "https://www.karmahq.xyz/.well-known/oauth-protected-resource",
+      apiKey: { header: "x-api-key" },
+    },
+    capabilities: ["discover programs", "read projects", "audit milestones", "submit applications"],
+    documentation: "https://www.karmahq.xyz/for-agents",
+  };
+  return NextResponse.json(body, {
+    status: 200,
+    headers: {
+      "Cache-Control": "public, max-age=3600",
+      "Access-Control-Allow-Origin": "*",
+    },
+  });
 }
 
 export const config = {

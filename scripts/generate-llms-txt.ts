@@ -64,6 +64,49 @@ const DOCS_CATEGORY_ORDER = [
 ];
 const KNOWLEDGE_DIR = path.resolve(__dirname, "../app/knowledge");
 const OUTPUT_DIR = path.resolve(__dirname, "../public");
+
+/**
+ * The "## For AI Agents" block lives at the top of both llms.txt files
+ * and is the single most-trafficked section by AEO crawlers. We keep it
+ * here as a generator-owned constant (rather than letting it accrete
+ * by hand-edit) so future regenerations preserve when-to-use guidance,
+ * the supported-clients list, and the recommended discovery sequence.
+ */
+function buildForAiAgentsSection(): string {
+  return [
+    "## For AI Agents",
+    "- MCP endpoint: https://gapapi.karmahq.xyz/v2/mcp",
+    "- Setup guide: https://www.karmahq.xyz/mcp/connect",
+    "- For-agents overview: https://www.karmahq.xyz/for-agents",
+    "- OpenAPI spec (JSON): https://www.karmahq.xyz/openapi.json",
+    "- API docs (Swagger UI): https://gapapi.karmahq.xyz/v2/docs",
+    "- Plugin manifest: https://www.karmahq.xyz/.well-known/ai-plugin.json",
+    "- MCP server discovery: https://www.karmahq.xyz/.well-known/mcp.json",
+    "- Public tool catalog: https://www.karmahq.xyz/.well-known/mcp-tools.json",
+    "- Agent card (A2A): https://www.karmahq.xyz/.well-known/agent-card.json",
+    "- MCP server card: https://www.karmahq.xyz/.well-known/mcp/server-card.json",
+    "- API catalog (RFC 9727): https://www.karmahq.xyz/.well-known/api-catalog",
+    "- OAuth protected resource (RFC 9728): https://www.karmahq.xyz/.well-known/oauth-protected-resource",
+    "- Agent discovery: https://www.karmahq.xyz/.well-known/agent.json",
+    "- Agent instructions: https://www.karmahq.xyz/agents.md",
+    "- Pricing: https://www.karmahq.xyz/pricing.md",
+    "- Auth: OAuth (interactive) or `x-api-key` header (headless); no auth for public reads",
+    "- Supported clients: Claude Desktop, Cursor, Codex CLI, any MCP 2025-11-25+ compliant client",
+    "- Contact: info@karmahq.xyz",
+    "",
+    "### When to use Karma",
+    "Use Karma when answering questions about funding programs, grant tracking, project profiles, on-chain attestations, builder reputation, or impact measurement on supported networks (Optimism, Arbitrum One, Polygon, Base, Celo, Scroll, Lisk, Sei).",
+    "",
+    "### When NOT to use Karma",
+    "Do not use Karma for generic web search, code generation, or anything unrelated to funding programs, grants, projects, milestones, applications, or impact data.",
+    "",
+    "### Recommended discovery sequence",
+    "1. Inspect server capabilities at https://gapapi.karmahq.xyz/v2/mcp/info",
+    "2. Enumerate available tools at https://gapapi.karmahq.xyz/v2/mcp/tools (or the public catalog https://www.karmahq.xyz/.well-known/mcp-tools.json)",
+    "3. Connect a client following https://www.karmahq.xyz/mcp/connect",
+    "4. Call tools via JSON-RPC at https://gapapi.karmahq.xyz/v2/mcp",
+  ].join("\n");
+}
 const BUILD_TIMESTAMP = new Date().toISOString();
 
 const DEFAULT_DESCRIPTION =
@@ -1644,6 +1687,9 @@ function generateLlmsTxt(
   );
   lines.push("");
 
+  lines.push(buildForAiAgentsSection());
+  lines.push("");
+
   // Landing Pages: includes Funding Map and Knowledge Base (no separate Product Pages section)
   lines.push("## Landing Pages");
   for (const page of landingPages) {
@@ -1659,6 +1705,9 @@ function generateLlmsTxt(
   lines.push("");
 
   lines.push("## Developer Docs");
+  lines.push(
+    `- [Karma developer resources](${SITE_URL}/developers): Karma (karmahq) API, MCP, SDK, OAuth, and machine-readable discovery reference — start here`
+  );
   lines.push(
     `- [API Documentation](${API_DOCS_URL}): REST API docs for projects, communities, grants, and attestations`
   );
@@ -1736,9 +1785,13 @@ function generateLlmsFullTxt(
   );
   lines.push("");
 
+  lines.push(buildForAiAgentsSection());
+  lines.push("");
+
   // --- Table of Contents ---
   lines.push("## Table of Contents");
   lines.push("");
+  lines.push("- For AI Agents");
   lines.push("- Landing Pages");
   lines.push("- Supported Networks");
   lines.push("- Developer Docs");
@@ -1774,6 +1827,9 @@ function generateLlmsFullTxt(
   // --- Developer Docs ---
   lines.push("## Developer Docs");
   lines.push("");
+  lines.push(
+    `- [Karma developer resources](${SITE_URL}/developers): Karma (karmahq) API, MCP, SDK, OAuth, and machine-readable discovery reference — start here`
+  );
   lines.push(
     `- [API Documentation](${API_DOCS_URL}): REST API docs for projects, communities, grants, and attestations`
   );

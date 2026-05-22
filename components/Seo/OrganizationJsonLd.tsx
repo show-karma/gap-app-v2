@@ -4,6 +4,10 @@ import { DEFAULT_DESCRIPTION, DEFAULT_TITLE, SITE_URL } from "@/utilities/meta";
 const organizationSchema = {
   "@context": "https://schema.org",
   "@type": "Organization",
+  // Stable @id so Service / Product / Event nodes can reference Karma
+  // as a single graph entity rather than emitting a fresh inline
+  // Organization on every page where they appear.
+  "@id": `${SITE_URL}#organization`,
   name: "Karma",
   url: SITE_URL,
   logo: `${SITE_URL}/logo/karma-logo.svg`,

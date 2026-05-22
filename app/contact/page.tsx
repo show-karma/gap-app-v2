@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { BreadcrumbJsonLd } from "@/components/Seo/BreadcrumbJsonLd";
 import { customMetadata } from "@/utilities/meta";
 import { PAGES } from "@/utilities/pages";
 import { getWhitelabelContext } from "@/utilities/whitelabel-server";
@@ -25,6 +26,12 @@ export default async function ContactPage() {
 
   return (
     <main className="mx-auto max-w-3xl px-6 py-12">
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Home", url: "/" },
+          { name: "Contact", url: "/contact" },
+        ]}
+      />
       <h1 className={styles.h1}>Contact Karma</h1>
 
       <h2 className={styles.h2}>General inquiries</h2>
