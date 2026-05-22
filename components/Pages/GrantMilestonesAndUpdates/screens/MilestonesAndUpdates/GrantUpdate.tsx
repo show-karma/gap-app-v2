@@ -69,16 +69,17 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({ title, description, index, d
   const { setupChainAndWallet } = useSetupChainAndWallet();
   const { startAttestation, changeStepperStep, setIsStepper, showSuccess, showError } =
     useAttestationToast();
-  const { project, isProjectOwner } = useProjectStore();
+  const project = useProjectStore((state) => state.project);
+  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const projectIdOrSlug = project?.details?.slug || project?.uid || "";
-  const { isOwner: isContractOwner } = useOwnerStore();
+  const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isOnChainAuthorized = isProjectOwner || isContractOwner;
   const { performOffChainRevoke } = useOffChainRevoke();
 
   // Fetch grants using dedicated hook
   const { grants, refetch: refetchProjectGrants } = useProjectGrants(projectIdOrSlug);
   // Get refreshGrant from store to update the UI after deletion
-  const { refreshGrant } = useGrantStore();
+  const refreshGrant = useGrantStore((state) => state.refreshGrant);
 
   const undoGrantUpdate = async () => {
     if (!address || !project) return;

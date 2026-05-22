@@ -123,7 +123,7 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
     schema.fields.forEach((field) => {
       if (field.type === "section_header") return;
       const fieldName = toFieldName(field.label);
-      let fieldSchema: z.ZodTypeAny;
+      let fieldSchema: z.ZodType;
 
       switch (field.type) {
         case "email":
@@ -168,7 +168,7 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
           break;
         case "checkbox": {
           // Checkboxes return arrays of selected values
-          let checkboxSchema: z.ZodTypeAny = z.array(z.string());
+          let checkboxSchema: z.ZodType = z.array(z.string());
           if (field.validation?.min) {
             checkboxSchema = (checkboxSchema as z.ZodArray<z.ZodString>).min(
               field.validation.min,
@@ -200,7 +200,7 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
         case "number": {
           // Number fields should accept numbers, not strings
           // The Controller will convert string input to number in onChange
-          let numberSchema: z.ZodTypeAny;
+          let numberSchema: z.ZodType;
 
           if (field.required) {
             numberSchema = z
@@ -223,7 +223,7 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
 
           // Add min/max validation
           if (field.validation?.min !== undefined) {
-            numberSchema = (numberSchema as z.ZodEffects<any>).refine(
+            numberSchema = (numberSchema as z.ZodType).refine(
               (val: unknown) => {
                 if (val === null || val === undefined) return !field.required;
                 return typeof val === "number" && val >= field.validation!.min!;
@@ -233,7 +233,7 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
           }
 
           if (field.validation?.max !== undefined) {
-            numberSchema = (numberSchema as z.ZodEffects<any>).refine(
+            numberSchema = (numberSchema as z.ZodType).refine(
               (val: unknown) => {
                 if (val === null || val === undefined) return !field.required;
                 return typeof val === "number" && val <= field.validation!.max!;
@@ -247,7 +247,7 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
         }
         case "text":
         case "textarea": {
-          let textSchema: z.ZodTypeAny = z.string();
+          let textSchema: z.ZodType = z.string();
           if (field.validation?.min && field.validation.min > 1) {
             textSchema = (textSchema as z.ZodString).min(
               field.validation.min,
@@ -289,7 +289,7 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
           });
 
           // Build array schema with min/max validations
-          let milestoneArraySchema: z.ZodTypeAny = z.array(milestoneObjectSchema);
+          let milestoneArraySchema: z.ZodType = z.array(milestoneObjectSchema);
 
           if (field.required) {
             if (field.validation?.minMilestones) {
@@ -350,7 +350,7 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
         if (field.required) {
           fieldSchema = (fieldSchema as z.ZodString).min(1, `${field.label} is required`);
         } else {
-          fieldSchema = (fieldSchema as z.ZodString).optional().or(z.literal("")) as z.ZodTypeAny;
+          fieldSchema = (fieldSchema as z.ZodString).optional().or(z.literal("")) as z.ZodType;
         }
       }
 
@@ -673,7 +673,7 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
                   label={field.label}
                   placeholder={field.placeholder || `Enter ${field.label.toLowerCase()}`}
                   description={field.description}
-                  value={value || ""}
+                  value={(value as string) || ""}
                   onChange={onChange}
                   onBlur={onBlur}
                   error={fieldState.error?.message}

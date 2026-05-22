@@ -51,7 +51,9 @@ const isValidAmount = (grant?: { amount?: string; details?: { amount?: string } 
   return formatCurrency(+amountToFormat);
 };
 export const GrantOverview = () => {
-  const { grant, loading, refreshGrant } = useGrantStore();
+  const grant = useGrantStore((state) => state.grant);
+  const loading = useGrantStore((state) => state.loading);
+  const refreshGrant = useGrantStore((state) => state.refreshGrant);
   const _isOwner = useOwnerStore((state) => state.isOwner);
 
   const grantData: { stat?: number | string; title: string }[] = [

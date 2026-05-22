@@ -5,7 +5,7 @@ import { useProgressModalStore } from "@/store/modals/progress";
 import { PAGES } from "@/utilities/pages";
 
 export const NoGrant = () => {
-  const { project } = useProjectStore();
+  const project = useProjectStore((state) => state.project);
   const router = useRouter();
   const { closeProgressModal } = useProgressModalStore();
 

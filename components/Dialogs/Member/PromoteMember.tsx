@@ -13,7 +13,7 @@ interface PromoteMemberDialogProps {
 
 export const PromoteMemberDialog: FC<PromoteMemberDialogProps> = ({ memberAddress }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const { project } = useProjectStore();
+  const project = useProjectStore((state) => state.project);
   const { teamProfiles } = useTeamProfiles(project);
   const { execute, isLoading } = useMemberRoleChange("promote");
 

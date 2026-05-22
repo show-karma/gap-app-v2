@@ -161,10 +161,9 @@ describe("generate-sitemap", () => {
 
     for (const file of probeFiles) {
       const probePath = path.join(publicDir, file);
-      expect(
-        fs.existsSync(probePath),
-        `${file} should not be emitted by the generator`
-      ).toBe(false);
+      expect(fs.existsSync(probePath), `${file} should not be emitted by the generator`).toBe(
+        false
+      );
     }
   }, 30_000);
 });

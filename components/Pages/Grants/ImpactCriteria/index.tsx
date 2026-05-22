@@ -4,7 +4,7 @@ import { MESSAGES } from "@/utilities/messages";
 import { ProjectGrantsImpactLoading } from "../../Project/Loading/Grants/Impact";
 
 export const GrantImpactCriteria = () => {
-  const { grant } = useGrantStore();
+  const grant = useGrantStore((state) => state.grant);
   if (!grant) return <ProjectGrantsImpactLoading />;
   const questions = grant?.details?.questions;
   return (

@@ -75,7 +75,8 @@ const buttonClassName = `group cursor-pointer font-normal text-gray-900 dark:tex
  * The dialogs are controlled by Zustand stores (useProjectEditModalStore, useMergeModalStore, etc.)
  */
 export const ProjectOptionsDialogs = () => {
-  const { project, refreshProject } = useProjectStore();
+  const project = useProjectStore((state) => state.project);
+  const refreshProject = useProjectStore((state) => state.refreshProject);
   const params = useParams();
   const projectId = params.projectId as string;
   const { address, chain } = useAccount();
@@ -113,7 +114,7 @@ export const ProjectOptionsDialogs = () => {
 };
 
 export const ProjectOptionsMenu = () => {
-  const { project } = useProjectStore();
+  const project = useProjectStore((state) => state.project);
   const params = useParams();
   const projectId = params.projectId as string;
   const [isDeleting, setIsDeleting] = useState(false);
@@ -135,9 +136,11 @@ export const ProjectOptionsMenu = () => {
   const { openGrantGenieModal } = useGrantGenieModalStore();
   const { openTransferOwnershipModal } = useTransferOwnershipModalStore();
   const { openAdminTransferOwnershipModal } = useAdminTransferOwnershipModalStore();
-  const { isProjectAdmin, isProjectOwner, refreshProject } = useProjectStore();
+  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
+  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
+  const refreshProject = useProjectStore((state) => state.refreshProject);
   const { data: contactsInfo } = useContactInfo(projectId);
-  const { isOwner: isContractOwner } = useOwnerStore();
+  const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isCommunityAdmin = useIsCommunityAdmin();
   const isAuthorized = isProjectAdmin || isProjectOwner || isContractOwner || isCommunityAdmin;
   const { data: permissions, isLoading: isPermissionsLoading } = usePermissionsQuery(

@@ -35,7 +35,7 @@ const ACTION_CONFIG = {
 export function useMemberRoleChange(action: RoleAction) {
   const [isLoading, setIsLoading] = useState(false);
   const { address, chain } = useAccount();
-  const { project } = useProjectStore();
+  const project = useProjectStore((state) => state.project);
   const { startAttestation, showSuccess, showError, changeStepperStep, setIsStepper } =
     useAttestationToast();
   const { switchChainAsync } = useWallet();

@@ -1,4 +1,4 @@
-import type { ZodError, ZodSchema } from "zod";
+import type { ZodError, ZodType } from "zod";
 
 /**
  * Validates MSW response data against a Zod schema at handler setup time.
@@ -7,7 +7,7 @@ import type { ZodError, ZodSchema } from "zod";
  * MSW fixtures surface during test setup rather than causing cryptic
  * failures later in the test run.
  */
-export function validateResponse<T>(schema: ZodSchema<T>, data: unknown, context: string): T {
+export function validateResponse<T>(schema: ZodType<T>, data: unknown, context: string): T {
   const result = schema.safeParse(data);
   if (!result.success) {
     const formatted = formatZodError(result.error);

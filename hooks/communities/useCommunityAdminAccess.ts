@@ -37,7 +37,8 @@ interface UseCommunityAdminAccessResult {
  */
 export const useCommunityAdminAccess = (communityId?: string): UseCommunityAdminAccessResult => {
   const { isCommunityAdmin, isLoading: isCheckingAdmin } = useIsCommunityAdmin(communityId);
-  const { isOwner, isOwnerLoading } = useOwnerStore();
+  const isOwner = useOwnerStore((state) => state.isOwner);
+  const isOwnerLoading = useOwnerStore((state) => state.isOwnerLoading);
   const { authenticated, ready } = useAuth();
   const { data: permissions, isLoading: isPermissionsLoading } = usePermissionsQuery(
     communityId ? { communityId } : {},

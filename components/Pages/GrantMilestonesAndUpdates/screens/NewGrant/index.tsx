@@ -81,8 +81,8 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
   } = useGrantFormStore();
 
   const selectedProject = useProjectStore((state) => state.project);
-  const { isProjectAdmin } = useProjectStore();
-  const { isOwner } = useOwnerStore();
+  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
+  const isOwner = useOwnerStore((state) => state.isOwner);
   const { communities } = useCommunitiesStore();
   const isCommunityAdminOfSome = communities.length !== 0;
   const isAuthorized = isProjectAdmin || isOwner || isCommunityAdminOfSome;

@@ -45,6 +45,8 @@ export function FooterSwitcher({ isWhitelabel }: { isWhitelabel: boolean }) {
   const pathname = usePathname();
 
   if (isWhitelabel) return <WhitelabelFooter />;
+  // The /non-profits section ships its own dedicated footer via its layout.
+  if (pathname.startsWith("/non-profits")) return null;
   if (isAppRoute(pathname)) return <MinimalFooter />;
   return <Footer />;
 }

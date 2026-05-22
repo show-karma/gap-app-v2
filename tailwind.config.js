@@ -137,6 +137,13 @@ module.exports = {
       },
       colors: {
         brand: {
+          // Semantic aliases (used by the non-profits / Grant Atlas components):
+          // bg-brand, from-brand, to-brand-emphasis, text-brand-subtle, bg-brand-faint, …
+          DEFAULT: "#2ed1a8", // brand-500
+          emphasis: "#1c7d65", // brand-700
+          subtle: "#58daba", // brand-400
+          muted: "#abeddc", // brand-200
+          faint: "#eafaf6", // brand-50
           // Main brand teal palette
           50: "#eafaf6", // Lightest - subtle backgrounds
           100: "#d5f6ee", // Very light
