@@ -74,8 +74,9 @@ export const ReEvaluateInternalButton: FC<ReEvaluateInternalButtonProps> = ({
             <DialogTitle>Re-run internal AI evaluation?</DialogTitle>
             <DialogDescription>
               This overwrites the existing internal evaluation with a fresh run against current
-              application data, the latest configured prompt, and (when configured) the latest Karma
-              project state. The previous evaluation will be lost.
+              application data and the latest configured prompt. The previous evaluation will be
+              lost. Track-record context now lives on the Applications Insights tab — re-evaluate it
+              separately there if needed.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

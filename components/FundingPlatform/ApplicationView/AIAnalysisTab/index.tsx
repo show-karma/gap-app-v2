@@ -8,6 +8,7 @@ import { InternalAIEvaluationDisplay } from "../InternalAIEvaluation";
 import { KarmaProfileEvaluationDisplay } from "../KarmaProfileEvaluation";
 import { ReEvaluateInternalButton } from "../ReEvaluateInternalButton";
 import { ReEvaluateKarmaProfileButton } from "../ReEvaluateKarmaProfileButton";
+import { RunKarmaProfileButton } from "../RunKarmaProfileButton";
 import { type AIAnalysisSubTabId, AIAnalysisSubTabs } from "./AIAnalysisSubTabs";
 import { EmptyEvaluationState } from "./EmptyEvaluationState";
 
@@ -162,12 +163,16 @@ function RunButton({
   }
 
   if (activeSubTab === "insights") {
-    // No prior record at all (pre-feature application, no backfill).
-    // Insights auto-fires on next submission / resubmission / edit. We
-    // intentionally don't expose a manual first-run button so the entry
-    // point stays consistent with Internal and External (which also
-    // fire from the submit flow).
-    return null;
+    // No prior record at all — most commonly a pre-feature application
+    // (no backfill) or an app whose auto-fire didn't run. Surface a
+    // first-run "Run Insights" button (no confirmation dialog — nothing
+    // to overwrite). Hits the same endpoint as Re-evaluate.
+    return (
+      <RunKarmaProfileButton
+        referenceNumber={referenceNumber}
+        onEvaluationComplete={onEvaluationComplete}
+      />
+    );
   }
 
   return (

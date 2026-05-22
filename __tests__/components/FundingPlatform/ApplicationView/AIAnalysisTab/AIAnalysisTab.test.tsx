@@ -67,6 +67,24 @@ vi.mock("@/components/FundingPlatform/ApplicationView/ReEvaluateKarmaProfileButt
   ),
 }));
 
+vi.mock("@/components/FundingPlatform/ApplicationView/RunKarmaProfileButton", () => ({
+  RunKarmaProfileButton: ({
+    onEvaluationComplete,
+  }: {
+    referenceNumber: string;
+    onEvaluationComplete?: () => void | Promise<void>;
+    disabled?: boolean;
+  }) => (
+    <button
+      type="button"
+      data-testid="run-karma-profile-btn"
+      onClick={onEvaluationComplete}
+    >
+      Run Insights
+    </button>
+  ),
+}));
+
 vi.mock("@/components/FundingPlatform/ApplicationView/KarmaProfileEvaluation", () => ({
   KarmaProfileEvaluationDisplay: ({ evaluation, status, evaluatedAt, skipReason }: any) => (
     <div data-testid="insights-evaluation">
@@ -526,6 +544,25 @@ describe("AIAnalysisTab", () => {
       await user.click(screen.getByText("Applications Insights"));
 
       expect(screen.getByTestId("re-evaluate-karma-profile-btn")).toBeInTheDocument();
+    });
+
+    it("shows first-run button on Insights when no karmaProfileEvaluation record exists", async () => {
+      const user = userEvent.setup();
+
+      // mockApplication has no karmaProfileEvaluation field at all
+      render(
+        <AIAnalysisTab
+          application={mockApplication as IFundingApplication}
+          program={mockProgram as ProgramWithFormSchema}
+        />
+      );
+
+      await user.click(screen.getByText("Applications Insights"));
+
+      expect(screen.getByTestId("run-karma-profile-btn")).toBeInTheDocument();
+      expect(
+        screen.queryByTestId("re-evaluate-karma-profile-btn")
+      ).not.toBeInTheDocument();
     });
 
     it("shows re-evaluate button when status is skipped (so admin can retry)", async () => {
