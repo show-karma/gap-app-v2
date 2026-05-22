@@ -15,13 +15,13 @@ export const CitationSchema = z.object({
 });
 export type Citation = z.infer<typeof CitationSchema>;
 
-const EntityScoresSchema = z.object({
+export const EntityScoresSchema = z.object({
   semantic: z.number(),
   amount: z.number(),
   recency: z.number(),
   composite: z.number(),
 });
-type EntityScores = z.infer<typeof EntityScoresSchema>;
+export type EntityScores = z.infer<typeof EntityScoresSchema>;
 
 // ── Query / search ───────────────────────────────────────────────────────────
 
@@ -78,7 +78,7 @@ export type QueryResponse = z.infer<typeof QueryResponseSchema>;
 
 // ── Entity detail schemas ────────────────────────────────────────────────────
 
-const FoundationSchema = z.object({
+export const FoundationSchema = z.object({
   id: z.string(),
   ein: z.string(),
   name: z.string(),
@@ -88,9 +88,9 @@ const FoundationSchema = z.object({
   createdAt: z.string(),
   updatedAt: z.string(),
 });
-type Foundation = z.infer<typeof FoundationSchema>;
+export type Foundation = z.infer<typeof FoundationSchema>;
 
-const NonprofitSchema = z.object({
+export const NonprofitSchema = z.object({
   id: z.string(),
   ein: z.string().nullable(),
   name: z.string(),
@@ -99,9 +99,9 @@ const NonprofitSchema = z.object({
   createdAt: z.string(),
   updatedAt: z.string(),
 });
-type Nonprofit = z.infer<typeof NonprofitSchema>;
+export type Nonprofit = z.infer<typeof NonprofitSchema>;
 
-const GrantSchema = z.object({
+export const GrantSchema = z.object({
   id: z.string(),
   filingId: z.string(),
   foundationId: z.string(),
@@ -115,9 +115,9 @@ const GrantSchema = z.object({
   createdAt: z.string(),
   updatedAt: z.string(),
 });
-type Grant = z.infer<typeof GrantSchema>;
+export type Grant = z.infer<typeof GrantSchema>;
 
-const OfficerSchema = z.object({
+export const OfficerSchema = z.object({
   id: z.string(),
   foundationId: z.string(),
   name: z.string(),
@@ -129,9 +129,9 @@ const OfficerSchema = z.object({
   createdAt: z.string(),
   updatedAt: z.string(),
 });
-type Officer = z.infer<typeof OfficerSchema>;
+export type Officer = z.infer<typeof OfficerSchema>;
 
-const FinancialsSchema = z.object({
+export const FinancialsSchema = z.object({
   id: z.string(),
   foundationId: z.string(),
   filingYear: z.number(),
@@ -147,9 +147,9 @@ const FinancialsSchema = z.object({
   createdAt: z.string(),
   updatedAt: z.string(),
 });
-type Financials = z.infer<typeof FinancialsSchema>;
+export type Financials = z.infer<typeof FinancialsSchema>;
 
-const FilingSchema = z.object({
+export const FilingSchema = z.object({
   id: z.string(),
   foundationId: z.string(),
   filingYear: z.number(),
@@ -162,4 +162,4 @@ const FilingSchema = z.object({
   createdAt: z.string(),
   updatedAt: z.string(),
 });
-type Filing = z.infer<typeof FilingSchema>;
+export type Filing = z.infer<typeof FilingSchema>;
