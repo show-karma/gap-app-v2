@@ -12,7 +12,8 @@ import { Building2, ChevronRight, HandCoins, Landmark, X } from "lucide-react";
 import Link from "next/link";
 import pluralize from "pluralize";
 import type React from "react";
-import { memo } from "react";
+import { memo, useState } from "react";
+import { DeleteDialog } from "@/components/DeleteDialog";
 import { NON_PROFITS_PAGES } from "@/utilities/pages";
 import {
   useClearResearchTray,
@@ -98,7 +99,8 @@ const TrayItem = memo(function TrayItem({ entry }: { entry: ResearchTrayEntry })
 
 export function BookmarksDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { data: items = [], isLoading, isError } = useResearchTray();
-  const { mutate: clearAll, isPending: isClearing } = useClearResearchTray();
+  const { mutateAsync: clearAll, isPending: isClearing } = useClearResearchTray();
+  const [confirmClearOpen, setConfirmClearOpen] = useState(false);
 
   return (
     <>
@@ -136,7 +138,7 @@ export function BookmarksDrawer({ open, onClose }: { open: boolean; onClose: () 
             {items.length > 0 && (
               <button
                 type="button"
-                onClick={() => clearAll()}
+                onClick={() => setConfirmClearOpen(true)}
                 disabled={isClearing}
                 className="text-xs text-zinc-400 transition-colors hover:text-zinc-600 dark:hover:text-zinc-300 disabled:opacity-50"
               >
@@ -194,6 +196,16 @@ export function BookmarksDrawer({ open, onClose }: { open: boolean; onClose: () 
           </div>
         )}
       </div>
+
+      {/* Clear-all confirmation */}
+      <DeleteDialog
+        title="Clear all bookmarks?"
+        deleteFunction={() => clearAll()}
+        isLoading={isClearing}
+        buttonElement={null}
+        externalIsOpen={confirmClearOpen}
+        externalSetIsOpen={setConfirmClearOpen}
+      />
     </>
   );
 }
