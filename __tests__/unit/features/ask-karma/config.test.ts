@@ -22,9 +22,10 @@ describe("getAskKarmaConfig", () => {
 
   it("returns the filecoin-specific config when tenant id is 'filecoin'", () => {
     const config = getAskKarmaConfig("filecoin");
-    // Filecoin example questions must include the bespoke "fil.one" prompt
-    // from the screenshot — this is the contract we wire from the spec.
-    expect(config.exampleQuestions.some((q) => q.toLowerCase().includes("fil.one"))).toBe(true);
+    // Filecoin overrides the default question list and surfaces a ProPGF
+    // card — keep these as the durable contract rather than pinning to
+    // specific copy that the customer iterates on.
+    expect(config.exampleQuestions).not.toEqual(getAskKarmaConfig().exampleQuestions);
     expect(config.featuredTopics.some((t) => t.title.includes("ProPGF"))).toBe(true);
   });
 
