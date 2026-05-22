@@ -135,4 +135,36 @@ describe("generate-sitemap", () => {
     const alias = fs.readFileSync(ALIAS_OUTPUT, "utf-8");
     expect(alias).toBe(primary);
   }, 30_000);
+
+  it("does not emit per-kind probe sitemap-{kind}.xml files at the public root", () => {
+    // Regression guard: per-kind probes from #1484 were intentionally removed.
+    // Re-adding them creates the "two parallel sitemap structures" submission
+    // smell that confuses GSC.
+    snapshot();
+
+    const publicDir = path.join(PROJECT_ROOT, "public");
+    const probeFiles = [
+      "sitemap-projects.xml",
+      "sitemap-impacts.xml",
+      "sitemap-grants.xml",
+      "sitemap-milestones.xml",
+      "sitemap-funding-programs.xml",
+      "sitemap-static.xml",
+      "sitemap-communities.xml",
+    ];
+    for (const file of probeFiles) {
+      const probePath = path.join(publicDir, file);
+      if (fs.existsSync(probePath)) fs.unlinkSync(probePath);
+    }
+
+    runScript({ NEXT_PUBLIC_GAP_INDEXER_URL: "http://127.0.0.1:9" });
+
+    for (const file of probeFiles) {
+      const probePath = path.join(publicDir, file);
+      expect(
+        fs.existsSync(probePath),
+        `${file} should not be emitted by the generator`
+      ).toBe(false);
+    }
+  }, 30_000);
 });
