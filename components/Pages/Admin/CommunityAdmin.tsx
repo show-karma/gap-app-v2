@@ -1,4 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
 import {
   ChevronDownIcon,
@@ -9,6 +8,7 @@ import {
 } from "@heroicons/react/24/solid";
 import { useQuery } from "@tanstack/react-query";
 import { blo } from "blo";
+import Image from "next/image";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { isAddress } from "viem";
 import CommunityStats from "@/components/CommunityStats";
@@ -63,6 +63,67 @@ const getAdminsBatchStatusMessage = (status: CommunityAdminsBatchStatus): string
   return "";
 };
 
+const SKELETON_PLACEHOLDERS = ["a", "b", "c", "d", "e", "f"] as const;
+
+function LoadingSkeleton() {
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+      {SKELETON_PLACEHOLDERS.map((slot) => (
+        <div
+          key={slot}
+          className="border border-zinc-300 rounded-lg p-6 bg-white dark:bg-zinc-900 shadow-sm"
+        >
+          {/* Network skeleton */}
+          <div className="mb-3">
+            <div className="flex flex-row gap-2 items-center">
+              <Skeleton className="w-5 h-5 rounded" />
+              <Skeleton className="h-4 w-24" />
+            </div>
+          </div>
+
+          {/* Header skeleton */}
+          <div className="flex items-center gap-4 mb-4">
+            <Skeleton className="h-16 w-16 rounded-lg flex-shrink-0" />
+            <div className="flex-1 min-w-0">
+              <Skeleton className="h-5 w-3/4 mb-2" />
+              <Skeleton className="h-3 w-1/2" />
+            </div>
+          </div>
+
+          {/* UUID skeleton */}
+          <div className="mb-4">
+            <Skeleton className="h-3 w-12 mb-1" />
+            <Skeleton className="h-3 w-full" />
+            <Skeleton className="h-3 w-5/6 mt-1" />
+          </div>
+
+          {/* Links skeleton */}
+          <div className="mb-4 pb-4 border-b border-zinc-200 dark:border-zinc-700">
+            <Skeleton className="h-3 w-20 mb-2" />
+            <div className="flex flex-col gap-2">
+              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-4 w-28" />
+              <Skeleton className="h-4 w-24 mt-1" />
+            </div>
+          </div>
+
+          {/* Admins skeleton */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <Skeleton className="h-3 w-16" />
+              <Skeleton className="h-6 w-6 rounded" />
+            </div>
+            <div className="space-y-2">
+              <Skeleton className="h-8 w-full rounded" />
+              <Skeleton className="h-8 w-full rounded" />
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function CommunitiesToAdminPage() {
   const [allCommunities, setAllCommunities] = useState<Community[]>([]);
   const [communityAdmins, setCommunityAdmins] = useState<CommunityAdmin[]>([]);
@@ -101,11 +162,12 @@ export default function CommunitiesToAdminPage() {
     const userAdminCommunityUidSet = new Set(
       userAdminCommunities.map((community) => community.uid)
     );
-    const communityUids = isSuperAdminOrOwner
-      ? result.map((community) => community.uid)
-      : result
-          .filter((community) => userAdminCommunityUidSet.has(community.uid))
-          .map((community) => community.uid);
+    const communityUids: string[] = [];
+    for (const community of result) {
+      if (isSuperAdminOrOwner || userAdminCommunityUidSet.has(community.uid)) {
+        communityUids.push(community.uid);
+      }
+    }
 
     if (communityUids.length === 0) {
       setAllCommunities([]);
@@ -274,63 +336,6 @@ export default function CommunitiesToAdminPage() {
     return `${firstPart}...${lastPart}`;
   }
 
-  const LoadingSkeleton = () => (
-    <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-      {Array.from({ length: 6 }).map((_, index) => (
-        <div
-          key={index}
-          className="border border-zinc-300 rounded-lg p-6 bg-white dark:bg-zinc-900 shadow-sm"
-        >
-          {/* Network skeleton */}
-          <div className="mb-3">
-            <div className="flex flex-row gap-2 items-center">
-              <Skeleton className="w-5 h-5 rounded" />
-              <Skeleton className="h-4 w-24" />
-            </div>
-          </div>
-
-          {/* Header skeleton */}
-          <div className="flex items-center gap-4 mb-4">
-            <Skeleton className="h-16 w-16 rounded-lg flex-shrink-0" />
-            <div className="flex-1 min-w-0">
-              <Skeleton className="h-5 w-3/4 mb-2" />
-              <Skeleton className="h-3 w-1/2" />
-            </div>
-          </div>
-
-          {/* UUID skeleton */}
-          <div className="mb-4">
-            <Skeleton className="h-3 w-12 mb-1" />
-            <Skeleton className="h-3 w-full" />
-            <Skeleton className="h-3 w-5/6 mt-1" />
-          </div>
-
-          {/* Links skeleton */}
-          <div className="mb-4 pb-4 border-b border-zinc-200 dark:border-zinc-700">
-            <Skeleton className="h-3 w-20 mb-2" />
-            <div className="flex flex-col gap-2">
-              <Skeleton className="h-4 w-32" />
-              <Skeleton className="h-4 w-28" />
-              <Skeleton className="h-4 w-24 mt-1" />
-            </div>
-          </div>
-
-          {/* Admins skeleton */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <Skeleton className="h-3 w-16" />
-              <Skeleton className="h-6 w-6 rounded" />
-            </div>
-            <div className="space-y-2">
-              <Skeleton className="h-8 w-full rounded" />
-              <Skeleton className="h-8 w-full rounded" />
-            </div>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-
   return (
     <div className={layoutTheme.padding}>
       {isLoadingData ? (
@@ -423,10 +428,13 @@ export default function CommunitiesToAdminPage() {
                       {/* Network at top */}
                       <div className="mb-3">
                         <div className="flex flex-row gap-2 items-center">
-                          <img
+                          <Image
                             src={chainImgDictionary(community.chainID)}
                             alt={chainNameDictionary(community.chainID)}
+                            width={20}
+                            height={20}
                             className="w-5 h-5"
+                            unoptimized
                           />
                           <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
                             {chainNameDictionary(community.chainID)}
@@ -436,10 +444,13 @@ export default function CommunitiesToAdminPage() {
 
                       {/* Header with image and name */}
                       <div className="flex items-center gap-4 mb-4">
-                        <img
+                        <Image
                           src={community.details?.imageURL || blo(community.uid as `0x${string}`)}
+                          width={64}
+                          height={64}
                           className="h-16 w-16 rounded-lg object-cover flex-shrink-0"
                           alt={community.details?.name || community.uid}
+                          unoptimized
                         />
                         <div className="flex-1 min-w-0">
                           <h3 className="text-lg font-semibold text-gray-900 dark:text-white truncate">
@@ -516,12 +527,12 @@ export default function CommunitiesToAdminPage() {
                               {(expandedAdmins.has(community.uid)
                                 ? matchingCommunityAdmin.admins
                                 : matchingCommunityAdmin.admins.slice(0, ADMINS_COLLAPSED_COUNT)
-                              ).map((admin, index) => {
+                              ).map((admin) => {
                                 const profile = adminProfiles?.get(admin.user.id.toLowerCase());
                                 return (
                                   <div
                                     className="flex items-center justify-between gap-2 p-2 bg-gray-50 dark:bg-zinc-800 rounded"
-                                    key={index}
+                                    key={admin.user.id}
                                   >
                                     <div className="flex flex-col gap-0.5 min-w-0">
                                       {profile ? (
