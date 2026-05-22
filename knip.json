@@ -25,7 +25,8 @@
     "next-env.d.ts",
     "**/*.d.ts",
     "src/features/non-profits/lib/api.ts",
-    "src/features/non-profits/types/philanthropy.ts"
+    "src/features/non-profits/types/philanthropy.ts",
+    "src/features/non-profits/components/suggested-queries.tsx"
   ],
   "ignoreDependencies": [
     "@biomejs/biome",
