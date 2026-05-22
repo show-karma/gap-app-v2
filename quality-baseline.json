@@ -411,9 +411,21 @@
       "maxLines": 600,
       "maxBytes": 40000
     },
+    "src/features/non-profits/components/foundation-detail.tsx": {
+      "lines": 1395,
+      "bytes": 49660,
+      "maxLines": 600,
+      "maxBytes": 40000
+    },
     "src/features/non-profits/components/landing-page-client.tsx": {
       "lines": 1123,
       "bytes": 41928,
+      "maxLines": 600,
+      "maxBytes": 40000
+    },
+    "src/features/non-profits/components/nonprofit-detail.tsx": {
+      "lines": 606,
+      "bytes": 22957,
       "maxLines": 600,
       "maxBytes": 40000
     },
