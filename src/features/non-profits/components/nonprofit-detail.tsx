@@ -31,6 +31,7 @@ import { resultToPromise } from "../lib/result-to-promise";
 import { formatCurrency } from "../lib/utils";
 import { philanthropyService } from "../services/philanthropy.service";
 import type { Grant } from "../types/philanthropy";
+import { EntityNotFound } from "./entity-not-found";
 import { type BreadcrumbItem, PageBreadcrumbs } from "./page-breadcrumbs";
 
 // ---------------------------------------------------------------------------
@@ -453,17 +454,11 @@ export function NonprofitDetail({ id }: { id: string }) {
 
   if (!nonprofit) {
     return (
-      <div className="mx-auto max-w-5xl px-4 py-16 text-center">
-        <h1 className="text-lg font-medium text-zinc-900 dark:text-zinc-100">
-          Nonprofit not found
-        </h1>
-        <Link
-          href={NON_PROFITS_PAGES.HOME}
-          className="mt-4 inline-block text-sm text-blue-600 hover:underline"
-        >
-          Back to Non-Profits
-        </Link>
-      </div>
+      <EntityNotFound
+        icon={<Heart className="size-6 text-zinc-400" />}
+        title="Nonprofit not found"
+        description="The nonprofit with this ID could not be found."
+      />
     );
   }
 

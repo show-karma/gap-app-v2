@@ -14,6 +14,7 @@
 
 import "@/src/features/non-profits/styles/non-profits-detail.css";
 
+import { HandCoins } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import pluralize from "pluralize";
@@ -25,6 +26,7 @@ import { useGrant } from "../hooks/use-grant";
 import { useNonprofit, useNonprofitGrants } from "../hooks/use-nonprofit";
 import { formatCurrency } from "../lib/utils";
 import type { Grant } from "../types/philanthropy";
+import { EntityNotFound } from "./entity-not-found";
 import { PageBreadcrumbs } from "./page-breadcrumbs";
 
 const RELATED_LIMIT = 8;
@@ -246,15 +248,11 @@ export function GrantDetail({ id }: { id: string }) {
 
   if (!grant) {
     return (
-      <div className="w-full px-4 py-6">
-        <p className="text-sm text-zinc-500">Grant not found.</p>
-        <Link
-          href={NON_PROFITS_PAGES.HOME}
-          className="mt-2 inline-block text-xs text-blue-600 hover:underline dark:text-blue-400"
-        >
-          Back to Non-Profits
-        </Link>
-      </div>
+      <EntityNotFound
+        icon={<HandCoins className="size-6 text-zinc-400" />}
+        title="Grant not found"
+        description="The grant with this ID could not be found."
+      />
     );
   }
 

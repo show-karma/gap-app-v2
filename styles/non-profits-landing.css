@@ -423,6 +423,31 @@
 .lp-chip:hover .lp-chip-arrow { opacity: 1; transform: translateX(0); color: var(--lp-ink-2); }
 .lp-chip-content { flex: 1; }
 
+/* ———————— Hero foot (nudge to connector) ———————— */
+.lp-hero-foot {
+  margin-top: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--lp-ink-3);
+}
+.lp-hero-foot-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--lp-ink);
+  text-decoration: none;
+  border-bottom: 1px dashed var(--lp-ink-4);
+  padding-bottom: 1px;
+  transition: color 0.15s, border-color 0.15s;
+}
+.lp-hero-foot-link:hover { color: var(--lp-primary); border-color: var(--lp-primary); }
+
 @keyframes lp-chipFly {
   0% { transform: translate(0, 0) scale(1); opacity: 1; }
   100% { transform: var(--fly-transform) scale(0.85); opacity: 0; }

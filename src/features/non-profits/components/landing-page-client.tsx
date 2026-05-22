@@ -101,7 +101,7 @@ function RotatingPlaceholder({ visible }: { visible: boolean }) {
     return () => clearTimeout(t);
   }, [sub, phase, i, visible]);
 
-  if (!visible) return <div className="lp-search-placeholder" />;
+  if (!visible) return null;
   return (
     <div className="lp-search-placeholder">
       <span>{sub}</span>
@@ -783,15 +783,24 @@ const INSTALL_CONFIGS = {
 
 type InstallTab = keyof typeof INSTALL_CONFIGS;
 
+function copyButtonLabel(state: "idle" | "copied" | "failed"): string {
+  if (state === "copied") return "COPIED";
+  if (state === "failed") return "FAILED";
+  return "COPY";
+}
+
 function CopyButton({ text }: { text: string }) {
   const [, copy] = useCopyToClipboard();
-  const [state, setState] = useState<"idle" | "copied">("idle");
+  const [state, setState] = useState<"idle" | "copied" | "failed">("idle");
 
   const handleCopy = async () => {
     const ok = await copy(text, "Copied!");
     if (ok) {
       setState("copied");
       setTimeout(() => setState("idle"), 1400);
+    } else {
+      setState("failed");
+      setTimeout(() => setState("idle"), 2000);
     }
   };
 
@@ -801,7 +810,7 @@ function CopyButton({ text }: { text: string }) {
       className={`lp-copy-btn ${state === "copied" ? "copied" : ""}`}
       onClick={handleCopy}
     >
-      {state === "copied" ? "COPIED" : "COPY"}
+      {copyButtonLabel(state)}
     </button>
   );
 }
