@@ -134,6 +134,7 @@ Add your organization
 
 ## Developer Docs
 
+- [Karma developer resources](https://www.karmahq.xyz/developers): Karma (karmahq) API, MCP, SDK, OAuth, and machine-readable discovery reference — start here
 - [API Documentation](https://gapapi.karmahq.xyz/v2/docs): REST API docs for projects, communities, grants, and attestations
 - [OpenAPI JSON](https://www.karmahq.xyz/openapi.json)
 - Authentication: use Privy JWT in `Authorization: Bearer <token>` for protected endpoints

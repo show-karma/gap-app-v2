@@ -10,7 +10,7 @@ import { customMetadata } from "@/utilities/meta";
 export const metadata: Metadata = customMetadata({
   title: "Connect Karma to your AI app",
   description:
-    "Add Karma's MCP server to Cursor, Claude Desktop, Codex, or any other MCP-compatible AI app to give it access to your projects, grants, and impact data.",
+    "Add Karma's (karmahq.xyz) MCP server to Cursor, Claude Desktop, Codex, or any other MCP-compatible AI app to give it access to your projects, grants, and impact data.",
   path: "/mcp/connect",
 });
 

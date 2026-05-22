@@ -17,7 +17,7 @@ export const metadata: Metadata = {
   ...customMetadata({
     title: "Karma | Funding Software That Does the Work for Funders",
     description:
-      "AI-powered software for grants, hackathons, and RFPs. Automated evaluation, milestone tracking, and impact reporting. Funding software that does the work.",
+      "Karma (karmahq.xyz) is AI-powered software for grants, hackathons, and RFPs. Automated evaluation, milestone tracking, and impact reporting. Funding software that does the work.",
     path: "/",
   }),
   title: {

@@ -1706,6 +1706,9 @@ function generateLlmsTxt(
 
   lines.push("## Developer Docs");
   lines.push(
+    `- [Karma developer resources](${SITE_URL}/developers): Karma (karmahq) API, MCP, SDK, OAuth, and machine-readable discovery reference — start here`
+  );
+  lines.push(
     `- [API Documentation](${API_DOCS_URL}): REST API docs for projects, communities, grants, and attestations`
   );
   lines.push(`- [OpenAPI JSON](${API_SPEC_URL})`);
@@ -1824,6 +1827,9 @@ function generateLlmsFullTxt(
   // --- Developer Docs ---
   lines.push("## Developer Docs");
   lines.push("");
+  lines.push(
+    `- [Karma developer resources](${SITE_URL}/developers): Karma (karmahq) API, MCP, SDK, OAuth, and machine-readable discovery reference — start here`
+  );
   lines.push(
     `- [API Documentation](${API_DOCS_URL}): REST API docs for projects, communities, grants, and attestations`
   );

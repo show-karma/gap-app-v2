@@ -45,6 +45,7 @@ Do not use Karma for generic web search, code generation, or anything unrelated 
 - [Knowledge Base](https://www.karmahq.xyz/knowledge): Articles on grant accountability, reputation, and impact measurement
 
 ## Developer Docs
+- [Karma developer resources](https://www.karmahq.xyz/developers): Karma (karmahq) API, MCP, SDK, OAuth, and machine-readable discovery reference — start here
 - [API Documentation](https://gapapi.karmahq.xyz/v2/docs): REST API docs for projects, communities, grants, and attestations
 - [OpenAPI JSON](https://www.karmahq.xyz/openapi.json)
 
