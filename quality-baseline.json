@@ -462,20 +462,19 @@
   },
   "reactDoctor": {
     "score": 0,
-    "errors": 32,
-    "warnings": 10623,
+    "errors": 61,
+    "warnings": 3185,
     "byCategory": {
-      "Architecture": 8267,
-      "Correctness": 414,
-      "Performance": 657,
-      "Accessibility": 41,
-      "Next.js": 160,
-      "State & Effects": 195,
-      "TanStack Query": 35,
-      "Bundle Size": 2,
-      "Server": 13,
-      "Security": 5,
-      "Dead Code": 866
+      "Accessibility": 263,
+      "Architecture": 1165,
+      "Correctness": 393,
+      "Next.js": 143,
+      "State & Effects": 660,
+      "Server": 6,
+      "Performance": 575,
+      "TanStack Query": 29,
+      "Bundle Size": 9,
+      "Security": 3
     }
   }
 }
