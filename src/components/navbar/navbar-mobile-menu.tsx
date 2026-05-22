@@ -23,7 +23,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useContributorProfile } from "@/hooks/useContributorProfile";
 import { useApiKeyManagementModalStore } from "@/store/modals/apiKeyManagement";
 import { useContributorProfileModalStore } from "@/store/modals/contributorProfile";
-import { PAGES } from "@/utilities/pages";
+import { NON_PROFITS_PAGES, PAGES } from "@/utilities/pages";
 import { SOCIALS } from "@/utilities/socials";
 import { Logo } from "../shared/logo";
 import {
@@ -233,6 +233,17 @@ export function NavbarMobileMenu() {
               {/* Explore Section */}
               <div className="border-b border-border py-5">
                 <ExploreContent variant="mobile" onClose={() => setMobileMenuOpen(false)} />
+              </div>
+
+              {/* Grow Nonprofits */}
+              <div className="border-b border-border py-3">
+                <Link
+                  href={NON_PROFITS_PAGES.HOME}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block text-base font-medium text-foreground transition-colors hover:text-primary"
+                >
+                  Grow Nonprofits
+                </Link>
               </div>
 
               {/* Resources Section */}

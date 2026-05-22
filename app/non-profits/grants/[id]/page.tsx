@@ -52,7 +52,7 @@ export async function generateMetadata({
 
   if (!grant) {
     return customMetadata({
-      title: "Grant — Grant Atlas",
+      title: "Grant — Grow Nonprofits",
       description: "View grant details, funder information, and related grants.",
       path: `/non-profits/grants/${id}`,
     });
@@ -62,7 +62,8 @@ export async function generateMetadata({
   const parts: string[] = [];
   if (amountStr) parts.push(amountStr);
   if (grant.purposeText) parts.push(grant.purposeText);
-  const title = parts.length > 0 ? `${parts.join(" — ")} — Grant Atlas` : "Grant — Grant Atlas";
+  const title =
+    parts.length > 0 ? `${parts.join(" — ")} — Grow Nonprofits` : "Grant — Grow Nonprofits";
 
   const recipientPart = grant.recipientName ? ` to ${grant.recipientName}` : "";
   const description = `${amountStr ? `${amountStr} grant` : "Grant"}${recipientPart}${grant.purposeText ? `: ${grant.purposeText}` : ""}`;
