@@ -18,6 +18,7 @@ import "../../../../styles/non-profits-landing.css";
 
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Input } from "@/components/ui/input";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { NON_PROFITS_PAGES } from "@/utilities/pages";
 import { useSearchSessionStore } from "../store/search-session";
@@ -242,9 +243,9 @@ function Hero({ onSearch }: { onSearch: (query: string) => void }) {
                 <Icon.search />
               </span>
               <div className="lp-search-input-wrap">
-                <input
+                <Input
                   ref={inputRef}
-                  className="lp-search-input"
+                  className="lp-search-input h-auto rounded-none border-0 bg-transparent px-0 py-3 text-base shadow-none focus-visible:ring-0 md:text-base"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   onFocus={() => setFocused(true)}

@@ -1167,7 +1167,151 @@
 }
 
 /* ———————— Responsive ———————— */
+/* ———————— Hero foot (nudge to connector) ———————— */
+.lp-hero-foot {
+  margin-top: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--lp-ink-3);
+}
+.lp-hero-foot-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--lp-ink);
+  text-decoration: none;
+  border-bottom: 1px dashed var(--lp-ink-4);
+  padding-bottom: 1px;
+  transition: color 0.15s, border-color 0.15s;
+}
+.lp-hero-foot-link:hover { color: var(--lp-primary); border-color: var(--lp-primary); }
+
+/* ———————— Nav ———————— */
+.lp-nav {
+  border-bottom: 1px solid var(--line);
+  background: color-mix(in oklch, var(--bg) 85%, transparent);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  backdrop-filter: blur(8px);
+}
+
+.lp-nav-inner {
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.lp-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  font-size: 15px;
+  letter-spacing: -0.01em;
+}
+
+.lp-nav-links {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.lp-nav-link {
+  padding: 8px 12px;
+  font-size: 13px;
+  color: var(--lp-ink-2);
+  transition: color 0.15s;
+  border-radius: 4px;
+}
+.lp-nav-link:hover { color: var(--lp-ink); background: var(--bg-sunken); }
+
+.lp-nav-status {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 11px;
+  color: var(--lp-ink-3);
+  padding: 4px 8px;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ———————— Bookmark badge ———————— */
+.lp-bookmark-badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--lp-accent);
+  color: var(--bg);
+  font-size: 9px;
+  font-weight: 700;
+  display: grid;
+  place-items: center;
+  font-family: "JetBrains Mono", monospace;
+}
+
+/* ———————— Footer ———————— */
+.lp-footer {
+  border-top: 1px solid var(--line);
+  padding: 48px 0 32px;
+  margin-top: 64px;
+}
+
+.lp-footer-inner {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  gap: 48px;
+  padding-bottom: 48px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 24px;
+}
+
+.lp-footer-col-title {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 10px;
+  color: var(--lp-ink-3);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+}
+
+.lp-footer-links { display: flex; flex-direction: column; gap: 10px; }
+.lp-footer-link { font-size: 13px; color: var(--lp-ink-2); transition: color 0.15s; }
+.lp-footer-link:hover { color: var(--lp-ink); }
+
+.lp-footer-intro {
+  font-size: 13px;
+  color: var(--lp-ink-2);
+  line-height: 1.6;
+  max-width: 320px;
+  margin-top: 16px;
+}
+
+.lp-footer-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 11px;
+  color: var(--lp-ink-3);
+}
+
+.lp-footer-bottom-right { display: flex; gap: 20px; }
+
 @media (max-width: 900px) {
+  .lp-footer-inner { grid-template-columns: 1fr 1fr; gap: 32px; }
   .lp-chips-grid { grid-template-columns: 1fr; }
   .lp-how-grid { grid-template-columns: 1fr; }
   .lp-how-step { border-right: none; border-bottom: 1px solid var(--line); }
@@ -1196,4 +1340,17 @@
   .lp-data-stat:nth-child(2n) { border-right: none; }
   .lp-data-stat:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
   .lp-cta-grid { grid-template-columns: 1fr; }
+}
+
+/* ———————— Nav responsive ————————
+   The nav row does not wrap; on narrow screens its widest, secondary items are
+   hidden so the brand + core actions never overflow. Marketing links point to
+   on-page anchors that remain reachable by scrolling. */
+@media (max-width: 1024px) {
+  .lp-nav-links { display: none; }
+}
+
+@media (max-width: 640px) {
+  .lp-nav-status { display: none; }
+  .lp-nav .lp-container { padding-left: 16px; padding-right: 16px; }
 }

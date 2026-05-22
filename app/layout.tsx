@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from "next";
-import dynamic from "next/dynamic";
 import localFont from "next/font/local";
 import { defaultMetadata } from "@/utilities/meta";
 
@@ -21,21 +20,11 @@ import { PermissionsProvider } from "@/components/Utilities/PermissionsProvider"
 import PrivyProviderWrapper from "@/components/Utilities/PrivyProviderWrapper";
 import { TenantStoreInitializer } from "@/components/Utilities/TenantStoreInitializer";
 import { FooterSwitcher } from "@/src/components/footer/footer-switcher";
-import { Navbar } from "@/src/components/navbar/navbar";
+import { GlobalNavbarSlot } from "@/src/components/navbar/global-navbar-slot";
 import { WhitelabelNavbar } from "@/src/components/navbar/whitelabel-navbar";
 import { toHslToken } from "@/utilities/whitelabel-config";
 import { WhitelabelProvider } from "@/utilities/whitelabel-context";
 import { getWhitelabelContext } from "@/utilities/whitelabel-server";
-
-const Footer = dynamic(() =>
-  import("@/src/components/footer/footer").then((m) => ({ default: m.Footer }))
-);
-
-const WhitelabelFooter = dynamic(() =>
-  import("@/src/components/footer/whitelabel-footer").then((m) => ({
-    default: m.WhitelabelFooter,
-  }))
-);
 
 export async function generateMetadata(): Promise<Metadata> {
   const { isWhitelabel, config, tenantConfig } = await getWhitelabelContext();
@@ -153,14 +142,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               <DeferredLayoutComponents toasterConfig={toasterConfig} />
               <div className="min-h-screen flex flex-col justify-between h-full text-gray-700 bg-white dark:bg-black dark:text-white">
                 <div className="flex flex-col w-full h-full">
-                  {isWhitelabel ? (
-                    <WhitelabelNavbar />
-                  ) : (
-                    <>
-                      <Navbar />
-                      <div className="h-[var(--navbar-height)]" />
-                    </>
-                  )}
+                  {isWhitelabel ? <WhitelabelNavbar /> : <GlobalNavbarSlot />}
                   {children}
                 </div>
                 <FooterSwitcher isWhitelabel={isWhitelabel} />
