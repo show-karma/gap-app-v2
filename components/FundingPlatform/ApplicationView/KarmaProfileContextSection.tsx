@@ -23,13 +23,8 @@ interface KarmaProfileContextSectionProps {
 /**
  * Collapsible block that surfaces the raw Karma profile markdown the
  * aggregator built. Used as an audit trail so reviewers can verify any
- * AI claim against the underlying ground-truth data.
- *
- * Two consumers:
- * - Legacy `InternalAIEvaluation.tsx` (for historical records that still
- *   have `internalAIEvaluation.context`).
- * - New `KarmaProfileEvaluation` tab (the canonical home for fresh context
- *   blocks).
+ * AI claim against the underlying ground-truth data. Used by the
+ * Applications Insights tab.
  */
 export function KarmaProfileContextSection({
   context,

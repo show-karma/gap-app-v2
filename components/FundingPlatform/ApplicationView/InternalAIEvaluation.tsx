@@ -11,13 +11,11 @@ import {
   getStatusColor,
   parseEvaluation,
 } from "./evaluationUtils";
-import { KarmaProfileContextSection } from "./KarmaProfileContextSection";
 
 export type InternalAIEvaluationData = string;
 
 interface InternalAIEvaluationDisplayProps {
   evaluation: InternalAIEvaluationData | null;
-  context?: string | null;
   className?: string;
   programName?: string;
 }
@@ -77,7 +75,6 @@ function EvaluationContent({
  */
 export function InternalAIEvaluationDisplay({
   evaluation,
-  context,
   className = "",
   programName,
 }: InternalAIEvaluationDisplayProps) {
@@ -115,7 +112,6 @@ export function InternalAIEvaluationDisplay({
         )}
       </div>
 
-      {context ? <KarmaProfileContextSection context={context} /> : null}
     </div>
   );
 }

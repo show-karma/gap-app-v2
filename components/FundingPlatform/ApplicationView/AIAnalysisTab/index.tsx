@@ -92,7 +92,6 @@ export const AIAnalysisTab: FC<AIAnalysisTabProps> = ({
         (hasInternalEvaluation ? (
           <InternalAIEvaluationDisplay
             evaluation={application.internalAIEvaluation?.evaluation || null}
-            context={application.internalAIEvaluation?.context || null}
             programName={program?.name}
           />
         ) : (
