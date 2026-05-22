@@ -486,7 +486,9 @@ describe("AIAnalysisTab", () => {
       expect(screen.getByTestId("re-evaluate-karma-profile-btn")).toBeInTheDocument();
     });
 
-    it("does not render the karma re-evaluate button on the external tab", () => {
+    it("does not render the karma re-evaluate button on the external tab", async () => {
+      const user = userEvent.setup();
+
       render(
         <AIAnalysisTab
           application={completedInsights as IFundingApplication}
@@ -494,10 +496,11 @@ describe("AIAnalysisTab", () => {
         />
       );
 
-      // Default tab when only insights exists is insights, so navigate away first.
-      // (Insights is the active tab here, so the karma re-eval button SHOULD show.
-      // To assert it doesn't show on other tabs, we test the external tab too.)
+      // Insights is the default tab when only insights exists — the button
+      // shows here. Switch to External; the karma re-eval button must vanish.
       expect(screen.getByTestId("re-evaluate-karma-profile-btn")).toBeInTheDocument();
+      await user.click(screen.getByText("External Evaluation"));
+      expect(screen.queryByTestId("re-evaluate-karma-profile-btn")).not.toBeInTheDocument();
     });
 
     it("shows re-evaluate button when status is failed (so admin can retry)", async () => {

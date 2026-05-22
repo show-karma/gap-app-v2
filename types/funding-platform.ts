@@ -154,8 +154,10 @@ export interface IFundingApplication {
      * record that was injected into the Internal AI prompt at evaluation time.
      * Preserved on historical records only — new internal evaluations write
      * null because track-record context now lives on `karmaProfileEvaluation`.
+     * Typed `string | null` (not just optional string) so consumers can rely on
+     * the explicit null contract.
      */
-    context?: string;
+    context?: string | null;
   };
   /**
    * Track-record AI evaluation (admin-only). Independent of `internalAIEvaluation`

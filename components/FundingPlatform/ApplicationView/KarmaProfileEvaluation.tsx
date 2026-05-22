@@ -103,9 +103,8 @@ export const KarmaProfileEvaluationDisplay: FC<KarmaProfileEvaluationDisplayProp
 };
 
 function SkippedState({ reason }: { reason?: KarmaProfileSkipReason }) {
-  const copy = reason
-    ? SKIP_COPY[reason]
-    : "Track-record evaluation didn't run for this application.";
+  const fallback = "Track-record evaluation didn't run for this application.";
+  const copy = reason ? (SKIP_COPY[reason] ?? fallback) : fallback;
   return (
     <div className="bg-zinc-50 dark:bg-zinc-800 rounded-lg p-4">
       <p className="text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Not evaluated</p>
