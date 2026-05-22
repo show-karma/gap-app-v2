@@ -26,12 +26,7 @@ const baseProps = {
 
 function renderWith(json: object | string) {
   const evaluation = typeof json === "string" ? json : JSON.stringify(json);
-  return render(
-    <KarmaProfileEvaluationDisplay
-      {...baseProps}
-      evaluation={evaluation}
-    />
-  );
+  return render(<KarmaProfileEvaluationDisplay {...baseProps} evaluation={evaluation} />);
 }
 
 describe("KarmaProfileEvaluationDisplay — schema-agnostic renderer", () => {

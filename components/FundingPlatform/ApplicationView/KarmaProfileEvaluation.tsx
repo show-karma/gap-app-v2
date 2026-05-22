@@ -142,13 +142,7 @@ function PendingState() {
   );
 }
 
-function CompletedState({
-  evaluation,
-  context,
-}: {
-  evaluation: string;
-  context: string | null;
-}) {
+function CompletedState({ evaluation, context }: { evaluation: string; context: string | null }) {
   const parsed = safeParse(evaluation);
 
   if (parsed === null) {
@@ -206,11 +200,22 @@ function isStringArray(v: unknown): v is string[] {
 }
 
 function isPrimitiveMap(v: unknown): v is Record<string, JsonPrimitive> {
-  return (
-    isPlainObject(v) &&
-    Object.keys(v).length > 0 &&
-    Object.values(v).every(isPrimitive)
-  );
+  return isPlainObject(v) && Object.keys(v).length > 0 && Object.values(v).every(isPrimitive);
+}
+
+/**
+ * Build a content-derived React key for an arbitrary array item so reorders
+ * don't reuse stale state. Truncated to keep keys small; idx + parentKey
+ * disambiguate duplicates.
+ */
+function stableKey(item: unknown, idx: number, parentKey?: string): string {
+  const seed = parentKey ?? "item";
+  if (isPrimitive(item)) return `${seed}-${idx}-${String(item).slice(0, 40)}`;
+  try {
+    return `${seed}-${idx}-${JSON.stringify(item).slice(0, 64)}`;
+  } catch {
+    return `${seed}-${idx}`;
+  }
 }
 
 function formatPrimitive(value: JsonPrimitive): string {
@@ -254,7 +259,11 @@ function JsonNode({
     return (
       <div className="space-y-3">
         {value.map((item, idx) => (
-          <ArrayItem key={`${parentKey ?? "item"}-${idx}`} value={item} depth={depth + 1} />
+          // Derive the key from the item's content so reorders / inserts
+          // don't reuse stale React state. Falls back to a hash of the
+          // serialized form for primitives, otherwise the index is the
+          // only signal we have.
+          <ArrayItem key={stableKey(item, idx, parentKey)} value={item} depth={depth + 1} />
         ))}
       </div>
     );
@@ -306,18 +315,17 @@ function ValueLine({ value }: { value: JsonPrimitive }) {
       </div>
     );
   }
-  return (
-    <p className="text-sm text-gray-900 dark:text-gray-100">
-      {formatPrimitive(value)}
-    </p>
-  );
+  return <p className="text-sm text-gray-900 dark:text-gray-100">{formatPrimitive(value)}</p>;
 }
 
 function BulletList({ items }: { items: string[] }) {
+  // Deduplicate identical bullets so React keys don't collide. LLM output
+  // can repeat itself; we'd rather show one bullet than warn at runtime.
+  const unique = Array.from(new Set(items));
   return (
     <ul className="space-y-1.5">
-      {items.map((item, idx) => (
-        <li key={idx} className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-200">
+      {unique.map((item) => (
+        <li key={item} className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-200">
           <span className="mt-2 w-1 h-1 flex-shrink-0 rounded-full bg-gray-400 dark:bg-gray-500" />
           <span className="leading-relaxed">{item}</span>
         </li>
