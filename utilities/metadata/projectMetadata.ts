@@ -15,6 +15,13 @@ const getProjectDescription = (project: ProjectResponse): string => {
   return project?.details?.description || "";
 };
 
+// Prefer the project's own description for meta tags so every page carries
+// unique, content-rich text instead of a title-only template shared across all
+// projects (which Google treats as near-duplicate / low-value).
+const getRealDescriptionExcerpt = (project: ProjectResponse, maxLength = 160): string => {
+  return cleanMarkdownForPlainText(getProjectDescription(project) || "", maxLength);
+};
+
 // Base project metadata generator
 export const generateProjectMetadata = (
   project: ProjectResponse,
@@ -91,7 +98,9 @@ export const generateProjectAboutMetadata = (
   return generateProjectMetadata(project, {
     projectId,
     pageName: "About",
-    description: `Learn about ${projectTitle}: mission, problem statement, solution, and project details.`,
+    description:
+      getRealDescriptionExcerpt(project) ||
+      `Learn about ${projectTitle}: mission, problem statement, solution, and project details.`,
     canonicalPath: `/project/${projectId}/about`,
   });
 };
@@ -104,7 +113,9 @@ export const generateProjectTeamMetadata = (
   return generateProjectMetadata(project, {
     projectId,
     pageName: "Team",
-    description: `Meet the team behind ${projectTitle} and their contributions to the project.`,
+    description:
+      getRealDescriptionExcerpt(project) ||
+      `Meet the team behind ${projectTitle} and their contributions to the project.`,
     canonicalPath: `/project/${projectId}/team`,
   });
 };
@@ -117,7 +128,9 @@ export const generateProjectImpactMetadata = (
   return generateProjectMetadata(project, {
     projectId,
     title: `Impact of ${projectTitle}`,
-    description: `Explore the impact and outcomes of ${projectTitle} on ${PROJECT_NAME}.`,
+    description:
+      getRealDescriptionExcerpt(project) ||
+      `Explore the impact and outcomes of ${projectTitle} on ${PROJECT_NAME}.`,
     canonicalPath: `/project/${projectId}/impact`,
   });
 };
@@ -130,7 +143,8 @@ export const generateProjectContactMetadata = (
   return generateProjectMetadata(project, {
     projectId,
     pageName: "Contact",
-    description: `Contact information for ${projectTitle} project team.`,
+    description:
+      getRealDescriptionExcerpt(project) || `Contact information for ${projectTitle} project team.`,
     canonicalPath: `/project/${projectId}/contact-info`,
   });
 };
@@ -143,7 +157,9 @@ export const generateProjectUpdatesMetadata = (
   return generateProjectMetadata(project, {
     projectId,
     title: `${projectTitle} Updates`,
-    description: `Explore the updates of ${projectTitle} on ${PROJECT_NAME}.`,
+    description:
+      getRealDescriptionExcerpt(project) ||
+      `Explore the updates of ${projectTitle} on ${PROJECT_NAME}.`,
     canonicalPath: `/project/${projectId}/updates`,
   });
 };
@@ -156,7 +172,9 @@ export const generateProjectFundingMetadata = (
   return generateProjectMetadata(project, {
     projectId,
     title: `${projectTitle} Grants`,
-    description: `View funding and grants for ${projectTitle} on ${PROJECT_NAME}.`,
+    description:
+      getRealDescriptionExcerpt(project) ||
+      `View funding and grants for ${projectTitle} on ${PROJECT_NAME}.`,
     canonicalPath: PAGES.PROJECT.GRANTS(projectId),
   });
 };
