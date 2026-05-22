@@ -6,7 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { resultToPromise } from "../lib/result-to-promise";
 import { philanthropyService } from "../services/philanthropy.service";
 
-export const grantKeys = {
+const grantKeys = {
   all: ["philanthropy", "grant"] as const,
   detail: (id: string) => [...grantKeys.all, id] as const,
 };

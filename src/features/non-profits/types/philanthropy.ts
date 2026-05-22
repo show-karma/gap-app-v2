@@ -15,13 +15,12 @@ export const CitationSchema = z.object({
 });
 export type Citation = z.infer<typeof CitationSchema>;
 
-export const EntityScoresSchema = z.object({
+const EntityScoresSchema = z.object({
   semantic: z.number(),
   amount: z.number(),
   recency: z.number(),
   composite: z.number(),
 });
-export type EntityScores = z.infer<typeof EntityScoresSchema>;
 
 // ── Query / search ───────────────────────────────────────────────────────────
 

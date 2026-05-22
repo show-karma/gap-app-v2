@@ -24,7 +24,8 @@
   "ignore": [
     "next-env.d.ts",
     "**/*.d.ts",
-    "src/features/non-profits/components/suggested-queries.tsx"
+    "src/features/non-profits/components/suggested-queries.tsx",
+    "src/features/non-profits/hooks/use-search-history.ts"
   ],
   "ignoreDependencies": [
     "@biomejs/biome",

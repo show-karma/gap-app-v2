@@ -54,7 +54,7 @@ import type { Financials, Grant, Officer } from "../types/philanthropy";
 import { HeroTransitionOverlay } from "./hero-transition-overlay";
 import { PageBreadcrumbs } from "./page-breadcrumbs";
 
-export interface SortOption {
+interface SortOption {
   sortBy?: string;
   sortOrder?: "asc" | "desc";
 }

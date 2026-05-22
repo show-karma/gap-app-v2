@@ -10,8 +10,6 @@ import { useState } from "react";
 import { resultToPromise } from "../lib/result-to-promise";
 import { philanthropyService, type SortOption } from "../services/philanthropy.service";
 
-export type { SortOption };
-
 export const foundationKeys = {
   all: ["philanthropy", "foundation"] as const,
   detail: (id: string) => [...foundationKeys.all, id] as const,
@@ -21,7 +19,6 @@ export const foundationKeys = {
     [...foundationKeys.all, id, "officers", sort?.sortBy ?? "", sort?.sortOrder ?? ""] as const,
   financials: (id: string, sort?: SortOption) =>
     [...foundationKeys.all, id, "financials", sort?.sortBy ?? "", sort?.sortOrder ?? ""] as const,
-  filing: (id: string, year: number) => [...foundationKeys.all, id, "filing", year] as const,
 };
 
 export function useFoundation(id: string) {
@@ -57,15 +54,6 @@ export function useFoundationFinancials(id: string, sort?: SortOption) {
     queryFn: () => resultToPromise(philanthropyService.getFoundationFinancials(id, sort)),
     enabled: Boolean(id),
     staleTime: 5 * 60 * 1000,
-  });
-}
-
-export function useFoundationFiling(id: string, year: number) {
-  return useQuery({
-    queryKey: foundationKeys.filing(id, year),
-    queryFn: () => resultToPromise(philanthropyService.getFoundationFiling(id, year)),
-    enabled: Boolean(id) && year > 0,
-    staleTime: 10 * 60 * 1000,
   });
 }
 
