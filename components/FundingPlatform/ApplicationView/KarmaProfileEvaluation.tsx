@@ -77,8 +77,8 @@ export const KarmaProfileEvaluationDisplay: FC<KarmaProfileEvaluationDisplayProp
         </div>
         <p className="text-xs text-gray-500 dark:text-gray-400">
           AI verdict on the applicant's delivery history across past Karma grants, milestones, and
-          impact indicators. Independent of the application proposal — use this to weigh track
-          record alongside the Internal evaluation.
+          impact indicators. Independent of the application proposal: use this to weigh track record
+          alongside the Internal evaluation.
         </p>
         {evaluatedAtLabel ? (
           <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">

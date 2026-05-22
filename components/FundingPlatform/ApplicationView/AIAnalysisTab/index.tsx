@@ -58,53 +58,18 @@ export const AIAnalysisTab: FC<AIAnalysisTabProps> = ({
 
   const referenceNumber = application.referenceNumber || application.id;
 
-  const renderRunButton = () => {
-    if (!canRunEvaluation) return null;
-
-    if (activeSubTab === "internal" && hasInternalEvaluation) {
-      return (
-        <ReEvaluateInternalButton
-          referenceNumber={referenceNumber}
-          onEvaluationComplete={onEvaluationComplete}
-        />
-      );
-    }
-
-    if (activeSubTab === "insights" && hasInsightsRecord) {
-      // Re-evaluate is available for any prior record — completed,
-      // failed, or skipped. The dialog gates destructive overwrites of
-      // completed evals; retrying failed/skipped is cheap.
-      return (
-        <ReEvaluateKarmaProfileButton
-          referenceNumber={referenceNumber}
-          onEvaluationComplete={onEvaluationComplete}
-        />
-      );
-    }
-
-    if (activeSubTab === "insights") {
-      // No prior record at all (pre-feature application, no backfill).
-      // Insights auto-fires on next submission/resubmission/edit; we
-      // intentionally don't expose a manual first-run button to keep the
-      // entry points consistent with Internal/External (which also
-      // auto-fire from the submit flow).
-      return null;
-    }
-
-    return (
-      <AIEvaluationButton
-        referenceNumber={referenceNumber}
-        onEvaluationComplete={onEvaluationComplete}
-        isInternal={activeSubTab === "internal"}
-      />
-    );
-  };
-
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-4">
         <AIAnalysisSubTabs activeTab={activeSubTab} onTabChange={setActiveSubTab} />
-        {renderRunButton()}
+        <RunButton
+          activeSubTab={activeSubTab}
+          referenceNumber={referenceNumber}
+          canRunEvaluation={canRunEvaluation}
+          hasInternalEvaluation={hasInternalEvaluation}
+          hasInsightsRecord={hasInsightsRecord}
+          onEvaluationComplete={onEvaluationComplete}
+        />
       </div>
 
       {activeSubTab === "external" &&
@@ -149,5 +114,69 @@ export const AIAnalysisTab: FC<AIAnalysisTabProps> = ({
     </div>
   );
 };
+
+interface RunButtonProps {
+  activeSubTab: AIAnalysisSubTabId;
+  referenceNumber: string;
+  canRunEvaluation: boolean;
+  hasInternalEvaluation: boolean;
+  hasInsightsRecord: boolean;
+  onEvaluationComplete?: () => void;
+}
+
+/**
+ * Renders the right-side run/re-run button next to the sub-tab bar.
+ * Extracted from `AIAnalysisTab` so React reconciles button identity
+ * properly when the active sub-tab changes (avoids the render-in-render
+ * anti-pattern).
+ */
+function RunButton({
+  activeSubTab,
+  referenceNumber,
+  canRunEvaluation,
+  hasInternalEvaluation,
+  hasInsightsRecord,
+  onEvaluationComplete,
+}: RunButtonProps) {
+  if (!canRunEvaluation) return null;
+
+  if (activeSubTab === "internal" && hasInternalEvaluation) {
+    return (
+      <ReEvaluateInternalButton
+        referenceNumber={referenceNumber}
+        onEvaluationComplete={onEvaluationComplete}
+      />
+    );
+  }
+
+  if (activeSubTab === "insights" && hasInsightsRecord) {
+    // Re-evaluate is available for any prior record (completed, failed,
+    // or skipped). The dialog gates destructive overwrites of completed
+    // evals; retrying failed/skipped is cheap.
+    return (
+      <ReEvaluateKarmaProfileButton
+        referenceNumber={referenceNumber}
+        onEvaluationComplete={onEvaluationComplete}
+      />
+    );
+  }
+
+  if (activeSubTab === "insights") {
+    // No prior record at all (pre-feature application, no backfill).
+    // Insights auto-fires on next submission / resubmission / edit. We
+    // intentionally don't expose a manual first-run button so the entry
+    // point stays consistent with Internal and External (which also
+    // fire from the submit flow).
+    return null;
+  }
+
+  return (
+    <AIEvaluationButton
+      referenceNumber={referenceNumber}
+      onEvaluationComplete={onEvaluationComplete}
+      isInternal={activeSubTab === "internal"}
+    />
+  );
+}
 
 export default AIAnalysisTab;
