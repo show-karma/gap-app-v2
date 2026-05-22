@@ -110,6 +110,10 @@ function SkippedState({ reason }: { reason?: KarmaProfileSkipReason }) {
     <div className="bg-zinc-50 dark:bg-zinc-800 rounded-lg p-4">
       <p className="text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Not evaluated</p>
       <p className="text-xs text-gray-500 dark:text-gray-400">{copy}</p>
+      <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">
+        If the underlying issue is fixed (applicant linked a project, program added the field), use
+        Re-evaluate above to retry.
+      </p>
     </div>
   );
 }

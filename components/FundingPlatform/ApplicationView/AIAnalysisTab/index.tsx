@@ -45,12 +45,12 @@ export const AIAnalysisTab: FC<AIAnalysisTabProps> = ({
   const hasExternalEvaluation = Boolean(application.aiEvaluation?.evaluation);
   const hasInternalEvaluation = Boolean(application.internalAIEvaluation?.evaluation);
   const insightsRecord = application.karmaProfileEvaluation;
-  // Any non-undefined Insights record (including SKIPPED) counts as "has run"
-  // so we route to the Insights tab by default if it's the only one with
-  // signal — keeps the UI from looking empty when reviewers click into apps
-  // that only have a track-record verdict.
+  // Any non-undefined Insights record (including SKIPPED / FAILED) counts as
+  // "has run" — routes to the Insights tab by default if it's the only one
+  // with signal, AND surfaces the Re-evaluate button so admins can retry
+  // failed/skipped states once the underlying issue is fixed (applicant linked
+  // a project, program added the field, etc.).
   const hasInsightsRecord = Boolean(insightsRecord);
-  const hasInsightsEvaluation = Boolean(insightsRecord?.evaluation);
 
   const [activeSubTab, setActiveSubTab] = useState<AIAnalysisSubTabId>(() =>
     getDefaultTab(hasExternalEvaluation, hasInternalEvaluation, hasInsightsRecord)
@@ -70,7 +70,10 @@ export const AIAnalysisTab: FC<AIAnalysisTabProps> = ({
       );
     }
 
-    if (activeSubTab === "insights" && hasInsightsEvaluation) {
+    if (activeSubTab === "insights" && hasInsightsRecord) {
+      // Re-evaluate is available for any prior record — completed,
+      // failed, or skipped. The dialog gates destructive overwrites of
+      // completed evals; retrying failed/skipped is cheap.
       return (
         <ReEvaluateKarmaProfileButton
           referenceNumber={referenceNumber}
@@ -79,14 +82,12 @@ export const AIAnalysisTab: FC<AIAnalysisTabProps> = ({
       );
     }
 
-    // For first-time runs (external, internal without prior eval, or
-    // insights without a completed prior). The Insights button uses
-    // isInternal=false because the AIEvaluationButton's "isInternal" flag
-    // only routes between External and Internal endpoints — Insights has
-    // its own endpoint, which is reached via the dedicated re-evaluate
-    // button. For now we hide the run button on Insights until an eval
-    // exists; admins trigger via the resubmit flow or wait for auto-fire.
     if (activeSubTab === "insights") {
+      // No prior record at all (pre-feature application, no backfill).
+      // Insights auto-fires on next submission/resubmission/edit; we
+      // intentionally don't expose a manual first-run button to keep the
+      // entry points consistent with Internal/External (which also
+      // auto-fire from the submit flow).
       return null;
     }
 

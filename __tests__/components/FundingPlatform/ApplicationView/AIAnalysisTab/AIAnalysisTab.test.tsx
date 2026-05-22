@@ -500,6 +500,57 @@ describe("AIAnalysisTab", () => {
       expect(screen.getByTestId("re-evaluate-karma-profile-btn")).toBeInTheDocument();
     });
 
+    it("shows re-evaluate button when status is failed (so admin can retry)", async () => {
+      const user = userEvent.setup();
+      const failedApp: Partial<IFundingApplication> = {
+        ...mockApplication,
+        karmaProfileEvaluation: {
+          status: "failed",
+          evaluation: "",
+          context: "",
+          contextHash: "",
+          evaluatedAt: "2026-05-22T14:30:00.000Z",
+        },
+      };
+
+      render(
+        <AIAnalysisTab
+          application={failedApp as IFundingApplication}
+          program={mockProgram as ProgramWithFormSchema}
+        />
+      );
+
+      await user.click(screen.getByText("Applications Insights"));
+
+      expect(screen.getByTestId("re-evaluate-karma-profile-btn")).toBeInTheDocument();
+    });
+
+    it("shows re-evaluate button when status is skipped (so admin can retry)", async () => {
+      const user = userEvent.setup();
+      const skippedApp: Partial<IFundingApplication> = {
+        ...mockApplication,
+        karmaProfileEvaluation: {
+          status: "skipped",
+          skipReason: "uid_empty",
+          evaluation: "",
+          context: "",
+          contextHash: "",
+          evaluatedAt: "2026-05-22T14:30:00.000Z",
+        },
+      };
+
+      render(
+        <AIAnalysisTab
+          application={skippedApp as IFundingApplication}
+          program={mockProgram as ProgramWithFormSchema}
+        />
+      );
+
+      await user.click(screen.getByText("Applications Insights"));
+
+      expect(screen.getByTestId("re-evaluate-karma-profile-btn")).toBeInTheDocument();
+    });
+
     it("passes evaluatedAt to the insights display", async () => {
       const user = userEvent.setup();
 
