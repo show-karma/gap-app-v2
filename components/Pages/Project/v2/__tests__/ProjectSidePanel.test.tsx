@@ -1,7 +1,7 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, renderHook, screen, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import type { Project } from "@/types/v2/project";
-import { DonateSection } from "../SidePanel/DonateSection";
+import { DonateSection, useDonationVisibility } from "../SidePanel/DonateSection";
 import { EndorseSection } from "../SidePanel/EndorseSection";
 import { ProjectSidePanel } from "../SidePanel/ProjectSidePanel";
 import { QuickLinksCard } from "../SidePanel/QuickLinksCard";
@@ -66,9 +66,13 @@ vi.mock("@/components/Donation/SingleProject/SingleProjectDonateModal", () => ({
     isOpen ? <div data-testid="donate-modal">Donation Modal</div> : null,
 }));
 
+// Mutable payout-address state so individual tests can flip whether the
+// "configured payout address" short-circuit applies.
+const payoutAddressMock = { hasConfigured: true };
+
 // Mock chain payout address hooks
 vi.mock("@/src/features/chain-payout-address/hooks/use-chain-payout-address", () => ({
-  hasConfiguredPayoutAddresses: vi.fn(() => true),
+  hasConfiguredPayoutAddresses: () => payoutAddressMock.hasConfigured,
   getPayoutAddressForChain: vi.fn(() => null),
   useChainPayoutAddress: vi.fn(() => ({
     data: [],
@@ -83,7 +87,7 @@ vi.mock("@/src/features/chain-payout-address/hooks/use-chain-payout-address", ()
 
 // Mock the barrel export for chain payout address feature
 vi.mock("@/src/features/chain-payout-address", () => ({
-  hasConfiguredPayoutAddresses: vi.fn(() => true),
+  hasConfiguredPayoutAddresses: () => payoutAddressMock.hasConfigured,
   getPayoutAddressForChain: vi.fn(() => null),
   useUpdateChainPayoutAddress: vi.fn(() => ({
     mutate: vi.fn(),
@@ -153,11 +157,12 @@ vi.mock("@/components/ui/button", () => ({
   ),
 }));
 
-// Mock community admin store
-vi.mock("@/store/communityAdmin", () => ({
-  useCommunityAdminStore: () => ({
-    isCommunityAdmin: false,
-  }),
+// Mutable mock for useCommunitiesStore so individual tests can flip
+// "community admin of any community" without re-mocking.
+const communitiesMock: { communities: Array<{ uid: string }> } = { communities: [] };
+
+vi.mock("@/store/communities", () => ({
+  useCommunitiesStore: () => communitiesMock,
 }));
 
 const mockProject: Project = {
@@ -185,7 +190,36 @@ const mockProjectNoLinks: Project = {
   },
 };
 
+describe("useDonationVisibility", () => {
+  beforeEach(() => {
+    payoutAddressMock.hasConfigured = false;
+    communitiesMock.communities = [];
+    mockOwnerStoreState.isOwner = false;
+    mockProjectStoreState.isProjectAdmin = false;
+    mockProjectStoreState.isProjectOwner = false;
+  });
+
+  it("hides the section for unauthorized users when payout is not configured", () => {
+    const { result } = renderHook(() => useDonationVisibility(mockProject));
+    expect(result.current).toBe(false);
+  });
+
+  // Regression: community admin of ANY community should be able to set up
+  // the payout address. Previously this branch read the per-grant flag and
+  // was always false on the project profile root.
+  it("shows the section for community admins of any community", () => {
+    communitiesMock.communities = [{ uid: "community-1" }];
+    const { result } = renderHook(() => useDonationVisibility(mockProject));
+    expect(result.current).toBe(true);
+  });
+});
+
 describe("DonateSection", () => {
+  beforeEach(() => {
+    payoutAddressMock.hasConfigured = true;
+    communitiesMock.communities = [];
+  });
+
   describe("Rendering", () => {
     it("should render donate section", () => {
       render(<DonateSection project={mockProject} />);

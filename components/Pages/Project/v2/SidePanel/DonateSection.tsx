@@ -11,7 +11,7 @@ import { usePermissionsQuery } from "@/src/core/rbac/hooks/use-permissions";
 import { Role } from "@/src/core/rbac/types";
 import { hasConfiguredPayoutAddresses } from "@/src/features/chain-payout-address";
 import { useOwnerStore, useProjectStore } from "@/store";
-import { useCommunityAdminStore } from "@/store/communityAdmin";
+import { useCommunitiesStore } from "@/store/communities";
 import type { Project } from "@/types/v2/project";
 import { cn } from "@/utilities/tailwind";
 
@@ -46,7 +46,8 @@ export function useDonationVisibility(project: Project): boolean {
   const isOwner = useOwnerStore((state) => state.isOwner);
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
-  const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin);
+  const { communities } = useCommunitiesStore();
+  const isCommunityAdminOfSome = communities.length !== 0;
   const { authenticated } = useAuth();
   const { data: permissions, isLoading: isPermissionsLoading } = usePermissionsQuery(
     {},
@@ -58,7 +59,7 @@ export function useDonationVisibility(project: Project): boolean {
     isProjectOwner ||
     isOwner ||
     isProjectAdmin ||
-    isCommunityAdmin ||
+    isCommunityAdminOfSome ||
     (!isPermissionsLoading && isSuperAdmin);
 
   const hasPayoutAddresses = hasConfiguredPayoutAddresses(project.chainPayoutAddress);
@@ -91,7 +92,8 @@ export function DonateSection({ project, className }: DonateSectionProps) {
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const refreshProject = useProjectStore((state) => state.refreshProject);
-  const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin);
+  const { communities } = useCommunitiesStore();
+  const isCommunityAdminOfSome = communities.length !== 0;
   const { authenticated } = useAuth();
   const { data: permissions, isLoading: isPermissionsLoading } = usePermissionsQuery(
     {},
@@ -104,7 +106,7 @@ export function DonateSection({ project, className }: DonateSectionProps) {
     isProjectOwner ||
     isOwner ||
     isProjectAdmin ||
-    isCommunityAdmin ||
+    isCommunityAdminOfSome ||
     (!isPermissionsLoading && isSuperAdmin);
 
   // Create project data for donation modal

@@ -25,7 +25,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useAdminCommunities } from "@/hooks/useAdminCommunities";
 import { useAuth } from "@/hooks/useAuth";
 import {
   type CommunityAdmin,
@@ -81,10 +80,7 @@ export default function CommunitiesToAdminPage() {
   }, [searchQuery]);
 
   const isOwner = useOwnerStore((state) => state.isOwner);
-  const { authenticated, address } = useAuth();
-
-  // Fetch admin communities when page loads (lazy-loaded, not on every page)
-  useAdminCommunities(address);
+  const { authenticated } = useAuth();
 
   const { data: permissions, isLoading: isPermissionsLoading } = usePermissionsQuery(
     {},

@@ -8,7 +8,6 @@ import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { useOwnerStore } from "@/store";
 import { useCommunitiesStore } from "@/store/communities";
-import { useCommunityAdminStore } from "@/store/communityAdmin";
 import type { Grant } from "@/types/v2/grant";
 import type { Project } from "@/types/v2/project";
 import formatCurrency from "@/utilities/formatCurrency";
@@ -257,15 +256,10 @@ export function FundingContent({ project, className }: FundingContentProps) {
 
   const { isProjectAdmin, isProjectOwner } = useProjectPermissions();
   const isContractOwner = useOwnerStore((state) => state.isOwner);
-  const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin);
   const { communities } = useCommunitiesStore();
   const isCommunityAdminOfSome = communities.length !== 0;
   const isAuthorized =
-    isProjectOwner ||
-    isProjectAdmin ||
-    isContractOwner ||
-    isCommunityAdmin ||
-    isCommunityAdminOfSome;
+    isProjectOwner || isProjectAdmin || isContractOwner || isCommunityAdminOfSome;
 
   // Fetch grants using dedicated hook
   const { grants, isLoading } = useProjectGrants(project.uid || "");

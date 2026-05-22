@@ -1,5 +1,4 @@
 import { create } from "zustand";
-import { createJSONStorage, persist } from "zustand/middleware";
 import type { Community } from "@/types/v2/community";
 
 type PartialCommunity = {
@@ -20,21 +19,12 @@ interface CommunitiesStore {
   setIsLoading: (isLoading: boolean) => void;
 }
 
-export const useCommunitiesStore = create(
-  persist<CommunitiesStore>(
-    (set, _get) => ({
-      communities: [],
-      setCommunities: (communities: Community[]) =>
-        set({ communities: communities.map(mapCommunity) }),
-      isLoading: false,
-      setIsLoading: (isLoading: boolean) => set({ isLoading }),
-    }),
-    {
-      name: "communities",
-      storage: createJSONStorage(() => sessionStorage),
-    }
-  )
-);
+export const useCommunitiesStore = create<CommunitiesStore>((set, _get) => ({
+  communities: [],
+  setCommunities: (communities: Community[]) => set({ communities: communities.map(mapCommunity) }),
+  isLoading: false,
+  setIsLoading: (isLoading: boolean) => set({ isLoading }),
+}));
 
 function mapCommunity(community: Community): PartialCommunity {
   return {

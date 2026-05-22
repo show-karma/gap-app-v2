@@ -1,5 +1,7 @@
 "use client";
 
+import { useAdminCommunities } from "@/hooks/useAdminCommunities";
+import { useAuth } from "@/hooks/useAuth";
 import { useContractOwner } from "@/hooks/useContractOwner";
 
 /**
@@ -11,8 +13,10 @@ import { useContractOwner } from "@/hooks/useContractOwner";
  * to a global store.
  */
 export function PermissionsProvider() {
-  // Check if user is contract owner (used for super admin access)
+  const { address } = useAuth();
+
   useContractOwner();
+  useAdminCommunities(address);
 
   return null;
 }
