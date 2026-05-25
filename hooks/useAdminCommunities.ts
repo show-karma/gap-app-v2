@@ -38,7 +38,8 @@ const fetchAdminCommunities = async (): Promise<Community[]> => {
 
 export const useAdminCommunities = (address?: string) => {
   const { authenticated: isAuth } = useAuth();
-  const { setCommunities, setIsLoading } = useCommunitiesStore();
+  const setCommunities = useCommunitiesStore((s) => s.setCommunities);
+  const setIsLoading = useCommunitiesStore((s) => s.setIsLoading);
 
   const queryResult = useQuery<Community[], Error>({
     queryKey: ["admin-communities", address],

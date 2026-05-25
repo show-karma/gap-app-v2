@@ -71,10 +71,14 @@ vi.mock("@/store", () => ({
   },
 }));
 
-const communitiesMock = { communities: [] as Array<{ uid: string }> };
+const communitiesMock: { communities: Array<{ uid: string }>; isLoading: boolean } = {
+  communities: [],
+  isLoading: false,
+};
 
 vi.mock("@/store/communities", () => ({
-  useCommunitiesStore: () => communitiesMock,
+  useCommunitiesStore: (selector?: (state: typeof communitiesMock) => unknown) =>
+    typeof selector === "function" ? selector(communitiesMock) : communitiesMock,
 }));
 
 describe("FundingContent", () => {

@@ -158,11 +158,17 @@ vi.mock("@/components/ui/button", () => ({
 }));
 
 // Mutable mock for useCommunitiesStore so individual tests can flip
-// "community admin of any community" without re-mocking.
-const communitiesMock: { communities: Array<{ uid: string }> } = { communities: [] };
+// "community admin of any community" without re-mocking. Honors the Zustand
+// selector calling convention (useStore((s) => s.field)) since consumers
+// converted to atomic selectors for v5 reference-equality stability.
+const communitiesMock: { communities: Array<{ uid: string }>; isLoading: boolean } = {
+  communities: [],
+  isLoading: false,
+};
 
 vi.mock("@/store/communities", () => ({
-  useCommunitiesStore: () => communitiesMock,
+  useCommunitiesStore: (selector?: (state: typeof communitiesMock) => unknown) =>
+    typeof selector === "function" ? selector(communitiesMock) : communitiesMock,
 }));
 
 const mockProject: Project = {

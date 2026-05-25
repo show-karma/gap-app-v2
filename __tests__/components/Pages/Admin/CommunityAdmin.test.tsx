@@ -89,10 +89,14 @@ describe("CommunityAdmin", () => {
       isLoading: false,
     });
 
-    mockUseCommunitiesStore.mockReturnValue({
-      communities: [],
-      isLoading: false,
-    });
+    // Honor the Zustand selector calling convention since CommunityAdmin
+    // converted to atomic selectors (v5 reference-equality stability).
+    mockUseCommunitiesStore.mockImplementation(
+      (selector?: (state: { communities: unknown[]; isLoading: boolean }) => unknown) => {
+        const state = { communities: [], isLoading: false };
+        return typeof selector === "function" ? selector(state) : state;
+      }
+    );
 
     mockUseOwnerStore.mockImplementation((selector: (state: { isOwner: boolean }) => unknown) =>
       selector({ isOwner: false })

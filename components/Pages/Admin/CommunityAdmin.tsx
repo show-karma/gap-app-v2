@@ -88,8 +88,8 @@ export default function CommunitiesToAdminPage() {
     { enabled: authenticated }
   );
   const isSuperAdmin = permissions?.roles?.roles?.includes(Role.SUPER_ADMIN) ?? false;
-  const { communities: userAdminCommunities, isLoading: isLoadingUserCommunities } =
-    useCommunitiesStore();
+  const userAdminCommunities = useCommunitiesStore((s) => s.communities);
+  const isLoadingUserCommunities = useCommunitiesStore((s) => s.isLoading);
 
   const isSuperAdminOrOwner = isOwner || isSuperAdmin;
   const hasAdminCommunities = userAdminCommunities.length > 0;

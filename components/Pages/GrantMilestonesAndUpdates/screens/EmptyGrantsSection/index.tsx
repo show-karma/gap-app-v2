@@ -16,7 +16,7 @@ export const EmptyGrantsSection: FC = () => {
   const isOwner = useOwnerStore((state) => state.isOwner);
   const project = useProjectStore((state) => state.project);
   const isCommunityAdmin = useIsCommunityAdmin();
-  const { communities } = useCommunitiesStore();
+  const communities = useCommunitiesStore((s) => s.communities);
   const isCommunityAdminOfSome = communities.length !== 0;
   const isAuthorized = isProjectAdmin || isOwner || isCommunityAdmin || isCommunityAdminOfSome;
   const router = useRouter();

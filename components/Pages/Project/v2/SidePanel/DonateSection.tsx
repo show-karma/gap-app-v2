@@ -46,7 +46,7 @@ export function useDonationVisibility(project: Project): boolean {
   const isOwner = useOwnerStore((state) => state.isOwner);
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
-  const { communities } = useCommunitiesStore();
+  const communities = useCommunitiesStore((s) => s.communities);
   const isCommunityAdminOfSome = communities.length !== 0;
   const { authenticated } = useAuth();
   const { data: permissions, isLoading: isPermissionsLoading } = usePermissionsQuery(
@@ -92,7 +92,7 @@ export function DonateSection({ project, className }: DonateSectionProps) {
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const refreshProject = useProjectStore((state) => state.refreshProject);
-  const { communities } = useCommunitiesStore();
+  const communities = useCommunitiesStore((s) => s.communities);
   const isCommunityAdminOfSome = communities.length !== 0;
   const { authenticated } = useAuth();
   const { data: permissions, isLoading: isPermissionsLoading } = usePermissionsQuery(

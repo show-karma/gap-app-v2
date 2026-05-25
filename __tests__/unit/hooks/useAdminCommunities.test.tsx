@@ -32,12 +32,18 @@ vi.mock("@/hooks/useAuth", () => ({
 const mockSetCommunities = vi.fn();
 const mockSetIsLoading = vi.fn();
 
+// Honor the Zustand selector calling convention since useAdminCommunities
+// converted to atomic selectors (v5 reference-equality stability).
 vi.mock("@/store/communities", () => ({
-  useCommunitiesStore: vi.fn(() => ({
-    setCommunities: mockSetCommunities,
-    setIsLoading: mockSetIsLoading,
-    communities: [],
-  })),
+  useCommunitiesStore: vi.fn((selector?: (state: unknown) => unknown) => {
+    const state = {
+      setCommunities: mockSetCommunities,
+      setIsLoading: mockSetIsLoading,
+      communities: [],
+      isLoading: false,
+    };
+    return typeof selector === "function" ? selector(state) : state;
+  }),
 }));
 
 import { errorManager } from "@/components/Utilities/errorManager";

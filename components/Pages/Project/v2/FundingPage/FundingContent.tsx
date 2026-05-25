@@ -256,7 +256,7 @@ export function FundingContent({ project, className }: FundingContentProps) {
 
   const { isProjectAdmin, isProjectOwner } = useProjectPermissions();
   const isContractOwner = useOwnerStore((state) => state.isOwner);
-  const { communities } = useCommunitiesStore();
+  const communities = useCommunitiesStore((s) => s.communities);
   const isCommunityAdminOfSome = communities.length !== 0;
   const isAuthorized =
     isProjectOwner || isProjectAdmin || isContractOwner || isCommunityAdminOfSome;
