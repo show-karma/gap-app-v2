@@ -1,0 +1,31 @@
+/**
+ * Route-scoped styles for the non-profits detail pages.
+ *
+ * Only adds the `.animate-entrance` keyframe used by the detail page layout
+ * components. Import this file at the top of each detail client component
+ * (foundation-detail.tsx, nonprofit-detail.tsx, grant-detail.tsx).
+ *
+ * This file intentionally does NOT touch globals.css. The animation is scoped
+ * to the non-profits feature area.
+ */
+
+@keyframes entrance-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-entrance {
+  animation: entrance-fade-in 0.45s cubic-bezier(0.25, 0.1, 0.25, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-entrance {
+    animation: none;
+  }
+}

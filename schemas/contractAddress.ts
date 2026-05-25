@@ -57,7 +57,7 @@ export const validateContractAddress = (
     if (error instanceof z.ZodError) {
       return {
         isValid: false,
-        error: error.errors[0]?.message || "Invalid address",
+        error: error.issues[0]?.message || "Invalid address",
       };
     }
     return { isValid: false, error: "Invalid address" };
@@ -83,7 +83,7 @@ export const validateNetworkAddressPair = (
   } catch (error) {
     if (error instanceof z.ZodError) {
       const errors: { network?: string; address?: string } = {};
-      error.errors.forEach((err) => {
+      error.issues.forEach((err) => {
         const field = err.path[0] as "network" | "address";
         if (field) {
           errors[field] = err.message;

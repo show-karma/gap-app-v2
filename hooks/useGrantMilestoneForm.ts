@@ -35,7 +35,7 @@ export function useGrantMilestoneForm({
   destinationPath,
 }: UseGrantMilestoneFormProps = {}) {
   const { address, chain } = useAccount();
-  const { project } = useProjectStore();
+  const project = useProjectStore((state) => state.project);
   const projectIdOrSlug = project?.details?.slug || project?.uid || "";
   const { switchChainAsync } = useWallet();
   const { setupChainAndWallet, smartWalletAddress } = useSetupChainAndWallet();

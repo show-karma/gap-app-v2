@@ -23,7 +23,8 @@ export function ManageLayoutShell({ children }: { children: React.ReactNode }) {
     isRegistryAdmin,
     isLoading: permissionsLoading,
   } = usePermissionContext();
-  const { isOwner, isOwnerLoading } = useOwnerStore();
+  const isOwner = useOwnerStore((state) => state.isOwner);
+  const isOwnerLoading = useOwnerStore((state) => state.isOwnerLoading);
 
   // Expose Zustand store setters for E2E tests.
   // Set during render (not useEffect) to ensure availability immediately.

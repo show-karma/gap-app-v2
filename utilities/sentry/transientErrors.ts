@@ -29,6 +29,15 @@ const TRANSIENT_AXIOS_CODES = new Set([
 
 const ABORT_CODES = new Set(["ERR_CANCELED", "ABORT_ERR"]);
 
+// Upstream HTTP statuses that mean "the indexer/gateway was momentarily
+// unreachable", not "the frontend code is broken". A 504 (gateway timeout)
+// from the indexer during SSR surfaces as a minified `Request failed with
+// status code 504` server crash with no actionable first-party frame — the
+// only fix is on the infra/indexer side, so it's noise in the frontend
+// Sentry project. 502/503/408 share the same transient, retriable shape.
+// See DEV-271 / GAP-FRONTEND-1R1.
+const TRANSIENT_HTTP_STATUS = new Set([408, 502, 503, 504]);
+
 function getErrorMessage(error: unknown): string {
   if (!error) return "";
   if (typeof error === "string") return error;
@@ -54,6 +63,18 @@ function hasHttpResponse(error: unknown): boolean {
     "response" in error &&
     !!(error as { response?: unknown }).response
   );
+}
+
+// Pulls an HTTP status code off the various error shapes that reach Sentry:
+// an axios error (`error.response.status`), the `[null, error, null, status]`
+// tuple-style object some callers attach (`error.status`), or nothing.
+function getHttpStatus(error: unknown): number | undefined {
+  if (!error || typeof error !== "object") return undefined;
+  const response = (error as { response?: { status?: unknown } }).response;
+  if (response && typeof response.status === "number") return response.status;
+  const status = (error as { status?: unknown }).status;
+  if (typeof status === "number") return status;
+  return undefined;
 }
 
 /**
@@ -83,4 +104,29 @@ export function isTransientNetworkError(error: unknown): boolean {
 
   const message = getErrorMessage(error).toLowerCase();
   return TRANSIENT_MESSAGE_FRAGMENTS.some((fragment) => message.includes(fragment));
+}
+
+/**
+ * True when the error is a transient upstream HTTP failure (gateway timeout
+ * / bad gateway / service unavailable / request timeout). Unlike
+ * `isTransientNetworkError`, these DO carry an HTTP response, so they need
+ * their own predicate. Used to keep the frontend Sentry project clean of
+ * indexer outages that crash SSR — the page still throws to its `error.tsx`
+ * retry boundary, we just don't page on the unactionable minified event.
+ * See DEV-271 / GAP-FRONTEND-1R1.
+ */
+export function isTransientHttpError(error: unknown): boolean {
+  if (!error) return false;
+
+  const status = getHttpStatus(error);
+  if (status !== undefined && TRANSIENT_HTTP_STATUS.has(status)) return true;
+
+  // SSR fetch failures bubble up as a re-thrown `Error` whose message is the
+  // axios default ("Request failed with status code 504") with no `response`
+  // attached — match the status off the message in that case.
+  const message = getErrorMessage(error).toLowerCase();
+  for (const code of TRANSIENT_HTTP_STATUS) {
+    if (message.includes(`status code ${code}`)) return true;
+  }
+  return false;
 }

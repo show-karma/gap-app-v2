@@ -453,4 +453,135 @@ describe("CommunityDialog", () => {
       expect(freshInput.value).toBe("");
     });
   });
+
+  // ---------------------------------------------------------------------------
+  // Client-side validation failures.
+  //
+  // Regression coverage for Sentry GAP-FRONTEND-222: the zodResolver used to
+  // re-throw the ZodError as an unhandled promise rejection instead of
+  // surfacing field errors. When that happens, the error text never renders and
+  // the create API call is never reached. These tests run the REAL resolver
+  // (react-hook-form / @hookform/resolvers are intentionally NOT mocked) and
+  // assert on the rendered error text + that no API/success path runs. The
+  // global setup also fails any test that produces an unhandled rejection.
+  // ---------------------------------------------------------------------------
+  describe("Validation failures", () => {
+    // Clear a field, then type a value only when a non-empty one is provided.
+    const fillField = async (
+      user: ReturnType<typeof userEvent.setup>,
+      element: HTMLElement,
+      value: string | undefined
+    ) => {
+      if (value === undefined) return;
+      await user.clear(element);
+      if (value) await user.type(element, value);
+    };
+
+    // Helper: open the dialog and submit, optionally filling fields first.
+    const openAndSubmit = async (
+      user: ReturnType<typeof userEvent.setup>,
+      fields: Partial<{ name: string; imageURL: string; slug: string }> = {}
+    ) => {
+      render(<CommunityDialog refreshCommunities={mockRefreshCommunities} />);
+      await user.click(screen.getByText("New Community"));
+
+      await fillField(
+        user,
+        screen.getByPlaceholderText('e.g. "My awesome Community"'),
+        fields.name
+      );
+      await fillField(
+        user,
+        screen.getByPlaceholderText('e.g. "https://example.com/image.jpg"'),
+        fields.imageURL
+      );
+      await fillField(user, screen.getByPlaceholderText('e.g. "grant-portal"'), fields.slug);
+
+      await user.click(screen.getByText("Create Community"));
+    };
+
+    it("should surface the name validation error and not call the API when name is empty", async () => {
+      const user = userEvent.setup();
+      // All other fields valid; only name is left empty (Sentry 222 scenario).
+      await openAndSubmit(user, {
+        name: "",
+        imageURL: "https://img.com/a.png",
+        slug: "test-slug",
+      });
+
+      // name's min(3) message renders (mocked MESSAGES.COMMUNITY_FORM.TITLE.MIN).
+      expect(await screen.findByText("Too short")).toBeInTheDocument();
+
+      // Validation blocked submission: no create POST, no success toast.
+      expect(mockFetchData).not.toHaveBeenCalledWith(
+        "/v2/communities",
+        "POST",
+        expect.anything(),
+        expect.anything(),
+        expect.anything(),
+        expect.anything()
+      );
+      expect(mockToastSuccess).not.toHaveBeenCalled();
+    });
+
+    it("should surface the slug validation error and not call the API when slug is empty", async () => {
+      const user = userEvent.setup();
+      await openAndSubmit(user, {
+        name: "Test Community",
+        imageURL: "https://img.com/a.png",
+        slug: "",
+      });
+
+      // slug's min(3) message renders (mocked MESSAGES.COMMUNITY_FORM.SLUG).
+      expect(await screen.findByText("Slug required")).toBeInTheDocument();
+
+      expect(mockFetchData).not.toHaveBeenCalledWith(
+        "/v2/communities",
+        "POST",
+        expect.anything(),
+        expect.anything(),
+        expect.anything(),
+        expect.anything()
+      );
+      expect(mockToastSuccess).not.toHaveBeenCalled();
+    });
+
+    it("should surface the imageURL validation error and not call the API when imageURL is empty", async () => {
+      const user = userEvent.setup();
+      await openAndSubmit(user, {
+        name: "Test Community",
+        imageURL: "",
+        slug: "test-slug",
+      });
+
+      // imageURL's min(1) message renders (mocked MESSAGES.COMMUNITY_FORM.IMAGE_URL).
+      expect(await screen.findByText("Image URL required")).toBeInTheDocument();
+
+      expect(mockFetchData).not.toHaveBeenCalledWith(
+        "/v2/communities",
+        "POST",
+        expect.anything(),
+        expect.anything(),
+        expect.anything(),
+        expect.anything()
+      );
+      expect(mockToastSuccess).not.toHaveBeenCalled();
+    });
+
+    it("should surface all field errors and make no fetch call when submitting an empty form", async () => {
+      const user = userEvent.setup();
+      // Open and submit immediately — every field is empty by default.
+      await openAndSubmit(user);
+
+      expect(await screen.findByText("Too short")).toBeInTheDocument();
+      expect(screen.getByText("Image URL required")).toBeInTheDocument();
+      expect(screen.getByText("Slug required")).toBeInTheDocument();
+
+      // Nothing reached the network layer at all.
+      expect(mockFetchData).not.toHaveBeenCalled();
+      expect(mockToastSuccess).not.toHaveBeenCalled();
+      // Dialog stays open so the user can correct the form.
+      expect(screen.getByTestId("dialog")).toBeInTheDocument();
+    });
+  });
 });

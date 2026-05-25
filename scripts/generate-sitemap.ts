@@ -187,15 +187,6 @@ function buildIndexXml(kindConfigs: KindConfig[]): string {
   return buildSitemapIndex(entries);
 }
 
-function buildKindIndexXml(config: KindConfig): string {
-  const chunkCount = computeChunkCount(config.total);
-  const locs: string[] = [];
-  for (let i = 1; i <= chunkCount; i++) {
-    locs.push(`${SITE_URL}/sitemaps/${config.path}/sitemap/${i}.xml`);
-  }
-  return buildSitemapIndex(locs);
-}
-
 function buildUrlsetXml(urls: string[], priority: number, changeFrequency: string): string {
   const now = formatLastmod(new Date());
   const items = urls
@@ -318,31 +309,19 @@ async function main() {
   ];
 
   const indexXml = buildIndexXml(kindConfigs);
-  const indexPath = path.join(PROJECT_ROOT, "public", "sitemap.xml");
-  fs.mkdirSync(path.dirname(indexPath), { recursive: true });
+  const publicDir = path.join(PROJECT_ROOT, "public");
+  const indexPath = path.join(publicDir, "sitemap.xml");
+  fs.mkdirSync(publicDir, { recursive: true });
   fs.writeFileSync(indexPath, indexXml, "utf-8");
 
   const indexEntryCount = (indexXml.match(/<sitemap>/g) ?? []).length;
   logInfo(`[sitemap-gen] Wrote ${indexPath} (${indexEntryCount} entries)`);
 
-  for (const config of kindConfigs) {
-    const kindIndexXml = buildKindIndexXml(config);
-    const kindIndexPath = path.join(PROJECT_ROOT, "public", `sitemap-${config.path}.xml`);
-    fs.writeFileSync(kindIndexPath, kindIndexXml, "utf-8");
-    const kindEntries = (kindIndexXml.match(/<sitemap>/g) ?? []).length;
-    logInfo(`[sitemap-gen] Wrote ${kindIndexPath} (${kindEntries} entries)`);
-  }
-
-  const singletonIndexes: Array<{ name: string; loc: string }> = [
-    { name: "sitemap-static.xml", loc: `${SITE_URL}/sitemaps/static/sitemap.xml` },
-    { name: "sitemap-communities.xml", loc: `${SITE_URL}/sitemaps/communities/sitemap.xml` },
-  ];
-  for (const { name, loc } of singletonIndexes) {
-    const xml = buildSitemapIndex([loc]);
-    const outPath = path.join(PROJECT_ROOT, "public", name);
-    fs.writeFileSync(outPath, xml, "utf-8");
-    logInfo(`[sitemap-gen] Wrote ${outPath} (1 entries)`);
-  }
+  // Alias served at a distinct URL so GSC's per-URL fetch-state machine treats it as
+  // a fresh submission, independent of any stuck backoff on /sitemap.xml.
+  const aliasPath = path.join(publicDir, "sitemap-index.xml");
+  fs.writeFileSync(aliasPath, indexXml, "utf-8");
+  logInfo(`[sitemap-gen] Wrote ${aliasPath} (${indexEntryCount} entries)`);
 
   await writeChildSitemaps(baseUrl, kindConfigs);
 }

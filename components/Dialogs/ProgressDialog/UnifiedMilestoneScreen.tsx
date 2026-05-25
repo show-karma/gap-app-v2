@@ -1,5 +1,4 @@
 "use client";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { Milestone } from "@show-karma/karma-gap-sdk";
 import { GapContract } from "@show-karma/karma-gap-sdk/core/class/contract/GapContract";
 import { ProjectMilestone } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectMilestone";
@@ -28,6 +27,7 @@ import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { PAGES } from "@/utilities/pages";
 import { sanitizeInput, sanitizeObject } from "@/utilities/sanitize";
+import { zodResolver } from "@/utilities/zodResolver";
 import { MultiSelect } from "../../../components/Utilities/MultiSelect";
 
 // Helper function to wait for a specified time
@@ -48,7 +48,7 @@ const milestoneSchema = z.object({
   dates: z
     .object({
       endsAt: z.date({
-        required_error: "End date is required",
+        error: "End date is required",
       }),
       startsAt: z.date().optional(),
     })
@@ -71,7 +71,7 @@ const milestoneSchema = z.object({
 type MilestoneFormData = z.infer<typeof milestoneSchema>;
 
 export const UnifiedMilestoneScreen = () => {
-  const { project } = useProjectStore();
+  const project = useProjectStore((state) => state.project);
   const { closeProgressModal, preSelectedGrantId, setPreSelectedGrantId } = useProgressModalStore();
   const [selectedGrantIds, setSelectedGrantIds] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);

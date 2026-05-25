@@ -21,8 +21,8 @@ interface ProjectWrapperProps {
 }
 
 export const ProjectWrapper = ({ projectId }: ProjectWrapperProps) => {
-  const { isProjectAdmin } = useProjectStore();
-  const { isProjectOwner } = useProjectStore();
+  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
+  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
 
   const isOwner = useOwnerStore((state: any) => state.isOwner);
 

@@ -12,7 +12,7 @@ import { useProgressModalStore } from "@/store/modals/progress";
 import { MESSAGES } from "@/utilities/messages";
 
 export const UpdatesPage: FC = () => {
-  const { project } = useProjectStore();
+  const project = useProjectStore((state) => state.project);
 
   const isOwner = useOwnerStore((state) => state.isOwner);
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);

@@ -4,7 +4,7 @@
 
 import * as Sentry from "@sentry/nextjs";
 import { sentryIgnoreErrors } from "./utilities/sentry/ignoreErrors";
-import { isTransientNetworkError } from "./utilities/sentry/transientErrors";
+import { isTransientHttpError, isTransientNetworkError } from "./utilities/sentry/transientErrors";
 
 Sentry.init({
   enabled: process.env.NEXT_PUBLIC_VERCEL_ENV === "production",
@@ -13,9 +13,12 @@ Sentry.init({
   integrations: [],
   // Defence in depth for transient Axios "Network Error" events that
   // bubble through code paths bypassing `errorManager` (raw React errors,
-  // third-party SDK fetches). See DEV-236 / GAP-FRONTEND-13P.
+  // third-party SDK fetches). See DEV-236 / GAP-FRONTEND-13P. Transient
+  // upstream gateway timeouts (504 etc.) get the same treatment — see
+  // DEV-271 / GAP-FRONTEND-1R1.
   beforeSend(event, hint) {
-    if (isTransientNetworkError(hint?.originalException)) {
+    const original = hint?.originalException;
+    if (isTransientNetworkError(original) || isTransientHttpError(original)) {
       return null;
     }
     return event;

@@ -6,7 +6,7 @@ import type { Project as ProjectResponse } from "@/types/v2/project";
 import { linkName, mapLinks } from "./utils/links";
 
 export const GroupedLinks = ({ proofs }: { proofs: string[] }) => {
-  const { project } = useProjectStore();
+  const project = useProjectStore((state) => state.project);
   const links = mapLinks(proofs, (project as ProjectResponse)?.external?.network_addresses);
   const [openDropdowns, setOpenDropdowns] = useState<Record<string, boolean>>({});
   const dropdownRefs = useRef<Record<string, HTMLDivElement | null>>({});

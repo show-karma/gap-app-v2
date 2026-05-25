@@ -30,7 +30,7 @@ export const DeleteMemberDialog: FC<DeleteMemberDialogProps> = ({ memberAddress 
   const [isOpen, setIsOpen] = useState(false);
   const { gap } = useGap();
   const { address, chain } = useAccount();
-  const { project } = useProjectStore();
+  const project = useProjectStore((state) => state.project);
   const { startAttestation, showSuccess, showError, changeStepperStep, setIsStepper } =
     useAttestationToast();
   const { switchChainAsync } = useWallet();

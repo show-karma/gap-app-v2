@@ -26,10 +26,10 @@ import { sanitizeObject } from "@/utilities/sanitize";
 
 const updateSchema = z.object({
   startedAt: z.date({
-    required_error: MESSAGES.PROJECT.IMPACT.FORM.DATE,
+    error: MESSAGES.PROJECT.IMPACT.FORM.DATE,
   }),
   completedAt: z.date({
-    required_error: MESSAGES.PROJECT.IMPACT.FORM.DATE,
+    error: MESSAGES.PROJECT.IMPACT.FORM.DATE,
   }),
 });
 

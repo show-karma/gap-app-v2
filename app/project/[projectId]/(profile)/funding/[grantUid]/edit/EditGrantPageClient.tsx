@@ -18,6 +18,6 @@ const NewGrant = dynamic(
  * Client-side edit grant form.
  */
 export function EditGrantPageClient() {
-  const { grant } = useGrantStore();
+  const grant = useGrantStore((state) => state.grant);
   return <NewGrant grantToEdit={grant} />;
 }

@@ -91,7 +91,6 @@ export const ContributorProfileDialog: FC = () => {
   const { smartWalletAddress, setupChainAndWallet } = useSetupChainAndWallet();
   const {
     register,
-    setValue,
     handleSubmit,
     reset,
     formState: { errors, isValid },
@@ -99,6 +98,14 @@ export const ContributorProfileDialog: FC = () => {
     resolver: zodResolver(profileSchema),
     reValidateMode: "onChange",
     mode: "onChange",
+    defaultValues: {
+      name: "",
+      aboutMe: "",
+      github: "",
+      twitter: "",
+      linkedin: "",
+      farcaster: "",
+    },
   });
   const [isLoading, setIsLoading] = useState(false);
   const { startAttestation, showLoading, showSuccess, showError, dismiss, changeStepperStep } =
@@ -253,31 +260,25 @@ export const ContributorProfileDialog: FC = () => {
     }
   };
 
-  // Update form values when profile data is loaded
+  // Populate form values when profile data loads. Use reset() to set everything
+  // in a single batch WITHOUT validating a partially-filled state. The previous
+  // per-field setValue(..., { shouldValidate: true }) calls validated the whole
+  // form while `name` was still empty, surfacing a "name: expected string,
+  // received undefined" error (Sentry GAP-FRONTEND-222/225).
   useEffect(() => {
     if (profile?.data) {
-      setValue("aboutMe", profile.data.aboutMe, {
-        shouldValidate: true,
-      });
-      setValue("github", profile.data.github, {
-        shouldValidate: true,
-      });
-      setValue("linkedin", profile.data.linkedin, {
-        shouldValidate: true,
-      });
-      setValue("twitter", profile.data.twitter, {
-        shouldValidate: true,
-      });
-      setValue("name", profile.data.name || "", {
-        shouldValidate: !!profile.data.name,
-      });
-      setValue("farcaster", profile.data.farcaster, {
-        shouldValidate: !!profile.data.farcaster,
+      reset({
+        name: profile.data.name || "",
+        aboutMe: profile.data.aboutMe || "",
+        github: profile.data.github || "",
+        twitter: profile.data.twitter || "",
+        linkedin: profile.data.linkedin || "",
+        farcaster: profile.data.farcaster || "",
       });
     } else {
       reset();
     }
-  }, [profile, setValue, reset]);
+  }, [profile, reset]);
 
   return (
     <Transition appear show={isOpen} as={Fragment}>

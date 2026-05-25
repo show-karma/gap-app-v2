@@ -42,8 +42,9 @@ export const ObjectiveSimpleOptionsMenu = ({ objectiveId }: ObjectiveSimpleOptio
   const { gap } = useGap();
   const { startAttestation, showSuccess, showError, changeStepperStep, setIsStepper } =
     useAttestationToast();
-  const { project, isProjectOwner } = useProjectStore();
-  const { isOwner: isContractOwner } = useOwnerStore();
+  const project = useProjectStore((state) => state.project);
+  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
+  const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isOnChainAuthorized = isProjectOwner || isContractOwner;
   const { performOffChainRevoke } = useOffChainRevoke();
   const { setupChainAndWallet } = useSetupChainAndWallet();

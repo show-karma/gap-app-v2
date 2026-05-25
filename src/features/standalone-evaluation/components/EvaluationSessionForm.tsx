@@ -23,7 +23,11 @@ const textareaClass =
   "mt-1 w-full min-h-[140px] rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-brand-500 disabled:cursor-not-allowed disabled:opacity-60";
 
 export function EvaluationSessionForm({ onCancel }: EvaluationSessionFormProps) {
-  const draft = useEvaluationDraftStore((s) => s.draft);
+  // Select individual primitives to avoid returning a new object reference on
+  // every render (Zustand v5 uses strict reference equality for selectors).
+  const draftProgramDescription = useEvaluationDraftStore((s) => s.draft.programDescription);
+  const draftEvaluationCriteria = useEvaluationDraftStore((s) => s.draft.evaluationCriteria);
+  const draftEvaluationStyle = useEvaluationDraftStore((s) => s.draft.evaluationStyle);
   const setDraft = useEvaluationDraftStore((s) => s.setDraft);
 
   const createSession = useCreateSession();
@@ -39,21 +43,25 @@ export function EvaluationSessionForm({ onCancel }: EvaluationSessionFormProps) 
     resolver: zodResolver(sessionCreateSchema),
     mode: "onChange",
     defaultValues: {
-      programDescription: draft.programDescription,
-      evaluationCriteria: draft.evaluationCriteria,
-      evaluationStyle: draft.evaluationStyle,
+      programDescription: draftProgramDescription,
+      evaluationCriteria: draftEvaluationCriteria,
+      evaluationStyle: draftEvaluationStyle,
     },
   });
 
   // Persist form values back into the draft store when they change so
   // refreshing/abandoning the page doesn't lose progress.
+  // Watch individual fields — not via `watch()` as a whole — to avoid
+  // re-subscribing on every render cycle.
   const programDescription = watch("programDescription");
   const evaluationCriteria = watch("evaluationCriteria");
   const evaluationStyle = watch("evaluationStyle");
 
   useEffect(() => {
     setDraft({ programDescription, evaluationCriteria, evaluationStyle });
-  }, [programDescription, evaluationCriteria, evaluationStyle, setDraft]);
+    // setDraft is a stable store action reference; it does not change between renders.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [programDescription, evaluationCriteria, evaluationStyle]);
 
   const isSubmitting = createSession.isPending;
 

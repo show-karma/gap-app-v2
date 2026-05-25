@@ -80,38 +80,21 @@ export const projectSchema = z.object({
     .min(3, { message: MESSAGES.PROJECT_FORM.TITLE.MIN })
     .max(50, { message: MESSAGES.PROJECT_FORM.TITLE.MAX }),
   chainID: z.number({
-    required_error: "Network is required",
-    message: "Network is required",
+    error: "Network is required",
   }),
   locationOfImpact: z.string().optional(),
-  description: z
-    .string({
-      required_error: "Description is required",
-    })
-    .min(1, {
-      message: "Description is required",
-    }),
-  problem: z
-    .string({
-      required_error: "Problem is required",
-    })
-    .min(1, {
-      message: "Problem is required",
-    }),
-  solution: z
-    .string({
-      required_error: "Solution is required",
-    })
-    .min(1, {
-      message: "Solution is required",
-    }),
-  missionSummary: z
-    .string({
-      required_error: "Mission Summary is required",
-    })
-    .min(1, {
-      message: "Mission Summary is required",
-    }),
+  description: z.string().min(1, {
+    message: "Description is required",
+  }),
+  problem: z.string().min(1, {
+    message: "Problem is required",
+  }),
+  solution: z.string().min(1, {
+    message: "Solution is required",
+  }),
+  missionSummary: z.string().min(1, {
+    message: "Mission Summary is required",
+  }),
   recipient: z
     .string()
     .optional()

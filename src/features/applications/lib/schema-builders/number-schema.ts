@@ -3,7 +3,7 @@ import type { ApplicationQuestion } from "@/types/whitelabel-entities";
 
 export function buildNumberSchema(q: ApplicationQuestion) {
   if (q.required) {
-    let fieldSchema: z.ZodTypeAny = z
+    let fieldSchema: z.ZodType = z
       .union([z.number(), z.undefined(), z.null()])
       .refine((val) => val !== undefined && val !== null, {
         message: "This field is required",

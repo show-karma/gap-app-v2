@@ -1,7 +1,6 @@
 "use client";
 
 import { PencilSquareIcon } from "@heroicons/react/24/outline";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useCallback, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
@@ -18,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import type { MilestoneEditData } from "@/hooks/useMilestoneEdit";
 import { useMilestoneEdit } from "@/hooks/useMilestoneEdit";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
+import { zodResolver } from "@/utilities/zodResolver";
 
 const editMilestoneSchema = z.object({
   title: z
@@ -29,10 +29,10 @@ const editMilestoneSchema = z.object({
   description: z.string().max(5000, "Description must be less than 5000 characters").optional(),
   startsAt: z.string().optional(),
   endsAt: z.string().optional(),
-  priority: z.preprocess(
-    (v) => (v === "" ? undefined : v),
-    z.coerce.number().min(0).max(10).optional()
-  ),
+  priority: z
+    .union([z.literal(""), z.coerce.number().min(0).max(10)])
+    .transform((v) => (v === "" ? undefined : v))
+    .optional(),
 });
 
 type EditMilestoneFormData = z.infer<typeof editMilestoneSchema>;
