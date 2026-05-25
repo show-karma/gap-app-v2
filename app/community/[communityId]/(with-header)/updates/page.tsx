@@ -6,9 +6,8 @@ import { useQueryState } from "nuqs";
 import pluralize from "pluralize";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { SearchWithValueDropdown } from "@/components/Pages/Communities/Impact/SearchWithValueDropdown";
-import { CommunityMilestoneCard } from "@/components/Pages/Community/Updates/CommunityMilestoneCard";
-import { SimplePagination } from "@/components/Pages/Community/Updates/SimplePagination";
-import { Spinner } from "@/components/Utilities/Spinner";
+import { UpdatesContent } from "@/components/Pages/Community/Updates/UpdatesContent";
+import { UpdatesViewToggle } from "@/components/Pages/Community/Updates/UpdatesViewToggle";
 import {
   Select,
   SelectContent,
@@ -19,6 +18,7 @@ import {
 import { useCommunityMilestoneAllocations } from "@/hooks/useCommunityMilestoneAllocations";
 import { useCommunityProjects } from "@/hooks/useCommunityProjects";
 import { useCommunityProjectUpdates } from "@/hooks/useCommunityProjectUpdates";
+import { useCommunityUpdatesView } from "@/hooks/useCommunityUpdatesView";
 import { useCommunityPrograms } from "@/hooks/usePrograms";
 import { findProjectOptionBySlugOrUid, projectsToOptions } from "@/utilities/project-lookup";
 import { sortCommunityMilestones } from "@/utilities/sorting/communityMilestoneSort";
@@ -33,6 +33,16 @@ const filterOptions: { value: FilterOption; label: string }[] = [
   { value: "completed", label: "Completed" },
   { value: "past_due", label: "Past Due" },
 ];
+
+const getEmptyStateMessage = (filter: FilterOption): string => {
+  if (filter === "all") {
+    return "No milestones have been created by any projects in this community yet.";
+  }
+  if (filter === "past_due") {
+    return "No past due milestones found.";
+  }
+  return `No ${filter} milestones found.`;
+};
 
 export default function CommunityUpdatesPage() {
   const { communityId } = useParams<{ communityId: string }>();
@@ -68,6 +78,9 @@ export default function CommunityUpdatesPage() {
       parse: (value) => value || null,
     }
   );
+
+  // View (cards | table) + server-sort state, persisted in the URL
+  const { view, isTableView, setView, sortBy, sortOrder, handleSort } = useCommunityUpdatesView();
 
   // Fetch programs for the community
   const { data: programsData, isLoading: programsLoading } = useCommunityPrograms(
@@ -105,29 +118,36 @@ export default function CommunityUpdatesPage() {
     }
   }, [selectedProgramId, changeSelectedProjectIdQuery]);
 
-  // Reset pagination when program or project filters change
+  // Reset pagination when program, project, or sort changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [selectedProgramId, selectedProjectId]);
+  }, [selectedProgramId, selectedProjectId, sortBy, sortOrder]);
 
-  // Fetch community updates from API using custom hook
+  // Fetch community updates from API using custom hook.
+  // Sort params are sent only in table view; cards view keeps existing behavior.
   const { data, isLoading, error } = useCommunityProjectUpdates(communityId, {
     page: currentPage,
     limit: ITEMS_PER_PAGE,
     status: selectedFilter,
     programId: selectedProgramId,
     projectId: selectedProjectId,
+    sortBy: isTableView && sortBy ? sortBy : undefined,
+    sortOrder: isTableView && sortBy ? sortOrder : undefined,
   });
 
-  // Memoize sorted data
-  // Backend handles all filtering including status, programId, and projectId
-  const sortedRawData = useMemo(() => {
+  // Cards view: apply the existing client-side sort.
+  // Table view: render the server order untouched.
+  const cardsData = useMemo(() => {
     if (!data?.payload) return [];
     return sortCommunityMilestones([...data.payload], selectedFilter, communityId);
   }, [data?.payload, selectedFilter, communityId]);
 
+  const tableData = useMemo(() => data?.payload ?? [], [data?.payload]);
+
+  const displayedData = isTableView ? tableData : cardsData;
+
   // Fetch payout configs for grants on the current page to show allocation amounts
-  const { allocationMap } = useCommunityMilestoneAllocations(sortedRawData);
+  const { allocationMap } = useCommunityMilestoneAllocations(displayedData);
 
   // Calculate total pages
   const totalPages = data ? Math.ceil((data.pagination.totalCount || 0) / ITEMS_PER_PAGE) : 0;
@@ -160,12 +180,7 @@ export default function CommunityUpdatesPage() {
 
   // Memoize empty state rendering
   const renderEmptyState = useMemo(() => {
-    const message =
-      selectedFilter === "all"
-        ? "No milestones have been created by any projects in this community yet."
-        : selectedFilter === "past_due"
-          ? "No past due milestones found."
-          : `No ${selectedFilter} milestones found.`;
+    const message = getEmptyStateMessage(selectedFilter);
 
     return (
       <div className="flex w-full items-center justify-center rounded border border-gray-200 px-6 py-10">
@@ -272,8 +287,8 @@ export default function CommunityUpdatesPage() {
             />
           </div>
 
-          {/* Right side - Milestone count */}
-          <div className="ml-auto flex items-center gap-2 pb-1.5 max-lg:ml-0">
+          {/* Right side - Milestone count + view toggle */}
+          <div className="ml-auto flex items-center gap-3 pb-1.5 max-lg:ml-0">
             {isLoading ? (
               <span className="inline-flex items-center gap-2 text-sm text-muted-foreground">
                 <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/50 animate-pulse" />
@@ -287,43 +302,25 @@ export default function CommunityUpdatesPage() {
                 {pluralize("milestone", data?.pagination?.totalCount || 0)} to update
               </span>
             )}
+            <UpdatesViewToggle value={view} onChange={setView} />
           </div>
         </div>
 
         {/* Content */}
-        {isLoading ? (
-          <div className="flex items-center justify-center min-h-[400px]">
-            <Spinner />
-          </div>
-        ) : sortedRawData && sortedRawData.length > 0 ? (
-          <>
-            <div className="flex flex-col gap-4">
-              {sortedRawData.map((milestone) => (
-                <CommunityMilestoneCard
-                  key={milestone.uid}
-                  milestone={milestone}
-                  allocationAmount={
-                    allocationMap.get(milestone.uid) ??
-                    allocationMap.get(milestone.uid.toLowerCase())
-                  }
-                />
-              ))}
-            </div>
-
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="flex justify-center mt-8">
-                <SimplePagination
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                  onPageChange={handlePageChange}
-                />
-              </div>
-            )}
-          </>
-        ) : (
-          renderEmptyState
-        )}
+        <UpdatesContent
+          isTableView={isTableView}
+          isLoading={isLoading}
+          error={error}
+          milestones={displayedData}
+          sortBy={sortBy}
+          sortOrder={sortOrder}
+          onSort={handleSort}
+          allocationMap={allocationMap}
+          emptyState={renderEmptyState}
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={handlePageChange}
+        />
       </div>
     </div>
   );

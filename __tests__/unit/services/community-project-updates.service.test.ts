@@ -168,6 +168,69 @@ describe("fetchCommunityProjectUpdates", () => {
       );
     });
 
+    it("should include sortBy and sortOrder when provided", async () => {
+      const mockResponse = {
+        updates: [],
+        pagination: { page: 1, limit: 25, total: 0, totalPages: 0 },
+      };
+
+      mockFetch.mockResolvedValue({
+        ok: true,
+        headers: { get: vi.fn().mockReturnValue("application/json") },
+        json: vi.fn().mockResolvedValue(mockResponse),
+      });
+
+      await fetchCommunityProjectUpdates({
+        communityId: "community-1",
+        sortBy: "dueDate",
+        sortOrder: "desc",
+      });
+
+      const fetchCall = mockFetch.mock.calls[0][0];
+      expect(fetchCall).toContain("sortBy=dueDate");
+      expect(fetchCall).toContain("sortOrder=desc");
+    });
+
+    it("should not include sort params when omitted (cards view)", async () => {
+      const mockResponse = {
+        updates: [],
+        pagination: { page: 1, limit: 25, total: 0, totalPages: 0 },
+      };
+
+      mockFetch.mockResolvedValue({
+        ok: true,
+        headers: { get: vi.fn().mockReturnValue("application/json") },
+        json: vi.fn().mockResolvedValue(mockResponse),
+      });
+
+      await fetchCommunityProjectUpdates({ communityId: "community-1" });
+
+      const fetchCall = mockFetch.mock.calls[0][0];
+      expect(fetchCall).not.toContain("sortBy");
+      expect(fetchCall).not.toContain("sortOrder");
+    });
+
+    it("should omit sortOrder when sortBy is absent", async () => {
+      const mockResponse = {
+        updates: [],
+        pagination: { page: 1, limit: 25, total: 0, totalPages: 0 },
+      };
+
+      mockFetch.mockResolvedValue({
+        ok: true,
+        headers: { get: vi.fn().mockReturnValue("application/json") },
+        json: vi.fn().mockResolvedValue(mockResponse),
+      });
+
+      await fetchCommunityProjectUpdates({
+        communityId: "community-1",
+        sortOrder: "desc",
+      });
+
+      const fetchCall = mockFetch.mock.calls[0][0];
+      expect(fetchCall).not.toContain("sortOrder");
+    });
+
     it('should not include status parameter for "all" status', async () => {
       const mockResponse = {
         updates: [],

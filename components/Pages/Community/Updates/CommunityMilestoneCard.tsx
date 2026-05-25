@@ -4,7 +4,6 @@ import { type FC, memo } from "react";
 import { MilestoneCardLayout } from "@/components/Shared/ActivityCard/MilestoneCardLayout";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "@/src/components/navigation/Link";
-import { MilestoneLifecycleStatus } from "@/src/features/payout-disbursement";
 import type { CommunityMilestoneUpdate } from "@/types/community-updates";
 import { formatDate } from "@/utilities/formatDate";
 import {
@@ -13,6 +12,7 @@ import {
 } from "@/utilities/milestones/getEffectiveMilestoneStatus";
 import { cn } from "@/utilities/tailwind";
 import { MilestoneCompletionInfo } from "./MilestoneCompletionInfo";
+import { STATUS_BADGE_CLASSES } from "./milestoneStatusStyles";
 
 const MilestoneAIEvaluationBadge = dynamic(
   () =>
@@ -26,16 +26,6 @@ interface CommunityMilestoneCardProps {
   milestone: CommunityMilestoneUpdate;
   allocationAmount?: string;
 }
-
-const STATUS_BADGE_CLASSES: Record<MilestoneLifecycleStatus, string> = {
-  [MilestoneLifecycleStatus.COMPLETED]:
-    "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
-  [MilestoneLifecycleStatus.VERIFIED]:
-    "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
-  [MilestoneLifecycleStatus.PAST_DUE]: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
-  [MilestoneLifecycleStatus.PENDING]:
-    "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
-};
 
 const CommunityMilestoneCardComponent: FC<CommunityMilestoneCardProps> = ({
   milestone,
