@@ -52,7 +52,7 @@ Keep `next build --turbopack` (preserves build speed and parity with
    `timeout`; the shared `package.json` `build` script stays cross-platform so
    local builds on Windows/macOS are unaffected):
 
-   ```
+   ```bash
    timeout -k 30s 900s pnpm build || ( rm -rf .next && timeout -k 30s 900s pnpm build )
    ```
 
