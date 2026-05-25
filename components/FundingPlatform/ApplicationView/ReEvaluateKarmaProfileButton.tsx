@@ -12,31 +12,28 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useReEvaluateInternalAI } from "@/hooks/useReEvaluateInternalAI";
+import { useReEvaluateKarmaProfileAI } from "@/hooks/useReEvaluateKarmaProfileAI";
 
-interface ReEvaluateInternalButtonProps {
+interface ReEvaluateKarmaProfileButtonProps {
   referenceNumber: string;
   onEvaluationComplete?: () => void | Promise<void>;
   disabled?: boolean;
 }
 
 /**
- * Re-evaluation trigger for internal AI evaluations. Renders a button
- * that opens a confirmation dialog (this overwrites the prior internal
- * evaluation, which reviewers may have already read) and on confirm
- * runs the evaluation via the existing /evaluate-internal endpoint.
- *
- * Use this in place of the regular AIEvaluationButton when an internal
- * evaluation already exists and we need explicit confirmation before
- * overwriting it.
+ * Re-run trigger for Karma Profile (track-record) evaluations. Confirms
+ * before overwriting the prior verdict since admins may have already read
+ * it. The backend short-circuits (no LLM call) when the content
+ * fingerprint matches the prior run — so this is cheap when project state
+ * hasn't changed.
  */
-export const ReEvaluateInternalButton: FC<ReEvaluateInternalButtonProps> = ({
+export const ReEvaluateKarmaProfileButton: FC<ReEvaluateKarmaProfileButtonProps> = ({
   referenceNumber,
   onEvaluationComplete,
   disabled = false,
 }) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const mutation = useReEvaluateInternalAI({ onSuccess: onEvaluationComplete });
+  const mutation = useReEvaluateKarmaProfileAI({ onSuccess: onEvaluationComplete });
 
   const handleOpen = () => setIsDialogOpen(true);
   const handleClose = () => {
@@ -47,7 +44,7 @@ export const ReEvaluateInternalButton: FC<ReEvaluateInternalButtonProps> = ({
   const handleConfirm = async () => {
     try {
       await mutation.mutateAsync(referenceNumber);
-      toast.success("Internal AI evaluation re-run successfully");
+      toast.success("Track-record evaluation re-run successfully");
       setIsDialogOpen(false);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to re-run evaluation";
@@ -62,7 +59,7 @@ export const ReEvaluateInternalButton: FC<ReEvaluateInternalButtonProps> = ({
         variant="secondary"
         disabled={disabled || mutation.isPending}
         aria-busy={mutation.isPending}
-        className="flex items-center space-x-2 px-3 py-2 text-sm"
+        className="flex items-center gap-x-2 px-3 py-2 text-sm"
       >
         <ArrowPathIcon className={`w-4 h-4 ${mutation.isPending ? "animate-spin" : ""}`} />
         <span>{mutation.isPending ? "Re-evaluating..." : "Re-evaluate"}</span>
@@ -71,11 +68,11 @@ export const ReEvaluateInternalButton: FC<ReEvaluateInternalButtonProps> = ({
       <Dialog open={isDialogOpen} onOpenChange={(open) => (open ? handleOpen() : handleClose())}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Re-run internal AI evaluation?</DialogTitle>
+            <DialogTitle>Re-run track-record evaluation?</DialogTitle>
             <DialogDescription>
-              This overwrites the existing internal evaluation with a fresh run against current
-              application data and the latest configured prompt. The previous evaluation will be
-              lost.
+              This overwrites the existing track-record evaluation with a fresh run against the
+              latest Karma project state (new completed milestones, new grants, etc.). The previous
+              evaluation will be lost.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

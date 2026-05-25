@@ -13,11 +13,12 @@ interface UseReEvaluateInternalAIOptions {
 
 /**
  * Re-run internal AI evaluation for an application. Overwrites any prior
- * internal evaluation with a fresh run against current data + current
- * prompt + current Karma project state (if linked).
+ * internal evaluation with a fresh run against current application data
+ * and the latest configured prompt. (Track-record context lives on the
+ * separate `karmaProfileEvaluation` field now — see
+ * `useReEvaluateKarmaProfileAI`.)
  *
- * Invalidates funding-application and applications queries on success so
- * the audit display picks up the new context block automatically.
+ * Invalidates funding-application and applications queries on success.
  */
 export function useReEvaluateInternalAI({ onSuccess }: UseReEvaluateInternalAIOptions = {}) {
   const queryClient = useQueryClient();

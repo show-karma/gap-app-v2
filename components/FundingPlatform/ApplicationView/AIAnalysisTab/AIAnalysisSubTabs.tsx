@@ -1,10 +1,10 @@
 "use client";
 
-import { LockClosedIcon, SunIcon } from "@heroicons/react/24/outline";
+import { ChartBarIcon, LockClosedIcon, SunIcon } from "@heroicons/react/24/outline";
 import type { FC } from "react";
 import { cn } from "@/utilities/tailwind";
 
-export type AIAnalysisSubTabId = "external" | "internal";
+export type AIAnalysisSubTabId = "external" | "internal" | "insights";
 
 export interface AIAnalysisSubTabsProps {
   /** Currently active sub-tab */
@@ -13,25 +13,41 @@ export interface AIAnalysisSubTabsProps {
   onTabChange: (tab: AIAnalysisSubTabId) => void;
 }
 
-const tabs: { id: AIAnalysisSubTabId; label: string; icon: typeof SunIcon; description: string }[] =
-  [
-    {
-      id: "external",
-      label: "External Evaluation",
-      icon: SunIcon,
-      description: "Visible to applicants",
-    },
-    {
-      id: "internal",
-      label: "Internal Evaluation",
-      icon: LockClosedIcon,
-      description: "Reviewer only",
-    },
-  ];
+const tabs: {
+  id: AIAnalysisSubTabId;
+  label: string;
+  shortLabel: string;
+  icon: typeof SunIcon;
+  description: string;
+}[] = [
+  {
+    id: "external",
+    label: "External Evaluation",
+    shortLabel: "External",
+    icon: SunIcon,
+    description: "Visible to applicants",
+  },
+  {
+    id: "internal",
+    label: "Internal Evaluation",
+    shortLabel: "Internal",
+    icon: LockClosedIcon,
+    description: "Reviewer only",
+  },
+  {
+    id: "insights",
+    label: "Applications Insights",
+    shortLabel: "Insights",
+    icon: ChartBarIcon,
+    description: "Project track record",
+  },
+];
 
 /**
  * Sub-tab navigation for AI Analysis tab.
- * Switches between External (applicant-visible) and Internal (reviewer-only) evaluations.
+ * Switches between External (applicant-visible), Internal (reviewer-only
+ * proposal critique), and Applications Insights (reviewer-only track-record
+ * verdict on the linked Karma project).
  */
 export const AIAnalysisSubTabs: FC<AIAnalysisSubTabsProps> = ({ activeTab, onTabChange }) => {
   return (
@@ -55,11 +71,12 @@ export const AIAnalysisSubTabs: FC<AIAnalysisSubTabsProps> = ({ activeTab, onTab
             <Icon
               className={cn(
                 "w-4 h-4",
-                tab.id === "internal" && isActive && "text-purple-600 dark:text-purple-400"
+                tab.id === "internal" && isActive && "text-purple-600 dark:text-purple-400",
+                tab.id === "insights" && isActive && "text-blue-600 dark:text-blue-400"
               )}
             />
             <span className="hidden sm:inline">{tab.label}</span>
-            <span className="sm:hidden">{tab.id === "external" ? "External" : "Internal"}</span>
+            <span className="sm:hidden">{tab.shortLabel}</span>
           </button>
         );
       })}
