@@ -1,10 +1,10 @@
 "use client";
 
 import { SparklesIcon } from "@heroicons/react/24/outline";
-import { type FC, useState } from "react";
+import type { FC } from "react";
 import toast from "react-hot-toast";
 import { Button } from "@/components/Utilities/Button";
-import { runKarmaProfileEvaluation } from "@/services/karmaProfileEvaluationService";
+import { useReEvaluateKarmaProfileAI } from "@/hooks/useReEvaluateKarmaProfileAI";
 
 interface RunKarmaProfileButtonProps {
   referenceNumber: string;
@@ -26,23 +26,13 @@ export const RunKarmaProfileButton: FC<RunKarmaProfileButtonProps> = ({
   onEvaluationComplete,
   disabled = false,
 }) => {
-  const [isEvaluating, setIsEvaluating] = useState(false);
+  const mutation = useReEvaluateKarmaProfileAI({ onSuccess: onEvaluationComplete });
 
   const handleRun = async () => {
-    if (disabled || isEvaluating) return;
-    setIsEvaluating(true);
+    if (disabled || mutation.isPending) return;
     try {
-      await runKarmaProfileEvaluation(referenceNumber);
+      await mutation.mutateAsync(referenceNumber);
       toast.success("Track-record evaluation completed");
-      if (onEvaluationComplete) {
-        try {
-          await onEvaluationComplete();
-        } catch {
-          toast.error(
-            "Evaluation completed but failed to refresh the display. Please reload the page."
-          );
-        }
-      }
     } catch (error) {
       let message = "Failed to run track-record evaluation";
       if (error && typeof error === "object" && "isAxiosError" in error) {
@@ -55,8 +45,6 @@ export const RunKarmaProfileButton: FC<RunKarmaProfileButtonProps> = ({
         message = error.message;
       }
       toast.error(message);
-    } finally {
-      setIsEvaluating(false);
     }
   };
 
@@ -64,15 +52,17 @@ export const RunKarmaProfileButton: FC<RunKarmaProfileButtonProps> = ({
     <Button
       onClick={handleRun}
       variant="secondary"
-      disabled={disabled || isEvaluating}
-      aria-busy={isEvaluating}
+      disabled={disabled || mutation.isPending}
+      aria-busy={mutation.isPending}
       aria-label={
-        isEvaluating ? "Track-record evaluation in progress" : "Run track-record evaluation"
+        mutation.isPending ? "Track-record evaluation in progress" : "Run track-record evaluation"
       }
-      className={`flex items-center gap-x-2 px-3 py-2 text-sm ${isEvaluating ? "animate-pulse" : ""}`}
+      className={`flex items-center gap-x-2 px-3 py-2 text-sm ${
+        mutation.isPending ? "animate-pulse" : ""
+      }`}
     >
-      <SparklesIcon className={`w-4 h-4 ${isEvaluating ? "animate-spin" : ""}`} />
-      <span>{isEvaluating ? "Running Insights..." : "Run Insights"}</span>
+      <SparklesIcon className={`w-4 h-4 ${mutation.isPending ? "animate-spin" : ""}`} />
+      <span>{mutation.isPending ? "Running Insights..." : "Run Insights"}</span>
     </Button>
   );
 };
