@@ -114,8 +114,9 @@ vi.mock("@/hooks/useAuth", () => ({
 }));
 
 const mockRefetchProfile = vi.fn().mockResolvedValue({ data: undefined });
+let mockProfileValue: { data?: Record<string, unknown> } | undefined;
 vi.mock("@/hooks/useContributorProfile", () => ({
-  useContributorProfile: () => ({ profile: undefined, refetch: mockRefetchProfile }),
+  useContributorProfile: () => ({ profile: mockProfileValue, refetch: mockRefetchProfile }),
 }));
 
 const mockRefetchTeamProfiles = vi.fn();
@@ -208,6 +209,7 @@ vi.mock("@/constants/brand", () => ({ PROJECT_NAME: "Karma GAP" }));
 describe("ContributorProfileDialog", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockProfileValue = undefined;
     mockSetupChainAndWallet.mockResolvedValue({
       gapClient: { findSchema: vi.fn(() => ({ uid: "0xschema" })) },
       walletSigner: {},
@@ -293,6 +295,29 @@ describe("ContributorProfileDialog", () => {
         })
       );
       // No validation error should be present on the happy path.
+      expect(screen.queryByText("This name is too short")).not.toBeInTheDocument();
+    });
+  });
+
+  describe("profile load with a missing name (Sentry GAP-FRONTEND-222/225)", () => {
+    it("populates a name-less profile on load without surfacing a validation error", async () => {
+      // A real contributor profile that has no `name` yet. Populating the form on
+      // load must use reset() (no validation) — validating the partially-filled
+      // state is what previously threw "name: expected string, received
+      // undefined". The global unhandled-rejection guard also fails this test if
+      // that throw resurfaces.
+      mockProfileValue = { data: { name: "", github: "https://github.com/test" } };
+
+      render(<ContributorProfileDialog />);
+
+      // The profile-load effect ran (github populated from the profile)...
+      await waitFor(() => {
+        expect(
+          (screen.getByPlaceholderText("Ex: https://github.com/johndoe") as HTMLInputElement).value
+        ).toBe("https://github.com/test");
+      });
+
+      // ...and loading alone did not trigger validation of the empty name.
       expect(screen.queryByText("This name is too short")).not.toBeInTheDocument();
     });
   });
