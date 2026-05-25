@@ -57,7 +57,15 @@ vi.mock("@/hooks/useAuth", () => ({
     logout: vi.fn(),
     isConnected: true,
     ready: true,
+    address: "0xtest-address",
   }),
+}));
+
+// DonateSection / useDonationVisibility call useAdminCommunities for its
+// side effect of priming useCommunitiesStore. Mock as a no-op — the store
+// state is controlled via communitiesMock below.
+vi.mock("@/hooks/useAdminCommunities", () => ({
+  useAdminCommunities: vi.fn(),
 }));
 
 // Mock SingleProjectDonateModal to avoid complex wagmi/web3 dependencies

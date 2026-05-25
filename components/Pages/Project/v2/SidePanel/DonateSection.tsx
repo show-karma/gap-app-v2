@@ -6,6 +6,7 @@ import { useState } from "react";
 import { useAccount } from "wagmi";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useAdminCommunities } from "@/hooks/useAdminCommunities";
 import { useAuth } from "@/hooks/useAuth";
 import { usePermissionsQuery } from "@/src/core/rbac/hooks/use-permissions";
 import { Role } from "@/src/core/rbac/types";
@@ -46,9 +47,11 @@ export function useDonationVisibility(project: Project): boolean {
   const isOwner = useOwnerStore((state) => state.isOwner);
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
+  const { authenticated, address } = useAuth();
+  // Lazy-fetch admin communities — React Query dedupes by queryKey.
+  useAdminCommunities(address);
   const communities = useCommunitiesStore((s) => s.communities);
   const isCommunityAdminOfSome = communities.length !== 0;
-  const { authenticated } = useAuth();
   const { data: permissions, isLoading: isPermissionsLoading } = usePermissionsQuery(
     {},
     { enabled: authenticated }
@@ -92,9 +95,11 @@ export function DonateSection({ project, className }: DonateSectionProps) {
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const refreshProject = useProjectStore((state) => state.refreshProject);
+  const { authenticated, address } = useAuth();
+  // Lazy-fetch admin communities — React Query dedupes by queryKey.
+  useAdminCommunities(address);
   const communities = useCommunitiesStore((s) => s.communities);
   const isCommunityAdminOfSome = communities.length !== 0;
-  const { authenticated } = useAuth();
   const { data: permissions, isLoading: isPermissionsLoading } = usePermissionsQuery(
     {},
     { enabled: authenticated }

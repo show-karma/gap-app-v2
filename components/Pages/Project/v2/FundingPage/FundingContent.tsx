@@ -4,6 +4,8 @@ import { CheckCircleIcon, PlusIcon } from "@heroicons/react/20/solid";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { useAdminCommunities } from "@/hooks/useAdminCommunities";
+import { useAuth } from "@/hooks/useAuth";
 import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { useOwnerStore } from "@/store";
@@ -256,6 +258,10 @@ export function FundingContent({ project, className }: FundingContentProps) {
 
   const { isProjectAdmin, isProjectOwner } = useProjectPermissions();
   const isContractOwner = useOwnerStore((state) => state.isOwner);
+  const { address } = useAuth();
+  // Lazy-fetch admin communities here — React Query dedupes by queryKey
+  // across consumers; populates useCommunitiesStore via side effect.
+  useAdminCommunities(address);
   const communities = useCommunitiesStore((s) => s.communities);
   const isCommunityAdminOfSome = communities.length !== 0;
   const isAuthorized =

@@ -64,6 +64,20 @@ vi.mock("@/hooks/useProjectPermissions", () => ({
   }),
 }));
 
+// FundingContent calls useAdminCommunities for its side effect of priming
+// useCommunitiesStore. We don't care about its return value — only the store
+// state, which is controlled directly via communitiesMock below.
+vi.mock("@/hooks/useAdminCommunities", () => ({
+  useAdminCommunities: vi.fn(),
+}));
+
+vi.mock("@/hooks/useAuth", () => ({
+  useAuth: () => ({
+    authenticated: true,
+    address: "0xtest-address",
+  }),
+}));
+
 vi.mock("@/store", () => ({
   useOwnerStore: (selector?: (state: { isOwner: boolean }) => unknown) => {
     const state = { isOwner: false };

@@ -8,6 +8,8 @@ import type { FC } from "react";
 import { useEffect } from "react";
 import { Button } from "@/components/Utilities/Button";
 import { DefaultLoading } from "@/components/Utilities/DefaultLoading";
+import { useAdminCommunities } from "@/hooks/useAdminCommunities";
+import { useAuth } from "@/hooks/useAuth";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunitiesStore } from "@/store/communities";
 import type { Grant } from "@/types/v2/grant";
@@ -83,6 +85,9 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
   const selectedProject = useProjectStore((state) => state.project);
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isOwner = useOwnerStore((state) => state.isOwner);
+  const { address } = useAuth();
+  // Lazy-fetch admin communities — React Query dedupes by queryKey.
+  useAdminCommunities(address);
   const communities = useCommunitiesStore((s) => s.communities);
   const isCommunityAdminOfSome = communities.length !== 0;
   const isAuthorized = isProjectAdmin || isOwner || isCommunityAdminOfSome;
