@@ -59,12 +59,12 @@ export async function fetchCommunityProjectUpdates(
       searchParams.append("projectId", projectId);
     }
 
+    // sortOrder is only meaningful alongside sortBy
     if (sortBy) {
       searchParams.append("sortBy", sortBy);
-    }
-
-    if (sortOrder) {
-      searchParams.append("sortOrder", sortOrder);
+      if (sortOrder) {
+        searchParams.append("sortOrder", sortOrder);
+      }
     }
 
     const url = `${API_URL}${INDEXER.COMMUNITY.PROJECT_UPDATES(

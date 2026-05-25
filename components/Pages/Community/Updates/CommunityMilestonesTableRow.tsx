@@ -7,6 +7,7 @@ import {
   getEffectiveMilestoneStatus,
   MILESTONE_STATUS_LABEL,
 } from "@/utilities/milestones/getEffectiveMilestoneStatus";
+import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 import { STATUS_BADGE_CLASSES } from "./milestoneStatusStyles";
 
@@ -30,10 +31,10 @@ const CommunityMilestonesTableRowComponent: FC<CommunityMilestonesTableRowProps>
   const effectiveStatus = getEffectiveMilestoneStatus(milestone.status, milestone.details.dueDate);
 
   const grantHref = milestone.grant
-    ? `/project/${projectSlug}/funding/${milestone.grant.uid}`
+    ? PAGES.PROJECT.GRANT(projectSlug, milestone.grant.uid)
     : undefined;
 
-  const viewHref = grantHref ?? `/project/${projectSlug}/updates`;
+  const viewHref = grantHref ?? PAGES.PROJECT.UPDATES(projectSlug);
 
   const hasMilestonePosition =
     milestone.grantMilestoneIndex != null && milestone.grantMilestoneTotal != null;
@@ -63,7 +64,7 @@ const CommunityMilestonesTableRowComponent: FC<CommunityMilestonesTableRowProps>
       <td className={cn(cellClasses, "max-w-[180px]")}>
         {projectTitle ? (
           <Link
-            href={`/project/${projectSlug}`}
+            href={PAGES.PROJECT.OVERVIEW(projectSlug)}
             className="text-sm text-gray-600 dark:text-gray-300 hover:text-brand-blue hover:underline line-clamp-2"
           >
             {projectTitle}

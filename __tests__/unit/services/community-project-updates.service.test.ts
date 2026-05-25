@@ -210,6 +210,27 @@ describe("fetchCommunityProjectUpdates", () => {
       expect(fetchCall).not.toContain("sortOrder");
     });
 
+    it("should omit sortOrder when sortBy is absent", async () => {
+      const mockResponse = {
+        updates: [],
+        pagination: { page: 1, limit: 25, total: 0, totalPages: 0 },
+      };
+
+      mockFetch.mockResolvedValue({
+        ok: true,
+        headers: { get: vi.fn().mockReturnValue("application/json") },
+        json: vi.fn().mockResolvedValue(mockResponse),
+      });
+
+      await fetchCommunityProjectUpdates({
+        communityId: "community-1",
+        sortOrder: "desc",
+      });
+
+      const fetchCall = mockFetch.mock.calls[0][0];
+      expect(fetchCall).not.toContain("sortOrder");
+    });
+
     it('should not include status parameter for "all" status', async () => {
       const mockResponse = {
         updates: [],
