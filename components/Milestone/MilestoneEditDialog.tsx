@@ -1,7 +1,6 @@
 "use client";
 
 import { PencilSquareIcon } from "@heroicons/react/24/outline";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useCallback, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
@@ -18,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import type { MilestoneEditData } from "@/hooks/useMilestoneEdit";
 import { useMilestoneEdit } from "@/hooks/useMilestoneEdit";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
+import { zodResolver } from "@/utilities/zodResolver";
 
 const editMilestoneSchema = z.object({
   title: z

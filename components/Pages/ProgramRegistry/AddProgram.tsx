@@ -1,6 +1,5 @@
 "use client";
 import { ChevronLeftIcon } from "@heroicons/react/24/solid";
-import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -39,6 +38,7 @@ import { appNetwork } from "@/utilities/network";
 import { PAGES } from "@/utilities/pages";
 import { sanitizeObject } from "@/utilities/sanitize";
 import { cn } from "@/utilities/tailwind";
+import { zodResolver } from "@/utilities/zodResolver";
 import { registryHelper } from "./helper";
 import type { GrantProgram } from "./ProgramList";
 import { SearchDropdown } from "./SearchDropdown";
