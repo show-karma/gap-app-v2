@@ -109,6 +109,14 @@ export interface TenantNavigation {
     paragraph?: string;
     farcaster?: string;
   };
+  /** Per-tenant label overrides for social links (e.g. show "Social" instead of "Twitter"). */
+  socialLinkLabels?: {
+    twitter?: string;
+    discord?: string;
+    github?: string;
+    docs?: string;
+    telegram?: string;
+  };
 }
 
 export interface HeroStat {
