@@ -5,6 +5,16 @@ import { INDEXER } from "@/utilities/indexer";
 
 const API_URL = envVars.NEXT_PUBLIC_GAP_INDEXER_URL;
 
+export type CommunityUpdatesSortBy =
+  | "dueDate"
+  | "status"
+  | "title"
+  | "projectTitle"
+  | "grantTitle"
+  | "completionDate";
+
+export type CommunityUpdatesSortOrder = "asc" | "desc";
+
 export interface FetchCommunityProjectUpdatesParams {
   communityId: string;
   page?: number;
@@ -12,12 +22,23 @@ export interface FetchCommunityProjectUpdatesParams {
   status?: "all" | "pending" | "completed" | "past_due";
   programId?: string | null;
   projectId?: string | null;
+  sortBy?: CommunityUpdatesSortBy;
+  sortOrder?: CommunityUpdatesSortOrder;
 }
 
 export async function fetchCommunityProjectUpdates(
   params: FetchCommunityProjectUpdatesParams
 ): Promise<CommunityUpdatesResponse> {
-  const { communityId, page = 1, limit = 25, status = "all", programId, projectId } = params;
+  const {
+    communityId,
+    page = 1,
+    limit = 25,
+    status = "all",
+    programId,
+    projectId,
+    sortBy,
+    sortOrder,
+  } = params;
 
   try {
     const searchParams = new URLSearchParams({
@@ -36,6 +57,14 @@ export async function fetchCommunityProjectUpdates(
 
     if (projectId) {
       searchParams.append("projectId", projectId);
+    }
+
+    if (sortBy) {
+      searchParams.append("sortBy", sortBy);
+    }
+
+    if (sortOrder) {
+      searchParams.append("sortOrder", sortOrder);
     }
 
     const url = `${API_URL}${INDEXER.COMMUNITY.PROJECT_UPDATES(
