@@ -1,8 +1,8 @@
 import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
-import { ChevronDownIcon, ChevronUpDownIcon, ChevronUpIcon } from "@heroicons/react/24/solid";
 import { Button } from "@/components/Utilities/Button";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { Skeleton } from "@/components/Utilities/Skeleton";
+import { SortableHeader } from "@/components/Utilities/SortableHeader";
 import TablePagination from "@/components/Utilities/TablePagination";
 import type { MilestoneCompletion, Report } from "@/hooks/useReportPageData";
 import { Link } from "@/src/components/navigation/Link";
@@ -11,43 +11,6 @@ import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 
 const skeletonArray = Array.from({ length: 12 }, (_, i) => i);
-
-interface SortableHeaderProps {
-  label: string;
-  field: string;
-  sortBy: string;
-  sortOrder: string;
-  onSort: (field: string) => void;
-}
-
-function SortableHeader({ label, field, sortBy, sortOrder, onSort }: SortableHeaderProps) {
-  const isActive = sortBy === field;
-  return (
-    <th scope="col" className="h-11 px-4 text-left align-middle font-medium">
-      <button
-        type="button"
-        className={cn(
-          "flex items-center gap-1.5 text-xs uppercase tracking-wider transition-colors",
-          isActive
-            ? "text-gray-900 dark:text-white"
-            : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
-        )}
-        onClick={() => onSort(field)}
-      >
-        {label}
-        {isActive ? (
-          sortOrder === "asc" ? (
-            <ChevronUpIcon className="h-3.5 w-3.5" />
-          ) : (
-            <ChevronDownIcon className="h-3.5 w-3.5" />
-          )
-        ) : (
-          <ChevronUpDownIcon className="h-3.5 w-3.5 opacity-40" />
-        )}
-      </button>
-    </th>
-  );
-}
 
 function ProgressBar({ completed, total }: { completed: number; total: number }) {
   if (total === 0) return null;

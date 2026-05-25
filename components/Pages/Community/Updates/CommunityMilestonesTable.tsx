@@ -1,55 +1,16 @@
 import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
-import { ChevronDownIcon, ChevronUpDownIcon, ChevronUpIcon } from "@heroicons/react/24/solid";
 import type { ReactNode } from "react";
 import { Skeleton } from "@/components/Utilities/Skeleton";
+import { SortableHeader } from "@/components/Utilities/SortableHeader";
 import type {
   CommunityUpdatesSortBy,
   CommunityUpdatesSortOrder,
 } from "@/services/community-project-updates.service";
 import type { CommunityMilestoneUpdate } from "@/types/community-updates";
-import { cn } from "@/utilities/tailwind";
 import { CommunityMilestonesTableRow } from "./CommunityMilestonesTableRow";
 
 const TOTAL_COLUMNS = 8;
 const skeletonRows = Array.from({ length: 8 }, (_, i) => i);
-
-interface SortableHeaderProps {
-  label: string;
-  field: CommunityUpdatesSortBy;
-  sortBy: CommunityUpdatesSortBy | null;
-  sortOrder: CommunityUpdatesSortOrder;
-  onSort: (field: CommunityUpdatesSortBy) => void;
-}
-
-function SortableHeader({ label, field, sortBy, sortOrder, onSort }: SortableHeaderProps) {
-  const isActive = sortBy === field;
-  return (
-    <th scope="col" className="h-11 px-4 text-left align-middle font-medium">
-      <button
-        type="button"
-        aria-label={`Sort by ${label}`}
-        className={cn(
-          "flex items-center gap-1.5 text-xs uppercase tracking-wider transition-colors",
-          isActive
-            ? "text-gray-900 dark:text-white"
-            : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
-        )}
-        onClick={() => onSort(field)}
-      >
-        {label}
-        {isActive ? (
-          sortOrder === "asc" ? (
-            <ChevronUpIcon className="h-3.5 w-3.5" />
-          ) : (
-            <ChevronDownIcon className="h-3.5 w-3.5" />
-          )
-        ) : (
-          <ChevronUpDownIcon className="h-3.5 w-3.5 opacity-40" />
-        )}
-      </button>
-    </th>
-  );
-}
 
 function PlainHeader({ children }: { children: ReactNode }) {
   return (
