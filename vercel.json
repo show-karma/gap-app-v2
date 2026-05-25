@@ -5,5 +5,6 @@
       "*": true
     }
   },
-  "ignoreCommand": "bash vercel-ignore.sh"
+  "ignoreCommand": "bash vercel-ignore.sh",
+  "buildCommand": "timeout -k 30s 900s pnpm build || ( rm -rf .next && timeout -k 30s 900s pnpm build )"
 }
