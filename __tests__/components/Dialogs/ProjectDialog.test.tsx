@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 let mockProjectAttest: vi.Mock;
@@ -571,5 +571,121 @@ describe("ProjectDialog", () => {
 
     // Regression assertion: modal should stay open during pending submission.
     expect(screen.getByTestId("dialog")).toBeInTheDocument();
+  });
+
+  // ---------------------------------------------------------------------------
+  // Validation-FAILURE regression tests (Sentry GAP-FRONTEND-221, 223, 224).
+  //
+  // These would have caught the bug where `zodResolver` re-threw the ZodError
+  // as an unhandled promise rejection instead of returning field errors: when
+  // the resolver throws, the validation message never renders and the submit
+  // handler is never reached. Each test below drives the REAL resolver against
+  // invalid input and asserts the error text renders in the DOM AND that the
+  // create/attest side effect was never invoked. The global setup additionally
+  // fails any test that produces an unhandled promise rejection.
+  //
+  // Note: the `@/utilities/messages` mock above redefines TITLE.MIN/MAX, so the
+  // title messages are asserted against those mocked strings. All other field
+  // messages ("Network is required", "Description is required", etc.) are
+  // hardcoded in `projectSchema`, so they render verbatim.
+  // ---------------------------------------------------------------------------
+
+  const openDialog = async (user: ReturnType<typeof userEvent.setup>) => {
+    await user.click(screen.getByRole("button", { name: /add project/i }));
+  };
+
+  const submitForm = () => {
+    // The submit/next buttons are disabled while validation fails, so submit the
+    // <form> directly to exercise handleSubmit(onSubmit) -> the real resolver.
+    const form = document.querySelector("form");
+    if (!form) throw new Error("ProjectDialog form not found");
+    fireEvent.submit(form);
+  };
+
+  it("renders required-field validation errors when submitting an empty form and does not attest", async () => {
+    const { ProjectDialog } = await import("@/components/Dialogs/ProjectDialog");
+    const user = userEvent.setup();
+
+    render(<ProjectDialog />);
+    await openDialog(user);
+
+    // Step 0 (General info) is shown first; submit it untouched so the resolver
+    // runs against the empty schema.
+    submitForm();
+
+    // The step-0 required-field messages must render (resolver returned errors
+    // rather than throwing them).
+    expect(await screen.findByText("Description is required")).toBeInTheDocument();
+    expect(screen.getByText("Problem is required")).toBeInTheDocument();
+    expect(screen.getByText("Solution is required")).toBeInTheDocument();
+    expect(screen.getByText("Mission Summary is required")).toBeInTheDocument();
+    // TITLE.MIN comes from the mocked MESSAGES.PROJECT_FORM.TITLE above.
+    expect(screen.getByText("Title too short")).toBeInTheDocument();
+
+    // The create/attest side effect must NOT fire on a failed validation.
+    expect(mockProjectAttest).not.toHaveBeenCalled();
+    expect(mockStartAttestation).not.toHaveBeenCalled();
+  });
+
+  it("renders the title length error when the title is too short and does not attest", async () => {
+    const { ProjectDialog } = await import("@/components/Dialogs/ProjectDialog");
+    const user = userEvent.setup();
+
+    render(<ProjectDialog />);
+    await openDialog(user);
+
+    // "ab" is below the 3-char minimum.
+    await user.type(screen.getByPlaceholderText('e.g. "My awesome project"'), "ab");
+    submitForm();
+
+    // TITLE.MIN message (mocked) renders; resolver returned the error.
+    expect(await screen.findByText("Title too short")).toBeInTheDocument();
+    expect(mockProjectAttest).not.toHaveBeenCalled();
+    expect(mockStartAttestation).not.toHaveBeenCalled();
+  });
+
+  it('surfaces "Network is required" when submitting without selecting a network and does not attest', async () => {
+    const { ProjectDialog } = await import("@/components/Dialogs/ProjectDialog");
+    const user = userEvent.setup();
+
+    render(<ProjectDialog />);
+    await openDialog(user);
+
+    // Fill all step-0 required fields with valid values so navigation can proceed.
+    await user.type(screen.getByPlaceholderText('e.g. "My awesome project"'), "My awesome project");
+    const markdownEditors = screen.getAllByTestId("markdown-editor");
+    await user.type(markdownEditors[0], "Description");
+    await user.type(markdownEditors[1], "Problem");
+    await user.type(markdownEditors[2], "Solution");
+    await user.type(markdownEditors[3], "Mission summary");
+
+    // Advance through steps 0 -> 1 -> 2 -> 3 (Contact info / network selection).
+    await user.click(screen.getByRole("button", { name: /next/i }));
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText("Your/organization handle")).toBeInTheDocument();
+    });
+
+    await user.click(screen.getByRole("button", { name: /next/i }));
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText("Describe your business model")).toBeInTheDocument();
+    });
+
+    await user.click(screen.getByRole("button", { name: /next/i }));
+    await waitFor(() => {
+      expect(screen.getByText("Choose a network to create your project")).toBeInTheDocument();
+    });
+
+    // Add a contact but intentionally DO NOT select a network, then submit.
+    await user.click(screen.getByRole("button", { name: /add contact/i }));
+    submitForm();
+
+    // chainID is missing: the resolver must surface "Network is required" in the
+    // DOM (the exact Sentry GAP-FRONTEND-221/223/224 crash path). When the
+    // resolver throws instead, this text never renders.
+    expect(await screen.findByText("Network is required")).toBeInTheDocument();
+
+    // No attestation should be attempted on validation failure.
+    expect(mockProjectAttest).not.toHaveBeenCalled();
+    expect(mockStartAttestation).not.toHaveBeenCalled();
   });
 });

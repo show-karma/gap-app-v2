@@ -1,5 +1,4 @@
 "use client";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo } from "react";
 import { useForm, useWatch } from "react-hook-form";
@@ -9,6 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import type { Community } from "@/types/v2/community";
 import { formatDate } from "@/utilities/formatDate";
 import { MESSAGES } from "@/utilities/messages";
+import { zodResolver } from "@/utilities/zodResolver";
 import { type AdminProgramFormSchema, createProgramSchema } from "../schemas/admin-form";
 import { ProgramRegistryService } from "../services/program-registry.service";
 import type { CreateProgramFormData, GrantProgram } from "../types";

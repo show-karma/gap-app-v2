@@ -1,4 +1,3 @@
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import type React from "react";
 import { useState } from "react";
@@ -17,6 +16,7 @@ import type { Grant } from "@/types/v2/grant";
 import { formatDate } from "@/utilities/formatDate";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
+import { zodResolver } from "@/utilities/zodResolver";
 import { StepBlock } from "../StepBlock";
 import { useGrantFormStore } from "../store";
 import { CancelButton } from "./buttons/CancelButton";
