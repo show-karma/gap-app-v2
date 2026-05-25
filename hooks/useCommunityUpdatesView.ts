@@ -22,7 +22,7 @@ const isValidSortBy = (value: string | null): value is CommunityUpdatesSortBy =>
 const isValidSortOrder = (value: string | null): value is CommunityUpdatesSortOrder =>
   value === "asc" || value === "desc";
 
-export interface CommunityUpdatesViewState {
+interface CommunityUpdatesViewState {
   view: UpdatesView;
   isTableView: boolean;
   setView: (view: UpdatesView) => void;

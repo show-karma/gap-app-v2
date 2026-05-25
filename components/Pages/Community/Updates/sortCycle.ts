@@ -3,7 +3,7 @@ import type {
   CommunityUpdatesSortOrder,
 } from "@/services/community-project-updates.service";
 
-export interface SortState {
+interface SortState {
   sortBy: CommunityUpdatesSortBy;
   sortOrder: CommunityUpdatesSortOrder;
 }
