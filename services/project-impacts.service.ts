@@ -57,10 +57,14 @@ export const getProjectImpacts = async (
     signal
   );
 
-  if (error || !data) {
+  if (error) {
     errorManager(`Project Impacts API Error: ${error}`, error, {
       context: "project-impacts.service",
     });
+    return [];
+  }
+
+  if (!Array.isArray(data)) {
     return [];
   }
 
