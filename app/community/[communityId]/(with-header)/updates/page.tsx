@@ -6,15 +6,8 @@ import { useQueryState } from "nuqs";
 import pluralize from "pluralize";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { SearchWithValueDropdown } from "@/components/Pages/Communities/Impact/SearchWithValueDropdown";
-import { CommunityMilestoneCard } from "@/components/Pages/Community/Updates/CommunityMilestoneCard";
-import { CommunityMilestonesTable } from "@/components/Pages/Community/Updates/CommunityMilestonesTable";
-import { SimplePagination } from "@/components/Pages/Community/Updates/SimplePagination";
-import { getNextSort } from "@/components/Pages/Community/Updates/sortCycle";
-import {
-  type UpdatesView,
-  UpdatesViewToggle,
-} from "@/components/Pages/Community/Updates/UpdatesViewToggle";
-import { Spinner } from "@/components/Utilities/Spinner";
+import { UpdatesContent } from "@/components/Pages/Community/Updates/UpdatesContent";
+import { UpdatesViewToggle } from "@/components/Pages/Community/Updates/UpdatesViewToggle";
 import {
   Select,
   SelectContent,
@@ -25,11 +18,8 @@ import {
 import { useCommunityMilestoneAllocations } from "@/hooks/useCommunityMilestoneAllocations";
 import { useCommunityProjects } from "@/hooks/useCommunityProjects";
 import { useCommunityProjectUpdates } from "@/hooks/useCommunityProjectUpdates";
+import { useCommunityUpdatesView } from "@/hooks/useCommunityUpdatesView";
 import { useCommunityPrograms } from "@/hooks/usePrograms";
-import type {
-  CommunityUpdatesSortBy,
-  CommunityUpdatesSortOrder,
-} from "@/services/community-project-updates.service";
 import { findProjectOptionBySlugOrUid, projectsToOptions } from "@/utilities/project-lookup";
 import { sortCommunityMilestones } from "@/utilities/sorting/communityMilestoneSort";
 
@@ -37,27 +27,22 @@ type FilterOption = "all" | "pending" | "completed" | "past_due";
 
 const ITEMS_PER_PAGE = 25;
 
-const VALID_SORT_FIELDS: CommunityUpdatesSortBy[] = [
-  "dueDate",
-  "status",
-  "title",
-  "projectTitle",
-  "grantTitle",
-  "completionDate",
-];
-
-const isValidSortBy = (value: string | null): value is CommunityUpdatesSortBy =>
-  value != null && (VALID_SORT_FIELDS as string[]).includes(value);
-
-const isValidSortOrder = (value: string | null): value is CommunityUpdatesSortOrder =>
-  value === "asc" || value === "desc";
-
 const filterOptions: { value: FilterOption; label: string }[] = [
   { value: "all", label: "All" },
   { value: "pending", label: "Pending" },
   { value: "completed", label: "Completed" },
   { value: "past_due", label: "Past Due" },
 ];
+
+const getEmptyStateMessage = (filter: FilterOption): string => {
+  if (filter === "all") {
+    return "No milestones have been created by any projects in this community yet.";
+  }
+  if (filter === "past_due") {
+    return "No past due milestones found.";
+  }
+  return `No ${filter} milestones found.`;
+};
 
 export default function CommunityUpdatesPage() {
   const { communityId } = useParams<{ communityId: string }>();
@@ -94,30 +79,8 @@ export default function CommunityUpdatesPage() {
     }
   );
 
-  // View state (cards | table) persisted in the URL
-  const [view, setView] = useQueryState<UpdatesView>("view", {
-    defaultValue: "cards",
-    serialize: (value) => (value === "table" ? "table" : ""),
-    parse: (value) => (value === "table" ? "table" : "cards"),
-  });
-  const isTableView = view === "table";
-
-  // Server-side sort state (table view only)
-  const [sortByRaw, setSortByQuery] = useQueryState<CommunityUpdatesSortBy | null>("sortBy", {
-    defaultValue: null,
-    serialize: (value) => value ?? "",
-    parse: (value) => (isValidSortBy(value) ? value : null),
-  });
-  const [sortOrderRaw, setSortOrderQuery] = useQueryState<CommunityUpdatesSortOrder | null>(
-    "sortOrder",
-    {
-      defaultValue: null,
-      serialize: (value) => value ?? "",
-      parse: (value) => (isValidSortOrder(value) ? value : null),
-    }
-  );
-  const sortBy = isValidSortBy(sortByRaw) ? sortByRaw : null;
-  const sortOrder = isValidSortOrder(sortOrderRaw) ? sortOrderRaw : "asc";
+  // View (cards | table) + server-sort state, persisted in the URL
+  const { view, isTableView, setView, sortBy, sortOrder, handleSort } = useCommunityUpdatesView();
 
   // Fetch programs for the community
   const { data: programsData, isLoading: programsLoading } = useCommunityPrograms(
@@ -215,31 +178,9 @@ export default function CommunityUpdatesPage() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
 
-  // Cycle sort: new column starts asc, active column flips direction.
-  const handleSort = useCallback(
-    (field: CommunityUpdatesSortBy) => {
-      const next = getNextSort(field, sortBy, sortOrder);
-      setSortByQuery(next.sortBy);
-      setSortOrderQuery(next.sortOrder);
-    },
-    [sortBy, sortOrder, setSortByQuery, setSortOrderQuery]
-  );
-
-  const handleViewChange = useCallback(
-    (nextView: UpdatesView) => {
-      setView(nextView);
-    },
-    [setView]
-  );
-
   // Memoize empty state rendering
   const renderEmptyState = useMemo(() => {
-    const message =
-      selectedFilter === "all"
-        ? "No milestones have been created by any projects in this community yet."
-        : selectedFilter === "past_due"
-          ? "No past due milestones found."
-          : `No ${selectedFilter} milestones found.`;
+    const message = getEmptyStateMessage(selectedFilter);
 
     return (
       <div className="flex w-full items-center justify-center rounded border border-gray-200 px-6 py-10">
@@ -361,68 +302,25 @@ export default function CommunityUpdatesPage() {
                 {pluralize("milestone", data?.pagination?.totalCount || 0)} to update
               </span>
             )}
-            <UpdatesViewToggle value={view} onChange={handleViewChange} />
+            <UpdatesViewToggle value={view} onChange={setView} />
           </div>
         </div>
 
         {/* Content */}
-        {isTableView ? (
-          <>
-            <CommunityMilestonesTable
-              milestones={displayedData}
-              isLoading={isLoading}
-              error={error}
-              sortBy={sortBy}
-              sortOrder={sortOrder}
-              onSort={handleSort}
-              allocationMap={allocationMap}
-              emptyState={renderEmptyState}
-            />
-
-            {/* Pagination */}
-            {!isLoading && totalPages > 1 && (
-              <div className="flex justify-center mt-8">
-                <SimplePagination
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                  onPageChange={handlePageChange}
-                />
-              </div>
-            )}
-          </>
-        ) : isLoading ? (
-          <div className="flex items-center justify-center min-h-[400px]">
-            <Spinner />
-          </div>
-        ) : displayedData.length > 0 ? (
-          <>
-            <div className="flex flex-col gap-4">
-              {displayedData.map((milestone) => (
-                <CommunityMilestoneCard
-                  key={milestone.uid}
-                  milestone={milestone}
-                  allocationAmount={
-                    allocationMap.get(milestone.uid) ??
-                    allocationMap.get(milestone.uid.toLowerCase())
-                  }
-                />
-              ))}
-            </div>
-
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="flex justify-center mt-8">
-                <SimplePagination
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                  onPageChange={handlePageChange}
-                />
-              </div>
-            )}
-          </>
-        ) : (
-          renderEmptyState
-        )}
+        <UpdatesContent
+          isTableView={isTableView}
+          isLoading={isLoading}
+          error={error}
+          milestones={displayedData}
+          sortBy={sortBy}
+          sortOrder={sortOrder}
+          onSort={handleSort}
+          allocationMap={allocationMap}
+          emptyState={renderEmptyState}
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={handlePageChange}
+        />
       </div>
     </div>
   );
