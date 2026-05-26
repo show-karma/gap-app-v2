@@ -1,17 +1,15 @@
 /**
- * Tests for community milestone validity filtering and sorting.
+ * Tests for community milestone validity filtering.
  *
  * The cards view and the table view of the community Updates page consume the
  * same API payload. Both must drop invalid milestones (missing uid, status,
  * title, or project slug) so the two views render the exact same set of items.
  * `isValidMilestone` is the shared predicate that guarantees that parity.
+ * Sort order is handled server-side in gap-indexer.
  */
 
 import type { CommunityMilestoneUpdate } from "@/types/community-updates";
-import {
-  isValidMilestone,
-  sortCommunityMilestones,
-} from "@/utilities/sorting/communityMilestoneSort";
+import { isValidMilestone } from "@/utilities/sorting/communityMilestoneSort";
 
 function createMilestone(
   overrides: Partial<CommunityMilestoneUpdate> = {}
@@ -82,36 +80,5 @@ describe("isValidMilestone", () => {
     expect(isValidMilestone(null)).toBe(false);
     expect(isValidMilestone(undefined)).toBe(false);
     expect(isValidMilestone("milestone")).toBe(false);
-  });
-});
-
-describe("sortCommunityMilestones", () => {
-  it("filters out invalid milestones from the result", () => {
-    const valid = createMilestone({ uid: "valid" });
-    const invalid = createMilestone({ uid: "" });
-
-    const result = sortCommunityMilestones([valid, invalid], "all", "community-1");
-
-    expect(result).toHaveLength(1);
-    expect(result[0].uid).toBe("valid");
-  });
-
-  it("orders pending milestones before completed ones for the 'all' filter", () => {
-    const completed = createMilestone({ uid: "completed", status: "completed" });
-    const pending = createMilestone({ uid: "pending", status: "pending" });
-
-    const result = sortCommunityMilestones([completed, pending], "all", "community-1");
-
-    expect(result.map((m) => m.uid)).toEqual(["pending", "completed"]);
-  });
-
-  it("returns an empty array for non-array input", () => {
-    expect(
-      sortCommunityMilestones(
-        undefined as unknown as CommunityMilestoneUpdate[],
-        "all",
-        "community-1"
-      )
-    ).toEqual([]);
   });
 });

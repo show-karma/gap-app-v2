@@ -41,7 +41,8 @@ interface CommunityUpdatesViewState {
 export function useCommunityUpdatesView(): CommunityUpdatesViewState {
   const [view, setViewQuery] = useQueryState<UpdatesView>("view", {
     defaultValue: "cards",
-    serialize: (value) => (value === "table" ? "table" : ""),
+    clearOnDefault: true,
+    serialize: (value) => (value === "table" ? "table" : "cards"),
     parse: (value) => (value === "table" ? "table" : "cards"),
   });
 
