@@ -2,10 +2,17 @@
 
 import { TrashIcon } from "@heroicons/react/24/solid";
 import { useQuery } from "@tanstack/react-query";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { createPortal } from "react-dom";
+import { useEffect, useMemo, useState } from "react";
 import { InfoTooltip } from "@/components/Utilities/InfoTooltip";
 import { Button } from "@/components/ui/button";
+import {
+  Command,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useAutosyncedIndicators } from "@/hooks/useAutosyncedIndicators";
 import type { ImpactIndicatorWithData } from "@/types/impactMeasurement";
 import { getUnlinkedIndicators } from "@/utilities/queries/getUnlinkedIndicators";
@@ -47,7 +54,6 @@ const isInvalidValue = (value: number | string, unitOfMeasure: string) => {
   return Number.isNaN(numValue);
 };
 
-// CategorizedIndicatorDropdown component with debounced API search
 const CategorizedIndicatorDropdown = ({
   indicators,
   onSelect,
@@ -63,98 +69,16 @@ const CategorizedIndicatorDropdown = ({
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [isOpen, setIsOpen] = useState(false);
-  const triggerRef = useRef<HTMLButtonElement>(null);
-  const panelRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const [panelPos, setPanelPos] = useState<{ top: number; left: number; width: number }>({
-    top: 0,
-    left: 0,
-    width: 340,
-  });
   const debouncedSearch = useDebouncedValue(searchTerm, 300);
 
-  // On mobile, the virtual keyboard and URL-bar collapse fire resize/scroll events
-  // that would otherwise dismiss the dropdown the instant it opens.
-  const isTouchDevice = useMemo(
-    () =>
-      typeof window !== "undefined" &&
-      typeof window.matchMedia === "function" &&
-      window.matchMedia("(pointer: coarse)").matches,
-    []
-  );
-
-  // Fetch unlinked indicators from API with debounced search
   const { data: searchedUnlinked = [], isFetching } = useQuery({
     queryKey: ["unlinkedIndicators", "search", debouncedSearch],
     queryFn: () => getUnlinkedIndicators(debouncedSearch || undefined),
     enabled: isOpen,
-    staleTime: 0, // Always refetch so newly created indicators appear
+    staleTime: 0,
     gcTime: 60 * 1000,
   });
 
-  // Position the portal panel below the trigger button
-  const reposition = useCallback(() => {
-    if (triggerRef.current) {
-      const rect = triggerRef.current.getBoundingClientRect();
-      setPanelPos({
-        top: rect.bottom + 4,
-        left: rect.left,
-        width: Math.max(340, rect.width),
-      });
-    }
-  }, []);
-
-  useEffect(() => {
-    if (isOpen) reposition();
-  }, [isOpen, reposition]);
-
-  const handleClose = useCallback(() => {
-    setIsOpen(false);
-    setSearchTerm("");
-  }, []);
-
-  // Close dropdown on outside click (check both trigger and portal panel)
-  useEffect(() => {
-    if (!isOpen) return;
-    const handleClickOutside = (e: MouseEvent) => {
-      const target = e.target as Node;
-      if (triggerRef.current?.contains(target) || panelRef.current?.contains(target)) {
-        return;
-      }
-      handleClose();
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [isOpen, handleClose]);
-
-  // Reposition on resize instead of closing (mobile keyboard / URL bar fire resize).
-  // On outside scroll, touch devices reposition; pointer devices close.
-  useEffect(() => {
-    if (!isOpen) return;
-    const handleScroll = (e: Event) => {
-      if (panelRef.current?.contains(e.target as Node)) return;
-      if (isTouchDevice) {
-        reposition();
-      } else {
-        handleClose();
-      }
-    };
-    window.addEventListener("resize", reposition);
-    document.addEventListener("scroll", handleScroll, true);
-    return () => {
-      window.removeEventListener("resize", reposition);
-      document.removeEventListener("scroll", handleScroll, true);
-    };
-  }, [isOpen, handleClose, isTouchDevice, reposition]);
-
-  // Skip autofocus on touch — the virtual keyboard would trigger a resize-close loop.
-  useEffect(() => {
-    if (isOpen && !isTouchDevice) {
-      requestAnimationFrame(() => inputRef.current?.focus());
-    }
-  }, [isOpen, isTouchDevice]);
-
-  // Community indicators (client-side filtered)
   const communityItems = useMemo(() => {
     const communityIds = selectedCommunities.map((c) => c.uid);
     const items = indicators
@@ -172,7 +96,6 @@ const CategorizedIndicatorDropdown = ({
     return items.filter((item) => item.title.toLowerCase().includes(lower));
   }, [indicators, selectedCommunities, searchTerm]);
 
-  // Unlinked indicators (from API search)
   const unlinkedItems = useMemo(
     () =>
       searchedUnlinked.map((indicator) => ({
@@ -187,7 +110,6 @@ const CategorizedIndicatorDropdown = ({
     [communityItems, unlinkedItems]
   );
 
-  // For the selected label, look in both the passed-in indicators and the API results
   const selectedLabel = useMemo(() => {
     const fromProps = indicators.find((ind) => ind.id === selected);
     if (fromProps) {
@@ -204,77 +126,74 @@ const CategorizedIndicatorDropdown = ({
     return "";
   }, [indicators, searchedUnlinked, selected]);
 
-  const handleSelect = useCallback(
-    (value: string) => {
-      onSelect(value);
-      setIsOpen(false);
-      setSearchTerm("");
-    },
-    [onSelect]
-  );
+  const handleSelect = (value: string) => {
+    onSelect(value);
+    setIsOpen(false);
+    setSearchTerm("");
+  };
 
-  const renderItem = useCallback(
-    (item: { value: string; title: string }) => (
-      <button
-        type="button"
+  const handleCreateNew = () => {
+    onCreateNew();
+    setIsOpen(false);
+    setSearchTerm("");
+  };
+
+  const renderItems = (items: { value: string; title: string }[]) =>
+    items.map((item) => (
+      <CommandItem
         key={item.value}
-        role="option"
-        aria-selected={item.value === selected}
-        onClick={() => handleSelect(item.value)}
+        value={item.value}
+        onSelect={() => handleSelect(item.value)}
         className={cn(
-          "w-full px-3 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-zinc-700",
-          item.value === selected
-            ? "bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300"
-            : "text-gray-900 dark:text-white"
+          "cursor-pointer",
+          item.value === selected &&
+            "bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300"
         )}
       >
         {item.title}
-      </button>
-    ),
-    [selected, handleSelect]
-  );
+      </CommandItem>
+    ));
 
-  const dropdownPanel = isOpen
-    ? createPortal(
-        <div
-          ref={panelRef}
-          style={{
-            position: "fixed",
-            top: panelPos.top,
-            left: panelPos.left,
-            width: panelPos.width,
-            maxWidth: 480,
-            zIndex: 9999,
-          }}
-          className="rounded-lg border border-gray-200 bg-white shadow-lg dark:bg-zinc-800 dark:border-zinc-700"
+  return (
+    <Popover
+      open={isOpen}
+      onOpenChange={(open) => {
+        setIsOpen(open);
+        if (!open) setSearchTerm("");
+      }}
+    >
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className={cn(
+            "w-full min-w-[200px] rounded-lg border bg-white px-3 py-1.5 text-left text-sm dark:bg-zinc-800 dark:text-white truncate",
+            "border-gray-200 dark:border-zinc-700",
+            "data-[state=open]:border-blue-500 data-[state=open]:ring-1 data-[state=open]:ring-blue-500",
+            selected ? "text-gray-900" : "text-gray-400 dark:text-zinc-500"
+          )}
         >
-          <div className="p-2 border-b border-gray-100 dark:border-zinc-700">
-            <input
-              ref={inputRef}
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Escape") handleClose();
-              }}
-              placeholder="Search indicators..."
-              className="w-full rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:outline-none dark:bg-zinc-900 dark:border-zinc-600 dark:text-white dark:placeholder-zinc-500"
-            />
-          </div>
-
-          <button
-            type="button"
-            onClick={() => {
-              onCreateNew();
-              setIsOpen(false);
-              setSearchTerm("");
-            }}
-            className="w-full px-3 py-2 text-left text-sm font-semibold text-brand-blue hover:bg-gray-100 dark:hover:bg-zinc-700 border-b border-gray-100 dark:border-zinc-700"
-          >
-            + Create New Metric
-          </button>
-
-          <div className="max-h-60 overflow-y-auto py-1" role="listbox">
+          {selectedLabel || "Select indicator..."}
+        </button>
+      </PopoverTrigger>
+      <PopoverContent
+        align="start"
+        sideOffset={4}
+        className="w-[var(--radix-popover-trigger-width)] min-w-[340px] max-w-[480px] p-0"
+      >
+        <Command shouldFilter={false}>
+          <CommandInput
+            value={searchTerm}
+            onValueChange={setSearchTerm}
+            placeholder="Search indicators..."
+          />
+          <CommandList>
+            <CommandItem
+              value="__create_new"
+              onSelect={handleCreateNew}
+              className="cursor-pointer border-b border-gray-100 font-semibold text-brand-blue dark:border-zinc-700"
+            >
+              + Create New Metric
+            </CommandItem>
             {isFetching && allItems.length === 0 ? (
               <div className="px-3 py-2 text-sm text-gray-500 dark:text-zinc-400">Searching...</div>
             ) : allItems.length === 0 ? (
@@ -284,20 +203,10 @@ const CategorizedIndicatorDropdown = ({
             ) : (
               <>
                 {communityItems.length > 0 && (
-                  <>
-                    <div className="px-3 py-1 text-xs font-medium text-gray-400 dark:text-zinc-500 uppercase tracking-wider">
-                      Community
-                    </div>
-                    {communityItems.map(renderItem)}
-                  </>
+                  <CommandGroup heading="Community">{renderItems(communityItems)}</CommandGroup>
                 )}
                 {unlinkedItems.length > 0 && (
-                  <>
-                    <div className="px-3 py-1 text-xs font-medium text-gray-400 dark:text-zinc-500 uppercase tracking-wider">
-                      Global
-                    </div>
-                    {unlinkedItems.map(renderItem)}
-                  </>
+                  <CommandGroup heading="Global">{renderItems(unlinkedItems)}</CommandGroup>
                 )}
                 {isFetching && (
                   <div className="px-3 py-1.5 text-xs text-gray-400 dark:text-zinc-500 text-center">
@@ -306,30 +215,10 @@ const CategorizedIndicatorDropdown = ({
                 )}
               </>
             )}
-          </div>
-        </div>,
-        document.body
-      )
-    : null;
-
-  return (
-    <div className="min-w-[200px]">
-      <button
-        ref={triggerRef}
-        type="button"
-        aria-haspopup="listbox"
-        aria-expanded={isOpen}
-        onClick={() => setIsOpen((prev) => !prev)}
-        className={cn(
-          "w-full rounded-lg border bg-white px-3 py-1.5 text-left text-sm dark:bg-zinc-800 dark:text-white truncate",
-          isOpen ? "border-blue-500 ring-1 ring-blue-500" : "border-gray-200 dark:border-zinc-700",
-          selected ? "text-gray-900" : "text-gray-400 dark:text-zinc-500"
-        )}
-      >
-        {selectedLabel || "Select indicator..."}
-      </button>
-      {dropdownPanel}
-    </div>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
   );
 };
 
