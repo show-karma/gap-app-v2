@@ -7,6 +7,7 @@ import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { z } from "zod";
 import { KarmaProfileLinkInput } from "@/components/FundingPlatform/FormFields/KarmaProfileLinkInput";
+import { MetricInput } from "@/components/FundingPlatform/FormFields/MetricInput";
 import { MilestoneInput } from "@/components/FundingPlatform/FormFields/MilestoneInput";
 import { Button } from "@/components/Utilities/Button";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
@@ -318,6 +319,44 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
           fieldSchema = milestoneArraySchema;
           break;
         }
+        case "metric": {
+          // Define metric object schema (all four sub-fields required per entry)
+          const metricObjectSchema = z.object({
+            metric: z.string().min(1, "Metric is required"),
+            dataSource: z.string().min(1, "Data source is required"),
+            howItsMeasured: z.string().min(1, "How it's measured is required"),
+            target: z.string().min(1, "Target is required"),
+          });
+
+          let metricArraySchema: z.ZodType = z.array(metricObjectSchema);
+
+          if (field.required) {
+            if (field.validation?.minMetrics) {
+              metricArraySchema = (metricArraySchema as z.ZodArray<any>).min(
+                field.validation.minMetrics,
+                `Please add at least ${field.validation.minMetrics} metric(s)`
+              );
+            } else {
+              metricArraySchema = (metricArraySchema as z.ZodArray<any>).min(
+                1,
+                `${field.label} is required`
+              );
+            }
+            if (field.validation?.maxMetrics) {
+              metricArraySchema = (metricArraySchema as z.ZodArray<any>).max(
+                field.validation.maxMetrics,
+                `Maximum ${field.validation.maxMetrics} metric(s) allowed`
+              );
+            }
+          } else {
+            metricArraySchema = (metricArraySchema as z.ZodArray<any>)
+              .optional()
+              .or(z.array(metricObjectSchema).length(0));
+          }
+
+          fieldSchema = metricArraySchema;
+          break;
+        }
         case "karma_profile_link": {
           // Karma profile link field stores a project UID (0x followed by 64 hex chars)
           if (field.required) {
@@ -377,6 +416,8 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
       if (field.type === "checkbox") {
         defaults[fieldKey] = [];
       } else if (field.type === "milestone") {
+        defaults[fieldKey] = [];
+      } else if (field.type === "metric") {
         defaults[fieldKey] = [];
       } else if (field.type === "number") {
         // Number fields should default to undefined, not empty string
@@ -532,6 +573,9 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
             } else if (field.type === "milestone") {
               // Handle milestone fields (arrays of objects)
               formData[fieldKey] = Array.isArray(value) ? value : [];
+            } else if (field.type === "metric") {
+              // Handle metric fields (arrays of objects)
+              formData[fieldKey] = Array.isArray(value) ? value : [];
             } else if (field.type === "number") {
               // Handle number fields - convert to number, preserve undefined/null
               if (value === null || value === undefined || value === "") {
@@ -562,6 +606,8 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
             if (field.type === "checkbox") {
               formData[fieldKey] = [];
             } else if (field.type === "milestone") {
+              formData[fieldKey] = [];
+            } else if (field.type === "metric") {
               formData[fieldKey] = [];
             } else if (field.type === "number") {
               formData[fieldKey] = undefined;
@@ -840,6 +886,18 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
       case "milestone":
         return (
           <MilestoneInput
+            key={index}
+            field={field}
+            control={control}
+            fieldKey={fieldKey}
+            error={error}
+            isLoading={isLoading || submitting}
+          />
+        );
+
+      case "metric":
+        return (
+          <MetricInput
             key={index}
             field={field}
             control={control}

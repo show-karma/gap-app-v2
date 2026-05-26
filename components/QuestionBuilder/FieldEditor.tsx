@@ -25,6 +25,8 @@ const fieldSchema = z.object({
       message: z.string().optional(),
       maxMilestones: z.number().optional(),
       minMilestones: z.number().optional(),
+      maxMetrics: z.number().optional(),
+      minMetrics: z.number().optional(),
     })
     .optional(),
   // AI evaluation configuration
@@ -251,6 +253,75 @@ export function FieldEditor({
           </>
         )}
 
+        {/* Metric sub-fields - shown only for metric type (preview, applicants fill these per entry) */}
+        {field.type === "metric" && (
+          <>
+            <div>
+              <label
+                htmlFor="metric-name"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+              >
+                Metric <span className="text-red-500">*</span>
+              </label>
+              <input
+                id="metric-name"
+                type="text"
+                disabled
+                placeholder="e.g., Monthly active users"
+                className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-gray-400 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-500 dark:placeholder-zinc-600 cursor-not-allowed"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="metric-data-source"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+              >
+                Data Source <span className="text-red-500">*</span>
+              </label>
+              <input
+                id="metric-data-source"
+                type="text"
+                disabled
+                placeholder="e.g., Dune Analytics dashboard"
+                className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-gray-400 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-500 dark:placeholder-zinc-600 cursor-not-allowed"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="metric-how-measured"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+              >
+                How It's Measured <span className="text-red-500">*</span>
+              </label>
+              <textarea
+                id="metric-how-measured"
+                disabled
+                placeholder="e.g., Count of unique wallet addresses interacting with the contract each month"
+                rows={3}
+                className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-gray-400 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-500 dark:placeholder-zinc-600 cursor-not-allowed resize-none"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="metric-target"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+              >
+                Target <span className="text-red-500">*</span>
+              </label>
+              <input
+                id="metric-target"
+                type="text"
+                disabled
+                placeholder="e.g., 10,000 monthly active users by Q4"
+                className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-gray-400 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-500 dark:placeholder-zinc-600 cursor-not-allowed"
+              />
+            </div>
+          </>
+        )}
+
         {!isSectionHeader && (
           <div className="space-y-3">
             <div className="flex items-center">
@@ -407,6 +478,54 @@ export function FieldEditor({
             </div>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
               Set limits for how many milestones users can add. Leave empty for no limits.
+            </p>
+          </div>
+        )}
+
+        {/* Metric-specific validation */}
+        {field.type === "metric" && (
+          <div>
+            <div className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Metric Limits
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label
+                  htmlFor="min-metrics"
+                  className="block text-xs text-gray-600 dark:text-gray-400 mb-1"
+                >
+                  Minimum Metrics
+                </label>
+                <input
+                  id="min-metrics"
+                  {...register("validation.minMetrics", { valueAsNumber: true })}
+                  type="number"
+                  min="0"
+                  disabled={readOnly}
+                  className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100 disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
+                  placeholder="0"
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="max-metrics"
+                  className="block text-xs text-gray-600 dark:text-gray-400 mb-1"
+                >
+                  Maximum Metrics
+                </label>
+                <input
+                  id="max-metrics"
+                  {...register("validation.maxMetrics", { valueAsNumber: true })}
+                  type="number"
+                  min="1"
+                  disabled={readOnly}
+                  className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100 disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
+                  placeholder="10"
+                />
+              </div>
+            </div>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              Set limits for how many metrics users can add. Leave empty for no limits.
             </p>
           </div>
         )}

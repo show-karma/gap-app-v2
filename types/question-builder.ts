@@ -11,6 +11,7 @@ export interface FormField {
     | "url"
     | "date"
     | "milestone"
+    | "metric"
     | "karma_profile_link"
     | "section_header";
   label: string;
@@ -25,6 +26,8 @@ export interface FormField {
     message?: string;
     maxMilestones?: number;
     minMilestones?: number;
+    maxMetrics?: number;
+    minMetrics?: number;
   };
   description?: string;
   // AI evaluation configuration

@@ -11,6 +11,7 @@ import {
 } from "@/src/features/applications/lib/milestone-status";
 import type {
   IFundingApplication,
+  IMetricData,
   IMilestoneData,
   ProgramWithFormSchema,
 } from "@/types/funding-platform";
@@ -50,6 +51,51 @@ export const ApplicationDataView: FC<ApplicationDataViewProps> = ({
       // Check if it's an array of milestones
       const isMilestoneArray =
         value.length > 0 && typeof value[0] === "object" && "title" in value[0];
+
+      // Check if it's an array of metrics
+      const isMetricArray =
+        value.length > 0 &&
+        typeof value[0] === "object" &&
+        value[0] !== null &&
+        "metric" in value[0] &&
+        "target" in value[0];
+
+      if (isMetricArray) {
+        return (
+          <div className="space-y-3">
+            {value.map((metric: IMetricData, index) => (
+              <div
+                key={index}
+                className="bg-gray-50 dark:bg-zinc-700/50 rounded-lg p-4 border border-gray-200 dark:border-gray-600"
+              >
+                <div className="space-y-2">
+                  <h5 className="font-medium text-gray-900 dark:text-gray-100">
+                    {metric.metric || `Metric ${index + 1}`}
+                  </h5>
+                  {metric.target && (
+                    <p className="text-sm text-gray-700 dark:text-gray-300">
+                      <span className="font-medium">Target:</span> {metric.target}
+                    </p>
+                  )}
+                  {metric.dataSource && (
+                    <p className="text-sm text-gray-700 dark:text-gray-300">
+                      <span className="font-medium">Data Source:</span> {metric.dataSource}
+                    </p>
+                  )}
+                  {metric.howItsMeasured && (
+                    <div className="text-sm text-gray-600 dark:text-gray-400">
+                      <span className="font-medium text-gray-700 dark:text-gray-300">
+                        How It's Measured:
+                      </span>{" "}
+                      {metric.howItsMeasured}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        );
+      }
 
       if (isMilestoneArray) {
         return (

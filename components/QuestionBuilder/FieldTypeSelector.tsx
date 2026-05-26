@@ -81,6 +81,12 @@ export const fieldTypes = [
     description:
       "Dynamic milestone management with title, description, due dates, funding requested, and completion criteria",
   },
+  {
+    type: "metric" as const,
+    label: "Metrics",
+    icon: "📊",
+    description: "Repeatable metrics, each with a data source, how it's measured, and a target",
+  },
 ];
 
 export function FieldTypeSelector({

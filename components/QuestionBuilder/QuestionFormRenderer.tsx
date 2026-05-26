@@ -119,6 +119,9 @@ export function QuestionFormRenderer({
       case "milestone":
         return <MilestonePreview field={field} isSubmitting={isSubmitting} />;
 
+      case "metric":
+        return <MetricPreview field={field} isSubmitting={isSubmitting} />;
+
       default:
         return <div>Unsupported field type: {field.type}</div>;
     }
@@ -299,6 +302,160 @@ export function QuestionFormRenderer({
         {minMilestones > 0 && milestones.length < minMilestones && (
           <p className="text-sm text-yellow-600 dark:text-yellow-400">
             Please add at least {minMilestones} milestone{minMilestones > 1 ? "s" : ""}
+          </p>
+        )}
+      </div>
+    );
+  }
+
+  // Simple Metric Preview Component
+  function MetricPreview({ field, isSubmitting }: { field: any; isSubmitting: boolean }) {
+    const [metrics, setMetrics] = useState<
+      Array<{
+        metric: string;
+        dataSource: string;
+        howItsMeasured: string;
+        target: string;
+      }>
+    >([]);
+
+    const maxMetrics = field.validation?.maxMetrics || 10;
+    const minMetrics = field.validation?.minMetrics || 0;
+
+    const addMetric = () => {
+      if (metrics.length < maxMetrics) {
+        setMetrics([...metrics, { metric: "", dataSource: "", howItsMeasured: "", target: "" }]);
+      }
+    };
+
+    const removeMetric = (index: number) => {
+      if (metrics.length > minMetrics) {
+        setMetrics(metrics.filter((_, i) => i !== index));
+      }
+    };
+
+    const updateMetric = (index: number, key: string, value: string) => {
+      const updated = [...metrics];
+      updated[index] = { ...updated[index], [key]: value };
+      setMetrics(updated);
+    };
+
+    const inputClass =
+      "w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100";
+
+    return (
+      <div className="space-y-4">
+        {metrics.map((metric, index) => (
+          <div
+            key={index}
+            className="bg-gray-50 dark:bg-zinc-900 rounded-lg p-4 border border-gray-200 dark:border-gray-700"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h4 className="text-base font-semibold text-gray-900 dark:text-white">
+                Metric {index + 1}
+              </h4>
+              {metrics.length > minMetrics && (
+                <button
+                  type="button"
+                  onClick={() => removeMetric(index)}
+                  disabled={isSubmitting}
+                  className="text-red-500 hover:text-red-700 text-sm"
+                >
+                  Remove
+                </button>
+              )}
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <label
+                  htmlFor={`metric-name-${index}`}
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                >
+                  Metric *
+                </label>
+                <input
+                  id={`metric-name-${index}`}
+                  type="text"
+                  placeholder="e.g., Monthly active users"
+                  value={metric.metric}
+                  onChange={(e) => updateMetric(index, "metric", e.target.value)}
+                  disabled={isSubmitting}
+                  className={inputClass}
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor={`metric-data-source-${index}`}
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                >
+                  Data Source *
+                </label>
+                <input
+                  id={`metric-data-source-${index}`}
+                  type="text"
+                  placeholder="e.g., Dune Analytics dashboard"
+                  value={metric.dataSource}
+                  onChange={(e) => updateMetric(index, "dataSource", e.target.value)}
+                  disabled={isSubmitting}
+                  className={inputClass}
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor={`metric-how-measured-${index}`}
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                >
+                  How It's Measured *
+                </label>
+                <textarea
+                  id={`metric-how-measured-${index}`}
+                  placeholder="e.g., Count of unique wallet addresses interacting with the contract each month"
+                  value={metric.howItsMeasured}
+                  onChange={(e) => updateMetric(index, "howItsMeasured", e.target.value)}
+                  disabled={isSubmitting}
+                  rows={3}
+                  className={inputClass}
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor={`metric-target-${index}`}
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                >
+                  Target *
+                </label>
+                <input
+                  id={`metric-target-${index}`}
+                  type="text"
+                  placeholder="e.g., 10,000 monthly active users by Q4"
+                  value={metric.target}
+                  onChange={(e) => updateMetric(index, "target", e.target.value)}
+                  disabled={isSubmitting}
+                  className={inputClass}
+                />
+              </div>
+            </div>
+          </div>
+        ))}
+
+        {metrics.length < maxMetrics && (
+          <button
+            type="button"
+            onClick={addMetric}
+            disabled={isSubmitting}
+            className="w-full py-2 px-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-gray-600 dark:text-gray-400 hover:border-blue-500 hover:text-blue-500 transition-colors"
+          >
+            + Add Metric
+          </button>
+        )}
+
+        {minMetrics > 0 && metrics.length < minMetrics && (
+          <p className="text-sm text-yellow-600 dark:text-yellow-400">
+            Please add at least {minMetrics} metric{minMetrics > 1 ? "s" : ""}
           </p>
         )}
       </div>

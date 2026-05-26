@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import type { ApplicationQuestion } from "@/types/whitelabel-entities";
 import type { ApplicationFormData } from "../types";
 import { KarmaProfileLinkInput } from "./KarmaProfileLinkInput";
+import { MetricFieldArray } from "./MetricFieldArray";
 import { MilestoneFieldArray } from "./MilestoneFieldArray";
 
 interface ApplicationFormFieldProps {
@@ -269,6 +270,17 @@ export function ApplicationFormField({
           case "milestone":
             return (
               <MilestoneFieldArray
+                control={control}
+                name={question.id}
+                question={question}
+                disabled={disabled}
+                trigger={trigger}
+              />
+            );
+
+          case "metric":
+            return (
+              <MetricFieldArray
                 control={control}
                 name={question.id}
                 question={question}

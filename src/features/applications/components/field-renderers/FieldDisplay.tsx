@@ -1,6 +1,7 @@
 "use client";
 
-import type { MilestoneData } from "@/types/whitelabel-entities";
+import type { MetricData, MilestoneData } from "@/types/whitelabel-entities";
+import { MetricRenderer } from "./MetricRenderer";
 import { MilestoneRenderer, ObjectArrayRenderer, SimpleArrayRenderer } from "./MilestoneRenderer";
 import {
   BooleanRenderer,
@@ -29,6 +30,17 @@ function isMilestoneArray(
     typeof value[0] === "object" &&
     value[0] !== null &&
     "title" in value[0]
+  );
+}
+
+function isMetricArray(value: unknown): value is Array<{ metric: string; [key: string]: unknown }> {
+  return (
+    Array.isArray(value) &&
+    value.length > 0 &&
+    typeof value[0] === "object" &&
+    value[0] !== null &&
+    "metric" in value[0] &&
+    "target" in value[0]
   );
 }
 
@@ -80,6 +92,10 @@ export function FieldDisplay({
           referenceNumber={referenceNumber}
         />
       );
+    }
+
+    if (isMetricArray(value)) {
+      return <MetricRenderer label={label} value={value as unknown as MetricData[]} />;
     }
 
     if (isObjectArray(value)) {
