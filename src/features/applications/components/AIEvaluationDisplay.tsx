@@ -78,7 +78,10 @@ function renderValue(value: unknown, depth = 0): React.ReactNode {
     return (
       <div className={depth > 0 ? "ml-4" : ""}>
         {value.map((item, index) => (
-          <div key={index} className="flex items-start gap-2 my-1">
+          <div
+            key={`${depth}-${typeof item === "string" || typeof item === "number" || typeof item === "boolean" ? String(item) : index}`}
+            className="flex items-start gap-2 my-1"
+          >
             <span className="text-muted-foreground select-none">&bull;</span>
             {renderValue(item, depth + 1)}
           </div>
@@ -324,7 +327,7 @@ export function AIEvaluationDisplay({
             data-testid="ai-evaluation-loading"
           >
             <Loader2 className="w-8 h-8 animate-spin mb-2 text-muted-foreground" />
-            <p className="text-sm text-muted-foreground">Analyzing your application...</p>
+            <p className="text-sm text-muted-foreground">Analyzing your application…</p>
           </div>
         ) : evaluation ? (
           (() => {
