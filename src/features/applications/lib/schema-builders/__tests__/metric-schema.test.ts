@@ -25,6 +25,17 @@ describe("buildMetricSchema — required sub-fields", () => {
     expect(result.success).toBe(true);
   });
 
+  it("rejects whitespace-only sub-field values", () => {
+    const schema = buildMetricSchema(baseQuestion);
+
+    const result = schema.safeParse([{ ...validMetric, metric: "   " }]);
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(JSON.stringify(result.error.issues)).toContain("Metric is required");
+    }
+  });
+
   it("rejects a metric with empty dataSource", () => {
     const schema = buildMetricSchema(baseQuestion);
 

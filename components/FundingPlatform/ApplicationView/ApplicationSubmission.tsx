@@ -323,10 +323,10 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
         case "metric": {
           // Define metric object schema (all four sub-fields required per entry)
           const metricObjectSchema = z.object({
-            metric: z.string().min(1, "Metric is required"),
-            dataSource: z.string().min(1, "Data source is required"),
-            howItsMeasured: z.string().min(1, "How it's measured is required"),
-            target: z.string().min(1, "Target is required"),
+            metric: z.string().trim().min(1, "Metric is required"),
+            dataSource: z.string().trim().min(1, "Data source is required"),
+            howItsMeasured: z.string().trim().min(1, "How it's measured is required"),
+            target: z.string().trim().min(1, "Target is required"),
           });
 
           let metricArray = z.array(metricObjectSchema);
