@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import type { ApplicationFormData } from "../types";
+import type { ApplicationFormData } from "@/features/applications/types";
 
 interface MetricItemProps {
   index: number;

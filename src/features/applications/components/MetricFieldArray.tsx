@@ -6,8 +6,8 @@ import type { Control, FieldPath, UseFormTrigger } from "react-hook-form";
 import { Controller, useFieldArray } from "react-hook-form";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { Button } from "@/components/ui/button";
+import type { ApplicationFormData } from "@/features/applications/types";
 import type { ApplicationQuestion, MetricData } from "@/types/whitelabel-entities";
-import type { ApplicationFormData } from "../types";
 import { MetricItem } from "./MetricItem";
 
 interface MetricFieldArrayProps {
