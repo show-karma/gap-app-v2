@@ -1,7 +1,7 @@
 "use client";
 
 import * as Sentry from "@sentry/nextjs";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -10,6 +10,8 @@ import type { ApplicationQuestion, IFormSchema } from "@/types/whitelabel-entiti
 import { cn } from "@/utilities/tailwind";
 import { useApplicationForm } from "../hooks/use-application-form";
 import { useFormDraftPersistence } from "../hooks/use-form-draft-persistence";
+import { useFormWatchEffect } from "../hooks/use-form-watch-effect";
+import { useRestoreAndAutoSubmit } from "../hooks/use-restore-and-auto-submit";
 import type { ApplicationFormData } from "../types";
 import { AIEvaluationSidebar } from "./AIEvaluationSidebar";
 import { ApplicationFormLoginDialog } from "./ApplicationFormLoginDialog";
@@ -94,18 +96,13 @@ export function ApplicationForm({
   const [hasScored, setHasScored] = useState(false);
   const [isScoring, setIsScoring] = useState(false);
 
-  useEffect(() => {
-    const { unsubscribe } = watch((value) => {
-      const currentFormData = value as Partial<ApplicationFormData>;
-      onDataChange?.(currentFormData);
-      if (authenticated) return;
-      schedulePersistOrClear(currentFormData);
-    });
-    return () => {
-      flushPendingDraftPersistence();
-      unsubscribe();
-    };
-  }, [watch, onDataChange, authenticated, schedulePersistOrClear, flushPendingDraftPersistence]);
+  useFormWatchEffect({
+    watch,
+    authenticated,
+    onDataChange,
+    schedulePersistOrClear,
+    flushPendingDraftPersistence,
+  });
 
   const scrollToFirstError = () => {
     const errorFieldIndex = questions.findIndex((q) => formState.errors[q.id]);
@@ -213,24 +210,14 @@ export function ApplicationForm({
     }
   }, [programId]);
 
-  useEffect(() => {
-    const persistedState = readPersistedFormStateForAuth();
-    if (persistedState) {
-      setFormData(persistedState.formData);
-      pendingSubmitRef.current = persistedState.shouldAutoSubmit;
-    }
-    if (authenticated && pendingSubmitRef.current) {
-      pendingSubmitRef.current = false;
-      setShowLoginPrompt(false);
-      attemptAutoSubmit();
-    }
-  }, [
+  useRestoreAndAutoSubmit({
+    authenticated,
+    pendingSubmitRef,
     readPersistedFormStateForAuth,
     setFormData,
-    authenticated,
+    setShowLoginPrompt,
     attemptAutoSubmit,
-    pendingSubmitRef,
-  ]);
+  });
 
   const handleLogin = async () => {
     try {
