@@ -77,15 +77,21 @@ function RenderedValue({ value, depth = 0 }: { value: unknown; depth?: number })
     if (value.length === 0) return <span className="text-muted-foreground">[]</span>;
     return (
       <div className={depth > 0 ? "ml-4" : ""}>
-        {value.map((item, index) => (
-          <div
-            key={`${depth}-${typeof item === "string" || typeof item === "number" || typeof item === "boolean" ? String(item) : index}`}
-            className="flex items-start gap-2 my-1"
-          >
-            <span className="text-muted-foreground select-none">&bull;</span>
-            <RenderedValue value={item} depth={depth + 1} />
-          </div>
-        ))}
+        {value.map((item, index) => {
+          const primitiveSuffix =
+            typeof item === "string" || typeof item === "number" || typeof item === "boolean"
+              ? String(item)
+              : "obj";
+          return (
+            <div
+              key={`${depth}-${index}-${primitiveSuffix}`}
+              className="flex items-start gap-2 my-1"
+            >
+              <span className="text-muted-foreground select-none">&bull;</span>
+              <RenderedValue value={item} depth={depth + 1} />
+            </div>
+          );
+        })}
       </div>
     );
   }
@@ -116,7 +122,8 @@ function EvaluationDisplay({ data, programName }: { data: GenericJSON; programNa
   const evalData = data;
   const rawScore = evalData.final_score ?? evalData.score;
   const parsedScore = rawScore == null ? null : Number(rawScore);
-  const hasValidScore = parsedScore !== null && Number.isFinite(parsedScore);
+  const hasValidScore =
+    parsedScore !== null && Number.isFinite(parsedScore) && parsedScore >= 0 && parsedScore <= 10;
   const hasMalformedScore = parsedScore !== null && !hasValidScore;
   if (hasMalformedScore) {
     logAIEvaluationDataIssue("ai-evaluation-malformed-score", {

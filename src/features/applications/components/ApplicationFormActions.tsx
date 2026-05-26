@@ -44,12 +44,14 @@ export function ApplicationFormActions({
               >
                 Get AI Feedback
               </Button>
-              <span
-                className="flex items-center font-bold justify-center w-5 h-5 rounded-full border border-gray-400 dark:border-gray-600 text-gray-600 dark:text-gray-400 text-xs cursor-help"
+              <button
+                type="button"
+                aria-label="You'll see feedback and can make changes before submitting."
                 title="You'll see feedback and can make changes before submitting."
+                className="flex items-center font-bold justify-center w-5 h-5 rounded-full border border-gray-400 dark:border-gray-600 text-gray-600 dark:text-gray-400 text-xs cursor-help focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1"
               >
                 ?
-              </span>
+              </button>
             </div>
           )}
 

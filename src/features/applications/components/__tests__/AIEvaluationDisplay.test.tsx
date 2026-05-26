@@ -80,6 +80,17 @@ describe("AIEvaluationDisplay", () => {
     );
   });
 
+  it("treats out-of-range numeric final_score as malformed (renders Score unavailable, logs to Sentry)", () => {
+    render(<AIEvaluationDisplay evaluation={{ final_score: 42 }} isLoading={false} isEnabled />);
+
+    expect(screen.queryByText(/Score: /)).not.toBeInTheDocument();
+    expect(screen.getByTestId("ai-evaluation-score-unavailable")).toBeInTheDocument();
+    expect(Sentry.captureMessage).toHaveBeenCalledWith(
+      expect.stringContaining("ai-evaluation-malformed-score"),
+      expect.objectContaining({ level: "warning" })
+    );
+  });
+
   it("treats null final_score as missing (no score block, no Score unavailable banner)", () => {
     render(<AIEvaluationDisplay evaluation={{ final_score: null }} isLoading={false} isEnabled />);
 
