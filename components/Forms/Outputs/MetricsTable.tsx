@@ -318,10 +318,10 @@ export const MetricsTable = ({
                 <th className="px-4 py-3 text-left text-sm font-bold text-gray-700 dark:text-zinc-300 min-w-[200px]">
                   Output
                 </th>
-                <th className="px-4 py-3 text-left text-sm font-bold text-gray-700 dark:text-zinc-300">
+                <th className="px-4 py-3 text-left text-sm font-bold text-gray-700 dark:text-zinc-300 min-w-[400px]">
                   Value
                 </th>
-                <th className="px-4 py-3 text-left text-sm font-bold text-gray-700 dark:text-zinc-300">
+                <th className="px-4 py-3 text-left text-sm font-bold text-gray-700 dark:text-zinc-300 min-w-[400px]">
                   Proof/Link
                 </th>
                 <th className="px-4 py-3 text-left text-sm font-bold text-gray-700 dark:text-zinc-300 w-16">
