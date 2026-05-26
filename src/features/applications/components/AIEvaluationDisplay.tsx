@@ -430,160 +430,100 @@ function EvaluationDisplay({ data, programName }: { data: GenericJSON; programNa
     }
   }
 
-  const renderedFields = new Set<string>();
+  const showStatusChip = !isGrowthGrants && Boolean(evalData.evaluation_status);
+  const hasImprovementRecommendations = improvementRecommendations.length > 0;
+  const renderedFields = new Set<string>(["title"]);
+  if (hasMalformedScore || hasValidScore) {
+    renderedFields.add("final_score");
+    renderedFields.add("score");
+  }
+  if (showStatusChip) renderedFields.add("evaluation_status");
+  if (evalData.decision) renderedFields.add("decision");
+  if (evalData.disqualification_reason) renderedFields.add("disqualification_reason");
+  if (evalData.evaluation_summary) renderedFields.add("evaluation_summary");
+  if (hasImprovementRecommendations) renderedFields.add("improvement_recommendations");
+  if (evalData.additional_notes) renderedFields.add("additional_notes");
+  if (evalData.reviewer_confidence) renderedFields.add("reviewer_confidence");
+  if (evalData.feedback) renderedFields.add("feedback");
+  if (evalData.applicant_guidance) renderedFields.add("applicant_guidance");
 
   return (
     <div className="space-y-4">
       {hasMalformedScore && (
-        <>
-          <div
-            className="rounded-md border border-muted-foreground/20 bg-muted/40 px-3 py-2 text-xs text-muted-foreground"
-            data-testid="ai-evaluation-score-unavailable"
-          >
-            Score unavailable — AI returned an unexpected value.
-          </div>
-          {(() => {
-            renderedFields.add("final_score");
-            renderedFields.add("score");
-            return null;
-          })()}
-        </>
+        <div
+          className="rounded-md border border-muted-foreground/20 bg-muted/40 px-3 py-2 text-xs text-muted-foreground"
+          data-testid="ai-evaluation-score-unavailable"
+        >
+          Score unavailable. AI returned an unexpected value.
+        </div>
       )}
-      {hasValidScore && (
-        <>
-          <ScoreDisplay score={parsedScore} isGrowthGrants={isGrowthGrants} />
-          {(() => {
-            renderedFields.add("final_score");
-            renderedFields.add("score");
-            return null;
-          })()}
-        </>
-      )}
-      {!isGrowthGrants && Boolean(evalData.evaluation_status) && (
-        <>
-          <div className="mt-2">
-            <StatusChip status={String(evalData.evaluation_status)} />
-          </div>
-          {(() => {
-            renderedFields.add("evaluation_status");
-            return null;
-          })()}
-        </>
+      {hasValidScore && <ScoreDisplay score={parsedScore} isGrowthGrants={isGrowthGrants} />}
+      {showStatusChip && (
+        <div className="mt-2">
+          <StatusChip status={String(evalData.evaluation_status)} />
+        </div>
       )}
 
       {Boolean(evalData.decision) && (
-        <>
-          <DecisionDisplay decision={String(evalData.decision)} isAuditGrants={isAuditGrants} />
-          {(() => {
-            renderedFields.add("decision");
-            return null;
-          })()}
-        </>
+        <DecisionDisplay decision={String(evalData.decision)} isAuditGrants={isAuditGrants} />
       )}
 
       {Boolean(evalData.disqualification_reason) && (
-        <>
-          <DisqualificationReason reason={String(evalData.disqualification_reason)} />
-          {(() => {
-            renderedFields.add("disqualification_reason");
-            return null;
-          })()}
-        </>
+        <DisqualificationReason reason={String(evalData.disqualification_reason)} />
       )}
 
       {Boolean(evalData.evaluation_summary) && (
-        <>
-          <EvaluationSummary
-            summary={
-              evalData.evaluation_summary as {
-                strengths?: string[];
-                concerns?: string[];
-                risk_factors?: string[];
-              }
+        <EvaluationSummary
+          summary={
+            evalData.evaluation_summary as {
+              strengths?: string[];
+              concerns?: string[];
+              risk_factors?: string[];
             }
-          />
-          {(() => {
-            renderedFields.add("evaluation_summary");
-            return null;
-          })()}
-        </>
+          }
+        />
       )}
 
-      {improvementRecommendations.length ? (
-        <>
-          <ImprovementRecommendations recommendations={improvementRecommendations} />
-          {(() => {
-            renderedFields.add("improvement_recommendations");
-            return null;
-          })()}
-        </>
-      ) : null}
+      {hasImprovementRecommendations && (
+        <ImprovementRecommendations recommendations={improvementRecommendations} />
+      )}
 
       {Boolean(evalData.additional_notes) && (
-        <>
-          <div className="bg-zinc-100 dark:bg-zinc-800 rounded-lg p-3">
-            <h4 className="text-sm font-medium mb-2">Additional Notes</h4>
-            <p className="text-sm text-zinc-700 dark:text-zinc-300">
-              {String(evalData.additional_notes)}
-            </p>
-          </div>
-          {(() => {
-            renderedFields.add("additional_notes");
-            return null;
-          })()}
-        </>
+        <div className="bg-zinc-100 dark:bg-zinc-800 rounded-lg p-3">
+          <h4 className="text-sm font-medium mb-2">Additional Notes</h4>
+          <p className="text-sm text-zinc-700 dark:text-zinc-300">
+            {String(evalData.additional_notes)}
+          </p>
+        </div>
       )}
 
       {Boolean(evalData.reviewer_confidence) && (
-        <>
-          <p className="text-xs text-muted-foreground">
-            Reviewer Confidence:{" "}
-            {String(evalData.reviewer_confidence).charAt(0).toUpperCase() +
-              String(evalData.reviewer_confidence).slice(1)}
-          </p>
-          {(() => {
-            renderedFields.add("reviewer_confidence");
-            return null;
-          })()}
-        </>
+        <p className="text-xs text-muted-foreground">
+          Reviewer Confidence:{" "}
+          {String(evalData.reviewer_confidence).charAt(0).toUpperCase() +
+            String(evalData.reviewer_confidence).slice(1)}
+        </p>
       )}
 
       {Boolean(evalData.feedback) && (
-        <>
-          <div className="rounded-lg border p-3">
-            <h4 className="text-sm font-medium mb-2">Feedback</h4>
-            <div className="text-sm text-zinc-700 dark:text-zinc-300 whitespace-pre-wrap leading-relaxed">
-              {String(evalData.feedback)}
-            </div>
+        <div className="rounded-lg border p-3">
+          <h4 className="text-sm font-medium mb-2">Feedback</h4>
+          <div className="text-sm text-zinc-700 dark:text-zinc-300 whitespace-pre-wrap leading-relaxed">
+            {String(evalData.feedback)}
           </div>
-          {(() => {
-            renderedFields.add("feedback");
-            return null;
-          })()}
-        </>
+        </div>
       )}
 
       {Boolean(evalData.applicant_guidance) && (
-        <>
-          <div className="rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20 p-3">
-            <h4 className="text-sm font-medium mb-2 text-blue-700 dark:text-blue-400">
-              Applicant Guidance
-            </h4>
-            <p className="text-sm text-blue-700 dark:text-blue-300 leading-relaxed">
-              {String(evalData.applicant_guidance)}
-            </p>
-          </div>
-          {(() => {
-            renderedFields.add("applicant_guidance");
-            return null;
-          })()}
-        </>
+        <div className="rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20 p-3">
+          <h4 className="text-sm font-medium mb-2 text-blue-700 dark:text-blue-400">
+            Applicant Guidance
+          </h4>
+          <p className="text-sm text-blue-700 dark:text-blue-300 leading-relaxed">
+            {String(evalData.applicant_guidance)}
+          </p>
+        </div>
       )}
-
-      {(() => {
-        renderedFields.add("title");
-        return null;
-      })()}
 
       <div className="space-y-2">
         {Object.entries(evalData).map(([key, value]) => {
