@@ -2,7 +2,7 @@
 
 import * as Sentry from "@sentry/nextjs";
 import { Info } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,36 +18,10 @@ import { useRealTimeAIEvaluation } from "@/hooks/useRealTimeAIEvaluation";
 import type { ApplicationQuestion, IFormSchema } from "@/types/whitelabel-entities";
 import { cn } from "@/utilities/tailwind";
 import { useApplicationForm } from "../hooks/use-application-form";
+import { useFormDraftPersistence } from "../hooks/use-form-draft-persistence";
 import type { ApplicationFormData } from "../types";
 import { AIEvaluationDisplay } from "./AIEvaluationDisplay";
 import { ApplicationFormSection } from "./ApplicationFormSection";
-
-const FORM_AUTH_PERSISTENCE_KEY_PREFIX = "gap:application-form-auth";
-const FORM_AUTH_PERSISTENCE_TTL_MS = 30 * 60 * 1000;
-const DRAFT_SAVE_DEBOUNCE_MS = 300;
-
-interface PendingFormAuthState {
-  formData: ApplicationFormData;
-  shouldAutoSubmit: boolean;
-  createdAt: number;
-}
-
-function getFormAuthPersistenceKey(programId: string, formId?: string): string {
-  return `${FORM_AUTH_PERSISTENCE_KEY_PREFIX}:${programId}:${formId ?? "default"}`;
-}
-
-function hasMeaningfulFormValue(value: unknown): boolean {
-  if (value === undefined || value === null || value === "") return false;
-  if (Array.isArray(value)) return value.length > 0;
-  if (typeof value === "object") {
-    return Object.values(value as Record<string, unknown>).some(hasMeaningfulFormValue);
-  }
-  return true;
-}
-
-function hasMeaningfulFormData(data: Partial<ApplicationFormData>): boolean {
-  return Object.values(data).some(hasMeaningfulFormValue);
-}
 
 function logApplicationFormError(error: unknown, errorId: string, extra?: Record<string, unknown>) {
   Sentry.captureException(error, {
@@ -101,105 +75,14 @@ export function ApplicationForm({
     trigger,
   } = useApplicationForm(questions, { initialData });
 
-  const pendingSubmitRef = useRef(false);
-  const draftPersistenceTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const pendingDraftPersistenceRef = useRef<
-    { kind: "persist"; formData: ApplicationFormData } | { kind: "clear" } | null
-  >(null);
-  const hasShownDraftStorageWarningRef = useRef(false);
-  const authPersistenceKey = useMemo(
-    () => getFormAuthPersistenceKey(programId, formId),
-    [programId, formId]
-  );
-
-  const handleDraftStorageError = useCallback(
-    (error: unknown, operation: "read" | "write" | "remove" | "parse") => {
-      logApplicationFormError(error, "application-form-draft-storage-failed", {
-        operation,
-        programId,
-        formId: formId ?? "default",
-      });
-
-      if (!hasShownDraftStorageWarningRef.current) {
-        hasShownDraftStorageWarningRef.current = true;
-        toast.error("We couldn't save your draft in this browser. Please submit before leaving.");
-      }
-    },
-    [formId, programId]
-  );
-
-  const persistFormStateForAuth = useCallback(
-    (formData: ApplicationFormData, shouldAutoSubmit: boolean) => {
-      if (typeof window === "undefined") return;
-      try {
-        const payload: PendingFormAuthState = {
-          formData,
-          shouldAutoSubmit,
-          createdAt: Date.now(),
-        };
-        window.sessionStorage.setItem(authPersistenceKey, JSON.stringify(payload));
-      } catch (error) {
-        handleDraftStorageError(error, "write");
-      }
-    },
-    [authPersistenceKey, handleDraftStorageError]
-  );
-
-  const clearPersistedFormStateForAuth = useCallback(() => {
-    if (typeof window === "undefined") return;
-    try {
-      window.sessionStorage.removeItem(authPersistenceKey);
-    } catch (error) {
-      handleDraftStorageError(error, "remove");
-    }
-  }, [authPersistenceKey, handleDraftStorageError]);
-
-  const flushPendingDraftPersistence = useCallback(() => {
-    if (draftPersistenceTimeoutRef.current) {
-      clearTimeout(draftPersistenceTimeoutRef.current);
-      draftPersistenceTimeoutRef.current = null;
-    }
-
-    const pendingDraft = pendingDraftPersistenceRef.current;
-    if (!pendingDraft) return;
-
-    pendingDraftPersistenceRef.current = null;
-    if (pendingDraft.kind === "clear") {
-      clearPersistedFormStateForAuth();
-      return;
-    }
-    persistFormStateForAuth(pendingDraft.formData, pendingSubmitRef.current);
-  }, [clearPersistedFormStateForAuth, persistFormStateForAuth]);
-
-  const readPersistedFormStateForAuth = useCallback((): PendingFormAuthState | null => {
-    if (typeof window === "undefined") return null;
-    let raw: string | null;
-    try {
-      raw = window.sessionStorage.getItem(authPersistenceKey);
-    } catch (error) {
-      handleDraftStorageError(error, "read");
-      return null;
-    }
-
-    if (!raw) return null;
-
-    try {
-      const parsed = JSON.parse(raw) as PendingFormAuthState;
-      if (
-        !parsed?.formData ||
-        typeof parsed.createdAt !== "number" ||
-        Date.now() - parsed.createdAt > FORM_AUTH_PERSISTENCE_TTL_MS
-      ) {
-        clearPersistedFormStateForAuth();
-        return null;
-      }
-      return parsed;
-    } catch (error) {
-      handleDraftStorageError(error, "parse");
-      clearPersistedFormStateForAuth();
-      return null;
-    }
-  }, [authPersistenceKey, clearPersistedFormStateForAuth, handleDraftStorageError]);
+  const {
+    pendingSubmitRef,
+    persistFormStateForAuth,
+    clearPersistedFormStateForAuth,
+    readPersistedFormStateForAuth,
+    schedulePersistOrClear,
+    flushPendingDraftPersistence,
+  } = useFormDraftPersistence({ programId, formId });
 
   const hasEvalConfig = Boolean(formSchema?.aiConfig?.enableRealTimeEvaluation);
   const {
@@ -223,37 +106,14 @@ export function ApplicationForm({
     const { unsubscribe } = watch((value) => {
       const currentFormData = value as Partial<ApplicationFormData>;
       onDataChange?.(currentFormData);
-
       if (authenticated) return;
-
-      if (draftPersistenceTimeoutRef.current) {
-        clearTimeout(draftPersistenceTimeoutRef.current);
-        draftPersistenceTimeoutRef.current = null;
-      }
-
-      if (hasMeaningfulFormData(currentFormData)) {
-        pendingDraftPersistenceRef.current = {
-          kind: "persist",
-          formData: currentFormData as ApplicationFormData,
-        };
-      } else if (pendingSubmitRef.current) {
-        pendingDraftPersistenceRef.current = {
-          kind: "persist",
-          formData: currentFormData as ApplicationFormData,
-        };
-      } else {
-        pendingDraftPersistenceRef.current = { kind: "clear" };
-      }
-
-      draftPersistenceTimeoutRef.current = setTimeout(() => {
-        flushPendingDraftPersistence();
-      }, DRAFT_SAVE_DEBOUNCE_MS);
+      schedulePersistOrClear(currentFormData);
     });
     return () => {
       flushPendingDraftPersistence();
       unsubscribe();
     };
-  }, [watch, onDataChange, authenticated, flushPendingDraftPersistence]);
+  }, [watch, onDataChange, authenticated, schedulePersistOrClear, flushPendingDraftPersistence]);
 
   const scrollToFirstError = () => {
     const errorFieldIndex = questions.findIndex((q) => formState.errors[q.id]);
