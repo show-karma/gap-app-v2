@@ -33,24 +33,64 @@ const DEFAULT_RPC_URLS_BY_CHAIN_ID: Partial<Record<number, string>> = {
   [scroll.id]: scroll.rpcUrls.default.http[0],
 };
 
+/**
+ * Alchemy network subdomains by chain ID. Chains absent here (e.g. Lisk, Sei)
+ * have no Alchemy endpoint and keep using their NEXT_PUBLIC_RPC_* URL. Deriving
+ * URLs from the single NEXT_PUBLIC_ALCHEMY_KEY keeps key rotation in one place
+ * and avoids stale keys getting embedded in per-chain RPC URLs.
+ */
+const ALCHEMY_SUBDOMAIN_BY_CHAIN_ID: Partial<Record<number, string>> = {
+  [mainnet.id]: "eth-mainnet",
+  [optimism.id]: "opt-mainnet",
+  [arbitrum.id]: "arb-mainnet",
+  [base.id]: "base-mainnet",
+  [polygon.id]: "polygon-mainnet",
+  [celo.id]: "celo-mainnet",
+  [scroll.id]: "scroll-mainnet",
+  [optimismSepolia.id]: "opt-sepolia",
+  [baseSepolia.id]: "base-sepolia",
+  [sepolia.id]: "eth-sepolia",
+};
+
+/**
+ * Alchemy keys are alphanumeric with optional `-`/`_`. Reject anything else so a
+ * malformed value (e.g. a full URL pasted into NEXT_PUBLIC_ALCHEMY_KEY) can't
+ * produce a broken endpoint that silently fails every request.
+ */
+const ALCHEMY_KEY_PATTERN = /^[A-Za-z0-9_-]+$/;
+
 const normalizeRPCUrl = (rpcUrl?: string): string | undefined => {
   const normalizedRpcUrl = rpcUrl?.trim();
   return normalizedRpcUrl ? normalizedRpcUrl : undefined;
 };
 
-const CHAIN_CONFIG: Record<string, { chain: Chain; rpcUrl: string | undefined }> = {
-  mainnet: { chain: mainnet, rpcUrl: envVars.RPC.MAINNET },
-  optimism: { chain: optimism, rpcUrl: envVars.RPC.OPTIMISM },
-  arbitrum: { chain: arbitrum, rpcUrl: envVars.RPC.ARBITRUM },
-  base: { chain: base, rpcUrl: envVars.RPC.BASE },
-  "base-sepolia": { chain: baseSepolia, rpcUrl: envVars.RPC.BASE_SEPOLIA },
-  celo: { chain: celo, rpcUrl: envVars.RPC.CELO },
-  lisk: { chain: lisk, rpcUrl: envVars.RPC.LISK },
-  "optimism-sepolia": { chain: optimismSepolia, rpcUrl: envVars.RPC.OPT_SEPOLIA },
-  polygon: { chain: polygon, rpcUrl: envVars.RPC.POLYGON },
-  scroll: { chain: scroll, rpcUrl: envVars.RPC.SCROLL },
-  sei: { chain: sei, rpcUrl: envVars.RPC.SEI },
-  sepolia: { chain: sepolia, rpcUrl: envVars.RPC.SEPOLIA },
+/**
+ * Build a chain's Alchemy RPC URL from the shared key alone. Returns undefined
+ * when the chain has no Alchemy endpoint or the key is missing/malformed, so
+ * callers fall through to the configured URL or the chain's public default.
+ */
+export const buildAlchemyRpcUrl = (chainId: number, key?: string): string | undefined => {
+  const subdomain = ALCHEMY_SUBDOMAIN_BY_CHAIN_ID[chainId];
+  const trimmedKey = key?.trim();
+  if (!subdomain || !trimmedKey || !ALCHEMY_KEY_PATTERN.test(trimmedKey)) {
+    return undefined;
+  }
+  return `https://${subdomain}.g.alchemy.com/v2/${trimmedKey}`;
+};
+
+const CHAIN_BY_NETWORK: Record<string, Chain> = {
+  mainnet,
+  optimism,
+  arbitrum,
+  base,
+  "base-sepolia": baseSepolia,
+  celo,
+  lisk,
+  "optimism-sepolia": optimismSepolia,
+  polygon,
+  scroll,
+  sei,
+  sepolia,
 };
 
 const clientCache = new Map<string, PublicClient>();
@@ -59,12 +99,12 @@ function getOrCreateClient(network: string): PublicClient | undefined {
   const existing = clientCache.get(network);
   if (existing) return existing;
 
-  const config = CHAIN_CONFIG[network];
-  if (!config) return undefined;
+  const chain = CHAIN_BY_NETWORK[network];
+  if (!chain) return undefined;
 
   const client = createPublicClient({
-    chain: config.chain,
-    transport: http(config.rpcUrl),
+    chain,
+    transport: http(getRPCUrlByChainId(chain.id)),
   });
 
   clientCache.set(network, client as PublicClient);
@@ -114,9 +154,17 @@ const getConfiguredRPCUrlByChainId = (chainId: number): string | undefined => {
   }
 };
 
+/**
+ * Resolve a chain's RPC URL. Precedence: Alchemy (built from the shared
+ * NEXT_PUBLIC_ALCHEMY_KEY) → explicit NEXT_PUBLIC_RPC_* override → public
+ * default. Alchemy wins so rotating the one key takes effect without having to
+ * also clear a stale per-chain URL.
+ */
 export const getRPCUrlByChainId = (chainId: number): string | undefined => {
   return (
-    normalizeRPCUrl(getConfiguredRPCUrlByChainId(chainId)) || DEFAULT_RPC_URLS_BY_CHAIN_ID[chainId]
+    buildAlchemyRpcUrl(chainId, envVars.ALCHEMY_KEY) ||
+    normalizeRPCUrl(getConfiguredRPCUrlByChainId(chainId)) ||
+    DEFAULT_RPC_URLS_BY_CHAIN_ID[chainId]
   );
 };
 

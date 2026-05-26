@@ -181,5 +181,61 @@ describe("rpcClient", () => {
 
       expect(url).toBe("https://optimism.llamarpc.com");
     });
+
+    it("prefers the Alchemy URL over a configured per-chain URL when the key is set", async () => {
+      vi.resetModules();
+      vi.doMock("@/utilities/enviromentVars", () => ({
+        envVars: {
+          ALCHEMY_KEY: "abc123-_KEY",
+          RPC: { CELO: "https://stale-embedded-key.example.com" },
+        },
+      }));
+
+      const { getRPCUrlByChainId } = await import("@/utilities/rpcClient");
+
+      expect(getRPCUrlByChainId(42220)).toBe("https://celo-mainnet.g.alchemy.com/v2/abc123-_KEY");
+    });
+
+    it("keeps the configured URL for chains Alchemy does not serve even when the key is set", async () => {
+      vi.resetModules();
+      vi.doMock("@/utilities/enviromentVars", () => ({
+        envVars: {
+          ALCHEMY_KEY: "abc123",
+          RPC: { LISK: "https://rpc-lisk.example.com" },
+        },
+      }));
+
+      const { getRPCUrlByChainId } = await import("@/utilities/rpcClient");
+
+      expect(getRPCUrlByChainId(1135)).toBe("https://rpc-lisk.example.com");
+    });
+  });
+
+  describe("buildAlchemyRpcUrl", () => {
+    it("builds the endpoint from chain subdomain and key", async () => {
+      vi.resetModules();
+      const { buildAlchemyRpcUrl } = await import("@/utilities/rpcClient");
+
+      expect(buildAlchemyRpcUrl(42220, "valid_KEY-123")).toBe(
+        "https://celo-mainnet.g.alchemy.com/v2/valid_KEY-123"
+      );
+    });
+
+    it("returns undefined for chains with no Alchemy endpoint", async () => {
+      vi.resetModules();
+      const { buildAlchemyRpcUrl } = await import("@/utilities/rpcClient");
+
+      expect(buildAlchemyRpcUrl(1135, "valid123")).toBeUndefined();
+    });
+
+    it.each(["", "   ", "not a key", "https://celo-mainnet.g.alchemy.com/v2/x"])(
+      "returns undefined for a missing or malformed key (%j)",
+      async (key) => {
+        vi.resetModules();
+        const { buildAlchemyRpcUrl } = await import("@/utilities/rpcClient");
+
+        expect(buildAlchemyRpcUrl(42220, key)).toBeUndefined();
+      }
+    );
   });
 });
