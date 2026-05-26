@@ -5,16 +5,19 @@ type FilterOption = "all" | "pending" | "completed" | "past_due";
 /**
  * Validates if a milestone item has all required fields
  */
-function isValidMilestone(item: unknown): item is CommunityMilestoneUpdate {
+export function isValidMilestone(item: unknown): item is CommunityMilestoneUpdate {
   if (!item || typeof item !== "object") return false;
   const milestone = item as Record<string, unknown>;
-  if (!milestone.uid || !milestone.status) return false;
+  if (typeof milestone.uid !== "string" || milestone.uid.trim() === "") return false;
+  if (milestone.status !== "pending" && milestone.status !== "completed") return false;
   const details = milestone.details as Record<string, unknown> | undefined;
-  if (!details?.title) return false;
+  const title = details?.title;
+  if (typeof title !== "string" || title.trim() === "") return false;
   const project = milestone.project as Record<string, unknown> | undefined;
   const projectDetails = project?.details as Record<string, unknown> | undefined;
   const projectData = projectDetails?.data as Record<string, unknown> | undefined;
-  if (!projectData?.slug) return false;
+  const slug = projectData?.slug;
+  if (typeof slug !== "string" || slug.trim() === "") return false;
   return true;
 }
 

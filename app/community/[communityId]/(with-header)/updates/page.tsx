@@ -21,7 +21,10 @@ import { useCommunityProjectUpdates } from "@/hooks/useCommunityProjectUpdates";
 import { useCommunityUpdatesView } from "@/hooks/useCommunityUpdatesView";
 import { useCommunityPrograms } from "@/hooks/usePrograms";
 import { findProjectOptionBySlugOrUid, projectsToOptions } from "@/utilities/project-lookup";
-import { sortCommunityMilestones } from "@/utilities/sorting/communityMilestoneSort";
+import {
+  isValidMilestone,
+  sortCommunityMilestones,
+} from "@/utilities/sorting/communityMilestoneSort";
 
 type FilterOption = "all" | "pending" | "completed" | "past_due";
 
@@ -142,7 +145,11 @@ export default function CommunityUpdatesPage() {
     return sortCommunityMilestones([...data.payload], selectedFilter, communityId);
   }, [data?.payload, selectedFilter, communityId]);
 
-  const tableData = useMemo(() => data?.payload ?? [], [data?.payload]);
+  // Table view: keep the server order, but apply the same validity filter as
+  // the cards view so both views show the exact same set of milestones.
+  // Milestones missing a project slug/title come from the indexer; tracked in
+  // show-karma/super-gap#37.
+  const tableData = useMemo(() => (data?.payload ?? []).filter(isValidMilestone), [data?.payload]);
 
   const displayedData = isTableView ? tableData : cardsData;
 
