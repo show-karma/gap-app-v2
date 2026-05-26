@@ -348,6 +348,19 @@ export function ApplicationForm({
 
   const formRef = useRef<HTMLFormElement>(null);
 
+  const attemptAutoSubmit = useCallback(() => {
+    if (formRef.current?.requestSubmit) {
+      formRef.current.requestSubmit();
+    } else {
+      logApplicationFormError(
+        new Error("Application form requestSubmit unavailable"),
+        "application-form-request-submit-unavailable",
+        { programId }
+      );
+      toast.error("Couldn't auto-submit your application. Please click Submit again.");
+    }
+  }, [programId]);
+
   useEffect(() => {
     const persistedState = readPersistedFormStateForAuth();
     if (!persistedState) return;
@@ -356,35 +369,17 @@ export function ApplicationForm({
     if (authenticated && persistedState.shouldAutoSubmit) {
       pendingSubmitRef.current = false;
       setShowLoginPrompt(false);
-      if (formRef.current?.requestSubmit) {
-        formRef.current.requestSubmit();
-      } else {
-        logApplicationFormError(
-          new Error("Application form requestSubmit unavailable"),
-          "application-form-request-submit-unavailable",
-          { programId }
-        );
-        toast.error("Couldn't auto-submit your application. Please click Submit again.");
-      }
+      attemptAutoSubmit();
     }
-  }, [readPersistedFormStateForAuth, setFormData, authenticated, programId]);
+  }, [readPersistedFormStateForAuth, setFormData, authenticated, attemptAutoSubmit]);
 
   useEffect(() => {
     if (authenticated && pendingSubmitRef.current) {
       pendingSubmitRef.current = false;
       setShowLoginPrompt(false);
-      if (formRef.current?.requestSubmit) {
-        formRef.current.requestSubmit();
-      } else {
-        logApplicationFormError(
-          new Error("Application form requestSubmit unavailable"),
-          "application-form-request-submit-unavailable",
-          { programId }
-        );
-        toast.error("Couldn't auto-submit your application. Please click Submit again.");
-      }
+      attemptAutoSubmit();
     }
-  }, [authenticated, programId]);
+  }, [authenticated, attemptAutoSubmit]);
 
   const handleLogin = async () => {
     try {

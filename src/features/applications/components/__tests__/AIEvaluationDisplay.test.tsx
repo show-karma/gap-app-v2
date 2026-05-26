@@ -80,6 +80,14 @@ describe("AIEvaluationDisplay", () => {
     );
   });
 
+  it("treats null final_score as missing (no score block, no Score unavailable banner)", () => {
+    render(<AIEvaluationDisplay evaluation={{ final_score: null }} isLoading={false} isEnabled />);
+
+    expect(screen.queryByText(/Score: /)).not.toBeInTheDocument();
+    expect(screen.queryByTestId("ai-evaluation-score-unavailable")).not.toBeInTheDocument();
+    expect(Sentry.captureMessage).not.toHaveBeenCalled();
+  });
+
   it("logs to Sentry when feedback is not a string", () => {
     render(
       <AIEvaluationDisplay

@@ -386,7 +386,7 @@ function EvaluationDisplay({ data, programName }: { data: GenericJSON; programNa
 
   const evalData = data;
   const rawScore = evalData.final_score ?? evalData.score;
-  const parsedScore = rawScore === undefined ? null : Number(rawScore);
+  const parsedScore = rawScore == null ? null : Number(rawScore);
   const hasValidScore = parsedScore !== null && Number.isFinite(parsedScore);
   const hasMalformedScore = parsedScore !== null && !hasValidScore;
   if (hasMalformedScore) {
