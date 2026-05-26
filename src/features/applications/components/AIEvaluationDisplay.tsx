@@ -56,7 +56,7 @@ function parseEvaluation(evaluationStr: AIEvaluationData): GenericJSON | null {
   }
 }
 
-function renderValue(value: unknown, depth = 0): React.ReactNode {
+function RenderedValue({ value, depth = 0 }: { value: unknown; depth?: number }) {
   if (value === null || value === undefined) {
     return <span className="text-muted-foreground">null</span>;
   }
@@ -83,7 +83,7 @@ function renderValue(value: unknown, depth = 0): React.ReactNode {
             className="flex items-start gap-2 my-1"
           >
             <span className="text-muted-foreground select-none">&bull;</span>
-            {renderValue(item, depth + 1)}
+            <RenderedValue value={item} depth={depth + 1} />
           </div>
         ))}
       </div>
@@ -99,7 +99,7 @@ function renderValue(value: unknown, depth = 0): React.ReactNode {
             <span className="font-medium text-zinc-600 dark:text-zinc-400 capitalize">
               {key.replace(/_/g, " ")}:
             </span>{" "}
-            {renderValue(val, depth + 1)}
+            <RenderedValue value={val} depth={depth + 1} />
           </div>
         ))}
       </div>
@@ -262,7 +262,9 @@ function EvaluationDisplay({ data, programName }: { data: GenericJSON; programNa
               <h5 className="text-sm font-bold text-zinc-600 dark:text-zinc-400 capitalize mb-1">
                 {key.replace(/_/g, " ")}
               </h5>
-              <div className="text-sm">{renderValue(value)}</div>
+              <div className="text-sm">
+                <RenderedValue value={value} />
+              </div>
             </div>
           );
         })}
