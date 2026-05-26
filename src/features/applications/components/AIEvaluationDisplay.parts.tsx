@@ -40,6 +40,25 @@ export function ScoreDisplay({
     return "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400";
   };
 
+  // Tailwind JIT can't see dynamic widths, so map the clamped score (0-10) to
+  // a literal width utility class. Score is already validated 0-10 in the parent.
+  const getScoreWidthClass = (s: number) => {
+    const bucket = Math.max(0, Math.min(10, Math.round(s)));
+    return [
+      "w-0",
+      "w-[10%]",
+      "w-[20%]",
+      "w-[30%]",
+      "w-[40%]",
+      "w-[50%]",
+      "w-[60%]",
+      "w-[70%]",
+      "w-[80%]",
+      "w-[90%]",
+      "w-full",
+    ][bucket];
+  };
+
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
@@ -64,8 +83,11 @@ export function ScoreDisplay({
       {!isGrowthGrants && (
         <div className="w-full bg-zinc-200 dark:bg-zinc-700 rounded-full h-2">
           <div
-            className={cn("h-2 rounded-full transition-all", getScoreBarColor(score))}
-            style={{ width: `${score * 10}%` }}
+            className={cn(
+              "h-2 rounded-full transition-all",
+              getScoreBarColor(score),
+              getScoreWidthClass(score)
+            )}
           />
         </div>
       )}
