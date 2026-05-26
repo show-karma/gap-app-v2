@@ -47,7 +47,10 @@ describe("isValidMilestone", () => {
 
   it.each([
     ["missing uid", { uid: "" }],
+    ["whitespace-only uid", { uid: "   " }],
+    ["non-string uid", { uid: 123 as unknown as string }],
     ["missing status", { status: undefined as unknown as "pending" }],
+    ["unsupported status value", { status: "in_progress" as unknown as "pending" }],
   ])("rejects a milestone %s", (_label, overrides) => {
     expect(isValidMilestone(createMilestone(overrides as Partial<CommunityMilestoneUpdate>))).toBe(
       false
@@ -57,6 +60,12 @@ describe("isValidMilestone", () => {
   it("rejects a milestone with no details title", () => {
     const milestone = createMilestone();
     milestone.details = { ...milestone.details, title: "" };
+    expect(isValidMilestone(milestone)).toBe(false);
+  });
+
+  it("rejects a milestone whose title is whitespace only", () => {
+    const milestone = createMilestone();
+    milestone.details = { ...milestone.details, title: "   " };
     expect(isValidMilestone(milestone)).toBe(false);
   });
 
