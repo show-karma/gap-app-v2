@@ -1,5 +1,6 @@
 "use client";
 
+import * as Sentry from "@sentry/nextjs";
 import {
   AlertOctagon,
   AlertTriangle,
@@ -10,9 +11,16 @@ import {
   Sparkles,
 } from "lucide-react";
 import type React from "react";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/utilities/tailwind";
+
+function logAIEvaluationDataIssue(errorId: string, extra: Record<string, unknown>) {
+  Sentry.captureMessage(`AIEvaluationDisplay: ${errorId}`, {
+    level: "warning",
+    tags: { component: "AIEvaluationDisplay", errorId },
+    extra,
+  });
+}
 
 export type AIEvaluationData = string | Record<string, unknown>;
 
@@ -307,7 +315,17 @@ function parseEvaluation(evaluationStr: AIEvaluationData): GenericJSON | null {
       return evaluationStr as GenericJSON;
     }
     return JSON.parse(evaluationStr);
-  } catch {
+  } catch (error) {
+    Sentry.captureException(error, {
+      tags: {
+        component: "AIEvaluationDisplay",
+        errorId: "ai-evaluation-parse-failed",
+      },
+      extra: {
+        sample:
+          typeof evaluationStr === "string" ? evaluationStr.slice(0, 200) : typeof evaluationStr,
+      },
+    });
     return null;
   }
 }
@@ -366,33 +384,94 @@ function EvaluationDisplay({ data, programName }: { data: GenericJSON; programNa
   const isAuditGrants = lowerName.includes("audit grants");
   const isGrowthGrants = lowerName.includes("growth grants");
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- generic JSON from API
-  const evalData = data as Record<string, any>;
+  const evalData = data;
+  const rawScore = evalData.final_score ?? evalData.score;
+  const parsedScore = rawScore === undefined ? null : Number(rawScore);
+  const hasValidScore = parsedScore !== null && Number.isFinite(parsedScore);
+  const hasMalformedScore = parsedScore !== null && !hasValidScore;
+  if (hasMalformedScore) {
+    logAIEvaluationDataIssue("ai-evaluation-malformed-score", {
+      rawScoreType: typeof rawScore,
+      rawScoreSample: String(rawScore).slice(0, 50),
+      programName,
+    });
+  }
+
+  const rawRecommendations = evalData.improvement_recommendations;
+  const hasRecommendations = rawRecommendations !== undefined;
+  const improvementRecommendations = Array.isArray(rawRecommendations)
+    ? (rawRecommendations as Array<{
+        priority?: string;
+        recommendation?: string;
+        impact?: string;
+      }>)
+    : [];
+  if (hasRecommendations && !Array.isArray(rawRecommendations)) {
+    let rawRecommendationsSample: string;
+    try {
+      rawRecommendationsSample = JSON.stringify(rawRecommendations).slice(0, 200);
+    } catch {
+      rawRecommendationsSample = String(rawRecommendations).slice(0, 200);
+    }
+    logAIEvaluationDataIssue("ai-evaluation-malformed-recommendations", {
+      rawRecommendationsType: typeof rawRecommendations,
+      rawRecommendationsSample,
+      programName,
+    });
+  }
+  for (const field of ["feedback", "applicant_guidance"] as const) {
+    const value = evalData[field];
+    if (value !== undefined && value !== null && typeof value !== "string") {
+      logAIEvaluationDataIssue("ai-evaluation-malformed-field", {
+        field,
+        valueType: typeof value,
+        programName,
+      });
+    }
+  }
+
   const renderedFields = new Set<string>();
 
   return (
     <div className="space-y-4">
-      {(evalData.final_score !== undefined || evalData.score !== undefined) && (
+      {hasMalformedScore && (
         <>
-          <ScoreDisplay
-            score={evalData.final_score || evalData.score || 0}
-            isGrowthGrants={isGrowthGrants}
-          />
-          {!isGrowthGrants && evalData.evaluation_status && (
-            <div className="mt-2">
-              <StatusChip status={String(evalData.evaluation_status)} />
-            </div>
-          )}
+          <div
+            className="rounded-md border border-muted-foreground/20 bg-muted/40 px-3 py-2 text-xs text-muted-foreground"
+            data-testid="ai-evaluation-score-unavailable"
+          >
+            Score unavailable — AI returned an unexpected value.
+          </div>
           {(() => {
             renderedFields.add("final_score");
             renderedFields.add("score");
+            return null;
+          })()}
+        </>
+      )}
+      {hasValidScore && (
+        <>
+          <ScoreDisplay score={parsedScore} isGrowthGrants={isGrowthGrants} />
+          {(() => {
+            renderedFields.add("final_score");
+            renderedFields.add("score");
+            return null;
+          })()}
+        </>
+      )}
+      {!isGrowthGrants && Boolean(evalData.evaluation_status) && (
+        <>
+          <div className="mt-2">
+            <StatusChip status={String(evalData.evaluation_status)} />
+          </div>
+          {(() => {
             renderedFields.add("evaluation_status");
             return null;
           })()}
         </>
       )}
 
-      {evalData.decision && (
+      {Boolean(evalData.decision) && (
         <>
           <DecisionDisplay decision={String(evalData.decision)} isAuditGrants={isAuditGrants} />
           {(() => {
@@ -402,7 +481,7 @@ function EvaluationDisplay({ data, programName }: { data: GenericJSON; programNa
         </>
       )}
 
-      {evalData.disqualification_reason && (
+      {Boolean(evalData.disqualification_reason) && (
         <>
           <DisqualificationReason reason={String(evalData.disqualification_reason)} />
           {(() => {
@@ -412,7 +491,7 @@ function EvaluationDisplay({ data, programName }: { data: GenericJSON; programNa
         </>
       )}
 
-      {evalData.evaluation_summary && (
+      {Boolean(evalData.evaluation_summary) && (
         <>
           <EvaluationSummary
             summary={
@@ -430,17 +509,9 @@ function EvaluationDisplay({ data, programName }: { data: GenericJSON; programNa
         </>
       )}
 
-      {evalData.improvement_recommendations?.length ? (
+      {improvementRecommendations.length ? (
         <>
-          <ImprovementRecommendations
-            recommendations={
-              evalData.improvement_recommendations as Array<{
-                priority?: string;
-                recommendation?: string;
-                impact?: string;
-              }>
-            }
-          />
+          <ImprovementRecommendations recommendations={improvementRecommendations} />
           {(() => {
             renderedFields.add("improvement_recommendations");
             return null;
@@ -448,7 +519,7 @@ function EvaluationDisplay({ data, programName }: { data: GenericJSON; programNa
         </>
       ) : null}
 
-      {evalData.additional_notes && (
+      {Boolean(evalData.additional_notes) && (
         <>
           <div className="bg-zinc-100 dark:bg-zinc-800 rounded-lg p-3">
             <h4 className="text-sm font-medium mb-2">Additional Notes</h4>
@@ -463,7 +534,7 @@ function EvaluationDisplay({ data, programName }: { data: GenericJSON; programNa
         </>
       )}
 
-      {evalData.reviewer_confidence && (
+      {Boolean(evalData.reviewer_confidence) && (
         <>
           <p className="text-xs text-muted-foreground">
             Reviewer Confidence:{" "}
@@ -477,8 +548,7 @@ function EvaluationDisplay({ data, programName }: { data: GenericJSON; programNa
         </>
       )}
 
-      {/* Feedback field — render with whitespace preserved */}
-      {evalData.feedback && (
+      {Boolean(evalData.feedback) && (
         <>
           <div className="rounded-lg border p-3">
             <h4 className="text-sm font-medium mb-2">Feedback</h4>
@@ -493,8 +563,7 @@ function EvaluationDisplay({ data, programName }: { data: GenericJSON; programNa
         </>
       )}
 
-      {/* Applicant guidance — styled as a tip box */}
-      {evalData.applicant_guidance && (
+      {Boolean(evalData.applicant_guidance) && (
         <>
           <div className="rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20 p-3">
             <h4 className="text-sm font-medium mb-2 text-blue-700 dark:text-blue-400">
@@ -511,13 +580,11 @@ function EvaluationDisplay({ data, programName }: { data: GenericJSON; programNa
         </>
       )}
 
-      {/* Title field — skip rendering as generic since it's shown in the header context */}
       {(() => {
         renderedFields.add("title");
         return null;
       })()}
 
-      {/* Generic rendering for any remaining fields */}
       <div className="space-y-2">
         {Object.entries(evalData).map(([key, value]) => {
           if (renderedFields.has(key)) return null;
@@ -532,7 +599,6 @@ function EvaluationDisplay({ data, programName }: { data: GenericJSON; programNa
         })}
       </div>
 
-      {/* Footer disclaimer */}
       <div className="pt-3 border-t">
         <p className="text-sm text-muted-foreground">
           This AI-generated review is for guidance only and may not be fully accurate. You can
@@ -568,13 +634,23 @@ export function AIEvaluationDisplay({
       <CardContent data-testid="ai-evaluation-content">
         {hasError ? (
           <div
-            className="flex flex-col items-center justify-center py-8"
+            className="rounded-lg border border-primary/15 bg-primary/5 p-4"
             data-testid="ai-evaluation-error"
           >
-            <AlertTriangle className="w-8 h-8 text-destructive mx-auto mb-2" />
-            <p className="text-sm text-destructive">
-              Failed to load AI evaluation feedback. Please try again.
-            </p>
+            <div className="flex items-start gap-3">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-primary/20 bg-background text-primary">
+                <Info className="h-4 w-4" aria-hidden="true" />
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm font-semibold text-foreground">
+                  AI feedback is unavailable right now
+                </p>
+                <p className="text-sm leading-6 text-muted-foreground">
+                  Your application can still be submitted. Try again if you want feedback before
+                  submitting, or continue without it.
+                </p>
+              </div>
+            </div>
           </div>
         ) : isLoading ? (
           <div

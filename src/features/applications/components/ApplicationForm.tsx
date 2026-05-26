@@ -1,10 +1,14 @@
 "use client";
 
+import * as Sentry from "@sentry/nextjs";
+import { Info } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -20,6 +24,7 @@ import { ApplicationFormSection } from "./ApplicationFormSection";
 
 const FORM_AUTH_PERSISTENCE_KEY_PREFIX = "gap:application-form-auth";
 const FORM_AUTH_PERSISTENCE_TTL_MS = 30 * 60 * 1000;
+const DRAFT_SAVE_DEBOUNCE_MS = 300;
 
 interface PendingFormAuthState {
   formData: ApplicationFormData;
@@ -29,6 +34,29 @@ interface PendingFormAuthState {
 
 function getFormAuthPersistenceKey(programId: string, formId?: string): string {
   return `${FORM_AUTH_PERSISTENCE_KEY_PREFIX}:${programId}:${formId ?? "default"}`;
+}
+
+function hasMeaningfulFormValue(value: unknown): boolean {
+  if (value === undefined || value === null || value === "") return false;
+  if (Array.isArray(value)) return value.length > 0;
+  if (typeof value === "object") {
+    return Object.values(value as Record<string, unknown>).some(hasMeaningfulFormValue);
+  }
+  return true;
+}
+
+function hasMeaningfulFormData(data: Partial<ApplicationFormData>): boolean {
+  return Object.values(data).some(hasMeaningfulFormValue);
+}
+
+function logApplicationFormError(error: unknown, errorId: string, extra?: Record<string, unknown>) {
+  Sentry.captureException(error, {
+    tags: {
+      component: "ApplicationForm",
+      errorId,
+    },
+    extra,
+  });
 }
 
 interface ApplicationFormProps {
@@ -74,9 +102,30 @@ export function ApplicationForm({
   } = useApplicationForm(questions, { initialData });
 
   const pendingSubmitRef = useRef(false);
+  const draftPersistenceTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingDraftPersistenceRef = useRef<
+    { kind: "persist"; formData: ApplicationFormData } | { kind: "clear" } | null
+  >(null);
+  const hasShownDraftStorageWarningRef = useRef(false);
   const authPersistenceKey = useMemo(
     () => getFormAuthPersistenceKey(programId, formId),
     [programId, formId]
+  );
+
+  const handleDraftStorageError = useCallback(
+    (error: unknown, operation: "read" | "write" | "remove" | "parse") => {
+      logApplicationFormError(error, "application-form-draft-storage-failed", {
+        operation,
+        programId,
+        formId: formId ?? "default",
+      });
+
+      if (!hasShownDraftStorageWarningRef.current) {
+        hasShownDraftStorageWarningRef.current = true;
+        toast.error("We couldn't save your draft in this browser. Please submit before leaving.");
+      }
+    },
+    [formId, programId]
   );
 
   const persistFormStateForAuth = useCallback(
@@ -89,27 +138,52 @@ export function ApplicationForm({
           createdAt: Date.now(),
         };
         window.sessionStorage.setItem(authPersistenceKey, JSON.stringify(payload));
-      } catch {
-        // Ignore storage failures
+      } catch (error) {
+        handleDraftStorageError(error, "write");
       }
     },
-    [authPersistenceKey]
+    [authPersistenceKey, handleDraftStorageError]
   );
 
   const clearPersistedFormStateForAuth = useCallback(() => {
     if (typeof window === "undefined") return;
     try {
       window.sessionStorage.removeItem(authPersistenceKey);
-    } catch {
-      // Ignore storage failures
+    } catch (error) {
+      handleDraftStorageError(error, "remove");
     }
-  }, [authPersistenceKey]);
+  }, [authPersistenceKey, handleDraftStorageError]);
+
+  const flushPendingDraftPersistence = useCallback(() => {
+    if (draftPersistenceTimeoutRef.current) {
+      clearTimeout(draftPersistenceTimeoutRef.current);
+      draftPersistenceTimeoutRef.current = null;
+    }
+
+    const pendingDraft = pendingDraftPersistenceRef.current;
+    if (!pendingDraft) return;
+
+    pendingDraftPersistenceRef.current = null;
+    if (pendingDraft.kind === "clear") {
+      clearPersistedFormStateForAuth();
+      return;
+    }
+    persistFormStateForAuth(pendingDraft.formData, pendingSubmitRef.current);
+  }, [clearPersistedFormStateForAuth, persistFormStateForAuth]);
 
   const readPersistedFormStateForAuth = useCallback((): PendingFormAuthState | null => {
     if (typeof window === "undefined") return null;
+    let raw: string | null;
     try {
-      const raw = window.sessionStorage.getItem(authPersistenceKey);
-      if (!raw) return null;
+      raw = window.sessionStorage.getItem(authPersistenceKey);
+    } catch (error) {
+      handleDraftStorageError(error, "read");
+      return null;
+    }
+
+    if (!raw) return null;
+
+    try {
       const parsed = JSON.parse(raw) as PendingFormAuthState;
       if (
         !parsed?.formData ||
@@ -120,13 +194,13 @@ export function ApplicationForm({
         return null;
       }
       return parsed;
-    } catch {
+    } catch (error) {
+      handleDraftStorageError(error, "parse");
       clearPersistedFormStateForAuth();
       return null;
     }
-  }, [authPersistenceKey, clearPersistedFormStateForAuth]);
+  }, [authPersistenceKey, clearPersistedFormStateForAuth, handleDraftStorageError]);
 
-  // AI Evaluation hook (P0-09)
   const hasEvalConfig = Boolean(formSchema?.aiConfig?.enableRealTimeEvaluation);
   const {
     evaluation,
@@ -145,13 +219,41 @@ export function ApplicationForm({
   const [hasScored, setHasScored] = useState(false);
   const [isScoring, setIsScoring] = useState(false);
 
-  // P2-15: Wire onDataChange with RHF watch() subscription
   useEffect(() => {
     const { unsubscribe } = watch((value) => {
-      onDataChange?.(value as Partial<ApplicationFormData>);
+      const currentFormData = value as Partial<ApplicationFormData>;
+      onDataChange?.(currentFormData);
+
+      if (authenticated) return;
+
+      if (draftPersistenceTimeoutRef.current) {
+        clearTimeout(draftPersistenceTimeoutRef.current);
+        draftPersistenceTimeoutRef.current = null;
+      }
+
+      if (hasMeaningfulFormData(currentFormData)) {
+        pendingDraftPersistenceRef.current = {
+          kind: "persist",
+          formData: currentFormData as ApplicationFormData,
+        };
+      } else if (pendingSubmitRef.current) {
+        pendingDraftPersistenceRef.current = {
+          kind: "persist",
+          formData: currentFormData as ApplicationFormData,
+        };
+      } else {
+        pendingDraftPersistenceRef.current = { kind: "clear" };
+      }
+
+      draftPersistenceTimeoutRef.current = setTimeout(() => {
+        flushPendingDraftPersistence();
+      }, DRAFT_SAVE_DEBOUNCE_MS);
     });
-    return unsubscribe;
-  }, [watch, onDataChange]);
+    return () => {
+      flushPendingDraftPersistence();
+      unsubscribe();
+    };
+  }, [watch, onDataChange, authenticated, flushPendingDraftPersistence]);
 
   const scrollToFirstError = () => {
     const errorFieldIndex = questions.findIndex((q) => formState.errors[q.id]);
@@ -159,6 +261,7 @@ export function ApplicationForm({
     const firstErrorField = questions[errorFieldIndex];
 
     let element = document.querySelector(`[data-field-id="${firstErrorField.id}"]`);
+    const failedSelectors: Array<{ selector: string; errorName?: string }> = [];
 
     if (!element) {
       const selectors = [`[name="${firstErrorField.id}"]`, `[id="${firstErrorField.id}"]`];
@@ -166,8 +269,11 @@ export function ApplicationForm({
         try {
           element = document.querySelector(selector);
           if (element) break;
-        } catch {
-          // Continue trying
+        } catch (error) {
+          failedSelectors.push({
+            selector,
+            errorName: error instanceof Error ? error.name : undefined,
+          });
         }
       }
     }
@@ -181,6 +287,12 @@ export function ApplicationForm({
       if (focusableElement instanceof HTMLElement) {
         setTimeout(() => focusableElement.focus(), 300);
       }
+    } else {
+      logApplicationFormError(
+        new Error("No DOM target found for form error field"),
+        "application-form-no-error-target",
+        { fieldId: firstErrorField.id, failedSelectors }
+      );
     }
   };
 
@@ -192,9 +304,8 @@ export function ApplicationForm({
       return;
     }
 
-    pendingSubmitRef.current = false;
-    clearPersistedFormStateForAuth();
     setIsSubmitting(true);
+    let submitSucceeded = false;
     try {
       const aiEvaluationData =
         evaluationResponse && hasScored
@@ -221,8 +332,17 @@ export function ApplicationForm({
         }
       });
       await onSubmit(labeledFormData, aiEvaluationData);
+      submitSucceeded = true;
+    } catch (error) {
+      logApplicationFormError(error, "application-form-submit-failed", { programId });
+      toast.error("We couldn't submit your application. Your form data is still here.");
     } finally {
+      pendingSubmitRef.current = false;
       setIsSubmitting(false);
+    }
+
+    if (submitSucceeded) {
+      clearPersistedFormStateForAuth();
     }
   };
 
@@ -235,20 +355,36 @@ export function ApplicationForm({
     pendingSubmitRef.current = persistedState.shouldAutoSubmit;
     if (authenticated && persistedState.shouldAutoSubmit) {
       pendingSubmitRef.current = false;
-      clearPersistedFormStateForAuth();
       setShowLoginPrompt(false);
-      formRef.current?.requestSubmit();
+      if (formRef.current?.requestSubmit) {
+        formRef.current.requestSubmit();
+      } else {
+        logApplicationFormError(
+          new Error("Application form requestSubmit unavailable"),
+          "application-form-request-submit-unavailable",
+          { programId }
+        );
+        toast.error("Couldn't auto-submit your application. Please click Submit again.");
+      }
     }
-  }, [readPersistedFormStateForAuth, setFormData, authenticated, clearPersistedFormStateForAuth]);
+  }, [readPersistedFormStateForAuth, setFormData, authenticated, programId]);
 
   useEffect(() => {
     if (authenticated && pendingSubmitRef.current) {
       pendingSubmitRef.current = false;
-      clearPersistedFormStateForAuth();
       setShowLoginPrompt(false);
-      formRef.current?.requestSubmit();
+      if (formRef.current?.requestSubmit) {
+        formRef.current.requestSubmit();
+      } else {
+        logApplicationFormError(
+          new Error("Application form requestSubmit unavailable"),
+          "application-form-request-submit-unavailable",
+          { programId }
+        );
+        toast.error("Couldn't auto-submit your application. Please click Submit again.");
+      }
     }
-  }, [authenticated, clearPersistedFormStateForAuth]);
+  }, [authenticated, programId]);
 
   const handleLogin = async () => {
     try {
@@ -258,11 +394,12 @@ export function ApplicationForm({
         typeof currentFormData === "object" &&
         Object.keys(currentFormData).length > 0
       ) {
-        persistFormStateForAuth(currentFormData as ApplicationFormData, false);
+        persistFormStateForAuth(currentFormData as ApplicationFormData, pendingSubmitRef.current);
       }
       await login();
-    } catch {
-      // Login errors handled by auth provider
+    } catch (error) {
+      logApplicationFormError(error, "application-form-login-failed", { programId });
+      toast.error("We couldn't start login. Please check your wallet and try again.");
     }
   };
 
@@ -274,20 +411,21 @@ export function ApplicationForm({
     }
 
     setIsScoring(true);
-    try {
-      const evaluationData: Record<string, unknown> = {};
-      questions.forEach((question) => {
-        const value = formState.data[question.id];
-        if (value !== undefined && value !== null && value !== "") {
-          evaluationData[question.label || question.id] = value;
-        }
-      });
+    const evaluationData: Record<string, unknown> = {};
+    questions.forEach((question) => {
+      const value = formState.data[question.id];
+      if (value !== undefined && value !== null && value !== "") {
+        evaluationData[question.label || question.id] = value;
+      }
+    });
 
+    try {
       await triggerEvaluation(evaluationData);
-      setHasScored(true);
-    } catch {
-      setHasScored(true); // Allow submission even if evaluation fails
+    } catch (error) {
+      logApplicationFormError(error, "application-form-ai-score-failed", { programId });
+      toast.error("We couldn't start AI feedback. You can try again or submit without it.");
     } finally {
+      setHasScored(true);
       setIsScoring(false);
     }
   };
@@ -390,7 +528,6 @@ export function ApplicationForm({
           </form>
         </div>
 
-        {/* AI Evaluation Sidebar */}
         {hasEvalConfig && hasScored && (
           <div className="lg:col-span-1">
             <div className="sticky top-6">
@@ -402,8 +539,16 @@ export function ApplicationForm({
                 programName={programName}
               />
               {evaluationError && (
-                <div className="mt-4 rounded-lg border border-destructive/30 bg-destructive/10 p-4">
-                  <p className="text-sm text-destructive">AI Evaluation Error: {evaluationError}</p>
+                <div className="mt-4 rounded-lg border border-primary/20 bg-primary/5 p-4">
+                  <div className="flex items-start gap-3">
+                    <Info className="mt-0.5 h-5 w-5 shrink-0 text-primary" aria-hidden="true" />
+                    <div className="space-y-1">
+                      <p className="text-sm font-semibold text-foreground">
+                        AI feedback did not finish
+                      </p>
+                      <p className="text-sm leading-6 text-muted-foreground">{evaluationError}</p>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
@@ -424,11 +569,11 @@ export function ApplicationForm({
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Connect Wallet Required</DialogTitle>
+            <DialogDescription>
+              You need to connect your wallet to submit an application. This ensures your
+              application is securely linked to your wallet address.
+            </DialogDescription>
           </DialogHeader>
-          <p className="text-zinc-600 dark:text-zinc-400">
-            You need to connect your wallet to submit an application. This ensures your application
-            is securely linked to your wallet address.
-          </p>
           <DialogFooter>
             <Button
               variant="outline"
