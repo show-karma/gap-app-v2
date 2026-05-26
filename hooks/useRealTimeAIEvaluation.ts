@@ -228,16 +228,22 @@ export function useRealTimeAIEvaluation({
     setIsLoading(false);
   }, []);
 
+  // Abort any pending debounce + in-flight request whenever the hook's inputs
+  // change (or on unmount), so a result for a previous programId / isEnabled /
+  // debounceMs cannot land and overwrite state under the new config.
   useEffect(() => {
     return () => {
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
+        abortControllerRef.current = null;
       }
       if (debounceRef.current) {
         clearTimeout(debounceRef.current);
+        debounceRef.current = null;
       }
+      lastEvaluationRef.current = "";
     };
-  }, []);
+  }, [programId, isEnabled, debounceMs]);
 
   return {
     evaluation,

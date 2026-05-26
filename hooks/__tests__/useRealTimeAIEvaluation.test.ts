@@ -440,6 +440,31 @@ describe("useRealTimeAIEvaluation", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
+  it("cancels a pending debounce when programId changes mid-debounce", async () => {
+    const fetchMock = makeFetchSuccess();
+    global.fetch = fetchMock;
+
+    const { result, rerender } = renderHook(
+      ({ programId }) => useRealTimeAIEvaluation({ programId, isEnabled: true, debounceMs: 500 }),
+      { initialProps: { programId: "prog-1" } }
+    );
+
+    act(() => {
+      result.current.triggerEvaluation({ title: "test" });
+    });
+
+    rerender({ programId: "prog-2" });
+
+    await act(async () => {
+      vi.advanceTimersByTime(500);
+      await Promise.resolve();
+    });
+
+    // Pending debounce was scheduled under prog-1 but config switched to prog-2,
+    // so no fetch should fire — stale work is cancelled.
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it("does not re-evaluate when called with identical data", async () => {
     const fetchMock = makeFetchSuccess();
     global.fetch = fetchMock;

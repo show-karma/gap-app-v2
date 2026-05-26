@@ -158,11 +158,18 @@ export function useFormDraftPersistence({
 
     try {
       const parsed = JSON.parse(raw) as PendingFormAuthState;
-      if (
-        !parsed?.formData ||
-        typeof parsed.createdAt !== "number" ||
-        Date.now() - parsed.createdAt > FORM_AUTH_PERSISTENCE_TTL_MS
-      ) {
+      // sessionStorage is user-writeable, so the payload could be tampered or
+      // belong to an older schema. Validate every field's shape before handing
+      // the value back to the form's restore path.
+      const formData = parsed?.formData;
+      const isPlainFormData =
+        typeof formData === "object" && formData !== null && !Array.isArray(formData);
+      const isShouldAutoSubmitValid = typeof parsed?.shouldAutoSubmit === "boolean";
+      const isCreatedAtValid =
+        typeof parsed?.createdAt === "number" && Number.isFinite(parsed.createdAt);
+      const isFresh =
+        isCreatedAtValid && Date.now() - parsed.createdAt <= FORM_AUTH_PERSISTENCE_TTL_MS;
+      if (!isPlainFormData || !isShouldAutoSubmitValid || !isCreatedAtValid || !isFresh) {
         clearPersistedFormStateForAuth();
         return null;
       }
