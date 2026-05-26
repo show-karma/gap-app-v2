@@ -73,6 +73,16 @@ const CategorizedIndicatorDropdown = ({
   });
   const debouncedSearch = useDebouncedValue(searchTerm, 300);
 
+  // On mobile, the virtual keyboard and URL-bar collapse fire resize/scroll events
+  // that would otherwise dismiss the dropdown the instant it opens.
+  const isTouchDevice = useMemo(
+    () =>
+      typeof window !== "undefined" &&
+      typeof window.matchMedia === "function" &&
+      window.matchMedia("(pointer: coarse)").matches,
+    []
+  );
+
   // Fetch unlinked indicators from API with debounced search
   const { data: searchedUnlinked = [], isFetching } = useQuery({
     queryKey: ["unlinkedIndicators", "search", debouncedSearch],
@@ -83,8 +93,8 @@ const CategorizedIndicatorDropdown = ({
   });
 
   // Position the portal panel below the trigger button
-  useEffect(() => {
-    if (isOpen && triggerRef.current) {
+  const reposition = useCallback(() => {
+    if (triggerRef.current) {
       const rect = triggerRef.current.getBoundingClientRect();
       setPanelPos({
         top: rect.bottom + 4,
@@ -92,7 +102,11 @@ const CategorizedIndicatorDropdown = ({
         width: Math.max(340, rect.width),
       });
     }
-  }, [isOpen]);
+  }, []);
+
+  useEffect(() => {
+    if (isOpen) reposition();
+  }, [isOpen, reposition]);
 
   const handleClose = useCallback(() => {
     setIsOpen(false);
@@ -113,27 +127,32 @@ const CategorizedIndicatorDropdown = ({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isOpen, handleClose]);
 
-  // Close on resize; close on scroll only if outside the panel
+  // Reposition on resize instead of closing (mobile keyboard / URL bar fire resize).
+  // On outside scroll, touch devices reposition; pointer devices close.
   useEffect(() => {
     if (!isOpen) return;
     const handleScroll = (e: Event) => {
       if (panelRef.current?.contains(e.target as Node)) return;
-      handleClose();
+      if (isTouchDevice) {
+        reposition();
+      } else {
+        handleClose();
+      }
     };
-    window.addEventListener("resize", handleClose);
+    window.addEventListener("resize", reposition);
     document.addEventListener("scroll", handleScroll, true);
     return () => {
-      window.removeEventListener("resize", handleClose);
+      window.removeEventListener("resize", reposition);
       document.removeEventListener("scroll", handleScroll, true);
     };
-  }, [isOpen, handleClose]);
+  }, [isOpen, handleClose, isTouchDevice, reposition]);
 
-  // Focus input when dropdown opens
+  // Skip autofocus on touch — the virtual keyboard would trigger a resize-close loop.
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && !isTouchDevice) {
       requestAnimationFrame(() => inputRef.current?.focus());
     }
-  }, [isOpen]);
+  }, [isOpen, isTouchDevice]);
 
   // Community indicators (client-side filtered)
   const communityItems = useMemo(() => {
@@ -182,7 +201,7 @@ const CategorizedIndicatorDropdown = ({
     }
     const fromSearch = searchedUnlinked.find((ind) => ind.id === selected);
     if (fromSearch) return `${fromSearch.name} [Global]`;
-    return null;
+    return "";
   }, [indicators, searchedUnlinked, selected]);
 
   const handleSelect = useCallback(
