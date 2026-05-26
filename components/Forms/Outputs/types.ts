@@ -12,6 +12,7 @@ export interface OutputData {
   proof?: string;
   startDate?: string;
   endDate?: string;
+  _key?: string;
 }
 
 export interface DeliverableData {

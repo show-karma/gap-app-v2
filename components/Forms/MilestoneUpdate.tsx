@@ -184,6 +184,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
   useEffect(() => {
     if (milestoneImpactData && milestoneImpactData.length > 0) {
       const transformedOutputs = milestoneImpactData.map((metric: any) => ({
+        _key: crypto.randomUUID(),
         outputId: metric.id || "",
         value: metric.datapoints && metric.datapoints.length > 0 ? metric.datapoints[0].value : "",
         proof:

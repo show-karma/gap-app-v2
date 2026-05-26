@@ -72,7 +72,11 @@ const CategorizedIndicatorDropdown = ({
   const [isOpen, setIsOpen] = useState(false);
   const debouncedSearch = useDebouncedValue(searchTerm, 300);
 
-  const { data: searchedUnlinked = [], isFetching } = useQuery({
+  const {
+    data: searchedUnlinked = [],
+    isFetching,
+    isError,
+  } = useQuery({
     queryKey: ["unlinkedIndicators", "search", debouncedSearch],
     queryFn: () => getUnlinkedIndicators(debouncedSearch || undefined),
     enabled: isOpen,
@@ -200,7 +204,13 @@ const CategorizedIndicatorDropdown = ({
               + Create New Metric
             </CommandItem>
             {allItems.length === 0 ? (
-              <CommandEmpty>{isFetching ? "Searching…" : "No indicators found"}</CommandEmpty>
+              <CommandEmpty>
+                {isFetching
+                  ? "Searching…"
+                  : isError
+                    ? "Failed to load indicators. Try again."
+                    : "No indicators found"}
+              </CommandEmpty>
             ) : (
               <>
                 {communityItems.length > 0 && (
@@ -253,6 +263,7 @@ export const MetricsTable = ({
     onOutputsChange([
       ...outputs,
       {
+        _key: crypto.randomUUID(),
         outputId: "",
         value: 0,
         proof: "",
@@ -340,7 +351,7 @@ export const MetricsTable = ({
 
               return (
                 <div
-                  key={index}
+                  key={output._key ?? `index-${index}`}
                   className={cn(
                     "flex flex-col gap-3 rounded-lg border border-gray-200 p-4 dark:border-zinc-700",
                     "md:grid md:grid-cols-[minmax(200px,1.2fr)_minmax(160px,1fr)_minmax(180px,1.2fr)_auto] md:items-start md:gap-4 md:border-0 md:rounded-none md:p-0 md:py-3"
