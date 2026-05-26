@@ -252,8 +252,9 @@ export const extractApplicationSummary = (
       if (!field.id || addedFieldIds.has(field.id)) continue;
       if (summary.length >= maxFields) break;
 
-      // Skip milestone fields and textarea (usually long content)
-      if (field.type === "milestone" || field.type === "textarea") continue;
+      // Skip milestone/metric fields and textarea (complex arrays or long content)
+      if (field.type === "milestone" || field.type === "metric" || field.type === "textarea")
+        continue;
 
       const value = applicationData[field.id];
       if (value !== undefined && value !== null && value !== "") {

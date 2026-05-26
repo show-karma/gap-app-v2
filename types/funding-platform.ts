@@ -39,6 +39,14 @@ export interface IMilestoneData {
   milestoneUID?: string; // Populated by the indexer once the slot is anchored on-chain
 }
 
+// Metric Data Structure (pure captured text — not tied to the Indicator system)
+export interface IMetricData {
+  metric: string;
+  dataSource: string;
+  howItsMeasured: string;
+  target: string;
+}
+
 // Form Field Types (unchanged)
 export interface IFormField {
   id: string; // Added ID field for V2
@@ -53,6 +61,7 @@ export interface IFormField {
     | "radio"
     | "date"
     | "milestone"
+    | "metric"
     | "karma_profile_link"
     | "section_header";
   label: string;
@@ -67,6 +76,8 @@ export interface IFormField {
     message?: string;
     maxMilestones?: number;
     minMilestones?: number;
+    maxMetrics?: number;
+    minMetrics?: number;
   };
   description?: string; // Added for question builder
 }

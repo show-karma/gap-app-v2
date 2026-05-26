@@ -1,12 +1,15 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import pluralize from "pluralize";
 import { type FC, useCallback, useEffect, useMemo, useState } from "react";
 import { Controller, type SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { z } from "zod";
+import { buildRepeatableObjectSchema } from "@/components/FundingPlatform/ApplicationView/lib/repeatable-field-schema";
 import { KarmaProfileLinkInput } from "@/components/FundingPlatform/FormFields/KarmaProfileLinkInput";
+import { MetricInput } from "@/components/FundingPlatform/FormFields/MetricInput";
 import { MilestoneInput } from "@/components/FundingPlatform/FormFields/MilestoneInput";
 import { Button } from "@/components/Utilities/Button";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
@@ -279,43 +282,42 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
           fieldSchema = z.string();
           break;
         case "milestone": {
-          // Define milestone object schema
-          const milestoneObjectSchema = z.object({
-            title: z.string().min(1, "Milestone title is required"),
-            description: z.string().min(1, "Milestone description is required"),
-            dueDate: z.string().min(1, "Due date is required"),
-            fundingRequested: z.string().min(1, "Milestone funding requested is required"),
-            completionCriteria: z.string().min(1, "Completion criteria is required"),
-          });
-
-          // Build array schema with min/max validations
-          let milestoneArraySchema: z.ZodType = z.array(milestoneObjectSchema);
-
-          if (field.required) {
-            if (field.validation?.minMilestones) {
-              milestoneArraySchema = (milestoneArraySchema as z.ZodArray<any>).min(
-                field.validation.minMilestones,
-                `Please add at least ${field.validation.minMilestones} milestone(s)`
-              );
-            } else {
-              milestoneArraySchema = (milestoneArraySchema as z.ZodArray<any>).min(
-                1,
-                `${field.label} is required`
-              );
+          fieldSchema = buildRepeatableObjectSchema(
+            z.object({
+              title: z.string().min(1, "Milestone title is required"),
+              description: z.string().min(1, "Milestone description is required"),
+              dueDate: z.string().min(1, "Due date is required"),
+              fundingRequested: z.string().min(1, "Milestone funding requested is required"),
+              completionCriteria: z.string().min(1, "Completion criteria is required"),
+            }),
+            {
+              required: field.required,
+              label: field.label,
+              min: field.validation?.minMilestones,
+              max: field.validation?.maxMilestones,
+              minMessage: (n) => `Please add at least ${n} milestone(s)`,
+              maxMessage: (n) => `Maximum ${n} milestone(s) allowed`,
             }
-            if (field.validation?.maxMilestones) {
-              milestoneArraySchema = (milestoneArraySchema as z.ZodArray<any>).max(
-                field.validation.maxMilestones,
-                `Maximum ${field.validation.maxMilestones} milestone(s) allowed`
-              );
+          );
+          break;
+        }
+        case "metric": {
+          fieldSchema = buildRepeatableObjectSchema(
+            z.object({
+              metric: z.string().trim().min(1, "Metric is required"),
+              dataSource: z.string().trim().min(1, "Data source is required"),
+              howItsMeasured: z.string().trim().min(1, "How it's measured is required"),
+              target: z.string().trim().min(1, "Target is required"),
+            }),
+            {
+              required: field.required,
+              label: field.label,
+              min: field.validation?.minMetrics,
+              max: field.validation?.maxMetrics,
+              minMessage: (n) => `Please add at least ${n} ${pluralize("metric", n)}`,
+              maxMessage: (n) => `Maximum ${n} ${pluralize("metric", n)} allowed`,
             }
-          } else {
-            milestoneArraySchema = (milestoneArraySchema as z.ZodArray<any>)
-              .optional()
-              .or(z.array(milestoneObjectSchema).length(0));
-          }
-
-          fieldSchema = milestoneArraySchema;
+          );
           break;
         }
         case "karma_profile_link": {
@@ -374,9 +376,7 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
       const fieldName = toFieldName(field.label);
       // Use field.id if available, otherwise fall back to fieldName (consistent with validation schema)
       const fieldKey = field.id || fieldName;
-      if (field.type === "checkbox") {
-        defaults[fieldKey] = [];
-      } else if (field.type === "milestone") {
+      if (field.type === "checkbox" || field.type === "milestone" || field.type === "metric") {
         defaults[fieldKey] = [];
       } else if (field.type === "number") {
         // Number fields should default to undefined, not empty string
@@ -529,8 +529,8 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
             // Handle checkbox fields (arrays)
             if (field.type === "checkbox") {
               formData[fieldKey] = Array.isArray(value) ? value : [value];
-            } else if (field.type === "milestone") {
-              // Handle milestone fields (arrays of objects)
+            } else if (field.type === "milestone" || field.type === "metric") {
+              // Milestone/metric fields are arrays of objects
               formData[fieldKey] = Array.isArray(value) ? value : [];
             } else if (field.type === "number") {
               // Handle number fields - convert to number, preserve undefined/null
@@ -559,9 +559,11 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
             }
           } else {
             // Set default values for unmatched fields
-            if (field.type === "checkbox") {
-              formData[fieldKey] = [];
-            } else if (field.type === "milestone") {
+            if (
+              field.type === "checkbox" ||
+              field.type === "milestone" ||
+              field.type === "metric"
+            ) {
               formData[fieldKey] = [];
             } else if (field.type === "number") {
               formData[fieldKey] = undefined;
@@ -840,6 +842,18 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
       case "milestone":
         return (
           <MilestoneInput
+            key={index}
+            field={field}
+            control={control}
+            fieldKey={fieldKey}
+            error={error}
+            isLoading={isLoading || submitting}
+          />
+        );
+
+      case "metric":
+        return (
+          <MetricInput
             key={index}
             field={field}
             control={control}

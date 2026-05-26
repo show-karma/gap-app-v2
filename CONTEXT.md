@@ -24,6 +24,15 @@ _Avoid_: "Community admin" without qualifier — ambiguous with the broader flag
 True when the current user is an admin of at least one Community in the system. Derived from `useCommunitiesStore.communities.length > 0`. Populated globally by `useAdminCommunities()` mounted in `PermissionsProvider`.
 _Avoid_: `isCommunityAdminOfSome` is the convention for the boolean derivation — don't reinvent.
 
+### Funding platform form fields
+
+**Metric (intake form field)**:
+A repeatable custom field type on a program's application form. Each entry captures four free-text values — **Metric**, **Data Source**, **How It's Measured**, **Target** — stored verbatim as JSON inside the application's `applicationData`. It is pure captured text: nothing is anchored on-chain and it does not flow into the **Indicator** system. Modeled on the **Milestone** field type, which (unlike Metric) the indexer anchors on-chain as attestations.
+_Avoid_: conflating with **Indicator** — see below.
+
+**Indicator**:
+Structured, queryable project-level impact data tracked over time (project outputs/KPIs), exposed via project-profile and community-metrics endpoints. Lives at the project layer, independent of any single application.
+
 ## Relationships
 
 - A user can be **Community Admin of Any** without being **Community Admin (per-grant)** in any given page context (no grant in scope).
@@ -40,3 +49,4 @@ _Avoid_: `isCommunityAdminOfSome` is the convention for the boolean derivation �
 ## Flagged ambiguities
 
 - The unqualified term "community admin" was used to gate behavior on both the project profile root (where the per-grant flag is always false) and grant-scoped pages — causing the "+ Add Funding" button and "set up payout" CTA to be hidden for users who legitimately had access. Resolved: always qualify as **per-grant** or **of-any**.
+- "Metric" is overloaded: the **Metric** intake form field (free-text captured on an application) is distinct from the project-level **Indicator** system (structured, on-chain-adjacent impact data). The intake field deliberately does not feed Indicators. Always qualify which one is meant.

@@ -5,6 +5,7 @@ import {
   buildDefaultSchema,
   buildKarmaProfileLinkSchema,
 } from "./schema-builders/karma-profile-schema";
+import { buildMetricSchema } from "./schema-builders/metric-schema";
 import { buildMilestoneSchema } from "./schema-builders/milestone-schema";
 import { buildDateSchema, buildNumberSchema } from "./schema-builders/number-schema";
 import { buildMultiselectSchema, buildSelectSchema } from "./schema-builders/select-schema";
@@ -23,6 +24,7 @@ const schemaBuilders: Record<string, (q: ApplicationQuestion) => ZodType> = {
   checkbox: buildMultiselectSchema,
   file: buildFileSchema,
   milestone: buildMilestoneSchema,
+  metric: buildMetricSchema,
   karma_profile_link: buildKarmaProfileLinkSchema,
 };
 

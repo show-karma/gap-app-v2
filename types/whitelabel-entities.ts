@@ -27,6 +27,7 @@ export interface ApplicationQuestion {
     | "number"
     | "date"
     | "milestone"
+    | "metric"
     | "checkbox"
     | "radio"
     | "url"
@@ -47,6 +48,8 @@ export interface ApplicationQuestion {
     maxFileSize?: number;
     maxMilestones?: number;
     minMilestones?: number;
+    maxMetrics?: number;
+    minMetrics?: number;
   };
 }
 
@@ -57,6 +60,13 @@ export interface MilestoneData {
   fundingRequested?: string;
   completionCriteria?: string;
   readonly milestoneUID?: string; // set after on-chain creation; immutable
+}
+
+export interface MetricData {
+  metric: string;
+  dataSource: string;
+  howItsMeasured: string;
+  target: string;
 }
 
 export interface ApplicationConfig {
@@ -94,6 +104,7 @@ export interface IFormField {
     | "radio"
     | "date"
     | "milestone"
+    | "metric"
     | "karma_profile_link"
     | "section_header";
   label: string;
@@ -110,6 +121,8 @@ export interface IFormField {
     maxFileSize?: number;
     maxMilestones?: number;
     minMilestones?: number;
+    maxMetrics?: number;
+    minMetrics?: number;
   };
   description?: string;
   aiEvaluation?: {

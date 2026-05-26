@@ -29,6 +29,8 @@ export function transformFormSchemaToQuestions(formSchema: IFormSchema): Applica
         maxFileSize: field.validation?.maxFileSize,
         maxMilestones: field.validation?.maxMilestones,
         minMilestones: field.validation?.minMilestones,
+        maxMetrics: field.validation?.maxMetrics,
+        minMetrics: field.validation?.minMetrics,
       },
     } as ApplicationQuestion;
   });
