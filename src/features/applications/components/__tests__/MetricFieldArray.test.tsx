@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { useForm } from "react-hook-form";
+import type { ApplicationFormData } from "@/features/applications/types";
 import type { ApplicationQuestion } from "@/types/whitelabel-entities";
-import type { ApplicationFormData } from "../../types";
 import { MetricFieldArray } from "../MetricFieldArray";
 
 const question: ApplicationQuestion = {

@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { useForm } from "react-hook-form";
-import type { ApplicationFormData } from "../../types";
+import type { ApplicationFormData } from "@/features/applications/types";
 import { MetricItem } from "../MetricItem";
 
 const mockOnRemove = vi.fn();
