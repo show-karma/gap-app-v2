@@ -1,18 +1,9 @@
 "use client";
 
 import * as Sentry from "@sentry/nextjs";
-import { Info } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { useAuth } from "@/hooks/useAuth";
 import { useRealTimeAIEvaluation } from "@/hooks/useRealTimeAIEvaluation";
 import type { ApplicationQuestion, IFormSchema } from "@/types/whitelabel-entities";
@@ -20,7 +11,8 @@ import { cn } from "@/utilities/tailwind";
 import { useApplicationForm } from "../hooks/use-application-form";
 import { useFormDraftPersistence } from "../hooks/use-form-draft-persistence";
 import type { ApplicationFormData } from "../types";
-import { AIEvaluationDisplay } from "./AIEvaluationDisplay";
+import { AIEvaluationSidebar } from "./AIEvaluationSidebar";
+import { ApplicationFormLoginDialog } from "./ApplicationFormLoginDialog";
 import { ApplicationFormSection } from "./ApplicationFormSection";
 
 function logApplicationFormError(error: unknown, errorId: string, extra?: Record<string, unknown>) {
@@ -223,10 +215,11 @@ export function ApplicationForm({
 
   useEffect(() => {
     const persistedState = readPersistedFormStateForAuth();
-    if (!persistedState) return;
-    setFormData(persistedState.formData);
-    pendingSubmitRef.current = persistedState.shouldAutoSubmit;
-    if (authenticated && persistedState.shouldAutoSubmit) {
+    if (persistedState) {
+      setFormData(persistedState.formData);
+      pendingSubmitRef.current = persistedState.shouldAutoSubmit;
+    }
+    if (authenticated && pendingSubmitRef.current) {
       pendingSubmitRef.current = false;
       setShowLoginPrompt(false);
       attemptAutoSubmit();
@@ -238,14 +231,6 @@ export function ApplicationForm({
     attemptAutoSubmit,
     pendingSubmitRef,
   ]);
-
-  useEffect(() => {
-    if (authenticated && pendingSubmitRef.current) {
-      pendingSubmitRef.current = false;
-      setShowLoginPrompt(false);
-      attemptAutoSubmit();
-    }
-  }, [authenticated, attemptAutoSubmit, pendingSubmitRef]);
 
   const handleLogin = async () => {
     try {
@@ -390,66 +375,24 @@ export function ApplicationForm({
         </div>
 
         {hasEvalConfig && hasScored && (
-          <div className="lg:col-span-1">
-            <div className="sticky top-6">
-              <AIEvaluationDisplay
-                evaluation={evaluation}
-                isLoading={isEvaluating}
-                isEnabled
-                hasError={!!evaluationError}
-                programName={programName}
-              />
-              {evaluationError && (
-                <div className="mt-4 rounded-lg border border-primary/20 bg-primary/5 p-4">
-                  <div className="flex items-start gap-3">
-                    <Info className="mt-0.5 h-5 w-5 shrink-0 text-primary" aria-hidden="true" />
-                    <div className="space-y-1">
-                      <p className="text-sm font-semibold text-foreground">
-                        AI feedback did not finish
-                      </p>
-                      <p className="text-sm leading-6 text-muted-foreground">{evaluationError}</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
+          <AIEvaluationSidebar
+            evaluation={evaluation}
+            isEvaluating={isEvaluating}
+            evaluationError={evaluationError}
+            programName={programName}
+          />
         )}
       </div>
 
-      <Dialog
+      <ApplicationFormLoginDialog
         open={showLoginPrompt}
-        onOpenChange={(open) => {
-          if (!open) {
-            pendingSubmitRef.current = false;
-            clearPersistedFormStateForAuth();
-            setShowLoginPrompt(false);
-          }
+        onCancel={() => {
+          pendingSubmitRef.current = false;
+          clearPersistedFormStateForAuth();
+          setShowLoginPrompt(false);
         }}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Connect Wallet Required</DialogTitle>
-            <DialogDescription>
-              You need to connect your wallet to submit an application. This ensures your
-              application is securely linked to your wallet address.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => {
-                pendingSubmitRef.current = false;
-                clearPersistedFormStateForAuth();
-                setShowLoginPrompt(false);
-              }}
-            >
-              Cancel
-            </Button>
-            <Button onClick={handleLogin}>Connect Wallet</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        onConnect={handleLogin}
+      />
     </div>
   );
 }
