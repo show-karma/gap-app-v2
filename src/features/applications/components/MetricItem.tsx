@@ -1,43 +1,35 @@
 "use client";
 
 import { Trash2 } from "lucide-react";
-import { type FC, memo } from "react";
+import type { FC } from "react";
+import { type Control, Controller, type FieldPath } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import type { MetricData } from "@/types/whitelabel-entities";
+import type { ApplicationFormData } from "@/features/applications/types";
 
 interface MetricItemProps {
   index: number;
-  metric: MetricData;
-  onUpdate: (data: MetricData) => void;
+  namePrefix: string;
+  control: Control<ApplicationFormData>;
   onRemove: () => void;
   canRemove: boolean;
   disabled?: boolean;
-  errors?: {
-    metric?: { message?: string };
-    dataSource?: { message?: string };
-    howItsMeasured?: { message?: string };
-    target?: { message?: string };
-  };
 }
 
-export const MetricItem: FC<MetricItemProps> = memo(function MetricItem({
+// Each sub-field is registered independently so editing one never rewrites the
+// others (avoids the stale-object-spread data loss).
+export const MetricItem: FC<MetricItemProps> = ({
   index,
-  metric,
-  onUpdate,
+  namePrefix,
+  control,
   onRemove,
   canRemove,
   disabled = false,
-  errors,
-}) {
-  const handleFieldChange = (field: keyof MetricData, value: string) => {
-    onUpdate({
-      ...metric,
-      [field]: value,
-    });
-  };
+}) => {
+  const subFieldName = (sub: string) =>
+    `${namePrefix}.${index}.${sub}` as FieldPath<ApplicationFormData>;
 
   return (
     <div
@@ -61,66 +53,94 @@ export const MetricItem: FC<MetricItemProps> = memo(function MetricItem({
         )}
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor={`metric-name-${index}`}>Metric *</Label>
-        <Input
-          id={`metric-name-${index}`}
-          placeholder="e.g., Monthly active users"
-          value={metric.metric || ""}
-          onChange={(e) => handleFieldChange("metric", e.target.value)}
-          disabled={disabled}
-          data-testid={`metric-name-input-${index}`}
-        />
-        {errors?.metric?.message && (
-          <p className="text-sm text-destructive">{errors.metric.message}</p>
+      <Controller
+        name={subFieldName("metric")}
+        control={control}
+        render={({ field, fieldState }) => (
+          <div className="space-y-2">
+            <Label htmlFor={`metric-name-${index}`}>Metric *</Label>
+            <Input
+              id={`metric-name-${index}`}
+              placeholder="e.g., Monthly active users"
+              value={(field.value as string) || ""}
+              onChange={field.onChange}
+              onBlur={field.onBlur}
+              disabled={disabled}
+              data-testid={`metric-name-input-${index}`}
+            />
+            {fieldState.error?.message && (
+              <p className="text-sm text-destructive">{fieldState.error.message}</p>
+            )}
+          </div>
         )}
-      </div>
+      />
 
-      <div className="space-y-2">
-        <Label htmlFor={`metric-data-source-${index}`}>Data Source *</Label>
-        <Input
-          id={`metric-data-source-${index}`}
-          placeholder="e.g., Dune Analytics dashboard"
-          value={metric.dataSource || ""}
-          onChange={(e) => handleFieldChange("dataSource", e.target.value)}
-          disabled={disabled}
-          data-testid={`metric-data-source-input-${index}`}
-        />
-        {errors?.dataSource?.message && (
-          <p className="text-sm text-destructive">{errors.dataSource.message}</p>
+      <Controller
+        name={subFieldName("dataSource")}
+        control={control}
+        render={({ field, fieldState }) => (
+          <div className="space-y-2">
+            <Label htmlFor={`metric-data-source-${index}`}>Data Source *</Label>
+            <Input
+              id={`metric-data-source-${index}`}
+              placeholder="e.g., Dune Analytics dashboard"
+              value={(field.value as string) || ""}
+              onChange={field.onChange}
+              onBlur={field.onBlur}
+              disabled={disabled}
+              data-testid={`metric-data-source-input-${index}`}
+            />
+            {fieldState.error?.message && (
+              <p className="text-sm text-destructive">{fieldState.error.message}</p>
+            )}
+          </div>
         )}
-      </div>
+      />
 
-      <div className="space-y-2">
-        <Label htmlFor={`metric-how-measured-${index}`}>How It's Measured *</Label>
-        <Textarea
-          id={`metric-how-measured-${index}`}
-          placeholder="e.g., Count of unique wallet addresses interacting with the contract each month"
-          value={metric.howItsMeasured || ""}
-          onChange={(e) => handleFieldChange("howItsMeasured", e.target.value)}
-          disabled={disabled}
-          rows={3}
-          data-testid={`metric-how-measured-input-${index}`}
-        />
-        {errors?.howItsMeasured?.message && (
-          <p className="text-sm text-destructive">{errors.howItsMeasured.message}</p>
+      <Controller
+        name={subFieldName("howItsMeasured")}
+        control={control}
+        render={({ field, fieldState }) => (
+          <div className="space-y-2">
+            <Label htmlFor={`metric-how-measured-${index}`}>How It's Measured *</Label>
+            <Textarea
+              id={`metric-how-measured-${index}`}
+              placeholder="e.g., Count of unique wallet addresses interacting with the contract each month"
+              value={(field.value as string) || ""}
+              onChange={field.onChange}
+              onBlur={field.onBlur}
+              disabled={disabled}
+              rows={3}
+              data-testid={`metric-how-measured-input-${index}`}
+            />
+            {fieldState.error?.message && (
+              <p className="text-sm text-destructive">{fieldState.error.message}</p>
+            )}
+          </div>
         )}
-      </div>
+      />
 
-      <div className="space-y-2">
-        <Label htmlFor={`metric-target-${index}`}>Target *</Label>
-        <Input
-          id={`metric-target-${index}`}
-          placeholder="e.g., 10,000 monthly active users by Q4"
-          value={metric.target || ""}
-          onChange={(e) => handleFieldChange("target", e.target.value)}
-          disabled={disabled}
-          data-testid={`metric-target-input-${index}`}
-        />
-        {errors?.target?.message && (
-          <p className="text-sm text-destructive">{errors.target.message}</p>
+      <Controller
+        name={subFieldName("target")}
+        control={control}
+        render={({ field, fieldState }) => (
+          <div className="space-y-2">
+            <Label htmlFor={`metric-target-${index}`}>Target *</Label>
+            <Input
+              id={`metric-target-${index}`}
+              placeholder="e.g., 10,000 monthly active users by Q4"
+              value={(field.value as string) || ""}
+              onChange={field.onChange}
+              onBlur={field.onBlur}
+              disabled={disabled}
+              data-testid={`metric-target-input-${index}`}
+            />
+            {fieldState.error?.message && (
+              <p className="text-sm text-destructive">{fieldState.error.message}</p>
+            )}
+          </div>
         )}
-      </div>
+      />
     </div>
   );
-});
+};

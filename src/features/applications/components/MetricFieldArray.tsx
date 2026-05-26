@@ -1,13 +1,13 @@
 "use client";
 
 import pluralize from "pluralize";
-import { type FC, useCallback } from "react";
+import type { FC } from "react";
 import type { Control, FieldPath, UseFormTrigger } from "react-hook-form";
 import { Controller, useFieldArray } from "react-hook-form";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { Button } from "@/components/ui/button";
+import type { ApplicationFormData } from "@/features/applications/types";
 import type { ApplicationQuestion, MetricData } from "@/types/whitelabel-entities";
-import type { ApplicationFormData } from "../types";
 import { MetricItem } from "./MetricItem";
 
 interface MetricFieldArrayProps {
@@ -33,7 +33,7 @@ export const MetricFieldArray: FC<MetricFieldArrayProps> = ({
   const maxMetrics = question.validation?.maxMetrics ?? Number.POSITIVE_INFINITY;
   const minMetrics = question.validation?.minMetrics ?? 0;
 
-  const handleAddMetric = useCallback(() => {
+  const handleAddMetric = () => {
     const newMetric: MetricData = {
       metric: "",
       dataSource: "",
@@ -41,17 +41,14 @@ export const MetricFieldArray: FC<MetricFieldArrayProps> = ({
       target: "",
     };
     append(newMetric as never);
-  }, [append]);
+  };
 
-  const handleRemoveMetric = useCallback(
-    async (index: number) => {
-      remove(index);
-      if (trigger) {
-        await trigger(name as FieldPath<ApplicationFormData>);
-      }
-    },
-    [remove, trigger, name]
-  );
+  const handleRemoveMetric = async (index: number) => {
+    remove(index);
+    if (trigger) {
+      await trigger(name as FieldPath<ApplicationFormData>);
+    }
+  };
 
   const canAddMore = fields.length < maxMetrics;
   const canRemove = fields.length > minMetrics;
@@ -82,26 +79,14 @@ export const MetricFieldArray: FC<MetricFieldArrayProps> = ({
 
             <div className="space-y-4" data-testid="metrics-list">
               {fields.map((field, index) => (
-                <Controller
+                <MetricItem
                   key={field.id}
-                  name={`${name}.${index}` as FieldPath<ApplicationFormData>}
+                  index={index}
+                  namePrefix={name}
                   control={control}
-                  render={({ field: metricField, fieldState }) => (
-                    <MetricItem
-                      index={index}
-                      metric={metricField.value as MetricData}
-                      onUpdate={metricField.onChange}
-                      onRemove={() => handleRemoveMetric(index)}
-                      canRemove={canRemove}
-                      disabled={disabled}
-                      errors={
-                        fieldState.error as unknown as Record<
-                          string,
-                          { message?: string } | undefined
-                        >
-                      }
-                    />
-                  )}
+                  canRemove={canRemove}
+                  disabled={disabled}
+                  onRemove={() => handleRemoveMetric(index)}
                 />
               ))}
             </div>

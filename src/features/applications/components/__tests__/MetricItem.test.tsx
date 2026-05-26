@@ -1,77 +1,72 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import type { MetricData } from "@/types/whitelabel-entities";
+import { useForm } from "react-hook-form";
+import type { ApplicationFormData } from "@/features/applications/types";
 import { MetricItem } from "../MetricItem";
 
+const mockOnRemove = vi.fn();
+
+interface HarnessProps {
+  canRemove?: boolean;
+  disabled?: boolean;
+  defaultValues?: Record<string, unknown>;
+}
+
+function Harness({ canRemove = true, disabled = false, defaultValues }: HarnessProps) {
+  const { control } = useForm<ApplicationFormData>({
+    defaultValues: (defaultValues ?? {
+      metrics: [{ metric: "", dataSource: "", howItsMeasured: "", target: "" }],
+    }) as Partial<ApplicationFormData>,
+  });
+  return (
+    <MetricItem
+      index={0}
+      namePrefix="metrics"
+      control={control}
+      canRemove={canRemove}
+      disabled={disabled}
+      onRemove={mockOnRemove}
+    />
+  );
+}
+
 describe("MetricItem", () => {
-  const mockMetric: MetricData = {
-    metric: "Monthly active users",
-    dataSource: "Dune Analytics dashboard",
-    howItsMeasured: "Unique wallets interacting with the contract",
-    target: "10,000 by Q4",
-  };
-
-  const mockOnUpdate = vi.fn();
-  const mockOnRemove = vi.fn();
-
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it("should render all four metric sub-fields", () => {
+  it("renders all four sub-fields with their values", () => {
     render(
-      <MetricItem
-        index={0}
-        metric={mockMetric}
-        onUpdate={mockOnUpdate}
-        onRemove={mockOnRemove}
-        canRemove={true}
+      <Harness
+        defaultValues={{
+          metrics: [
+            {
+              metric: "Monthly active users",
+              dataSource: "Dune analytics",
+              howItsMeasured: "Unique wallets",
+              target: "10,000 by Q4",
+            },
+          ],
+        }}
       />
     );
 
     expect(screen.getByText("Metric 1")).toBeInTheDocument();
     expect(screen.getByTestId("metric-name-input-0")).toHaveValue("Monthly active users");
-    expect(screen.getByTestId("metric-data-source-input-0")).toHaveValue(
-      "Dune Analytics dashboard"
-    );
-    expect(screen.getByTestId("metric-how-measured-input-0")).toHaveValue(
-      "Unique wallets interacting with the contract"
-    );
+    expect(screen.getByTestId("metric-data-source-input-0")).toHaveValue("Dune analytics");
+    expect(screen.getByTestId("metric-how-measured-input-0")).toHaveValue("Unique wallets");
     expect(screen.getByTestId("metric-target-input-0")).toHaveValue("10,000 by Q4");
   });
 
-  it("should call onUpdate with the changed sub-field, preserving the rest", () => {
-    render(
-      <MetricItem
-        index={0}
-        metric={mockMetric}
-        onUpdate={mockOnUpdate}
-        onRemove={mockOnRemove}
-        canRemove={true}
-      />
-    );
+  it("calls onRemove when the remove button is clicked", () => {
+    render(<Harness />);
 
-    fireEvent.change(screen.getByTestId("metric-target-input-0"), {
-      target: { value: "25,000 by Q4" },
-    });
+    fireEvent.click(screen.getByTestId("remove-metric-btn-0"));
 
-    expect(mockOnUpdate).toHaveBeenCalledWith(
-      expect.objectContaining({
-        metric: "Monthly active users",
-        target: "25,000 by Q4",
-      })
-    );
+    expect(mockOnRemove).toHaveBeenCalledTimes(1);
   });
 
-  it("should hide the remove button when canRemove is false", () => {
-    render(
-      <MetricItem
-        index={0}
-        metric={mockMetric}
-        onUpdate={mockOnUpdate}
-        onRemove={mockOnRemove}
-        canRemove={false}
-      />
-    );
+  it("hides the remove button when canRemove is false", () => {
+    render(<Harness canRemove={false} />);
 
     expect(screen.queryByTestId("remove-metric-btn-0")).not.toBeInTheDocument();
   });
