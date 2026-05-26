@@ -99,6 +99,25 @@ describe("AIEvaluationDisplay", () => {
     expect(Sentry.captureMessage).not.toHaveBeenCalled();
   });
 
+  it.each([
+    ["empty string", ""],
+    ["whitespace-only string", "   "],
+  ])(
+    "treats %s final_score as malformed (no Score: 0/10, renders Score unavailable)",
+    (_label, value) => {
+      render(
+        <AIEvaluationDisplay evaluation={{ final_score: value }} isLoading={false} isEnabled />
+      );
+
+      expect(screen.queryByText("Score: 0/10")).not.toBeInTheDocument();
+      expect(screen.getByTestId("ai-evaluation-score-unavailable")).toBeInTheDocument();
+      expect(Sentry.captureMessage).toHaveBeenCalledWith(
+        expect.stringContaining("ai-evaluation-malformed-score"),
+        expect.objectContaining({ level: "warning" })
+      );
+    }
+  );
+
   it("logs to Sentry when feedback is not a string", () => {
     render(
       <AIEvaluationDisplay

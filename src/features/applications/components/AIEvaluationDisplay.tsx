@@ -121,10 +121,16 @@ function EvaluationDisplay({ data, programName }: { data: GenericJSON; programNa
 
   const evalData = data;
   const rawScore = evalData.final_score ?? evalData.score;
-  const parsedScore = rawScore == null ? null : Number(rawScore);
+  // Trim string scores before coercion — `Number("")` and `Number("   ")` both
+  // return 0, which would otherwise pass the 0–10 range check and render as a
+  // legitimate "Score: 0/10". Treat blank/whitespace as malformed.
+  const trimmedRawScore = typeof rawScore === "string" ? rawScore.trim() : rawScore;
+  const isBlankStringScore = typeof rawScore === "string" && trimmedRawScore === "";
+  const parsedScore =
+    trimmedRawScore == null || isBlankStringScore ? null : Number(trimmedRawScore);
   const hasValidScore =
     parsedScore !== null && Number.isFinite(parsedScore) && parsedScore >= 0 && parsedScore <= 10;
-  const hasMalformedScore = parsedScore !== null && !hasValidScore;
+  const hasMalformedScore = isBlankStringScore || (parsedScore !== null && !hasValidScore);
   if (hasMalformedScore) {
     logAIEvaluationDataIssue("ai-evaluation-malformed-score", {
       rawScoreType: typeof rawScore,
