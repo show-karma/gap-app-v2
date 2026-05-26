@@ -88,6 +88,7 @@ export function useApplicationForm(
     control,
     handleSubmit,
     watch,
+    getValues,
     trigger,
 
     formState: {

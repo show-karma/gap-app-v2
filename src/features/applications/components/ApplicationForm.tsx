@@ -60,6 +60,7 @@ export function ApplicationForm({
     control,
     handleSubmit: formHandleSubmit,
     watch,
+    getValues,
     trigger,
   } = useApplicationForm(questions, { initialData });
 
@@ -246,9 +247,13 @@ export function ApplicationForm({
     }
 
     setScoringState("pending");
+    // Read live values imperatively. `formState.data` is a getValues() snapshot
+    // frozen at the last render, and RHF Controller fields don't re-render this
+    // component on input — so it would evaluate stale (pre-edit) values.
+    const liveData = getValues();
     const evaluationData: Record<string, unknown> = {};
     questions.forEach((question) => {
-      const value = formState.data[question.id];
+      const value = liveData[question.id];
       if (value !== undefined && value !== null && value !== "") {
         evaluationData[question.label || question.id] = value;
       }
