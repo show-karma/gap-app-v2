@@ -183,21 +183,17 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
   // Update form values when milestone impact data is loaded
   useEffect(() => {
     if (milestoneImpactData && milestoneImpactData.length > 0) {
-      const transformedOutputs = milestoneImpactData.map((metric: any) => ({
-        _key: crypto.randomUUID(),
-        outputId: metric.id || "",
-        value: metric.datapoints && metric.datapoints.length > 0 ? metric.datapoints[0].value : "",
-        proof:
-          metric.datapoints && metric.datapoints.length > 0 ? metric.datapoints[0].proof || "" : "",
-        startDate:
-          metric.datapoints && metric.datapoints.length > 0
-            ? metric.datapoints[0].startDate || ""
-            : "",
-        endDate:
-          metric.datapoints && metric.datapoints.length > 0
-            ? metric.datapoints[0].endDate || ""
-            : "",
-      }));
+      const transformedOutputs = milestoneImpactData.map((metric: any) => {
+        const datapoint = metric.datapoints?.[0];
+        return {
+          _key: crypto.randomUUID(),
+          outputId: metric.id || "",
+          value: datapoint?.value ?? "",
+          proof: datapoint?.proof || "",
+          startDate: datapoint?.startDate || "",
+          endDate: datapoint?.endDate || "",
+        };
+      });
       setValue("outputs", transformedOutputs, { shouldValidate: true });
     }
   }, [milestoneImpactData, setValue]);
