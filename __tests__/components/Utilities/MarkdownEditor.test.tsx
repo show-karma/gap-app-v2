@@ -127,6 +127,27 @@ describe("MarkdownEditor", () => {
 
       expect(screen.queryByRole("button", { name: /preview/i })).not.toBeInTheDocument();
     });
+
+    it("should render label with default bold class when labelClassName is not provided", () => {
+      render(<MarkdownEditor label="Test Label" id="test-editor" />);
+
+      const label = screen.getByText("Test Label", { selector: "label" });
+      expect(label).toHaveClass("font-bold");
+    });
+
+    it("should apply labelClassName when provided and drop the default", () => {
+      render(
+        <MarkdownEditor
+          label="Test Label"
+          id="test-editor"
+          labelClassName="text-sm font-medium leading-none"
+        />
+      );
+
+      const label = screen.getByText("Test Label", { selector: "label" });
+      expect(label).toHaveClass("font-medium");
+      expect(label).not.toHaveClass("font-bold");
+    });
   });
 
   describe("Character Limits", () => {
