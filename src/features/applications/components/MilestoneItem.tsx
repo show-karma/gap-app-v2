@@ -103,6 +103,7 @@ export const MilestoneItem: React.FC<MilestoneItemProps> = ({
 
       <MarkdownEditor
         label="Description"
+        labelClassName="text-sm font-medium leading-none"
         placeholder="Describe what will be accomplished in this milestone"
         value={milestone.description}
         onChange={(value) => handleFieldChange("description", value)}
@@ -144,6 +145,7 @@ export const MilestoneItem: React.FC<MilestoneItemProps> = ({
 
       <MarkdownEditor
         label="Completion Criteria"
+        labelClassName="text-sm font-medium leading-none"
         placeholder="Define criteria for milestone completion"
         value={milestone.completionCriteria || ""}
         onChange={(value) => handleFieldChange("completionCriteria", value)}

@@ -188,6 +188,7 @@ export function ApplicationFormField({
               <div className="flex flex-col gap-2" data-field-id={question.id}>
                 <MarkdownEditor
                   label={question.label}
+                  labelClassName="text-sm font-medium leading-none"
                   placeholder={question.placeholder}
                   value={(field.value as string) || ""}
                   onChange={field.onChange}
