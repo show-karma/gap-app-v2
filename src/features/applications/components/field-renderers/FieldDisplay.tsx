@@ -1,8 +1,12 @@
 "use client";
 
 import type { MetricData, MilestoneData } from "@/types/whitelabel-entities";
-import { MetricRenderer } from "./MetricRenderer";
-import { MilestoneRenderer, ObjectArrayRenderer, SimpleArrayRenderer } from "./MilestoneRenderer";
+import {
+  MetricRenderer,
+  MilestoneRenderer,
+  ObjectArrayRenderer,
+  SimpleArrayRenderer,
+} from "./MilestoneRenderer";
 import {
   BooleanRenderer,
   DateRenderer,
