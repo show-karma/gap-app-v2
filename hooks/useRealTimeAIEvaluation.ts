@@ -3,6 +3,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { AIEvaluationData } from "@/src/features/applications/components/AIEvaluationDisplay";
 import { TokenManager } from "@/utilities/auth/token-manager";
 import { envVars } from "@/utilities/enviromentVars";
+import { captureWithContext } from "@/utilities/sentry-capture";
+
+const COMPONENT_TAG = "useRealTimeAIEvaluation";
 
 interface UseRealTimeAIEvaluationProps {
   programId: string;
@@ -25,43 +28,26 @@ const AI_EVALUATION_TIMEOUT_MESSAGE =
 const AI_EVALUATION_AUTH_MESSAGE =
   "Please reconnect your wallet to get AI feedback, or submit your application without it.";
 
-class AIEvaluationAuthError extends Error {
-  constructor() {
-    super(AI_EVALUATION_AUTH_MESSAGE);
-    this.name = "AIEvaluationAuthError";
-    Object.setPrototypeOf(this, AIEvaluationAuthError.prototype);
-  }
+type AIEvaluationErrorCause = "auth" | "http" | "parse";
+
+interface AIEvaluationErrorOptions {
+  cause: AIEvaluationErrorCause;
+  status?: number;
+  statusText?: string;
 }
 
-class AIEvaluationHttpError extends Error {
-  status: number;
-  statusText: string;
+export class AIEvaluationError extends Error {
+  readonly cause: AIEvaluationErrorCause;
+  readonly status?: number;
+  readonly statusText?: string;
 
-  constructor(status: number, statusText: string) {
-    super(AI_EVALUATION_UNAVAILABLE_MESSAGE);
-    this.name = "AIEvaluationHttpError";
-    this.status = status;
-    this.statusText = statusText;
-    Object.setPrototypeOf(this, AIEvaluationHttpError.prototype);
+  constructor(message: string, options: AIEvaluationErrorOptions) {
+    super(message);
+    this.name = "AIEvaluationError";
+    this.cause = options.cause;
+    this.status = options.status;
+    this.statusText = options.statusText;
   }
-}
-
-class AIEvaluationParseError extends Error {
-  constructor() {
-    super(AI_EVALUATION_UNAVAILABLE_MESSAGE);
-    this.name = "AIEvaluationParseError";
-    Object.setPrototypeOf(this, AIEvaluationParseError.prototype);
-  }
-}
-
-function logAIEvaluationError(error: unknown, errorId: string, extra?: Record<string, unknown>) {
-  Sentry.captureException(error, {
-    tags: {
-      component: "useRealTimeAIEvaluation",
-      errorId,
-    },
-    extra,
-  });
 }
 
 async function evaluateApplication(
@@ -73,8 +59,10 @@ async function evaluateApplication(
   try {
     authHeaders = await TokenManager.getAuthHeader();
   } catch (error) {
-    logAIEvaluationError(error, "ai-realtime-evaluation-auth-header-failed", { programId });
-    throw new AIEvaluationAuthError();
+    captureWithContext(error, COMPONENT_TAG, "ai-realtime-evaluation-auth-header-failed", {
+      programId,
+    });
+    throw new AIEvaluationError(AI_EVALUATION_AUTH_MESSAGE, { cause: "auth" });
   }
 
   const apiBase = envVars.NEXT_PUBLIC_GAP_INDEXER_URL;
@@ -97,24 +85,28 @@ async function evaluateApplication(
       Sentry.captureMessage("AI evaluation auth rejected by server", {
         level: "info",
         tags: {
-          component: "useRealTimeAIEvaluation",
+          component: COMPONENT_TAG,
           errorId: "ai-realtime-evaluation-auth-rejected",
         },
         extra: { programId, status: response.status },
       });
-      throw new AIEvaluationAuthError();
+      throw new AIEvaluationError(AI_EVALUATION_AUTH_MESSAGE, { cause: "auth" });
     }
-    throw new AIEvaluationHttpError(response.status, response.statusText);
+    throw new AIEvaluationError(AI_EVALUATION_UNAVAILABLE_MESSAGE, {
+      cause: "http",
+      status: response.status,
+      statusText: response.statusText,
+    });
   }
 
   try {
     return await response.json();
   } catch (error) {
-    logAIEvaluationError(error, "ai-realtime-evaluation-json-parse-failed", {
+    captureWithContext(error, COMPONENT_TAG, "ai-realtime-evaluation-json-parse-failed", {
       programId,
       status: response.status,
     });
-    throw new AIEvaluationParseError();
+    throw new AIEvaluationError(AI_EVALUATION_UNAVAILABLE_MESSAGE, { cause: "parse" });
   }
 }
 
@@ -184,26 +176,20 @@ export function useRealTimeAIEvaluation({
             return;
           }
           if (controller.signal.aborted) return;
-          const isTypedAIError =
-            err instanceof AIEvaluationAuthError ||
-            err instanceof AIEvaluationHttpError ||
-            err instanceof AIEvaluationParseError;
-          const message =
-            isTypedAIError && err instanceof Error
-              ? err.message
-              : AI_EVALUATION_UNAVAILABLE_MESSAGE;
-          const alreadyLogged =
-            err instanceof AIEvaluationAuthError || err instanceof AIEvaluationParseError;
+          const isAIError = err instanceof AIEvaluationError;
+          const message = isAIError ? err.message : AI_EVALUATION_UNAVAILABLE_MESSAGE;
+          // auth/parse paths are already logged at the throw site — skip to avoid double-reporting.
+          const alreadyLogged = isAIError && (err.cause === "auth" || err.cause === "parse");
           if (!alreadyLogged) {
             const extra: Record<string, unknown> = {
               programId,
               applicationDataKeys: Object.keys(applicationData),
             };
-            if (err instanceof AIEvaluationHttpError) {
+            if (isAIError && err.cause === "http") {
               extra.status = err.status;
               extra.statusText = err.statusText;
             }
-            logAIEvaluationError(err, "ai-realtime-evaluation-request-failed", extra);
+            captureWithContext(err, COMPONENT_TAG, "ai-realtime-evaluation-request-failed", extra);
           }
           setError(message);
         } finally {

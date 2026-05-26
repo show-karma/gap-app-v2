@@ -1,7 +1,11 @@
 import * as Sentry from "@sentry/nextjs";
 import { act, renderHook } from "@testing-library/react";
 import { TokenManager } from "@/utilities/auth/token-manager";
-import { AI_EVALUATION_TIMEOUT_MS, useRealTimeAIEvaluation } from "../useRealTimeAIEvaluation";
+import {
+  AI_EVALUATION_TIMEOUT_MS,
+  AIEvaluationError,
+  useRealTimeAIEvaluation,
+} from "../useRealTimeAIEvaluation";
 
 vi.mock("@/utilities/auth/token-manager", () => ({
   TokenManager: {
@@ -247,6 +251,10 @@ describe("useRealTimeAIEvaluation", () => {
     expect(Sentry.captureException).toHaveBeenCalledTimes(1);
     const call = vi.mocked(Sentry.captureException).mock.calls[0];
     expect(call[1]?.extra).toMatchObject({ status: 503 });
+    const captured = call[0] as AIEvaluationError;
+    expect(captured).toBeInstanceOf(AIEvaluationError);
+    expect(captured.cause).toBe("http");
+    expect(captured.status).toBe(503);
   });
 
   it("returns the generic unavailable copy when JSON parsing fails and logs Sentry only once", async () => {
