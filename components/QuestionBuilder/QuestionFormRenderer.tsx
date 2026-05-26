@@ -1,10 +1,11 @@
 "use client";
 
+import pluralize from "pluralize";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/Utilities/Button";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
-import type { FormSchema } from "@/types/question-builder";
+import type { FormField, FormSchema } from "@/types/question-builder";
 
 interface QuestionFormRendererProps {
   schema: FormSchema;
@@ -309,7 +310,7 @@ export function QuestionFormRenderer({
   }
 
   // Simple Metric Preview Component
-  function MetricPreview({ field, isSubmitting }: { field: any; isSubmitting: boolean }) {
+  function MetricPreview({ field, isSubmitting }: { field: FormField; isSubmitting: boolean }) {
     const [metrics, setMetrics] = useState<
       Array<{
         metric: string;
@@ -319,8 +320,8 @@ export function QuestionFormRenderer({
       }>
     >([]);
 
-    const maxMetrics = field.validation?.maxMetrics || 10;
-    const minMetrics = field.validation?.minMetrics || 0;
+    const maxMetrics = field.validation?.maxMetrics ?? Number.POSITIVE_INFINITY;
+    const minMetrics = field.validation?.minMetrics ?? 0;
 
     const addMetric = () => {
       if (metrics.length < maxMetrics) {
@@ -455,7 +456,7 @@ export function QuestionFormRenderer({
 
         {minMetrics > 0 && metrics.length < minMetrics && (
           <p className="text-sm text-yellow-600 dark:text-yellow-400">
-            Please add at least {minMetrics} metric{minMetrics > 1 ? "s" : ""}
+            Please add at least {minMetrics} {pluralize("metric", minMetrics)}
           </p>
         )}
       </div>

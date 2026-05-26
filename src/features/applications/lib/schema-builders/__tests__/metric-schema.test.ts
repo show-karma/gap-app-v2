@@ -113,3 +113,21 @@ describe("buildMetricSchema — min/max limits", () => {
     }
   });
 });
+
+describe("buildMetricSchema — empty required input", () => {
+  it("reports only the required error (not the count rule) for undefined", () => {
+    const schema = buildMetricSchema({
+      ...baseQuestion,
+      validation: { minMetrics: 2 },
+    });
+
+    const result = schema.safeParse(undefined);
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const issues = JSON.stringify(result.error.issues);
+      expect(issues).toContain("This field is required");
+      expect(issues).not.toContain("at least 2 metrics");
+    }
+  });
+});

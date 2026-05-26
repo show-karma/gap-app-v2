@@ -1,6 +1,7 @@
 "use client";
 
-import type React from "react";
+import pluralize from "pluralize";
+import { type FC, useCallback } from "react";
 import type { Control, FieldPath, UseFormTrigger } from "react-hook-form";
 import { Controller, useFieldArray } from "react-hook-form";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
@@ -17,7 +18,7 @@ interface MetricFieldArrayProps {
   trigger?: UseFormTrigger<ApplicationFormData>;
 }
 
-export const MetricFieldArray: React.FC<MetricFieldArrayProps> = ({
+export const MetricFieldArray: FC<MetricFieldArrayProps> = ({
   control,
   name,
   question,
@@ -29,10 +30,10 @@ export const MetricFieldArray: React.FC<MetricFieldArrayProps> = ({
     name: name as never,
   });
 
-  const maxMetrics = question.validation?.maxMetrics || 10;
-  const minMetrics = question.validation?.minMetrics || 0;
+  const maxMetrics = question.validation?.maxMetrics ?? Number.POSITIVE_INFINITY;
+  const minMetrics = question.validation?.minMetrics ?? 0;
 
-  const handleAddMetric = () => {
+  const handleAddMetric = useCallback(() => {
     const newMetric: MetricData = {
       metric: "",
       dataSource: "",
@@ -40,14 +41,17 @@ export const MetricFieldArray: React.FC<MetricFieldArrayProps> = ({
       target: "",
     };
     append(newMetric as never);
-  };
+  }, [append]);
 
-  const handleRemoveMetric = async (index: number) => {
-    remove(index);
-    if (trigger) {
-      await trigger(name as FieldPath<ApplicationFormData>);
-    }
-  };
+  const handleRemoveMetric = useCallback(
+    async (index: number) => {
+      remove(index);
+      if (trigger) {
+        await trigger(name as FieldPath<ApplicationFormData>);
+      }
+    },
+    [remove, trigger, name]
+  );
 
   const canAddMore = fields.length < maxMetrics;
   const canRemove = fields.length > minMetrics;
@@ -86,7 +90,7 @@ export const MetricFieldArray: React.FC<MetricFieldArrayProps> = ({
                     <MetricItem
                       index={index}
                       metric={metricField.value as MetricData}
-                      onUpdate={(data) => metricField.onChange(data)}
+                      onUpdate={metricField.onChange}
                       onRemove={() => handleRemoveMetric(index)}
                       canRemove={canRemove}
                       disabled={disabled}
@@ -120,8 +124,7 @@ export const MetricFieldArray: React.FC<MetricFieldArrayProps> = ({
               minMetrics > 0 &&
               fields.length < minMetrics && (
                 <p className="text-sm text-yellow-600 dark:text-yellow-400">
-                  Please add at least {minMetrics} metric
-                  {minMetrics > 1 ? "s" : ""}
+                  Please add at least {minMetrics} {pluralize("metric", minMetrics)}
                 </p>
               )}
           </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import pluralize from "pluralize";
 import { type FC, useCallback, useEffect, useMemo, useState } from "react";
 import { Controller, type SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -328,33 +329,29 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
             target: z.string().min(1, "Target is required"),
           });
 
-          let metricArraySchema: z.ZodType = z.array(metricObjectSchema);
+          let metricArray = z.array(metricObjectSchema);
 
           if (field.required) {
-            if (field.validation?.minMetrics) {
-              metricArraySchema = (metricArraySchema as z.ZodArray<any>).min(
-                field.validation.minMetrics,
-                `Please add at least ${field.validation.minMetrics} metric(s)`
+            const min = field.validation?.minMetrics;
+            if (min) {
+              metricArray = metricArray.min(
+                min,
+                `Please add at least ${min} ${pluralize("metric", min)}`
               );
             } else {
-              metricArraySchema = (metricArraySchema as z.ZodArray<any>).min(
-                1,
-                `${field.label} is required`
+              metricArray = metricArray.min(1, `${field.label} is required`);
+            }
+            const max = field.validation?.maxMetrics;
+            if (max) {
+              metricArray = metricArray.max(
+                max,
+                `Maximum ${max} ${pluralize("metric", max)} allowed`
               );
             }
-            if (field.validation?.maxMetrics) {
-              metricArraySchema = (metricArraySchema as z.ZodArray<any>).max(
-                field.validation.maxMetrics,
-                `Maximum ${field.validation.maxMetrics} metric(s) allowed`
-              );
-            }
+            fieldSchema = metricArray;
           } else {
-            metricArraySchema = (metricArraySchema as z.ZodArray<any>)
-              .optional()
-              .or(z.array(metricObjectSchema).length(0));
+            fieldSchema = metricArray.optional().or(z.array(metricObjectSchema).length(0));
           }
-
-          fieldSchema = metricArraySchema;
           break;
         }
         case "karma_profile_link": {

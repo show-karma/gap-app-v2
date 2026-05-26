@@ -1,7 +1,7 @@
 "use client";
 
 import { Trash2 } from "lucide-react";
-import type React from "react";
+import { type FC, memo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,7 +23,7 @@ interface MetricItemProps {
   };
 }
 
-export const MetricItem: React.FC<MetricItemProps> = ({
+export const MetricItem: FC<MetricItemProps> = memo(function MetricItem({
   index,
   metric,
   onUpdate,
@@ -31,7 +31,7 @@ export const MetricItem: React.FC<MetricItemProps> = ({
   canRemove,
   disabled = false,
   errors,
-}) => {
+}) {
   const handleFieldChange = (field: keyof MetricData, value: string) => {
     onUpdate({
       ...metric,
@@ -123,4 +123,4 @@ export const MetricItem: React.FC<MetricItemProps> = ({
       </div>
     </div>
   );
-};
+});

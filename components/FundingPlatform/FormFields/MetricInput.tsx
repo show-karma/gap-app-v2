@@ -1,8 +1,9 @@
 "use client";
 
 import { TrashIcon } from "@heroicons/react/24/solid";
+import pluralize from "pluralize";
 import type { FC } from "react";
-import type { Control, FieldError } from "react-hook-form";
+import type { Control } from "react-hook-form";
 import { Controller, useFieldArray } from "react-hook-form";
 import { Button } from "@/components/Utilities/Button";
 import type { IFormField, IMetricData } from "@/types/funding-platform";
@@ -10,9 +11,13 @@ import { cn } from "@/utilities/tailwind";
 
 interface MetricInputProps {
   field: IFormField;
+  // The intake form schema is built dynamically, so there is no static form
+  // type to parameterise the control with (matches MilestoneInput).
+  // biome-ignore lint/suspicious/noExplicitAny: dynamic RHF control
   control: Control<any>;
   fieldKey: string;
-  error?: FieldError | any;
+  // Field-array level error from RHF; only `.message` is read here.
+  error?: { message?: string };
   isLoading?: boolean;
 }
 
@@ -32,8 +37,8 @@ export const MetricInput: FC<MetricInputProps> = ({
     name: fieldKey,
   });
 
-  const maxMetrics = field.validation?.maxMetrics || 10;
-  const minMetrics = field.validation?.minMetrics || 0;
+  const maxMetrics = field.validation?.maxMetrics ?? Number.POSITIVE_INFINITY;
+  const minMetrics = field.validation?.minMetrics ?? 0;
 
   const handleAddMetric = () => {
     const newMetric: IMetricData = {
@@ -79,7 +84,7 @@ export const MetricInput: FC<MetricInputProps> = ({
                   type="button"
                   onClick={() => handleRemoveMetric(index)}
                   variant="custom"
-                  className="!p-2 !bg-red-500 hover:!bg-red-600 text-white"
+                  className="!p-2 !bg-destructive hover:!bg-destructive/90 text-destructive-foreground"
                   aria-label={`Remove metric ${index + 1}`}
                 >
                   <TrashIcon className="w-4 h-4" />
@@ -92,7 +97,6 @@ export const MetricInput: FC<MetricInputProps> = ({
               <Controller
                 name={`${fieldKey}.${index}.metric`}
                 control={control}
-                rules={{ required: "Metric is required" }}
                 render={({ field: metricField, fieldState }) => (
                   <div>
                     <label htmlFor={`${fieldKey}-${index}-metric`} className={labelStyle}>
@@ -120,7 +124,6 @@ export const MetricInput: FC<MetricInputProps> = ({
               <Controller
                 name={`${fieldKey}.${index}.dataSource`}
                 control={control}
-                rules={{ required: "Data source is required" }}
                 render={({ field: sourceField, fieldState }) => (
                   <div>
                     <label htmlFor={`${fieldKey}-${index}-dataSource`} className={labelStyle}>
@@ -148,7 +151,6 @@ export const MetricInput: FC<MetricInputProps> = ({
               <Controller
                 name={`${fieldKey}.${index}.howItsMeasured`}
                 control={control}
-                rules={{ required: "How it's measured is required" }}
                 render={({ field: measuredField, fieldState }) => (
                   <div>
                     <label htmlFor={`${fieldKey}-${index}-howItsMeasured`} className={labelStyle}>
@@ -177,7 +179,6 @@ export const MetricInput: FC<MetricInputProps> = ({
               <Controller
                 name={`${fieldKey}.${index}.target`}
                 control={control}
-                rules={{ required: "Target is required" }}
                 render={({ field: targetField, fieldState }) => (
                   <div>
                     <label htmlFor={`${fieldKey}-${index}-target`} className={labelStyle}>
@@ -222,7 +223,7 @@ export const MetricInput: FC<MetricInputProps> = ({
 
       {minMetrics > 0 && fields.length < minMetrics && (
         <p className="text-sm text-yellow-600 dark:text-yellow-400">
-          Please add at least {minMetrics} metric{minMetrics > 1 ? "s" : ""}
+          Please add at least {minMetrics} {pluralize("metric", minMetrics)}
         </p>
       )}
     </div>

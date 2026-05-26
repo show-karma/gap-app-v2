@@ -1,3 +1,4 @@
+import pluralize from "pluralize";
 import { z } from "zod";
 import type { ApplicationQuestion } from "@/types/whitelabel-entities";
 
@@ -8,31 +9,35 @@ const metricSchema = z.object({
   target: z.string().min(1, "Target is required"),
 });
 
+const isNullish = (val: unknown): boolean => val === null || val === undefined;
+
 export function buildMetricSchema(q: ApplicationQuestion) {
-  const minMetrics = q.validation?.minMetrics || (q.required ? 1 : 0);
-  const maxMetrics = q.validation?.maxMetrics || Number.POSITIVE_INFINITY;
+  const minMetrics = q.validation?.minMetrics ?? (q.required ? 1 : 0);
+  const maxMetrics = q.validation?.maxMetrics ?? Number.POSITIVE_INFINITY;
 
   if (q.required) {
     let fieldSchema: z.ZodType = z
       .union([z.array(metricSchema), z.undefined(), z.null()])
-      .refine((val) => val !== undefined && val !== null, {
+      .refine((val) => !isNullish(val), {
         message: "This field is required",
       });
 
+    // Guard the count refines against nullish input so empty submissions show
+    // only the single "required" error instead of stacking with the count rule.
     if (minMetrics > 0) {
       fieldSchema = fieldSchema.refine(
-        (val: unknown) => Array.isArray(val) && val.length >= minMetrics,
+        (val: unknown) => isNullish(val) || (Array.isArray(val) && val.length >= minMetrics),
         {
-          message: `Please add at least ${minMetrics} metric${minMetrics > 1 ? "s" : ""}`,
+          message: `Please add at least ${minMetrics} ${pluralize("metric", minMetrics)}`,
         }
       );
     }
 
     if (maxMetrics !== Number.POSITIVE_INFINITY) {
       fieldSchema = fieldSchema.refine(
-        (val: unknown) => Array.isArray(val) && val.length <= maxMetrics,
+        (val: unknown) => isNullish(val) || (Array.isArray(val) && val.length <= maxMetrics),
         {
-          message: `Maximum ${maxMetrics} metric${maxMetrics > 1 ? "s" : ""} allowed`,
+          message: `Maximum ${maxMetrics} ${pluralize("metric", maxMetrics)} allowed`,
         }
       );
     }
@@ -40,25 +45,22 @@ export function buildMetricSchema(q: ApplicationQuestion) {
     return fieldSchema;
   }
 
-  if (minMetrics > 0 || maxMetrics !== Number.POSITIVE_INFINITY) {
-    let arrSchema = z.array(metricSchema);
+  // Optional field: build the array schema once, layering on any limits.
+  let arrSchema = z.array(metricSchema);
 
-    if (minMetrics > 0) {
-      arrSchema = arrSchema.min(
-        minMetrics,
-        `Please add at least ${minMetrics} metric${minMetrics > 1 ? "s" : ""}`
-      );
-    }
-
-    if (maxMetrics !== Number.POSITIVE_INFINITY) {
-      arrSchema = arrSchema.max(
-        maxMetrics,
-        `Maximum ${maxMetrics} metric${maxMetrics > 1 ? "s" : ""} allowed`
-      );
-    }
-
-    return z.union([arrSchema, z.undefined(), z.null()]);
+  if (minMetrics > 0) {
+    arrSchema = arrSchema.min(
+      minMetrics,
+      `Please add at least ${minMetrics} ${pluralize("metric", minMetrics)}`
+    );
   }
 
-  return z.union([z.array(metricSchema), z.undefined(), z.null()]);
+  if (maxMetrics !== Number.POSITIVE_INFINITY) {
+    arrSchema = arrSchema.max(
+      maxMetrics,
+      `Maximum ${maxMetrics} ${pluralize("metric", maxMetrics)} allowed`
+    );
+  }
+
+  return z.union([arrSchema, z.undefined(), z.null()]);
 }
