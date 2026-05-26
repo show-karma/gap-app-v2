@@ -123,8 +123,10 @@ export default function CommunityUpdatesPage() {
     setCurrentPage(1);
   }, [selectedProgramId, selectedProjectId, sortBy, sortOrder]);
 
-  // Fetch community updates from API using custom hook.
-  // Sort params are sent only in table view; cards view keeps existing behavior.
+  // Fetch community updates from API using custom hook. Explicit sort params
+  // are sent only when the user has clicked a table column header; otherwise
+  // the indexer applies the canonical community-updates default order, which
+  // both views render unchanged.
   const { data, isLoading, error } = useCommunityProjectUpdates(communityId, {
     page: currentPage,
     limit: ITEMS_PER_PAGE,
