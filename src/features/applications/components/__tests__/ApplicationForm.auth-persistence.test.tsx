@@ -328,9 +328,8 @@ describe("ApplicationForm auth persistence", () => {
     expect(Sentry.captureException).toHaveBeenCalled();
   });
 
-  it("unlocks the submit path so applicants are not soft-locked when AI feedback fails", async () => {
+  it("shows Submit alongside Get AI Feedback when authenticated with AI eval enabled", () => {
     mockAuthState.authenticated = true;
-    mockAIEvaluation.triggerEvaluation.mockRejectedValueOnce(new Error("AI start failed"));
 
     render(
       <ApplicationForm
@@ -341,19 +340,12 @@ describe("ApplicationForm auth persistence", () => {
       />
     );
 
-    fireEvent.change(screen.getByLabelText("Project name"), {
-      target: { value: "Builder Network" },
-    });
-    fireEvent.click(screen.getByTestId("get-ai-feedback-btn"));
-
-    await waitFor(() => {
-      expect(toast.error).toHaveBeenCalledWith(
-        "We couldn't start AI feedback. You can try again or submit without it."
-      );
-    });
-    expect(Sentry.captureException).toHaveBeenCalled();
-    expect(await screen.findByTestId("submit-application-btn")).toBeInTheDocument();
-    expect(screen.getByTestId("rescore-btn")).toBeInTheDocument();
+    // Customer complaint #2 regression: Submit must NOT be gated on scoring.
+    // Both actions should be available side-by-side from the initial state.
+    expect(screen.getByTestId("get-ai-feedback-btn")).toBeInTheDocument();
+    const submit = screen.getByTestId("submit-application-btn");
+    expect(submit).toBeInTheDocument();
+    expect(submit).not.toBeDisabled();
   });
 
   it("warns once when the draft cannot be saved", async () => {
@@ -484,7 +476,7 @@ describe("ApplicationForm auth persistence", () => {
     });
   });
 
-  it("clears the persisted draft when the user cancels the login dialog", async () => {
+  it("preserves the persisted draft when the user cancels the login dialog", async () => {
     render(<ApplicationForm programId={PROGRAM_ID} questions={questions} onSubmit={vi.fn()} />);
 
     fireEvent.change(screen.getByLabelText("Project name"), {
@@ -500,9 +492,12 @@ describe("ApplicationForm auth persistence", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /^cancel$/i }));
 
-    await waitFor(() => {
-      expect(window.sessionStorage.getItem(FORM_STORAGE_KEY)).toBeNull();
-    });
+    // The draft must stay so the applicant can retry submit later or after a
+    // refresh; only the auto-submit intent is dropped (shouldAutoSubmit -> false).
+    const raw = window.sessionStorage.getItem(FORM_STORAGE_KEY);
+    expect(raw).not.toBeNull();
+    const saved = JSON.parse(raw as string);
+    expect(saved.formData).toEqual({ projectName: "Builder Network" });
   });
 
   it("surfaces a toast when auto-submit cannot fire because requestSubmit is unavailable", async () => {

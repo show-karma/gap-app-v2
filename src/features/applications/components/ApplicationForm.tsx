@@ -1,15 +1,14 @@
 "use client";
 
-import * as Sentry from "@sentry/nextjs";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useRealTimeAIEvaluation } from "@/hooks/useRealTimeAIEvaluation";
 import type { ApplicationQuestion, IFormSchema } from "@/types/whitelabel-entities";
+import { captureWithContext } from "@/utilities/sentry-capture";
 import { cn } from "@/utilities/tailwind";
 import { useApplicationForm } from "../hooks/use-application-form";
 import { useFormDraftPersistence } from "../hooks/use-form-draft-persistence";
-import { useFormWatchEffect } from "../hooks/use-form-watch-effect";
 import { useRestoreAndAutoSubmit } from "../hooks/use-restore-and-auto-submit";
 import type { ApplicationFormData } from "../types";
 import { AIEvaluationSidebar } from "./AIEvaluationSidebar";
@@ -18,15 +17,9 @@ import { deriveApplicationFormActionsMode } from "./ApplicationFormActions.helpe
 import { ApplicationFormLoginDialog } from "./ApplicationFormLoginDialog";
 import { ApplicationFormSection } from "./ApplicationFormSection";
 
-function logApplicationFormError(error: unknown, errorId: string, extra?: Record<string, unknown>) {
-  Sentry.captureException(error, {
-    tags: {
-      component: "ApplicationForm",
-      errorId,
-    },
-    extra,
-  });
-}
+const COMPONENT_TAG = "ApplicationForm";
+
+type ScoringState = "idle" | "pending" | "done";
 
 interface ApplicationFormProps {
   programId: string;
@@ -75,9 +68,13 @@ export function ApplicationForm({
     persistFormStateForAuth,
     clearPersistedFormStateForAuth,
     readPersistedFormStateForAuth,
-    schedulePersistOrClear,
-    flushPendingDraftPersistence,
-  } = useFormDraftPersistence({ programId, formId });
+  } = useFormDraftPersistence({
+    programId,
+    formId,
+    watch,
+    authenticated,
+    onDataChange,
+  });
 
   const hasEvalConfig = Boolean(formSchema?.aiConfig?.enableRealTimeEvaluation);
   const {
@@ -94,16 +91,19 @@ export function ApplicationForm({
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
-  const [hasScored, setHasScored] = useState(false);
-  const [isScoring, setIsScoring] = useState(false);
+  const [scoringState, setScoringState] = useState<ScoringState>("idle");
 
-  useFormWatchEffect({
-    watch,
-    authenticated,
-    onDataChange,
-    schedulePersistOrClear,
-    flushPendingDraftPersistence,
-  });
+  // Transition "pending" -> "done" only when the hook surfaces a real result
+  // (success OR error). triggerEvaluation never throws, so we react to its
+  // observable state instead of try/catch.
+  useEffect(() => {
+    if (scoringState !== "pending") return;
+    if (evaluationResponse || evaluationError) {
+      setScoringState("done");
+    }
+  }, [scoringState, evaluationResponse, evaluationError]);
+
+  const hasScored = scoringState === "done";
 
   const scrollToFirstError = () => {
     const errorFieldIndex = questions.findIndex((q) => formState.errors[q.id]);
@@ -138,8 +138,9 @@ export function ApplicationForm({
         setTimeout(() => focusableElement.focus(), 300);
       }
     } else {
-      logApplicationFormError(
+      captureWithContext(
         new Error("No DOM target found for form error field"),
+        COMPONENT_TAG,
         "application-form-no-error-target",
         { fieldId: firstErrorField.id, failedSelectors }
       );
@@ -155,7 +156,6 @@ export function ApplicationForm({
     }
 
     setIsSubmitting(true);
-    let submitSucceeded = false;
     try {
       const aiEvaluationData =
         evaluationResponse && hasScored
@@ -182,17 +182,17 @@ export function ApplicationForm({
         }
       });
       await onSubmit(labeledFormData, aiEvaluationData);
-      submitSucceeded = true;
+      clearPersistedFormStateForAuth();
     } catch (error) {
-      logApplicationFormError(error, "application-form-submit-failed", { programId });
+      captureWithContext(error, COMPONENT_TAG, "application-form-submit-failed", { programId });
       toast.error("We couldn't submit your application. Your form data is still here.");
+      // Surface failure to RHF so formState.isSubmitSuccessful reflects reality.
+      // The form-level onSubmit wrapper absorbs the rejection so it doesn't
+      // bubble as an unhandled promise rejection.
+      throw error;
     } finally {
       pendingSubmitRef.current = false;
       setIsSubmitting(false);
-    }
-
-    if (submitSucceeded) {
-      clearPersistedFormStateForAuth();
     }
   };
 
@@ -202,8 +202,9 @@ export function ApplicationForm({
     if (formRef.current?.requestSubmit) {
       formRef.current.requestSubmit();
     } else {
-      logApplicationFormError(
+      captureWithContext(
         new Error("Application form requestSubmit unavailable"),
+        COMPONENT_TAG,
         "application-form-request-submit-unavailable",
         { programId }
       );
@@ -232,7 +233,7 @@ export function ApplicationForm({
       }
       await login();
     } catch (error) {
-      logApplicationFormError(error, "application-form-login-failed", { programId });
+      captureWithContext(error, COMPONENT_TAG, "application-form-login-failed", { programId });
       toast.error("We couldn't start login. Please check your wallet and try again.");
     }
   };
@@ -244,7 +245,7 @@ export function ApplicationForm({
       return;
     }
 
-    setIsScoring(true);
+    setScoringState("pending");
     const evaluationData: Record<string, unknown> = {};
     questions.forEach((question) => {
       const value = formState.data[question.id];
@@ -252,40 +253,55 @@ export function ApplicationForm({
         evaluationData[question.label || question.id] = value;
       }
     });
-
     try {
       await triggerEvaluation(evaluationData);
+      // scoringState transitions to "done" via the effect watching the hook's
+      // response/error — triggerEvaluation surfaces failures via state, not throw.
     } catch (error) {
-      logApplicationFormError(error, "application-form-ai-score-failed", { programId });
-      toast.error("We couldn't start AI feedback. You can try again or submit without it.");
-    } finally {
-      setHasScored(true);
-      setIsScoring(false);
+      // Defensive: guard against contract drift so a thrown rejection here
+      // can't wedge the UI in "pending" indefinitely. Roll back to "idle"
+      // so the applicant can retry.
+      captureWithContext(error, COMPONENT_TAG, "application-form-ai-score-unexpected-throw", {
+        programId,
+      });
+      setScoringState("idle");
     }
   };
 
   const handleRescore = async () => {
     clearEvaluation();
-    setHasScored(false);
+    setScoringState("idle");
     await handleScore();
   };
 
-  const currentQuestions = questions;
+  const dismissLoginPrompt = () => {
+    // Drop the auto-submit intent but keep the persisted draft so the
+    // applicant can retry later or after a refresh.
+    pendingSubmitRef.current = false;
+    setShowLoginPrompt(false);
+  };
+
+  const showSidebar = hasEvalConfig && scoringState !== "idle";
 
   return (
     <div className="w-full max-w-full" data-testid="application-form-container">
-      <div className={cn("grid gap-6", hasEvalConfig && hasScored && "lg:grid-cols-3")}>
-        <div className={cn(hasEvalConfig && hasScored && "lg:col-span-2")}>
+      <div className={cn("grid gap-6", showSidebar && "lg:grid-cols-3")}>
+        <div className={cn(showSidebar && "lg:col-span-2")}>
           <form
             ref={formRef}
             id={formId}
             data-testid="application-form"
-            onSubmit={formHandleSubmit(handleSubmit, () => {
-              scrollToFirstError();
-            })}
+            onSubmit={(event) => {
+              // handleSubmit rethrows on failure so RHF marks the submit as
+              // unsuccessful; absorb the rejection here so it doesn't bubble
+              // up as an unhandled promise rejection.
+              void formHandleSubmit(handleSubmit, () => {
+                scrollToFirstError();
+              })(event).catch(() => {});
+            }}
           >
             <ApplicationFormSection
-              questions={currentQuestions}
+              questions={questions}
               control={control}
               disabled={isSubmitting || isDisabled}
               trigger={trigger}
@@ -299,8 +315,7 @@ export function ApplicationForm({
                   hasScored,
                   isDisabled,
                   isSubmitting,
-                  isScoring,
-                  isEvaluating,
+                  scoringPending: scoringState === "pending" || isEvaluating,
                 })}
                 onCancel={onCancel}
                 onLogin={handleLogin}
@@ -311,7 +326,7 @@ export function ApplicationForm({
           </form>
         </div>
 
-        {hasEvalConfig && hasScored && (
+        {showSidebar && (
           <AIEvaluationSidebar
             evaluation={evaluation}
             isEvaluating={isEvaluating}
@@ -323,11 +338,7 @@ export function ApplicationForm({
 
       <ApplicationFormLoginDialog
         open={showLoginPrompt}
-        onCancel={() => {
-          pendingSubmitRef.current = false;
-          clearPersistedFormStateForAuth();
-          setShowLoginPrompt(false);
-        }}
+        onCancel={dismissLoginPrompt}
         onConnect={handleLogin}
       />
     </div>

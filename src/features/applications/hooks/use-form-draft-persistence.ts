@@ -1,9 +1,11 @@
 "use client";
 
-import * as Sentry from "@sentry/nextjs";
-import { useCallback, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import toast from "react-hot-toast";
+import { captureWithContext } from "@/utilities/sentry-capture";
 import type { ApplicationFormData } from "../types";
+
+const COMPONENT_TAG = "useFormDraftPersistence";
 
 const FORM_AUTH_PERSISTENCE_KEY_PREFIX = "gap:application-form-auth";
 const FORM_AUTH_PERSISTENCE_TTL_MS = 30 * 60 * 1000;
@@ -17,6 +19,10 @@ interface PendingFormAuthState {
 
 type DraftStorageOperation = "read" | "write" | "remove" | "parse";
 type PendingDraft = { kind: "persist"; formData: ApplicationFormData } | { kind: "clear" };
+
+type WatchSubscription = (callback: (value: Partial<ApplicationFormData>) => void) => {
+  unsubscribe: () => void;
+};
 
 function getFormAuthPersistenceKey(programId: string, formId?: string): string {
   return `${FORM_AUTH_PERSISTENCE_KEY_PREFIX}:${programId}:${formId ?? "default"}`;
@@ -35,24 +41,12 @@ function hasMeaningfulFormData(data: Partial<ApplicationFormData>): boolean {
   return Object.values(data).some(hasMeaningfulFormValue);
 }
 
-function logFormDraftStorageError(
-  error: unknown,
-  operation: DraftStorageOperation,
-  programId: string,
-  formId: string
-) {
-  Sentry.captureException(error, {
-    tags: {
-      component: "useFormDraftPersistence",
-      errorId: "application-form-draft-storage-failed",
-    },
-    extra: { operation, programId, formId },
-  });
-}
-
 interface UseFormDraftPersistenceOptions {
   programId: string;
   formId?: string;
+  watch: WatchSubscription;
+  authenticated: boolean;
+  onDataChange?: (data: Partial<ApplicationFormData>) => void;
 }
 
 interface FormDraftPersistence {
@@ -60,18 +54,35 @@ interface FormDraftPersistence {
   persistFormStateForAuth: (formData: ApplicationFormData, shouldAutoSubmit: boolean) => void;
   clearPersistedFormStateForAuth: () => void;
   readPersistedFormStateForAuth: () => PendingFormAuthState | null;
-  schedulePersistOrClear: (data: Partial<ApplicationFormData>) => void;
-  flushPendingDraftPersistence: () => void;
 }
 
+/**
+ * Owns the full draft-persistence lifecycle for a single application form:
+ * subscribes to RHF's `watch`, debounces writes to sessionStorage while the
+ * applicant is unauthenticated, flushes pending writes on unmount, and
+ * exposes imperative persist/clear/read helpers for the login + submit paths.
+ */
 export function useFormDraftPersistence({
   programId,
   formId,
+  watch,
+  authenticated,
+  onDataChange,
 }: UseFormDraftPersistenceOptions): FormDraftPersistence {
   const pendingSubmitRef = useRef(false);
   const draftPersistenceTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingDraftPersistenceRef = useRef<PendingDraft | null>(null);
   const hasShownDraftStorageWarningRef = useRef(false);
+
+  // Stash callbacks in refs so the watch effect can run with stable deps —
+  // otherwise an unstable `onDataChange` identity from the parent would
+  // re-subscribe on every render and lose pending debounced writes.
+  const onDataChangeRef = useRef(onDataChange);
+  const authenticatedRef = useRef(authenticated);
+  useEffect(() => {
+    onDataChangeRef.current = onDataChange;
+    authenticatedRef.current = authenticated;
+  }, [onDataChange, authenticated]);
 
   const authPersistenceKey = useMemo(
     () => getFormAuthPersistenceKey(programId, formId),
@@ -80,7 +91,11 @@ export function useFormDraftPersistence({
 
   const handleDraftStorageError = useCallback(
     (error: unknown, operation: DraftStorageOperation) => {
-      logFormDraftStorageError(error, operation, programId, formId ?? "default");
+      captureWithContext(error, COMPONENT_TAG, "application-form-draft-storage-failed", {
+        operation,
+        programId,
+        formId: formId ?? "default",
+      });
       if (!hasShownDraftStorageWarningRef.current) {
         hasShownDraftStorageWarningRef.current = true;
         toast.error("We couldn't save your draft in this browser. Please submit before leaving.");
@@ -182,12 +197,23 @@ export function useFormDraftPersistence({
     [flushPendingDraftPersistence]
   );
 
+  useEffect(() => {
+    const { unsubscribe } = watch((value) => {
+      const currentFormData = value as Partial<ApplicationFormData>;
+      onDataChangeRef.current?.(currentFormData);
+      if (authenticatedRef.current) return;
+      schedulePersistOrClear(currentFormData);
+    });
+    return () => {
+      flushPendingDraftPersistence();
+      unsubscribe();
+    };
+  }, [watch, schedulePersistOrClear, flushPendingDraftPersistence]);
+
   return {
     pendingSubmitRef,
     persistFormStateForAuth,
     clearPersistedFormStateForAuth,
     readPersistedFormStateForAuth,
-    schedulePersistOrClear,
-    flushPendingDraftPersistence,
   };
 }

@@ -1,7 +1,11 @@
 export type ApplicationFormActionsMode =
   | { kind: "login" }
-  | { kind: "score-prompt"; busy: boolean }
-  | { kind: "scored"; busy: boolean; submitting: boolean }
+  | {
+      kind: "evaluate-or-submit";
+      scoringPending: boolean;
+      submitting: boolean;
+      hasScored: boolean;
+    }
   | { kind: "submit"; submitting: boolean }
   | { kind: "hidden" };
 
@@ -11,24 +15,24 @@ export function deriveApplicationFormActionsMode({
   hasScored,
   isDisabled,
   isSubmitting,
-  isScoring,
-  isEvaluating,
+  scoringPending,
 }: {
   authenticated: boolean;
   hasEvalConfig: boolean;
   hasScored: boolean;
   isDisabled: boolean;
   isSubmitting: boolean;
-  isScoring: boolean;
-  isEvaluating: boolean;
+  scoringPending: boolean;
 }): ApplicationFormActionsMode {
   if (!authenticated) return { kind: "login" };
-  if (hasEvalConfig && !hasScored && !isDisabled) {
-    return { kind: "score-prompt", busy: isScoring || isEvaluating };
+  if (isDisabled) return { kind: "hidden" };
+  if (hasEvalConfig) {
+    return {
+      kind: "evaluate-or-submit",
+      scoringPending,
+      submitting: isSubmitting,
+      hasScored,
+    };
   }
-  if (hasEvalConfig && hasScored && !isDisabled) {
-    return { kind: "scored", busy: isScoring || isEvaluating, submitting: isSubmitting };
-  }
-  if (!isDisabled) return { kind: "submit", submitting: isSubmitting };
-  return { kind: "hidden" };
+  return { kind: "submit", submitting: isSubmitting };
 }

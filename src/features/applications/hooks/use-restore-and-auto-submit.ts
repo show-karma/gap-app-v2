@@ -44,10 +44,11 @@ export function useRestoreAndAutoSubmit({
   }, [readPersistedFormStateForAuth, setFormData, pendingSubmitRef]);
 
   useEffect(() => {
-    if (authenticated && pendingSubmitRef.current) {
-      pendingSubmitRef.current = false;
-      setShowLoginPrompt(false);
-      attemptAutoSubmit();
-    }
+    if (!authenticated || !pendingSubmitRef.current) return;
+    pendingSubmitRef.current = false;
+    setShowLoginPrompt(false);
+    // Defer to a microtask so RHF's reset() (called inside setFormData during
+    // restore) is committed before requestSubmit() reads the form's value.
+    queueMicrotask(attemptAutoSubmit);
   }, [authenticated, pendingSubmitRef, setShowLoginPrompt, attemptAutoSubmit]);
 }

@@ -12,6 +12,11 @@ import {
 
 interface ApplicationFormLoginDialogProps {
   open: boolean;
+  /**
+   * Invoked when the user dismisses the dialog via the Cancel button OR an
+   * outside-click. This should ONLY drop the pending auto-submit intent;
+   * the persisted draft must stay intact so the applicant can retry later.
+   */
   onCancel: () => void;
   onConnect: () => void;
 }

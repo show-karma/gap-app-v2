@@ -33,16 +33,21 @@ export function ApplicationFormActions({
             </Button>
           )}
 
-          {mode.kind === "score-prompt" && (
+          {mode.kind === "evaluate-or-submit" && (
             <div className="flex flex-row gap-2 items-center">
               <Button
                 type="button"
-                onClick={onScore}
-                isLoading={mode.busy}
-                disabled={mode.busy}
-                data-testid="get-ai-feedback-btn"
+                variant={mode.hasScored ? "outline" : "default"}
+                onClick={mode.hasScored ? onRescore : onScore}
+                isLoading={mode.scoringPending}
+                disabled={mode.scoringPending || mode.submitting}
+                data-testid={mode.hasScored ? "rescore-btn" : "get-ai-feedback-btn"}
               >
-                Get AI Feedback
+                {mode.hasScored
+                  ? mode.scoringPending
+                    ? "Evaluating…"
+                    : "Re-evaluate my application"
+                  : "Get AI Feedback"}
               </Button>
               <button
                 type="button"
@@ -52,30 +57,15 @@ export function ApplicationFormActions({
               >
                 ?
               </button>
-            </div>
-          )}
-
-          {mode.kind === "scored" && (
-            <>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={onRescore}
-                disabled={mode.submitting || mode.busy}
-                isLoading={mode.busy}
-                data-testid="rescore-btn"
-              >
-                {mode.busy ? "Evaluating…" : "Re-evaluate my application"}
-              </Button>
               <Button
                 type="submit"
-                disabled={mode.submitting || mode.busy}
+                disabled={mode.submitting || mode.scoringPending}
                 isLoading={mode.submitting}
                 data-testid="submit-application-btn"
               >
                 Submit My Application
               </Button>
-            </>
+            </div>
           )}
 
           {mode.kind === "submit" && (
