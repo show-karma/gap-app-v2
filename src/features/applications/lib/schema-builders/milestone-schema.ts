@@ -40,7 +40,7 @@ const milestoneSchema = z.object({
   title: z.string().min(1, "Title is required"),
   description: z.string().min(1, "Description is required"),
   dueDate: z.union([futureDateSchema, z.date()]),
-  fundingRequested: z.string().min(1, "Funding requested is required"),
+  fundingRequested: z.string().min(1, "Milestone funding requested is required"),
   completionCriteria: z.string().min(1, "Completion criteria is required"),
 });
 

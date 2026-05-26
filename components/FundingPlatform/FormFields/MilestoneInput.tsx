@@ -187,11 +187,11 @@ export const MilestoneInput: FC<MilestoneInputProps> = ({
               <Controller
                 name={`${fieldKey}.${index}.fundingRequested`}
                 control={control}
-                rules={{ required: "Funding requested is required" }}
+                rules={{ required: "Milestone funding requested is required" }}
                 render={({ field: fundingField, fieldState }) => (
                   <div>
                     <label htmlFor={`${fieldKey}-${index}-fundingRequested`} className={labelStyle}>
-                      Funding Requested *
+                      Milestone funding requested *
                     </label>
                     <input
                       {...fundingField}

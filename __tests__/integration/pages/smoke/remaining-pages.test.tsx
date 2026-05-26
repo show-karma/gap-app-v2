@@ -273,10 +273,6 @@ vi.mock("@/utilities/project-lookup", () => ({
   projectsToOptions: () => [],
 }));
 
-vi.mock("@/utilities/sorting/communityMilestoneSort", () => ({
-  sortCommunityMilestones: (m: unknown[]) => m,
-}));
-
 vi.mock("@/utilities/fundingPlatformUrls", () => ({
   getProgramApplyUrl: (cId: string, pId: string) => `/c/${cId}/p/${pId}`,
 }));

@@ -287,7 +287,7 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
               title: z.string().min(1, "Milestone title is required"),
               description: z.string().min(1, "Milestone description is required"),
               dueDate: z.string().min(1, "Due date is required"),
-              fundingRequested: z.string().min(1, "Funding requested is required"),
+              fundingRequested: z.string().min(1, "Milestone funding requested is required"),
               completionCriteria: z.string().min(1, "Completion criteria is required"),
             }),
             {

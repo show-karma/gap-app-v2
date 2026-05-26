@@ -21,10 +21,7 @@ import { useCommunityProjectUpdates } from "@/hooks/useCommunityProjectUpdates";
 import { useCommunityUpdatesView } from "@/hooks/useCommunityUpdatesView";
 import { useCommunityPrograms } from "@/hooks/usePrograms";
 import { findProjectOptionBySlugOrUid, projectsToOptions } from "@/utilities/project-lookup";
-import {
-  isValidMilestone,
-  sortCommunityMilestones,
-} from "@/utilities/sorting/communityMilestoneSort";
+import { isValidMilestone } from "@/utilities/sorting/communityMilestoneSort";
 
 type FilterOption = "all" | "pending" | "completed" | "past_due";
 
@@ -126,8 +123,10 @@ export default function CommunityUpdatesPage() {
     setCurrentPage(1);
   }, [selectedProgramId, selectedProjectId, sortBy, sortOrder]);
 
-  // Fetch community updates from API using custom hook.
-  // Sort params are sent only in table view; cards view keeps existing behavior.
+  // Fetch community updates from API using custom hook. Explicit sort params
+  // are sent only when the user has clicked a table column header; otherwise
+  // the indexer applies the canonical community-updates default order, which
+  // both views render unchanged.
   const { data, isLoading, error } = useCommunityProjectUpdates(communityId, {
     page: currentPage,
     limit: ITEMS_PER_PAGE,
@@ -138,20 +137,14 @@ export default function CommunityUpdatesPage() {
     sortOrder: isTableView && sortBy ? sortOrder : undefined,
   });
 
-  // Cards view: apply the existing client-side sort.
-  // Table view: render the server order untouched.
-  const cardsData = useMemo(() => {
-    if (!data?.payload) return [];
-    return sortCommunityMilestones([...data.payload], selectedFilter, communityId);
-  }, [data?.payload, selectedFilter, communityId]);
-
-  // Table view: keep the server order, but apply the same validity filter as
-  // the cards view so both views show the exact same set of milestones.
-  // Milestones missing a project slug/title come from the indexer; tracked in
-  // show-karma/super-gap#37.
-  const tableData = useMemo(() => (data?.payload ?? []).filter(isValidMilestone), [data?.payload]);
-
-  const displayedData = isTableView ? tableData : cardsData;
+  // Server is authoritative for ordering (see gap-indexer
+  // MilestoneReadService.compareDefault) so both views render the same payload.
+  // The validity filter is a defensive guard against milestones missing a
+  // project slug/title from the indexer; tracked in show-karma/super-gap#37.
+  const displayedData = useMemo(
+    () => (data?.payload ?? []).filter(isValidMilestone),
+    [data?.payload]
+  );
 
   // Fetch payout configs for grants on the current page to show allocation amounts
   const { allocationMap } = useCommunityMilestoneAllocations(displayedData);
