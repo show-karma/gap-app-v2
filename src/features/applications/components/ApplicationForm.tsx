@@ -13,7 +13,7 @@ import { useFormWatchEffect } from "../hooks/use-form-watch-effect";
 import { useRestoreAndAutoSubmit } from "../hooks/use-restore-and-auto-submit";
 import type { ApplicationFormData } from "../types";
 import { AIEvaluationSidebar } from "./AIEvaluationSidebar";
-import { ApplicationFormActions } from "./ApplicationFormActions";
+import { ApplicationFormActions, deriveApplicationFormActionsMode } from "./ApplicationFormActions";
 import { ApplicationFormLoginDialog } from "./ApplicationFormLoginDialog";
 import { ApplicationFormSection } from "./ApplicationFormSection";
 
@@ -292,13 +292,15 @@ export function ApplicationForm({
 
             {!hideActions && (
               <ApplicationFormActions
-                authenticated={authenticated}
-                hasEvalConfig={hasEvalConfig}
-                hasScored={hasScored}
-                isDisabled={isDisabled}
-                isSubmitting={isSubmitting}
-                isScoring={isScoring}
-                isEvaluating={isEvaluating}
+                mode={deriveApplicationFormActionsMode({
+                  authenticated,
+                  hasEvalConfig,
+                  hasScored,
+                  isDisabled,
+                  isSubmitting,
+                  isScoring,
+                  isEvaluating,
+                })}
                 onCancel={onCancel}
                 onLogin={handleLogin}
                 onScore={handleScore}

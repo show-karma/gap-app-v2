@@ -2,14 +2,15 @@
 
 import { Button } from "@/components/ui/button";
 
+type ActionsMode =
+  | { kind: "login" }
+  | { kind: "score-prompt"; busy: boolean }
+  | { kind: "scored"; busy: boolean; submitting: boolean }
+  | { kind: "submit"; submitting: boolean }
+  | { kind: "hidden" };
+
 interface ApplicationFormActionsProps {
-  authenticated: boolean;
-  hasEvalConfig: boolean;
-  hasScored: boolean;
-  isDisabled: boolean;
-  isSubmitting: boolean;
-  isScoring: boolean;
-  isEvaluating: boolean;
+  mode: ActionsMode;
   onCancel?: () => void;
   onLogin: () => void;
   onScore: () => void;
@@ -17,22 +18,12 @@ interface ApplicationFormActionsProps {
 }
 
 export function ApplicationFormActions({
-  authenticated,
-  hasEvalConfig,
-  hasScored,
-  isDisabled,
-  isSubmitting,
-  isScoring,
-  isEvaluating,
+  mode,
   onCancel,
   onLogin,
   onScore,
   onRescore,
 }: ApplicationFormActionsProps) {
-  const showAIPrompt = hasEvalConfig && !hasScored && !isDisabled;
-  const showScoredActions = hasEvalConfig && hasScored && !isDisabled;
-  const showPlainSubmit = !hasEvalConfig && !isDisabled;
-
   return (
     <div className="mt-6 rounded-lg border bg-card p-4">
       <div className="flex justify-between items-center">
@@ -42,17 +33,19 @@ export function ApplicationFormActions({
           </Button>
         )}
         <div className="flex items-center gap-2 ml-auto">
-          {!authenticated ? (
+          {mode.kind === "login" && (
             <Button type="button" onClick={onLogin}>
               Login to submit
             </Button>
-          ) : showAIPrompt ? (
+          )}
+
+          {mode.kind === "score-prompt" && (
             <div className="flex flex-row gap-2 items-center">
               <Button
                 type="button"
                 onClick={onScore}
-                isLoading={isScoring || isEvaluating}
-                disabled={isScoring || isEvaluating}
+                isLoading={mode.busy}
+                disabled={mode.busy}
                 data-testid="get-ai-feedback-btn"
               >
                 Get AI Feedback
@@ -64,39 +57,71 @@ export function ApplicationFormActions({
                 ?
               </span>
             </div>
-          ) : showScoredActions ? (
+          )}
+
+          {mode.kind === "scored" && (
             <>
               <Button
                 type="button"
                 variant="outline"
                 onClick={onRescore}
-                disabled={isSubmitting || isScoring || isEvaluating}
-                isLoading={isScoring || isEvaluating}
+                disabled={mode.submitting || mode.busy}
+                isLoading={mode.busy}
                 data-testid="rescore-btn"
               >
-                {isScoring || isEvaluating ? "Evaluating…" : "Re-evaluate my application"}
+                {mode.busy ? "Evaluating…" : "Re-evaluate my application"}
               </Button>
               <Button
                 type="submit"
-                disabled={isSubmitting || isScoring || isEvaluating}
-                isLoading={isSubmitting}
+                disabled={mode.submitting || mode.busy}
+                isLoading={mode.submitting}
                 data-testid="submit-application-btn"
               >
                 Submit My Application
               </Button>
             </>
-          ) : showPlainSubmit ? (
+          )}
+
+          {mode.kind === "submit" && (
             <Button
               type="submit"
-              disabled={isSubmitting}
-              isLoading={isSubmitting}
+              disabled={mode.submitting}
+              isLoading={mode.submitting}
               data-testid="submit-application-btn"
             >
               Submit My Application
             </Button>
-          ) : null}
+          )}
         </div>
       </div>
     </div>
   );
+}
+
+export function deriveApplicationFormActionsMode({
+  authenticated,
+  hasEvalConfig,
+  hasScored,
+  isDisabled,
+  isSubmitting,
+  isScoring,
+  isEvaluating,
+}: {
+  authenticated: boolean;
+  hasEvalConfig: boolean;
+  hasScored: boolean;
+  isDisabled: boolean;
+  isSubmitting: boolean;
+  isScoring: boolean;
+  isEvaluating: boolean;
+}): ActionsMode {
+  if (!authenticated) return { kind: "login" };
+  if (hasEvalConfig && !hasScored && !isDisabled) {
+    return { kind: "score-prompt", busy: isScoring || isEvaluating };
+  }
+  if (hasEvalConfig && hasScored && !isDisabled) {
+    return { kind: "scored", busy: isScoring || isEvaluating, submitting: isSubmitting };
+  }
+  if (!isDisabled) return { kind: "submit", submitting: isSubmitting };
+  return { kind: "hidden" };
 }
