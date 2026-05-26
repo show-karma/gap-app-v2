@@ -46,3 +46,30 @@ describe("MetricFieldArray — sequential sub-field edits", () => {
     expect(screen.getByTestId("metric-target-input-0")).toHaveValue("10,000 by Q4");
   });
 });
+
+describe("MetricFieldArray — remove icon visibility (required, no explicit min)", () => {
+  const requiredQuestion: ApplicationQuestion = {
+    id: "metrics",
+    type: "metric",
+    label: "Impact Metrics",
+    required: true,
+  };
+
+  function RequiredHarness() {
+    const { control } = useForm<ApplicationFormData>({
+      defaultValues: { metrics: [] } as Partial<ApplicationFormData>,
+    });
+    return <MetricFieldArray control={control} name="metrics" question={requiredQuestion} />;
+  }
+
+  it("hides the remove icon for a single metric and shows it once there is more than one", () => {
+    render(<RequiredHarness />);
+
+    fireEvent.click(screen.getByTestId("add-metric-btn"));
+    expect(screen.queryByTestId("remove-metric-btn-0")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId("add-metric-btn"));
+    expect(screen.getByTestId("remove-metric-btn-0")).toBeInTheDocument();
+    expect(screen.getByTestId("remove-metric-btn-1")).toBeInTheDocument();
+  });
+});

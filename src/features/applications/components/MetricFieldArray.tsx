@@ -31,7 +31,9 @@ export const MetricFieldArray: FC<MetricFieldArrayProps> = ({
   });
 
   const maxMetrics = question.validation?.maxMetrics ?? Number.POSITIVE_INFINITY;
-  const minMetrics = question.validation?.minMetrics ?? 0;
+  // Required fields keep at least one entry (matches the Zod schema), so the
+  // remove icon only appears once there is more than one metric.
+  const minMetrics = question.validation?.minMetrics ?? (question.required ? 1 : 0);
 
   const handleAddMetric = () => {
     const newMetric: MetricData = {
