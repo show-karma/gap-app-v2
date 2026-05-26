@@ -9,7 +9,7 @@ const FORM_AUTH_PERSISTENCE_KEY_PREFIX = "gap:application-form-auth";
 const FORM_AUTH_PERSISTENCE_TTL_MS = 30 * 60 * 1000;
 const DRAFT_SAVE_DEBOUNCE_MS = 300;
 
-export interface PendingFormAuthState {
+interface PendingFormAuthState {
   formData: ApplicationFormData;
   shouldAutoSubmit: boolean;
   createdAt: number;
@@ -22,7 +22,7 @@ function getFormAuthPersistenceKey(programId: string, formId?: string): string {
   return `${FORM_AUTH_PERSISTENCE_KEY_PREFIX}:${programId}:${formId ?? "default"}`;
 }
 
-export function hasMeaningfulFormValue(value: unknown): boolean {
+function hasMeaningfulFormValue(value: unknown): boolean {
   if (value === undefined || value === null || value === "") return false;
   if (Array.isArray(value)) return value.length > 0;
   if (typeof value === "object") {
@@ -31,7 +31,7 @@ export function hasMeaningfulFormValue(value: unknown): boolean {
   return true;
 }
 
-export function hasMeaningfulFormData(data: Partial<ApplicationFormData>): boolean {
+function hasMeaningfulFormData(data: Partial<ApplicationFormData>): boolean {
   return Object.values(data).some(hasMeaningfulFormValue);
 }
 
@@ -55,7 +55,7 @@ interface UseFormDraftPersistenceOptions {
   formId?: string;
 }
 
-export interface FormDraftPersistence {
+interface FormDraftPersistence {
   pendingSubmitRef: React.MutableRefObject<boolean>;
   persistFormStateForAuth: (formData: ApplicationFormData, shouldAutoSubmit: boolean) => void;
   clearPersistedFormStateForAuth: () => void;
@@ -63,9 +63,6 @@ export interface FormDraftPersistence {
   schedulePersistOrClear: (data: Partial<ApplicationFormData>) => void;
   flushPendingDraftPersistence: () => void;
 }
-
-export const DRAFT_PERSISTENCE_DEBOUNCE_MS = DRAFT_SAVE_DEBOUNCE_MS;
-export const DRAFT_PERSISTENCE_TTL_MS = FORM_AUTH_PERSISTENCE_TTL_MS;
 
 export function useFormDraftPersistence({
   programId,

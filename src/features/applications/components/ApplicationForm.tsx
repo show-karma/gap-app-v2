@@ -231,7 +231,13 @@ export function ApplicationForm({
       setShowLoginPrompt(false);
       attemptAutoSubmit();
     }
-  }, [readPersistedFormStateForAuth, setFormData, authenticated, attemptAutoSubmit]);
+  }, [
+    readPersistedFormStateForAuth,
+    setFormData,
+    authenticated,
+    attemptAutoSubmit,
+    pendingSubmitRef,
+  ]);
 
   useEffect(() => {
     if (authenticated && pendingSubmitRef.current) {
@@ -239,7 +245,7 @@ export function ApplicationForm({
       setShowLoginPrompt(false);
       attemptAutoSubmit();
     }
-  }, [authenticated, attemptAutoSubmit]);
+  }, [authenticated, attemptAutoSubmit, pendingSubmitRef]);
 
   const handleLogin = async () => {
     try {
