@@ -5,7 +5,7 @@ type FilterOption = "all" | "pending" | "completed" | "past_due";
 /**
  * Validates if a milestone item has all required fields
  */
-function isValidMilestone(item: unknown): item is CommunityMilestoneUpdate {
+export function isValidMilestone(item: unknown): item is CommunityMilestoneUpdate {
   if (!item || typeof item !== "object") return false;
   const milestone = item as Record<string, unknown>;
   if (!milestone.uid || !milestone.status) return false;
