@@ -2,11 +2,12 @@
 
 import { TrashIcon } from "@heroicons/react/24/solid";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { InfoTooltip } from "@/components/Utilities/InfoTooltip";
 import { Button } from "@/components/ui/button";
 import {
   Command,
+  CommandEmpty,
   CommandGroup,
   CommandInput,
   CommandItem,
@@ -126,17 +127,20 @@ const CategorizedIndicatorDropdown = ({
     return "";
   }, [indicators, searchedUnlinked, selected]);
 
-  const handleSelect = (value: string) => {
-    onSelect(value);
-    setIsOpen(false);
-    setSearchTerm("");
-  };
+  const handleSelect = useCallback(
+    (value: string) => {
+      onSelect(value);
+      setIsOpen(false);
+      setSearchTerm("");
+    },
+    [onSelect]
+  );
 
-  const handleCreateNew = () => {
+  const handleCreateNew = useCallback(() => {
     onCreateNew();
     setIsOpen(false);
     setSearchTerm("");
-  };
+  }, [onCreateNew]);
 
   const renderItems = (items: { value: string; title: string }[]) =>
     items.map((item) => (
@@ -166,25 +170,26 @@ const CategorizedIndicatorDropdown = ({
         <button
           type="button"
           className={cn(
-            "w-full min-w-[200px] rounded-lg border bg-white px-3 py-1.5 text-left text-sm dark:bg-zinc-800 dark:text-white truncate",
+            "w-full min-w-0 rounded-lg border bg-white px-3 py-2 text-left text-sm dark:bg-zinc-800 dark:text-white truncate",
             "border-gray-200 dark:border-zinc-700",
             "data-[state=open]:border-blue-500 data-[state=open]:ring-1 data-[state=open]:ring-blue-500",
             selected ? "text-gray-900" : "text-gray-400 dark:text-zinc-500"
           )}
         >
-          {selectedLabel || "Select indicator..."}
+          {selectedLabel || "Select indicator…"}
         </button>
       </PopoverTrigger>
       <PopoverContent
         align="start"
         sideOffset={4}
-        className="w-[var(--radix-popover-trigger-width)] min-w-[340px] max-w-[480px] p-0"
+        collisionPadding={8}
+        className="w-[var(--radix-popover-trigger-width)] max-w-[calc(100vw-1rem)] min-w-[260px] md:min-w-[340px] md:max-w-[480px] p-0"
       >
         <Command shouldFilter={false}>
           <CommandInput
             value={searchTerm}
             onValueChange={setSearchTerm}
-            placeholder="Search indicators..."
+            placeholder="Search indicators…"
           />
           <CommandList>
             <CommandItem
@@ -194,12 +199,8 @@ const CategorizedIndicatorDropdown = ({
             >
               + Create New Metric
             </CommandItem>
-            {isFetching && allItems.length === 0 ? (
-              <div className="px-3 py-2 text-sm text-gray-500 dark:text-zinc-400">Searching...</div>
-            ) : allItems.length === 0 ? (
-              <div className="px-3 py-2 text-sm text-gray-500 dark:text-zinc-400">
-                No indicators found
-              </div>
+            {allItems.length === 0 ? (
+              <CommandEmpty>{isFetching ? "Searching…" : "No indicators found"}</CommandEmpty>
             ) : (
               <>
                 {communityItems.length > 0 && (
@@ -210,7 +211,7 @@ const CategorizedIndicatorDropdown = ({
                 )}
                 {isFetching && (
                   <div className="px-3 py-1.5 text-xs text-gray-400 dark:text-zinc-500 text-center">
-                    Loading...
+                    Loading…
                   </div>
                 )}
               </>
@@ -297,7 +298,7 @@ export const MetricsTable = ({
 
       {outputs.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-8">
-          <p className="text-gray-500 dark:text-zinc-400 mb-4">
+          <p className="text-gray-500 dark:text-zinc-400 mb-4 text-center">
             Select from your project indicators, community indicators, or global indicators to add
             metrics
           </p>
@@ -305,169 +306,163 @@ export const MetricsTable = ({
             type="button"
             onClick={handleAddOutput}
             size="xl"
-            className="bg-brand-blue text-white hover:bg-brand-blue/90"
+            className="w-full bg-brand-blue text-white hover:bg-brand-blue/90 md:w-auto"
           >
             Add metric
           </Button>
         </div>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200 dark:divide-zinc-700">
-            <thead>
-              <tr>
-                <th className="px-4 py-3 text-left text-sm font-bold text-gray-700 dark:text-zinc-300 min-w-[200px]">
-                  Output
-                </th>
-                <th className="px-4 py-3 text-left text-sm font-bold text-gray-700 dark:text-zinc-300 min-w-[400px]">
-                  Value
-                </th>
-                <th className="px-4 py-3 text-left text-sm font-bold text-gray-700 dark:text-zinc-300 min-w-[400px]">
-                  Proof/Link
-                </th>
-                <th className="px-4 py-3 text-left text-sm font-bold text-gray-700 dark:text-zinc-300 w-16">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200 dark:divide-zinc-700">
-              {outputs.map((output, index) => (
-                <tr key={index}>
-                  <td className="px-4 py-3 align-top">
-                    <CategorizedIndicatorDropdown
-                      indicators={categorizedIndicators}
-                      onSelect={(indicatorId) => {
-                        handleOutputChange(index, "outputId", indicatorId);
-                      }}
-                      selected={output.outputId}
-                      onCreateNew={() => {
-                        handleCreateNewIndicatorClick(index);
-                      }}
-                      selectedCommunities={selectedCommunities}
-                    />
-                  </td>
-                  <td className="px-4 py-3 align-top">
-                    <div className="flex flex-col gap-2">
-                      <input
-                        type="text"
-                        value={output.value === 0 ? "" : output.value}
-                        onChange={(e) => {
-                          const indicator = categorizedIndicators.find(
-                            (o) => o.id === output.outputId
-                          );
-                          const unitType = indicator?.unitOfMeasure || "int";
-
-                          // Allow decimal point and numbers
-                          const isValidInput =
-                            unitType === "float"
-                              ? /^-?\d*\.?\d*$/.test(e.target.value) // Allow decimals for float
-                              : /^-?\d*$/.test(e.target.value); // Only integers for int
-
-                          if (isValidInput) {
-                            handleOutputChange(
-                              index,
-                              "value",
-                              e.target.value === "" ? "" : e.target.value
-                            );
-                          }
-                        }}
-                        placeholder={`Enter ${
-                          categorizedIndicators.find((o) => o.id === output.outputId)
-                            ?.unitOfMeasure === "float"
-                            ? "decimal"
-                            : "whole"
-                        } number`}
-                        disabled={
-                          !!autosyncedIndicators.find(
-                            (indicator) =>
-                              indicator.name ===
-                              indicatorsList.find((i) => i.indicatorId === output.outputId)?.name
-                          )
-                        }
-                        className={cn(
-                          "w-full px-3 py-1.5 bg-white disabled:opacity-50 disabled:cursor-not-allowed dark:bg-zinc-900 border rounded-md",
-                          output.outputId &&
-                            isInvalidValue(
-                              output.value,
-                              categorizedIndicators.find((o) => o.id === output.outputId)
-                                ?.unitOfMeasure || "int"
-                            )
-                            ? "border-red-500 dark:border-red-500"
-                            : "border-gray-300 dark:border-zinc-700"
-                        )}
-                      />
-                      {/* Empty div to align with the "Create New Metric" button height */}
-                      <div className="h-8"></div>
-                    </div>
-                    {output.outputId &&
-                      isInvalidValue(
-                        output.value,
-                        categorizedIndicators.find((o) => o.id === output.outputId)
-                          ?.unitOfMeasure || "int"
-                      ) && (
-                        <p className="text-xs text-red-500 mt-1">
-                          {typeof output.value === "string" && output.value === ""
-                            ? "This field is required"
-                            : categorizedIndicators.find((o) => o.id === output.outputId)
-                                  ?.unitOfMeasure === "int"
-                              ? "Please enter a whole number"
-                              : "Please enter a valid decimal number"}
-                        </p>
-                      )}
-                  </td>
-                  <td className="px-4 py-3 align-top">
-                    <div className="flex flex-col gap-2">
-                      <input
-                        type="text"
-                        value={output.proof || ""}
-                        onChange={(e) => {
-                          handleOutputChange(index, "proof", e.target.value);
-                        }}
-                        placeholder="Enter proof URL"
-                        disabled={
-                          !!autosyncedIndicators.find(
-                            (indicator) =>
-                              indicator.name ===
-                              indicatorsList.find((i) => i.indicatorId === output.outputId)?.name
-                          )
-                        }
-                        className="w-full px-3 py-1.5 bg-white disabled:opacity-50 disabled:cursor-not-allowed dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded-md"
-                      />
-                      {/* Empty div to align with the "Create New Metric" button height */}
-                      <div className="h-8"></div>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 align-top">
-                    <div className="flex flex-col gap-2">
-                      <div className="flex items-center justify-center h-9">
-                        <button
-                          onClick={() => handleRemoveOutput(index)}
-                          type="button"
-                          className="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20"
-                        >
-                          <TrashIcon className="h-5 w-5" />
-                        </button>
-                      </div>
-                      {/* Empty div to align with the "Create New Metric" button height */}
-                      <div className="h-8"></div>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-
-          {outputs.length > 0 && (
-            <div className="flex w-full justify-end">
-              <Button
-                type="button"
-                onClick={handleAddOutput}
-                size="xl"
-                className="bg-brand-blue text-white hover:bg-brand-blue/90"
-              >
-                Add more metrics
-              </Button>
+        <div className="flex flex-col gap-4">
+          <div
+            aria-hidden="true"
+            className="hidden md:grid md:grid-cols-[minmax(200px,1.2fr)_minmax(160px,1fr)_minmax(180px,1.2fr)_auto] md:items-end md:gap-4 md:border-b md:border-gray-200 md:pb-2 md:dark:border-zinc-700"
+          >
+            <div className="text-sm font-bold text-gray-700 dark:text-zinc-300">Output</div>
+            <div className="text-sm font-bold text-gray-700 dark:text-zinc-300">Value</div>
+            <div className="text-sm font-bold text-gray-700 dark:text-zinc-300">Proof/Link</div>
+            <div className="text-sm font-bold text-gray-700 dark:text-zinc-300 w-10 text-center">
+              <span className="sr-only">Actions</span>
             </div>
-          )}
+          </div>
+
+          <div className="flex flex-col gap-3 md:divide-y md:divide-gray-200 md:gap-0 md:dark:divide-zinc-700">
+            {outputs.map((output, index) => {
+              const indicator = categorizedIndicators.find((o) => o.id === output.outputId);
+              const unitType = indicator?.unitOfMeasure || "int";
+              const isDisabled = !!autosyncedIndicators.find(
+                (auto) =>
+                  auto.name === indicatorsList.find((i) => i.indicatorId === output.outputId)?.name
+              );
+              const hasValueError = !!output.outputId && isInvalidValue(output.value, unitType);
+              const valueInputId = `metric-value-${index}`;
+              const proofInputId = `metric-proof-${index}`;
+              const outputFieldId = `metric-output-${index}`;
+
+              return (
+                <div
+                  key={index}
+                  className={cn(
+                    "flex flex-col gap-3 rounded-lg border border-gray-200 p-4 dark:border-zinc-700",
+                    "md:grid md:grid-cols-[minmax(200px,1.2fr)_minmax(160px,1fr)_minmax(180px,1.2fr)_auto] md:items-start md:gap-4 md:border-0 md:rounded-none md:p-0 md:py-3"
+                  )}
+                >
+                  <div className="flex flex-col gap-1.5">
+                    <label
+                      htmlFor={outputFieldId}
+                      className="text-xs font-medium text-gray-600 dark:text-zinc-400 md:hidden"
+                    >
+                      Output
+                    </label>
+                    <div id={outputFieldId}>
+                      <CategorizedIndicatorDropdown
+                        indicators={categorizedIndicators}
+                        onSelect={(indicatorId) => {
+                          handleOutputChange(index, "outputId", indicatorId);
+                        }}
+                        selected={output.outputId}
+                        onCreateNew={() => {
+                          handleCreateNewIndicatorClick(index);
+                        }}
+                        selectedCommunities={selectedCommunities}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label
+                      htmlFor={valueInputId}
+                      className="text-xs font-medium text-gray-600 dark:text-zinc-400 md:hidden"
+                    >
+                      Value
+                    </label>
+                    <input
+                      id={valueInputId}
+                      type="text"
+                      inputMode={unitType === "float" ? "decimal" : "numeric"}
+                      value={output.value === 0 ? "" : output.value}
+                      onChange={(e) => {
+                        const isValidInput =
+                          unitType === "float"
+                            ? /^-?\d*\.?\d*$/.test(e.target.value)
+                            : /^-?\d*$/.test(e.target.value);
+
+                        if (isValidInput) {
+                          handleOutputChange(
+                            index,
+                            "value",
+                            e.target.value === "" ? "" : e.target.value
+                          );
+                        }
+                      }}
+                      placeholder={`Enter ${unitType === "float" ? "decimal" : "whole"} number`}
+                      disabled={isDisabled}
+                      className={cn(
+                        "w-full px-3 py-2 bg-white disabled:opacity-50 disabled:cursor-not-allowed dark:bg-zinc-900 border rounded-md text-sm",
+                        hasValueError
+                          ? "border-red-500 dark:border-red-500"
+                          : "border-gray-300 dark:border-zinc-700"
+                      )}
+                    />
+                    {hasValueError && (
+                      <p className="text-xs text-red-500">
+                        {typeof output.value === "string" && output.value === ""
+                          ? "This field is required"
+                          : unitType === "int"
+                            ? "Please enter a whole number"
+                            : "Please enter a valid decimal number"}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label
+                      htmlFor={proofInputId}
+                      className="text-xs font-medium text-gray-600 dark:text-zinc-400 md:hidden"
+                    >
+                      Proof / Link
+                    </label>
+                    <input
+                      id={proofInputId}
+                      type="text"
+                      value={output.proof || ""}
+                      onChange={(e) => {
+                        handleOutputChange(index, "proof", e.target.value);
+                      }}
+                      placeholder="Enter proof URL"
+                      disabled={isDisabled}
+                      className="w-full px-3 py-2 bg-white disabled:opacity-50 disabled:cursor-not-allowed dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded-md text-sm"
+                    />
+                  </div>
+
+                  <div className="flex md:justify-center md:pt-1">
+                    <button
+                      onClick={() => handleRemoveOutput(index)}
+                      type="button"
+                      aria-label="Remove metric"
+                      className={cn(
+                        "flex w-full min-h-[44px] items-center justify-center gap-2 rounded-md border border-red-200 px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 dark:border-red-900/40 dark:text-red-400 dark:hover:bg-red-900/20",
+                        "md:w-10 md:h-10 md:min-h-0 md:border-0 md:p-1 md:rounded-full"
+                      )}
+                    >
+                      <TrashIcon className="h-5 w-5" />
+                      <span className="md:hidden">Remove metric</span>
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="flex w-full justify-end">
+            <Button
+              type="button"
+              onClick={handleAddOutput}
+              size="xl"
+              className="w-full bg-brand-blue text-white hover:bg-brand-blue/90 md:w-auto"
+            >
+              Add more metrics
+            </Button>
+          </div>
         </div>
       )}
 
