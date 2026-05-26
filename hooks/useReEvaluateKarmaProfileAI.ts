@@ -23,8 +23,7 @@ export function useReEvaluateKarmaProfileAI({
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (referenceNumber: string) =>
-      runKarmaProfileEvaluation(referenceNumber),
+    mutationFn: (referenceNumber: string) => runKarmaProfileEvaluation(referenceNumber),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["funding-application"] });
       await queryClient.invalidateQueries({ queryKey: ["applications"] });
