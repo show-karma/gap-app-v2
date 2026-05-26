@@ -13,7 +13,8 @@ import { useFormWatchEffect } from "../hooks/use-form-watch-effect";
 import { useRestoreAndAutoSubmit } from "../hooks/use-restore-and-auto-submit";
 import type { ApplicationFormData } from "../types";
 import { AIEvaluationSidebar } from "./AIEvaluationSidebar";
-import { ApplicationFormActions, deriveApplicationFormActionsMode } from "./ApplicationFormActions";
+import { ApplicationFormActions } from "./ApplicationFormActions";
+import { deriveApplicationFormActionsMode } from "./ApplicationFormActions.helpers";
 import { ApplicationFormLoginDialog } from "./ApplicationFormLoginDialog";
 import { ApplicationFormSection } from "./ApplicationFormSection";
 

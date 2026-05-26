@@ -1,16 +1,10 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-
-type ActionsMode =
-  | { kind: "login" }
-  | { kind: "score-prompt"; busy: boolean }
-  | { kind: "scored"; busy: boolean; submitting: boolean }
-  | { kind: "submit"; submitting: boolean }
-  | { kind: "hidden" };
+import type { ApplicationFormActionsMode } from "./ApplicationFormActions.helpers";
 
 interface ApplicationFormActionsProps {
-  mode: ActionsMode;
+  mode: ApplicationFormActionsMode;
   onCancel?: () => void;
   onLogin: () => void;
   onScore: () => void;
@@ -96,32 +90,4 @@ export function ApplicationFormActions({
       </div>
     </div>
   );
-}
-
-export function deriveApplicationFormActionsMode({
-  authenticated,
-  hasEvalConfig,
-  hasScored,
-  isDisabled,
-  isSubmitting,
-  isScoring,
-  isEvaluating,
-}: {
-  authenticated: boolean;
-  hasEvalConfig: boolean;
-  hasScored: boolean;
-  isDisabled: boolean;
-  isSubmitting: boolean;
-  isScoring: boolean;
-  isEvaluating: boolean;
-}): ActionsMode {
-  if (!authenticated) return { kind: "login" };
-  if (hasEvalConfig && !hasScored && !isDisabled) {
-    return { kind: "score-prompt", busy: isScoring || isEvaluating };
-  }
-  if (hasEvalConfig && hasScored && !isDisabled) {
-    return { kind: "scored", busy: isScoring || isEvaluating, submitting: isSubmitting };
-  }
-  if (!isDisabled) return { kind: "submit", submitting: isSubmitting };
-  return { kind: "hidden" };
 }
