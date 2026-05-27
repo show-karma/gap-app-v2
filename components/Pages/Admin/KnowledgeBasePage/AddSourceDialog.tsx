@@ -79,6 +79,9 @@ export function AddSourceDialog({ communityIdOrSlug, open, onOpenChange, initial
   // kind === "gdrive_file"; we hide the toggle for other kinds and clear
   // the value on kind changes so a stale `true` can't sneak in.
   const [followLinks, setFollowLinks] = useState(false);
+  // DEV-342: optional public citation link. Only valid on Google Docs —
+  // hidden and cleared for other kinds (backend rejects it with 422).
+  const [citationUrl, setCitationUrl] = useState("");
   const create = useCreateKnowledgeSource(communityIdOrSlug);
 
   // On open, seed the kind from `initialKind` (quick-pick) or fall back to the
@@ -92,6 +95,7 @@ export function AddSourceDialog({ communityIdOrSlug, open, onOpenChange, initial
       setTitle("");
       setGoal("");
       setFollowLinks(false);
+      setCitationUrl("");
     }
   }, [open, initialKind]);
 
@@ -101,7 +105,10 @@ export function AddSourceDialog({ communityIdOrSlug, open, onOpenChange, initial
   // with what we'd send.
   const handleKindChange = (nextKind: KnowledgeSourceKind) => {
     setKind(nextKind);
-    if (nextKind !== "gdrive_file") setFollowLinks(false);
+    if (nextKind !== "gdrive_file") {
+      setFollowLinks(false);
+      setCitationUrl("");
+    }
   };
 
   const canSubmit = externalId.trim().length > 0 && title.trim().length > 0 && !create.isPending;
@@ -123,6 +130,10 @@ export function AddSourceDialog({ communityIdOrSlug, open, onOpenChange, initial
         // accepts false universally), but omitting keeps the request
         // payload tight and aligned with the visible UI state.
         followLinks: kind === "gdrive_file" ? followLinks : undefined,
+        // DEV-342: only Google Docs accept a citation override; omit it
+        // otherwise. Empty input means "no public link" (cite by title).
+        citationUrl:
+          kind === "gdrive_file" && citationUrl.trim().length > 0 ? citationUrl.trim() : undefined,
       });
       toast.success("Knowledge source added.");
       onOpenChange(false);
@@ -253,6 +264,25 @@ export function AddSourceDialog({ communityIdOrSlug, open, onOpenChange, initial
                     </span>
                   </div>
                 </FormField>
+
+                {kind === "gdrive_file" && (
+                  <FormField
+                    label="Citation link (optional)"
+                    hint="Public URL to link in chat citations. If empty, this Google Doc is cited by title with no link — its Drive URL is never shown."
+                    htmlFor="kb-citation-url"
+                  >
+                    <input
+                      id="kb-citation-url"
+                      type="url"
+                      value={citationUrl}
+                      onChange={(e) => setCitationUrl(e.target.value)}
+                      placeholder="https://example.com/published-handbook"
+                      maxLength={2048}
+                      spellCheck={false}
+                      className="h-9 w-full rounded-md border border-stone-300 bg-white px-3 font-mono text-[12.5px] text-stone-900 placeholder-stone-400 transition focus:border-sky-500 focus:outline-none focus:ring-[3px] focus:ring-sky-500/20 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder-zinc-600 dark:focus:border-sky-400 dark:focus:ring-sky-400/20"
+                    />
+                  </FormField>
+                )}
 
                 {kind === "gdrive_file" && (
                   <FollowLinksToggle checked={followLinks} onChange={setFollowLinks} />

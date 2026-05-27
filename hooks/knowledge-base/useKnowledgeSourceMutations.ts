@@ -131,6 +131,11 @@ function applyPatch(source: KnowledgeSource, patch: UpdateKnowledgeSourceInput):
       syncIntervalMin: patch.syncIntervalMin,
     }),
     ...(patch.followLinks !== undefined && { followLinks: patch.followLinks }),
+    // DEV-342: tri-state like `goal` — present (incl. null) applies, absent
+    // leaves the override unchanged.
+    ...(Object.hasOwn(patch, "citationUrl") && {
+      citationUrl: patch.citationUrl ?? null,
+    }),
   };
 }
 
