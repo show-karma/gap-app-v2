@@ -1002,7 +1002,7 @@ function FinalCTA({ onSearchFocus }: { onSearchFocus: () => void }) {
               Start a search <Icon.arrow />
             </div>
           </button>
-          <Link href={NON_PROFITS_PAGES.CONNECT_CLAUDE} className="lp-cta-card lp-cta-card-alt">
+          <Link href={NON_PROFITS_PAGES.CONNECT} className="lp-cta-card lp-cta-card-alt">
             <div className="lp-cta-card-eyebrow">PATH 02 &middot; INTEGRATED</div>
             <div className="lp-cta-card-title">Add the agents to Claude or ChatGPT.</div>
             <div className="lp-cta-card-body">

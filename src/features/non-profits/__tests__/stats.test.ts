@@ -10,9 +10,11 @@ describe("FILINGS_STATS", () => {
 
   it("provides sentence-fragment copy that fits inline next to other words", () => {
     // Must start lowercase so it reads naturally after "Plain English · " etc.
+    expect(FILINGS_STATS.searchingProgressLabel.length).toBeGreaterThan(0);
     expect(FILINGS_STATS.searchingProgressLabel.charAt(0)).toBe(
       FILINGS_STATS.searchingProgressLabel.charAt(0).toLowerCase()
     );
+    expect(FILINGS_STATS.composerFooterLabel.length).toBeGreaterThan(0);
     expect(FILINGS_STATS.composerFooterLabel.charAt(0)).toBe(
       FILINGS_STATS.composerFooterLabel.charAt(0).toLowerCase()
     );
