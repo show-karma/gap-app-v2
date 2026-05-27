@@ -20,6 +20,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
+import { Link } from "@/src/components/navigation/Link";
 import { NON_PROFITS_PAGES } from "@/utilities/pages";
 import { FILINGS_STATS } from "../lib/stats";
 import { useSearchSessionStore } from "../store/search-session";
@@ -212,7 +213,7 @@ function Hero({ onSearch }: { onSearch: (query: string) => void }) {
         <h1 className="lp-hero-title">
           Stop hunting for funders.
           <br />
-          <em>Ask an agent.</em>
+          <span className="italic">Ask an agent.</span>
         </h1>
         <p className="lp-hero-sub">
           AI agents that find the right foundations and funders for your mission, grounded in every
@@ -289,12 +290,12 @@ function Hero({ onSearch }: { onSearch: (query: string) => void }) {
 
           <div className="lp-hero-foot">
             <span>Prefer to stay in your AI tool?</span>
-            <a href={NON_PROFITS_PAGES.CONNECT_CLAUDE} className="lp-hero-foot-link">
+            <Link href={NON_PROFITS_PAGES.CONNECT_CLAUDE} className="lp-hero-foot-link">
               Add to Claude <Icon.arrow />
-            </a>
-            <a href={NON_PROFITS_PAGES.CONNECT_CHATGPT} className="lp-hero-foot-link">
+            </Link>
+            <Link href={NON_PROFITS_PAGES.CONNECT_CHATGPT} className="lp-hero-foot-link">
               Add to ChatGPT <Icon.arrow />
-            </a>
+            </Link>
           </div>
         </div>
       </div>
@@ -314,7 +315,7 @@ function TheShift() {
             <h2 className="lp-section-title">
               Agents handle the research.
               <br />
-              <em>You handle the relationships.</em>
+              <span className="italic">You handle the relationships.</span>
             </h2>
           </div>
           <p className="lp-section-desc">
@@ -444,7 +445,7 @@ function Agents() {
             <h2 className="lp-section-title">
               Two agents live today.
               <br />
-              <em>Four more shipping soon.</em>
+              <span className="italic">Four more shipping soon.</span>
             </h2>
           </div>
           <p className="lp-section-desc">
@@ -546,7 +547,7 @@ function HowItWorks() {
             <h2 className="lp-section-title">
               Three steps to
               <br />
-              <em>get an agent working for you.</em>
+              <span className="italic">get an agent working for you.</span>
             </h2>
           </div>
           <p className="lp-section-desc">
@@ -656,7 +657,7 @@ function NoNewTool() {
             <h2 className="lp-section-title">
               You already have 12 tools.
               <br />
-              <em>We&apos;re not the 13th.</em>
+              <span className="italic">We&apos;re not the 13th.</span>
             </h2>
           </div>
           <p className="lp-section-desc">
@@ -707,8 +708,8 @@ const INSTALL_CONFIGS = {
         badge: "01",
         text: (
           <>
-            Open Claude &rarr; <code>Settings</code> &rarr; <code>Connectors</code> &rarr;{" "}
-            <code>Add custom connector</code>.
+            Open Claude &rarr; <code>Settings</code> &rarr; <code>Customize</code> &rarr;{" "}
+            <code>Connectors</code> &rarr; <code>+</code> &rarr; <code>Add custom connector</code>.
           </>
         ),
       },
@@ -716,8 +717,8 @@ const INSTALL_CONFIGS = {
         badge: "02",
         text: (
           <>
-            Paste the MCP server URL below. You&apos;ll be prompted to sign in with your Grow
-            Nonprofit account.
+            Name it <code>Karma Find Funders</code>, paste the MCP server URL below, and click{" "}
+            <code>Add</code>. Sign in with your Karma account to authorize.
           </>
         ),
         code: "https://gapapi.karmahq.xyz/mcp",
@@ -726,13 +727,13 @@ const INSTALL_CONFIGS = {
         badge: "03",
         text: (
           <>
-            Start a chat. Ask &ldquo;find funders for &hellip;&rdquo; or &ldquo;pull the giving
-            history for &hellip;&rdquo;. The agent takes it from there.
+            In a new chat, click <code>+</code> in the composer, open <code>Connectors</code>, and
+            toggle <code>Karma Find Funders</code> on.
           </>
         ),
       },
     ],
-    foot: "Supports Claude 3.5 Sonnet and newer · MCP spec 2025-03",
+    foot: "Free, Pro, Max, Team, and Enterprise plans · Streamable HTTP · OAuth 2.1 · Beta",
   },
   chatgpt: {
     label: "ChatGPT",
@@ -741,8 +742,8 @@ const INSTALL_CONFIGS = {
         badge: "01",
         text: (
           <>
-            In ChatGPT, open <code>Settings</code> &rarr; <code>Connectors</code> &rarr;{" "}
-            <code>Browse</code> and search for &ldquo;Karma Find Funders&rdquo;.
+            In ChatGPT, open <code>Settings</code> &rarr; <code>Apps &amp; Connectors</code> &rarr;{" "}
+            <code>Advanced settings</code> and turn on <code>Developer mode</code>.
           </>
         ),
       },
@@ -750,22 +751,25 @@ const INSTALL_CONFIGS = {
         badge: "02",
         text: (
           <>
-            Click <code>Connect</code>, sign in with your Karma Find Funders account, and authorize
-            the agent.
+            Back on <code>Apps &amp; Connectors</code>, click <code>Create</code>, name it{" "}
+            <code>Karma Find Funders</code>, paste the MCP server URL below, leave auth on{" "}
+            <code>OAuth</code>, and click <code>Create</code>.
           </>
         ),
+        code: "https://gapapi.karmahq.xyz/mcp",
       },
       {
         badge: "03",
         text: (
           <>
-            Toggle the connector on inside any chat &mdash; or pin it so every fundraising
-            conversation has the agent ready by default.
+            In a new chat, click <code>+</code> &rarr; <code>More</code> and pick{" "}
+            <code>Karma Find Funders</code>. Read-only on Plus/Pro; read/write on Business,
+            Enterprise, and Edu.
           </>
         ),
       },
     ],
-    foot: "Available on ChatGPT Plus, Pro, Team, and Enterprise plans",
+    foot: "Plus, Pro, Business, Enterprise, and Edu plans · Streamable HTTP · OAuth 2.1 · Beta",
   },
   api: {
     label: "API / Other tools",
@@ -809,12 +813,17 @@ function CopyButton({ text }: { text: string }) {
   const [, copy] = useCopyToClipboard();
   const [state, setState] = useState<"idle" | "copied">("idle");
 
-  const handleCopy = async () => {
-    const ok = await copy(text, "Copied!");
-    if (ok) {
-      setState("copied");
-      setTimeout(() => setState("idle"), 1400);
-    }
+  const handleCopy = () => {
+    copy(text, "Copied!")
+      .then((ok) => {
+        if (ok) {
+          setState("copied");
+          setTimeout(() => setState("idle"), 1400);
+        }
+      })
+      .catch((error) => {
+        console.warn("Copy install snippet failed", error);
+      });
   };
 
   return (
@@ -822,6 +831,7 @@ function CopyButton({ text }: { text: string }) {
       type="button"
       className={`lp-copy-btn ${state === "copied" ? "copied" : ""}`}
       onClick={handleCopy}
+      aria-live="polite"
     >
       {state === "copied" ? "COPIED" : "COPY"}
     </button>
@@ -840,7 +850,7 @@ function Connector() {
           <h2 className="lp-connector-title">
             One connector,
             <br />
-            <em>and the agents are yours.</em>
+            <span className="italic">and the agents are yours.</span>
           </h2>
           <p className="lp-connector-sub">
             Add Karma Find Funders to Claude or ChatGPT in under a minute. From then on, every
@@ -931,7 +941,7 @@ function Connector() {
           <div className="lp-install-foot">
             <span>{cfg.foot}</span>
             {tab !== "api" && (
-              <a
+              <Link
                 href={
                   tab === "claude"
                     ? NON_PROFITS_PAGES.CONNECT_CLAUDE
@@ -940,7 +950,7 @@ function Connector() {
                 className="lp-hero-foot-link"
               >
                 Open full {cfg.label} setup guide <Icon.arrow />
-              </a>
+              </Link>
             )}
           </div>
         </div>
@@ -961,7 +971,7 @@ function TheData() {
             <h2 className="lp-section-title">
               Every 990-PF.
               <br />
-              <em>Every foundation. Every grant.</em>
+              <span className="italic">Every foundation. Every grant.</span>
             </h2>
           </div>
           <p className="lp-section-desc">
@@ -977,7 +987,7 @@ function TheData() {
             <div className="lp-data-stat-label">990 filings indexed</div>
           </div>
           <div className="lp-data-stat">
-            <div className="lp-data-stat-num">$1.2T</div>
+            <div className="lp-data-stat-num">{FILINGS_STATS.dollarsTracked}</div>
             <div className="lp-data-stat-label">In philanthropic assets tracked</div>
           </div>
           <div className="lp-data-stat">
@@ -1039,7 +1049,7 @@ function Audience() {
             <h2 className="lp-section-title">
               For the people who
               <br />
-              <em>need this most.</em>
+              <span className="italic">need this most.</span>
             </h2>
           </div>
           <p className="lp-section-desc">
@@ -1083,7 +1093,7 @@ function FinalCTA({ onSearchFocus }: { onSearchFocus: () => void }) {
             <h2 className="lp-section-title">
               Two ways in.
               <br />
-              <em>Both take less than a minute.</em>
+              <span className="italic">Both take less than a minute.</span>
             </h2>
           </div>
         </div>
@@ -1100,7 +1110,7 @@ function FinalCTA({ onSearchFocus }: { onSearchFocus: () => void }) {
               Start a search <Icon.arrow />
             </div>
           </button>
-          <a href={NON_PROFITS_PAGES.CONNECT_CLAUDE} className="lp-cta-card lp-cta-card-alt">
+          <Link href={NON_PROFITS_PAGES.CONNECT_CLAUDE} className="lp-cta-card lp-cta-card-alt">
             <div className="lp-cta-card-eyebrow">PATH 02 &middot; INTEGRATED</div>
             <div className="lp-cta-card-title">Add the agents to Claude or ChatGPT.</div>
             <div className="lp-cta-card-body">
@@ -1110,7 +1120,7 @@ function FinalCTA({ onSearchFocus }: { onSearchFocus: () => void }) {
             <div className="lp-cta-card-action">
               See setup steps <Icon.arrow />
             </div>
-          </a>
+          </Link>
         </div>
       </div>
     </section>

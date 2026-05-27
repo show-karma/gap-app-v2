@@ -247,6 +247,7 @@ export const NON_PROFITS_PAGES = {
   },
   GRANT: (id: string, searchId?: string) =>
     `${FIND_FUNDERS}/grants/${id}${searchId ? `?searchId=${searchId}` : ""}`,
+  CONNECT: `${FIND_FUNDERS}/connect` as const,
   CONNECT_CLAUDE: `${FIND_FUNDERS}/connect/claude` as const,
   CONNECT_CHATGPT: `${FIND_FUNDERS}/connect/chatgpt` as const,
 } as const;

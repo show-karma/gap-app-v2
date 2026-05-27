@@ -1,10 +1,11 @@
 "use client";
 
 import { ArrowLeft, ArrowRight, Check, Copy } from "lucide-react";
-import Link from "next/link";
 import type { ReactNode } from "react";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
+import { Link } from "@/src/components/navigation/Link";
 import { NON_PROFITS_PAGES } from "@/utilities/pages";
+import { FILINGS_STATS } from "../lib/stats";
 
 const MCP_URL = "https://gapapi.karmahq.xyz/mcp";
 
@@ -18,7 +19,7 @@ function sharedFaqs(productName: "Claude" | "ChatGPT"): FaqItem[] {
     },
     {
       q: "What data does it have access to?",
-      a: "IRS 990 and 990-PF filings for every U.S. private foundation and public charity that files annually. Over 2 million filings going back several years. Every answer cites the filing it came from.",
+      a: `IRS 990 and 990-PF filings for every U.S. private foundation and public charity that files annually. Over ${FILINGS_STATS.countLong} filings going back several years. Every answer cites the filing it came from.`,
     },
     {
       q: `Does Karma see my ${productName} chats?`,
@@ -283,14 +284,21 @@ function CodeBlock({ text }: { text: string }) {
   const [copiedText, copy] = useCopyToClipboard();
   const copied = copiedText === text;
 
+  const handleCopy = () => {
+    copy(text, "Copied").catch((error) => {
+      console.warn("Copy MCP URL failed", error);
+    });
+  };
+
   return (
     <div className="flex items-center justify-between gap-3 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-700 dark:bg-gray-900">
       <code className="break-all font-mono text-sm text-gray-900 dark:text-gray-100">{text}</code>
       <button
         type="button"
-        onClick={() => copy(text, "Copied")}
+        onClick={handleCopy}
         className="flex shrink-0 items-center gap-1.5 rounded-md border border-gray-200 bg-white px-2.5 py-1 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
         aria-label={copied ? "Copied" : "Copy MCP URL"}
+        aria-live="polite"
       >
         {copied ? (
           <>
@@ -317,7 +325,7 @@ function StepCard({ index, step }: { index: number; step: Step }) {
       </div>
       <div className="flex-1 space-y-3">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-50">{step.title}</h3>
-        <p className="text-gray-700 dark:text-gray-300">{step.body}</p>
+        <div className="text-gray-700 dark:text-gray-300">{step.body}</div>
         {step.code && <CodeBlock text={step.code} />}
       </div>
     </li>

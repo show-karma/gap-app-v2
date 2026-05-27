@@ -1,11 +1,11 @@
 "use client";
 
 /**
- * NonProfitsNavbar — dedicated top nav for the /non-profits section.
+ * NonProfitsNavbar — dedicated top nav for the /non-profits/find-funders section.
  *
  * Ported from grant-atlas src/components/landing-nav.tsx (the navbar shown on
  * karmagrants.org). Adaptations for gap-app-v2:
- * - Brand: "Grow Nonprofit" mark replaced by the Karma logo (next/image).
+ * - Brand: "Karma Find Funders" — the Karma logo (next/image) sits in for the original mark.
  * - Router/links: TanStack Router → next/link + NON_PROFITS_PAGES constants.
  * - Homepage detection: useMatch → usePathname.
  * - Theme: grant-atlas ThemeProvider → next-themes.
@@ -122,7 +122,7 @@ export function NonProfitsNavbar() {
     <>
       <nav className="lp-nav">
         <div className="lp-container lp-nav-inner">
-          <Link href={NON_PROFITS_PAGES.HOME} aria-label="Grow Nonprofit home">
+          <Link href={NON_PROFITS_PAGES.HOME} aria-label="Karma Find Funders home">
             <BrandMark />
           </Link>
 

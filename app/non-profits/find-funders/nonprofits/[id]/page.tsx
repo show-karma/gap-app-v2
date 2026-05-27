@@ -41,14 +41,14 @@ export async function generateMetadata({
 
   if (!nonprofit?.name) {
     return customMetadata({
-      title: "Nonprofit — Grow Nonprofits",
+      title: "Nonprofit — Karma Find Funders",
       description: "View nonprofit details and grants received.",
       path: `/non-profits/find-funders/nonprofits/${id}`,
     });
   }
 
   return customMetadata({
-    title: `${nonprofit.name} — Grow Nonprofits`,
+    title: `${nonprofit.name} — Karma Find Funders`,
     description:
       nonprofit.description ??
       `Explore grants received by ${nonprofit.name} and their funding sources.`,
