@@ -6,7 +6,7 @@ export const metadata: Metadata = customMetadata({
   title: "Search — Grow Nonprofits",
   description:
     "AI-powered philanthropic prospecting. Find funders, explore foundations, and research grants in plain English.",
-  path: "/non-profits/search",
+  path: "/non-profits/find-funders/search",
 });
 
 /**

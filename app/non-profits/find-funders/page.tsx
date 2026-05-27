@@ -3,10 +3,10 @@ import { LandingPageDynamic } from "@/src/features/non-profits/components/landin
 import { customMetadata } from "@/utilities/meta";
 
 export const metadata: Metadata = customMetadata({
-  title: "Grow Nonprofits — Find Philanthropic Funding",
+  title: "Karma Find Funders — AI Agents for Funder Research",
   description:
-    "Search thousands of foundations, grants, and nonprofits with AI-powered discovery. Find the right funders for your mission.",
-  path: "/non-profits",
+    "Ask an agent: find foundations and grantmaking nonprofits aligned to your mission. Grounded in every IRS 990 on record — every answer cited. Works in Claude and ChatGPT.",
+  path: "/non-profits/find-funders",
 });
 
 export default function NonProfitsPage() {

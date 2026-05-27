@@ -46,7 +46,7 @@ export function ConnectorNudge() {
   };
 
   // Connector setup section lives on the landing page.
-  const setupHref = "/non-profits#connector";
+  const setupHref = "/non-profits/find-funders/connect/claude";
 
   return (
     <div className="mb-4 overflow-hidden rounded-xl border border-zinc-200 bg-gradient-to-br from-amber-50 via-white to-blue-50 dark:border-zinc-800 dark:from-amber-900/10 dark:via-zinc-900 dark:to-blue-900/10">

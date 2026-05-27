@@ -47,7 +47,7 @@ export async function generateMetadata({
     return customMetadata({
       title: "Foundation — Grow Nonprofits",
       description: "View foundation details, grants, officers, and financials.",
-      path: `/non-profits/foundations/${id}`,
+      path: `/non-profits/find-funders/foundations/${id}`,
     });
   }
 
@@ -56,7 +56,7 @@ export async function generateMetadata({
     description:
       foundation.description ??
       `Explore grants, officers, and financial data for ${foundation.name}.`,
-    path: `/non-profits/foundations/${id}`,
+    path: `/non-profits/find-funders/foundations/${id}`,
   });
 }
 

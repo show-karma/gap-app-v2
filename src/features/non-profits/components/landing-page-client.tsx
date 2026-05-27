@@ -21,12 +21,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { NON_PROFITS_PAGES } from "@/utilities/pages";
+import { FILINGS_STATS } from "../lib/stats";
 import { useSearchSessionStore } from "../store/search-session";
-
-// ————————————————————————— Landing stats —————————————————————————
-// Keep in sync with the indexer until an index-stats endpoint exists.
-
-const INDEXED_SHORT_LABEL = "140,221 filings · $1.2T tracked";
 
 // ————————————————————————— Icons —————————————————————————
 
@@ -211,17 +207,17 @@ function Hero({ onSearch }: { onSearch: (query: string) => void }) {
       <div className="lp-container lp-hero-inner lp-fade-in">
         <div className="lp-eyebrow">
           <span className="lp-eyebrow-dot" />
-          <span>AI Agents for Nonprofit Fundraising &middot; Works in Claude &amp; ChatGPT</span>
+          <span>AI Agents for Funder Research &middot; Works in Claude &amp; ChatGPT</span>
         </div>
         <h1 className="lp-hero-title">
-          Stop hunting for grants.
+          Stop hunting for funders.
           <br />
           <em>Ask an agent.</em>
         </h1>
         <p className="lp-hero-sub">
-          AI agents that find funders, draft proposals, and handle the grant grunt work &mdash;
-          inside the AI tools you already use. Try it right here, then take it with you to Claude or
-          ChatGPT.
+          AI agents that find the right foundations and funders for your mission, grounded in every
+          IRS 990 on record. Ask in plain English, get a cited prospect list. Use it here, or take
+          the agent with you to Claude or ChatGPT.
         </p>
 
         <div className="lp-search-shell">
@@ -232,7 +228,7 @@ function Hero({ onSearch }: { onSearch: (query: string) => void }) {
                 <span>ASK IN PLAIN ENGLISH</span>
               </span>
               <span>&middot;</span>
-              <span>{INDEXED_SHORT_LABEL}</span>
+              <span>{FILINGS_STATS.indexedShortLabel}</span>
             </div>
             <span>&#8984; K</span>
           </div>
@@ -293,8 +289,11 @@ function Hero({ onSearch }: { onSearch: (query: string) => void }) {
 
           <div className="lp-hero-foot">
             <span>Prefer to stay in your AI tool?</span>
-            <a href="#connector" className="lp-hero-foot-link">
-              Add the agent to Claude or ChatGPT <Icon.arrow />
+            <a href={NON_PROFITS_PAGES.CONNECT_CLAUDE} className="lp-hero-foot-link">
+              Add to Claude <Icon.arrow />
+            </a>
+            <a href={NON_PROFITS_PAGES.CONNECT_CHATGPT} className="lp-hero-foot-link">
+              Add to ChatGPT <Icon.arrow />
             </a>
           </div>
         </div>
@@ -313,15 +312,16 @@ function TheShift() {
           <div>
             <div className="lp-section-label">01 &mdash; THE SHIFT</div>
             <h2 className="lp-section-title">
-              AI handles the busywork.
+              Agents handle the research.
               <br />
-              <em>You handle what matters.</em>
+              <em>You handle the relationships.</em>
             </h2>
           </div>
           <p className="lp-section-desc">
-            Fundraising is relationships, storytelling, and judgement &mdash; work only your team
-            can do. Everything around it &mdash; the searching, the drafting, the tracking, the
-            follow-ups &mdash; is grunt work an agent should be doing for you.
+            Finding the right funders is hours of database wrangling, 990 archaeology, and
+            spreadsheet upkeep. All of it before you write a single line of outreach. That&apos;s
+            grunt work an agent should be doing for you, so your team can spend its hours on the
+            work only you can do.
           </p>
         </div>
 
@@ -331,7 +331,7 @@ function TheShift() {
             <div className="lp-cap-title">Your team is not being replaced.</div>
             <div className="lp-cap-desc">
               You still build the relationships. You still tell the story. You still close the
-              grants. The agents just handle everything before and after.
+              grants. The agents just do the funder research and prep so you can show up ready.
             </div>
           </div>
           <div className="lp-cap">
@@ -368,43 +368,58 @@ function TheShift() {
 const SUPPORTING_AGENTS = [
   {
     num: "02",
-    tag: "WRITING AGENT",
+    tag: "RESEARCH AGENT",
     status: "live" as const,
-    title: "Draft proposals and LOIs in your voice.",
-    desc: "Turn your program details into LOIs, narratives, and full proposals. The agent learns your past submissions and matches the funder's priorities.",
-    qs: ["Draft an LOI to the Hewlett Foundation", "Tighten this proposal for a family funder"],
+    title: "Deep-dive any foundation in seconds.",
+    desc: "Pull a funder's giving history, officers, peer co-funders, and historical priorities from the 990 record. Skip the PDF scavenger hunt before your first call.",
+    qs: [
+      "Summarize the Hewlett Foundation's last 5 years of climate giving",
+      "Who sits on the board of the Mott Foundation and what else do they fund?",
+    ],
   },
   {
     num: "03",
-    tag: "MANAGEMENT AGENT",
+    tag: "GRANTS AGENT",
     status: "soon" as const,
-    title: "Track every application, never miss a deadline.",
-    desc: "A pipeline that updates itself. Statuses, deadlines, decisions, renewals &mdash; all maintained by the agent so your team never has to babysit a spreadsheet again.",
-    qs: ["Show me what's due this week", "Which proposals haven't heard back?"],
+    title: "Find open RFPs and grant opportunities.",
+    desc: "Surfaces live grant opportunities aligned to your cause area, geography, and stage. Not just funders, but the actual RFPs they have open right now.",
+    qs: [
+      "Open RFPs for youth education in California closing in the next 60 days",
+      "Bridge funding opportunities for nonprofits under $1M budget",
+    ],
   },
   {
     num: "04",
     tag: "WATCHER AGENT",
     status: "soon" as const,
     title: "Get pinged the moment a fit appears.",
-    desc: "The agent watches for new RFPs, fresh 990 filings, and funder priority shifts &mdash; and surfaces only the ones that match your work.",
-    qs: ["Ping me when funders open climate RFPs", "Alert me on new local family foundations"],
+    desc: "Stand a watch for new 990 filings, funder priority shifts, and fresh RFPs. The agent surfaces only the ones that match your work, the moment they land.",
+    qs: [
+      "Ping me when funders open climate RFPs in the Bay Area",
+      "Alert me on new local family foundations under $50M",
+    ],
   },
   {
     num: "05",
-    tag: "REPORTER AGENT",
+    tag: "PEOPLE AGENT",
     status: "soon" as const,
-    title: "Milestone reports, drafted for you.",
-    desc: "Pulls your program data, matches it to the grant agreement, and drafts the report. You review, edit, send.",
-    qs: ["Draft our Q3 report to the Ford Foundation", "Summarize milestone progress for funders"],
+    title: "Find the right human at every foundation.",
+    desc: "Program officers, trustees, and grants managers tied to your cause area, with their giving signal, recent moves, and who in your network already knows them.",
+    qs: [
+      "Who is the climate program officer at the Kresge Foundation?",
+      "Trustees of Bay Area family foundations active in housing",
+    ],
   },
   {
     num: "06",
-    tag: "DONATIONS AGENT",
+    tag: "OUTREACH AGENT",
     status: "soon" as const,
-    title: "Accept donations through ChatGPT and Claude.",
-    desc: "Donors give in the same chat where they discovered you. No checkout pages, no friction &mdash; the agent handles intent, payment, and receipts.",
-    qs: ["Donate $50 to this nonprofit", "Set up a recurring gift through Claude"],
+    title: "Warm intros and first-touch emails, drafted.",
+    desc: "Hand the agent a short list and it drafts the first email to each funder, cited to their priorities, in your voice, ready for you to review and send.",
+    qs: [
+      "Draft an intro email to the Walton Family Foundation for our literacy program",
+      "Rewrite this LOI to match the Surdna Foundation's funding lens",
+    ],
   },
 ] as const;
 
@@ -433,9 +448,9 @@ function Agents() {
             </h2>
           </div>
           <p className="lp-section-desc">
-            Each agent owns one part of the fundraising lifecycle &mdash; the grunt-work parts. They
-            run inside Claude, ChatGPT, or right here. We&apos;re shipping in the open: live means
-            you can use it today.
+            Each agent owns one part of the funder-research lifecycle, namely the grunt-work parts.
+            They run inside Claude, ChatGPT, or right here. We&apos;re shipping in the open: live
+            means you can use it today.
           </p>
         </div>
 
@@ -478,7 +493,7 @@ function Agents() {
                 <div className="lp-chat-tool">
                   <span>&rarr;</span>
                   <span>
-                    <span className="accent">grow.prospect</span>(
+                    <span className="accent">funders.search</span>(
                     {`{geo: "OH", cause: "literacy", assets_lt: 10_000_000}`})
                   </span>
                 </div>
@@ -547,15 +562,15 @@ function HowItWorks() {
               <div className="lp-screenshot-placeholder">
                 <div className="lp-screenshot-label">SCREENSHOT</div>
                 <div className="lp-screenshot-hint">
-                  Claude &rarr; Settings &rarr; Connectors &rarr; Add Grow Nonprofit
+                  Claude &rarr; Settings &rarr; Connectors &rarr; Add Karma Find Funders
                 </div>
               </div>
             </div>
             <div>
               <div className="lp-how-step-title">Add the connector. One time.</div>
               <div className="lp-how-step-body">
-                In Claude: paste the MCP URL into Connectors. In ChatGPT: install the Grow Nonprofit
-                app from the directory. Sign in once and you&apos;re done.
+                In Claude or ChatGPT: paste the MCP URL into Connectors and sign in once. The agent
+                shows up in every chat from then on.
               </div>
             </div>
           </div>
@@ -569,11 +584,15 @@ function HowItWorks() {
               </div>
               <div className="lp-viz-line">
                 <span className="dim">you</span>{" "}
-                <span>&ldquo;Now draft an LOI to the top three&rdquo;</span>
+                <span>
+                  &ldquo;Filter to under $10M assets and recent giving in this space&rdquo;
+                </span>
               </div>
               <div className="lp-viz-line">
                 <span className="dim">you</span>{" "}
-                <span>&ldquo;Remind me to follow up in two weeks&rdquo;</span>
+                <span>
+                  &ldquo;Pull the program officer and last 3 years of giving for the top 5&rdquo;
+                </span>
               </div>
               <div style={{ flex: 1 }} />
               <div className="lp-viz-line">
@@ -594,15 +613,15 @@ function HowItWorks() {
             <div className="lp-how-step-viz">
               <div className="lp-viz-line">
                 <span className="kw">prospect_list.csv</span>{" "}
-                <span className="dim">&middot; 23 funders</span>
+                <span className="dim">&middot; 23 funders, ranked &amp; cited</span>
               </div>
               <div className="lp-viz-line">
-                <span className="kw">loi_hewlett.docx</span>{" "}
-                <span className="dim">&middot; draft</span>
+                <span className="kw">funder_briefs.md</span>{" "}
+                <span className="dim">&middot; top 5, with officers &amp; giving history</span>
               </div>
               <div className="lp-viz-line">
-                <span className="kw">followup</span>{" "}
-                <span className="dim">&middot; scheduled 2 weeks</span>
+                <span className="kw">peer_overlap</span>{" "}
+                <span className="dim">&middot; who else funds your space</span>
               </div>
               <div style={{ flex: 1 }} />
               <div className="lp-viz-line">
@@ -610,10 +629,12 @@ function HowItWorks() {
               </div>
             </div>
             <div>
-              <div className="lp-how-step-title">The agent does the work, you do the review.</div>
+              <div className="lp-how-step-title">
+                The agent does the research, you make the call.
+              </div>
               <div className="lp-how-step-body">
-                Lists, drafts, reminders, follow-ups &mdash; delivered in the chat. You review,
-                edit, send. The grunt work is done before you sit down to think.
+                Ranked lists, funder briefs, and peer overlap, delivered in the chat. Take them
+                straight into your outreach with a clear picture of who&apos;s worth pursuing.
               </div>
             </div>
           </div>
@@ -639,9 +660,9 @@ function NoNewTool() {
             </h2>
           </div>
           <p className="lp-section-desc">
-            Most fundraising software wants to be the place you live. We don&apos;t. Grow Nonprofit
-            lives inside Claude and ChatGPT &mdash; the AI tool already open in your browser. No new
-            tab, no new interface, no migration.
+            Most fundraising software wants to be the place you live. We don&apos;t. Karma Find
+            Funders lives inside Claude and ChatGPT &mdash; the AI tool already open in your
+            browser. No new tab, no new interface, no migration.
           </p>
         </div>
 
@@ -668,7 +689,7 @@ function NoNewTool() {
             <span className="lp-anti-x">&times;</span>
             <span className="lp-anti-old">Copy-pasting between tabs</span>
             <span className="lp-anti-arrow">&rarr;</span>
-            <span className="lp-anti-new">Prospect, draft, follow up &mdash; same chat</span>
+            <span className="lp-anti-new">Search, brief, compare in one chat</span>
           </div>
         </div>
       </div>
@@ -699,14 +720,14 @@ const INSTALL_CONFIGS = {
             Nonprofit account.
           </>
         ),
-        code: "https://mcp.grant-atlas.example/v1/sse",
+        code: "https://gapapi.karmahq.xyz/mcp",
       },
       {
         badge: "03",
         text: (
           <>
-            Start a chat. Ask &ldquo;find funders for &hellip;&rdquo; or &ldquo;draft an LOI for
-            &hellip;&rdquo; &mdash; the agent takes it from there.
+            Start a chat. Ask &ldquo;find funders for &hellip;&rdquo; or &ldquo;pull the giving
+            history for &hellip;&rdquo;. The agent takes it from there.
           </>
         ),
       },
@@ -721,7 +742,7 @@ const INSTALL_CONFIGS = {
         text: (
           <>
             In ChatGPT, open <code>Settings</code> &rarr; <code>Connectors</code> &rarr;{" "}
-            <code>Browse</code> and search for &ldquo;Grow Nonprofit&rdquo;.
+            <code>Browse</code> and search for &ldquo;Karma Find Funders&rdquo;.
           </>
         ),
       },
@@ -729,8 +750,8 @@ const INSTALL_CONFIGS = {
         badge: "02",
         text: (
           <>
-            Click <code>Connect</code>, sign in with your Grow Nonprofit account, and authorize the
-            agent.
+            Click <code>Connect</code>, sign in with your Karma Find Funders account, and authorize
+            the agent.
           </>
         ),
       },
@@ -766,7 +787,7 @@ const INSTALL_CONFIGS = {
             to the exact filing page.
           </>
         ),
-        code: `curl https://api.grant-atlas.example/v1/ask \\\n  -H "Authorization: Bearer $GA_KEY" \\\n  -d '{"q": "Family foundations funding literacy in Ohio under $10M"}'`,
+        code: `curl https://gapapi.karmahq.xyz/v2/philanthropy/agent-query \\\n  -H "Content-Type: application/json" \\\n  -d '{"query": "Family foundations funding literacy in Ohio under $10M"}'`,
       },
       {
         badge: "03",
@@ -822,8 +843,8 @@ function Connector() {
             <em>and the agents are yours.</em>
           </h2>
           <p className="lp-connector-sub">
-            Add Grow Nonprofit to Claude or ChatGPT in under a minute. From then on, every
-            fundraising question you ask &mdash; in any chat &mdash; goes through the agents.
+            Add Karma Find Funders to Claude or ChatGPT in under a minute. From then on, every
+            funder question you ask in any chat goes through the agents.
           </p>
           <div className="lp-connector-hosts">
             {["CLAUDE DESKTOP", "CLAUDE.AI", "CHATGPT", "CURSOR", "REST / SDK"].map((h) => (
@@ -849,25 +870,25 @@ function Connector() {
 
           <div className="lp-chat-preview">
             <div className="lp-chat-head">
-              <span>{"// CHATGPT · grow nonprofit agent active"}</span>
+              <span>{"// CHATGPT · karma find funders agent active"}</span>
               <span>LIVE</span>
             </div>
             <div className="lp-chat-body">
               <div className="lp-chat-user">
-                Find foundations that funded our peers in climate justice last year, then draft an
-                LOI to the top three.
+                Find foundations that funded our peers in climate justice last year, then brief me
+                on the top three.
               </div>
               <div className="lp-chat-tool">
                 <span>&rarr;</span>
                 <span>
-                  <span className="accent">grow.prospect</span> &rarr;{" "}
-                  <span className="accent">grow.draft_loi</span>
+                  <span className="accent">funders.search</span> &rarr;{" "}
+                  <span className="accent">funder.brief</span>
                 </span>
               </div>
               <div className="lp-chat-assist">
-                Pulled <strong>14 peer-funded foundations</strong>. Drafted three LOIs in your
-                voice, tailored to each funder&apos;s priorities. Review them here, or have me push
-                to Google Docs.
+                Pulled <strong>14 peer-funded foundations</strong>. Briefs on the top three include
+                last three years of climate giving, program officers, and check-size patterns. Each
+                figure cited back to the 990 it came from.
               </div>
             </div>
           </div>
@@ -909,6 +930,18 @@ function Connector() {
           </div>
           <div className="lp-install-foot">
             <span>{cfg.foot}</span>
+            {tab !== "api" && (
+              <a
+                href={
+                  tab === "claude"
+                    ? NON_PROFITS_PAGES.CONNECT_CLAUDE
+                    : NON_PROFITS_PAGES.CONNECT_CHATGPT
+                }
+                className="lp-hero-foot-link"
+              >
+                Open full {cfg.label} setup guide <Icon.arrow />
+              </a>
+            )}
           </div>
         </div>
       </div>
@@ -940,8 +973,8 @@ function TheData() {
 
         <div className="lp-data-grid">
           <div className="lp-data-stat">
-            <div className="lp-data-stat-num">140,221</div>
-            <div className="lp-data-stat-label">990-PF filings indexed</div>
+            <div className="lp-data-stat-num">{FILINGS_STATS.countShort}</div>
+            <div className="lp-data-stat-label">990 filings indexed</div>
           </div>
           <div className="lp-data-stat">
             <div className="lp-data-stat-num">$1.2T</div>
@@ -1067,11 +1100,11 @@ function FinalCTA({ onSearchFocus }: { onSearchFocus: () => void }) {
               Start a search <Icon.arrow />
             </div>
           </button>
-          <a href="#connector" className="lp-cta-card lp-cta-card-alt">
+          <a href={NON_PROFITS_PAGES.CONNECT_CLAUDE} className="lp-cta-card lp-cta-card-alt">
             <div className="lp-cta-card-eyebrow">PATH 02 &middot; INTEGRATED</div>
             <div className="lp-cta-card-title">Add the agents to Claude or ChatGPT.</div>
             <div className="lp-cta-card-body">
-              About 60 seconds to connect. From then on, every fundraising chat in your AI tool has
+              About 60 seconds to connect. From then on, every funder question in your AI tool has
               the agents ready.
             </div>
             <div className="lp-cta-card-action">

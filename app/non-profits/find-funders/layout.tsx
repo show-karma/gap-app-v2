@@ -1,10 +1,10 @@
-import "../../styles/non-profits-landing.css";
+import "../../../styles/non-profits-landing.css";
 
 import { NonProfitsFooter } from "@/src/features/non-profits/components/non-profits-footer";
 import { NonProfitsNavbar } from "@/src/features/non-profits/components/non-profits-navbar";
 
 /**
- * Dedicated chrome for the /non-profits section.
+ * Dedicated chrome for the /non-profits/find-funders section.
  *
  * The global app navbar/footer are suppressed for this route (see
  * GlobalNavbarSlot and FooterSwitcher); this layout supplies the standalone

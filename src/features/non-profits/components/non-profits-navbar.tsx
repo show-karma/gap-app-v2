@@ -31,10 +31,9 @@ import {
 import { NavbarUserSkeleton } from "@/src/components/navbar/navbar-user-skeleton";
 import { NON_PROFITS_PAGES } from "@/utilities/pages";
 import { useResearchTray } from "../hooks/use-research-tray";
+import { FILINGS_STATS } from "../lib/stats";
 import { BookmarksDrawer } from "./bookmarks-drawer";
 import { HelpModal } from "./help-modal";
-
-const FILINGS_INDEXED_LABEL = "140,221 filings indexed";
 
 // Loaded the same way as the homepage navbar (ssr: false) so the account
 // dropdown is identical and never renders on the server — this avoids the
@@ -148,7 +147,7 @@ export function NonProfitsNavbar() {
 
             <div className="lp-nav-status">
               <span className="lp-status-dot" />
-              <span>{FILINGS_INDEXED_LABEL}</span>
+              <span>{FILINGS_STATS.indexedLabel}</span>
             </div>
 
             {/* Help */}
