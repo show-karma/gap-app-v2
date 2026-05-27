@@ -52,9 +52,9 @@ export async function generateMetadata({
 
   if (!grant) {
     return customMetadata({
-      title: "Grant — Grow Nonprofits",
+      title: "Grant — Karma Find Funders",
       description: "View grant details, funder information, and related grants.",
-      path: `/non-profits/grants/${id}`,
+      path: `/non-profits/find-funders/grants/${id}`,
     });
   }
 
@@ -63,7 +63,7 @@ export async function generateMetadata({
   if (amountStr) parts.push(amountStr);
   if (grant.purposeText) parts.push(grant.purposeText);
   const title =
-    parts.length > 0 ? `${parts.join(" — ")} — Grow Nonprofits` : "Grant — Grow Nonprofits";
+    parts.length > 0 ? `${parts.join(" — ")} — Karma Find Funders` : "Grant — Karma Find Funders";
 
   const recipientPart = grant.recipientName ? ` to ${grant.recipientName}` : "";
   const description = `${amountStr ? `${amountStr} grant` : "Grant"}${recipientPart}${grant.purposeText ? `: ${grant.purposeText}` : ""}`;
@@ -71,7 +71,7 @@ export async function generateMetadata({
   return customMetadata({
     title,
     description,
-    path: `/non-profits/grants/${id}`,
+    path: `/non-profits/find-funders/grants/${id}`,
   });
 }
 

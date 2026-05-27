@@ -214,8 +214,8 @@
       "maxBytes": 40000
     },
     "components/FundingPlatform/ApplicationView/ApplicationSubmission.tsx": {
-      "lines": 978,
-      "bytes": 36812,
+      "lines": 992,
+      "bytes": 37357,
       "maxLines": 600,
       "maxBytes": 40000
     },

@@ -10,6 +10,16 @@ describe("app/sitemaps/static/sitemap.ts", () => {
     expect(urls).toContain(`${SITE_URL}/for-agents`);
   });
 
+  it("includes the find-funders landing and connect setup pages", async () => {
+    const { default: staticSitemap } = await import("@/app/sitemaps/static/sitemap");
+    const entries = staticSitemap();
+    const urls = entries.map((e) => e.url);
+    expect(urls).toContain(`${SITE_URL}/non-profits/find-funders`);
+    expect(urls).toContain(`${SITE_URL}/non-profits/find-funders/connect`);
+    expect(urls).toContain(`${SITE_URL}/non-profits/find-funders/connect/claude`);
+    expect(urls).toContain(`${SITE_URL}/non-profits/find-funders/connect/chatgpt`);
+  });
+
   it("sets homepage priority to 1 and changeFrequency to daily", async () => {
     const { default: staticSitemap } = await import("@/app/sitemaps/static/sitemap");
     const entries = staticSitemap();

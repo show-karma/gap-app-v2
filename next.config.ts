@@ -130,6 +130,11 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
+      {
+        source: "/non-profits",
+        destination: "/non-profits/find-funders",
+        permanent: true,
+      },
       // Redirect all old /community/:communityId/admin routes to /community/:communityId/manage
       {
         source: "/community/:communityId/admin",

@@ -45,18 +45,18 @@ export async function generateMetadata({
 
   if (!foundation?.name) {
     return customMetadata({
-      title: "Foundation — Grow Nonprofits",
+      title: "Foundation — Karma Find Funders",
       description: "View foundation details, grants, officers, and financials.",
-      path: `/non-profits/foundations/${id}`,
+      path: `/non-profits/find-funders/foundations/${id}`,
     });
   }
 
   return customMetadata({
-    title: `${foundation.name} — Grow Nonprofits`,
+    title: `${foundation.name} — Karma Find Funders`,
     description:
       foundation.description ??
       `Explore grants, officers, and financial data for ${foundation.name}.`,
-    path: `/non-profits/foundations/${id}`,
+    path: `/non-profits/find-funders/foundations/${id}`,
   });
 }
 

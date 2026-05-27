@@ -1,18 +1,15 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import { NON_PROFITS_PAGES } from "@/utilities/pages";
 import { Navbar } from "./navbar";
 
-/**
- * Renders the global app navbar plus the fixed-navbar spacer for non-whitelabel
- * routes — except the /non-profits section, which supplies its own dedicated
- * navbar via app/non-profits/layout.tsx. Suppressing both the navbar and the
- * spacer here avoids a 64px gap above the standalone "Grow Nonprofit" nav.
- */
+// The /non-profits/find-funders section supplies its own navbar via its layout.
+// Suppressing both the global navbar and the spacer here avoids a 64px gap above it.
 export function GlobalNavbarSlot() {
   const pathname = usePathname();
 
-  if (pathname.startsWith("/non-profits")) return null;
+  if (pathname.startsWith(NON_PROFITS_PAGES.HOME)) return null;
 
   return (
     <>

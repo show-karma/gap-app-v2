@@ -66,7 +66,7 @@ export function HelpModal({ open, onClose }: HelpModalProps) {
     >
       <div className="flex items-center justify-between border-b border-zinc-200 px-6 py-4 dark:border-zinc-800">
         <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-          How to use Grow Nonprofit
+          How to use Karma Find Funders
         </h2>
         <button
           type="button"
@@ -80,8 +80,8 @@ export function HelpModal({ open, onClose }: HelpModalProps) {
 
       <div className="px-6 py-5">
         <p className="mb-5 text-sm text-zinc-600 dark:text-zinc-400">
-          Grow Nonprofit helps you explore U.S. philanthropy data using AI-powered search across IRS
-          990-PF filings.
+          Karma Find Funders helps you explore U.S. philanthropy data using AI-powered search across
+          IRS 990 and 990-PF filings.
         </p>
 
         <div className="space-y-4">
