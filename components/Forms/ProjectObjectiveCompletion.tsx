@@ -1,5 +1,6 @@
 "use client";
 import { zodResolver } from "@hookform/resolvers/zod";
+import type { IProjectMilestoneStatus } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectMilestone";
 import { ProjectMilestone } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectMilestone";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
@@ -162,16 +163,23 @@ export const ProjectObjectiveCompletionForm = ({
         return;
       }
 
+      // The SDK type is narrow (proofOfWork/reason/type), but `complete()`
+      // spreads the data into the JSON schema, so deliverables + outputs
+      // captured by the form below are persisted on chain. Without this,
+      // any metrics or deliverables the user filled in are silently dropped.
+      const completionPayload: IProjectMilestoneStatus & {
+        outputs: SchemaType["outputs"];
+        deliverables: SchemaType["deliverables"];
+      } = {
+        proofOfWork: sanitizeInput(data.proofOfWork),
+        reason: sanitizeInput(data.description),
+        type: `project-milestone-completed`,
+        outputs: data.outputs,
+        deliverables: data.deliverables,
+      };
+
       await objectiveInstance
-        .complete(
-          walletSigner,
-          {
-            proofOfWork: sanitizeInput(data.proofOfWork),
-            reason: sanitizeInput(data.description),
-            type: `project-milestone-completed`,
-          },
-          changeStepperStep
-        )
+        .complete(walletSigner, completionPayload, changeStepperStep)
         .then(async (res) => {
           let retries = 1000;
           changeStepperStep("indexing");
