@@ -38,8 +38,8 @@ interface Props {
 }
 
 const AVAILABLE_MODELS = [
-  { id: "gpt-5.2", label: "GPT-5.2 (OpenAI)" },
-  { id: "gpt-5.4-nano", label: "GPT-5.4 Nano (OpenAI)" },
+  { id: "gpt-5.5", label: "GPT-5.5 (OpenAI)" },
+  { id: "gpt-5.5-nano", label: "GPT-5.5 Nano (OpenAI)" },
   { id: "claude-haiku-4-5-20251001", label: "Claude Haiku 4.5 (Anthropic)" },
   { id: "grok-4-1-fast-reasoning", label: "Grok 4.1 (xAI)" },
 ];
@@ -587,13 +587,13 @@ export function ReportConfigPage({ community, grantPrograms }: Props) {
             {errors.prompt && <p className="mt-1 text-xs text-red-500">{errors.prompt.message}</p>}
           </div>
 
-          {/* Chart Section */}
+          {/* Metrics */}
           <div>
             <div className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
-              Chart Section
+              Metrics
             </div>
             <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">
-              Interactive charts shown below each generated report: one card per indicator with a
+              Interactive metrics shown below each generated report: one card per indicator with a
               sparkline per project, covering Jan 1 of the report year through the run date.
             </p>
             <ChartSectionPicker

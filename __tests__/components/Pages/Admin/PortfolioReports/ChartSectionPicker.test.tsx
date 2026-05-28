@@ -47,7 +47,7 @@ describe("ChartSectionPicker", () => {
   it("renders empty state when no indicators are selected", () => {
     render(<ChartSectionPicker communityId="community-1" value={[]} onChange={vi.fn()} />);
 
-    expect(screen.getByText(/No indicators selected/i)).toBeInTheDocument();
+    expect(screen.getByText(/No metrics selected/i)).toBeInTheDocument();
   });
 
   it("renders one row per selected indicator", () => {
@@ -86,7 +86,7 @@ describe("ChartSectionPicker", () => {
     const onChange = vi.fn();
     render(<ChartSectionPicker communityId="community-1" value={[]} onChange={onChange} />);
 
-    await user.click(screen.getByRole("button", { name: /add indicators/i }));
+    await user.click(screen.getByRole("button", { name: /add metrics/i }));
 
     expect(screen.getByText(/System indicators/i)).toBeInTheDocument();
 
@@ -136,6 +136,6 @@ describe("ChartSectionPicker", () => {
 
     render(<ChartSectionPicker communityId="community-1" value={elevenIds} onChange={vi.fn()} />);
 
-    expect(screen.getByText(/11 indicators will make the report larger/i)).toBeInTheDocument();
+    expect(screen.getByText(/11 metrics will make the report larger/i)).toBeInTheDocument();
   });
 });

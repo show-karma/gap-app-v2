@@ -93,15 +93,15 @@ export function ChartSectionPicker({ value, onChange }: ChartSectionPickerProps)
         <div className="mb-2 flex items-start gap-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-200">
           <AlertTriangle className="mt-0.5 h-3.5 w-3.5 flex-shrink-0" />
           <span>
-            Rendering charts for {value.length} indicators will make the report larger and slower to
-            generate. Consider keeping the list under {WARN_THRESHOLD}.
+            Rendering {value.length} metrics will make the report larger and slower to generate.
+            Consider keeping the list under {WARN_THRESHOLD}.
           </span>
         </div>
       )}
 
       {selectedIndicators.length === 0 ? (
         <div className="rounded-md border border-dashed border-zinc-300 px-4 py-6 text-center text-sm text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
-          No indicators selected. Charts will be skipped for this report.
+          No metrics selected. The metrics section will be skipped for this report.
         </div>
       ) : (
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
@@ -128,7 +128,7 @@ export function ChartSectionPicker({ value, onChange }: ChartSectionPickerProps)
           disabled={isLoading}
         >
           <Plus className="mr-1.5 h-4 w-4" />
-          {selectedIndicators.length === 0 ? "Add indicators" : "Edit selection"}
+          {selectedIndicators.length === 0 ? "Add metrics" : "Edit selection"}
         </Button>
       </div>
 
@@ -314,7 +314,7 @@ function DialogBody({ initialSelection, catalog, isLoading, onClose, onSave }: D
     <>
       <div className="flex items-start justify-between gap-4">
         <Dialog.Title className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-          Select chart indicators
+          Select metrics
         </Dialog.Title>
         <button
           type="button"
@@ -326,7 +326,7 @@ function DialogBody({ initialSelection, catalog, isLoading, onClose, onSave }: D
         </button>
       </div>
       <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-        Charts are rendered as sparklines, one row per project, with data since Jan 1 of the report
+        Metrics are rendered as sparklines, one row per project, with data since Jan 1 of the report
         year.
       </p>
 

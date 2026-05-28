@@ -35,9 +35,9 @@ export function ReportChartsSection({ communitySlug, reportId, authenticated = t
 
   if (isLoading) {
     return (
-      <section className="mt-4" aria-label="Report charts">
+      <section className="mt-4" aria-label="Report metrics">
         <Card className="bg-white">
-          <Title className="!text-xl !text-zinc-900">Charts</Title>
+          <Title className="!text-xl !text-zinc-900">Metrics</Title>
           <div className="mt-4">
             <ChartSkeleton height="h-48" />
           </div>
@@ -48,9 +48,9 @@ export function ReportChartsSection({ communitySlug, reportId, authenticated = t
 
   if (isError) {
     return (
-      <section className="mt-4" aria-label="Report charts">
+      <section className="mt-4" aria-label="Report metrics">
         <Card className="bg-white">
-          <Title className="!text-xl !text-zinc-900">Charts</Title>
+          <Title className="!text-xl !text-zinc-900">Metrics</Title>
           <Text className="mt-2 !text-sm !text-zinc-500">Couldn&apos;t load charts.</Text>
           <Button
             variant="outline"
@@ -76,16 +76,16 @@ export function ReportChartsSection({ communitySlug, reportId, authenticated = t
   // which is always rendered light inside its Shadow DOM. Individual
   // indicator blocks are simple bordered <article>s inside the same card.
   return (
-    <section className="mt-8" aria-label="Report charts">
+    <section className="mt-8" aria-label="Report metrics">
       <Card className="bg-white">
         <header className="mb-6">
-          <Title className="!text-xl !text-zinc-900">Charts</Title>
+          <Title className="!text-xl !text-zinc-900">Metrics</Title>
           <Text className="!text-sm !text-zinc-500">
-            Data from {data.startDate} to {data.endDate}
+            {formatDateRange(data.startDate, data.endDate)}
           </Text>
         </header>
 
-        <div className="space-y-4">
+        <div className="divide-y divide-zinc-100">
           {data.indicators.map((indicator) => (
             <IndicatorBlock key={indicator.id} indicator={indicator} />
           ))}
@@ -114,7 +114,7 @@ function IndicatorBlock({ indicator }: IndicatorBlockProps) {
   // sub-card inside the outer Charts container, separated by parent-level
   // gap so they breathe.
   return (
-    <article className="report-print-no-break rounded-lg border border-zinc-200 bg-white p-5">
+    <article className="report-print-no-break py-5 first:pt-0 last:pb-0">
       <div className="flex items-start justify-between gap-4">
         <Title className="!text-base !text-zinc-900">
           {indicator.name}
@@ -235,11 +235,16 @@ function ProjectRow({ project, showAxis }: ProjectRowProps) {
 
   return (
     <li className={cn("flex items-center gap-4", showAxis ? "pt-2 pb-1" : "py-2")}>
-      <div className="min-w-0 flex-shrink-0 basis-52 text-sm text-zinc-800" title={project.title}>
-        <span className="truncate font-medium">{project.title}</span>
-        <span className="ml-2 text-xs font-normal text-zinc-500">{summary}</span>
+      <div
+        className="flex w-52 flex-shrink-0 items-baseline gap-2 overflow-hidden text-sm text-zinc-800"
+        title={project.title}
+      >
+        <span className="min-w-0 flex-1 truncate font-medium">{project.title}</span>
+        <span className="flex-shrink-0 text-xs font-normal tabular-nums text-zinc-500">
+          {summary}
+        </span>
       </div>
-      <div className="flex-1">
+      <div className="min-w-0 flex-1">
         <AreaChart
           data={chartData}
           index="date"
@@ -388,4 +393,29 @@ function formatValue(value: number): string {
 function trimTrailingZero(s: string): string {
   // "2.0" → "2", "1.50" → "1.5", "1.55" → "1.55"
   return s.includes(".") ? s.replace(/\.?0+$/, "") : s;
+}
+
+const SHORT_MONTH = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric" });
+const SHORT_MONTH_YEAR = new Intl.DateTimeFormat("en-US", {
+  month: "short",
+  day: "numeric",
+  year: "numeric",
+});
+
+/**
+ * Human-readable date range. Same year → "Jan 1 – May 28, 2026". Different
+ * years → "Dec 15, 2025 – May 28, 2026". Input is the report's ISO date
+ * strings (UTC) — render in UTC to avoid timezone drift on the boundary.
+ */
+function formatDateRange(startIso: string, endIso: string): string {
+  const start = new Date(`${startIso}T00:00:00.000Z`);
+  const end = new Date(`${endIso}T00:00:00.000Z`);
+  if (!Number.isFinite(start.getTime()) || !Number.isFinite(end.getTime())) {
+    return `${startIso} – ${endIso}`;
+  }
+  const sameYear = start.getUTCFullYear() === end.getUTCFullYear();
+  if (sameYear) {
+    return `${SHORT_MONTH.format(start)} – ${SHORT_MONTH_YEAR.format(end)}`;
+  }
+  return `${SHORT_MONTH_YEAR.format(start)} – ${SHORT_MONTH_YEAR.format(end)}`;
 }
