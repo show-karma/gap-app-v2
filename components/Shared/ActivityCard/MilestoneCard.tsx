@@ -339,11 +339,7 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
             <div className="flex flex-col gap-1">
               <ReadMore side="left">{completionReason}</ReadMore>
             </div>
-          ) : (
-            <p className="text-sm text-muted-foreground" data-testid="empty-completion-text">
-              —
-            </p>
-          )}
+          ) : null}
           {isAuthorized && milestone.invoiceInfo?.fileKey && grantUID && (
             <button
               type="button"
