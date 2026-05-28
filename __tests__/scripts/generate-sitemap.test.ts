@@ -71,8 +71,11 @@ describe("generate-sitemap", () => {
     originalChildren.clear();
   });
 
-  it("falls back to a minimal sitemapindex when the indexer is unreachable", () => {
+  it("falls back to one chunk per kind on a cold start when the indexer is unreachable", () => {
     snapshot();
+    // Cold start: no prior index means there is no published floor to preserve.
+    if (fs.existsSync(INDEX_OUTPUT)) fs.unlinkSync(INDEX_OUTPUT);
+    if (fs.existsSync(ALIAS_OUTPUT)) fs.unlinkSync(ALIAS_OUTPUT);
 
     const xml = runScript({ NEXT_PUBLIC_GAP_INDEXER_URL: "http://127.0.0.1:9" });
 
@@ -82,6 +85,56 @@ describe("generate-sitemap", () => {
     expect(xml).toContain("https://www.karmahq.xyz/sitemaps/communities/sitemap.xml");
     // static + communities + 1 chunk per 5 kinds = 7
     expect(xml.match(/<sitemap>/g) ?? []).toHaveLength(7);
+  }, 30_000);
+
+  it("preserves the previously-published chunk count when counts are unavailable", () => {
+    snapshot();
+    // A transient /counts failure makes every kind look empty. Without the
+    // floor, grants would collapse from 2 chunks to 1 and grants/sitemap/2.xml
+    // — already crawled by Google — would 404. The prior index is the floor.
+    const priorIndex = [
+      '<?xml version="1.0" encoding="UTF-8"?>',
+      '<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+      "  <sitemap><loc>https://www.karmahq.xyz/sitemaps/static/sitemap.xml</loc></sitemap>",
+      "  <sitemap><loc>https://www.karmahq.xyz/sitemaps/communities/sitemap.xml</loc></sitemap>",
+      "  <sitemap><loc>https://www.karmahq.xyz/sitemaps/grants/sitemap/1.xml</loc></sitemap>",
+      "  <sitemap><loc>https://www.karmahq.xyz/sitemaps/grants/sitemap/2.xml</loc></sitemap>",
+      "</sitemapindex>",
+      "",
+    ].join("\n");
+    fs.mkdirSync(path.dirname(INDEX_OUTPUT), { recursive: true });
+    fs.writeFileSync(INDEX_OUTPUT, priorIndex, "utf-8");
+
+    const xml = runScript({ NEXT_PUBLIC_GAP_INDEXER_URL: "http://127.0.0.1:9" });
+
+    expect(xml).toContain("https://www.karmahq.xyz/sitemaps/grants/sitemap/1.xml");
+    expect(xml).toContain("https://www.karmahq.xyz/sitemaps/grants/sitemap/2.xml");
+    // Every chunk listed in the index must have a child file on disk (no 404).
+    expect(fs.existsSync(path.join(SITEMAPS_ROOT, "grants", "sitemap", "2.xml"))).toBe(true);
+    // Kinds with no prior entry still get exactly one chunk.
+    expect(xml).toContain("https://www.karmahq.xyz/sitemaps/projects/sitemap/1.xml");
+    expect(xml).not.toContain("https://www.karmahq.xyz/sitemaps/projects/sitemap/2.xml");
+  }, 30_000);
+
+  it("ignores an out-of-range chunk number in a corrupt prior index", () => {
+    snapshot();
+    // A garbage chunk number must not become a loop bound. Without the cap this
+    // run would hang emitting billions of chunks; with it the entry is ignored
+    // and grants falls back to a single chunk.
+    const corruptIndex = [
+      '<?xml version="1.0" encoding="UTF-8"?>',
+      '<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+      "  <sitemap><loc>https://www.karmahq.xyz/sitemaps/grants/sitemap/999999999999.xml</loc></sitemap>",
+      "</sitemapindex>",
+      "",
+    ].join("\n");
+    fs.mkdirSync(path.dirname(INDEX_OUTPUT), { recursive: true });
+    fs.writeFileSync(INDEX_OUTPUT, corruptIndex, "utf-8");
+
+    const xml = runScript({ NEXT_PUBLIC_GAP_INDEXER_URL: "http://127.0.0.1:9" });
+
+    expect(xml).toContain("https://www.karmahq.xyz/sitemaps/grants/sitemap/1.xml");
+    expect(xml).not.toContain("https://www.karmahq.xyz/sitemaps/grants/sitemap/2.xml");
   }, 30_000);
 
   it("emits lastmod values without fractional seconds (Google parser strictness)", () => {
