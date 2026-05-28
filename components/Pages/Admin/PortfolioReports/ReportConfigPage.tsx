@@ -2,7 +2,7 @@
 
 import { ArrowLeft, Calendar, Clock, Plus, Save, Sun, Trash2, X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
@@ -112,6 +112,18 @@ const EMPTY_FORM_VALUES: FormValues = {
   isActive: true,
 };
 
+function buildFormValues(cfg: ReportConfig): FormValues {
+  return {
+    name: cfg.name,
+    programIds: cfg.programIds,
+    modelId: cfg.modelId as FormValues["modelId"],
+    prompt: cfg.prompt,
+    chartIndicatorIds: cfg.chartIndicatorIds ?? [],
+    schedule: cfg.schedule,
+    isActive: cfg.isActive,
+  };
+}
+
 interface ProgramOption {
   programId: string;
   label: string;
@@ -132,16 +144,59 @@ function buildProgramOptions(grantPrograms: GrantProgram[]): ProgramOption[] {
 }
 
 export function ReportConfigPage({ community, grantPrograms }: Props) {
-  const slug = community.details.slug;
-  const router = useRouter();
-  const searchParams = useSearchParams();
   const { hasAccess, isLoading: accessLoading } = useCommunityAdminAccess(community.uid);
   const {
     data: configs,
     isLoading,
     isError: configsError,
     refetch: refetchConfigs,
-  } = useReportConfigs(slug);
+  } = useReportConfigs(community.details.slug);
+
+  if (accessLoading || isLoading) {
+    return (
+      <div className="flex items-center justify-center p-12">
+        <Spinner />
+      </div>
+    );
+  }
+
+  if (!hasAccess) {
+    return (
+      <div className="flex items-center justify-center p-12 text-zinc-500">
+        You don&apos;t have permission to view this page.
+      </div>
+    );
+  }
+
+  return (
+    <ReportConfigPageLoaded
+      community={community}
+      grantPrograms={grantPrograms}
+      configs={configs ?? []}
+      configsError={configsError}
+      refetchConfigs={refetchConfigs}
+    />
+  );
+}
+
+interface LoadedProps {
+  community: Community;
+  grantPrograms: GrantProgram[];
+  configs: ReportConfig[];
+  configsError: boolean;
+  refetchConfigs: () => void;
+}
+
+function ReportConfigPageLoaded({
+  community,
+  grantPrograms,
+  configs,
+  configsError,
+  refetchConfigs,
+}: LoadedProps) {
+  const slug = community.details.slug;
+  const { push: routerPush } = useRouter();
+  const searchParams = useSearchParams();
 
   const programOptions = useMemo(() => buildProgramOptions(grantPrograms), [grantPrograms]);
   const labelByProgramId = useMemo(
@@ -153,33 +208,21 @@ export function ReportConfigPage({ community, grantPrograms }: Props) {
     [programOptions]
   );
 
-  const [editingId, setEditingId] = useState<string | "new" | null>(null);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
-
-  // Honor `?new=1` or `?editId=<id>` when arriving from the list page so the
-  // form opens immediately. Only consume each query value once — if the user
-  // closes the form, we don't want to reopen it on the next render.
-  const [didConsumeQuery, setDidConsumeQuery] = useState(false);
-  useEffect(() => {
-    if (didConsumeQuery) return;
-    if (isLoading) return;
+  // Honor `?new=1` or `?editId=<id>` on first mount. Configs are guaranteed
+  // loaded by the outer gate, so the initial value is computed synchronously
+  // without a chained effect.
+  const [editingId, setEditingId] = useState<string | "new" | null>(() => {
     const newParam = searchParams.get("new");
     const editParam = searchParams.get("editId");
-    if (newParam === "1") {
-      setEditingId("new");
-      setDidConsumeQuery(true);
-    } else if (editParam && configs?.some((c) => c.id === editParam)) {
-      setEditingId(editParam);
-      setDidConsumeQuery(true);
-    } else if (newParam || editParam) {
-      // Param present but no match — still mark consumed so we don't loop.
-      setDidConsumeQuery(true);
-    }
-  }, [searchParams, configs, isLoading, didConsumeQuery]);
+    if (newParam === "1") return "new";
+    if (editParam && configs.some((c) => c.id === editParam)) return editParam;
+    return null;
+  });
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const editingConfig = useMemo(
     () =>
-      editingId && editingId !== "new" ? (configs?.find((c) => c.id === editingId) ?? null) : null,
+      editingId && editingId !== "new" ? (configs.find((c) => c.id === editingId) ?? null) : null,
     [configs, editingId]
   );
 
@@ -196,8 +239,23 @@ export function ReportConfigPage({ community, grantPrograms }: Props) {
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: EMPTY_FORM_VALUES,
+    defaultValues: editingConfig ? buildFormValues(editingConfig) : EMPTY_FORM_VALUES,
   });
+
+  const openNewForm = () => {
+    setEditingId("new");
+    reset(EMPTY_FORM_VALUES);
+  };
+
+  const openEditForm = (configId: string) => {
+    const cfg = configs.find((c) => c.id === configId);
+    setEditingId(configId);
+    if (cfg) reset(buildFormValues(cfg));
+  };
+
+  const closeForm = () => {
+    setEditingId(null);
+  };
 
   const selectedProgramIds = watch("programIds");
   const selectedProgramLabels = selectedProgramIds.map((id) => labelByProgramId.get(id) ?? id);
@@ -227,39 +285,6 @@ export function ReportConfigPage({ community, grantPrograms }: Props) {
     const earliestKept = original && original < todayIso ? original : todayIso;
     return schedule.startDate > earliestKept ? schedule.startDate : earliestKept;
   }, [editingConfig, schedule.startDate, todayIso]);
-
-  useEffect(() => {
-    if (!editingId) return;
-    if (editingId === "new") {
-      reset(EMPTY_FORM_VALUES);
-    } else if (editingConfig) {
-      reset({
-        name: editingConfig.name,
-        programIds: editingConfig.programIds,
-        modelId: editingConfig.modelId,
-        prompt: editingConfig.prompt,
-        chartIndicatorIds: editingConfig.chartIndicatorIds ?? [],
-        schedule: editingConfig.schedule,
-        isActive: editingConfig.isActive,
-      });
-    }
-  }, [editingId, editingConfig, reset]);
-
-  if (accessLoading || isLoading) {
-    return (
-      <div className="flex items-center justify-center p-12">
-        <Spinner />
-      </div>
-    );
-  }
-
-  if (!hasAccess) {
-    return (
-      <div className="flex items-center justify-center p-12 text-zinc-500">
-        You don&apos;t have permission to view this page.
-      </div>
-    );
-  }
 
   const handleSelectProgram = (label: string) => {
     const programId = programIdByLabel.get(label);
@@ -367,7 +392,7 @@ export function ReportConfigPage({ community, grantPrograms }: Props) {
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => router.push(PAGES.ADMIN.PORTFOLIO_REPORTS(slug))}
+          onClick={() => routerPush(PAGES.ADMIN.PORTFOLIO_REPORTS(slug))}
           aria-label="Back to portfolio reports"
         >
           <ArrowLeft className="h-4 w-4" />
@@ -381,7 +406,7 @@ export function ReportConfigPage({ community, grantPrograms }: Props) {
           </p>
         </div>
         {!isFormOpen && (
-          <Button onClick={() => setEditingId("new")}>
+          <Button onClick={openNewForm}>
             <Plus className="mr-2 h-4 w-4" />
             New Report
           </Button>
@@ -396,7 +421,7 @@ export function ReportConfigPage({ community, grantPrograms }: Props) {
             Retry
           </Button>
         </div>
-      ) : !configs || configs.length === 0 ? (
+      ) : configs.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-zinc-300 p-12 text-center dark:border-zinc-600">
           <p className="text-sm text-zinc-500">
             No report configs yet. Click &quot;New Report&quot; to create the first one.
@@ -442,7 +467,7 @@ export function ReportConfigPage({ community, grantPrograms }: Props) {
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center justify-end gap-1">
-                      <Button variant="ghost" size="sm" onClick={() => setEditingId(cfg.id)}>
+                      <Button variant="ghost" size="sm" onClick={() => openEditForm(cfg.id)}>
                         Edit
                       </Button>
                       <Button
@@ -474,7 +499,7 @@ export function ReportConfigPage({ community, grantPrograms }: Props) {
               variant="ghost"
               size="sm"
               type="button"
-              onClick={() => setEditingId(null)}
+              onClick={closeForm}
               aria-label="Close form"
             >
               <X className="h-4 w-4" />
@@ -603,7 +628,7 @@ export function ReportConfigPage({ community, grantPrograms }: Props) {
           </div>
 
           <div className="flex items-center justify-end gap-2">
-            <Button variant="outline" type="button" onClick={() => setEditingId(null)}>
+            <Button variant="outline" type="button" onClick={closeForm}>
               Cancel
             </Button>
             <Button type="submit" disabled={isSaving}>
@@ -706,6 +731,7 @@ function SchedulePicker({ schedule, onChange, minStartDate, minEndsDate }: Sched
           <span className="w-16 shrink-0 text-zinc-500">Starting</span>
           <input
             type="date"
+            aria-label="Schedule start date"
             value={schedule.startDate}
             min={minStartDate}
             onChange={(e) => setStartDate(e.target.value)}
@@ -726,6 +752,7 @@ function SchedulePicker({ schedule, onChange, minStartDate, minEndsDate }: Sched
           {schedule.ends.kind === "on_date" && (
             <input
               type="date"
+              aria-label="Schedule end date"
               value={schedule.ends.date}
               min={minEndsDate}
               onChange={(e) => setEndsDate(e.target.value)}
