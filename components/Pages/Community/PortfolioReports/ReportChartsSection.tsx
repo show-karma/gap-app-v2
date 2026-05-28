@@ -35,9 +35,13 @@ export function ReportChartsSection({ communitySlug, reportId, authenticated = t
 
   if (isLoading) {
     return (
-      <section className="mt-8 space-y-4" aria-label="Report charts">
-        <Title className="!text-xl !text-zinc-900 dark:!text-zinc-100">Charts</Title>
-        <ChartSkeleton height="h-48" />
+      <section className="mt-8" aria-label="Report charts">
+        <Card className="bg-white">
+          <Title className="!text-xl !text-zinc-900">Charts</Title>
+          <div className="mt-4">
+            <ChartSkeleton height="h-48" />
+          </div>
+        </Card>
       </section>
     );
   }
@@ -45,20 +49,20 @@ export function ReportChartsSection({ communitySlug, reportId, authenticated = t
   if (isError) {
     return (
       <section className="mt-8" aria-label="Report charts">
-        <Title className="!text-xl !text-zinc-900 dark:!text-zinc-100">Charts</Title>
-        <Text className="mt-2 !text-sm !text-zinc-500 dark:!text-zinc-400">
-          Couldn&apos;t load charts.
-        </Text>
-        <Button
-          variant="outline"
-          size="sm"
-          className="mt-3"
-          onClick={() => refetch()}
-          disabled={isFetching}
-        >
-          <RefreshCw className={cn("mr-1 h-3 w-3", isFetching && "animate-spin")} />
-          {isFetching ? "Retrying…" : "Retry"}
-        </Button>
+        <Card className="bg-white">
+          <Title className="!text-xl !text-zinc-900">Charts</Title>
+          <Text className="mt-2 !text-sm !text-zinc-500">Couldn&apos;t load charts.</Text>
+          <Button
+            variant="outline"
+            size="sm"
+            className="mt-3"
+            onClick={() => refetch()}
+            disabled={isFetching}
+          >
+            <RefreshCw className={cn("mr-1 h-3 w-3", isFetching && "animate-spin")} />
+            {isFetching ? "Retrying…" : "Retry"}
+          </Button>
+        </Card>
       </section>
     );
   }
@@ -67,29 +71,38 @@ export function ReportChartsSection({ communitySlug, reportId, authenticated = t
     return null;
   }
 
+  // One outer Card wraps the whole Charts section so it reads as a single
+  // "document" block — matching the LLM-generated report HTML above it,
+  // which is always rendered light inside its Shadow DOM. Individual
+  // indicator blocks are simple bordered <article>s inside the same card.
   return (
-    <section className="mt-8 space-y-6" aria-label="Report charts">
-      <header>
-        <Title className="!text-xl !text-zinc-900 dark:!text-zinc-100">Charts</Title>
-        <Text className="!text-sm !text-zinc-500 dark:!text-zinc-400">
-          Data from {data.startDate} to {data.endDate}
-        </Text>
-      </header>
+    <section className="mt-8" aria-label="Report charts">
+      <Card className="bg-white">
+        <header className="mb-6">
+          <Title className="!text-xl !text-zinc-900">Charts</Title>
+          <Text className="!text-sm !text-zinc-500">
+            Data from {data.startDate} to {data.endDate}
+          </Text>
+        </header>
 
-      {data.indicators.map((indicator) => (
-        <IndicatorCard key={indicator.id} indicator={indicator} />
-      ))}
+        <div>
+          {data.indicators.map((indicator, idx) => (
+            <IndicatorBlock key={indicator.id} indicator={indicator} isFirst={idx === 0} />
+          ))}
+        </div>
+      </Card>
     </section>
   );
 }
 
 type ViewMode = "rows" | "combined";
 
-interface IndicatorCardProps {
+interface IndicatorBlockProps {
   indicator: ChartSectionIndicator;
+  isFirst: boolean;
 }
 
-function IndicatorCard({ indicator }: IndicatorCardProps) {
+function IndicatorBlock({ indicator, isFirst }: IndicatorBlockProps) {
   const [viewMode, setViewMode] = useState<ViewMode>("rows");
 
   const projectsWithData = useMemo(
@@ -97,22 +110,26 @@ function IndicatorCard({ indicator }: IndicatorCardProps) {
     [indicator.projects]
   );
 
+  // All chart content stays light in both themes to match the LLM-generated
+  // report HTML rendered above (which is always light inside its Shadow
+  // DOM). Indicator blocks are siblings inside one outer Card, separated
+  // by a top border so they read as document subsections.
   return (
-    <Card className="report-print-no-break bg-white dark:bg-zinc-800">
+    <article
+      className={cn("report-print-no-break", isFirst ? "" : "mt-6 border-t border-zinc-100 pt-6")}
+    >
       <div className="flex items-start justify-between gap-4">
-        <Title className="!text-base !text-zinc-900 dark:!text-zinc-100">
+        <Title className="!text-base !text-zinc-900">
           {indicator.name}
           {indicator.unit && (
-            <span className="ml-2 text-sm font-normal text-zinc-500 dark:text-zinc-400">
-              ({indicator.unit})
-            </span>
+            <span className="ml-2 text-sm font-normal text-zinc-500">({indicator.unit})</span>
           )}
         </Title>
         {projectsWithData.length > 0 && <ViewModeToggle value={viewMode} onChange={setViewMode} />}
       </div>
 
       {projectsWithData.length === 0 ? (
-        <Text className="mt-4 !text-sm !text-zinc-500 dark:!text-zinc-400">
+        <Text className="mt-4 !text-sm !text-zinc-500">
           No datapoints recorded for the selected projects in this date range.
         </Text>
       ) : viewMode === "rows" ? (
@@ -120,7 +137,7 @@ function IndicatorCard({ indicator }: IndicatorCardProps) {
       ) : (
         <CombinedView projects={projectsWithData} />
       )}
-    </Card>
+    </article>
   );
 }
 
@@ -134,7 +151,7 @@ function ViewModeToggle({ value, onChange }: ViewModeToggleProps) {
     <div
       role="toolbar"
       aria-label="Chart layout"
-      className="report-print-hide inline-flex flex-shrink-0 items-center rounded-md border border-zinc-200 bg-white p-0.5 dark:border-zinc-700 dark:bg-zinc-900"
+      className="report-print-hide inline-flex flex-shrink-0 items-center rounded-md border border-zinc-200 bg-white p-0.5"
     >
       <ToggleButton
         active={value === "rows"}
@@ -174,9 +191,7 @@ function ToggleButton({
       onClick={onClick}
       className={cn(
         "inline-flex h-7 w-7 items-center justify-center rounded transition-colors",
-        active
-          ? "bg-zinc-100 text-zinc-900 dark:bg-zinc-700 dark:text-zinc-100"
-          : "text-zinc-500 hover:bg-zinc-50 hover:text-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+        active ? "bg-zinc-100 text-zinc-900" : "text-zinc-500 hover:bg-zinc-50 hover:text-zinc-700"
       )}
     >
       {children}
@@ -197,7 +212,7 @@ function RowsView({ projects }: RowsViewProps) {
   );
 
   return (
-    <ul className="mt-4 divide-y divide-zinc-100 dark:divide-zinc-800">
+    <ul className="mt-4 divide-y divide-zinc-100">
       {sorted.map((project, idx) => (
         <ProjectRow key={project.uid} project={project} showAxis={idx === sorted.length - 1} />
       ))}
@@ -223,12 +238,9 @@ function ProjectRow({ project, showAxis }: ProjectRowProps) {
 
   return (
     <li className={cn("flex items-center gap-4", showAxis ? "pt-2 pb-1" : "py-2")}>
-      <div
-        className="min-w-0 flex-shrink-0 basis-52 text-sm text-zinc-800 dark:text-zinc-100"
-        title={project.title}
-      >
+      <div className="min-w-0 flex-shrink-0 basis-52 text-sm text-zinc-800" title={project.title}>
         <span className="truncate font-medium">{project.title}</span>
-        <span className="ml-2 text-xs font-normal text-zinc-500 dark:text-zinc-300">{summary}</span>
+        <span className="ml-2 text-xs font-normal text-zinc-500">{summary}</span>
       </div>
       <div className="flex-1">
         <AreaChart
@@ -267,7 +279,7 @@ function CombinedView({ projects }: CombinedViewProps) {
 
   if (rows.length === 0) {
     return (
-      <Text className="mt-4 !text-sm !text-zinc-500 dark:!text-zinc-400">
+      <Text className="mt-4 !text-sm !text-zinc-500">
         No comparable datapoints across projects.
       </Text>
     );
