@@ -832,7 +832,6 @@ article.report-article tbody tr:hover td {
   .chart-card,
   .report-print-no-break {
     break-inside: avoid;
-    page-break-inside: avoid;
   }
   /* Trim the body's screen padding so the PDF margin is just the
    * browser's @page margin. */

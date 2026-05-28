@@ -107,11 +107,10 @@ export function ChartSectionPicker({ value, onChange }: ChartSectionPickerProps)
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext items={value} strategy={verticalListSortingStrategy}>
             <ul className="space-y-2">
-              {selectedIndicators.map((indicator, idx) => (
+              {selectedIndicators.map((indicator) => (
                 <SortableIndicatorRow
                   key={indicator.id}
                   indicator={indicator}
-                  index={idx}
                   onRemove={handleRemove}
                 />
               ))}
@@ -147,7 +146,6 @@ export function ChartSectionPicker({ value, onChange }: ChartSectionPickerProps)
 
 interface SortableIndicatorRowProps {
   indicator: Indicator;
-  index: number;
   onRemove: (id: string) => void;
 }
 

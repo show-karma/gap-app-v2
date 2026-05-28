@@ -1,10 +1,11 @@
 "use client";
 
 import { Card, Text, Title } from "@tremor/react";
-import { LayoutList, LineChart as LineIcon } from "lucide-react";
+import { LayoutList, LineChart as LineIcon, RefreshCw } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useMemo, useState } from "react";
 import { ChartSkeleton } from "@/components/Utilities/ChartSkeleton";
+import { Button } from "@/components/ui/button";
 import { useReportCharts } from "@/hooks/portfolio-reports/usePortfolioReports";
 import type { ChartSectionIndicator, ChartSectionProject } from "@/types/portfolio-report";
 import { cn } from "@/utilities/tailwind";
@@ -26,9 +27,11 @@ interface Props {
 }
 
 export function ReportChartsSection({ communitySlug, reportId, authenticated = true }: Props) {
-  const { data, isLoading, isError } = useReportCharts(communitySlug, reportId, {
-    authenticated,
-  });
+  const { data, isLoading, isError, isFetching, refetch } = useReportCharts(
+    communitySlug,
+    reportId,
+    { authenticated }
+  );
 
   if (isLoading) {
     return (
@@ -43,9 +46,17 @@ export function ReportChartsSection({ communitySlug, reportId, authenticated = t
     return (
       <section className="mt-8" aria-label="Report charts">
         <Title className="!text-xl">Charts</Title>
-        <Text className="mt-2 !text-sm text-zinc-500">
-          Couldn&apos;t load charts. Refresh the page to try again.
-        </Text>
+        <Text className="mt-2 !text-sm text-zinc-500">Couldn&apos;t load charts.</Text>
+        <Button
+          variant="outline"
+          size="sm"
+          className="mt-3"
+          onClick={() => refetch()}
+          disabled={isFetching}
+        >
+          <RefreshCw className={cn("mr-1 h-3 w-3", isFetching && "animate-spin")} />
+          {isFetching ? "Retrying…" : "Retry"}
+        </Button>
       </section>
     );
   }
@@ -85,7 +96,7 @@ function IndicatorCard({ indicator }: IndicatorCardProps) {
   );
 
   return (
-    <Card>
+    <Card className="report-print-no-break">
       <div className="flex items-start justify-between gap-4">
         <Title className="!text-base">
           {indicator.name}

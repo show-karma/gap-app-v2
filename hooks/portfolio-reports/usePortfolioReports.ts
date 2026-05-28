@@ -16,7 +16,8 @@ const QUERY_KEYS = {
   configs: (slug: string) => ["portfolio-report-configs", slug] as const,
   reports: (slug: string) => ["portfolio-reports", slug] as const,
   report: (slug: string, id: string) => ["portfolio-report", slug, id] as const,
-  reportCharts: (slug: string, id: string) => ["portfolio-report-charts", slug, id] as const,
+  reportCharts: (slug: string, id: string, authenticated: boolean) =>
+    ["portfolio-report-charts", slug, id, authenticated ? "auth" : "public"] as const,
   published: (slug: string) => ["portfolio-reports-published", slug] as const,
   publishedRunDate: (slug: string, runDate: string) =>
     ["portfolio-report-published", slug, runDate] as const,
@@ -108,12 +109,12 @@ export function useReportCharts(
   reportId: string,
   options?: { authenticated?: boolean; enabled?: boolean }
 ) {
+  // Default to authenticated; encode the mode in the cache key so admin and
+  // public views of the same report don't collide on each other's data.
+  const authenticated = options?.authenticated ?? true;
   return useQuery({
-    queryKey: QUERY_KEYS.reportCharts(communitySlug, reportId),
-    queryFn: () =>
-      portfolioService.getReportCharts(communitySlug, reportId, {
-        authenticated: options?.authenticated,
-      }),
+    queryKey: QUERY_KEYS.reportCharts(communitySlug, reportId, authenticated),
+    queryFn: () => portfolioService.getReportCharts(communitySlug, reportId, { authenticated }),
     enabled: Boolean(communitySlug && reportId) && (options?.enabled ?? true),
     staleTime: 5 * 60 * 1000,
   });
