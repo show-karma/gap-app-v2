@@ -35,4 +35,9 @@ describe("app/sitemaps/[kind]/sitemap/[chunk] orphaned-chunk fallback", () => {
     const res = await call("grants", "sitemap.xml");
     expect(res.status).toBe(404);
   });
+
+  it.each(["0.xml", "01.xml"])("returns 404 for the non-positive chunk id %s", async (chunk) => {
+    const res = await call("grants", chunk);
+    expect(res.status).toBe(404);
+  });
 });
