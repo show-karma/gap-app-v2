@@ -116,6 +116,27 @@ describe("generate-sitemap", () => {
     expect(xml).not.toContain("https://www.karmahq.xyz/sitemaps/projects/sitemap/2.xml");
   }, 30_000);
 
+  it("ignores an out-of-range chunk number in a corrupt prior index", () => {
+    snapshot();
+    // A garbage chunk number must not become a loop bound. Without the cap this
+    // run would hang emitting billions of chunks; with it the entry is ignored
+    // and grants falls back to a single chunk.
+    const corruptIndex = [
+      '<?xml version="1.0" encoding="UTF-8"?>',
+      '<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+      "  <sitemap><loc>https://www.karmahq.xyz/sitemaps/grants/sitemap/999999999999.xml</loc></sitemap>",
+      "</sitemapindex>",
+      "",
+    ].join("\n");
+    fs.mkdirSync(path.dirname(INDEX_OUTPUT), { recursive: true });
+    fs.writeFileSync(INDEX_OUTPUT, corruptIndex, "utf-8");
+
+    const xml = runScript({ NEXT_PUBLIC_GAP_INDEXER_URL: "http://127.0.0.1:9" });
+
+    expect(xml).toContain("https://www.karmahq.xyz/sitemaps/grants/sitemap/1.xml");
+    expect(xml).not.toContain("https://www.karmahq.xyz/sitemaps/grants/sitemap/2.xml");
+  }, 30_000);
+
   it("emits lastmod values without fractional seconds (Google parser strictness)", () => {
     snapshot();
 

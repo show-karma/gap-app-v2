@@ -13,6 +13,11 @@ const COUNTS_RETRY_BACKOFF_MS = 1000;
 const URLS_RETRY_BACKOFF_MS = 750;
 const URLS_CONCURRENCY = 4;
 const FALLBACK_CHUNKS_PER_KIND = 1;
+// Sanity ceiling for a chunk number parsed from an existing index — ~100M URLs
+// at SITEMAP_PAGE_SIZE per chunk. Guards the chunk-emitting loops against a
+// corrupt or hand-edited index whose digits would otherwise drive an
+// effectively unbounded loop at build time.
+const MAX_REASONABLE_CHUNKS = 100_000;
 
 type SitemapKind = "projects" | "impacts" | "grants" | "milestones" | "funding-programs";
 
@@ -102,7 +107,7 @@ function readPublishedChunkCounts(indexPath: string): Record<string, number> {
   for (const match of content.matchAll(pattern)) {
     const kindPath = match[1];
     const chunk = Number.parseInt(match[2], 10);
-    if (!Number.isFinite(chunk)) continue;
+    if (!Number.isInteger(chunk) || chunk < 1 || chunk > MAX_REASONABLE_CHUNKS) continue;
     counts[kindPath] = Math.max(counts[kindPath] ?? 0, chunk);
   }
   return counts;
