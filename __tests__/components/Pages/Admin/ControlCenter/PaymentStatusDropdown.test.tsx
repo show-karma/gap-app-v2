@@ -180,6 +180,7 @@ function renderWithProviders(ui: React.ReactElement) {
 const defaultProps = {
   currentStatus: "unpaid" as MilestonePaymentStatus,
   milestoneLabel: "Milestone 1",
+  milestoneUID: "milestone-uid-789",
   grantUID: "grant-123",
   communityUID: "community-456",
 };
@@ -243,6 +244,7 @@ describe("PaymentStatusDropdown", () => {
       {
         grantUID: "grant-123",
         milestoneLabel: "Milestone 1",
+        milestoneUID: "milestone-uid-789",
         paymentStatus: "pending",
       },
       expect.objectContaining({
