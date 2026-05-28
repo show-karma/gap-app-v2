@@ -79,6 +79,7 @@ export const ObjectiveCardComplete = ({
       }
 
       const { gapClient, walletSigner } = setup;
+      if (!gapClient?.network) throw new Error("WALLET_SETUP_FAILED");
       const fetchedProject = await getProjectById(projectId);
       if (!fetchedProject) throw new Error("Failed to fetch project data");
       const projectRecipient = fetchedProject.recipient;
@@ -88,8 +89,8 @@ export const ObjectiveCardComplete = ({
         projectRecipient,
         fetchedProject.chainID
       );
-      if (!fetchedMilestones || !gapClient?.network) throw new Error("Failed to fetch milestones");
-      const objectivesInstances = ProjectMilestone.from(fetchedMilestones, gapClient?.network);
+      if (!fetchedMilestones) throw new Error("Failed to fetch milestones");
+      const objectivesInstances = ProjectMilestone.from(fetchedMilestones, gapClient.network);
       const objectiveInstance = objectivesInstances.find(
         (item) => item.uid.toLowerCase() === objective.uid.toLowerCase()
       );
@@ -167,6 +168,7 @@ export const ObjectiveCardComplete = ({
         }
       }
     } catch (error: any) {
+      console.error("[deleteObjectiveCompletion] failed:", error);
       // Setup failures have already been surfaced by setupChainAndWallet —
       // skip the duplicate generic toast.
       if (error?.message !== "WALLET_SETUP_FAILED") {

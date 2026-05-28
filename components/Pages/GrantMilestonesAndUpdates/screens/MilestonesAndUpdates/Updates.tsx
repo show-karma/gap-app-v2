@@ -173,6 +173,7 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
           { error: MESSAGES.MILESTONES.COMPLETE.UNDO.ERROR }
         );
       }
+      throw error;
     } finally {
       setIsDeleting(false);
       setIsStepper(false);

@@ -563,13 +563,7 @@ export const useMilestone = () => {
         switchChainAsync,
       });
 
-      if (!setup) {
-        // setupChainAndWallet already surfaced a toast. Throw a sentinel so
-        // the calling form can keep itself open instead of silently closing
-        // and discarding the user's input.
-        throw new Error("WALLET_SETUP_FAILED");
-      }
-
+      if (!setup?.gapClient) throw new Error("WALLET_SETUP_FAILED");
       const { gapClient, walletSigner } = setup;
       const fetchedProject = await gapClient.fetch.projectById(project?.uid);
 
@@ -650,20 +644,11 @@ export const useMilestone = () => {
           });
         });
     } catch (error: any) {
-      // Always console.error the real cause so devs can diagnose. errorManager
-      // silently early-returns for some classes of error ("reject" messages,
-      // transient network failures) which leaves users staring at a generic
-      // toast with no console output — that hid real Privy/SDK errors.
+      // errorManager filters "reject" / transient errors, so log raw cause first.
       console.error("[completeSingleMilestone] failed:", error);
-
-      // Setup failures have already been surfaced by setupChainAndWallet —
-      // re-throw so the caller (form) keeps itself open without showing a
-      // duplicate generic toast.
       if (error?.message !== "WALLET_SETUP_FAILED") {
         showError("There was an error completing the milestone");
-        errorManager("Error completing milestone.", error, {
-          milestoneData: milestone,
-        });
+        errorManager("Error completing milestone.", error, { milestoneData: milestone });
       }
       throw error;
     } finally {
