@@ -1,13 +1,16 @@
 "use client";
 import { zodResolver } from "@hookform/resolvers/zod";
-import type { IProjectMilestoneStatus } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectMilestone";
 import { ProjectMilestone } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectMilestone";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useAccount } from "wagmi";
-import { z } from "zod";
 import { OutputsSection } from "@/components/Forms/Outputs/OutputsSection";
+import {
+  buildProjectObjectiveCompletionPayload,
+  type ProjectObjectiveCompletionFormData as SchemaType,
+  projectObjectiveCompletionSchema as schema,
+} from "@/components/Forms/projectObjectiveCompletionPayload";
 import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useGap } from "@/hooks/useGap";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
@@ -20,42 +23,12 @@ import { getProjectObjectives } from "@/utilities/gapIndexerApi/getProjectObject
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
-import { urlRegex } from "@/utilities/regexs/urlRegex";
-import { sanitizeInput } from "@/utilities/sanitize";
 import { getProjectById } from "@/utilities/sdk";
 import { SHARE_TEXTS } from "@/utilities/share/text";
 import { cn } from "@/utilities/tailwind";
 import { Button } from "../Utilities/Button";
 import { errorManager } from "../Utilities/errorManager";
 import { MarkdownEditor } from "../Utilities/MarkdownEditor";
-
-const schema = z.object({
-  description: z.string().optional(),
-  proofOfWork: z
-    .string()
-    .refine((value) => urlRegex.test(value), {
-      message: "Please enter a valid URL",
-    })
-    .optional()
-    .or(z.literal("")),
-  outputs: z.array(
-    z.object({
-      outputId: z.string().min(1, "Output is required"),
-      value: z.union([z.number().min(0), z.string()]),
-      proof: z.string().optional(),
-      startDate: z.string().optional(),
-      endDate: z.string().optional(),
-    })
-  ),
-  deliverables: z.array(
-    z.object({
-      name: z.string().min(1, "Name is required"),
-      proof: z.string().min(1, "Proof is required"),
-      description: z.string().optional(),
-    })
-  ),
-});
-type SchemaType = z.infer<typeof schema>;
 
 const labelStyle = "text-slate-700 text-sm font-bold leading-tight dark:text-slate-200";
 
@@ -163,23 +136,8 @@ export const ProjectObjectiveCompletionForm = ({
         return;
       }
 
-      // The SDK type is narrow (proofOfWork/reason/type), but `complete()`
-      // spreads the data into the JSON schema, so deliverables + outputs
-      // captured by the form below are persisted on chain. Without this,
-      // any metrics or deliverables the user filled in are silently dropped.
-      const completionPayload: IProjectMilestoneStatus & {
-        outputs: SchemaType["outputs"];
-        deliverables: SchemaType["deliverables"];
-      } = {
-        proofOfWork: sanitizeInput(data.proofOfWork),
-        reason: sanitizeInput(data.description),
-        type: `project-milestone-completed`,
-        outputs: data.outputs,
-        deliverables: data.deliverables,
-      };
-
       await objectiveInstance
-        .complete(walletSigner, completionPayload, changeStepperStep)
+        .complete(walletSigner, buildProjectObjectiveCompletionPayload(data), changeStepperStep)
         .then(async (res) => {
           let retries = 1000;
           changeStepperStep("indexing");
