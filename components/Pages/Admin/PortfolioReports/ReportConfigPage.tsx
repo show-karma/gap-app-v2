@@ -39,7 +39,6 @@ interface Props {
 
 const AVAILABLE_MODELS = [
   { id: "gpt-5.5", label: "GPT-5.5 (OpenAI)" },
-  { id: "gpt-5.5-nano", label: "GPT-5.5 Nano (OpenAI)" },
   { id: "claude-haiku-4-5-20251001", label: "Claude Haiku 4.5 (Anthropic)" },
   { id: "grok-4-1-fast-reasoning", label: "Grok 4.1 (xAI)" },
 ];

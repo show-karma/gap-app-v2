@@ -8,6 +8,7 @@ import { ChartSkeleton } from "@/components/Utilities/ChartSkeleton";
 import { Button } from "@/components/ui/button";
 import { useReportCharts } from "@/hooks/portfolio-reports/usePortfolioReports";
 import type { ChartSectionIndicator, ChartSectionProject } from "@/types/portfolio-report";
+import { formatDate } from "@/utilities/formatDate";
 import { cn } from "@/utilities/tailwind";
 
 const AreaChart = dynamic(() => import("@tremor/react").then((mod) => mod.AreaChart), {
@@ -85,7 +86,7 @@ export function ReportChartsSection({ communitySlug, reportId, authenticated = t
           </Text>
         </header>
 
-        <div className="divide-y divide-zinc-100">
+        <div>
           {data.indicators.map((indicator) => (
             <IndicatorBlock key={indicator.id} indicator={indicator} />
           ))}
@@ -109,12 +110,13 @@ function IndicatorBlock({ indicator }: IndicatorBlockProps) {
     [indicator.projects]
   );
 
-  // All chart content stays light in both themes to match the LLM-generated
-  // report HTML rendered above. Each indicator block is its own bordered
-  // sub-card inside the outer Charts container, separated by parent-level
-  // gap so they breathe.
+  // Each metric block is a flat section inside the outer Metrics Card.
+  // The top border (skipped on the first block) gives a clean "this
+  // metric ends, the next one starts" cue without nesting another card.
+  // Generous py-8 above the rule + below the rule = ~64px between
+  // adjacent metrics, matching the LLM report's section rhythm.
   return (
-    <article className="report-print-no-break py-5 first:pt-0 last:pb-0">
+    <article className="report-print-no-break border-t border-zinc-200 pt-8 first:border-t-0 first:pt-0 [&:not(:last-child)]:pb-8">
       <div className="flex items-start justify-between gap-4">
         <Title className="!text-base !text-zinc-900">
           {indicator.name}
@@ -226,7 +228,11 @@ interface ProjectRowProps {
 
 function ProjectRow({ project, showAxis }: ProjectRowProps) {
   const chartData = useMemo(
-    () => project.points.map((p) => ({ date: p.date, [project.title]: p.value })),
+    () =>
+      project.points.map((p) => ({
+        date: formatDate(p.date, "UTC", "MMM D"),
+        [project.title]: p.value,
+      })),
     [project.points, project.title]
   );
 
@@ -353,7 +359,10 @@ function buildCombined(projects: ChartSectionProject[]): {
   }
 
   const rows: CombinedRow[] = sortedDates.map((date) => {
-    const row: CombinedRow = { date };
+    // Sort on raw ISO (lexicographic == chronological for YYYY-MM-DD), but
+    // expose the formatted label to Tremor so the x-axis + tooltip show
+    // "Jan 25" instead of "2026-01-25".
+    const row: CombinedRow = { date: formatDate(date, "UTC", "MMM D") };
     for (const project of projects) {
       const column = columnByUid.get(project.uid)!;
       const value = lookup.get(project.uid)?.get(date);
@@ -395,27 +404,18 @@ function trimTrailingZero(s: string): string {
   return s.includes(".") ? s.replace(/\.?0+$/, "") : s;
 }
 
-const SHORT_MONTH = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric" });
-const SHORT_MONTH_YEAR = new Intl.DateTimeFormat("en-US", {
-  month: "short",
-  day: "numeric",
-  year: "numeric",
-});
-
 /**
  * Human-readable date range. Same year → "Jan 1 – May 28, 2026". Different
- * years → "Dec 15, 2025 – May 28, 2026". Input is the report's ISO date
- * strings (UTC) — render in UTC to avoid timezone drift on the boundary.
+ * years → "Dec 15, 2025 – May 28, 2026". Defers to the shared `formatDate`
+ * util, which auto-detects YYYY-MM-DD strings and forces UTC display so the
+ * viewer's local timezone doesn't shift the date boundary.
  */
 function formatDateRange(startIso: string, endIso: string): string {
-  const start = new Date(`${startIso}T00:00:00.000Z`);
-  const end = new Date(`${endIso}T00:00:00.000Z`);
-  if (!Number.isFinite(start.getTime()) || !Number.isFinite(end.getTime())) {
-    return `${startIso} – ${endIso}`;
+  const startYear = startIso.slice(0, 4);
+  const endYear = endIso.slice(0, 4);
+  const endLabel = formatDate(endIso, "UTC", "MMM D, YYYY");
+  if (startYear === endYear) {
+    return `${formatDate(startIso, "UTC", "MMM D")} – ${endLabel}`;
   }
-  const sameYear = start.getUTCFullYear() === end.getUTCFullYear();
-  if (sameYear) {
-    return `${SHORT_MONTH.format(start)} – ${SHORT_MONTH_YEAR.format(end)}`;
-  }
-  return `${SHORT_MONTH_YEAR.format(start)} – ${SHORT_MONTH_YEAR.format(end)}`;
+  return `${formatDate(startIso, "UTC", "MMM D, YYYY")} – ${endLabel}`;
 }

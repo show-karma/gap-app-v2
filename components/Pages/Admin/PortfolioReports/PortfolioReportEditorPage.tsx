@@ -348,7 +348,7 @@ export function PortfolioReportEditorPage({ community, reportId }: Props) {
       {/* Preview */}
       <div className="flex-1 p-4">
         {report.content ? (
-          <div className="report-print-area rounded-xl bg-[#f5f6f8] p-4 sm:p-6">
+          <div className="report-print-area mx-auto max-w-[1100px] rounded-xl bg-[#f5f6f8] p-4 sm:p-6">
             <HtmlReportFrame html={report.content} title={`Portfolio report — ${runDateLabel}`} />
             <ReportChartsSection communitySlug={slug} reportId={report.id} authenticated />
           </div>
