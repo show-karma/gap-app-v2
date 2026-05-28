@@ -85,9 +85,9 @@ export function ReportChartsSection({ communitySlug, reportId, authenticated = t
           </Text>
         </header>
 
-        <div>
-          {data.indicators.map((indicator, idx) => (
-            <IndicatorBlock key={indicator.id} indicator={indicator} isFirst={idx === 0} />
+        <div className="space-y-4">
+          {data.indicators.map((indicator) => (
+            <IndicatorBlock key={indicator.id} indicator={indicator} />
           ))}
         </div>
       </Card>
@@ -99,10 +99,9 @@ type ViewMode = "rows" | "combined";
 
 interface IndicatorBlockProps {
   indicator: ChartSectionIndicator;
-  isFirst: boolean;
 }
 
-function IndicatorBlock({ indicator, isFirst }: IndicatorBlockProps) {
+function IndicatorBlock({ indicator }: IndicatorBlockProps) {
   const [viewMode, setViewMode] = useState<ViewMode>("rows");
 
   const projectsWithData = useMemo(
@@ -111,13 +110,11 @@ function IndicatorBlock({ indicator, isFirst }: IndicatorBlockProps) {
   );
 
   // All chart content stays light in both themes to match the LLM-generated
-  // report HTML rendered above (which is always light inside its Shadow
-  // DOM). Indicator blocks are siblings inside one outer Card, separated
-  // by a top border so they read as document subsections.
+  // report HTML rendered above. Each indicator block is its own bordered
+  // sub-card inside the outer Charts container, separated by parent-level
+  // gap so they breathe.
   return (
-    <article
-      className={cn("report-print-no-break", isFirst ? "" : "mt-6 border-t border-zinc-100 pt-6")}
-    >
+    <article className="report-print-no-break rounded-lg border border-zinc-200 bg-white p-5">
       <div className="flex items-start justify-between gap-4">
         <Title className="!text-base !text-zinc-900">
           {indicator.name}
