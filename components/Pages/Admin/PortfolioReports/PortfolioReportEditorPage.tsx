@@ -2,9 +2,10 @@
 
 import { ArrowLeft, Download, Eye, EyeOff, Pencil, RefreshCw } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { HtmlReportFrame } from "@/components/Pages/Community/PortfolioReports/HtmlReportFrame";
+import { ReportChartsSection } from "@/components/Pages/Community/PortfolioReports/ReportChartsSection";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,7 +24,6 @@ import {
   useUnpublishReport,
   useUpdateReportContent,
 } from "@/hooks/portfolio-reports/usePortfolioReports";
-import { downloadReportPdf } from "@/services/portfolio-reports.service";
 import { AccessDenied } from "@/src/components/ui/AccessDenied";
 import { communityAdminDenial } from "@/src/components/ui/access-denied-presets";
 import { isReportGenerating } from "@/types/portfolio-report";
@@ -60,8 +60,6 @@ export function PortfolioReportEditorPage({ community, reportId }: Props) {
   const [showRegenerateDialog, setShowRegenerateDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [editDraft, setEditDraft] = useState("");
-  const [exportingPdf, setExportingPdf] = useState(false);
-  const exportInFlight = useRef(false);
 
   // Close the Edit dialog if a regenerate kicks off while it's open —
   // the draft is now stale (it was seeded from pre-regen content) and
@@ -153,31 +151,6 @@ export function PortfolioReportEditorPage({ community, reportId }: Props) {
     }
   };
 
-  const handleExportPdf = async () => {
-    // Synchronous guard against double-clicks — `setExportingPdf(true)`
-    // is queued by React and won't disable the button before a second
-    // click can fire on the same event loop tick.
-    if (exportInFlight.current) return;
-    exportInFlight.current = true;
-    setExportingPdf(true);
-    try {
-      const blob = await downloadReportPdf(slug, reportId);
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `portfolio-report-${report.runDate}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      URL.revokeObjectURL(url);
-    } catch (err) {
-      toast.error(`Failed to export PDF: ${err instanceof Error ? err.message : "Unknown error"}`);
-    } finally {
-      exportInFlight.current = false;
-      setExportingPdf(false);
-    }
-  };
-
   const runDateLabel = formatRunDate(report.runDate).label;
 
   // True when the user has typed in the Edit textarea and their local draft
@@ -257,7 +230,7 @@ export function PortfolioReportEditorPage({ community, reportId }: Props) {
       </Dialog>
 
       {/* Top bar */}
-      <div className="flex items-center justify-between border-b border-zinc-200 px-4 py-3 dark:border-zinc-700">
+      <div className="report-print-hide flex items-center justify-between border-b border-zinc-200 px-4 py-3 dark:border-zinc-700">
         <div className="flex items-center gap-3">
           <Button
             variant="ghost"
@@ -296,11 +269,12 @@ export function PortfolioReportEditorPage({ community, reportId }: Props) {
           <Button
             variant="outline"
             size="sm"
-            onClick={handleExportPdf}
-            disabled={exportingPdf || generating || !report.content}
+            onClick={() => window.print()}
+            disabled={generating || !report.content}
+            title="Tip: turn off 'Headers and footers' in the print dialog for a cleaner PDF"
           >
             <Download className="mr-1 h-3 w-3" />
-            {exportingPdf ? "Exporting…" : "Export PDF"}
+            Export PDF
           </Button>
           <Button
             variant="outline"
@@ -358,7 +332,10 @@ export function PortfolioReportEditorPage({ community, reportId }: Props) {
       {/* Preview */}
       <div className="flex-1 p-4">
         {report.content ? (
-          <HtmlReportFrame html={report.content} title={`Portfolio report — ${runDateLabel}`} />
+          <div className="report-print-area">
+            <HtmlReportFrame html={report.content} title={`Portfolio report — ${runDateLabel}`} />
+            <ReportChartsSection communitySlug={slug} reportId={report.id} authenticated />
+          </div>
         ) : (
           <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-6 text-sm text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900/50 dark:text-zinc-400">
             No content yet. Regenerate to produce the report body.

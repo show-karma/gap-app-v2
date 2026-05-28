@@ -16,6 +16,7 @@ const QUERY_KEYS = {
   configs: (slug: string) => ["portfolio-report-configs", slug] as const,
   reports: (slug: string) => ["portfolio-reports", slug] as const,
   report: (slug: string, id: string) => ["portfolio-report", slug, id] as const,
+  reportCharts: (slug: string, id: string) => ["portfolio-report-charts", slug, id] as const,
   published: (slug: string) => ["portfolio-reports-published", slug] as const,
   publishedRunDate: (slug: string, runDate: string) =>
     ["portfolio-report-published", slug, runDate] as const,
@@ -94,6 +95,27 @@ export function usePortfolioReport(communitySlug: string, reportId: string) {
     enabled: Boolean(communitySlug && reportId),
     refetchInterval: (query) =>
       reportPollIntervalMs(query.state.data as PortfolioReport | undefined),
+  });
+}
+
+/**
+ * Fetches the chart-section payload (live datapoints + frozen snapshot) for a
+ * report. Pass `authenticated: false` for public/published report views; the
+ * backend gates draft access on community admin auth.
+ */
+export function useReportCharts(
+  communitySlug: string,
+  reportId: string,
+  options?: { authenticated?: boolean; enabled?: boolean }
+) {
+  return useQuery({
+    queryKey: QUERY_KEYS.reportCharts(communitySlug, reportId),
+    queryFn: () =>
+      portfolioService.getReportCharts(communitySlug, reportId, {
+        authenticated: options?.authenticated,
+      }),
+    enabled: Boolean(communitySlug && reportId) && (options?.enabled ?? true),
+    staleTime: 5 * 60 * 1000,
   });
 }
 
