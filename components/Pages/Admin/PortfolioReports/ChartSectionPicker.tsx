@@ -19,7 +19,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { Dialog, Transition } from "@headlessui/react";
 import { AlertTriangle, GripVertical, Plus, Search, Sparkles, X } from "lucide-react";
-import { Fragment, memo, useEffect, useMemo, useState } from "react";
+import { Fragment, memo, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useAutosyncedIndicators } from "@/hooks/useAutosyncedIndicators";
 import type { Indicator } from "@/utilities/queries/getIndicatorsByCommunity";
@@ -216,46 +216,11 @@ function IndicatorPickerDialog({
   catalog,
   isLoading,
 }: IndicatorPickerDialogProps) {
-  const [selection, setSelection] = useState<Set<string>>(new Set(initialSelection));
-  const [query, setQuery] = useState("");
-
-  // Reset local state when the dialog opens — picks up any external changes to
-  // the selection that happened while the dialog was closed.
+  // The dialog body owns its own selection/query state. We pass an
+  // `initialSelection`-derived `key` so React remounts the body (resetting
+  // state) whenever the parent's selection changes between opens — no
+  // useEffect-to-reset pattern needed.
   const initialKey = useMemo(() => initialSelection.join("|"), [initialSelection]);
-  useEffect(() => {
-    if (isOpen) {
-      setSelection(new Set(initialSelection));
-      setQuery("");
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, initialKey]);
-
-  const toggle = (id: string) => {
-    const next = new Set(selection);
-    if (next.has(id)) next.delete(id);
-    else next.add(id);
-    setSelection(next);
-  };
-
-  const handleSave = () => {
-    // Preserve the order from the initial selection, then append newly-added IDs
-    // in catalog order.
-    const ordered: string[] = [];
-    for (const id of initialSelection) {
-      if (selection.has(id)) ordered.push(id);
-    }
-    for (const ind of catalog) {
-      if (selection.has(ind.id) && !ordered.includes(ind.id)) {
-        ordered.push(ind.id);
-      }
-    }
-    onSave(ordered);
-  };
-
-  const filter = (list: Indicator[]) =>
-    query.trim()
-      ? list.filter((i) => i.name.toLowerCase().includes(query.trim().toLowerCase()))
-      : list;
 
   return (
     <Transition appear show={isOpen} as={Fragment}>
@@ -284,71 +249,128 @@ function IndicatorPickerDialog({
               leaveTo="opacity-0 scale-95"
             >
               <Dialog.Panel className="w-full max-w-2xl transform overflow-hidden rounded-lg bg-white dark:bg-zinc-800 p-6 text-left align-middle shadow-xl transition-all">
-                <div className="flex items-start justify-between gap-4">
-                  <Dialog.Title className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-                    Select chart indicators
-                  </Dialog.Title>
-                  <button
-                    type="button"
-                    onClick={onClose}
-                    aria-label="Close"
-                    className="rounded p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-700"
-                  >
-                    <X className="h-5 w-5" />
-                  </button>
-                </div>
-                <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                  Charts are rendered as sparklines, one row per project, with data since Jan 1 of
-                  the report year.
-                </p>
-
-                <div className="mt-4 flex items-center gap-2 rounded-md border border-zinc-300 px-3 py-2 dark:border-zinc-600">
-                  <Search className="h-4 w-4 text-zinc-400" />
-                  <input
-                    type="search"
-                    placeholder="Search indicators..."
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    className="w-full bg-transparent text-sm focus:outline-none"
-                  />
-                </div>
-
-                <div className="mt-4 max-h-[420px] overflow-y-auto pr-1">
-                  {isLoading ? (
-                    <div className="py-8 text-center text-sm text-zinc-500">
-                      Loading indicators...
-                    </div>
-                  ) : catalog.length === 0 ? (
-                    <div className="py-8 text-center text-sm text-zinc-500">
-                      No indicators available.
-                    </div>
-                  ) : (
-                    <IndicatorGroup
-                      title="System indicators"
-                      items={filter(catalog)}
-                      selection={selection}
-                      onToggle={toggle}
-                    />
-                  )}
-                </div>
-
-                <div className="mt-4 flex items-center justify-between gap-2 border-t border-zinc-200 pt-4 dark:border-zinc-700">
-                  <span className="text-xs text-zinc-500">{selection.size} selected</span>
-                  <div className="flex items-center gap-2">
-                    <Button type="button" variant="outline" onClick={onClose}>
-                      Cancel
-                    </Button>
-                    <Button type="button" onClick={handleSave}>
-                      Save selection
-                    </Button>
-                  </div>
-                </div>
+                <DialogBody
+                  key={initialKey}
+                  initialSelection={initialSelection}
+                  catalog={catalog}
+                  isLoading={isLoading}
+                  onClose={onClose}
+                  onSave={onSave}
+                />
               </Dialog.Panel>
             </Transition.Child>
           </div>
         </div>
       </Dialog>
     </Transition>
+  );
+}
+
+interface DialogBodyProps {
+  initialSelection: string[];
+  catalog: Indicator[];
+  isLoading: boolean;
+  onClose: () => void;
+  onSave: (selected: string[]) => void;
+}
+
+function DialogBody({ initialSelection, catalog, isLoading, onClose, onSave }: DialogBodyProps) {
+  const [selection, setSelection] = useState<Set<string>>(() => new Set(initialSelection));
+  const [query, setQuery] = useState("");
+
+  const toggle = (id: string) => {
+    setSelection((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const handleSave = () => {
+    // Preserve the order from the initial selection, then append newly-added IDs
+    // in catalog order. A Set tracks what's already in `ordered` so we avoid
+    // an O(n) Array.includes lookup per indicator.
+    const ordered: string[] = [];
+    const orderedSeen = new Set<string>();
+    for (const id of initialSelection) {
+      if (selection.has(id)) {
+        ordered.push(id);
+        orderedSeen.add(id);
+      }
+    }
+    for (const ind of catalog) {
+      if (selection.has(ind.id) && !orderedSeen.has(ind.id)) {
+        ordered.push(ind.id);
+        orderedSeen.add(ind.id);
+      }
+    }
+    onSave(ordered);
+  };
+
+  const trimmedQuery = query.trim().toLowerCase();
+  const filter = (list: Indicator[]) =>
+    trimmedQuery ? list.filter((i) => i.name.toLowerCase().includes(trimmedQuery)) : list;
+
+  return (
+    <>
+      <div className="flex items-start justify-between gap-4">
+        <Dialog.Title className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+          Select chart indicators
+        </Dialog.Title>
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Close"
+          className="rounded p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-700"
+        >
+          <X className="h-5 w-5" />
+        </button>
+      </div>
+      <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+        Charts are rendered as sparklines, one row per project, with data since Jan 1 of the report
+        year.
+      </p>
+
+      <div className="mt-4 flex items-center gap-2 rounded-md border border-zinc-300 px-3 py-2 dark:border-zinc-600">
+        <Search className="h-4 w-4 text-zinc-400" />
+        <input
+          type="search"
+          aria-label="Search indicators"
+          placeholder="Search indicators…"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          className="w-full bg-transparent text-sm focus:outline-none"
+        />
+      </div>
+
+      <div className="mt-4 max-h-[420px] overflow-y-auto pr-1">
+        {isLoading ? (
+          <div className="py-8 text-center text-sm text-zinc-500">Loading indicators…</div>
+        ) : catalog.length === 0 ? (
+          <div className="py-8 text-center text-sm text-zinc-500">No indicators available.</div>
+        ) : (
+          <IndicatorGroup
+            title="System indicators"
+            items={filter(catalog)}
+            selection={selection}
+            onToggle={toggle}
+          />
+        )}
+      </div>
+
+      <div className="mt-4 flex items-center justify-between gap-2 border-t border-zinc-200 pt-4 dark:border-zinc-700">
+        <span className="text-xs text-zinc-500">{selection.size} selected</span>
+        <div className="flex items-center gap-2">
+          <Button type="button" variant="outline" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button type="button" onClick={handleSave}>
+            Save selection
+          </Button>
+        </div>
+      </div>
+    </>
   );
 }
 

@@ -593,7 +593,7 @@ export function ReportConfigPage({ community, grantPrograms }: Props) {
               Chart Section
             </div>
             <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">
-              Interactive charts shown below each generated report — one card per indicator with a
+              Interactive charts shown below each generated report: one card per indicator with a
               sparkline per project, covering Jan 1 of the report year through the run date.
             </p>
             <ChartSectionPicker

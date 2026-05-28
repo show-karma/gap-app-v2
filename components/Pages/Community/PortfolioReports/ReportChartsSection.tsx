@@ -179,7 +179,7 @@ interface RowsViewProps {
 
 function RowsView({ projects }: RowsViewProps) {
   const sorted = useMemo(
-    () => [...projects].sort((a, b) => latestValue(b) - latestValue(a)),
+    () => projects.toSorted((a, b) => latestValue(b) - latestValue(a)),
     [projects]
   );
 
