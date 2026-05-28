@@ -35,7 +35,7 @@ export function ReportChartsSection({ communitySlug, reportId, authenticated = t
 
   if (isLoading) {
     return (
-      <section className="mt-8" aria-label="Report charts">
+      <section className="mt-4" aria-label="Report charts">
         <Card className="bg-white">
           <Title className="!text-xl !text-zinc-900">Charts</Title>
           <div className="mt-4">
@@ -48,7 +48,7 @@ export function ReportChartsSection({ communitySlug, reportId, authenticated = t
 
   if (isError) {
     return (
-      <section className="mt-8" aria-label="Report charts">
+      <section className="mt-4" aria-label="Report charts">
         <Card className="bg-white">
           <Title className="!text-xl !text-zinc-900">Charts</Title>
           <Text className="mt-2 !text-sm !text-zinc-500">Couldn&apos;t load charts.</Text>

@@ -87,7 +87,7 @@ export function PortfolioReportDocumentView({
           </Button>
         </div>
 
-        <div className="report-print-area">
+        <div className="report-print-area rounded-xl bg-[#f5f6f8] p-4 sm:p-6">
           <HtmlReportFrame html={report.content} title={`Portfolio report — ${runDateLabel}`} />
 
           <ReportChartsSection
