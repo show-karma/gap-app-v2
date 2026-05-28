@@ -36,7 +36,7 @@ export function ReportChartsSection({ communitySlug, reportId, authenticated = t
   if (isLoading) {
     return (
       <section className="mt-8 space-y-4" aria-label="Report charts">
-        <Title className="!text-xl">Charts</Title>
+        <Title className="!text-xl !text-zinc-900 dark:!text-zinc-100">Charts</Title>
         <ChartSkeleton height="h-48" />
       </section>
     );
@@ -45,8 +45,10 @@ export function ReportChartsSection({ communitySlug, reportId, authenticated = t
   if (isError) {
     return (
       <section className="mt-8" aria-label="Report charts">
-        <Title className="!text-xl">Charts</Title>
-        <Text className="mt-2 !text-sm text-zinc-500">Couldn&apos;t load charts.</Text>
+        <Title className="!text-xl !text-zinc-900 dark:!text-zinc-100">Charts</Title>
+        <Text className="mt-2 !text-sm !text-zinc-500 dark:!text-zinc-400">
+          Couldn&apos;t load charts.
+        </Text>
         <Button
           variant="outline"
           size="sm"
@@ -68,8 +70,8 @@ export function ReportChartsSection({ communitySlug, reportId, authenticated = t
   return (
     <section className="mt-8 space-y-6" aria-label="Report charts">
       <header>
-        <Title className="!text-xl">Charts</Title>
-        <Text className="!text-sm">
+        <Title className="!text-xl !text-zinc-900 dark:!text-zinc-100">Charts</Title>
+        <Text className="!text-sm !text-zinc-500 dark:!text-zinc-400">
           Data from {data.startDate} to {data.endDate}
         </Text>
       </header>
@@ -98,7 +100,7 @@ function IndicatorCard({ indicator }: IndicatorCardProps) {
   return (
     <Card className="report-print-no-break bg-white dark:bg-zinc-800">
       <div className="flex items-start justify-between gap-4">
-        <Title className="!text-base">
+        <Title className="!text-base !text-zinc-900 dark:!text-zinc-100">
           {indicator.name}
           {indicator.unit && (
             <span className="ml-2 text-sm font-normal text-zinc-500 dark:text-zinc-400">
@@ -110,7 +112,7 @@ function IndicatorCard({ indicator }: IndicatorCardProps) {
       </div>
 
       {projectsWithData.length === 0 ? (
-        <Text className="mt-4 !text-sm text-zinc-500 dark:text-zinc-400">
+        <Text className="mt-4 !text-sm !text-zinc-500 dark:!text-zinc-400">
           No datapoints recorded for the selected projects in this date range.
         </Text>
       ) : viewMode === "rows" ? (
@@ -265,7 +267,7 @@ function CombinedView({ projects }: CombinedViewProps) {
 
   if (rows.length === 0) {
     return (
-      <Text className="mt-4 !text-sm text-zinc-500 dark:text-zinc-400">
+      <Text className="mt-4 !text-sm !text-zinc-500 dark:!text-zinc-400">
         No comparable datapoints across projects.
       </Text>
     );
