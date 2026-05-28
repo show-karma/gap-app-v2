@@ -74,11 +74,11 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
       });
 
       if (!setup) {
-        return;
+        throw new Error("WALLET_SETUP_FAILED");
       }
 
       const { gapClient, walletSigner } = setup;
-      if (!gapClient) return;
+      if (!gapClient) throw new Error("WALLET_SETUP_FAILED");
 
       const instanceProject = await gapClient.fetch.projectById(project.uid);
       const findGrant = instanceProject?.grants.find(
@@ -87,7 +87,7 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
       const instanceMilestone = findGrant?.milestones.find(
         (item) => item.uid.toLowerCase() === milestone.uid.toLowerCase()
       );
-      if (!instanceMilestone) return;
+      if (!instanceMilestone) throw new Error("Milestone not found");
 
       const checkIfAttestationExists = async (callbackFn?: () => void) => {
         await retryUntilConditionMet(
@@ -95,7 +95,7 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
             const { data: fetchedGrants } = await refetchGrants();
             const foundGrant = (fetchedGrants || []).find((g) => g.uid === milestone.refUID);
             const fetchedMilestone = foundGrant?.milestones?.find((u) => u.uid === milestone.uid);
-            return !!fetchedMilestone?.completed;
+            return !fetchedMilestone?.completed;
           },
           async () => {
             // Refresh both React Query cache and Zustand store
@@ -155,17 +155,24 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
         }
       }
     } catch (error: any) {
-      showError(MESSAGES.MILESTONES.COMPLETE.UNDO.ERROR);
-      errorManager(
-        MESSAGES.MILESTONES.COMPLETE.UNDO.ERROR,
-        error,
-        {
-          milestone: milestone.uid,
-          grant: milestone.refUID,
-          address,
-        },
-        { error: MESSAGES.MILESTONES.COMPLETE.UNDO.ERROR }
-      );
+      console.error("[undoMilestoneCompletion] failed:", error);
+
+      // Setup failures have already been surfaced by setupChainAndWallet —
+      // skip the duplicate generic toast but still bubble the error so the
+      // confirmation dialog (DeleteDialog) knows the action did not succeed.
+      if (error?.message !== "WALLET_SETUP_FAILED") {
+        showError(MESSAGES.MILESTONES.COMPLETE.UNDO.ERROR);
+        errorManager(
+          MESSAGES.MILESTONES.COMPLETE.UNDO.ERROR,
+          error,
+          {
+            milestone: milestone.uid,
+            grant: milestone.refUID,
+            address,
+          },
+          { error: MESSAGES.MILESTONES.COMPLETE.UNDO.ERROR }
+        );
+      }
     } finally {
       setIsDeleting(false);
       setIsStepper(false);

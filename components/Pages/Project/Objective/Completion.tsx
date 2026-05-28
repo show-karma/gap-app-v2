@@ -75,12 +75,12 @@ export const ObjectiveCardComplete = ({
       });
 
       if (!setup) {
-        return;
+        throw new Error("WALLET_SETUP_FAILED");
       }
 
       const { gapClient, walletSigner } = setup;
       const fetchedProject = await getProjectById(projectId);
-      if (!fetchedProject) return;
+      if (!fetchedProject) throw new Error("Failed to fetch project data");
       const projectRecipient = fetchedProject.recipient;
       const fetchedMilestones = await getProjectObjectives(
         projectId,
@@ -88,12 +88,12 @@ export const ObjectiveCardComplete = ({
         projectRecipient,
         fetchedProject.chainID
       );
-      if (!fetchedMilestones || !gapClient?.network) return;
+      if (!fetchedMilestones || !gapClient?.network) throw new Error("Failed to fetch milestones");
       const objectivesInstances = ProjectMilestone.from(fetchedMilestones, gapClient?.network);
       const objectiveInstance = objectivesInstances.find(
         (item) => item.uid.toLowerCase() === objective.uid.toLowerCase()
       );
-      if (!objectiveInstance) return;
+      if (!objectiveInstance) throw new Error("Project milestone not found");
 
       const checkIfAttestationExists = async (callbackFn?: () => void) => {
         await retryUntilConditionMet(
@@ -167,17 +167,21 @@ export const ObjectiveCardComplete = ({
         }
       }
     } catch (error: any) {
-      showError(MESSAGES.PROJECT_OBJECTIVE_FORM.COMPLETE.DELETE.ERROR);
-      errorManager(
-        MESSAGES.PROJECT_OBJECTIVE_FORM.COMPLETE.DELETE.ERROR,
-        error,
-        {
-          objectiveUID: objective.uid,
-          projectUID: objective.refUID,
-          address,
-        },
-        { error: MESSAGES.PROJECT_OBJECTIVE_FORM.COMPLETE.DELETE.ERROR }
-      );
+      // Setup failures have already been surfaced by setupChainAndWallet —
+      // skip the duplicate generic toast.
+      if (error?.message !== "WALLET_SETUP_FAILED") {
+        showError(MESSAGES.PROJECT_OBJECTIVE_FORM.COMPLETE.DELETE.ERROR);
+        errorManager(
+          MESSAGES.PROJECT_OBJECTIVE_FORM.COMPLETE.DELETE.ERROR,
+          error,
+          {
+            objectiveUID: objective.uid,
+            projectUID: objective.refUID,
+            address,
+          },
+          { error: MESSAGES.PROJECT_OBJECTIVE_FORM.COMPLETE.DELETE.ERROR }
+        );
+      }
     } finally {
       setIsDeleting(false);
       setIsStepper(false);

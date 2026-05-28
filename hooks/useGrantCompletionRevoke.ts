@@ -111,8 +111,7 @@ export const useGrantCompletionRevoke = ({ grant, project }: UseGrantCompletionR
       });
 
       if (!setup) {
-        setIsRevoking(false);
-        return;
+        throw new Error("WALLET_SETUP_FAILED");
       }
 
       const { gapClient, walletSigner } = setup;
@@ -195,6 +194,12 @@ export const useGrantCompletionRevoke = ({ grant, project }: UseGrantCompletionR
         }
       }
     } catch (error: unknown) {
+      // Setup failures have already been surfaced by setupChainAndWallet —
+      // skip the duplicate generic toast.
+      if (error instanceof Error && error.message === "WALLET_SETUP_FAILED") {
+        return;
+      }
+
       const errorMessage =
         error instanceof Error ? error.message : MESSAGES.GRANT.MARK_AS_COMPLETE.UNDO.ERROR;
 

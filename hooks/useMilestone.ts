@@ -564,25 +564,28 @@ export const useMilestone = () => {
       });
 
       if (!setup) {
-        return;
+        // setupChainAndWallet already surfaced a toast. Throw a sentinel so
+        // the calling form can keep itself open instead of silently closing
+        // and discarding the user's input.
+        throw new Error("WALLET_SETUP_FAILED");
       }
 
       const { gapClient, walletSigner } = setup;
       const fetchedProject = await gapClient.fetch.projectById(project?.uid);
 
-      if (!fetchedProject) return;
+      if (!fetchedProject) throw new Error("Failed to fetch project data");
 
       const grantInstance = fetchedProject.grants.find(
         (g) => g.uid.toLowerCase() === milestone.refUID.toLowerCase()
       );
 
-      if (!grantInstance) return;
+      if (!grantInstance) throw new Error("Grant not found");
 
       const milestoneInstance = grantInstance.milestones.find(
         (u) => u.uid.toLowerCase() === milestone.uid.toLowerCase()
       );
 
-      if (!milestoneInstance) return;
+      if (!milestoneInstance) throw new Error("Milestone not found");
 
       const completionData = sanitizeObject({
         reason: data.description,
@@ -646,11 +649,22 @@ export const useMilestone = () => {
             }, 250);
           });
         });
-    } catch (error) {
-      showError("There was an error completing the milestone");
-      errorManager("Error completing milestone.", error, {
-        milestoneData: milestone,
-      });
+    } catch (error: any) {
+      // Always console.error the real cause so devs can diagnose. errorManager
+      // silently early-returns for some classes of error ("reject" messages,
+      // transient network failures) which leaves users staring at a generic
+      // toast with no console output — that hid real Privy/SDK errors.
+      console.error("[completeSingleMilestone] failed:", error);
+
+      // Setup failures have already been surfaced by setupChainAndWallet —
+      // re-throw so the caller (form) keeps itself open without showing a
+      // duplicate generic toast.
+      if (error?.message !== "WALLET_SETUP_FAILED") {
+        showError("There was an error completing the milestone");
+        errorManager("Error completing milestone.", error, {
+          milestoneData: milestone,
+        });
+      }
       throw error;
     } finally {
       dismiss();
@@ -806,6 +820,7 @@ export const useMilestone = () => {
         router.push(PAGES.PROJECT.UPDATES(slugOrUid));
       }, 250);
     } catch (error) {
+      console.error("[completeMilestone] failed:", error);
       showError("There was an error completing the milestone");
       errorManager("Error completing milestone", error, {
         milestoneData: milestone,

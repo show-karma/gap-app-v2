@@ -160,6 +160,12 @@ export function useZeroDevSigner(): UseZeroDevSignerResult {
       if (!Number.isFinite(targetChainId)) {
         throw new Error(`Invalid chain ID: ${rawTargetChainId}`);
       }
+      // Track the most recent diagnostic so the final throw can surface the
+      // real cause instead of a generic "No wallet available" — silently
+      // falling through after a catch hid the real Privy/embedded-wallet
+      // error from users and from Sentry.
+      let lastError: unknown;
+
       // Case 1: Email/Google login with gasless support
       if (isEmailOrSocialLogin && embeddedWallet && isChainSupportedForGasless(targetChainId)) {
         try {
@@ -176,6 +182,13 @@ export function useZeroDevSigner(): UseZeroDevSignerResult {
             const ethersSigner = await getGaslessSigner(client, targetChainId);
             return ethersSigner;
           }
+
+          // No client returned — record a synthetic diagnostic so the final
+          // throw isn't "No wallet available" when gasless creation silently
+          // returned null.
+          lastError = new Error(
+            `Gasless client creation returned no client for chain ${targetChainId}`
+          );
         } catch (error) {
           // Don't fall back for gasless provider errors - show the actual error
           if (error instanceof GaslessProviderError) {
@@ -185,6 +198,7 @@ export function useZeroDevSigner(): UseZeroDevSignerResult {
 
           // Log and fall back for other errors
           console.warn("[Gasless] Client creation failed, falling back to embedded wallet:", error);
+          lastError = error;
         }
       }
 
@@ -198,6 +212,7 @@ export function useZeroDevSigner(): UseZeroDevSignerResult {
           return await ethersProvider.getSigner();
         } catch (error) {
           console.warn("[Gasless] Embedded wallet error:", error);
+          lastError = error;
         }
       }
 
@@ -244,6 +259,18 @@ export function useZeroDevSigner(): UseZeroDevSignerResult {
 
           return signer;
         }
+      }
+
+      // No wallet path returned a signer. If an earlier path threw, surface
+      // that real error — "No wallet available" was misleading because the
+      // user had a wallet, it just failed during signer construction.
+      if (lastError) {
+        const message = lastError instanceof Error ? lastError.message : String(lastError);
+        const wrapped = new Error(`Failed to obtain signer from embedded wallet: ${message}`);
+        if (lastError instanceof Error && lastError.stack) {
+          wrapped.stack = lastError.stack;
+        }
+        throw wrapped;
       }
 
       throw new Error("No wallet available for signing");
