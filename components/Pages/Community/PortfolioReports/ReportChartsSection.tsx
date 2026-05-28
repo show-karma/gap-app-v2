@@ -96,7 +96,7 @@ function IndicatorCard({ indicator }: IndicatorCardProps) {
   );
 
   return (
-    <Card className="report-print-no-break">
+    <Card className="report-print-no-break bg-white dark:bg-zinc-800">
       <div className="flex items-start justify-between gap-4">
         <Title className="!text-base">
           {indicator.name}
@@ -110,7 +110,7 @@ function IndicatorCard({ indicator }: IndicatorCardProps) {
       </div>
 
       {projectsWithData.length === 0 ? (
-        <Text className="mt-4 !text-sm text-zinc-500">
+        <Text className="mt-4 !text-sm text-zinc-500 dark:text-zinc-400">
           No datapoints recorded for the selected projects in this date range.
         </Text>
       ) : viewMode === "rows" ? (
@@ -226,7 +226,7 @@ function ProjectRow({ project, showAxis }: ProjectRowProps) {
         title={project.title}
       >
         <span className="truncate font-medium">{project.title}</span>
-        <span className="ml-2 text-xs font-normal text-zinc-500 dark:text-zinc-400">{summary}</span>
+        <span className="ml-2 text-xs font-normal text-zinc-500 dark:text-zinc-300">{summary}</span>
       </div>
       <div className="flex-1">
         <AreaChart
@@ -265,7 +265,9 @@ function CombinedView({ projects }: CombinedViewProps) {
 
   if (rows.length === 0) {
     return (
-      <Text className="mt-4 !text-sm text-zinc-500">No comparable datapoints across projects.</Text>
+      <Text className="mt-4 !text-sm text-zinc-500 dark:text-zinc-400">
+        No comparable datapoints across projects.
+      </Text>
     );
   }
 
