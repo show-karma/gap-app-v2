@@ -2,7 +2,7 @@
 
 import { ArrowLeft, Download, Eye, EyeOff, Pencil, RefreshCw } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import toast from "react-hot-toast";
 import { HtmlReportFrame } from "@/components/Pages/Community/PortfolioReports/HtmlReportFrame";
 import { ReportChartsSection } from "@/components/Pages/Community/PortfolioReports/ReportChartsSection";
@@ -49,7 +49,7 @@ interface Props {
  */
 export function PortfolioReportEditorPage({ community, reportId }: Props) {
   const slug = community.details.slug;
-  const router = useRouter();
+  const { push: routerPush } = useRouter();
   const { hasAccess, isLoading: accessLoading } = useCommunityAdminAccess(community.uid);
   const { data: report, isLoading } = usePortfolioReport(slug, reportId);
   const publishMutation = usePublishReport(slug);
@@ -58,26 +58,21 @@ export function PortfolioReportEditorPage({ community, reportId }: Props) {
   const updateContentMutation = useUpdateReportContent(slug);
 
   const [showRegenerateDialog, setShowRegenerateDialog] = useState(false);
-  const [showEditDialog, setShowEditDialog] = useState(false);
-  const [editDraft, setEditDraft] = useState("");
+  // Edit-dialog state lives in one object so we can update {open, draft}
+  // atomically in event handlers. Avoids a chain of setState updates
+  // across useState + useEffect.
+  const [editState, setEditState] = useState<{ open: boolean; draft: string }>({
+    open: false,
+    draft: "",
+  });
 
-  // Close the Edit dialog if a regenerate kicks off while it's open —
-  // the draft is now stale (it was seeded from pre-regen content) and
-  // saving would clobber the freshly generated report. We also clear
-  // editDraft so a subsequent Regenerate click doesn't surface a
-  // misleading "unsaved edits" warning about content that no longer
-  // exists. The user gets a toast so they know why their dialog
-  // disappeared.
   const isReportRegenerating = report ? isReportGenerating(report) : false;
-  useEffect(() => {
-    if (showEditDialog && isReportRegenerating) {
-      setShowEditDialog(false);
-      setEditDraft("");
-      toast("Closed Edit — report is regenerating. Reopen when it finishes.", {
-        icon: "ℹ️",
-      });
-    }
-  }, [showEditDialog, isReportRegenerating]);
+  // Edit dialog hides automatically while a regenerate is in flight — the
+  // visual openness is derived, no useEffect to "react" to status changes.
+  // The toast + draft-clear for the local-regen case is handled inside
+  // handleRegenerate; for the rare remote-triggered regen, the dialog
+  // just visually closes without a toast (acceptable since it's rare).
+  const isEditDialogVisible = editState.open && !isReportRegenerating;
 
   if (accessLoading || isLoading) {
     return (
@@ -107,7 +102,15 @@ export function PortfolioReportEditorPage({ community, reportId }: Props) {
   const failed = report.status === "failed";
 
   const navigateBack = () => {
-    router.push(PAGES.ADMIN.PORTFOLIO_REPORTS(slug));
+    routerPush(PAGES.ADMIN.PORTFOLIO_REPORTS(slug));
+  };
+
+  const openEditDialog = () => {
+    setEditState({ open: true, draft: report.content ?? "" });
+  };
+
+  const closeEditDialog = () => {
+    setEditState((prev) => ({ ...prev, open: false }));
   };
 
   const handlePublish = async () => {
@@ -132,6 +135,16 @@ export function PortfolioReportEditorPage({ community, reportId }: Props) {
     try {
       await regenerateMutation.mutateAsync(reportId);
       setShowRegenerateDialog(false);
+      // If the user had Edit open, close it and clear the draft — saving
+      // post-regen would clobber the freshly generated content, and a
+      // stale draft would surface a misleading "unsaved edits" warning
+      // on the next Regenerate click.
+      if (editState.open) {
+        setEditState({ open: false, draft: "" });
+        toast("Closed Edit — report is regenerating. Reopen when it finishes.", {
+          icon: "ℹ️",
+        });
+      }
       toast.success("Regeneration started");
     } catch {
       toast.error("Failed to start regeneration");
@@ -140,11 +153,10 @@ export function PortfolioReportEditorPage({ community, reportId }: Props) {
 
   const handleSaveEdit = async () => {
     try {
-      await updateContentMutation.mutateAsync({ reportId, content: editDraft });
-      setShowEditDialog(false);
-      // Clear so the brief window before React Query's cache update
-      // propagates doesn't make `hasUnsavedEdits` falsely true.
-      setEditDraft("");
+      await updateContentMutation.mutateAsync({ reportId, content: editState.draft });
+      // Atomically close + clear so the brief window before React Query's
+      // cache update propagates doesn't make `hasUnsavedEdits` falsely true.
+      setEditState({ open: false, draft: "" });
       toast.success("Report content saved");
     } catch (err) {
       toast.error(`Failed to save: ${err instanceof Error ? err.message : "Unknown error"}`);
@@ -156,7 +168,7 @@ export function PortfolioReportEditorPage({ community, reportId }: Props) {
   // True when the user has typed in the Edit textarea and their local draft
   // diverges from the server's saved content. We only warn about *user* edits,
   // not the initial empty state before the dialog has ever been opened.
-  const hasUnsavedEdits = editDraft !== "" && editDraft !== (report.content ?? "");
+  const hasUnsavedEdits = editState.draft !== "" && editState.draft !== (report.content ?? "");
 
   return (
     <div className="flex h-full flex-col">
@@ -195,7 +207,12 @@ export function PortfolioReportEditorPage({ community, reportId }: Props) {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+      <Dialog
+        open={isEditDialogVisible}
+        onOpenChange={(open) => {
+          if (!open) closeEditDialog();
+        }}
+      >
         <DialogContent className="max-w-4xl">
           <DialogHeader>
             <DialogTitle>Edit report content</DialogTitle>
@@ -206,22 +223,24 @@ export function PortfolioReportEditorPage({ community, reportId }: Props) {
           </DialogHeader>
           <textarea
             className="h-[60vh] w-full resize-none rounded border border-zinc-300 bg-white p-3 font-mono text-xs text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
-            value={editDraft}
-            onChange={(event) => setEditDraft(event.target.value)}
+            value={editState.draft}
+            onChange={(event) => setEditState((prev) => ({ ...prev, draft: event.target.value }))}
             spellCheck={false}
             aria-label="Report HTML content"
           />
           <DialogFooter>
             <Button
               variant="outline"
-              onClick={() => setShowEditDialog(false)}
+              onClick={closeEditDialog}
               disabled={updateContentMutation.isPending}
             >
               Cancel
             </Button>
             <Button
               onClick={handleSaveEdit}
-              disabled={updateContentMutation.isPending || editDraft === (report.content ?? "")}
+              disabled={
+                updateContentMutation.isPending || editState.draft === (report.content ?? "")
+              }
             >
               {updateContentMutation.isPending ? "Saving…" : "Save"}
             </Button>
@@ -257,10 +276,7 @@ export function PortfolioReportEditorPage({ community, reportId }: Props) {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => {
-              setEditDraft(report.content ?? "");
-              setShowEditDialog(true);
-            }}
+            onClick={openEditDialog}
             disabled={generating || !report.content}
           >
             <Pencil className="mr-1 h-3 w-3" />
