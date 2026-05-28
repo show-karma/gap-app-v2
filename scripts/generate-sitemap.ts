@@ -26,8 +26,8 @@ interface SitemapCounts {
 
 interface KindConfig {
   kind: SitemapKind;
-  total: number;
   path: string;
+  chunkCount: number;
   priority: number;
   changeFrequency: "daily" | "weekly" | "monthly";
 }
@@ -78,6 +78,34 @@ function logWarn(message: string): void {
 function computeChunkCount(total: number): number {
   if (total <= 0) return FALLBACK_CHUNKS_PER_KIND;
   return Math.ceil(total / SITEMAP_PAGE_SIZE);
+}
+
+/**
+ * Parses the chunk count previously published for each kind from an existing
+ * sitemap index. Used as a floor so a transient `/counts` failure (which makes
+ * every kind look empty) can never shrink the published chunk count: dropping
+ * a chunk would 404 child sitemaps Google has already crawled and recorded in
+ * its sitemap-index drilldown. Returns `{}` when the index is absent/unreadable.
+ */
+function readPublishedChunkCounts(indexPath: string): Record<string, number> {
+  const counts: Record<string, number> = {};
+  if (!fs.existsSync(indexPath)) return counts;
+
+  let content: string;
+  try {
+    content = fs.readFileSync(indexPath, "utf-8");
+  } catch {
+    return counts;
+  }
+
+  const pattern = /\/sitemaps\/([a-z-]+)\/sitemap\/(\d+)\.xml/g;
+  for (const match of content.matchAll(pattern)) {
+    const kindPath = match[1];
+    const chunk = Number.parseInt(match[2], 10);
+    if (!Number.isFinite(chunk)) continue;
+    counts[kindPath] = Math.max(counts[kindPath] ?? 0, chunk);
+  }
+  return counts;
 }
 
 function escapeXml(value: string): string {
@@ -177,8 +205,7 @@ function buildIndexXml(kindConfigs: KindConfig[]): string {
   entries.push(`${SITE_URL}/sitemaps/static/sitemap.xml`);
   entries.push(`${SITE_URL}/sitemaps/communities/sitemap.xml`);
 
-  for (const { path: kindPath, total } of kindConfigs) {
-    const chunkCount = computeChunkCount(total);
+  for (const { path: kindPath, chunkCount } of kindConfigs) {
     for (let i = 1; i <= chunkCount; i++) {
       entries.push(`${SITE_URL}/sitemaps/${kindPath}/sitemap/${i}.xml`);
     }
@@ -211,14 +238,13 @@ async function writeChildSitemaps(
 
   const jobs: Job[] = [];
   for (const config of kindConfigs) {
-    const chunkCount = computeChunkCount(config.total);
     // Reset the kind's output directory so stale chunks from a previous build
     // (when chunk count was higher) do not linger.
     const kindDir = path.join(PROJECT_ROOT, "public", "sitemaps", config.path, "sitemap");
     fs.rmSync(kindDir, { recursive: true, force: true });
     fs.mkdirSync(kindDir, { recursive: true });
 
-    for (let i = 1; i <= chunkCount; i++) {
+    for (let i = 1; i <= config.chunkCount; i++) {
       jobs.push({
         config,
         chunkId: i,
@@ -266,51 +292,59 @@ async function main() {
   const counts = baseUrl ? await fetchCounts(baseUrl) : null;
   if (!counts) {
     logWarn(
-      "[sitemap-gen] Using fallback counts (one chunk per kind). Build will succeed; Google will discover additional chunks on next deploy."
+      "[sitemap-gen] Counts unavailable — preserving the previously-published chunk count per kind so no child sitemap is dropped. Build will succeed."
     );
   }
+
+  const publicDir = path.join(PROJECT_ROOT, "public");
+  const indexPath = path.join(publicDir, "sitemap.xml");
+
+  // Floor each kind's chunk count at what the existing index already published.
+  // This is the durable guard against a transient `/counts` failure shrinking
+  // the index and 404-ing child sitemaps Google has already crawled.
+  const publishedFloor = readPublishedChunkCounts(indexPath);
+  const chunksFor = (kindPath: string, total: number): number =>
+    Math.max(computeChunkCount(total), publishedFloor[kindPath] ?? 0);
 
   const kindConfigs: KindConfig[] = [
     {
       kind: "projects",
-      total: counts?.projects ?? 0,
       path: "projects",
+      chunkCount: chunksFor("projects", counts?.projects ?? 0),
       priority: 0.8,
       changeFrequency: "daily",
     },
     {
       kind: "impacts",
-      total: counts?.impacts ?? 0,
       path: "impacts",
+      chunkCount: chunksFor("impacts", counts?.impacts ?? 0),
       priority: 0.7,
       changeFrequency: "weekly",
     },
     {
       kind: "grants",
-      total: counts?.grants ?? 0,
       path: "grants",
+      chunkCount: chunksFor("grants", counts?.grants ?? 0),
       priority: 0.6,
       changeFrequency: "weekly",
     },
     {
       kind: "milestones",
-      total: counts?.milestones ?? 0,
       path: "milestones",
+      chunkCount: chunksFor("milestones", counts?.milestones ?? 0),
       priority: 0.5,
       changeFrequency: "weekly",
     },
     {
       kind: "funding-programs",
-      total: counts?.fundingPrograms ?? 0,
       path: "funding-programs",
+      chunkCount: chunksFor("funding-programs", counts?.fundingPrograms ?? 0),
       priority: 0.6,
       changeFrequency: "weekly",
     },
   ];
 
   const indexXml = buildIndexXml(kindConfigs);
-  const publicDir = path.join(PROJECT_ROOT, "public");
-  const indexPath = path.join(publicDir, "sitemap.xml");
   fs.mkdirSync(publicDir, { recursive: true });
   fs.writeFileSync(indexPath, indexXml, "utf-8");
 
