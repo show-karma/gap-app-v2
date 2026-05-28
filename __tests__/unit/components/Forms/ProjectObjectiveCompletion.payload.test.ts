@@ -8,7 +8,10 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { buildProjectObjectiveCompletionPayload } from "@/components/Forms/projectObjectiveCompletionPayload";
+import {
+  buildProjectObjectiveCompletionPayload,
+  projectObjectiveCompletionSchema,
+} from "@/components/Forms/projectObjectiveCompletionPayload";
 
 describe("buildProjectObjectiveCompletionPayload", () => {
   it("forwards outputs and deliverables onto the attestation payload", () => {
@@ -85,6 +88,32 @@ describe("buildProjectObjectiveCompletionPayload", () => {
 
     expect(payload.reason).toBe("shipped the work");
     expect(payload.proofOfWork).toBe("https://example.com/proof");
+  });
+
+  it("rejects whitespace-only values on required string fields", () => {
+    // Without .trim() before .min(1), "   " would pass the required check
+    // and a whitespace-only payload could be submitted on chain.
+    const result = projectObjectiveCompletionSchema.safeParse({
+      description: "",
+      proofOfWork: "",
+      outputs: [{ outputId: "   ", value: 1 }],
+      deliverables: [{ name: "   ", proof: "   " }],
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("accepts a proofOfWork URL with surrounding whitespace", () => {
+    // Form-side trim() lets validators run against the normalised value, so
+    // "  https://example.com  " is accepted rather than rejected as invalid URL.
+    const result = projectObjectiveCompletionSchema.safeParse({
+      description: "",
+      proofOfWork: "  https://example.com/proof  ",
+      outputs: [],
+      deliverables: [],
+    });
+
+    expect(result.success).toBe(true);
   });
 
   it("always stamps the project-milestone-completed type", () => {

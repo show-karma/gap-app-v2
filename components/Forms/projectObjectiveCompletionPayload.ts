@@ -12,14 +12,15 @@ export const projectObjectiveCompletionSchema = z.object({
   description: z.string().optional(),
   proofOfWork: z
     .string()
-    .refine((value) => urlRegex.test(value), {
+    .trim()
+    .refine((value) => value === "" || urlRegex.test(value), {
       message: "Please enter a valid URL",
     })
     .optional()
     .or(z.literal("")),
   outputs: z.array(
     z.object({
-      outputId: z.string().min(1, "Output is required"),
+      outputId: z.string().trim().min(1, "Output is required"),
       value: z.union([z.number().min(0), z.string()]),
       proof: z.string().optional(),
       startDate: z.string().optional(),
@@ -28,8 +29,8 @@ export const projectObjectiveCompletionSchema = z.object({
   ),
   deliverables: z.array(
     z.object({
-      name: z.string().min(1, "Name is required"),
-      proof: z.string().min(1, "Proof is required"),
+      name: z.string().trim().min(1, "Name is required"),
+      proof: z.string().trim().min(1, "Proof is required"),
       description: z.string().optional(),
     })
   ),
@@ -37,7 +38,9 @@ export const projectObjectiveCompletionSchema = z.object({
 
 export type ProjectObjectiveCompletionFormData = z.infer<typeof projectObjectiveCompletionSchema>;
 
-export type ProjectObjectiveCompletionPayload = IProjectMilestoneStatus & {
+// Internal — the type the payload builder returns. Kept module-local so knip
+// doesn't flag it as an unused export; nothing outside this module needs it.
+type ProjectObjectiveCompletionPayload = IProjectMilestoneStatus & {
   outputs: ProjectObjectiveCompletionFormData["outputs"];
   deliverables: ProjectObjectiveCompletionFormData["deliverables"];
 };
