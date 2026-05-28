@@ -227,14 +227,17 @@ interface ProjectRowProps {
 }
 
 function ProjectRow({ project, showAxis }: ProjectRowProps) {
-  const chartData = useMemo(
-    () =>
-      project.points.map((p) => ({
-        date: formatDate(p.date, "UTC", "MMM D"),
-        [project.title]: p.value,
-      })),
-    [project.points, project.title]
-  );
+  const chartData = useMemo(() => {
+    // Dedupe by formatted label — two raw dates can collapse to the same
+    // "MMM D" (e.g. multiple samples on the same day, or cross-year ticks),
+    // which Tremor would render as duplicate-keyed children.
+    const byLabel = new Map<string, { date: string; [k: string]: string | number }>();
+    for (const p of project.points) {
+      const label = formatDate(p.date, "UTC", "MMM D");
+      byLabel.set(label, { date: label, [project.title]: p.value });
+    }
+    return Array.from(byLabel.values());
+  }, [project.points, project.title]);
 
   const latest = latestValue(project);
   const summary = formatValue(latest);
@@ -358,19 +361,21 @@ function buildCombined(projects: ChartSectionProject[]): {
     lookup.set(project.uid, inner);
   }
 
-  const rows: CombinedRow[] = sortedDates.map((date) => {
-    // Sort on raw ISO (lexicographic == chronological for YYYY-MM-DD), but
-    // expose the formatted label to Tremor so the x-axis + tooltip show
-    // "Jan 25" instead of "2026-01-25".
-    const row: CombinedRow = { date: formatDate(date, "UTC", "MMM D") };
+  // Build rows keyed by formatted label so two ISO dates that collapse to the
+  // same "MMM D" merge into one row instead of becoming duplicate keys.
+  const rowsByLabel = new Map<string, CombinedRow>();
+  for (const date of sortedDates) {
+    const label = formatDate(date, "UTC", "MMM D");
+    const row: CombinedRow = rowsByLabel.get(label) ?? { date: label };
     for (const project of projects) {
       const column = columnByUid.get(project.uid)!;
       const value = lookup.get(project.uid)?.get(date);
-      // `null` keeps connectNulls bridging missing months.
-      row[column] = value ?? null;
+      if (value !== undefined) row[column] = value;
+      else if (!(column in row)) row[column] = null;
     }
-    return row;
-  });
+    rowsByLabel.set(label, row);
+  }
+  const rows: CombinedRow[] = Array.from(rowsByLabel.values());
 
   return { rows, categories: Array.from(columnByUid.values()) };
 }
