@@ -338,15 +338,19 @@ function DialogBody({ initialSelection, catalog, isLoading, onClose, onSave }: D
           placeholder="Search indicators…"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          className="w-full bg-transparent text-sm focus:outline-none"
+          className="w-full bg-transparent text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none dark:text-zinc-100 dark:placeholder:text-zinc-500"
         />
       </div>
 
       <div className="mt-4 max-h-[420px] overflow-y-auto pr-1">
         {isLoading ? (
-          <div className="py-8 text-center text-sm text-zinc-500">Loading indicators…</div>
+          <div className="py-8 text-center text-sm text-zinc-500 dark:text-zinc-400">
+            Loading indicators…
+          </div>
         ) : catalog.length === 0 ? (
-          <div className="py-8 text-center text-sm text-zinc-500">No indicators available.</div>
+          <div className="py-8 text-center text-sm text-zinc-500 dark:text-zinc-400">
+            No indicators available.
+          </div>
         ) : (
           <IndicatorGroup
             title="System indicators"
@@ -358,7 +362,7 @@ function DialogBody({ initialSelection, catalog, isLoading, onClose, onSave }: D
       </div>
 
       <div className="mt-4 flex items-center justify-between gap-2 border-t border-zinc-200 pt-4 dark:border-zinc-700">
-        <span className="text-xs text-zinc-500">{selection.size} selected</span>
+        <span className="text-xs text-zinc-500 dark:text-zinc-400">{selection.size} selected</span>
         <div className="flex items-center gap-2">
           <Button type="button" variant="outline" onClick={onClose}>
             Cancel
