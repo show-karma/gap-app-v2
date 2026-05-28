@@ -781,3 +781,62 @@ article.report-article tbody tr:hover td {
     transition: none !important;
   }
 }
+
+/* ──────────────────────────────────────────────────────────────────
+ * Portfolio report print styles
+ *
+ * Used by the "Export PDF" button on the report viewer/editor. Clicking
+ * fires window.print(), which applies these rules — everything outside
+ * the `.report-print-area` is hidden, and the print area floats to the
+ * top of the page. The browser's "Save as PDF" destination produces the
+ * final file.
+ *
+ * Anything inside `.report-print-area` that should still be hidden in
+ * the PDF (toggle buttons, hover-only chrome) gets the
+ * `.report-print-hide` class.
+ * ─────────────────────────────────────────────────────────────── */
+@media print {
+  /* Hide every node by default, then re-reveal only the print area. */
+  body * {
+    visibility: hidden;
+  }
+  .report-print-area,
+  .report-print-area * {
+    visibility: visible;
+  }
+  /* Opt-out for chrome inside the print area (toggles, action buttons). */
+  .report-print-hide,
+  .report-print-hide * {
+    visibility: hidden !important;
+    display: none !important;
+  }
+  /* Pin the print area to the top of the printed page. */
+  .report-print-area {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    background: #ffffff;
+  }
+  /* Browsers strip background colors/images by default — opt back in
+   * so card backgrounds, chart fills, and accent colors print. */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  /* Don't split a chart card across pages — keeps each metric block
+   * intact even if it pushes onto the next sheet. */
+  .chart-card,
+  .report-print-no-break {
+    break-inside: avoid;
+  }
+  /* Trim the body's screen padding so the PDF margin is just the
+   * browser's @page margin. */
+  body {
+    margin: 0;
+    padding: 0;
+  }
+}

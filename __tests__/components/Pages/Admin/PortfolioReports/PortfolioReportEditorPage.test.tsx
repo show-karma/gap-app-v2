@@ -23,8 +23,8 @@ vi.mock("@/components/Pages/Community/PortfolioReports/HtmlReportFrame", () => (
   HtmlReportFrame: ({ html }: { html?: string }) => <div data-testid="report-frame">{html}</div>,
 }));
 
-vi.mock("@/services/portfolio-reports.service", () => ({
-  downloadReportPdf: vi.fn(),
+vi.mock("@/components/Pages/Community/PortfolioReports/ReportChartsSection", () => ({
+  ReportChartsSection: () => <div data-testid="report-charts-section" />,
 }));
 
 vi.mock("@/hooks/communities/useCommunityAdminAccess");

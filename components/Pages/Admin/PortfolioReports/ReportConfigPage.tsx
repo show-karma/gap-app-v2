@@ -7,6 +7,7 @@ import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
 import { DeleteDialog } from "@/components/DeleteDialog";
+import { ChartSectionPicker } from "@/components/Pages/Admin/PortfolioReports/ChartSectionPicker";
 import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
 import { SearchDropdown } from "@/components/Pages/ProgramRegistry/SearchDropdown";
 import { Spinner } from "@/components/Utilities/Spinner";
@@ -95,6 +96,7 @@ const formSchema = z.object({
   programIds: z.array(z.string().min(1)).min(1, "Select at least one program"),
   modelId: z.enum(MODEL_IDS, { message: "Pick a model" }),
   prompt: z.string().trim().min(1, "A prompt is required"),
+  chartIndicatorIds: z.array(z.string().min(1)).max(50).default([]),
   schedule: scheduleZod,
   isActive: z.boolean(),
 });
@@ -106,6 +108,7 @@ const EMPTY_FORM_VALUES: FormValues = {
   programIds: [],
   modelId: AVAILABLE_MODELS[0].id,
   prompt: "",
+  chartIndicatorIds: [],
   schedule: defaultScheduleForPreset("monthly"),
   isActive: true,
 };
@@ -205,6 +208,11 @@ export function ReportConfigPage({ community, grantPrograms }: Props) {
     setValue("schedule", next, { shouldValidate: true, shouldDirty: true });
   };
 
+  const chartIndicatorIds = watch("chartIndicatorIds");
+  const setChartIndicatorIds = (next: string[]) => {
+    setValue("chartIndicatorIds", next, { shouldValidate: true, shouldDirty: true });
+  };
+
   // Allow already-past dates on existing configs so admins can edit
   // name/prompt without being forced to bump the schedule.
   const todayIso = useMemo(() => new Date().toISOString().slice(0, 10), []);
@@ -231,6 +239,7 @@ export function ReportConfigPage({ community, grantPrograms }: Props) {
         programIds: editingConfig.programIds,
         modelId: editingConfig.modelId,
         prompt: editingConfig.prompt,
+        chartIndicatorIds: editingConfig.chartIndicatorIds ?? [],
         schedule: editingConfig.schedule,
         isActive: editingConfig.isActive,
       });
@@ -576,6 +585,22 @@ export function ReportConfigPage({ community, grantPrograms }: Props) {
               {...register("prompt")}
             />
             {errors.prompt && <p className="mt-1 text-xs text-red-500">{errors.prompt.message}</p>}
+          </div>
+
+          {/* Chart Section */}
+          <div>
+            <div className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+              Chart Section
+            </div>
+            <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">
+              Interactive charts shown below each generated report: one card per indicator with a
+              sparkline per project, covering Jan 1 of the report year through the run date.
+            </p>
+            <ChartSectionPicker
+              communityId={community.uid}
+              value={chartIndicatorIds ?? []}
+              onChange={setChartIndicatorIds}
+            />
           </div>
 
           <div className="flex items-center justify-end gap-2">
