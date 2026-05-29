@@ -87,11 +87,11 @@ describe("generate-sitemap", () => {
     expect(xml.match(/<sitemap>/g) ?? []).toHaveLength(7);
   }, 30_000);
 
-  it("preserves the previously-published chunk count when counts are unavailable", () => {
+  it("preserves the previously-published chunk count when the indexer is unreachable", () => {
     snapshot();
-    // A transient /counts failure makes every kind look empty. Without the
-    // floor, grants would collapse from 2 chunks to 1 and grants/sitemap/2.xml
-    // — already crawled by Google — would 404. The prior index is the floor.
+    // When URL fetches fail, a kind looks empty. Without the floor, grants would
+    // collapse from 2 chunks to 1 and grants/sitemap/2.xml — already crawled by
+    // Google — would 404. The prior index is the floor.
     const priorIndex = [
       '<?xml version="1.0" encoding="UTF-8"?>',
       '<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
