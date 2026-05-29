@@ -211,4 +211,54 @@ describe("fetchData", () => {
       expect.objectContaining({ signal: controller.signal })
     );
   });
+
+  it("retries once with a fresh token when an authorized indexer request returns 401", async () => {
+    // Simulates the deferred-Privy auth race: the first request fired before the
+    // token was ready and 401'd; a fresh token is now available and the retry
+    // succeeds — instead of dead-ending as an empty result until a page refresh.
+    const unauthorized = { response: { data: { message: "Unauthorized" }, status: 401 } };
+    const okResponse = { data: { result: "recovered" }, status: 200 };
+    (axios.request as vi.Mock)
+      .mockRejectedValueOnce(unauthorized)
+      .mockResolvedValueOnce(okResponse);
+    (TokenManager.getToken as vi.Mock)
+      .mockResolvedValueOnce("stale-token")
+      .mockResolvedValueOnce("fresh-token");
+
+    const [resData, error, , status] = await fetchData("/test-endpoint");
+
+    expect(axios.request).toHaveBeenCalledTimes(2);
+    expect(TokenManager.clearCache).toHaveBeenCalledTimes(1);
+    const retryConfig = (axios.request as vi.Mock).mock.calls[1][0];
+    expect(retryConfig.headers.Authorization).toBe("Bearer fresh-token");
+    expect(resData).toEqual({ result: "recovered" });
+    expect(error).toBeNull();
+    expect(status).toBe(200);
+  });
+
+  it("does not retry a 401 when no fresh token is available", async () => {
+    const unauthorized = { response: { data: { message: "Unauthorized" }, status: 401 } };
+    (axios.request as vi.Mock).mockRejectedValue(unauthorized);
+    (TokenManager.getToken as vi.Mock)
+      .mockResolvedValueOnce("stale-token")
+      .mockResolvedValueOnce(null);
+
+    const [resData, error, , status] = await fetchData("/test-endpoint");
+
+    expect(axios.request).toHaveBeenCalledTimes(1);
+    expect(resData).toBeNull();
+    expect(error).toBe("Unauthorized");
+    expect(status).toBe(401);
+  });
+
+  it("does not retry a 401 for unauthorized (public) requests", async () => {
+    const unauthorized = { response: { data: { message: "Unauthorized" }, status: 401 } };
+    (axios.request as vi.Mock).mockRejectedValue(unauthorized);
+
+    const [, , , status] = await fetchData("/test-endpoint", "GET", {}, {}, {}, false);
+
+    expect(axios.request).toHaveBeenCalledTimes(1);
+    expect(TokenManager.getToken).not.toHaveBeenCalled();
+    expect(status).toBe(401);
+  });
 });

@@ -101,6 +101,18 @@ export function NavbarUserMenu() {
     return null;
   }
 
+  // Authenticated, but identity hasn't resolved yet. During the Privy↔Wagmi
+  // hydration gap `authenticated` is true while `user` and `wallets[0].address`
+  // are still loading, so the trigger would render a blank avatar and the
+  // dropdown would say "No wallet connected" for an actually-connected user.
+  // Show the skeleton instead — a wallet user always resolves an address and a
+  // social user always resolves a farcaster/email identity, so this only covers
+  // the transient loading window.
+  const hasResolvedIdentity = Boolean(user?.farcaster || getUserEmail(user) || address);
+  if (!hasResolvedIdentity) {
+    return <NavbarUserSkeleton />;
+  }
+
   return (
     <Menubar className="border-0 bg-transparent shadow-none p-0 h-auto">
       <MenubarMenu>
