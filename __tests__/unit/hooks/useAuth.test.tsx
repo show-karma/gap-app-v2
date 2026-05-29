@@ -106,11 +106,13 @@ vi.mock("@/utilities/wagmi/privy-config", () => ({
 }));
 
 const mockQueryClientClear = vi.fn();
+const mockQueryClientInvalidate = vi.fn();
 const mockClearCache = vi.fn();
 
 vi.mock("@/utilities/query-client", () => ({
   queryClient: {
     clear: (...args: unknown[]) => mockQueryClientClear(...args),
+    invalidateQueries: (...args: unknown[]) => mockQueryClientInvalidate(...args),
     removeQueries: vi.fn(),
   },
 }));
@@ -187,6 +189,65 @@ describe("useAuth - Query Key Consistency", () => {
       expect(Array.isArray(QUERY_KEYS.AUTH.CONTRACT_OWNER("test", 1))).toBe(true);
       expect(Array.isArray(QUERY_KEYS.COMMUNITY.IS_ADMIN("uid", 1, "addr", {}))).toBe(true);
     });
+  });
+});
+
+describe("useAuth - Auth-ready refetch barrier", () => {
+  const mockPrivyUser = {
+    id: "user-123",
+    wallet: { address: "0x1234567890123456789012345678901234567890" },
+  };
+  const mockWallet = {
+    address: "0x1234567890123456789012345678901234567890",
+    chainId: "eip155:10",
+  };
+  const wrapper = ({ children }: { children: ReactNode }) => <>{children}</>;
+
+  beforeEach(() => {
+    mockQueryClientInvalidate.mockClear();
+  });
+
+  afterEach(() => {
+    resetBridgeState();
+  });
+
+  it("invalidates queries when the wallet address resolves after auth (Privy↔Wagmi gap)", async () => {
+    // Authenticated, but wallets[0].address has not hydrated yet.
+    setBridgeState({
+      ready: true,
+      authenticated: true,
+      user: mockPrivyUser,
+      wallets: [],
+      isConnected: false,
+    });
+    const { rerender } = renderHook(() => useAuth(), { wrapper });
+
+    expect(mockQueryClientInvalidate).not.toHaveBeenCalled();
+
+    // Wallet hydrates → address becomes available.
+    setBridgeState({ wallets: [mockWallet], isConnected: true });
+    await act(async () => {
+      rerender();
+    });
+
+    expect(mockQueryClientInvalidate).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not invalidate when the address is already present at mount", async () => {
+    setBridgeState({
+      ready: true,
+      authenticated: true,
+      user: mockPrivyUser,
+      wallets: [mockWallet],
+      isConnected: true,
+    });
+    const { rerender } = renderHook(() => useAuth(), { wrapper });
+
+    await act(async () => {
+      rerender();
+    });
+
+    expect(mockQueryClientInvalidate).not.toHaveBeenCalled();
   });
 });
 
