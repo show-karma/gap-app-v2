@@ -235,6 +235,7 @@ export function useSubmitMilestoneCompletion() {
           try {
             await submitGranteeInvoice(grantUID, {
               milestoneLabel: params.milestoneTitle,
+              milestoneUID: params.milestoneUID,
               invoiceFileKey: params.invoiceFile.fileKey,
               invoiceFileUrl: params.invoiceFile.fileUrl,
             });
