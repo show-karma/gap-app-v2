@@ -35,7 +35,8 @@ export function UpdatesContent({ className }: UpdatesContentProps) {
   const { projectId } = useParams();
   const isOwner = useOwnerStore((state) => state.isOwner);
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
-  const isAuthorized = isOwner || isProjectAdmin;
+  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
+  const isAuthorized = isOwner || isProjectAdmin || isProjectOwner;
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
