@@ -196,8 +196,8 @@
       "maxBytes": 40000
     },
     "components/Forms/MilestoneUpdate.tsx": {
-      "lines": 761,
-      "bytes": 28479,
+      "lines": 770,
+      "bytes": 28833,
       "maxLines": 600,
       "maxBytes": 40000
     },
@@ -240,6 +240,12 @@
     "components/Pages/Admin/ControlCenter/ControlCenterPage.tsx": {
       "lines": 661,
       "bytes": 24473,
+      "maxLines": 600,
+      "maxBytes": 40000
+    },
+    "components/Pages/Admin/ControlCenter/MilestonesSection.tsx": {
+      "lines": 601,
+      "bytes": 26462,
       "maxLines": 600,
       "maxBytes": 40000
     },
