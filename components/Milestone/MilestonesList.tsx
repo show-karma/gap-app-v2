@@ -9,7 +9,7 @@ import { Fragment, useCallback, useMemo, useState } from "react";
 import { ActivityCard } from "@/components/Shared/ActivityCard";
 import { Skeleton } from "@/components/Utilities/Skeleton";
 import { useMilestoneAllocationsByGrants } from "@/hooks/useCommunityMilestoneAllocations";
-import { useOwnerStore, useProjectStore } from "@/store";
+import { useProjectAuthorization } from "@/hooks/useProjectAuthorization";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
 import type { StatusOptions } from "@/utilities/gapIndexerApi/getProjectObjectives";
 import { mergeDuplicateMilestones } from "@/utilities/milestones/mergeDuplicateMilestones";
@@ -87,10 +87,7 @@ export const MilestonesList = ({
   showAllTypes = false,
   totalItems,
 }: MilestonesListProps) => {
-  const isOwner = useOwnerStore((state) => state.isOwner);
-  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
-  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
-  const isAuthorized = isOwner || isProjectAdmin || isProjectOwner;
+  const isAuthorized = useProjectAuthorization();
 
   // Extract unique grant UIDs for allocation lookup
   const grantUIDs = useMemo(() => {

@@ -4,10 +4,11 @@ import { useParams, useSearchParams } from "next/navigation";
 import { useMemo } from "react";
 import { MilestonesList } from "@/components/Milestone/MilestonesList";
 import { Button } from "@/components/Utilities/Button";
+import { useProjectAuthorization } from "@/hooks/useProjectAuthorization";
 import { useProjectImpacts } from "@/hooks/v2/useProjectImpacts";
 import { useProjectUpdates } from "@/hooks/v2/useProjectUpdates";
 import { transformImpactsToMilestones } from "@/services/project-profile.service";
-import { useOwnerStore, useProjectStore } from "@/store";
+import { useProjectStore } from "@/store";
 import { useProgressModalStore } from "@/store/modals/progress";
 import type { Project as ProjectResponse } from "@/types/v2/project";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
@@ -54,10 +55,7 @@ export const ProjectRoadmap = ({ project: propProject }: ProjectRoadmapProps) =>
 
   const { setIsProgressModalOpen, setProgressModalScreen } = useProgressModalStore();
 
-  const isOwner = useOwnerStore((state) => state.isOwner);
-  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
-  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
-  const isAuthorized = isOwner || isProjectAdmin || isProjectOwner;
+  const isAuthorized = useProjectAuthorization();
 
   // Derive active filters directly from URL params - no state synchronization needed
   const activeFilters = useMemo(() => {

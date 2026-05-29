@@ -2,15 +2,11 @@ import { PlusIcon } from "@heroicons/react/20/solid";
 import Image from "next/image";
 import { useQueryState } from "nuqs";
 import type { FC } from "react";
-import { useOwnerStore, useProjectStore } from "@/store";
+import { useProjectAuthorization } from "@/hooks/useProjectAuthorization";
 import { MESSAGES } from "@/utilities/messages";
 
 export const EmptyImpactScreen: FC = () => {
-  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
-  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
-  const isOwner = useOwnerStore((state) => state.isOwner);
-
-  const isAuthorized = isProjectAdmin || isOwner || isProjectOwner;
+  const isAuthorized = useProjectAuthorization();
   const [, changeTab] = useQueryState("tab");
   if (!isAuthorized) {
     return (
