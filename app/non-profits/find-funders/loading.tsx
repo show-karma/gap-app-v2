@@ -1,0 +1,7 @@
+export default function NonProfitsLoading() {
+  return (
+    <main className="flex w-full min-h-screen items-center justify-center bg-background">
+      <div className="h-10 w-10 animate-spin rounded-full border-2 border-border border-t-primary" />
+    </main>
+  );
+}

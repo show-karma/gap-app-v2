@@ -38,6 +38,11 @@ interface EvaluateWorkspaceProps {
 
 type WorkbenchTab = "iterate" | "bulk" | "history";
 
+// Stable empty array — must be module-level so the reference never changes.
+// Inline `?? []` in a Zustand selector creates a new array on every render
+// and causes infinite re-renders in Zustand v5.
+const EMPTY_RESULTS: ReadonlyArray<EvaluationResultResponse> = [];
+
 const TABS: ReadonlyArray<{ id: WorkbenchTab; label: string; icon: typeof Sparkles }> = [
   { id: "iterate", label: "Iterate on sample", icon: Sparkles },
   { id: "bulk", label: "Bulk run", icon: Upload },
@@ -55,7 +60,10 @@ export function EvaluateWorkspace({ sessionId }: EvaluateWorkspaceProps) {
   );
 
   const session = sessionQuery.data;
-  const results = useEvaluationDraftStore((s) => s.resultsBySession[sessionId] ?? []);
+  // The `?? []` fallback must not be inlined — it would produce a new array
+  // reference on every render and trigger infinite re-renders in Zustand v5.
+  const resultsRaw = useEvaluationDraftStore((s) => s.resultsBySession[sessionId]);
+  const results = resultsRaw ?? EMPTY_RESULTS;
   const sortedResults = useMemo(
     () => [...results].sort((a, b) => a.iterationNumber - b.iterationNumber),
     [results]

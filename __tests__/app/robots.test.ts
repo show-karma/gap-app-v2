@@ -96,12 +96,16 @@ describe("robots", () => {
   });
 
   describe("sitemaps", () => {
-    it("should reference only the main sitemap index", () => {
+    it("should reference the main sitemap index", () => {
       expect(result.sitemap).toContain(`${SITE_URL}/sitemap.xml`);
     });
 
-    it("should list exactly 1 sitemap entry", () => {
-      expect(result.sitemap).toHaveLength(1);
+    it("should reference the sitemap-index alias served at a fresh URL", () => {
+      expect(result.sitemap).toContain(`${SITE_URL}/sitemap-index.xml`);
+    });
+
+    it("should list exactly 2 sitemap entries (main + alias)", () => {
+      expect(result.sitemap).toHaveLength(2);
     });
   });
 

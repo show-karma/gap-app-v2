@@ -31,7 +31,7 @@ export function useProjectMilestoneForm({
   onSuccess,
 }: UseProjectMilestoneFormProps = {}) {
   const { address, chain } = useAccount();
-  const { project } = useProjectStore();
+  const project = useProjectStore((state) => state.project);
   const { switchChainAsync } = useWallet();
   const { setupChainAndWallet, smartWalletAddress } = useSetupChainAndWallet();
   const params = useParams();

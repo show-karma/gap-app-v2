@@ -231,6 +231,7 @@ export const updateMilestonePaymentStatus = async (
   request: {
     communityUID: string;
     milestoneLabel: string;
+    milestoneUID: string;
     paymentStatus: "pending";
   }
 ): Promise<void> => {
@@ -876,13 +877,18 @@ export const submitGranteeInvoice = async (
     );
 
     if (error || !data?.data) {
+      // `fetchData` already extracts the backend `message` field into
+      // `error`, so propagate it verbatim — the UI surfaces this string
+      // (e.g. a 409 conflict reason) instead of a generic fallback.
       throw new Error(error || "Failed to submit invoice");
     }
 
     return data.data.invoice;
   } catch (error: unknown) {
     errorManager(`Error submitting grantee invoice for grant ${grantUID}`, error);
-    throw new Error(`Failed to submit invoice: ${getErrorMessage(error)}`);
+    // Re-throw the original message unchanged so callers can show the
+    // backend's specific reason; only fall back when none is available.
+    throw new Error(getErrorMessage(error) || "Failed to submit invoice");
   }
 };
 

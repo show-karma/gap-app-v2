@@ -21,7 +21,11 @@ const removeImports = require("next-remove-imports")();
 /** @type {import('next').NextConfig} */
 const nextConfig: NextConfig = {
   reactStrictMode: true,
-  staticPageGenerationTimeout: 10000,
+  // Cap per-page static generation at 2 min. The app has no
+  // generateStaticParams and builds in ~5 min, so nothing legitimately
+  // approaches this — a longer stall means a hung build-time fetch that
+  // should fail fast and name the page, not silently burn the build.
+  staticPageGenerationTimeout: 120,
   // Standalone output produces a self-contained server.js bundle in
   // .next/standalone with traced node_modules. Cuts CI artifact size
   // from ~200MB to ~30-50MB and boots in ~2s vs ~25s for `pnpm start`.
@@ -126,6 +130,11 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
+      {
+        source: "/non-profits",
+        destination: "/non-profits/find-funders",
+        permanent: true,
+      },
       // Redirect all old /community/:communityId/admin routes to /community/:communityId/manage
       {
         source: "/community/:communityId/admin",

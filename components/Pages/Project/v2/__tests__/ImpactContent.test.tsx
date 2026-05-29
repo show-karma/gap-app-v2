@@ -46,7 +46,7 @@ describe("ImpactContent", () => {
       return selector ? selector(state as never) : state;
     });
     mockUseProjectStore.mockImplementation((selector) => {
-      const state = { isProjectAdmin: false };
+      const state = { isProjectAdmin: false, isProjectOwner: false };
       return selector ? selector(state as never) : state;
     });
     mockUseSearchParams.mockReturnValue(new URLSearchParams());
@@ -94,7 +94,19 @@ describe("ImpactContent", () => {
 
     it("should show AddImpactScreen when project admin and tab=add-impact", () => {
       mockUseProjectStore.mockImplementation((selector) => {
-        const state = { isProjectAdmin: true };
+        const state = { isProjectAdmin: true, isProjectOwner: false };
+        return selector ? selector(state as never) : state;
+      });
+      mockUseSearchParams.mockReturnValue(new URLSearchParams("tab=add-impact"));
+
+      render(<ImpactContent />);
+
+      expect(screen.getByTestId("add-impact-screen")).toBeInTheDocument();
+    });
+
+    it("should show AddImpactScreen when project owner (not admin) and tab=add-impact", () => {
+      mockUseProjectStore.mockImplementation((selector) => {
+        const state = { isProjectAdmin: false, isProjectOwner: true };
         return selector ? selector(state as never) : state;
       });
       mockUseSearchParams.mockReturnValue(new URLSearchParams("tab=add-impact"));

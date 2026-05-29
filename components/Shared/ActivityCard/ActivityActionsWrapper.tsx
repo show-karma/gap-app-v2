@@ -64,7 +64,7 @@ function convertToUpdateType(
  * Uses useUpdateActions hook which requires specific update object format.
  */
 export const ActivityActionsWrapper: FC<ActivityActionsWrapperProps> = ({ milestone }) => {
-  const { project } = useProjectStore();
+  const project = useProjectStore((state) => state.project);
   const { type, title } = milestone;
 
   // Convert milestone to update format for the hook

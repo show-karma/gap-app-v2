@@ -30,10 +30,11 @@ export const MilestoneDelete: FC<MilestoneDeleteProps> = ({ milestone }) => {
     useAttestationToast();
   const { setupChainAndWallet } = useSetupChainAndWallet();
 
-  const { project, isProjectOwner } = useProjectStore();
+  const project = useProjectStore((state) => state.project);
+  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const { refetch: refetchGrants } = useProjectGrants(project?.uid || "");
-  const { refreshGrant } = useGrantStore();
-  const { isOwner: isContractOwner } = useOwnerStore();
+  const refreshGrant = useGrantStore((state) => state.refreshGrant);
+  const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isOnChainAuthorized = isProjectOwner || isContractOwner;
   const { performOffChainRevoke } = useOffChainRevoke();
 

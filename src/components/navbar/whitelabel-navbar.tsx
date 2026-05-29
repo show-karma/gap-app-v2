@@ -27,7 +27,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/hooks/useAuth";
 import { Link } from "@/src/components/navigation/Link";
-import type { NavDropdown, NavItem } from "@/src/infrastructure/types/tenant";
+import type { NavDropdown, NavItem, TenantNavigation } from "@/src/infrastructure/types/tenant";
 import { useTenantSafe } from "@/store/tenant";
 import { karmaLinks } from "@/utilities/karma/karma";
 import { cn } from "@/utilities/tailwind";
@@ -62,47 +62,54 @@ interface SocialLinkItem {
   href: string;
 }
 
+function buildSocialLinks(
+  socialLinks: TenantNavigation["socialLinks"],
+  labels: TenantNavigation["socialLinkLabels"]
+): SocialLinkItem[] {
+  return [
+    socialLinks?.twitter && {
+      key: "twitter",
+      label: labels?.twitter ?? "Twitter",
+      href: socialLinks.twitter,
+    },
+    socialLinks?.discord && {
+      key: "discord",
+      label: labels?.discord ?? "Discord",
+      href: socialLinks.discord,
+    },
+    socialLinks?.github && {
+      key: "github",
+      label: labels?.github ?? "GitHub",
+      href: socialLinks.github,
+    },
+    socialLinks?.telegram && {
+      key: "telegram",
+      label: labels?.telegram ?? "Telegram",
+      href: socialLinks.telegram,
+    },
+    socialLinks?.docs && {
+      key: "docs",
+      label: labels?.docs ?? "Docs",
+      href: socialLinks.docs,
+    },
+    {
+      key: "skills",
+      label: "Skills",
+      href: karmaLinks.skills,
+    },
+  ].filter((link): link is SocialLinkItem => Boolean(link));
+}
+
 export function WhitelabelNavbar() {
   const tenant = useTenantSafe();
   const { authenticated } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const tenantSocialLinks = tenant?.navigation?.socialLinks;
+  const tenantSocialLinkLabels = tenant?.navigation?.socialLinkLabels;
   const socialLinks = useMemo<SocialLinkItem[]>(
-    () =>
-      [
-        tenantSocialLinks?.twitter && {
-          key: "twitter",
-          label: "Twitter",
-          href: tenantSocialLinks.twitter,
-        },
-        tenantSocialLinks?.discord && {
-          key: "discord",
-          label: "Discord",
-          href: tenantSocialLinks.discord,
-        },
-        tenantSocialLinks?.github && {
-          key: "github",
-          label: "GitHub",
-          href: tenantSocialLinks.github,
-        },
-        tenantSocialLinks?.telegram && {
-          key: "telegram",
-          label: "Telegram",
-          href: tenantSocialLinks.telegram,
-        },
-        tenantSocialLinks?.docs && {
-          key: "docs",
-          label: "Docs",
-          href: tenantSocialLinks.docs,
-        },
-        {
-          key: "skills",
-          label: "Skills",
-          href: karmaLinks.skills,
-        },
-      ].filter((link): link is SocialLinkItem => Boolean(link)),
-    [tenantSocialLinks]
+    () => buildSocialLinks(tenantSocialLinks, tenantSocialLinkLabels),
+    [tenantSocialLinks, tenantSocialLinkLabels]
   );
 
   if (!tenant) {

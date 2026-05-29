@@ -153,3 +153,57 @@ if (typeof window !== "undefined") {
 
 // Increase default test timeout
 vi.setConfig({ testTimeout: 30000 });
+
+// ---------------------------------------------------------------------------
+// Fail tests on unhandled promise rejections.
+//
+// Several production crashes (e.g. the form `zodResolver` re-throwing a
+// `ZodError` instead of returning field errors) surface in the browser as
+// *unhandled promise rejections*, not as thrown errors a component renders.
+// A unit test that doesn't assert on the rendered error can stay green while
+// the app is actually broken. This guard makes any rejection that escapes a
+// test fail that test.
+//
+// We listen on both the jsdom `window` (where browser-style rejections from
+// React Hook Form's `handleSubmit` are dispatched) and the Node process.
+// ---------------------------------------------------------------------------
+const unhandledRejections: unknown[] = [];
+const recordRejection = (reason: unknown) => {
+  unhandledRejections.push(reason);
+};
+
+// Capture the REAL macrotask scheduler now, before any test installs
+// `vi.useFakeTimers()`. The flush in afterEach must run on the real event loop;
+// using the (possibly faked) global `setTimeout` would hang until the test
+// timeout whenever a test has fake timers active.
+const scheduleRealMacrotask = globalThis.setTimeout.bind(globalThis);
+
+if (typeof window !== "undefined") {
+  window.addEventListener("unhandledrejection", (event) => {
+    recordRejection((event as PromiseRejectionEvent).reason);
+    // Stop jsdom from additionally logging it as an uncaught error.
+    event.preventDefault?.();
+  });
+}
+if (typeof process !== "undefined" && typeof process.on === "function") {
+  process.on("unhandledRejection", recordRejection);
+}
+
+beforeEach(() => {
+  unhandledRejections.length = 0;
+});
+
+afterEach(async () => {
+  // Let any microtask-queued rejections settle before we assert.
+  await new Promise((resolve) => scheduleRealMacrotask(resolve, 0));
+  if (unhandledRejections.length === 0) return;
+  const reasons = unhandledRejections.splice(0);
+  const formatted = reasons
+    .map((reason) =>
+      reason instanceof Error ? (reason.stack ?? reason.message) : JSON.stringify(reason)
+    )
+    .join("\n\n");
+  throw new Error(
+    `Unhandled promise rejection(s) during test (${reasons.length}):\n\n${formatted}`
+  );
+});

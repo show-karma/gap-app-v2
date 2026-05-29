@@ -1,4 +1,3 @@
-export { AboutContentSkeleton } from "./AboutContentSkeleton";
 export { ActivityFeedSkeleton } from "./ActivityFeedSkeleton";
 export { ContentTabsSkeleton } from "./ContentTabsSkeleton";
 export { FundingContentSkeleton } from "./FundingContentSkeleton";

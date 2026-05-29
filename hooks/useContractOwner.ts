@@ -32,7 +32,8 @@ const fetchContractOwner = async (address: string): Promise<boolean> => {
 
 export const useContractOwner = (chainOverride?: Chain) => {
   const { authenticated: isAuth, address } = useAuth();
-  const { setIsOwner, setIsOwnerLoading } = useOwnerStore();
+  const setIsOwner = useOwnerStore((state) => state.setIsOwner);
+  const setIsOwnerLoading = useOwnerStore((state) => state.setIsOwnerLoading);
   const signer = useSigner();
   const chain = chainOverride || gapSupportedNetworks[0];
 

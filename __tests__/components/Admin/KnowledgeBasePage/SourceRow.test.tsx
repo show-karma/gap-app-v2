@@ -49,6 +49,7 @@ const createSource = (overrides: Partial<KnowledgeSource> = {}): KnowledgeSource
   goal: null,
   syncIntervalMin: 1440,
   followLinks: false,
+  citationUrl: null,
   lastSyncedAt: "2026-04-26T00:00:00.000Z",
   lastSyncStatus: "success",
   lastSyncError: null,

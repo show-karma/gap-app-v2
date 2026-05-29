@@ -64,27 +64,41 @@ vi.mock("@/hooks/useProjectPermissions", () => ({
   }),
 }));
 
-vi.mock("@/store", () => ({
-  useOwnerStore: () => ({
-    isOwner: false,
+// FundingContent calls useAdminCommunities for its side effect of priming
+// useCommunitiesStore. We don't care about its return value — only the store
+// state, which is controlled directly via communitiesMock below.
+vi.mock("@/hooks/useAdminCommunities", () => ({
+  useAdminCommunities: vi.fn(),
+}));
+
+vi.mock("@/hooks/useAuth", () => ({
+  useAuth: () => ({
+    authenticated: true,
+    address: "0xtest-address",
   }),
 }));
+
+vi.mock("@/store", () => ({
+  useOwnerStore: (selector?: (state: { isOwner: boolean }) => unknown) => {
+    const state = { isOwner: false };
+    return typeof selector === "function" ? selector(state) : state;
+  },
+}));
+
+const communitiesMock: { communities: Array<{ uid: string }>; isLoading: boolean } = {
+  communities: [],
+  isLoading: false,
+};
 
 vi.mock("@/store/communities", () => ({
-  useCommunitiesStore: () => ({
-    communities: [],
-  }),
-}));
-
-vi.mock("@/store/communityAdmin", () => ({
-  useCommunityAdminStore: () => ({
-    isCommunityAdmin: false,
-  }),
+  useCommunitiesStore: (selector?: (state: typeof communitiesMock) => unknown) =>
+    typeof selector === "function" ? selector(communitiesMock) : communitiesMock,
 }));
 
 describe("FundingContent", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    communitiesMock.communities = [];
   });
 
   describe("Rendering with grants", () => {
@@ -144,6 +158,22 @@ describe("FundingContent", () => {
   // Note: Empty state and Loading state tests are skipped because they require
   // dynamic mock changes which are difficult to achieve with Jest's module mocking.
   // The core functionality is tested through the ProjectFundingPage integration tests.
+
+  describe("Authorization: + Add Funding button", () => {
+    it("hides the Add button for users who are not project owner/admin/community admin", () => {
+      render(<FundingContent project={mockProject} />);
+      expect(screen.queryByTestId("add-funding-button")).not.toBeInTheDocument();
+    });
+
+    // Regression: community admin of ANY community should see the button on the
+    // project's funding list — previously hidden because the store was only
+    // primed on /admin and the per-grant flag is always false here.
+    it("shows the Add button for community admins of any community", () => {
+      communitiesMock.communities = [{ uid: "community-1" }];
+      render(<FundingContent project={mockProject} />);
+      expect(screen.getByTestId("add-funding-button")).toBeInTheDocument();
+    });
+  });
 
   describe("Styling", () => {
     it("should accept custom className", () => {

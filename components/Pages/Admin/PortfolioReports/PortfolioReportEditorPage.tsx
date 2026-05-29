@@ -2,9 +2,10 @@
 
 import { ArrowLeft, Download, Eye, EyeOff, Pencil, RefreshCw } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import toast from "react-hot-toast";
 import { HtmlReportFrame } from "@/components/Pages/Community/PortfolioReports/HtmlReportFrame";
+import { ReportChartsSection } from "@/components/Pages/Community/PortfolioReports/ReportChartsSection";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,7 +24,6 @@ import {
   useUnpublishReport,
   useUpdateReportContent,
 } from "@/hooks/portfolio-reports/usePortfolioReports";
-import { downloadReportPdf } from "@/services/portfolio-reports.service";
 import { AccessDenied } from "@/src/components/ui/AccessDenied";
 import { communityAdminDenial } from "@/src/components/ui/access-denied-presets";
 import { isReportGenerating } from "@/types/portfolio-report";
@@ -49,7 +49,7 @@ interface Props {
  */
 export function PortfolioReportEditorPage({ community, reportId }: Props) {
   const slug = community.details.slug;
-  const router = useRouter();
+  const { push: routerPush } = useRouter();
   const { hasAccess, isLoading: accessLoading } = useCommunityAdminAccess(community.uid);
   const { data: report, isLoading } = usePortfolioReport(slug, reportId);
   const publishMutation = usePublishReport(slug);
@@ -58,28 +58,21 @@ export function PortfolioReportEditorPage({ community, reportId }: Props) {
   const updateContentMutation = useUpdateReportContent(slug);
 
   const [showRegenerateDialog, setShowRegenerateDialog] = useState(false);
-  const [showEditDialog, setShowEditDialog] = useState(false);
-  const [editDraft, setEditDraft] = useState("");
-  const [exportingPdf, setExportingPdf] = useState(false);
-  const exportInFlight = useRef(false);
+  // Edit-dialog state lives in one object so we can update {open, draft}
+  // atomically in event handlers. Avoids a chain of setState updates
+  // across useState + useEffect.
+  const [editState, setEditState] = useState<{ open: boolean; draft: string }>({
+    open: false,
+    draft: "",
+  });
 
-  // Close the Edit dialog if a regenerate kicks off while it's open —
-  // the draft is now stale (it was seeded from pre-regen content) and
-  // saving would clobber the freshly generated report. We also clear
-  // editDraft so a subsequent Regenerate click doesn't surface a
-  // misleading "unsaved edits" warning about content that no longer
-  // exists. The user gets a toast so they know why their dialog
-  // disappeared.
   const isReportRegenerating = report ? isReportGenerating(report) : false;
-  useEffect(() => {
-    if (showEditDialog && isReportRegenerating) {
-      setShowEditDialog(false);
-      setEditDraft("");
-      toast("Closed Edit — report is regenerating. Reopen when it finishes.", {
-        icon: "ℹ️",
-      });
-    }
-  }, [showEditDialog, isReportRegenerating]);
+  // Edit dialog hides automatically while a regenerate is in flight — the
+  // visual openness is derived, no useEffect to "react" to status changes.
+  // The toast + draft-clear for the local-regen case is handled inside
+  // handleRegenerate; for the rare remote-triggered regen, the dialog
+  // just visually closes without a toast (acceptable since it's rare).
+  const isEditDialogVisible = editState.open && !isReportRegenerating;
 
   if (accessLoading || isLoading) {
     return (
@@ -109,7 +102,15 @@ export function PortfolioReportEditorPage({ community, reportId }: Props) {
   const failed = report.status === "failed";
 
   const navigateBack = () => {
-    router.push(PAGES.ADMIN.PORTFOLIO_REPORTS(slug));
+    routerPush(PAGES.ADMIN.PORTFOLIO_REPORTS(slug));
+  };
+
+  const openEditDialog = () => {
+    setEditState({ open: true, draft: report.content ?? "" });
+  };
+
+  const closeEditDialog = () => {
+    setEditState((prev) => ({ ...prev, open: false }));
   };
 
   const handlePublish = async () => {
@@ -134,6 +135,16 @@ export function PortfolioReportEditorPage({ community, reportId }: Props) {
     try {
       await regenerateMutation.mutateAsync(reportId);
       setShowRegenerateDialog(false);
+      // If the user had Edit open, close it and clear the draft — saving
+      // post-regen would clobber the freshly generated content, and a
+      // stale draft would surface a misleading "unsaved edits" warning
+      // on the next Regenerate click.
+      if (editState.open) {
+        setEditState({ open: false, draft: "" });
+        toast("Closed Edit — report is regenerating. Reopen when it finishes.", {
+          icon: "ℹ️",
+        });
+      }
       toast.success("Regeneration started");
     } catch {
       toast.error("Failed to start regeneration");
@@ -142,39 +153,13 @@ export function PortfolioReportEditorPage({ community, reportId }: Props) {
 
   const handleSaveEdit = async () => {
     try {
-      await updateContentMutation.mutateAsync({ reportId, content: editDraft });
-      setShowEditDialog(false);
-      // Clear so the brief window before React Query's cache update
-      // propagates doesn't make `hasUnsavedEdits` falsely true.
-      setEditDraft("");
+      await updateContentMutation.mutateAsync({ reportId, content: editState.draft });
+      // Atomically close + clear so the brief window before React Query's
+      // cache update propagates doesn't make `hasUnsavedEdits` falsely true.
+      setEditState({ open: false, draft: "" });
       toast.success("Report content saved");
     } catch (err) {
       toast.error(`Failed to save: ${err instanceof Error ? err.message : "Unknown error"}`);
-    }
-  };
-
-  const handleExportPdf = async () => {
-    // Synchronous guard against double-clicks — `setExportingPdf(true)`
-    // is queued by React and won't disable the button before a second
-    // click can fire on the same event loop tick.
-    if (exportInFlight.current) return;
-    exportInFlight.current = true;
-    setExportingPdf(true);
-    try {
-      const blob = await downloadReportPdf(slug, reportId);
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `portfolio-report-${report.runDate}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      URL.revokeObjectURL(url);
-    } catch (err) {
-      toast.error(`Failed to export PDF: ${err instanceof Error ? err.message : "Unknown error"}`);
-    } finally {
-      exportInFlight.current = false;
-      setExportingPdf(false);
     }
   };
 
@@ -183,7 +168,7 @@ export function PortfolioReportEditorPage({ community, reportId }: Props) {
   // True when the user has typed in the Edit textarea and their local draft
   // diverges from the server's saved content. We only warn about *user* edits,
   // not the initial empty state before the dialog has ever been opened.
-  const hasUnsavedEdits = editDraft !== "" && editDraft !== (report.content ?? "");
+  const hasUnsavedEdits = editState.draft !== "" && editState.draft !== (report.content ?? "");
 
   return (
     <div className="flex h-full flex-col">
@@ -222,7 +207,12 @@ export function PortfolioReportEditorPage({ community, reportId }: Props) {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+      <Dialog
+        open={isEditDialogVisible}
+        onOpenChange={(open) => {
+          if (!open) closeEditDialog();
+        }}
+      >
         <DialogContent className="max-w-4xl">
           <DialogHeader>
             <DialogTitle>Edit report content</DialogTitle>
@@ -233,22 +223,24 @@ export function PortfolioReportEditorPage({ community, reportId }: Props) {
           </DialogHeader>
           <textarea
             className="h-[60vh] w-full resize-none rounded border border-zinc-300 bg-white p-3 font-mono text-xs text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
-            value={editDraft}
-            onChange={(event) => setEditDraft(event.target.value)}
+            value={editState.draft}
+            onChange={(event) => setEditState((prev) => ({ ...prev, draft: event.target.value }))}
             spellCheck={false}
             aria-label="Report HTML content"
           />
           <DialogFooter>
             <Button
               variant="outline"
-              onClick={() => setShowEditDialog(false)}
+              onClick={closeEditDialog}
               disabled={updateContentMutation.isPending}
             >
               Cancel
             </Button>
             <Button
               onClick={handleSaveEdit}
-              disabled={updateContentMutation.isPending || editDraft === (report.content ?? "")}
+              disabled={
+                updateContentMutation.isPending || editState.draft === (report.content ?? "")
+              }
             >
               {updateContentMutation.isPending ? "Saving…" : "Save"}
             </Button>
@@ -257,7 +249,7 @@ export function PortfolioReportEditorPage({ community, reportId }: Props) {
       </Dialog>
 
       {/* Top bar */}
-      <div className="flex items-center justify-between border-b border-zinc-200 px-4 py-3 dark:border-zinc-700">
+      <div className="report-print-hide flex items-center justify-between border-b border-zinc-200 px-4 py-3 dark:border-zinc-700">
         <div className="flex items-center gap-3">
           <Button
             variant="ghost"
@@ -284,10 +276,7 @@ export function PortfolioReportEditorPage({ community, reportId }: Props) {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => {
-              setEditDraft(report.content ?? "");
-              setShowEditDialog(true);
-            }}
+            onClick={openEditDialog}
             disabled={generating || !report.content}
           >
             <Pencil className="mr-1 h-3 w-3" />
@@ -296,11 +285,12 @@ export function PortfolioReportEditorPage({ community, reportId }: Props) {
           <Button
             variant="outline"
             size="sm"
-            onClick={handleExportPdf}
-            disabled={exportingPdf || generating || !report.content}
+            onClick={() => window.print()}
+            disabled={generating || !report.content}
+            title="Tip: turn off 'Headers and footers' in the print dialog for a cleaner PDF"
           >
             <Download className="mr-1 h-3 w-3" />
-            {exportingPdf ? "Exporting…" : "Export PDF"}
+            Export PDF
           </Button>
           <Button
             variant="outline"
@@ -358,7 +348,10 @@ export function PortfolioReportEditorPage({ community, reportId }: Props) {
       {/* Preview */}
       <div className="flex-1 p-4">
         {report.content ? (
-          <HtmlReportFrame html={report.content} title={`Portfolio report — ${runDateLabel}`} />
+          <div className="report-print-area mx-auto max-w-[1100px] rounded-xl bg-[#f5f6f8] p-4 sm:p-6">
+            <HtmlReportFrame html={report.content} title={`Portfolio report — ${runDateLabel}`} />
+            <ReportChartsSection communitySlug={slug} reportId={report.id} authenticated />
+          </div>
         ) : (
           <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-6 text-sm text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900/50 dark:text-zinc-400">
             No content yet. Regenerate to produce the report body.

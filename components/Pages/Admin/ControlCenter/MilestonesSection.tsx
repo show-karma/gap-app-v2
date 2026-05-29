@@ -530,6 +530,7 @@ export const MilestonesSection = memo(function MilestonesSection({
                           <PaymentStatusDropdown
                             currentStatus={invoice.paymentStatus ?? "unpaid"}
                             milestoneLabel={invoice.milestoneLabel}
+                            milestoneUID={invoice.milestoneUID}
                             grantUID={grant.grantUid}
                             communityUID={communityUID}
                             paymentStatusDate={invoice.paymentStatusDate}

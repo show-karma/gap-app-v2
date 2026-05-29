@@ -3,7 +3,7 @@ import type { ApplicationQuestion } from "@/types/whitelabel-entities";
 
 export function buildFileSchema(q: ApplicationQuestion) {
   if (q.required) {
-    let fieldSchema: z.ZodTypeAny = z
+    let fieldSchema: z.ZodType = z
       .union([z.instanceof(File), z.undefined(), z.null()])
       .refine((val) => val !== undefined && val !== null, {
         message: "This field is required",
@@ -38,7 +38,7 @@ export function buildFileSchema(q: ApplicationQuestion) {
   }
 
   if (q.validation?.maxFileSize || (q.validation?.fileTypes && q.validation.fileTypes.length > 0)) {
-    let fileSchema: z.ZodTypeAny = z.instanceof(File);
+    let fileSchema: z.ZodType = z.instanceof(File);
 
     if (q.validation?.maxFileSize) {
       const maxSizeMB = q.validation.maxFileSize / (1024 * 1024);

@@ -56,8 +56,6 @@ const TENANT_CONFIGS: Partial<Record<KnownTenantId, AskKarmaConfig>> = {
     exampleQuestions: [
       "How do I submit a milestone update for my project?",
       "Why can't I access the project I am reviewing?",
-      "Which metrics matter most when evaluating project impact?",
-      "How is ProPGF currently supporting fil.one?",
       "What is the typical payment timeline after invoice submission?",
       "Are there retrospective reports from previous funding rounds?",
     ],
@@ -69,10 +67,9 @@ const TENANT_CONFIGS: Partial<Record<KnownTenantId, AskKarmaConfig>> = {
           // No href → renders as "coming soon" (muted, non-interactive)
           { label: "Round 3 Announcement" },
           { label: "Selection Committee" },
-          // TODO(ask-karma-filecoin): replace placeholder href with real destination
           {
             label: "Retro from previous rounds",
-            href: "https://filpgf.io/propgf",
+            href: "https://www.filecoin.io/blog/reflections-from-propgf-batch-1-what-we-learned-about-funding-impact-in-the-filecoin-ecosystem",
             isExternal: true,
           },
         ],
@@ -90,24 +87,28 @@ const TENANT_CONFIGS: Partial<Record<KnownTenantId, AskKarmaConfig>> = {
         icon: "settings",
         title: "Navigate filpgf.io",
         links: [
-          // TODO(ask-karma-filecoin): replace placeholder hrefs with real destinations
-          { label: "ProPGF Grantee Guide", href: "https://filpgf.io/propgf", isExternal: true },
-          { label: "Milestone Reviewer Guide", href: "https://filpgf.io/propgf", isExternal: true },
-          { label: "FAQs", href: "https://filpgf.io/propgf", isExternal: true },
+          {
+            label: "ProPGF Grantee Guide",
+            href: "https://docs.gap.karmahq.xyz/how-to-guides/partners/filecoin/propgf-grantee-guide",
+            isExternal: true,
+          },
+          {
+            label: "Milestone Reviewer Guide",
+            href: "https://docs.gap.karmahq.xyz/how-to-guides/partners/filecoin/milestone-reviewer-guide",
+            isExternal: true,
+          },
         ],
       },
       {
         icon: "document",
         title: "Focus Areas",
         links: [
-          // TODO(ask-karma-filecoin): replace placeholder href with real destination
-          { label: "Large Data Onboarding", href: "https://filpgf.io/propgf", isExternal: true },
           {
             label: "Filecoin Onchain Cloud",
             href: "https://filecoin.cloud/",
             isExternal: true,
           },
-          { label: "Fil.one", href: "https://fil.one", isExternal: true },
+          { label: "Fil.one", href: "https://fil.one/", isExternal: true },
         ],
       },
       {
@@ -119,8 +120,11 @@ const TENANT_CONFIGS: Partial<Record<KnownTenantId, AskKarmaConfig>> = {
             href: "https://www.filecoin.io/blog/the-2026-filecoin-network-strategy",
             isExternal: true,
           },
-          // TODO(ask-karma-filecoin): replace placeholder href with real destination
-          { label: "ProPGF Project Impact", href: "https://filpgf.io/propgf", isExternal: true },
+          {
+            label: "Filecoin Data Portal",
+            href: "https://filecoindataportal.xyz/",
+            isExternal: true,
+          },
         ],
       },
       {
@@ -128,7 +132,11 @@ const TENANT_CONFIGS: Partial<Record<KnownTenantId, AskKarmaConfig>> = {
         title: "RetroPGF",
         links: [
           { label: "About RetroPGF", href: "https://www.fil-retropgf.io/", isExternal: true },
-          { label: "Past rounds", href: "https://www.fil-retropgf.io/", isExternal: true },
+          {
+            label: "Past rounds",
+            href: "https://www.fil-retropgf.io/archive/round-2/",
+            isExternal: true,
+          },
         ],
       },
     ],

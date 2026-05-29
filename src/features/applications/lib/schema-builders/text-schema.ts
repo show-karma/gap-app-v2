@@ -29,7 +29,7 @@ function isSafePattern(pattern: string): boolean {
 
 export function buildTextSchema(q: ApplicationQuestion) {
   if (q.required) {
-    let fieldSchema: z.ZodTypeAny = z
+    let fieldSchema: z.ZodType = z
       .union([z.string(), z.undefined(), z.null()])
       .refine((val) => val !== undefined && val !== null && val !== "", {
         message: "This field is required",

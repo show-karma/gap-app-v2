@@ -17,11 +17,12 @@ interface ProjectPermissionsResult {
 
 export const useProjectPermissions = () => {
   const { address, isConnected, authenticated: isAuth, user } = useAuth();
-  const { project } = useProjectStore();
+  const project = useProjectStore((state) => state.project);
   const projectId = project?.details?.slug || project?.uid;
   const { project: projectInstance } = useProjectInstance(projectId);
 
-  const { setIsProjectAdmin, setIsProjectOwner } = useProjectStore();
+  const setIsProjectAdmin = useProjectStore((state) => state.setIsProjectAdmin);
+  const setIsProjectOwner = useProjectStore((state) => state.setIsProjectOwner);
 
   const checkPermissions = async (): Promise<ProjectPermissionsResult> => {
     // Early returns for invalid states

@@ -36,6 +36,8 @@ interface MarkdownEditorProps {
   showCharacterCount?: boolean;
   /** Enable preview toggle button (default: true) */
   enablePreviewToggle?: boolean;
+  /** Override the label element's className. When omitted, a bold default is used. */
+  labelClassName?: string;
 }
 
 import "md-editor-rt/lib/style.css";
@@ -110,6 +112,7 @@ export const MarkdownEditor: FC<MarkdownEditorProps> = ({
   maxLength = DEFAULT_MAX_LENGTH,
   showCharacterCount = false,
   enablePreviewToggle = true,
+  labelClassName,
 }) => {
   // md-editor-rt accesses `modelValue.length` synchronously inside its
   // CodeMirror input/paste/setValue handlers — if a caller (or RHF default)
@@ -205,7 +208,10 @@ export const MarkdownEditor: FC<MarkdownEditorProps> = ({
       {/* Header with label and preview toggle */}
       <div className="flex items-center justify-between mb-2">
         {label && (
-          <label htmlFor={safeId} className="block text-sm font-bold text-black dark:text-zinc-100">
+          <label
+            htmlFor={safeId}
+            className={labelClassName ?? "block text-sm font-bold text-black dark:text-zinc-100"}
+          >
             {label} {isRequired && <span className="text-red-500">*</span>}
           </label>
         )}

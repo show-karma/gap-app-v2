@@ -1,13 +1,13 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft, Calendar, Clock, Plus, Save, Sun, Trash2, X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
 import { DeleteDialog } from "@/components/DeleteDialog";
+import { ChartSectionPicker } from "@/components/Pages/Admin/PortfolioReports/ChartSectionPicker";
 import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
 import { SearchDropdown } from "@/components/Pages/ProgramRegistry/SearchDropdown";
 import { Spinner } from "@/components/Utilities/Spinner";
@@ -19,11 +19,7 @@ import {
   useReportConfigs,
   useUpdateReportConfig,
 } from "@/hooks/portfolio-reports/usePortfolioReports";
-import type {
-  ReportConfig,
-  ReportSchedule,
-  ScheduleIntervalUnit,
-} from "@/types/portfolio-report";
+import type { ReportConfig, ReportSchedule, ScheduleIntervalUnit } from "@/types/portfolio-report";
 import type { Community } from "@/types/v2/community";
 import { PAGES } from "@/utilities/pages";
 import {
@@ -34,6 +30,7 @@ import {
   RUN_DATE_REGEX,
   type SchedulePresetKey,
 } from "@/utilities/portfolio-reports/period";
+import { zodResolver } from "@/utilities/zodResolver";
 
 interface Props {
   community: Community;
@@ -41,8 +38,7 @@ interface Props {
 }
 
 const AVAILABLE_MODELS = [
-  { id: "gpt-5.2", label: "GPT-5.2 (OpenAI)" },
-  { id: "gpt-5.4-nano", label: "GPT-5.4 Nano (OpenAI)" },
+  { id: "gpt-5.5", label: "GPT-5.5 (OpenAI)" },
   { id: "claude-haiku-4-5-20251001", label: "Claude Haiku 4.5 (Anthropic)" },
   { id: "grok-4-1-fast-reasoning", label: "Grok 4.1 (xAI)" },
 ];
@@ -81,11 +77,7 @@ const isoDate = z
   .refine((v) => {
     const [y, m, d] = v.split("-").map(Number);
     const date = new Date(y, m - 1, d);
-    return (
-      date.getFullYear() === y &&
-      date.getMonth() === m - 1 &&
-      date.getDate() === d
-    );
+    return date.getFullYear() === y && date.getMonth() === m - 1 && date.getDate() === d;
   }, "Not a valid calendar date");
 
 const scheduleZod = z.object({
@@ -100,11 +92,10 @@ const scheduleZod = z.object({
 
 const formSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(128),
-  programIds: z
-    .array(z.string().min(1))
-    .min(1, "Select at least one program"),
+  programIds: z.array(z.string().min(1)).min(1, "Select at least one program"),
   modelId: z.enum(MODEL_IDS, { message: "Pick a model" }),
   prompt: z.string().trim().min(1, "A prompt is required"),
+  chartIndicatorIds: z.array(z.string().min(1)).max(50).default([]),
   schedule: scheduleZod,
   isActive: z.boolean(),
 });
@@ -116,9 +107,22 @@ const EMPTY_FORM_VALUES: FormValues = {
   programIds: [],
   modelId: AVAILABLE_MODELS[0].id,
   prompt: "",
+  chartIndicatorIds: [],
   schedule: defaultScheduleForPreset("monthly"),
   isActive: true,
 };
+
+function buildFormValues(cfg: ReportConfig): FormValues {
+  return {
+    name: cfg.name,
+    programIds: cfg.programIds,
+    modelId: cfg.modelId as FormValues["modelId"],
+    prompt: cfg.prompt,
+    chartIndicatorIds: cfg.chartIndicatorIds ?? [],
+    schedule: cfg.schedule,
+    isActive: cfg.isActive,
+  };
+}
 
 interface ProgramOption {
   programId: string;
@@ -140,21 +144,61 @@ function buildProgramOptions(grantPrograms: GrantProgram[]): ProgramOption[] {
 }
 
 export function ReportConfigPage({ community, grantPrograms }: Props) {
-  const slug = community.details.slug;
-  const router = useRouter();
-  const searchParams = useSearchParams();
   const { hasAccess, isLoading: accessLoading } = useCommunityAdminAccess(community.uid);
   const {
     data: configs,
     isLoading,
     isError: configsError,
     refetch: refetchConfigs,
-  } = useReportConfigs(slug);
+  } = useReportConfigs(community.details.slug);
 
-  const programOptions = useMemo(
-    () => buildProgramOptions(grantPrograms),
-    [grantPrograms]
+  if (accessLoading || isLoading) {
+    return (
+      <div className="flex items-center justify-center p-12">
+        <Spinner />
+      </div>
+    );
+  }
+
+  if (!hasAccess) {
+    return (
+      <div className="flex items-center justify-center p-12 text-zinc-500">
+        You don&apos;t have permission to view this page.
+      </div>
+    );
+  }
+
+  return (
+    <ReportConfigPageLoaded
+      community={community}
+      grantPrograms={grantPrograms}
+      configs={configs ?? []}
+      configsError={configsError}
+      refetchConfigs={refetchConfigs}
+    />
   );
+}
+
+interface LoadedProps {
+  community: Community;
+  grantPrograms: GrantProgram[];
+  configs: ReportConfig[];
+  configsError: boolean;
+  refetchConfigs: () => void;
+}
+
+function ReportConfigPageLoaded({
+  community,
+  grantPrograms,
+  configs,
+  configsError,
+  refetchConfigs,
+}: LoadedProps) {
+  const slug = community.details.slug;
+  const { push: routerPush } = useRouter();
+  const searchParams = useSearchParams();
+
+  const programOptions = useMemo(() => buildProgramOptions(grantPrograms), [grantPrograms]);
   const labelByProgramId = useMemo(
     () => new Map(programOptions.map((o) => [o.programId, o.label])),
     [programOptions]
@@ -164,35 +208,21 @@ export function ReportConfigPage({ community, grantPrograms }: Props) {
     [programOptions]
   );
 
-  const [editingId, setEditingId] = useState<string | "new" | null>(null);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
-
-  // Honor `?new=1` or `?editId=<id>` when arriving from the list page so the
-  // form opens immediately. Only consume each query value once — if the user
-  // closes the form, we don't want to reopen it on the next render.
-  const [didConsumeQuery, setDidConsumeQuery] = useState(false);
-  useEffect(() => {
-    if (didConsumeQuery) return;
-    if (isLoading) return;
+  // Honor `?new=1` or `?editId=<id>` on first mount. Configs are guaranteed
+  // loaded by the outer gate, so the initial value is computed synchronously
+  // without a chained effect.
+  const [editingId, setEditingId] = useState<string | "new" | null>(() => {
     const newParam = searchParams.get("new");
     const editParam = searchParams.get("editId");
-    if (newParam === "1") {
-      setEditingId("new");
-      setDidConsumeQuery(true);
-    } else if (editParam && configs?.some((c) => c.id === editParam)) {
-      setEditingId(editParam);
-      setDidConsumeQuery(true);
-    } else if (newParam || editParam) {
-      // Param present but no match — still mark consumed so we don't loop.
-      setDidConsumeQuery(true);
-    }
-  }, [searchParams, configs, isLoading, didConsumeQuery]);
+    if (newParam === "1") return "new";
+    if (editParam && configs.some((c) => c.id === editParam)) return editParam;
+    return null;
+  });
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const editingConfig = useMemo(
     () =>
-      editingId && editingId !== "new"
-        ? configs?.find((c) => c.id === editingId) ?? null
-        : null,
+      editingId && editingId !== "new" ? (configs.find((c) => c.id === editingId) ?? null) : null,
     [configs, editingId]
   );
 
@@ -209,17 +239,35 @@ export function ReportConfigPage({ community, grantPrograms }: Props) {
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: EMPTY_FORM_VALUES,
+    defaultValues: editingConfig ? buildFormValues(editingConfig) : EMPTY_FORM_VALUES,
   });
 
+  const openNewForm = () => {
+    setEditingId("new");
+    reset(EMPTY_FORM_VALUES);
+  };
+
+  const openEditForm = (configId: string) => {
+    const cfg = configs.find((c) => c.id === configId);
+    setEditingId(configId);
+    if (cfg) reset(buildFormValues(cfg));
+  };
+
+  const closeForm = () => {
+    setEditingId(null);
+  };
+
   const selectedProgramIds = watch("programIds");
-  const selectedProgramLabels = selectedProgramIds.map(
-    (id) => labelByProgramId.get(id) ?? id
-  );
+  const selectedProgramLabels = selectedProgramIds.map((id) => labelByProgramId.get(id) ?? id);
 
   const schedule = watch("schedule");
   const setSchedule = (next: ReportSchedule) => {
     setValue("schedule", next, { shouldValidate: true, shouldDirty: true });
+  };
+
+  const chartIndicatorIds = watch("chartIndicatorIds");
+  const setChartIndicatorIds = (next: string[]) => {
+    setValue("chartIndicatorIds", next, { shouldValidate: true, shouldDirty: true });
   };
 
   // Allow already-past dates on existing configs so admins can edit
@@ -237,38 +285,6 @@ export function ReportConfigPage({ community, grantPrograms }: Props) {
     const earliestKept = original && original < todayIso ? original : todayIso;
     return schedule.startDate > earliestKept ? schedule.startDate : earliestKept;
   }, [editingConfig, schedule.startDate, todayIso]);
-
-  useEffect(() => {
-    if (!editingId) return;
-    if (editingId === "new") {
-      reset(EMPTY_FORM_VALUES);
-    } else if (editingConfig) {
-      reset({
-        name: editingConfig.name,
-        programIds: editingConfig.programIds,
-        modelId: editingConfig.modelId,
-        prompt: editingConfig.prompt,
-        schedule: editingConfig.schedule,
-        isActive: editingConfig.isActive,
-      });
-    }
-  }, [editingId, editingConfig, reset]);
-
-  if (accessLoading || isLoading) {
-    return (
-      <div className="flex items-center justify-center p-12">
-        <Spinner />
-      </div>
-    );
-  }
-
-  if (!hasAccess) {
-    return (
-      <div className="flex items-center justify-center p-12 text-zinc-500">
-        You don&apos;t have permission to view this page.
-      </div>
-    );
-  }
 
   const handleSelectProgram = (label: string) => {
     const programId = programIdByLabel.get(label);
@@ -299,10 +315,7 @@ export function ReportConfigPage({ community, grantPrograms }: Props) {
         ? editingConfig.schedule.ends.date
         : undefined;
 
-    if (
-      values.schedule.startDate < todayIso &&
-      values.schedule.startDate !== originalStartDate
-    ) {
+    if (values.schedule.startDate < todayIso && values.schedule.startDate !== originalStartDate) {
       toast.error("Start date can't be in the past.");
       return;
     }
@@ -324,9 +337,7 @@ export function ReportConfigPage({ community, grantPrograms }: Props) {
         toast.success("Config created");
       } else {
         if (!editingConfig) {
-          toast.error(
-            "This config no longer exists. Please refresh and try again."
-          );
+          toast.error("This config no longer exists. Please refresh and try again.");
           return;
         }
         await updateMutation.mutateAsync(values);
@@ -381,7 +392,7 @@ export function ReportConfigPage({ community, grantPrograms }: Props) {
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => router.push(PAGES.ADMIN.PORTFOLIO_REPORTS(slug))}
+          onClick={() => routerPush(PAGES.ADMIN.PORTFOLIO_REPORTS(slug))}
           aria-label="Back to portfolio reports"
         >
           <ArrowLeft className="h-4 w-4" />
@@ -395,7 +406,7 @@ export function ReportConfigPage({ community, grantPrograms }: Props) {
           </p>
         </div>
         {!isFormOpen && (
-          <Button onClick={() => setEditingId("new")}>
+          <Button onClick={openNewForm}>
             <Plus className="mr-2 h-4 w-4" />
             New Report
           </Button>
@@ -405,19 +416,12 @@ export function ReportConfigPage({ community, grantPrograms }: Props) {
       {/* Configs table */}
       {configsError ? (
         <div className="flex flex-col items-center justify-center rounded-lg border border-red-200 p-12 text-center dark:border-red-900/40">
-          <p className="text-sm text-red-600 dark:text-red-400">
-            Failed to load report configs.
-          </p>
-          <Button
-            variant="outline"
-            size="sm"
-            className="mt-3"
-            onClick={() => refetchConfigs()}
-          >
+          <p className="text-sm text-red-600 dark:text-red-400">Failed to load report configs.</p>
+          <Button variant="outline" size="sm" className="mt-3" onClick={() => refetchConfigs()}>
             Retry
           </Button>
         </div>
-      ) : !configs || configs.length === 0 ? (
+      ) : configs.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-zinc-300 p-12 text-center dark:border-zinc-600">
           <p className="text-sm text-zinc-500">
             No report configs yet. Click &quot;New Report&quot; to create the first one.
@@ -463,11 +467,7 @@ export function ReportConfigPage({ community, grantPrograms }: Props) {
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center justify-end gap-1">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setEditingId(cfg.id)}
-                      >
+                      <Button variant="ghost" size="sm" onClick={() => openEditForm(cfg.id)}>
                         Edit
                       </Button>
                       <Button
@@ -494,14 +494,12 @@ export function ReportConfigPage({ community, grantPrograms }: Props) {
           className="space-y-6 rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-800"
         >
           <div className="flex items-start justify-between">
-            <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-              {formTitle}
-            </h2>
+            <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">{formTitle}</h2>
             <Button
               variant="ghost"
               size="sm"
               type="button"
-              onClick={() => setEditingId(null)}
+              onClick={closeForm}
               aria-label="Close form"
             >
               <X className="h-4 w-4" />
@@ -523,16 +521,14 @@ export function ReportConfigPage({ community, grantPrograms }: Props) {
               className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-100"
               {...register("name")}
             />
-            {errors.name && (
-              <p className="mt-1 text-xs text-red-500">{errors.name.message}</p>
-            )}
+            {errors.name && <p className="mt-1 text-xs text-red-500">{errors.name.message}</p>}
           </div>
 
           {/* Programs */}
           <div>
-            <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+            <span className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
               Programs
-            </label>
+            </span>
             <SearchDropdown
               list={programOptions.map((o) => o.label)}
               selected={selectedProgramLabels}
@@ -601,9 +597,9 @@ export function ReportConfigPage({ community, grantPrograms }: Props) {
               Report Prompt
             </label>
             <p className="mb-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-200">
-              <strong>Tip:</strong> specify the time window in your prompt
-              (e.g. &quot;summarize the last 30 days&quot; or &quot;past quarter&quot;).
-              If you don&apos;t, the agent defaults to the last 30 days.
+              <strong>Tip:</strong> specify the time window in your prompt (e.g. &quot;summarize the
+              last 30 days&quot; or &quot;past quarter&quot;). If you don&apos;t, the agent defaults
+              to the last 30 days.
             </p>
             <textarea
               id="prompt"
@@ -612,17 +608,27 @@ export function ReportConfigPage({ community, grantPrograms }: Props) {
               className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm font-mono dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-100"
               {...register("prompt")}
             />
-            {errors.prompt && (
-              <p className="mt-1 text-xs text-red-500">{errors.prompt.message}</p>
-            )}
+            {errors.prompt && <p className="mt-1 text-xs text-red-500">{errors.prompt.message}</p>}
+          </div>
+
+          {/* Metrics */}
+          <div>
+            <div className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+              Metrics
+            </div>
+            <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">
+              Interactive metrics shown below each generated report: one card per indicator with a
+              sparkline per project, covering Jan 1 of the report year through the run date.
+            </p>
+            <ChartSectionPicker
+              communityId={community.uid}
+              value={chartIndicatorIds ?? []}
+              onChange={setChartIndicatorIds}
+            />
           </div>
 
           <div className="flex items-center justify-end gap-2">
-            <Button
-              variant="outline"
-              type="button"
-              onClick={() => setEditingId(null)}
-            >
+            <Button variant="outline" type="button" onClick={closeForm}>
               Cancel
             </Button>
             <Button type="submit" disabled={isSaving}>
@@ -643,19 +649,12 @@ interface SchedulePickerProps {
   minEndsDate: string;
 }
 
-function SchedulePicker({
-  schedule,
-  onChange,
-  minStartDate,
-  minEndsDate,
-}: SchedulePickerProps) {
+function SchedulePicker({ schedule, onChange, minStartDate, minEndsDate }: SchedulePickerProps) {
   const activePreset = detectPreset(schedule);
 
   const handlePresetClick = (key: SchedulePresetKey) => {
     if (key === "custom") return;
-    onChange(
-      defaultScheduleForPreset(key, parseIsoOrToday(schedule.startDate))
-    );
+    onChange(defaultScheduleForPreset(key, parseIsoOrToday(schedule.startDate)));
   };
 
   const setIntervalCount = (next: number) => {
@@ -672,8 +671,7 @@ function SchedulePicker({
     if (kind === "never") {
       onChange({ ...schedule, ends: { kind: "never" } });
     } else {
-      const fallback =
-        schedule.ends.kind === "on_date" ? schedule.ends.date : schedule.startDate;
+      const fallback = schedule.ends.kind === "on_date" ? schedule.ends.date : schedule.startDate;
       onChange({ ...schedule, ends: { kind: "on_date", date: fallback } });
     }
   };
@@ -682,16 +680,13 @@ function SchedulePicker({
     onChange({ ...schedule, ends: { kind: "on_date", date } });
   };
 
-  const previewDates = useMemo(
-    () => computeNextRuns(schedule, 4),
-    [schedule]
-  );
+  const previewDates = useMemo(() => computeNextRuns(schedule, 4), [schedule]);
 
   return (
     <div>
-      <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+      <span className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
         Schedule
-      </label>
+      </span>
       <p className="mb-2 text-xs text-zinc-400">
         Choose how often the report runs. Pick a preset or fine-tune below.
       </p>
@@ -703,8 +698,7 @@ function SchedulePicker({
             <button
               key={key}
               type="button"
-              role="radio"
-              aria-checked={active}
+              aria-pressed={active}
               onClick={() => handlePresetClick(key)}
               className={`flex flex-col items-center gap-1 rounded-md border px-2 py-2 text-xs font-medium transition-colors ${
                 active
@@ -712,7 +706,9 @@ function SchedulePicker({
                   : "border-zinc-200 text-zinc-600 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-700/50"
               }`}
             >
-              <Icon className={`h-4 w-4 ${active ? "text-blue-500 dark:text-blue-400" : "text-zinc-400"}`} />
+              <Icon
+                className={`h-4 w-4 ${active ? "text-blue-500 dark:text-blue-400" : "text-zinc-400"}`}
+              />
               {label}
             </button>
           );
@@ -735,6 +731,7 @@ function SchedulePicker({
           <span className="w-16 shrink-0 text-zinc-500">Starting</span>
           <input
             type="date"
+            aria-label="Schedule start date"
             value={schedule.startDate}
             min={minStartDate}
             onChange={(e) => setStartDate(e.target.value)}
@@ -755,6 +752,7 @@ function SchedulePicker({
           {schedule.ends.kind === "on_date" && (
             <input
               type="date"
+              aria-label="Schedule end date"
               value={schedule.ends.date}
               min={minEndsDate}
               onChange={(e) => setEndsDate(e.target.value)}
@@ -777,9 +775,7 @@ function SchedulePicker({
           </span>
         </div>
         {previewDates.length === 0 ? (
-          <p className="text-xs text-zinc-500">
-            Pick a valid start date to see upcoming runs
-          </p>
+          <p className="text-xs text-zinc-500">Pick a valid start date to see upcoming runs</p>
         ) : (
           <div className="flex flex-wrap gap-1.5">
             {previewDates.map((d) => (
@@ -797,13 +793,7 @@ function SchedulePicker({
   );
 }
 
-function Stepper({
-  value,
-  onChange,
-}: {
-  value: number;
-  onChange: (next: number) => void;
-}) {
+function Stepper({ value, onChange }: { value: number; onChange: (next: number) => void }) {
   return (
     <div className="inline-flex h-7 items-center overflow-hidden rounded-md border border-zinc-300 bg-white dark:border-zinc-600 dark:bg-zinc-700">
       <button
@@ -849,8 +839,7 @@ function Segmented<T extends string>({
           <button
             key={opt.value}
             type="button"
-            role="radio"
-            aria-checked={active}
+            aria-pressed={active}
             onClick={() => onChange(opt.value)}
             className={`px-3 text-xs font-medium ${
               i > 0 ? "border-l border-zinc-300 dark:border-zinc-600" : ""

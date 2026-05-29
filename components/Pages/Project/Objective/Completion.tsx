@@ -43,7 +43,7 @@ export const ObjectiveCardComplete = ({
   handleCompleting: (isCompleting: boolean) => void;
 }) => {
   const [isDeleting, setIsDeleting] = useState(false);
-  const { isProjectOwner } = useProjectStore();
+  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isAuthorized = isProjectOwner || isProjectAdmin || isContractOwner;
@@ -75,12 +75,13 @@ export const ObjectiveCardComplete = ({
       });
 
       if (!setup) {
-        return;
+        throw new Error("WALLET_SETUP_FAILED");
       }
 
       const { gapClient, walletSigner } = setup;
+      if (!gapClient?.network) throw new Error("WALLET_SETUP_FAILED");
       const fetchedProject = await getProjectById(projectId);
-      if (!fetchedProject) return;
+      if (!fetchedProject) throw new Error("Failed to fetch project data");
       const projectRecipient = fetchedProject.recipient;
       const fetchedMilestones = await getProjectObjectives(
         projectId,
@@ -88,12 +89,12 @@ export const ObjectiveCardComplete = ({
         projectRecipient,
         fetchedProject.chainID
       );
-      if (!fetchedMilestones || !gapClient?.network) return;
-      const objectivesInstances = ProjectMilestone.from(fetchedMilestones, gapClient?.network);
+      if (!fetchedMilestones) throw new Error("Failed to fetch milestones");
+      const objectivesInstances = ProjectMilestone.from(fetchedMilestones, gapClient.network);
       const objectiveInstance = objectivesInstances.find(
         (item) => item.uid.toLowerCase() === objective.uid.toLowerCase()
       );
-      if (!objectiveInstance) return;
+      if (!objectiveInstance) throw new Error("Project milestone not found");
 
       const checkIfAttestationExists = async (callbackFn?: () => void) => {
         await retryUntilConditionMet(
@@ -167,17 +168,22 @@ export const ObjectiveCardComplete = ({
         }
       }
     } catch (error: any) {
-      showError(MESSAGES.PROJECT_OBJECTIVE_FORM.COMPLETE.DELETE.ERROR);
-      errorManager(
-        MESSAGES.PROJECT_OBJECTIVE_FORM.COMPLETE.DELETE.ERROR,
-        error,
-        {
-          objectiveUID: objective.uid,
-          projectUID: objective.refUID,
-          address,
-        },
-        { error: MESSAGES.PROJECT_OBJECTIVE_FORM.COMPLETE.DELETE.ERROR }
-      );
+      console.error("[deleteObjectiveCompletion] failed:", error);
+      // Setup failures have already been surfaced by setupChainAndWallet —
+      // skip the duplicate generic toast.
+      if (error?.message !== "WALLET_SETUP_FAILED") {
+        showError(MESSAGES.PROJECT_OBJECTIVE_FORM.COMPLETE.DELETE.ERROR);
+        errorManager(
+          MESSAGES.PROJECT_OBJECTIVE_FORM.COMPLETE.DELETE.ERROR,
+          error,
+          {
+            objectiveUID: objective.uid,
+            projectUID: objective.refUID,
+            address,
+          },
+          { error: MESSAGES.PROJECT_OBJECTIVE_FORM.COMPLETE.DELETE.ERROR }
+        );
+      }
     } finally {
       setIsDeleting(false);
       setIsStepper(false);

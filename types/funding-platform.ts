@@ -39,6 +39,14 @@ export interface IMilestoneData {
   milestoneUID?: string; // Populated by the indexer once the slot is anchored on-chain
 }
 
+// Metric Data Structure (pure captured text — not tied to the Indicator system)
+export interface IMetricData {
+  metric: string;
+  dataSource: string;
+  howItsMeasured: string;
+  target: string;
+}
+
 // Form Field Types (unchanged)
 export interface IFormField {
   id: string; // Added ID field for V2
@@ -53,6 +61,7 @@ export interface IFormField {
     | "radio"
     | "date"
     | "milestone"
+    | "metric"
     | "karma_profile_link"
     | "section_header";
   label: string;
@@ -67,6 +76,8 @@ export interface IFormField {
     message?: string;
     maxMilestones?: number;
     minMilestones?: number;
+    maxMetrics?: number;
+    minMetrics?: number;
   };
   description?: string; // Added for question builder
 }
@@ -149,13 +160,26 @@ export interface IFundingApplication {
     evaluation?: string;
     promptId?: string;
     evaluatedAt?: string | Date;
-    /**
-     * Markdown block describing the applicant's Karma project track record
-     * that was injected into the AI prompt at evaluation time. Present only
-     * when the program has a karma_profile_link field and the applicant
-     * linked a project. Used by reviewers to audit AI claims.
-     */
+  };
+  /**
+   * Track-record AI evaluation (admin-only). Independent of `internalAIEvaluation`
+   * — judges the applicant's delivery history across past Karma grants,
+   * milestones, and indicators rather than the proposal itself. Stripped from
+   * non-admin API responses by the same sanitizer that hides `internalAIEvaluation`.
+   */
+  karmaProfileEvaluation?: {
+    evaluation?: string;
+    promptId?: string;
+    evaluatedAt?: string | Date;
+    status?: "pending" | "in_progress" | "completed" | "failed" | "skipped";
     context?: string;
+    contextHash?: string;
+    skipReason?:
+      | "no_field_configured"
+      | "uid_empty"
+      | "uid_invalid"
+      | "project_not_found"
+      | "aggregator_failed";
   };
   appReviewers?: string[]; // Array of program reviewer addresses assigned to this application
   milestoneReviewers?: string[]; // Array of milestone reviewer addresses assigned to this application

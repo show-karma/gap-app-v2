@@ -2,16 +2,14 @@
 
 import { ChevronRight, Download } from "lucide-react";
 import Link from "next/link";
-import { useRef, useState } from "react";
-import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
-import { downloadReportPdf } from "@/services/portfolio-reports.service";
 import type { PortfolioReport } from "@/types/portfolio-report";
 import type { Community } from "@/types/v2/community";
 import { formatRunDate } from "@/utilities/portfolio-reports/period";
 import { BackToTop } from "./BackToTop";
 import { HtmlReportFrame } from "./HtmlReportFrame";
 import { ReadingProgress } from "./ReadingProgress";
+import { ReportChartsSection } from "./ReportChartsSection";
 
 interface Props {
   community: Community;
@@ -21,13 +19,12 @@ interface Props {
   backLabel?: string;
   bannerText?: string;
   /**
-   * When provided, surfaces an "Export PDF" button next to the
-   * breadcrumb. Pass `{ communitySlug, reportId }` from contexts where
-   * the viewer is authorized to call the admin-scoped PDF endpoint
-   * (e.g. the admin /preview tab). Public report views should leave
-   * this undefined.
+   * `true` when the viewer is an authenticated admin (e.g. the admin
+   * `/preview` tab). Controls whether the charts endpoint is called via
+   * the auth-aware API client — needed because drafts/failed/generating
+   * reports require community-admin auth.
    */
-  exportContext?: { communitySlug: string; reportId: string };
+  isAdmin?: boolean;
 }
 
 function formatDate(iso: string): string {
@@ -39,42 +36,15 @@ function formatDate(iso: string): string {
 }
 
 export function PortfolioReportDocumentView({
-  community: _community,
+  community,
   runDate,
   report,
   backHref,
   backLabel = "Reports",
   bannerText,
-  exportContext,
+  isAdmin = false,
 }: Props) {
   const runDateLabel = formatRunDate(runDate).label;
-  const [exportingPdf, setExportingPdf] = useState(false);
-  const exportInFlight = useRef(false);
-
-  const handleExportPdf = async () => {
-    if (!exportContext) return;
-    // Synchronous guard against double-clicks; setState is async and the
-    // disabled prop won't update before a second click in the same tick.
-    if (exportInFlight.current) return;
-    exportInFlight.current = true;
-    setExportingPdf(true);
-    try {
-      const blob = await downloadReportPdf(exportContext.communitySlug, exportContext.reportId);
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `portfolio-report-${runDate}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      URL.revokeObjectURL(url);
-    } catch (err) {
-      toast.error(`Failed to export PDF: ${err instanceof Error ? err.message : "Unknown error"}`);
-    } finally {
-      exportInFlight.current = false;
-      setExportingPdf(false);
-    }
-  };
 
   return (
     <>
@@ -86,7 +56,7 @@ export function PortfolioReportDocumentView({
           </div>
         ) : null}
 
-        <div className="mb-8 flex flex-wrap items-center justify-between gap-3">
+        <div className="report-print-hide mb-8 flex flex-wrap items-center justify-between gap-3">
           <nav aria-label="Breadcrumb">
             <ol className="flex flex-wrap items-center gap-1.5 text-sm text-zinc-500 dark:text-zinc-400">
               <li>
@@ -105,22 +75,29 @@ export function PortfolioReportDocumentView({
               </li>
             </ol>
           </nav>
-          {exportContext ? (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleExportPdf}
-              disabled={exportingPdf || !report.content}
-            >
-              <Download className="mr-1 h-3 w-3" />
-              {exportingPdf ? "Exporting…" : "Export PDF"}
-            </Button>
-          ) : null}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => window.print()}
+            disabled={!report.content}
+            title="Tip: turn off 'Headers and footers' in the print dialog for a cleaner PDF"
+          >
+            <Download className="mr-1 h-3 w-3" />
+            Export PDF
+          </Button>
         </div>
 
-        <HtmlReportFrame html={report.content} title={`Portfolio report — ${runDateLabel}`} />
+        <div className="report-print-area mx-auto max-w-[1100px] rounded-xl bg-[#f5f6f8] p-4 sm:p-6">
+          <HtmlReportFrame html={report.content} title={`Portfolio report — ${runDateLabel}`} />
 
-        <footer className="mt-12 border-t border-zinc-200 pt-4 font-mono text-[11px] uppercase tracking-wider text-zinc-400 dark:border-zinc-800 dark:text-zinc-500">
+          <ReportChartsSection
+            communitySlug={community.details.slug}
+            reportId={report.id}
+            authenticated={isAdmin}
+          />
+        </div>
+
+        <footer className="report-print-hide mt-12 border-t border-zinc-200 pt-4 font-mono text-[11px] uppercase tracking-wider text-zinc-400 dark:border-zinc-800 dark:text-zinc-500">
           <span>Generated {formatDate(report.generatedAt)}</span>
           <span className="mx-2">·</span>
           <span>{report.modelId}</span>

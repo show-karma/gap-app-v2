@@ -1,6 +1,7 @@
 type TimeZoneFormat = "UTC" | "ISO" | "local";
 type DateFormatOption =
   | "MMM D, YYYY"
+  | "MMM D"
   | "MMM D, YYYY, h:mm a UTC"
   | "h:mm a"
   | "DDD, MMM DD"
@@ -85,6 +86,10 @@ export const formatDate = (
 
   if (formatOption === "MMM D, YYYY") {
     return `${monthNames[month]} ${day}, ${year}`;
+  }
+
+  if (formatOption === "MMM D") {
+    return `${monthNames[month]} ${day}`;
   }
 
   if (formatOption === "MMM D, YYYY, h:mm a UTC") {

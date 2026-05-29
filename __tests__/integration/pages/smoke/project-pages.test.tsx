@@ -47,8 +47,12 @@ vi.mock("@/utilities/queryKeys", () => ({
 }));
 
 // Inner client mocks — colocated PageClient files
-vi.mock("@/app/project/[projectId]/(profile)/about/AboutPageClient", () => ({
-  AboutPageClient: () => <div data-testid="about-page-client">About</div>,
+vi.mock("@/components/Pages/Project/v2/MainContent/AboutContentServer", () => ({
+  AboutContentServer: () => <div data-testid="about-content-server">About</div>,
+}));
+
+vi.mock("@/components/Pages/Project/v2/MainContent/AboutScrollHandler", () => ({
+  AboutScrollHandler: () => null,
 }));
 
 vi.mock("@/app/project/[projectId]/(profile)/contact-info/ContactInfoPageClient", () => ({
@@ -115,9 +119,11 @@ beforeEach(() => {
 });
 
 describe("Project profile pages", () => {
-  it("/project/[projectId]/(profile)/about renders AboutPageClient", async () => {
-    await renderPageElement(() => import("@/app/project/[projectId]/(profile)/about/page"));
-    expect(screen.getByTestId("about-page-client")).toBeInTheDocument();
+  it("/project/[projectId]/(profile)/about renders server About content", async () => {
+    await renderAsyncPage(() => import("@/app/project/[projectId]/(profile)/about/page"), {
+      params: Promise.resolve({ projectId: "test-project" }),
+    });
+    expect(screen.getByTestId("about-content-server")).toBeInTheDocument();
   });
 
   it("/project/[projectId]/(profile)/contact-info renders ContactInfoPageClient", async () => {

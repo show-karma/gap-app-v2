@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type FC, useEffect } from "react";
+import { useAdminCommunities } from "@/hooks/useAdminCommunities";
+import { useAuth } from "@/hooks/useAuth";
 import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { useIsCommunityAdmin } from "@/src/core/rbac/context/permission-context";
 import { useOwnerStore, useProjectStore } from "@/store";
@@ -16,7 +18,10 @@ export const EmptyGrantsSection: FC = () => {
   const isOwner = useOwnerStore((state) => state.isOwner);
   const project = useProjectStore((state) => state.project);
   const isCommunityAdmin = useIsCommunityAdmin();
-  const { communities } = useCommunitiesStore();
+  const { address } = useAuth();
+  // Lazy-fetch admin communities — React Query dedupes by queryKey.
+  useAdminCommunities(address);
+  const communities = useCommunitiesStore((s) => s.communities);
   const isCommunityAdminOfSome = communities.length !== 0;
   const isAuthorized = isProjectAdmin || isOwner || isCommunityAdmin || isCommunityAdminOfSome;
   const router = useRouter();

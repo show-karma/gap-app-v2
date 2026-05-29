@@ -1,4 +1,3 @@
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import type React from "react";
 import { useState } from "react";
@@ -17,6 +16,7 @@ import type { Grant } from "@/types/v2/grant";
 import { formatDate } from "@/utilities/formatDate";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
+import { zodResolver } from "@/utilities/zodResolver";
 import { StepBlock } from "../StepBlock";
 import { useGrantFormStore } from "../store";
 import { CancelButton } from "./buttons/CancelButton";
@@ -36,7 +36,7 @@ const _defaultFundUsage = `| Budget Item    | % of Allocated funding |
 const baseSchema = z.object({
   startDate: z
     .date({
-      required_error: MESSAGES.GRANT.FORM.DATE,
+      error: MESSAGES.GRANT.FORM.DATE,
     })
     .optional(),
   receivedDate: z.date().optional(),
@@ -44,7 +44,8 @@ const baseSchema = z.object({
 });
 
 // Define additional fields for grant flow
-const grantSchema = baseSchema.extend({
+const grantSchema = z.object({
+  ...baseSchema.shape,
   description: z.string().min(1, { message: "Description is required" }),
   amount: z.string().optional(),
   linkToProposal: z
@@ -88,7 +89,7 @@ export const DetailsScreen: React.FC = () => {
   const { gap } = useGap();
   const { updateGrant, isLoading: isUpdatingGrant } = useGrant();
   const isCommunityAdmin = useIsCommunityAdmin();
-  const { isOwner } = useOwnerStore();
+  const isOwner = useOwnerStore((state) => state.isOwner);
   const [_isLoading, _setIsLoading] = useState(false);
   const isAuthorized = isOwner || isCommunityAdmin;
   const params = useParams();

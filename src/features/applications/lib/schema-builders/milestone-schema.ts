@@ -40,7 +40,7 @@ const milestoneSchema = z.object({
   title: z.string().min(1, "Title is required"),
   description: z.string().min(1, "Description is required"),
   dueDate: z.union([futureDateSchema, z.date()]),
-  fundingRequested: z.string().min(1, "Funding requested is required"),
+  fundingRequested: z.string().min(1, "Milestone funding requested is required"),
   completionCriteria: z.string().min(1, "Completion criteria is required"),
 });
 
@@ -49,7 +49,7 @@ export function buildMilestoneSchema(q: ApplicationQuestion) {
   const maxMilestones = q.validation?.maxMilestones || Number.POSITIVE_INFINITY;
 
   if (q.required) {
-    let fieldSchema: z.ZodTypeAny = z
+    let fieldSchema: z.ZodType = z
       .union([z.array(milestoneSchema), z.undefined(), z.null()])
       .refine((val) => val !== undefined && val !== null, {
         message: "This field is required",

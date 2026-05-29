@@ -2,15 +2,15 @@ import { Tab } from "@headlessui/react";
 import { useParams } from "next/navigation";
 import { useMemo, useState } from "react";
 import { ActivityList } from "@/components/Shared/ActivityList";
+import { useProjectAuthorization } from "@/hooks/useProjectAuthorization";
 import { useProjectImpacts } from "@/hooks/v2/useProjectImpacts";
 import { useProjectUpdates } from "@/hooks/v2/useProjectUpdates";
 import { transformImpactsToMilestones } from "@/services/project-profile.service";
-import { useProjectStore } from "@/store";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
 import { cn } from "@/utilities/tailwind";
 
 export const ProjectActivity = () => {
-  const { isProjectAdmin } = useProjectStore();
+  const isAuthorized = useProjectAuthorization();
   const { projectId } = useParams();
 
   const { milestones = [] } = useProjectUpdates(projectId as string);
@@ -23,7 +23,6 @@ export const ProjectActivity = () => {
     const impactItems = transformImpactsToMilestones(impacts);
     return [...milestones, ...impactItems];
   }, [milestones, impacts]);
-  const isAuthorized = isProjectAdmin;
 
   // Count items by type for tabs
   const updatesCount = useMemo(

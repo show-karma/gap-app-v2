@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import type { ApplicationQuestion } from "@/types/whitelabel-entities";
 import type { ApplicationFormData } from "../types";
 import { KarmaProfileLinkInput } from "./KarmaProfileLinkInput";
+import { MetricFieldArray } from "./MetricFieldArray";
 import { MilestoneFieldArray } from "./MilestoneFieldArray";
 
 interface ApplicationFormFieldProps {
@@ -188,6 +189,7 @@ export function ApplicationFormField({
               <div className="flex flex-col gap-2" data-field-id={question.id}>
                 <MarkdownEditor
                   label={question.label}
+                  labelClassName="text-sm font-medium leading-none"
                   placeholder={question.placeholder}
                   value={(field.value as string) || ""}
                   onChange={field.onChange}
@@ -269,6 +271,17 @@ export function ApplicationFormField({
           case "milestone":
             return (
               <MilestoneFieldArray
+                control={control}
+                name={question.id}
+                question={question}
+                disabled={disabled}
+                trigger={trigger}
+              />
+            );
+
+          case "metric":
+            return (
+              <MetricFieldArray
                 control={control}
                 name={question.id}
                 question={question}

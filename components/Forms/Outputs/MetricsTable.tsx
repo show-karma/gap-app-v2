@@ -2,10 +2,18 @@
 
 import { TrashIcon } from "@heroicons/react/24/solid";
 import { useQuery } from "@tanstack/react-query";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { createPortal } from "react-dom";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { InfoTooltip } from "@/components/Utilities/InfoTooltip";
 import { Button } from "@/components/ui/button";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useAutosyncedIndicators } from "@/hooks/useAutosyncedIndicators";
 import type { ImpactIndicatorWithData } from "@/types/impactMeasurement";
 import { getUnlinkedIndicators } from "@/utilities/queries/getUnlinkedIndicators";
@@ -47,7 +55,6 @@ const isInvalidValue = (value: number | string, unitOfMeasure: string) => {
   return Number.isNaN(numValue);
 };
 
-// CategorizedIndicatorDropdown component with debounced API search
 const CategorizedIndicatorDropdown = ({
   indicators,
   onSelect,
@@ -63,79 +70,20 @@ const CategorizedIndicatorDropdown = ({
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [isOpen, setIsOpen] = useState(false);
-  const triggerRef = useRef<HTMLButtonElement>(null);
-  const panelRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const [panelPos, setPanelPos] = useState<{ top: number; left: number; width: number }>({
-    top: 0,
-    left: 0,
-    width: 340,
-  });
   const debouncedSearch = useDebouncedValue(searchTerm, 300);
 
-  // Fetch unlinked indicators from API with debounced search
-  const { data: searchedUnlinked = [], isFetching } = useQuery({
+  const {
+    data: searchedUnlinked = [],
+    isFetching,
+    isError,
+  } = useQuery({
     queryKey: ["unlinkedIndicators", "search", debouncedSearch],
     queryFn: () => getUnlinkedIndicators(debouncedSearch || undefined),
     enabled: isOpen,
-    staleTime: 0, // Always refetch so newly created indicators appear
+    staleTime: 0,
     gcTime: 60 * 1000,
   });
 
-  // Position the portal panel below the trigger button
-  useEffect(() => {
-    if (isOpen && triggerRef.current) {
-      const rect = triggerRef.current.getBoundingClientRect();
-      setPanelPos({
-        top: rect.bottom + 4,
-        left: rect.left,
-        width: Math.max(340, rect.width),
-      });
-    }
-  }, [isOpen]);
-
-  const handleClose = useCallback(() => {
-    setIsOpen(false);
-    setSearchTerm("");
-  }, []);
-
-  // Close dropdown on outside click (check both trigger and portal panel)
-  useEffect(() => {
-    if (!isOpen) return;
-    const handleClickOutside = (e: MouseEvent) => {
-      const target = e.target as Node;
-      if (triggerRef.current?.contains(target) || panelRef.current?.contains(target)) {
-        return;
-      }
-      handleClose();
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [isOpen, handleClose]);
-
-  // Close on resize; close on scroll only if outside the panel
-  useEffect(() => {
-    if (!isOpen) return;
-    const handleScroll = (e: Event) => {
-      if (panelRef.current?.contains(e.target as Node)) return;
-      handleClose();
-    };
-    window.addEventListener("resize", handleClose);
-    document.addEventListener("scroll", handleScroll, true);
-    return () => {
-      window.removeEventListener("resize", handleClose);
-      document.removeEventListener("scroll", handleScroll, true);
-    };
-  }, [isOpen, handleClose]);
-
-  // Focus input when dropdown opens
-  useEffect(() => {
-    if (isOpen) {
-      requestAnimationFrame(() => inputRef.current?.focus());
-    }
-  }, [isOpen]);
-
-  // Community indicators (client-side filtered)
   const communityItems = useMemo(() => {
     const communityIds = selectedCommunities.map((c) => c.uid);
     const items = indicators
@@ -153,7 +101,6 @@ const CategorizedIndicatorDropdown = ({
     return items.filter((item) => item.title.toLowerCase().includes(lower));
   }, [indicators, selectedCommunities, searchTerm]);
 
-  // Unlinked indicators (from API search)
   const unlinkedItems = useMemo(
     () =>
       searchedUnlinked.map((indicator) => ({
@@ -168,7 +115,6 @@ const CategorizedIndicatorDropdown = ({
     [communityItems, unlinkedItems]
   );
 
-  // For the selected label, look in both the passed-in indicators and the API results
   const selectedLabel = useMemo(() => {
     const fromProps = indicators.find((ind) => ind.id === selected);
     if (fromProps) {
@@ -182,7 +128,7 @@ const CategorizedIndicatorDropdown = ({
     }
     const fromSearch = searchedUnlinked.find((ind) => ind.id === selected);
     if (fromSearch) return `${fromSearch.name} [Global]`;
-    return null;
+    return "";
   }, [indicators, searchedUnlinked, selected]);
 
   const handleSelect = useCallback(
@@ -194,123 +140,96 @@ const CategorizedIndicatorDropdown = ({
     [onSelect]
   );
 
-  const renderItem = useCallback(
-    (item: { value: string; title: string }) => (
-      <button
-        type="button"
+  const handleCreateNew = useCallback(() => {
+    onCreateNew();
+    setIsOpen(false);
+    setSearchTerm("");
+  }, [onCreateNew]);
+
+  const renderItems = (items: { value: string; title: string }[]) =>
+    items.map((item) => (
+      <CommandItem
         key={item.value}
-        role="option"
-        aria-selected={item.value === selected}
-        onClick={() => handleSelect(item.value)}
+        value={item.value}
+        onSelect={() => handleSelect(item.value)}
         className={cn(
-          "w-full px-3 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-zinc-700",
-          item.value === selected
-            ? "bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300"
-            : "text-gray-900 dark:text-white"
+          "cursor-pointer",
+          item.value === selected &&
+            "bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300"
         )}
       >
         {item.title}
-      </button>
-    ),
-    [selected, handleSelect]
-  );
+      </CommandItem>
+    ));
 
-  const dropdownPanel = isOpen
-    ? createPortal(
-        <div
-          ref={panelRef}
-          style={{
-            position: "fixed",
-            top: panelPos.top,
-            left: panelPos.left,
-            width: panelPos.width,
-            maxWidth: 480,
-            zIndex: 9999,
-          }}
-          className="rounded-lg border border-gray-200 bg-white shadow-lg dark:bg-zinc-800 dark:border-zinc-700"
+  return (
+    <Popover
+      open={isOpen}
+      onOpenChange={(open) => {
+        setIsOpen(open);
+        if (!open) setSearchTerm("");
+      }}
+    >
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className={cn(
+            "w-full min-w-0 rounded-lg border bg-white px-3 py-2 text-left text-sm dark:bg-zinc-800 dark:text-white truncate",
+            "border-gray-200 dark:border-zinc-700",
+            "data-[state=open]:border-blue-500 data-[state=open]:ring-1 data-[state=open]:ring-blue-500",
+            selected ? "text-gray-900" : "text-gray-400 dark:text-zinc-500"
+          )}
         >
-          <div className="p-2 border-b border-gray-100 dark:border-zinc-700">
-            <input
-              ref={inputRef}
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Escape") handleClose();
-              }}
-              placeholder="Search indicators..."
-              className="w-full rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:outline-none dark:bg-zinc-900 dark:border-zinc-600 dark:text-white dark:placeholder-zinc-500"
-            />
-          </div>
-
-          <button
-            type="button"
-            onClick={() => {
-              onCreateNew();
-              setIsOpen(false);
-              setSearchTerm("");
-            }}
-            className="w-full px-3 py-2 text-left text-sm font-semibold text-brand-blue hover:bg-gray-100 dark:hover:bg-zinc-700 border-b border-gray-100 dark:border-zinc-700"
-          >
-            + Create New Metric
-          </button>
-
-          <div className="max-h-60 overflow-y-auto py-1" role="listbox">
-            {isFetching && allItems.length === 0 ? (
-              <div className="px-3 py-2 text-sm text-gray-500 dark:text-zinc-400">Searching...</div>
-            ) : allItems.length === 0 ? (
-              <div className="px-3 py-2 text-sm text-gray-500 dark:text-zinc-400">
-                No indicators found
-              </div>
+          {selectedLabel || "Select indicator…"}
+        </button>
+      </PopoverTrigger>
+      <PopoverContent
+        align="start"
+        sideOffset={4}
+        collisionPadding={8}
+        className="w-[var(--radix-popover-trigger-width)] max-w-[calc(100vw-1rem)] min-w-[260px] md:min-w-[340px] md:max-w-[480px] p-0"
+      >
+        <Command shouldFilter={false}>
+          <CommandInput
+            value={searchTerm}
+            onValueChange={setSearchTerm}
+            placeholder="Search indicators…"
+          />
+          <CommandList>
+            <CommandItem
+              value="__create_new"
+              onSelect={handleCreateNew}
+              className="cursor-pointer border-b border-gray-100 font-semibold text-brand-blue dark:border-zinc-700"
+            >
+              + Create New Metric
+            </CommandItem>
+            {allItems.length === 0 ? (
+              <CommandEmpty>
+                {isFetching
+                  ? "Searching…"
+                  : isError
+                    ? "Failed to load indicators. Try again."
+                    : "No indicators found"}
+              </CommandEmpty>
             ) : (
               <>
                 {communityItems.length > 0 && (
-                  <>
-                    <div className="px-3 py-1 text-xs font-medium text-gray-400 dark:text-zinc-500 uppercase tracking-wider">
-                      Community
-                    </div>
-                    {communityItems.map(renderItem)}
-                  </>
+                  <CommandGroup heading="Community">{renderItems(communityItems)}</CommandGroup>
                 )}
                 {unlinkedItems.length > 0 && (
-                  <>
-                    <div className="px-3 py-1 text-xs font-medium text-gray-400 dark:text-zinc-500 uppercase tracking-wider">
-                      Global
-                    </div>
-                    {unlinkedItems.map(renderItem)}
-                  </>
+                  <CommandGroup heading="Global">{renderItems(unlinkedItems)}</CommandGroup>
                 )}
                 {isFetching && (
                   <div className="px-3 py-1.5 text-xs text-gray-400 dark:text-zinc-500 text-center">
-                    Loading...
+                    Loading…
                   </div>
                 )}
               </>
             )}
-          </div>
-        </div>,
-        document.body
-      )
-    : null;
-
-  return (
-    <div className="min-w-[200px]">
-      <button
-        ref={triggerRef}
-        type="button"
-        aria-haspopup="listbox"
-        aria-expanded={isOpen}
-        onClick={() => setIsOpen((prev) => !prev)}
-        className={cn(
-          "w-full rounded-lg border bg-white px-3 py-1.5 text-left text-sm dark:bg-zinc-800 dark:text-white truncate",
-          isOpen ? "border-blue-500 ring-1 ring-blue-500" : "border-gray-200 dark:border-zinc-700",
-          selected ? "text-gray-900" : "text-gray-400 dark:text-zinc-500"
-        )}
-      >
-        {selectedLabel || "Select indicator..."}
-      </button>
-      {dropdownPanel}
-    </div>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
   );
 };
 
@@ -344,6 +263,7 @@ export const MetricsTable = ({
     onOutputsChange([
       ...outputs,
       {
+        _key: crypto.randomUUID(),
         outputId: "",
         value: 0,
         proof: "",
@@ -389,7 +309,7 @@ export const MetricsTable = ({
 
       {outputs.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-8">
-          <p className="text-gray-500 dark:text-zinc-400 mb-4">
+          <p className="text-gray-500 dark:text-zinc-400 mb-4 text-center">
             Select from your project indicators, community indicators, or global indicators to add
             metrics
           </p>
@@ -397,169 +317,163 @@ export const MetricsTable = ({
             type="button"
             onClick={handleAddOutput}
             size="xl"
-            className="bg-brand-blue text-white hover:bg-brand-blue/90"
+            className="w-full bg-brand-blue text-white hover:bg-brand-blue/90 md:w-auto"
           >
             Add metric
           </Button>
         </div>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200 dark:divide-zinc-700">
-            <thead>
-              <tr>
-                <th className="px-4 py-3 text-left text-sm font-bold text-gray-700 dark:text-zinc-300 min-w-[200px]">
-                  Output
-                </th>
-                <th className="px-4 py-3 text-left text-sm font-bold text-gray-700 dark:text-zinc-300">
-                  Value
-                </th>
-                <th className="px-4 py-3 text-left text-sm font-bold text-gray-700 dark:text-zinc-300">
-                  Proof/Link
-                </th>
-                <th className="px-4 py-3 text-left text-sm font-bold text-gray-700 dark:text-zinc-300 w-16">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200 dark:divide-zinc-700">
-              {outputs.map((output, index) => (
-                <tr key={index}>
-                  <td className="px-4 py-3 align-top">
-                    <CategorizedIndicatorDropdown
-                      indicators={categorizedIndicators}
-                      onSelect={(indicatorId) => {
-                        handleOutputChange(index, "outputId", indicatorId);
-                      }}
-                      selected={output.outputId}
-                      onCreateNew={() => {
-                        handleCreateNewIndicatorClick(index);
-                      }}
-                      selectedCommunities={selectedCommunities}
-                    />
-                  </td>
-                  <td className="px-4 py-3 align-top">
-                    <div className="flex flex-col gap-2">
-                      <input
-                        type="text"
-                        value={output.value === 0 ? "" : output.value}
-                        onChange={(e) => {
-                          const indicator = categorizedIndicators.find(
-                            (o) => o.id === output.outputId
-                          );
-                          const unitType = indicator?.unitOfMeasure || "int";
-
-                          // Allow decimal point and numbers
-                          const isValidInput =
-                            unitType === "float"
-                              ? /^-?\d*\.?\d*$/.test(e.target.value) // Allow decimals for float
-                              : /^-?\d*$/.test(e.target.value); // Only integers for int
-
-                          if (isValidInput) {
-                            handleOutputChange(
-                              index,
-                              "value",
-                              e.target.value === "" ? "" : e.target.value
-                            );
-                          }
-                        }}
-                        placeholder={`Enter ${
-                          categorizedIndicators.find((o) => o.id === output.outputId)
-                            ?.unitOfMeasure === "float"
-                            ? "decimal"
-                            : "whole"
-                        } number`}
-                        disabled={
-                          !!autosyncedIndicators.find(
-                            (indicator) =>
-                              indicator.name ===
-                              indicatorsList.find((i) => i.indicatorId === output.outputId)?.name
-                          )
-                        }
-                        className={cn(
-                          "w-full px-3 py-1.5 bg-white disabled:opacity-50 disabled:cursor-not-allowed dark:bg-zinc-900 border rounded-md",
-                          output.outputId &&
-                            isInvalidValue(
-                              output.value,
-                              categorizedIndicators.find((o) => o.id === output.outputId)
-                                ?.unitOfMeasure || "int"
-                            )
-                            ? "border-red-500 dark:border-red-500"
-                            : "border-gray-300 dark:border-zinc-700"
-                        )}
-                      />
-                      {/* Empty div to align with the "Create New Metric" button height */}
-                      <div className="h-8"></div>
-                    </div>
-                    {output.outputId &&
-                      isInvalidValue(
-                        output.value,
-                        categorizedIndicators.find((o) => o.id === output.outputId)
-                          ?.unitOfMeasure || "int"
-                      ) && (
-                        <p className="text-xs text-red-500 mt-1">
-                          {typeof output.value === "string" && output.value === ""
-                            ? "This field is required"
-                            : categorizedIndicators.find((o) => o.id === output.outputId)
-                                  ?.unitOfMeasure === "int"
-                              ? "Please enter a whole number"
-                              : "Please enter a valid decimal number"}
-                        </p>
-                      )}
-                  </td>
-                  <td className="px-4 py-3 align-top">
-                    <div className="flex flex-col gap-2">
-                      <input
-                        type="text"
-                        value={output.proof || ""}
-                        onChange={(e) => {
-                          handleOutputChange(index, "proof", e.target.value);
-                        }}
-                        placeholder="Enter proof URL"
-                        disabled={
-                          !!autosyncedIndicators.find(
-                            (indicator) =>
-                              indicator.name ===
-                              indicatorsList.find((i) => i.indicatorId === output.outputId)?.name
-                          )
-                        }
-                        className="w-full px-3 py-1.5 bg-white disabled:opacity-50 disabled:cursor-not-allowed dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded-md"
-                      />
-                      {/* Empty div to align with the "Create New Metric" button height */}
-                      <div className="h-8"></div>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 align-top">
-                    <div className="flex flex-col gap-2">
-                      <div className="flex items-center justify-center h-9">
-                        <button
-                          onClick={() => handleRemoveOutput(index)}
-                          type="button"
-                          className="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20"
-                        >
-                          <TrashIcon className="h-5 w-5" />
-                        </button>
-                      </div>
-                      {/* Empty div to align with the "Create New Metric" button height */}
-                      <div className="h-8"></div>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-
-          {outputs.length > 0 && (
-            <div className="flex w-full justify-end">
-              <Button
-                type="button"
-                onClick={handleAddOutput}
-                size="xl"
-                className="bg-brand-blue text-white hover:bg-brand-blue/90"
-              >
-                Add more metrics
-              </Button>
+        <div className="flex flex-col gap-4">
+          <div
+            aria-hidden="true"
+            className="hidden md:grid md:grid-cols-[minmax(200px,1.2fr)_minmax(160px,1fr)_minmax(180px,1.2fr)_auto] md:items-end md:gap-4 md:border-b md:border-gray-200 md:pb-2 md:dark:border-zinc-700"
+          >
+            <div className="text-sm font-bold text-gray-700 dark:text-zinc-300">Output</div>
+            <div className="text-sm font-bold text-gray-700 dark:text-zinc-300">Value</div>
+            <div className="text-sm font-bold text-gray-700 dark:text-zinc-300">Proof/Link</div>
+            <div className="text-sm font-bold text-gray-700 dark:text-zinc-300 w-10 text-center">
+              <span className="sr-only">Actions</span>
             </div>
-          )}
+          </div>
+
+          <div className="flex flex-col gap-3 md:divide-y md:divide-gray-200 md:gap-0 md:dark:divide-zinc-700">
+            {outputs.map((output, index) => {
+              const indicator = categorizedIndicators.find((o) => o.id === output.outputId);
+              const unitType = indicator?.unitOfMeasure || "int";
+              const isDisabled = !!autosyncedIndicators.find(
+                (auto) =>
+                  auto.name === indicatorsList.find((i) => i.indicatorId === output.outputId)?.name
+              );
+              const hasValueError = !!output.outputId && isInvalidValue(output.value, unitType);
+              const valueInputId = `metric-value-${index}`;
+              const proofInputId = `metric-proof-${index}`;
+              const outputFieldId = `metric-output-${index}`;
+
+              return (
+                <div
+                  key={output._key ?? `index-${index}`}
+                  className={cn(
+                    "flex flex-col gap-3 rounded-lg border border-gray-200 p-4 dark:border-zinc-700",
+                    "md:grid md:grid-cols-[minmax(200px,1.2fr)_minmax(160px,1fr)_minmax(180px,1.2fr)_auto] md:items-start md:gap-4 md:border-0 md:rounded-none md:p-0 md:py-3"
+                  )}
+                >
+                  <div className="flex flex-col gap-1.5">
+                    <label
+                      htmlFor={outputFieldId}
+                      className="text-xs font-medium text-gray-600 dark:text-zinc-400 md:hidden"
+                    >
+                      Output
+                    </label>
+                    <div id={outputFieldId}>
+                      <CategorizedIndicatorDropdown
+                        indicators={categorizedIndicators}
+                        onSelect={(indicatorId) => {
+                          handleOutputChange(index, "outputId", indicatorId);
+                        }}
+                        selected={output.outputId}
+                        onCreateNew={() => {
+                          handleCreateNewIndicatorClick(index);
+                        }}
+                        selectedCommunities={selectedCommunities}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label
+                      htmlFor={valueInputId}
+                      className="text-xs font-medium text-gray-600 dark:text-zinc-400 md:hidden"
+                    >
+                      Value
+                    </label>
+                    <input
+                      id={valueInputId}
+                      type="text"
+                      inputMode={unitType === "float" ? "decimal" : "numeric"}
+                      value={output.value === 0 ? "" : output.value}
+                      onChange={(e) => {
+                        const isValidInput =
+                          unitType === "float"
+                            ? /^-?\d*\.?\d*$/.test(e.target.value)
+                            : /^-?\d*$/.test(e.target.value);
+
+                        if (isValidInput) {
+                          handleOutputChange(
+                            index,
+                            "value",
+                            e.target.value === "" ? "" : e.target.value
+                          );
+                        }
+                      }}
+                      placeholder={`Enter ${unitType === "float" ? "decimal" : "whole"} number`}
+                      disabled={isDisabled}
+                      className={cn(
+                        "w-full px-3 py-2 bg-white disabled:opacity-50 disabled:cursor-not-allowed dark:bg-zinc-900 border rounded-md text-sm",
+                        hasValueError
+                          ? "border-red-500 dark:border-red-500"
+                          : "border-gray-300 dark:border-zinc-700"
+                      )}
+                    />
+                    {hasValueError && (
+                      <p className="text-xs text-red-500">
+                        {typeof output.value === "string" && output.value === ""
+                          ? "This field is required"
+                          : unitType === "int"
+                            ? "Please enter a whole number"
+                            : "Please enter a valid decimal number"}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label
+                      htmlFor={proofInputId}
+                      className="text-xs font-medium text-gray-600 dark:text-zinc-400 md:hidden"
+                    >
+                      Proof / Link
+                    </label>
+                    <input
+                      id={proofInputId}
+                      type="text"
+                      value={output.proof || ""}
+                      onChange={(e) => {
+                        handleOutputChange(index, "proof", e.target.value);
+                      }}
+                      placeholder="Enter proof URL"
+                      disabled={isDisabled}
+                      className="w-full px-3 py-2 bg-white disabled:opacity-50 disabled:cursor-not-allowed dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded-md text-sm"
+                    />
+                  </div>
+
+                  <div className="flex md:justify-center md:pt-1">
+                    <button
+                      onClick={() => handleRemoveOutput(index)}
+                      type="button"
+                      aria-label="Remove metric"
+                      className={cn(
+                        "flex w-full min-h-[44px] items-center justify-center gap-2 rounded-md border border-red-200 px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 dark:border-red-900/40 dark:text-red-400 dark:hover:bg-red-900/20",
+                        "md:w-10 md:h-10 md:min-h-0 md:border-0 md:p-1 md:rounded-full"
+                      )}
+                    >
+                      <TrashIcon className="h-5 w-5" />
+                      <span className="md:hidden">Remove metric</span>
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="flex w-full justify-end">
+            <Button
+              type="button"
+              onClick={handleAddOutput}
+              size="xl"
+              className="w-full bg-brand-blue text-white hover:bg-brand-blue/90 md:w-auto"
+            >
+              Add more metrics
+            </Button>
+          </div>
         </div>
       )}
 

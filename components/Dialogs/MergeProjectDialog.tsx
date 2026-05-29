@@ -44,7 +44,7 @@ function SearchProject({
 }: {
   setPrimaryProject: (value: ProjectResponse) => void;
 }) {
-  const { project: currentProject } = useProjectStore();
+  const currentProject = useProjectStore((state) => state.project);
   const [results, setResults] = useState<ProjectResponse[]>([]);
   const [isSearchListOpen, setIsSearchListOpen] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);

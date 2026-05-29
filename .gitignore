@@ -74,3 +74,6 @@ public/knowledge/*.md
 # Quality gate ephemeral output (report.md, current.json, jscpd report, etc).
 # The committed baseline is `/quality-baseline.json` at the project root.
 .quality/
+
+# fast-grep index (local search index, not committed)
+.fgr/

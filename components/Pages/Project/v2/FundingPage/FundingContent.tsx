@@ -4,11 +4,12 @@ import { CheckCircleIcon, PlusIcon } from "@heroicons/react/20/solid";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { useAdminCommunities } from "@/hooks/useAdminCommunities";
+import { useAuth } from "@/hooks/useAuth";
 import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { useOwnerStore } from "@/store";
 import { useCommunitiesStore } from "@/store/communities";
-import { useCommunityAdminStore } from "@/store/communityAdmin";
 import type { Grant } from "@/types/v2/grant";
 import type { Project } from "@/types/v2/project";
 import formatCurrency from "@/utilities/formatCurrency";
@@ -257,21 +258,20 @@ export function FundingContent({ project, className }: FundingContentProps) {
 
   const { isProjectAdmin, isProjectOwner } = useProjectPermissions();
   const isContractOwner = useOwnerStore((state) => state.isOwner);
-  const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin);
-  const { communities } = useCommunitiesStore();
+  const { address } = useAuth();
+  // Lazy-fetch admin communities here — React Query dedupes by queryKey
+  // across consumers; populates useCommunitiesStore via side effect.
+  useAdminCommunities(address);
+  const communities = useCommunitiesStore((s) => s.communities);
   const isCommunityAdminOfSome = communities.length !== 0;
   const isAuthorized =
-    isProjectOwner ||
-    isProjectAdmin ||
-    isContractOwner ||
-    isCommunityAdmin ||
-    isCommunityAdminOfSome;
+    isProjectOwner || isProjectAdmin || isContractOwner || isCommunityAdminOfSome;
 
   // Fetch grants using dedicated hook
   const { grants, isLoading } = useProjectGrants(project.uid || "");
 
   // Sort grants by creation date (most recent first)
-  const sortedGrants = [...grants].sort((a, b) => {
+  const sortedGrants = grants.toSorted((a, b) => {
     const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
     const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
     return dateB - dateA;

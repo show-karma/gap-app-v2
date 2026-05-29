@@ -150,7 +150,9 @@ export const QUERY_KEYS = {
       page: number,
       limit: number,
       programId?: string | null,
-      projectId?: string | null
+      projectId?: string | null,
+      sortBy?: string | null,
+      sortOrder?: string | null
     ) =>
       [
         "community-project-updates",
@@ -160,6 +162,8 @@ export const QUERY_KEYS = {
         limit,
         programId ?? "",
         projectId ?? "",
+        sortBy ?? "",
+        sortOrder ?? "",
       ] as const,
   },
   KNOWLEDGE_BASE: {

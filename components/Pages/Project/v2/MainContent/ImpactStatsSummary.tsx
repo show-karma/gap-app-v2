@@ -40,7 +40,7 @@ interface ImpactStatsSummaryProps {
  * aggregated values matching production behavior.
  */
 export function ImpactStatsSummary({ className }: ImpactStatsSummaryProps) {
-  const { project } = useProjectStore();
+  const project = useProjectStore((state) => state.project);
 
   // Use the dashboard metrics endpoint which returns pre-calculated stats
   const { data: dashboardMetrics, isLoading } = useProjectImpactIndicators(

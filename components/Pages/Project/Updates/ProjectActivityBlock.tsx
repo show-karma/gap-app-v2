@@ -8,7 +8,8 @@ import { useOwnerStore, useProjectStore } from "@/store";
 import { FilteredOutputsAndOutcomes, filterIndicators } from "../Impact/FilteredOutputsAndOutcomes";
 
 export const ProjectActivityBlock = ({ activity }: { activity: IProjectUpdate }) => {
-  const { project, isProjectOwner } = useProjectStore();
+  const project = useProjectStore((state) => state.project);
+  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
 
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isCommunityAdmin = useIsCommunityAdmin();

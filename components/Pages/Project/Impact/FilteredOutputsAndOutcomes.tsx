@@ -74,7 +74,8 @@ export const FilteredOutputsAndOutcomes = ({
   indicatorIds,
   indicatorNames,
 }: FilteredOutputsAndOutcomesProps) => {
-  const { project, isProjectOwner } = useProjectStore();
+  const project = useProjectStore((state) => state.project);
+  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
 
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isCommunityAdmin = useIsCommunityAdmin();

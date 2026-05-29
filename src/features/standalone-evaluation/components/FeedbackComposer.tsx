@@ -23,7 +23,7 @@ export function FeedbackComposer({ hasSample, isPending, onSubmit }: FeedbackCom
   const handleSubmit = async () => {
     const parsed = sessionFeedbackSchema.safeParse({ feedback });
     if (!parsed.success) {
-      setError(parsed.error.errors[0]?.message ?? "Invalid feedback");
+      setError(parsed.error.issues[0]?.message ?? "Invalid feedback");
       return;
     }
     setError(null);

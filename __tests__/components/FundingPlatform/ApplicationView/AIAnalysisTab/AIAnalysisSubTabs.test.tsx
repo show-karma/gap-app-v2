@@ -9,11 +9,12 @@ vi.mock("@/utilities/tailwind", () => ({
 
 describe("AIAnalysisSubTabs", () => {
   describe("Rendering", () => {
-    it("renders both tab buttons", () => {
+    it("renders all three tab buttons", () => {
       render(<AIAnalysisSubTabs activeTab="external" onTabChange={vi.fn()} />);
 
       expect(screen.getByText("External Evaluation")).toBeInTheDocument();
       expect(screen.getByText("Internal Evaluation")).toBeInTheDocument();
+      expect(screen.getByText("Applications Insights")).toBeInTheDocument();
     });
 
     it("shows external tab as active by default", () => {
@@ -53,17 +54,28 @@ describe("AIAnalysisSubTabs", () => {
 
       expect(mockOnTabChange).toHaveBeenCalledWith("internal");
     });
+
+    it("calls onTabChange with 'insights' when Applications Insights tab is clicked", async () => {
+      const user = userEvent.setup();
+      const mockOnTabChange = vi.fn();
+
+      render(<AIAnalysisSubTabs activeTab="external" onTabChange={mockOnTabChange} />);
+
+      await user.click(screen.getByText("Applications Insights"));
+
+      expect(mockOnTabChange).toHaveBeenCalledWith("insights");
+    });
   });
 
   describe("Icons", () => {
-    it("renders icons for both tabs", () => {
+    it("renders icons for all three tabs", () => {
       const { container } = render(
         <AIAnalysisSubTabs activeTab="external" onTabChange={vi.fn()} />
       );
 
       // Check that SVG icons are present
       const svgs = container.querySelectorAll("svg");
-      expect(svgs.length).toBe(2);
+      expect(svgs.length).toBe(3);
     });
 
     it("applies purple color to internal icon when active", () => {

@@ -37,9 +37,15 @@ export function EditSourceDialog({ communityIdOrSlug, source, open, onOpenChange
   const [externalId, setExternalId] = useState("");
   const [goal, setGoal] = useState("");
   const [followLinks, setFollowLinks] = useState(false);
+  // DEV-342: optional public citation link. Editing it is display-only —
+  // it never triggers a re-sync, so it stays out of `requiresConfirmation`.
+  const [citationUrl, setCitationUrl] = useState("");
   const [confirmOpen, setConfirmOpen] = useState(false);
 
   const edit = useEditKnowledgeSource(communityIdOrSlug);
+
+  // DEV-342: the citation override only applies to Google Doc sources.
+  const isGoogleDocSource = source?.kind === "gdrive_file" || source?.kind === "gdrive_folder";
 
   // Hydrate from `source` only when the dialog opens or the row identity
   // changes (different sourceId). Depending on the source object reference
@@ -55,6 +61,7 @@ export function EditSourceDialog({ communityIdOrSlug, source, open, onOpenChange
       setExternalId(source.externalId);
       setGoal(source.goal ?? "");
       setFollowLinks(source.followLinks);
+      setCitationUrl(source.citationUrl ?? "");
     }
     if (!open) {
       // Clear any in-flight confirmation modal when the parent closes —
@@ -67,6 +74,7 @@ export function EditSourceDialog({ communityIdOrSlug, source, open, onOpenChange
   const trimmedTitle = title.trim();
   const trimmedExternalId = externalId.trim();
   const trimmedGoal = goal.trim();
+  const trimmedCitationUrl = citationUrl.trim();
 
   // Tri-state goal: original null + empty string → no change, original
   // string + empty string → clear (null), original string + new string
@@ -79,6 +87,15 @@ export function EditSourceDialog({ communityIdOrSlug, source, open, onOpenChange
     return trimmedGoal.length > 0 ? trimmedGoal : null;
   }, [source, trimmedGoal]);
 
+  // DEV-342: same tri-state as goal — empty input clears the override to
+  // null; an unchanged value is a no-op.
+  const citationUrlForPatch: string | null | "unchanged" = useMemo(() => {
+    if (!source) return "unchanged";
+    const original = source.citationUrl ?? "";
+    if (trimmedCitationUrl === original) return "unchanged";
+    return trimmedCitationUrl.length > 0 ? trimmedCitationUrl : null;
+  }, [source, trimmedCitationUrl]);
+
   const changes = useMemo<EditChanges | null>(() => {
     if (!source) return null;
     return {
@@ -87,15 +104,17 @@ export function EditSourceDialog({ communityIdOrSlug, source, open, onOpenChange
       externalIdChanged: trimmedExternalId !== source.externalId && trimmedExternalId.length > 0,
       followLinksTurnedOn: followLinks && !source.followLinks,
       followLinksTurnedOff: !followLinks && source.followLinks,
+      citationUrlChanged: citationUrlForPatch !== "unchanged",
     };
-  }, [source, trimmedTitle, goalForPatch, trimmedExternalId, followLinks]);
+  }, [source, trimmedTitle, goalForPatch, trimmedExternalId, followLinks, citationUrlForPatch]);
 
   const hasAnyChange = changes
     ? changes.titleChanged ||
       changes.goalChanged ||
       changes.externalIdChanged ||
       changes.followLinksTurnedOn ||
-      changes.followLinksTurnedOff
+      changes.followLinksTurnedOff ||
+      changes.citationUrlChanged
     : false;
 
   const requiresConfirmation = changes
@@ -122,6 +141,11 @@ export function EditSourceDialog({ communityIdOrSlug, source, open, onOpenChange
     if (changes.externalIdChanged) patch.externalId = trimmedExternalId;
     if (changes.followLinksTurnedOn || changes.followLinksTurnedOff) {
       patch.followLinks = followLinks;
+    }
+    if (changes.citationUrlChanged) {
+      // Narrow off the "unchanged" sentinel — the branch guarantees it's
+      // `string | null` here.
+      patch.citationUrl = citationUrlForPatch as string | null;
     }
     return patch;
   };
@@ -273,6 +297,25 @@ export function EditSourceDialog({ communityIdOrSlug, source, open, onOpenChange
                     </div>
                   </FormField>
 
+                  {isGoogleDocSource && (
+                    <FormField
+                      label="Citation link (optional)"
+                      hint="Public URL to link in chat citations. If empty, this Google Doc is cited by title with no link — its Drive URL is never shown. Saved instantly; no re-sync."
+                      htmlFor="kb-edit-citation-url"
+                    >
+                      <input
+                        id="kb-edit-citation-url"
+                        type="url"
+                        value={citationUrl}
+                        onChange={(e) => setCitationUrl(e.target.value)}
+                        placeholder="https://example.com/published-handbook"
+                        maxLength={2048}
+                        spellCheck={false}
+                        className="h-9 w-full rounded-md border border-stone-300 bg-white px-3 font-mono text-[12.5px] text-stone-900 placeholder-stone-400 transition focus:border-sky-500 focus:outline-none focus:ring-[3px] focus:ring-sky-500/20 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder-zinc-600 dark:focus:border-sky-400 dark:focus:ring-sky-400/20"
+                      />
+                    </FormField>
+                  )}
+
                   {source.kind === "gdrive_file" && (
                     <FollowLinksToggle checked={followLinks} onChange={setFollowLinks} />
                   )}
@@ -314,6 +357,8 @@ interface EditChanges {
   externalIdChanged: boolean;
   followLinksTurnedOn: boolean;
   followLinksTurnedOff: boolean;
+  // DEV-342: display-only — deliberately excluded from requiresConfirmation.
+  citationUrlChanged: boolean;
 }
 
 // ── Locked kind badge ───────────────────────────────────────────────────────

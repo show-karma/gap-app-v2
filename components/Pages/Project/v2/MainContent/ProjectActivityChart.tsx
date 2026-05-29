@@ -60,7 +60,7 @@ const TIME_RANGE_OPTIONS: { value: TimeRange; label: string }[] = [
  * - embedded: When true, removes Card wrapper for use inside other components
  */
 export function ProjectActivityChart({ className, embedded = false }: ProjectActivityChartProps) {
-  const { project } = useProjectStore();
+  const project = useProjectStore((state) => state.project);
   const { allUpdates: milestones, isLoading } = useProjectProfile(project?.uid || "");
 
   // Track visibility to prevent chart rendering when container is hidden (e.g., lg:hidden on mobile header)

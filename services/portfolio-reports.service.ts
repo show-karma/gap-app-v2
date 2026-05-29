@@ -1,4 +1,5 @@
 import type {
+  ChartSectionData,
   CreateReportConfigRequest,
   GenerateReportRequest,
   PortfolioReport,
@@ -77,6 +78,25 @@ export async function getReport(communitySlug: string, reportId: string): Promis
   return data;
 }
 
+/**
+ * Charts payload — datapoints are queried live on the backend, scoped to the
+ * report's frozen snapshot (indicator IDs + project list) and runDate.
+ * Published reports are public; drafts require admin auth (handled by the
+ * auth-aware client). Public reads fall back to plain fetch.
+ */
+export async function getReportCharts(
+  communitySlug: string,
+  reportId: string,
+  options?: { authenticated?: boolean }
+): Promise<ChartSectionData> {
+  const path = `/v2/communities/${communitySlug}/reports/${reportId}/charts`;
+  if (options?.authenticated === false) {
+    return fetchPublic<ChartSectionData>(path);
+  }
+  const { data } = await apiClient.get(path);
+  return data;
+}
+
 export async function updateReportContent(
   communitySlug: string,
   reportId: string,
@@ -86,19 +106,6 @@ export async function updateReportContent(
     content,
   });
   return data;
-}
-
-/**
- * Server-side PDF render. Returns the binary PDF as a Blob so the
- * caller can drive a browser download. Uses the auth-aware api client
- * because the underlying endpoint shares the same authorization as
- * the JSON GET (community admin or staff).
- */
-export async function downloadReportPdf(communitySlug: string, reportId: string): Promise<Blob> {
-  const { data } = await apiClient.get(`/v2/communities/${communitySlug}/reports/${reportId}/pdf`, {
-    responseType: "blob",
-  });
-  return data as Blob;
 }
 
 export async function generateReport(

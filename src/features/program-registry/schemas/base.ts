@@ -29,11 +29,11 @@ export const baseProgramFields = {
         path: ["startsAt"],
       }
     ),
-  budget: z.preprocess(
-    (val) => (val === "" || val === undefined || val === null ? undefined : Number(val)),
-    z.number().min(0, { message: "Budget must be a positive number" }).optional()
-  ),
-  invoiceRequired: z.boolean({ required_error: "Please select whether invoices are required" }),
+  budget: z
+    .union([z.literal(""), z.string(), z.number(), z.null(), z.undefined()])
+    .transform((val) => (val === "" || val === null || val === undefined ? undefined : Number(val)))
+    .pipe(z.number().min(0, { message: "Budget must be a positive number" }).optional()),
+  invoiceRequired: z.boolean({ error: "Please select whether invoices are required" }),
 };
 
 /**

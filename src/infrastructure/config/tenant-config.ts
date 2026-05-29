@@ -320,6 +320,11 @@ const tenantNavigation: Record<TenantId, TenantNavigation> = {
                 href: "https://app.filpgf.io/projects?programId=1039",
                 isExternal: true,
               },
+              {
+                label: "Batch 3 - Apply Now",
+                href: "https://app.filpgf.io/programs/1479/",
+                isExternal: true,
+              },
             ],
           },
           {
@@ -342,11 +347,6 @@ const tenantNavigation: Record<TenantId, TenantNavigation> = {
               },
             ],
           },
-          {
-            label: "Payout process",
-            href: "https://docs.google.com/document/d/1WIyL8zj1ToTEVujRvCV6E4mlle5srwLP3DhEarWn3Ug/edit?usp=sharing",
-            isExternal: true,
-          },
           { label: "Financials", href: "/community/filecoin/financials" },
         ],
       },
@@ -361,7 +361,6 @@ const tenantNavigation: Record<TenantId, TenantNavigation> = {
             href: "https://github.com/filecoin-project/community/discussions",
             isExternal: true,
           },
-          { label: "Community", href: "https://filecoin.io/community", isExternal: true },
         ],
       },
     ],
@@ -369,6 +368,9 @@ const tenantNavigation: Record<TenantId, TenantNavigation> = {
       twitter: "https://twitter.com/Filecoin",
       discord: "https://discord.gg/yeQ2hcd2TD",
       github: "https://github.com/filecoin-project",
+    },
+    socialLinkLabels: {
+      twitter: "Social",
     },
   },
   "for-the-world": {

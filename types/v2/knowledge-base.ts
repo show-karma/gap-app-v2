@@ -38,6 +38,11 @@ export interface KnowledgeSource {
   // ingests Google Docs linked from the parent doc as additional
   // documents under the same source (depth=1, no recursion).
   followLinks: boolean;
+  // DEV-342: optional public link used when citing this source in Ask
+  // Karma. For Google Docs the raw docs.google.com URL is never cited —
+  // the doc links only via this override (top-level document only);
+  // absent it, it is cited by title with no link.
+  citationUrl: string | null;
   lastSyncedAt: string | null;
   lastSyncStatus: KnowledgeSyncStatus | null;
   lastSyncError: string | null;
@@ -72,6 +77,9 @@ export interface CreateKnowledgeSourceInput {
   // DEV-192: opt-in only when kind === "gdrive_file". Backend rejects
   // with 422 if set true on any other kind.
   followLinks?: boolean;
+  // DEV-342: optional public citation link. Only valid on Google Doc
+  // kinds — backend returns 422 if set on any other kind.
+  citationUrl?: string | null;
 }
 
 export interface UpdateKnowledgeSourceInput {
@@ -88,6 +96,9 @@ export interface UpdateKnowledgeSourceInput {
   paused?: boolean;
   syncIntervalMin?: number;
   followLinks?: boolean;
+  // DEV-342: set the public citation link, or `null` to clear it. Only
+  // valid on Google Doc kinds. Display-only — never triggers a re-sync.
+  citationUrl?: string | null;
 }
 
 export const KNOWLEDGE_SOURCE_KIND_LABELS: Record<KnowledgeSourceKind, string> = {

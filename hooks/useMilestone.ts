@@ -87,8 +87,8 @@ export const useMilestone = () => {
   const { refetch } = useProjectUpdates(projectId as string);
   const { refetch: refetchGrants } = useProjectGrants(project?.uid || "");
   const router = useRouter();
-  const { isProjectOwner } = useProjectStore();
-  const { isOwner: isContractOwner } = useOwnerStore();
+  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
+  const isContractOwner = useOwnerStore((state) => state.isOwner);
   const { openShareDialog } = useShareDialogStore();
   const _isOnChainAuthorized = isProjectOwner || isContractOwner;
   const { performOffChainRevoke } = useOffChainRevoke();
@@ -563,26 +563,23 @@ export const useMilestone = () => {
         switchChainAsync,
       });
 
-      if (!setup) {
-        return;
-      }
-
+      if (!setup?.gapClient) throw new Error("WALLET_SETUP_FAILED");
       const { gapClient, walletSigner } = setup;
       const fetchedProject = await gapClient.fetch.projectById(project?.uid);
 
-      if (!fetchedProject) return;
+      if (!fetchedProject) throw new Error("Failed to fetch project data");
 
       const grantInstance = fetchedProject.grants.find(
         (g) => g.uid.toLowerCase() === milestone.refUID.toLowerCase()
       );
 
-      if (!grantInstance) return;
+      if (!grantInstance) throw new Error("Grant not found");
 
       const milestoneInstance = grantInstance.milestones.find(
         (u) => u.uid.toLowerCase() === milestone.uid.toLowerCase()
       );
 
-      if (!milestoneInstance) return;
+      if (!milestoneInstance) throw new Error("Milestone not found");
 
       const completionData = sanitizeObject({
         reason: data.description,
@@ -646,11 +643,13 @@ export const useMilestone = () => {
             }, 250);
           });
         });
-    } catch (error) {
-      showError("There was an error completing the milestone");
-      errorManager("Error completing milestone.", error, {
-        milestoneData: milestone,
-      });
+    } catch (error: any) {
+      // errorManager filters "reject" / transient errors, so log raw cause first.
+      console.error("[completeSingleMilestone] failed:", error);
+      if (error?.message !== "WALLET_SETUP_FAILED") {
+        showError("There was an error completing the milestone");
+        errorManager("Error completing milestone.", error, { milestoneData: milestone });
+      }
       throw error;
     } finally {
       dismiss();
@@ -806,6 +805,7 @@ export const useMilestone = () => {
         router.push(PAGES.PROJECT.UPDATES(slugOrUid));
       }, 250);
     } catch (error) {
+      console.error("[completeMilestone] failed:", error);
       showError("There was an error completing the milestone");
       errorManager("Error completing milestone", error, {
         milestoneData: milestone,

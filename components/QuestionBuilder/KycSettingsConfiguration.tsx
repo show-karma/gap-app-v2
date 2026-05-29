@@ -1,9 +1,9 @@
 "use client";
 
 import { IdentificationIcon } from "@heroicons/react/24/outline";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { zodResolver } from "@/utilities/zodResolver";
 import { PageHeader } from "../FundingPlatform/PageHeader";
 import { Button } from "../Utilities/Button";
 

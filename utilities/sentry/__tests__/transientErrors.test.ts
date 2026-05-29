@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { isAxiosAbortError, isTransientNetworkError } from "../transientErrors";
+import {
+  isAxiosAbortError,
+  isTransientHttpError,
+  isTransientNetworkError,
+} from "../transientErrors";
 
 describe("isTransientNetworkError", () => {
   it("detects axios Network Error with no response", () => {
@@ -36,6 +40,44 @@ describe("isTransientNetworkError", () => {
     );
     expect(isTransientNetworkError(null)).toBe(false);
     expect(isTransientNetworkError(undefined)).toBe(false);
+  });
+});
+
+describe("isTransientHttpError", () => {
+  it("detects an axios 504 by response.status", () => {
+    const err = {
+      message: "Request failed with status code 504",
+      response: { status: 504, data: {} },
+    };
+    expect(isTransientHttpError(err)).toBe(true);
+  });
+
+  it("detects the re-thrown SSR error by its axios message (no response attached)", () => {
+    // This is the exact DEV-271 shape: getGrantPrograms re-throws
+    // `new Error("Request failed with status code 504")`, which Next captures
+    // with no `.response`.
+    expect(isTransientHttpError(new Error("Request failed with status code 504"))).toBe(true);
+    expect(isTransientHttpError("Request failed with status code 504")).toBe(true);
+  });
+
+  it("detects the rest of the transient gateway family (502/503/408)", () => {
+    expect(isTransientHttpError({ status: 502 })).toBe(true);
+    expect(isTransientHttpError({ response: { status: 503 } })).toBe(true);
+    expect(isTransientHttpError(new Error("Request failed with status code 408"))).toBe(true);
+  });
+
+  it("does NOT match non-transient HTTP failures (4xx/5xx that are real bugs)", () => {
+    expect(isTransientHttpError({ response: { status: 500 } })).toBe(false);
+    expect(isTransientHttpError(new Error("Request failed with status code 400"))).toBe(false);
+    expect(isTransientHttpError({ response: { status: 404 } })).toBe(false);
+  });
+
+  it("does NOT match non-HTTP errors", () => {
+    expect(isTransientHttpError(new TypeError("Cannot read property 'x' of undefined"))).toBe(
+      false
+    );
+    expect(isTransientHttpError(null)).toBe(false);
+    expect(isTransientHttpError(undefined)).toBe(false);
   });
 });
 

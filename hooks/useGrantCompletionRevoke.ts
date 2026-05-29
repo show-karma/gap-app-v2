@@ -48,9 +48,9 @@ export const useGrantCompletionRevoke = ({ grant, project }: UseGrantCompletionR
     useAttestationToast();
   const projectIdOrSlug = project?.details?.slug || project?.uid || "";
   const { refetch: refetchGrants } = useProjectGrants(projectIdOrSlug);
-  const { refreshGrant } = useGrantStore();
-  const { isProjectOwner } = useProjectStore();
-  const { isOwner: isContractOwner } = useOwnerStore();
+  const refreshGrant = useGrantStore((state) => state.refreshGrant);
+  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
+  const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isOnChainAuthorized = isProjectOwner || isContractOwner;
   const { performOffChainRevoke } = useOffChainRevoke();
 
@@ -111,8 +111,7 @@ export const useGrantCompletionRevoke = ({ grant, project }: UseGrantCompletionR
       });
 
       if (!setup) {
-        setIsRevoking(false);
-        return;
+        throw new Error("WALLET_SETUP_FAILED");
       }
 
       const { gapClient, walletSigner } = setup;
@@ -195,6 +194,12 @@ export const useGrantCompletionRevoke = ({ grant, project }: UseGrantCompletionR
         }
       }
     } catch (error: unknown) {
+      // Setup failures have already been surfaced by setupChainAndWallet —
+      // skip the duplicate generic toast.
+      if (error instanceof Error && error.message === "WALLET_SETUP_FAILED") {
+        return;
+      }
+
       const errorMessage =
         error instanceof Error ? error.message : MESSAGES.GRANT.MARK_AS_COMPLETE.UNDO.ERROR;
 

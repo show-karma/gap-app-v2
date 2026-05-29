@@ -44,7 +44,7 @@ export const LinkDivviWalletButton: FC<LinkDivviWalletButtonProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
-  const { refreshProject } = useProjectStore();
+  const refreshProject = useProjectStore((state) => state.refreshProject);
 
   useEffect(() => {
     if (project?.external?.divvi_wallets?.length) {
