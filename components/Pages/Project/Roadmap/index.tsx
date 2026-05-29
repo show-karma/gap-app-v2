@@ -56,7 +56,8 @@ export const ProjectRoadmap = ({ project: propProject }: ProjectRoadmapProps) =>
 
   const isOwner = useOwnerStore((state) => state.isOwner);
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
-  const isAuthorized = isOwner || isProjectAdmin;
+  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
+  const isAuthorized = isOwner || isProjectAdmin || isProjectOwner;
 
   // Derive active filters directly from URL params - no state synchronization needed
   const activeFilters = useMemo(() => {

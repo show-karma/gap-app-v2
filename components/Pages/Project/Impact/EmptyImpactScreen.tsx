@@ -7,9 +7,10 @@ import { MESSAGES } from "@/utilities/messages";
 
 export const EmptyImpactScreen: FC = () => {
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
+  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const isOwner = useOwnerStore((state) => state.isOwner);
 
-  const isAuthorized = isProjectAdmin || isOwner;
+  const isAuthorized = isProjectAdmin || isOwner || isProjectOwner;
   const [, changeTab] = useQueryState("tab");
   if (!isAuthorized) {
     return (

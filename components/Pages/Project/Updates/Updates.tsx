@@ -16,7 +16,8 @@ export const UpdatesPage: FC = () => {
 
   const isOwner = useOwnerStore((state) => state.isOwner);
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
-  const isAuthorized = isOwner || isProjectAdmin;
+  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
+  const isAuthorized = isOwner || isProjectAdmin || isProjectOwner;
 
   const { setIsProgressModalOpen, setProgressModalScreen } = useProgressModalStore();
 

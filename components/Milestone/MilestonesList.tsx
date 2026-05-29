@@ -89,7 +89,8 @@ export const MilestonesList = ({
 }: MilestonesListProps) => {
   const isOwner = useOwnerStore((state) => state.isOwner);
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
-  const isAuthorized = isOwner || isProjectAdmin;
+  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
+  const isAuthorized = isOwner || isProjectAdmin || isProjectOwner;
 
   // Extract unique grant UIDs for allocation lookup
   const grantUIDs = useMemo(() => {
