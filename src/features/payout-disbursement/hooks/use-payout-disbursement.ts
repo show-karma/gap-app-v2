@@ -687,13 +687,15 @@ export function useUpdateMilestonePaymentStatus(
     {
       grantUID: string;
       milestoneLabel: string;
+      milestoneUID: string;
       paymentStatus: "pending";
     }
   >({
-    mutationFn: ({ grantUID, milestoneLabel, paymentStatus }) =>
+    mutationFn: ({ grantUID, milestoneLabel, milestoneUID, paymentStatus }) =>
       payoutService.updateMilestonePaymentStatus(grantUID, {
         communityUID,
         milestoneLabel,
+        milestoneUID,
         paymentStatus,
       }),
     onSuccess: () => {

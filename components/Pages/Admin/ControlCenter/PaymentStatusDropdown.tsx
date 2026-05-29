@@ -59,6 +59,7 @@ const STATUS_OPTIONS: {
 interface PaymentStatusDropdownProps {
   currentStatus: MilestonePaymentStatus;
   milestoneLabel: string;
+  milestoneUID: string | null;
   grantUID: string;
   communityUID: string;
   paymentStatusDate?: string | null;
@@ -72,6 +73,7 @@ interface PaymentStatusDropdownProps {
 export const PaymentStatusDropdown = memo(function PaymentStatusDropdown({
   currentStatus,
   milestoneLabel,
+  milestoneUID,
   grantUID,
   communityUID,
   paymentStatusDate,
@@ -104,7 +106,7 @@ export const PaymentStatusDropdown = memo(function PaymentStatusDropdown({
 
       // "Pending" stays as override-only (existing behavior)
       mutation.mutate(
-        { grantUID, milestoneLabel, paymentStatus: "pending" },
+        { grantUID, milestoneLabel, milestoneUID: milestoneUID ?? "", paymentStatus: "pending" },
         {
           onSuccess: () => {
             toast.success(`Payment status updated to ${status}`);
@@ -119,6 +121,7 @@ export const PaymentStatusDropdown = memo(function PaymentStatusDropdown({
       currentStatus,
       grantUID,
       milestoneLabel,
+      milestoneUID,
       mutation,
       onRequestRecordPayment,
       onRequestDeleteDisbursement,

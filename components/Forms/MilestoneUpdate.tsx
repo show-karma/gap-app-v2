@@ -566,7 +566,13 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
           address,
           milestoneUID: milestone.uid,
         });
-        toast.error("Invoice submission failed. Please try again.", { id: loadingToastId });
+        // Surface the backend's specific reason (e.g. a 409 conflict
+        // message); fall back only when no message is available.
+        const message =
+          invoiceError instanceof Error && invoiceError.message
+            ? invoiceError.message
+            : "Invoice submission failed. Please try again.";
+        toast.error(message, { id: loadingToastId });
       } finally {
         setIsSubmitLoading(false);
       }
@@ -602,7 +608,13 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
         });
       } catch (invoiceError) {
         errorManager("Invoice submission failed after milestone update", invoiceError);
-        toast.error("Update saved but invoice submission failed. You can try again later.");
+        // Surface the backend's specific reason; the milestone update
+        // itself already succeeded, so prefix to keep that context.
+        const reason =
+          invoiceError instanceof Error && invoiceError.message
+            ? invoiceError.message
+            : "You can try again later.";
+        toast.error(`Update saved but invoice submission failed: ${reason}`);
       }
     }
   };
