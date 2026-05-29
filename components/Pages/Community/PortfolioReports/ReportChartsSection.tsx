@@ -1,7 +1,7 @@
 "use client";
 
 import { Card, Text, Title } from "@tremor/react";
-import { LayoutList, LineChart as LineIcon, RefreshCw } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useMemo, useState } from "react";
 import { ChartSkeleton } from "@/components/Utilities/ChartSkeleton";
@@ -10,11 +10,6 @@ import { useReportCharts } from "@/hooks/portfolio-reports/usePortfolioReports";
 import type { ChartSectionIndicator, ChartSectionProject } from "@/types/portfolio-report";
 import { formatDate } from "@/utilities/formatDate";
 import { cn } from "@/utilities/tailwind";
-
-const AreaChart = dynamic(() => import("@tremor/react").then((mod) => mod.AreaChart), {
-  ssr: false,
-  loading: () => <ChartSkeleton height="h-10" />,
-});
 
 const LineChart = dynamic(() => import("@tremor/react").then((mod) => mod.LineChart), {
   ssr: false,
@@ -96,181 +91,116 @@ export function ReportChartsSection({ communitySlug, reportId, authenticated = t
   );
 }
 
-type ViewMode = "rows" | "combined";
-
 interface IndicatorBlockProps {
   indicator: ChartSectionIndicator;
 }
 
 function IndicatorBlock({ indicator }: IndicatorBlockProps) {
-  const [viewMode, setViewMode] = useState<ViewMode>("rows");
-
   const projectsWithData = useMemo(
     () => indicator.projects.filter((p) => p.points.length > 0),
     [indicator.projects]
   );
+  const [selectedUids, setSelectedUids] = useState<Set<string>>(() => new Set());
 
-  // Each metric block is a flat section inside the outer Metrics Card.
-  // The top border (skipped on the first block) gives a clean "this
-  // metric ends, the next one starts" cue without nesting another card.
-  // Generous py-8 above the rule + below the rule = ~64px between
-  // adjacent metrics, matching the LLM report's section rhythm.
+  const handleToggle = (uid: string) => {
+    setSelectedUids((prev) => {
+      const next = new Set(prev);
+      if (next.has(uid)) next.delete(uid);
+      else next.add(uid);
+      return next;
+    });
+  };
+
+  const handleClear = () => {
+    setSelectedUids(new Set());
+  };
+
   return (
     <article className="report-print-no-break border-t border-zinc-200 pt-8 first:border-t-0 first:pt-0 [&:not(:last-child)]:pb-8">
-      <div className="flex items-start justify-between gap-4">
-        <Title className="!text-base !text-zinc-900">
-          {indicator.name}
-          {indicator.unit && (
-            <span className="ml-2 text-sm font-normal text-zinc-500">({indicator.unit})</span>
-          )}
-        </Title>
-        {projectsWithData.length > 0 && <ViewModeToggle value={viewMode} onChange={setViewMode} />}
-      </div>
+      <Title className="!text-base !text-zinc-900">
+        {indicator.name}
+        {indicator.unit && (
+          <span className="ml-2 text-sm font-normal text-zinc-500">({indicator.unit})</span>
+        )}
+      </Title>
 
       {projectsWithData.length === 0 ? (
         <Text className="mt-4 !text-sm !text-zinc-500">
           No datapoints recorded for the selected projects in this date range.
         </Text>
-      ) : viewMode === "rows" ? (
-        <RowsView projects={projectsWithData} />
       ) : (
-        <CombinedView projects={projectsWithData} />
+        <>
+          <ProjectFilterPills
+            projects={projectsWithData}
+            selectedUids={selectedUids}
+            onToggle={handleToggle}
+            onClear={handleClear}
+          />
+          <CombinedView projects={projectsWithData} selectedUids={selectedUids} />
+        </>
       )}
     </article>
   );
 }
 
-interface ViewModeToggleProps {
-  value: ViewMode;
-  onChange: (next: ViewMode) => void;
+interface ProjectFilterPillsProps {
+  projects: ChartSectionProject[];
+  selectedUids: Set<string>;
+  onToggle: (uid: string) => void;
+  onClear: () => void;
 }
 
-function ViewModeToggle({ value, onChange }: ViewModeToggleProps) {
+function ProjectFilterPills({
+  projects,
+  selectedUids,
+  onToggle,
+  onClear,
+}: ProjectFilterPillsProps) {
+  const hasFilter = selectedUids.size > 0;
   return (
     <div
       role="toolbar"
-      aria-label="Chart layout"
-      className="report-print-hide inline-flex flex-shrink-0 items-center rounded-md border border-zinc-200 bg-white p-0.5"
+      aria-label="Filter chart by project"
+      className="mt-4 flex flex-wrap items-center gap-1.5"
     >
-      <ToggleButton
-        active={value === "rows"}
-        onClick={() => onChange("rows")}
-        label="One row per project"
-      >
-        <LayoutList className="h-4 w-4" />
-      </ToggleButton>
-      <ToggleButton
-        active={value === "combined"}
-        onClick={() => onChange("combined")}
-        label="Combined chart"
-      >
-        <LineIcon className="h-4 w-4" />
-      </ToggleButton>
-    </div>
-  );
-}
-
-function ToggleButton({
-  active,
-  onClick,
-  label,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  label: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      aria-pressed={active}
-      aria-label={label}
-      title={label}
-      onClick={onClick}
-      className={cn(
-        "inline-flex h-7 w-7 items-center justify-center rounded transition-colors",
-        active ? "bg-zinc-100 text-zinc-900" : "text-zinc-500 hover:bg-zinc-50 hover:text-zinc-700"
+      {projects.map((project, i) => {
+        const color = SERIES_COLORS[i % SERIES_COLORS.length];
+        const isSelected = selectedUids.has(project.uid);
+        const isDimmed = hasFilter && !isSelected;
+        return (
+          <button
+            key={project.uid}
+            type="button"
+            aria-pressed={isSelected}
+            title={isSelected ? `Remove ${project.title}` : `Add ${project.title}`}
+            onClick={() => onToggle(project.uid)}
+            className={cn(
+              "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs transition-colors",
+              isSelected
+                ? "border-zinc-900 bg-zinc-900 text-white"
+                : isDimmed
+                  ? "border-zinc-200 bg-white text-zinc-400 hover:bg-zinc-50"
+                  : "border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50"
+            )}
+          >
+            <span
+              className={cn("h-2 w-2 flex-shrink-0 rounded-full", COLOR_DOT_CLASSES[color])}
+              aria-hidden="true"
+            />
+            <span className="max-w-[180px] truncate">{project.title}</span>
+          </button>
+        );
+      })}
+      {hasFilter && (
+        <button
+          type="button"
+          onClick={onClear}
+          className="ml-1 text-xs font-medium text-zinc-500 underline-offset-2 hover:text-zinc-900 hover:underline"
+        >
+          Show all
+        </button>
       )}
-    >
-      {children}
-    </button>
-  );
-}
-
-// ── Rows view ───────────────────────────────────────────────
-
-interface RowsViewProps {
-  projects: ChartSectionProject[];
-}
-
-function RowsView({ projects }: RowsViewProps) {
-  const sorted = useMemo(
-    () => projects.toSorted((a, b) => latestValue(b) - latestValue(a)),
-    [projects]
-  );
-
-  return (
-    <ul className="mt-4 divide-y divide-zinc-100">
-      {sorted.map((project, idx) => (
-        <ProjectRow key={project.uid} project={project} showAxis={idx === sorted.length - 1} />
-      ))}
-    </ul>
-  );
-}
-
-interface ProjectRowProps {
-  project: ChartSectionProject;
-  /** When true, the row reveals the chart's x-axis — used on the last
-   *  row so it acts as a shared bottom axis for the whole card. */
-  showAxis: boolean;
-}
-
-function ProjectRow({ project, showAxis }: ProjectRowProps) {
-  const chartData = useMemo(() => {
-    // Dedupe by formatted label — two raw dates can collapse to the same
-    // "MMM D" (e.g. multiple samples on the same day, or cross-year ticks),
-    // which Tremor would render as duplicate-keyed children.
-    const byLabel = new Map<string, { date: string; [k: string]: string | number }>();
-    for (const p of project.points) {
-      const label = formatDate(p.date, "UTC", "MMM D");
-      byLabel.set(label, { date: label, [project.title]: p.value });
-    }
-    return Array.from(byLabel.values());
-  }, [project.points, project.title]);
-
-  const latest = latestValue(project);
-  const summary = formatValue(latest);
-
-  return (
-    <li className={cn("flex items-center gap-4", showAxis ? "pt-2 pb-1" : "py-2")}>
-      <div
-        className="flex w-52 flex-shrink-0 items-baseline gap-2 overflow-hidden text-sm text-zinc-800"
-        title={project.title}
-      >
-        <span className="min-w-0 flex-1 truncate font-medium">{project.title}</span>
-        <span className="flex-shrink-0 text-xs font-normal tabular-nums text-zinc-500">
-          {summary}
-        </span>
-      </div>
-      <div className="min-w-0 flex-1">
-        <AreaChart
-          data={chartData}
-          index="date"
-          categories={[project.title]}
-          colors={["blue"]}
-          showLegend={false}
-          showXAxis={showAxis}
-          showYAxis={false}
-          showGridLines={false}
-          showAnimation
-          startEndOnly={showAxis}
-          autoMinValue
-          valueFormatter={(v) => formatValue(v)}
-          className={showAxis ? "h-16 w-full" : "h-10 w-full"}
-        />
-      </div>
-    </li>
+    </div>
   );
 }
 
@@ -278,6 +208,7 @@ function ProjectRow({ project, showAxis }: ProjectRowProps) {
 
 interface CombinedViewProps {
   projects: ChartSectionProject[];
+  selectedUids: Set<string>;
 }
 
 interface CombinedRow {
@@ -285,8 +216,21 @@ interface CombinedRow {
   [projectTitle: string]: string | number | null;
 }
 
-function CombinedView({ projects }: CombinedViewProps) {
-  const { rows, categories } = useMemo(() => buildCombined(projects), [projects]);
+function CombinedView({ projects, selectedUids }: CombinedViewProps) {
+  const { rows, categories, colors } = useMemo(() => {
+    const built = buildCombined(projects);
+    if (selectedUids.size === 0) return built;
+    const keptIndices: number[] = [];
+    projects.forEach((p, i) => {
+      if (selectedUids.has(p.uid)) keptIndices.push(i);
+    });
+    if (keptIndices.length === 0) return built;
+    return {
+      rows: built.rows,
+      categories: keptIndices.map((i) => built.categories[i]),
+      colors: keptIndices.map((i) => built.colors[i]),
+    };
+  }, [projects, selectedUids]);
 
   if (rows.length === 0) {
     return (
@@ -302,9 +246,9 @@ function CombinedView({ projects }: CombinedViewProps) {
       data={rows}
       index="date"
       categories={categories}
-      colors={SERIES_COLORS}
+      colors={colors}
       valueFormatter={(v) => formatValue(v)}
-      showLegend
+      showLegend={false}
       showGridLines
       showAnimation
       yAxisWidth={64}
@@ -328,11 +272,25 @@ const SERIES_COLORS = [
   "lime",
 ];
 
-function buildCombined(projects: ChartSectionProject[]): {
-  rows: CombinedRow[];
-  categories: string[];
-} {
-  // Resolve unique column names per project (handles duplicate titles).
+// Tailwind needs static class names so the JIT compiler emits them; this
+// maps each Tremor series color to its matching dot swatch class.
+const COLOR_DOT_CLASSES: Record<string, string> = {
+  blue: "bg-blue-500",
+  emerald: "bg-emerald-500",
+  violet: "bg-violet-500",
+  amber: "bg-amber-500",
+  rose: "bg-rose-500",
+  cyan: "bg-cyan-500",
+  indigo: "bg-indigo-500",
+  orange: "bg-orange-500",
+  pink: "bg-pink-500",
+  teal: "bg-teal-500",
+  fuchsia: "bg-fuchsia-500",
+  lime: "bg-lime-500",
+};
+
+// Resolve unique column names per project (handles duplicate titles).
+function buildColumnsByUid(projects: ChartSectionProject[]): Map<string, string> {
   const seen = new Map<string, number>();
   const columnByUid = new Map<string, string>();
   for (const project of projects) {
@@ -341,6 +299,29 @@ function buildCombined(projects: ChartSectionProject[]): {
     seen.set(base, count);
     columnByUid.set(project.uid, count === 1 ? base : `${base} (${count})`);
   }
+  return columnByUid;
+}
+
+// (uid, date) → value lookup.
+function buildValueLookup(projects: ChartSectionProject[]): Map<string, Map<string, number>> {
+  const lookup = new Map<string, Map<string, number>>();
+  for (const project of projects) {
+    const inner = new Map<string, number>();
+    for (const point of project.points) {
+      inner.set(point.date, point.value);
+    }
+    lookup.set(project.uid, inner);
+  }
+  return lookup;
+}
+
+function buildCombined(projects: ChartSectionProject[]): {
+  rows: CombinedRow[];
+  categories: string[];
+  colors: string[];
+} {
+  const columnByUid = buildColumnsByUid(projects);
+  const lookup = buildValueLookup(projects);
 
   // Union of dates across all projects.
   const dateSet = new Set<string>();
@@ -350,16 +331,6 @@ function buildCombined(projects: ChartSectionProject[]): {
     }
   }
   const sortedDates = Array.from(dateSet).sort();
-
-  // (uid, date) → value lookup.
-  const lookup = new Map<string, Map<string, number>>();
-  for (const project of projects) {
-    const inner = new Map<string, number>();
-    for (const point of project.points) {
-      inner.set(point.date, point.value);
-    }
-    lookup.set(project.uid, inner);
-  }
 
   // Build rows keyed by formatted label so two ISO dates that collapse to the
   // same "MMM D" merge into one row instead of becoming duplicate keys.
@@ -375,17 +346,17 @@ function buildCombined(projects: ChartSectionProject[]): {
     }
     rowsByLabel.set(label, row);
   }
-  const rows: CombinedRow[] = Array.from(rowsByLabel.values());
 
-  return { rows, categories: Array.from(columnByUid.values()) };
+  // categories/colors are aligned by project order — Map preserves insertion
+  // order, and we colored each project by its index above.
+  return {
+    rows: Array.from(rowsByLabel.values()),
+    categories: Array.from(columnByUid.values()),
+    colors: projects.map((_, i) => SERIES_COLORS[i % SERIES_COLORS.length]),
+  };
 }
 
 // ── Helpers ───────────────────────────────────────────────
-
-function latestValue(project: ChartSectionProject): number {
-  if (project.points.length === 0) return 0;
-  return project.points[project.points.length - 1].value;
-}
 
 /**
  * Compact number format with no trailing `.0` (so `2k` not `2.0k`, `1.5k`
