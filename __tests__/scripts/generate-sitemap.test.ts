@@ -1,13 +1,19 @@
-import { execFileSync } from "node:child_process";
+import { execFile, execFileSync } from "node:child_process";
 import * as fs from "node:fs";
+import * as http from "node:http";
+import type { AddressInfo } from "node:net";
 import * as path from "node:path";
+import { promisify } from "node:util";
 import { afterEach, describe, expect, it } from "vitest";
+
+const execFileAsync = promisify(execFile);
 
 const PROJECT_ROOT = path.resolve(__dirname, "../..");
 const INDEX_OUTPUT = path.join(PROJECT_ROOT, "public", "sitemap.xml");
 const ALIAS_OUTPUT = path.join(PROJECT_ROOT, "public", "sitemap-index.xml");
 const SITEMAPS_ROOT = path.join(PROJECT_ROOT, "public", "sitemaps");
 const KIND_DIRS = ["projects", "impacts", "grants", "milestones", "funding-programs"] as const;
+const PAGE_SIZE = 1000;
 
 function runScript(env: NodeJS.ProcessEnv): string {
   execFileSync("npm", ["run", "--silent", "generate-sitemap"], {
@@ -16,6 +22,19 @@ function runScript(env: NodeJS.ProcessEnv): string {
     stdio: "pipe",
   });
   return fs.readFileSync(INDEX_OUTPUT, "utf-8");
+}
+
+// Async run so an in-process fake indexer can answer while the script runs
+// (execFileSync would block the event loop and deadlock the server).
+function runScriptAsync(env: NodeJS.ProcessEnv): Promise<string> {
+  return execFileAsync("npm", ["run", "--silent", "generate-sitemap"], {
+    cwd: PROJECT_ROOT,
+    env: { ...process.env, ...env },
+  }).then(() => fs.readFileSync(INDEX_OUTPUT, "utf-8"));
+}
+
+function locCount(file: string): number {
+  return (fs.readFileSync(file, "utf-8").match(/<loc>/g) ?? []).length;
 }
 
 describe("generate-sitemap", () => {
@@ -135,6 +154,62 @@ describe("generate-sitemap", () => {
 
     expect(xml).toContain("https://www.karmahq.xyz/sitemaps/grants/sitemap/1.xml");
     expect(xml).not.toContain("https://www.karmahq.xyz/sitemaps/grants/sitemap/2.xml");
+  }, 30_000);
+
+  it("derives chunk counts by paging the URL endpoint and canonicalizes hosts", async () => {
+    snapshot();
+    // Cold start so chunk counts come purely from pagination, not the floor.
+    if (fs.existsSync(INDEX_OUTPUT)) fs.unlinkSync(INDEX_OUTPUT);
+    if (fs.existsSync(ALIAS_OUTPUT)) fs.unlinkSync(ALIAS_OUTPUT);
+
+    // Fake indexer: grants spans 3 chunks (1000, 1000, 300 → short last page),
+    // every other kind is one short page. URLs use a NON-canonical host to prove
+    // the generator rewrites them to SITE_URL.
+    const pageSizes: Record<string, number[]> = { grants: [PAGE_SIZE, PAGE_SIZE, 300] };
+    const server = http.createServer((req, res) => {
+      const url = new URL(req.url ?? "", "http://localhost");
+      if (url.pathname === "/v2/sitemap") {
+        const kind = url.searchParams.get("kind") ?? "";
+        const page = Number(url.searchParams.get("page") ?? "1");
+        const size = (pageSizes[kind] ?? [3])[page - 1] ?? 0;
+        const urls = Array.from(
+          { length: size },
+          (_, i) => `https://staging.karmahq.xyz/x/${kind}/${page}/${i}`
+        );
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ kind, page, pageSize: PAGE_SIZE, total: urls.length, urls }));
+        return;
+      }
+      res.writeHead(404);
+      res.end();
+    });
+
+    try {
+      await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+      const { port } = server.address() as AddressInfo;
+
+      const xml = await runScriptAsync({
+        NEXT_PUBLIC_GAP_INDEXER_URL: `http://127.0.0.1:${port}`,
+      });
+
+      // grants: 1000 + 1000 + 300 → exactly 3 chunks, no 4th.
+      expect(xml).toContain("https://www.karmahq.xyz/sitemaps/grants/sitemap/3.xml");
+      expect(xml).not.toContain("https://www.karmahq.xyz/sitemaps/grants/sitemap/4.xml");
+      // single short page → exactly one chunk.
+      expect(xml).toContain("https://www.karmahq.xyz/sitemaps/projects/sitemap/1.xml");
+      expect(xml).not.toContain("https://www.karmahq.xyz/sitemaps/projects/sitemap/2.xml");
+
+      const grants1 = path.join(SITEMAPS_ROOT, "grants", "sitemap", "1.xml");
+      expect(locCount(grants1)).toBe(PAGE_SIZE);
+      expect(locCount(path.join(SITEMAPS_ROOT, "grants", "sitemap", "3.xml"))).toBe(300);
+
+      // Child URLs are rewritten to the canonical host, never the indexer's.
+      const grants1Body = fs.readFileSync(grants1, "utf-8");
+      expect(grants1Body).toContain("<loc>https://www.karmahq.xyz/x/grants/1/0</loc>");
+      expect(grants1Body).not.toContain("staging.karmahq.xyz");
+    } finally {
+      await new Promise<void>((resolve) => server.close(() => resolve()));
+    }
   }, 30_000);
 
   it("emits lastmod values without fractional seconds (Google parser strictness)", () => {

@@ -122,6 +122,19 @@ function escapeXml(value: string): string {
     .replace(/'/g, "&apos;");
 }
 
+// Sitemaps must list canonical production URLs. The indexer builds child URLs
+// from its own configured host, so a preview build wired to the staging indexer
+// emits staging URLs. Rewrite every child URL's origin to SITE_URL — matching
+// the canonical host already hardcoded for the index entries.
+function canonicalizeUrl(url: string): string {
+  try {
+    const parsed = new URL(url);
+    return `${SITE_URL}${parsed.pathname}${parsed.search}${parsed.hash}`;
+  } catch {
+    return url;
+  }
+}
+
 async function fetchUrlsOnce(baseUrl: string, kind: SitemapKind, page: number): Promise<string[]> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), URLS_TIMEOUT_MS);
@@ -222,7 +235,7 @@ function buildUrlsetXml(urls: string[], priority: number, changeFrequency: strin
   const items = urls
     .map(
       (url) =>
-        `  <url>\n    <loc>${escapeXml(url)}</loc>\n    <lastmod>${now}</lastmod>\n    <changefreq>${changeFrequency}</changefreq>\n    <priority>${priority}</priority>\n  </url>`
+        `  <url>\n    <loc>${escapeXml(canonicalizeUrl(url))}</loc>\n    <lastmod>${now}</lastmod>\n    <changefreq>${changeFrequency}</changefreq>\n    <priority>${priority}</priority>\n  </url>`
     )
     .join("\n");
 
