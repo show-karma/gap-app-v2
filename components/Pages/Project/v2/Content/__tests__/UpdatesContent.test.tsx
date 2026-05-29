@@ -43,9 +43,11 @@ vi.mock("@/components/Pages/Project/v2/MainContent/ActivityFilters", () => ({
 
 // ─── Shared test helpers ───────────────────────────────────────────────────────
 
-function mockStores({ isOwner = false, isProjectAdmin = false } = {}) {
+function mockStores({ isOwner = false, isProjectAdmin = false, isProjectOwner = false } = {}) {
   (useOwnerStore as unknown as vi.Mock).mockImplementation((sel) => sel({ isOwner }));
-  (useProjectStore as unknown as vi.Mock).mockImplementation((sel) => sel({ isProjectAdmin }));
+  (useProjectStore as unknown as vi.Mock).mockImplementation((sel) =>
+    sel({ isProjectAdmin, isProjectOwner })
+  );
 }
 
 function mockProjectProfile(overrides: Record<string, unknown> = {}) {
@@ -90,6 +92,12 @@ describe("UpdatesContent — authorization", () => {
 
   it("passes isAuthorized=true when user is both owner and admin", () => {
     mockStores({ isOwner: true, isProjectAdmin: true });
+    render(<UpdatesContent />);
+    expect(screen.getByTestId("activity-feed")).toHaveAttribute("data-authorized", "true");
+  });
+
+  it("passes isAuthorized=true to ActivityFeed when user is project owner (not admin)", () => {
+    mockStores({ isProjectOwner: true });
     render(<UpdatesContent />);
     expect(screen.getByTestId("activity-feed")).toHaveAttribute("data-authorized", "true");
   });
