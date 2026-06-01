@@ -76,14 +76,15 @@ export default async function fetchData<T = any>(
     let res: AxiosResponse<T & { pageInfo?: any }>;
     try {
       res = await axios.request<T & { pageInfo?: any }>(requestConfig);
-    } catch (err: any) {
+    } catch (err) {
       // Retry once on 401 for authorized indexer requests. The token may have
       // been absent or stale because Privy had not finished bootstrapping when
       // the request fired (the deferred-SDK auth race). Without this, fetchData
       // swallows the 401 into a "successful" null tuple below, so React Query
       // treats it as empty data and never refetches — a manual page refresh is
       // the only recovery. Re-fetching a fresh token and retrying self-heals it.
-      if (isIndexerUrl && isAuthorized && err?.response?.status === 401) {
+      const status = (err as { response?: { status?: number } } | null)?.response?.status;
+      if (isIndexerUrl && isAuthorized && status === 401) {
         TokenManager.clearCache();
         const freshToken = await TokenManager.getToken();
         if (!freshToken) throw err;
