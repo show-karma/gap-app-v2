@@ -111,7 +111,7 @@ const mockClearCache = vi.fn();
 vi.mock("@/utilities/query-client", () => ({
   queryClient: {
     clear: (...args: unknown[]) => mockQueryClientClear(...args),
-    removeQueries: vi.fn(),
+    invalidateQueries: vi.fn(),
   },
 }));
 
