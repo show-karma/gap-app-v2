@@ -10,7 +10,10 @@
  */
 
 import type { CommunityReviewer } from "@/hooks/useCommunityMilestoneReviewers";
-import { computeDefaultReviewerAddress } from "@/hooks/useReportPageData";
+import {
+  computeDefaultReviewerAddress,
+  getPendingVerificationTotalItems,
+} from "@/hooks/useReportPageData";
 
 describe("useReportPageData reviewer filter logic (address-based)", () => {
   const userAddress = "0x1234567890abcdef1234567890abcdef12345678";
@@ -108,6 +111,22 @@ describe("useReportPageData reviewer filter logic (address-based)", () => {
     it("user not in reviewer list defaults to seeing all milestones", () => {
       const reviewers = [makeReviewer(otherAddress)];
       expect(computeDefaultReviewerAddress(reviewers, userAddress)).toBeUndefined();
+    });
+  });
+
+  describe("getPendingVerificationTotalItems", () => {
+    it("never reports fewer items than are visible in the current table data", () => {
+      expect(getPendingVerificationTotalItems(5, 6)).toBe(6);
+    });
+
+    it("keeps the API total when it already matches or exceeds the visible rows", () => {
+      expect(getPendingVerificationTotalItems(6, 5)).toBe(6);
+      expect(getPendingVerificationTotalItems(6, 6)).toBe(6);
+    });
+
+    it("falls back to the visible row count when the API total is missing", () => {
+      expect(getPendingVerificationTotalItems(undefined, 4)).toBe(4);
+      expect(getPendingVerificationTotalItems(null, 3)).toBe(3);
     });
   });
 });
