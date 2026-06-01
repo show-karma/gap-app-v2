@@ -109,6 +109,13 @@ export function computeDefaultReviewerAddress(
   return match?.publicAddress;
 }
 
+export function getPendingVerificationTotalItems(
+  totalItems: number | null | undefined,
+  visibleMilestonesCount: number
+): number {
+  return Math.max(totalItems ?? 0, visibleMilestonesCount);
+}
+
 export function useReportPageData({
   communityId,
   grantPrograms,
@@ -266,7 +273,10 @@ export function useReportPageData({
 
   const reports = data?.data;
   const totalItems = data?.pageInfo?.totalItems ?? 0;
-  const pendingTotalItems = pendingPageInfo?.totalItems ?? 0;
+  const pendingTotalItems = getPendingVerificationTotalItems(
+    pendingPageInfo?.totalItems,
+    pendingMilestones.length
+  );
 
   const handleSort = useCallback(
     (newSort: string) => {
