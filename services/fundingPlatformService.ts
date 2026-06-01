@@ -98,7 +98,24 @@ export interface IApplicationFilters {
     | "projectTitle"
     | "aiEvaluationScore";
   sortOrder?: "asc" | "desc";
+  reviewerAddress?: string;
+  reviewerAddresses?: string[];
 }
+
+/**
+ * Merges the single `reviewerAddress` and the `reviewerAddresses` list into one
+ * de-duplicated array, for endpoints that accept a comma-separated
+ * `reviewerAddresses` query param (statistics, export).
+ */
+const mergeReviewerAddresses = (
+  filters: Pick<IApplicationFilters, "reviewerAddress" | "reviewerAddresses">
+): string[] => {
+  const addresses = [
+    ...(filters.reviewerAddress ? [filters.reviewerAddress] : []),
+    ...(filters.reviewerAddresses ?? []),
+  ];
+  return [...new Set(addresses)];
+};
 
 export type FundingProgram = {
   programId: string;
@@ -411,6 +428,9 @@ export const fundingApplicationsAPI = {
     if (filters.dateTo) params.append("dateTo", filters.dateTo);
     if (filters.sortBy) params.append("sortBy", filters.sortBy);
     if (filters.sortOrder) params.append("sortOrder", filters.sortOrder);
+    if (filters.reviewerAddress) params.append("reviewerAddress", filters.reviewerAddress);
+    if (filters.reviewerAddresses?.length)
+      params.append("reviewerAddresses", filters.reviewerAddresses.join(","));
 
     const [data, error] = await fetchData<IPaginatedApplicationsResponse>(
       `${INDEXER.V2.FUNDING_APPLICATIONS.BY_PROGRAM(programId)}?${params}`
@@ -489,9 +509,19 @@ export const fundingApplicationsAPI = {
   /**
    * Get application statistics for a program
    */
-  async getApplicationStatistics(programId: string): Promise<IApplicationStatistics> {
+  async getApplicationStatistics(
+    programId: string,
+    filters: Pick<IApplicationFilters, "reviewerAddress" | "reviewerAddresses"> = {}
+  ): Promise<IApplicationStatistics> {
+    const params = new URLSearchParams();
+    const reviewerAddresses = mergeReviewerAddresses(filters);
+    if (reviewerAddresses.length) params.append("reviewerAddresses", reviewerAddresses.join(","));
+
+    const query = params.toString();
+    const statisticsUrl = INDEXER.V2.FUNDING_APPLICATIONS.STATISTICS(programId);
+
     const [data, error] = await fetchData<IApplicationStatistics>(
-      INDEXER.V2.FUNDING_APPLICATIONS.STATISTICS(programId)
+      query ? `${statisticsUrl}?${query}` : statisticsUrl
     );
 
     if (error || !data) {
@@ -527,6 +557,8 @@ export const fundingApplicationsAPI = {
     if (filters.dateTo) params.append("dateTo", filters.dateTo);
     if (filters.sortBy) params.append("sortBy", filters.sortBy);
     if (filters.sortOrder) params.append("sortOrder", filters.sortOrder);
+    const reviewerAddresses = mergeReviewerAddresses(filters);
+    if (reviewerAddresses.length) params.append("reviewerAddresses", reviewerAddresses.join(","));
 
     const response = await apiClient.get(
       `/v2/funding-applications/program/${programId}/export?${params}`,
@@ -566,6 +598,8 @@ export const fundingApplicationsAPI = {
     if (filters.dateTo) params.append("dateTo", filters.dateTo);
     if (filters.sortBy) params.append("sortBy", filters.sortBy);
     if (filters.sortOrder) params.append("sortOrder", filters.sortOrder);
+    const reviewerAddresses = mergeReviewerAddresses(filters);
+    if (reviewerAddresses.length) params.append("reviewerAddresses", reviewerAddresses.join(","));
 
     const response = await apiClient.get(
       `/v2/funding-applications/admin/${programId}/export?${params}`,

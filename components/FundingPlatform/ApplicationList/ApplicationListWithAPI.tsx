@@ -9,6 +9,7 @@ import pluralize from "pluralize";
 import { type FC, useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 import InfiniteScroll from "react-infinite-scroll-component";
+import { useAccount } from "wagmi";
 import { Button } from "@/components/Utilities/Button";
 import {
   useApplicationExport,
@@ -24,10 +25,13 @@ import { useProgramPrompts } from "@/src/features/prompt-management";
 import type { IFundingApplication } from "@/types/funding-platform";
 import formatCurrency from "@/utilities/formatCurrency";
 import { getAIColumnVisibility } from "../helper/getAIColumnVisibility";
+import ApplicationInbox from "./ApplicationInbox";
 import { ApplicationList } from "./ApplicationList";
+import ReviewerFilterDropdown from "./ReviewerFilterDropdown";
 
 interface IApplicationListWithAPIProps {
-  programId: string; // May be in format "programId" or "programId_chainId"
+  programId: string; // Normalized program id (chainId suffix stripped)
+  combinedProgramId: string; // Original id, may be "programId" or "programId_chainId"
   communityId: string;
   onApplicationSelect?: (application: IFundingApplication) => void;
   onApplicationHover?: (applicationId: string) => void;
@@ -39,6 +43,7 @@ interface IApplicationListWithAPIProps {
 
 const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
   programId,
+  combinedProgramId,
   communityId,
   onApplicationSelect,
   onApplicationHover,
@@ -50,6 +55,10 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const { address } = useAccount();
+  const [myReviewsOnly, setMyReviewsOnly] = useState(true);
+  // Reviewer addresses selected in the "All Applications" dropdown (lowercased)
+  const [selectedReviewerAddresses, setSelectedReviewerAddresses] = useState<string[]>([]);
 
   // Initialize filters from URL params (excluding page for infinite scroll)
   const [filters, setFilters] = useState<IApplicationFilters>(() => {
@@ -84,6 +93,20 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
     []
   );
 
+  // Active reviewer filter, shared across the list, stats, and export:
+  // "My Applications" scopes to the current user; "All Applications" scopes to
+  // the reviewer(s) selected in the dropdown (if any).
+  const reviewerFilter = useMemo(
+    () => ({
+      reviewerAddress: myReviewsOnly && address ? address.toLowerCase() : undefined,
+      reviewerAddresses:
+        !myReviewsOnly && selectedReviewerAddresses.length > 0
+          ? selectedReviewerAddresses
+          : undefined,
+    }),
+    [myReviewsOnly, address, selectedReviewerAddresses]
+  );
+
   const {
     applications,
     total,
@@ -98,7 +121,12 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
     updateApplicationStatus,
     isUpdatingStatus,
     refetch,
-  } = useFundingApplications(programId, { ...filters, sortBy, sortOrder });
+  } = useFundingApplications(programId, {
+    ...filters,
+    sortBy,
+    sortOrder,
+    ...reviewerFilter,
+  });
 
   // Load more function for infinite scroll
   const loadMore = useCallback(() => {
@@ -251,9 +279,9 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
 
   const handleExport = useCallback(
     (format: "json" | "csv" = "json") => {
-      exportApplications(format, { ...filters, sortBy, sortOrder });
+      exportApplications(format, { ...filters, sortBy, sortOrder, ...reviewerFilter });
     },
-    [exportApplications, filters, sortBy, sortOrder]
+    [exportApplications, filters, sortBy, sortOrder, reviewerFilter]
   );
 
   const handleFilterChange = useCallback((newFilters: IApplicationFilters) => {
@@ -438,12 +466,49 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
         </div>
 
         <div className="flex justify-between mt-4 space-x-2">
-          <div className="flex flex-row gap-4 items-center" />
+          <div className="flex flex-row items-center gap-2">
+            <div className="flex flex-row gap-1 items-center rounded-lg border border-gray-200 dark:border-zinc-700 p-1">
+              <button
+                type="button"
+                onClick={() => setMyReviewsOnly(true)}
+                className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${
+                  myReviewsOnly
+                    ? "bg-blue-600 text-white"
+                    : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                }`}
+              >
+                My Applications
+              </button>
+              <button
+                type="button"
+                onClick={() => setMyReviewsOnly(false)}
+                className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${
+                  !myReviewsOnly
+                    ? "bg-blue-600 text-white"
+                    : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                }`}
+              >
+                All Applications
+              </button>
+            </div>
+            {!myReviewsOnly && (
+              <div className="w-64">
+                <ReviewerFilterDropdown
+                  reviewers={programReviewers}
+                  selectedAddresses={selectedReviewerAddresses}
+                  onChange={setSelectedReviewerAddresses}
+                  isLoading={isLoadingProgramReviewers}
+                  isError={isProgramReviewersError}
+                />
+              </div>
+            )}
+          </div>
           <div className="flex justify-end space-x-2">
             <Button
               onClick={() => {
                 setFilters({});
                 setSearchInput("");
+                setSelectedReviewerAddresses([]);
                 debouncedSearch.cancel(); // Cancel any pending debounced search
                 router.push(pathname, { scroll: false });
               }}
@@ -467,57 +532,73 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
         </div>
       </div>
 
-      {/* Application List with Infinite Scroll */}
-      <InfiniteScroll
-        dataLength={applications.length}
-        next={loadMore}
-        hasMore={hasNextPage || false}
-        loader={
-          <div className="flex items-center justify-center py-4">
-            <div className="text-sm text-gray-600 dark:text-gray-400">
-              Loading more applications...
-            </div>
-          </div>
-        }
-        endMessage={
-          applications.length > 0 ? (
+      {/* "My Applications": inbox (selectable list + inline detail).
+          "All Applications": the original table with infinite scroll. */}
+      {myReviewsOnly ? (
+        <ApplicationInbox
+          applications={applications}
+          programId={programId}
+          communityId={communityId}
+          combinedProgramId={combinedProgramId}
+          isLoading={isLoading}
+          hasNextPage={hasNextPage || false}
+          isFetchingNextPage={isFetchingNextPage}
+          fetchNextPage={loadMore}
+          total={total}
+          onApplicationHover={onApplicationHover}
+        />
+      ) : (
+        <InfiniteScroll
+          dataLength={applications.length}
+          next={loadMore}
+          hasMore={hasNextPage || false}
+          loader={
             <div className="flex items-center justify-center py-4">
               <div className="text-sm text-gray-600 dark:text-gray-400">
-                {total} total {pluralize("application", total)} loaded
+                Loading more applications...
               </div>
             </div>
-          ) : null
-        }
-      >
-        <ApplicationList
-          programId={programId}
-          communityUID={communityUID}
-          applications={applications}
-          isLoading={isLoading && applications.length === 0}
-          onApplicationSelect={onApplicationSelect}
-          onApplicationHover={onApplicationHover}
-          onStatusChange={showStatusActions ? handleStatusChange : undefined}
-          showStatusActions={showStatusActions}
-          sortBy={sortBy}
-          sortOrder={sortOrder}
-          onSortChange={handleSortChange}
-          showAIScoreColumn={showAIScoreColumn}
-          showInternalAIScoreColumn={showInternalAIScoreColumn}
-          programReviewers={programReviewers}
-          milestoneReviewers={milestoneReviewers}
-          addProgramReviewer={addProgramReviewer}
-          isAddingProgramReviewer={isAddingProgramReviewer}
-          addMilestoneReviewer={addMilestoneReviewer}
-          isAddingMilestoneReviewer={isAddingMilestoneReviewer}
-          isLoadingProgramReviewers={isLoadingProgramReviewers}
-          isProgramReviewersError={isProgramReviewersError}
-          isLoadingMilestoneReviewers={isLoadingMilestoneReviewers}
-          isMilestoneReviewersError={isMilestoneReviewersError}
-          isKycEnabled={isKycEnabled}
-          kycStatuses={kycStatuses}
-          isLoadingKycStatuses={isLoadingKycStatuses}
-        />
-      </InfiniteScroll>
+          }
+          endMessage={
+            applications.length > 0 ? (
+              <div className="flex items-center justify-center py-4">
+                <div className="text-sm text-gray-600 dark:text-gray-400">
+                  {total} total {pluralize("application", total)} loaded
+                </div>
+              </div>
+            ) : null
+          }
+        >
+          <ApplicationList
+            programId={programId}
+            communityUID={communityUID}
+            applications={applications}
+            isLoading={isLoading && applications.length === 0}
+            onApplicationSelect={onApplicationSelect}
+            onApplicationHover={onApplicationHover}
+            onStatusChange={showStatusActions ? handleStatusChange : undefined}
+            showStatusActions={showStatusActions}
+            sortBy={sortBy}
+            sortOrder={sortOrder}
+            onSortChange={handleSortChange}
+            showAIScoreColumn={showAIScoreColumn}
+            showInternalAIScoreColumn={showInternalAIScoreColumn}
+            programReviewers={programReviewers}
+            milestoneReviewers={milestoneReviewers}
+            addProgramReviewer={addProgramReviewer}
+            isAddingProgramReviewer={isAddingProgramReviewer}
+            addMilestoneReviewer={addMilestoneReviewer}
+            isAddingMilestoneReviewer={isAddingMilestoneReviewer}
+            isLoadingProgramReviewers={isLoadingProgramReviewers}
+            isProgramReviewersError={isProgramReviewersError}
+            isLoadingMilestoneReviewers={isLoadingMilestoneReviewers}
+            isMilestoneReviewersError={isMilestoneReviewersError}
+            isKycEnabled={isKycEnabled}
+            kycStatuses={kycStatuses}
+            isLoadingKycStatuses={isLoadingKycStatuses}
+          />
+        </InfiniteScroll>
+      )}
     </div>
   );
 };

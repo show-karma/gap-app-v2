@@ -281,9 +281,18 @@ export const useFundingApplications = (programId: string, filters: IApplicationF
     initialPageParam: 1,
   });
 
+  // Scope the statistics to the same reviewer filter as the list, so the counts
+  // reflect the selected reviewer(s). Appended to the stats key as a suffix so
+  // the prefix-based invalidations elsewhere still match.
+  const reviewerStatsFilter = {
+    reviewerAddress: filtersWithDefaults.reviewerAddress,
+    reviewerAddresses: filtersWithDefaults.reviewerAddresses,
+  };
+
   const statsQuery = useQuery({
-    queryKey: QUERY_KEYS.applicationStats(programId),
-    queryFn: () => fundingPlatformService.applications.getApplicationStatistics(programId),
+    queryKey: [...QUERY_KEYS.applicationStats(programId), reviewerStatsFilter],
+    queryFn: () =>
+      fundingPlatformService.applications.getApplicationStatistics(programId, reviewerStatsFilter),
     enabled: !!programId && authenticated,
   });
 
