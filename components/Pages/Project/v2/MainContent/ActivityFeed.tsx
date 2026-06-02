@@ -3,6 +3,7 @@
 import { BadgeCheck, CircleDollarSign, Goal, Rss } from "lucide-react";
 import { useParams } from "next/navigation";
 import React, { useMemo } from "react";
+import { EfpStatsLine } from "@/components/EFP/EfpStatsLine";
 import EthereumAddressToProfileName from "@/components/EthereumAddressToProfileName";
 import { ActivityCard } from "@/components/Shared/ActivityCard";
 import { useMilestoneAllocationsByGrants } from "@/hooks/useCommunityMilestoneAllocations";
@@ -102,17 +103,20 @@ const TimelineItem = React.memo(function TimelineItem({
         {/* Endorsement - special format */}
         {milestone.type === "endorsement" && milestone.endorsement ? (
           <>
-            <div className="flex flex-row items-center gap-1.5 lg:gap-2 flex-wrap">
-              <span className="text-xs lg:text-sm font-semibold text-foreground">Endorsed by</span>
-              <span className="text-xs lg:text-sm font-semibold text-foreground">
+            <div className="flex flex-col gap-0.5 min-w-0">
+              <div className="flex flex-row items-center gap-1.5 lg:gap-2 flex-wrap">
+                <span className="text-xs lg:text-sm font-semibold text-foreground">
+                  Endorsed by
+                </span>
                 <EthereumAddressToProfileName
                   address={milestone.endorsement.endorsedBy}
                   showProfilePicture
                   pictureClassName="h-5 w-5 lg:h-6 lg:w-6 min-w-5 min-h-5 lg:min-w-6 lg:min-h-6 rounded-full"
                 />
-              </span>
+              </div>
+              <EfpStatsLine address={milestone.endorsement.endorsedBy} variant="compact" />
             </div>
-            <div className="flex flex-row items-center gap-1.5 lg:gap-2 text-xs lg:text-sm font-medium leading-5 text-muted-foreground">
+            <div className="flex flex-row items-center gap-1.5 lg:gap-2 text-xs lg:text-sm font-medium leading-5 text-muted-foreground shrink-0">
               <span>{formatDisplayDate(milestone.createdAt)}</span>
             </div>
           </>
