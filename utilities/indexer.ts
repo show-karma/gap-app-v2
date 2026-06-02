@@ -167,8 +167,6 @@ export const INDEXER = {
       ACCESS: (referenceNumber: string) => `/v2/funding-applications/${referenceNumber}/access`,
       MY_APPLICATIONS: (communitySlug: string) =>
         `/v2/funding-applications/user/my-applications?communitySlug=${communitySlug}`,
-      MILESTONE_COMPLETIONS: (referenceNumber: string) =>
-        `/v2/funding-applications/${referenceNumber}/milestone-completions`,
       INVOICE_CONFIG: (referenceNumber: string) =>
         `/v2/funding-applications/${referenceNumber}/invoice-config`,
       MILESTONE_EVALUATION: (referenceNumber: string, milestoneTitle: string) =>
