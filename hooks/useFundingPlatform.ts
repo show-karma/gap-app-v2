@@ -22,39 +22,8 @@ import type {
   IFundingApplication,
   IFundingProgramConfig,
 } from "@/types/funding-platform";
+import { QUERY_KEYS } from "./fundingPlatformQueryKeys";
 import { useAuth } from "./useAuth";
-
-// Query keys for caching
-const QUERY_KEYS = {
-  programs: (communityId: string) => ["grant-programs", communityId],
-  programConfig: (programId: string) => ["program-config", programId],
-  programStats: (programId: string) => ["program-stats", programId],
-  applications: (programId: string, filters: IApplicationFilters) => [
-    "applications",
-    programId,
-    filters,
-  ],
-  application: (applicationId: string) => ["funding-application", applicationId],
-  applicationByReference: (referenceNumber: string) => [
-    "application-by-reference",
-    referenceNumber,
-  ],
-  applicationByEmail: (programId: string, email: string) => [
-    "application-by-email",
-    programId,
-    email,
-  ],
-  applicationStats: (programId: string) => ["application-stats", programId],
-  applicationComments: (applicationId: string, isAdmin?: boolean) => [
-    "application-comments",
-    applicationId,
-    isAdmin,
-  ],
-  applicationVersions: (applicationIdOrReference: string) => [
-    "application-versions",
-    applicationIdOrReference,
-  ],
-};
 
 /**
  * Hook for managing funding programs for a community
@@ -281,9 +250,17 @@ export const useFundingApplications = (programId: string, filters: IApplicationF
     initialPageParam: 1,
   });
 
+  // Scope the statistics to the same reviewer filter as the list, so the counts
+  // reflect the selected reviewer(s).
+  const reviewerStatsFilter = {
+    reviewerAddress: filtersWithDefaults.reviewerAddress,
+    reviewerAddresses: filtersWithDefaults.reviewerAddresses,
+  };
+
   const statsQuery = useQuery({
-    queryKey: QUERY_KEYS.applicationStats(programId),
-    queryFn: () => fundingPlatformService.applications.getApplicationStatistics(programId),
+    queryKey: QUERY_KEYS.applicationStats(programId, reviewerStatsFilter),
+    queryFn: () =>
+      fundingPlatformService.applications.getApplicationStatistics(programId, reviewerStatsFilter),
     enabled: !!programId && authenticated,
   });
 

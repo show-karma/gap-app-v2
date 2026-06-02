@@ -5,7 +5,18 @@ import type { FC } from "react";
 import { Button } from "@/components/Utilities/Button";
 import { Can } from "@/src/core/rbac/components/can";
 import { Permission } from "@/src/core/rbac/types";
-import type { FundingApplicationStatusV2 } from "@/types/funding-platform";
+import type { ApplicationReportAction, FundingApplicationStatusV2 } from "@/types/funding-platform";
+
+// Maps the table transition's targetStatus to the action name the
+// applications-report endpoint returns in `availableActions`. Used only when
+// the optional `availableActions` prop is provided — otherwise the existing
+// <Can permission={...}> gate handles authorization.
+const TARGET_STATUS_TO_ACTION: Record<string, ApplicationReportAction> = {
+  under_review: "review",
+  revision_requested: "request_revision",
+  approved: "approve",
+  rejected: "reject",
+};
 
 // Define status transition configuration for table view
 interface TableStatusTransition {
@@ -108,6 +119,12 @@ interface TableStatusActionButtonsProps {
   currentStatus: FundingApplicationStatusV2;
   onStatusChange: (applicationId: string, status: string, e: React.MouseEvent) => void;
   isUpdating?: boolean;
+  // When provided, overrides the <Can permission={...}> gate. Used by the
+  // cross-program applications-report, where authorization is computed
+  // server-side per-row (caller's role in *that row's* program) and surfaced
+  // as a list of permitted actions. Leave undefined for per-program use cases
+  // where the RBAC context is already program-scoped.
+  availableActions?: ApplicationReportAction[];
 }
 
 // Main component that renders appropriate status action buttons for table rows
@@ -117,6 +134,7 @@ export const TableStatusActionButtons: FC<TableStatusActionButtonsProps> = ({
   currentStatus,
   onStatusChange,
   isUpdating = false,
+  availableActions,
 }) => {
   const availableTransitions = TABLE_STATUS_TRANSITIONS[currentStatus] || [];
 
@@ -127,6 +145,27 @@ export const TableStatusActionButtons: FC<TableStatusActionButtonsProps> = ({
 
   if (availableTransitions.length === 0) {
     return null;
+  }
+
+  if (availableActions) {
+    const allowed = new Set(availableActions);
+    const allowedTransitions = availableTransitions.filter((t) =>
+      allowed.has(TARGET_STATUS_TO_ACTION[t.targetStatus])
+    );
+    if (allowedTransitions.length === 0) return null;
+    return (
+      <div className="flex gap-1">
+        {allowedTransitions.map((transition) => (
+          <TableStatusActionButton
+            key={transition.targetStatus}
+            transition={transition}
+            applicationId={applicationId}
+            onStatusChange={onStatusChange}
+            disabled={isUpdating}
+          />
+        ))}
+      </div>
+    );
   }
 
   return (
