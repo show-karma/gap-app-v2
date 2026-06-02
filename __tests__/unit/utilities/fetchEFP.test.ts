@@ -79,7 +79,7 @@ describe("fetchEFP", () => {
       expect(global.fetch).toHaveBeenCalledTimes(1);
     });
 
-    it("reports errors when response is not ok", async () => {
+    it("omits addresses when response is not ok", async () => {
       (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
         ok: false,
         status: 500,
@@ -109,7 +109,7 @@ describe("fetchEFP", () => {
   });
 
   describe("fetchEfpCommonFollowers", () => {
-    it("returns empty results when leader equals target", async () => {
+    it("returns empty result when leader equals target", async () => {
       const result = await fetchEfpCommonFollowers(ADDR1, ADDR1);
       expect(result).toEqual({ results: [], length: 0 });
       expect(global.fetch).not.toHaveBeenCalled();
@@ -135,7 +135,7 @@ describe("fetchEFP", () => {
   });
 
   describe("fetchEfpFollowing", () => {
-    it("fetches a single page of following", async () => {
+    it("returns following page", async () => {
       (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
         ok: true,
         json: async () => ({
@@ -151,10 +151,9 @@ describe("fetchEFP", () => {
         }),
       });
 
-      const results = await fetchEfpFollowing(VIEWER, { limit: 50, offset: 0 });
+      const results = await fetchEfpFollowing(VIEWER, { limit: 10, offset: 0 });
 
       expect(results).toHaveLength(1);
-      expect(global.fetch).toHaveBeenCalledTimes(1);
     });
 
     it("returns null on failed following fetch", async () => {

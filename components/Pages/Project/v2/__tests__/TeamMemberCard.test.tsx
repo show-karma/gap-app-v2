@@ -381,7 +381,7 @@ describe("TeamMemberCard", () => {
 
       render(<TeamMemberCard member={defaultMember} />);
 
-      fireEvent.click(screen.getByRole("button", { name: /Retry/i }));
+      fireEvent.click(screen.getByTestId("member-efp-retry"));
       expect(mockPopulateEfp).toHaveBeenCalledWith([defaultMember]);
     });
 
