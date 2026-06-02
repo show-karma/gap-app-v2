@@ -84,6 +84,33 @@ vi.mock("@/store/ens", () => ({
   }),
 }));
 
+const mockPopulateEfp = vi.fn();
+vi.mock("@/store/efp", () => ({
+  useEFP: vi.fn((selector?: (state: unknown) => unknown) => {
+    const state = {
+      efpData: {},
+      populateEfp: mockPopulateEfp,
+      populateCommonFollowers: vi.fn(),
+    };
+    if (typeof selector === "function") {
+      return selector(state);
+    }
+    return state;
+  }),
+}));
+
+vi.mock("@/components/EFP/AddressEfpHoverCard", () => ({
+  AddressEfpHoverCard: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+}));
+
+vi.mock("@/components/EFP/EfpStatsLine", () => ({
+  EfpStatsLine: () => <div data-testid="member-efp-stats" />,
+}));
+
+vi.mock("@/components/EFP/EfpCommonFollowersLine", () => ({
+  EfpCommonFollowersLine: () => null,
+}));
+
 // Mock contributor profile modal store
 vi.mock("@/store/modals/contributorProfile", () => ({
   useContributorProfileModalStore: () => ({
@@ -206,6 +233,18 @@ describe("TeamContent", () => {
     });
   });
 
+  describe("EFP batch populate", () => {
+    it("calls populateEfp with owner and member addresses", () => {
+      render(<TeamContent />);
+
+      expect(mockPopulateEfp).toHaveBeenCalledWith([
+        "0x1111111111111111111111111111111111111111",
+        "0x2222222222222222222222222222222222222222",
+        "0x3333333333333333333333333333333333333333",
+      ]);
+    });
+  });
+
   describe("Member Sorting", () => {
     it("should sort members by role (Owner > Admin > Member)", () => {
       render(<TeamContent />);
@@ -227,6 +266,18 @@ describe("TeamContent", () => {
       render(<TeamContent className="custom-class" />);
 
       expect(screen.getByTestId("team-content")).toHaveClass("custom-class");
+    });
+  });
+
+  describe("EFP", () => {
+    it("should batch populate EFP stats for all team members", () => {
+      render(<TeamContent />);
+
+      expect(mockPopulateEfp).toHaveBeenCalledWith([
+        "0x1111111111111111111111111111111111111111",
+        "0x2222222222222222222222222222222222222222",
+        "0x3333333333333333333333333333333333333333",
+      ]);
     });
   });
 });

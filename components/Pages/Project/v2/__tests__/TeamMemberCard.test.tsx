@@ -73,6 +73,47 @@ vi.mock("@/store/ens", () => ({
   }),
 }));
 
+// Mock EFP store
+const mockPopulateEfp = vi.fn();
+const mockPopulateCommonFollowers = vi.fn();
+
+const mockEfpState = {
+  efpData: {
+    "0x1234567890123456789012345678901234567890": {
+      followers_count: 10,
+      following_count: 5,
+      isFetching: false,
+      error: false,
+    },
+  } as Record<
+    string,
+    {
+      followers_count?: number;
+      following_count?: number;
+      commonFollowers?: { address: string }[];
+      commonFollowersLength?: number;
+      isFetching?: boolean;
+      isFetchingCommon?: boolean;
+      error?: boolean;
+    }
+  >,
+  populateEfp: mockPopulateEfp,
+  populateCommonFollowers: mockPopulateCommonFollowers,
+};
+
+vi.mock("@/store/efp", () => ({
+  useEFP: vi.fn((selector?: (state: unknown) => unknown) => {
+    if (typeof selector === "function") {
+      return selector(mockEfpState);
+    }
+    return mockEfpState;
+  }),
+}));
+
+vi.mock("@/components/EFP/AddressEfpHoverCard", () => ({
+  AddressEfpHoverCard: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+}));
+
 // Mock contributor profile modal store
 const mockOpenModal = vi.fn();
 vi.mock("@/store/modals/contributorProfile", () => ({
@@ -187,6 +228,7 @@ describe("TeamMemberCard", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockTeamProfiles = [createMockTeamProfile()];
+    mockEfpState.efpData = {};
   });
 
   describe("Rendering", () => {
@@ -296,6 +338,89 @@ describe("TeamMemberCard", () => {
       render(<TeamMemberCard member={defaultMember} className="custom-class" />);
 
       expect(screen.getByTestId("team-member-card")).toHaveClass("custom-class");
+    });
+  });
+
+  describe("EFP stats", () => {
+    beforeEach(() => {
+      mockEfpState.efpData[defaultMember.toLowerCase()] = {
+        followers_count: 10,
+        following_count: 5,
+        isFetching: false,
+        error: false,
+      };
+    });
+
+    it("shows skeleton while EFP stats are loading", () => {
+      mockEfpState.efpData[defaultMember.toLowerCase()] = { isFetching: true };
+
+      render(<TeamMemberCard member={defaultMember} />);
+
+      expect(screen.getByTestId("member-efp-stats")).toBeInTheDocument();
+      expect(screen.getByTestId("skeleton")).toBeInTheDocument();
+    });
+
+    it("shows follower and following counts with correct pluralization", () => {
+      mockEfpState.efpData[defaultMember.toLowerCase()] = {
+        followers_count: 1,
+        following_count: 2,
+        isFetching: false,
+      };
+
+      render(<TeamMemberCard member={defaultMember} />);
+
+      expect(screen.getByTestId("member-efp-stats")).toHaveTextContent("1 follower");
+      expect(screen.getByTestId("member-efp-stats")).toHaveTextContent("2 following");
+    });
+
+    it("shows retry when EFP stats errored", () => {
+      mockEfpState.efpData[defaultMember.toLowerCase()] = {
+        error: true,
+        isFetching: false,
+      };
+
+      render(<TeamMemberCard member={defaultMember} />);
+
+      fireEvent.click(screen.getByRole("button", { name: /Retry/i }));
+      expect(mockPopulateEfp).toHaveBeenCalledWith([defaultMember]);
+    });
+
+    it("shows common followers row when length is greater than zero", () => {
+      mockEfpState.efpData[defaultMember.toLowerCase()] = {
+        commonFollowersLength: 2,
+        commonFollowers: [
+          { address: "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" },
+          { address: "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb" },
+        ],
+        isFetchingCommon: false,
+      };
+
+      render(<TeamMemberCard member={defaultMember} />);
+
+      expect(screen.getByTestId("member-efp-common-followers")).toHaveTextContent(
+        "2 followers you know"
+      );
+    });
+
+    it("hides common followers row when length is zero", () => {
+      mockEfpState.efpData[defaultMember.toLowerCase()] = {
+        commonFollowersLength: 0,
+        commonFollowers: [],
+        isFetchingCommon: false,
+      };
+
+      render(<TeamMemberCard member={defaultMember} />);
+
+      expect(screen.queryByTestId("member-efp-common-followers")).not.toBeInTheDocument();
+    });
+
+    it("calls populateCommonFollowers when viewer is connected", () => {
+      render(<TeamMemberCard member={defaultMember} />);
+
+      expect(mockPopulateCommonFollowers).toHaveBeenCalledWith(
+        defaultMember,
+        "0x1234567890123456789012345678901234567890"
+      );
     });
   });
 });
