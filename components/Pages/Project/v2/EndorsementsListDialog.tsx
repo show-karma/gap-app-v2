@@ -3,7 +3,7 @@
 import { BadgeCheckIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import type { Hex } from "viem";
-import { AddressEfpHoverCard } from "@/components/EFP/AddressEfpHoverCard";
+import { EfpStatsLine } from "@/components/EFP/EfpStatsLine";
 import EthereumAddressToProfileName from "@/components/EthereumAddressToProfileName";
 import { Button } from "@/components/Utilities/Button";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useProjectStore } from "@/store";
+import { useEFP } from "@/store/efp";
 import { formatDate } from "@/utilities/formatDate";
 
 const ITEMS_PER_PAGE = 12;
@@ -37,17 +38,13 @@ function EndorsementRow({ endorsement }: EndorsementRowProps) {
       <div className="flex flex-row gap-2 w-full items-start">
         <div className="flex flex-row gap-2 w-full items-center">
           <div className="flex flex-col gap-0.5">
-            <p className="text-sm font-semibold text-foreground">
-              <AddressEfpHoverCard address={endorsement.endorsedBy}>
-                <span className="inline-flex cursor-default">
-                  <EthereumAddressToProfileName
-                    address={endorsement.endorsedBy}
-                    showProfilePicture
-                    pictureClassName="h-8 w-8 rounded-full"
-                  />
-                </span>
-              </AddressEfpHoverCard>
-            </p>
+            <EthereumAddressToProfileName
+              address={endorsement.endorsedBy}
+              showProfilePicture
+              pictureClassName="h-8 w-8 rounded-full"
+              className="text-sm font-semibold text-foreground"
+            />
+            <EfpStatsLine address={endorsement.endorsedBy} variant="compact" />
             <p className="text-xs text-muted-foreground">
               endorsed on {formatDate(endorsement.createdAt)}
             </p>
@@ -85,12 +82,23 @@ export function EndorsementsListDialog({ open, onOpenChange }: EndorsementsListD
   const project = useProjectStore((state) => state.project);
   const [page, setPage] = useState<number>(1);
 
+  const populateEfp = useEFP((state) => state.populateEfp);
+
   // Reset pagination when dialog opens
   useEffect(() => {
     if (open) {
       setPage(1);
     }
   }, [open]);
+
+  useEffect(() => {
+    if (open && project?.endorsements?.length) {
+      const addresses = [
+        ...new Set((project.endorsements as ProjectEndorsementV2[]).map((e) => e.endorsedBy)),
+      ];
+      populateEfp(addresses);
+    }
+  }, [open, project?.endorsements, populateEfp]);
 
   // Compute unique, sorted endorsements
   const { displayedEndorsements, hasMore, totalCount } = useMemo(() => {
