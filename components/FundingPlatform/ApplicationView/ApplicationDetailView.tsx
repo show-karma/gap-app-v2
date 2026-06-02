@@ -25,7 +25,6 @@ import { Link } from "@/src/components/navigation/Link";
 import { AdminOnly } from "@/src/core/rbac";
 import { MilestonesTab } from "@/src/features/applications/components/MilestonesTab";
 import { layoutTheme } from "@/src/helper/theme";
-import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 import { isFundingProgramConfig } from "@/utilities/type-guards";
 import { isKnownTabId, useApplicationDetailView } from "./useApplicationDetailView";
@@ -82,8 +81,8 @@ export default function ApplicationDetailView({
     milestoneReviewUrl,
     applicationViewMode,
     setApplicationViewMode,
+    activeTabId,
     setActiveTabId,
-    tabParam,
     selectedStatus,
     isUpdatingStatus,
     handleStatusChangeClick,
@@ -225,10 +224,14 @@ export default function ApplicationDetailView({
     },
   ];
 
-  // Derive tab index from the tab id rather than hardcoding — prevents silent
-  // breakage when the Milestones tab is or isn't present.
-  const tabParamIndex = tabParam ? tabs.findIndex((t) => t.id === tabParam) : -1;
-  const defaultIndex = tabParamIndex >= 0 ? tabParamIndex : 0;
+  // Seed the rendered tab from the live activeTabId (not the static `?tab=`
+  // param) so that when the Milestones tab is inserted/removed on an approval
+  // transition, ApplicationTabs re-derives the correct panel instead of drifting
+  // to whatever now sits at the old index.
+  const selectedIndex = Math.max(
+    0,
+    tabs.findIndex((tab) => tab.id === activeTabId)
+  );
 
   const handleTabChange = (index: number) => {
     const tab = tabs[index];
@@ -306,7 +309,7 @@ export default function ApplicationDetailView({
 
       <ApplicationTabs
         connectedToHeader={!milestoneReviewUrl && !selectedStatus}
-        defaultIndex={defaultIndex}
+        defaultIndex={selectedIndex}
         tabs={tabs}
         onChange={handleTabChange}
       />

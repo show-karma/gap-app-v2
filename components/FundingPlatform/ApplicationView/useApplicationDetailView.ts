@@ -322,7 +322,6 @@ export function useApplicationDetailView({
     setApplicationViewMode,
     activeTabId,
     setActiveTabId,
-    tabParam,
     // Status form
     selectedStatus,
     isUpdatingStatus,

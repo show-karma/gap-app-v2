@@ -2,7 +2,6 @@
 
 import type { FC } from "react";
 import type { IApplicationStatistics } from "@/types/funding-platform";
-import formatCurrency from "@/utilities/formatCurrency";
 
 interface ApplicationListStatsBarProps {
   stats?: IApplicationStatistics;
@@ -28,7 +27,7 @@ export const ApplicationListStatsBar: FC<ApplicationListStatsBarProps> = ({ stat
           className="bg-white dark:bg-zinc-800 p-4 rounded-lg border items-center justify-center"
         >
           <div className="text-2xl font-bold text-gray-900 dark:text-white text-center">
-            {formatCurrency(item.value || 0)}
+            {item.value.toLocaleString()}
           </div>
           <div className="text-sm text-gray-600 dark:text-gray-400 text-center">{item.title}</div>
         </div>

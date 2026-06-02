@@ -92,7 +92,9 @@ export function useApplicationListFilters(initialFilters: IApplicationFilters = 
     syncParam("status", filters.status);
     syncParam("dateFrom", filters.dateFrom);
     syncParam("dateTo", filters.dateTo);
-    syncParam("sortBy", sortBy && sortBy !== "createdAt" ? sortBy : undefined);
+    // "status" is the default, so omit it from the URL; persist every other
+    // sort column (including "createdAt") so it survives a reload.
+    syncParam("sortBy", sortBy && sortBy !== "status" ? sortBy : undefined);
     syncParam("sortOrder", sortOrder);
 
     const queryString = params.toString();
