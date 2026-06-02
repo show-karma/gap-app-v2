@@ -40,6 +40,9 @@ export const envVars = {
   ZERODEV_PROJECT_ID: process.env.NEXT_PUBLIC_ZERODEV_PROJECT_ID || "",
   ALCHEMY_POLICY_ID: process.env.NEXT_PUBLIC_ALCHEMY_POLICY_ID || "",
   NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || "",
+  NEXT_PUBLIC_EFP_API_URL: process.env.NEXT_PUBLIC_EFP_API_URL || "",
+  EFP_API_URL:
+    process.env.NEXT_PUBLIC_EFP_API_URL || "https://api.ethfollow.xyz/api/v1",
   // Karma platform-owned Telegram bot handle (without leading @).
   // Hardcoded — single bot used across all environments.
   KARMA_TELEGRAM_BOT_HANDLE: "karmahq_support_bot",
