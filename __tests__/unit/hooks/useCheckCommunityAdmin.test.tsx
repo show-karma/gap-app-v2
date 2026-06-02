@@ -29,20 +29,23 @@ vi.mock("@/utilities/eas-wagmi-utils", () => ({
   useSigner: vi.fn(() => "mockSigner"),
 }));
 
-// Mock isCommunityAdminOf
+// Mock the community-admin SDK. The hook resolves admin status across every
+// linked wallet via isCommunityAdminOfAny.
 vi.mock("@/utilities/sdk/communities/isCommunityAdmin", () => ({
-  isCommunityAdminOf: vi.fn(),
+  isCommunityAdminOfAny: vi.fn(),
 }));
 
 import { useAccount } from "wagmi";
 import { useAuth } from "@/hooks/useAuth";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
-import { isCommunityAdminOf } from "@/utilities/sdk/communities/isCommunityAdmin";
+import { isCommunityAdminOfAny } from "@/utilities/sdk/communities/isCommunityAdmin";
 
 const mockUseAccount = useAccount as vi.MockedFunction<typeof useAccount>;
 const mockUseAuth = useAuth as vi.MockedFunction<typeof useAuth>;
 const mockUseSigner = useSigner as vi.MockedFunction<typeof useSigner>;
-const mockIsCommunityAdminOf = isCommunityAdminOf as vi.MockedFunction<typeof isCommunityAdminOf>;
+const mockIsCommunityAdminOfAny = isCommunityAdminOfAny as vi.MockedFunction<
+  typeof isCommunityAdminOfAny
+>;
 
 // Test data
 const mockCommunity: CommunityDetails = {
@@ -103,7 +106,7 @@ describe("useCheckCommunityAdmin", () => {
 
   describe("Admin Status Verification (Security-Critical)", () => {
     it("should return isAdmin: true when user is admin", async () => {
-      mockIsCommunityAdminOf.mockResolvedValueOnce(true);
+      mockIsCommunityAdminOfAny.mockResolvedValueOnce(true);
 
       const { result } = renderHook(() => useCheckCommunityAdmin(mockCommunity), {
         wrapper: createWrapper(queryClient),
@@ -118,7 +121,7 @@ describe("useCheckCommunityAdmin", () => {
     });
 
     it("should return isAdmin: false when user is not admin", async () => {
-      mockIsCommunityAdminOf.mockResolvedValueOnce(false);
+      mockIsCommunityAdminOfAny.mockResolvedValueOnce(false);
 
       const { result } = renderHook(() => useCheckCommunityAdmin(mockCommunity), {
         wrapper: createWrapper(queryClient),
@@ -133,7 +136,7 @@ describe("useCheckCommunityAdmin", () => {
     });
 
     it("should return isAdmin: false when isCommunityAdminOf returns undefined", async () => {
-      mockIsCommunityAdminOf.mockResolvedValueOnce(undefined as unknown as boolean);
+      mockIsCommunityAdminOfAny.mockResolvedValueOnce(undefined as unknown as boolean);
 
       const { result } = renderHook(() => useCheckCommunityAdmin(mockCommunity), {
         wrapper: createWrapper(queryClient),
@@ -147,22 +150,26 @@ describe("useCheckCommunityAdmin", () => {
       expect(result.current.isAdmin).toBe(false);
     });
 
-    it("should call isCommunityAdminOf with correct parameters", async () => {
-      mockIsCommunityAdminOf.mockResolvedValueOnce(true);
+    it("should call isCommunityAdminOfAny with the active wallet", async () => {
+      mockIsCommunityAdminOfAny.mockResolvedValueOnce(true);
 
       renderHook(() => useCheckCommunityAdmin(mockCommunity), {
         wrapper: createWrapper(queryClient),
       });
 
       await waitFor(() => {
-        expect(mockIsCommunityAdminOf).toHaveBeenCalled();
+        expect(mockIsCommunityAdminOfAny).toHaveBeenCalled();
       });
 
-      expect(mockIsCommunityAdminOf).toHaveBeenCalledWith(mockCommunity, mockAddress, "mockSigner");
+      expect(mockIsCommunityAdminOfAny).toHaveBeenCalledWith(
+        mockCommunity,
+        [mockAddress],
+        "mockSigner"
+      );
     });
 
     it("should use provided address over connected account address", async () => {
-      mockIsCommunityAdminOf.mockResolvedValueOnce(true);
+      mockIsCommunityAdminOfAny.mockResolvedValueOnce(true);
       const customAddress = "0xCustomAddress";
 
       renderHook(() => useCheckCommunityAdmin(mockCommunity, customAddress), {
@@ -170,12 +177,69 @@ describe("useCheckCommunityAdmin", () => {
       });
 
       await waitFor(() => {
-        expect(mockIsCommunityAdminOf).toHaveBeenCalled();
+        expect(mockIsCommunityAdminOfAny).toHaveBeenCalled();
       });
 
-      expect(mockIsCommunityAdminOf).toHaveBeenCalledWith(
+      expect(mockIsCommunityAdminOfAny).toHaveBeenCalledWith(
         mockCommunity,
-        customAddress,
+        [customAddress],
+        "mockSigner"
+      );
+    });
+
+    it("checks every linked wallet of the authenticated user, not just the active one", async () => {
+      mockUseAuth.mockReturnValue({
+        authenticated: true,
+        address: "0xActiveWallet",
+        user: {
+          linkedAccounts: [
+            { type: "wallet", address: "0xActiveWallet" },
+            { type: "wallet", address: "0xAdminWallet" },
+          ],
+        },
+      } as unknown as ReturnType<typeof useAuth>);
+      mockIsCommunityAdminOfAny.mockResolvedValueOnce(true);
+
+      const { result } = renderHook(() => useCheckCommunityAdmin(mockCommunity), {
+        wrapper: createWrapper(queryClient),
+      });
+
+      await waitFor(() => {
+        expect(result.current.isAdmin).toBe(true);
+      });
+
+      expect(mockIsCommunityAdminOfAny).toHaveBeenCalledWith(
+        mockCommunity,
+        expect.arrayContaining(["0xActiveWallet", "0xAdminWallet"]),
+        "mockSigner"
+      );
+    });
+
+    it("does not expand to linked wallets when an explicit address is provided", async () => {
+      mockUseAuth.mockReturnValue({
+        authenticated: true,
+        address: "0xActiveWallet",
+        user: {
+          linkedAccounts: [
+            { type: "wallet", address: "0xActiveWallet" },
+            { type: "wallet", address: "0xAdminWallet" },
+          ],
+        },
+      } as unknown as ReturnType<typeof useAuth>);
+      mockIsCommunityAdminOfAny.mockResolvedValueOnce(false);
+      const someoneElse = "0xSomeoneElse";
+
+      renderHook(() => useCheckCommunityAdmin(mockCommunity, someoneElse), {
+        wrapper: createWrapper(queryClient),
+      });
+
+      await waitFor(() => {
+        expect(mockIsCommunityAdminOfAny).toHaveBeenCalled();
+      });
+
+      expect(mockIsCommunityAdminOfAny).toHaveBeenCalledWith(
+        mockCommunity,
+        [someoneElse],
         "mockSigner"
       );
     });
@@ -187,7 +251,7 @@ describe("useCheckCommunityAdmin", () => {
       const pendingPromise = new Promise<boolean>((resolve) => {
         resolvePromise = resolve;
       });
-      mockIsCommunityAdminOf.mockReturnValueOnce(pendingPromise);
+      mockIsCommunityAdminOfAny.mockReturnValueOnce(pendingPromise);
 
       const { result } = renderHook(() => useCheckCommunityAdmin(mockCommunity), {
         wrapper: createWrapper(queryClient),
@@ -213,7 +277,7 @@ describe("useCheckCommunityAdmin", () => {
       );
 
       expect(result.current.isLoading).toBe(false);
-      expect(mockIsCommunityAdminOf).not.toHaveBeenCalled();
+      expect(mockIsCommunityAdminOfAny).not.toHaveBeenCalled();
     });
   });
 
@@ -224,7 +288,7 @@ describe("useCheckCommunityAdmin", () => {
       });
 
       expect(result.current.isLoading).toBe(false);
-      expect(mockIsCommunityAdminOf).not.toHaveBeenCalled();
+      expect(mockIsCommunityAdminOfAny).not.toHaveBeenCalled();
     });
 
     it("should not fetch when community is null", () => {
@@ -233,7 +297,7 @@ describe("useCheckCommunityAdmin", () => {
       });
 
       expect(result.current.isLoading).toBe(false);
-      expect(mockIsCommunityAdminOf).not.toHaveBeenCalled();
+      expect(mockIsCommunityAdminOfAny).not.toHaveBeenCalled();
     });
 
     it("should not fetch when user is not authenticated", () => {
@@ -246,7 +310,7 @@ describe("useCheckCommunityAdmin", () => {
       });
 
       expect(result.current.isLoading).toBe(false);
-      expect(mockIsCommunityAdminOf).not.toHaveBeenCalled();
+      expect(mockIsCommunityAdminOfAny).not.toHaveBeenCalled();
     });
 
     it("should not fetch when no address is available", () => {
@@ -260,7 +324,7 @@ describe("useCheckCommunityAdmin", () => {
       });
 
       expect(result.current.isLoading).toBe(false);
-      expect(mockIsCommunityAdminOf).not.toHaveBeenCalled();
+      expect(mockIsCommunityAdminOfAny).not.toHaveBeenCalled();
     });
 
     it("should not fetch when enabled option is false", () => {
@@ -272,18 +336,18 @@ describe("useCheckCommunityAdmin", () => {
       );
 
       expect(result.current.isLoading).toBe(false);
-      expect(mockIsCommunityAdminOf).not.toHaveBeenCalled();
+      expect(mockIsCommunityAdminOfAny).not.toHaveBeenCalled();
     });
 
     it("should fetch when all conditions are met", async () => {
-      mockIsCommunityAdminOf.mockResolvedValueOnce(true);
+      mockIsCommunityAdminOfAny.mockResolvedValueOnce(true);
 
       renderHook(() => useCheckCommunityAdmin(mockCommunity), {
         wrapper: createWrapper(queryClient),
       });
 
       await waitFor(() => {
-        expect(mockIsCommunityAdminOf).toHaveBeenCalled();
+        expect(mockIsCommunityAdminOfAny).toHaveBeenCalled();
       });
     });
   });
@@ -292,7 +356,7 @@ describe("useCheckCommunityAdmin", () => {
     it("should return isAdmin: false when isCommunityAdminOf returns false (internal error handling)", async () => {
       // isCommunityAdminOf catches errors internally and returns false
       // So we test that the hook properly handles this case
-      mockIsCommunityAdminOf.mockResolvedValueOnce(false);
+      mockIsCommunityAdminOfAny.mockResolvedValueOnce(false);
 
       const { result } = renderHook(() => useCheckCommunityAdmin(mockCommunity), {
         wrapper: createWrapper(queryClient),
@@ -311,7 +375,7 @@ describe("useCheckCommunityAdmin", () => {
       // When isCommunityAdminOf encounters an error, it catches it internally
       // and returns false (with error logged via errorManager)
       // This test verifies the hook handles this gracefully
-      mockIsCommunityAdminOf.mockResolvedValueOnce(false);
+      mockIsCommunityAdminOfAny.mockResolvedValueOnce(false);
 
       const { result } = renderHook(() => useCheckCommunityAdmin(mockCommunity), {
         wrapper: createWrapper(queryClient),
@@ -329,7 +393,7 @@ describe("useCheckCommunityAdmin", () => {
 
   describe("Refetch Functionality", () => {
     it("should provide a refetch function", async () => {
-      mockIsCommunityAdminOf.mockResolvedValueOnce(false);
+      mockIsCommunityAdminOfAny.mockResolvedValueOnce(false);
 
       const { result } = renderHook(() => useCheckCommunityAdmin(mockCommunity), {
         wrapper: createWrapper(queryClient),
@@ -343,7 +407,7 @@ describe("useCheckCommunityAdmin", () => {
     });
 
     it("should re-fetch admin status when refetch is called", async () => {
-      mockIsCommunityAdminOf.mockResolvedValueOnce(false);
+      mockIsCommunityAdminOfAny.mockResolvedValueOnce(false);
 
       const { result } = renderHook(() => useCheckCommunityAdmin(mockCommunity), {
         wrapper: createWrapper(queryClient),
@@ -354,7 +418,7 @@ describe("useCheckCommunityAdmin", () => {
       });
 
       // Change the mock to return true
-      mockIsCommunityAdminOf.mockResolvedValueOnce(true);
+      mockIsCommunityAdminOfAny.mockResolvedValueOnce(true);
 
       // Call refetch
       await result.current.refetch();
@@ -367,14 +431,14 @@ describe("useCheckCommunityAdmin", () => {
 
   describe("Query Key Structure", () => {
     it("should use correct query key for caching", async () => {
-      mockIsCommunityAdminOf.mockResolvedValueOnce(true);
+      mockIsCommunityAdminOfAny.mockResolvedValueOnce(true);
 
       renderHook(() => useCheckCommunityAdmin(mockCommunity), {
         wrapper: createWrapper(queryClient),
       });
 
       await waitFor(() => {
-        expect(mockIsCommunityAdminOf).toHaveBeenCalled();
+        expect(mockIsCommunityAdminOfAny).toHaveBeenCalled();
       });
 
       // Verify the query is cached with the correct key components (using centralized QUERY_KEYS)
@@ -383,7 +447,9 @@ describe("useCheckCommunityAdmin", () => {
         "isCommunityAdmin",
         mockCommunity.uid,
         mockCommunity.chainID,
-        mockAddress,
+        // The key carries the order-independent, lowercased signature of the
+        // checked wallet set (here just the single active wallet).
+        mockAddress.toLowerCase(),
         "mockSigner",
       ]);
       expect(cachedData).toBe(true);
@@ -392,7 +458,7 @@ describe("useCheckCommunityAdmin", () => {
 
   describe("Return Value Structure", () => {
     it("should return all expected properties", async () => {
-      mockIsCommunityAdminOf.mockResolvedValueOnce(true);
+      mockIsCommunityAdminOfAny.mockResolvedValueOnce(true);
 
       const { result } = renderHook(() => useCheckCommunityAdmin(mockCommunity), {
         wrapper: createWrapper(queryClient),
@@ -410,7 +476,7 @@ describe("useCheckCommunityAdmin", () => {
     });
 
     it("should default isAdmin to false when data is falsy", async () => {
-      mockIsCommunityAdminOf.mockResolvedValueOnce(null as unknown as boolean);
+      mockIsCommunityAdminOfAny.mockResolvedValueOnce(null as unknown as boolean);
 
       const { result } = renderHook(() => useCheckCommunityAdmin(mockCommunity), {
         wrapper: createWrapper(queryClient),

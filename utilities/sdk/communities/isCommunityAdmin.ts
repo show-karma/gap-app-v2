@@ -5,7 +5,72 @@ import type { Community } from "@/types/v2/community";
 import { getGapRpcConfig } from "@/utilities/gapRpcConfig";
 
 /**
- * Check if a user is an admin of a community
+ * Check if ANY of the given wallet addresses is an admin of a community.
+ *
+ * A single authenticated account can hold multiple wallets (e.g. several Privy
+ * embedded wallets), and admin authority may sit on a non-active one. Resolve
+ * the on-chain `isAdmin` check across every supplied wallet so the account is
+ * authorized wherever the role lives. The resolver is fetched once and reused.
+ *
+ * @param community - The community to check admin status for
+ * @param addresses - The wallet addresses to check
+ * @param signer - Optional signer for blockchain calls
+ * @returns boolean - true if any address is an admin, false otherwise or on failure
+ */
+export const isCommunityAdminOfAny = async (
+  community: Community,
+  addresses: (string | Hex)[],
+  signer?: SignerOrProvider
+): Promise<boolean> => {
+  const { uid, chainID } = community;
+
+  // Dedupe case-insensitively while preserving the original-cased address.
+  const uniqueAddresses = Array.from(
+    new Map(
+      addresses.filter((address) => !!address).map((address) => [address.toLowerCase(), address])
+    ).values()
+  );
+  if (uniqueAddresses.length === 0) return false;
+
+  try {
+    const resolver = await GAP.getCommunityResolver(signer, getGapRpcConfig(), chainID);
+    if (!resolver) {
+      errorManager(`Community resolver not available for chain ${chainID}`, null, {
+        uid,
+        chainID,
+        addresses: uniqueAddresses,
+      });
+      return false;
+    }
+
+    const results = await Promise.all(
+      uniqueAddresses.map((address) =>
+        Promise.resolve(resolver.isAdmin(uid as Hex, address))
+          .then((response) => response ?? false)
+          .catch((error: unknown) => {
+            errorManager(`Error checking if user ${address} is community(${uid}) admin`, error, {
+              uid,
+              chainID,
+              address,
+            });
+            return false;
+          })
+      )
+    );
+
+    return results.some(Boolean);
+  } catch (error: unknown) {
+    errorManager(`Error checking community(${uid}) admin for addresses`, error, {
+      uid,
+      chainID,
+      addresses: uniqueAddresses,
+    });
+    return false;
+  }
+};
+
+/**
+ * Check if a user is an admin of a community.
  *
  * @param community - The community to check admin status for
  * @param address - The wallet address to check
@@ -16,27 +81,4 @@ export const isCommunityAdminOf = async (
   community: Community,
   address: string | Hex,
   signer?: SignerOrProvider
-): Promise<boolean> => {
-  const { uid, chainID } = community;
-  try {
-    const resolver = await GAP.getCommunityResolver(signer, getGapRpcConfig(), chainID);
-    if (!resolver) {
-      errorManager(`Community resolver not available for chain ${chainID}`, null, {
-        uid,
-        chainID,
-        address,
-      });
-      return false;
-    }
-
-    const response = await resolver.isAdmin(uid as Hex, address);
-    return response ?? false;
-  } catch (error: unknown) {
-    errorManager(`Error checking if user ${address} is community(${uid}) admin`, error, {
-      uid,
-      chainID,
-      address,
-    });
-    return false;
-  }
-};
+): Promise<boolean> => isCommunityAdminOfAny(community, [address], signer);
