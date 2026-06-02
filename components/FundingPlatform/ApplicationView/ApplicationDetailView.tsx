@@ -131,7 +131,6 @@ export default function ApplicationDetailView({
 
   // Status change inline form state
   const [selectedStatus, setSelectedStatus] = useState<ApplicationStatus | null>(null);
-  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 
   // Fetch application data
   const {
@@ -162,13 +161,6 @@ export default function ApplicationDetailView({
     }
   }, [application, activeTabId, isApprovedApplication]);
 
-  // Reset the inline status form when switching to a different application
-  // (panel variant reuses this component across selections).
-  useEffect(() => {
-    setSelectedStatus(null);
-    setApplicationViewMode("details");
-  }, [applicationId]);
-
   // Fetch program config
   const { data: program, config } = useProgramConfig(programId);
 
@@ -182,8 +174,9 @@ export default function ApplicationDetailView({
   // Fetch KYC config to get form URLs
   const { isEnabled: isKycEnabled } = useKycConfig(communityId);
 
-  // Use the application status hook
-  const { updateStatusAsync } = useApplicationStatus(programId);
+  // Use the application status hook — the mutation's pending flag drives the
+  // inline form's busy state (no separate local loading state needed).
+  const { updateStatusAsync, isUpdating: isUpdatingStatus } = useApplicationStatus(programId);
 
   // Use the comments hook - all users with access can view comments
   const {
@@ -241,7 +234,6 @@ export default function ApplicationDetailView({
   ) => {
     if (!selectedStatus) return;
 
-    setIsUpdatingStatus(true);
     try {
       await handleStatusChange(selectedStatus, reason, approvedAmount, approvedCurrency);
       // Success: hide inline form and clear state
@@ -252,13 +244,10 @@ export default function ApplicationDetailView({
         toast.success(`Application status updated to ${selectedStatus}`);
       }
     } catch (error) {
-      // Error: keep form open so user can retry
+      // Error: keep the form open so the user can retry.
       const errorMessage =
         error instanceof Error ? error.message : "Failed to update application status";
       toast.error(errorMessage);
-    } finally {
-      // Always clear loading state
-      setIsUpdatingStatus(false);
     }
   };
 

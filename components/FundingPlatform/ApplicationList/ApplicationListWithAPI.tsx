@@ -27,7 +27,7 @@ import formatCurrency from "@/utilities/formatCurrency";
 import { getAIColumnVisibility } from "../helper/getAIColumnVisibility";
 import ApplicationInbox from "./ApplicationInbox";
 import { ApplicationList } from "./ApplicationList";
-import ReviewerFilterDropdown from "./ReviewerFilterDropdown";
+import { ReviewerFilterDropdown } from "./ReviewerFilterDropdown";
 
 interface IApplicationListWithAPIProps {
   programId: string; // Normalized program id (chainId suffix stripped)
@@ -471,6 +471,7 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
               <button
                 type="button"
                 onClick={() => setMyReviewsOnly(true)}
+                aria-pressed={myReviewsOnly}
                 className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${
                   myReviewsOnly
                     ? "bg-blue-600 text-white"
@@ -482,6 +483,7 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
               <button
                 type="button"
                 onClick={() => setMyReviewsOnly(false)}
+                aria-pressed={!myReviewsOnly}
                 className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${
                   !myReviewsOnly
                     ? "bg-blue-600 text-white"

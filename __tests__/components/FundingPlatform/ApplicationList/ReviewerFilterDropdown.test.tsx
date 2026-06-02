@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import ReviewerFilterDropdown from "@/components/FundingPlatform/ApplicationList/ReviewerFilterDropdown";
+import { ReviewerFilterDropdown } from "@/components/FundingPlatform/ApplicationList/ReviewerFilterDropdown";
 import type { ProgramReviewer } from "@/services/program-reviewers.service";
 
 const createMockReviewer = (overrides: Partial<ProgramReviewer> = {}): ProgramReviewer => ({

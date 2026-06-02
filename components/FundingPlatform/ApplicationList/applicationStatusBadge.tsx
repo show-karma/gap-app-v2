@@ -31,7 +31,8 @@ export const ApplicationStatusBadge = ({
   <span
     className={cn(
       "inline-flex px-2 py-1 rounded-full text-xs font-medium",
-      applicationStatusColors[status] || "bg-gray-100 text-gray-800",
+      applicationStatusColors[status] ||
+        "bg-gray-100 text-gray-800 dark:bg-zinc-700 dark:text-zinc-200",
       className
     )}
   >

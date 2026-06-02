@@ -22,7 +22,7 @@ const reviewerLabel = (reviewer: ProgramReviewer) =>
   reviewer.email ||
   (reviewer.publicAddress ? shortenAddress(reviewer.publicAddress) : "Unknown reviewer");
 
-const ReviewerFilterDropdown: FC<IReviewerFilterDropdownProps> = ({
+const ReviewerFilterDropdownComponent: FC<IReviewerFilterDropdownProps> = ({
   reviewers,
   selectedAddresses,
   onChange,
@@ -134,4 +134,5 @@ const ReviewerFilterDropdown: FC<IReviewerFilterDropdownProps> = ({
   );
 };
 
-export default memo(ReviewerFilterDropdown);
+export const ReviewerFilterDropdown = memo(ReviewerFilterDropdownComponent);
+ReviewerFilterDropdown.displayName = "ReviewerFilterDropdown";

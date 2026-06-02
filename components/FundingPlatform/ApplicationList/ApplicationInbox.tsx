@@ -146,7 +146,9 @@ const ApplicationInbox: FC<ApplicationInboxProps> = ({
         <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-800">
           <div className="mb-1 flex items-center justify-between gap-2">
             <h2 className="text-sm font-semibold text-gray-900 dark:text-white">Assigned to you</h2>
-            {!showEmpty && <span className="text-xs text-gray-400">{totalLabel}</span>}
+            {!showEmpty && !showInitialLoading && (
+              <span className="text-xs text-gray-400">{totalLabel}</span>
+            )}
           </div>
           <p className="mb-3 text-xs text-gray-400 dark:text-zinc-500">
             Select an application to review it on the right.
