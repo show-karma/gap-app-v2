@@ -338,12 +338,7 @@ export const ContributorProfileDialog: FC = () => {
                           Your ETH address
                         </label>
                         <AddressEfpHoverCard address={address ?? ""}>
-                          <p
-                            className={cn(
-                              inputStyle,
-                              "opacity-70 cursor-default w-fit"
-                            )}
-                          >
+                          <p className={cn(inputStyle, "opacity-70 cursor-default w-fit")}>
                             {address}
                           </p>
                         </AddressEfpHoverCard>

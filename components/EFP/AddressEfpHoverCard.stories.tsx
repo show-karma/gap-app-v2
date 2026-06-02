@@ -17,10 +17,9 @@ const meta: Meta<typeof AddressEfpHoverCard> = {
 export default meta;
 type Story = StoryObj<typeof AddressEfpHoverCard>;
 
-export const HoverCardOpen: Story = {
+export const Default: Story = {
   args: {
     address: TEST_ADDRESS,
-    open: true,
     children: (
       <button type="button" className="text-sm font-semibold underline">
         alice.eth
@@ -44,10 +43,9 @@ export const HoverCardOpen: Story = {
   ],
 };
 
-export const HoverCardLoading: Story = {
+export const Loading: Story = {
   args: {
     address: TEST_ADDRESS,
-    open: true,
     children: (
       <button type="button" className="text-sm font-semibold underline">
         alice.eth
