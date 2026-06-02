@@ -2,7 +2,7 @@ import type { Hex } from "viem";
 
 vi.mock("@/utilities/enviromentVars", () => ({
   envVars: {
-    NEXT_PUBLIC_EFP_API_URL: "https://api.ethfollow.xyz/api/v1",
+    NEXT_PUBLIC_EFP_API_URL: "",
   },
 }));
 
@@ -34,7 +34,7 @@ describe("fetchEFP", () => {
   });
 
   describe("getEfpApiBase", () => {
-    it("returns configured API base without trailing slash", () => {
+    it("returns default API base when env is empty", () => {
       expect(getEfpApiBase()).toBe("https://api.ethfollow.xyz/api/v1");
     });
   });
