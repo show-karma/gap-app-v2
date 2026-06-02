@@ -5,11 +5,14 @@ import { Dialog, Transition } from "@headlessui/react";
 import { ArrowPathIcon, CheckIcon, ClipboardDocumentIcon } from "@heroicons/react/24/outline";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { type FC, Fragment, useEffect, useState } from "react";
+import { EfpFollowingSuggestions } from "@/components/EFP/EfpFollowingSuggestions";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/useAuth";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { useInviteLink, useInviteUrl } from "@/hooks/useInviteLink";
 import { useProjectStore } from "@/store";
+import { useEFP } from "@/store/efp";
 
 interface InviteMemberDialogProps {
   shouldDisable?: boolean;
@@ -19,7 +22,10 @@ export const InviteMemberDialog: FC<InviteMemberDialogProps> = ({ shouldDisable 
   const [isOpen, setIsOpen] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
   const project = useProjectStore((state) => state.project);
+  const { address, authenticated, login } = useAuth();
   const [, copyToClipboard] = useCopyToClipboard();
+  const populateViewerFollowing = useEFP((state) => state.populateViewerFollowing);
+  const resetViewerFollowing = useEFP((state) => state.resetViewerFollowing);
 
   const { inviteCode, isLoading, isGenerating, generateCode, revokeCode, isSuccess } =
     useInviteLink(project?.uid);
@@ -39,6 +45,15 @@ export const InviteMemberDialog: FC<InviteMemberDialogProps> = ({ shouldDisable 
       generateCode();
     }
   }, [isSuccess, inviteCode, isOpen, generateCode]);
+
+  useEffect(() => {
+    if (isOpen && authenticated && address) {
+      populateViewerFollowing(address);
+    }
+    if (!isOpen) {
+      resetViewerFollowing();
+    }
+  }, [isOpen, authenticated, address, populateViewerFollowing, resetViewerFollowing]);
 
   return (
     <>
@@ -170,6 +185,7 @@ export const InviteMemberDialog: FC<InviteMemberDialogProps> = ({ shouldDisable 
                     ) : (
                       <Spinner />
                     )}
+                    <EfpFollowingSuggestions onRequestConnect={() => login()} />
                   </div>
                 </Dialog.Panel>
               </Transition.Child>

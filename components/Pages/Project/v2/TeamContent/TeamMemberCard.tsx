@@ -7,6 +7,9 @@ import type { Hex } from "viem";
 import { DeleteMemberDialog } from "@/components/Dialogs/Member/DeleteMember";
 import { DemoteMemberDialog } from "@/components/Dialogs/Member/DemoteMember";
 import { PromoteMemberDialog } from "@/components/Dialogs/Member/PromoteMember";
+import { AddressEfpHoverCard } from "@/components/EFP/AddressEfpHoverCard";
+import { EfpCommonFollowersLine } from "@/components/EFP/EfpCommonFollowersLine";
+import { EfpStatsLine } from "@/components/EFP/EfpStatsLine";
 import { GithubIcon, LinkedInIcon, Twitter2Icon } from "@/components/Icons";
 import { FarcasterIcon } from "@/components/Icons/Farcaster";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
@@ -15,6 +18,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { useTeamProfiles } from "@/hooks/useTeamProfiles";
 import { useOwnerStore, useProjectStore } from "@/store";
+import { useEFP } from "@/store/efp";
 import { useENS } from "@/store/ens";
 import { useContributorProfileModalStore } from "@/store/modals/contributorProfile";
 import { formatFarcasterLink } from "@/utilities/farcaster";
@@ -61,12 +65,19 @@ export function TeamMemberCard({ member, className }: TeamMemberCardProps) {
 
   const ensNames = useENS((state) => state.ensData);
   const populateEns = useENS((state) => state.populateEns);
+  const populateCommonFollowers = useEFP((state) => state.populateCommonFollowers);
 
   useEffect(() => {
     if (member) {
       populateEns([member?.toLowerCase() as string]);
     }
   }, [member, populateEns]);
+
+  useEffect(() => {
+    if (member && address) {
+      populateCommonFollowers(member, address);
+    }
+  }, [member, address, populateCommonFollowers]);
 
   const displayName =
     profile?.data.name ||
@@ -95,12 +106,14 @@ export function TeamMemberCard({ member, className }: TeamMemberCardProps) {
       <div className="flex flex-col gap-0 w-full">
         <div className="flex flex-row justify-between w-full gap-4">
           <div className="flex flex-col gap-1 w-full">
-            <p
-              className="text-base font-semibold text-black dark:text-zinc-100 break-words"
-              data-testid="member-name"
-            >
-              {displayName}
-            </p>
+            <AddressEfpHoverCard address={member}>
+              <p
+                className="text-base font-semibold text-black dark:text-zinc-100 break-words cursor-default"
+                data-testid="member-name"
+              >
+                {displayName}
+              </p>
+            </AddressEfpHoverCard>
             {isRoleLoading ? (
               <Skeleton className="w-16 h-4" />
             ) : role && !isMemberRole ? (
@@ -167,6 +180,8 @@ export function TeamMemberCard({ member, className }: TeamMemberCardProps) {
             {profile.data.aboutMe}
           </p>
         )}
+        <EfpStatsLine address={member} className="pt-1" />
+        <EfpCommonFollowersLine target={member} />
       </div>
       {hasSocials && (
         <div className="flex flex-row gap-3" data-testid="member-socials">

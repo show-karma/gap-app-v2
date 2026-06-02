@@ -1,11 +1,13 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { InviteMemberDialog } from "@/components/Dialogs/Member/InviteMember";
 import { useAuth } from "@/hooks/useAuth";
 import { usePermissionsQuery } from "@/src/core/rbac/hooks/use-permissions";
 import { Role } from "@/src/core/rbac/types";
 import { useOwnerStore, useProjectStore } from "@/store";
+import { useEFP } from "@/store/efp";
 import { getProjectMemberRoles, type Member } from "@/utilities/getProjectMemberRoles";
 import { cn } from "@/utilities/tailwind";
 import { TeamMemberCard } from "./TeamMemberCard";
@@ -61,6 +63,13 @@ export function TeamContent({ className }: TeamContentProps) {
   });
 
   const shouldDisableInvite = !isAuthorized;
+  const populateEfp = useEFP((state) => state.populateEfp);
+
+  useEffect(() => {
+    if (members.length > 0) {
+      populateEfp(members);
+    }
+  }, [members, populateEfp]);
 
   return (
     <div className={cn("flex flex-col gap-4", className)} data-testid="team-content">

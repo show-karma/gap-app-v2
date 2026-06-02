@@ -3,6 +3,7 @@
 import { BadgeCheckIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import type { Hex } from "viem";
+import { AddressEfpHoverCard } from "@/components/EFP/AddressEfpHoverCard";
 import EthereumAddressToProfileName from "@/components/EthereumAddressToProfileName";
 import { Button } from "@/components/Utilities/Button";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
@@ -37,11 +38,15 @@ function EndorsementRow({ endorsement }: EndorsementRowProps) {
         <div className="flex flex-row gap-2 w-full items-center">
           <div className="flex flex-col gap-0.5">
             <p className="text-sm font-semibold text-foreground">
-              <EthereumAddressToProfileName
-                address={endorsement.endorsedBy}
-                showProfilePicture
-                pictureClassName="h-8 w-8 rounded-full"
-              />
+              <AddressEfpHoverCard address={endorsement.endorsedBy}>
+                <span className="inline-flex cursor-default">
+                  <EthereumAddressToProfileName
+                    address={endorsement.endorsedBy}
+                    showProfilePicture
+                    pictureClassName="h-8 w-8 rounded-full"
+                  />
+                </span>
+              </AddressEfpHoverCard>
             </p>
             <p className="text-xs text-muted-foreground">
               endorsed on {formatDate(endorsement.createdAt)}
