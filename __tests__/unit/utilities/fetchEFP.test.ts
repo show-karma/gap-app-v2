@@ -19,6 +19,7 @@ import {
   EFP_BATCH_SIZE,
   fetchEfpCommonFollowers,
   fetchEfpFollowing,
+  fetchEfpFollowingAll,
   fetchEfpStats,
   getEfpApiBase,
   getEfpProfileUrl,
@@ -163,6 +164,44 @@ describe("fetchEFP", () => {
       });
 
       const results = await fetchEfpFollowing(VIEWER);
+
+      expect(results).toBeNull();
+    });
+  });
+
+  describe("fetchEfpFollowingAll", () => {
+    it("paginates following until empty page", async () => {
+      const fullPage = Array.from({ length: 50 }, (_, i) => ({
+        version: 1,
+        record_type: "address" as const,
+        data: `0x${String(i + 1).padStart(40, "0")}`,
+        address: `0x${String(i + 1).padStart(40, "0")}`,
+        tags: [],
+      }));
+
+      (global.fetch as ReturnType<typeof vi.fn>)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ following: fullPage }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ following: [] }),
+        });
+
+      const results = await fetchEfpFollowingAll(VIEWER);
+
+      expect(results).toHaveLength(50);
+      expect(global.fetch).toHaveBeenCalledTimes(2);
+    });
+
+    it("returns null when a page fetch fails", async () => {
+      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
+        ok: false,
+        status: 503,
+      });
+
+      const results = await fetchEfpFollowingAll(VIEWER);
 
       expect(results).toBeNull();
     });
