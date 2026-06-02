@@ -4,13 +4,13 @@ import { useAccount } from "wagmi";
 import { DeleteDialog } from "@/components/DeleteDialog";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { errorManager } from "@/components/Utilities/errorManager";
+import { useIsCommunityAdmin } from "@/hooks/communities/useIsCommunityAdmin";
 import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useOffChainRevoke } from "@/hooks/useOffChainRevoke";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
 import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { getProjectGrants } from "@/services/project-grants.service";
-import { useIsCommunityAdmin } from "@/src/core/rbac/context/permission-context";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useGrantStore } from "@/store/grant";
 import type { GrantUpdate as GrantUpdateType } from "@/types/v2/grant";
@@ -78,6 +78,7 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({ title, description, index, d
 
   // Fetch grants using dedicated hook
   const { grants, refetch: refetchProjectGrants } = useProjectGrants(projectIdOrSlug);
+  const grant = grants.find((g) => g.uid?.toLowerCase() === update.refUID?.toLowerCase());
   // Get refreshGrant from store to update the UI after deletion
   const refreshGrant = useGrantStore((state) => state.refreshGrant);
 
@@ -202,7 +203,7 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({ title, description, index, d
   };
 
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
-  const isCommunityAdmin = useIsCommunityAdmin();
+  const { isCommunityAdmin } = useIsCommunityAdmin(grant?.communityUID);
 
   const isAuthorized = isProjectOwner || isProjectAdmin || isContractOwner || isCommunityAdmin;
 
@@ -217,8 +218,6 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({ title, description, index, d
   };
 
   const isAfterProofLaunch = checkProofLaunch();
-
-  const grant = grants.find((g) => g.uid?.toLowerCase() === update.refUID?.toLowerCase());
 
   return (
     <div className="flex w-full flex-1 max-w-full flex-col gap-4 rounded-lg border border-zinc-200 dark:bg-zinc-800 dark:border-zinc-700 bg-white p-4 transition-all duration-200 ease-in-out  max-sm:px-2">

@@ -4,10 +4,10 @@ import dynamic from "next/dynamic";
 import Image from "next/image";
 import { useParams } from "next/navigation";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { useIsCommunityAdmin } from "@/hooks/communities/useIsCommunityAdmin";
 import { useTracksForProgram } from "@/hooks/useTracks";
 import { useGrantLinkedActivities } from "@/hooks/v2/useGrantLinkedActivities";
 import type { Track } from "@/services/tracks";
-import { useIsCommunityAdmin } from "@/src/core/rbac/context/permission-context";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useGrantStore } from "@/store/grant";
 import { useProgressModalStore } from "@/store/modals/progress";
@@ -22,7 +22,7 @@ const EmptyMilestone = ({ grant }: { grant?: Grant; project?: ProjectResponse })
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isContractOwner = useOwnerStore((state) => state.isOwner);
-  const isCommunityAdmin = useIsCommunityAdmin();
+  const { isCommunityAdmin } = useIsCommunityAdmin(grant?.communityUID);
   const { openProgressModalWithScreen } = useProgressModalStore();
 
   const isAuthorized = isProjectOwner || isProjectAdmin || isContractOwner || isCommunityAdmin;
@@ -231,7 +231,7 @@ export default function MilestonesAndUpdates() {
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isContractOwner = useOwnerStore((state) => state.isOwner);
-  const isCommunityAdmin = useIsCommunityAdmin();
+  const { isCommunityAdmin } = useIsCommunityAdmin(grant?.communityUID);
   const isAuthorized = isProjectOwner || isProjectAdmin || isContractOwner || isCommunityAdmin;
 
   const handleAddMilestone = () => {
