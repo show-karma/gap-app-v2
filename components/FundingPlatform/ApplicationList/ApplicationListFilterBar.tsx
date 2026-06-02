@@ -12,8 +12,6 @@ interface ApplicationListFilterBarProps {
   filters: IApplicationFilters;
   onSearchChange: (value: string) => void;
   onFilterChange: (filters: IApplicationFilters) => void;
-  myReviewsOnly: boolean;
-  onMyReviewsOnlyChange: (value: boolean) => void;
   programReviewers: ProgramReviewer[];
   selectedReviewerAddresses: string[];
   onReviewerAddressesChange: (addresses: string[]) => void;
@@ -27,12 +25,6 @@ interface ApplicationListFilterBarProps {
 const inputClass =
   "w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100";
 const labelClass = "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2";
-const toggleClass = (active: boolean) =>
-  `px-3 py-1 text-sm font-medium rounded-md transition-colors ${
-    active
-      ? "bg-blue-600 text-white"
-      : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
-  }`;
 const actionButtonClass =
   "w-fit px-3 py-1 border bg-transparent text-zinc-500 font-medium border-zinc-200 dark:border-zinc-400 dark:text-zinc-400 flex flex-row gap-2";
 
@@ -41,8 +33,6 @@ export const ApplicationListFilterBar: FC<ApplicationListFilterBarProps> = ({
   filters,
   onSearchChange,
   onFilterChange,
-  myReviewsOnly,
-  onMyReviewsOnlyChange,
   programReviewers,
   selectedReviewerAddresses,
   onReviewerAddressesChange,
@@ -117,35 +107,15 @@ export const ApplicationListFilterBar: FC<ApplicationListFilterBarProps> = ({
 
     <div className="flex justify-between mt-4 space-x-2">
       <div className="flex flex-row items-center gap-2">
-        <div className="flex flex-row gap-1 items-center rounded-lg border border-gray-200 dark:border-zinc-700 p-1">
-          <button
-            type="button"
-            onClick={() => onMyReviewsOnlyChange(true)}
-            aria-pressed={myReviewsOnly}
-            className={toggleClass(myReviewsOnly)}
-          >
-            My Applications
-          </button>
-          <button
-            type="button"
-            onClick={() => onMyReviewsOnlyChange(false)}
-            aria-pressed={!myReviewsOnly}
-            className={toggleClass(!myReviewsOnly)}
-          >
-            All Applications
-          </button>
+        <div className="w-64">
+          <ReviewerFilterDropdown
+            reviewers={programReviewers}
+            selectedAddresses={selectedReviewerAddresses}
+            onChange={onReviewerAddressesChange}
+            isLoading={isLoadingProgramReviewers}
+            isError={isProgramReviewersError}
+          />
         </div>
-        {!myReviewsOnly && (
-          <div className="w-64">
-            <ReviewerFilterDropdown
-              reviewers={programReviewers}
-              selectedAddresses={selectedReviewerAddresses}
-              onChange={onReviewerAddressesChange}
-              isLoading={isLoadingProgramReviewers}
-              isError={isProgramReviewersError}
-            />
-          </div>
-        )}
       </div>
       <div className="flex justify-end space-x-2">
         <Button onClick={onClearFilters} variant="secondary" className={actionButtonClass}>
