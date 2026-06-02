@@ -9,7 +9,7 @@ import { type FC, Fragment, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useAccount } from "wagmi";
 import { z } from "zod";
-import { AddressEfpHoverCard } from "@/components/EFP/AddressEfpHoverCard";
+import { EfpStatsLine } from "@/components/EFP/EfpStatsLine";
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { PROJECT_NAME } from "@/constants/brand";
@@ -337,11 +337,10 @@ export const ContributorProfileDialog: FC = () => {
                         <label htmlFor="ethAddress" className={labelStyle}>
                           Your ETH address
                         </label>
-                        <AddressEfpHoverCard address={address ?? ""}>
-                          <p className={cn(inputStyle, "opacity-70 cursor-default w-fit")}>
-                            {address}
-                          </p>
-                        </AddressEfpHoverCard>
+                        <p className={cn(inputStyle, "opacity-70 w-fit")}>{address}</p>
+                        {address ? (
+                          <EfpStatsLine address={address} variant="compact" className="mt-1" />
+                        ) : null}
                       </div>
                       <div className="w-full flex flex-col gap-1">
                         <label htmlFor="name" className={labelStyle}>
