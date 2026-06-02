@@ -208,14 +208,14 @@ export const QUERY_KEYS = {
      * to prevent query key instability when project data loads asynchronously.
      */
     PERMISSIONS: (params: {
-      address: string | null;
+      walletsKey: string | null;
       projectId: string | null;
       chainID: number | null;
       isAuth: boolean;
     }) =>
       [
         "project-permissions",
-        params.address,
+        params.walletsKey,
         params.projectId,
         params.chainID,
         params.isAuth,
