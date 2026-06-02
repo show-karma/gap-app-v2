@@ -1,21 +1,34 @@
 "use client";
 
 import pluralize from "pluralize";
+import { useEffect } from "react";
 import type { Hex } from "viem";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { Skeleton } from "@/components/Utilities/Skeleton";
 import { useEFP } from "@/store/efp";
 import { getEfpProfileUrl } from "@/utilities/fetchEFP";
+import { cn } from "@/utilities/tailwind";
+
+// Social-graph "following" is invariant (never "followings").
+pluralize.addUncountableRule("following");
 
 interface EfpStatsLineProps {
   address: string;
   className?: string;
+  variant?: "default" | "compact";
 }
 
-export function EfpStatsLine({ address, className }: EfpStatsLineProps) {
+export function EfpStatsLine({ address, className, variant = "default" }: EfpStatsLineProps) {
   const lower = address?.toLowerCase() as Hex;
   const efpEntry = useEFP((s) => s.efpData[lower]);
   const populateEfp = useEFP((s) => s.populateEfp);
+  const isCompact = variant === "compact";
+
+  useEffect(() => {
+    if (address && !efpEntry) {
+      populateEfp([address]);
+    }
+  }, [address, efpEntry, populateEfp]);
 
   const isFetching = efpEntry?.isFetching;
   const hasError = efpEntry?.error && !isFetching;
@@ -25,7 +38,7 @@ export function EfpStatsLine({ address, className }: EfpStatsLineProps) {
   if (isFetching && efpEntry?.followers_count === undefined) {
     return (
       <div className={className} data-testid="member-efp-stats">
-        <Skeleton className="h-4 w-48" />
+        <Skeleton className={cn(isCompact ? "h-3 w-32" : "h-4 w-48")} />
       </div>
     );
   }
@@ -33,7 +46,11 @@ export function EfpStatsLine({ address, className }: EfpStatsLineProps) {
   if (hasError) {
     return (
       <div
-        className={`flex flex-row items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400 ${className ?? ""}`}
+        className={cn(
+          "flex flex-row items-center gap-2 text-zinc-500 dark:text-zinc-400",
+          isCompact ? "text-xs" : "text-sm",
+          className
+        )}
         data-testid="member-efp-stats"
       >
         <span>Could not load EFP stats</span>
@@ -63,7 +80,10 @@ export function EfpStatsLine({ address, className }: EfpStatsLineProps) {
     <div className={className} data-testid="member-efp-stats">
       <ExternalLink
         href={getEfpProfileUrl(address)}
-        className="text-sm text-zinc-500 dark:text-zinc-400 hover:text-brand-blue hover:underline"
+        className={cn(
+          "text-zinc-500 dark:text-zinc-400 hover:text-brand-blue hover:underline",
+          isCompact ? "text-xs text-muted-foreground" : "text-sm"
+        )}
       >
         {label}
       </ExternalLink>
