@@ -18,6 +18,7 @@ const {
   mockWriteContract,
   mockWalletClient,
   mockWallets,
+  mockUserRef,
   mockSanitizeErrorMessage,
   mockSwitchOrAddChain,
   mockWaitForTransactionReceipt,
@@ -31,8 +32,11 @@ const {
   const mockWalletClient = { writeContract: mockWriteContract };
   const mockWallets: Array<{
     address: string;
+    walletClientType?: string;
     getEthereumProvider: () => Promise<unknown>;
   }> = [];
+  // Privy user (with linkedAccounts) used by selectPrimaryWallet; null = anonymous.
+  const mockUserRef: { current: unknown } = { current: null };
   const mockSanitizeErrorMessage = vi.fn((err: unknown, defaultTitle: string) => ({
     title: defaultTitle,
     message: err instanceof Error ? err.message : "Unknown error",
@@ -45,6 +49,7 @@ const {
     mockWriteContract,
     mockWalletClient,
     mockWallets,
+    mockUserRef,
     mockSanitizeErrorMessage,
     mockSwitchOrAddChain,
     mockWaitForTransactionReceipt,
@@ -63,6 +68,7 @@ vi.mock("viem", () => ({
 vi.mock("@/contexts/privy-bridge-context", () => ({
   usePrivyBridge: vi.fn(() => ({
     wallets: mockWallets,
+    user: mockUserRef.current,
   })),
 }));
 
@@ -146,6 +152,7 @@ describe("useClaimTransaction (real hook)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockWallets.length = 0;
+    mockUserRef.current = null;
     mockWriteContract.mockReset();
     mockWaitForTransactionReceipt.mockReset();
     mockSwitchOrAddChain.mockReset();
@@ -225,6 +232,66 @@ describe("useClaimTransaction (real hook)", () => {
       await act(async () => {
         resolveWrite!(MOCK_TX_HASH);
       });
+    });
+  });
+
+  describe("stale wallet — linked-wallet selection (regression)", () => {
+    const STALE_METAMASK = "0x9999999999999999999999999999999999999999";
+    const EMAIL_EMBEDDED = "0x3333333333333333333333333333333333333333";
+
+    // Two connected wallets: a stale MetaMask listed FIRST (as Privy often does after
+    // logging out of a wallet session and back in with email), plus the email user's
+    // embedded wallet. Only the embedded wallet is linked to the authenticated user.
+    function setupStaleAndEmbedded() {
+      const staleGetProvider = vi.fn().mockResolvedValue({ request: vi.fn() });
+      const embeddedGetProvider = vi.fn().mockResolvedValue({ request: vi.fn() });
+      mockWallets.length = 0;
+      mockWallets.push(
+        {
+          address: STALE_METAMASK,
+          walletClientType: "metamask",
+          getEthereumProvider: staleGetProvider,
+        },
+        {
+          address: EMAIL_EMBEDDED,
+          walletClientType: "privy",
+          getEthereumProvider: embeddedGetProvider,
+        }
+      );
+      mockUserRef.current = {
+        linkedAccounts: [
+          { type: "email", address: "user@example.com" },
+          { type: "wallet", address: EMAIL_EMBEDDED, walletClientType: "privy" },
+        ],
+      };
+      return { staleGetProvider, embeddedGetProvider };
+    }
+
+    it("signs with the linked (embedded) wallet, not the stale wallets[0] MetaMask", async () => {
+      const { staleGetProvider, embeddedGetProvider } = setupStaleAndEmbedded();
+      mockWriteContract.mockResolvedValue(MOCK_TX_HASH);
+      mockWaitForTransactionReceipt.mockResolvedValue({ status: "success" });
+
+      const { wrapper, queryClient } = createWrapper();
+      const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
+      const { result } = renderHook(() => useClaimTransaction("tenant-1", undefined), { wrapper });
+
+      act(() => {
+        result.current.claim(MOCK_CAMPAIGN_ID, createMockEligibility(), MOCK_CONTRACT);
+      });
+
+      await waitFor(() => {
+        expect(result.current.isSuccess).toBe(true);
+      });
+
+      // The embedded (linked) wallet signed — the stale MetaMask was never touched.
+      expect(embeddedGetProvider).toHaveBeenCalled();
+      expect(staleGetProvider).not.toHaveBeenCalled();
+
+      // Eligibility cache is keyed/invalidated on the embedded address, not the stale one.
+      expect(invalidateSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ queryKey: expect.arrayContaining([EMAIL_EMBEDDED]) })
+      );
     });
   });
 

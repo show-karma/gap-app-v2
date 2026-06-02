@@ -7,6 +7,7 @@
 import { act, renderHook } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { compareAllWallets } from "@/utilities/auth/compare-all-wallets";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
 
 // Undo the global mock of useAuth from __tests__/navbar/setup.ts
@@ -527,6 +528,105 @@ describe("useAuth - Re-login with different wallet", () => {
     // Should NOT trigger user-switch logout — the user explicitly
     // logged out then logged in again, this is not a cross-tab switch.
     expect(mockLogout).not.toHaveBeenCalled();
+  });
+});
+
+describe("useAuth - stale connected wallet after switching login method", () => {
+  /**
+   * Regression: login with MetaMask, log out, then log in with email.
+   *
+   * MetaMask cannot be disconnected programmatically (Privy's wallet.disconnect()
+   * is a no-op for it), so it stays connected and remains in useWallets() — often
+   * as wallets[0] — even though it is NOT linked to the new email user. The address
+   * exposed by useAuth() (used for the avatar and on-chain lookups) must resolve to
+   * the email user's own (embedded) wallet, never the leftover MetaMask wallet.
+   */
+  const wrapper = ({ children }: { children: ReactNode }) => <>{children}</>;
+
+  const mockCompareAllWallets = vi.mocked(compareAllWallets);
+
+  const STALE_METAMASK_ADDRESS = "0xMETAMASK00000000000000000000000000000001";
+  const EMAIL_EMBEDDED_ADDRESS = "0xEMBEDDED00000000000000000000000000000002";
+
+  const emailUser = {
+    id: "email-user-1",
+    email: { address: "user@example.com" },
+    wallet: { address: EMAIL_EMBEDDED_ADDRESS },
+    linkedAccounts: [
+      { type: "email", address: "user@example.com" },
+      { type: "wallet", address: EMAIL_EMBEDDED_ADDRESS, walletClientType: "privy" },
+    ],
+  };
+
+  // Stale MetaMask wallet is listed first by Privy (connected earlier), embedded second.
+  const staleMetaMaskWallet = {
+    address: STALE_METAMASK_ADDRESS,
+    chainId: "eip155:10",
+    walletClientType: "metamask",
+  };
+  const embeddedWallet = {
+    address: EMAIL_EMBEDDED_ADDRESS,
+    chainId: "eip155:10",
+    walletClientType: "privy",
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    // Realistic behavior: only the embedded wallet is linked to the email user.
+    mockCompareAllWallets.mockImplementation(
+      (_user, address) => address.toLowerCase() === EMAIL_EMBEDDED_ADDRESS.toLowerCase()
+    );
+    setBridgeState({
+      ready: true,
+      authenticated: true,
+      user: emailUser,
+      wallets: [staleMetaMaskWallet, embeddedWallet],
+      isConnected: true,
+    });
+  });
+
+  afterEach(() => {
+    resetBridgeState();
+    // Restore the default global mock implementation for other suites.
+    mockCompareAllWallets.mockImplementation(() => true);
+  });
+
+  it("resolves the address to the linked embedded wallet, not the stale MetaMask wallet", () => {
+    const { result } = renderHook(() => useAuth(), { wrapper });
+
+    expect(result.current.address).toBe(EMAIL_EMBEDDED_ADDRESS);
+    expect(result.current.address).not.toBe(STALE_METAMASK_ADDRESS);
+    expect(result.current.primaryWallet?.address).toBe(EMAIL_EMBEDDED_ADDRESS);
+  });
+
+  it("falls back to the first connected wallet when none are linked to the user (hydration gap)", () => {
+    // No wallet is linked yet (e.g. linkedAccounts not populated during hydration).
+    mockCompareAllWallets.mockImplementation(() => false);
+    setBridgeState({ wallets: [staleMetaMaskWallet] });
+
+    const { result } = renderHook(() => useAuth(), { wrapper });
+
+    expect(result.current.address).toBe(STALE_METAMASK_ADDRESS);
+  });
+
+  it("keeps the active wallet (wallets[0]) when an account has multiple linked wallets", () => {
+    const secondLinkedAddress = "0xLINKED0000000000000000000000000000000003";
+    // Both connected wallets belong to the user — selection must not reorder them.
+    mockCompareAllWallets.mockImplementation((_user, address) =>
+      [EMAIL_EMBEDDED_ADDRESS, secondLinkedAddress].some(
+        (a) => a.toLowerCase() === address.toLowerCase()
+      )
+    );
+    setBridgeState({
+      wallets: [
+        { address: secondLinkedAddress, chainId: "eip155:10", walletClientType: "rainbow" },
+        embeddedWallet,
+      ],
+    });
+
+    const { result } = renderHook(() => useAuth(), { wrapper });
+
+    expect(result.current.address).toBe(secondLinkedAddress);
   });
 });
 

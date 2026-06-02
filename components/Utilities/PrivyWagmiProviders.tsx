@@ -9,6 +9,7 @@ import { useAccount } from "wagmi";
 import { PROJECT_NAME } from "@/constants/brand";
 import { type PrivyBridgeValue, usePrivyBridgeSetter } from "@/contexts/privy-bridge-context";
 import type { TenantConfig } from "@/src/infrastructure/types/tenant";
+import { selectPrimaryWallet } from "@/utilities/auth/select-primary-wallet";
 import { envVars } from "@/utilities/enviromentVars";
 import { appNetwork } from "@/utilities/network";
 import { privyConfig } from "@/utilities/wagmi/privy-config";
@@ -79,20 +80,41 @@ function PrivyBridgeUpdater() {
   // The app has two WagmiProviders: the outer one wraps all components (useAccount()
   // reads from it) and this inner one syncs with Privy. Without this bridge,
   // the outer useAccount().address is undefined during the Privy↔wagmi sync gap.
-  const outerSyncedRef = useRef(false);
-  const primaryWallet = wallets[0];
+  // Tracks which address the outer config is currently synced to (undefined = none),
+  // so we re-sync when the selected wallet changes — e.g. when the user's embedded
+  // wallet finishes connecting after an email login, replacing a stale MetaMask that
+  // was briefly wallets[0]. A plain boolean would sync only once and leave
+  // useAccount() pinned to the first (possibly stale) wallet.
+  const syncedAddressRef = useRef<string | undefined>(undefined);
+  // Sync the SAME wallet useAuth treats as the user's identity (linked wallet
+  // preferred over a stale, unlinked one like a lingering MetaMask) so the outer
+  // wagmi config — and therefore useAccount() used by signing/attestation flows —
+  // never diverges from useAuth().address.
+  const primaryWallet = selectPrimaryWallet(privy.user, wallets);
   const primaryWalletAddress = primaryWallet?.address;
 
   useEffect(() => {
-    if (!primaryWallet || outerSyncedRef.current) return;
+    if (!primaryWallet) return;
+    // Already synced to this exact wallet — nothing to do.
+    if (syncedAddressRef.current === primaryWalletAddress) return;
 
     const syncOuterConfig = async () => {
       try {
         const { minimalWagmiConfig } = await import("@/utilities/wagmi/privy-config");
         const { privyBridgeConnector } = await import("@/utilities/wagmi/privy-bridge-connector");
+        // Disconnect the previously-synced wallet before connecting the new one so
+        // useAccount() reflects the currently selected wallet rather than stacking
+        // connectors.
+        if (syncedAddressRef.current) {
+          try {
+            await wagmiCoreDisconnect(minimalWagmiConfig);
+          } catch {
+            // Ignore disconnect errors
+          }
+        }
         const connector = privyBridgeConnector(primaryWallet, chainId || appNetwork[0].id);
         await wagmiCoreConnect(minimalWagmiConfig, { connector });
-        outerSyncedRef.current = true;
+        syncedAddressRef.current = primaryWalletAddress;
       } catch {
         // Non-fatal: outer useAccount() will lack address, but useAuth().address still works
       }
@@ -103,7 +125,7 @@ function PrivyBridgeUpdater() {
 
   // Disconnect outer config when user logs out
   useEffect(() => {
-    if (!privy.authenticated && outerSyncedRef.current) {
+    if (!privy.authenticated && syncedAddressRef.current) {
       const disconnectOuter = async () => {
         try {
           const { minimalWagmiConfig } = await import("@/utilities/wagmi/privy-config");
@@ -111,7 +133,7 @@ function PrivyBridgeUpdater() {
         } catch {
           // Ignore disconnect errors
         }
-        outerSyncedRef.current = false;
+        syncedAddressRef.current = undefined;
       };
       disconnectOuter();
     }
