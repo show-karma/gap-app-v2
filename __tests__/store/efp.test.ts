@@ -19,7 +19,7 @@ describe("useEFP store", () => {
     act(() => {
       useEFP.setState({
         efpData: {},
-        viewerFollowing: undefined,
+        viewerFollowing: null,
         isFetchingFollowing: false,
         followingError: false,
       });
@@ -106,6 +106,16 @@ describe("useEFP store", () => {
 
       expect(useEFP.getState().viewerFollowing).toEqual(following);
       expect(useEFP.getState().isFetchingFollowing).toBe(false);
+    });
+
+    it("sets followingError when fetch returns null", async () => {
+      vi.mocked(fetchEfpFollowingAll).mockResolvedValueOnce(null);
+
+      await act(async () => {
+        await useEFP.getState().populateViewerFollowing(VIEWER);
+      });
+
+      expect(useEFP.getState().followingError).toBe(true);
     });
   });
 });
