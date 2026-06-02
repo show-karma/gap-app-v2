@@ -1,7 +1,5 @@
 "use client";
 
-import { AddressEfpHoverCard } from "@/components/EFP/AddressEfpHoverCard";
-
 interface PayoutInfo {
   address?: string;
   isLoading: boolean;
@@ -34,11 +32,9 @@ export function PayoutAddressDisplay({ payoutInfo, formatAddress }: PayoutAddres
 
   if (payoutInfo.address) {
     return (
-      <AddressEfpHoverCard address={payoutInfo.address}>
-        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-1.5 py-0.5 text-xs text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200 cursor-default">
-          {formatAddress(payoutInfo.address)}
-        </span>
-      </AddressEfpHoverCard>
+      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-1.5 py-0.5 text-xs text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200">
+        {formatAddress(payoutInfo.address)}
+      </span>
     );
   }
 
