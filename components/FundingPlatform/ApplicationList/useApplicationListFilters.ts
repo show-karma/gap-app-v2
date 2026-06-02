@@ -4,7 +4,6 @@
 import debounce from "lodash.debounce";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useAccount } from "wagmi";
 import type { IApplicationFilters } from "@/services/fundingPlatformService";
 
 /**
@@ -16,10 +15,8 @@ export function useApplicationListFilters(initialFilters: IApplicationFilters = 
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { address } = useAccount();
 
-  const [myReviewsOnly, setMyReviewsOnly] = useState(true);
-  // Reviewer addresses selected in the "All Applications" dropdown (lowercased)
+  // Reviewer addresses selected in the reviewer filter dropdown (lowercased)
   const [selectedReviewerAddresses, setSelectedReviewerAddresses] = useState<string[]>([]);
 
   // Initialize filters from URL params (excluding page for infinite scroll)
@@ -56,17 +53,13 @@ export function useApplicationListFilters(initialFilters: IApplicationFilters = 
   useEffect(() => () => debouncedSearch.cancel(), [debouncedSearch]);
 
   // Active reviewer filter, shared across the list, stats, and export:
-  // "My Applications" scopes to the current user; "All Applications" scopes to
-  // the reviewer(s) selected in the dropdown (if any).
+  // scopes to the reviewer(s) selected in the dropdown (if any).
   const reviewerFilter = useMemo(
     () => ({
-      reviewerAddress: myReviewsOnly && address ? address.toLowerCase() : undefined,
       reviewerAddresses:
-        !myReviewsOnly && selectedReviewerAddresses.length > 0
-          ? selectedReviewerAddresses
-          : undefined,
+        selectedReviewerAddresses.length > 0 ? selectedReviewerAddresses : undefined,
     }),
-    [myReviewsOnly, address, selectedReviewerAddresses]
+    [selectedReviewerAddresses]
   );
 
   // Combined params consumed by the data hook and the export action.
@@ -141,8 +134,6 @@ export function useApplicationListFilters(initialFilters: IApplicationFilters = 
     searchInput,
     sortBy,
     sortOrder,
-    myReviewsOnly,
-    setMyReviewsOnly,
     selectedReviewerAddresses,
     setSelectedReviewerAddresses,
     reviewerFilter,
