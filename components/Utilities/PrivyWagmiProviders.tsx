@@ -4,10 +4,10 @@ import { PrivyProvider, usePrivy, useWallets } from "@privy-io/react-auth";
 import { useSmartWallets } from "@privy-io/react-auth/smart-wallets";
 import { WagmiProvider } from "@privy-io/wagmi";
 import { connect as wagmiCoreConnect, disconnect as wagmiCoreDisconnect } from "@wagmi/core";
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useAccount } from "wagmi";
 import { PROJECT_NAME } from "@/constants/brand";
-import { type PrivyBridgeValue, usePrivyBridgeSetter } from "@/contexts/privy-bridge-context";
+import { usePrivyBridgeSetter } from "@/contexts/privy-bridge-context";
 import type { TenantConfig } from "@/src/infrastructure/types/tenant";
 import { selectPrimaryWallet } from "@/utilities/auth/select-primary-wallet";
 import { envVars } from "@/utilities/enviromentVars";
@@ -37,7 +37,7 @@ function PrivyBridgeUpdater() {
   const privy = usePrivy();
   const { wallets } = useWallets();
   const { client: smartWalletClient } = useSmartWallets();
-  const { isConnected, address, chainId } = useAccount();
+  const { isConnected, chainId } = useAccount();
 
   // Store latest values in refs so the effect always has fresh data.
   // Depend on primitives only (stable across renders when unchanged).
@@ -90,7 +90,10 @@ function PrivyBridgeUpdater() {
   // preferred over a stale, unlinked one like a lingering MetaMask) so the outer
   // wagmi config — and therefore useAccount() used by signing/attestation flows —
   // never diverges from useAuth().address.
-  const primaryWallet = selectPrimaryWallet(privy.user, wallets);
+  const primaryWallet = useMemo(
+    () => selectPrimaryWallet(privy.user, wallets),
+    [privy.user, wallets]
+  );
   const primaryWalletAddress = primaryWallet?.address;
 
   useEffect(() => {

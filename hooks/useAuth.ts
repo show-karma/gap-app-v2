@@ -9,7 +9,6 @@ import { compareAllWallets } from "@/utilities/auth/compare-all-wallets";
 import { getE2EMockAuthState } from "@/utilities/auth/e2e-auth";
 import { selectPrimaryWallet } from "@/utilities/auth/select-primary-wallet";
 import { TokenManager } from "@/utilities/auth/token-manager";
-import { PAGES } from "@/utilities/pages";
 import { queryClient } from "@/utilities/query-client";
 import { useWhitelabel } from "@/utilities/whitelabel-context";
 
