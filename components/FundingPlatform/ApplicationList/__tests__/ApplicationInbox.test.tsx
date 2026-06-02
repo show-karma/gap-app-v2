@@ -57,10 +57,24 @@ describe("ApplicationInbox", () => {
   it("shows an empty state when no applications are assigned", () => {
     render(<ApplicationInbox {...baseProps} applications={[]} isLoading={false} total={0} />);
 
-    expect(screen.getByText("No applications are assigned to you yet.")).toBeInTheDocument();
-    expect(
-      screen.getByText("Select an application from the list to review it.")
-    ).toBeInTheDocument();
+    expect(screen.getAllByText("No applications are assigned to you yet.").length).toBeGreaterThan(
+      0
+    );
+  });
+
+  it("uses a filter-aware empty message when filters are active", () => {
+    render(
+      <ApplicationInbox
+        {...baseProps}
+        applications={[]}
+        isLoading={false}
+        total={0}
+        hasActiveFilters
+      />
+    );
+
+    expect(screen.getAllByText("No applications match your filters.").length).toBeGreaterThan(0);
+    expect(screen.queryByText("No applications are assigned to you yet.")).not.toBeInTheDocument();
   });
 
   it("renders the list and selects the first application by default", () => {
@@ -135,8 +149,8 @@ describe("ApplicationInbox", () => {
     rerender(<ApplicationInbox {...baseProps} applications={[]} isLoading={false} total={0} />);
 
     expect(screen.queryByTestId("detail-view")).not.toBeInTheDocument();
-    expect(
-      screen.getByText("Select an application from the list to review it.")
-    ).toBeInTheDocument();
+    expect(screen.getAllByText("No applications are assigned to you yet.").length).toBeGreaterThan(
+      0
+    );
   });
 });

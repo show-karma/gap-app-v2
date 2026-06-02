@@ -296,10 +296,9 @@ export default function ApplicationDetailView({
       // Only close modal and navigate on success
       setIsDeleteModalOpen(false);
       router.push(PAGES.MANAGE.FUNDING_PLATFORM.APPLICATIONS(communityId, combinedProgramId));
-    } catch (error) {
-      // Error is handled by the hook (shows toast with specific message and logs to Sentry)
-      // Modal stays open to allow user to retry or cancel
-      console.error("Failed to delete application:", error);
+    } catch {
+      // Error is handled by the hook (toast with a specific message + Sentry).
+      // Keep the modal open so the user can retry or cancel.
     }
   };
 

@@ -31,6 +31,8 @@ interface ApplicationInboxProps {
   isFetchingNextPage?: boolean;
   fetchNextPage: () => void;
   total: number;
+  /** Whether a search/status/date filter is active — drives the empty-state copy. */
+  hasActiveFilters?: boolean;
   onApplicationHover?: (referenceNumber: string) => void;
 }
 
@@ -65,6 +67,7 @@ const ApplicationInbox: FC<ApplicationInboxProps> = ({
   isFetchingNextPage = false,
   fetchNextPage,
   total,
+  hasActiveFilters = false,
   onApplicationHover,
 }) => {
   const [selectedRef, setSelectedRef] = useState<string | null>(() => getReferenceFromHash());
@@ -128,6 +131,14 @@ const ApplicationInbox: FC<ApplicationInboxProps> = ({
   const showInitialLoading = isLoading && applications.length === 0;
   const showEmpty = !isLoading && applications.length === 0;
 
+  const emptyMessage = hasActiveFilters
+    ? "No applications match your filters."
+    : "No applications are assigned to you yet.";
+
+  let detailEmptyMessage = "Select an application from the list to review it.";
+  if (showInitialLoading) detailEmptyMessage = "Loading your applications…";
+  else if (showEmpty) detailEmptyMessage = emptyMessage;
+
   return (
     <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(300px,380px)_minmax(0,1fr)]">
       {/* Left: selectable list of the reviewer's assigned applications */}
@@ -145,9 +156,7 @@ const ApplicationInbox: FC<ApplicationInboxProps> = ({
             <ListSkeleton />
           ) : showEmpty ? (
             <div className="rounded-xl border border-dashed border-gray-200 px-4 py-10 text-center dark:border-zinc-700">
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                No applications are assigned to you yet.
-              </p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">{emptyMessage}</p>
             </div>
           ) : (
             <div
@@ -193,13 +202,7 @@ const ApplicationInbox: FC<ApplicationInboxProps> = ({
             variant="panel"
           />
         ) : (
-          <DetailEmptyState
-            message={
-              showInitialLoading
-                ? "Loading your applications…"
-                : "Select an application from the list to review it."
-            }
-          />
+          <DetailEmptyState message={detailEmptyMessage} />
         )}
       </section>
     </div>

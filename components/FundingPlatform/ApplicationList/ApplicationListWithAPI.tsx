@@ -545,6 +545,9 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
           isFetchingNextPage={isFetchingNextPage}
           fetchNextPage={loadMore}
           total={total}
+          hasActiveFilters={Boolean(
+            filters.search || filters.status || filters.dateFrom || filters.dateTo
+          )}
           onApplicationHover={onApplicationHover}
         />
       ) : (
