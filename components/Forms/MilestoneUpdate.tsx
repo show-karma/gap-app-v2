@@ -24,10 +24,9 @@ import {
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
 import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
-import { useIsCommunityAdmin } from "@/src/core/rbac/context/permission-context";
 import { useGrantInvoiceRequired } from "@/src/features/payout-disbursement/hooks/use-payout-disbursement";
 import { submitGranteeInvoice } from "@/src/features/payout-disbursement/services/payout-disbursement.service";
-import { useOwnerStore, useProjectStore } from "@/store";
+import { useProjectStore } from "@/store";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
 import type { GrantMilestone } from "@/types/v2/grant";
 import fetchData from "@/utilities/fetchData";
@@ -115,11 +114,6 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
   const { chain, address } = useAccount();
   const { switchChainAsync } = useWallet();
   const { setupChainAndWallet } = useSetupChainAndWallet();
-  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
-  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
-  const isContractOwner = useOwnerStore((state) => state.isOwner);
-  const isCommunityAdmin = useIsCommunityAdmin();
-  const _isAuthorized = isProjectOwner || isProjectAdmin || isContractOwner || isCommunityAdmin;
   const { openShareDialog, closeShareDialog } = useShareDialogStore();
   const router = useRouter();
   const pathname = usePathname();

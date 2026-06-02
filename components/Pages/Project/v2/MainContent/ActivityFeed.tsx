@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import React, { useMemo } from "react";
 import EthereumAddressToProfileName from "@/components/EthereumAddressToProfileName";
 import { ActivityCard } from "@/components/Shared/ActivityCard";
+import { useIsCommunityAdmin } from "@/hooks/communities/useIsCommunityAdmin";
 import { useMilestoneAllocationsByGrants } from "@/hooks/useCommunityMilestoneAllocations";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
 import { cn } from "@/utilities/tailwind";
@@ -59,6 +60,11 @@ const TimelineItem = React.memo(function TimelineItem({
   formatDisplayDate,
   allocationAmount,
 }: TimelineItemProps) {
+  const grantCommunity = milestone.source?.grantMilestone?.grant?.community;
+  const { isCommunityAdmin } = useIsCommunityAdmin(
+    grantCommunity?.uid || grantCommunity?.details?.slug
+  );
+  const itemAuthorized = isAuthorized || isCommunityAdmin;
   return (
     <div className="relative pl-8 max-lg:pl-7" data-testid="activity-item">
       {/* Timeline icon - positioned relative to item, not content row */}
@@ -169,7 +175,7 @@ const TimelineItem = React.memo(function TimelineItem({
                   allocationAmount,
                 }
         }
-        isAuthorized={isAuthorized}
+        isAuthorized={itemAuthorized}
       />
     </div>
   );
