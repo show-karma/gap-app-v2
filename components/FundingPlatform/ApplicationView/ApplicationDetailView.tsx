@@ -57,7 +57,7 @@ function isKnownTabId(value: string | null): value is KnownTabId {
   return value !== null && (KNOWN_TAB_IDS as readonly string[]).includes(value);
 }
 
-export interface ApplicationDetailViewProps {
+interface ApplicationDetailViewProps {
   /** Application reference number / id used to fetch the application. */
   applicationId: string;
   /** Normalized program id (chainId suffix stripped). */
