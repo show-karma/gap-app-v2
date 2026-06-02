@@ -17,6 +17,10 @@ import { createAuthenticatedApiClient } from "@/utilities/auth/api-client";
 import { envVars } from "@/utilities/enviromentVars";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
+import {
+  appendMergedReviewerAddresses,
+  buildApplicationQueryParams,
+} from "./fundingApplicationParams";
 
 // Base API configuration
 const API_BASE = envVars.NEXT_PUBLIC_GAP_INDEXER_URL || "http://localhost:4000";
@@ -101,21 +105,6 @@ export interface IApplicationFilters {
   reviewerAddress?: string;
   reviewerAddresses?: string[];
 }
-
-/**
- * Merges the single `reviewerAddress` and the `reviewerAddresses` list into one
- * de-duplicated array, for endpoints that accept a comma-separated
- * `reviewerAddresses` query param (statistics, export).
- */
-const mergeReviewerAddresses = (
-  filters: Pick<IApplicationFilters, "reviewerAddress" | "reviewerAddresses">
-): string[] => {
-  const addresses = [
-    ...(filters.reviewerAddress ? [filters.reviewerAddress] : []),
-    ...(filters.reviewerAddresses ?? []),
-  ];
-  return [...new Set(addresses)];
-};
 
 export type FundingProgram = {
   programId: string;
@@ -362,6 +351,39 @@ export const fundingProgramsAPI = {
 };
 
 // Funding Applications API (V2)
+// `data` is a parsed JSON document or a CSV Blob depending on `format`.
+type ApplicationExportResult = { data: any; filename?: string };
+
+/**
+ * Shared implementation for the public and admin application export endpoints.
+ * Both build the same filter query and parse the download filename from the
+ * `Content-Disposition` header; only the request path differs.
+ */
+async function requestApplicationsExport(
+  path: string,
+  format: ExportFormat,
+  filters: IApplicationFilters
+): Promise<ApplicationExportResult> {
+  const params = buildApplicationQueryParams(filters);
+  params.append("format", format);
+  appendMergedReviewerAddresses(params, filters);
+
+  const response = await apiClient.get(`${path}?${params}`, {
+    responseType: format === "csv" ? "blob" : "json",
+  });
+
+  const contentDisposition = response.headers["content-disposition"];
+  let filename: string | undefined;
+  if (contentDisposition) {
+    const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+    if (filenameMatch?.[1]) {
+      filename = filenameMatch[1].replace(/['"]/g, "");
+    }
+  }
+
+  return { data: response.data, filename };
+}
+
 export const fundingApplicationsAPI = {
   /**
    * Submit a new funding application
@@ -418,16 +440,11 @@ export const fundingApplicationsAPI = {
     programId: string,
     filters: IApplicationFilters = {}
   ): Promise<IPaginatedApplicationsResponse> {
-    const params = new URLSearchParams();
-
-    if (filters.status) params.append("status", filters.status);
-    if (filters.search) params.append("search", filters.search);
+    const params = buildApplicationQueryParams(filters);
     if (filters.page) params.append("page", filters.page.toString());
     if (filters.limit) params.append("limit", filters.limit.toString());
-    if (filters.dateFrom) params.append("dateFrom", filters.dateFrom);
-    if (filters.dateTo) params.append("dateTo", filters.dateTo);
-    if (filters.sortBy) params.append("sortBy", filters.sortBy);
-    if (filters.sortOrder) params.append("sortOrder", filters.sortOrder);
+    // The list endpoint accepts the single and multi reviewer params separately
+    // (the multi-select picker vs. the "My Applications" self-scope).
     if (filters.reviewerAddress) params.append("reviewerAddress", filters.reviewerAddress);
     if (filters.reviewerAddresses?.length)
       params.append("reviewerAddresses", filters.reviewerAddresses.join(","));
@@ -514,8 +531,7 @@ export const fundingApplicationsAPI = {
     filters: Pick<IApplicationFilters, "reviewerAddress" | "reviewerAddresses"> = {}
   ): Promise<IApplicationStatistics> {
     const params = new URLSearchParams();
-    const reviewerAddresses = mergeReviewerAddresses(filters);
-    if (reviewerAddresses.length) params.append("reviewerAddresses", reviewerAddresses.join(","));
+    appendMergedReviewerAddresses(params, filters);
 
     const query = params.toString();
     const statisticsUrl = INDEXER.V2.FUNDING_APPLICATIONS.STATISTICS(programId);
@@ -547,38 +563,12 @@ export const fundingApplicationsAPI = {
     programId: string,
     format: ExportFormat = "json",
     filters: IApplicationFilters = {}
-  ): Promise<{ data: any; filename?: string }> {
-    const params = new URLSearchParams();
-    params.append("format", format);
-
-    if (filters.status) params.append("status", filters.status);
-    if (filters.search) params.append("search", filters.search);
-    if (filters.dateFrom) params.append("dateFrom", filters.dateFrom);
-    if (filters.dateTo) params.append("dateTo", filters.dateTo);
-    if (filters.sortBy) params.append("sortBy", filters.sortBy);
-    if (filters.sortOrder) params.append("sortOrder", filters.sortOrder);
-    const reviewerAddresses = mergeReviewerAddresses(filters);
-    if (reviewerAddresses.length) params.append("reviewerAddresses", reviewerAddresses.join(","));
-
-    const response = await apiClient.get(
-      `/v2/funding-applications/program/${programId}/export?${params}`,
-      {
-        responseType: format === "csv" ? "blob" : "json",
-      }
+  ): Promise<ApplicationExportResult> {
+    return requestApplicationsExport(
+      `/v2/funding-applications/program/${programId}/export`,
+      format,
+      filters
     );
-
-    // Extract filename from Content-Disposition header if available
-    const contentDisposition = response.headers["content-disposition"];
-    let filename: string | undefined;
-
-    if (contentDisposition) {
-      const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
-      if (filenameMatch?.[1]) {
-        filename = filenameMatch[1].replace(/['"]/g, "");
-      }
-    }
-
-    return { data: response.data, filename };
   },
 
   /**
@@ -588,37 +578,12 @@ export const fundingApplicationsAPI = {
     programId: string,
     format: ExportFormat = "json",
     filters: IApplicationFilters = {}
-  ): Promise<{ data: any; filename?: string }> {
-    const params = new URLSearchParams();
-    params.append("format", format);
-
-    if (filters.status) params.append("status", filters.status);
-    if (filters.search) params.append("search", filters.search);
-    if (filters.dateFrom) params.append("dateFrom", filters.dateFrom);
-    if (filters.dateTo) params.append("dateTo", filters.dateTo);
-    if (filters.sortBy) params.append("sortBy", filters.sortBy);
-    if (filters.sortOrder) params.append("sortOrder", filters.sortOrder);
-    const reviewerAddresses = mergeReviewerAddresses(filters);
-    if (reviewerAddresses.length) params.append("reviewerAddresses", reviewerAddresses.join(","));
-
-    const response = await apiClient.get(
-      `/v2/funding-applications/admin/${programId}/export?${params}`,
-      {
-        responseType: format === "csv" ? "blob" : "json",
-      }
+  ): Promise<ApplicationExportResult> {
+    return requestApplicationsExport(
+      `/v2/funding-applications/admin/${programId}/export`,
+      format,
+      filters
     );
-
-    const contentDisposition = response.headers["content-disposition"];
-    let filename: string | undefined;
-
-    if (contentDisposition) {
-      const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
-      if (filenameMatch?.[1]) {
-        filename = filenameMatch[1].replace(/['"]/g, "");
-      }
-    }
-
-    return { data: response.data, filename };
   },
 
   /**

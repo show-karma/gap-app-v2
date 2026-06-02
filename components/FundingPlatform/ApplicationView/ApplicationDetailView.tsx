@@ -1,9 +1,6 @@
 "use client";
 
 import { ArrowLeftIcon } from "@heroicons/react/24/solid";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
-import toast from "react-hot-toast";
 import { AIAnalysisTab } from "@/components/FundingPlatform/ApplicationView/AIAnalysisTab";
 import ApplicationDetailSkeleton from "@/components/FundingPlatform/ApplicationView/ApplicationDetailSkeleton";
 import ApplicationHeader from "@/components/FundingPlatform/ApplicationView/ApplicationHeader";
@@ -24,38 +21,14 @@ import MoreActionsDropdown from "@/components/FundingPlatform/ApplicationView/Mo
 import { StatusChangeInline } from "@/components/FundingPlatform/ApplicationView/StatusChangeInline";
 import { TabPanel } from "@/components/FundingPlatform/ApplicationView/TabPanel";
 import { Button } from "@/components/Utilities/Button";
-import { useAuth } from "@/hooks/useAuth";
-import { useBackNavigation } from "@/hooks/useBackNavigation";
-import {
-  useApplication,
-  useApplicationComments,
-  useApplicationStatus,
-  useApplicationVersions,
-  useDeleteApplication,
-  useProgramConfig,
-} from "@/hooks/useFundingPlatform";
-import { useKycConfig, useKycStatus } from "@/hooks/useKycStatus";
 import { Link } from "@/src/components/navigation/Link";
-import { AdminOnly, Permission, useIsFundingPlatformAdmin } from "@/src/core/rbac";
-import { usePermissionContext } from "@/src/core/rbac/context/permission-context";
+import { AdminOnly } from "@/src/core/rbac";
 import { MilestonesTab } from "@/src/features/applications/components/MilestonesTab";
-import { useMilestonesAdminRefetch } from "@/src/features/applications/hooks/use-milestones-admin-refetch";
 import { layoutTheme } from "@/src/helper/theme";
-import { useApplicationVersionsStore } from "@/store/applicationVersions";
-import type { IFundingApplication } from "@/types/funding-platform";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 import { isFundingProgramConfig } from "@/utilities/type-guards";
-
-// Whitelist used when seeding activeTabId from the `?tab=` query
-// param. Keeps unknown values from drifting the polling-gate state
-// away from the actually-rendered tab.
-const KNOWN_TAB_IDS = ["application", "milestones", "ai-analysis", "comments"] as const;
-type KnownTabId = (typeof KNOWN_TAB_IDS)[number];
-
-function isKnownTabId(value: string | null): value is KnownTabId {
-  return value !== null && (KNOWN_TAB_IDS as readonly string[]).includes(value);
-}
+import { isKnownTabId, useApplicationDetailView } from "./useApplicationDetailView";
 
 interface ApplicationDetailViewProps {
   /** Application reference number / id used to fetch the application. */
@@ -78,7 +51,7 @@ interface ApplicationDetailViewProps {
  * Shared application-detail view. Rendered both by the standalone route
  * `…/applications/[applicationId]` (variant="page") and inline as the right pane
  * of the "My Applications" inbox (variant="panel"). Single source of truth — do
- * not duplicate this logic.
+ * not duplicate this logic. All data/handlers live in `useApplicationDetailView`.
  */
 export default function ApplicationDetailView({
   applicationId,
@@ -88,312 +61,57 @@ export default function ApplicationDetailView({
   variant = "page",
   className,
 }: ApplicationDetailViewProps) {
-  const router = useRouter();
   const isPanel = variant === "panel";
-
-  const isAdmin = useIsFundingPlatformAdmin();
-  const { isLoading: isLoadingPermissions } = usePermissionContext();
-
-  // Check for edit parameter in URL
-  const searchParams = useSearchParams();
-  const shouldOpenEdit = searchParams.get("edit") === "true";
-
-  // ?tab=comments from TG notification deep-link
-  const tabParam = searchParams.get("tab");
-
-  // Get current user address
-  const { address: currentUserAddress } = useAuth();
-
-  // View mode state for ApplicationContent
-  const [applicationViewMode, setApplicationViewMode] = useState<"details" | "changes">("details");
-
-  // Active-tab id — used to gate the milestones admin refetch hook
-  // (don't poll when admin is looking at AI Analysis or Comments).
-  // Seeded from `?tab=` so deep-links land on the right active id
-  // without waiting for an onChange event. Validated against
-  // KNOWN_TAB_IDS to keep unknown deep-link values from drifting the
-  // state away from the actually-rendered tab. The post-load
-  // reconcile useEffect below also corrects `?tab=milestones` on a
-  // non-approved application (where the Milestones tab is filtered
-  // out at render time).
-  const [activeTabId, setActiveTabId] = useState<KnownTabId>(() =>
-    isKnownTabId(tabParam) ? tabParam : "application"
-  );
-
-  // Delete modal state
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-
-  // Edit modal state
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-
-  // Edit post-approval modal state
-  const [isEditPostApprovalModalOpen, setIsEditPostApprovalModalOpen] = useState(false);
-
-  // Status change inline form state
-  const [selectedStatus, setSelectedStatus] = useState<ApplicationStatus | null>(null);
-
-  // Fetch application data
   const {
     application,
-    isLoading: isLoadingApplication,
-    refetch: refetchApplication,
-  } = useApplication(applicationId);
-
-  // Keep the milestones tab fresh on long-lived admin sessions. Active
-  // only when the admin is viewing the Milestones tab AND the
-  // application is approved (the only state in which milestones can
-  // exist on this surface).
-  const isApprovedApplication = application?.status?.toLowerCase() === "approved";
-  useMilestonesAdminRefetch({
-    isActive: activeTabId === "milestones" && isApprovedApplication,
-    refetch: refetchApplication,
-  });
-
-  // Reconcile activeTabId once the application loads: if the seed
-  // came from `?tab=milestones` but this application doesn't expose a
-  // Milestones tab (non-approved), correct to "application" so the
-  // state doesn't lie about what's rendered. Only runs when we know
-  // the application's approval status (i.e. application is loaded).
-  useEffect(() => {
-    if (!application) return;
-    if (activeTabId === "milestones" && !isApprovedApplication) {
-      setActiveTabId("application");
-    }
-  }, [application, activeTabId, isApprovedApplication]);
-
-  // Fetch program config
-  const { data: program, config } = useProgramConfig(programId);
-
-  // Get chainId from program config if needed for V1 components
-  const chainId = program?.chainID;
-
-  // Fetch KYC status for the application - use referenceNumber as project identifier
-  // (referenceNumber is the consistent identifier used across all apps for KYC)
-  const { status: kycStatus } = useKycStatus(application?.referenceNumber, communityId);
-
-  // Fetch KYC config to get form URLs
-  const { isEnabled: isKycEnabled } = useKycConfig(communityId);
-
-  // Use the application status hook — the mutation's pending flag drives the
-  // inline form's busy state (no separate local loading state needed).
-  const { updateStatusAsync, isUpdating: isUpdatingStatus } = useApplicationStatus(programId);
-
-  // Use the comments hook - all users with access can view comments
-  const {
+    program,
+    config,
+    chainId,
     comments,
-    isLoading: isLoadingComments,
-    createCommentAsync,
-    editCommentAsync,
-    deleteCommentAsync,
-    refetch: refetchComments,
-  } = useApplicationComments(applicationId, true);
+    versions,
+    kycStatus,
+    isKycEnabled,
+    currentUserAddress,
+    isLoading,
+    isLoadingComments,
+    isAdmin,
+    canEditApplication,
+    canEditPostApproval,
+    showStatusActions,
+    isApprovedApplication,
+    milestoneReviewUrl,
+    applicationViewMode,
+    setApplicationViewMode,
+    setActiveTabId,
+    tabParam,
+    selectedStatus,
+    isUpdatingStatus,
+    handleStatusChangeClick,
+    handleStatusChangeConfirm,
+    handleStatusChangeCancel,
+    handleCommentAdd,
+    handleCommentEdit,
+    handleCommentDelete,
+    handleVersionClick,
+    isDeleteModalOpen,
+    isEditModalOpen,
+    isEditPostApprovalModalOpen,
+    isDeleting,
+    handleDeleteClick,
+    handleDeleteConfirm,
+    handleDeleteCancel,
+    handleEditClick,
+    handleEditClose,
+    handleEditSuccess,
+    handleEditPostApprovalClick,
+    handleEditPostApprovalClose,
+    handleEditPostApprovalSuccess,
+    handleBackClick,
+    refetchApplication,
+  } = useApplicationDetailView({ applicationId, programId, combinedProgramId, communityId });
 
-  // Use the delete application hook
-  const { deleteApplicationAsync, isDeleting } = useDeleteApplication();
-
-  const handleBackClick = useBackNavigation({
-    fallbackRoute: PAGES.MANAGE.FUNDING_PLATFORM.APPLICATIONS(communityId, combinedProgramId),
-  });
-
-  // Get application identifier for fetching versions
-  const applicationIdentifier = application?.referenceNumber || application?.id || applicationId;
-
-  // Fetch versions using React Query
-  const { versions, refetch: refetchVersions } = useApplicationVersions(applicationIdentifier);
-
-  // Get version selection from store
-  const { selectVersion } = useApplicationVersionsStore();
-
-  // Handle status change
-  const handleStatusChange = async (
-    status: string,
-    note?: string,
-    approvedAmount?: string,
-    approvedCurrency?: string
-  ) => {
-    if (!application) return;
-    await updateStatusAsync({
-      applicationId: application.referenceNumber,
-      status,
-      note,
-      approvedAmount,
-      approvedCurrency,
-    });
-  };
-
-  // Handle status change click - shows inline form (toggle if same status clicked)
-  const handleStatusChangeClick = (status: ApplicationStatus) => {
-    setSelectedStatus((current) => (current === status ? null : status));
-  };
-
-  // Handle status change confirmation from inline form
-  const handleStatusChangeConfirm = async (
-    reason?: string,
-    approvedAmount?: string,
-    approvedCurrency?: string
-  ) => {
-    if (!selectedStatus) return;
-
-    try {
-      await handleStatusChange(selectedStatus, reason, approvedAmount, approvedCurrency);
-      // Success: hide inline form and clear state
-      setSelectedStatus(null);
-      if (selectedStatus === "approved") {
-        toast.success("Application approved successfully!");
-      } else {
-        toast.success(`Application status updated to ${selectedStatus}`);
-      }
-    } catch (error) {
-      // Error: keep the form open so the user can retry.
-      const errorMessage =
-        error instanceof Error ? error.message : "Failed to update application status";
-      toast.error(errorMessage);
-    }
-  };
-
-  // Handle inline form cancel
-  const handleStatusChangeCancel = () => {
-    if (!isUpdatingStatus) {
-      setSelectedStatus(null);
-    }
-  };
-
-  // Handle comment operations
-  const handleCommentAdd = async (content: string) => {
-    if (!applicationId) return;
-    await createCommentAsync({ content });
-  };
-
-  const handleCommentEdit = async (commentId: string, content: string) => {
-    await editCommentAsync({ commentId, content });
-  };
-
-  const handleCommentDelete = async (commentId: string) => {
-    await deleteCommentAsync(commentId);
-  };
-
-  // Handle delete application
-  const handleDeleteClick = () => {
-    setIsDeleteModalOpen(true);
-  };
-
-  const handleDeleteConfirm = async () => {
-    if (!application) return;
-
-    try {
-      await deleteApplicationAsync(application.referenceNumber);
-      // Only close modal and navigate on success
-      setIsDeleteModalOpen(false);
-      router.push(PAGES.MANAGE.FUNDING_PLATFORM.APPLICATIONS(communityId, combinedProgramId));
-    } catch {
-      // Error is handled by the hook (toast with a specific message + Sentry).
-      // Keep the modal open so the user can retry or cancel.
-    }
-  };
-
-  const handleDeleteCancel = () => {
-    setIsDeleteModalOpen(false);
-  };
-
-  // Helper function to check if editing is allowed
-  // NOTE: This is a UI-only check. The backend API MUST enforce these same restrictions
-  // to prevent unauthorized edits. The backend should reject edit requests for applications
-  // with status 'approved' regardless of client-side checks.
-  const canEditApplication = (app: IFundingApplication) => {
-    const restrictedStatuses = ["approved"];
-    return !restrictedStatuses.includes(app.status.toLowerCase());
-  };
-
-  // Auto-open edit modal when ?edit=true is present in URL
-  useEffect(() => {
-    if (shouldOpenEdit && application && isAdmin && canEditApplication(application)) {
-      setIsEditModalOpen(true);
-    }
-  }, [shouldOpenEdit, application, isAdmin]);
-
-  // Handle edit application
-  const handleEditClick = () => {
-    setIsEditModalOpen(true);
-    // Add edit=true to URL
-    const url = new URL(window.location.href);
-    url.searchParams.set("edit", "true");
-    window.history.replaceState({}, "", url.toString());
-  };
-
-  const handleEditClose = () => {
-    setIsEditModalOpen(false);
-    // Remove edit param from URL
-    const url = new URL(window.location.href);
-    url.searchParams.delete("edit");
-    window.history.replaceState({}, "", url.toString());
-  };
-
-  const handleEditSuccess = async () => {
-    // Refetch all data in parallel for better performance
-    await Promise.all([refetchApplication(), refetchVersions(), refetchComments()]);
-  };
-
-  // Handle post-approval edit
-  const handleEditPostApprovalClick = () => {
-    setIsEditPostApprovalModalOpen(true);
-  };
-
-  const handleEditPostApprovalClose = () => {
-    setIsEditPostApprovalModalOpen(false);
-  };
-
-  const handleEditPostApprovalSuccess = async () => {
-    await refetchApplication();
-  };
-
-  const handleVersionClick = (versionId: string) => {
-    // Select the version to view
-    selectVersion(versionId, versions);
-    // Switch to Changes view to show the selected version
-    setApplicationViewMode("changes");
-
-    // Scroll to the Application Details section
-    setTimeout(() => {
-      const element = document.getElementById("application-details");
-      if (element) {
-        element.scrollIntoView({ behavior: "smooth", block: "start" });
-      }
-    }, 100); // Small delay to ensure the view mode has changed
-  };
-
-  // Memoized milestone review URL - only returns URL if approved and has projectUID
-  const milestoneReviewUrl = useMemo(() => {
-    if (application?.status?.toLowerCase() === "approved" && application?.projectUID) {
-      return `${PAGES.MANAGE.FUNDING_PLATFORM.MILESTONES(communityId, combinedProgramId, application.projectUID)}?from=application`;
-    }
-    return null;
-  }, [application?.status, application?.projectUID, communityId, combinedProgramId]);
-
-  // Get can function from permission context for permission-based checks
-  const { can } = usePermissionContext();
-
-  // Check if status actions should be shown
-  // User needs at least one of the status-changing permissions and the application must not be finalized
-  const showStatusActions =
-    application &&
-    !["approved", "rejected"].includes(application.status.toLowerCase()) &&
-    (can(Permission.APPLICATION_CHANGE_STATUS) ||
-      can(Permission.APPLICATION_APPROVE) ||
-      can(Permission.APPLICATION_REJECT) ||
-      can(Permission.APPLICATION_REVIEW));
-
-  // Check if post-approval edit should be enabled (admin only)
-  // Show when approved AND (program has a post-approval form schema OR data already exists)
-  const hasPostApprovalSchema = !!config?.postApprovalFormSchema?.fields?.length;
-  const hasPostApprovalData =
-    !!application?.postApprovalData && Object.keys(application.postApprovalData).length > 0;
-  const canEditPostApproval =
-    isAdmin &&
-    application?.status?.toLowerCase() === "approved" &&
-    (hasPostApprovalSchema || hasPostApprovalData);
-
-  // Check loading states
-  if (isLoadingPermissions || isLoadingApplication) {
+  // Loading state
+  if (isLoading) {
     if (isPanel) {
       return (
         <div className={cn("min-w-0", className)}>
@@ -410,7 +128,7 @@ export default function ApplicationDetailView({
     );
   }
 
-  // Check if application exists
+  // Not found
   if (!application) {
     if (isPanel) {
       return (
@@ -432,9 +150,94 @@ export default function ApplicationDetailView({
     );
   }
 
+  const tabs: TabConfig[] = [
+    {
+      id: "application",
+      label: "Application",
+      icon: TabIcons.Application,
+      content: (
+        <TabPanel>
+          <ApplicationTab
+            application={application}
+            program={program}
+            viewMode={applicationViewMode}
+            onViewModeChange={setApplicationViewMode}
+          />
+        </TabPanel>
+      ),
+    },
+    // Milestones tab only renders once the application is approved —
+    // pre-approval there's no grant on-chain yet and `milestoneStatuses[]` is
+    // always empty.
+    ...(isApprovedApplication
+      ? [
+          {
+            id: "milestones",
+            label: "Milestones",
+            icon: TabIcons.Milestones,
+            content: (
+              <TabPanel>
+                <MilestonesTab application={application} isOwner={false} />
+              </TabPanel>
+            ),
+          } satisfies TabConfig,
+        ]
+      : []),
+    {
+      id: "ai-analysis",
+      label: "AI Analysis",
+      icon: TabIcons.AIAnalysis,
+      content: (
+        <TabPanel>
+          <AIAnalysisTab
+            application={application}
+            program={program}
+            onEvaluationComplete={refetchApplication}
+          />
+        </TabPanel>
+      ),
+    },
+    {
+      id: "comments",
+      label: "Comments",
+      icon: TabIcons.Discussion,
+      content: (
+        <TabPanel>
+          <DiscussionTab
+            applicationId={application.referenceNumber}
+            comments={comments}
+            statusHistory={application.statusHistory}
+            versionHistory={versions}
+            currentStatus={application.status}
+            isAdmin={isAdmin}
+            currentUserAddress={currentUserAddress}
+            onCommentAdd={handleCommentAdd}
+            onCommentEdit={handleCommentEdit}
+            onCommentDelete={handleCommentDelete}
+            onVersionClick={handleVersionClick}
+            isLoading={isLoadingComments}
+            programId={programId}
+            enableMentions
+            referenceNumber={application.referenceNumber}
+          />
+        </TabPanel>
+      ),
+    },
+  ];
+
+  // Derive tab index from the tab id rather than hardcoding — prevents silent
+  // breakage when the Milestones tab is or isn't present.
+  const tabParamIndex = tabParam ? tabs.findIndex((t) => t.id === tabParam) : -1;
+  const defaultIndex = tabParamIndex >= 0 ? tabParamIndex : 0;
+
+  const handleTabChange = (index: number) => {
+    const tab = tabs[index];
+    if (tab && isKnownTabId(tab.id)) setActiveTabId(tab.id);
+  };
+
   const detailBody = (
     <>
-      {/* Application Header Card with Actions - connects to tabs when no milestone link and no inline form */}
+      {/* Application Header Card with Actions — connects to tabs when no milestone link and no inline form */}
       <ApplicationHeader
         application={application}
         program={program}
@@ -458,7 +261,7 @@ export default function ApplicationDetailView({
               canDelete={isAdmin}
               isDeleting={isDeleting}
               onEditClick={handleEditClick}
-              canEdit={isAdmin && canEditApplication(application)}
+              canEdit={isAdmin && canEditApplication}
               onEditPostApprovalClick={handleEditPostApprovalClick}
               canEditPostApproval={canEditPostApproval}
             />
@@ -466,7 +269,7 @@ export default function ApplicationDetailView({
         }
       />
 
-      {/* Status Change Inline Form - Shows below header when status action is selected (admin only) */}
+      {/* Status Change Inline Form — below header when a status action is selected (admin only) */}
       {selectedStatus && showStatusActions && (
         <StatusChangeInline
           status={selectedStatus}
@@ -479,7 +282,7 @@ export default function ApplicationDetailView({
         />
       )}
 
-      {/* Milestone Review Link - Only shown if application is approved and has projectUID */}
+      {/* Milestone Review Link — only when approved and has projectUID */}
       {milestoneReviewUrl && (
         <div className="my-6 bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-800 rounded-lg p-4">
           <div className="flex items-center justify-between">
@@ -501,105 +304,14 @@ export default function ApplicationDetailView({
         </div>
       )}
 
-      {/* Tab-based Layout */}
-      {(() => {
-        const tabs: TabConfig[] = [
-          {
-            id: "application",
-            label: "Application",
-            icon: TabIcons.Application,
-            content: (
-              <TabPanel>
-                <ApplicationTab
-                  application={application}
-                  program={program}
-                  viewMode={applicationViewMode}
-                  onViewModeChange={setApplicationViewMode}
-                />
-              </TabPanel>
-            ),
-          },
-          // Milestones tab only renders once the application is
-          // approved — pre-approval there's no grant on-chain yet
-          // and `milestoneStatuses[]` is always empty.
-          ...(isApprovedApplication
-            ? [
-                {
-                  id: "milestones",
-                  label: "Milestones",
-                  icon: TabIcons.Milestones,
-                  content: (
-                    <TabPanel>
-                      <MilestonesTab application={application} isOwner={false} />
-                    </TabPanel>
-                  ),
-                } satisfies TabConfig,
-              ]
-            : []),
-          {
-            id: "ai-analysis",
-            label: "AI Analysis",
-            icon: TabIcons.AIAnalysis,
-            content: (
-              <TabPanel>
-                <AIAnalysisTab
-                  application={application}
-                  program={program}
-                  onEvaluationComplete={refetchApplication}
-                />
-              </TabPanel>
-            ),
-          },
-          {
-            id: "comments",
-            label: "Comments",
-            icon: TabIcons.Discussion,
-            content: (
-              <TabPanel>
-                <DiscussionTab
-                  applicationId={application.referenceNumber}
-                  comments={comments}
-                  statusHistory={application.statusHistory}
-                  versionHistory={versions}
-                  currentStatus={application.status}
-                  isAdmin={isAdmin}
-                  currentUserAddress={currentUserAddress}
-                  onCommentAdd={handleCommentAdd}
-                  onCommentEdit={handleCommentEdit}
-                  onCommentDelete={handleCommentDelete}
-                  onVersionClick={handleVersionClick}
-                  isLoading={isLoadingComments}
-                  programId={programId}
-                  enableMentions
-                  referenceNumber={application.referenceNumber}
-                />
-              </TabPanel>
-            ),
-          },
-        ];
+      <ApplicationTabs
+        connectedToHeader={!milestoneReviewUrl && !selectedStatus}
+        defaultIndex={defaultIndex}
+        tabs={tabs}
+        onChange={handleTabChange}
+      />
 
-        // Derive tab index from the tab id rather than hardcoding —
-        // prevents silent breakage when the Milestones tab is or isn't
-        // present.
-        const tabParamIndex = tabParam ? tabs.findIndex((t) => t.id === tabParam) : -1;
-        const defaultIndex = tabParamIndex >= 0 ? tabParamIndex : 0;
-
-        const handleTabChange = (index: number) => {
-          const tab = tabs[index];
-          if (tab && isKnownTabId(tab.id)) setActiveTabId(tab.id);
-        };
-
-        return (
-          <ApplicationTabs
-            connectedToHeader={!milestoneReviewUrl && !selectedStatus}
-            defaultIndex={defaultIndex}
-            tabs={tabs}
-            onChange={handleTabChange}
-          />
-        );
-      })()}
-
-      {/* Delete Confirmation Modal - Admin only */}
+      {/* Delete Confirmation Modal — Admin only */}
       <DeleteApplicationModal
         isOpen={isDeleteModalOpen}
         onClose={handleDeleteCancel}
@@ -608,8 +320,8 @@ export default function ApplicationDetailView({
         isDeleting={isDeleting}
       />
 
-      {/* Edit Application Modal - Admin only */}
-      {application && isAdmin && (
+      {/* Edit Application Modal — Admin only */}
+      {isAdmin && (
         <EditApplicationModal
           isOpen={isEditModalOpen}
           onClose={handleEditClose}
@@ -621,8 +333,8 @@ export default function ApplicationDetailView({
         />
       )}
 
-      {/* Edit Post-Approval Modal - Admin only */}
-      {application && canEditPostApproval && (
+      {/* Edit Post-Approval Modal — Admin only */}
+      {canEditPostApproval && (
         <EditPostApprovalModal
           isOpen={isEditPostApprovalModalOpen}
           onClose={handleEditPostApprovalClose}
@@ -643,7 +355,6 @@ export default function ApplicationDetailView({
   // Page variant: full standalone route layout.
   return (
     <div className={cn("min-h-screen bg-gray-50 dark:bg-zinc-900", className)}>
-      {/* Main Content */}
       <div className="px-4 sm:px-6 lg:px-8 py-6">
         {/* Back Button and Role Indicator */}
         <div className="mb-4 flex items-center justify-between">
