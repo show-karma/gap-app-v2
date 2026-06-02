@@ -110,10 +110,6 @@ vi.mock("@/store/efp", () => ({
   }),
 }));
 
-vi.mock("@/components/EFP/AddressEfpHoverCard", () => ({
-  AddressEfpHoverCard: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-}));
-
 // Mock contributor profile modal store
 const mockOpenModal = vi.fn();
 vi.mock("@/store/modals/contributorProfile", () => ({
@@ -371,6 +367,7 @@ describe("TeamMemberCard", () => {
 
       expect(screen.getByTestId("member-efp-stats")).toHaveTextContent("1 follower");
       expect(screen.getByTestId("member-efp-stats")).toHaveTextContent("2 following");
+      expect(screen.getByTestId("member-efp-stats")).not.toHaveTextContent("followings");
     });
 
     it("shows retry when EFP stats errored", () => {

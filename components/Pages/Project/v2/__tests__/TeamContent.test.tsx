@@ -99,10 +99,6 @@ vi.mock("@/store/efp", () => ({
   }),
 }));
 
-vi.mock("@/components/EFP/AddressEfpHoverCard", () => ({
-  AddressEfpHoverCard: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-}));
-
 vi.mock("@/components/EFP/EfpStatsLine", () => ({
   EfpStatsLine: () => <div data-testid="member-efp-stats" />,
 }));
