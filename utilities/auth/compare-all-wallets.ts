@@ -4,11 +4,18 @@ import { isAddress } from "viem";
 type WalletLike = { address: string };
 
 /**
- * Check if a given address matches any wallet linked to the Privy user,
- * including standard wallets, smart wallets, and cross-app embedded wallets.
+ * Collect EVERY wallet address linked to the Privy user — standard wallets,
+ * smart wallets, the Farcaster owner address, and cross-app embedded + smart
+ * wallets.
+ *
+ * A single Privy account can carry MORE THAN ONE wallet (e.g. two embedded
+ * wallets), only one of which is the "active" signer at a time. Callers that
+ * authorize the *account* rather than the active signer must consider all of
+ * them, or the account silently loses access whenever Privy surfaces a
+ * different wallet as the active one.
  */
-export const compareAllWallets = (user: User, address: string): boolean => {
-  if (!user.linkedAccounts) return false;
+export const getLinkedWalletAddresses = (user: User): string[] => {
+  if (!user.linkedAccounts) return [];
   const wallets: string[] = [];
 
   user.linkedAccounts.forEach((account: LinkedAccountWithMetadata) => {
@@ -39,5 +46,12 @@ export const compareAllWallets = (user: User, address: string): boolean => {
     }
   });
 
-  return wallets.some((wallet) => wallet.toLowerCase() === address.toLowerCase());
+  return wallets;
 };
+
+/**
+ * Check if a given address matches any wallet linked to the Privy user,
+ * including standard wallets, smart wallets, and cross-app embedded wallets.
+ */
+export const compareAllWallets = (user: User, address: string): boolean =>
+  getLinkedWalletAddresses(user).some((wallet) => wallet.toLowerCase() === address.toLowerCase());
