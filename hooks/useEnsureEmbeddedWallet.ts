@@ -1,5 +1,6 @@
 import { type User, useCreateWallet } from "@privy-io/react-auth";
 import { useEffect } from "react";
+import { errorManager } from "@/components/Utilities/errorManager";
 import { getLinkedWalletAddresses } from "@/utilities/auth/compare-all-wallets";
 
 // Value of Privy's PrivyErrorCode.EMBEDDED_WALLET_ALREADY_EXISTS. Inlined because
@@ -61,8 +62,10 @@ export const useEnsureEmbeddedWallet = (
       const message = error instanceof Error ? error.message : String(error);
       // Another path already created the wallet — keep the slot claimed.
       if (message.includes(EMBEDDED_WALLET_ALREADY_EXISTS)) return;
-      // Transient failure — release the slot so a later state change retries.
+      // Genuine failure leaves the user without a wallet — surface it and
+      // release the slot so a later state change retries.
       creationAttemptedUserIds.delete(userId);
+      errorManager("Failed to create embedded wallet on login", error, { userId });
     });
   }, [ready, authenticated, user, walletCount, createWallet]);
 };

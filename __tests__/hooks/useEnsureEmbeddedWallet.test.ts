@@ -23,6 +23,12 @@ vi.mock("@/utilities/auth/compare-all-wallets", () => ({
   getLinkedWalletAddresses: () => mockGetLinkedWalletAddresses(),
 }));
 
+const mockErrorManager = vi.fn();
+
+vi.mock("@/components/Utilities/errorManager", () => ({
+  errorManager: (...args: unknown[]) => mockErrorManager(...args),
+}));
+
 const makeUser = (id: string): User => ({ id }) as User;
 
 describe("useEnsureEmbeddedWallet", () => {
@@ -111,5 +117,17 @@ describe("useEnsureEmbeddedWallet", () => {
     // Slot stays claimed — no retry for an already-existing wallet.
     renderHook(() => useEnsureEmbeddedWallet(true, true, makeUser("u-exists"), 0));
     expect(mockCreateWallet).toHaveBeenCalledTimes(3);
+  });
+
+  it("reports a genuine failure to Sentry but stays silent on already-exists", async () => {
+    mockCreateWallet.mockRejectedValueOnce(new Error("network down"));
+    renderHook(() => useEnsureEmbeddedWallet(true, true, makeUser("u-report"), 0));
+    await Promise.resolve();
+    expect(mockErrorManager).toHaveBeenCalledTimes(1);
+
+    mockCreateWallet.mockRejectedValueOnce(new Error("embedded_wallet_already_exists"));
+    renderHook(() => useEnsureEmbeddedWallet(true, true, makeUser("u-report-exists"), 0));
+    await Promise.resolve();
+    expect(mockErrorManager).toHaveBeenCalledTimes(1);
   });
 });
