@@ -185,4 +185,19 @@ describe("buildSitemapIndexBody", () => {
     );
     await expect(buildSitemapIndexBody()).rejects.toThrow("HTTP 500");
   });
+
+  it("falls back to one chunk for a kind missing from a partial counts payload", async () => {
+    // A malformed/partial counts response must not drop a kind or crash — each
+    // missing kind still lists exactly one chunk.
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => jsonResponse({ projects: 1500 }))
+    );
+
+    const xml = await buildSitemapIndexBody();
+
+    expect(xml).toContain(`<loc>${SITE}/sitemaps/projects/sitemap/2.xml</loc>`);
+    expect(xml).toContain(`<loc>${SITE}/sitemaps/grants/sitemap/1.xml</loc>`);
+    expect(xml).not.toContain(`<loc>${SITE}/sitemaps/grants/sitemap/2.xml</loc>`);
+  });
 });

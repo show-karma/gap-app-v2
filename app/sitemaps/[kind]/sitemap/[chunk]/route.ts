@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import {
   buildUrlsetXml,
   fetchSitemapKindPage,
+  MAX_SITEMAP_CHUNK,
   SITEMAP_CACHE_CONTROL,
   SITEMAP_KINDS,
   type SitemapKind,
@@ -30,6 +31,10 @@ export async function GET(
   }
 
   const page = Number.parseInt(chunk, 10);
+  if (!Number.isSafeInteger(page) || page > MAX_SITEMAP_CHUNK) {
+    return new NextResponse("Not Found", { status: 404 });
+  }
+
   const urls = await fetchSitemapKindPage(meta.kind, page);
 
   return new NextResponse(buildUrlsetXml(urls, meta.priority, meta.changeFrequency), {

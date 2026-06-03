@@ -11,6 +11,12 @@ export function formatSitemapLastmod(date: Date = new Date()): string {
 // so each child sitemap holds at most this many URLs.
 export const SITEMAP_PAGE_SIZE = 1000;
 
+// Upper bound on a chunk number parsed from a request path — ~100M URLs per
+// kind at SITEMAP_PAGE_SIZE. Guards the child route against absurd or crafted
+// chunk numbers (e.g. /sitemaps/projects/sitemap/99999999999999999.xml) that
+// would otherwise trigger a pointless indexer fetch; anything larger 404s.
+export const MAX_SITEMAP_CHUNK = 100_000;
+
 // How long Next caches each indexer fetch before a background revalidation.
 // Crawler traffic triggers the refresh (stale-while-revalidate), so no cron is
 // needed; a slow or unreachable indexer keeps serving the last good response

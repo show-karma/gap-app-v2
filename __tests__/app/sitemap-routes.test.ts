@@ -52,6 +52,24 @@ describe("child sitemap route", () => {
     );
     expect(res.status).toBe(404);
   });
+
+  it("404s an out-of-range chunk number without calling the indexer", async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    const res = await childGet(
+      new Request("https://www.karmahq.xyz/sitemaps/projects/sitemap/99999999999999999.xml"),
+      {
+        params: Promise.resolve({
+          kind: "projects",
+          chunk: "99999999999999999.xml",
+        }),
+      }
+    );
+
+    expect(res.status).toBe(404);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
 });
 
 describe("sitemap index route", () => {
