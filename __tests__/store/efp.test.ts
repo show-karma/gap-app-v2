@@ -58,6 +58,29 @@ describe("useEFP store", () => {
       expect(fetchEfpStats).not.toHaveBeenCalled();
     });
 
+    it("retries addresses that previously errored", async () => {
+      act(() => {
+        useEFP.setState({
+          efpData: { [ADDR]: { error: true, followers_count: 0 } },
+        });
+      });
+
+      vi.mocked(fetchEfpStats).mockResolvedValueOnce([
+        { address: ADDR, followers_count: 5, following_count: 2 },
+      ]);
+
+      await act(async () => {
+        await useEFP.getState().populateEfp([ADDR]);
+      });
+
+      expect(fetchEfpStats).toHaveBeenCalledWith([ADDR]);
+      expect(useEFP.getState().efpData[ADDR]).toMatchObject({
+        followers_count: 5,
+        following_count: 2,
+        error: false,
+      });
+    });
+
     it("marks error when stats fetch returns no result for address", async () => {
       vi.mocked(fetchEfpStats).mockResolvedValueOnce([]);
 

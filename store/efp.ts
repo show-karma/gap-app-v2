@@ -41,7 +41,9 @@ export const useEFP = create<EfpStore>((set, get) => ({
       .filter((address): address is string => !!address && isValidEthAddress(address))
       .map((address) => address.toLowerCase() as Hex);
 
-    const notTriedAddresses = lowercasedAddresses.filter((address) => !efpData[address]);
+    const notTriedAddresses = lowercasedAddresses.filter(
+      (address) => !efpData[address] || efpData[address].error
+    );
 
     if (notTriedAddresses.length === 0) {
       return;
