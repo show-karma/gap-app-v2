@@ -2,6 +2,7 @@
 
 import { ChevronDown, ChevronUp, History } from "lucide-react";
 import React, { useMemo, useState } from "react";
+import { EMPTY_ARRAY } from "@/utilities/safeEmpty";
 import type { EvaluationResultResponse, EvaluationStyle } from "../schemas/session.schema";
 import { useEvaluationDraftStore } from "../store/evaluationDraftStore";
 import { EvaluationResultCard } from "./EvaluationResultCard";
@@ -22,7 +23,10 @@ const HistoryRow = React.memo(function HistoryRow({ result, style, highlight }: 
 });
 
 export function IterationHistory({ sessionId, style }: IterationHistoryProps) {
-  const results = useEvaluationDraftStore((s) => s.resultsBySession[sessionId] ?? []);
+  // Select the raw slice (undefined is Object.is-stable) and apply the empty
+  // fallback OUTSIDE the selector. Returning `?? []` inside the selector would
+  // allocate a new array every render and trigger React #185 in Zustand v5.
+  const results = useEvaluationDraftStore((s) => s.resultsBySession[sessionId]) ?? EMPTY_ARRAY;
   const [expanded, setExpanded] = useState(true);
 
   const sorted = useMemo(
