@@ -235,6 +235,7 @@ export function useSubmitMilestoneCompletion() {
           try {
             await submitGranteeInvoice(grantUID, {
               milestoneLabel: params.milestoneTitle,
+              milestoneUID: params.milestoneUID,
               invoiceFileKey: params.invoiceFile.fileKey,
               invoiceFileUrl: params.invoiceFile.fileUrl,
             });
@@ -243,10 +244,16 @@ export function useSubmitMilestoneCompletion() {
             await queryClient.invalidateQueries({
               queryKey: QUERY_KEYS.APPLICATIONS.INVOICE_CONFIG(params.referenceNumber),
             });
-          } catch {
+          } catch (invoiceError) {
             if (signal.aborted) return;
-            // Non-fatal — the on-chain completion already shipped.
-            toast.error("Failed to submit invoice");
+            // Non-fatal — the on-chain completion already shipped. Surface
+            // the backend's specific reason (e.g. a 409 conflict message)
+            // instead of a generic string; fall back only when absent.
+            const message =
+              invoiceError instanceof Error && invoiceError.message
+                ? invoiceError.message
+                : "Failed to submit invoice";
+            toast.error(message);
           }
         }
       } finally {

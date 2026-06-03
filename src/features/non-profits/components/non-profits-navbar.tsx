@@ -1,11 +1,11 @@
 "use client";
 
 /**
- * NonProfitsNavbar — dedicated top nav for the /non-profits section.
+ * NonProfitsNavbar — dedicated top nav for the /non-profits/find-funders section.
  *
  * Ported from grant-atlas src/components/landing-nav.tsx (the navbar shown on
  * karmagrants.org). Adaptations for gap-app-v2:
- * - Brand: "Grow Nonprofit" mark replaced by the Karma logo (next/image).
+ * - Brand: "Karma Find Funders" — the Karma logo (next/image) sits in for the original mark.
  * - Router/links: TanStack Router → next/link + NON_PROFITS_PAGES constants.
  * - Homepage detection: useMatch → usePathname.
  * - Theme: grant-atlas ThemeProvider → next-themes.
@@ -31,10 +31,9 @@ import {
 import { NavbarUserSkeleton } from "@/src/components/navbar/navbar-user-skeleton";
 import { NON_PROFITS_PAGES } from "@/utilities/pages";
 import { useResearchTray } from "../hooks/use-research-tray";
+import { FILINGS_STATS } from "../lib/stats";
 import { BookmarksDrawer } from "./bookmarks-drawer";
 import { HelpModal } from "./help-modal";
-
-const FILINGS_INDEXED_LABEL = "140,221 filings indexed";
 
 // Loaded the same way as the homepage navbar (ssr: false) so the account
 // dropdown is identical and never renders on the server — this avoids the
@@ -123,7 +122,7 @@ export function NonProfitsNavbar() {
     <>
       <nav className="lp-nav">
         <div className="lp-container lp-nav-inner">
-          <Link href={NON_PROFITS_PAGES.HOME} aria-label="Grow Nonprofit home">
+          <Link href={NON_PROFITS_PAGES.HOME} aria-label="Karma Find Funders home">
             <BrandMark />
           </Link>
 
@@ -148,7 +147,7 @@ export function NonProfitsNavbar() {
 
             <div className="lp-nav-status">
               <span className="lp-status-dot" />
-              <span>{FILINGS_INDEXED_LABEL}</span>
+              <span>{FILINGS_STATS.indexedLabel}</span>
             </div>
 
             {/* Help */}

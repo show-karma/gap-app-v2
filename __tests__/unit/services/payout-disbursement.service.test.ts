@@ -627,17 +627,17 @@ describe("payout-disbursement.service", () => {
       );
     });
 
-    it("throws on fetch error", async () => {
-      mockFetchData.mockResolvedValue([null, "Unauthorized"]);
+    it("surfaces the backend error message verbatim", async () => {
+      mockFetchData.mockResolvedValue([null, "An invoice already exists for this milestone"]);
       await expect(submitGranteeInvoice("grant-1", invoice)).rejects.toThrow(
-        /Failed to submit invoice/
+        "An invoice already exists for this milestone"
       );
     });
 
-    it("throws when data is null", async () => {
+    it("falls back to a generic message when the backend provides none", async () => {
       mockFetchData.mockResolvedValue([null, null]);
       await expect(submitGranteeInvoice("grant-1", invoice)).rejects.toThrow(
-        /Failed to submit invoice/
+        "Failed to submit invoice"
       );
     });
   });

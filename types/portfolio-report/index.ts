@@ -16,6 +16,7 @@ export interface ReportConfig {
   name: string;
   modelId: string;
   prompt: string;
+  chartIndicatorIds: string[];
   schedule: ReportSchedule;
   isActive: boolean;
   createdAt: string;
@@ -31,6 +32,33 @@ export interface TokenUsage {
 }
 
 export type PortfolioReportStatus = "generating" | "draft" | "failed" | "published";
+
+export interface ChartSectionDataPoint {
+  /** ISO date `YYYY-MM-DD` */
+  date: string;
+  value: number;
+}
+
+export interface ChartSectionProject {
+  uid: string;
+  title: string;
+  points: ChartSectionDataPoint[];
+}
+
+export interface ChartSectionIndicator {
+  id: string;
+  name: string;
+  unit: string;
+  projects: ChartSectionProject[];
+}
+
+export interface ChartSectionData {
+  indicators: ChartSectionIndicator[];
+  /** ISO date `YYYY-MM-DD` — Jan 1 of `runDate.year` */
+  startDate: string;
+  /** ISO date `YYYY-MM-DD` — same as the report's runDate */
+  endDate: string;
+}
 
 export interface PortfolioReport {
   id: string;
@@ -80,6 +108,7 @@ export interface CreateReportConfigRequest {
   programIds: string[];
   modelId: string;
   prompt: string;
+  chartIndicatorIds?: string[];
   schedule: ReportSchedule;
   isActive?: boolean;
 }
@@ -89,6 +118,7 @@ export interface UpdateReportConfigRequest {
   programIds?: string[];
   modelId?: string;
   prompt?: string;
+  chartIndicatorIds?: string[];
   schedule?: ReportSchedule;
   isActive?: boolean;
 }

@@ -1,7 +1,10 @@
 import { GAP } from "@show-karma/karma-gap-sdk";
 import type { Community } from "@/types/v2/community";
 import { getGapRpcConfig } from "@/utilities/gapRpcConfig";
-import { isCommunityAdminOf } from "@/utilities/sdk/communities/isCommunityAdmin";
+import {
+  isCommunityAdminOf,
+  isCommunityAdminOfAny,
+} from "@/utilities/sdk/communities/isCommunityAdmin";
 
 vi.mock("@show-karma/karma-gap-sdk", () => ({
   GAP: {
@@ -65,5 +68,63 @@ describe("isCommunityAdminOf", () => {
     const result = await isCommunityAdminOf(community, address);
 
     expect(result).toBe(false);
+  });
+});
+
+describe("isCommunityAdminOfAny", () => {
+  const adminWallet = "0xAdminWallet000000000000000000000000000001";
+  const otherWallet = "0xOtherWallet00000000000000000000000000002";
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("returns true when any wallet is an admin and fetches the resolver only once", async () => {
+    const isAdmin = vi.fn(async (_uid: string, addr: string) => addr === adminWallet);
+    mockGetCommunityResolver.mockResolvedValue({ isAdmin });
+
+    const result = await isCommunityAdminOfAny(community, [otherWallet, adminWallet]);
+
+    expect(result).toBe(true);
+    expect(mockGetCommunityResolver).toHaveBeenCalledTimes(1);
+    expect(isAdmin).toHaveBeenCalledWith(community.uid, otherWallet);
+    expect(isAdmin).toHaveBeenCalledWith(community.uid, adminWallet);
+  });
+
+  it("returns false when no wallet is an admin", async () => {
+    const isAdmin = vi.fn().mockResolvedValue(false);
+    mockGetCommunityResolver.mockResolvedValue({ isAdmin });
+
+    const result = await isCommunityAdminOfAny(community, [otherWallet, adminWallet]);
+
+    expect(result).toBe(false);
+  });
+
+  it("returns false for an empty address list without calling the resolver", async () => {
+    const result = await isCommunityAdminOfAny(community, []);
+
+    expect(result).toBe(false);
+    expect(mockGetCommunityResolver).not.toHaveBeenCalled();
+  });
+
+  it("dedupes addresses case-insensitively", async () => {
+    const isAdmin = vi.fn().mockResolvedValue(false);
+    mockGetCommunityResolver.mockResolvedValue({ isAdmin });
+
+    await isCommunityAdminOfAny(community, [adminWallet, adminWallet.toLowerCase()]);
+
+    expect(isAdmin).toHaveBeenCalledTimes(1);
+  });
+
+  it("tolerates a per-wallet check failure and still resolves the others", async () => {
+    const isAdmin = vi.fn(async (_uid: string, addr: string) => {
+      if (addr === otherWallet) throw new Error("boom");
+      return true;
+    });
+    mockGetCommunityResolver.mockResolvedValue({ isAdmin });
+
+    const result = await isCommunityAdminOfAny(community, [otherWallet, adminWallet]);
+
+    expect(result).toBe(true);
   });
 });

@@ -2,13 +2,13 @@
 
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useMemo } from "react";
+import { useProjectAuthorization } from "@/hooks/useProjectAuthorization";
 import { useProjectProfile } from "@/hooks/v2/useProjectProfile";
 import {
   isMilestoneStatusFilter,
   type MilestoneStatusFilter,
 } from "@/services/milestone-status-filter.service";
 import { getActivityFilterType } from "@/services/project-profile.service";
-import { useOwnerStore, useProjectStore } from "@/store";
 import type { UpdatesFeedFilters } from "@/types/v2/project-profile.types";
 import { ActivityFeed } from "../MainContent/ActivityFeed";
 import { ActivityFilters, type ActivityFilterType } from "../MainContent/ActivityFilters";
@@ -33,9 +33,7 @@ function parseIntParam(value: string | null): number | undefined {
  */
 export function UpdatesContent({ className }: UpdatesContentProps) {
   const { projectId } = useParams();
-  const isOwner = useOwnerStore((state) => state.isOwner);
-  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
-  const isAuthorized = isOwner || isProjectAdmin;
+  const isAuthorized = useProjectAuthorization();
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();

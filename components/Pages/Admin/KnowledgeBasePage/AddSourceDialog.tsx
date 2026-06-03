@@ -1,7 +1,7 @@
 "use client";
 
 import * as Dialog from "@radix-ui/react-dialog";
-import { FileBadge, FileText, GitBranch, Globe, Info, ShieldCheck, X } from "lucide-react";
+import { Bot, FileBadge, FileText, GitBranch, Globe, Info, ShieldCheck, X } from "lucide-react";
 import { type ComponentType, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { Button } from "@/components/Utilities/Button";
@@ -58,12 +58,19 @@ const KIND_OPTIONS: KindOption[] = [
     blurb: "A PDF served from a public URL",
     fg: "text-rose-600 dark:text-rose-400",
   },
+  {
+    kind: "agentic_site",
+    Icon: Bot,
+    blurb: "Register a site that publishes a SKILL.md manifest for AI agents",
+    fg: "text-violet-600 dark:text-violet-400",
+  },
 ];
 
 const PLACEHOLDER_BY_KIND: Partial<Record<KnowledgeSourceKind, string>> = {
   gdrive_file: "https://docs.google.com/document/d/<doc-id>/edit",
   url: "https://docs.example.com/intro",
   pdf_url: "https://example.com/whitepaper.pdf",
+  agentic_site: "https://example.com (or https://example.com/SKILL.md)",
 };
 
 const DEFAULT_KIND: KnowledgeSourceKind = "gdrive_file";
@@ -79,6 +86,9 @@ export function AddSourceDialog({ communityIdOrSlug, open, onOpenChange, initial
   // kind === "gdrive_file"; we hide the toggle for other kinds and clear
   // the value on kind changes so a stale `true` can't sneak in.
   const [followLinks, setFollowLinks] = useState(false);
+  // DEV-342: optional public citation link. Only valid on Google Docs —
+  // hidden and cleared for other kinds (backend rejects it with 422).
+  const [citationUrl, setCitationUrl] = useState("");
   const create = useCreateKnowledgeSource(communityIdOrSlug);
 
   // On open, seed the kind from `initialKind` (quick-pick) or fall back to the
@@ -92,6 +102,7 @@ export function AddSourceDialog({ communityIdOrSlug, open, onOpenChange, initial
       setTitle("");
       setGoal("");
       setFollowLinks(false);
+      setCitationUrl("");
     }
   }, [open, initialKind]);
 
@@ -101,7 +112,10 @@ export function AddSourceDialog({ communityIdOrSlug, open, onOpenChange, initial
   // with what we'd send.
   const handleKindChange = (nextKind: KnowledgeSourceKind) => {
     setKind(nextKind);
-    if (nextKind !== "gdrive_file") setFollowLinks(false);
+    if (nextKind !== "gdrive_file") {
+      setFollowLinks(false);
+      setCitationUrl("");
+    }
   };
 
   const canSubmit = externalId.trim().length > 0 && title.trim().length > 0 && !create.isPending;
@@ -123,6 +137,10 @@ export function AddSourceDialog({ communityIdOrSlug, open, onOpenChange, initial
         // accepts false universally), but omitting keeps the request
         // payload tight and aligned with the visible UI state.
         followLinks: kind === "gdrive_file" ? followLinks : undefined,
+        // DEV-342: only Google Docs accept a citation override; omit it
+        // otherwise. Empty input means "no public link" (cite by title).
+        citationUrl:
+          kind === "gdrive_file" && citationUrl.trim().length > 0 ? citationUrl.trim() : undefined,
       });
       toast.success("Knowledge source added.");
       onOpenChange(false);
@@ -213,7 +231,9 @@ export function AddSourceDialog({ communityIdOrSlug, open, onOpenChange, initial
                       ? "Google Doc URL or ID"
                       : kind === "pdf_url"
                         ? "PDF URL"
-                        : "Web page URL"
+                        : kind === "agentic_site"
+                          ? "Site URL"
+                          : "Web page URL"
                   }
                   hint={KNOWLEDGE_SOURCE_KIND_HINTS[kind] ?? "Provide a publicly-accessible URL."}
                   htmlFor="kb-external"
@@ -232,7 +252,11 @@ export function AddSourceDialog({ communityIdOrSlug, open, onOpenChange, initial
 
                 <FormField
                   label="Purpose (optional)"
-                  hint="One sentence on what this source is for. Prepended to each chunk at embed time so the chatbot ranks it higher when a question matches the intent. Not shown in citations."
+                  hint={
+                    kind === "agentic_site"
+                      ? "One sentence on when this manifest applies. Sent alongside the SKILL.md text so the chatbot uses it to decide whether to draw on this source."
+                      : "One sentence on what this source is for. Prepended to each chunk at embed time so the chatbot ranks it higher when a question matches the intent. Not shown in citations."
+                  }
                   htmlFor="kb-goal"
                 >
                   <div className="relative">
@@ -240,7 +264,11 @@ export function AddSourceDialog({ communityIdOrSlug, open, onOpenChange, initial
                       id="kb-goal"
                       value={goal}
                       onChange={(e) => setGoal(e.target.value.slice(0, GOAL_MAX))}
-                      placeholder="Reference for grant applicants reviewing milestone formats."
+                      placeholder={
+                        kind === "agentic_site"
+                          ? "Use this when users ask how to query Filecoin protocol data."
+                          : "Reference for grant applicants reviewing milestone formats."
+                      }
                       maxLength={GOAL_MAX}
                       rows={3}
                       className="block w-full resize-y rounded-md border border-stone-300 bg-white px-3 py-2 pb-5 text-[13px] leading-relaxed text-stone-900 placeholder-stone-400 transition focus:border-sky-500 focus:outline-none focus:ring-[3px] focus:ring-sky-500/20 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder-zinc-500 dark:focus:border-sky-400 dark:focus:ring-sky-400/20"
@@ -255,6 +283,25 @@ export function AddSourceDialog({ communityIdOrSlug, open, onOpenChange, initial
                 </FormField>
 
                 {kind === "gdrive_file" && (
+                  <FormField
+                    label="Citation link (optional)"
+                    hint="Public URL to link in chat citations. If empty, this Google Doc is cited by title with no link — its Drive URL is never shown."
+                    htmlFor="kb-citation-url"
+                  >
+                    <input
+                      id="kb-citation-url"
+                      type="url"
+                      value={citationUrl}
+                      onChange={(e) => setCitationUrl(e.target.value)}
+                      placeholder="https://example.com/published-handbook"
+                      maxLength={2048}
+                      spellCheck={false}
+                      className="h-9 w-full rounded-md border border-stone-300 bg-white px-3 font-mono text-[12.5px] text-stone-900 placeholder-stone-400 transition focus:border-sky-500 focus:outline-none focus:ring-[3px] focus:ring-sky-500/20 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder-zinc-600 dark:focus:border-sky-400 dark:focus:ring-sky-400/20"
+                    />
+                  </FormField>
+                )}
+
+                {kind === "gdrive_file" && (
                   <FollowLinksToggle checked={followLinks} onChange={setFollowLinks} />
                 )}
               </div>
@@ -262,7 +309,7 @@ export function AddSourceDialog({ communityIdOrSlug, open, onOpenChange, initial
               <PublicAccessReminder kind={kind} />
               {kind === "gdrive_file" && followLinks ? (
                 <FollowLinksScopeNote />
-              ) : (
+              ) : kind === "agentic_site" ? null : (
                 <OneSourceAtATimeNote />
               )}
             </div>
@@ -362,6 +409,18 @@ function PublicAccessReminder({ kind }: { kind: KnowledgeSourceKind }) {
             The page must load without a sign-in wall, paywall, or required cookies. Karma converts
             the page&apos;s HTML to markdown — pages that render content via JavaScript only may
             return empty.
+          </p>
+        ) : kind === "agentic_site" ? (
+          <p>
+            <strong className="font-semibold text-stone-800 dark:text-zinc-200">
+              SKILL.md must be publicly accessible.
+            </strong>{" "}
+            Paste the site root and Karma will fetch{" "}
+            <code className="rounded bg-stone-100 px-1 py-px font-mono text-[11.5px] text-stone-800 dark:bg-zinc-800 dark:text-zinc-200">
+              /SKILL.md
+            </code>{" "}
+            from it, or paste the full SKILL.md URL directly. The manifest is sent to the chatbot as
+            instructions — it is not chunked or embedded.
           </p>
         ) : (
           <p>

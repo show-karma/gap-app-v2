@@ -4,19 +4,18 @@ import Image from "next/image";
 import type { FC } from "react";
 import { ActivityList } from "@/components/Shared/ActivityList";
 import { Button } from "@/components/Utilities/Button";
+import { useProjectAuthorization } from "@/hooks/useProjectAuthorization";
 import { useProjectImpacts } from "@/hooks/v2/useProjectImpacts";
 import { useProjectUpdates } from "@/hooks/v2/useProjectUpdates";
 import { transformImpactsToMilestones } from "@/services/project-profile.service";
-import { useOwnerStore, useProjectStore } from "@/store";
+import { useProjectStore } from "@/store";
 import { useProgressModalStore } from "@/store/modals/progress";
 import { MESSAGES } from "@/utilities/messages";
 
 export const UpdatesPage: FC = () => {
   const project = useProjectStore((state) => state.project);
 
-  const isOwner = useOwnerStore((state) => state.isOwner);
-  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
-  const isAuthorized = isOwner || isProjectAdmin;
+  const isAuthorized = useProjectAuthorization();
 
   const { setIsProgressModalOpen, setProgressModalScreen } = useProgressModalStore();
 

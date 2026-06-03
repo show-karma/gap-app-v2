@@ -3,7 +3,7 @@
 import { useSearchParams } from "next/navigation";
 import { AddImpactScreen } from "@/components/Pages/Project/Impact/AddImpactScreen";
 import { OutputsAndOutcomes } from "@/components/Pages/Project/Impact/OutputsAndOutcomes";
-import { useOwnerStore, useProjectStore } from "@/store";
+import { useProjectAuthorization } from "@/hooks/useProjectAuthorization";
 import { ImpactStatsSummary } from "./ImpactStatsSummary";
 
 interface ImpactContentProps {
@@ -25,9 +25,7 @@ interface ImpactContentProps {
  * alongside the project info, separated by a vertical divider.
  */
 export function ImpactContent({ className }: ImpactContentProps) {
-  const isOwner = useOwnerStore((state) => state.isOwner);
-  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
-  const isAuthorized = isOwner || isProjectAdmin;
+  const isAuthorized = useProjectAuthorization();
 
   const searchParams = useSearchParams();
   const grantScreen = searchParams?.get("tab");

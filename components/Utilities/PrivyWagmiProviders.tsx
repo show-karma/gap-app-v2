@@ -4,11 +4,13 @@ import { PrivyProvider, usePrivy, useWallets } from "@privy-io/react-auth";
 import { useSmartWallets } from "@privy-io/react-auth/smart-wallets";
 import { WagmiProvider } from "@privy-io/wagmi";
 import { connect as wagmiCoreConnect, disconnect as wagmiCoreDisconnect } from "@wagmi/core";
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useAccount } from "wagmi";
 import { PROJECT_NAME } from "@/constants/brand";
-import { type PrivyBridgeValue, usePrivyBridgeSetter } from "@/contexts/privy-bridge-context";
+import { usePrivyBridgeSetter } from "@/contexts/privy-bridge-context";
+import { useEnsureEmbeddedWallet } from "@/hooks/useEnsureEmbeddedWallet";
 import type { TenantConfig } from "@/src/infrastructure/types/tenant";
+import { selectPrimaryWallet } from "@/utilities/auth/select-primary-wallet";
 import { envVars } from "@/utilities/enviromentVars";
 import { appNetwork } from "@/utilities/network";
 import { privyConfig } from "@/utilities/wagmi/privy-config";
@@ -36,7 +38,7 @@ function PrivyBridgeUpdater() {
   const privy = usePrivy();
   const { wallets } = useWallets();
   const { client: smartWalletClient } = useSmartWallets();
-  const { isConnected, address, chainId } = useAccount();
+  const { isConnected, chainId } = useAccount();
 
   // Store latest values in refs so the effect always has fresh data.
   // Depend on primitives only (stable across renders when unchanged).
@@ -49,6 +51,10 @@ function PrivyBridgeUpdater() {
 
   const userId = privy.user?.id;
   const walletCount = wallets.length;
+
+  // Create the single embedded wallet for new users. Replaces the SDK's
+  // createOnLogin auto-creation, which double-fired and minted two wallets.
+  useEnsureEmbeddedWallet(privy.ready, privy.authenticated, privy.user, walletCount);
 
   useEffect(() => {
     const p = privyRef.current;
@@ -79,20 +85,44 @@ function PrivyBridgeUpdater() {
   // The app has two WagmiProviders: the outer one wraps all components (useAccount()
   // reads from it) and this inner one syncs with Privy. Without this bridge,
   // the outer useAccount().address is undefined during the Privy↔wagmi sync gap.
-  const outerSyncedRef = useRef(false);
-  const primaryWallet = wallets[0];
+  // Tracks which address the outer config is currently synced to (undefined = none),
+  // so we re-sync when the selected wallet changes — e.g. when the user's embedded
+  // wallet finishes connecting after an email login, replacing a stale MetaMask that
+  // was briefly wallets[0]. A plain boolean would sync only once and leave
+  // useAccount() pinned to the first (possibly stale) wallet.
+  const syncedAddressRef = useRef<string | undefined>(undefined);
+  // Sync the SAME wallet useAuth treats as the user's identity (linked wallet
+  // preferred over a stale, unlinked one like a lingering MetaMask) so the outer
+  // wagmi config — and therefore useAccount() used by signing/attestation flows —
+  // never diverges from useAuth().address.
+  const primaryWallet = useMemo(
+    () => selectPrimaryWallet(privy.user, wallets),
+    [privy.user, wallets]
+  );
   const primaryWalletAddress = primaryWallet?.address;
 
   useEffect(() => {
-    if (!primaryWallet || outerSyncedRef.current) return;
+    if (!primaryWallet) return;
+    // Already synced to this exact wallet — nothing to do.
+    if (syncedAddressRef.current === primaryWalletAddress) return;
 
     const syncOuterConfig = async () => {
       try {
         const { minimalWagmiConfig } = await import("@/utilities/wagmi/privy-config");
         const { privyBridgeConnector } = await import("@/utilities/wagmi/privy-bridge-connector");
+        // Disconnect the previously-synced wallet before connecting the new one so
+        // useAccount() reflects the currently selected wallet rather than stacking
+        // connectors.
+        if (syncedAddressRef.current) {
+          try {
+            await wagmiCoreDisconnect(minimalWagmiConfig);
+          } catch {
+            // Ignore disconnect errors
+          }
+        }
         const connector = privyBridgeConnector(primaryWallet, chainId || appNetwork[0].id);
         await wagmiCoreConnect(minimalWagmiConfig, { connector });
-        outerSyncedRef.current = true;
+        syncedAddressRef.current = primaryWalletAddress;
       } catch {
         // Non-fatal: outer useAccount() will lack address, but useAuth().address still works
       }
@@ -103,7 +133,7 @@ function PrivyBridgeUpdater() {
 
   // Disconnect outer config when user logs out
   useEffect(() => {
-    if (!privy.authenticated && outerSyncedRef.current) {
+    if (!privy.authenticated && syncedAddressRef.current) {
       const disconnectOuter = async () => {
         try {
           const { minimalWagmiConfig } = await import("@/utilities/wagmi/privy-config");
@@ -111,7 +141,7 @@ function PrivyBridgeUpdater() {
         } catch {
           // Ignore disconnect errors
         }
-        outerSyncedRef.current = false;
+        syncedAddressRef.current = undefined;
       };
       disconnectOuter();
     }
@@ -192,7 +222,11 @@ export default function PrivyWagmiProviders({ tenantConfig }: PrivyWagmiProvider
         },
         embeddedWallets: {
           ethereum: {
-            createOnLogin: "users-without-wallets",
+            // Auto-creation is handled by useEnsureEmbeddedWallet, not the SDK.
+            // The SDK's "users-without-wallets" re-evaluates on every provider
+            // initialization and mints a duplicate embedded wallet before the
+            // first one persists (Strict Mode / remount / concurrent render).
+            createOnLogin: "off",
           },
           // Explicitly disable Solana embedded wallets. The Privy SDK (v3.8)
           // bundles Solana support (~197KB) internally and tree-shaking cannot

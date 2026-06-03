@@ -6,7 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useProjectInstance } from "@/hooks/useProjectInstance";
 import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { useProjectStore } from "@/store";
-import { compareAllWallets } from "@/utilities/auth/compare-all-wallets";
+import { compareAllWallets, getLinkedWalletAddresses } from "@/utilities/auth/compare-all-wallets";
 import { getRPCUrlByChainId } from "@/utilities/rpcClient";
 
 vi.mock("@/hooks/useAuth", () => ({
@@ -31,6 +31,7 @@ vi.mock("@/components/Utilities/errorManager", () => ({
 
 vi.mock("@/utilities/auth/compare-all-wallets", () => ({
   compareAllWallets: vi.fn(),
+  getLinkedWalletAddresses: vi.fn(),
 }));
 
 // Override defaultQueryOptions to disable retries in tests (prevents flaky
@@ -66,6 +67,7 @@ const mockUseProjectStore = useProjectStore as unknown as vi.Mock;
 const mockUseProjectInstance = useProjectInstance as unknown as vi.Mock;
 const mockGetRPCUrlByChainId = getRPCUrlByChainId as unknown as vi.Mock;
 const mockCompareAllWallets = compareAllWallets as unknown as vi.Mock;
+const mockGetLinkedWalletAddresses = getLinkedWalletAddresses as unknown as vi.Mock;
 
 // Fresh QueryClient per render — no afterEach cleanup required
 function createWrapper() {
@@ -91,6 +93,7 @@ function setupMocks(
     projectInstance?: any;
     rpcUrl?: string | null;
     compareAllWalletsResult?: boolean;
+    linkedWalletAddresses?: string[];
   } = {}
 ) {
   const {
@@ -102,6 +105,7 @@ function setupMocks(
     projectInstance = null,
     rpcUrl = null,
     compareAllWalletsResult = false,
+    linkedWalletAddresses = [],
   } = overrides;
 
   mockUseAuth.mockReturnValue({
@@ -129,6 +133,7 @@ function setupMocks(
   mockUseProjectInstance.mockReturnValue({ project: projectInstance });
   mockGetRPCUrlByChainId.mockReturnValue(rpcUrl);
   mockCompareAllWallets.mockReturnValue(compareAllWalletsResult);
+  mockGetLinkedWalletAddresses.mockReturnValue(linkedWalletAddresses);
 }
 
 describe("useProjectPermissions", () => {
@@ -364,6 +369,92 @@ describe("useProjectPermissions", () => {
       });
 
       expect(result.current.isProjectAdmin).toBe(false);
+    });
+  });
+
+  describe("multi-wallet admin", () => {
+    const ADMIN_WALLET = "0x741e2cdff080bd42cd30cfd6cc4a8a0f46a80a84";
+    const ACTIVE_WALLET = "0xbec2de31b27f04ea906c139b1c665bcdfd81a1aa";
+
+    const mockProject = {
+      uid: "test-project-uid",
+      details: { slug: "test-slug" },
+      chainID: 10,
+      // Project owner is someone else entirely — this account is only an admin.
+      owner: "0xCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC",
+    };
+
+    // One Privy account, two embedded wallets. The admin authority sits on
+    // ADMIN_WALLET, but Privy currently surfaces ACTIVE_WALLET as the active one.
+    const mockUser = {
+      linkedAccounts: [
+        { type: "wallet", address: ACTIVE_WALLET, walletClientType: "privy" },
+        { type: "wallet", address: ADMIN_WALLET, walletClientType: "privy" },
+      ],
+    };
+
+    it("recognizes admin when the role sits on a non-active linked wallet", async () => {
+      const mockProjectInstance = {
+        chainID: 10,
+        isOwner: vi.fn().mockResolvedValue(false),
+        // Only the admin wallet returns true on-chain; the active wallet does not.
+        isAdmin: vi.fn((_provider: unknown, addr: string) =>
+          Promise.resolve(addr.toLowerCase() === ADMIN_WALLET.toLowerCase())
+        ),
+      };
+
+      setupMocks({
+        authenticated: true,
+        isConnected: true,
+        address: ACTIVE_WALLET, // the wrong wallet is active
+        user: mockUser,
+        project: mockProject,
+        projectInstance: mockProjectInstance,
+        rpcUrl: "https://mainnet.optimism.io",
+        linkedWalletAddresses: [ACTIVE_WALLET, ADMIN_WALLET],
+      });
+
+      const { result } = renderHook(() => useProjectPermissions(), {
+        wrapper: createWrapper(),
+      });
+
+      await waitFor(() => {
+        expect(result.current.isProjectAdmin).toBe(true);
+      });
+
+      // isAdmin must have been checked against the non-active admin wallet.
+      expect(mockProjectInstance.isAdmin).toHaveBeenCalledWith(expect.anything(), ADMIN_WALLET);
+      expect(result.current.isProjectOwner).toBe(false);
+    });
+
+    it("denies admin when no linked wallet holds the role on-chain", async () => {
+      const mockProjectInstance = {
+        chainID: 10,
+        isOwner: vi.fn().mockResolvedValue(false),
+        isAdmin: vi.fn().mockResolvedValue(false),
+      };
+
+      setupMocks({
+        authenticated: true,
+        isConnected: true,
+        address: ACTIVE_WALLET,
+        user: mockUser,
+        project: mockProject,
+        projectInstance: mockProjectInstance,
+        rpcUrl: "https://mainnet.optimism.io",
+        linkedWalletAddresses: [ACTIVE_WALLET, ADMIN_WALLET],
+      });
+
+      const { result } = renderHook(() => useProjectPermissions(), {
+        wrapper: createWrapper(),
+      });
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
+      });
+
+      expect(result.current.isProjectAdmin).toBe(false);
+      expect(result.current.isProjectOwner).toBe(false);
     });
   });
 });

@@ -5,31 +5,41 @@ const PROJECT_ROOT = path.resolve(__dirname, "..");
 const SITE_URL = "https://www.karmahq.xyz";
 // Must match SITEMAP_PAGE_SIZE in utilities/sitemap.ts. GSC fails on >~1MB / 5000 URLs.
 const SITEMAP_PAGE_SIZE = 1000;
-const COUNTS_TIMEOUT_MS = 8000;
 const URLS_TIMEOUT_MS = 15_000;
-const COUNTS_MAX_ATTEMPTS = 3;
 const URLS_MAX_ATTEMPTS = 3;
-const COUNTS_RETRY_BACKOFF_MS = 1000;
 const URLS_RETRY_BACKOFF_MS = 750;
-const URLS_CONCURRENCY = 4;
 const FALLBACK_CHUNKS_PER_KIND = 1;
+// Sanity ceiling for a chunk number parsed from an existing index — ~100M URLs
+// at SITEMAP_PAGE_SIZE per chunk. Guards the chunk-emitting loops against a
+// corrupt or hand-edited index whose digits would otherwise drive an
+// effectively unbounded loop at build time.
+const MAX_REASONABLE_CHUNKS = 100_000;
 
 type SitemapKind = "projects" | "impacts" | "grants" | "milestones" | "funding-programs";
 
-interface SitemapCounts {
-  projects: number;
-  impacts: number;
-  grants: number;
-  milestones: number;
-  fundingPrograms: number;
-}
-
-interface KindConfig {
+interface KindMeta {
   kind: SitemapKind;
-  total: number;
   path: string;
   priority: number;
   changeFrequency: "daily" | "weekly" | "monthly";
+}
+
+// Static per-kind metadata. Chunk counts are NOT configured here — they are
+// derived at build time by paging the URL endpoint (the same source that fills
+// the child files), so the index and the files can never disagree.
+const KIND_META: KindMeta[] = [
+  { kind: "projects", path: "projects", priority: 0.8, changeFrequency: "daily" },
+  { kind: "impacts", path: "impacts", priority: 0.7, changeFrequency: "weekly" },
+  { kind: "grants", path: "grants", priority: 0.6, changeFrequency: "weekly" },
+  { kind: "milestones", path: "milestones", priority: 0.5, changeFrequency: "weekly" },
+  { kind: "funding-programs", path: "funding-programs", priority: 0.6, changeFrequency: "weekly" },
+];
+
+interface KindConfig extends KindMeta {
+  chunkCount: number;
+  // URL pages already fetched for this kind; pages[i] holds chunk i+1's URLs.
+  // Chunks listed beyond pages.length (held up by the floor) are emitted empty.
+  pages: string[][];
 }
 
 interface SitemapUrlsResponse {
@@ -75,9 +85,32 @@ function logWarn(message: string): void {
   process.stderr.write(`${message}\n`);
 }
 
-function computeChunkCount(total: number): number {
-  if (total <= 0) return FALLBACK_CHUNKS_PER_KIND;
-  return Math.ceil(total / SITEMAP_PAGE_SIZE);
+/**
+ * Parses the chunk count previously published for each kind from an existing
+ * sitemap index. Used as a floor so a transient `/counts` failure (which makes
+ * every kind look empty) can never shrink the published chunk count: dropping
+ * a chunk would 404 child sitemaps Google has already crawled and recorded in
+ * its sitemap-index drilldown. Returns `{}` when the index is absent/unreadable.
+ */
+function readPublishedChunkCounts(indexPath: string): Record<string, number> {
+  const counts: Record<string, number> = {};
+  if (!fs.existsSync(indexPath)) return counts;
+
+  let content: string;
+  try {
+    content = fs.readFileSync(indexPath, "utf-8");
+  } catch {
+    return counts;
+  }
+
+  const pattern = /\/sitemaps\/([a-z-]+)\/sitemap\/(\d+)\.xml/g;
+  for (const match of content.matchAll(pattern)) {
+    const kindPath = match[1];
+    const chunk = Number.parseInt(match[2], 10);
+    if (!Number.isInteger(chunk) || chunk < 1 || chunk > MAX_REASONABLE_CHUNKS) continue;
+    counts[kindPath] = Math.max(counts[kindPath] ?? 0, chunk);
+  }
+  return counts;
 }
 
 function escapeXml(value: string): string {
@@ -89,37 +122,17 @@ function escapeXml(value: string): string {
     .replace(/'/g, "&apos;");
 }
 
-async function fetchCountsOnce(baseUrl: string): Promise<SitemapCounts | null> {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), COUNTS_TIMEOUT_MS);
+// Sitemaps must list canonical production URLs. The indexer builds child URLs
+// from its own configured host, so a preview build wired to the staging indexer
+// emits staging URLs. Rewrite every child URL's origin to SITE_URL — matching
+// the canonical host already hardcoded for the index entries.
+function canonicalizeUrl(url: string): string {
   try {
-    const res = await fetch(`${baseUrl}/v2/sitemap/counts`, { signal: controller.signal });
-    if (!res.ok) {
-      throw new Error(`HTTP ${res.status}`);
-    }
-    return (await res.json()) as SitemapCounts;
-  } finally {
-    clearTimeout(timer);
+    const parsed = new URL(url);
+    return `${SITE_URL}${parsed.pathname}${parsed.search}${parsed.hash}`;
+  } catch {
+    return url;
   }
-}
-
-async function fetchCounts(baseUrl: string): Promise<SitemapCounts | null> {
-  for (let attempt = 1; attempt <= COUNTS_MAX_ATTEMPTS; attempt++) {
-    try {
-      return await fetchCountsOnce(baseUrl);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      const isLast = attempt === COUNTS_MAX_ATTEMPTS;
-      logWarn(
-        `[sitemap-gen] counts fetch attempt ${attempt}/${COUNTS_MAX_ATTEMPTS} failed: ${message}${
-          isLast ? "" : " — retrying"
-        }`
-      );
-      if (isLast) return null;
-      await new Promise((resolve) => setTimeout(resolve, COUNTS_RETRY_BACKOFF_MS * attempt));
-    }
-  }
-  return null;
 }
 
 async function fetchUrlsOnce(baseUrl: string, kind: SitemapKind, page: number): Promise<string[]> {
@@ -163,6 +176,37 @@ async function fetchUrls(
   return null;
 }
 
+interface KindFetchResult {
+  pages: string[][];
+  // true when pagination reached a definitive end (a short or empty page).
+  // false when a page fetch failed after retries — the listing is incomplete
+  // and the published floor must backfill so nothing is dropped.
+  complete: boolean;
+}
+
+/**
+ * Derives a kind's chunk pages by walking the URL endpoint from page 1 until a
+ * page comes back shorter than a full page (the last page) or empty (past the
+ * end). The page count IS the chunk count — no separate counts call to time out
+ * or disagree with the child files. The indexer caches the full per-kind list
+ * on the first page, so subsequent pages are cheap.
+ */
+async function fetchKindPages(baseUrl: string, kind: SitemapKind): Promise<KindFetchResult> {
+  const pages: string[][] = [];
+
+  for (let page = 1; page <= MAX_REASONABLE_CHUNKS; page++) {
+    const urls = await fetchUrls(baseUrl, kind, page);
+    if (urls === null) return { pages, complete: false };
+    if (urls.length === 0) return { pages, complete: true };
+
+    pages.push(urls);
+    if (urls.length < SITEMAP_PAGE_SIZE) return { pages, complete: true };
+  }
+
+  logWarn(`[sitemap-gen] ${kind}: reached MAX_REASONABLE_CHUNKS — truncating pagination.`);
+  return { pages, complete: true };
+}
+
 function buildSitemapIndex(locs: string[]): string {
   const now = formatLastmod(new Date());
   const items = locs
@@ -177,8 +221,7 @@ function buildIndexXml(kindConfigs: KindConfig[]): string {
   entries.push(`${SITE_URL}/sitemaps/static/sitemap.xml`);
   entries.push(`${SITE_URL}/sitemaps/communities/sitemap.xml`);
 
-  for (const { path: kindPath, total } of kindConfigs) {
-    const chunkCount = computeChunkCount(total);
+  for (const { path: kindPath, chunkCount } of kindConfigs) {
     for (let i = 1; i <= chunkCount; i++) {
       entries.push(`${SITE_URL}/sitemaps/${kindPath}/sitemap/${i}.xml`);
     }
@@ -192,63 +235,39 @@ function buildUrlsetXml(urls: string[], priority: number, changeFrequency: strin
   const items = urls
     .map(
       (url) =>
-        `  <url>\n    <loc>${escapeXml(url)}</loc>\n    <lastmod>${now}</lastmod>\n    <changefreq>${changeFrequency}</changefreq>\n    <priority>${priority}</priority>\n  </url>`
+        `  <url>\n    <loc>${escapeXml(canonicalizeUrl(url))}</loc>\n    <lastmod>${now}</lastmod>\n    <changefreq>${changeFrequency}</changefreq>\n    <priority>${priority}</priority>\n  </url>`
     )
     .join("\n");
 
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${items}\n</urlset>\n`;
 }
 
-async function writeChildSitemaps(
-  baseUrl: string | undefined,
-  kindConfigs: KindConfig[]
-): Promise<void> {
-  interface Job {
-    config: KindConfig;
-    chunkId: number;
-    outPath: string;
-  }
+function writeChildSitemaps(kindConfigs: KindConfig[]): void {
+  let total = 0;
+  let writtenWithUrls = 0;
+  let writtenEmpty = 0;
 
-  const jobs: Job[] = [];
   for (const config of kindConfigs) {
-    const chunkCount = computeChunkCount(config.total);
     // Reset the kind's output directory so stale chunks from a previous build
     // (when chunk count was higher) do not linger.
     const kindDir = path.join(PROJECT_ROOT, "public", "sitemaps", config.path, "sitemap");
     fs.rmSync(kindDir, { recursive: true, force: true });
     fs.mkdirSync(kindDir, { recursive: true });
 
-    for (let i = 1; i <= chunkCount; i++) {
-      jobs.push({
-        config,
-        chunkId: i,
-        outPath: path.join(kindDir, `${i}.xml`),
-      });
-    }
-  }
-
-  let cursor = 0;
-  let writtenWithUrls = 0;
-  let writtenEmpty = 0;
-
-  async function worker() {
-    while (cursor < jobs.length) {
-      const index = cursor++;
-      const job = jobs[index];
-      const urls = baseUrl ? await fetchUrls(baseUrl, job.config.kind, job.chunkId) : null;
-      const effectiveUrls = urls ?? [];
-      const xml = buildUrlsetXml(effectiveUrls, job.config.priority, job.config.changeFrequency);
-      fs.writeFileSync(job.outPath, xml, "utf-8");
-      if (effectiveUrls.length > 0) writtenWithUrls++;
+    for (let i = 1; i <= config.chunkCount; i++) {
+      // Chunks beyond the fetched pages (held up by the floor) are emitted empty
+      // so every chunk listed in the index has a real file — never a 404.
+      const urls = config.pages[i - 1] ?? [];
+      const xml = buildUrlsetXml(urls, config.priority, config.changeFrequency);
+      fs.writeFileSync(path.join(kindDir, `${i}.xml`), xml, "utf-8");
+      total++;
+      if (urls.length > 0) writtenWithUrls++;
       else writtenEmpty++;
     }
   }
 
-  const workers = Array.from({ length: Math.min(URLS_CONCURRENCY, jobs.length) }, () => worker());
-  await Promise.all(workers);
-
   logInfo(
-    `[sitemap-gen] Wrote ${jobs.length} child sitemap(s): ${writtenWithUrls} with URLs, ${writtenEmpty} empty.`
+    `[sitemap-gen] Wrote ${total} child sitemap(s): ${writtenWithUrls} with URLs, ${writtenEmpty} empty.`
   );
 }
 
@@ -263,54 +282,35 @@ async function main() {
     );
   }
 
-  const counts = baseUrl ? await fetchCounts(baseUrl) : null;
-  if (!counts) {
-    logWarn(
-      "[sitemap-gen] Using fallback counts (one chunk per kind). Build will succeed; Google will discover additional chunks on next deploy."
-    );
-  }
-
-  const kindConfigs: KindConfig[] = [
-    {
-      kind: "projects",
-      total: counts?.projects ?? 0,
-      path: "projects",
-      priority: 0.8,
-      changeFrequency: "daily",
-    },
-    {
-      kind: "impacts",
-      total: counts?.impacts ?? 0,
-      path: "impacts",
-      priority: 0.7,
-      changeFrequency: "weekly",
-    },
-    {
-      kind: "grants",
-      total: counts?.grants ?? 0,
-      path: "grants",
-      priority: 0.6,
-      changeFrequency: "weekly",
-    },
-    {
-      kind: "milestones",
-      total: counts?.milestones ?? 0,
-      path: "milestones",
-      priority: 0.5,
-      changeFrequency: "weekly",
-    },
-    {
-      kind: "funding-programs",
-      total: counts?.fundingPrograms ?? 0,
-      path: "funding-programs",
-      priority: 0.6,
-      changeFrequency: "weekly",
-    },
-  ];
-
-  const indexXml = buildIndexXml(kindConfigs);
   const publicDir = path.join(PROJECT_ROOT, "public");
   const indexPath = path.join(publicDir, "sitemap.xml");
+
+  // Floor each kind's chunk count at what the existing index already published,
+  // so a transient fetch failure can never shrink the index or 404 a child
+  // sitemap Google has already crawled.
+  const publishedFloor = readPublishedChunkCounts(indexPath);
+
+  const kindConfigs: KindConfig[] = await Promise.all(
+    KIND_META.map(async (meta): Promise<KindConfig> => {
+      const { pages, complete } = baseUrl
+        ? await fetchKindPages(baseUrl, meta.kind)
+        : { pages: [] as string[][], complete: false };
+
+      const floor = publishedFloor[meta.path] ?? 0;
+      const chunkCount = Math.max(pages.length, floor, FALLBACK_CHUNKS_PER_KIND);
+
+      if (!complete) {
+        logWarn(
+          `[sitemap-gen] ${meta.path}: URL listing incomplete — holding ${chunkCount} chunk(s) ` +
+            `(fetched ${pages.length}, floor ${floor}); any missing chunks are emitted empty.`
+        );
+      }
+
+      return { ...meta, chunkCount, pages };
+    })
+  );
+
+  const indexXml = buildIndexXml(kindConfigs);
   fs.mkdirSync(publicDir, { recursive: true });
   fs.writeFileSync(indexPath, indexXml, "utf-8");
 
@@ -323,7 +323,7 @@ async function main() {
   fs.writeFileSync(aliasPath, indexXml, "utf-8");
   logInfo(`[sitemap-gen] Wrote ${aliasPath} (${indexEntryCount} entries)`);
 
-  await writeChildSitemaps(baseUrl, kindConfigs);
+  writeChildSitemaps(kindConfigs);
 }
 
 main().catch((err) => {

@@ -320,6 +320,11 @@ const tenantNavigation: Record<TenantId, TenantNavigation> = {
                 href: "https://app.filpgf.io/projects?programId=1039",
                 isExternal: true,
               },
+              {
+                label: "Batch 3 - Apply Now",
+                href: "https://app.filpgf.io/programs/1479/",
+                isExternal: true,
+              },
             ],
           },
           {

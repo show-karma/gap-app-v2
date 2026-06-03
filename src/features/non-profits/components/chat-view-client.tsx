@@ -4,7 +4,7 @@
  * ChatViewClient — ported from grant-atlas
  * features/grant-atlas/components/research-workbench/chat-view.tsx.
  *
- * Full SSE streaming search workbench for /non-profits/search/[id].
+ * Full SSE streaming search workbench for /non-profits/find-funders/search/[id].
  *
  * Key adaptations from grant-atlas:
  * - Router: TanStack Link → next/link
@@ -57,6 +57,7 @@ import {
   useRemoveFromResearchTray,
   useResearchTray,
 } from "../hooks/use-research-tray";
+import { FILINGS_STATS } from "../lib/stats";
 import { searchHistoryService } from "../services/search-history.service";
 import type { FieldRect, PageTransitionFields } from "../store/page-transition";
 import { usePageTransitionStore } from "../store/page-transition";
@@ -297,7 +298,7 @@ const AssistantTurn = memo(function AssistantTurn({
         {isStreaming && !hasNarrative && (
           <span className="inline-flex items-center gap-1.5 text-zinc-400">
             <Spinner className="size-3" />
-            searching 140,221 filings…
+            {FILINGS_STATS.searchingProgressLabel}
           </span>
         )}
       </div>
@@ -352,7 +353,7 @@ export function ChatView({ searchId }: { searchId?: string }) {
   const [historyOpen, setHistoryOpen] = useState(false);
   const initialQueryRanRef = useRef(false);
 
-  // First-time load: when arriving on /non-profits/search/[id] with an empty
+  // First-time load: when arriving on /non-profits/find-funders/search/[id] with an empty
   // thread, grab the initial query from the search session store and run it.
   // Fallback: if the local session is missing (shared link / cold load),
   // fetch via searchHistoryService.getById() to seed the search.
@@ -544,7 +545,7 @@ export function ChatView({ searchId }: { searchId?: string }) {
             <PromptInputFooter>
               <PromptInputTools>
                 <span className="px-2 text-xs text-zinc-500 dark:text-zinc-400">
-                  Plain English · 140,221 filings indexed
+                  Plain English · {FILINGS_STATS.composerFooterLabel}
                 </span>
               </PromptInputTools>
               <PromptInputSubmit

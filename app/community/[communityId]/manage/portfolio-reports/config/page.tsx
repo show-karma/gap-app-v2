@@ -1,7 +1,9 @@
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 import { ReportConfigPage } from "@/components/Pages/Admin/PortfolioReports/ReportConfigPage";
 import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
 import { errorManager } from "@/components/Utilities/errorManager";
+import { Spinner } from "@/components/Utilities/Spinner";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { defaultMetadata } from "@/utilities/meta";
@@ -40,5 +42,15 @@ export default async function Page(props: Props) {
 
   const grantPrograms = await getGrantPrograms(communityId);
 
-  return <ReportConfigPage community={community} grantPrograms={grantPrograms} />;
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center p-12">
+          <Spinner />
+        </div>
+      }
+    >
+      <ReportConfigPage community={community} grantPrograms={grantPrograms} />
+    </Suspense>
+  );
 }

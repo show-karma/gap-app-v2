@@ -18,7 +18,6 @@ import type { IApplicationFilters } from "@/services/fundingPlatformService";
 import { useProgramPrompts } from "@/src/features/prompt-management";
 import type { IFundingApplication } from "@/types/funding-platform";
 import { getAIColumnVisibility } from "../helper/getAIColumnVisibility";
-import ApplicationInbox from "./ApplicationInbox";
 import { ApplicationList } from "./ApplicationList";
 import { ApplicationListFilterBar } from "./ApplicationListFilterBar";
 import { ApplicationListStatsBar } from "./ApplicationListStatsBar";
@@ -26,7 +25,6 @@ import { useApplicationListFilters } from "./useApplicationListFilters";
 
 interface IApplicationListWithAPIProps {
   programId: string; // Normalized program id (chainId suffix stripped)
-  combinedProgramId: string; // Original id, may be "programId" or "programId_chainId"
   communityId: string;
   onApplicationSelect?: (application: IFundingApplication) => void;
   onApplicationHover?: (applicationId: string) => void;
@@ -38,7 +36,6 @@ interface IApplicationListWithAPIProps {
 
 const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
   programId,
-  combinedProgramId,
   communityId,
   onApplicationSelect,
   onApplicationHover,
@@ -51,12 +48,9 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
     searchInput,
     sortBy,
     sortOrder,
-    myReviewsOnly,
-    setMyReviewsOnly,
     selectedReviewerAddresses,
     setSelectedReviewerAddresses,
     queryParams,
-    hasActiveFilters,
     handleFilterChange,
     handleSearchChange,
     handleSortChange,
@@ -213,8 +207,6 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
         filters={filters}
         onSearchChange={handleSearchChange}
         onFilterChange={handleFilterChange}
-        myReviewsOnly={myReviewsOnly}
-        onMyReviewsOnlyChange={setMyReviewsOnly}
         programReviewers={programReviewers}
         selectedReviewerAddresses={selectedReviewerAddresses}
         onReviewerAddressesChange={setSelectedReviewerAddresses}
@@ -225,74 +217,56 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
         isExporting={isExporting}
       />
 
-      {/* "My Applications": inbox (selectable list + inline detail).
-          "All Applications": the original table with infinite scroll. */}
-      {myReviewsOnly ? (
-        <ApplicationInbox
-          applications={applications}
-          programId={programId}
-          communityId={communityId}
-          combinedProgramId={combinedProgramId}
-          isLoading={isLoading}
-          hasNextPage={hasNextPage || false}
-          isFetchingNextPage={isFetchingNextPage}
-          fetchNextPage={loadMore}
-          total={total}
-          hasActiveFilters={hasActiveFilters}
-          onApplicationHover={onApplicationHover}
-        />
-      ) : (
-        <InfiniteScroll
-          dataLength={applications.length}
-          next={loadMore}
-          hasMore={hasNextPage || false}
-          loader={
+      <InfiniteScroll
+        dataLength={applications.length}
+        next={loadMore}
+        hasMore={hasNextPage || false}
+        loader={
+          <div className="flex items-center justify-center py-4">
+            <div className="text-sm text-gray-600 dark:text-gray-400">
+              Loading more applications...
+            </div>
+          </div>
+        }
+        endMessage={
+          applications.length > 0 ? (
             <div className="flex items-center justify-center py-4">
               <div className="text-sm text-gray-600 dark:text-gray-400">
-                Loading more applications...
+                {total} total {pluralize("application", total)} loaded
               </div>
             </div>
-          }
-          endMessage={
-            applications.length > 0 ? (
-              <div className="flex items-center justify-center py-4">
-                <div className="text-sm text-gray-600 dark:text-gray-400">
-                  {total} total {pluralize("application", total)} loaded
-                </div>
-              </div>
-            ) : null
-          }
-        >
-          <ApplicationList
-            programId={programId}
-            communityUID={communityUID}
-            applications={applications}
-            isLoading={isLoading && applications.length === 0}
-            onApplicationSelect={onApplicationSelect}
-            onApplicationHover={onApplicationHover}
-            onStatusChange={showStatusActions ? handleStatusChange : undefined}
-            showStatusActions={showStatusActions}
-            sortBy={sortBy}
-            sortOrder={sortOrder}
-            onSortChange={handleSortChange}
-            showAIScoreColumn={showAIScoreColumn}
-            showInternalAIScoreColumn={showInternalAIScoreColumn}
-            programReviewers={programReviewers}
-            milestoneReviewers={milestoneReviewers}
-            addProgramReviewer={addProgramReviewer}
-            isAddingProgramReviewer={isAddingProgramReviewer}
-            addMilestoneReviewer={addMilestoneReviewer}
-            isAddingMilestoneReviewer={isAddingMilestoneReviewer}
-            isLoadingProgramReviewers={isLoadingProgramReviewers}
-            isProgramReviewersError={isProgramReviewersError}
-            isLoadingMilestoneReviewers={isLoadingMilestoneReviewers}
-            isMilestoneReviewersError={isMilestoneReviewersError}
-            isKycEnabled={isKycEnabled}
-            kycStatuses={kycStatuses}
-            isLoadingKycStatuses={isLoadingKycStatuses}
-          />
-        </InfiniteScroll>
-      )}
+          ) : null
+        }
+      >
+        <ApplicationList
+          programId={programId}
+          communityUID={communityUID}
+          applications={applications}
+          isLoading={isLoading && applications.length === 0}
+          onApplicationSelect={onApplicationSelect}
+          onApplicationHover={onApplicationHover}
+          onStatusChange={showStatusActions ? handleStatusChange : undefined}
+          showStatusActions={showStatusActions}
+          sortBy={sortBy}
+          sortOrder={sortOrder}
+          onSortChange={handleSortChange}
+          showAIScoreColumn={showAIScoreColumn}
+          showInternalAIScoreColumn={showInternalAIScoreColumn}
+          programReviewers={programReviewers}
+          milestoneReviewers={milestoneReviewers}
+          addProgramReviewer={addProgramReviewer}
+          isAddingProgramReviewer={isAddingProgramReviewer}
+          addMilestoneReviewer={addMilestoneReviewer}
+          isAddingMilestoneReviewer={isAddingMilestoneReviewer}
+          isLoadingProgramReviewers={isLoadingProgramReviewers}
+          isProgramReviewersError={isProgramReviewersError}
+          isLoadingMilestoneReviewers={isLoadingMilestoneReviewers}
+          isMilestoneReviewersError={isMilestoneReviewersError}
+          isKycEnabled={isKycEnabled}
+          kycStatuses={kycStatuses}
+          isLoadingKycStatuses={isLoadingKycStatuses}
+        />
+      </InfiniteScroll>
     </div>
   );
 };

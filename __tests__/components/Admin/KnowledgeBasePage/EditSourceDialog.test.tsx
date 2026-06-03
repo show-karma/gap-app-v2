@@ -45,6 +45,7 @@ const createSource = (overrides: Partial<KnowledgeSource> = {}): KnowledgeSource
   goal: "old purpose",
   syncIntervalMin: 1440,
   followLinks: false,
+  citationUrl: null,
   lastSyncedAt: "2026-04-26T00:00:00.000Z",
   lastSyncStatus: "success",
   lastSyncError: null,
@@ -312,6 +313,71 @@ describe("EditSourceDialog", () => {
         expect(mutateAsync).toHaveBeenCalledWith({
           sourceId: "src-1",
           patch: { goal: null },
+        });
+      });
+    });
+  });
+
+  describe("citation URL (DEV-342)", () => {
+    it("does NOT show the citation link field for url kind", () => {
+      mockEdit.mockReturnValue({ mutateAsync: vi.fn(), isPending: false });
+      renderDialog(createSource({ kind: "url" }));
+
+      expect(screen.queryByLabelText(/citation link/i)).not.toBeInTheDocument();
+    });
+
+    it("shows the citation link field for gdrive_file kind", () => {
+      mockEdit.mockReturnValue({ mutateAsync: vi.fn(), isPending: false });
+      renderDialog(createSource({ kind: "gdrive_file", externalId: "doc-1234" }));
+
+      expect(screen.getByLabelText(/citation link/i)).toBeInTheDocument();
+    });
+
+    it("commits a citation-URL change directly without the re-sync confirmation", async () => {
+      // DEV-342: the override is display-only — editing it must bypass the
+      // confirmation modal and patch immediately, unlike goal/externalId.
+      const mutateAsync = vi.fn().mockResolvedValue(undefined);
+      mockEdit.mockReturnValue({ mutateAsync, isPending: false });
+      renderDialog(createSource({ kind: "gdrive_file", externalId: "doc-1234" }));
+
+      const user = userEvent.setup();
+      await user.type(
+        screen.getByLabelText(/citation link/i),
+        "https://public.example.com/handbook"
+      );
+      await user.click(screen.getByRole("button", { name: /save changes/i }));
+
+      expect(
+        screen.queryByRole("heading", { name: /apply re-sync changes/i })
+      ).not.toBeInTheDocument();
+
+      await waitFor(() => {
+        expect(mutateAsync).toHaveBeenCalledWith({
+          sourceId: "src-1",
+          patch: { citationUrl: "https://public.example.com/handbook" },
+        });
+      });
+    });
+
+    it("clears citation URL to null when the field is emptied", async () => {
+      const mutateAsync = vi.fn().mockResolvedValue(undefined);
+      mockEdit.mockReturnValue({ mutateAsync, isPending: false });
+      renderDialog(
+        createSource({
+          kind: "gdrive_file",
+          externalId: "doc-1234",
+          citationUrl: "https://public.example.com/handbook",
+        })
+      );
+
+      const user = userEvent.setup();
+      await user.clear(screen.getByDisplayValue("https://public.example.com/handbook"));
+      await user.click(screen.getByRole("button", { name: /save changes/i }));
+
+      await waitFor(() => {
+        expect(mutateAsync).toHaveBeenCalledWith({
+          sourceId: "src-1",
+          patch: { citationUrl: null },
         });
       });
     });

@@ -24,10 +24,9 @@ import {
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
 import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
-import { useIsCommunityAdmin } from "@/src/core/rbac/context/permission-context";
 import { useGrantInvoiceRequired } from "@/src/features/payout-disbursement/hooks/use-payout-disbursement";
 import { submitGranteeInvoice } from "@/src/features/payout-disbursement/services/payout-disbursement.service";
-import { useOwnerStore, useProjectStore } from "@/store";
+import { useProjectStore } from "@/store";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
 import type { GrantMilestone } from "@/types/v2/grant";
 import fetchData from "@/utilities/fetchData";
@@ -115,11 +114,6 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
   const { chain, address } = useAccount();
   const { switchChainAsync } = useWallet();
   const { setupChainAndWallet } = useSetupChainAndWallet();
-  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
-  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
-  const isContractOwner = useOwnerStore((state) => state.isOwner);
-  const isCommunityAdmin = useIsCommunityAdmin();
-  const _isAuthorized = isProjectOwner || isProjectAdmin || isContractOwner || isCommunityAdmin;
   const { openShareDialog, closeShareDialog } = useShareDialogStore();
   const router = useRouter();
   const pathname = usePathname();
@@ -566,7 +560,13 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
           address,
           milestoneUID: milestone.uid,
         });
-        toast.error("Invoice submission failed. Please try again.", { id: loadingToastId });
+        // Surface the backend's specific reason (e.g. a 409 conflict
+        // message); fall back only when no message is available.
+        const message =
+          invoiceError instanceof Error && invoiceError.message
+            ? invoiceError.message
+            : "Invoice submission failed. Please try again.";
+        toast.error(message, { id: loadingToastId });
       } finally {
         setIsSubmitLoading(false);
       }
@@ -602,7 +602,13 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
         });
       } catch (invoiceError) {
         errorManager("Invoice submission failed after milestone update", invoiceError);
-        toast.error("Update saved but invoice submission failed. You can try again later.");
+        // Surface the backend's specific reason; the milestone update
+        // itself already succeeded, so prefix to keep that context.
+        const reason =
+          invoiceError instanceof Error && invoiceError.message
+            ? invoiceError.message
+            : "You can try again later.";
+        toast.error(`Update saved but invoice submission failed: ${reason}`);
       }
     }
   };

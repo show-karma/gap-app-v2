@@ -2,6 +2,7 @@
 
 import { Check, Wrench, X } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
+import { FILINGS_STATS } from "../lib/stats";
 import type { ChatTurn } from "../store/philanthropy";
 
 function formatToolName(tool: string): string {
@@ -16,7 +17,7 @@ export function ProgressView({ progress }: { progress: NonNullable<ChatTurn["pro
     return (
       <div className="inline-flex items-center gap-1.5 text-xs text-zinc-400">
         <Spinner className="size-3" />
-        searching 140,221 filings…
+        {FILINGS_STATS.searchingProgressLabel}
       </div>
     );
   }

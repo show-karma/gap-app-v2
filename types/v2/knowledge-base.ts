@@ -1,4 +1,10 @@
-export type KnowledgeSourceKind = "gdrive_folder" | "gdrive_file" | "url" | "sitemap" | "pdf_url";
+export type KnowledgeSourceKind =
+  | "gdrive_folder"
+  | "gdrive_file"
+  | "url"
+  | "sitemap"
+  | "pdf_url"
+  | "agentic_site";
 
 export type KnowledgeSyncStatus = "syncing" | "success" | "partial" | "failed";
 
@@ -32,6 +38,11 @@ export interface KnowledgeSource {
   // ingests Google Docs linked from the parent doc as additional
   // documents under the same source (depth=1, no recursion).
   followLinks: boolean;
+  // DEV-342: optional public link used when citing this source in Ask
+  // Karma. For Google Docs the raw docs.google.com URL is never cited —
+  // the doc links only via this override (top-level document only);
+  // absent it, it is cited by title with no link.
+  citationUrl: string | null;
   lastSyncedAt: string | null;
   lastSyncStatus: KnowledgeSyncStatus | null;
   lastSyncError: string | null;
@@ -66,6 +77,9 @@ export interface CreateKnowledgeSourceInput {
   // DEV-192: opt-in only when kind === "gdrive_file". Backend rejects
   // with 422 if set true on any other kind.
   followLinks?: boolean;
+  // DEV-342: optional public citation link. Only valid on Google Doc
+  // kinds — backend returns 422 if set on any other kind.
+  citationUrl?: string | null;
 }
 
 export interface UpdateKnowledgeSourceInput {
@@ -82,6 +96,9 @@ export interface UpdateKnowledgeSourceInput {
   paused?: boolean;
   syncIntervalMin?: number;
   followLinks?: boolean;
+  // DEV-342: set the public citation link, or `null` to clear it. Only
+  // valid on Google Doc kinds. Display-only — never triggers a re-sync.
+  citationUrl?: string | null;
 }
 
 export const KNOWLEDGE_SOURCE_KIND_LABELS: Record<KnowledgeSourceKind, string> = {
@@ -90,6 +107,7 @@ export const KNOWLEDGE_SOURCE_KIND_LABELS: Record<KnowledgeSourceKind, string> =
   url: "Web page",
   sitemap: "Sitemap (sitemap.xml)",
   pdf_url: "PDF (URL)",
+  agentic_site: "Skill manifest",
 };
 
 // Three-letter shorthand for the row's mono meta strip — matches the
@@ -101,6 +119,7 @@ export const KNOWLEDGE_SOURCE_KIND_SHORT: Record<KnowledgeSourceKind, string> = 
   url: "Web",
   sitemap: "Map",
   pdf_url: "PDF",
+  agentic_site: "Manifest",
 };
 
 export const KNOWLEDGE_SOURCE_KIND_HINTS: Record<KnowledgeSourceKind, string> = {
@@ -110,4 +129,5 @@ export const KNOWLEDGE_SOURCE_KIND_HINTS: Record<KnowledgeSourceKind, string> = 
   url: "Full URL of the page (e.g. https://docs.example.com/intro). Must load without sign-in.",
   sitemap: "Currently disabled in the UI; tracked in docs/features.",
   pdf_url: "Direct URL to a publicly-accessible PDF file (no auth or session cookies required).",
+  agentic_site: "A site that publishes a SKILL.md for AI agents.",
 };

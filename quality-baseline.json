@@ -196,8 +196,8 @@
       "maxBytes": 40000
     },
     "components/Forms/MilestoneUpdate.tsx": {
-      "lines": 761,
-      "bytes": 28479,
+      "lines": 764,
+      "bytes": 28372,
       "maxLines": 600,
       "maxBytes": 40000
     },
@@ -214,8 +214,8 @@
       "maxBytes": 40000
     },
     "components/FundingPlatform/ApplicationView/ApplicationSubmission.tsx": {
-      "lines": 978,
-      "bytes": 36812,
+      "lines": 992,
+      "bytes": 37357,
       "maxLines": 600,
       "maxBytes": 40000
     },
@@ -240,6 +240,12 @@
     "components/Pages/Admin/ControlCenter/ControlCenterPage.tsx": {
       "lines": 661,
       "bytes": 24473,
+      "maxLines": 600,
+      "maxBytes": 40000
+    },
+    "components/Pages/Admin/ControlCenter/MilestonesSection.tsx": {
+      "lines": 601,
+      "bytes": 26462,
       "maxLines": 600,
       "maxBytes": 40000
     },
@@ -448,13 +454,13 @@
       "maxBytes": 40000
     },
     "src/features/payout-disbursement/hooks/use-payout-disbursement.ts": {
-      "lines": 779,
+      "lines": 781,
       "bytes": 24563,
       "maxLines": 600,
       "maxBytes": 40000
     },
     "src/features/payout-disbursement/services/payout-disbursement.service.ts": {
-      "lines": 916,
+      "lines": 922,
       "bytes": 23575,
       "maxLines": 600,
       "maxBytes": 40000

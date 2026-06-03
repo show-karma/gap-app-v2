@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { PAGES } from "@/utilities/pages";
+import { NON_PROFITS_PAGES, PAGES } from "@/utilities/pages";
 import { Footer } from "./footer";
 import { WhitelabelFooter } from "./whitelabel-footer";
 
@@ -45,8 +45,7 @@ export function FooterSwitcher({ isWhitelabel }: { isWhitelabel: boolean }) {
   const pathname = usePathname();
 
   if (isWhitelabel) return <WhitelabelFooter />;
-  // The /non-profits section ships its own dedicated footer via its layout.
-  if (pathname.startsWith("/non-profits")) return null;
+  if (pathname.startsWith(NON_PROFITS_PAGES.HOME)) return null;
   if (isAppRoute(pathname)) return <MinimalFooter />;
   return <Footer />;
 }

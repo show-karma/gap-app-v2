@@ -58,6 +58,25 @@ describe("formatDate", () => {
     });
   });
 
+  describe("MMM D format (no year)", () => {
+    it("should format date string in UTC without a year", () => {
+      const result = formatDate("2024-01-15", "UTC", "MMM D");
+      expect(result).toBe("Jan 15");
+    });
+
+    it("should format a Date object in UTC without a year", () => {
+      const result = formatDate(testDate, "UTC", "MMM D");
+      expect(result).toBe("Jan 15");
+    });
+
+    it("should auto-force UTC for date-only YYYY-MM-DD strings", () => {
+      // Even with "local" requested, date-only strings switch to UTC to avoid
+      // showing the previous day for viewers west of UTC.
+      const result = formatDate("2024-01-15", "local", "MMM D");
+      expect(result).toBe("Jan 15");
+    });
+  });
+
   describe("DDD, MMM DD format", () => {
     it("should format date with day name", () => {
       const result = formatDate("2024-01-15T00:00:00Z", "UTC", "DDD, MMM DD");

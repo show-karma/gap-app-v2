@@ -1,5 +1,5 @@
 /*
- * Non-profits landing page — Grow Nonprofit design system
+ * Non-profits landing page — Karma Find Funders design system
  *
  * Ported from grant-atlas src/styles/app.css (lp-* section only).
  * Tailwind v4 directives (@import "tailwindcss", @theme, @custom-variant,
@@ -12,7 +12,7 @@
 @import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600;700&display=swap");
 
 /* ================================================================
-   Landing page — Grow Nonprofit design system
+   Landing page — Karma Find Funders design system
    ================================================================ */
 
 .landing {

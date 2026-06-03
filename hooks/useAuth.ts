@@ -7,8 +7,8 @@ import { usePrivyBridge } from "@/contexts/privy-bridge-context";
 import { useProjectCreateModalStore } from "@/store/modals/projectCreate";
 import { compareAllWallets } from "@/utilities/auth/compare-all-wallets";
 import { getE2EMockAuthState } from "@/utilities/auth/e2e-auth";
+import { selectPrimaryWallet } from "@/utilities/auth/select-primary-wallet";
 import { TokenManager } from "@/utilities/auth/token-manager";
-import { PAGES } from "@/utilities/pages";
 import { queryClient } from "@/utilities/query-client";
 import { useWhitelabel } from "@/utilities/whitelabel-context";
 
@@ -123,7 +123,11 @@ export const useAuth = () => {
   const pathname = usePathname();
   const { isWhitelabel } = useWhitelabel();
 
-  const primaryWallet = wallets[0];
+  // Resolve the wallet representing the authenticated user's identity. See
+  // selectPrimaryWallet for why wallets[0] is not safe (stale, unlinked wallets such
+  // as MetaMask can linger in useWallets() across login methods). Shared with
+  // PrivyWagmiProviders so useAuth().address and useAccount() agree.
+  const primaryWallet = useMemo(() => selectPrimaryWallet(user, wallets), [user, wallets]);
   // Track client-side hydration so getE2EMockAuthState() re-evaluates after SSR.
   // During SSR, window is undefined so the check returns null. Without isClient,
   // useMemo caches the SSR result when Privy's ready/authenticated haven't changed yet.
@@ -142,6 +146,9 @@ export const useAuth = () => {
   const walletsSnapshotRef = useRef<string[]>([]);
   // Grace period after login — suppresses watchAccount false positives from stale wagmi state
   const loginGraceRef = useRef(false);
+  // Tracks the wallet address across renders to detect the undefined→defined
+  // transition once Privy/Wagmi finish hydrating after auth (see refetch barrier).
+  const prevAddressRef = useRef<Hex | undefined>(address);
 
   /**
    * AUTH STATE CHANGE DETECTION
@@ -225,6 +232,25 @@ export const useAuth = () => {
       TokenManager.setPrivyInstance({ getAccessToken });
     }
   }, [ready, getAccessToken]);
+
+  /**
+   * AUTH-READY REFETCH BARRIER
+   *
+   * Privy/Wagmi hydrate the wallet asynchronously: `authenticated` flips true
+   * before `wallets[0].address` is populated (the deferred-SDK race). Any
+   * authenticated query that fired during that window had no token/address and
+   * resolved empty or 401'd. fetchData swallows the 401 into a null tuple, so
+   * React Query treats it as data and never refetches — the stale empty result
+   * sticks until a manual page refresh. When the address first becomes
+   * available, invalidate queries once so they refetch with auth now ready.
+   */
+  useEffect(() => {
+    const prev = prevAddressRef.current;
+    prevAddressRef.current = address;
+    if (authenticated && !prev && address) {
+      queryClient.invalidateQueries();
+    }
+  }, [authenticated, address]);
 
   // Auto-login after logout completes
   useEffect(() => {

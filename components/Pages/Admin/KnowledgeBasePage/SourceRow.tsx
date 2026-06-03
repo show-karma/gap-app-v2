@@ -2,12 +2,7 @@
 
 import {
   ExternalLink,
-  FileBadge,
-  FileText,
-  FolderOpen,
   GitBranch,
-  Globe,
-  Network,
   Pause,
   Pencil,
   Play,
@@ -18,6 +13,7 @@ import {
 import { type ComponentType, memo, useState } from "react";
 import toast from "react-hot-toast";
 import { DeleteDialog } from "@/components/DeleteDialog";
+import { KIND_STYLES } from "@/components/Pages/Admin/KnowledgeBasePage/SourceRow.kinds";
 import {
   useDeleteKnowledgeSource,
   useResyncKnowledgeSource,
@@ -27,7 +23,6 @@ import {
   KNOWLEDGE_SOURCE_KIND_LABELS,
   KNOWLEDGE_SOURCE_KIND_SHORT,
   type KnowledgeSource,
-  type KnowledgeSourceKind,
 } from "@/types/v2/knowledge-base";
 import { EditSourceDialog } from "./EditSourceDialog";
 
@@ -38,44 +33,6 @@ interface Props {
    * the row aligns flush with the list container's top edge. */
   isFirst?: boolean;
 }
-
-// ── Kind metadata ────────────────────────────────────────────────────────────
-//
-// The design renders each kind glyph in a neutral square tile rather than a
-// tinted circle — quieter rhythm down the list. We keep a soft tint on the
-// glyph itself so admins can still scan kinds at a glance.
-
-interface KindStyle {
-  Icon: ComponentType<{
-    className?: string;
-    "aria-hidden"?: boolean;
-    strokeWidth?: number;
-  }>;
-  fg: string;
-}
-
-const KIND_STYLES: Record<KnowledgeSourceKind, KindStyle> = {
-  url: {
-    Icon: Globe,
-    fg: "text-sky-600 dark:text-sky-400",
-  },
-  sitemap: {
-    Icon: Network,
-    fg: "text-violet-600 dark:text-violet-400",
-  },
-  gdrive_file: {
-    Icon: FileText,
-    fg: "text-emerald-600 dark:text-emerald-400",
-  },
-  gdrive_folder: {
-    Icon: FolderOpen,
-    fg: "text-amber-600 dark:text-amber-400",
-  },
-  pdf_url: {
-    Icon: FileBadge,
-    fg: "text-rose-600 dark:text-rose-400",
-  },
-};
 
 // ── Status meta ──────────────────────────────────────────────────────────────
 //
@@ -570,6 +527,7 @@ function externalHref(source: KnowledgeSource): string | null {
   switch (source.kind) {
     case "url":
     case "pdf_url":
+    case "agentic_site":
       return id.startsWith("http://") || id.startsWith("https://") ? id : null;
     case "gdrive_file":
       // Admins paste either the share URL or a bare doc ID. If it's
@@ -577,9 +535,8 @@ function externalHref(source: KnowledgeSource): string | null {
       // edit URL from the doc id.
       if (id.startsWith("https://")) return id;
       return `https://docs.google.com/document/d/${id}/edit`;
-    case "gdrive_folder":
-    case "sitemap":
     default:
+      // gdrive_folder, sitemap: no per-row "open original" affordance.
       return null;
   }
 }

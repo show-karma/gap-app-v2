@@ -10,6 +10,8 @@
 
 import { ArrowUpRight, Sparkles, X } from "lucide-react";
 import { useEffect, useState } from "react";
+import { Link } from "@/src/components/navigation/Link";
+import { NON_PROFITS_PAGES } from "@/utilities/pages";
 
 const DISMISS_KEY = "np-connector-nudge-dismissed";
 
@@ -45,9 +47,6 @@ export function ConnectorNudge() {
     setHidden(true);
   };
 
-  // Connector setup section lives on the landing page.
-  const setupHref = "/non-profits#connector";
-
   return (
     <div className="mb-4 overflow-hidden rounded-xl border border-zinc-200 bg-gradient-to-br from-amber-50 via-white to-blue-50 dark:border-zinc-800 dark:from-amber-900/10 dark:via-zinc-900 dark:to-blue-900/10">
       <div className="flex items-start gap-4 p-4">
@@ -75,20 +74,20 @@ export function ConnectorNudge() {
             </button>
           </div>
           <div className="mt-3 flex flex-wrap gap-2">
-            <a
-              href={setupHref}
+            <Link
+              href={NON_PROFITS_PAGES.CONNECT_CLAUDE}
               className="inline-flex items-center gap-1.5 rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-xs font-medium text-zinc-800 transition-colors hover:border-zinc-400 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:border-zinc-600 dark:hover:bg-zinc-800"
             >
               Add to Claude
               <ArrowUpRight className="size-3" />
-            </a>
-            <a
-              href={setupHref}
+            </Link>
+            <Link
+              href={NON_PROFITS_PAGES.CONNECT_CHATGPT}
               className="inline-flex items-center gap-1.5 rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-xs font-medium text-zinc-800 transition-colors hover:border-zinc-400 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:border-zinc-600 dark:hover:bg-zinc-800"
             >
               Add to ChatGPT
               <ArrowUpRight className="size-3" />
-            </a>
+            </Link>
           </div>
         </div>
       </div>

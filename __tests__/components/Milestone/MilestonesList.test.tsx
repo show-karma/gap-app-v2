@@ -30,7 +30,7 @@ vi.mock("next/navigation", () => ({
 // Mock stores
 vi.mock("@/store", () => ({
   useOwnerStore: vi.fn((selector) => selector({ isOwner: false })),
-  useProjectStore: vi.fn((selector) => selector({ isProjectAdmin: false })),
+  useProjectStore: vi.fn((selector) => selector({ isProjectAdmin: false, isProjectOwner: false })),
 }));
 
 // Mock ActivityCard component

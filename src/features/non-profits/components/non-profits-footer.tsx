@@ -1,9 +1,9 @@
 /**
- * NonProfitsFooter — dedicated footer for the /non-profits section.
+ * NonProfitsFooter — dedicated footer for the /non-profits/find-funders section.
  *
  * Ported from grant-atlas src/components/landing-footer.tsx (the footer shown on
  * karmagrants.org). Adaptations for gap-app-v2:
- * - Brand: "Grow Nonprofit" mark replaced by the Karma logo (next/image).
+ * - Brand: "Karma Find Funders" — the Karma logo (next/image) sits in for the original mark.
  * - Links: TanStack Router Link → next/link + NON_PROFITS_PAGES constants.
  *
  * Styling uses the lp-footer-* classes in styles/non-profits-landing.css.

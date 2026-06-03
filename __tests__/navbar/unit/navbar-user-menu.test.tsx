@@ -629,4 +629,27 @@ describe("NavbarUserMenu", () => {
       expect(followSection).toBeInTheDocument();
     });
   });
+
+  describe("Wallet Hydration (Privy↔Wagmi gap)", () => {
+    it("shows the skeleton instead of 'No wallet connected' while an authenticated user's wallet is still hydrating", () => {
+      // authenticated=true, but `user` and `wallets[0].address` haven't resolved
+      // yet (the deferred-SDK race). The menu must not render a blank avatar or
+      // claim "No wallet connected" for an actually-connected user.
+      _localRefs.navPermsState.current.isLoggedIn = true;
+      _localRefs.navPermsState.current.address = undefined;
+      _localRefs.navPermsState.current.ready = true;
+      _localRefs.authState.current.authenticated = true;
+      _localRefs.authState.current.address = undefined;
+      _localRefs.authState.current.user = null;
+
+      renderWithProviders(<NavbarUserMenu />, {
+        mockUseAuth: createMockUseAuth(_localRefs.authState.current),
+      });
+
+      expect(screen.queryByText("No wallet connected")).not.toBeInTheDocument();
+      // The skeleton replaces the menu entirely — no menubar or avatar yet.
+      expect(screen.queryByRole("menubar")).not.toBeInTheDocument();
+      expect(screen.queryByRole("img")).not.toBeInTheDocument();
+    });
+  });
 });
