@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { InviteMemberDialog } from "@/components/Dialogs/Member/InviteMember";
 import { useAuth } from "@/hooks/useAuth";
 import { usePermissionsQuery } from "@/src/core/rbac/hooks/use-permissions";
@@ -28,11 +28,15 @@ export function TeamContent({ className }: TeamContentProps) {
   const project = useProjectStore((state) => state.project);
 
   // Deduplicate members - owner is always first
-  const members = project
-    ? Array.from(
-        new Set([project?.owner, ...(project?.members?.map((member) => member.address) || [])])
-      )
-    : [];
+  const members = useMemo(
+    () =>
+      project
+        ? Array.from(
+            new Set([project.owner, ...(project.members?.map((member) => member.address) ?? [])])
+          )
+        : [],
+    [project?.owner, project?.members]
+  );
 
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const isContractOwner = useOwnerStore((state) => state.isOwner);

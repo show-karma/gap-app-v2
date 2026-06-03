@@ -94,7 +94,11 @@ export function EndorsementsListDialog({ open, onOpenChange }: EndorsementsListD
   useEffect(() => {
     if (open && project?.endorsements?.length) {
       const addresses = [
-        ...new Set((project.endorsements as ProjectEndorsementV2[]).map((e) => e.endorsedBy)),
+        ...new Set(
+          (project.endorsements as ProjectEndorsementV2[])
+            .map((e) => e.endorsedBy?.toLowerCase())
+            .filter((addr): addr is string => Boolean(addr))
+        ),
       ];
       populateEfp(addresses);
     }
@@ -107,13 +111,15 @@ export function EndorsementsListDialog({ open, onOpenChange }: EndorsementsListD
     // Deduplicate by address, keeping latest endorsement per address
     const addresses: Record<Hex, ProjectEndorsementV2> = {};
     endorsements.forEach((endorsement) => {
-      const existingEndorsement = addresses[endorsement.endorsedBy];
+      const endorsedKey = endorsement.endorsedBy?.toLowerCase() as Hex | undefined;
+      if (!endorsedKey) return;
+      const existingEndorsement = addresses[endorsedKey];
       if (existingEndorsement) {
         if (new Date(existingEndorsement.createdAt) < new Date(endorsement.createdAt)) {
-          addresses[endorsement.endorsedBy] = endorsement;
+          addresses[endorsedKey] = endorsement;
         }
       } else {
-        addresses[endorsement.endorsedBy] = endorsement;
+        addresses[endorsedKey] = endorsement;
       }
     });
 

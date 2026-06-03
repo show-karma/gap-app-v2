@@ -6,6 +6,7 @@ import type { Hex } from "viem";
 import { Skeleton } from "@/components/Utilities/Skeleton";
 import { useAuth } from "@/hooks/useAuth";
 import { useEFP } from "@/store/efp";
+import { cn } from "@/utilities/tailwind";
 
 interface EfpCommonFollowersLineProps {
   target: string;
@@ -38,7 +39,10 @@ export function EfpCommonFollowersLine({ target, className }: EfpCommonFollowers
 
   return (
     <div
-      className={`flex flex-row flex-wrap items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400 ${className ?? ""}`}
+      className={cn(
+        "flex flex-row flex-wrap items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400",
+        className
+      )}
       data-testid="member-efp-common-followers"
     >
       <div className="flex flex-row -space-x-2">
