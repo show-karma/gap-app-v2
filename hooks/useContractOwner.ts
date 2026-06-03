@@ -1,9 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import type { Chain } from "viem";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useAuth } from "@/hooks/useAuth";
 import { useOwnerStore } from "@/store/owner";
+import { getLinkedWalletAddresses } from "@/utilities/auth/compare-all-wallets";
 import { CONTRACT_OWNER_CACHE_CONFIG } from "@/utilities/cache-config";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
 import { gapSupportedNetworks } from "@/utilities/network";
@@ -11,8 +12,12 @@ import { QUERY_KEYS } from "@/utilities/queryKeys";
 import { getRPCUrlByChainId } from "@/utilities/rpcClient";
 import { getContractOwner } from "@/utilities/sdk/getContractOwner";
 
-const fetchContractOwner = async (address: string): Promise<boolean> => {
-  if (!address) return false;
+// Resolve whether the EAS contract owner matches ANY of the supplied wallets.
+// A single authenticated account can hold multiple wallets (e.g. several Privy
+// embedded wallets); the owner role may sit on a non-active one, so checking
+// only the active address can wrongly deny global-owner access.
+const fetchIsContractOwner = async (addresses: string[]): Promise<boolean> => {
+  if (addresses.length === 0) return false;
   const chain = gapSupportedNetworks[0];
   const rpcUrl = getRPCUrlByChainId(chain.id);
 
@@ -27,23 +32,50 @@ const fetchContractOwner = async (address: string): Promise<boolean> => {
   });
 
   const owner = await getContractOwner(provider, chain);
-  return owner?.toLowerCase() === address?.toLowerCase();
+  const ownerAddress = owner?.toLowerCase();
+  return !!ownerAddress && addresses.some((address) => address.toLowerCase() === ownerAddress);
 };
 
 export const useContractOwner = (chainOverride?: Chain) => {
-  const { authenticated: isAuth, address } = useAuth();
+  const { authenticated: isAuth, address, user } = useAuth();
   const setIsOwner = useOwnerStore((state) => state.setIsOwner);
   const setIsOwnerLoading = useOwnerStore((state) => state.setIsOwnerLoading);
   const signer = useSigner();
   const chain = chainOverride || gapSupportedNetworks[0];
 
+  // The active wallet plus every wallet linked to the Privy user, deduped.
+  const candidateAddresses = useMemo(() => {
+    const seen = new Set<string>();
+    const result: string[] = [];
+    for (const candidate of [address, ...(user ? getLinkedWalletAddresses(user) : [])]) {
+      if (!candidate) continue;
+      const key = candidate.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      result.push(candidate);
+    }
+    return result;
+  }, [address, user]);
+
+  // Order-independent signature of the candidate set for the query key.
+  const walletsKey = useMemo(
+    () =>
+      candidateAddresses.length
+        ? candidateAddresses
+            .map((candidate) => candidate.toLowerCase())
+            .sort()
+            .join(",")
+        : undefined,
+    [candidateAddresses]
+  );
+
   const queryResult = useQuery<boolean, Error>({
-    queryKey: QUERY_KEYS.AUTH.CONTRACT_OWNER(address, chain?.id),
+    queryKey: QUERY_KEYS.AUTH.CONTRACT_OWNER(walletsKey, chain?.id),
     queryFn: () =>
-      fetchContractOwner(address!).catch(() => {
+      fetchIsContractOwner(candidateAddresses).catch(() => {
         return false;
       }),
-    enabled: !!address && isAuth,
+    enabled: candidateAddresses.length > 0 && isAuth,
     staleTime: CONTRACT_OWNER_CACHE_CONFIG.staleTime,
     gcTime: CONTRACT_OWNER_CACHE_CONFIG.gcTime,
     refetchOnMount: false,
