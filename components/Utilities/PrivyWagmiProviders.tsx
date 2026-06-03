@@ -8,6 +8,7 @@ import { useEffect, useMemo, useRef } from "react";
 import { useAccount } from "wagmi";
 import { PROJECT_NAME } from "@/constants/brand";
 import { usePrivyBridgeSetter } from "@/contexts/privy-bridge-context";
+import { useEnsureEmbeddedWallet } from "@/hooks/useEnsureEmbeddedWallet";
 import type { TenantConfig } from "@/src/infrastructure/types/tenant";
 import { selectPrimaryWallet } from "@/utilities/auth/select-primary-wallet";
 import { envVars } from "@/utilities/enviromentVars";
@@ -50,6 +51,10 @@ function PrivyBridgeUpdater() {
 
   const userId = privy.user?.id;
   const walletCount = wallets.length;
+
+  // Create the single embedded wallet for new users. Replaces the SDK's
+  // createOnLogin auto-creation, which double-fired and minted two wallets.
+  useEnsureEmbeddedWallet(privy.ready, privy.authenticated, privy.user, walletCount);
 
   useEffect(() => {
     const p = privyRef.current;
@@ -217,7 +222,11 @@ export default function PrivyWagmiProviders({ tenantConfig }: PrivyWagmiProvider
         },
         embeddedWallets: {
           ethereum: {
-            createOnLogin: "users-without-wallets",
+            // Auto-creation is handled by useEnsureEmbeddedWallet, not the SDK.
+            // The SDK's "users-without-wallets" re-evaluates on every provider
+            // initialization and mints a duplicate embedded wallet before the
+            // first one persists (Strict Mode / remount / concurrent render).
+            createOnLogin: "off",
           },
           // Explicitly disable Solana embedded wallets. The Privy SDK (v3.8)
           // bundles Solana support (~197KB) internally and tree-shaking cannot
