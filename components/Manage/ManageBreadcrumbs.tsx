@@ -266,7 +266,7 @@ export function ManageBreadcrumbs({ communitySlug }: { communitySlug: string }) 
  * fixed-width skeleton (stable layout, no shift when the name swaps in) and
  * exposes a loading state to assistive tech instead of announcing a raw id.
  */
-function CrumbLabel({ crumb }: { crumb: Crumb }) {
+const CrumbLabel = React.memo(function CrumbLabel({ crumb }: { crumb: Crumb }) {
   if (crumb.state === "pending") {
     return (
       <output aria-busy="true" aria-label="Loading" className="inline-flex">
@@ -275,4 +275,4 @@ function CrumbLabel({ crumb }: { crumb: Crumb }) {
     );
   }
   return <span title={crumb.label}>{crumb.label}</span>;
-}
+});
