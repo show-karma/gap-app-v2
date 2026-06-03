@@ -29,6 +29,7 @@ const makeResult = (
 
 describe("IterationHistory — React #185 render-stability regression", () => {
   beforeEach(() => {
+    vi.clearAllMocks();
     act(() => {
       useEvaluationDraftStore.setState({ resultsBySession: {} });
     });
