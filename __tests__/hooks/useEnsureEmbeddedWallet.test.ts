@@ -8,8 +8,8 @@
  */
 
 import type { User } from "@privy-io/react-auth";
-import { renderHook } from "@testing-library/react";
-import { useEnsureEmbeddedWallet } from "@/hooks/useEnsureEmbeddedWallet";
+import { renderHook, waitFor } from "@testing-library/react";
+import { RETRY_BASE_DELAY_MS, useEnsureEmbeddedWallet } from "@/hooks/useEnsureEmbeddedWallet";
 
 const mockCreateWallet = vi.fn<() => Promise<unknown>>();
 
@@ -96,38 +96,52 @@ describe("useEnsureEmbeddedWallet", () => {
     expect(mockCreateWallet).toHaveBeenCalledTimes(1);
   });
 
-  it("retries after a transient failure but not after an already-exists error", async () => {
-    mockCreateWallet.mockRejectedValueOnce(new Error("network down"));
+  it("retries a transient failure with backoff and succeeds without reporting", async () => {
+    vi.useFakeTimers();
+    try {
+      mockCreateWallet.mockRejectedValueOnce(new Error("network down")).mockResolvedValue({});
 
-    const transient = renderHook(() =>
-      useEnsureEmbeddedWallet(true, true, makeUser("u-transient"), 0)
-    );
-    await Promise.resolve();
-    transient.unmount();
+      renderHook(() => useEnsureEmbeddedWallet(true, true, makeUser("u-transient"), 0));
 
-    // Slot was released — a later mount retries.
-    renderHook(() => useEnsureEmbeddedWallet(true, true, makeUser("u-transient"), 0));
-    expect(mockCreateWallet).toHaveBeenCalledTimes(2);
+      // First attempt rejects, then backoff elapses and the retry succeeds.
+      await vi.advanceTimersByTimeAsync(RETRY_BASE_DELAY_MS);
 
-    mockCreateWallet.mockRejectedValueOnce(new Error("embedded_wallet_already_exists"));
-    const exists = renderHook(() => useEnsureEmbeddedWallet(true, true, makeUser("u-exists"), 0));
-    await Promise.resolve();
-    exists.unmount();
-
-    // Slot stays claimed — no retry for an already-existing wallet.
-    renderHook(() => useEnsureEmbeddedWallet(true, true, makeUser("u-exists"), 0));
-    expect(mockCreateWallet).toHaveBeenCalledTimes(3);
+      expect(mockCreateWallet).toHaveBeenCalledTimes(2);
+      expect(mockErrorManager).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
-  it("reports a genuine failure to Sentry but stays silent on already-exists", async () => {
-    mockCreateWallet.mockRejectedValueOnce(new Error("network down"));
-    renderHook(() => useEnsureEmbeddedWallet(true, true, makeUser("u-report"), 0));
-    await Promise.resolve();
-    expect(mockErrorManager).toHaveBeenCalledTimes(1);
+  it("reports and releases the slot after exhausting retries", async () => {
+    vi.useFakeTimers();
+    try {
+      mockCreateWallet.mockRejectedValue(new Error("network down"));
 
+      renderHook(() => useEnsureEmbeddedWallet(true, true, makeUser("u-exhaust"), 0));
+      await vi.advanceTimersByTimeAsync(10_000);
+
+      expect(mockCreateWallet).toHaveBeenCalledTimes(3);
+      expect(mockErrorManager).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.useRealTimers();
+    }
+
+    // Slot was released — a later mount retries.
+    mockCreateWallet.mockReset().mockResolvedValue({});
+    renderHook(() => useEnsureEmbeddedWallet(true, true, makeUser("u-exhaust"), 0));
+    expect(mockCreateWallet).toHaveBeenCalledTimes(1);
+  });
+
+  it("stops immediately and stays silent when the wallet already exists", async () => {
     mockCreateWallet.mockRejectedValueOnce(new Error("embedded_wallet_already_exists"));
-    renderHook(() => useEnsureEmbeddedWallet(true, true, makeUser("u-report-exists"), 0));
-    await Promise.resolve();
-    expect(mockErrorManager).toHaveBeenCalledTimes(1);
+
+    renderHook(() => useEnsureEmbeddedWallet(true, true, makeUser("u-already"), 0));
+    await waitFor(() => expect(mockCreateWallet).toHaveBeenCalledTimes(1));
+
+    expect(mockErrorManager).not.toHaveBeenCalled();
+    // Slot stays claimed — a later mount of the same user does not retry.
+    renderHook(() => useEnsureEmbeddedWallet(true, true, makeUser("u-already"), 0));
+    expect(mockCreateWallet).toHaveBeenCalledTimes(1);
   });
 });

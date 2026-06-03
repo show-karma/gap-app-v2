@@ -17,6 +17,46 @@ const EMBEDDED_WALLET_ALREADY_EXISTS = "embedded_wallet_already_exists";
  */
 const creationAttemptedUserIds = new Set<string>();
 
+const MAX_CREATE_ATTEMPTS = 3;
+export const RETRY_BASE_DELAY_MS = 1000;
+
+const wait = (ms: number): Promise<void> =>
+  new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+
+/**
+ * Create the embedded wallet, retrying transient failures with exponential
+ * backoff. The slot stays claimed across retries so no parallel creation can
+ * start. Only after all attempts are exhausted is the slot released (so a later
+ * remount or auth-state change can try again) and the failure surfaced.
+ */
+const createEmbeddedWalletWithRetry = async (
+  createWallet: () => Promise<unknown>,
+  userId: string
+): Promise<void> => {
+  for (let attempt = 1; attempt <= MAX_CREATE_ATTEMPTS; attempt += 1) {
+    try {
+      await createWallet();
+      return;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      // Another path already created the wallet — treat as success.
+      if (message.includes(EMBEDDED_WALLET_ALREADY_EXISTS)) return;
+
+      if (attempt === MAX_CREATE_ATTEMPTS) {
+        creationAttemptedUserIds.delete(userId);
+        errorManager("Failed to create embedded wallet on login", error, {
+          userId,
+          attempts: attempt,
+        });
+        return;
+      }
+      await wait(RETRY_BASE_DELAY_MS * 2 ** (attempt - 1));
+    }
+  }
+};
+
 // Match Privy's "users-without-wallets": the decision is based ONLY on wallets
 // LINKED to the account, never on physically-connected ones. A stale MetaMask
 // left connected from a previous session is in useWallets() but not linked — it
@@ -58,14 +98,6 @@ export const useEnsureEmbeddedWallet = (
     // remount, rapid re-render) cannot launch a parallel createWallet().
     creationAttemptedUserIds.add(userId);
 
-    createWallet().catch((error: unknown) => {
-      const message = error instanceof Error ? error.message : String(error);
-      // Another path already created the wallet — keep the slot claimed.
-      if (message.includes(EMBEDDED_WALLET_ALREADY_EXISTS)) return;
-      // Genuine failure leaves the user without a wallet — surface it and
-      // release the slot so a later state change retries.
-      creationAttemptedUserIds.delete(userId);
-      errorManager("Failed to create embedded wallet on login", error, { userId });
-    });
+    void createEmbeddedWalletWithRetry(createWallet, userId);
   }, [ready, authenticated, user, walletCount, createWallet]);
 };
