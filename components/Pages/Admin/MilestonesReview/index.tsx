@@ -205,13 +205,6 @@ interface MilestonesReviewPageProps {
   projectId: string;
   programId: string;
   referrer?: string;
-  /**
-   * When provided, the page renders in embedded mode: the "Back" button calls
-   * this instead of navigating, the redundant "View Application" button is
-   * hidden, and the full-screen height is dropped. Used to show the review
-   * inline inside the applications inbox panel without leaving the page.
-   */
-  onBack?: () => void;
 }
 
 function ProjectAskButton({
@@ -246,59 +239,6 @@ function ProjectAskButton({
       <AtSymbolIcon className="w-4 h-4" />
       Mention to AI
     </Button>
-  );
-}
-
-/**
- * Header row with the back button and the project actions. The back button
- * navigates via `backButtonConfig` on the standalone route, or calls `onBack`
- * (returning to the application detail) when the page is embedded in the inbox.
- */
-function ReviewHeaderBackRow({
-  onBack,
-  backButtonConfig,
-  project,
-  milestoneReviewUrl,
-}: {
-  onBack?: () => void;
-  backButtonConfig: { url: string; label: string };
-  project: { uid: string; details: { title: string; slug?: string } };
-  milestoneReviewUrl?: string | null;
-}) {
-  return (
-    <div className="flex items-center justify-between gap-3 mb-2">
-      {onBack ? (
-        <Button variant="secondary" className="flex items-center text-sm" onClick={onBack}>
-          <ArrowLeftIcon className="w-4 h-4 mr-1.5" />
-          Back to Application
-        </Button>
-      ) : (
-        <Link href={backButtonConfig.url}>
-          <Button variant="secondary" className="flex items-center text-sm">
-            <ArrowLeftIcon className="w-4 h-4 mr-1.5" />
-            {backButtonConfig.label}
-          </Button>
-        </Link>
-      )}
-      <div className="flex items-center gap-2">
-        <ProjectAskButton
-          projectUid={project.uid}
-          projectTitle={project.details.title}
-          projectSlug={project.details?.slug}
-        />
-        {/* Hidden when embedded — onBack already returns to the application. */}
-        {!onBack && milestoneReviewUrl && (
-          <Link href={milestoneReviewUrl}>
-            <Button
-              variant="secondary"
-              className="flex items-center gap-2 px-3 py-1.5 text-sm border border-gray-300 dark:border-zinc-600 bg-transparent hover:bg-gray-50 dark:hover:bg-zinc-700 text-gray-700 dark:text-gray-300"
-            >
-              View Application
-            </Button>
-          </Link>
-        )}
-      </div>
-    </div>
   );
 }
 
@@ -494,7 +434,6 @@ export function MilestonesReviewPage({
   projectId,
   programId,
   referrer,
-  onBack,
 }: MilestonesReviewPageProps) {
   // Supports both "959" and legacy "959_42161" formats
   const parsedProgramId = useMemo(() => parseProgramId(programId), [programId]);
@@ -513,7 +452,6 @@ export function MilestonesReviewPage({
         programId={programId}
         parsedProgramId={parsedProgramId}
         referrer={referrer}
-        onBack={onBack}
       />
     </PermissionProvider>
   );
@@ -525,7 +463,6 @@ function MilestonesReviewPageContent({
   programId,
   parsedProgramId,
   referrer,
-  onBack,
 }: MilestonesReviewPageProps & { parsedProgramId: string }) {
   const { data, isLoading, error, refetch } = useProjectGrantMilestones(projectId, programId);
   const [verifyingMilestoneId, setVerifyingMilestoneId] = useState<string | null>(null);
@@ -841,12 +778,32 @@ function MilestonesReviewPageContent({
       {/* Header Section */}
       <div className="bg-white dark:bg-zinc-800 border-b border-gray-200 dark:border-gray-700">
         <div className="px-4 sm:px-6 lg:px-8 py-4">
-          <ReviewHeaderBackRow
-            onBack={onBack}
-            backButtonConfig={backButtonConfig}
-            project={project}
-            milestoneReviewUrl={milestoneReviewUrl}
-          />
+          {/* Back button row */}
+          <div className="flex items-center justify-between gap-3 mb-2">
+            <Link href={backButtonConfig.url}>
+              <Button variant="secondary" className="flex items-center text-sm">
+                <ArrowLeftIcon className="w-4 h-4 mr-1.5" />
+                {backButtonConfig.label}
+              </Button>
+            </Link>
+            <div className="flex items-center gap-2">
+              <ProjectAskButton
+                projectUid={project.uid}
+                projectTitle={project.details.title}
+                projectSlug={project.details?.slug}
+              />
+              {milestoneReviewUrl && (
+                <Link href={milestoneReviewUrl}>
+                  <Button
+                    variant="secondary"
+                    className="flex items-center gap-2 px-3 py-1.5 text-sm border border-gray-300 dark:border-zinc-600 bg-transparent hover:bg-gray-50 dark:hover:bg-zinc-700 text-gray-700 dark:text-gray-300"
+                  >
+                    View Application
+                  </Button>
+                </Link>
+              )}
+            </div>
+          </div>
           {/* Title */}
           <div className="flex flex-col gap-0.5">
             <p className="text-xs text-gray-500 dark:text-gray-400">

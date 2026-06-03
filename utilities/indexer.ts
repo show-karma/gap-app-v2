@@ -175,6 +175,8 @@ export const INDEXER = {
         `/v2/funding-applications/${referenceNumber}/milestones/${encodeURIComponent(milestoneTitle)}/evaluation`,
       GRANTEE_CONTACTS: (referenceNumber: string) =>
         `/v2/funding-applications/${referenceNumber}/grantee-contacts`,
+      REVIEWER_INBOX: (communityId: string, qs?: string) =>
+        `/v2/funding-applications/community/${communityId}/reviewer-inbox${qs ? `?${qs}` : ""}`,
     },
     AUTH: {
       PERMISSIONS: (params?: {

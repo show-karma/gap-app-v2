@@ -13,6 +13,7 @@ import {
   Flag,
   Globe,
   Home,
+  Inbox,
   LayoutGrid,
   Mail,
   ShieldAlert,
@@ -85,6 +86,12 @@ const NAV_GROUPS: NavGroup[] = [
         matchSegment: "funding-platform",
         label: "Funding Platform",
         icon: CircleDollarSign,
+      },
+      {
+        href: PAGES.MANAGE.INBOX,
+        matchSegment: "inbox",
+        label: "Inbox",
+        icon: Inbox,
       },
       {
         href: PAGES.ADMIN.MILESTONES,
@@ -180,7 +187,7 @@ const NAV_GROUPS: NavGroup[] = [
   },
 ];
 
-const REVIEWER_SEGMENTS = new Set(["funding-platform", "milestones-report"]);
+const REVIEWER_SEGMENTS = new Set(["inbox", "funding-platform", "milestones-report"]);
 
 function isActiveRoute(pathname: string, matchSegment: string, slug: string): boolean {
   const itemPath = `${PAGES.ADMIN.ROOT(slug)}/${matchSegment}`;

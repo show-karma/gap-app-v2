@@ -1,7 +1,6 @@
 "use client";
 
 import { ArrowLeftIcon } from "@heroicons/react/24/solid";
-import { useState } from "react";
 import { AIAnalysisTab } from "@/components/FundingPlatform/ApplicationView/AIAnalysisTab";
 import ApplicationDetailSkeleton from "@/components/FundingPlatform/ApplicationView/ApplicationDetailSkeleton";
 import ApplicationHeader from "@/components/FundingPlatform/ApplicationView/ApplicationHeader";
@@ -21,7 +20,6 @@ import HeaderActions, {
 import MoreActionsDropdown from "@/components/FundingPlatform/ApplicationView/MoreActionsDropdown";
 import { StatusChangeInline } from "@/components/FundingPlatform/ApplicationView/StatusChangeInline";
 import { TabPanel } from "@/components/FundingPlatform/ApplicationView/TabPanel";
-import { MilestonesReviewPage } from "@/components/Pages/Admin/MilestonesReview";
 import { Button } from "@/components/Utilities/Button";
 import { Link } from "@/src/components/navigation/Link";
 import { AdminOnly } from "@/src/core/rbac";
@@ -30,48 +28,6 @@ import { layoutTheme } from "@/src/helper/theme";
 import { cn } from "@/utilities/tailwind";
 import { isFundingProgramConfig } from "@/utilities/type-guards";
 import { isKnownTabId, useApplicationDetailView } from "./useApplicationDetailView";
-
-const MILESTONE_CTA_CLASS =
-  "flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md font-medium transition-colors";
-
-/**
- * "Review Project Milestones" banner. On the standalone page the CTA navigates
- * to the milestone review route; inside the inbox panel it opens the review
- * inline (via `onReviewInline`) so the reviewer never leaves the page.
- */
-function MilestoneReviewBanner({
-  isPanel,
-  milestoneReviewUrl,
-  onReviewInline,
-}: {
-  isPanel: boolean;
-  milestoneReviewUrl: string;
-  onReviewInline: () => void;
-}) {
-  return (
-    <div className="my-6 bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-800 rounded-lg p-4">
-      <div className="flex items-center justify-between">
-        <div className="flex flex-col gap-1">
-          <h3 className="text-sm font-semibold text-green-900 dark:text-green-100">
-            Review Project Milestones
-          </h3>
-          <p className="text-xs text-green-700 dark:text-green-300">
-            View and verify milestone completions for this approved application
-          </p>
-        </div>
-        {isPanel ? (
-          <button type="button" onClick={onReviewInline} className={MILESTONE_CTA_CLASS}>
-            Review Milestones
-          </button>
-        ) : (
-          <Link href={milestoneReviewUrl} className={MILESTONE_CTA_CLASS}>
-            Review Milestones
-          </Link>
-        )}
-      </div>
-    </div>
-  );
-}
 
 interface ApplicationDetailViewProps {
   /** Application reference number / id used to fetch the application. */
@@ -105,10 +61,6 @@ export default function ApplicationDetailView({
   className,
 }: ApplicationDetailViewProps) {
   const isPanel = variant === "panel";
-  // Panel-only: show the full milestone review inline instead of navigating
-  // away, so reviewers stay in the inbox. Resets automatically when a different
-  // application is selected (the inbox keys this component by reference).
-  const [showMilestonesReview, setShowMilestonesReview] = useState(false);
   const {
     application,
     program,
@@ -193,22 +145,6 @@ export default function ApplicationDetailView({
           </Button>
           <p className="text-gray-500">Application not found.</p>
         </div>
-      </div>
-    );
-  }
-
-  // Inbox panel: show the milestone review inline (reuses the standalone review
-  // page) so the reviewer never leaves the inbox. `onBack` returns to the detail.
-  if (isPanel && showMilestonesReview && application.projectUID) {
-    return (
-      <div className={cn("min-w-0", className)}>
-        <MilestonesReviewPage
-          communityId={communityId}
-          programId={programId}
-          projectId={application.projectUID}
-          referrer="application"
-          onBack={() => setShowMilestonesReview(false)}
-        />
       </div>
     );
   }
@@ -349,13 +285,26 @@ export default function ApplicationDetailView({
         />
       )}
 
-      {/* Milestone Review banner — only when approved and has projectUID */}
+      {/* Milestone Review Link — only when approved and has projectUID */}
       {milestoneReviewUrl && (
-        <MilestoneReviewBanner
-          isPanel={isPanel}
-          milestoneReviewUrl={milestoneReviewUrl}
-          onReviewInline={() => setShowMilestonesReview(true)}
-        />
+        <div className="my-6 bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-800 rounded-lg p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-1">
+              <h3 className="text-sm font-semibold text-green-900 dark:text-green-100">
+                Review Project Milestones
+              </h3>
+              <p className="text-xs text-green-700 dark:text-green-300">
+                View and verify milestone completions for this approved application
+              </p>
+            </div>
+            <Link
+              href={milestoneReviewUrl}
+              className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md font-medium transition-colors"
+            >
+              Review Milestones
+            </Link>
+          </div>
+        </div>
       )}
 
       <ApplicationTabs
