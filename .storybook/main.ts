@@ -20,6 +20,7 @@ const config: StorybookConfig = {
       config.resolve.alias = {
         ...config.resolve.alias,
         "@": path.resolve(__dirname, "../"),
+        "@/hooks/useAuth": path.resolve(__dirname, "./mocks/useAuth.ts"),
       };
     }
     return config;
