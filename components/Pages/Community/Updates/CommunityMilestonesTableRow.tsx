@@ -129,41 +129,34 @@ const CommunityMilestonesTableRowComponent: FC<CommunityMilestonesTableRowProps>
 
       {/* Milestone X of Y */}
       <td className={cellClasses}>
-        {hasMilestonePosition ? (
-          (() => {
-            const index = milestone.grantMilestoneIndex as number;
-            const total = milestone.grantMilestoneTotal as number;
-            const progressPct =
-              total > 0 ? Math.min(100, Math.max(0, (index / total) * 100)) : 0;
-            return (
-              <div
-                className="flex flex-col gap-1 min-w-[88px]"
-                role="progressbar"
-                aria-valuemin={0}
-                aria-valuemax={total}
-                aria-valuenow={index}
-                aria-label={`Milestone ${index} of ${total}`}
-              >
-                <span className="text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap tabular-nums">
-                  {index} of {total}
-                </span>
-                <div className="h-1.5 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-zinc-700">
+        {hasMilestonePosition
+          ? (() => {
+              const index = milestone.grantMilestoneIndex as number;
+              const total = milestone.grantMilestoneTotal as number;
+              const progressPct = total > 0 ? Math.min(100, Math.max(0, (index / total) * 100)) : 0;
+              return (
+                <div className="flex flex-col gap-1 min-w-[88px]">
+                  <span className="text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap tabular-nums">
+                    {index} of {total}
+                  </span>
                   <div
-                    className={cn(
-                      "h-full origin-left rounded-full transition-[width] duration-300 ease-out",
-                      progressPct >= 100
-                        ? "bg-green-500 dark:bg-green-400"
-                        : "bg-brand-blue dark:bg-blue-400"
-                    )}
-                    style={{ width: `${progressPct}%` }}
-                  />
+                    aria-hidden="true"
+                    className="h-1.5 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-zinc-700"
+                  >
+                    <div
+                      className={cn(
+                        "h-full origin-left rounded-full transition-[width] duration-300 ease-out",
+                        progressPct >= 100
+                          ? "bg-green-500 dark:bg-green-400"
+                          : "bg-brand-blue dark:bg-blue-400"
+                      )}
+                      style={{ width: `${progressPct}%` }}
+                    />
+                  </div>
                 </div>
-              </div>
-            );
-          })()
-        ) : (
-          placeholder
-        )}
+              );
+            })()
+          : placeholder}
       </td>
 
       {/* Completion date */}
