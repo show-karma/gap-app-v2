@@ -9,9 +9,6 @@ import { useEFP } from "@/store/efp";
 import { getEfpProfileUrl } from "@/utilities/fetchEFP";
 import { cn } from "@/utilities/tailwind";
 
-// Social-graph "following" is invariant (never "followings").
-pluralize.addUncountableRule("following");
-
 interface EfpStatsLineProps {
   address: string;
   className?: string;
@@ -69,12 +66,12 @@ export function EfpStatsLine({ address, className, variant = "default" }: EfpSta
   if (efpEntry === undefined) {
     return (
       <div className={className} data-testid="member-efp-stats">
-        <Skeleton className="h-4 w-48" />
+        <Skeleton className={cn(isCompact ? "h-3 w-32" : "h-4 w-48")} />
       </div>
     );
   }
 
-  const label = `${followers} ${pluralize("follower", followers)} · ${following} ${pluralize("following", following)}`;
+  const label = `${followers} ${pluralize("follower", followers)} · ${following} following`;
 
   return (
     <div className={className} data-testid="member-efp-stats">

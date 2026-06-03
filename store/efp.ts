@@ -49,24 +49,27 @@ export const useEFP = create<EfpStore>((set, get) => ({
       return;
     }
 
-    for (const address of notTriedAddresses) {
-      set((state) => ({
-        efpData: {
-          ...state.efpData,
-          [address]: {
-            ...state.efpData[address],
-            isFetching: true,
-            error: false,
-          },
-        },
-      }));
-    }
+    set((state) => {
+      const fetchingUpdates: EfpRecord = {};
+      for (const address of notTriedAddresses) {
+        fetchingUpdates[address] = {
+          ...state.efpData[address],
+          isFetching: true,
+          error: false,
+        };
+      }
+      return {
+        efpData: { ...state.efpData, ...fetchingUpdates },
+      };
+    });
 
     const fetched = await fetchEfpStats(notTriedAddresses);
 
+    const fetchedByAddress = new Map(fetched.map((r) => [r.address.toLowerCase(), r] as const));
+
     const updates: EfpRecord = {};
     for (const address of notTriedAddresses) {
-      const item = fetched.find((r) => r.address.toLowerCase() === address);
+      const item = fetchedByAddress.get(address);
       updates[address] = {
         followers_count: item?.followers_count ?? 0,
         following_count: item?.following_count ?? 0,

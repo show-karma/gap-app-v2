@@ -1,8 +1,8 @@
 "use client";
 
-import Image from "next/image";
 import pluralize from "pluralize";
 import type { Hex } from "viem";
+import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
 import { Skeleton } from "@/components/Utilities/Skeleton";
 import { useAuth } from "@/hooks/useAuth";
 import { useEFP } from "@/store/efp";
@@ -46,27 +46,16 @@ export function EfpCommonFollowersLine({ target, className }: EfpCommonFollowers
       data-testid="member-efp-common-followers"
     >
       <div className="flex flex-row -space-x-2">
-        {preview.map((follower) =>
-          follower.avatar ? (
-            <Image
-              key={follower.address}
-              src={follower.avatar}
-              alt=""
-              width={24}
-              height={24}
-              unoptimized
-              className="h-6 w-6 rounded-full border border-white dark:border-zinc-800 object-cover"
-            />
-          ) : (
-            <span
-              key={follower.address}
-              className="flex h-6 w-6 items-center justify-center rounded-full border border-white bg-zinc-200 text-[10px] dark:border-zinc-800 dark:bg-zinc-600"
-              aria-hidden
-            >
-              ?
-            </span>
-          )
-        )}
+        {preview.map((follower) => (
+          <ProfilePicture
+            key={follower.address}
+            imageURL={follower.avatar}
+            name={follower.name || follower.address}
+            size="24"
+            alt=""
+            className="h-6 w-6 border border-white dark:border-zinc-800"
+          />
+        ))}
       </div>
       <span>
         {length} {pluralize("follower", length)} you know

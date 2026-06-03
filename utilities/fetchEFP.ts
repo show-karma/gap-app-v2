@@ -117,15 +117,16 @@ export async function fetchEfpFollowingAll(
   let offset = 0;
 
   while (collected.length < max) {
+    const pageLimit = Math.min(EFP_FOLLOWING_PAGE_SIZE, max - collected.length);
     const page = await fetchEfpFollowing(viewer, {
-      limit: EFP_FOLLOWING_PAGE_SIZE,
+      limit: pageLimit,
       offset,
     });
     if (page === null) return null;
     if (!page.length) break;
     collected.push(...page);
     offset += page.length;
-    if (page.length < EFP_FOLLOWING_PAGE_SIZE) break;
+    if (page.length < pageLimit) break;
   }
 
   return collected.slice(0, max);

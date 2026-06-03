@@ -157,8 +157,8 @@ describe("ProfilePicture", () => {
   });
 
   describe("URL Validation", () => {
-    it("should render image for valid http URL", () => {
-      render(<ProfilePicture imageURL="http://example.com/image.jpg" name="John Doe" />);
+    it("should render image for allowed http unavatar URL", () => {
+      render(<ProfilePicture imageURL="http://api.unavatar.io/twitter/test" name="John Doe" />);
 
       expect(screen.getByAltText("John Doe")).toBeInTheDocument();
     });
@@ -167,6 +167,12 @@ describe("ProfilePicture", () => {
       render(<ProfilePicture imageURL="https://example.com/image.jpg" name="John Doe" />);
 
       expect(screen.getByAltText("John Doe")).toBeInTheDocument();
+    });
+
+    it("should fallback to avatar for disallowed http host", () => {
+      render(<ProfilePicture imageURL="http://example.com/image.jpg" name="John Doe" />);
+
+      expect(screen.getByTestId("boring-avatar")).toBeInTheDocument();
     });
 
     it("should fallback to avatar for relative URL", () => {
@@ -178,9 +184,7 @@ describe("ProfilePicture", () => {
     it("should fallback to avatar for invalid protocol", () => {
       render(<ProfilePicture imageURL="ftp://example.com/image.jpg" name="John Doe" />);
 
-      // ftp:// is a valid URL protocol according to URL constructor, so it renders an image
-      // The component doesn't filter by protocol, only validates URL format
-      expect(screen.getByAltText("John Doe")).toBeInTheDocument();
+      expect(screen.getByTestId("boring-avatar")).toBeInTheDocument();
     });
 
     it("should fallback to avatar for malformed URL", () => {

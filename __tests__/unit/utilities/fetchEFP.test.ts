@@ -194,6 +194,40 @@ describe("fetchEFP", () => {
       expect(global.fetch).toHaveBeenCalledTimes(2);
     });
 
+    it("requests only the remaining count on the final page", async () => {
+      const fullPage = Array.from({ length: 50 }, (_, i) => ({
+        version: 1,
+        record_type: "address" as const,
+        data: `0x${String(i + 1).padStart(40, "0")}`,
+        address: `0x${String(i + 1).padStart(40, "0")}`,
+        tags: [],
+      }));
+      const remainderPage = Array.from({ length: 10 }, (_, i) => ({
+        version: 1,
+        record_type: "address" as const,
+        data: `0x${String(i + 51).padStart(40, "0")}`,
+        address: `0x${String(i + 51).padStart(40, "0")}`,
+        tags: [],
+      }));
+
+      (global.fetch as ReturnType<typeof vi.fn>)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ following: fullPage }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ following: remainderPage }),
+        });
+
+      const results = await fetchEfpFollowingAll(VIEWER, 60);
+
+      expect(results).toHaveLength(60);
+      expect(global.fetch).toHaveBeenCalledTimes(2);
+      const secondCallUrl = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[1][0] as string;
+      expect(secondCallUrl).toContain("limit=10");
+    });
+
     it("returns null when a page fetch fails", async () => {
       (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
         ok: false,

@@ -19,11 +19,18 @@ interface ProfilePictureProps {
 
 const AVATAR_COLORS = ["#92A1C6", "#146A7C", "#F0AB3D", "#C271B4", "#C20D90"];
 
-const isValidUrl = (url?: string): boolean => {
+const ALLOWED_HTTP_IMAGE_HOSTS = new Set(["api.unavatar.io"]);
+
+const isAllowedImageUrl = (url?: string): boolean => {
   if (!url) return false;
   try {
-    new URL(url);
-    return true;
+    const parsed = new URL(url);
+    if (parsed.protocol === "https:") return true;
+    if (parsed.protocol === "http:") {
+      return ALLOWED_HTTP_IMAGE_HOSTS.has(parsed.hostname);
+    }
+    if (parsed.protocol === "data:") return true;
+    return false;
   } catch {
     return false;
   }
@@ -44,7 +51,7 @@ export const ProfilePicture = ({
     setHasError(false);
   }, [imageURL]);
 
-  const isValid = isValidUrl(imageURL);
+  const isValid = isAllowedImageUrl(imageURL);
   const numericSize = Number.parseInt(size, 10) || 32;
 
   if (isValid && imageURL && !hasError) {

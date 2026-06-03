@@ -35,7 +35,7 @@ type Story = StoryObj<typeof EfpFollowingSuggestions>;
 export const Loading: Story = {
   decorators: [
     (Story) => {
-      useEFP.setState({ isFetchingFollowing: true, viewerFollowing: undefined });
+      useEFP.setState({ isFetchingFollowing: true, viewerFollowing: null });
       return <Story />;
     },
   ],
@@ -60,7 +60,7 @@ export const Error: Story = {
       useEFP.setState({
         isFetchingFollowing: false,
         followingError: true,
-        viewerFollowing: undefined,
+        viewerFollowing: null,
       });
       return <Story />;
     },
