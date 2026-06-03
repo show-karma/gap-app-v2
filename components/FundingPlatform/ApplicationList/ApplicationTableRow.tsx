@@ -10,28 +10,12 @@ import type { ProgramReviewer } from "@/services/program-reviewers.service";
 import type { FundingApplicationStatusV2, IFundingApplication } from "@/types/funding-platform";
 import type { KycStatusResponse } from "@/types/kyc";
 import { formatDate } from "@/utilities/formatDate";
-import { cn } from "@/utilities/tailwind";
 import { formatAIScore } from "../helper/getAIScore";
 import { formatInternalAIScore } from "../helper/getInternalAIScore";
 import { AIEvaluationModal, type EvaluationType } from "./AIEvaluationModal";
+import { ApplicationStatusBadge } from "./applicationStatusBadge";
 import { ReviewerAssignmentDropdown } from "./ReviewerAssignmentDropdown";
 import { TableStatusActionButtons } from "./TableStatusActionButtons";
-
-const statusColors = {
-  pending: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300",
-  resubmitted: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300",
-  under_review: "bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-300",
-  revision_requested: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300",
-  approved: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
-  rejected: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300",
-};
-
-const formatStatus = (status: string): string => {
-  return status
-    .split("_")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
-};
 
 interface ApplicationTableRowProps {
   programId: string;
@@ -65,17 +49,6 @@ interface ApplicationTableRowProps {
   kycStatus?: KycStatusResponse | null;
   isLoadingKycStatus?: boolean;
 }
-
-const getStatusBadge = (status: string) => (
-  <span
-    className={cn(
-      "inline-flex px-2 py-1 rounded-full text-xs font-medium",
-      statusColors[status as keyof typeof statusColors] || "bg-gray-100 text-gray-800"
-    )}
-  >
-    {formatStatus(status)}
-  </span>
-);
 
 const ApplicationTableRowComponent: FC<ApplicationTableRowProps> = ({
   programId,
@@ -149,7 +122,7 @@ const ApplicationTableRowComponent: FC<ApplicationTableRowProps> = ({
         </td>
         <td className="px-4 py-4 whitespace-nowrap">
           <div className="flex items-center gap-2">
-            {getStatusBadge(application.status)}
+            <ApplicationStatusBadge status={application.status} />
             {application.status === "approved" && application.postApprovalCompleted && (
               <span
                 title="Post-approval form completed"

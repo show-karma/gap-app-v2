@@ -113,6 +113,12 @@ export interface IStatusHistoryEntry {
   reason?: string;
 }
 
+// Status transitions the caller is authorized to trigger on a given application,
+// computed server-side from the caller's role in that row's program. The cross-
+// program applications-report uses this to gate inline action buttons without
+// duplicating the permission matrix on the frontend.
+export type ApplicationReportAction = "review" | "request_revision" | "approve" | "reject";
+
 // V2 Funding Program Configuration
 export interface IFundingProgramConfig {
   id: string;
@@ -193,6 +199,10 @@ export interface IFundingApplication {
   // Populated by the indexer's attachMilestoneStatuses walker. Empty when
   // projectUID is unset or the linked grant has no milestones yet.
   milestoneStatuses?: MilestoneStatusEntry[];
+  // Populated only by the community applications-report endpoint. Undefined
+  // elsewhere — callers gating actions outside that page should still use the
+  // RBAC <Can> component.
+  availableActions?: ApplicationReportAction[];
   createdAt: string | Date;
   updatedAt: string | Date;
 }
