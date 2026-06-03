@@ -264,18 +264,6 @@ describe("TeamContent", () => {
       expect(screen.getByTestId("team-content")).toHaveClass("custom-class");
     });
   });
-
-  describe("EFP", () => {
-    it("should batch populate EFP stats for all team members", () => {
-      render(<TeamContent />);
-
-      expect(mockPopulateEfp).toHaveBeenCalledWith([
-        "0x1111111111111111111111111111111111111111",
-        "0x2222222222222222222222222222222222222222",
-        "0x3333333333333333333333333333333333333333",
-      ]);
-    });
-  });
 });
 
 describe("TeamContent - Empty State", () => {

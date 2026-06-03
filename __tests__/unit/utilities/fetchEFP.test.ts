@@ -90,7 +90,7 @@ describe("fetchEFP", () => {
       expect(results).toEqual([]);
     });
 
-    it("processes addresses in batches", async () => {
+    it("fetches every address when list spans multiple batches", async () => {
       const addresses: Hex[] = [];
       for (let i = 1; i <= EFP_BATCH_SIZE + 3; i++) {
         addresses.push(`0x${String(i).padStart(40, "0")}` as Hex);
