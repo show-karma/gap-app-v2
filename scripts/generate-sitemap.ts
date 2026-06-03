@@ -5,7 +5,11 @@ const PROJECT_ROOT = path.resolve(__dirname, "..");
 const SITE_URL = "https://www.karmahq.xyz";
 // Must match SITEMAP_PAGE_SIZE in utilities/sitemap.ts. GSC fails on >~1MB / 5000 URLs.
 const SITEMAP_PAGE_SIZE = 1000;
-const URLS_TIMEOUT_MS = 15_000;
+// Per-page fetch budget. The first page of a kind can be a cold cache miss on
+// the indexer (a heavy aggregation); give it room rather than ship a degraded
+// sitemap. The indexer-side cache warmer normally keeps this well under a
+// second.
+const URLS_TIMEOUT_MS = 30_000;
 const URLS_MAX_ATTEMPTS = 3;
 const URLS_RETRY_BACKOFF_MS = 750;
 const FALLBACK_CHUNKS_PER_KIND = 1;
@@ -290,25 +294,50 @@ async function main() {
   // sitemap Google has already crawled.
   const publishedFloor = readPublishedChunkCounts(indexPath);
 
-  const kindConfigs: KindConfig[] = await Promise.all(
-    KIND_META.map(async (meta): Promise<KindConfig> => {
-      const { pages, complete } = baseUrl
-        ? await fetchKindPages(baseUrl, meta.kind)
-        : { pages: [] as string[][], complete: false };
+  // Fetch kinds SEQUENTIALLY, not in parallel. Each kind's first page can
+  // trigger a heavy aggregation on the indexer; firing all kinds at once is the
+  // cold-start stampede that made these fetches time out. One at a time keeps
+  // the indexer responsive (and with the indexer-side cache warmer, page 1 is
+  // already warm).
+  const degradedKinds: string[] = [];
+  const kindConfigs: KindConfig[] = [];
 
-      const floor = publishedFloor[meta.path] ?? 0;
-      const chunkCount = Math.max(pages.length, floor, FALLBACK_CHUNKS_PER_KIND);
+  for (const meta of KIND_META) {
+    const { pages, complete } = baseUrl
+      ? await fetchKindPages(baseUrl, meta.kind)
+      : { pages: [] as string[][], complete: false };
 
-      if (!complete) {
-        logWarn(
-          `[sitemap-gen] ${meta.path}: URL listing incomplete — holding ${chunkCount} chunk(s) ` +
-            `(fetched ${pages.length}, floor ${floor}); any missing chunks are emitted empty.`
-        );
-      }
+    const floor = publishedFloor[meta.path] ?? 0;
+    const chunkCount = Math.max(pages.length, floor, FALLBACK_CHUNKS_PER_KIND);
 
-      return { ...meta, chunkCount, pages };
-    })
-  );
+    // An established kind (one with previously-published chunks) whose listing
+    // came back incomplete would ship empty/partial child sitemaps — the silent
+    // degradation that dropped thousands of URLs from Google's index. Refuse to
+    // write a regressed sitemap: fail the build so the last good one stays live.
+    // (A brand-new kind with no floor has nothing to regress, so an incomplete
+    // listing just falls back to a single chunk.)
+    if (!complete && floor > 0) {
+      degradedKinds.push(`${meta.path} (fetched ${pages.length} page(s), floor ${floor})`);
+    } else if (!complete) {
+      logWarn(
+        `[sitemap-gen] ${meta.path}: URL listing incomplete and no published ` +
+          `floor — emitting ${chunkCount} fallback chunk(s).`
+      );
+    }
+
+    kindConfigs.push({ ...meta, chunkCount, pages });
+  }
+
+  if (degradedKinds.length > 0) {
+    // Thrown before anything is written, so the committed sitemap is untouched.
+    throw new Error(
+      `Refusing to write a degraded sitemap: ${degradedKinds.length} established ` +
+        `kind(s) failed to fully fetch and would ship empty child sitemaps — ` +
+        `${degradedKinds.join("; ")}. The indexer ` +
+        `(${baseUrl ?? "NEXT_PUBLIC_GAP_INDEXER_URL unset"}) was slow or unreachable. ` +
+        `Existing sitemap left untouched; re-run once the indexer is responsive.`
+    );
+  }
 
   const indexXml = buildIndexXml(kindConfigs);
   fs.mkdirSync(publicDir, { recursive: true });

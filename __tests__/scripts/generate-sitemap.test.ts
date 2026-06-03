@@ -37,6 +37,67 @@ function locCount(file: string): number {
   return (fs.readFileSync(file, "utf-8").match(/<loc>/g) ?? []).length;
 }
 
+// In-process indexer stub. By default every kind returns a single short page
+// (3 URLs) so the generator sees a complete listing for all kinds; pass
+// `pageSizes` to override per-kind pagination (e.g. grants spanning 3 chunks).
+function startFakeIndexer(
+  pageSizes: Record<string, number[]> = {}
+): Promise<{ url: string; close: () => Promise<void> }> {
+  const server = http.createServer((req, res) => {
+    const url = new URL(req.url ?? "", "http://localhost");
+    if (url.pathname === "/v2/sitemap") {
+      const kind = url.searchParams.get("kind") ?? "";
+      const page = Number(url.searchParams.get("page") ?? "1");
+      const size = (pageSizes[kind] ?? [3])[page - 1] ?? 0;
+      const urls = Array.from(
+        { length: size },
+        (_, i) => `https://staging.karmahq.xyz/x/${kind}/${page}/${i}`
+      );
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ kind, page, pageSize: PAGE_SIZE, total: urls.length, urls }));
+      return;
+    }
+    res.writeHead(404);
+    res.end();
+  });
+  return new Promise((resolve) => {
+    server.listen(0, "127.0.0.1", () => {
+      const { port } = server.address() as AddressInfo;
+      resolve({
+        url: `http://127.0.0.1:${port}`,
+        close: () => new Promise<void>((r) => server.close(() => r())),
+      });
+    });
+  });
+}
+
+// Run the generator against a fresh fake indexer and return the written index.
+async function runScriptWithFakeIndexer(pageSizes: Record<string, number[]> = {}): Promise<string> {
+  const { url, close } = await startFakeIndexer(pageSizes);
+  try {
+    return await runScriptAsync({ NEXT_PUBLIC_GAP_INDEXER_URL: url });
+  } finally {
+    await close();
+  }
+}
+
+// Run the generator expecting a non-zero exit. Returns the captured stderr so
+// the failure reason can be asserted.
+function runScriptExpectFailure(env: NodeJS.ProcessEnv): { stderr: string } {
+  try {
+    execFileSync("npm", ["run", "--silent", "generate-sitemap"], {
+      cwd: PROJECT_ROOT,
+      env: { ...process.env, ...env },
+      stdio: "pipe",
+    });
+  } catch (err) {
+    const e = err as { status?: number | null; stderr?: Buffer | string };
+    if (e.status === undefined || e.status === null || e.status === 0) throw err;
+    return { stderr: String(e.stderr ?? "") };
+  }
+  throw new Error("expected generate-sitemap to exit non-zero, but it succeeded");
+}
+
 describe("generate-sitemap", () => {
   let originalIndex: string | null = null;
   let hadOriginalIndex = false;
@@ -106,11 +167,12 @@ describe("generate-sitemap", () => {
     expect(xml.match(/<sitemap>/g) ?? []).toHaveLength(7);
   }, 30_000);
 
-  it("preserves the previously-published chunk count when the indexer is unreachable", () => {
+  it("fails the build and leaves the existing sitemap untouched when an established kind cannot be fetched", () => {
     snapshot();
-    // When URL fetches fail, a kind looks empty. Without the floor, grants would
-    // collapse from 2 chunks to 1 and grants/sitemap/2.xml — already crawled by
-    // Google — would 404. The prior index is the floor.
+    // grants previously published 2 chunks, so it has a floor. A fetch failure
+    // would ship empty grants children — a silent regression. The build must
+    // fail instead and leave the committed sitemap exactly as it was, so the
+    // last good deploy keeps serving the real URLs.
     const priorIndex = [
       '<?xml version="1.0" encoding="UTF-8"?>',
       '<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
@@ -124,15 +186,15 @@ describe("generate-sitemap", () => {
     fs.mkdirSync(path.dirname(INDEX_OUTPUT), { recursive: true });
     fs.writeFileSync(INDEX_OUTPUT, priorIndex, "utf-8");
 
-    const xml = runScript({ NEXT_PUBLIC_GAP_INDEXER_URL: "http://127.0.0.1:9" });
+    const { stderr } = runScriptExpectFailure({
+      NEXT_PUBLIC_GAP_INDEXER_URL: "http://127.0.0.1:9",
+    });
 
-    expect(xml).toContain("https://www.karmahq.xyz/sitemaps/grants/sitemap/1.xml");
-    expect(xml).toContain("https://www.karmahq.xyz/sitemaps/grants/sitemap/2.xml");
-    // Every chunk listed in the index must have a child file on disk (no 404).
-    expect(fs.existsSync(path.join(SITEMAPS_ROOT, "grants", "sitemap", "2.xml"))).toBe(true);
-    // Kinds with no prior entry still get exactly one chunk.
-    expect(xml).toContain("https://www.karmahq.xyz/sitemaps/projects/sitemap/1.xml");
-    expect(xml).not.toContain("https://www.karmahq.xyz/sitemaps/projects/sitemap/2.xml");
+    expect(stderr).toContain("Refusing to write a degraded sitemap");
+    expect(stderr).toContain("grants");
+    // The committed sitemap is byte-for-byte untouched — not overwritten with
+    // an empty-children regression.
+    expect(fs.readFileSync(INDEX_OUTPUT, "utf-8")).toBe(priorIndex);
   }, 30_000);
 
   it("ignores an out-of-range chunk number in a corrupt prior index", () => {
@@ -212,10 +274,10 @@ describe("generate-sitemap", () => {
     }
   }, 30_000);
 
-  it("emits lastmod values without fractional seconds (Google parser strictness)", () => {
+  it("emits lastmod values without fractional seconds (Google parser strictness)", async () => {
     snapshot();
 
-    const xml = runScript({ NEXT_PUBLIC_GAP_INDEXER_URL: "http://127.0.0.1:9" });
+    const xml = await runScriptWithFakeIndexer();
 
     const lastmodMatches = xml.match(/<lastmod>([^<]+)<\/lastmod>/g) ?? [];
     expect(lastmodMatches.length).toBeGreaterThan(0);
@@ -225,10 +287,10 @@ describe("generate-sitemap", () => {
     }
   }, 30_000);
 
-  it("emits a child urlset XML file for every kind chunk listed in the index", () => {
+  it("emits a child urlset XML file for every kind chunk listed in the index", async () => {
     snapshot();
 
-    runScript({ NEXT_PUBLIC_GAP_INDEXER_URL: "http://127.0.0.1:9" });
+    await runScriptWithFakeIndexer();
 
     for (const kind of KIND_DIRS) {
       const file = path.join(SITEMAPS_ROOT, kind, "sitemap", "1.xml");
@@ -239,7 +301,7 @@ describe("generate-sitemap", () => {
     }
   }, 30_000);
 
-  it("removes stale child chunks from a previous build before writing", () => {
+  it("removes stale child chunks from a previous build before writing", async () => {
     snapshot();
 
     const staleDir = path.join(SITEMAPS_ROOT, "projects", "sitemap");
@@ -247,16 +309,16 @@ describe("generate-sitemap", () => {
     const stalePath = path.join(staleDir, "999.xml");
     fs.writeFileSync(stalePath, "<stale/>", "utf-8");
 
-    runScript({ NEXT_PUBLIC_GAP_INDEXER_URL: "http://127.0.0.1:9" });
+    await runScriptWithFakeIndexer();
 
     expect(fs.existsSync(stalePath)).toBe(false);
     expect(fs.existsSync(path.join(staleDir, "1.xml"))).toBe(true);
   }, 30_000);
 
-  it("emits sitemap-index.xml with byte-identical content to sitemap.xml", () => {
+  it("emits sitemap-index.xml with byte-identical content to sitemap.xml", async () => {
     snapshot();
 
-    runScript({ NEXT_PUBLIC_GAP_INDEXER_URL: "http://127.0.0.1:9" });
+    await runScriptWithFakeIndexer();
 
     expect(fs.existsSync(ALIAS_OUTPUT), `expected ${ALIAS_OUTPUT} to exist`).toBe(true);
     const primary = fs.readFileSync(INDEX_OUTPUT, "utf-8");
@@ -264,7 +326,7 @@ describe("generate-sitemap", () => {
     expect(alias).toBe(primary);
   }, 30_000);
 
-  it("does not emit per-kind probe sitemap-{kind}.xml files at the public root", () => {
+  it("does not emit per-kind probe sitemap-{kind}.xml files at the public root", async () => {
     // Regression guard: per-kind probes from #1484 were intentionally removed.
     // Re-adding them creates the "two parallel sitemap structures" submission
     // smell that confuses GSC.
@@ -285,7 +347,7 @@ describe("generate-sitemap", () => {
       if (fs.existsSync(probePath)) fs.unlinkSync(probePath);
     }
 
-    runScript({ NEXT_PUBLIC_GAP_INDEXER_URL: "http://127.0.0.1:9" });
+    await runScriptWithFakeIndexer();
 
     for (const file of probeFiles) {
       const probePath = path.join(publicDir, file);
