@@ -11,6 +11,25 @@ import { ProjectMainContent } from "../MainContent/ProjectMainContent";
 vi.mock("next/navigation", () => ({
   useParams: () => ({ projectId: "test-project" }),
   usePathname: vi.fn(() => "/"),
+  useRouter: () => ({
+    push: vi.fn(),
+    replace: vi.fn(),
+    prefetch: vi.fn(),
+    back: vi.fn(),
+    forward: vi.fn(),
+    refresh: vi.fn(),
+  }),
+}));
+
+// Mock useIsCommunityAdmin (used by ActivityFeed's TimelineItem) to avoid Wagmi provider requirement
+vi.mock("@/hooks/communities/useIsCommunityAdmin", () => ({
+  useIsCommunityAdmin: () => ({
+    isCommunityAdmin: false,
+    isLoading: false,
+    isError: false,
+    error: null,
+    refetch: vi.fn(),
+  }),
 }));
 
 // Mock next/link

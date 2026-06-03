@@ -214,6 +214,13 @@ vi.mock("@/components/FundingPlatform", () => ({
   ApplicationListWithAPI: () => <div data-testid="application-list-with-api" />,
 }));
 
+// Application detail view (transitively imports karma-gap-sdk; mock it like
+// the other ApplicationView sub-components so the page module loads cleanly).
+vi.mock("@/components/FundingPlatform/ApplicationView/ApplicationDetailView", () => ({
+  __esModule: true,
+  default: () => <div data-testid="spinner">Spinner</div>,
+}));
+
 // Application view sub-components
 vi.mock("@/components/FundingPlatform/ApplicationView/ApplicationHeader", () => ({
   __esModule: true,

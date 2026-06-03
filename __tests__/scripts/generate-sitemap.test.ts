@@ -20,6 +20,8 @@ function runScript(env: NodeJS.ProcessEnv): string {
     cwd: PROJECT_ROOT,
     env: { ...process.env, ...env },
     stdio: "pipe",
+    // shell:true so Windows resolves `npm.cmd` (execFile won't find bare `npm`)
+    shell: true,
   });
   return fs.readFileSync(INDEX_OUTPUT, "utf-8");
 }
@@ -30,6 +32,8 @@ function runScriptAsync(env: NodeJS.ProcessEnv): Promise<string> {
   return execFileAsync("npm", ["run", "--silent", "generate-sitemap"], {
     cwd: PROJECT_ROOT,
     env: { ...process.env, ...env },
+    // shell:true so Windows resolves `npm.cmd` (execFile won't find bare `npm`)
+    shell: true,
   }).then(() => fs.readFileSync(INDEX_OUTPUT, "utf-8"));
 }
 
