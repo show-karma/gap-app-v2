@@ -3,67 +3,43 @@ import { PAGES } from "./pages";
 /**
  * App route TEMPLATES (with `:param` placeholders) for the Karma agent backend.
  *
- * Derived by walking the ENTIRE `PAGES` object — every string route and every
- * route builder — so the list is comprehensive and stays in sync with the FE
- * automatically: add a route to `PAGES` and it shows up here, no manual edit.
- * Served (crawler-disallowed) via `app/extended-sitemap.xml/route.ts` so the
- * backend can FETCH the routes instead of hardcoding a copy that drifts.
+ * Generated from `PAGES` so they always reflect the real FE routes — this is
+ * the single source of truth. Served (crawler-disallowed) via
+ * `app/sitemaps/app-routes/sitemap.ts` so the backend can FETCH the routes
+ * instead of hardcoding a copy. Only stable, user-facing entity routes the
+ * agent links to are included — not every app page.
  *
- * Builders are invoked with `:paramName` sentinels taken from their parameter
- * names. Optional params are omitted (we pass only the required arity), which
- * yields the canonical base path for each route.
+ * Placeholders use `:paramName` (URL-safe) so the backend can substitute the
+ * real slug / id it gets from its tools.
  */
+const PROJECT_SLUG = ":projectSlug";
+const GRANT_UID = ":grantUID";
+const COMMUNITY_SLUG = ":communitySlug";
+const PROGRAM_ID = ":programId";
+const APPLICATION_ID = ":applicationId";
+const PROJECT_UID = ":projectUID";
 
-/** Extract `:paramName` sentinels (one per parameter) from a builder. */
-function paramSentinels(fn: (...args: string[]) => unknown): string[] {
-  const src = fn.toString();
-  const parens = src.match(/^[^(]*\(([^)]*)\)/);
-  const single = src.match(/^\s*([A-Za-z_$][\w$]*)\s*=>/);
-  const raw = parens ? parens[1] : single ? single[1] : "";
-  return raw
-    .split(",")
-    .map((part) => part.trim().split(/[=:?]/)[0].trim())
-    .filter(Boolean)
-    .map((name) => `:${name}`);
-}
-
-function addRoute(result: unknown, out: Set<string>): void {
-  // A required param left out shows up as the literal "undefined" — skip those;
-  // an OPTIONAL param left out resolves to "" inside the builder's conditional,
-  // giving the clean base path. Restore `:` if encodeURIComponent touched it.
-  if (typeof result === "string" && result.startsWith("/") && !result.includes("undefined")) {
-    out.add(result.replace(/%3A/gi, ":"));
-  }
-}
-
-function collectRoutes(node: unknown, out: Set<string>): void {
-  if (typeof node === "string") {
-    if (node.startsWith("/")) out.add(node);
-    return;
-  }
-  if (typeof node === "function") {
-    const fn = node as (...args: string[]) => unknown;
-    const sentinels = paramSentinels(fn);
-    // Call with full arity down to zero args: full calls yield deep links
-    // (incl. optional query/anchor variants), fewer-arg calls yield the base
-    // path when the omitted params are optional. addRoute() drops any result
-    // where a REQUIRED param was missing (it contains "undefined").
-    for (let count = sentinels.length; count >= 0; count -= 1) {
-      try {
-        addRoute(fn(...sentinels.slice(0, count)), out);
-      } catch {
-        // Skip builders that need non-string args; no linkable route does.
-      }
-    }
-    return;
-  }
-  if (node && typeof node === "object") {
-    for (const value of Object.values(node)) collectRoutes(value, out);
-  }
-}
-
-export const APP_ROUTE_TEMPLATES: readonly string[] = (() => {
-  const out = new Set<string>();
-  collectRoutes(PAGES, out);
-  return Array.from(out).sort();
-})();
+export const APP_ROUTE_TEMPLATES: readonly string[] = [
+  // Top-level
+  PAGES.PROJECTS_EXPLORER,
+  PAGES.COMMUNITIES,
+  PAGES.MY_PROJECTS,
+  PAGES.MY_REVIEWS,
+  // Project
+  PAGES.PROJECT.OVERVIEW(PROJECT_SLUG),
+  PAGES.PROJECT.ABOUT(PROJECT_SLUG),
+  PAGES.PROJECT.TEAM(PROJECT_SLUG),
+  PAGES.PROJECT.IMPACT.ROOT(PROJECT_SLUG),
+  // Grant (= project with that grant selected)
+  PAGES.PROJECT.GRANTS(PROJECT_SLUG),
+  PAGES.PROJECT.GRANT(PROJECT_SLUG, GRANT_UID),
+  PAGES.PROJECT.MILESTONES_AND_UPDATES(PROJECT_SLUG, GRANT_UID),
+  // Community / program / application
+  PAGES.COMMUNITY.ALL_GRANTS(COMMUNITY_SLUG),
+  PAGES.COMMUNITY.FUNDING_OPPORTUNITIES(COMMUNITY_SLUG),
+  PAGES.COMMUNITY.PROGRAM_DETAIL(COMMUNITY_SLUG, PROGRAM_ID),
+  PAGES.COMMUNITY.APPLICATION_DETAIL(COMMUNITY_SLUG, APPLICATION_ID),
+  // Reviewer milestone page (deep-link a specific milestone by appending
+  // `#milestone-<milestoneUID>` — the backend adds the anchor)
+  PAGES.MANAGE.FUNDING_PLATFORM.MILESTONES(COMMUNITY_SLUG, PROGRAM_ID, PROJECT_UID),
+];
