@@ -13,17 +13,15 @@ const mockUseAuth = useAuth as unknown as ReturnType<typeof vi.fn>;
 const mockUsePermissions = usePermissions as unknown as ReturnType<typeof vi.fn>;
 const mockUseIsCommunityAdmin = useIsCommunityAdmin as unknown as ReturnType<typeof vi.fn>;
 
-function setup({
-  authenticated,
-  isReviewer,
-  isCommunityAdmin = false,
-}: {
+interface SetupOptions {
   authenticated: boolean;
-  isReviewer: boolean;
+  reviewerPrograms?: Array<{ communitySlug?: string; communityUID?: string }>;
   isCommunityAdmin?: boolean;
-}) {
+}
+
+function setup({ authenticated, reviewerPrograms = [], isCommunityAdmin = false }: SetupOptions) {
   mockUseAuth.mockReturnValue({ authenticated, address: authenticated ? "0xabc" : undefined });
-  mockUsePermissions.mockReturnValue({ hasRole: isReviewer });
+  mockUsePermissions.mockReturnValue({ programs: reviewerPrograms });
   mockUseIsCommunityAdmin.mockReturnValue({ isCommunityAdmin });
 }
 
@@ -33,25 +31,37 @@ describe("useAskKarmaPersona", () => {
   });
 
   it("returns 'visitor' when the user is signed out", () => {
-    setup({ authenticated: false, isReviewer: false });
+    setup({ authenticated: false });
     const { result } = renderHook(() => useAskKarmaPersona("filecoin"));
     expect(result.current).toBe("visitor");
   });
 
-  it("returns 'reviewer' when a signed-in user reviews any program", () => {
-    setup({ authenticated: true, isReviewer: true });
+  it("returns 'reviewer' when the user reviews a program in the page's community", () => {
+    setup({ authenticated: true, reviewerPrograms: [{ communitySlug: "filecoin" }] });
     const { result } = renderHook(() => useAskKarmaPersona("filecoin"));
     expect(result.current).toBe("reviewer");
   });
 
-  it("returns 'reviewer' when a signed-in user administers the page's community", () => {
-    setup({ authenticated: true, isReviewer: false, isCommunityAdmin: true });
+  it("matches the reviewer program by community UID as well as slug", () => {
+    setup({ authenticated: true, reviewerPrograms: [{ communityUID: "0xCommunityUID" }] });
+    const { result } = renderHook(() => useAskKarmaPersona("0xcommunityuid"));
+    expect(result.current).toBe("reviewer");
+  });
+
+  it("ignores reviewer programs from a different community", () => {
+    setup({ authenticated: true, reviewerPrograms: [{ communitySlug: "optimism" }] });
+    const { result } = renderHook(() => useAskKarmaPersona("filecoin"));
+    expect(result.current).toBe("grantee");
+  });
+
+  it("returns 'reviewer' when the user administers the page's community", () => {
+    setup({ authenticated: true, isCommunityAdmin: true });
     const { result } = renderHook(() => useAskKarmaPersona("filecoin"));
     expect(result.current).toBe("reviewer");
   });
 
   it("scopes the admin check to the page's community", () => {
-    setup({ authenticated: true, isReviewer: false, isCommunityAdmin: true });
+    setup({ authenticated: true, isCommunityAdmin: true });
     renderHook(() => useAskKarmaPersona("filecoin"));
     expect(mockUseIsCommunityAdmin).toHaveBeenCalledWith(
       "filecoin",
@@ -60,14 +70,20 @@ describe("useAskKarmaPersona", () => {
     );
   });
 
-  it("returns 'grantee' for a signed-in user who is neither reviewer nor admin", () => {
-    setup({ authenticated: true, isReviewer: false, isCommunityAdmin: false });
+  it("returns 'grantee' for a signed-in user with no role in the page's community", () => {
+    setup({ authenticated: true });
     const { result } = renderHook(() => useAskKarmaPersona("filecoin"));
     expect(result.current).toBe("grantee");
   });
 
+  it("falls back to 'reviewer of any program' when no community is in scope", () => {
+    setup({ authenticated: true, reviewerPrograms: [{ communitySlug: "optimism" }] });
+    const { result } = renderHook(() => useAskKarmaPersona(undefined));
+    expect(result.current).toBe("reviewer");
+  });
+
   it("disables the admin check when there is no community in scope", () => {
-    setup({ authenticated: true, isReviewer: false });
+    setup({ authenticated: true });
     renderHook(() => useAskKarmaPersona(undefined));
     expect(mockUseIsCommunityAdmin).toHaveBeenCalledWith(
       undefined,
@@ -77,9 +93,9 @@ describe("useAskKarmaPersona", () => {
   });
 
   it("ignores reviewer status while signed out", () => {
-    // The permission query is disabled when signed out; even if it leaked a
-    // stale `true`, a signed-out visitor must stay on the visitor prompts.
-    setup({ authenticated: false, isReviewer: true });
+    // The permission query is disabled when signed out; even if it leaked
+    // stale programs, a signed-out visitor must stay on the visitor prompts.
+    setup({ authenticated: false, reviewerPrograms: [{ communitySlug: "filecoin" }] });
     const { result } = renderHook(() => useAskKarmaPersona("filecoin"));
     expect(result.current).toBe("visitor");
   });
