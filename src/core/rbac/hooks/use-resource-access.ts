@@ -1,10 +1,10 @@
 "use client";
 
 import { useAuth } from "@/hooks/useAuth";
-import { Permission } from "../types";
+import { Permission } from "../types/permission";
 import { usePermissionsQuery } from "./use-permissions";
 
-export interface ProjectAccess {
+interface ProjectAccess {
   canEdit: boolean;
   canManageLinks: boolean;
   canManageMembers: boolean;
@@ -34,7 +34,7 @@ export function useProjectAccess(projectId?: string, chainId?: number): ProjectA
   };
 }
 
-export interface GrantMilestoneAccess {
+interface GrantMilestoneAccess {
   canEdit: boolean;
   canComplete: boolean;
   isLoading: boolean;

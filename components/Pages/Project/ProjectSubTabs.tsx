@@ -10,7 +10,7 @@ import { EndorsementList } from "../ProgramRegistry/EndorsementList";
 export const ProjectSubTabs = () => {
   const project = useProjectStore((state) => state.project);
   const { setIsEndorsementOpen: setIsOpen } = useEndorsementStore();
-  const { address, isConnected, authenticated: isAuth, user, login } = useAuth();
+  const { isConnected, authenticated: isAuth, user, login } = useAuth();
 
   const userHasEndorsed = useMemo(() => {
     if (!isConnected || !isAuth || !user || !project?.endorsements?.length) return false;
@@ -26,12 +26,13 @@ export const ProjectSubTabs = () => {
         <p className="text-base py-4 mx-4 px-2.5 text-[#30374F] dark:text-zinc-300 font-bold">
           Endorsements
         </p>
-        <div className="flex flex-row gap-2 px-2 py-2 justify-end">
+        <div className="flex flex-row gap-2 p-2 justify-end">
           <Tooltip.Provider>
             <Tooltip.Root delayDuration={300}>
               <Tooltip.Trigger asChild>
                 <div>
                   <button
+                    type="button"
                     onClick={() => {
                       if (isConnected) {
                         setIsOpen(true);

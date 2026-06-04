@@ -186,14 +186,10 @@ export const INDEXER = {
         chainId?: number;
       }) => {
         const queryParams = new URLSearchParams();
-        if (params?.communityId) queryParams.set("communityId", params.communityId);
-        if (params?.programId) queryParams.set("programId", params.programId);
-        if (params?.applicationId) queryParams.set("applicationId", params.applicationId);
-        if (params?.milestoneId) queryParams.set("milestoneId", params.milestoneId);
-        if (params?.projectId) queryParams.set("projectId", params.projectId);
-        if (params?.chainId !== undefined) queryParams.set("chainId", params.chainId.toString());
-        const query = queryParams.toString();
-        return `/v2/auth/permissions${query ? `?${query}` : ""}`;
+        for (const [key, value] of Object.entries(params ?? {})) {
+          if (value !== undefined && value !== "") queryParams.set(key, String(value));
+        }
+        return `/v2/auth/permissions${queryParams.toString() ? `?${queryParams}` : ""}`;
       },
     },
     USER: {
