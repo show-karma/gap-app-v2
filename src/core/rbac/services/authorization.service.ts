@@ -1,9 +1,8 @@
 import { errorManager } from "@/components/Utilities/errorManager";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
-import { isValidPermission } from "../types/permission";
-import type { PermissionsResponse, ResourceContext } from "../types/resource";
-import { isValidReviewerType, isValidRole, Role } from "../types/role";
+import type { PermissionsResponse, ResourceContext } from "../types";
+import { isValidPermission, isValidReviewerType, isValidRole, Role } from "../types";
 
 interface AuthPermissionsApiResponse {
   roles: {

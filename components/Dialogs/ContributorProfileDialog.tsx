@@ -423,7 +423,7 @@ export const ContributorProfileDialog: FC = () => {
                         <p className="text-base text-red-400">{errors.farcaster?.message}</p>
                       </div>
                       <Button
-                        className="justify-center items-center flex text-center text-base w-full bg-black dark:bg-zinc-900 hover:bg-black hover:dark:bg-zinc-800 text-white dark:text-zinc-100"
+                        className="justify-center items-center flex text-center text-base w-full bg-zinc-950 dark:bg-zinc-900 hover:bg-zinc-950 hover:dark:bg-zinc-800 text-white dark:text-zinc-100"
                         type="submit"
                         disabled={isLoading || !isValid}
                         isLoading={isLoading}
