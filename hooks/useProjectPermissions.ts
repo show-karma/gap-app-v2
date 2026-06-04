@@ -31,12 +31,22 @@ export const useProjectPermissions = () => {
 
   // Keep the project store in sync (many components read isProjectOwner/admin from it).
   useEffect(() => {
-    // While authenticated but still loading, leave the store untouched to avoid
-    // flicker; otherwise (unauthenticated, or data ready) write resolved flags.
-    if (isAuth && !query.data) return;
-    setIsProjectOwner(isAuth && query.data?.isProjectOwner === true);
-    setIsProjectAdmin(isAuth && query.data?.isProjectAdmin === true);
-  }, [query.data, isAuth, setIsProjectOwner, setIsProjectAdmin]);
+    // Keep the previous value only while a fetch is genuinely in flight (avoids
+    // flicker on navigation). On unauthenticated OR error, fail closed to false
+    // so stale owner/admin flags from a prior project/session never persist.
+    if (isAuth && (query.isLoading || query.isFetching)) return;
+    const hasError = Boolean(query.error);
+    setIsProjectOwner(isAuth && !hasError && query.data?.isProjectOwner === true);
+    setIsProjectAdmin(isAuth && !hasError && query.data?.isProjectAdmin === true);
+  }, [
+    isAuth,
+    query.data,
+    query.error,
+    query.isLoading,
+    query.isFetching,
+    setIsProjectOwner,
+    setIsProjectAdmin,
+  ]);
 
   return {
     isProjectOwner,

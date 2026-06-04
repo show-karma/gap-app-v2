@@ -21,8 +21,17 @@ function setup(opts: {
   project?: unknown;
   data?: { isProjectOwner?: boolean; isProjectAdmin?: boolean };
   isLoading?: boolean;
+  isFetching?: boolean;
+  error?: unknown;
 }) {
-  const { authenticated = false, project = null, data, isLoading = false } = opts;
+  const {
+    authenticated = false,
+    project = null,
+    data,
+    isLoading = false,
+    isFetching = false,
+    error = null,
+  } = opts;
   mockUseAuth.mockReturnValue({ authenticated });
   mockUseProjectStore.mockImplementation((selector: (s: any) => any) =>
     selector({
@@ -34,8 +43,8 @@ function setup(opts: {
   mockUsePermissionsQuery.mockReturnValue({
     data,
     isLoading,
-    isFetching: false,
-    error: null,
+    isFetching,
+    error,
     refetch: vi.fn(),
   });
 }
@@ -112,5 +121,30 @@ describe("useProjectPermissions (backend-resolved)", () => {
       expect(mockSetIsProjectOwner).toHaveBeenCalledWith(false);
       expect(mockSetIsProjectAdmin).toHaveBeenCalledWith(false);
     });
+  });
+
+  it("resets the store to false when the permissions request errors", async () => {
+    setup({
+      authenticated: true,
+      project: PROJECT,
+      data: undefined,
+      error: new Error("permissions request failed"),
+    });
+
+    renderHook(() => useProjectPermissions());
+
+    await waitFor(() => {
+      expect(mockSetIsProjectOwner).toHaveBeenCalledWith(false);
+      expect(mockSetIsProjectAdmin).toHaveBeenCalledWith(false);
+    });
+  });
+
+  it("leaves the store untouched while a fetch is in flight (avoids flicker)", () => {
+    setup({ authenticated: true, project: PROJECT, data: undefined, isLoading: true });
+
+    renderHook(() => useProjectPermissions());
+
+    expect(mockSetIsProjectOwner).not.toHaveBeenCalled();
+    expect(mockSetIsProjectAdmin).not.toHaveBeenCalled();
   });
 });
