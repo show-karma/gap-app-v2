@@ -8,6 +8,7 @@ import { PAGES } from "@/utilities/pages";
 import { DonorResearchLoading } from "../common/DonorResearchLoading";
 import { StatusBadge } from "../report-list/StatusBadge";
 import { CandidateCard } from "./CandidateCard";
+import { DisqualificationSummary } from "./DisqualificationSummary";
 import { FailedReportBanner } from "./FailedReportBanner";
 import { ProgressTimeline } from "./ProgressTimeline";
 import { ShareTokenControls } from "./ShareTokenControls";
@@ -30,7 +31,13 @@ interface ReportViewerProps {
  */
 export function ReportViewer({ reportId }: ReportViewerProps) {
   const reportQuery = useDonorReport(reportId);
-  const stream = useDonorReportStream(reportId);
+  // Gate the SSE connection on report status so we don't open a stream
+  // (and thus trigger the browser's native auto-reconnect loop) for a
+  // report that already finished before the user landed on this page.
+  const reportStatus = reportQuery.data?.status;
+  const isTerminal =
+    reportStatus === "complete" || reportStatus === "fast_complete" || reportStatus === "failed";
+  const stream = useDonorReportStream(isTerminal ? null : reportId);
 
   if (reportQuery.isLoading) {
     return <DonorResearchLoading label="Loading report…" />;
@@ -44,8 +51,6 @@ export function ReportViewer({ reportId }: ReportViewerProps) {
   const candidates = report.candidates ?? [];
   const topThree = candidates.filter((c) => c.topThreeFlag);
   const remaining = candidates.filter((c) => !c.topThreeFlag);
-  const isTerminal =
-    report.status === "complete" || report.status === "fast_complete" || report.status === "failed";
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
@@ -88,12 +93,18 @@ export function ReportViewer({ reportId }: ReportViewerProps) {
 
       {report.status === "failed" ? <FailedReportBanner report={report} /> : null}
 
+      {isTerminal && topThree.length === 0 && candidates.length > 0 ? (
+        <DisqualificationSummary candidates={candidates} />
+      ) : null}
+
       <section className="mb-8">
         <h2 className="mb-3 text-lg font-semibold">Top recommendations</h2>
         {topThree.length === 0 ? (
           <p className="rounded-md border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
             {isTerminal
-              ? "No qualifying candidates surfaced. Consider broadening the criteria (geography, cause, amount range)."
+              ? candidates.length === 0
+                ? "No candidates matched the criteria. Try broadening the geography or cause so the pool draws from a different stratum."
+                : "No qualifying candidates surfaced — see the compliance summary above. Consider broadening the criteria (geography, cause, amount range)."
               : "Top recommendations will appear here once the pipeline finishes ranking."}
           </p>
         ) : (

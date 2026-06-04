@@ -56,7 +56,7 @@ export function CandidateCard({ candidate, variant }: CandidateCardProps) {
       </header>
 
       <ScoreBreakdown
-        components={candidate.scores}
+        components={candidate.components}
         activityStatus={candidate.activitySignalStatus}
       />
 

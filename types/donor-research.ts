@@ -88,11 +88,19 @@ export interface ResearchReportList {
   offset: number;
 }
 
+export type ComplianceDisqualificationReason =
+  | "pub78_revoked"
+  | "ca_ag_suspended"
+  | "ca_ag_revoked"
+  | "no_recent_990"
+  | "governance_red_flag";
+
 export interface ResearchReportCandidate {
+  id: string;
   fundingOrganizationId: string;
   ein: string | null;
   composite: number;
-  scores: {
+  components: {
     freshness: number;
     impactRecency: number;
     donorMatch: number;
@@ -100,6 +108,7 @@ export interface ResearchReportCandidate {
   };
   topThreeFlag: boolean;
   complianceVerdict: ComplianceVerdictKind;
+  disqualificationReasons: ComplianceDisqualificationReason[];
   stateRegistrationStatus: StateRegistrationStatus;
   activitySignalStatus: ActivitySignalStatus;
   websiteLastUpdatedAt: string | null;
