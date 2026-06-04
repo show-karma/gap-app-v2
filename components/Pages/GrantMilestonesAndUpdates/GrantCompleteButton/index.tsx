@@ -20,12 +20,13 @@ export const GrantCompleteButton: FC<GrantCompleteProps> = ({
   project,
   text = "Mark as Complete",
 }) => {
-  const isOwner = useOwnerStore((state) => state.isOwner);
+  const isContractOwner = useOwnerStore((state) => state.isOwner);
+  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   // Scope community-admin to THIS grant's community (fixes the bug where a
   // community admin of any community could complete any grant).
   const { isCommunityAdmin } = useScopedCommunityAdmin(grant.communityUID, grant.chainID);
-  const isAuthorized = isOwner || isProjectAdmin || isCommunityAdmin;
+  const isAuthorized = isContractOwner || isProjectOwner || isProjectAdmin || isCommunityAdmin;
 
   const { revokeCompletion, isRevoking } = useGrantCompletionRevoke({
     grant,
