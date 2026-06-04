@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { GET } from "@/app/sitemaps/[kind]/sitemap/[chunk]/route";
 
 function call(kind: string, chunk: string) {
@@ -6,6 +6,24 @@ function call(kind: string, chunk: string) {
     params: Promise.resolve({ kind, chunk }),
   });
 }
+
+beforeEach(() => {
+  // The route now fetches the chunk's URLs from the indexer. Stub it to return
+  // an empty page so a chunk past the current end yields an empty-but-valid 200
+  // — the GSC-no-404 behavior this file guards (a previously-crawled chunk that
+  // no longer has URLs must not 404).
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(
+      async () =>
+        ({ ok: true, status: 200, json: async () => ({ urls: [] }) }) as unknown as Response
+    )
+  );
+});
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
 
 describe("app/sitemaps/[kind]/sitemap/[chunk] orphaned-chunk fallback", () => {
   it("returns an empty 200 urlset for a known kind with a numeric chunk", async () => {
