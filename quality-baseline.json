@@ -3,10 +3,10 @@
   "generatedAt": "2026-06-04T03:56:41.033Z",
   "generatedFromCommit": "48e1469",
   "coverage": {
-    "lines": 68.77,
-    "statements": 67.69,
-    "functions": 61.85,
-    "branches": 60.21
+    "lines": 0,
+    "statements": 0,
+    "functions": 0,
+    "branches": 0
   },
   "duplication": {
     "percent": 1.34,
