@@ -1,9 +1,7 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { QUERY_KEYS } from "@/hooks/fundingPlatformQueryKeys";
-import {
-  fundingApplicationsAPI,
-  type IApplicationFilters,
-} from "@/services/fundingPlatformService";
+import type { IApplicationFilters } from "@/services/fundingPlatformService";
+import { getReviewerInbox } from "@/services/reviewerInboxService";
 import type { IReviewerInboxResponse } from "@/types/funding-platform";
 
 interface UseReviewerInboxOptions {
@@ -39,7 +37,7 @@ export function useReviewerInbox(
 
   const query = useQuery<IReviewerInboxResponse>({
     queryKey: QUERY_KEYS.reviewerInbox(communityId, filters),
-    queryFn: () => fundingApplicationsAPI.getReviewerInbox(communityId, filters),
+    queryFn: () => getReviewerInbox(communityId, filters),
     enabled: Boolean(communityId) && enabled,
     // Keep the previous page visible while a new page/filter loads to avoid
     // list flicker in the master pane.

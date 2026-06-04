@@ -132,7 +132,7 @@ function InlineAIEvaluation({ milestone }: { milestone: GrantMilestoneWithComple
   );
 }
 
-export interface InboxMilestoneDetailProps {
+interface InboxMilestoneDetailProps {
   /** Project UID (or slug) used to fetch the grant's milestones. */
   projectUid: string;
   /** Program id (supports composite "id_chainId"); identifies the grant. */

@@ -4,7 +4,7 @@ import React, { type FC } from "react";
 import { cn } from "@/utilities/tailwind";
 
 /** Visual tones for the Inbox header stat pills. */
-export type StatPillTone = "brand" | "red" | "amber" | "green";
+type StatPillTone = "brand" | "red" | "amber" | "green";
 
 const ICON_WRAP: Record<StatPillTone, string> = {
   brand: "bg-teal-50 text-teal-600 dark:bg-teal-900/30 dark:text-teal-300",

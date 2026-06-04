@@ -12,7 +12,7 @@ export interface UseInboxFeedOptions {
   applicationFilters?: IApplicationFilters;
 }
 
-export interface UseInboxFeedResult {
+interface UseInboxFeedResult {
   items: InboxItem[];
   stats: InboxStats;
   isLoading: boolean;
