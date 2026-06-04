@@ -788,4 +788,14 @@ export const INDEXER = {
       pageSize: number
     ) => `/v2/sitemap?kind=${kind}&page=${page}&pageSize=${pageSize}`,
   },
+  DONOR_RESEARCH: {
+    ME: "/v2/donor-research/me",
+    HANDLES: "/v2/donor-research/handles",
+    HANDLE_BY_ID: (handleId: string) => `/v2/donor-research/handles/${handleId}`,
+    REPORTS: "/v2/donor-research/reports",
+    REPORT_BY_ID: (reportId: string) => `/v2/donor-research/reports/${reportId}`,
+    REPORT_STREAM: (reportId: string) => `/v2/donor-research/reports/${reportId}/stream`,
+    SHARE_TOKEN: (reportId: string) => `/v2/donor-research/reports/${reportId}/share-token`,
+    SHARED: (token: string) => `/v2/donor-research/shared/${token}`,
+  },
 };
