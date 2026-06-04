@@ -59,14 +59,9 @@ export function useAskKarmaPersona(communityId?: string): AskKarmaPersona {
     enabled: Boolean(authenticated && communityId),
   });
 
-  const isReviewer = useMemo(
-    () => isReviewerForCommunity(programs, communityId),
-    [programs, communityId]
-  );
-
   return useMemo<AskKarmaPersona>(() => {
     if (!authenticated) return "visitor";
-    if (isReviewer || isCommunityAdmin) return "reviewer";
+    if (isReviewerForCommunity(programs, communityId) || isCommunityAdmin) return "reviewer";
     return "grantee";
-  }, [authenticated, isReviewer, isCommunityAdmin]);
+  }, [authenticated, programs, communityId, isCommunityAdmin]);
 }
