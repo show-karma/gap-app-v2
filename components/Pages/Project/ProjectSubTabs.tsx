@@ -4,19 +4,22 @@ import { useMemo } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useProjectStore } from "@/store";
 import { useEndorsementStore } from "@/store/modals/endorsement";
+import { compareAllWallets } from "@/utilities/auth/compare-all-wallets";
 import { EndorsementList } from "../ProgramRegistry/EndorsementList";
 
 export const ProjectSubTabs = () => {
   const project = useProjectStore((state) => state.project);
   const { setIsEndorsementOpen: setIsOpen } = useEndorsementStore();
-  const { address, isConnected, authenticated: isAuth, login } = useAuth();
+  const { address, isConnected, authenticated: isAuth, user, login } = useAuth();
 
   const userHasEndorsed = useMemo(() => {
-    if (!address || !isConnected || !isAuth || !project?.endorsements?.length) return false;
+    if (!isConnected || !isAuth || !user || !project?.endorsements?.length) return false;
+    // Match against ALL the user's linked wallets — an endorsement made with one
+    // embedded/linked wallet must still register when acting with another.
     return project.endorsements.some(
-      (endorsement) => endorsement.recipient?.toLowerCase() === address.toLowerCase()
+      (endorsement) => endorsement.recipient && compareAllWallets(user, endorsement.recipient)
     );
-  }, [address, isConnected, isAuth, project?.endorsements]);
+  }, [user, isConnected, isAuth, project?.endorsements]);
   return (
     <div className="flex flex-col border border-zinc-300 rounded-xl w-full">
       <div className="flex flex-row gap-1 justify-between items-center border-b border-b-zinc-300">

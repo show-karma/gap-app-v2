@@ -2,7 +2,7 @@
 
 import type { FC } from "react";
 import { useGrantCompletionRevoke } from "@/hooks/useGrantCompletionRevoke";
-import { useIsCommunityAdmin } from "@/src/core/rbac/context/permission-context";
+import { useScopedCommunityAdmin } from "@/src/core/rbac/hooks/use-resource-access";
 import { useOwnerStore, useProjectStore } from "@/store";
 import type { Grant } from "@/types/v2/grant";
 import type { Project as ProjectResponse } from "@/types/v2/project";
@@ -22,7 +22,9 @@ export const GrantCompleteButton: FC<GrantCompleteProps> = ({
 }) => {
   const isOwner = useOwnerStore((state) => state.isOwner);
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
-  const isCommunityAdmin = useIsCommunityAdmin();
+  // Scope community-admin to THIS grant's community (fixes the bug where a
+  // community admin of any community could complete any grant).
+  const { isCommunityAdmin } = useScopedCommunityAdmin(grant.communityUID, grant.chainID);
   const isAuthorized = isOwner || isProjectAdmin || isCommunityAdmin;
 
   const { revokeCompletion, isRevoking } = useGrantCompletionRevoke({

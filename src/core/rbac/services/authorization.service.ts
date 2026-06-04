@@ -29,6 +29,7 @@ export interface GetPermissionsParams {
   programId?: string;
   applicationId?: string;
   milestoneId?: string;
+  projectId?: string;
   chainId?: number;
 }
 

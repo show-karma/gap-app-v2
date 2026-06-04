@@ -182,6 +182,7 @@ export const INDEXER = {
         programId?: string;
         applicationId?: string;
         milestoneId?: string;
+        projectId?: string;
         chainId?: number;
       }) => {
         const queryParams = new URLSearchParams();
@@ -189,6 +190,7 @@ export const INDEXER = {
         if (params?.programId) queryParams.set("programId", params.programId);
         if (params?.applicationId) queryParams.set("applicationId", params.applicationId);
         if (params?.milestoneId) queryParams.set("milestoneId", params.milestoneId);
+        if (params?.projectId) queryParams.set("projectId", params.projectId);
         if (params?.chainId !== undefined) queryParams.set("chainId", params.chainId.toString());
         const query = queryParams.toString();
         return `/v2/auth/permissions${query ? `?${query}` : ""}`;
