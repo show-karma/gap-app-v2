@@ -28,14 +28,10 @@ describe("app/sitemaps/static/sitemap.ts", () => {
     expect(homepage?.changeFrequency).toBe("daily");
   });
 
-  it("downgrades privacy/terms/dashboard to yearly low-priority entries", async () => {
+  it("downgrades privacy/terms to yearly low-priority entries", async () => {
     const { default: staticSitemap } = await import("@/app/sitemaps/static/sitemap");
     const entries = staticSitemap();
-    const lowPriorityUrls = [
-      `${SITE_URL}/privacy-policy`,
-      `${SITE_URL}/terms-and-conditions`,
-      `${SITE_URL}/dashboard`,
-    ];
+    const lowPriorityUrls = [`${SITE_URL}/privacy-policy`, `${SITE_URL}/terms-and-conditions`];
     for (const url of lowPriorityUrls) {
       const entry = entries.find((e) => e.url === url);
       expect(entry?.priority).toBe(0.3);

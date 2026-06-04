@@ -47,23 +47,16 @@ vi.mock(
   })
 );
 
-vi.mock("@/features/programs/components/program-list", () => ({
-  ProgramList: () => <div data-testid="program-list">ProgramList</div>,
-}));
-
-vi.mock("@/features/programs/components/program-filters", () => ({
-  ProgramFilters: () => <div data-testid="program-filters">ProgramFilters</div>,
-}));
-
-vi.mock("@/features/programs/hooks/use-programs", () => ({
+vi.mock("@/src/features/programs/hooks/use-programs", () => ({
   usePrograms: () => ({
     programs: [],
     loading: false,
     error: null,
     filters: {},
     setFilters: vi.fn(),
-    totalCount: 0,
     refetch: vi.fn(),
+    hasMore: false,
+    totalCount: 0,
   }),
 }));
 
@@ -286,18 +279,22 @@ describe("Community client pages", () => {
     await renderClientPage(
       () => import("@/app/community/[communityId]/(with-header)/browse-applications/page")
     );
+    // The page itself is a thin shell: the heading and all UI now live inside
+    // BrowseApplicationsClient (mocked here), so the page-level smoke check is
+    // simply that the client component mounts.
     expect(screen.getByTestId("browse-applications-client")).toBeInTheDocument();
-    expect(
-      screen.getByRole("heading", { name: /browse applications/i, level: 1 })
-    ).toBeInTheDocument();
   });
 
-  it("/(with-header)/funding-opportunities renders ProgramList", async () => {
+  it("/(with-header)/funding-opportunities renders the funding hero", async () => {
     await renderClientPage(
       () => import("@/app/community/[communityId]/(with-header)/funding-opportunities/page")
     );
-    expect(screen.getByTestId("program-list")).toBeInTheDocument();
-    expect(screen.getByTestId("program-filters")).toBeInTheDocument();
+    // With no programs the page renders its hero (PageHero <h1>) plus the
+    // empty state — assert the hero heading and empty-state copy are present.
+    expect(
+      screen.getByRole("heading", { name: /funding opportunities/i, level: 1 })
+    ).toBeInTheDocument();
+    expect(screen.getByText(/no programs available/i)).toBeInTheDocument();
   });
 
   it("/manage/program-scores renders ProgramScoresUpload", async () => {

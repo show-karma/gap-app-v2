@@ -177,17 +177,21 @@ vi.mock("@/components/Utilities/Button", () => ({
   ),
 }));
 
-// lucide-react icons for ProgramList and Select component
+// lucide-react icons used across the funding-opportunities page and its
+// child components (FeaturedProgram, EditorialProgramCard, toolbar, states).
 vi.mock("lucide-react", () => ({
   AlertCircle: () => <span data-testid="icon-alert" />,
   FileText: () => <span data-testid="icon-file" />,
   RefreshCw: () => <span data-testid="icon-refresh" />,
   Search: () => <span data-testid="icon-search" />,
   Calendar: () => <span data-testid="icon-calendar" />,
+  CalendarClock: () => <span data-testid="icon-calendar-clock" />,
   Coins: () => <span data-testid="icon-coins" />,
   ChevronDown: () => <span data-testid="icon-chevron-down" />,
   ChevronUp: () => <span data-testid="icon-chevron-up" />,
   Check: () => <span data-testid="icon-check" />,
+  ArrowRight: () => <span data-testid="icon-arrow-right" />,
+  Users: () => <span data-testid="icon-users" />,
 }));
 
 // ── MSW lifecycle ──
@@ -738,7 +742,8 @@ describe("Multi-Step Navigation Journey Tests", () => {
         })
       );
 
-      // Step 1: Render and wait for programs to load
+      // Step 1: Render and wait for programs to load. The first program is
+      // rendered in the FeaturedProgram hero; the rest as editorial cards.
       const Page = await importPage();
       renderWithProviders(<Page />);
 
@@ -752,28 +757,31 @@ describe("Multi-Step Navigation Journey Tests", () => {
       // All 3 programs visible
       expect(screen.getByText("Builder Grants")).toBeInTheDocument();
       expect(screen.getByText("DeFi Incentives Program")).toBeInTheDocument();
-      expect(screen.getByText("3 programs found")).toBeInTheDocument();
 
-      // Step 2: Type in the search/filter input
-      const searchInput = screen.getByPlaceholderText("Search programs...");
+      // Step 2: Type in the search/filter input (filtering is client-side)
+      const searchInput = screen.getByPlaceholderText("Search programs…");
       await user.type(searchInput, "Builder");
 
-      // Step 3: Wait for the filter to apply (debounced at 300ms)
+      // Step 3: Wait for the filter to apply — only Builder Grants remains,
+      // so the other programs disappear from the list.
       await waitFor(
         () => {
-          expect(screen.getByText("1 program found")).toBeInTheDocument();
+          expect(screen.queryByText("RetroPGF Round 5")).not.toBeInTheDocument();
         },
         { timeout: 3000 }
       );
 
-      // Only Builder Grants should be visible
+      // Only Builder Grants should be visible. As the single remaining
+      // program it is promoted to the FeaturedProgram hero (heading), whose
+      // call-to-action links to the program detail page.
       expect(screen.getByText("Builder Grants")).toBeInTheDocument();
-      expect(screen.queryByText("RetroPGF Round 5")).not.toBeInTheDocument();
       expect(screen.queryByText("DeFi Incentives Program")).not.toBeInTheDocument();
 
-      // Step 4: Click the matching program card
-      const programLink = screen.getByTestId("program-card-Builder Grants");
-      expect(programLink).toHaveAttribute("href", expect.stringContaining("builder-grants"));
+      // Step 4: The featured program's links point at its detail page.
+      const detailLinks = screen
+        .getAllByRole("link")
+        .filter((link) => link.getAttribute("href")?.includes("builder-grants"));
+      expect(detailLinks.length).toBeGreaterThanOrEqual(1);
     });
 
     it("filters by status, clears filter, then searches by text", async () => {
@@ -817,48 +825,64 @@ describe("Multi-Step Navigation Journey Tests", () => {
       const Page = await importPage();
       renderWithProviders(<Page />);
 
-      // Step 1: Default filter is "active", so only active program shows
+      // Step 1: With no status in the URL, the page seeds the "All" status
+      // tab, so every program is visible on first load.
       await waitFor(
         () => {
           expect(screen.getByText("Active Program")).toBeInTheDocument();
         },
         { timeout: 5000 }
       );
-      expect(screen.queryByText("Ended Program")).not.toBeInTheDocument();
-
-      // Step 2: Change status filter to "All Status" to see all programs
-      const statusSelect = screen.getByRole("combobox", { name: /status/i });
-      await user.selectOptions(statusSelect, "all");
-
-      await waitFor(() => {
-        expect(screen.getByText("2 programs found")).toBeInTheDocument();
-      });
-
-      expect(screen.getByText("Active Program")).toBeInTheDocument();
       expect(screen.getByText("Ended Program")).toBeInTheDocument();
 
-      // Step 3: Type in search to filter the "all status" results
-      const searchInput = screen.getByPlaceholderText("Search programs...");
+      // Step 2: Narrow to the "Open" status tab — only the active program
+      // (within date range and accepting applications) should remain.
+      const openTab = screen.getByRole("tab", { name: /^open$/i });
+      await user.click(openTab);
+
+      await waitFor(() => {
+        expect(screen.queryByText("Ended Program")).not.toBeInTheDocument();
+      });
+      expect(screen.getByText("Active Program")).toBeInTheDocument();
+
+      // Step 3: Switch back to "All" and search by text to filter results.
+      const allTab = screen.getByRole("tab", { name: /^all$/i });
+      await user.click(allTab);
+
+      await waitFor(() => {
+        expect(screen.getByText("Ended Program")).toBeInTheDocument();
+      });
+
+      const searchInput = screen.getByPlaceholderText("Search programs…");
       await user.type(searchInput, "Ended");
 
       await waitFor(
         () => {
-          expect(screen.getByText("1 program found")).toBeInTheDocument();
+          expect(screen.queryByText("Active Program")).not.toBeInTheDocument();
         },
         { timeout: 3000 }
       );
 
-      expect(screen.queryByText("Active Program")).not.toBeInTheDocument();
       expect(screen.getByText("Ended Program")).toBeInTheDocument();
 
-      // Step 4: Clear all filters
+      // Step 4: Searching for a non-matching term yields the filtered-empty
+      // state, which exposes a "Clear filters" action.
+      await user.clear(searchInput);
+      await user.type(searchInput, "ZZZNoMatch");
+
+      await waitFor(
+        () => {
+          expect(screen.getByText("More opportunities are on the way")).toBeInTheDocument();
+        },
+        { timeout: 3000 }
+      );
+
       const clearButton = screen.getByRole("button", { name: /clear filters/i });
       await user.click(clearButton);
 
-      // After clearing, the default status "active" from store is reset,
-      // search is cleared, so the store goes back to initial state
+      // After clearing, the search input is emptied and programs reappear.
       await waitFor(() => {
-        const searchInputAfterClear = screen.getByPlaceholderText("Search programs...");
+        const searchInputAfterClear = screen.getByPlaceholderText("Search programs…");
         expect(searchInputAfterClear).toHaveValue("");
       });
     });
@@ -891,7 +915,7 @@ describe("Multi-Step Navigation Journey Tests", () => {
       const Page = await importPage();
       renderWithProviders(<Page />);
 
-      // Step 1: See the program
+      // Step 1: See the program (rendered as the featured hero).
       await waitFor(
         () => {
           expect(screen.getByText("Only Program")).toBeInTheDocument();
@@ -899,21 +923,19 @@ describe("Multi-Step Navigation Journey Tests", () => {
         { timeout: 5000 }
       );
 
-      expect(screen.getByText("1 program found")).toBeInTheDocument();
-
       // Step 2: Search for something that doesn't match
-      const searchInput = screen.getByPlaceholderText("Search programs...");
+      const searchInput = screen.getByPlaceholderText("Search programs…");
       await user.type(searchInput, "ZZZNonExistent");
 
-      // Step 3: Wait for empty state
+      // Step 3: Wait for the filtered-empty state
       await waitFor(
         () => {
-          expect(screen.getByText("No programs available")).toBeInTheDocument();
+          expect(screen.getByText("More opportunities are on the way")).toBeInTheDocument();
         },
         { timeout: 3000 }
       );
 
-      expect(screen.getByText("0 programs found")).toBeInTheDocument();
+      expect(screen.queryByText("Only Program")).not.toBeInTheDocument();
 
       // Step 4: Clear the search
       await user.clear(searchInput);
@@ -925,8 +947,6 @@ describe("Multi-Step Navigation Journey Tests", () => {
         },
         { timeout: 3000 }
       );
-
-      expect(screen.getByText("1 program found")).toBeInTheDocument();
     });
   });
 });

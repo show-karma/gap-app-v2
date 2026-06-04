@@ -59,6 +59,17 @@ vi.mock("@/components/Pages/Community/Updates/MilestoneCompletionInfo", () => ({
   ),
 }));
 
+// Mock MilestoneAIEvaluationBadge component (it uses React Query internally)
+vi.mock("@/components/Milestone/MilestoneAIEvaluationBadge", () => ({
+  MilestoneAIEvaluationBadge: ({ milestoneUID, completionReason }: any) => (
+    <div
+      data-testid="milestone-ai-evaluation-badge"
+      data-milestone-uid={milestoneUID}
+      data-completion-reason={completionReason}
+    />
+  ),
+}));
+
 // Mock Heroicons
 vi.mock("@heroicons/react/24/outline", () => ({
   CheckCircleIcon: ({ className }: any) => (

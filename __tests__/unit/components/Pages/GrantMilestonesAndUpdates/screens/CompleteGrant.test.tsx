@@ -166,9 +166,10 @@ const mockProject = {
 } as any;
 
 vi.mock("@/store/grant", () => ({
-  useGrantStore: vi.fn(() => ({
-    grant: mockGrant,
-  })),
+  useGrantStore: vi.fn((selector?: any) => {
+    const state = { grant: mockGrant };
+    return selector ? selector(state) : state;
+  }),
 }));
 
 vi.mock("@/store", () => ({

@@ -9,6 +9,7 @@ import { HttpResponse, http } from "msw";
 import { installMswLifecycle, server } from "@/__tests__/msw/server";
 import { renderWithProviders } from "@/__tests__/utils/render";
 import { CommunityStatCards } from "@/components/Pages/Communities/Impact/StatCards";
+import { TokenManager } from "@/utilities/auth/token-manager";
 
 const BASE = "http://localhost:4000";
 
@@ -40,6 +41,16 @@ describe("CommunityStatCards", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockProgramId = null;
+    // fetchData() awaits TokenManager.getToken() for the authorized indexer
+    // call. With no Privy instance registered, getToken() blocks on a 3s
+    // waitForInstance() timeout, which outruns waitFor's default and leaves the
+    // component stuck in its loading skeleton. Register a stub instance so the
+    // token resolves immediately and the query can settle within assertions.
+    TokenManager.setPrivyInstance({ getAccessToken: async () => null });
+  });
+
+  afterEach(() => {
+    TokenManager.setPrivyInstance(null);
   });
 
   describe("loading state", () => {
