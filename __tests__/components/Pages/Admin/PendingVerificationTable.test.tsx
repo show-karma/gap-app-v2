@@ -3,6 +3,7 @@
  */
 
 import { render, screen } from "@testing-library/react";
+import type { ReactNode } from "react";
 import {
   getEmptyStateMessage,
   PendingVerificationTable,
@@ -17,11 +18,11 @@ vi.mock("@/components/Utilities/TablePagination", () => ({
 }));
 
 vi.mock("@/src/components/navigation/Link", () => ({
-  Link: ({ children }: { children: React.ReactNode }) => <a href="#">{children}</a>,
+  Link: ({ children }: { children: ReactNode }) => <a href="#">{children}</a>,
 }));
 
 vi.mock("@/components/Utilities/ExternalLink", () => ({
-  ExternalLink: ({ children }: { children: React.ReactNode }) => <a href="#">{children}</a>,
+  ExternalLink: ({ children }: { children: ReactNode }) => <a href="#">{children}</a>,
 }));
 
 function makeMilestone(
@@ -123,9 +124,11 @@ describe("PendingVerificationTable empty state", () => {
         makeMilestone({ milestoneUid: "0xb", grantUid: "0xg2" }),
       ];
 
-      render(<PendingVerificationTable {...baseProps} milestones={milestones} totalItems={2} />);
+      // API total deliberately differs from the rendered row count: the badge
+      // and pagination must reflect totalItems, never milestones.length.
+      render(<PendingVerificationTable {...baseProps} milestones={milestones} totalItems={57} />);
 
-      expect(screen.getByTestId("table-pagination")).toHaveAttribute("data-total", "2");
+      expect(screen.getByTestId("table-pagination")).toHaveAttribute("data-total", "57");
     });
   });
 });
