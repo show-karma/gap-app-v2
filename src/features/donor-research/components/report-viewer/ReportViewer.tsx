@@ -8,6 +8,7 @@ import { PAGES } from "@/utilities/pages";
 import { DonorResearchLoading } from "../common/DonorResearchLoading";
 import { StatusBadge } from "../report-list/StatusBadge";
 import { CandidateCard } from "./CandidateCard";
+import { FailedReportBanner } from "./FailedReportBanner";
 import { ProgressTimeline } from "./ProgressTimeline";
 import { ShareTokenControls } from "./ShareTokenControls";
 
@@ -85,12 +86,7 @@ export function ReportViewer({ reportId }: ReportViewerProps) {
         </section>
       ) : null}
 
-      {report.errorMessage ? (
-        <div className="mb-6 rounded-md border border-red-300 bg-red-50 p-4 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200">
-          <strong className="block">Report failed</strong>
-          {report.errorMessage}
-        </div>
-      ) : null}
+      {report.status === "failed" ? <FailedReportBanner report={report} /> : null}
 
       <section className="mb-8">
         <h2 className="mb-3 text-lg font-semibold">Top recommendations</h2>

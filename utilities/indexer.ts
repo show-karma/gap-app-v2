@@ -790,6 +790,7 @@ export const INDEXER = {
   },
   DONOR_RESEARCH: {
     ME: "/v2/donor-research/me",
+    ME_COUNTERS: "/v2/donor-research/me/counters",
     HANDLES: "/v2/donor-research/handles",
     HANDLE_BY_ID: (handleId: string) => `/v2/donor-research/handles/${handleId}`,
     REPORTS: "/v2/donor-research/reports",

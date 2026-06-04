@@ -1,12 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   fetchCurrentAdvisor,
+  fetchMyCounters,
   type OnboardAdvisorRequest,
   onboardAdvisor,
 } from "@/services/donor-research.service";
-import type { DonorAdvisor } from "@/types/donor-research";
+import type { DonorAdvisor, DonorResearchCountersSnapshot } from "@/types/donor-research";
 
 export const donorAdvisorQueryKey = ["donor-research", "advisor", "me"] as const;
+export const donorCountersQueryKey = ["donor-research", "advisor", "counters"] as const;
 
 /**
  * Loads the current advisor row.
@@ -21,6 +23,22 @@ export function useDonorAdvisor() {
     queryKey: donorAdvisorQueryKey,
     queryFn: fetchCurrentAdvisor,
     staleTime: 5 * 60_000, // advisor row rarely changes
+  });
+}
+
+/**
+ * Today's rate-limit counters for the current advisor. Auto-refetches
+ * every 60 seconds while the page is open so the header chip reflects
+ * recently-consumed budget. Backend gracefully returns a `degraded`
+ * snapshot when Redis is unreachable instead of throwing.
+ */
+export function useDonorCounters(enabled: boolean) {
+  return useQuery<DonorResearchCountersSnapshot>({
+    queryKey: donorCountersQueryKey,
+    queryFn: fetchMyCounters,
+    enabled,
+    refetchInterval: 60_000,
+    staleTime: 30_000,
   });
 }
 

@@ -2,6 +2,7 @@ import type {
   DonorAdvisor,
   DonorHandle,
   DonorHandleList,
+  DonorResearchCountersSnapshot,
   ReportCreateResponse,
   ResearchReportDetail,
   ResearchReportList,
@@ -62,6 +63,23 @@ export const onboardAdvisor = async (body: OnboardAdvisorRequest): Promise<Donor
   const [data, error] = await fetchData<DonorAdvisor>(INDEXER.DONOR_RESEARCH.ME, "POST", body);
   if (error || !data) {
     throw new Error(error || "Failed to onboard advisor");
+  }
+  return data;
+};
+
+/**
+ * Today's per-channel rate-limit counters + tier caps. Refreshed on each
+ * page mount and after a successful report create so the
+ * `RateLimitCounter` chip reflects what enforcement sees. `degraded`
+ * true means Redis was unreachable on the backend — the chip should
+ * still render but with a "—" usage value.
+ */
+export const fetchMyCounters = async (): Promise<DonorResearchCountersSnapshot> => {
+  const [data, error] = await fetchData<DonorResearchCountersSnapshot>(
+    INDEXER.DONOR_RESEARCH.ME_COUNTERS
+  );
+  if (error || !data) {
+    throw new Error(error || "Failed to load rate-limit counters");
   }
   return data;
 };

@@ -39,6 +39,20 @@ export interface DonorAdvisor {
   updatedAt: string;
 }
 
+export interface DonorResearchCounterChannel {
+  used: number;
+  cap: number | null;
+}
+
+export interface DonorResearchCountersSnapshot {
+  advisorId: string;
+  tier: DonorResearchRateLimitTier;
+  fast: DonorResearchCounterChannel;
+  deep: DonorResearchCounterChannel;
+  resetsAt: string;
+  degraded: boolean;
+}
+
 export interface DonorHandle {
   id: string;
   advisorId: string;

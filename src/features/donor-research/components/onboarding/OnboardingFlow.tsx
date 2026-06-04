@@ -8,6 +8,7 @@ import { z } from "zod";
 import { useDonorAdvisor, useOnboardAdvisor } from "@/hooks/useDonorAdvisor";
 import { PAGES } from "@/utilities/pages";
 import { DonorResearchLoading } from "../common/DonorResearchLoading";
+import { SampleReportPreview } from "./SampleReportPreview";
 
 const TIMEZONE_REGEX = /^[A-Za-z_/+\-0-9]{1,64}$/;
 
@@ -241,10 +242,7 @@ function SampleStep({ onBack, onContinue }: { onBack: () => void; onContinue: ()
         recommendations have a one-pager; the full ranked list sits below with per-candidate score
         breakdowns.
       </p>
-      <div className="rounded-md border border-dashed border-border bg-muted/30 p-6 text-center text-sm text-muted-foreground">
-        Sample report preview placeholder. In production this renders an illustrated screenshot of a
-        real report.
-      </div>
+      <SampleReportPreview />
       <div className="mt-6 flex justify-between">
         <button
           type="button"
