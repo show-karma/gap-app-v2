@@ -10,7 +10,7 @@
  */
 
 import type { CommunityReviewer } from "@/hooks/useCommunityMilestoneReviewers";
-import { computeDefaultReviewerAddress } from "@/hooks/useReportPageData";
+import { computeDefaultReviewerAddress, getPendingTableResetKey } from "@/hooks/useReportPageData";
 
 describe("useReportPageData reviewer filter logic (address-based)", () => {
   const userAddress = "0x1234567890abcdef1234567890abcdef12345678";
@@ -108,6 +108,38 @@ describe("useReportPageData reviewer filter logic (address-based)", () => {
     it("user not in reviewer list defaults to seeing all milestones", () => {
       const reviewers = [makeReviewer(otherAddress)];
       expect(computeDefaultReviewerAddress(reviewers, userAddress)).toBeUndefined();
+    });
+  });
+
+  // DEV-365: the pending table must fully remount when the filter changes so a
+  // row from a previous reviewer/program/page can't survive list reconciliation.
+  describe("getPendingTableResetKey", () => {
+    it("changes when the reviewer changes", () => {
+      const all = getPendingTableResetKey(undefined, [], 1);
+      const scoped = getPendingTableResetKey(userAddress, [], 1);
+      expect(all).not.toBe(scoped);
+    });
+
+    it("changes when the selected programs change", () => {
+      const noProgram = getPendingTableResetKey(userAddress, [], 1);
+      const withProgram = getPendingTableResetKey(userAddress, ["992"], 1);
+      expect(noProgram).not.toBe(withProgram);
+    });
+
+    it("changes when the page changes", () => {
+      expect(getPendingTableResetKey(userAddress, ["992"], 1)).not.toBe(
+        getPendingTableResetKey(userAddress, ["992"], 2)
+      );
+    });
+
+    it("is stable regardless of program-id ordering", () => {
+      expect(getPendingTableResetKey(userAddress, ["992", "1"], 1)).toBe(
+        getPendingTableResetKey(userAddress, ["1", "992"], 1)
+      );
+    });
+
+    it("treats 'all reviewers' (undefined) distinctly from a specific address", () => {
+      expect(getPendingTableResetKey(undefined, ["992"], 1)).toBe("all-992-1");
     });
   });
 });
