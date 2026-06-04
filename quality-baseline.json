@@ -1,7 +1,7 @@
 {
   "$schema": "./scripts/quality-baseline.schema.json",
-  "generatedAt": "2026-05-22T12:27:06.613Z",
-  "generatedFromCommit": "c0f93c25e3065c28299a8be0a3468014d8efbb49",
+  "generatedAt": "2026-06-04T00:00:00.000Z",
+  "generatedFromCommit": "3a950c7",
   "coverage": {
     "lines": 0,
     "statements": 0,
