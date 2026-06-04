@@ -39,7 +39,7 @@ export function AskKarmaPage({ config, communityId }: AskKarmaPageProps) {
   // Tailor the start-screen prompts to the visitor (signed out vs. reviewer
   // vs. grantee) on top of the tenant config resolved on the server. Only the
   // example questions change, so the rest of the config flows through.
-  const persona = useAskKarmaPersona();
+  const persona = useAskKarmaPersona(communityId);
   const startConfig = useMemo<AskKarmaConfig>(
     () => ({ ...config, exampleQuestions: selectAskKarmaQuestions(config, persona) }),
     [config, persona]

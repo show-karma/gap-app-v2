@@ -1,66 +1,42 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
+import { useIsCommunityAdmin } from "@/hooks/communities/useIsCommunityAdmin";
 import { useAuth } from "@/hooks/useAuth";
 import { usePermissions } from "@/hooks/usePermissions";
-import fetchData from "@/utilities/fetchData";
-import { INDEXER } from "@/utilities/indexer";
 import type { AskKarmaPersona } from "../types";
-
-interface AdminCommunitiesResponse {
-  communities?: unknown[];
-}
-
-/**
- * Whether the connected wallet administers any community. The Ask Karma page
- * isn't always community-scoped, so we can't lean on the context RBAC
- * (`isCommunityAdmin`) — we read the cross-community admin list directly.
- *
- * Deliberately lightweight: just the list, no per-community metrics fan-out
- * (unlike `useDashboardAdmin`) and no global-store writes (unlike
- * `useAdminCommunities`) — this only needs a boolean to pick prompt chips.
- */
-function useIsCommunityAdminAnywhere(): boolean {
-  const { authenticated, address } = useAuth();
-  const { data } = useQuery({
-    queryKey: ["ask-karma-admin-communities", address],
-    enabled: Boolean(authenticated && address),
-    staleTime: 5 * 60 * 1000,
-    queryFn: async () => {
-      const [response] = await fetchData<AdminCommunitiesResponse>(
-        INDEXER.V2.USER.ADMIN_COMMUNITIES()
-      );
-      return (response?.communities?.length ?? 0) > 0;
-    },
-  });
-  return data ?? false;
-}
 
 /**
  * Resolves the Ask Karma audience from the visitor's sign-in state and role,
  * so the start screen can surface prompts that match where they are:
  *
- * - signed out                           → `visitor`
- * - signed in + reviewer OR community admin → `reviewer`
- * - signed in (everyone else)            → `grantee`
+ * - signed out                              → `visitor`
+ * - signed in + reviewer OR admin of tenant → `reviewer`
+ * - signed in (everyone else)               → `grantee`
  *
  * Reviewers and community admins share the same prompt set: both ask
  * operational, review-side questions (pending reviews, evaluation criteria,
  * access) rather than grantee questions about submitting their own work.
  *
- * Both role checks are top-level (no community context required), which suits
- * this page. While they're in flight we keep the `grantee` default (the common
- * case), so prompts settle on `reviewer` once a role resolves rather than
- * flashing the wrong copy first.
+ * Admin status is scoped to the page's own community (`communityId` — the
+ * whitelabel tenant or the `/community/[id]` route). Being an admin of some
+ * *other* community is irrelevant here, so this only flips to `reviewer` for
+ * admins of the community whose Ask Karma page they're on. Reviewer status is
+ * program-level (no community scope), which is the only signal available.
+ *
+ * While the role checks are in flight we keep the `grantee` default (the
+ * common case), so prompts settle on `reviewer` once a role resolves rather
+ * than flashing the wrong copy first.
  */
-export function useAskKarmaPersona(): AskKarmaPersona {
+export function useAskKarmaPersona(communityId?: string): AskKarmaPersona {
   const { authenticated } = useAuth();
   const { hasRole: isReviewer } = usePermissions({
     role: "reviewer",
     enabled: authenticated,
   });
-  const isCommunityAdmin = useIsCommunityAdminAnywhere();
+  const { isCommunityAdmin } = useIsCommunityAdmin(communityId, undefined, {
+    enabled: Boolean(authenticated && communityId),
+  });
 
   return useMemo<AskKarmaPersona>(() => {
     if (!authenticated) return "visitor";
