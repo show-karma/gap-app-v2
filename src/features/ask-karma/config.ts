@@ -229,9 +229,13 @@ export function selectAskKarmaQuestions(
   if (reviewer.length === 0) return byPersona.grantee ?? config.exampleQuestions;
 
   const blended = [...reviewer];
+  const seen = new Set(reviewer);
   for (const question of byPersona.grantee ?? []) {
     if (blended.length >= REVIEWER_PROMPT_LIMIT) break;
-    if (!blended.includes(question)) blended.push(question);
+    if (!seen.has(question)) {
+      seen.add(question);
+      blended.push(question);
+    }
   }
   return blended;
 }
