@@ -221,6 +221,31 @@ export const useMilestoneCompletionVerification = ({
     onCachesInvalidated?.();
   };
 
+  // Re-fetch the milestone from the SDK and locate it within its grant, used by
+  // the post-attestation polls to observe on-chain → indexer state transitions.
+  // Returns null until the project, grant, and milestone are all present.
+  const findIndexedMilestone = async (
+    gapClient: GAP,
+    data: ProjectGrantMilestonesResponse,
+    milestone: GrantMilestoneWithCompletion,
+    inputProgramId: string
+  ) => {
+    const normalizedInputId = normalizeProgramId(inputProgramId);
+    const updatedProject = await gapClient.fetch.projectById(data.project.uid);
+
+    if (!updatedProject) return null;
+
+    const updatedGrant = updatedProject.grants.find((g) => {
+      const storedId = g.details?.programId;
+      if (!storedId) return false;
+      return normalizeProgramId(storedId) === normalizedInputId;
+    });
+
+    if (!updatedGrant) return null;
+
+    return updatedGrant.milestones?.find((m) => m.uid === milestone.uid) ?? null;
+  };
+
   const pollForMilestoneStatus = async (
     gapClient: GAP,
     data: ProjectGrantMilestonesResponse,
@@ -230,24 +255,14 @@ export const useMilestoneCompletionVerification = ({
     inputProgramId: string,
     signal?: AbortSignal
   ) => {
-    // Normalize for comparison (supports both programId formats)
-    const normalizedInputId = normalizeProgramId(inputProgramId);
-
     await retryUntilConditionMet(
       async () => {
-        const updatedProject = await gapClient.fetch.projectById(data.project.uid);
-
-        if (!updatedProject) return false;
-
-        const updatedGrant = updatedProject.grants.find((g) => {
-          const storedId = g.details?.programId;
-          if (!storedId) return false;
-          return normalizeProgramId(storedId) === normalizedInputId;
-        });
-
-        if (!updatedGrant) return false;
-
-        const updatedMilestone = updatedGrant.milestones?.find((m) => m.uid === milestone.uid);
+        const updatedMilestone = await findIndexedMilestone(
+          gapClient,
+          data,
+          milestone,
+          inputProgramId
+        );
 
         if (!updatedMilestone) return false;
 
@@ -278,27 +293,16 @@ export const useMilestoneCompletionVerification = ({
     inputProgramId: string,
     signal?: AbortSignal
   ) => {
-    const normalizedInputId = normalizeProgramId(inputProgramId);
-
     await retryUntilConditionMet(
       async () => {
-        const updatedProject = await gapClient.fetch.projectById(data.project.uid);
+        const updatedMilestone = await findIndexedMilestone(
+          gapClient,
+          data,
+          milestone,
+          inputProgramId
+        );
 
-        if (!updatedProject) return false;
-
-        const updatedGrant = updatedProject.grants.find((g) => {
-          const storedId = g.details?.programId;
-          if (!storedId) return false;
-          return normalizeProgramId(storedId) === normalizedInputId;
-        });
-
-        if (!updatedGrant) return false;
-
-        const updatedMilestone = updatedGrant.milestones?.find((m) => m.uid === milestone.uid);
-
-        if (!updatedMilestone) return false;
-
-        return !!updatedMilestone.completed;
+        return !!updatedMilestone?.completed;
       },
       undefined,
       undefined,
@@ -624,13 +628,14 @@ export const useMilestoneCompletionVerification = ({
       showSuccess("Milestone completed successfully!");
 
       onSuccess?.();
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (isAbortError(error)) {
         return;
       }
       console.error("Error completing milestone:", error);
 
-      if (error?.message?.includes("User rejected") || error?.code === 4001) {
+      const walletError = error as { message?: string; code?: number };
+      if (walletError?.message?.includes("User rejected") || walletError?.code === 4001) {
         showError("Completion cancelled");
       } else {
         showError("Failed to complete milestone");

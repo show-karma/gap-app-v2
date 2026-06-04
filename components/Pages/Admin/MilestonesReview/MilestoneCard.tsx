@@ -794,6 +794,7 @@ export function MilestoneCard({
                 value={completionComment}
                 onChange={(e) => onCompletionCommentChange?.(e.target.value)}
                 placeholder="Describe what was completed (optional)..."
+                aria-label={`Completion description for ${milestone.title}`}
                 rows={3}
                 className="w-full px-3 py-2 text-sm border border-blue-300 dark:border-blue-700 rounded-md bg-white dark:bg-zinc-800 text-black dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-blue"
               />
