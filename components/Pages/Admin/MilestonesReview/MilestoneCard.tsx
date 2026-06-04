@@ -144,6 +144,15 @@ interface MilestoneCardProps {
   verificationComment: string;
   isVerifying: boolean;
   canVerifyMilestones: boolean;
+  /**
+   * Completion-on-behalf is opt-in per surface. The Milestones Review page wires
+   * these up for community admins; other surfaces (e.g. the reviewer Inbox) omit
+   * them so the action never renders.
+   */
+  canCompleteMilestones?: boolean;
+  completingMilestoneId?: string | null;
+  completionComment?: string;
+  isCompleting?: boolean;
   canDeleteMilestones: boolean;
   canEditMilestones?: boolean;
   grantUID?: string;
@@ -156,6 +165,10 @@ interface MilestoneCardProps {
   onCancelVerification: () => void;
   onVerificationCommentChange: (comment: string) => void;
   onSubmitVerification: (milestone: GrantMilestoneWithCompletion) => void;
+  onCompleteClick?: (uid: string) => void;
+  onCancelCompletion?: () => void;
+  onCompletionCommentChange?: (comment: string) => void;
+  onSubmitCompletion?: (milestone: GrantMilestoneWithCompletion) => void;
   onRequestChanges?: () => void;
   onDeleteMilestone: (milestone: GrantMilestoneWithCompletion) => Promise<void>;
   isDeleting?: boolean;
@@ -172,6 +185,10 @@ export function MilestoneCard({
   verificationComment,
   isVerifying,
   canVerifyMilestones,
+  canCompleteMilestones = false,
+  completingMilestoneId = null,
+  completionComment = "",
+  isCompleting = false,
   canDeleteMilestones,
   canEditMilestones = false,
   grantUID,
@@ -184,6 +201,10 @@ export function MilestoneCard({
   onCancelVerification,
   onVerificationCommentChange,
   onSubmitVerification,
+  onCompleteClick,
+  onCancelCompletion,
+  onCompletionCommentChange,
+  onSubmitCompletion,
   onRequestChanges,
   onDeleteMilestone,
   isDeleting = false,
@@ -754,6 +775,56 @@ export function MilestoneCard({
             )
           )}
         </>
+      )}
+
+      {/* Complete on behalf of grantee — community admins only, for milestones
+          with no completion yet. The attestation is signed by and attributed to
+          the admin's wallet. */}
+      {!hasCompletion && canCompleteMilestones && (
+        <div className="mb-3">
+          {completingMilestoneId === milestone.uid ? (
+            <div className="p-3 bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800 rounded-md space-y-2">
+              <p className="text-sm font-semibold text-blue-900 dark:text-blue-200">
+                Complete milestone on behalf of grantee
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                This completion is recorded on-chain and attributed to your wallet.
+              </p>
+              <textarea
+                value={completionComment}
+                onChange={(e) => onCompletionCommentChange?.(e.target.value)}
+                placeholder="Describe what was completed (optional)..."
+                rows={3}
+                className="w-full px-3 py-2 text-sm border border-blue-300 dark:border-blue-700 rounded-md bg-white dark:bg-zinc-800 text-black dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-blue"
+              />
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => onSubmitCompletion?.(milestone)}
+                  className="px-3 py-1 text-xs bg-brand-blue hover:bg-brand-blue/90"
+                  disabled={isCompleting}
+                  isLoading={isCompleting}
+                >
+                  Complete
+                </Button>
+                <Button
+                  onClick={() => onCancelCompletion?.()}
+                  className="px-3 py-1 text-xs bg-gray-500 hover:bg-gray-600"
+                  disabled={isCompleting}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <Button
+              onClick={() => onCompleteClick?.(milestone.uid)}
+              className="flex items-center gap-2 px-4 py-2 text-sm bg-brand-blue hover:bg-brand-blue/90"
+            >
+              <CheckCircleIcon className="w-4 h-4" />
+              Complete on behalf of grantee
+            </Button>
+          )}
+        </div>
       )}
 
       {hasCompletion && isEvaluationModalOpen && (

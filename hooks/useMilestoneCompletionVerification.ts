@@ -64,6 +64,7 @@ export const useMilestoneCompletionVerification = ({
   onCachesInvalidated,
 }: UseMilestoneCompletionVerificationParams) => {
   const [isVerifying, setIsVerifying] = useState(false);
+  const [isCompleting, setIsCompleting] = useState(false);
   const { address, chain } = useAccount();
   const { switchChainAsync } = useWallet();
   const { startAttestation, showLoading, showSuccess, showError, changeStepperStep, dismiss } =
@@ -262,6 +263,42 @@ export const useMilestoneCompletionVerification = ({
 
         // Otherwise just check verification
         return !!isVerified;
+      },
+      undefined,
+      undefined,
+      undefined,
+      signal
+    );
+  };
+
+  const pollForCompletionStatus = async (
+    gapClient: GAP,
+    data: ProjectGrantMilestonesResponse,
+    milestone: GrantMilestoneWithCompletion,
+    inputProgramId: string,
+    signal?: AbortSignal
+  ) => {
+    const normalizedInputId = normalizeProgramId(inputProgramId);
+
+    await retryUntilConditionMet(
+      async () => {
+        const updatedProject = await gapClient.fetch.projectById(data.project.uid);
+
+        if (!updatedProject) return false;
+
+        const updatedGrant = updatedProject.grants.find((g) => {
+          const storedId = g.details?.programId;
+          if (!storedId) return false;
+          return normalizeProgramId(storedId) === normalizedInputId;
+        });
+
+        if (!updatedGrant) return false;
+
+        const updatedMilestone = updatedGrant.milestones?.find((m) => m.uid === milestone.uid);
+
+        if (!updatedMilestone) return false;
+
+        return !!updatedMilestone.completed;
       },
       undefined,
       undefined,
@@ -509,8 +546,111 @@ export const useMilestoneCompletionVerification = ({
     }
   };
 
+  /**
+   * Completes a milestone on the grantee's behalf as a community admin.
+   * The completion attestation is signed by — and attributed to — the
+   * admin's connected wallet. Reviewers are not granted this action; that
+   * gating lives in the calling UI.
+   */
+  const completeMilestone = async (
+    milestone: GrantMilestoneWithCompletion,
+    data: ProjectGrantMilestonesResponse,
+    completionComment: string
+  ) => {
+    if (!address || !data) {
+      showError("Please connect your wallet");
+      return;
+    }
+
+    if (!milestone.uid) {
+      showError("Cannot complete milestone without UID");
+      return;
+    }
+
+    controllerRef.current?.abort();
+    const controller = new AbortController();
+    controllerRef.current = controller;
+    const { signal } = controller;
+
+    setIsCompleting(true);
+    startAttestation("Completing milestone...");
+
+    try {
+      changeStepperStep("preparing");
+
+      const chainSetup = await setupChainAndWalletForMilestone(milestone, data);
+      if (!chainSetup) return;
+
+      const { gapClient, walletSigner } = chainSetup;
+
+      const { milestoneInstance, communityUID } = await fetchMilestoneInstance(
+        gapClient,
+        data,
+        milestone
+      );
+
+      const milestoneCompletedSchema = gapClient.findSchema("MilestoneCompleted");
+      const completionAttestation = new MilestoneCompleted({
+        data: sanitizeObject({
+          reason: completionComment || "",
+          proofOfWork: "",
+          type: "completed",
+        }),
+        refUID: milestone.uid as Hex,
+        schema: milestoneCompletedSchema,
+        recipient: milestoneInstance.recipient,
+      });
+      const payloads = [await completionAttestation.payloadFor(0)];
+
+      changeStepperStep("pending");
+
+      const result = await GapContract.multiAttest(walletSigner, payloads, changeStepperStep);
+
+      changeStepperStep("indexing");
+
+      const txHash = result?.tx[0]?.hash || undefined;
+      await notifyIndexerAndInvalidateCache(
+        txHash,
+        milestoneInstance.chainID,
+        payloads.length,
+        communityUID
+      );
+
+      await pollForCompletionStatus(gapClient, data, milestone, programId, signal);
+
+      if (signal.aborted) return;
+
+      changeStepperStep("indexed");
+      showSuccess("Milestone completed successfully!");
+
+      onSuccess?.();
+    } catch (error: any) {
+      if (isAbortError(error)) {
+        return;
+      }
+      console.error("Error completing milestone:", error);
+
+      if (error?.message?.includes("User rejected") || error?.code === 4001) {
+        showError("Completion cancelled");
+      } else {
+        showError("Failed to complete milestone");
+        errorManager("Error completing milestone", error, {
+          milestoneUID: milestone.uid,
+          address,
+        });
+      }
+    } finally {
+      if (!signal.aborted) {
+        setIsCompleting(false);
+      }
+      dismiss();
+    }
+  };
+
   return {
     verifyMilestone,
     isVerifying,
+    completeMilestone,
+    isCompleting,
   };
 };
