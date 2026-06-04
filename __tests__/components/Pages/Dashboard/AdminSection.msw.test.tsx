@@ -45,6 +45,18 @@ vi.mock("@/src/components/navigation/Link", () => ({
   ),
 }));
 
+// Mock TokenManager — fetchData awaits TokenManager.getToken() for authorized
+// indexer requests. In jsdom there's no registered Privy instance, so the real
+// implementation blocks on a 3s waitForInstance() bootstrap window, which pushes
+// the request past waitFor's default timeout and leaves the component stuck in
+// its loading state. Resolve the token immediately so the MSW-backed request fires.
+vi.mock("@/utilities/auth/token-manager", () => ({
+  TokenManager: {
+    getToken: vi.fn(() => Promise.resolve("test-token")),
+    clearCache: vi.fn(),
+  },
+}));
+
 installMswLifecycle();
 
 describe("AdminSection (MSW integration)", () => {

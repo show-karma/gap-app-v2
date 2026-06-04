@@ -362,6 +362,15 @@ vi.mock("@/components/FundingPlatform/ApplicationView/TabPanel", () => ({
     React.createElement("div", { "data-testid": "tab-panel" }, children),
 }));
 
+// MilestonesTab transitively imports the karma-gap-sdk runtime client
+// (gapClient.ts → @show-karma/karma-gap-sdk/core/class/GAP), which fails to
+// load under Vitest. The test does not assert on milestones content, so mock
+// it out to break the SDK import chain.
+vi.mock("@/src/features/applications/components/MilestonesTab", () => ({
+  MilestonesTab: () =>
+    React.createElement("div", { "data-testid": "milestones-tab" }, "Milestones Tab"),
+}));
+
 import toast from "react-hot-toast";
 // Import the page component after mocks (now uses unified manage route)
 import ReviewerApplicationDetailPage from "@/app/community/[communityId]/manage/funding-platform/[programId]/applications/[applicationId]/page";
@@ -611,21 +620,23 @@ describe("Reviewer Status Change Functionality", () => {
         permissions: [],
       });
 
-      render(React.createElement(ReviewerApplicationDetailPage));
+      const { container } = render(React.createElement(ReviewerApplicationDetailPage));
 
-      expect(screen.getByTestId("spinner")).toBeInTheDocument();
+      // Loading state now renders ApplicationDetailSkeleton, whose accessible
+      // root advertises aria-busy="true" rather than a bare spinner.
+      expect(container.querySelector('[aria-busy="true"]')).toBeInTheDocument();
     });
 
-    it("should show loading spinner when application is loading", () => {
+    it("should show loading skeleton when application is loading", () => {
       vi.mocked(useApplication).mockReturnValue({
         application: null,
         isLoading: true,
         refetch: mockRefetchApplication,
       });
 
-      render(React.createElement(ReviewerApplicationDetailPage));
+      const { container } = render(React.createElement(ReviewerApplicationDetailPage));
 
-      expect(screen.getByTestId("spinner")).toBeInTheDocument();
+      expect(container.querySelector('[aria-busy="true"]')).toBeInTheDocument();
     });
   });
 
