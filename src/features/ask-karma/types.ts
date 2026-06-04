@@ -34,10 +34,10 @@ export interface AskKarmaTopic {
 
 /**
  * Audience the start-screen prompts are tailored to. Resolved at runtime from
- * the visitor's sign-in state and role:
+ * the visitor's sign-in state and role within the page's community:
  * - `visitor`  — signed out; discovery-oriented questions
- * - `reviewer` — signed in and a reviewer of at least one program
- * - `grantee`  — signed in, default for everyone who isn't a reviewer
+ * - `reviewer` — signed in and a reviewer or admin of the page's community
+ * - `grantee`  — signed in, default for everyone without a review-side role
  */
 export type AskKarmaPersona = "visitor" | "reviewer" | "grantee";
 

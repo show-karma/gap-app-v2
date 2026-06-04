@@ -2,15 +2,15 @@ import { renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useIsCommunityAdmin } from "@/hooks/communities/useIsCommunityAdmin";
 import { useAuth } from "@/hooks/useAuth";
-import { usePermissions } from "@/hooks/usePermissions";
+import { useReviewerPrograms } from "@/hooks/usePermissions";
 import { useAskKarmaPersona } from "@/src/features/ask-karma/hooks/use-ask-karma-persona";
 
 vi.mock("@/hooks/useAuth", () => ({ useAuth: vi.fn() }));
-vi.mock("@/hooks/usePermissions", () => ({ usePermissions: vi.fn() }));
+vi.mock("@/hooks/usePermissions", () => ({ useReviewerPrograms: vi.fn() }));
 vi.mock("@/hooks/communities/useIsCommunityAdmin", () => ({ useIsCommunityAdmin: vi.fn() }));
 
 const mockUseAuth = useAuth as unknown as ReturnType<typeof vi.fn>;
-const mockUsePermissions = usePermissions as unknown as ReturnType<typeof vi.fn>;
+const mockUseReviewerPrograms = useReviewerPrograms as unknown as ReturnType<typeof vi.fn>;
 const mockUseIsCommunityAdmin = useIsCommunityAdmin as unknown as ReturnType<typeof vi.fn>;
 
 interface SetupOptions {
@@ -21,7 +21,7 @@ interface SetupOptions {
 
 function setup({ authenticated, reviewerPrograms = [], isCommunityAdmin = false }: SetupOptions) {
   mockUseAuth.mockReturnValue({ authenticated, address: authenticated ? "0xabc" : undefined });
-  mockUsePermissions.mockReturnValue({ programs: reviewerPrograms });
+  mockUseReviewerPrograms.mockReturnValue({ programs: reviewerPrograms });
   mockUseIsCommunityAdmin.mockReturnValue({ isCommunityAdmin });
 }
 

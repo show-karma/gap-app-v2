@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { useIsCommunityAdmin } from "@/hooks/communities/useIsCommunityAdmin";
 import { useAuth } from "@/hooks/useAuth";
-import { usePermissions } from "@/hooks/usePermissions";
+import { useReviewerPrograms } from "@/hooks/usePermissions";
 import type { AskKarmaPersona } from "../types";
 
 /**
@@ -53,7 +53,8 @@ function isReviewerForCommunity(
  */
 export function useAskKarmaPersona(communityId?: string): AskKarmaPersona {
   const { authenticated } = useAuth();
-  const { programs } = usePermissions({ role: "reviewer", enabled: authenticated });
+  // useReviewerPrograms gates its own query on auth + a connected address.
+  const { programs } = useReviewerPrograms();
   const { isCommunityAdmin } = useIsCommunityAdmin(communityId, undefined, {
     enabled: Boolean(authenticated && communityId),
   });
