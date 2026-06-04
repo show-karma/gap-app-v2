@@ -1,5 +1,5 @@
 import { isKnownTenant, type KnownTenantId } from "@/src/infrastructure/types/tenant";
-import type { AskKarmaConfig } from "./types";
+import type { AskKarmaConfig, AskKarmaPersona } from "./types";
 
 const DEFAULT_CONFIG: AskKarmaConfig = {
   heading: "Ask Karma",
@@ -14,6 +14,28 @@ const DEFAULT_CONFIG: AskKarmaConfig = {
     "Are there retrospective reports from previous funding rounds?",
     "How do I apply to an open funding round?",
   ],
+  exampleQuestionsByPersona: {
+    visitor: [
+      "What is Karma GAP?",
+      "What types of projects receive funding?",
+      "How do I apply or get involved?",
+      "When does the next funding round open?",
+      "How does the funding process work?",
+    ],
+    reviewer: [
+      "Why can't I access the project I am reviewing?",
+      "What milestones or proposals are pending my review?",
+      "Which metrics matter most when evaluating project impact?",
+      "What is the review process for grant proposals?",
+    ],
+    grantee: [
+      "Why can't I submit project updates?",
+      "How do I submit a milestone update for my project?",
+      "When will my invoice be processed?",
+      "When are my milestone updates due?",
+      "What should I include in my milestone update?",
+    ],
+  },
   featuredTopicsHeading: "Check out these featured topics",
   featuredTopics: [
     {
@@ -59,6 +81,28 @@ const TENANT_CONFIGS: Partial<Record<KnownTenantId, AskKarmaConfig>> = {
       "What is the typical payment timeline after invoice submission?",
       "Are there retrospective reports from previous funding rounds?",
     ],
+    exampleQuestionsByPersona: {
+      visitor: [
+        "What is ProPGF?",
+        "What is RetroPGF?",
+        "What types of projects receive funding?",
+        "How do I apply or get involved?",
+        "When does the next funding round open?",
+      ],
+      reviewer: [
+        "How come I don't have reviewer access for a project?",
+        "What milestones or proposals are pending my review?",
+        "What is the criteria for Batch 3 General Track proposals?",
+        "What is the review process for Batch 3 Grant proposals?",
+      ],
+      grantee: [
+        "How come I don't have access to submit project updates?",
+        "How do I submit a milestone update for my project?",
+        "When will my invoice be processed?",
+        "When are my milestone updates due?",
+        "What should I include in my milestone update?",
+      ],
+    },
     featuredTopics: [
       {
         icon: "dollar",
@@ -154,4 +198,40 @@ export function getAskKarmaConfig(lookupKey?: string | null): AskKarmaConfig {
     return TENANT_CONFIGS[lookupKey] ?? DEFAULT_CONFIG;
   }
   return DEFAULT_CONFIG;
+}
+
+// A reviewer is usually a grantee too, so their prompts lead with the
+// review-focused set and top up with grantee questions. Capped so the chip
+// row stays scannable rather than turning into a wall of suggestions.
+const REVIEWER_PROMPT_LIMIT = 6;
+
+/**
+ * Pick the start-screen prompts for a persona. Tenants that don't define
+ * `exampleQuestionsByPersona` (or omit a given persona) fall back to the flat
+ * `exampleQuestions` list, so this is safe for every config.
+ *
+ * Reviewers get a blended list — their review prompts first, then grantee
+ * prompts to fill out the row — because a reviewer is typically a grantee as
+ * well and benefits from both.
+ */
+export function selectAskKarmaQuestions(
+  config: AskKarmaConfig,
+  persona: AskKarmaPersona
+): string[] {
+  const byPersona = config.exampleQuestionsByPersona;
+  if (!byPersona) return config.exampleQuestions;
+
+  if (persona === "visitor") return byPersona.visitor ?? config.exampleQuestions;
+  if (persona === "grantee") return byPersona.grantee ?? config.exampleQuestions;
+
+  // Reviewer: lead with review prompts, then fill from grantee prompts.
+  const reviewer = byPersona.reviewer ?? [];
+  if (reviewer.length === 0) return byPersona.grantee ?? config.exampleQuestions;
+
+  const blended = [...reviewer];
+  for (const question of byPersona.grantee ?? []) {
+    if (blended.length >= REVIEWER_PROMPT_LIMIT) break;
+    if (!blended.includes(question)) blended.push(question);
+  }
+  return blended;
 }

@@ -2,12 +2,14 @@
 
 import { ArrowLeftIcon } from "lucide-react";
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAgentStream } from "@/hooks/useAgentStream";
 import { useAgentChatStore } from "@/store/agentChat";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 import { useWhitelabel } from "@/utilities/whitelabel-context";
+import { selectAskKarmaQuestions } from "../config";
+import { useAskKarmaPersona } from "../hooks/use-ask-karma-persona";
 import type { AskKarmaConfig } from "../types";
 import { AskKarmaChat } from "./ask-karma-chat";
 import { AskKarmaStart } from "./ask-karma-start";
@@ -33,6 +35,15 @@ export function AskKarmaPage({ config, communityId }: AskKarmaPageProps) {
 
   const { sendMessage, abort } = useAgentStream();
   const [view, setView] = useState<AskKarmaView>("start");
+
+  // Tailor the start-screen prompts to the visitor (signed out vs. reviewer
+  // vs. grantee) on top of the tenant config resolved on the server. Only the
+  // example questions change, so the rest of the config flows through.
+  const persona = useAskKarmaPersona();
+  const startConfig = useMemo<AskKarmaConfig>(
+    () => ({ ...config, exampleQuestions: selectAskKarmaQuestions(config, persona) }),
+    [config, persona]
+  );
   const transitionTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -126,7 +137,7 @@ export function AskKarmaPage({ config, communityId }: AskKarmaPageProps) {
           )}
           style={isLeaving ? { animationFillMode: "forwards" } : undefined}
         >
-          <AskKarmaStart config={config} onSubmit={handleSubmit} />
+          <AskKarmaStart config={startConfig} onSubmit={handleSubmit} />
         </div>
       )}
       {showChat && (
