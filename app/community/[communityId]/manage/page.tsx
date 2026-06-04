@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { DashboardOverview } from "@/components/Manage/DashboardOverview";
+import { ReviewerLandingRedirect } from "@/components/Manage/ReviewerLandingRedirect";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { defaultMetadata } from "@/utilities/meta";
 import { getCommunityDetails } from "@/utilities/queries/v2/community";
@@ -20,14 +21,17 @@ export default async function Page(props: Props) {
   }
 
   return (
-    <Suspense
-      fallback={
-        <div className="flex w-full items-center justify-center">
-          <Spinner />
-        </div>
-      }
-    >
-      <DashboardOverview community={community} />
-    </Suspense>
+    <>
+      <ReviewerLandingRedirect />
+      <Suspense
+        fallback={
+          <div className="flex w-full items-center justify-center">
+            <Spinner />
+          </div>
+        }
+      >
+        <DashboardOverview community={community} />
+      </Suspense>
+    </>
   );
 }

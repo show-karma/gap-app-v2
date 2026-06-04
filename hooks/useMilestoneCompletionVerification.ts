@@ -36,6 +36,14 @@ interface UseMilestoneCompletionVerificationParams {
   projectId: string;
   programId: string;
   onSuccess?: () => void;
+  /**
+   * Fires whenever the milestone caches are invalidated after a backend write
+   * or attestation submission — i.e. *before* the (potentially long) on-chain
+   * verification-indexing poll. Lets cross-cutting feeds (e.g. the Reviewer
+   * Inbox) reflect the bucket transition immediately instead of waiting for
+   * full verification indexing, which `onSuccess` is gated on.
+   */
+  onCachesInvalidated?: () => void;
 }
 
 interface MilestoneInstance {
@@ -53,6 +61,7 @@ export const useMilestoneCompletionVerification = ({
   projectId,
   programId,
   onSuccess,
+  onCachesInvalidated,
 }: UseMilestoneCompletionVerificationParams) => {
   const [isVerifying, setIsVerifying] = useState(false);
   const { address, chain } = useAccount();
@@ -204,6 +213,11 @@ export const useMilestoneCompletionVerification = ({
     await queryClient.invalidateQueries({
       queryKey: ["reportMilestones", communityUID],
     });
+
+    // Let consumers refresh cross-cutting feeds (e.g. the Reviewer Inbox) now
+    // that the backend milestone state has changed, rather than waiting for the
+    // on-chain verification poll that gates `onSuccess`.
+    onCachesInvalidated?.();
   };
 
   const pollForMilestoneStatus = async (
