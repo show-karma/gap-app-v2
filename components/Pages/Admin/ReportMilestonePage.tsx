@@ -17,7 +17,11 @@ import { useAuth } from "@/hooks/useAuth";
 import { useMilestoneAllocationsByGrants } from "@/hooks/useCommunityMilestoneAllocations";
 import { useCommunityMilestoneReviewers } from "@/hooks/useCommunityMilestoneReviewers";
 import { useReviewerPrograms } from "@/hooks/usePermissions";
-import { itemsPerPage, useReportPageData } from "@/hooks/useReportPageData";
+import {
+  getPendingTableResetKey,
+  itemsPerPage,
+  useReportPageData,
+} from "@/hooks/useReportPageData";
 import {
   useIsReviewerType,
   usePermissionContext,
@@ -241,6 +245,11 @@ export const ReportMilestonePage = ({ community, grantPrograms }: ReportMileston
 
         <TabsContent value="pending-verification">
           <PendingVerificationTable
+            key={getPendingTableResetKey(
+              reportData.selectedReviewerAddress,
+              reportData.effectiveProgramIds,
+              reportData.pendingPage
+            )}
             milestones={reportData.pendingMilestones}
             isLoading={reportData.isPendingLoading}
             error={reportData.pendingError}
