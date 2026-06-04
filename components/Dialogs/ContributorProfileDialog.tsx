@@ -80,15 +80,21 @@ export const ContributorProfileDialog: FC = () => {
   const { refetch: refetchTeamProfiles } = useTeamProfiles(project);
 
   // Match against ALL the user's linked wallets so membership/ownership resolves
-  // regardless of which linked wallet is currently active.
-  const isProjectMember = !!(
+  // regardless of which linked wallet is currently active. The owner check is
+  // separate from members.some() — an owner not listed in members (or an empty
+  // members array) must still resolve as a member here.
+  const isOwnerByLinkedWallet = !!(
     user &&
-    project?.members.find(
-      (item: { address: string; role: string; joinedAt: string }) =>
-        compareAllWallets(user, item.address) ||
-        (project?.owner && compareAllWallets(user, project.owner))
+    project?.owner &&
+    compareAllWallets(user, project.owner)
+  );
+  const isMemberByLinkedWallet = !!(
+    user &&
+    project?.members?.some((item: { address: string; role: string; joinedAt: string }) =>
+      compareAllWallets(user, item.address)
     )
   );
+  const isProjectMember = isOwnerByLinkedWallet || isMemberByLinkedWallet;
   const isEditing = isProjectMember || isGlobal;
   const searchParams = useSearchParams();
   const inviteCodeParam = searchParams?.get("invite-code");
