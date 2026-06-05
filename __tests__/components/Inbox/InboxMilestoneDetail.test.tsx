@@ -308,8 +308,14 @@ describe("InboxMilestoneDetail", () => {
     });
 
     render(<InboxMilestoneDetail {...baseProps} />);
-    expect(screen.getByRole("button", { name: /Details/ })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Comments/ })).toBeInTheDocument();
+    const detailsTab = screen.getByRole("tab", { name: /Details/ });
+    const commentsTab = screen.getByRole("tab", { name: /Comments/ });
+    expect(detailsTab).toHaveAttribute("aria-selected", "true");
+    expect(commentsTab).toHaveAttribute("aria-selected", "false");
+
+    fireEvent.click(commentsTab);
+    expect(commentsTab).toHaveAttribute("aria-selected", "true");
+    expect(detailsTab).toHaveAttribute("aria-selected", "false");
   });
 
   it("does not fetch the funding application until the Comments tab is opened", () => {
@@ -323,7 +329,7 @@ describe("InboxMilestoneDetail", () => {
     render(<InboxMilestoneDetail {...baseProps} />);
     expect(mockUseFundingApplicationByProjectUID).not.toHaveBeenCalled();
 
-    fireEvent.click(screen.getByRole("button", { name: /Comments/ }));
+    fireEvent.click(screen.getByRole("tab", { name: /Comments/ }));
     expect(mockUseFundingApplicationByProjectUID).toHaveBeenCalled();
   });
 
@@ -342,7 +348,7 @@ describe("InboxMilestoneDetail", () => {
     });
 
     render(<InboxMilestoneDetail {...baseProps} />);
-    fireEvent.click(screen.getByRole("button", { name: /Comments/ }));
+    fireEvent.click(screen.getByRole("tab", { name: /Comments/ }));
     expect(screen.getByTestId("comments-and-activity")).toHaveTextContent("REF-1");
   });
 
@@ -355,7 +361,7 @@ describe("InboxMilestoneDetail", () => {
     });
 
     render(<InboxMilestoneDetail {...baseProps} />);
-    fireEvent.click(screen.getByRole("button", { name: /Comments/ }));
+    fireEvent.click(screen.getByRole("tab", { name: /Comments/ }));
     expect(screen.getByTestId("grant-comments-and-activity")).toHaveTextContent("proj-1");
   });
 
@@ -374,7 +380,7 @@ describe("InboxMilestoneDetail", () => {
     });
 
     render(<InboxMilestoneDetail {...baseProps} />);
-    fireEvent.click(screen.getByRole("button", { name: /Comments/ }));
+    fireEvent.click(screen.getByRole("tab", { name: /Comments/ }));
     expect(screen.getByLabelText("Loading comments")).toBeInTheDocument();
   });
 

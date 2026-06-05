@@ -370,7 +370,11 @@ export function InboxMilestoneDetail({
 
   return (
     <div className="space-y-4">
-      <div className="inline-flex w-max rounded-lg border border-gray-200 bg-gray-50 p-1 dark:border-zinc-700 dark:bg-zinc-800">
+      <div
+        role="tablist"
+        aria-label="Milestone detail sections"
+        className="inline-flex w-max rounded-lg border border-gray-200 bg-gray-50 p-1 dark:border-zinc-700 dark:bg-zinc-800"
+      >
         {PANEL_TABS.map((tab) => {
           const Icon = tab.icon;
           const isActive = activePanelTab === tab.key;
@@ -378,6 +382,10 @@ export function InboxMilestoneDetail({
             <button
               key={tab.key}
               type="button"
+              role="tab"
+              id={`inbox-ms-tab-${tab.key}`}
+              aria-selected={isActive}
+              aria-controls={`inbox-ms-panel-${tab.key}`}
               onClick={() => setActivePanelTab(tab.key)}
               className={cn(
                 "inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue",
@@ -393,45 +401,51 @@ export function InboxMilestoneDetail({
         })}
       </div>
 
-      {activePanelTab === "details" ? (
-        <div className="space-y-4">
-          <MilestoneCard
-            key={selectedMilestone.uid}
-            milestone={selectedMilestone}
-            index={index < 0 ? 0 : index}
-            verifyingMilestoneId={verifyingMilestoneId}
-            verificationComment={verificationComment}
-            isVerifying={isVerifying}
-            canVerifyMilestones={canVerifyMilestones}
-            canDeleteMilestones={false}
-            canEditMilestones={false}
-            grantUID={grant?.uid ?? grantUid}
-            grantChainID={grant?.chainID}
-            projectUid={project?.uid ?? projectUid}
-            projectSlug={project?.details?.slug ?? projectSlug}
-            projectTitle={project?.details?.title ?? projectTitle}
+      <div
+        role="tabpanel"
+        id={`inbox-ms-panel-${activePanelTab}`}
+        aria-labelledby={`inbox-ms-tab-${activePanelTab}`}
+      >
+        {activePanelTab === "details" ? (
+          <div className="space-y-4">
+            <MilestoneCard
+              key={selectedMilestone.uid}
+              milestone={selectedMilestone}
+              index={index < 0 ? 0 : index}
+              verifyingMilestoneId={verifyingMilestoneId}
+              verificationComment={verificationComment}
+              isVerifying={isVerifying}
+              canVerifyMilestones={canVerifyMilestones}
+              canDeleteMilestones={false}
+              canEditMilestones={false}
+              grantUID={grant?.uid ?? grantUid}
+              grantChainID={grant?.chainID}
+              projectUid={project?.uid ?? projectUid}
+              projectSlug={project?.details?.slug ?? projectSlug}
+              projectTitle={project?.details?.title ?? projectTitle}
+              programId={parsedProgramId}
+              onVerifyClick={handleVerifyClick}
+              onCancelVerification={handleCancelVerification}
+              onVerificationCommentChange={setVerificationComment}
+              onSubmitVerification={handleSubmitVerification}
+              onDeleteMilestone={handleDeleteMilestone}
+              allocationAmount={
+                allocationMap.get(selectedMilestone.uid) ??
+                allocationMap.get(selectedMilestone.uid.toLowerCase())
+              }
+              showAIEvaluationButton={false}
+              quietSurface
+            />
+            <InlineAIEvaluation milestone={selectedMilestone} />
+          </div>
+        ) : (
+          <MilestoneCommentsTab
+            projectUID={project?.uid ?? projectUid}
             programId={parsedProgramId}
-            onVerifyClick={handleVerifyClick}
-            onCancelVerification={handleCancelVerification}
-            onVerificationCommentChange={setVerificationComment}
-            onSubmitVerification={handleSubmitVerification}
-            onDeleteMilestone={handleDeleteMilestone}
-            allocationAmount={
-              allocationMap.get(selectedMilestone.uid) ??
-              allocationMap.get(selectedMilestone.uid.toLowerCase())
-            }
-            showAIEvaluationButton={false}
-            quietSurface
+            communityId={communityId}
           />
-          <InlineAIEvaluation milestone={selectedMilestone} />
-        </div>
-      ) : (
-        <MilestoneCommentsTab
-          projectUID={project?.uid ?? projectUid}
-          programId={parsedProgramId}
-          communityId={communityId}
-        />
-      )}
+        )}
+      </div>
     </div>
   );
 }
