@@ -95,6 +95,17 @@ export type ComplianceDisqualificationReason =
   | "no_recent_990"
   | "governance_red_flag";
 
+export type ComplianceCheckName = "pub78" | "recent_990" | "ca_ag" | "governance";
+
+export type ComplianceCheckStatus = "passed" | "failed" | "not_applicable" | "unknown";
+
+export interface ComplianceCheck {
+  name: ComplianceCheckName;
+  label: string;
+  status: ComplianceCheckStatus;
+  detail: string;
+}
+
 export interface ResearchReportCandidate {
   id: string;
   fundingOrganizationId: string;
@@ -113,6 +124,7 @@ export interface ResearchReportCandidate {
   topThreeFlag: boolean;
   complianceVerdict: ComplianceVerdictKind;
   disqualificationReasons: ComplianceDisqualificationReason[];
+  complianceChecks: ComplianceCheck[];
   stateRegistrationStatus: StateRegistrationStatus;
   activitySignalStatus: ActivitySignalStatus;
   websiteLastUpdatedAt: string | null;

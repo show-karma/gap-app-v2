@@ -3,6 +3,7 @@
 import { ArrowUpRight, ChevronDown } from "lucide-react";
 import { useState } from "react";
 import type { ResearchReportCandidate } from "@/types/donor-research";
+import { ComplianceBreakdown } from "./ComplianceBreakdown";
 import { ScoreBreakdown } from "./ScoreBreakdown";
 
 interface CandidateCardProps {
@@ -144,6 +145,13 @@ export function CandidateCard({ candidate, variant }: CandidateCardProps) {
             />
           ) : null}
         </footer>
+
+        {candidate.complianceChecks && candidate.complianceChecks.length > 0 ? (
+          <ComplianceBreakdown
+            checks={candidate.complianceChecks}
+            defaultOpen={variant === "one-pager"}
+          />
+        ) : null}
 
         {variant === "detail" ? (
           <details
