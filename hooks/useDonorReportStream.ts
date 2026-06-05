@@ -1,3 +1,4 @@
+import { fetchEventSource } from "@microsoft/fetch-event-source";
 import { useEffect, useRef, useState } from "react";
 import type { FastReportEvent } from "@/types/donor-research";
 import { TokenManager } from "@/utilities/auth/token-manager";
@@ -7,103 +8,141 @@ import { INDEXER } from "@/utilities/indexer";
 interface StreamState {
   events: FastReportEvent[];
   latest: FastReportEvent | null;
-  /** EventSource readyState; null when not connected. */
-  readyState: number | null;
+  /** AbortController signal flag — `true` while connected, `false` after close. */
+  connected: boolean;
   errorCount: number;
 }
 
 const TERMINAL_EVENT_NAMES = new Set(["report_finalized", "report_failed"]);
 
+const KNOWN_EVENT_NAMES = new Set<FastReportEvent["name"]>([
+  "snapshot",
+  "pool_loaded",
+  "compliance_complete",
+  "contact_discovery_complete",
+  "activity_complete",
+  "ranking_complete",
+  "report_finalized",
+  "report_failed",
+]);
+
 /**
- * Subscribes to the SSE progress stream for a Fast/Deep report. Re-
- * connects automatically on transient errors (browsers' native
- * `EventSource` already retries on connection drop; this hook also
- * tolerates server-side 5xx by recreating the source).
+ * Subscribes to the SSE progress stream for a Fast/Deep report.
  *
- * Returns the full ordered event list (for replay UIs) plus the latest
- * event (for status banners). Caller decides when to render — there is
- * no implicit suspense behavior.
+ * Uses `@microsoft/fetch-event-source` instead of the native
+ * `EventSource` so we can send the Privy JWT in the standard
+ * `Authorization: Bearer …` header. The native EventSource API has
+ * no way to set custom headers, which forced us to either embed
+ * the JWT in the URL (security risk — leaks via access logs, history,
+ * Referer) or run an unauthenticated stream. Neither is acceptable.
  *
- * The hook intentionally does NOT hit `useQueryClient` — SSE is a
- * push channel, while `useDonorReport` already polls until terminal.
- * Keeping the two paths independent avoids cache thrash when both fire
- * simultaneously during a report run.
+ * Returns the full ordered event list (for replay UIs) plus the
+ * latest event (for status banners). Reconnects automatically on
+ * transient errors; the backend emitter replays missed stages on
+ * reconnect so the timeline stays accurate.
  */
 export function useDonorReportStream(reportId: string | null) {
   const [state, setState] = useState<StreamState>({
     events: [],
     latest: null,
-    readyState: null,
+    connected: false,
     errorCount: 0,
   });
-  const sourceRef = useRef<EventSource | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     if (!reportId) return;
+
+    const controller = new AbortController();
+    abortRef.current = controller;
     let cancelled = false;
-    let source: EventSource | null = null;
+    let closed = false;
 
-    const eventNames: FastReportEvent["name"][] = [
-      "snapshot",
-      "pool_loaded",
-      "compliance_complete",
-      "contact_discovery_complete",
-      "activity_complete",
-      "ranking_complete",
-      "report_finalized",
-      "report_failed",
-    ];
-
-    const handleEvent = (event: MessageEvent) => {
+    const handleNamedEvent = (eventName: FastReportEvent["name"], data: string): boolean => {
       try {
-        const parsed = JSON.parse(event.data) as FastReportEvent;
+        const parsed = JSON.parse(data) as FastReportEvent;
+        // Server may emit a name we don't model yet; ignore rather than crash.
+        const safe: FastReportEvent = KNOWN_EVENT_NAMES.has(parsed.name)
+          ? parsed
+          : { ...parsed, name: eventName };
         setState((s) => ({
           ...s,
-          events: [...s.events, parsed],
-          latest: parsed,
-          readyState: source?.readyState ?? null,
+          events: [...s.events, safe],
+          latest: safe,
+          connected: true,
         }));
-        if (TERMINAL_EVENT_NAMES.has(parsed.name)) {
-          source?.close();
+        if (TERMINAL_EVENT_NAMES.has(safe.name)) {
+          closed = true;
+          controller.abort();
+          return true;
         }
       } catch {
-        // Malformed payload — drop the event but keep the stream open
-        // so subsequent events still arrive.
+        // Malformed payload — drop the event but keep the stream open.
       }
+      return false;
     };
 
-    // EventSource can't set Authorization headers (browser limitation),
-    // so the indexer's auth middleware accepts the Privy JWT as an
-    // `?access_token=` query parameter for routes ending in /stream
-    // (RFC 6750 §2.3). Without this every SSE connection 401s and the
-    // browser drops into an infinite reconnect loop.
     (async () => {
       const token = await TokenManager.getToken().catch(() => null);
       if (cancelled) return;
+
       const baseUrl = envVars.NEXT_PUBLIC_GAP_INDEXER_URL;
-      const base = `${baseUrl}${INDEXER.DONOR_RESEARCH.REPORT_STREAM(reportId)}`;
-      const url = token
-        ? `${base}${base.includes("?") ? "&" : "?"}access_token=${encodeURIComponent(token)}`
-        : base;
-      source = new EventSource(url, { withCredentials: true });
-      sourceRef.current = source;
-      setState((s) => ({ ...s, readyState: source!.readyState }));
-      for (const name of eventNames) {
-        source.addEventListener(name, handleEvent as EventListener);
+      const url = `${baseUrl}${INDEXER.DONOR_RESEARCH.REPORT_STREAM(reportId)}`;
+      const headers: Record<string, string> = {};
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
       }
-      source.onerror = () => {
-        setState((s) => ({
-          ...s,
-          readyState: source?.readyState ?? null,
-          errorCount: s.errorCount + 1,
-        }));
-      };
+
+      try {
+        await fetchEventSource(url, {
+          method: "GET",
+          headers,
+          credentials: "include",
+          signal: controller.signal,
+          // Disable visibility-driven reconnect handling — the in-memory
+          // emitter replays missed stages so we don't need the library
+          // to refetch the whole history.
+          openWhenHidden: true,
+          onopen: async (response) => {
+            if (response.ok) {
+              setState((s) => ({ ...s, connected: true }));
+              return;
+            }
+            // Non-ok response means the server refused (401/404/etc).
+            // Surface as an error and stop retrying — the user has to
+            // re-authenticate or fix the URL; no point burning cycles.
+            setState((s) => ({ ...s, errorCount: s.errorCount + 1 }));
+            throw new Error(`Stream open failed: ${response.status}`);
+          },
+          onmessage: (ev) => {
+            const name = (ev.event || "message") as FastReportEvent["name"];
+            handleNamedEvent(name, ev.data);
+          },
+          onerror: (err) => {
+            // Returning `undefined` lets the library retry; throwing
+            // aborts. Retry transparently — the emitter handles replay.
+            if (closed) throw err;
+            setState((s) => ({
+              ...s,
+              connected: false,
+              errorCount: s.errorCount + 1,
+            }));
+          },
+          onclose: () => {
+            setState((s) => ({ ...s, connected: false }));
+          },
+        });
+      } catch {
+        // Final error after retry budget exhausted; state already shows
+        // disconnected. Caller decides whether to refetch via polling.
+      }
     })();
 
     return () => {
       cancelled = true;
-      source?.close();
-      sourceRef.current = null;
+      closed = true;
+      controller.abort();
+      abortRef.current = null;
     };
   }, [reportId]);
 
