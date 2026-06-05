@@ -1,12 +1,16 @@
 "use client";
 
-import { SparklesIcon } from "@heroicons/react/20/solid";
+import { ChatBubbleLeftRightIcon, DocumentTextIcon, SparklesIcon } from "@heroicons/react/20/solid";
 import { useQueryClient } from "@tanstack/react-query";
 import dynamic from "next/dynamic";
 import { memo, useCallback, useMemo, useState } from "react";
+import { CommentsAndActivity } from "@/components/Pages/Admin/MilestonesReview/CommentsAndActivity";
+import { GrantCommentsAndActivity } from "@/components/Pages/Admin/MilestonesReview/GrantCommentsAndActivity";
 import { MilestoneCard } from "@/components/Pages/Admin/MilestonesReview/MilestoneCard";
 import { Button } from "@/components/Utilities/Button";
+import { useAuth } from "@/hooks/useAuth";
 import { useMilestoneAllocationsByGrants } from "@/hooks/useCommunityMilestoneAllocations";
+import { useFundingApplicationByProjectUID } from "@/hooks/useFundingApplicationByProjectUID";
 import { useMilestoneCompletionVerification } from "@/hooks/useMilestoneCompletionVerification";
 import { useMilestoneEvaluation } from "@/hooks/useMilestoneEvaluation";
 import { useProjectGrantMilestones } from "@/hooks/useProjectGrantMilestones";
@@ -132,6 +136,95 @@ function InlineAIEvaluation({ milestone }: { milestone: GrantMilestoneWithComple
   );
 }
 
+/**
+ * Comments & activity tab for the inbox milestone detail. Mirrors the
+ * milestone-review page: the thread is keyed on the grantee's funding
+ * application (resolved by project UID), falling back to the grant-level
+ * thread when no application reference exists. The funding application is
+ * fetched lazily — only when this tab is mounted.
+ */
+function MilestoneCommentsTab({
+  projectUID,
+  programId,
+  communityId,
+}: {
+  projectUID: string;
+  programId: string;
+  communityId: string;
+}) {
+  const { address } = useAuth();
+  const {
+    application: fundingApplication,
+    isLoading,
+    error,
+    refetch,
+  } = useFundingApplicationByProjectUID(projectUID || "");
+  const referenceNumber = fundingApplication?.referenceNumber;
+
+  if (isLoading && !referenceNumber) {
+    return (
+      <output
+        aria-label="Loading comments"
+        className="block animate-pulse space-y-3 rounded-lg border border-gray-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900"
+      >
+        <span className="block h-5 w-40 rounded bg-gray-200 dark:bg-zinc-700" />
+        <span className="block h-4 w-full rounded bg-gray-100 dark:bg-zinc-800" />
+        <span className="block h-4 w-3/4 rounded bg-gray-100 dark:bg-zinc-800" />
+      </output>
+    );
+  }
+
+  if (error && !referenceNumber) {
+    return (
+      <div className="rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/10">
+        <p className="mb-3 text-sm text-red-700 dark:text-red-300">Failed to load comments.</p>
+        <Button variant="secondary" onClick={() => refetch()}>
+          Retry
+        </Button>
+      </div>
+    );
+  }
+
+  if (referenceNumber) {
+    return (
+      <CommentsAndActivity
+        referenceNumber={referenceNumber}
+        statusHistory={(fundingApplication?.statusHistory || []).map((item) => ({
+          status: item.status,
+          timestamp:
+            typeof item.timestamp === "string" ? item.timestamp : item.timestamp.toISOString(),
+          reason: item.reason,
+        }))}
+        communityId={communityId}
+        currentUserAddress={address}
+        programId={programId}
+        embedded
+      />
+    );
+  }
+
+  if (projectUID) {
+    return (
+      <GrantCommentsAndActivity
+        projectUID={projectUID}
+        programId={programId}
+        communityId={communityId}
+        currentUserAddress={address}
+        referenceNumber={referenceNumber}
+        embedded
+      />
+    );
+  }
+
+  return (
+    <div className="rounded-lg border border-dashed border-gray-200 p-8 text-center dark:border-zinc-700">
+      <p className="text-sm text-gray-500 dark:text-gray-400">
+        Comments are not available until the project data finishes loading.
+      </p>
+    </div>
+  );
+}
+
 interface InboxMilestoneDetailProps {
   /** Project UID (or slug) used to fetch the grant's milestones. */
   projectUid: string;
@@ -145,7 +238,7 @@ interface InboxMilestoneDetailProps {
   projectTitle?: string;
   /** The milestone to render. Must match one in the fetched grant. */
   milestoneUid: string;
-  /** Community id (reserved for parity with the report wiring). */
+  /** Community id — scopes the comments/activity thread. */
   communityId: string;
 }
 
@@ -156,9 +249,11 @@ export function InboxMilestoneDetail({
   projectSlug,
   projectTitle,
   milestoneUid,
+  communityId,
 }: InboxMilestoneDetailProps) {
   const parsedProgramId = useMemo(() => parseProgramId(programId), [programId]);
   const queryClient = useQueryClient();
+  const [activePanelTab, setActivePanelTab] = useState<"details" | "comments">("details");
 
   const { data, isLoading, error, refetch } = useProjectGrantMilestones(projectUid, programId);
 
@@ -269,35 +364,71 @@ export function InboxMilestoneDetail({
 
   return (
     <div className="space-y-4">
-      <MilestoneCard
-        key={selectedMilestone.uid}
-        milestone={selectedMilestone}
-        index={index < 0 ? 0 : index}
-        verifyingMilestoneId={verifyingMilestoneId}
-        verificationComment={verificationComment}
-        isVerifying={isVerifying}
-        canVerifyMilestones={canVerifyMilestones}
-        canDeleteMilestones={false}
-        canEditMilestones={false}
-        grantUID={grant?.uid ?? grantUid}
-        grantChainID={grant?.chainID}
-        projectUid={project?.uid ?? projectUid}
-        projectSlug={project?.details?.slug ?? projectSlug}
-        projectTitle={project?.details?.title ?? projectTitle}
-        programId={parsedProgramId}
-        onVerifyClick={handleVerifyClick}
-        onCancelVerification={handleCancelVerification}
-        onVerificationCommentChange={setVerificationComment}
-        onSubmitVerification={handleSubmitVerification}
-        onDeleteMilestone={handleDeleteMilestone}
-        allocationAmount={
-          allocationMap.get(selectedMilestone.uid) ??
-          allocationMap.get(selectedMilestone.uid.toLowerCase())
-        }
-        showAIEvaluationButton={false}
-        quietSurface
-      />
-      <InlineAIEvaluation milestone={selectedMilestone} />
+      <div className="inline-flex w-max rounded-lg border border-gray-200 bg-gray-50 p-1 dark:border-zinc-700 dark:bg-zinc-800">
+        {[
+          { key: "details" as const, label: "Details", icon: DocumentTextIcon },
+          { key: "comments" as const, label: "Comments", icon: ChatBubbleLeftRightIcon },
+        ].map((tab) => {
+          const Icon = tab.icon;
+          const isActive = activePanelTab === tab.key;
+          return (
+            <button
+              key={tab.key}
+              type="button"
+              onClick={() => setActivePanelTab(tab.key)}
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue",
+                isActive
+                  ? "bg-white text-gray-950 shadow-sm dark:bg-zinc-950 dark:text-white"
+                  : "text-gray-600 hover:text-gray-950 dark:text-gray-400 dark:hover:text-white"
+              )}
+            >
+              <Icon className="h-4 w-4" />
+              {tab.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {activePanelTab === "details" ? (
+        <div className="space-y-4">
+          <MilestoneCard
+            key={selectedMilestone.uid}
+            milestone={selectedMilestone}
+            index={index < 0 ? 0 : index}
+            verifyingMilestoneId={verifyingMilestoneId}
+            verificationComment={verificationComment}
+            isVerifying={isVerifying}
+            canVerifyMilestones={canVerifyMilestones}
+            canDeleteMilestones={false}
+            canEditMilestones={false}
+            grantUID={grant?.uid ?? grantUid}
+            grantChainID={grant?.chainID}
+            projectUid={project?.uid ?? projectUid}
+            projectSlug={project?.details?.slug ?? projectSlug}
+            projectTitle={project?.details?.title ?? projectTitle}
+            programId={parsedProgramId}
+            onVerifyClick={handleVerifyClick}
+            onCancelVerification={handleCancelVerification}
+            onVerificationCommentChange={setVerificationComment}
+            onSubmitVerification={handleSubmitVerification}
+            onDeleteMilestone={handleDeleteMilestone}
+            allocationAmount={
+              allocationMap.get(selectedMilestone.uid) ??
+              allocationMap.get(selectedMilestone.uid.toLowerCase())
+            }
+            showAIEvaluationButton={false}
+            quietSurface
+          />
+          <InlineAIEvaluation milestone={selectedMilestone} />
+        </div>
+      ) : (
+        <MilestoneCommentsTab
+          projectUID={project?.uid ?? projectUid}
+          programId={parsedProgramId}
+          communityId={communityId}
+        />
+      )}
     </div>
   );
 }

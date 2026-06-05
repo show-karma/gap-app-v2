@@ -9,6 +9,7 @@ const mockUseIsReviewerType = vi.fn();
 const mockVerifyMilestone = vi.fn();
 const mockUseMilestoneEvaluation = vi.fn();
 const mockUseMilestoneAllocationsByGrants = vi.fn();
+const mockUseFundingApplicationByProjectUID = vi.fn();
 const mockRefetch = vi.fn();
 const mockInvalidateQueries = vi.fn();
 
@@ -57,6 +58,29 @@ vi.mock("@/hooks/useMilestoneEvaluation", () => ({
 vi.mock("@/hooks/useCommunityMilestoneAllocations", () => ({
   useMilestoneAllocationsByGrants: (...args: unknown[]) =>
     mockUseMilestoneAllocationsByGrants(...args),
+}));
+
+vi.mock("@/hooks/useAuth", () => ({
+  useAuth: () => ({ address: "0xreviewer" }),
+}));
+
+vi.mock("@/hooks/useFundingApplicationByProjectUID", () => ({
+  useFundingApplicationByProjectUID: (...args: unknown[]) =>
+    mockUseFundingApplicationByProjectUID(...args),
+}));
+
+// Comments threads are exercised in their own suites; stub them to probes that
+// surface the identifier the inbox wired through.
+vi.mock("@/components/Pages/Admin/MilestonesReview/CommentsAndActivity", () => ({
+  CommentsAndActivity: (props: { referenceNumber: string }) => (
+    <div data-testid="comments-and-activity">{props.referenceNumber}</div>
+  ),
+}));
+
+vi.mock("@/components/Pages/Admin/MilestonesReview/GrantCommentsAndActivity", () => ({
+  GrantCommentsAndActivity: (props: { projectUID: string }) => (
+    <div data-testid="grant-comments-and-activity">{props.projectUID}</div>
+  ),
 }));
 
 // MilestoneCard pulls in heavy SDK + clipboard utilities; stub it to a probe
@@ -126,6 +150,12 @@ beforeEach(() => {
     refetch: vi.fn(),
   });
   mockUseMilestoneAllocationsByGrants.mockReturnValue({ allocationMap: new Map() });
+  mockUseFundingApplicationByProjectUID.mockReturnValue({
+    application: undefined,
+    isLoading: false,
+    error: null,
+    refetch: vi.fn(),
+  });
 });
 
 describe("InboxMilestoneDetail", () => {
@@ -267,6 +297,85 @@ describe("InboxMilestoneDetail", () => {
 
     expect(mockRefetch).toHaveBeenCalled();
     expect(mockInvalidateQueries).toHaveBeenCalledWith({ queryKey: ["reviewer-inbox"] });
+  });
+
+  it("renders Details and Comments tabs for a selected milestone", () => {
+    mockUseProjectGrantMilestones.mockReturnValue({
+      data: makeData([makeMilestone()]),
+      isLoading: false,
+      error: null,
+      refetch: mockRefetch,
+    });
+
+    render(<InboxMilestoneDetail {...baseProps} />);
+    expect(screen.getByRole("button", { name: /Details/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Comments/ })).toBeInTheDocument();
+  });
+
+  it("does not fetch the funding application until the Comments tab is opened", () => {
+    mockUseProjectGrantMilestones.mockReturnValue({
+      data: makeData([makeMilestone()]),
+      isLoading: false,
+      error: null,
+      refetch: mockRefetch,
+    });
+
+    render(<InboxMilestoneDetail {...baseProps} />);
+    expect(mockUseFundingApplicationByProjectUID).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("button", { name: /Comments/ }));
+    expect(mockUseFundingApplicationByProjectUID).toHaveBeenCalled();
+  });
+
+  it("shows the application comments thread on the Comments tab when a reference number exists", () => {
+    mockUseProjectGrantMilestones.mockReturnValue({
+      data: makeData([makeMilestone()]),
+      isLoading: false,
+      error: null,
+      refetch: mockRefetch,
+    });
+    mockUseFundingApplicationByProjectUID.mockReturnValue({
+      application: { referenceNumber: "REF-1", statusHistory: [] },
+      isLoading: false,
+      error: null,
+      refetch: vi.fn(),
+    });
+
+    render(<InboxMilestoneDetail {...baseProps} />);
+    fireEvent.click(screen.getByRole("button", { name: /Comments/ }));
+    expect(screen.getByTestId("comments-and-activity")).toHaveTextContent("REF-1");
+  });
+
+  it("falls back to the grant comments thread when no application reference exists", () => {
+    mockUseProjectGrantMilestones.mockReturnValue({
+      data: makeData([makeMilestone()]),
+      isLoading: false,
+      error: null,
+      refetch: mockRefetch,
+    });
+
+    render(<InboxMilestoneDetail {...baseProps} />);
+    fireEvent.click(screen.getByRole("button", { name: /Comments/ }));
+    expect(screen.getByTestId("grant-comments-and-activity")).toHaveTextContent("proj-1");
+  });
+
+  it("shows a loading skeleton on the Comments tab while the application loads", () => {
+    mockUseProjectGrantMilestones.mockReturnValue({
+      data: makeData([makeMilestone()]),
+      isLoading: false,
+      error: null,
+      refetch: mockRefetch,
+    });
+    mockUseFundingApplicationByProjectUID.mockReturnValue({
+      application: undefined,
+      isLoading: true,
+      error: null,
+      refetch: vi.fn(),
+    });
+
+    render(<InboxMilestoneDetail {...baseProps} />);
+    fireEvent.click(screen.getByRole("button", { name: /Comments/ }));
+    expect(screen.getByLabelText("Loading comments")).toBeInTheDocument();
   });
 
   it("refreshes the reviewer-inbox feed as soon as milestone caches invalidate, before on-chain indexing confirms", () => {
