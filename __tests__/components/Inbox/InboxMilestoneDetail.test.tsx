@@ -384,6 +384,29 @@ describe("InboxMilestoneDetail", () => {
     expect(screen.getByLabelText("Loading comments")).toBeInTheDocument();
   });
 
+  it("shows an error state with a working retry on the Comments tab when the application fetch fails", () => {
+    mockUseProjectGrantMilestones.mockReturnValue({
+      data: makeData([makeMilestone()]),
+      isLoading: false,
+      error: null,
+      refetch: mockRefetch,
+    });
+    const mockAppRefetch = vi.fn();
+    mockUseFundingApplicationByProjectUID.mockReturnValue({
+      application: undefined,
+      isLoading: false,
+      error: new Error("Network error"),
+      refetch: mockAppRefetch,
+    });
+
+    render(<InboxMilestoneDetail {...baseProps} />);
+    fireEvent.click(screen.getByRole("tab", { name: /Comments/ }));
+    expect(screen.getByText("Failed to load comments.")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+    expect(mockAppRefetch).toHaveBeenCalledTimes(1);
+  });
+
   it("refreshes the reviewer-inbox feed as soon as milestone caches invalidate, before on-chain indexing confirms", () => {
     mockUseIsReviewerType.mockReturnValue(true);
     mockUseProjectGrantMilestones.mockReturnValue({
