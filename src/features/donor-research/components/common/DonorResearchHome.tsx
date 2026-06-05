@@ -52,26 +52,32 @@ export function DonorResearchHome() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8">
-      <header className="mb-6 flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold text-foreground">Donor Research</h1>
-          <p className="text-sm text-muted-foreground">
-            Research current, ranked nonprofit recommendations for your donor clients.
+    <div className="mx-auto max-w-5xl px-4 py-10 sm:py-14">
+      <header className="mb-10 flex flex-wrap items-end justify-between gap-x-6 gap-y-4 border-b border-border/60 pb-6">
+        <div className="max-w-xl">
+          <p className="mb-1 text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+            Karma · Donor Research
+          </p>
+          <h1 className="text-balance text-3xl font-medium tracking-tight text-foreground sm:text-4xl">
+            Find nonprofits worth your client's next gift.
+          </h1>
+          <p className="mt-2 max-w-lg text-pretty text-sm leading-relaxed text-muted-foreground">
+            We surface vetted 501(c)(3)s ranked on freshness, impact recency, donor alignment, and
+            compliance — sourced from the IRS Pub 78, recent 990 filings, and live activity signals.
           </p>
         </div>
         <div className="flex items-center gap-3">
           <RateLimitCounter advisor={advisor} />
           <Link
             href={PAGES.DONOR_RESEARCH.INDEX}
-            className="text-sm text-muted-foreground underline underline-offset-2 hover:text-foreground"
+            className="text-xs font-medium text-muted-foreground underline underline-offset-4 decoration-border hover:text-foreground hover:decoration-current"
           >
             Refresh
           </Link>
         </div>
       </header>
 
-      <section className="mb-8">
+      <section className="mb-10">
         <CriteriaInputPanel />
       </section>
 

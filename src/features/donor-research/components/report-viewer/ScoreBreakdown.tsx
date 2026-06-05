@@ -11,16 +11,19 @@ interface ScoreBreakdownProps {
 }
 
 /**
- * Score breakdown as a horizontal stacked bar (U13c).
+ * Score breakdown as a horizontal stacked bar (U13c, post-impeccable
+ * redesign).
  *
  * Plan guidance: "Do not default to four circular progress dials in
- * colored circles — that is the canonical AI-slop pattern." This
- * component renders a single horizontal bar split into the four weighted
- * components, with an inline label table that's screen-reader-friendly
- * via a visually-hidden alternative.
+ * colored circles." We previously had four bars colored in the
+ * emerald/blue/purple/amber rainbow — the canonical AI dashboard
+ * palette. This version uses a monochromatic brand-teal ramp so the
+ * chart reads as one family of measurements, not four unrelated metrics.
+ * Categories are distinguished by position + label, not hue.
  *
- * Unavailable components (e.g., activity scrape failed) render as
- * dashed/gray segments labeled "data unavailable" rather than zero-bar.
+ * Unavailable components (e.g., activity scrape failed) render as a
+ * diagonal hatch labeled "unavailable" — never a zero-fill, which
+ * misleads as "scored zero."
  */
 export function ScoreBreakdown({ components, activityStatus }: ScoreBreakdownProps) {
   const weights = {
@@ -38,8 +41,9 @@ export function ScoreBreakdown({ components, activityStatus }: ScoreBreakdownPro
       score: components.freshness,
       weight: weights.freshness,
       unavailable,
-      color: "bg-emerald-500/80",
-      placeholder: "bg-muted",
+      // Brand teal at full intensity — anchors the chart visually.
+      fill: "bg-brand-emphasis",
+      swatch: "bg-brand-emphasis",
     },
     {
       key: "impactRecency" as const,
@@ -47,8 +51,8 @@ export function ScoreBreakdown({ components, activityStatus }: ScoreBreakdownPro
       score: components.impactRecency,
       weight: weights.impactRecency,
       unavailable: false,
-      color: "bg-blue-500/80",
-      placeholder: "bg-muted",
+      fill: "bg-brand",
+      swatch: "bg-brand",
     },
     {
       key: "donorMatch" as const,
@@ -56,8 +60,8 @@ export function ScoreBreakdown({ components, activityStatus }: ScoreBreakdownPro
       score: components.donorMatch,
       weight: weights.donorMatch,
       unavailable: false,
-      color: "bg-purple-500/80",
-      placeholder: "bg-muted",
+      fill: "bg-brand-subtle",
+      swatch: "bg-brand-subtle",
     },
     {
       key: "compliance" as const,
@@ -65,59 +69,52 @@ export function ScoreBreakdown({ components, activityStatus }: ScoreBreakdownPro
       score: components.compliance,
       weight: weights.compliance,
       unavailable: false,
-      color: "bg-amber-500/80",
-      placeholder: "bg-muted",
+      fill: "bg-brand-muted",
+      swatch: "bg-brand-muted",
     },
   ];
 
   return (
-    <div className="mt-3">
+    <div>
+      {/* Horizontal stacked bar. Width = weight share; fill = score. */}
       <div
-        className="flex h-4 w-full overflow-hidden rounded-md border border-border"
+        className="flex h-2 w-full overflow-hidden rounded-full bg-muted"
         role="img"
         aria-label="Composite score breakdown"
       >
         {rows.map((row) => {
           const widthPct = row.weight * 100;
-          const segmentFill = row.unavailable ? 0 : row.score;
           return (
             <div
               key={row.key}
               style={{ width: `${widthPct}%` }}
               className={`relative h-full ${
                 row.unavailable
-                  ? "bg-muted [background-image:repeating-linear-gradient(45deg,transparent_0,transparent_4px,rgba(0,0,0,0.05)_4px,rgba(0,0,0,0.05)_8px)]"
-                  : row.placeholder
+                  ? "bg-[repeating-linear-gradient(45deg,transparent_0,transparent_3px,rgba(127,127,127,0.18)_3px,rgba(127,127,127,0.18)_6px)]"
+                  : "bg-muted"
               }`}
             >
               {!row.unavailable ? (
-                <div className={`${row.color} h-full`} style={{ width: `${segmentFill * 100}%` }} />
+                <div className={`${row.fill} h-full`} style={{ width: `${row.score * 100}%` }} />
               ) : null}
             </div>
           );
         })}
       </div>
 
-      {/* Visible label legend */}
-      <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs">
+      {/* Legend: a quiet grid that lets the eye scan score values fast. */}
+      <dl className="mt-2.5 grid grid-cols-2 gap-x-4 gap-y-1 text-xs sm:grid-cols-4">
         {rows.map((row) => (
-          <li key={row.key} className="flex items-center gap-1.5">
-            <span
-              className={`h-2 w-2 rounded ${row.unavailable ? "bg-muted-foreground" : row.color}`}
-              aria-hidden
-            />
-            <span className="text-muted-foreground">
-              {row.label}:{" "}
-              <span className="tabular-nums text-foreground">
-                {row.unavailable ? "—" : row.score.toFixed(2)}
-              </span>
-              <span className="ml-1 text-[10px]">×{row.weight.toFixed(2)}</span>
-            </span>
-          </li>
+          <div key={row.key} className="flex items-baseline gap-1.5">
+            <span aria-hidden className={`h-2 w-2 shrink-0 rounded-sm ${row.swatch}`} />
+            <dt className="truncate text-muted-foreground">{row.label}</dt>
+            <dd className="ml-auto font-mono text-foreground tabular-nums">
+              {row.unavailable ? "—" : row.score.toFixed(2)}
+            </dd>
+          </div>
         ))}
-      </ul>
+      </dl>
 
-      {/* Screen-reader-friendly table mirror */}
       <table className="sr-only">
         <caption>Score component breakdown</caption>
         <thead>

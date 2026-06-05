@@ -40,27 +40,40 @@ export function RateLimitCounter({ advisor }: RateLimitCounterProps) {
   const deepCap = snapshot ? snapshot.deep.cap : fallbackCaps.deep;
 
   return (
-    <div className="flex items-center gap-3 rounded-md border border-border bg-muted/40 px-3 py-1.5 text-xs text-muted-foreground">
-      <Sparkles className="h-3.5 w-3.5" />
-      <span className="font-medium capitalize text-foreground">{advisor.rateLimitTier} tier</span>
-      <span aria-hidden>·</span>
-      <span>
-        Fast: {fastUsed ?? "—"}/{fastCap === null ? "∞" : fastCap} today
-      </span>
-      <span aria-hidden>·</span>
-      <span>
-        Deep: {deepUsed ?? "—"}/{deepCap === null ? "∞" : deepCap} today
-      </span>
+    <div
+      className="flex items-stretch overflow-hidden rounded-md border border-border bg-background text-xs"
+      title={
+        snapshot?.degraded ? "Counter service unavailable; showing tier caps only." : undefined
+      }
+    >
+      <div className="flex items-center gap-1.5 border-r border-border/60 px-2.5 py-1.5">
+        <Sparkles className="h-3 w-3 text-brand-emphasis dark:text-brand-subtle" aria-hidden />
+        <span className="text-[10px] font-medium uppercase tracking-[0.1em] text-muted-foreground">
+          {advisor.rateLimitTier}
+        </span>
+      </div>
+      <div className="flex items-baseline gap-1 border-r border-border/60 px-2.5 py-1.5">
+        <span className="text-[10px] font-medium uppercase tracking-[0.1em] text-muted-foreground">
+          Fast
+        </span>
+        <span className="font-mono tabular-nums text-foreground">{fastUsed ?? "—"}</span>
+        <span className="text-[10px] text-muted-foreground">
+          / {fastCap === null ? "∞" : fastCap}
+        </span>
+      </div>
+      <div className="flex items-baseline gap-1 px-2.5 py-1.5">
+        <span className="text-[10px] font-medium uppercase tracking-[0.1em] text-muted-foreground">
+          Deep
+        </span>
+        <span className="font-mono tabular-nums text-foreground">{deepUsed ?? "—"}</span>
+        <span className="text-[10px] text-muted-foreground">
+          / {deepCap === null ? "∞" : deepCap}
+        </span>
+      </div>
       {snapshot?.degraded ? (
-        <>
-          <span aria-hidden>·</span>
-          <span
-            className="text-amber-600 dark:text-amber-400"
-            title="Counter service unavailable; showing tier caps only."
-          >
-            usage unavailable
-          </span>
-        </>
+        <div className="flex items-center border-l border-amber-300/60 bg-amber-50 px-2.5 py-1.5 text-[10px] font-medium uppercase tracking-[0.1em] text-amber-700 dark:border-amber-700/60 dark:bg-amber-950/40 dark:text-amber-300">
+          usage offline
+        </div>
       ) : null}
     </div>
   );

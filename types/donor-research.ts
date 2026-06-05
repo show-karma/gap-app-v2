@@ -98,6 +98,10 @@ export type ComplianceDisqualificationReason =
 export interface ResearchReportCandidate {
   id: string;
   fundingOrganizationId: string;
+  organizationName: string | null;
+  organizationCity: string | null;
+  organizationState: string | null;
+  organizationWebsiteUrl: string | null;
   ein: string | null;
   composite: number;
   components: {

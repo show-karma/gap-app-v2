@@ -53,32 +53,42 @@ export function ReportViewer({ reportId }: ReportViewerProps) {
   const remaining = candidates.filter((c) => !c.topThreeFlag);
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8">
-      <header className="mb-6 flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <p className="text-xs text-muted-foreground">
-            <Link
-              href={PAGES.DONOR_RESEARCH.INDEX}
-              className="underline underline-offset-2 hover:text-foreground"
-            >
-              ← Back to donor research
-            </Link>
-          </p>
-          <h1 className="mt-1 text-2xl font-semibold capitalize">{report.mode} report</h1>
-          <div className="mt-1 flex items-center gap-2">
-            <StatusBadge status={report.status} />
-            <span className="text-xs text-muted-foreground">
-              {candidates.length} {pluralize("candidate", candidates.length)}
-            </span>
+    <div className="mx-auto max-w-6xl px-4 py-10 sm:py-14">
+      <header className="mb-8 border-b border-border/60 pb-6">
+        <Link
+          href={PAGES.DONOR_RESEARCH.INDEX}
+          className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+        >
+          <span aria-hidden>←</span>
+          Back to donor research
+        </Link>
+        <div className="mt-3 flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
+          <div className="max-w-2xl">
+            <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+              {report.mode === "deep" ? "Deep research report" : "Fast research report"}
+            </p>
+            <h1 className="mt-1 text-balance text-2xl font-medium tracking-tight text-foreground sm:text-3xl">
+              {candidates.length === 0
+                ? "Awaiting candidate ranking"
+                : `${candidates.length} ${pluralize("candidate", candidates.length)} considered`}
+            </h1>
+            <div className="mt-2 flex items-center gap-3">
+              <StatusBadge status={report.status} />
+              {topThree.length > 0 ? (
+                <span className="text-xs text-muted-foreground">
+                  {topThree.length} top {pluralize("recommendation", topThree.length)} surfaced
+                </span>
+              ) : null}
+            </div>
           </div>
+          {isTerminal ? (
+            <ShareTokenControls
+              reportId={reportId}
+              hasShareToken={report.hasShareToken}
+              shareTokenExpiresAt={report.shareTokenExpiresAt}
+            />
+          ) : null}
         </div>
-        {isTerminal ? (
-          <ShareTokenControls
-            reportId={reportId}
-            hasShareToken={report.hasShareToken}
-            shareTokenExpiresAt={report.shareTokenExpiresAt}
-          />
-        ) : null}
       </header>
 
       {!isTerminal ? (
@@ -97,10 +107,14 @@ export function ReportViewer({ reportId }: ReportViewerProps) {
         <DisqualificationSummary candidates={candidates} />
       ) : null}
 
-      <section className="mb-8">
-        <h2 className="mb-3 text-lg font-semibold">Top recommendations</h2>
+      <section className="mb-10">
+        <SectionHeading
+          eyebrow="Top recommendations"
+          title="Lead with these three."
+          subtitle="Highest composite scores after compliance and activity weighting."
+        />
         {topThree.length === 0 ? (
-          <p className="rounded-md border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+          <p className="rounded-lg border border-dashed border-border/70 bg-muted/20 p-8 text-center text-sm text-muted-foreground">
             {isTerminal
               ? candidates.length === 0
                 ? "No candidates matched the criteria. Try broadening the geography or cause so the pool draws from a different stratum."
@@ -122,7 +136,11 @@ export function ReportViewer({ reportId }: ReportViewerProps) {
 
       {remaining.length > 0 ? (
         <section>
-          <h2 className="mb-3 text-lg font-semibold">Full ranked list</h2>
+          <SectionHeading
+            eyebrow={`Full ranked list · ${remaining.length}`}
+            title="Everyone else the pool surfaced."
+            subtitle="Ranked by composite. Disqualified candidates kept inline for transparency."
+          />
           <div className="flex flex-col gap-3">
             {remaining.map((candidate) => (
               <CandidateCard
@@ -135,5 +153,23 @@ export function ReportViewer({ reportId }: ReportViewerProps) {
         </section>
       ) : null}
     </div>
+  );
+}
+
+interface SectionHeadingProps {
+  eyebrow: string;
+  title: string;
+  subtitle: string;
+}
+
+function SectionHeading({ eyebrow, title, subtitle }: SectionHeadingProps) {
+  return (
+    <header className="mb-4">
+      <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+        {eyebrow}
+      </p>
+      <h2 className="mt-1 text-xl font-medium tracking-tight text-foreground">{title}</h2>
+      <p className="mt-0.5 text-sm text-muted-foreground">{subtitle}</p>
+    </header>
   );
 }
