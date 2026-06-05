@@ -34,13 +34,18 @@ interface CandidateCardProps {
 export function CandidateCard({ candidate, variant }: CandidateCardProps) {
   const [expanded, setExpanded] = useState(false);
   const isDisqualified = candidate.complianceVerdict === "disqualified";
-  const name =
+  // IRS 990 data is shouted in all caps; normalize so the card doesn't
+  // look like a tax form.
+  const rawName =
     candidate.organizationName ??
     (candidate.ein ? `EIN ${formatEin(candidate.ein)}` : "Unidentified nonprofit");
+  const name = humanizeCase(rawName, "title");
   const locale = formatLocale(candidate.organizationCity, candidate.organizationState);
   const scoreBand = bandForScore(candidate.composite, isDisqualified);
   const matchReasons = isDisqualified ? [] : buildMatchReasons(candidate);
-  const description = candidate.organizationDescription?.trim() || null;
+  const description = candidate.organizationDescription
+    ? humanizeCase(candidate.organizationDescription.trim(), "sentence")
+    : null;
 
   return (
     <article
@@ -122,25 +127,7 @@ export function CandidateCard({ candidate, variant }: CandidateCardProps) {
         ) : null}
 
         {matchReasons.length > 0 ? (
-          <section className="rounded-md border border-border/60 bg-muted/20 p-3.5">
-            <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
-              Why this match
-            </p>
-            <ul className="mt-2 flex flex-col gap-1.5 text-[13px] leading-snug">
-              {matchReasons.map((reason) => (
-                <li key={reason.key} className="flex items-start gap-2">
-                  <ReasonGlyph tone={reason.tone} />
-                  <span className="flex-1 text-foreground/90">{reason.text}</span>
-                </li>
-              ))}
-            </ul>
-            <p className="mt-2 text-[10px] uppercase tracking-[0.08em] text-muted-foreground/70">
-              We weigh donor alignment, impact recency, freshness, and compliance.{" "}
-              <a href="#scoring-methodology" className="underline-offset-2 hover:underline">
-                How we score
-              </a>
-            </p>
-          </section>
+          <ScoreBreakdownViz candidate={candidate} reasons={matchReasons} />
         ) : null}
 
         {candidate.reasoningSummary ? (
@@ -192,30 +179,188 @@ export function CandidateCard({ candidate, variant }: CandidateCardProps) {
 type ReasonTone = "good" | "neutral" | "weak";
 
 interface MatchReason {
-  key: string;
+  key: "donorMatch" | "impact" | "freshness" | "compliance";
+  componentKey: "donorMatch" | "impactRecency" | "freshness" | "compliance";
+  label: string;
+  weight: number;
   tone: ReasonTone;
   text: string;
 }
+
+interface ScoreBreakdownVizProps {
+  candidate: ResearchReportCandidate;
+  reasons: MatchReason[];
+}
+
+/**
+ * Per-component score viz that shows the advisor exactly how the
+ * composite was assembled. Each row pairs a horizontal bar (component
+ * score, 0-100) with the weight that determines its contribution to
+ * the composite, plus a one-line plain-language explanation.
+ *
+ * The bars are stacked vertically (one row per component) rather than
+ * the previous side-by-side weighted-stack which was unreadable. The
+ * weight is shown as a multiplier (×25%) on the right of each row so
+ * advisors can see which dimensions matter most.
+ *
+ * Bottom row shows the math: a thin stacked bar where each segment is
+ * the component's contribution (score × weight), summing to the
+ * composite. This is the same data as the old viz but reframed as
+ * "what added up to your number" rather than "weighted breakdown."
+ */
+function ScoreBreakdownViz({ candidate, reasons }: ScoreBreakdownVizProps) {
+  const { components } = candidate;
+  const compositePct = Math.round(candidate.composite * 100);
+
+  return (
+    <section className="rounded-md border border-border/60 bg-muted/20 p-4">
+      <header className="mb-3 flex items-baseline justify-between gap-3">
+        <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+          How we got {compositePct} / 100
+        </p>
+        <a
+          href="#scoring-methodology"
+          className="text-[10px] uppercase tracking-[0.08em] text-muted-foreground/70 underline-offset-2 hover:text-foreground hover:underline"
+        >
+          How we score
+        </a>
+      </header>
+
+      <ul className="flex flex-col gap-3">
+        {reasons.map((reason) => {
+          const score = components[reason.componentKey];
+          const scorePct = Math.round(score * 100);
+          return (
+            <li key={reason.key} className="flex flex-col gap-1">
+              <div className="flex items-baseline justify-between gap-3 text-xs">
+                <span className="font-medium text-foreground">{reason.label}</span>
+                <span className="font-mono tabular-nums text-muted-foreground">
+                  <span className="text-foreground">{scorePct}</span>
+                  <span className="text-muted-foreground/70"> / 100</span>
+                  <span className="ml-2 text-[10px] uppercase tracking-[0.06em] text-muted-foreground/70">
+                    × {Math.round(reason.weight * 100)}%
+                  </span>
+                </span>
+              </div>
+              <div
+                role="img"
+                aria-label={`${reason.label}: ${scorePct} out of 100`}
+                className="h-1.5 w-full overflow-hidden rounded-full bg-muted"
+              >
+                <div
+                  className={`h-full transition-all ${toneFill(reason.tone)}`}
+                  style={{ width: `${scorePct}%` }}
+                />
+              </div>
+              <p className="mt-0.5 flex items-start gap-1.5 text-[12px] leading-snug text-muted-foreground">
+                <ReasonGlyph tone={reason.tone} />
+                <span className="flex-1">{reason.text}</span>
+              </p>
+            </li>
+          );
+        })}
+      </ul>
+
+      {/* Composite math: a thin stacked bar showing each component's
+          contribution (score × weight), totaling the composite. */}
+      <div className="mt-4 border-t border-border/60 pt-3">
+        <div className="mb-1.5 flex items-baseline justify-between text-[11px]">
+          <span className="font-medium uppercase tracking-[0.14em] text-muted-foreground">
+            Composite
+          </span>
+          <span className="font-mono text-base tabular-nums text-foreground">
+            {compositePct}
+            <span className="text-xs text-muted-foreground"> / 100</span>
+          </span>
+        </div>
+        <div
+          className="flex h-1.5 w-full overflow-hidden rounded-full bg-muted"
+          role="img"
+          aria-label={`Composite ${compositePct} of 100, summed from each component's weighted contribution.`}
+        >
+          {reasons.map((reason) => {
+            const score = components[reason.componentKey];
+            const contribution = score * reason.weight * 100;
+            return (
+              <div
+                key={`contrib-${reason.key}`}
+                className={toneFill(reason.tone)}
+                style={{ width: `${contribution}%` }}
+                title={`${reason.label}: contributed ${Math.round(contribution)}/100`}
+              />
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/**
+ * Component weights are duplicated here from the backend's
+ * composite-ranking service so the UI can show the math without a
+ * round-trip. Keep in sync when the backend weights change.
+ */
+const COMPONENT_WEIGHTS = {
+  freshness: 0.35,
+  impactRecency: 0.25,
+  donorMatch: 0.25,
+  compliance: 0.15,
+};
 
 function buildMatchReasons(candidate: ResearchReportCandidate): MatchReason[] {
   const { components } = candidate;
   return [
     {
       key: "donorMatch",
+      componentKey: "donorMatch",
+      label: "Donor alignment",
+      weight: COMPONENT_WEIGHTS.donorMatch,
       tone: toneFor(components.donorMatch),
       text: phraseDonorMatch(components.donorMatch),
     },
     {
       key: "impact",
+      componentKey: "impactRecency",
+      label: "Impact recency",
+      weight: COMPONENT_WEIGHTS.impactRecency,
       tone: toneFor(components.impactRecency),
       text: phraseImpact(components.impactRecency),
     },
     {
       key: "freshness",
+      componentKey: "freshness",
+      label: "Freshness",
+      weight: COMPONENT_WEIGHTS.freshness,
       tone: toneFor(components.freshness),
       text: phraseFreshness(components.freshness, candidate.activitySignalStatus),
     },
+    {
+      key: "compliance",
+      componentKey: "compliance",
+      label: "Compliance",
+      weight: COMPONENT_WEIGHTS.compliance,
+      tone: toneFor(components.compliance),
+      text: phraseCompliance(components.compliance, candidate.complianceVerdict),
+    },
   ];
+}
+
+function phraseCompliance(
+  score: number,
+  verdict: ResearchReportCandidate["complianceVerdict"]
+): string {
+  if (verdict === "verified") return "Fully verified across IRS and state registries.";
+  if (verdict === "partial") return "Mostly verified with one caveat — see the breakdown below.";
+  if (verdict === "flagged") return "Compliance flags surfaced — review carefully before outreach.";
+  if (score >= 0.6) return "Compliance checks passed.";
+  return "Limited compliance signal — review the breakdown below.";
+}
+
+function toneFill(tone: ReasonTone): string {
+  if (tone === "good") return "bg-brand";
+  if (tone === "neutral") return "bg-muted-foreground/40";
+  return "bg-amber-500/70";
 }
 
 function toneFor(score: number): ReasonTone {
@@ -327,4 +472,138 @@ function truncate(text: string, max: number): string {
   const slice = text.slice(0, max);
   const lastSpace = slice.lastIndexOf(" ");
   return `${slice.slice(0, lastSpace > 0 ? lastSpace : max).trimEnd()}…`;
+}
+
+// Words to always lowercase in title case (articles, conjunctions, short
+// prepositions), unless they're the first or last word.
+const TITLE_CASE_LOWERCASE = new Set([
+  "a",
+  "an",
+  "and",
+  "as",
+  "at",
+  "but",
+  "by",
+  "for",
+  "from",
+  "in",
+  "into",
+  "nor",
+  "of",
+  "on",
+  "onto",
+  "or",
+  "per",
+  "the",
+  "to",
+  "up",
+  "via",
+  "vs",
+  "vs.",
+  "with",
+]);
+
+// Common acronyms / proper-noun fragments that should keep their case.
+const KEEP_AS_IS = new Set([
+  "USA",
+  "U.S.",
+  "U.S.A.",
+  "UK",
+  "EU",
+  "NYC",
+  "LA",
+  "SF",
+  "DC",
+  "IRS",
+  "LLC",
+  "LLP",
+  "Inc.",
+  "Inc",
+  "Co.",
+  "Co",
+  "Corp.",
+  "Corp",
+  "Ltd.",
+  "Ltd",
+  "II",
+  "III",
+  "IV",
+  "VI",
+  "VII",
+  "VIII",
+  "IX",
+  "XI",
+  "501c3",
+  "STEM",
+  "LGBT",
+  "LGBTQ",
+  "LGBTQ+",
+  "HIV",
+  "AIDS",
+  "CDC",
+  "FBI",
+  "CIA",
+  "NASA",
+  "MIT",
+]);
+
+/**
+ * Normalize a string that may be SHOUTED IN ALL CAPS (the IRS 990 data
+ * convention) into Title Case or Sentence case. Leaves correctly-cased
+ * text alone — only kicks in when >70% of alphabetic characters are
+ * uppercase, which is the all-caps signature.
+ */
+function humanizeCase(input: string, mode: "title" | "sentence"): string {
+  if (!input) return input;
+  const letters = input.replace(/[^A-Za-z]/g, "");
+  if (letters.length === 0) return input;
+  const upper = letters.replace(/[^A-Z]/g, "").length;
+  const ratio = upper / letters.length;
+  // Already mixed-case — assume the writer knew what they meant.
+  if (ratio < 0.7) return input;
+
+  if (mode === "title") return toTitleCase(input);
+  return toSentenceCase(input);
+}
+
+function toTitleCase(input: string): string {
+  const tokens = input.split(/(\s+|[-—–/])/);
+  const wordIndices: number[] = [];
+  tokens.forEach((tok, i) => {
+    if (/^[A-Za-z]/.test(tok)) wordIndices.push(i);
+  });
+  const lastWord = wordIndices[wordIndices.length - 1] ?? -1;
+
+  return tokens
+    .map((tok, i) => {
+      if (!/^[A-Za-z]/.test(tok)) return tok;
+      if (KEEP_AS_IS.has(tok)) return tok;
+      const lower = tok.toLowerCase();
+      const isFirst = i === wordIndices[0];
+      const isLast = i === lastWord;
+      if (!isFirst && !isLast && TITLE_CASE_LOWERCASE.has(lower)) return lower;
+      return lower.charAt(0).toUpperCase() + lower.slice(1);
+    })
+    .join("");
+}
+
+function toSentenceCase(input: string): string {
+  // Lowercase everything, then uppercase the first letter of each
+  // sentence and standalone "I". Preserve KEEP_AS_IS tokens that
+  // appear verbatim with word boundaries.
+  const lower = input.toLowerCase();
+  // First pass: sentence-start uppercase.
+  const sentenced = lower.replace(
+    /(^|[.!?]\s+)([a-z])/g,
+    (_, lead, ch) => `${lead}${ch.toUpperCase()}`
+  );
+  // Restore standalone "I"
+  const withI = sentenced.replace(/\bi\b/g, "I");
+  // Restore acronyms (case-insensitive whole-word match against KEEP_AS_IS).
+  let result = withI;
+  for (const token of KEEP_AS_IS) {
+    const safe = token.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    result = result.replace(new RegExp(`\\b${safe}\\b`, "gi"), token);
+  }
+  return result;
 }
