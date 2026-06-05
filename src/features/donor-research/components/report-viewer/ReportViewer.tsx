@@ -92,7 +92,8 @@ export function ReportViewer({ reportId }: ReportViewerProps) {
       </header>
 
       {!isTerminal ? (
-        <section className="mb-6">
+        <section className="mb-6 flex flex-col gap-4">
+          <NavigateAwayHint />
           <ProgressTimeline
             events={stream.events}
             latest={stream.latest}
@@ -171,5 +172,24 @@ function SectionHeading({ eyebrow, title, subtitle }: SectionHeadingProps) {
       <h2 className="mt-1 text-xl font-medium tracking-tight text-foreground">{title}</h2>
       <p className="mt-0.5 text-sm text-muted-foreground">{subtitle}</p>
     </header>
+  );
+}
+
+function NavigateAwayHint() {
+  return (
+    <div className="rounded-lg border border-border bg-brand-faint/40 px-4 py-3 text-sm dark:bg-brand-emphasis/10">
+      <p className="font-medium text-foreground">This run takes about five minutes.</p>
+      <p className="mt-0.5 text-pretty leading-relaxed text-muted-foreground">
+        Feel free to navigate away — the pipeline keeps running on our end. You can return to this
+        report any time from the{" "}
+        <Link
+          href={PAGES.DONOR_RESEARCH.INDEX}
+          className="text-brand-emphasis underline-offset-2 hover:underline dark:text-brand-subtle"
+        >
+          donor research dashboard
+        </Link>{" "}
+        and pick up where it left off.
+      </p>
+    </div>
   );
 }

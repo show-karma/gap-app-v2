@@ -110,6 +110,7 @@ export interface ResearchReportCandidate {
   id: string;
   fundingOrganizationId: string;
   organizationName: string | null;
+  organizationDescription: string | null;
   organizationCity: string | null;
   organizationState: string | null;
   organizationWebsiteUrl: string | null;

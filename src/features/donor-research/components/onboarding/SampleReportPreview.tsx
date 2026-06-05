@@ -1,5 +1,3 @@
-import { ScoreBreakdown } from "../report-viewer/ScoreBreakdown";
-
 /**
  * Sample report fixture used in the onboarding flow (F4).
  *
@@ -103,9 +101,10 @@ interface SampleCardProps {
 }
 
 function SampleCandidateCard({ candidate, variant }: SampleCardProps) {
+  const band = bandForSampleScore(candidate.composite);
   return (
     <article className="rounded-lg border border-border bg-card p-3">
-      <header className="mb-2 flex items-baseline justify-between gap-2">
+      <header className="mb-2 flex items-start justify-between gap-2">
         <div className="min-w-0">
           <h4 className="truncate text-sm font-semibold">{candidate.name}</h4>
           <p className="text-xs text-muted-foreground">
@@ -113,12 +112,26 @@ function SampleCandidateCard({ candidate, variant }: SampleCardProps) {
             <span className="capitalize">{candidate.verdict}</span>
           </p>
         </div>
-        <p className="text-xl font-semibold tabular-nums">{candidate.composite.toFixed(2)}</p>
+        <div className="text-right">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-brand-emphasis dark:text-brand-subtle">
+            {band}
+          </p>
+          <p className="font-mono text-lg leading-none tabular-nums">
+            {Math.round(candidate.composite * 100)}
+            <span className="text-xs text-muted-foreground">{" / 100"}</span>
+          </p>
+        </div>
       </header>
-      <ScoreBreakdown components={candidate.components} activityStatus="ok" />
       {variant === "one-pager" && candidate.onePager ? (
         <p className="mt-2 rounded-md bg-muted/40 p-2 text-xs">{candidate.onePager}</p>
       ) : null}
     </article>
   );
+}
+
+function bandForSampleScore(score: number): string {
+  if (score >= 0.6) return "Outstanding fit";
+  if (score >= 0.4) return "Strong fit";
+  if (score >= 0.25) return "Promising";
+  return "Marginal";
 }

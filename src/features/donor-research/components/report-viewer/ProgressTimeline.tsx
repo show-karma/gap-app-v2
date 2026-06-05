@@ -34,7 +34,7 @@ const STAGE_ORDER: Array<{
     name: "contact_discovery_complete",
     label: "Contact discovery",
     caption:
-      "Searching the web for each candidate's official website and social handles via Parallel.ai (~30s per org).",
+      "Searching the web for each candidate's official website and social handles (~30 seconds per organization).",
   },
   {
     name: "activity_complete",
