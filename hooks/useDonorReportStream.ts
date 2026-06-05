@@ -97,7 +97,11 @@ export function useDonorReportStream(reportId: string | null) {
         await fetchEventSource(url, {
           method: "GET",
           headers,
-          credentials: "include",
+          // Auth flows via the Authorization header, not cookies, so
+          // we don't need credentials-mode CORS. Avoids the
+          // `Allow-Origin: '*'` + `Allow-Credentials: true` mismatch
+          // that the indexer's global fastify-cors config rejects.
+          credentials: "omit",
           signal: controller.signal,
           // Disable visibility-driven reconnect handling — the in-memory
           // emitter replays missed stages so we don't need the library
