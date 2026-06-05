@@ -31,6 +31,12 @@ const STAGE_ORDER: Array<{
     caption: "Running Pub 78, recent 990, and CA AG checks.",
   },
   {
+    name: "contact_discovery_complete",
+    label: "Contact discovery",
+    caption:
+      "Searching the web for each candidate's official website and social handles via Parallel.ai (~30s per org).",
+  },
+  {
     name: "activity_complete",
     label: "Activity signal",
     caption: "Sampling website and social channels for freshness.",

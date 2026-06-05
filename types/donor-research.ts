@@ -183,6 +183,7 @@ export interface FastReportEvent {
     | "snapshot"
     | "pool_loaded"
     | "compliance_complete"
+    | "contact_discovery_complete"
     | "activity_complete"
     | "ranking_complete"
     | "report_finalized"
