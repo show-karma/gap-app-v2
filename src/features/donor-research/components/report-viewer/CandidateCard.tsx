@@ -4,6 +4,7 @@ import { ArrowUpRight, ChevronDown } from "lucide-react";
 import { useState } from "react";
 import type { ResearchReportCandidate } from "@/types/donor-research";
 import { ComplianceBreakdown } from "./ComplianceBreakdown";
+import { RecentActivity } from "./RecentActivity";
 
 interface CandidateCardProps {
   candidate: ResearchReportCandidate;
@@ -128,6 +129,10 @@ export function CandidateCard({ candidate, variant }: CandidateCardProps) {
 
         {matchReasons.length > 0 ? (
           <ScoreBreakdownViz candidate={candidate} reasons={matchReasons} />
+        ) : null}
+
+        {candidate.recentMentions && candidate.recentMentions.length > 0 ? (
+          <RecentActivity mentions={candidate.recentMentions} />
         ) : null}
 
         {candidate.reasoningSummary ? (
@@ -348,10 +353,14 @@ function buildMatchReasons(candidate: ResearchReportCandidate): MatchReason[] {
       key: "freshness",
       componentKey: "freshness",
       label: "Online presence",
-      help: "Whether the nonprofit has a current public web presence — recent website updates, recent LinkedIn or social posts.",
+      help: "Whether the nonprofit has recently published content or appeared in news coverage. Powered by a Exa search disambiguated against IRS facts (EIN, name, locale).",
       weight: COMPONENT_WEIGHTS.freshness,
       tone: toneFor(components.freshness),
-      text: phraseFreshness(components.freshness, candidate.activitySignalStatus),
+      text: phraseFreshness(
+        components.freshness,
+        candidate.activitySignalStatus,
+        candidate.recentMentions,
+      ),
     },
     {
       key: "compliance",
@@ -406,18 +415,46 @@ function phraseImpact(score: number): string {
 
 function phraseFreshness(
   score: number,
-  activity: ResearchReportCandidate["activitySignalStatus"]
+  activity: ResearchReportCandidate["activitySignalStatus"],
+  mentions: ResearchReportCandidate["recentMentions"] | undefined,
 ): string {
-  if (activity === "scrape_failed") {
-    return "We couldn't reach their website or social channels during this run.";
+  // When we have a validated mention, lead with the concrete date —
+  // it's more useful than a generic band phrase ("a few weeks").
+  const mostRecent = pickMostRecentDateMs(mentions ?? []);
+  if (mostRecent !== null) {
+    const days = Math.max(
+      0,
+      Math.floor((Date.now() - mostRecent) / 86400_000),
+    );
+    if (days <= 7) return "Mentioned in the last week across web or news.";
+    if (days <= 30)
+      return `Most recent public mention about ${days} days ago.`;
+    if (days <= 90)
+      return `Most recent public mention about ${Math.round(days / 7)} weeks ago.`;
+    if (days <= 365)
+      return `Most recent public mention about ${Math.round(days / 30)} months ago.`;
+    return "No public mentions in the last year.";
   }
   if (activity === "no_signal") {
-    return "We couldn't find a website or social handles to check.";
+    return "We couldn't find any recent public mentions.";
   }
-  if (score >= 0.65) return "Website and social channels were updated in the last few weeks.";
-  if (score >= 0.4) return "Some recent updates on their website or social channels.";
-  if (score >= 0.2) return "Web and social channels haven't been updated in a few months.";
-  return "No fresh activity on their website or social channels.";
+  if (score >= 0.65) return "Recently active across web and news.";
+  if (score >= 0.4) return "Some recent web or news activity.";
+  if (score >= 0.2) return "Light recent activity — most signals are months old.";
+  return "No fresh public mentions surfaced.";
+}
+
+function pickMostRecentDateMs(
+  mentions: ResearchReportCandidate["recentMentions"],
+): number | null {
+  let best: number | null = null;
+  for (const m of mentions) {
+    if (!m.publishedDate) continue;
+    const t = Date.parse(m.publishedDate);
+    if (Number.isNaN(t)) continue;
+    if (best === null || t > best) best = t;
+  }
+  return best;
 }
 
 function ReasonGlyph({ tone }: { tone: ReasonTone }) {

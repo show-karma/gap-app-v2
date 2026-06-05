@@ -106,6 +106,23 @@ export interface ComplianceCheck {
   detail: string;
 }
 
+/**
+ * One validated mention of the nonprofit on its own site or in
+ * external news/coverage. Powers the "Recent activity" section on
+ * the candidate card.
+ */
+export type RecentMentionKind = "own_domain" | "external_mention";
+
+export interface RecentMention {
+  kind: RecentMentionKind;
+  url: string;
+  title: string | null;
+  publisher: string | null;
+  publishedDate: string | null;
+  matchScore: number;
+  matchSignals: string[];
+}
+
 export interface ResearchReportCandidate {
   id: string;
   fundingOrganizationId: string;
@@ -126,6 +143,7 @@ export interface ResearchReportCandidate {
   complianceVerdict: ComplianceVerdictKind;
   disqualificationReasons: ComplianceDisqualificationReason[];
   complianceChecks: ComplianceCheck[];
+  recentMentions: RecentMention[];
   stateRegistrationStatus: StateRegistrationStatus;
   activitySignalStatus: ActivitySignalStatus;
   websiteLastUpdatedAt: string | null;
