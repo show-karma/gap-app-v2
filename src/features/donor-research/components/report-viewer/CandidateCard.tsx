@@ -182,6 +182,8 @@ interface MatchReason {
   key: "donorMatch" | "impact" | "freshness" | "compliance";
   componentKey: "donorMatch" | "impactRecency" | "freshness" | "compliance";
   label: string;
+  /** One-line explanation surfaced on hover via title attribute. */
+  help: string;
   weight: number;
   tone: ReasonTone;
   text: string;
@@ -233,7 +235,20 @@ function ScoreBreakdownViz({ candidate, reasons }: ScoreBreakdownVizProps) {
           return (
             <li key={reason.key} className="flex flex-col gap-1">
               <div className="flex items-baseline justify-between gap-3 text-xs">
-                <span className="font-medium text-foreground">{reason.label}</span>
+                <span
+                  className="inline-flex items-center gap-1 font-medium text-foreground"
+                  title={reason.help}
+                >
+                  {reason.label}
+                  <span
+                    role="img"
+                    aria-label="What this means"
+                    title={reason.help}
+                    className="inline-flex h-3 w-3 cursor-help items-center justify-center rounded-full border border-muted-foreground/40 text-[8px] font-semibold leading-none text-muted-foreground/70 hover:border-muted-foreground hover:text-foreground"
+                  >
+                    ?
+                  </span>
+                </span>
                 <span className="font-mono tabular-nums text-muted-foreground">
                   <span className="text-foreground">{scorePct}</span>
                   <span className="text-muted-foreground/70"> / 100</span>
@@ -314,7 +329,8 @@ function buildMatchReasons(candidate: ResearchReportCandidate): MatchReason[] {
     {
       key: "donorMatch",
       componentKey: "donorMatch",
-      label: "Donor alignment",
+      label: "Match to your criteria",
+      help: "How closely the nonprofit's mission and location match your donor's stated cause, geography, and amount range.",
       weight: COMPONENT_WEIGHTS.donorMatch,
       tone: toneFor(components.donorMatch),
       text: phraseDonorMatch(components.donorMatch),
@@ -322,7 +338,8 @@ function buildMatchReasons(candidate: ResearchReportCandidate): MatchReason[] {
     {
       key: "impact",
       componentKey: "impactRecency",
-      label: "Impact recency",
+      label: "Still operating?",
+      help: "Whether the nonprofit is still actively running programs, based on how recently they filed an IRS 990 and the freshness of their grant activity.",
       weight: COMPONENT_WEIGHTS.impactRecency,
       tone: toneFor(components.impactRecency),
       text: phraseImpact(components.impactRecency),
@@ -330,7 +347,8 @@ function buildMatchReasons(candidate: ResearchReportCandidate): MatchReason[] {
     {
       key: "freshness",
       componentKey: "freshness",
-      label: "Freshness",
+      label: "Online presence",
+      help: "Whether the nonprofit has a current public web presence — recent website updates, recent LinkedIn or social posts.",
       weight: COMPONENT_WEIGHTS.freshness,
       tone: toneFor(components.freshness),
       text: phraseFreshness(components.freshness, candidate.activitySignalStatus),
@@ -339,6 +357,7 @@ function buildMatchReasons(candidate: ResearchReportCandidate): MatchReason[] {
       key: "compliance",
       componentKey: "compliance",
       label: "Compliance",
+      help: "Whether the nonprofit passes the IRS Pub 78 active-501(c)(3) check, has a recent 990 on file, and (for California orgs) is current on the state charity registry.",
       weight: COMPONENT_WEIGHTS.compliance,
       tone: toneFor(components.compliance),
       text: phraseCompliance(components.compliance, candidate.complianceVerdict),
@@ -370,17 +389,19 @@ function toneFor(score: number): ReasonTone {
 }
 
 function phraseDonorMatch(score: number): string {
-  if (score >= 0.65) return "Sharp alignment with your client's stated criteria.";
-  if (score >= 0.4) return "Solid alignment with your client's criteria.";
-  if (score >= 0.2) return "Loose alignment with the criteria — adjacent but not central.";
-  return "Marginal alignment — consider broadening the criteria.";
+  if (score >= 0.65) return "Their mission and location match your criteria closely.";
+  if (score >= 0.4) return "Their mission and location are a solid match for your criteria.";
+  if (score >= 0.2) return "Adjacent to your criteria but not a central match.";
+  return "Limited overlap with your criteria — consider broadening cause or geography.";
 }
 
 function phraseImpact(score: number): string {
-  if (score >= 0.65) return "Sustained recent program impact reported on the 990.";
-  if (score >= 0.4) return "Recent impact visible in the 990 and program data.";
-  if (score >= 0.2) return "Older impact data — most recent reporting is dated.";
-  return "Limited public impact data available.";
+  if (score >= 0.65) return "Filed a recent 990 and shows active grant activity.";
+  if (score >= 0.4)
+    return "Filed a 990 in the last couple of years; some recent grant activity on record.";
+  if (score >= 0.2)
+    return "Their most recent IRS 990 is a few years old — they may still be running, just quieter on the record.";
+  return "No recent IRS filing or grant activity in our index — may have wound down.";
 }
 
 function phraseFreshness(
@@ -388,15 +409,15 @@ function phraseFreshness(
   activity: ResearchReportCandidate["activitySignalStatus"]
 ): string {
   if (activity === "scrape_failed") {
-    return "Website or social channels couldn't be reached during this run.";
+    return "We couldn't reach their website or social channels during this run.";
   }
   if (activity === "no_signal") {
-    return "No website or social handles found yet — activity unknown.";
+    return "We couldn't find a website or social handles to check.";
   }
-  if (score >= 0.65) return "Recently active — website and social channels updated lately.";
-  if (score >= 0.4) return "Some recent activity on website or social channels.";
-  if (score >= 0.2) return "Limited recent updates across web and social.";
-  return "No fresh activity surfaced.";
+  if (score >= 0.65) return "Website and social channels were updated in the last few weeks.";
+  if (score >= 0.4) return "Some recent updates on their website or social channels.";
+  if (score >= 0.2) return "Web and social channels haven't been updated in a few months.";
+  return "No fresh activity on their website or social channels.";
 }
 
 function ReasonGlyph({ tone }: { tone: ReasonTone }) {
