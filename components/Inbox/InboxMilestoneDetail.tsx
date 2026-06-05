@@ -29,6 +29,12 @@ const MarkdownPreview = dynamic(
   { ssr: false }
 );
 
+/** Detail-pane tabs, mirroring the milestone-review page. */
+const PANEL_TABS = [
+  { key: "details" as const, label: "Details", icon: DocumentTextIcon },
+  { key: "comments" as const, label: "Comments", icon: ChatBubbleLeftRightIcon },
+];
+
 /** Strip the optional chainId suffix from program IDs (e.g. "959_42161" -> "959"). */
 function parseProgramId(programId: string): string {
   if (programId.includes("_")) {
@@ -365,10 +371,7 @@ export function InboxMilestoneDetail({
   return (
     <div className="space-y-4">
       <div className="inline-flex w-max rounded-lg border border-gray-200 bg-gray-50 p-1 dark:border-zinc-700 dark:bg-zinc-800">
-        {[
-          { key: "details" as const, label: "Details", icon: DocumentTextIcon },
-          { key: "comments" as const, label: "Comments", icon: ChatBubbleLeftRightIcon },
-        ].map((tab) => {
+        {PANEL_TABS.map((tab) => {
           const Icon = tab.icon;
           const isActive = activePanelTab === tab.key;
           return (
