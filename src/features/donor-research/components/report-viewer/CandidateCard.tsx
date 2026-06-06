@@ -62,64 +62,13 @@ export function CandidateCard({ candidate, variant }: CandidateCardProps) {
       ) : null}
 
       <div className="flex flex-col gap-4 p-5">
-        <header className="flex flex-wrap items-start justify-between gap-3">
-          <div className="min-w-0 flex-1">
-            <h3
-              className={`text-balance text-lg font-medium leading-snug tracking-tight ${
-                isDisqualified
-                  ? "text-muted-foreground line-through decoration-1"
-                  : "text-foreground"
-              }`}
-            >
-              {name}
-            </h3>
-            <div className="mt-1 flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-xs">
-              {locale ? (
-                <span className="font-medium uppercase tracking-[0.08em] text-muted-foreground">
-                  {locale}
-                </span>
-              ) : null}
-              {candidate.ein && candidate.organizationName ? (
-                <span className="tabular-nums text-muted-foreground/80">
-                  EIN&nbsp;{formatEin(candidate.ein)}
-                </span>
-              ) : null}
-              {candidate.organizationWebsiteUrl ? (
-                <a
-                  href={candidate.organizationWebsiteUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-0.5 text-brand-emphasis underline-offset-2 hover:underline dark:text-brand-subtle"
-                >
-                  {hostname(candidate.organizationWebsiteUrl)}
-                  <ArrowUpRight className="h-3 w-3" aria-hidden />
-                </a>
-              ) : null}
-            </div>
-          </div>
-
-          {/* Score column: band label as the primary signal, with the
-              numeric score reframed as X / 100 so readers can put it on
-              a familiar grading scale. */}
-          <div className="text-right">
-            <p
-              className={`text-[10px] font-semibold uppercase tracking-[0.14em] ${scoreBand.tone}`}
-            >
-              {scoreBand.label}
-            </p>
-            <p
-              className={`mt-0.5 font-mono text-2xl leading-none tabular-nums ${
-                isDisqualified ? "text-muted-foreground" : "text-foreground"
-              }`}
-            >
-              {Math.round(candidate.composite * 100)}
-              <span className="text-base text-muted-foreground">{" / 100"}</span>
-            </p>
-            <p className="mt-1 text-[10px] uppercase tracking-[0.1em] text-muted-foreground/70">
-              Match score
-            </p>
-          </div>
-        </header>
+        <CandidateHeader
+          candidate={candidate}
+          isDisqualified={isDisqualified}
+          locale={locale}
+          name={name}
+          scoreBand={scoreBand}
+        />
 
         {description ? (
           <p className="text-pretty text-sm leading-relaxed text-foreground/90">
@@ -178,6 +127,76 @@ export function CandidateCard({ candidate, variant }: CandidateCardProps) {
         ) : null}
       </div>
     </article>
+  );
+}
+
+interface CandidateHeaderProps {
+  candidate: ResearchReportCandidate;
+  isDisqualified: boolean;
+  locale: string | null;
+  name: string;
+  scoreBand: BandResult;
+}
+
+function CandidateHeader({
+  candidate,
+  isDisqualified,
+  locale,
+  name,
+  scoreBand,
+}: CandidateHeaderProps) {
+  return (
+    <header className="flex flex-wrap items-start justify-between gap-3">
+      <div className="min-w-0 flex-1">
+        <h3
+          className={`text-balance text-lg font-medium leading-snug tracking-tight ${
+            isDisqualified ? "text-muted-foreground line-through decoration-1" : "text-foreground"
+          }`}
+        >
+          {name}
+        </h3>
+        <div className="mt-1 flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-xs">
+          {locale ? (
+            <span className="font-medium uppercase tracking-[0.08em] text-muted-foreground">
+              {locale}
+            </span>
+          ) : null}
+          {candidate.ein && candidate.organizationName ? (
+            <span className="tabular-nums text-muted-foreground/80">
+              EIN&nbsp;{formatEin(candidate.ein)}
+            </span>
+          ) : null}
+          {candidate.organizationWebsiteUrl ? (
+            <a
+              href={candidate.organizationWebsiteUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-0.5 text-brand-emphasis underline-offset-2 hover:underline dark:text-brand-subtle"
+            >
+              {hostname(candidate.organizationWebsiteUrl)}
+              <ArrowUpRight className="h-3 w-3" aria-hidden />
+            </a>
+          ) : null}
+        </div>
+      </div>
+
+      <div className="text-right">
+        <p className={`text-[10px] font-semibold uppercase tracking-[0.14em] ${scoreBand.tone}`}>
+          {scoreBand.label}
+        </p>
+        <p
+          className={`mt-0.5 font-mono text-2xl leading-none tabular-nums ${
+            isDisqualified ? "text-muted-foreground" : "text-foreground"
+          }`}
+        >
+          {Math.round(candidate.composite * 100)}
+          <span className="text-base text-muted-foreground">{" / 100"}</span>
+        </p>
+        <p className="mt-1 text-[10px] uppercase tracking-[0.1em] text-muted-foreground/70">
+          Match score
+        </p>
+      </div>
+    </header>
   );
 }
 
@@ -343,11 +362,11 @@ function buildMatchReasons(candidate: ResearchReportCandidate): MatchReason[] {
     {
       key: "impact",
       componentKey: "impactRecency",
-      label: "Still operating?",
-      help: "Whether the nonprofit is still actively running programs, based on how recently they filed an IRS 990 and the freshness of their grant activity.",
+      label: "IRS 990 recency",
+      help: "How recent the nonprofit's latest indexed IRS 990 filing is. This is a proxy for whether the organization is still operating.",
       weight: COMPONENT_WEIGHTS.impactRecency,
       tone: toneFor(components.impactRecency),
-      text: phraseImpact(components.impactRecency),
+      text: phraseImpact(components.impactRecency, candidate.complianceChecks),
     },
     {
       key: "freshness",
@@ -359,7 +378,7 @@ function buildMatchReasons(candidate: ResearchReportCandidate): MatchReason[] {
       text: phraseFreshness(
         components.freshness,
         candidate.activitySignalStatus,
-        candidate.recentMentions,
+        candidate.recentMentions
       ),
     },
     {
@@ -369,18 +388,44 @@ function buildMatchReasons(candidate: ResearchReportCandidate): MatchReason[] {
       help: "Whether the nonprofit passes the IRS Pub 78 active-501(c)(3) check, has a recent 990 on file, and (for California orgs) is current on the state charity registry.",
       weight: COMPONENT_WEIGHTS.compliance,
       tone: toneFor(components.compliance),
-      text: phraseCompliance(components.compliance, candidate.complianceVerdict),
+      text: phraseCompliance(
+        components.compliance,
+        candidate.complianceVerdict,
+        candidate.complianceChecks,
+        candidate.stateRegistrationStatus
+      ),
     },
   ];
 }
 
 function phraseCompliance(
   score: number,
-  verdict: ResearchReportCandidate["complianceVerdict"]
+  verdict: ResearchReportCandidate["complianceVerdict"],
+  checks: readonly ResearchReportCandidate["complianceChecks"][number][],
+  stateRegistrationStatus: ResearchReportCandidate["stateRegistrationStatus"]
 ): string {
-  if (verdict === "verified") return "Fully verified across IRS and state registries.";
+  const failed = checks.filter((check) => check.status === "failed");
+  if (failed.length > 0) {
+    const label = failed[0]?.label ?? "Compliance";
+    return `${label} failed — review the compliance breakdown below.`;
+  }
+  const unknown = checks.filter((check) => check.status === "unknown");
+  const caCheck = checks.find((check) => check.name === "ca_ag");
+  const recent990 = checks.find((check) => check.name === "recent_990");
+  const pub78 = checks.find((check) => check.name === "pub78");
+
+  if (verdict === "verified") {
+    const stateText = stateRegistrationPhrase(stateRegistrationStatus, caCheck);
+    if (unknown.length > 0) {
+      return `IRS checks passed, but ${unknown.length} compliance ${unknown.length === 1 ? "item is" : "items are"} unverified. ${stateText}`;
+    }
+    return `IRS checks passed. ${stateText}`;
+  }
   if (verdict === "partial") return "Mostly verified with one caveat — see the breakdown below.";
   if (verdict === "flagged") return "Compliance flags surfaced — review carefully before outreach.";
+  if (pub78?.status === "passed" || recent990?.status === "passed") {
+    return "IRS checks have partial support; review state and governance details below.";
+  }
   if (score >= 0.6) return "Compliance checks passed.";
   return "Limited compliance signal — review the breakdown below.";
 }
@@ -404,7 +449,12 @@ function phraseDonorMatch(score: number): string {
   return "Limited overlap with your criteria — consider broadening cause or geography.";
 }
 
-function phraseImpact(score: number): string {
+function phraseImpact(
+  score: number,
+  checks: readonly ResearchReportCandidate["complianceChecks"][number][]
+): string {
+  const recent990 = checks.find((check) => check.name === "recent_990");
+  if (recent990) return recent990.detail;
   if (score >= 0.65) return "Filed a recent 990 and shows active grant activity.";
   if (score >= 0.4)
     return "Filed a 990 in the last couple of years; some recent grant activity on record.";
@@ -416,37 +466,48 @@ function phraseImpact(score: number): string {
 function phraseFreshness(
   score: number,
   activity: ResearchReportCandidate["activitySignalStatus"],
-  mentions: ResearchReportCandidate["recentMentions"] | undefined,
+  mentions: ResearchReportCandidate["recentMentions"] | undefined
 ): string {
   // When we have a validated mention, lead with the concrete date —
   // it's more useful than a generic band phrase ("a few weeks").
-  const mostRecent = pickMostRecentDateMs(mentions ?? []);
+  const mentionList = mentions ?? [];
+  const mostRecent = pickMostRecentDateMs(mentionList);
   if (mostRecent !== null) {
-    const days = Math.max(
-      0,
-      Math.floor((Date.now() - mostRecent) / 86400_000),
-    );
-    if (days <= 7) return "Mentioned in the last week across web or news.";
-    if (days <= 30)
-      return `Most recent public mention about ${days} days ago.`;
+    const days = Math.max(0, Math.floor((Date.now() - mostRecent) / 86400_000));
+    const count = mentionList.length;
+    const proof = `Found ${count} validated ${count === 1 ? "mention" : "mentions"}; proof links are listed below.`;
+    if (days <= 7) return `Latest public activity was in the last week. ${proof}`;
+    if (days <= 30) return `Latest public activity was about ${days} days ago. ${proof}`;
     if (days <= 90)
-      return `Most recent public mention about ${Math.round(days / 7)} weeks ago.`;
+      return `Latest public activity was about ${Math.round(days / 7)} weeks ago. ${proof}`;
     if (days <= 365)
-      return `Most recent public mention about ${Math.round(days / 30)} months ago.`;
-    return "No public mentions in the last year.";
+      return `Latest public activity was about ${Math.round(days / 30)} months ago. ${proof}`;
+    return `Latest saved public activity is over a year old. ${proof}`;
   }
   if (activity === "no_signal") {
-    return "We couldn't find any recent public mentions.";
+    return "No validated recent web or news mentions were saved for this score.";
   }
-  if (score >= 0.65) return "Recently active across web and news.";
-  if (score >= 0.4) return "Some recent web or news activity.";
+  if (score >= 0.65)
+    return "Scored as recently active, but no source links were saved with this report.";
+  if (score >= 0.4)
+    return "Some recent web or news activity was detected, but no proof links were saved.";
   if (score >= 0.2) return "Light recent activity — most signals are months old.";
   return "No fresh public mentions surfaced.";
 }
 
-function pickMostRecentDateMs(
-  mentions: ResearchReportCandidate["recentMentions"],
-): number | null {
+function stateRegistrationPhrase(
+  status: ResearchReportCandidate["stateRegistrationStatus"],
+  caCheck: ResearchReportCandidate["complianceChecks"][number] | undefined
+): string {
+  if (status === "verified") return "State registration is verified.";
+  if (status === "suspended") return "State registration is suspended.";
+  if (status === "revoked") return "State registration is revoked.";
+  if (status === "data_not_yet_indexed") return "State registry data is not indexed yet.";
+  if (caCheck?.status === "not_applicable") return "State registry was not checked for this state.";
+  return "State registry was not verified for this state.";
+}
+
+function pickMostRecentDateMs(mentions: ResearchReportCandidate["recentMentions"]): number | null {
   let best: number | null = null;
   for (const m of mentions) {
     if (!m.publishedDate) continue;
