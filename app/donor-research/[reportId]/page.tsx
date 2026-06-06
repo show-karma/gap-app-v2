@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { ReportViewer } from "@/src/features/donor-research/components/report-viewer/ReportViewer";
+import { ReportBriefView } from "@/src/features/donor-research/components/report-brief/ReportBriefView";
 import { customMetadata } from "@/utilities/meta";
 
 interface PageProps {
@@ -15,5 +15,5 @@ export const metadata: Metadata = customMetadata({
 
 export default async function Page({ params }: PageProps) {
   const { reportId } = await params;
-  return <ReportViewer reportId={reportId} />;
+  return <ReportBriefView reportId={reportId} />;
 }
