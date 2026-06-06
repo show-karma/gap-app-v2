@@ -71,7 +71,19 @@ export interface DonorHandleList {
 export interface ResearchReportListItem {
   id: string;
   donorHandleId: string;
+  /**
+   * Opaque label the advisor set for the donor on this report
+   * (e.g. "Smith Family Q3"). Null when the handle row has gone
+   * missing — typically only during partial backfills.
+   */
+  donorHandleLabel: string | null;
   criteriaId: string;
+  /**
+   * Word-boundary truncated preview of the criteria text the
+   * advisor submitted, capped at ~240 chars on the wire. Null when
+   * the criteria row has gone missing.
+   */
+  criteriaSummary: string | null;
   mode: DonorResearchReportMode;
   status: DonorResearchReportStatus;
   hasShareToken: boolean;
@@ -167,11 +179,26 @@ export interface ResearchReportCandidate {
   detailedText: string | null;
 }
 
+export interface CriteriaSnapshot {
+  criteriaText: string;
+  cause: string | null;
+  geography: string | null;
+  amountMin: number | null;
+  amountMax: number | null;
+}
+
 export interface ResearchReportDetail {
   id: string;
   advisorId: string;
   donorHandleId: string;
+  donorHandleLabel: string | null;
   criteriaId: string;
+  /**
+   * Snapshot of the criteria the report was generated from. Null when
+   * the criteria row is unrecoverable; otherwise carries the full text
+   * + structured fields so the brief can render a "Query" disclosure.
+   */
+  criteria: CriteriaSnapshot | null;
   mode: DonorResearchReportMode;
   status: DonorResearchReportStatus;
   hasShareToken: boolean;

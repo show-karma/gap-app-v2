@@ -13,6 +13,7 @@ import { briefDisplay, briefProse } from "./fonts";
 import { LeadCandidate } from "./LeadCandidate";
 import { Masthead } from "./Masthead";
 import { Methodology } from "./Methodology";
+import { QueryDisclosure } from "./QueryDisclosure";
 import { RunnerUpCandidate } from "./RunnerUpCandidate";
 
 interface ReportBriefViewProps {
@@ -58,6 +59,8 @@ export function ReportBriefView({ reportId }: ReportBriefViewProps) {
           surfacedCount={topThree.length}
           isTerminal={isTerminal}
         />
+
+        <QueryDisclosure criteria={report.criteria} donorHandleLabel={report.donorHandleLabel} />
 
         {!isTerminal ? (
           <RunningPanel
