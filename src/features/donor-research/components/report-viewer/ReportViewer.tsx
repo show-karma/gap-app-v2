@@ -10,6 +10,7 @@ import { StatusBadge } from "../report-list/StatusBadge";
 import { CandidateCard } from "./CandidateCard";
 import { DisqualificationSummary } from "./DisqualificationSummary";
 import { FailedReportBanner } from "./FailedReportBanner";
+import { GeographyWarning } from "./GeographyWarning";
 import { ProgressTimeline } from "./ProgressTimeline";
 import { ShareTokenControls } from "./ShareTokenControls";
 
@@ -103,6 +104,10 @@ export function ReportViewer({ reportId }: ReportViewerProps) {
       ) : null}
 
       {report.status === "failed" ? <FailedReportBanner report={report} /> : null}
+
+      {isTerminal ? (
+        <GeographyWarning diagnostic={report.geographyDiagnostic} />
+      ) : null}
 
       {isTerminal && topThree.length === 0 && candidates.length > 0 ? (
         <DisqualificationSummary candidates={candidates} />

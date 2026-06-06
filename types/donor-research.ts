@@ -123,6 +123,20 @@ export interface RecentMention {
   matchSignals: string[];
 }
 
+/**
+ * Snapshot of how the orchestrator interpreted the freeform geography
+ * input. Lets the report viewer show "filter not applied" warnings
+ * when the LLM couldn't confidently map the input to a US locale.
+ */
+export interface GeographyDiagnostic {
+  inputGeography: string | null;
+  resolvedStates: string[];
+  resolvedCities: string[];
+  radius: "city" | "metro" | "regional" | "state" | "national" | "unknown";
+  confidence: number;
+  cached: boolean;
+}
+
 export interface ResearchReportCandidate {
   id: string;
   fundingOrganizationId: string;
@@ -166,6 +180,7 @@ export interface ResearchReportDetail {
   createdAt: string;
   fastCompletedAt: string | null;
   completedAt: string | null;
+  geographyDiagnostic: GeographyDiagnostic | null;
   candidates: ResearchReportCandidate[];
 }
 
