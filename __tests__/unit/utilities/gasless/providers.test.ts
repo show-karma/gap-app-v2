@@ -114,6 +114,15 @@ import { ZeroDevProvider } from "@/utilities/gasless/providers/zerodev.provider"
 import type { LocalAccountWithEIP7702 } from "@/utilities/gasless/types";
 import { GaslessProviderError } from "@/utilities/gasless/types";
 
+/** Mock kernel/smart-account client fixture with override support. */
+const createMockKernelClient = (overrides: Record<string, unknown> = {}) => ({
+  account: { address: "0x1234567890123456789012345678901234567890" },
+  getSupportedEntryPoints: vi
+    .fn()
+    .mockResolvedValue(["0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789"]),
+  ...overrides,
+});
+
 describe("Provider Registry", () => {
   describe("getProvider", () => {
     it("should return ZeroDev provider for zerodev type", async () => {
@@ -404,14 +413,7 @@ describe("ZeroDevProvider", () => {
 
   describe("toEthersSigner", () => {
     it("should convert client to ethers signer", async () => {
-      const mockClient = {
-        account: {
-          address: "0x1234567890123456789012345678901234567890",
-        },
-        getSupportedEntryPoints: vi
-          .fn()
-          .mockResolvedValue(["0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789"]),
-      };
+      const mockClient = createMockKernelClient();
 
       const config = {
         provider: "zerodev" as const,
@@ -430,12 +432,7 @@ describe("ZeroDevProvider", () => {
       // underlying provider, which can still report a stale chain (e.g. mainnet/1
       // right after an embedded-wallet switch) and make the GAP SDK throw
       // "Network mainnet not supported." Pinning the network closes that race.
-      const mockClient = {
-        account: { address: "0x1234567890123456789012345678901234567890" },
-        getSupportedEntryPoints: vi
-          .fn()
-          .mockResolvedValue(["0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789"]),
-      };
+      const mockClient = createMockKernelClient();
 
       const config = {
         provider: "zerodev" as const,
@@ -453,12 +450,7 @@ describe("ZeroDevProvider", () => {
     });
 
     it("should fall back to the chain ID as the network name when chain has none", async () => {
-      const mockClient = {
-        account: { address: "0x1234567890123456789012345678901234567890" },
-        getSupportedEntryPoints: vi
-          .fn()
-          .mockResolvedValue(["0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789"]),
-      };
+      const mockClient = createMockKernelClient();
 
       // Config whose chain carries no `name` — the provider must still pin chainId.
       const config = {
@@ -477,12 +469,9 @@ describe("ZeroDevProvider", () => {
     });
 
     it("should throw GaslessProviderError when bundler validation fails critically", async () => {
-      const mockClient = {
-        account: {
-          address: "0x1234567890123456789012345678901234567890",
-        },
+      const mockClient = createMockKernelClient({
         getSupportedEntryPoints: vi.fn().mockResolvedValue([]),
-      };
+      });
 
       const config = {
         provider: "zerodev" as const,

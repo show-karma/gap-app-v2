@@ -699,9 +699,7 @@ describe("useZeroDevSigner (real hook)", () => {
         const promise = result.current.getAttestationSigner(999);
         // Surfaces the target + actual chain and tells the user to retry —
         // it must NOT instruct an embedded user to "switch your network".
-        await expect(promise).rejects.toThrow(/chain 999/);
-        await expect(promise).rejects.toThrow(/still on chain 1/);
-        await expect(promise).rejects.toThrow(/try again/i);
+        await expect(promise).rejects.toThrow(/chain 999.*still on chain 1.*try again/is);
       });
 
       // Exactly one rebuild attempt before giving up.
