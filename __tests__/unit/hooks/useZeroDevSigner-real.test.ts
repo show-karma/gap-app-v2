@@ -20,27 +20,6 @@ import { act, renderHook } from "@testing-library/react";
 // Hoisted mock variables
 // ---------------------------------------------------------------------------
 
-interface MockUser {
-  linkedAccounts: Array<{ type: string }>;
-}
-
-interface EmbeddedWalletOptions {
-  /** Chain the embedded wallet reports before any switch. Privy embedded
-   *  wallets default to mainnet (chain 1) — the GAP-FRONTEND-1T9 root cause. */
-  initialChainId?: number;
-  /** How many `getEthereumProvider` reads still report the OLD chain after
-   *  `switchChain` resolves (models Privy's switch propagation lag).
-   *  0 = propagates immediately; Infinity = never propagates. */
-  propagateAfterReads?: number;
-}
-
-interface MockWallet {
-  address: string;
-  walletClientType: string;
-  switchChain: ReturnType<typeof vi.fn>;
-  getEthereumProvider: ReturnType<typeof vi.fn>;
-}
-
 const {
   mockUseChainId,
   mockPrivyState,
@@ -149,68 +128,24 @@ import {
 import { useZeroDevSigner } from "../../../hooks/useZeroDevSigner";
 
 // ---------------------------------------------------------------------------
+// Shared chain-aware fixtures (see zerodev-signer-test-utils.ts)
+// ---------------------------------------------------------------------------
+import {
+  addressOf,
+  chainIdOf,
+  createEmbeddedWallet,
+  createExternalWallet,
+  EMBEDDED_WALLET_ADDRESS,
+  type EmbeddedWalletOptions,
+  EXTERNAL_WALLET_ADDRESS,
+  type MockUser,
+  type MockWallet,
+  signerOnChain,
+} from "./zerodev-signer-test-utils";
+
+// ---------------------------------------------------------------------------
 // Test helpers
 // ---------------------------------------------------------------------------
-
-const EMBEDDED_WALLET_ADDRESS = "0xEmbedded1111111111111111111111111111111111";
-const EXTERNAL_WALLET_ADDRESS = "0xExternal2222222222222222222222222222222222";
-
-/** A signer whose `.provider.getNetwork()` reports `chainId` — mirrors the
- *  shape the production guard (`assertSignerOnChain`) reads. */
-function signerOnChain(chainId: number, address = EMBEDDED_WALLET_ADDRESS) {
-  return {
-    getAddress: vi.fn().mockResolvedValue(address),
-    provider: {
-      getNetwork: vi.fn().mockResolvedValue({ chainId: BigInt(chainId) }),
-    },
-  };
-}
-
-async function chainIdOf(signer: unknown): Promise<number> {
-  const s = signer as { provider: { getNetwork: () => Promise<{ chainId: bigint }> } };
-  return Number((await s.provider.getNetwork()).chainId);
-}
-
-async function addressOf(signer: unknown): Promise<string> {
-  return (signer as { getAddress: () => Promise<string> }).getAddress();
-}
-
-function createEmbeddedWallet(
-  address = EMBEDDED_WALLET_ADDRESS,
-  { initialChainId = 1, propagateAfterReads = 0 }: EmbeddedWalletOptions = {}
-): MockWallet {
-  let reportedChainId = initialChainId;
-  let targetChainId = initialChainId;
-  let readsUntilPropagation = propagateAfterReads;
-
-  return {
-    address,
-    walletClientType: "privy",
-    switchChain: vi.fn().mockImplementation(async (id: number) => {
-      targetChainId = id;
-      // When there is no propagation lag the switch is reflected immediately.
-      if (readsUntilPropagation <= 0) reportedChainId = id;
-    }),
-    getEthereumProvider: vi.fn().mockImplementation(async () => {
-      const chainId = reportedChainId;
-      // After enough reads the pending switch finally "propagates".
-      if (readsUntilPropagation > 0) {
-        readsUntilPropagation -= 1;
-        if (readsUntilPropagation <= 0) reportedChainId = targetChainId;
-      }
-      return { request: vi.fn(), __chainId: chainId };
-    }),
-  };
-}
-
-function createExternalWallet(address = EXTERNAL_WALLET_ADDRESS): MockWallet {
-  return {
-    address,
-    walletClientType: "metamask",
-    switchChain: vi.fn().mockResolvedValue(undefined),
-    getEthereumProvider: vi.fn().mockResolvedValue({ request: vi.fn() }),
-  };
-}
 
 function setupEmailUser(
   opts: { embedded?: boolean; external?: boolean; embeddedOpts?: EmbeddedWalletOptions } = {}
