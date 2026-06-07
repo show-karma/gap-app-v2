@@ -72,22 +72,27 @@ async function getSignerChainId(signer: Signer): Promise<number | undefined> {
 }
 
 /**
+ * Builds the user-facing error for a chain mismatch. Embedded (email/Google)
+ * wallets have no network-switcher UI — the app owns the switch — so a
+ * persistent mismatch is a transient app-side race, not something the user can
+ * fix manually. The message says "try again", never "switch your network".
+ */
+function chainMismatchError(expectedChainId: number, actualChainId: number | undefined): Error {
+  return new Error(
+    `Couldn't switch your wallet to the required network (chain ${expectedChainId}); it is still on chain ${actualChainId ?? "unknown"}. Please try again in a moment.`
+  );
+}
+
+/**
  * Guards the embedded-wallet attestation signer: if the signer's provider is
  * still not on the expected chain after the app has switched it, fail with an
  * explicit, debuggable error instead of letting the cryptic SDK
  * "Network ... not supported." throw surface.
- *
- * Embedded (email/Google) wallets have no network-switcher UI — the app owns
- * the switch — so a persistent mismatch is a transient app-side race, not
- * something the user can fix manually. The message says "try again", never
- * "switch your network".
  */
 async function assertSignerOnChain(signer: Signer, expectedChainId: number): Promise<Signer> {
   const actualChainId = await getSignerChainId(signer);
   if (actualChainId !== expectedChainId) {
-    throw new Error(
-      `Couldn't switch your wallet to the required network (chain ${expectedChainId}); it is still on chain ${actualChainId ?? "unknown"}. Please try again in a moment.`
-    );
+    throw chainMismatchError(expectedChainId, actualChainId);
   }
   return signer;
 }
@@ -245,14 +250,19 @@ export function useZeroDevSigner(): UseZeroDevSignerResult {
           };
 
           let signer = await buildEmbeddedSigner();
+          let signerChainId = await getSignerChainId(signer);
           // Privy's switchChain can resolve before getEthereumProvider reports
           // the new chain. Rebuild once to absorb that propagation race; the
           // BrowserProvider is intentionally left un-pinned here so it reflects
           // the wallet's real chain rather than masking a genuine mismatch.
-          if ((await getSignerChainId(signer)) !== targetChainId) {
+          if (signerChainId !== targetChainId) {
             signer = await buildEmbeddedSigner();
+            signerChainId = await getSignerChainId(signer);
           }
-          return await assertSignerOnChain(signer, targetChainId);
+          if (signerChainId !== targetChainId) {
+            throw chainMismatchError(targetChainId, signerChainId);
+          }
+          return signer;
         } catch (error) {
           console.warn("[Gasless] Embedded wallet error:", error);
           lastError = error;

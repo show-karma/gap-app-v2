@@ -171,6 +171,10 @@ async function chainIdOf(signer: unknown): Promise<number> {
   return Number((await s.provider.getNetwork()).chainId);
 }
 
+async function addressOf(signer: unknown): Promise<string> {
+  return (signer as { getAddress: () => Promise<string> }).getAddress();
+}
+
 function createEmbeddedWallet(
   address = EMBEDDED_WALLET_ADDRESS,
   { initialChainId = 1, propagateAfterReads = 0 }: EmbeddedWalletOptions = {}
@@ -755,13 +759,13 @@ describe("useZeroDevSigner (real hook)", () => {
 
       const { result } = renderHook(() => useZeroDevSigner());
 
-      let signer: any;
+      let signer: unknown;
       await act(async () => {
         signer = await result.current.getAttestationSigner(10);
       });
 
       expect(signer).toBeDefined();
-      expect(await signer.getAddress()).toBe(EMBEDDED_WALLET_ADDRESS);
+      expect(await addressOf(signer)).toBe(EMBEDDED_WALLET_ADDRESS);
       expect(await chainIdOf(signer)).toBe(10);
     });
 
@@ -771,7 +775,7 @@ describe("useZeroDevSigner (real hook)", () => {
 
       const { result } = renderHook(() => useZeroDevSigner());
 
-      let signer: any;
+      let signer: unknown;
       await act(async () => {
         signer = await result.current.getAttestationSigner(999);
       });
@@ -788,13 +792,13 @@ describe("useZeroDevSigner (real hook)", () => {
 
       const { result } = renderHook(() => useZeroDevSigner());
 
-      let signer: any;
+      let signer: unknown;
       await act(async () => {
         signer = await result.current.getAttestationSigner(10);
       });
 
       expect(signer).toBeDefined();
-      expect(await signer.getAddress()).toBe(EXTERNAL_WALLET_ADDRESS);
+      expect(await addressOf(signer)).toBe(EXTERNAL_WALLET_ADDRESS);
     });
 
     it("Google + gasless: returns a usable signer on the requested chain", async () => {
@@ -803,7 +807,7 @@ describe("useZeroDevSigner (real hook)", () => {
 
       const { result } = renderHook(() => useZeroDevSigner());
 
-      let signer: any;
+      let signer: unknown;
       await act(async () => {
         signer = await result.current.getAttestationSigner(42161);
       });
