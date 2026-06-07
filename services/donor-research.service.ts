@@ -154,14 +154,20 @@ export const updateDonorHandle = async (
 export interface ListReportsOptions {
   limit?: number;
   offset?: number;
+  /**
+   * Restrict the list to a single donor handle. Omit to load every
+   * report for the current advisor (default behavior).
+   */
+  donorHandleId?: string;
 }
 
 export const listResearchReports = async (
   options: ListReportsOptions = {}
 ): Promise<ResearchReportList> => {
-  const params: Record<string, number> = {};
+  const params: Record<string, number | string> = {};
   if (options.limit !== undefined) params.limit = options.limit;
   if (options.offset !== undefined) params.offset = options.offset;
+  if (options.donorHandleId) params.donorHandleId = options.donorHandleId;
   const [data, error] = await fetchData<ResearchReportList>(
     INDEXER.DONOR_RESEARCH.REPORTS,
     "GET",
