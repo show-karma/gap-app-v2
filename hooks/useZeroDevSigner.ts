@@ -61,6 +61,38 @@ function resolveChain(targetChainId: number): Chain | undefined {
 }
 
 /**
+ * Reads the chain the signer's provider actually reports. Embedded (email/Google)
+ * wallets default to mainnet (chain 1), which the GAP SDK rejects on the very
+ * first call (`getMulticall`) with "Network mainnet not supported." — so a signer
+ * built before the network switch has propagated must never reach the SDK.
+ */
+async function getSignerChainId(signer: Signer): Promise<number | undefined> {
+  const network = await signer.provider?.getNetwork();
+  return network ? Number(network.chainId) : undefined;
+}
+
+/**
+ * Guards the embedded-wallet attestation signer: if the signer's provider is
+ * still not on the expected chain after the app has switched it, fail with an
+ * explicit, debuggable error instead of letting the cryptic SDK
+ * "Network ... not supported." throw surface.
+ *
+ * Embedded (email/Google) wallets have no network-switcher UI — the app owns
+ * the switch — so a persistent mismatch is a transient app-side race, not
+ * something the user can fix manually. The message says "try again", never
+ * "switch your network".
+ */
+async function assertSignerOnChain(signer: Signer, expectedChainId: number): Promise<Signer> {
+  const actualChainId = await getSignerChainId(signer);
+  if (actualChainId !== expectedChainId) {
+    throw new Error(
+      `Couldn't switch your wallet to the required network (chain ${expectedChainId}); it is still on chain ${actualChainId ?? "unknown"}. Please try again in a moment.`
+    );
+  }
+  return signer;
+}
+
+/**
  * Check if user logged in with email/Google (not wallet).
  * These users should use embedded wallet with gasless transactions.
  */
@@ -180,7 +212,7 @@ export function useZeroDevSigner(): UseZeroDevSignerResult {
           if (client) {
             // Convert to ethers.js signer for GAP SDK compatibility
             const ethersSigner = await getGaslessSigner(client, targetChainId);
-            return ethersSigner;
+            return await assertSignerOnChain(ethersSigner, targetChainId);
           }
 
           // No client returned — record a synthetic diagnostic so the final
@@ -206,10 +238,21 @@ export function useZeroDevSigner(): UseZeroDevSignerResult {
       // This handles: gasless fallback failures AND chains that don't support gasless
       if (isEmailOrSocialLogin && embeddedWallet) {
         try {
-          await embeddedWallet.switchChain(targetChainId);
-          const provider = await embeddedWallet.getEthereumProvider();
-          const ethersProvider = new BrowserProvider(provider);
-          return await ethersProvider.getSigner();
+          const buildEmbeddedSigner = async (): Promise<Signer> => {
+            await embeddedWallet.switchChain(targetChainId);
+            const provider = await embeddedWallet.getEthereumProvider();
+            return new BrowserProvider(provider).getSigner();
+          };
+
+          let signer = await buildEmbeddedSigner();
+          // Privy's switchChain can resolve before getEthereumProvider reports
+          // the new chain. Rebuild once to absorb that propagation race; the
+          // BrowserProvider is intentionally left un-pinned here so it reflects
+          // the wallet's real chain rather than masking a genuine mismatch.
+          if ((await getSignerChainId(signer)) !== targetChainId) {
+            signer = await buildEmbeddedSigner();
+          }
+          return await assertSignerOnChain(signer, targetChainId);
         } catch (error) {
           console.warn("[Gasless] Embedded wallet error:", error);
           lastError = error;

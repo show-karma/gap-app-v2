@@ -91,12 +91,19 @@ vi.mock("viem", () => ({
   http: vi.fn().mockReturnValue({}),
 }));
 
-// Mock ethers
+// Mock ethers. The BrowserProvider constructor args are captured via a hoisted
+// spy so tests can assert the network is pinned (GAP-FRONTEND-1T9 fix).
+const { mockBrowserProviderCtor } = vi.hoisted(() => ({
+  mockBrowserProviderCtor: vi.fn(),
+}));
 vi.mock("ethers", () => ({
   BrowserProvider: class MockBrowserProvider {
     getSigner = vi.fn().mockResolvedValue({
       getAddress: vi.fn().mockResolvedValue("0x1234567890123456789012345678901234567890"),
     });
+    constructor(...args: unknown[]) {
+      mockBrowserProviderCtor(...args);
+    }
   },
 }));
 
@@ -416,6 +423,57 @@ describe("ZeroDevProvider", () => {
       const result = await provider.toEthersSigner(mockClient, optimism.id, config);
 
       expect(result).toBeDefined();
+    });
+
+    it("should pin the ethers network to the kernel chain (GAP-FRONTEND-1T9)", async () => {
+      // Without an explicit network, ethers v6 lazily probes eth_chainId on the
+      // underlying provider, which can still report a stale chain (e.g. mainnet/1
+      // right after an embedded-wallet switch) and make the GAP SDK throw
+      // "Network mainnet not supported." Pinning the network closes that race.
+      const mockClient = {
+        account: { address: "0x1234567890123456789012345678901234567890" },
+        getSupportedEntryPoints: vi
+          .fn()
+          .mockResolvedValue(["0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789"]),
+      };
+
+      const config = {
+        provider: "zerodev" as const,
+        chain: optimism,
+        rpcUrl: "https://rpc.optimism.test",
+        enabled: true,
+      };
+
+      await provider.toEthersSigner(mockClient, optimism.id, config);
+
+      expect(mockBrowserProviderCtor).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ chainId: optimism.id, name: optimism.name })
+      );
+    });
+
+    it("should fall back to the chain ID as the network name when chain has none", async () => {
+      const mockClient = {
+        account: { address: "0x1234567890123456789012345678901234567890" },
+        getSupportedEntryPoints: vi
+          .fn()
+          .mockResolvedValue(["0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789"]),
+      };
+
+      // Config whose chain carries no `name` — the provider must still pin chainId.
+      const config = {
+        provider: "zerodev" as const,
+        chain: { ...optimism, name: undefined } as unknown as typeof optimism,
+        rpcUrl: "https://rpc.optimism.test",
+        enabled: true,
+      };
+
+      await provider.toEthersSigner(mockClient, optimism.id, config);
+
+      expect(mockBrowserProviderCtor).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ chainId: optimism.id, name: String(optimism.id) })
+      );
     });
 
     it("should throw GaslessProviderError when bundler validation fails critically", async () => {
