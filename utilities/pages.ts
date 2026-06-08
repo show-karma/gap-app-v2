@@ -32,6 +32,8 @@ export const PAGES = {
     APPLICATIONS: (community: string) => `/community/${community}/applications`,
     APPLICATION_DETAIL: (community: string, applicationId: string) =>
       `/community/${community}/applications/${applicationId}`,
+    APPLICATION_EDIT: (community: string, referenceNumber: string) =>
+      `/community/${community}/applications/${referenceNumber}/edit`,
     APPLICATION_SUCCESS: (community: string, applicationId: string) =>
       `/community/${community}/applications/${applicationId}/success`,
     BROWSE_APPLICATIONS: (community: string) => `/community/${community}/browse-applications`,
