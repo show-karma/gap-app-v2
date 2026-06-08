@@ -1,9 +1,8 @@
 "use client";
 
 import { ArrowLeft } from "lucide-react";
-import { useSearchParams } from "next/navigation";
 import pluralize from "pluralize";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo } from "react";
 import { ApplicationDataView } from "@/components/FundingPlatform/ApplicationView/ApplicationTab/ApplicationDataView";
 import { useAuth } from "@/hooks/useAuth";
 import { Link } from "@/src/components/navigation/Link";
@@ -29,6 +28,7 @@ import {
 } from "./components/ApplicationTabBar";
 import type { ApplicationViewerRole } from "./components/NextStepCard";
 import { PostApprovalTab } from "./components/PostApprovalTab";
+import { useUrlTabState } from "./components/use-url-tab-state";
 
 interface ApplicationPageClientProps {
   communityId: string;
@@ -43,8 +43,6 @@ const editableStatuses: ApplicationStatus[] = [
   "resubmitted",
 ];
 
-const TAB_KEYS = new Set<ApplicationTabKey>(["details", "milestones", "post-approval", "comments"]);
-
 export function ApplicationPageClient({
   communityId,
   application,
@@ -55,7 +53,7 @@ export function ApplicationPageClient({
   const { hasRoleOrHigher, isReviewer, can } = usePermissionContext();
   const isAdminOrReviewer = hasRoleOrHigher(Role.MILESTONE_REVIEWER) || isReviewer;
 
-  const searchParams = useSearchParams();
+  const [selectedTab, setActiveTab] = useUrlTabState();
 
   // Use authenticated backend check for ownership
   // (SSR-fetched ownerAddress may be sanitized to "")
@@ -159,35 +157,10 @@ export function ApplicationPageClient({
   // A lone Details tab isn't worth a switcher — render the card directly.
   const hasTabs = tabs.length > 1;
 
-  // Tab switching is instant: local state drives the UI and the URL is kept in
-  // sync via the History API (no Next navigation → no server refetch). The
-  // initial value is read once from ?tab=… so shared links / refresh deep-link.
-  const [selectedTab, setSelectedTab] = useState<ApplicationTabKey>(() => {
-    const t = searchParams.get("tab");
-    return t && TAB_KEYS.has(t as ApplicationTabKey) ? (t as ApplicationTabKey) : "details";
-  });
-
   // Fall back to Details if the selected tab isn't available for this viewer.
   const activeTab: ApplicationTabKey = tabs.some((t) => t.key === selectedTab)
     ? selectedTab
     : "details";
-
-  const setActiveTab = useCallback((key: ApplicationTabKey) => {
-    setSelectedTab(key);
-    if (typeof window === "undefined") return;
-    const params = new URLSearchParams(window.location.search);
-    if (key === "details") {
-      params.delete("tab");
-    } else {
-      params.set("tab", key);
-    }
-    const query = params.toString();
-    window.history.replaceState(
-      null,
-      "",
-      query ? `${window.location.pathname}?${query}` : window.location.pathname
-    );
-  }, []);
 
   const handleViewActivity = useCallback(() => {
     if (hasCommentsSurface) {
