@@ -8,13 +8,10 @@ interface RateLimitCounterProps {
   advisor: DonorAdvisor;
 }
 
-const FALLBACK_TIER_CAPS: Record<
-  DonorResearchRateLimitTier,
-  { fast: number | null; deep: number | null }
-> = {
-  beta: { fast: 10, deep: 2 },
-  standard: { fast: 50, deep: 10 },
-  unlimited: { fast: null, deep: null },
+const FALLBACK_TIER_CAPS: Record<DonorResearchRateLimitTier, { fast: number | null }> = {
+  beta: { fast: 10 },
+  standard: { fast: 50 },
+  unlimited: { fast: null },
 };
 
 /**

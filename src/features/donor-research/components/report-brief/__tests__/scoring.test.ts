@@ -56,7 +56,7 @@ describe("componentRows", () => {
 });
 
 describe("compositeBand", () => {
-  it.each([
+  it.each<[number, boolean, string]>([
     [0.92, false, "Outstanding fit"],
     [0.6, false, "Outstanding fit"],
     [0.5, false, "Strong fit"],
@@ -65,7 +65,7 @@ describe("compositeBand", () => {
     [0.25, false, "Promising"],
     [0.1, false, "Marginal"],
   ])("maps composite %s to %s", (score, disqualified, expected) => {
-    expect(compositeBand(score as number, disqualified as boolean)).toBe(expected);
+    expect(compositeBand(score, disqualified)).toBe(expected);
   });
 
   it("returns Disqualified regardless of score when disqualified", () => {
