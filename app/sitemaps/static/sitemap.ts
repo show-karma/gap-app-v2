@@ -1,6 +1,5 @@
 import type { MetadataRoute } from "next";
 import { SITE_URL } from "@/utilities/meta";
-import { formatSitemapLastmod } from "@/utilities/sitemap";
 
 const staticPages = [
   "",
@@ -50,11 +49,12 @@ const staticPages = [
 
 const lowPriorityPages = ["/privacy-policy", "/terms-and-conditions"];
 
+// `lastModified` is intentionally omitted — we have no accurate per-page
+// modified date, and a fabricated "now" makes Google distrust the signal
+// (see utilities/sitemap.ts buildUrlsetXml).
 export default function sitemap(): MetadataRoute.Sitemap {
-  const lastModified = formatSitemapLastmod();
   return staticPages.map((path) => ({
     url: `${SITE_URL}${path}`,
-    lastModified,
     changeFrequency: path === "" ? "daily" : lowPriorityPages.includes(path) ? "yearly" : "weekly",
     priority:
       path === ""

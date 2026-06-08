@@ -109,6 +109,20 @@ export function computeDefaultReviewerAddress(
   return match?.publicAddress;
 }
 
+/**
+ * Identity of the current pending-verification result set. Used as a React
+ * `key` on the table so the row subtree is fully rebuilt whenever the
+ * reviewer/program/page filter changes — preventing a row from a previous
+ * filter from surviving list reconciliation (DEV-365).
+ */
+export function getPendingTableResetKey(
+  reviewerAddress: string | undefined,
+  programIds: string[],
+  page: number
+): string {
+  return `${reviewerAddress ?? "all"}-${[...programIds].sort().join(",")}-${page}`;
+}
+
 export function useReportPageData({
   communityId,
   grantPrograms,

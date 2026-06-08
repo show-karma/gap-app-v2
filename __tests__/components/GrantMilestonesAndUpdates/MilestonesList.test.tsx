@@ -3,6 +3,19 @@ import { render, screen } from "@testing-library/react";
 import { MilestonesList } from "@/components/Pages/GrantMilestonesAndUpdates/screens/MilestonesAndUpdates/MilestonesList";
 import type { Grant } from "@/types/v2/grant";
 
+// Mock the SDK to avoid class initialization errors
+vi.mock("@show-karma/karma-gap-sdk", () => ({
+  GAP: vi.fn(),
+  GapSchema: vi.fn(),
+}));
+
+// Mock the ActivityCard component to avoid SDK dependency chain
+vi.mock("@/components/Shared/ActivityCard", () => ({
+  ActivityCard: ({ activity }: any) => (
+    <div data-testid="activity-card">{activity?.data?.title || "Activity"}</div>
+  ),
+}));
+
 // Mock payout config hook
 const mockPayoutConfig = {
   isLoading: false,

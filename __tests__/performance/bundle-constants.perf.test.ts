@@ -138,31 +138,38 @@ function collectTsxFiles(dir: string): string[] {
 // ---------------------------------------------------------------------------
 
 describe("Bundle constants -- module-level extraction", () => {
-  it("ApplicationTableRow defines statusColors at module level", () => {
+  it("ApplicationStatusBadge defines status colors at module level", () => {
+    // The status color map was extracted out of ApplicationTableRow into the
+    // shared ApplicationStatusBadge component (single source of truth for the
+    // table row and the inbox list item). It must remain a module-level
+    // constant rather than being recreated inline on every render.
     const file = path.join(
       ROOT,
-      "components/FundingPlatform/ApplicationList/ApplicationTableRow.tsx"
+      "components/FundingPlatform/ApplicationList/applicationStatusBadge.tsx"
     );
     const content = fs.readFileSync(file, "utf-8");
 
-    // statusColors should be defined before the component function
-    const statusColorsIndex = content.indexOf("const statusColors");
-    const componentIndex = content.indexOf("const ApplicationTableRowComponent");
+    // status colors should be defined before the component function
+    const statusColorsIndex = content.indexOf("const applicationStatusColors");
+    const componentIndex = content.indexOf("export const ApplicationStatusBadge");
 
     expect(statusColorsIndex).toBeGreaterThan(-1);
     expect(componentIndex).toBeGreaterThan(-1);
     expect(statusColorsIndex).toBeLessThan(componentIndex);
   });
 
-  it("ApplicationTableRow defines formatStatus at module level", () => {
+  it("ApplicationStatusBadge defines the status formatter at module level", () => {
+    // The snake_case -> Title Case status formatter was extracted out of
+    // ApplicationTableRow into the shared ApplicationStatusBadge component and
+    // must stay module-level so it is not re-created on every render.
     const file = path.join(
       ROOT,
-      "components/FundingPlatform/ApplicationList/ApplicationTableRow.tsx"
+      "components/FundingPlatform/ApplicationList/applicationStatusBadge.tsx"
     );
     const content = fs.readFileSync(file, "utf-8");
 
-    const formatStatusIndex = content.indexOf("const formatStatus");
-    const componentIndex = content.indexOf("const ApplicationTableRowComponent");
+    const formatStatusIndex = content.indexOf("const formatApplicationStatus");
+    const componentIndex = content.indexOf("export const ApplicationStatusBadge");
 
     expect(formatStatusIndex).toBeGreaterThan(-1);
     expect(componentIndex).toBeGreaterThan(-1);

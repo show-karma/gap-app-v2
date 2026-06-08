@@ -175,3 +175,100 @@ describe("MilestoneCard (admin review) — overflow → delete dialog flow", () 
     expect(screen.queryByRole("button", { name: /more actions/i })).not.toBeInTheDocument();
   });
 });
+
+const COMPLETION_PROPS = {
+  ...DEFAULT_PROPS,
+  canCompleteMilestones: true,
+  completingMilestoneId: null,
+  completionComment: "",
+  isCompleting: false,
+  onCompleteClick: vi.fn(),
+  onCancelCompletion: vi.fn(),
+  onCompletionCommentChange: vi.fn(),
+  onSubmitCompletion: vi.fn(),
+};
+
+describe("MilestoneCard (admin review) — complete on behalf of grantee", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("should_render_complete_button_for_pending_milestone_when_canCompleteMilestones", () => {
+    render(<MilestoneCard {...COMPLETION_PROPS} milestone={createMilestone()} />);
+
+    expect(
+      screen.getByRole("button", { name: /complete on behalf of grantee/i })
+    ).toBeInTheDocument();
+  });
+
+  it("should_not_render_complete_button_when_canCompleteMilestones_is_false", () => {
+    render(
+      <MilestoneCard
+        {...COMPLETION_PROPS}
+        canCompleteMilestones={false}
+        milestone={createMilestone()}
+      />
+    );
+
+    expect(
+      screen.queryByRole("button", { name: /complete on behalf of grantee/i })
+    ).not.toBeInTheDocument();
+  });
+
+  it("should_not_render_complete_button_when_milestone_already_has_a_completion", () => {
+    render(
+      <MilestoneCard
+        {...COMPLETION_PROPS}
+        milestone={createMilestone({
+          completionDetails: {
+            description: "submitted",
+            completedAt: "2026-01-01T00:00:00Z",
+            deliverables: [],
+          } as unknown as GrantMilestoneWithCompletion["completionDetails"],
+        })}
+      />
+    );
+
+    expect(
+      screen.queryByRole("button", { name: /complete on behalf of grantee/i })
+    ).not.toBeInTheDocument();
+  });
+
+  it("should_call_onCompleteClick_with_milestone_uid_when_complete_button_clicked", () => {
+    const onCompleteClick = vi.fn();
+    const milestone = createMilestone();
+
+    render(
+      <MilestoneCard
+        {...COMPLETION_PROPS}
+        milestone={milestone}
+        onCompleteClick={onCompleteClick}
+      />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /complete on behalf of grantee/i }));
+
+    expect(onCompleteClick).toHaveBeenCalledWith(milestone.uid);
+  });
+
+  it("should_show_inline_completion_form_and_submit_when_milestone_is_being_completed", () => {
+    const onSubmitCompletion = vi.fn();
+    const milestone = createMilestone();
+
+    render(
+      <MilestoneCard
+        {...COMPLETION_PROPS}
+        milestone={milestone}
+        completingMilestoneId={milestone.uid}
+        onSubmitCompletion={onSubmitCompletion}
+      />
+    );
+
+    // The on-chain attribution is surfaced to the admin before they submit.
+    expect(screen.getByText(/attributed to your wallet/i)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /^complete$/i }));
+
+    expect(onSubmitCompletion).toHaveBeenCalledWith(milestone);
+  });
+});

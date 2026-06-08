@@ -322,7 +322,10 @@ describe("Integration: Grant Completion Revocation Flow", () => {
       return { isCommunityAdmin: mockIsCommunityAdmin() };
     });
     const mockRefreshGrant = vi.fn();
-    vi.mocked(useGrantStore).mockReturnValue({ refreshGrant: mockRefreshGrant });
+    vi.mocked(useGrantStore).mockImplementation((selector?: any) => {
+      const state = { refreshGrant: mockRefreshGrant };
+      return typeof selector === "function" ? selector(state) : state;
+    });
     // Mock checkIfCompletionExists to invoke the callback when called
     mockCheckIfCompletionExists.mockImplementation(async (callback?: () => void) => {
       // Simulate async completion check
@@ -440,6 +443,24 @@ describe("Integration: Grant Completion Revocation Flow", () => {
       // Verify initial text
       expect(screen.getByText("Marked as complete")).toBeInTheDocument();
 
+      // Gate the first awaited async (setupChainAndWallet) on a deferred promise
+      // so the in-flight loading state is STABLE while we assert it. Otherwise
+      // every mock resolves instantly and the disabled/"Revoking..." state can
+      // come and go between waitFor polls — a race that flakes under load.
+      let releaseSetup: () => void = () => {};
+      mockSetupChainAndWallet.mockImplementation(
+        () =>
+          new Promise((resolve) => {
+            releaseSetup = () =>
+              resolve({
+                gapClient: mockGapClient,
+                walletSigner: mockWalletSigner,
+                chainId: 42161,
+                isGasless: false,
+              });
+          })
+      );
+
       // Click button to trigger revocation
       await user.click(button);
 
@@ -448,6 +469,11 @@ describe("Integration: Grant Completion Revocation Flow", () => {
         expect(button).toBeDisabled();
         expect(screen.getByTestId("spinner")).toBeInTheDocument();
         expect(screen.getByText("Revoking...")).toBeInTheDocument();
+      });
+
+      // Release the gated async so the rest of the flow proceeds to completion.
+      await act(async () => {
+        releaseSetup();
       });
 
       // Verify stepper was activated (now uses changeStepperStep instead of setIsStepper)

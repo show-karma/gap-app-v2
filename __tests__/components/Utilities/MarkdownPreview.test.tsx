@@ -1,5 +1,15 @@
-import { act, render, screen, waitFor } from "@testing-library/react";
+import { act, configure, render, screen, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom";
+
+// MarkdownPreview lazy-loads streamdown + plugins via 5 real dynamic import()s
+// and shows a plain-text fallback until they resolve. In isolation that takes
+// <1s, but inside the full suite the imports compete for the worker and can
+// exceed RTL's default 1s asyncUtilTimeout — leaving the fallback in the DOM
+// and flaking whichever waitFor happens to run slowest. Give every waitFor in
+// this file room for the real imports; reset to the default afterward so the
+// longer timeout never leaks into other files sharing the worker.
+beforeAll(() => configure({ asyncUtilTimeout: 5000 }));
+afterAll(() => configure({ asyncUtilTimeout: 1000 }));
 
 // Mock next-themes
 vi.mock("next-themes", () => ({

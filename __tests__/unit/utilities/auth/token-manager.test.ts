@@ -19,6 +19,16 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { TokenManager } from "@/utilities/auth/token-manager";
 
+// When no Privy instance with getAccessToken is registered, getToken() awaits
+// an internal waitForInstance() that resolves via a setTimeout(3000) fallback.
+// Under fake timers that timer must be advanced or the await hangs forever.
+// This helper drives the fake clock while the (possibly pending) getToken
+// promise settles, so "no instance" paths resolve to null promptly.
+async function resolveTokenWithTimers<T>(promise: Promise<T>): Promise<T> {
+  await vi.advanceTimersByTimeAsync(3000);
+  return promise;
+}
+
 describe("TokenManager", () => {
   let mockGetAccessToken: ReturnType<typeof vi.fn>;
 
@@ -54,13 +64,13 @@ describe("TokenManager", () => {
 
     it("should return null when Privy instance has no getAccessToken", async () => {
       TokenManager.setPrivyInstance({});
-      const token = await TokenManager.getToken();
+      const token = await resolveTokenWithTimers(TokenManager.getToken());
       expect(token).toBeNull();
     });
 
     it("should return null when Privy instance is null", async () => {
       TokenManager.setPrivyInstance(null);
-      const token = await TokenManager.getToken();
+      const token = await resolveTokenWithTimers(TokenManager.getToken());
       expect(token).toBeNull();
     });
 
@@ -221,7 +231,7 @@ describe("TokenManager", () => {
 
     it("should return empty object when no token", async () => {
       TokenManager.setPrivyInstance(null);
-      const header = await TokenManager.getAuthHeader();
+      const header = await resolveTokenWithTimers(TokenManager.getAuthHeader());
       expect(header).toEqual({});
     });
   });
@@ -237,7 +247,7 @@ describe("TokenManager", () => {
 
     it("should return false when no token", async () => {
       TokenManager.setPrivyInstance(null);
-      expect(await TokenManager.isAuthenticated()).toBe(false);
+      expect(await resolveTokenWithTimers(TokenManager.isAuthenticated())).toBe(false);
     });
   });
 

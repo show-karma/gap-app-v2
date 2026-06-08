@@ -1,3 +1,5 @@
+"use client";
+
 import * as Tooltip from "@radix-ui/react-tooltip";
 import type { ReactNode } from "react";
 import { cn } from "@/utilities/tailwind";
@@ -51,12 +53,16 @@ export const QuestionTooltip = ({
     </button>
   );
 
+  // The default trigger is itself a <button>, so it must be slotted via
+  // asChild to avoid Radix rendering a second wrapping <button> (nested
+  // interactive elements — invalid HTML + duplicate a11y nodes, issue #1458).
+  // Caller-provided children keep honoring the explicit triggerAsChild prop.
+  const useAsChild = children ? triggerAsChild : true;
+
   return (
     <Tooltip.Provider>
       <Tooltip.Root delayDuration={delayDuration}>
-        <Tooltip.Trigger asChild={triggerAsChild} type="button">
-          {children || defaultTrigger}
-        </Tooltip.Trigger>
+        <Tooltip.Trigger asChild={useAsChild}>{children || defaultTrigger}</Tooltip.Trigger>
         <Tooltip.Portal>
           <Tooltip.Content
             className={cn(

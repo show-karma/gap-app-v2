@@ -41,7 +41,7 @@ const mockClient = aiAgentClient as {
 };
 
 // ─── import the component under test AFTER mocks ─────────────────────────────
-import OnboardingPage from "@/app/(nonprofit)/onboarding/page";
+import OnboardingPage from "@/app/ai-teams/onboarding/page";
 
 function renderPage() {
   const qc = new QueryClient({

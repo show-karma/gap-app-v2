@@ -52,8 +52,12 @@ describe("robots", () => {
       expect(disallowed).toContain("/safe/");
     });
 
-    it("should have exactly 4 disallow entries", () => {
-      expect(disallowed).toHaveLength(4);
+    it("should block /extended-sitemap.xml", () => {
+      expect(disallowed).toContain("/extended-sitemap.xml");
+    });
+
+    it("should have exactly 5 disallow entries", () => {
+      expect(disallowed).toHaveLength(5);
     });
   });
 

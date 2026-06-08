@@ -10,11 +10,25 @@ import { HttpResponse, http } from "msw";
 import { installMswLifecycle, server } from "@/__tests__/msw/server";
 import { renderWithProviders } from "@/__tests__/utils/render";
 import { GlobalCount } from "@/components/Pages/Stats/GlobalCount";
+import { TokenManager } from "@/utilities/auth/token-manager";
 
 const BASE = "http://localhost:4000";
 const GLOBAL_COUNT_URL = `${BASE}/attestations/global-count`;
 
 installMswLifecycle();
+
+// fetchData() awaits TokenManager.getToken() for the authorized indexer call.
+// With no Privy instance registered, getToken() blocks on a 3s
+// waitForInstance() timeout, which outruns waitFor's 1s default and leaves the
+// component stuck in its loading state. Register a stub instance so the token
+// resolves immediately and the query can settle within the assertions.
+beforeEach(() => {
+  TokenManager.setPrivyInstance({ getAccessToken: async () => null });
+});
+
+afterEach(() => {
+  TokenManager.setPrivyInstance(null);
+});
 
 describe("GlobalCount", () => {
   describe("loading state", () => {

@@ -11,6 +11,7 @@ import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
 import { getProjectCachedData } from "@/utilities/queries/getProjectCachedData";
 import { prefetchProjectProfileData } from "@/utilities/queries/prefetchProjectProfile";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
+import { reportCanonicalMismatchIfAny } from "@/utilities/sentry/reportCanonicalMismatch";
 
 type Params = Promise<{
   projectId: string;
@@ -28,6 +29,16 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   const { projectId } = awaitedParams;
 
   const projectInfo = await getProjectCachedData(projectId);
+
+  // Tripwire: getProjectCachedData redirects to the canonical slug, so a
+  // resolved slug that differs from the requested id here signals the
+  // cross-request render bleed rather than normal routing.
+  reportCanonicalMismatchIfAny({
+    scope: "project",
+    requestedId: projectId,
+    resolvedSlug: projectInfo?.details?.slug,
+    resolvedUid: projectInfo?.uid,
+  });
 
   return generateProjectOverviewMetadata(projectInfo, projectId);
 }

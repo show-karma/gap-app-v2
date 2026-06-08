@@ -12,7 +12,17 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const askKarmaPageSpy = vi.fn();
 
 vi.mock("@/src/features/ask-karma/components/ask-karma-page", () => ({
-  AskKarmaPage: (props: { config: { heading: string }; communityId?: string }) => {
+  AskKarmaPage: (props: {
+    config: {
+      heading: string;
+      exampleQuestions: string[];
+      featuredTopics: {
+        links?: { href?: string }[];
+        cta?: { href?: string };
+      }[];
+    };
+    communityId?: string;
+  }) => {
     askKarmaPageSpy(props);
     return (
       <div
@@ -86,9 +96,14 @@ describe("/ask-karma (root) page", () => {
     const props = askKarmaPageSpy.mock.calls[0][0];
     expect(props.communityId).toBe("filecoin");
     // Filecoin gets the bespoke config — the heading reads "Ask Karma"
-    // (same across all tenants), but the example questions array carries
-    // filecoin-specific prompts.
-    expect(props.config.exampleQuestions.some((q: string) => q.includes("fil.one"))).toBe(true);
+    // (same across all tenants), but the featured topics carry
+    // filecoin-specific destinations (e.g. a "Fil.one" link).
+    const hasFilOneTopic = props.config.featuredTopics.some(
+      (topic: { links?: { href?: string }[]; cta?: { href?: string } }) =>
+        topic.links?.some((link) => link.href?.includes("fil.one")) ||
+        topic.cta?.href?.includes("fil.one")
+    );
+    expect(hasFilOneTopic).toBe(true);
   });
 
   it("metadata is static 'Ask Karma' even on a whitelabel surface", async () => {
@@ -113,7 +128,12 @@ describe("/community/[communityId]/ask-karma (community) page", () => {
     expect(screen.getByTestId("ask-karma-page")).toBeInTheDocument();
     expect(screen.getByTestId("ask-karma-page")).toHaveAttribute("data-community-id", "filecoin");
     const props = askKarmaPageSpy.mock.calls[0][0];
-    expect(props.config.exampleQuestions.some((q: string) => q.includes("fil.one"))).toBe(true);
+    const hasFilOneTopic = props.config.featuredTopics.some(
+      (topic: { links?: { href?: string }[]; cta?: { href?: string } }) =>
+        topic.links?.some((link) => link.href?.includes("fil.one")) ||
+        topic.cta?.href?.includes("fil.one")
+    );
+    expect(hasFilOneTopic).toBe(true);
   });
 
   it("calls notFound when the community cannot be resolved", async () => {

@@ -26,8 +26,8 @@ vi.mock("@/store/grant", () => ({
   useGrantStore: vi.fn((selector: (s: any) => any) => selector({ grant: null })),
 }));
 
-vi.mock("@/src/core/rbac/context/permission-context", () => ({
-  useIsCommunityAdmin: () => false,
+vi.mock("@/hooks/communities/useIsCommunityAdmin", () => ({
+  useIsCommunityAdmin: () => ({ isCommunityAdmin: false }),
 }));
 
 vi.mock(
