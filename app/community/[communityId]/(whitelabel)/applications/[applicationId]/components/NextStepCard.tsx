@@ -114,13 +114,13 @@ function getDescriptor(props: NextStepCardProps): NextStepDescriptor | null {
     case "rejected":
       return {
         title: "Not approved this round",
-        copy: "This application wasn't approved. Review the reviewer's feedback in the activity timeline.",
-        cta: {
-          kind: "action",
-          label: "View feedback",
-          Icon: MessageSquare,
-          onClick: onViewActivity,
-        },
+        copy: onViewActivity
+          ? "This application wasn't approved. Review the reviewer's feedback in the activity timeline."
+          : "This application wasn't approved.",
+        // Only offer the jump when there's an activity surface to jump to.
+        cta: onViewActivity
+          ? { kind: "action", label: "View feedback", Icon: MessageSquare, onClick: onViewActivity }
+          : undefined,
       };
     default:
       return null;

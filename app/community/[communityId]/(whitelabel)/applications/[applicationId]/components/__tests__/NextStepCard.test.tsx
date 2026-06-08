@@ -99,4 +99,10 @@ describe("NextStepCard", () => {
     fireEvent.click(screen.getByRole("button", { name: /view feedback/i }));
     expect(onViewActivity).toHaveBeenCalledTimes(1);
   });
+
+  it("shows a rejected card with no CTA when there's no activity surface", () => {
+    renderCard({ status: "rejected" }); // no onViewActivity handler
+    expect(screen.getByText("Not approved this round")).toBeInTheDocument();
+    expect(screen.queryByRole("button")).not.toBeInTheDocument();
+  });
 });

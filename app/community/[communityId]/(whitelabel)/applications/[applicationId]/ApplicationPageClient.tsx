@@ -293,7 +293,7 @@ export function ApplicationPageClient({
             reviewHref={reviewHref}
             onGoToMilestones={() => setActiveTab("milestones")}
             onGoToPostApproval={() => setActiveTab("post-approval")}
-            onViewActivity={handleViewActivity}
+            onViewActivity={hasCommentsSurface ? handleViewActivity : undefined}
           />
         </div>
       </div>
