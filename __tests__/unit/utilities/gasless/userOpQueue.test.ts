@@ -87,6 +87,29 @@ describe("serializeBySender", () => {
     await expect(next).resolves.toBe("ok");
     expect(order).toEqual(["fail", "next"]);
   });
+
+  it("serializes ops with an undefined sender under the shared fallback key", async () => {
+    // When the smart-account address can't be read it's almost always the same
+    // wallet in-session, so undefined senders must still serialize together to
+    // keep the nonce safe.
+    const order: string[] = [];
+    const gate = deferred<void>();
+
+    const op1 = serializeBySender(undefined, async () => {
+      order.push("1");
+      await gate.promise;
+    });
+    const op2 = serializeBySender(undefined, async () => {
+      order.push("2");
+    });
+
+    await Promise.resolve();
+    expect(order).toEqual(["1"]);
+
+    gate.resolve();
+    await Promise.all([op1, op2]);
+    expect(order).toEqual(["1", "2"]);
+  });
 });
 
 describe("withUserOpSerialization", () => {
