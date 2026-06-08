@@ -10,9 +10,11 @@ interface Props {
 }
 
 // Self-canonical per report run-date. Previously inherited defaultMetadata,
-// whose canonical is the homepage "/".
+// whose canonical is the homepage "/". Mirror the page's run-date validation so
+// an invalid run-date (which the page 404s) never emits a bogus canonical.
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { communityId, runDate } = await params;
+  if (!RUN_DATE_REGEX.test(runDate)) return {};
   return communitySubpageMetadata(communityId, `reports/${runDate}`);
 }
 
