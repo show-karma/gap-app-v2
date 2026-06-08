@@ -5,10 +5,12 @@ import { useState } from "react";
 import { DeleteDialog } from "@/components/DeleteDialog";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { useGenerateShareToken, useRevokeShareToken } from "@/hooks/useShareToken";
+import { PAGES } from "@/utilities/pages";
 
 interface ShareTokenControlsProps {
   reportId: string;
   hasShareToken: boolean;
+  shareToken: string | null;
   shareTokenExpiresAt: string | null;
 }
 
@@ -20,24 +22,37 @@ const DEFAULT_TTL_DAYS = 30;
  *  - No token: "Generate share link" CTA → modal with TTL + advisor
  *    display name + intro text. Submit hits the indexer's POST
  *    /reports/:id/share-token.
- *  - Has token: copy URL / regenerate / revoke. Revoke fires through
- *    `DeleteDialog` (CLAUDE.md mandate: never raw `confirm()`).
+ *  - Has token: copy URL / regenerate / revoke. Both Regenerate (rotates
+ *    the token, breaking links already sent) and Revoke are destructive,
+ *    so both fire through `DeleteDialog` (CLAUDE.md mandate: never raw
+ *    `confirm()`). Copy works off whatever token is currently live —
+ *    either the one just generated in this session or the one the
+ *    report-detail response carried in (`report.shareToken`).
  *  - Pending: button disabled, label flips to a progress phrase.
  */
 export function ShareTokenControls({
   reportId,
   hasShareToken,
+  shareToken,
   shareTokenExpiresAt,
 }: ShareTokenControlsProps) {
   const [, copyFn] = useCopyToClipboard();
   const copy = async (text: string) => {
-    await copyFn(text);
+    try {
+      await copyFn(text);
+    } catch {
+      // useCopyToClipboard already surfaces failures via toast/errorManager;
+      // swallow here so a rejected clipboard write can't bubble up as an
+      // unhandled rejection.
+    }
   };
   const generate = useGenerateShareToken();
   const revoke = useRevokeShareToken();
   const [generatedToken, setGeneratedToken] = useState<string | null>(null);
   const [revokeOpen, setRevokeOpen] = useState(false);
+  const [regenerateOpen, setRegenerateOpen] = useState(false);
 
+  const effectiveToken = generatedToken ?? shareToken;
   const expiresAt = shareTokenExpiresAt ? new Date(shareTokenExpiresAt) : null;
 
   if (!hasShareToken && !generatedToken) {
@@ -66,24 +81,18 @@ export function ShareTokenControls({
         <button
           type="button"
           onClick={async () => {
-            if (generatedToken) {
-              await copy(buildShareUrl(generatedToken));
+            if (effectiveToken) {
+              await copy(buildShareUrl(effectiveToken));
             }
           }}
-          disabled={!generatedToken}
+          disabled={!effectiveToken}
           className="rounded-md border border-border bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
         >
           Copy share link
         </button>
         <button
           type="button"
-          onClick={async () => {
-            const result = await generate.mutateAsync({
-              reportId,
-              body: { ttlSeconds: DEFAULT_TTL_DAYS * 24 * 60 * 60 },
-            });
-            setGeneratedToken(result.shareToken);
-          }}
+          onClick={() => setRegenerateOpen(true)}
           disabled={generate.isPending}
           className="rounded-md border border-border px-3 py-1.5 text-sm hover:bg-muted disabled:opacity-50"
         >
@@ -102,6 +111,29 @@ export function ShareTokenControls({
       ) : null}
 
       <DeleteDialog
+        title={
+          <span className="flex flex-col gap-2">
+            <span>Regenerate share link?</span>
+            <span className="text-sm font-normal text-muted-foreground">
+              This rotates the share token and immediately stops the current link from working.
+              Anyone you already sent it to will lose access until you share the new link.
+            </span>
+          </span>
+        }
+        deleteFunction={async () => {
+          const result = await generate.mutateAsync({
+            reportId,
+            body: { ttlSeconds: DEFAULT_TTL_DAYS * 24 * 60 * 60 },
+          });
+          setGeneratedToken(result.shareToken);
+        }}
+        isLoading={generate.isPending}
+        buttonElement={null}
+        externalIsOpen={regenerateOpen}
+        externalSetIsOpen={setRegenerateOpen}
+      />
+
+      <DeleteDialog
         title="Revoke share link?"
         deleteFunction={async () => {
           await revoke.mutateAsync({ reportId });
@@ -118,6 +150,5 @@ export function ShareTokenControls({
 
 function buildShareUrl(token: string): string {
   if (typeof window === "undefined") return "";
-  const origin = window.location.origin;
-  return `${origin}/donor-research/shared/${token}`;
+  return `${window.location.origin}${PAGES.DONOR_RESEARCH.SHARED(token)}`;
 }

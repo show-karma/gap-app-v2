@@ -25,7 +25,7 @@ interface ReportBriefViewProps {
  * dashboard with a document-shaped surface: masthead, lead spread,
  * runner-up chapters, side-by-side comparison, long tail, and a
  * collapsed methodology colophon. Same SSE + React Query plumbing
- * as the legacy ReportViewer — only the rendering changes.
+ * as the report-viewer components — only the rendering changes.
  */
 export function ReportBriefView({ reportId }: ReportBriefViewProps) {
   const reportQuery = useDonorReport(reportId);

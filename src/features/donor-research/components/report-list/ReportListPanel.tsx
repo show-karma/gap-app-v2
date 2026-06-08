@@ -1,7 +1,7 @@
 "use client";
 
 import pluralize from "pluralize";
-import { useMemo, useState } from "react";
+import { memo, useMemo, useState } from "react";
 import { useDonorHandles } from "@/hooks/useDonorHandles";
 import { useDonorReports } from "@/hooks/useDonorReports";
 import { Link } from "@/src/components/navigation/Link";
@@ -180,7 +180,7 @@ function DonorFilterSelect({ handles, value, onChange }: DonorFilterSelectProps)
   );
 }
 
-function ReportRow({ report }: { report: ResearchReportListItem }) {
+const ReportRow = memo(function ReportRow({ report }: { report: ResearchReportListItem }) {
   const createdAt = new Date(report.createdAt);
   const finishedAt = report.completedAt ?? report.fastCompletedAt ?? null;
   // Headline the criteria text (truncated server-side) when present;
@@ -228,4 +228,6 @@ function ReportRow({ report }: { report: ResearchReportListItem }) {
       </Link>
     </li>
   );
-}
+});
+
+ReportRow.displayName = "ReportRow";

@@ -109,14 +109,6 @@ export const listDonorHandles = async (
   return data;
 };
 
-export const getDonorHandle = async (handleId: string): Promise<DonorHandle> => {
-  const [data, error] = await fetchData<DonorHandle>(INDEXER.DONOR_RESEARCH.HANDLE_BY_ID(handleId));
-  if (error || !data) {
-    throw new Error(error || "Failed to load donor handle");
-  }
-  return data;
-};
-
 export interface CreateHandleRequest {
   opaqueLabel: string;
   notes?: string | null;
@@ -126,25 +118,6 @@ export const createDonorHandle = async (body: CreateHandleRequest): Promise<Dono
   const [data, error] = await fetchData<DonorHandle>(INDEXER.DONOR_RESEARCH.HANDLES, "POST", body);
   if (error || !data) {
     throw new Error(error || "Failed to create donor handle");
-  }
-  return data;
-};
-
-export interface UpdateHandleRequest {
-  notes?: string | null;
-}
-
-export const updateDonorHandle = async (
-  handleId: string,
-  body: UpdateHandleRequest
-): Promise<DonorHandle> => {
-  const [data, error] = await fetchData<DonorHandle>(
-    INDEXER.DONOR_RESEARCH.HANDLE_BY_ID(handleId),
-    "PATCH",
-    body
-  );
-  if (error || !data) {
-    throw new Error(error || "Failed to update donor handle");
   }
   return data;
 };

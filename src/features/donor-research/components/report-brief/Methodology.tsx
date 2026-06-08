@@ -83,7 +83,7 @@ export function Methodology({
           <ColophonBlock label="Sources">
             <p>
               IRS Publication 78 (active 501(c)(3) status), most recent indexed IRS Form 990, the
-              California Registry of Charitable Trusts where applicable, and a multi-signal Exa web
+              California Registry of Charitable Trusts where applicable, and a multi-signal web
               search disambiguated against each nonprofit's name, EIN, locale, and primary contact
               phone.
             </p>

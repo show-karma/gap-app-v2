@@ -35,9 +35,7 @@ export function RateLimitCounter({ advisor }: RateLimitCounterProps) {
   const showLive = !!snapshot && !snapshot.degraded;
 
   const fastUsed = showLive ? snapshot.fast.used : null;
-  const deepUsed = showLive ? snapshot.deep.used : null;
   const fastCap = snapshot ? snapshot.fast.cap : fallbackCaps.fast;
-  const deepCap = snapshot ? snapshot.deep.cap : fallbackCaps.deep;
 
   return (
     <div
@@ -52,22 +50,13 @@ export function RateLimitCounter({ advisor }: RateLimitCounterProps) {
           {advisor.rateLimitTier}
         </span>
       </div>
-      <div className="flex items-baseline gap-1 border-r border-border/60 px-2.5 py-1.5">
+      <div className="flex items-baseline gap-1 px-2.5 py-1.5">
         <span className="text-[10px] font-medium uppercase tracking-[0.1em] text-muted-foreground">
           Fast
         </span>
         <span className="font-mono tabular-nums text-foreground">{fastUsed ?? "—"}</span>
         <span className="text-[10px] text-muted-foreground">
           / {fastCap === null ? "∞" : fastCap}
-        </span>
-      </div>
-      <div className="flex items-baseline gap-1 px-2.5 py-1.5">
-        <span className="text-[10px] font-medium uppercase tracking-[0.1em] text-muted-foreground">
-          Deep
-        </span>
-        <span className="font-mono tabular-nums text-foreground">{deepUsed ?? "—"}</span>
-        <span className="text-[10px] text-muted-foreground">
-          / {deepCap === null ? "∞" : deepCap}
         </span>
       </div>
       {snapshot?.degraded ? (

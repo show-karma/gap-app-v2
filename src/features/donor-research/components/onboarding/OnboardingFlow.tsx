@@ -172,16 +172,16 @@ interface FieldProps {
 }
 
 function Field({ label, hint, error, children }: FieldProps) {
-  // Wrap in a fieldset rather than a label so Biome's
-  // `noLabelWithoutControl` lint passes — the children include
-  // form-bound inputs that React Hook Form's register() wires up.
+  // A `<label>` that wraps its control implicitly associates the visible
+  // text with the input, so the field is programmatically accessible.
   return (
-    <fieldset className="flex flex-col gap-1.5 text-sm">
+    // biome-ignore lint/a11y/noLabelWithoutControl: children always contains the input; Biome can't infer this statically
+    <label className="flex flex-col gap-1.5 text-sm">
       <span className="font-medium text-foreground">{label}</span>
       {children}
       {hint ? <span className="text-xs text-muted-foreground">{hint}</span> : null}
       {error ? <span className="text-xs text-red-600">{error}</span> : null}
-    </fieldset>
+    </label>
   );
 }
 
@@ -210,15 +210,15 @@ function WelcomeStep({ onContinue }: { onContinue: () => void }) {
           </span>
         </li>
         <li className="rounded-md border border-border p-3">
-          <strong className="block">Two modes</strong>
+          <strong className="block">Fast turnaround</strong>
           <span className="text-muted-foreground">
-            Fast (~10 min) for everyday research; Deep (1–3 days) for outreach-enriched diligence.
+            Ranked recommendations with compliance verification in about ten minutes.
           </span>
         </li>
         <li className="rounded-md border border-border p-3">
           <strong className="block">Share with donors</strong>
           <span className="text-muted-foreground">
-            Generate a private link with your branding and customizable intro paragraph.
+            Generate a private, expiring link to share the research with your donor.
           </span>
         </li>
       </ul>

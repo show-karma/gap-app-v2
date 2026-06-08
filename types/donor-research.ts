@@ -202,6 +202,7 @@ export interface ResearchReportDetail {
   mode: DonorResearchReportMode;
   status: DonorResearchReportStatus;
   hasShareToken: boolean;
+  shareToken: string | null;
   shareTokenExpiresAt: string | null;
   errorMessage: string | null;
   createdAt: string;

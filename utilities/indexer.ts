@@ -792,7 +792,6 @@ export const INDEXER = {
     ME: "/v2/donor-research/me",
     ME_COUNTERS: "/v2/donor-research/me/counters",
     HANDLES: "/v2/donor-research/handles",
-    HANDLE_BY_ID: (handleId: string) => `/v2/donor-research/handles/${handleId}`,
     REPORTS: "/v2/donor-research/reports",
     REPORT_BY_ID: (reportId: string) => `/v2/donor-research/reports/${reportId}`,
     REPORT_STREAM: (reportId: string) => `/v2/donor-research/reports/${reportId}/stream`,

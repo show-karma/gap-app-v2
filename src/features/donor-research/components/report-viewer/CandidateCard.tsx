@@ -3,6 +3,7 @@
 import { ArrowUpRight, ChevronDown } from "lucide-react";
 import { useState } from "react";
 import type { ResearchReportCandidate } from "@/types/donor-research";
+import { COMPONENT_WEIGHTS, compositeBand } from "../report-brief/scoring";
 import { ComplianceBreakdown } from "./ComplianceBreakdown";
 import { RecentActivity } from "./RecentActivity";
 
@@ -42,7 +43,10 @@ export function CandidateCard({ candidate, variant }: CandidateCardProps) {
     (candidate.ein ? `EIN ${formatEin(candidate.ein)}` : "Unidentified nonprofit");
   const name = humanizeCase(rawName, "title");
   const locale = formatLocale(candidate.organizationCity, candidate.organizationState);
-  const scoreBand = bandForScore(candidate.composite, isDisqualified);
+  const scoreBand: BandResult = {
+    label: compositeBand(candidate.composite, isDisqualified),
+    tone: bandTone(candidate.composite, isDisqualified),
+  };
   const matchReasons = isDisqualified ? [] : buildMatchReasons(candidate);
   const description = candidate.organizationDescription
     ? humanizeCase(candidate.organizationDescription.trim(), "sentence")
@@ -335,18 +339,6 @@ function ScoreBreakdownViz({ candidate, reasons }: ScoreBreakdownVizProps) {
   );
 }
 
-/**
- * Component weights are duplicated here from the backend's
- * composite-ranking service so the UI can show the math without a
- * round-trip. Keep in sync when the backend weights change.
- */
-const COMPONENT_WEIGHTS = {
-  freshness: 0.35,
-  impactRecency: 0.25,
-  donorMatch: 0.25,
-  compliance: 0.15,
-};
-
 function buildMatchReasons(candidate: ResearchReportCandidate): MatchReason[] {
   const { components } = candidate;
   return [
@@ -372,7 +364,7 @@ function buildMatchReasons(candidate: ResearchReportCandidate): MatchReason[] {
       key: "freshness",
       componentKey: "freshness",
       label: "Online presence",
-      help: "Whether the nonprofit has recently published content or appeared in news coverage. Powered by a Exa search disambiguated against IRS facts (EIN, name, locale).",
+      help: "Whether the nonprofit has recently published content or appeared in news coverage. Based on a web search disambiguated against IRS facts (EIN, name, locale).",
       weight: COMPONENT_WEIGHTS.freshness,
       tone: toneFor(components.freshness),
       text: phraseFreshness(
@@ -555,16 +547,17 @@ interface BandResult {
   tone: string;
 }
 
-function bandForScore(score: number, disqualified: boolean): BandResult {
-  if (disqualified) {
-    return { label: "Disqualified", tone: "text-muted-foreground" };
-  }
-  if (score >= 0.6)
-    return { label: "Outstanding fit", tone: "text-brand-emphasis dark:text-brand-subtle" };
-  if (score >= 0.4)
-    return { label: "Strong fit", tone: "text-brand-emphasis dark:text-brand-subtle" };
-  if (score >= 0.25) return { label: "Promising", tone: "text-foreground" };
-  return { label: "Marginal", tone: "text-muted-foreground" };
+/**
+ * Tone class for the band label. The label text itself comes from the
+ * shared `compositeBand` in report-brief/scoring; this maps the same
+ * thresholds onto the masthead color treatment.
+ */
+function bandTone(score: number, disqualified: boolean): string {
+  if (disqualified) return "text-muted-foreground";
+  if (score >= 0.6) return "text-brand-emphasis dark:text-brand-subtle";
+  if (score >= 0.4) return "text-brand-emphasis dark:text-brand-subtle";
+  if (score >= 0.25) return "text-foreground";
+  return "text-muted-foreground";
 }
 
 function formatEin(ein: string): string {

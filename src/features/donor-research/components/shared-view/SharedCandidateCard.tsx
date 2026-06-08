@@ -1,3 +1,4 @@
+import { memo } from "react";
 import type { ResearchReportCandidate } from "@/types/donor-research";
 
 interface SharedCandidateCardProps {
@@ -31,7 +32,10 @@ const FRIENDLY_VERDICT: Record<string, string> = {
  *  - One-pager text gets prominent display; the detail view shows the
  *    full reasoning only when the donor opens the disclosure.
  */
-export function SharedCandidateCard({ candidate, variant }: SharedCandidateCardProps) {
+export const SharedCandidateCard = memo(function SharedCandidateCard({
+  candidate,
+  variant,
+}: SharedCandidateCardProps) {
   const stateLabel = FRIENDLY_STATE_LABEL[candidate.stateRegistrationStatus] ?? null;
   const verdict = FRIENDLY_VERDICT[candidate.complianceVerdict] ?? candidate.complianceVerdict;
 
@@ -63,7 +67,9 @@ export function SharedCandidateCard({ candidate, variant }: SharedCandidateCardP
       ) : null}
     </article>
   );
-}
+});
+
+SharedCandidateCard.displayName = "SharedCandidateCard";
 
 function formatEin(ein: string): string {
   const digits = ein.replace(/[^0-9]/g, "");

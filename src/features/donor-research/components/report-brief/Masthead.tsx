@@ -82,6 +82,7 @@ export function Masthead({ report, candidatesCount, surfacedCount, isTerminal }:
           <ShareTokenControls
             reportId={report.id}
             hasShareToken={report.hasShareToken}
+            shareToken={report.shareToken}
             shareTokenExpiresAt={report.shareTokenExpiresAt}
           />
         </div>

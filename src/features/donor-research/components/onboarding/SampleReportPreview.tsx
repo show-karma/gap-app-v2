@@ -2,13 +2,15 @@
  * Sample report fixture used in the onboarding flow (F4).
  *
  * Renders a hard-coded illustrative report so the advisor sees what
- * they'll get before they commit to onboarding. Shape mirrors the real
- * `ReportViewer`: header + top-3 one-pager cards + a full-list row, all
- * built from inline fixture data. No API calls.
+ * they'll get before they commit to onboarding. Shape mirrors a real
+ * report brief: top-3 one-pager cards + a full-list row, all built from
+ * inline fixture data. No API calls.
  *
  * Intentionally not connected to PAGES or any real candidate — this is
  * marketing-shape content.
  */
+
+import { compositeBand } from "../report-brief/scoring";
 
 interface SampleCandidate {
   ein: string;
@@ -63,10 +65,6 @@ const SUPPORTING: SampleCandidate = {
   onePager: "",
 };
 
-function formatEin(ein: string): string {
-  return ein;
-}
-
 export function SampleReportPreview() {
   return (
     <div className="rounded-md border border-dashed border-border bg-muted/20 p-4">
@@ -101,15 +99,14 @@ interface SampleCardProps {
 }
 
 function SampleCandidateCard({ candidate, variant }: SampleCardProps) {
-  const band = bandForSampleScore(candidate.composite);
+  const band = compositeBand(candidate.composite, false);
   return (
     <article className="rounded-lg border border-border bg-card p-3">
       <header className="mb-2 flex items-start justify-between gap-2">
         <div className="min-w-0">
           <h4 className="truncate text-sm font-semibold">{candidate.name}</h4>
           <p className="text-xs text-muted-foreground">
-            EIN {formatEin(candidate.ein)} · Verdict:{" "}
-            <span className="capitalize">{candidate.verdict}</span>
+            EIN {candidate.ein} · Verdict: <span className="capitalize">{candidate.verdict}</span>
           </p>
         </div>
         <div className="text-right">
@@ -127,11 +124,4 @@ function SampleCandidateCard({ candidate, variant }: SampleCardProps) {
       ) : null}
     </article>
   );
-}
-
-function bandForSampleScore(score: number): string {
-  if (score >= 0.6) return "Outstanding fit";
-  if (score >= 0.4) return "Strong fit";
-  if (score >= 0.25) return "Promising";
-  return "Marginal";
 }
