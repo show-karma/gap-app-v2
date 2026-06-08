@@ -238,5 +238,3 @@ export const ApplicationDataView: FC<ApplicationDataViewProps> = ({
     </dl>
   );
 };
-
-export default ApplicationDataView;
