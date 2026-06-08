@@ -16,7 +16,7 @@ import {
  * statements that previously lived in three different components.
  */
 
-export interface StatusVisual {
+interface StatusVisual {
   label: string;
   Icon: LucideIcon;
   /** Soft badge/pill: tinted background + readable text (light + dark). */
@@ -80,7 +80,7 @@ const STATUS_VISUALS: Record<string, StatusVisual> = {
   },
 };
 
-export function formatStatusLabel(status: string): string {
+function formatStatusLabel(status: string): string {
   return status.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
