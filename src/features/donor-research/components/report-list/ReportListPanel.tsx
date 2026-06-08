@@ -61,7 +61,7 @@ export function ReportListPanel() {
           onChangeDonor={setDonorFilter}
           summary={null}
         />
-        <p className="text-sm text-red-600">
+        <p className="text-sm text-red-600 dark:text-red-400">
           Couldn't load reports: {(reportsQuery.error as Error)?.message || "unknown error"}
         </p>
         <button
@@ -217,7 +217,9 @@ const ReportRow = memo(function ReportRow({ report }: { report: ResearchReportLi
             {finishedAt ? ` · Finished ${new Date(finishedAt).toLocaleString()}` : ""}
           </p>
           {report.errorMessage ? (
-            <p className="mt-0.5 truncate text-xs text-red-600">{report.errorMessage}</p>
+            <p className="mt-0.5 truncate text-xs text-red-600 dark:text-red-400">
+              {report.errorMessage}
+            </p>
           ) : null}
         </div>
         {report.hasShareToken ? (

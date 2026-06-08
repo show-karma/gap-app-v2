@@ -268,14 +268,14 @@ function ScoreBreakdownViz({ candidate, reasons }: ScoreBreakdownVizProps) {
                   title={reason.help}
                 >
                   {reason.label}
-                  <span
-                    role="img"
-                    aria-label="What this means"
+                  <button
+                    type="button"
+                    aria-label={reason.help}
                     title={reason.help}
-                    className="inline-flex h-3 w-3 cursor-help items-center justify-center rounded-full border border-muted-foreground/40 text-[8px] font-semibold leading-none text-muted-foreground/70 hover:border-muted-foreground hover:text-foreground"
+                    className="inline-flex h-3 w-3 cursor-help items-center justify-center rounded-full border border-muted-foreground/40 text-[8px] font-semibold leading-none text-muted-foreground/70 hover:border-muted-foreground hover:text-foreground focus:outline-none focus:ring-1 focus:ring-brand/40"
                   >
                     ?
-                  </span>
+                  </button>
                 </span>
                 <span className="font-mono tabular-nums text-muted-foreground">
                   <span className="text-foreground">{scorePct}</span>

@@ -11,7 +11,9 @@ interface SharedHeaderProps {
  * mechanism for leaking them even if a future bug tried.
  */
 export function SharedHeader({ displayName, introText, reportFinalizedAt }: SharedHeaderProps) {
-  const finalizedAt = reportFinalizedAt ? new Date(reportFinalizedAt) : null;
+  const parsedFinalizedAt = reportFinalizedAt ? new Date(reportFinalizedAt) : null;
+  const finalizedAt =
+    parsedFinalizedAt && !Number.isNaN(parsedFinalizedAt.getTime()) ? parsedFinalizedAt : null;
 
   return (
     <header className="rounded-xl border border-border bg-card p-6">

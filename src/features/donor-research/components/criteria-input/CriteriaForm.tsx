@@ -48,7 +48,9 @@ export function CriteriaForm({
           className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
         />
         {errors.criteriaText ? (
-          <span className="text-xs text-red-600">{errors.criteriaText.message}</span>
+          <span className="text-xs text-red-600 dark:text-red-400">
+            {errors.criteriaText.message}
+          </span>
         ) : null}
       </label>
 

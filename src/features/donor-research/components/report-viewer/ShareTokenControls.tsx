@@ -55,17 +55,30 @@ export function ShareTokenControls({
   const effectiveToken = generatedToken ?? shareToken;
   const expiresAt = shareTokenExpiresAt ? new Date(shareTokenExpiresAt) : null;
 
+  const handleGenerate = async () => {
+    const result = await generate.mutateAsync({
+      reportId,
+      body: { ttlSeconds: DEFAULT_TTL_DAYS * 24 * 60 * 60 },
+    });
+    setGeneratedToken(result.shareToken);
+  };
+
+  const handleCopy = async () => {
+    if (effectiveToken) {
+      await copy(buildShareUrl(effectiveToken));
+    }
+  };
+
+  const handleConfirmRevoke = async () => {
+    await revoke.mutateAsync({ reportId });
+    setGeneratedToken(null);
+  };
+
   if (!hasShareToken && !generatedToken) {
     return (
       <button
         type="button"
-        onClick={async () => {
-          const result = await generate.mutateAsync({
-            reportId,
-            body: { ttlSeconds: DEFAULT_TTL_DAYS * 24 * 60 * 60 },
-          });
-          setGeneratedToken(result.shareToken);
-        }}
+        onClick={handleGenerate}
         disabled={generate.isPending}
         className="inline-flex items-center gap-2 rounded-md border border-border bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
       >
@@ -80,11 +93,7 @@ export function ShareTokenControls({
       <div className="flex items-center gap-2">
         <button
           type="button"
-          onClick={async () => {
-            if (effectiveToken) {
-              await copy(buildShareUrl(effectiveToken));
-            }
-          }}
+          onClick={handleCopy}
           disabled={!effectiveToken}
           className="rounded-md border border-border bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
         >
@@ -120,13 +129,7 @@ export function ShareTokenControls({
             </span>
           </span>
         }
-        deleteFunction={async () => {
-          const result = await generate.mutateAsync({
-            reportId,
-            body: { ttlSeconds: DEFAULT_TTL_DAYS * 24 * 60 * 60 },
-          });
-          setGeneratedToken(result.shareToken);
-        }}
+        deleteFunction={handleGenerate}
         isLoading={generate.isPending}
         buttonElement={null}
         externalIsOpen={regenerateOpen}
@@ -135,10 +138,7 @@ export function ShareTokenControls({
 
       <DeleteDialog
         title="Revoke share link?"
-        deleteFunction={async () => {
-          await revoke.mutateAsync({ reportId });
-          setGeneratedToken(null);
-        }}
+        deleteFunction={handleConfirmRevoke}
         isLoading={revoke.isPending}
         buttonElement={null}
         externalIsOpen={revokeOpen}

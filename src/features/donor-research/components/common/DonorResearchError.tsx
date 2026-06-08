@@ -1,6 +1,8 @@
 "use client";
 
 import { AlertTriangle, RefreshCw } from "lucide-react";
+import { useEffect } from "react";
+import { errorManager } from "@/components/Utilities/errorManager";
 import { Link } from "@/src/components/navigation/Link";
 import { PAGES } from "@/utilities/pages";
 
@@ -22,6 +24,16 @@ export function DonorResearchError({ error, reset }: DonorResearchErrorProps) {
   const isAuthError = /authoriz|jwt|unauthenticated|not authenticated|\b401\b/i.test(
     error.message ?? ""
   );
+
+  useEffect(() => {
+    // Forward unexpected failures to Sentry/observability (errorManager
+    // already drops transient network errors). Skip the signed-out case —
+    // that's an expected user state, not a defect worth alerting on.
+    if (!isAuthError) {
+      errorManager("Donor research section failed to load", error, { digest: error.digest });
+    }
+  }, [error, isAuthError]);
+
   const heading = isAuthError ? "Please sign in" : "Something went wrong";
   const message = isAuthError
     ? "Your session has expired or you're signed out. Sign in to view donor research, then try again."

@@ -18,12 +18,16 @@ export function ScoringLegend() {
         onClick={() => setOpen((v) => !v)}
         className="flex w-full items-center justify-between px-4 py-2 text-left text-sm font-medium hover:bg-muted/30"
         aria-expanded={open}
+        aria-controls="scoring-legend-details"
       >
         <span>How these recommendations are scored</span>
         {open ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
       </button>
       {open ? (
-        <div className="border-t border-border px-4 py-3 text-sm text-muted-foreground">
+        <div
+          id="scoring-legend-details"
+          className="border-t border-border px-4 py-3 text-sm text-muted-foreground"
+        >
           <ul className="flex flex-col gap-2">
             <li>
               <strong className="text-foreground">Freshness</strong> — recent activity from the

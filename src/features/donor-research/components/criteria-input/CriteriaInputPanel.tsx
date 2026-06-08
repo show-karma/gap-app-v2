@@ -72,7 +72,7 @@ export function CriteriaInputPanel() {
       />
 
       {createReport.isError ? (
-        <p className="mt-3 text-sm text-red-600">
+        <p className="mt-3 text-sm text-red-600 dark:text-red-400">
           {(createReport.error as Error)?.message || "Couldn't start the report. Try again."}
         </p>
       ) : null}

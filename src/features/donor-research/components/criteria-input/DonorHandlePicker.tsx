@@ -64,9 +64,12 @@ export function DonorHandlePicker({
             value={newLabel}
             onChange={(e) => setNewLabel(e.target.value)}
             placeholder="e.g. Smith Family Q3"
+            aria-label="New donor handle label"
             className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
           />
-          {createError ? <span className="text-xs text-red-600">{createError}</span> : null}
+          {createError ? (
+            <span className="text-xs text-red-600 dark:text-red-400">{createError}</span>
+          ) : null}
           <div className="flex gap-2">
             <button
               type="button"
@@ -93,6 +96,7 @@ export function DonorHandlePicker({
               onClick={() => {
                 setCreating(false);
                 setNewLabel("");
+                setCreateError(null);
               }}
               className="rounded-md border border-border px-3 py-1.5 text-sm hover:bg-muted"
             >
@@ -105,6 +109,7 @@ export function DonorHandlePicker({
           <select
             value={value}
             onChange={(e) => onChange(e.target.value)}
+            aria-label="Donor handle"
             className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
           >
             <option value="" disabled>
@@ -126,7 +131,7 @@ export function DonorHandlePicker({
         </div>
       )}
 
-      {error ? <span className="text-xs text-red-600">{error}</span> : null}
+      {error ? <span className="text-xs text-red-600 dark:text-red-400">{error}</span> : null}
     </div>
   );
 }

@@ -136,7 +136,7 @@ export function OnboardingFlow() {
           </div>
 
           {onboard.isError ? (
-            <p className="mt-3 text-sm text-red-600">
+            <p className="mt-3 text-sm text-red-600 dark:text-red-400">
               {(onboard.error as Error)?.message || "Couldn't complete onboarding. Try again."}
             </p>
           ) : null}
@@ -180,7 +180,7 @@ function Field({ label, hint, error, children }: FieldProps) {
       <span className="font-medium text-foreground">{label}</span>
       {children}
       {hint ? <span className="text-xs text-muted-foreground">{hint}</span> : null}
-      {error ? <span className="text-xs text-red-600">{error}</span> : null}
+      {error ? <span className="text-xs text-red-600 dark:text-red-400">{error}</span> : null}
     </label>
   );
 }

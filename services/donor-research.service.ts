@@ -12,8 +12,6 @@ import type {
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
-const NOT_PROVISIONED_404 = "donor_research_advisor_not_provisioned";
-
 /**
  * Donor-research API client.
  *
@@ -32,25 +30,24 @@ const NOT_PROVISIONED_404 = "donor_research_advisor_not_provisioned";
 
 /**
  * Fetches the current advisor row.
- * Returns `null` when the backend signals "not provisioned" (404 with the
- * `donor_research_advisor_not_provisioned` error code) — the caller
- * routes to onboarding in that case rather than surfacing the 404 as an
- * exception.
+ *
+ * Returns `null` only when the advisor hasn't onboarded yet — `GET /me`
+ * returns 404 in exactly that one case (missing/invalid auth surfaces as
+ * 401 earlier, and the route always exists), so a 404 is the unambiguous
+ * "route to onboarding" signal. `fetchData` exposes only `response.data
+ * .message`, not the structured error code, so we key off the status.
+ * Any other error is thrown so React Query can retry / surface an error
+ * state rather than silently sending the user to onboarding.
  */
 export const fetchCurrentAdvisor = async (): Promise<DonorAdvisor | null> => {
-  const [data, error, , status] = await fetchData<DonorAdvisor | { error: string }>(
-    INDEXER.DONOR_RESEARCH.ME
-  );
+  const [data, error, , status] = await fetchData<DonorAdvisor>(INDEXER.DONOR_RESEARCH.ME);
   if (status === 404) {
     return null;
   }
-  if (error) {
-    throw new Error(error);
+  if (error || !data) {
+    throw new Error(error || "Failed to load advisor");
   }
-  if (data && "error" in data && data.error === NOT_PROVISIONED_404) {
-    return null;
-  }
-  return data as DonorAdvisor;
+  return data;
 };
 
 export interface OnboardAdvisorRequest {

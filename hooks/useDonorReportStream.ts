@@ -13,6 +13,13 @@ interface StreamState {
   errorCount: number;
 }
 
+const INITIAL_STREAM_STATE: StreamState = {
+  events: [],
+  latest: null,
+  connected: false,
+  errorCount: 0,
+};
+
 const TERMINAL_EVENT_NAMES = new Set(["report_finalized", "report_failed"]);
 
 const KNOWN_EVENT_NAMES = new Set<FastReportEvent["name"]>([
@@ -75,15 +82,14 @@ export function mergeStreamEvents(
  * and free of duplicates.
  */
 export function useDonorReportStream(reportId: string | null) {
-  const [state, setState] = useState<StreamState>({
-    events: [],
-    latest: null,
-    connected: false,
-    errorCount: 0,
-  });
+  const [state, setState] = useState<StreamState>(INITIAL_STREAM_STATE);
   const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
+    // Clear any prior report's accumulated events when the subscribed
+    // report changes, so switching reports never briefly renders the
+    // previous report's timeline before the new snapshot arrives.
+    setState(INITIAL_STREAM_STATE);
     if (!reportId) return;
 
     const controller = new AbortController();
