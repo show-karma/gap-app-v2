@@ -6,6 +6,7 @@ import { envVars } from "@/utilities/enviromentVars";
 import { DEFAULT_DESCRIPTION, DEFAULT_TITLE, SITE_URL, twitterMeta } from "@/utilities/meta";
 import { pagesOnRoot } from "@/utilities/pagesOnRoot";
 import { getCommunityDetails } from "@/utilities/queries/v2/getCommunityData";
+import { reportCanonicalMismatchIfAny } from "@/utilities/sentry/reportCanonicalMismatch";
 import { getWhitelabelContext } from "@/utilities/whitelabel-server";
 
 // Deduplicate across generateMetadata, generateViewport, and Layout per request
@@ -32,6 +33,16 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   const { isWhitelabel, config: wlConfig } = await getCachedContext();
 
   const community = await getCommunityDetails(communityId);
+
+  // Tripwire: a resolved community whose slug differs from the requested id
+  // signals the cross-request render bleed (see reportCanonicalMismatchIfAny).
+  reportCanonicalMismatchIfAny({
+    scope: "community",
+    requestedId: communityId,
+    resolvedSlug: community?.details?.slug,
+    resolvedUid: community?.uid,
+  });
+
   const communityName = community?.details?.name || communityId;
 
   const dynamicMetadata = {
