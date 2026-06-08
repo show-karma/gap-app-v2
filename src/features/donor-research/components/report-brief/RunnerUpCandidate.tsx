@@ -3,7 +3,9 @@
 import { ArrowUpRight } from "lucide-react";
 import type { ResearchReportCandidate } from "@/types/donor-research";
 import { ChapterMark } from "./ChapterMark";
+import { ComplianceStrip } from "./ComplianceStrip";
 import { briefDisplay, briefProse } from "./fonts";
+import { ScoreBreakdownTable } from "./ScoreBreakdownTable";
 import { compositeBand } from "./scoring";
 import {
   formatEin,
@@ -50,7 +52,7 @@ export function RunnerUpCandidate({ candidate, number, label }: RunnerUpCandidat
     <section className="mb-20 sm:mb-24">
       <ChapterMark number={number} label={label} tone="runner-up" />
 
-      <div className="mt-8 grid grid-cols-1 gap-x-12 gap-y-8 lg:grid-cols-[minmax(0,9fr)_minmax(0,3fr)]">
+      <div className="mt-8 grid grid-cols-1 gap-x-12 gap-y-8 lg:grid-cols-[minmax(0,8fr)_minmax(0,4fr)]">
         <div className="min-w-0">
           <header>
             <h2
@@ -122,6 +124,11 @@ export function RunnerUpCandidate({ candidate, number, label }: RunnerUpCandidat
           >
             {band}
           </p>
+
+          <ScoreBreakdownTable candidate={candidate} />
+
+          <ComplianceStrip candidate={candidate} />
+
           {lastMention ? (
             <div className="mt-5 border-t border-border/60 pt-3">
               <p

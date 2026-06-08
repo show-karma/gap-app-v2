@@ -3,8 +3,10 @@
 import { ArrowUpRight } from "lucide-react";
 import type { ResearchReportCandidate } from "@/types/donor-research";
 import { ChapterMark } from "./ChapterMark";
+import { ComplianceStrip } from "./ComplianceStrip";
 import { briefDisplay, briefProse } from "./fonts";
-import { componentRows, compositeBand, leadJustification } from "./scoring";
+import { ScoreBreakdownTable } from "./ScoreBreakdownTable";
+import { compositeBand, leadJustification } from "./scoring";
 import {
   formatEin,
   formatLocale,
@@ -40,7 +42,6 @@ export function LeadCandidate({ candidate }: LeadCandidateProps) {
   const pullQuote = candidate.reasoningSummary?.trim() ?? null;
   const composite100 = Math.round(candidate.composite * 100);
   const band = compositeBand(candidate.composite, isDisqualified);
-  const rows = componentRows(candidate);
   const recent = candidate.recentMentions ?? [];
   const mostRecentMs = mostRecentMentionDate(recent);
   const mostRecentLabel = relativeDays(mostRecentMs);
@@ -103,7 +104,7 @@ export function LeadCandidate({ candidate }: LeadCandidateProps) {
         <aside className="min-w-0 lg:pl-8 lg:border-l lg:border-border/60">
           <CompositeHero composite100={composite100} band={band} disqualified={isDisqualified} />
 
-          <Breakdown rows={rows} composite100={composite100} />
+          <ScoreBreakdownTable candidate={candidate} />
 
           <ComplianceStrip candidate={candidate} />
 
@@ -216,111 +217,6 @@ function CompositeHero({ composite100, band, disqualified }: CompositeHeroProps)
       </p>
     </div>
   );
-}
-
-interface BreakdownProps {
-  rows: ReturnType<typeof componentRows>;
-  composite100: number;
-}
-
-function Breakdown({ rows, composite100 }: BreakdownProps) {
-  return (
-    <div className="mt-8">
-      <p
-        className={`${briefDisplay.className} text-[10px] font-medium uppercase tracking-[0.28em] text-muted-foreground`}
-      >
-        How the score adds up
-      </p>
-      <dl
-        className={`${briefDisplay.className} mt-3 flex flex-col divide-y divide-border/50 border-y border-border/50`}
-      >
-        {rows.map((row) => (
-          <div
-            key={row.key}
-            className="grid grid-cols-[1fr_auto_auto] items-baseline gap-x-4 py-2 text-sm"
-          >
-            <dt className="text-foreground/80">{row.label}</dt>
-            <dd className="tabular-nums text-foreground/70" title="Score (0–100) × weight">
-              {row.scoreOutOf100}
-              <span className="text-muted-foreground/70"> × </span>
-              {Math.round(row.weight * 100)}%
-            </dd>
-            <dd className="w-10 text-right font-medium tabular-nums text-foreground">
-              {row.contributionOutOf100}
-            </dd>
-          </div>
-        ))}
-        <div className="grid grid-cols-[1fr_auto_auto] items-baseline gap-x-4 py-2.5 text-sm">
-          <dt className="font-medium uppercase tracking-[0.18em] text-[10px] text-muted-foreground">
-            Composite
-          </dt>
-          <dd aria-hidden />
-          <dd className="w-10 text-right text-base font-medium tabular-nums text-brand-emphasis dark:text-brand-subtle">
-            {composite100}
-          </dd>
-        </div>
-      </dl>
-    </div>
-  );
-}
-
-interface ComplianceStripProps {
-  candidate: ResearchReportCandidate;
-}
-
-function ComplianceStrip({ candidate }: ComplianceStripProps) {
-  const checks = candidate.complianceChecks ?? [];
-  if (checks.length === 0) return null;
-  return (
-    <div className="mt-7">
-      <p
-        className={`${briefDisplay.className} text-[10px] font-medium uppercase tracking-[0.28em] text-muted-foreground`}
-      >
-        Compliance
-      </p>
-      <ul className={`${briefDisplay.className} mt-3 flex flex-col gap-1.5 text-sm`}>
-        {checks.map((check) => (
-          <li
-            key={check.name}
-            className="grid grid-cols-[auto_1fr_auto] items-baseline gap-x-3"
-            title={check.detail}
-          >
-            <StatusDot status={check.status} />
-            <span className="truncate text-foreground/80">{check.label}</span>
-            <span className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
-              {humanizeStatus(check.status)}
-            </span>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
-function StatusDot({
-  status,
-}: {
-  status: ResearchReportCandidate["complianceChecks"][number]["status"];
-}) {
-  const tone =
-    status === "passed"
-      ? "bg-brand"
-      : status === "failed"
-        ? "bg-amber-600 dark:bg-amber-400"
-        : status === "not_applicable"
-          ? "bg-muted-foreground/30"
-          : "bg-muted-foreground/50";
-  return (
-    <span aria-hidden className={`mt-1.5 inline-block h-1.5 w-1.5 shrink-0 rounded-full ${tone}`} />
-  );
-}
-
-function humanizeStatus(status: string): string {
-  if (status === "passed") return "Active";
-  if (status === "failed") return "Flagged";
-  if (status === "not_applicable") return "n/a";
-  if (status === "unknown") return "Unknown";
-  return status;
 }
 
 interface LeadCoverageProps {
