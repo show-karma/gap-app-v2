@@ -69,10 +69,6 @@ const nextConfig: NextConfig = {
       "semver",
     ],
   },
-  eslint: {
-    dirs: ["app", "components", "utilities", "hooks", "store", "types"],
-    ignoreDuringBuilds: false,
-  },
   typescript: {
     ignoreBuildErrors: false,
   },
