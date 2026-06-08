@@ -82,14 +82,18 @@ describe("canonicalizeSitemapUrl", () => {
 });
 
 describe("buildUrlsetXml", () => {
-  it("emits a urlset entry per URL with second-precision lastmod", () => {
+  it("emits a urlset entry per URL and canonicalizes the host", () => {
     const xml = buildUrlsetXml(["https://staging.karmahq.xyz/a"], 0.8, "daily");
     expect(xml).toContain('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">');
     expect(xml).toContain(`<loc>${SITE}/a</loc>`);
     expect(xml).toContain("<changefreq>daily</changefreq>");
     expect(xml).toContain("<priority>0.8</priority>");
-    expect(xml).toMatch(/<lastmod>\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z<\/lastmod>/);
     expect(xml).not.toContain("staging.karmahq.xyz");
+  });
+
+  it("omits lastmod (no accurate per-URL modified date to emit)", () => {
+    const xml = buildUrlsetXml(["https://www.karmahq.xyz/a"], 0.8, "daily");
+    expect(xml).not.toContain("<lastmod>");
   });
 
   it("escapes XML-significant characters in URLs", () => {
@@ -109,6 +113,11 @@ describe("buildSitemapIndexXml", () => {
     const xml = buildSitemapIndexXml([`${SITE}/sitemaps/grants/sitemap/1.xml`]);
     expect(xml).toContain('<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">');
     expect(xml).toContain(`<loc>${SITE}/sitemaps/grants/sitemap/1.xml</loc>`);
+  });
+
+  it("omits lastmod on child entries", () => {
+    const xml = buildSitemapIndexXml([`${SITE}/sitemaps/grants/sitemap/1.xml`]);
+    expect(xml).not.toContain("<lastmod>");
   });
 });
 

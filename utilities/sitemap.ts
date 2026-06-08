@@ -95,24 +95,28 @@ export function canonicalizeSitemapUrl(url: string): string {
   }
 }
 
+// `lastmod` is intentionally omitted. The indexer returns only URL strings (no
+// per-entity modified date), so the only value we could emit is "now" on every
+// request — which Google treats as an inaccurate freshness signal and, per
+// Gary Illyes, makes it distrust/ignore lastmod for the whole site (the signal
+// is binary: trustworthy or ignored). Omitting it is strictly better than a
+// fabricated date. To reinstate an accurate lastmod, have the indexer return a
+// per-URL updatedAt and thread it through `urls` here.
 export function buildUrlsetXml(urls: string[], priority: number, changeFrequency: string): string {
-  const now = formatSitemapLastmod();
   const items = urls
     .map(
       (url) =>
-        `  <url>\n    <loc>${escapeXml(canonicalizeSitemapUrl(url))}</loc>\n    <lastmod>${now}</lastmod>\n    <changefreq>${changeFrequency}</changefreq>\n    <priority>${priority}</priority>\n  </url>`
+        `  <url>\n    <loc>${escapeXml(canonicalizeSitemapUrl(url))}</loc>\n    <changefreq>${changeFrequency}</changefreq>\n    <priority>${priority}</priority>\n  </url>`
     )
     .join("\n");
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${items}\n</urlset>\n`;
 }
 
+// See buildUrlsetXml: `lastmod` is omitted here for the same reason (we have no
+// accurate per-child-sitemap modified date, only "now").
 export function buildSitemapIndexXml(locs: string[]): string {
-  const now = formatSitemapLastmod();
   const items = locs
-    .map(
-      (loc) =>
-        `  <sitemap>\n    <loc>${escapeXml(loc)}</loc>\n    <lastmod>${now}</lastmod>\n  </sitemap>`
-    )
+    .map((loc) => `  <sitemap>\n    <loc>${escapeXml(loc)}</loc>\n  </sitemap>`)
     .join("\n");
   return `<?xml version="1.0" encoding="UTF-8"?>\n<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${items}\n</sitemapindex>\n`;
 }
