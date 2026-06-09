@@ -198,12 +198,12 @@ export const useFaucetRequest = (requestId: string | null) => {
       return faucetService.getRequest(requestId);
     },
     enabled: !!requestId,
-    // refetchInterval: (data) => {
-    //   // Stop polling if request is completed or failed
-    //   if (data?.d === "CLAIMED" || data?.status === "FAILED") {
-    //     return false;
-    //   }
-    //   return 2000; // Poll every 2 seconds
-    // }
+    refetchInterval: (query) => {
+      const status = query.state.data?.status;
+      if (status === "CLAIMED" || status === "FAILED" || status === "EXPIRED") {
+        return false;
+      }
+      return 2000;
+    },
   });
 };
