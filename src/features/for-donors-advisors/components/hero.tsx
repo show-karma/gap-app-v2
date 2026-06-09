@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { SectionContainer } from "@/src/components/shared/section-container";
 import { marketingLayoutTheme } from "@/src/helper/theme";
+import { PAGES } from "@/utilities/pages";
 import { SOCIALS } from "@/utilities/socials";
 import { cn } from "@/utilities/tailwind";
 
@@ -15,7 +16,6 @@ export function Hero() {
       )}
     >
       <SectionContainer className="flex flex-col items-center gap-6">
-        {/* Badge */}
         <div className="w-full flex justify-start md:justify-center">
           <Badge
             variant="secondary"
@@ -26,11 +26,10 @@ export function Hero() {
               "bg-secondary border-0 w-fit"
             )}
           >
-            For Foundations
+            For Donors & Advisors
           </Badge>
         </div>
 
-        {/* Main Heading */}
         <h1
           className={cn(
             "text-foreground font-semibold text-[40px] md:text-5xl lg:text-[48px]",
@@ -38,10 +37,9 @@ export function Hero() {
             "text-left md:text-center max-w-[820px] w-full md:mx-auto"
           )}
         >
-          AI-powered funding software that does the work for you
+          Find nonprofits you can actually trust to get results
         </h1>
 
-        {/* Description */}
         <p
           className={cn(
             "text-muted-foreground font-medium text-base md:text-lg",
@@ -49,19 +47,21 @@ export function Hero() {
             "max-w-[720px] w-full md:mx-auto"
           )}
         >
-          Run grants, hackathons, and RFPs with a lean team. Karma&apos;s AI agents handle
-          evaluation, milestone tracking, and impact reporting, so your team focuses on funding
-          outcomes, not data entry.
+          Karma surfaces vetted, active nonprofits matched to your giving priorities, so you can
+          move from &ldquo;I want to give&rdquo; to &ldquo;I found the right organization&rdquo; in
+          minutes, not months.
         </p>
 
-        {/* CTA Buttons */}
-        <div className="w-full flex flex-col sm:flex-row justify-start md:justify-center gap-3 max-w-[768px] md:mx-auto">
+        <div className="w-full flex flex-col sm:flex-row justify-start md:justify-center gap-3 max-w-[640px] md:mx-auto">
           <Button
             asChild
             className="bg-foreground text-background hover:bg-foreground/90 rounded-md font-medium px-6 py-2.5"
           >
+            <Link href={PAGES.PROJECTS_EXPLORER}>Start discovering nonprofits</Link>
+          </Button>
+          <Button asChild variant="outline" className="rounded-md font-medium px-6 py-2.5">
             <Link href={SOCIALS.PARTNER_FORM} target="_blank" rel="noopener noreferrer">
-              Schedule a Demo
+              Talk to our team
             </Link>
           </Button>
         </div>

@@ -44,7 +44,7 @@ export function PainPoints() {
       <SectionContainer className="flex flex-col items-start gap-12">
         {/* Header */}
         <ScrollReveal variant="fade-up">
-          <div className="flex flex-col items-start gap-4 w-full max-w-xl">
+          <div className="flex flex-col items-start gap-4 w-full max-w-2xl">
             <Badge
               variant="secondary"
               className={cn(
@@ -54,14 +54,19 @@ export function PainPoints() {
                 "bg-secondary border-0 w-fit"
               )}
             >
-              Sound Familiar?
+              How most foundations work today
             </Badge>
 
             <h2 className={cn("section-title", "text-left", "w-full")}>
-              <span className="text-foreground">Four tools to do one job.</span>
+              <span className="text-foreground">
+                Many disconnected tools, all expected to do one job.
+              </span>
               <br />
-              <span className="text-muted-foreground">There&apos;s a better way.</span>
+              <span className="text-muted-foreground">And it gets worse every cycle.</span>
             </h2>
+            <p className="text-muted-foreground font-medium text-base md:text-lg leading-[28px] mt-2">
+              This is the patchwork foundation teams stitch together today.
+            </p>
           </div>
         </ScrollReveal>
 

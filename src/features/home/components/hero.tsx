@@ -36,7 +36,7 @@ export function Hero() {
               "text-left md:text-center max-w-[820px] w-full md:mx-auto"
             )}
           >
-            AI powered funding software that does the work for you
+            Karma connects funders to organizations worth backing
           </h1>
         </ScrollReveal>
 
@@ -47,25 +47,31 @@ export function Hero() {
               "text-muted-foreground font-normal text-base md:text-lg lg:text-xl",
               "leading-[160%]",
               "text-left md:text-center",
-              "max-w-[640px] w-full md:mx-auto"
+              "max-w-[720px] w-full md:mx-auto"
             )}
           >
-            Run grants, hackathons, and RFPs with a lean team. AI-powered evaluation, automated
-            milestone tracking, and real-time impact reporting so you can focus on funding outcomes.
+            One platform for foundations, donors, and nonprofits. The right money reaches the right
+            organizations, and you can see what happens next.
           </p>
         </ScrollReveal>
 
-        {/* CTA Buttons */}
+        {/* Primary CTAs */}
         <ScrollReveal variant="fade-up" delay={300} duration={800}>
-          <div className="w-full flex flex-col sm:flex-row justify-start md:justify-center gap-3 max-w-[640px] md:mx-auto">
+          <div className="w-full flex flex-col sm:flex-row justify-start md:justify-center items-center gap-3 max-w-[640px] md:mx-auto">
             <Button asChild size="xl">
               <Link href={SOCIALS.PARTNER_FORM} target="_blank" rel="noopener noreferrer">
-                Schedule a Demo
+                Schedule a demo
               </Link>
             </Button>
-            <Button asChild variant="outline" size="xl">
-              <Link href={PAGES.COMMUNITIES}>Explore Organizations</Link>
-            </Button>
+            <Link
+              href="#who-its-for"
+              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors inline-flex items-center gap-1.5"
+            >
+              See what Karma does for you
+              <span aria-hidden className="text-base leading-none">
+                ↓
+              </span>
+            </Link>
           </div>
         </ScrollReveal>
 
