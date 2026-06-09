@@ -23,7 +23,7 @@ const STAGE_ORDER: Array<{
   {
     name: "pool_loaded",
     label: "Candidate pool",
-    caption: "Querying the 200k-org embedding index for matches.",
+    caption: "Finding organizations matching your criteria.",
   },
   {
     name: "compliance_complete",
