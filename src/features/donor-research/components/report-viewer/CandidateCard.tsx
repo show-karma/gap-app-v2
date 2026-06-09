@@ -3,6 +3,7 @@
 import { ArrowUpRight, ChevronDown } from "lucide-react";
 import { useState } from "react";
 import type { ResearchReportCandidate } from "@/types/donor-research";
+import { FinancialsTable } from "../report-brief/FinancialsTable";
 import { COMPONENT_WEIGHTS, compositeBand } from "../report-brief/scoring";
 import { ComplianceBreakdown } from "./ComplianceBreakdown";
 import { RecentActivity } from "./RecentActivity";
@@ -91,6 +92,8 @@ export function CandidateCard({ candidate, variant }: CandidateCardProps) {
         {candidate.reasoningSummary ? (
           <p className="text-sm leading-relaxed text-foreground">{candidate.reasoningSummary}</p>
         ) : null}
+
+        <FinancialsTable financials={candidate.financials} />
 
         {variant === "one-pager" && candidate.onePagerText ? (
           <blockquote className="border-t border-border/60 pt-4 text-sm italic leading-relaxed text-foreground/90 [&::before]:mr-1 [&::before]:font-mono [&::before]:not-italic [&::before]:text-brand-emphasis [&::before]:content-['❝']">

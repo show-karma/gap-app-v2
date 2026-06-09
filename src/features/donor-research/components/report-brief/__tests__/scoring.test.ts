@@ -29,6 +29,7 @@ function makeCandidate(
     reasoningSummary: null,
     onePagerText: null,
     detailedText: null,
+    financials: [],
   };
 }
 

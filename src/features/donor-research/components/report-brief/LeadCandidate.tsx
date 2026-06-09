@@ -4,6 +4,7 @@ import { ArrowUpRight } from "lucide-react";
 import type { ResearchReportCandidate } from "@/types/donor-research";
 import { ChapterMark } from "./ChapterMark";
 import { ComplianceStrip } from "./ComplianceStrip";
+import { FinancialsTable } from "./FinancialsTable";
 import { briefDisplay, briefProse } from "./fonts";
 import { ScoreBreakdownTable } from "./ScoreBreakdownTable";
 import { compositeBand, leadJustification } from "./scoring";
@@ -97,6 +98,8 @@ export function LeadCandidate({ candidate }: LeadCandidateProps) {
               </p>
             </blockquote>
           ) : null}
+
+          <FinancialsTable financials={candidate.financials} />
 
           {recent.length > 0 ? <LeadCoverage candidate={candidate} /> : null}
         </div>
