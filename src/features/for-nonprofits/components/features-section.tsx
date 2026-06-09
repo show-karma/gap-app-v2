@@ -11,28 +11,28 @@ interface Feature {
 
 const features: Feature[] = [
   {
-    label: "Your profile",
-    title: "One place to keep your story current",
+    label: "Share your URL",
+    title: "Drop a link. We build the profile.",
     description:
-      "Submit updates, post milestones, and keep your profile fresh so funders always see the real you.",
+      "Karma indexes your website, pulls together your work, impact, and team, and publishes a live funder-facing profile in minutes. If anything is missing, we email you to fill the gap.",
   },
   {
-    label: "Discovery",
-    title: "Get found by foundations searching right now",
+    label: "AI-run reporting, free",
+    title: "Impact reports funders can actually find",
     description:
-      "Karma is where active foundations look for grantees. A complete profile puts you in the room.",
+      "Our agents draft milestone updates and board-ready reports from the work you're already doing. Funders see your impact in real time instead of waiting for a quarterly PDF. Free for you.",
   },
   {
-    label: "Funding requests",
-    title: "Post what you need, not just who you are",
+    label: "AI-run social, free",
+    title: "Updates posted where funders watch",
     description:
-      "Tell funders about a specific gap or initiative. Donors can match directly to that need.",
+      "Agents write and post your updates in your voice on the channels funders actually browse. Your wins stay visible, not buried in a doc nobody opens.",
   },
   {
-    label: "Track record",
-    title: "Show your impact, not just your potential",
+    label: "Find funders, free",
+    title: "Natural-language funder search",
     description:
-      "Past grants, completed milestones, and outcomes build credibility with every new funder you meet.",
+      'Search Karma\'s funder map in plain English: "foundations funding bilingual education in the Bay Area." Free tool, no signup, results in seconds.',
   },
 ];
 
@@ -54,9 +54,9 @@ export function FeaturesSection() {
           </Badge>
 
           <h2 className={cn("section-title", "text-left", "w-full")}>
-            <span className="text-foreground">Be seen, get funded,</span>
+            <span className="text-foreground">A live profile, ongoing reporting,</span>
             <br />
-            <span className="text-muted-foreground">show what funding produced</span>
+            <span className="text-muted-foreground">and funders who can find you.</span>
           </h2>
 
           <p
@@ -66,8 +66,8 @@ export function FeaturesSection() {
               "w-full"
             )}
           >
-            Karma turns your nonprofit&apos;s story into a living record that funders can search,
-            verify, and trust.
+            Share your website and Karma does the work. AI agents keep your funder-facing record
+            current so you spend your time on the mission, not on paperwork.
           </p>
         </div>
 

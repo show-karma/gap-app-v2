@@ -7,7 +7,7 @@ import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { SectionContainer } from "@/src/components/shared/section-container";
 import { marketingLayoutTheme } from "@/src/helper/theme";
-import { PAGES } from "@/utilities/pages";
+import { NON_PROFITS_PAGES, PAGES } from "@/utilities/pages";
 import { SOCIALS } from "@/utilities/socials";
 import { cn } from "@/utilities/tailwind";
 
@@ -147,37 +147,37 @@ const PANELS: AudiencePanel[] = [
     key: "nonprofits",
     tabLabel: "Nonprofits",
     eyebrow: "For nonprofits",
-    headline: "Get in front of the funders looking for organizations like yours.",
+    headline: "Just share your website. We'll get you in front of funders.",
     subhead:
-      "Karma gives your organization a live profile that foundations and donors actually search, plus a way to show what you've done with funding so far, not just what you're asking for next.",
+      "Karma indexes your site to build your funder-facing profile, then runs your impact reporting and social with AI agents so funders see what you're doing in real time. Free for nonprofits. Funders pay us, not you.",
     features: [
       {
-        label: "Your profile",
-        title: "One place to keep your story current",
+        label: "Share your URL",
+        title: "Drop a link. We build the profile.",
         description:
-          "Submit updates, post milestones, and keep your profile fresh so funders always see the real you.",
+          "Karma indexes your website, surfaces your work, impact, and team, and ships a live funder-facing profile. We follow up by email if anything is missing.",
       },
       {
-        label: "Discovery",
-        title: "Get found by foundations searching right now",
+        label: "AI-run reporting",
+        title: "Impact reports funders can actually find",
         description:
-          "Karma is where active foundations look for grantees. A complete profile puts you in the room.",
+          "Our agents draft milestone updates and board-ready reports from your work. Funders see your impact without waiting for a quarterly PDF. Free for you.",
       },
       {
-        label: "Funding requests",
-        title: "Post what you need, not just who you are",
+        label: "AI-run social",
+        title: "Updates posted where funders watch",
         description:
-          "Tell funders about a specific gap or initiative. Donors can match directly to that need.",
+          "Agents write and post your updates in your voice, on the channels funders actually browse. Your wins stay visible, not buried in a doc.",
       },
       {
-        label: "Track record",
-        title: "Show your impact, not just your potential",
+        label: "Find funders, free",
+        title: "Natural-language funder search",
         description:
-          "Past grants, completed milestones, and outcomes build credibility with every new funder you meet.",
+          'Search Karma\'s funder map in plain English: "foundations funding bilingual education in the Bay Area." Free tool, no signup.',
       },
     ],
-    primaryCta: { label: "Explore nonprofit experience", href: PAGES.FOR_NONPROFITS },
-    secondaryCta: { label: "Talk to our team", href: SOCIALS.PARTNER_FORM },
+    primaryCta: { label: "Add your nonprofit free", href: PAGES.CREATE_PROJECT_PROFILE },
+    secondaryCta: { label: "Find funders for free", href: NON_PROFITS_PAGES.HOME },
   },
 ];
 

@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { SectionContainer } from "@/src/components/shared/section-container";
 import { marketingLayoutTheme } from "@/src/helper/theme";
-import { PAGES } from "@/utilities/pages";
+import { NON_PROFITS_PAGES, PAGES } from "@/utilities/pages";
 import { SOCIALS } from "@/utilities/socials";
 import { cn } from "@/utilities/tailwind";
 
@@ -37,19 +37,19 @@ export function Hero() {
             "text-left md:text-center max-w-[820px] w-full md:mx-auto"
           )}
         >
-          Get in front of the funders looking for organizations like yours
+          Just share your website. We&apos;ll do the rest.
         </h1>
 
         <p
           className={cn(
             "text-muted-foreground font-medium text-base md:text-lg",
             "text-left md:text-center",
-            "max-w-[720px] w-full md:mx-auto"
+            "max-w-[760px] w-full md:mx-auto"
           )}
         >
-          Karma gives your organization a live profile that foundations and donors actually search,
-          plus a way to show what you&apos;ve done with funding so far, not just what you&apos;re
-          asking for next.
+          Karma indexes your site to build your funder-facing profile, then runs your impact
+          reporting and social with AI agents so funders see what you&apos;re doing in real time.
+          Free for nonprofits. Funders pay us, not you.
         </p>
 
         <div className="w-full flex flex-col sm:flex-row justify-start md:justify-center gap-3 max-w-[640px] md:mx-auto">
@@ -57,14 +57,25 @@ export function Hero() {
             asChild
             className="bg-foreground text-background hover:bg-foreground/90 rounded-md font-medium px-6 py-2.5"
           >
-            <Link href={PAGES.CREATE_PROJECT_PROFILE}>Add your organization to Karma</Link>
+            <Link href={PAGES.CREATE_PROJECT_PROFILE}>Add your nonprofit free</Link>
           </Button>
           <Button asChild variant="outline" className="rounded-md font-medium px-6 py-2.5">
-            <Link href={SOCIALS.PARTNER_FORM} target="_blank" rel="noopener noreferrer">
-              Schedule a demo
-            </Link>
+            <Link href={NON_PROFITS_PAGES.HOME}>Find funders for free</Link>
           </Button>
         </div>
+
+        <p className="text-sm text-muted-foreground text-center mt-1">
+          Prefer a call?{" "}
+          <Link
+            href={SOCIALS.PARTNER_FORM}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline underline-offset-4 hover:text-foreground transition-colors"
+          >
+            Book one with our team
+          </Link>
+          .
+        </p>
       </SectionContainer>
     </section>
   );

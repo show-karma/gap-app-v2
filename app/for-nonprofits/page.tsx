@@ -6,9 +6,9 @@ import { customMetadata } from "@/utilities/meta";
 import { cn } from "@/utilities/tailwind";
 
 export const metadata: Metadata = customMetadata({
-  title: "For Nonprofits: Get found by the funders looking for you",
+  title: "For Nonprofits: Share your website, we do the rest",
   description:
-    "Karma gives nonprofits a live profile that foundations and donors actually search, plus a way to show what funding produced, not just what you're asking for next.",
+    "Karma indexes your website to build a funder-facing profile, then runs your impact reporting and social with AI agents so funders see your work in real time. Free for nonprofits.",
   path: "/for-nonprofits",
 });
 
