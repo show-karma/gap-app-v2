@@ -1,5 +1,7 @@
-import { type FC, useState } from "react";
+import type { IProjectUpdate } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import type { FC } from "react";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { useUpdateActions } from "@/hooks/useUpdateActions";
 import { useProjectStore } from "@/store";
 import type { ProjectUpdate } from "@/types/v2/roadmap";
 import { PAGES } from "@/utilities/pages";
@@ -19,7 +21,22 @@ interface ProjectUpdateCardProps {
 
 export const ProjectUpdateCard: FC<ProjectUpdateCardProps> = ({ update, index, isAuthorized }) => {
   const project = useProjectStore((state) => state.project);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const updateForActions = {
+    type: "ProjectUpdate",
+    uid: update.uid,
+    chainID: project?.chainID,
+    refUID: project?.uid,
+    attester: update.recipient,
+    recipient: update.recipient,
+    createdAt: update.createdAt || "",
+    data: {
+      type: "ProjectUpdate",
+      title: update.title,
+      text: update.description,
+    },
+  } as unknown as IProjectUpdate;
+  const { isDeletingUpdate, isEditDialogOpen, deleteUpdate, handleEdit, closeEditDialog } =
+    useUpdateActions(updateForActions);
 
   const canEdit = true;
   const canDelete = true;
@@ -30,18 +47,6 @@ export const ProjectUpdateCard: FC<ProjectUpdateCardProps> = ({ update, index, i
       project?.details?.slug || project?.uid || ""
     )}`;
     navigator.clipboard.writeText(url);
-  };
-
-  const handleEdit = () => {
-    setIsEditDialogOpen(true);
-  };
-
-  const closeEditDialog = () => {
-    setIsEditDialogOpen(false);
-  };
-
-  const handleDelete = async () => {
-    // TODO: Implement delete functionality
   };
 
   // V2 API structure
@@ -191,11 +196,11 @@ export const ProjectUpdateCard: FC<ProjectUpdateCardProps> = ({ update, index, i
             <ActivityMenu
               onShare={canShare ? handleShare : undefined}
               onEdit={canEdit ? handleEdit : undefined}
-              onDelete={canDelete ? handleDelete : undefined}
+              onDelete={canDelete ? deleteUpdate : undefined}
               canShare={canShare}
               canEdit={canEdit}
               canDelete={canDelete}
-              isDeleting={false}
+              isDeleting={isDeletingUpdate}
               activityType="ProjectUpdate"
               deleteTitle={
                 <p className="font-normal">
