@@ -1,5 +1,6 @@
 "use client";
 
+import pluralize from "pluralize";
 import { useMemo } from "react";
 import { useDonationHistory } from "@/hooks/donation/useDonationHistory";
 import { useAuth } from "@/hooks/useAuth";
@@ -85,13 +86,17 @@ export default function DonationsPage() {
           <span className="text-sm font-medium text-gray-900 dark:text-zinc-100">
             {donations.length}
           </span>
-          <span className="text-sm text-gray-500 dark:text-zinc-400">donations</span>
+          <span className="text-sm text-gray-500 dark:text-zinc-400">
+            {pluralize("donation", donations.length)}
+          </span>
         </div>
         <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 dark:bg-zinc-800 rounded-md">
           <span className="text-sm font-medium text-gray-900 dark:text-zinc-100">
             {completedCount}
           </span>
-          <span className="text-sm text-gray-500 dark:text-zinc-400">completed</span>
+          <span className="text-sm text-gray-500 dark:text-zinc-400">
+            completed {pluralize("donation", completedCount)}
+          </span>
         </div>
       </div>
 
