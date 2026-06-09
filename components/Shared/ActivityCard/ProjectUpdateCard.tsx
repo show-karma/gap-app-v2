@@ -19,6 +19,9 @@ interface ProjectUpdateCardProps {
   isAuthorized: boolean;
 }
 
+const withHttpProtocol = (value: string) =>
+  /^https?:\/\//i.test(value) ? value : `https://${value}`;
+
 export const ProjectUpdateCard: FC<ProjectUpdateCardProps> = ({ update, index, isAuthorized }) => {
   const project = useProjectStore((state) => state.project);
   const updateForActions = {
@@ -118,11 +121,7 @@ export const ProjectUpdateCard: FC<ProjectUpdateCardProps> = ({ update, index, i
                               {deliverable.proof && (
                                 <div className="flex items-center">
                                   <ExternalLink
-                                    href={
-                                      deliverable.proof.includes("http")
-                                        ? deliverable.proof
-                                        : `https://${deliverable.proof}`
-                                    }
+                                    href={withHttpProtocol(deliverable.proof)}
                                     className="inline-flex items-center gap-1.5 text-sm text-blue-600 dark:text-blue-400 hover:underline font-medium"
                                     aria-label={`View proof for ${deliverable.name}`}
                                     tabIndex={0}
