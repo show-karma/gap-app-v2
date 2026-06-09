@@ -1,7 +1,7 @@
 {
   "$schema": "./scripts/quality-baseline.schema.json",
-  "generatedAt": "2026-06-07T17:34:34.000Z",
-  "generatedFromCommit": "9b9698e",
+  "generatedAt": "2026-06-09T22:05:40.782Z",
+  "generatedFromCommit": "fd0598d30e9e8abe1cd83754b73fb077e9fe6d64",
   "coverage": {
     "lines": 0,
     "statements": 0,
@@ -9,16 +9,16 @@
     "branches": 0
   },
   "duplication": {
-    "percent": 1.34,
-    "fragments": 72
+    "percent": 1.29,
+    "fragments": 71
   },
   "violations": {
-    "biome": 1246,
-    "knipUnusedFiles": 213,
-    "knipUnusedExports": 416,
-    "knipUnusedTypes": 351,
+    "biome": 1245,
+    "knipUnusedFiles": 212,
+    "knipUnusedExports": 420,
+    "knipUnusedTypes": 353,
     "knipUnusedDeps": 20,
-    "knipDuplicates": 35
+    "knipDuplicates": 34
   },
   "oversizedFiles": {
     "__tests__/components/Admin/NotificationSettingsPage.test.tsx": {
@@ -363,6 +363,12 @@
       "maxLines": 600,
       "maxBytes": 40000
     },
+    "hooks/useMilestoneCompletionVerification.ts": {
+      "lines": 661,
+      "bytes": 20047,
+      "maxLines": 600,
+      "maxBytes": 40000
+    },
     "services/__tests__/fundingPlatformService.test.ts": {
       "lines": 976,
       "bytes": 33292,
@@ -448,8 +454,8 @@
       "maxBytes": 40000
     },
     "utilities/indexer.ts": {
-      "lines": 793,
-      "bytes": 38951,
+      "lines": 803,
+      "bytes": 39480,
       "maxLines": 600,
       "maxBytes": 40000
     },
@@ -458,26 +464,20 @@
       "bytes": 28913,
       "maxLines": 600,
       "maxBytes": 40000
-    },
-    "hooks/useMilestoneCompletionVerification.ts": {
-      "lines": 661,
-      "bytes": 20047,
-      "maxLines": 600,
-      "maxBytes": 40000
     }
   },
   "reactDoctor": {
     "score": 0,
-    "errors": 61,
-    "warnings": 3236,
+    "errors": 63,
+    "warnings": 3254,
     "byCategory": {
-      "Accessibility": 275,
-      "Architecture": 1170,
-      "Correctness": 399,
-      "Next.js": 145,
+      "Accessibility": 279,
+      "Architecture": 1179,
+      "Correctness": 397,
+      "Next.js": 148,
       "Server": 6,
-      "Performance": 600,
-      "State & Effects": 659,
+      "Performance": 602,
+      "State & Effects": 663,
       "TanStack Query": 30,
       "Bundle Size": 10,
       "Security": 3
