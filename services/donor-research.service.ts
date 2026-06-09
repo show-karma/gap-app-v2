@@ -6,7 +6,7 @@ import type {
   ReportCreateResponse,
   ResearchReportDetail,
   ResearchReportList,
-  SharedReportPayload,
+  SharedReportApiPayload,
   ShareTokenPayload,
 } from "@/types/donor-research";
 import fetchData from "@/utilities/fetchData";
@@ -222,8 +222,12 @@ export const revokeShareToken = async (reportId: string): Promise<void> => {
  * via `isAuthorized = false` so the request doesn't carry the advisor's
  * session, mirroring the way an external visitor would hit it.
  */
-export const fetchSharedReport = async (token: string): Promise<SharedReportPayload> => {
-  const [data, error] = await fetchData<SharedReportPayload>(
+export const fetchSharedReport = async (token: string): Promise<ResearchReportDetail> => {
+  // The share endpoint returns ONLY render-necessary fields (no advisor IDs,
+  // no share-token material). Adapt it to the full ResearchReportDetail shape
+  // the brief expects by filling inert defaults for the advisor-only fields —
+  // the share view hides every control that would read them.
+  const [data, error] = await fetchData<SharedReportApiPayload>(
     INDEXER.DONOR_RESEARCH.SHARED(token),
     "GET",
     {},
@@ -234,5 +238,15 @@ export const fetchSharedReport = async (token: string): Promise<SharedReportPayl
   if (error || !data) {
     throw new Error(error || "Failed to load shared report");
   }
-  return data;
+  return {
+    ...data,
+    advisorId: "",
+    donorHandleId: "",
+    donorHandleLabel: null,
+    criteriaId: "",
+    criteria: null,
+    hasShareToken: false,
+    shareToken: null,
+    shareTokenExpiresAt: null,
+  };
 };

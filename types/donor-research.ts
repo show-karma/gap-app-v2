@@ -227,18 +227,25 @@ export interface ShareTokenPayload {
   shareUrlPath: string;
 }
 
-export interface SharedReportPayload {
-  report: {
-    id: string;
-    status: DonorResearchReportStatus;
-    mode: DonorResearchReportMode;
-    shareDisplayName: string | null;
-    shareIntroText: string | null;
-    shareTokenExpiresAt: string | null;
-    reportFinalizedAt: string | null;
-  };
-  candidates: ResearchReportCandidate[];
-}
+/**
+ * Wire shape of the unauthenticated donor share endpoint
+ * (`GET /v2/donor-research/shared/:token`). It returns ONLY the fields the
+ * brief renders — no advisor identifiers, no internal IDs, and no share-token
+ * material. `fetchSharedReport` adapts this into a {@link ResearchReportDetail}
+ * (filling inert defaults for the advisor-only fields) so the donor share view
+ * renders the exact same brief as the advisor report.
+ */
+export type SharedReportApiPayload = Omit<
+  ResearchReportDetail,
+  | "advisorId"
+  | "donorHandleId"
+  | "donorHandleLabel"
+  | "criteriaId"
+  | "criteria"
+  | "hasShareToken"
+  | "shareToken"
+  | "shareTokenExpiresAt"
+>;
 
 export interface FastReportEvent {
   name:

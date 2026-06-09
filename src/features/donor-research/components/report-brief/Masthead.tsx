@@ -14,6 +14,12 @@ interface MastheadProps {
   candidatesCount: number;
   surfacedCount: number;
   isTerminal: boolean;
+  /**
+   * "shared" hides advisor-only affordances (the dashboard back-link and the
+   * share-token controls) that a donor can't use, while keeping the masthead
+   * visually identical otherwise.
+   */
+  variant?: "advisor" | "shared";
 }
 
 /**
@@ -24,7 +30,14 @@ interface MastheadProps {
  * right edge so the share affordance is the first thing a sender
  * sees.
  */
-export function Masthead({ report, candidatesCount, surfacedCount, isTerminal }: MastheadProps) {
+export function Masthead({
+  report,
+  candidatesCount,
+  surfacedCount,
+  isTerminal,
+  variant = "advisor",
+}: MastheadProps) {
+  const isShared = variant === "shared";
   const issuedAt = report.fastCompletedAt ?? report.completedAt ?? report.createdAt;
   const issuedLabel = formatIssueDate(issuedAt);
   const issueNumber = `No. ${report.id.slice(0, 6).toUpperCase()}`;
@@ -32,13 +45,15 @@ export function Masthead({ report, candidatesCount, surfacedCount, isTerminal }:
   return (
     <header className="mb-14 grid grid-cols-1 gap-8 sm:mb-20 sm:grid-cols-[1fr_auto] sm:gap-12">
       <div className="min-w-0">
-        <Link
-          href={PAGES.DONOR_RESEARCH.INDEX}
-          className={`${briefDisplay.className} inline-flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-[0.28em] text-muted-foreground transition-colors hover:text-foreground`}
-        >
-          <ArrowLeft className="h-3 w-3" aria-hidden />
-          Research dashboard
-        </Link>
+        {isShared ? null : (
+          <Link
+            href={PAGES.DONOR_RESEARCH.INDEX}
+            className={`${briefDisplay.className} inline-flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-[0.28em] text-muted-foreground transition-colors hover:text-foreground`}
+          >
+            <ArrowLeft className="h-3 w-3" aria-hidden />
+            Research dashboard
+          </Link>
+        )}
 
         <div
           className={`${briefDisplay.className} mt-10 flex flex-wrap items-baseline gap-x-3 gap-y-1 text-[10px] uppercase tracking-[0.34em] text-muted-foreground`}
@@ -77,7 +92,7 @@ export function Masthead({ report, candidatesCount, surfacedCount, isTerminal }:
         </div>
       </div>
 
-      {isTerminal ? (
+      {isTerminal && !isShared ? (
         <div className="sm:justify-self-end">
           <ShareTokenControls
             reportId={report.id}
