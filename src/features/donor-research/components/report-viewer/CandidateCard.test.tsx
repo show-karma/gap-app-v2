@@ -1,6 +1,14 @@
 import { render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { ResearchReportCandidate } from "@/types/donor-research";
+
+// FinancialsTable (rendered by CandidateCard) pulls in the brief fonts, which
+// load next/font/google — unavailable in the unit runtime. Stub it.
+vi.mock("../report-brief/fonts", () => ({
+  briefDisplay: { className: "brief-display" },
+  briefProse: { className: "brief-prose" },
+}));
+
 import { CandidateCard } from "./CandidateCard";
 
 function buildCandidate(overrides: Partial<ResearchReportCandidate> = {}): ResearchReportCandidate {
@@ -57,6 +65,7 @@ function buildCandidate(overrides: Partial<ResearchReportCandidate> = {}): Resea
     reasoningSummary: null,
     onePagerText: null,
     detailedText: null,
+    financials: [],
     ...overrides,
   };
 }
@@ -64,6 +73,20 @@ function buildCandidate(overrides: Partial<ResearchReportCandidate> = {}): Resea
 describe("CandidateCard score evidence", () => {
   afterEach(() => {
     vi.useRealTimers();
+  });
+
+  it("renders the last-3-year financials table on the also-considered surface", () => {
+    render(
+      <CandidateCard
+        candidate={buildCandidate({
+          financials: [{ year: 2024, income: 1200000, expenses: 800000, assets: 5000000 }],
+        })}
+        variant="detail"
+      />
+    );
+
+    expect(screen.getByRole("columnheader", { name: "Income" })).toBeInTheDocument();
+    expect(screen.getByText("$1.2M")).toBeInTheDocument();
   });
 
   it("shows the latest IRS 990 age instead of a vague still-operating phrase", () => {

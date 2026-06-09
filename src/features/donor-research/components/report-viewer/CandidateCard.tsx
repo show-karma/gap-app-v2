@@ -3,8 +3,11 @@
 import { ArrowUpRight, ChevronDown } from "lucide-react";
 import { useState } from "react";
 import type { ResearchReportCandidate } from "@/types/donor-research";
+import { FinancialsTable } from "../report-brief/FinancialsTable";
 import { COMPONENT_WEIGHTS, compositeBand } from "../report-brief/scoring";
+import { formatEin, hostname, humanizeCase, truncate } from "../report-brief/text-utils";
 import { ComplianceBreakdown } from "./ComplianceBreakdown";
+import { formatLocale } from "./candidate-card-text";
 import { RecentActivity } from "./RecentActivity";
 
 interface CandidateCardProps {
@@ -91,6 +94,8 @@ export function CandidateCard({ candidate, variant }: CandidateCardProps) {
         {candidate.reasoningSummary ? (
           <p className="text-sm leading-relaxed text-foreground">{candidate.reasoningSummary}</p>
         ) : null}
+
+        <FinancialsTable financials={candidate.financials} />
 
         {variant === "one-pager" && candidate.onePagerText ? (
           <blockquote className="border-t border-border/60 pt-4 text-sm italic leading-relaxed text-foreground/90 [&::before]:mr-1 [&::before]:font-mono [&::before]:not-italic [&::before]:text-brand-emphasis [&::before]:content-['❝']">
@@ -558,164 +563,4 @@ function bandTone(score: number, disqualified: boolean): string {
   if (score >= 0.4) return "text-brand-emphasis dark:text-brand-subtle";
   if (score >= 0.25) return "text-foreground";
   return "text-muted-foreground";
-}
-
-function formatEin(ein: string): string {
-  const digits = ein.replace(/[^0-9]/g, "");
-  if (digits.length !== 9) return ein;
-  return `${digits.slice(0, 2)}-${digits.slice(2)}`;
-}
-
-function formatLocale(city: string | null, state: string | null): string | null {
-  if (city && state) return `${city}, ${state}`;
-  return city ?? state ?? null;
-}
-
-function hostname(url: string): string {
-  try {
-    return new URL(url).hostname.replace(/^www\./, "");
-  } catch {
-    return url;
-  }
-}
-
-function truncate(text: string, max: number): string {
-  if (text.length <= max) return text;
-  const slice = text.slice(0, max);
-  const lastSpace = slice.lastIndexOf(" ");
-  return `${slice.slice(0, lastSpace > 0 ? lastSpace : max).trimEnd()}…`;
-}
-
-// Words to always lowercase in title case (articles, conjunctions, short
-// prepositions), unless they're the first or last word.
-const TITLE_CASE_LOWERCASE = new Set([
-  "a",
-  "an",
-  "and",
-  "as",
-  "at",
-  "but",
-  "by",
-  "for",
-  "from",
-  "in",
-  "into",
-  "nor",
-  "of",
-  "on",
-  "onto",
-  "or",
-  "per",
-  "the",
-  "to",
-  "up",
-  "via",
-  "vs",
-  "vs.",
-  "with",
-]);
-
-// Common acronyms / proper-noun fragments that should keep their case.
-const KEEP_AS_IS = new Set([
-  "USA",
-  "U.S.",
-  "U.S.A.",
-  "UK",
-  "EU",
-  "NYC",
-  "LA",
-  "SF",
-  "DC",
-  "IRS",
-  "LLC",
-  "LLP",
-  "Inc.",
-  "Inc",
-  "Co.",
-  "Co",
-  "Corp.",
-  "Corp",
-  "Ltd.",
-  "Ltd",
-  "II",
-  "III",
-  "IV",
-  "VI",
-  "VII",
-  "VIII",
-  "IX",
-  "XI",
-  "501c3",
-  "STEM",
-  "LGBT",
-  "LGBTQ",
-  "LGBTQ+",
-  "HIV",
-  "AIDS",
-  "CDC",
-  "FBI",
-  "CIA",
-  "NASA",
-  "MIT",
-]);
-
-/**
- * Normalize a string that may be SHOUTED IN ALL CAPS (the IRS 990 data
- * convention) into Title Case or Sentence case. Leaves correctly-cased
- * text alone — only kicks in when >70% of alphabetic characters are
- * uppercase, which is the all-caps signature.
- */
-function humanizeCase(input: string, mode: "title" | "sentence"): string {
-  if (!input) return input;
-  const letters = input.replace(/[^A-Za-z]/g, "");
-  if (letters.length === 0) return input;
-  const upper = letters.replace(/[^A-Z]/g, "").length;
-  const ratio = upper / letters.length;
-  // Already mixed-case — assume the writer knew what they meant.
-  if (ratio < 0.7) return input;
-
-  if (mode === "title") return toTitleCase(input);
-  return toSentenceCase(input);
-}
-
-function toTitleCase(input: string): string {
-  const tokens = input.split(/(\s+|[-—–/])/);
-  const wordIndices: number[] = [];
-  tokens.forEach((tok, i) => {
-    if (/^[A-Za-z]/.test(tok)) wordIndices.push(i);
-  });
-  const lastWord = wordIndices[wordIndices.length - 1] ?? -1;
-
-  return tokens
-    .map((tok, i) => {
-      if (!/^[A-Za-z]/.test(tok)) return tok;
-      if (KEEP_AS_IS.has(tok)) return tok;
-      const lower = tok.toLowerCase();
-      const isFirst = i === wordIndices[0];
-      const isLast = i === lastWord;
-      if (!isFirst && !isLast && TITLE_CASE_LOWERCASE.has(lower)) return lower;
-      return lower.charAt(0).toUpperCase() + lower.slice(1);
-    })
-    .join("");
-}
-
-function toSentenceCase(input: string): string {
-  // Lowercase everything, then uppercase the first letter of each
-  // sentence and standalone "I". Preserve KEEP_AS_IS tokens that
-  // appear verbatim with word boundaries.
-  const lower = input.toLowerCase();
-  // First pass: sentence-start uppercase.
-  const sentenced = lower.replace(
-    /(^|[.!?]\s+)([a-z])/g,
-    (_, lead, ch) => `${lead}${ch.toUpperCase()}`
-  );
-  // Restore standalone "I"
-  const withI = sentenced.replace(/\bi\b/g, "I");
-  // Restore acronyms (case-insensitive whole-word match against KEEP_AS_IS).
-  let result = withI;
-  for (const token of KEEP_AS_IS) {
-    const safe = token.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    result = result.replace(new RegExp(`\\b${safe}\\b`, "gi"), token);
-  }
-  return result;
 }

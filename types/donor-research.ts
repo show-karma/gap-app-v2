@@ -149,6 +149,18 @@ export interface GeographyDiagnostic {
   cached: boolean;
 }
 
+/**
+ * One year of IRS-990 financials for a candidate, as surfaced on the
+ * candidate card's "Financials (last 3 years)" table. Each figure is a
+ * plain USD amount; `null` means the value was absent from the filing.
+ */
+export interface CandidateFinancialYear {
+  year: number;
+  income: number | null;
+  expenses: number | null;
+  assets: number | null;
+}
+
 export interface ResearchReportCandidate {
   id: string;
   fundingOrganizationId: string;
@@ -177,6 +189,11 @@ export interface ResearchReportCandidate {
   reasoningSummary: string | null;
   onePagerText: string | null;
   detailedText: string | null;
+  /**
+   * Up to three years of IRS-990 financials, ordered most-recent year
+   * first. Empty when the org has no indexed 990 financials.
+   */
+  financials: CandidateFinancialYear[];
 }
 
 export interface CriteriaSnapshot {

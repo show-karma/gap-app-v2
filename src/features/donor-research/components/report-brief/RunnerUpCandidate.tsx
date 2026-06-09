@@ -4,6 +4,7 @@ import { ArrowUpRight } from "lucide-react";
 import type { ResearchReportCandidate } from "@/types/donor-research";
 import { ChapterMark } from "./ChapterMark";
 import { ComplianceStrip } from "./ComplianceStrip";
+import { FinancialsTable } from "./FinancialsTable";
 import { briefDisplay, briefProse } from "./fonts";
 import { ScoreBreakdownTable } from "./ScoreBreakdownTable";
 import { compositeBand } from "./scoring";
@@ -102,6 +103,8 @@ export function RunnerUpCandidate({ candidate, number, label }: RunnerUpCandidat
               {body}
             </p>
           ) : null}
+
+          <FinancialsTable financials={candidate.financials} />
 
           {mentions.length > 0 ? <RunnerUpCoverage mentions={mentions} /> : null}
         </div>
