@@ -44,7 +44,7 @@ const pickColor = (index: number) => {
 };
 
 export default function MyProjects() {
-  const { authenticated: isAuth, isConnected, address } = useAuth();
+  const { authenticated: isAuth, address } = useAuth();
   const { theme: currentTheme } = useTheme();
   const { setIsOnboarding } = useOnboarding();
   const { mixpanel } = useMixpanel();
@@ -85,7 +85,7 @@ export default function MyProjects() {
   return (
     <div className={layoutTheme.padding}>
       <div className="mt-5 w-full gap-5">
-        {isConnected && isAuth ? (
+        {isAuth ? (
           <div className="flex flex-col gap-4">
             {/* Show header only when loading or when there are projects */}
             {(isLoading || myProjects.length > 0) && (
