@@ -47,6 +47,12 @@ export const PAGES = {
   MY_REVIEWS: `/my-reviews`,
   DASHBOARD: `/dashboard`,
   DONATIONS: `/donations`,
+  DONOR_RESEARCH: {
+    INDEX: `/donor-research`,
+    ONBOARDING: `/donor-research/onboarding`,
+    REPORT: (reportId: string) => `/donor-research/${reportId}`,
+    SHARED: (token: string) => `/donor-research/shared/${token}`,
+  },
   EVALUATE: `/evaluate`,
   // REVIEWER routes now point to MANAGE (unified RBAC-based routes)
   REVIEWER: {
