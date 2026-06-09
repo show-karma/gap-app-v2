@@ -109,7 +109,7 @@ const ApplicationTableRowComponent: FC<ApplicationTableRowProps> = ({
                   application.referenceNumber
                 )
               : `${window.location.pathname.replace(/\/[^/]+$/, "")}/${application.referenceNumber}`;
-            window.open(newPath, "_blank");
+            window.open(newPath, "_blank", "noopener,noreferrer");
             onApplicationSelect(application);
           }
         }}
