@@ -147,33 +147,33 @@ const PANELS: AudiencePanel[] = [
     key: "nonprofits",
     tabLabel: "Nonprofits",
     eyebrow: "For nonprofits",
-    headline: "Just share your website. We'll get you in front of funders.",
+    headline: "Just share your website. We'll do the rest.",
     subhead:
-      "Karma indexes your site to build your funder-facing profile, then runs your impact reporting and social with AI agents so funders see what you're doing in real time. Free for nonprofits. Funders pay us, not you.",
+      "Karma indexes your site to build a funder-facing profile, then keeps it current by pulling your latest from your blog, socials, and press. Free for nonprofits. Funders pay us, not you.",
     features: [
       {
-        label: "Share your URL",
-        title: "Drop a link. We build the profile.",
+        label: "Drop your URL",
+        title: "We build the profile from your website",
         description:
-          "Karma indexes your website, surfaces your work, impact, and team, and ships a live funder-facing profile. We follow up by email if anything is missing.",
+          "Karma indexes your site to surface your mission, work, impact stories, and team. A funder-facing profile ships in minutes. We email you if anything is missing.",
       },
       {
-        label: "AI-run reporting",
-        title: "Impact reports funders can actually find",
+        label: "Always current",
+        title: "Your latest blog, social, and press posts, picked up automatically",
         description:
-          "Our agents draft milestone updates and board-ready reports from your work. Funders see your impact without waiting for a quarterly PDF. Free for you.",
+          "Karma watches your public web. New blog posts, social updates, and press mentions flow into your profile so funders see what you're doing right now.",
       },
       {
-        label: "AI-run social",
-        title: "Updates posted where funders watch",
+        label: "Funders find you",
+        title: "Live profile in front of active funders",
         description:
-          "Agents write and post your updates in your voice, on the channels funders actually browse. Your wins stay visible, not buried in a doc.",
+          "Karma is where foundations and donors search for grantees. A current, complete profile puts your work in their results.",
       },
       {
-        label: "Find funders, free",
-        title: "Natural-language funder search",
+        label: "Free tools & a helping hand",
+        title: "Funder search, reports, and social, all free",
         description:
-          'Search Karma\'s funder map in plain English: "foundations funding bilingual education in the Bay Area." Free tool, no signup.',
+          "Search funders in plain English on /non-profits/find-funders. Want us to help run your reports or social? Just ask. Free, because funders pay us.",
       },
     ],
     primaryCta: { label: "Add your nonprofit free", href: PAGES.CREATE_PROJECT_PROFILE },

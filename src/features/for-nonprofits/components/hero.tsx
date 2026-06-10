@@ -47,9 +47,9 @@ export function Hero() {
             "max-w-[760px] w-full md:mx-auto"
           )}
         >
-          Karma indexes your site to build your funder-facing profile, then runs your impact
-          reporting and social with AI agents so funders see what you&apos;re doing in real time.
-          Free for nonprofits. Funders pay us, not you.
+          Karma indexes your site to build a funder-facing profile, then keeps it current by pulling
+          your latest from your blog, socials, and press. Free for nonprofits. Funders pay us, not
+          you.
         </p>
 
         <div className="w-full flex flex-col sm:flex-row justify-start md:justify-center gap-3 max-w-[640px] md:mx-auto">

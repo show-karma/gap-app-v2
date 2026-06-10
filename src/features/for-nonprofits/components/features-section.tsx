@@ -11,28 +11,22 @@ interface Feature {
 
 const features: Feature[] = [
   {
-    label: "Share your URL",
-    title: "Drop a link. We build the profile.",
+    label: "Drop your URL",
+    title: "We build the profile from your website",
     description:
-      "Karma indexes your website, pulls together your work, impact, and team, and publishes a live funder-facing profile in minutes. If anything is missing, we email you to fill the gap.",
+      "Karma reads your site to assemble your mission, programs, impact stories, and team into a live funder-facing profile. It ships in minutes. If anything is thin or missing, our team follows up by email so you don't have to fill out a form.",
   },
   {
-    label: "AI-run reporting, free",
-    title: "Impact reports funders can actually find",
+    label: "Always current",
+    title: "Your latest blogs, socials, and press, picked up automatically",
     description:
-      "Our agents draft milestone updates and board-ready reports from the work you're already doing. Funders see your impact in real time instead of waiting for a quarterly PDF. Free for you.",
+      "Karma watches your public web. New blog posts, social updates, and press mentions flow into your profile so funders see what you're doing right now, not what your About page said in 2022.",
   },
   {
-    label: "AI-run social, free",
-    title: "Updates posted where funders watch",
+    label: "Funders find you",
+    title: "A live profile, in front of active funders",
     description:
-      "Agents write and post your updates in your voice on the channels funders actually browse. Your wins stay visible, not buried in a doc nobody opens.",
-  },
-  {
-    label: "Find funders, free",
-    title: "Natural-language funder search",
-    description:
-      'Search Karma\'s funder map in plain English: "foundations funding bilingual education in the Bay Area." Free tool, no signup, results in seconds.',
+      "Karma is where foundations and donors search for grantees. A current, complete profile puts your work in their results when they're actually looking to give.",
   },
 ];
 
@@ -50,13 +44,13 @@ export function FeaturesSection() {
               "bg-secondary border-0 w-fit"
             )}
           >
-            What you get
+            What Karma does automatically
           </Badge>
 
           <h2 className={cn("section-title", "text-left", "w-full")}>
-            <span className="text-foreground">A live profile, ongoing reporting,</span>
+            <span className="text-foreground">Drop your URL.</span>
             <br />
-            <span className="text-muted-foreground">and funders who can find you.</span>
+            <span className="text-muted-foreground">Karma takes it from there.</span>
           </h2>
 
           <p
@@ -66,12 +60,12 @@ export function FeaturesSection() {
               "w-full"
             )}
           >
-            Share your website and Karma does the work. AI agents keep your funder-facing record
-            current so you spend your time on the mission, not on paperwork.
+            No long form, no setup wizard. Karma reads your public web to build your funder-facing
+            profile and keeps it current as you publish.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
           {features.map((feature) => (
             <div
               key={feature.label}
