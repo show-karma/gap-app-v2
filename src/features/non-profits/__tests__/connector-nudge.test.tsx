@@ -34,8 +34,8 @@ describe("ConnectorNudge", () => {
     const claudeLink = screen.getByRole("link", { name: /Add to Claude/i });
     const chatgptLink = screen.getByRole("link", { name: /Add to ChatGPT/i });
 
-    expect(claudeLink).toHaveAttribute("href", "/non-profits/find-funders/connect/claude");
-    expect(chatgptLink).toHaveAttribute("href", "/non-profits/find-funders/connect/chatgpt");
+    expect(claudeLink).toHaveAttribute("href", "/nonprofits/find-funders/connect/claude");
+    expect(chatgptLink).toHaveAttribute("href", "/nonprofits/find-funders/connect/chatgpt");
   });
 
   it("hides the banner once dismissed and remembers the dismissal via sessionStorage", () => {

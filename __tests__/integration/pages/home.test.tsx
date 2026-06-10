@@ -6,57 +6,18 @@ vi.mock("@/src/features/home/components/hero", () => ({
   Hero: () => <div data-testid="hero" />,
 }));
 
-vi.mock("@/src/features/home/components/pain-points", () => ({
-  PainPoints: () => <div data-testid="pain-points" />,
-}));
-
-vi.mock("@/src/features/home/components/numbers-section", () => ({
-  NumbersSection: () => <div data-testid="numbers-section" />,
-}));
-
-vi.mock("@/src/features/home/components/platform-section", () => ({
-  PlatformSection: () => <div data-testid="platform-section" />,
-}));
-
-vi.mock("@/src/features/home/components/case-studies-section", () => ({
-  CaseStudiesSection: () => <div data-testid="case-studies-section" />,
-}));
-
-vi.mock("@/src/features/home/components/how-it-works-section", () => ({
-  HowItWorksSection: () => <div data-testid="how-it-works-section" />,
-}));
-
-vi.mock("@/src/features/home/components/objections-section", () => ({
-  ObjectionsSection: () => <div data-testid="objections-section" />,
-}));
-
-vi.mock("@/src/features/home/components/offering-section", () => ({
-  OfferingSection: () => <div data-testid="offering-section" />,
-}));
-
-vi.mock("@/src/features/home/components/faq-section", () => ({
-  FAQSection: () => <div data-testid="faq-section" />,
+vi.mock("@/src/features/home/components/audience-switcher", () => ({
+  AudienceSwitcher: () => <div data-testid="audience-switcher" />,
 }));
 
 vi.mock("@/src/features/home/components/cta-section", () => ({
   CTASection: () => <div data-testid="cta-section" />,
 }));
 
-describe("Homepage (funder landing)", () => {
-  const sections = [
-    "hero",
-    "pain-points",
-    "numbers-section",
-    "platform-section",
-    "case-studies-section",
-    "how-it-works-section",
-    "objections-section",
-    "offering-section",
-    "faq-section",
-    "cta-section",
-  ];
+describe("Homepage (audience-switcher landing)", () => {
+  const sections = ["hero", "audience-switcher", "cta-section"];
 
-  it("renders all main sections", () => {
+  it("renders the three top-level sections", () => {
     render(<Index />);
     sections.forEach((testId) => {
       expect(screen.getByTestId(testId)).toBeInTheDocument();

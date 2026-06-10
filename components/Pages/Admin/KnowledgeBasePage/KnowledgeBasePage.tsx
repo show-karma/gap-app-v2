@@ -178,8 +178,8 @@ function Masthead({
           <p className="mt-1.5 max-w-[68ch] text-sm leading-relaxed text-stone-600 dark:text-zinc-400">
             Documents the{" "}
             <span className="font-medium text-stone-900 dark:text-zinc-100">{communityName}</span>{" "}
-            assistant reads from. Documents are fetched and embedded hourly; skill manifests
-            are fetched and passed to the assistant as instructions.
+            assistant reads from. Documents are fetched and embedded hourly; skill manifests are
+            fetched and passed to the assistant as instructions.
           </p>
         </div>
 

@@ -1,6 +1,7 @@
 /**
  * Homepage Data Flow Integration Tests
- * Tests content and data display throughout the main homepage (funder-facing)
+ * Tests content and data display throughout the redesigned home page
+ * (rotating-word hero + audience switcher + persona-aware CTA).
  *
  * Target: 10 tests
  * - Page Structure (5)
@@ -19,6 +20,8 @@ vi.mock("@/utilities/chosenCommunities", async () => {
   };
 });
 
+const HERO_SR_TEXT = /Karma connects funders to organizations, projects, and individuals/i;
+
 describe("Homepage Data Flow", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -30,81 +33,65 @@ describe("Homepage Data Flow", () => {
       expect(container.querySelector("main")).toBeInTheDocument();
     });
 
-    it("should render hero heading", async () => {
+    it("should render hero heading with the canonical sentence", async () => {
       renderWithProviders(await HomePage());
-      expect(screen.getByText(/AI powered funding software/i)).toBeInTheDocument();
+      // The H1's sr-only span carries the full sentence for screen readers
+      // and SEO. The decorative rotating word is split across spans.
+      expect(screen.getByText(HERO_SR_TEXT)).toBeInTheDocument();
     });
 
-    it("should load community data for Hero carousel", async () => {
+    it("should load community data for the hero trust strip", async () => {
       renderWithProviders(await HomePage());
-
-      // Hero section should render (communities are mocked)
-      const heroSection = screen.getByText(/AI powered funding software/i);
-      expect(heroSection).toBeInTheDocument();
+      // Trust strip kicker is rendered with the marquee that consumes
+      // the mocked communities.
+      expect(screen.getByText(/Powering 30\+ funding programs/i)).toBeInTheDocument();
     });
 
     it("should render page without errors", async () => {
       const { container } = renderWithProviders(await HomePage());
-
-      // Page should render with main element
       expect(container.querySelector("main")).toBeInTheDocument();
-      expect(screen.getByText(/AI powered funding software/i)).toBeInTheDocument();
+      expect(screen.getByText(HERO_SR_TEXT)).toBeInTheDocument();
     });
 
     it("should render multiple sections", async () => {
       const { container } = renderWithProviders(await HomePage());
-
-      // Multiple sections should be rendered
+      // Hero + audience switcher + CTA, minimum three sections.
       const sections = container.querySelectorAll("section");
       expect(sections.length).toBeGreaterThanOrEqual(3);
     });
   });
 
   describe("Data Display", () => {
-    it("should display hero content", async () => {
+    it("should display the hero subtext naming all three audiences", async () => {
       renderWithProviders(await HomePage());
-
-      expect(screen.getByText(/AI powered funding software/i)).toBeInTheDocument();
+      expect(screen.getByText(/grantmaking software for foundations/i)).toBeInTheDocument();
     });
 
-    it("should display community logos in carousel", async () => {
+    it("should display the trust strip kicker", async () => {
       renderWithProviders(await HomePage());
-
-      // Hero section should render
-      const heroSection = screen.getByText(/AI powered funding software/i);
-      expect(heroSection).toBeInTheDocument();
+      expect(screen.getByText(/Powering 30\+ funding programs/i)).toBeInTheDocument();
     });
 
-    it("should render all static content", async () => {
+    it("should render persona entry chips", async () => {
       renderWithProviders(await HomePage());
+      // Hero chips
+      expect(screen.getByText(/^For foundations$/)).toBeInTheDocument();
+      expect(screen.getByText(/^For donors & advisors$/)).toBeInTheDocument();
+      expect(screen.getByText(/^For nonprofits$/)).toBeInTheDocument();
+    });
 
-      // Hero is always present
-      expect(screen.getByText(/AI powered funding software/i)).toBeInTheDocument();
-
-      // FAQ section with questions relevant to funders
+    it("should render persona CTA section below the switcher", async () => {
+      renderWithProviders(await HomePage());
       await waitFor(() => {
-        expect(screen.getByText(/What is Karma\?/i)).toBeInTheDocument();
+        expect(screen.getByText(/Pick your side/i)).toBeInTheDocument();
       });
     });
 
-    it("should render CTA sections", async () => {
+    it("should maintain UI stability across renders", async () => {
       renderWithProviders(await HomePage());
-
-      // Schedule a Demo appears in hero and other CTAs
-      const demoLinks = screen.getAllByText(/Schedule a Demo/i);
-      expect(demoLinks.length).toBeGreaterThanOrEqual(1);
-    });
-
-    it("should maintain UI stability", async () => {
-      renderWithProviders(await HomePage());
-
-      // Hero should be immediately visible
-      const hero = screen.getByText(/AI powered funding software/i);
-      expect(hero).toBeInTheDocument();
-
-      // FAQ section should also load
+      expect(screen.getByText(HERO_SR_TEXT)).toBeInTheDocument();
       await waitFor(() => {
-        expect(screen.getByText(/What is Karma\?/i)).toBeInTheDocument();
+        expect(screen.getByText(/Pick your side/i)).toBeInTheDocument();
       });
     });
   });

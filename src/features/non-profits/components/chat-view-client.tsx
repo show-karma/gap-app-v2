@@ -4,7 +4,7 @@
  * ChatViewClient — ported from grant-atlas
  * features/grant-atlas/components/research-workbench/chat-view.tsx.
  *
- * Full SSE streaming search workbench for /non-profits/find-funders/search/[id].
+ * Full SSE streaming search workbench for /nonprofits/find-funders/search/[id].
  *
  * Key adaptations from grant-atlas:
  * - Router: TanStack Link → next/link
@@ -353,7 +353,7 @@ export function ChatView({ searchId }: { searchId?: string }) {
   const [historyOpen, setHistoryOpen] = useState(false);
   const initialQueryRanRef = useRef(false);
 
-  // First-time load: when arriving on /non-profits/find-funders/search/[id] with an empty
+  // First-time load: when arriving on /nonprofits/find-funders/search/[id] with an empty
   // thread, grab the initial query from the search session store and run it.
   // Fallback: if the local session is missing (shared link / cold load),
   // fetch via searchHistoryService.getById() to seed the search.

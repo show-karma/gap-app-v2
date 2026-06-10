@@ -158,8 +158,8 @@ export const PAGES = {
   FUNDERS: `/funders`,
   FOR_PROJECTS: `/for-projects`,
   FOR_AGENTS: `/for-agents`,
-  FOR_NONPROFITS: `/for-nonprofits`,
-  FOR_DONORS_ADVISORS: `/for-donors-advisors`,
+  NONPROFITS: `/nonprofits`,
+  DONOR_ADVISORS: `/donor-advisors`,
   CREATE_PROJECT_PROFILE: `/create-project-profile`,
   DONOR_RESEARCH: `/donor-research`,
   MCP_CONNECT: `/mcp/connect`,
@@ -232,11 +232,11 @@ export const FUNDING_PLATFORM_PAGES = (tenantId: string, _domain?: string) => {
 };
 
 // ── Find Funders (foundations + nonprofits search) ──────────────────────────
-// Route constants for the /non-profits/find-funders feature area. Surfaces
+// Route constants for the /nonprofits/find-funders feature area. Surfaces
 // foundation profiles, nonprofit profiles, grants, and the agentic search
 // workbench grounded in IRS 990 filings.
 
-const FIND_FUNDERS = "/non-profits/find-funders";
+const FIND_FUNDERS = "/nonprofits/find-funders";
 
 export const NON_PROFITS_PAGES = {
   HOME: FIND_FUNDERS,

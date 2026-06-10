@@ -29,15 +29,15 @@ describe("ConnectIndex", () => {
 
     expect(screen.getByRole("link", { name: /Open the Claude guide/i })).toHaveAttribute(
       "href",
-      "/non-profits/find-funders/connect/claude"
+      "/nonprofits/find-funders/connect/claude"
     );
     expect(screen.getByRole("link", { name: /Open the ChatGPT guide/i })).toHaveAttribute(
       "href",
-      "/non-profits/find-funders/connect/chatgpt"
+      "/nonprofits/find-funders/connect/chatgpt"
     );
     expect(screen.getByRole("link", { name: /Back to Find Funders/i })).toHaveAttribute(
       "href",
-      "/non-profits/find-funders"
+      "/nonprofits/find-funders"
     );
   });
 });

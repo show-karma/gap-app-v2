@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * NonProfitsNavbar — dedicated top nav for the /non-profits/find-funders section.
+ * NonProfitsNavbar — dedicated top nav for the /nonprofits/find-funders section.
  *
  * Ported from grant-atlas src/components/landing-nav.tsx (the navbar shown on
  * karmagrants.org). Adaptations for gap-app-v2:

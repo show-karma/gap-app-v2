@@ -14,7 +14,7 @@ import { customMetadata } from "@/utilities/meta";
 import { cn } from "@/utilities/tailwind";
 
 export const metadata: Metadata = customMetadata({
-  title: "For Foundations - Professional Grant Programs Without the Overhead",
+  title: "For foundations: AI-powered funding software that does the work for you",
   description:
     "AI-powered funding software for foundations running grants, hackathons, and RFPs. Karma's AI agents handle evaluation, milestone tracking, and impact reporting, so a lean team runs enterprise-grade programs.",
   path: "/foundations",
@@ -73,21 +73,19 @@ export default function FoundationsPage() {
       />
       <div className="flex w-full max-w-[1920px] justify-center items-center flex-1 flex-col gap-16 lg:gap-24">
         <Hero />
+        {/* Narrative break: intro to problem */}
         <HorizontalLine className="max-w-full" />
         <PainPoints />
-        <HorizontalLine />
         <SolutionBridge />
+        {/* Narrative break: problem to proof + product */}
         <HorizontalLine />
         <NumbersSection />
-        <HorizontalLine />
         <PlatformSection />
-        <HorizontalLine />
         <CaseStudiesSection />
-        <HorizontalLine />
         <HowItWorksSection />
+        {/* Narrative break: product to close */}
         <HorizontalLine />
         <ObjectionsSection />
-        <HorizontalLine />
         <FAQSection />
         <CTASection />
       </div>

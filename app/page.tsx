@@ -7,13 +7,14 @@ import { cn } from "@/utilities/tailwind";
 
 export const metadata: Metadata = {
   ...customMetadata({
-    title: "Karma | Connecting funders to organizations worth backing",
+    title: "Karma | Connecting funders to organizations, projects, and individuals worth backing",
     description:
-      "One platform for foundations, donors, and nonprofits. Karma helps the right money reach the right organizations, and shows what happens next.",
+      "One platform for foundations, donors, and nonprofits. Karma connects funders to the organizations, projects, and individuals worth backing, and shows what happens next.",
     path: "/",
   }),
   title: {
-    absolute: "Karma | Connecting funders to organizations worth backing",
+    absolute:
+      "Karma | Connecting funders to organizations, projects, and individuals worth backing",
   },
 };
 

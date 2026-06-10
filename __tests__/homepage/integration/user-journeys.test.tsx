@@ -1,54 +1,13 @@
 /**
  * Homepage User Journeys Integration Tests
- * Tests complete user flows through the main homepage (funder-facing)
- *
- * Target: 13 tests
- * - First-Time Visitor (5)
- * - Funder Journey (4)
- * - Page Structure (4)
+ * Tests complete visitor flows through the redesigned home page.
  */
 
 import HomePage from "@/app/page";
 import { renderWithProviders, screen, waitFor } from "../utils/test-helpers";
 import "@testing-library/jest-dom";
 
-// Mock SOCIALS utility
-vi.mock("@/utilities/socials", () => ({
-  SOCIALS: {
-    PARTNER_FORM: "https://forms.example.com/partner",
-    DISCORD: "https://discord.gg/karmahq",
-  },
-}));
-
-// Mock PAGES utility
-vi.mock("@/utilities/pages", () => ({
-  PAGES: {
-    COMMUNITIES: "/communities",
-    COMMUNITY: {
-      ALL_GRANTS: (slug: string) => `/community/${slug}/grants`,
-    },
-    REGISTRY: {
-      ROOT: "/funding-map",
-    },
-    FUNDERS: "/funders",
-    PROJECTS_EXPLORER: "/projects",
-  },
-}));
-
-// Mock auth states
-const createMockUseAuth = (overrides = {}) => ({
-  ready: true,
-  authenticated: false,
-  isConnected: false,
-  address: undefined,
-  user: null,
-  authenticate: vi.fn(),
-  login: vi.fn(),
-  logout: vi.fn(),
-  disconnect: vi.fn(),
-  getAccessToken: vi.fn().mockResolvedValue("mock-token"),
-  ...overrides,
-});
+const HERO_SR_TEXT = /Karma connects funders to organizations, projects, and individuals/i;
 
 describe("Homepage User Journeys", () => {
   beforeEach(() => {
@@ -56,128 +15,107 @@ describe("Homepage User Journeys", () => {
   });
 
   describe("First-Time Visitor", () => {
-    it("should see hero section on load", async () => {
-      renderWithProviders(await HomePage(), {
-        mockUseAuth: createMockUseAuth({ authenticated: false }),
-      });
-
-      // Hero heading
-      expect(screen.getByText(/AI powered funding software/i)).toBeInTheDocument();
+    it("should see the hero canonical sentence on load", async () => {
+      renderWithProviders(await HomePage());
+      expect(screen.getByText(HERO_SR_TEXT)).toBeInTheDocument();
     });
 
-    it("should be able to scroll through content", async () => {
-      const { container } = renderWithProviders(await HomePage(), {
-        mockUseAuth: createMockUseAuth({ authenticated: false }),
-      });
-
-      const main = container.querySelector("main");
-      expect(main).toHaveClass("flex-col");
-
-      // All sections should be in the DOM for scrolling
-      const sections = container.querySelectorAll("section");
-      expect(sections.length).toBeGreaterThanOrEqual(3);
+    it("should see persona chips as the primary entry", async () => {
+      renderWithProviders(await HomePage());
+      expect(screen.getByText(/^For foundations$/)).toBeInTheDocument();
+      expect(screen.getByText(/^For donors & advisors$/)).toBeInTheDocument();
+      expect(screen.getByText(/^For nonprofits$/)).toBeInTheDocument();
     });
 
-    it("should see 'Schedule a Demo' CTA", async () => {
-      renderWithProviders(await HomePage(), {
-        mockUseAuth: createMockUseAuth({ authenticated: false }),
-      });
-
-      const demoLinks = screen.getAllByRole("link", { name: /Schedule a Demo/i });
-      expect(demoLinks.length).toBeGreaterThanOrEqual(1);
+    it("should see the trust strip with funding programs kicker", async () => {
+      renderWithProviders(await HomePage());
+      expect(screen.getByText(/Powering 30\+ funding programs/i)).toBeInTheDocument();
     });
 
-    it("should be able to explore organizations", async () => {
-      renderWithProviders(await HomePage(), {
-        mockUseAuth: createMockUseAuth({ authenticated: false }),
-      });
-
-      const orgLinks = screen.getAllByRole("link", { name: /Explore Organizations/i });
-      expect(orgLinks.length).toBeGreaterThanOrEqual(1);
-    });
-
-    it("should access FAQ for help", async () => {
-      renderWithProviders(await HomePage(), {
-        mockUseAuth: createMockUseAuth({ authenticated: false }),
-      });
-
-      // FAQ section should be visible
+    it("should see the audience switcher heading below the hero", async () => {
+      renderWithProviders(await HomePage());
       await waitFor(() => {
-        expect(screen.getByText(/What is Karma\?/i)).toBeInTheDocument();
+        expect(
+          screen.getByText(/One platform\. Three sides of philanthropic capital\./i)
+        ).toBeInTheDocument();
+      });
+    });
+
+    it("should see the closing CTA section", async () => {
+      renderWithProviders(await HomePage());
+      await waitFor(() => {
+        expect(screen.getByText(/Pick your side/i)).toBeInTheDocument();
       });
     });
   });
 
-  describe("Funder Journey", () => {
-    it("should see 'Schedule a Demo' CTA", async () => {
-      renderWithProviders(await HomePage(), {
-        mockUseAuth: createMockUseAuth({ authenticated: false }),
-      });
-
-      const demoLinks = screen.getAllByRole("link", { name: /Schedule a Demo/i });
-      expect(demoLinks.length).toBeGreaterThanOrEqual(1);
+  describe("Foundation Visitor", () => {
+    it("should be able to click 'For foundations' chip routing to #foundations", async () => {
+      renderWithProviders(await HomePage());
+      const chip = screen.getByText(/^For foundations$/).closest("a");
+      expect(chip).toHaveAttribute("href", "#foundations");
     });
 
-    it("should be able to navigate to organizations page", async () => {
-      renderWithProviders(await HomePage(), {
-        mockUseAuth: createMockUseAuth({ authenticated: false }),
-      });
-
-      const orgLinks = screen.getAllByRole("link", { name: /Explore Organizations/i });
-      expect(orgLinks.length).toBeGreaterThanOrEqual(1);
-      expect(orgLinks[0]).toHaveAttribute("href", "/communities");
-    });
-
-    it("should see platform benefits", async () => {
-      renderWithProviders(await HomePage(), {
-        mockUseAuth: createMockUseAuth({ authenticated: false }),
-      });
-
-      // AI powered description
-      expect(screen.getByText(/AI powered funding software/i)).toBeInTheDocument();
-    });
-
-    it("should see FAQ with funder-focused questions", async () => {
-      renderWithProviders(await HomePage(), {
-        mockUseAuth: createMockUseAuth({ authenticated: false }),
-      });
-
-      // FAQ section
+    it("should see a closing CTA for foundations (Schedule a demo)", async () => {
+      renderWithProviders(await HomePage());
       await waitFor(() => {
-        expect(screen.getByText(/What is Karma\?/i)).toBeInTheDocument();
+        // The CTA section has multiple "Schedule a demo" labels; the hero
+        // also has the small text link. At least one is for foundations.
+        const demoLinks = screen.getAllByRole("link", { name: /schedule a demo/i });
+        expect(demoLinks.length).toBeGreaterThanOrEqual(1);
+      });
+    });
+  });
+
+  describe("Donor Visitor", () => {
+    it("should be able to click 'For donors & advisors' chip", async () => {
+      renderWithProviders(await HomePage());
+      const chip = screen.getByText(/^For donors & advisors$/).closest("a");
+      expect(chip).toHaveAttribute("href", "#donors-advisors");
+    });
+
+    it("should see a Donor Research CTA in the closing section", async () => {
+      renderWithProviders(await HomePage());
+      await waitFor(() => {
+        expect(screen.getByText(/Try Donor Research/i)).toBeInTheDocument();
+      });
+    });
+  });
+
+  describe("Nonprofit Visitor", () => {
+    it("should be able to click 'For nonprofits' chip", async () => {
+      renderWithProviders(await HomePage());
+      const chip = screen.getByText(/^For nonprofits$/).closest("a");
+      expect(chip).toHaveAttribute("href", "#nonprofits");
+    });
+
+    it("should see 'Add your nonprofit free' in the closing CTA", async () => {
+      renderWithProviders(await HomePage());
+      await waitFor(() => {
+        expect(screen.getByText(/Add your nonprofit free/i)).toBeInTheDocument();
       });
     });
   });
 
   describe("Page Structure", () => {
-    it("should have main element with correct layout", async () => {
+    it("should render a main element", async () => {
       const { container } = renderWithProviders(await HomePage());
-
-      const main = container.querySelector("main");
-      expect(main).toHaveClass("flex");
-      expect(main).toHaveClass("flex-col");
+      expect(container.querySelector("main")).toBeInTheDocument();
     });
 
-    it("should have multiple sections", async () => {
+    it("should render at least three sections", async () => {
       const { container } = renderWithProviders(await HomePage());
-
       const sections = container.querySelectorAll("section");
       expect(sections.length).toBeGreaterThanOrEqual(3);
     });
 
-    it("should have horizontal dividers between sections", async () => {
+    it("should render external links with safe rel attributes", async () => {
       const { container } = renderWithProviders(await HomePage());
-
-      const dividers = container.querySelectorAll("hr");
-      expect(dividers.length).toBeGreaterThanOrEqual(3);
-    });
-
-    it("should have all content inside main", async () => {
-      const { container } = renderWithProviders(await HomePage());
-
-      const main = container.querySelector("main");
-      const links = main?.querySelectorAll("a");
-      expect(links?.length).toBeGreaterThan(0);
+      const externalLinks = Array.from(container.querySelectorAll('a[target="_blank"]'));
+      externalLinks.forEach((link) => {
+        const rel = link.getAttribute("rel") || "";
+        expect(rel.includes("noopener") || rel.includes("noreferrer")).toBe(true);
+      });
     });
   });
 });

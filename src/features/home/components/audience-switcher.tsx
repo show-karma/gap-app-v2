@@ -1,14 +1,14 @@
 "use client";
 
-import { ArrowUpRight, Search, Users } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { SectionContainer } from "@/src/components/shared/section-container";
+import { LayeredScreenshots } from "@/src/features/foundations/components/layered-screenshots";
 import { marketingLayoutTheme } from "@/src/helper/theme";
-import { NON_PROFITS_PAGES, PAGES } from "@/utilities/pages";
+import { PAGES } from "@/utilities/pages";
 import { SOCIALS } from "@/utilities/socials";
 import { cn } from "@/utilities/tailwind";
 
@@ -52,38 +52,31 @@ interface PreviewImage {
   caption?: string;
 }
 
-type IconName = "search" | "users";
-
-interface ExtraTrack {
-  icon: IconName;
-  title: string;
-  description: string;
-  cta: { label: string; href: string; external?: boolean };
-}
-
-interface ExtrasBand {
-  eyebrow: string;
-  items: ExtraTrack[];
+interface LayeredPreview {
+  front: { src: string; alt: string; width: number; height: number };
+  back: { src: string; alt: string; width: number; height: number };
+  caption?: string;
 }
 
 interface AudiencePanel {
   key: AudienceKey;
   tabLabel: string;
-  eyebrow: string;
   headline: string;
   subhead: string;
   features: Feature[];
   primaryCta: { label: string; href: string; external?: boolean };
-  secondaryCta: { label: string; href: string };
+  /** Optional: some panels have only a single primary action. */
+  secondaryCta?: { label: string; href: string; external?: boolean };
+  /** Use `layeredPreview` for the two-screenshot composition; otherwise
+      pass a single `preview` image. The render path picks layered first. */
   preview?: PreviewImage;
-  extras?: ExtrasBand;
+  layeredPreview?: LayeredPreview;
 }
 
 const PANELS: AudiencePanel[] = [
   {
     key: "foundations",
     tabLabel: "Foundations",
-    eyebrow: "For foundations",
     headline: "AI-powered funding software that does the work for you.",
     subhead:
       "Run grants, hackathons, and RFPs with a lean team. Karma's AI agents handle evaluation, milestone tracking, and impact reporting, so your team focuses on funding outcomes, not data entry.",
@@ -115,14 +108,28 @@ const PANELS: AudiencePanel[] = [
     ],
     primaryCta: { label: "See how foundations use Karma", href: PAGES.FOUNDATIONS },
     secondaryCta: { label: "Schedule a demo", href: SOCIALS.PARTNER_FORM },
+    layeredPreview: {
+      front: {
+        src: "/images/homepage/funder-benefit-01.png",
+        alt: "Karma application evaluation dashboard",
+        width: 720,
+        height: 450,
+      },
+      back: {
+        src: "/images/homepage/funder-benefit-02.png",
+        alt: "Karma project registry",
+        width: 720,
+        height: 450,
+      },
+      caption: "Application evaluation and project registry.",
+    },
   },
   {
     key: "donors",
     tabLabel: "Donors & Advisors",
-    eyebrow: "For donors & advisors",
     headline: "A research brief for every gift, ready in 10 minutes.",
     subhead:
-      "Karma's Donor Research scans hundreds of 501(c)(3)s against your cause, geography, and grant size, then returns a ranked brief with compliance verified, activity scored, and mission matched. You move from “I want to give” to “here's the shortlist” in one session, not three weeks.",
+      "Karma's Donor Research scans thousands of 501(c)(3)s against your cause, geography, and grant size, then returns a ranked brief with compliance verified, activity scored, and mission matched. You move from “I want to give” to “here's the shortlist” in one session, not three weeks.",
     features: [
       {
         label: "Compliance verified",
@@ -150,19 +157,18 @@ const PANELS: AudiencePanel[] = [
       },
     ],
     primaryCta: { label: "Try Donor Research", href: PAGES.DONOR_RESEARCH },
-    secondaryCta: { label: "Talk to our team", href: SOCIALS.PARTNER_FORM },
+    secondaryCta: { label: "Talk to our team", href: SOCIALS.DONOR_PARTNER_FORM },
     preview: {
-      src: "/images/homepage/donor-research-brief.png",
-      alt: "Karma Donor Research brief showing a lead recommendation with composite score, scoring breakdown, and compliance checks against IRS Pub 78, the latest 990, and state registries",
-      width: 1440,
-      height: 700,
+      src: "/images/homepage/karma-donor-research-brief.png",
+      alt: "Karma Donor Research brief: lead recommendation Northcoast Environmental Center with composite match 74/100, score breakdown across mission match, online presence, and IRS 990 recency, plus three-year financials and recent press coverage",
+      width: 1500,
+      height: 1049,
       caption: "From a recent research brief.",
     },
   },
   {
     key: "nonprofits",
     tabLabel: "Nonprofits",
-    eyebrow: "For nonprofits",
     headline: "Just share your website. We'll do the rest.",
     subhead:
       "Karma indexes your site to build a funder-facing profile, then keeps it current by pulling your latest from your blog, socials, and press. Free for nonprofits. Funders pay us, not you.",
@@ -186,27 +192,14 @@ const PANELS: AudiencePanel[] = [
           "Karma is where foundations and donors search for grantees. A current, complete profile puts your work in their results.",
       },
     ],
-    extras: {
-      eyebrow: "Free tools & a helping hand",
-      items: [
-        {
-          icon: "search",
-          title: "Search funders in plain English",
-          description:
-            'Type what you\'re looking for: "foundations funding bilingual education in the Bay Area." No signup.',
-          cta: { label: "Try the funder search", href: NON_PROFITS_PAGES.HOME },
-        },
-        {
-          icon: "users",
-          title: "Want a hand with reports or social?",
-          description:
-            "Tight on time? Karma's team can help run your impact reporting or manage your social. Free, because AI agents keep our cost low.",
-          cta: { label: "Talk to us", href: SOCIALS.PARTNER_FORM, external: true },
-        },
-      ],
+    primaryCta: { label: "Add your nonprofit free", href: PAGES.NONPROFITS },
+    preview: {
+      src: "/images/homepage/karma-nonprofit-public-profile.png",
+      alt: "Karma nonprofit public profile for Greenaction for Health & Environmental Justice, showing 501(c)(3) verification, latest public updates pulled from blogs and press, public data freshness score 96/100, compliance checks, and potential funder fits",
+      width: 1797,
+      height: 875,
+      caption: "Funder-facing profile, assembled from your website.",
     },
-    primaryCta: { label: "Add your nonprofit free", href: PAGES.CREATE_PROJECT_PROFILE },
-    secondaryCta: { label: "Explore the nonprofit experience", href: PAGES.FOR_NONPROFITS },
   },
 ];
 
@@ -232,10 +225,23 @@ export function AudienceSwitcher() {
       });
     }
 
-    // Keep state in sync with back/forward navigation.
+    // Keep state in sync with back/forward navigation and with in-page
+    // anchor clicks (e.g., the hero's persona chips). hashchange fires for
+    // any non-self-driven hash mutation; we scroll smoothly into view so
+    // visitors see the matching panel after a chip click — Next.js Link's
+    // default scroll-to-id can't find #foundations because no element has
+    // that id (the section's id is #who-its-for).
     const onHashChange = () => {
       const next = readAudienceFromHash();
-      if (next) setActive(next);
+      if (next) {
+        setActive(next);
+        requestAnimationFrame(() => {
+          document.getElementById("who-its-for")?.scrollIntoView({
+            block: "start",
+            behavior: "smooth",
+          });
+        });
+      }
     };
     window.addEventListener("hashchange", onHashChange);
     return () => window.removeEventListener("hashchange", onHashChange);
@@ -329,7 +335,7 @@ export function AudienceSwitcher() {
                     layoutId={indicatorId}
                     aria-hidden
                     className="absolute inset-0 bg-foreground rounded-xl sm:rounded-full"
-                    transition={{ type: "spring", stiffness: 380, damping: 32 }}
+                    transition={{ type: "spring", stiffness: 260, damping: 30 }}
                   />
                 )}
                 <span className="relative z-10 whitespace-nowrap">{p.tabLabel}</span>
@@ -338,25 +344,23 @@ export function AudienceSwitcher() {
           })}
         </div>
 
-        {/* Panel */}
-        <div className="w-full max-w-[1080px]">
+        {/* Panel — min-h absorbs residual variance between audiences so the
+            CTA section below doesn't jump when switching tabs. */}
+        <div className="w-full max-w-[1080px] min-h-[1240px] md:min-h-[1340px] lg:min-h-[1380px]">
           <AnimatePresence mode="wait">
             <motion.div
               key={panel.key}
               id={`audience-panel-${panel.key}`}
               role="tabpanel"
               aria-labelledby={`audience-tab-${panel.key}`}
-              initial={{ opacity: 0, y: 8 }}
+              initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
               className="flex flex-col gap-10 md:gap-12"
             >
-              {/* Panel header */}
+              {/* Panel header. Eyebrow removed: the active tab already names the audience. */}
               <div className="flex flex-col gap-4 md:max-w-[820px]">
-                <span className="text-xs font-medium tracking-[0.12em] uppercase text-muted-foreground">
-                  {panel.eyebrow}
-                </span>
                 <h3 className="text-foreground font-semibold text-[28px] md:text-[36px] leading-[115%] tracking-[-0.02em]">
                   {panel.headline}
                 </h3>
@@ -394,78 +398,26 @@ export function AudienceSwitcher() {
                 ))}
               </div>
 
-              {/* Extras band: distinctly different from the feature grid above so
-                  the two categories don't read as equal weight */}
-              {panel.extras ? (
-                <div className="relative">
-                  {/* Subtle visual rule + eyebrow as a section break */}
-                  <div className="flex items-center gap-3 mb-4">
-                    <span className="text-[11px] font-medium tracking-[0.14em] uppercase text-muted-foreground whitespace-nowrap">
-                      {panel.extras.eyebrow}
-                    </span>
-                    <span aria-hidden className="flex-1 h-px bg-border" />
-                  </div>
-
-                  <div
-                    className={cn(
-                      "grid grid-cols-1 md:grid-cols-2 gap-px overflow-hidden",
-                      "rounded-2xl border border-border bg-border"
-                    )}
-                  >
-                    {panel.extras.items.map((item) => {
-                      const Icon = item.icon === "search" ? Search : Users;
-                      const linkProps = item.cta.external
-                        ? { target: "_blank" as const, rel: "noopener noreferrer" as const }
-                        : {};
-                      return (
-                        <Link
-                          key={item.title}
-                          href={item.cta.href}
-                          {...linkProps}
-                          className={cn(
-                            "group/extra relative flex flex-col gap-3 p-6 md:p-7",
-                            "bg-background",
-                            "transition-colors duration-200 hover:bg-secondary/40",
-                            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-                          )}
-                        >
-                          <div className="flex items-start justify-between gap-3">
-                            <div
-                              className={cn(
-                                "inline-flex h-9 w-9 items-center justify-center rounded-full",
-                                "bg-secondary text-foreground"
-                              )}
-                            >
-                              <Icon className="h-4 w-4" />
-                            </div>
-                            <ArrowUpRight
-                              className={cn(
-                                "h-4 w-4 text-muted-foreground",
-                                "transition-transform duration-200 group-hover/extra:translate-x-0.5 group-hover/extra:-translate-y-0.5",
-                                "group-hover/extra:text-foreground"
-                              )}
-                            />
-                          </div>
-                          <div className="flex flex-col gap-1.5">
-                            <h4 className="text-foreground font-semibold text-[16px] leading-[130%] tracking-[-0.01em]">
-                              {item.title}
-                            </h4>
-                            <p className="text-muted-foreground text-sm leading-[150%]">
-                              {item.description}
-                            </p>
-                          </div>
-                          <span className="text-[13px] font-medium text-foreground/80 group-hover/extra:text-foreground transition-colors mt-1">
-                            {item.cta.label}
-                          </span>
-                        </Link>
-                      );
-                    })}
-                  </div>
-                </div>
-              ) : null}
-
-              {/* Optional product preview */}
-              {panel.preview ? (
+              {/* Product preview. Three render paths:
+                  1. Layered: two stacked product screenshots (foundations, donors)
+                  2. SVG placeholder: plain img to bypass next/image SVG gate
+                  3. Single PNG: optimized via next/image */}
+              {panel.layeredPreview ? (
+                <figure className="flex flex-col gap-3 items-center">
+                  <LayeredScreenshots
+                    className="mt-2"
+                    staticAppear
+                    front={panel.layeredPreview.front}
+                    back={panel.layeredPreview.back}
+                    disableDarkMode={panel.key === "donors"}
+                  />
+                  {panel.layeredPreview.caption ? (
+                    <figcaption className="text-[11px] font-medium tracking-[0.12em] uppercase text-muted-foreground text-center">
+                      {panel.layeredPreview.caption}
+                    </figcaption>
+                  ) : null}
+                </figure>
+              ) : panel.preview ? (
                 <figure className="flex flex-col gap-3">
                   <div
                     className={cn(
@@ -474,14 +426,25 @@ export function AudienceSwitcher() {
                       "shadow-[0_24px_60px_-24px_rgba(15,23,42,0.25)]"
                     )}
                   >
-                    <Image
-                      src={panel.preview.src}
-                      alt={panel.preview.alt}
-                      width={panel.preview.width}
-                      height={panel.preview.height}
-                      sizes="(min-width: 1080px) 1080px, 100vw"
-                      className="w-full h-auto"
-                    />
+                    {panel.preview.src.endsWith(".svg") ? (
+                      // biome-ignore lint/performance/noImgElement: SVG placeholder bypasses next/image SVG gate
+                      <img
+                        src={panel.preview.src}
+                        alt={panel.preview.alt}
+                        width={panel.preview.width}
+                        height={panel.preview.height}
+                        className="w-full h-auto"
+                      />
+                    ) : (
+                      <Image
+                        src={panel.preview.src}
+                        alt={panel.preview.alt}
+                        width={panel.preview.width}
+                        height={panel.preview.height}
+                        sizes="(min-width: 1080px) 1080px, 100vw"
+                        className="w-full h-auto"
+                      />
+                    )}
                   </div>
                   {panel.preview.caption ? (
                     <figcaption className="text-[11px] font-medium tracking-[0.12em] uppercase text-muted-foreground text-center">
@@ -491,7 +454,7 @@ export function AudienceSwitcher() {
                 </figure>
               ) : null}
 
-              {/* CTAs */}
+              {/* CTAs — secondary is optional */}
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                 <Button asChild className="rounded-md font-semibold px-6 py-2.5">
                   <Link
@@ -503,11 +466,18 @@ export function AudienceSwitcher() {
                     {panel.primaryCta.label}
                   </Link>
                 </Button>
-                <Button asChild variant="outline" className="rounded-md font-medium px-6 py-2.5">
-                  <Link href={panel.secondaryCta.href} target="_blank" rel="noopener noreferrer">
-                    {panel.secondaryCta.label}
-                  </Link>
-                </Button>
+                {panel.secondaryCta ? (
+                  <Button asChild variant="outline" className="rounded-md font-medium px-6 py-2.5">
+                    <Link
+                      href={panel.secondaryCta.href}
+                      {...(panel.secondaryCta.external
+                        ? { target: "_blank", rel: "noopener noreferrer" }
+                        : {})}
+                    >
+                      {panel.secondaryCta.label}
+                    </Link>
+                  </Button>
+                ) : null}
               </div>
             </motion.div>
           </AnimatePresence>

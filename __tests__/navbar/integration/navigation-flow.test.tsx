@@ -294,25 +294,14 @@ describe("Navigation Flow Integration Tests", () => {
       }
     });
 
-    it("should render Contact sales as external link", async () => {
+    it("should NOT render Contact sales (removed from nav header)", () => {
       const authFixture = getAuthFixture("unauthenticated");
 
       renderWithProviders(<Navbar />, {
         mockUsePrivy: createMockUsePrivy(authFixture.authState),
       });
 
-      // Contact sales is only in the mobile menu (NavbarMobileMenu), which is
-      // lazy-loaded. Use findAllByText to wait for it.
-      const contactSalesLinks = await screen.findAllByText("Contact sales");
-      expect(contactSalesLinks.length).toBeGreaterThan(0);
-
-      // Check the first link element
-      const linkElement = contactSalesLinks[0].closest("a");
-
-      if (linkElement) {
-        expect(linkElement).toHaveAttribute("target", "_blank");
-        expect(linkElement).toHaveAttribute("rel", "noopener noreferrer");
-      }
+      expect(screen.queryByText("Contact sales")).not.toBeInTheDocument();
     });
 
     it("should render Help & Docs as external link in user menu", async () => {

@@ -105,16 +105,13 @@ export function HowItWorksSection() {
 
                     {step.hasButton && (
                       <div className="mt-4">
-                        <Button
-                          asChild
-                          className="bg-foreground text-background hover:bg-foreground/90 rounded-md font-medium"
-                        >
+                        <Button asChild className="rounded-md font-semibold px-6 py-2.5">
                           <Link
                             href={SOCIALS.PARTNER_FORM}
                             target="_blank"
                             rel="noopener noreferrer"
                           >
-                            Schedule a Call
+                            Schedule a call
                           </Link>
                         </Button>
                       </div>

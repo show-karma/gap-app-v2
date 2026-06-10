@@ -1,16 +1,24 @@
 "use client";
 
+import { ArrowRight } from "lucide-react";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
 import { SectionContainer } from "@/src/components/shared/section-container";
 import { InfiniteMovingCards } from "@/src/components/ui/infinite-moving-cards";
-import { ThemeImage } from "@/src/components/ui/theme-image";
+import { RotatingWord } from "@/src/features/home/components/rotating-word";
 import { ScrollReveal } from "@/src/features/home/components/scroll-reveal";
 import { marketingLayoutTheme } from "@/src/helper/theme";
 import { chosenCommunities } from "@/utilities/chosenCommunities";
 import { PAGES } from "@/utilities/pages";
 import { SOCIALS } from "@/utilities/socials";
 import { cn } from "@/utilities/tailwind";
+
+const ROTATING_TARGETS = ["organizations", "projects", "individuals"];
+
+const PERSONA_CHIPS = [
+  { label: "For foundations", hash: "#foundations" },
+  { label: "For donors & advisors", hash: "#donors-advisors" },
+  { label: "For nonprofits", hash: "#nonprofits" },
+] as const;
 
 export function Hero() {
   const communityItems = chosenCommunities(true).map((community) => ({
@@ -27,88 +35,123 @@ export function Hero() {
       )}
     >
       <SectionContainer className="flex flex-col items-center gap-8">
-        {/* Main Heading */}
+        {/* Main Heading. The rotating word is decorative (aria-hidden); the
+            sr-only span gives screen readers and SEO crawlers one complete
+            sentence covering all three audiences in their canonical order.
+            The italic wrapper extends to both the invisible spacer and the
+            active word so the slot's width matches the italic glyph metrics. */}
         <ScrollReveal variant="fade-up" duration={800}>
           <h1
             className={cn(
               "text-foreground font-semibold text-[36px] md:text-5xl lg:text-[56px]",
               "leading-[110%] tracking-[-0.025em]",
-              "text-left md:text-center max-w-[820px] w-full md:mx-auto"
+              "text-left md:text-center max-w-[920px] w-full md:mx-auto"
             )}
           >
-            Karma connects funders to organizations worth backing
+            <span className="sr-only">
+              Karma connects funders to organizations, projects, and individuals worth backing
+            </span>
+            <span aria-hidden>
+              Karma connects funders to{" "}
+              <span className="italic">
+                <RotatingWord words={ROTATING_TARGETS} />
+              </span>{" "}
+              worth backing
+            </span>
           </h1>
         </ScrollReveal>
 
-        {/* Description */}
+        {/* Subtext: one sentence, one subject (Karma), three audiences in
+            canonical order. Replaces the prior 40-word multi-subject blurb. */}
         <ScrollReveal variant="fade-up" delay={150} duration={800}>
           <p
             className={cn(
               "text-muted-foreground font-normal text-base md:text-lg lg:text-xl",
               "leading-[160%]",
               "text-left md:text-center",
-              "max-w-[720px] w-full md:mx-auto"
+              "max-w-[820px] w-full md:mx-auto"
             )}
           >
-            One platform for foundations, donors, and nonprofits. The right money reaches the right
-            organizations, and you can see what happens next.
+            Karma is the grantmaking software for foundations, the funder-facing profile builder for
+            nonprofits, and the research engine that guides every donor gift.
           </p>
         </ScrollReveal>
 
-        {/* Primary CTAs */}
+        {/* Persona entry — three chips replace the demo-only primary CTA so
+            every audience has an obvious next step above the fold. We use
+            plain anchors with an explicit handler rather than next/link
+            because Link uses history.pushState internally, which per spec
+            does NOT fire a hashchange event — the audience switcher's
+            hashchange listener would never hear the click. Setting
+            window.location.hash directly fires hashchange in every browser,
+            and on identical-hash re-clicks we scroll manually because the
+            hash didn't actually change. */}
         <ScrollReveal variant="fade-up" delay={300} duration={800}>
-          <div className="w-full flex flex-col sm:flex-row justify-start md:justify-center items-center gap-3 max-w-[640px] md:mx-auto">
-            <Button asChild size="xl">
-              <Link href={SOCIALS.PARTNER_FORM} target="_blank" rel="noopener noreferrer">
-                Schedule a demo
+          <div className="flex flex-col items-center gap-3">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
+              {PERSONA_CHIPS.map((chip) => {
+                const target = chip.hash.replace(/^#/, "");
+                const onClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+                  e.preventDefault();
+                  if (typeof window === "undefined") return;
+                  if (window.location.hash === `#${target}`) {
+                    // Same hash — hashchange won't fire. Scroll manually.
+                    document.getElementById("who-its-for")?.scrollIntoView({
+                      block: "start",
+                      behavior: "smooth",
+                    });
+                    return;
+                  }
+                  // Mutating location.hash fires hashchange; the switcher's
+                  // listener then sets the active panel AND scrolls.
+                  window.location.hash = target;
+                };
+                return (
+                  <a
+                    key={chip.hash}
+                    href={chip.hash}
+                    onClick={onClick}
+                    className={cn(
+                      "group inline-flex items-center justify-center gap-2",
+                      "rounded-full border border-border bg-secondary",
+                      "px-5 py-2.5 text-sm font-medium text-foreground",
+                      "transition-colors duration-200 hover:bg-foreground hover:text-background",
+                      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                    )}
+                  >
+                    {chip.label}
+                    <ArrowRight
+                      className="h-3.5 w-3.5 transition-transform duration-200 group-hover:translate-x-0.5"
+                      aria-hidden
+                    />
+                  </a>
+                );
+              })}
+            </div>
+
+            {/* Quiet escape hatch for high-intent foundation visitors who
+                already know they want a demo. */}
+            <p className="text-sm text-muted-foreground">
+              Or{" "}
+              <Link
+                href={SOCIALS.PARTNER_FORM}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline underline-offset-4 hover:text-foreground transition-colors"
+              >
+                schedule a demo
               </Link>
-            </Button>
-            <Link
-              href="#who-its-for"
-              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors inline-flex items-center gap-1.5"
-            >
-              See what Karma does for you
-              <span aria-hidden className="text-base leading-none">
-                ↓
-              </span>
-            </Link>
+              .
+            </p>
           </div>
         </ScrollReveal>
 
-        {/* Product Screenshots - layered composition */}
-        <div className="w-full max-w-[960px] mx-auto mt-4 relative">
-          {/* Back image - project registry, offset right and up */}
-          <ScrollReveal variant="fade-up" delay={500} duration={900}>
-            <div className="w-[75%] ml-auto rounded-xl overflow-hidden border border-border shadow-md">
-              <ThemeImage
-                src="/images/homepage/funder-benefit-02.png"
-                alt="Karma project registry"
-                width={720}
-                height={450}
-                className="w-full h-auto"
-              />
-            </div>
-          </ScrollReveal>
-
-          {/* Front image - application evaluation, overlapping from the left */}
-          <ScrollReveal variant="fade-up" delay={350} duration={900}>
-            <div className="w-[75%] -mt-[30%] relative z-10 rounded-xl overflow-hidden border border-border shadow-xl">
-              <ThemeImage
-                src="/images/homepage/funder-benefit-01.png"
-                alt="Karma application evaluation dashboard"
-                width={720}
-                height={450}
-                className="w-full h-auto"
-              />
-            </div>
-          </ScrollReveal>
-        </div>
-
-        {/* Trusted By */}
-        <ScrollReveal variant="fade-in" delay={600} duration={1000} className="w-full min-w-0">
-          <div className="flex flex-col items-start md:items-center mt-4 gap-3 w-full min-w-0">
+        {/* Trust strip. Specific number replaces generic "leading organizations"
+            and avoids the word "organizations" appearing thrice in the hero. */}
+        <ScrollReveal variant="fade-in" delay={550} duration={900} className="w-full min-w-0">
+          <div className="flex flex-col items-start md:items-center mt-2 gap-3 w-full min-w-0">
             <p className="text-muted-foreground font-medium text-xs tracking-wider uppercase">
-              Trusted by leading organizations
+              Powering 30+ funding programs
             </p>
             <div className="w-full min-w-0 -mx-4 md:-mx-8 flex flex-row items-center justify-center overflow-hidden">
               <InfiniteMovingCards
