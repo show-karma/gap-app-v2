@@ -11,10 +11,10 @@ import { PAGES } from "@/utilities/pages";
  *
  * Review-only users (a Program and/or Milestone reviewer with NO
  * community-admin rights) have no dashboard to land on, so we send them
- * straight to the Reviewer Inbox. Admins keep the dashboard.
+ * straight to their Action Items. Admins keep the dashboard.
  *
  * Only fires once roles are resolved (never while loading) and only on the
- * /manage root, so the redirect cannot loop (the inbox is a different path).
+ * /manage root, so the redirect cannot loop (action items is a different path).
  * Renders nothing.
  */
 export function ReviewerLandingRedirect() {
@@ -30,7 +30,7 @@ export function ReviewerLandingRedirect() {
 
   useEffect(() => {
     if (shouldRedirect) {
-      router.replace(PAGES.MANAGE.INBOX(communityId));
+      router.replace(PAGES.MANAGE.ACTION_ITEMS(communityId));
     }
   }, [shouldRedirect, communityId, router]);
 

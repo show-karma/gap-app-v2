@@ -733,7 +733,7 @@ export function MilestoneCard({
                     <div className="flex gap-2">
                       <Button
                         onClick={() => onSubmitVerification(milestone)}
-                        className="px-3 py-1 text-xs bg-green-600 hover:bg-green-700"
+                        className="px-3 py-1 text-xs"
                         disabled={isVerifying}
                         isLoading={isVerifying}
                       >
@@ -752,7 +752,7 @@ export function MilestoneCard({
                   <div className="flex items-center gap-2">
                     <Button
                       onClick={() => onVerifyClick(milestone.uid)}
-                      className="flex items-center gap-2 px-4 py-2 text-sm bg-green-600 hover:bg-green-700"
+                      className="flex items-center gap-2 px-4 py-2 text-sm"
                     >
                       <CheckCircleIcon className="w-4 h-4" />
                       Verify Milestone

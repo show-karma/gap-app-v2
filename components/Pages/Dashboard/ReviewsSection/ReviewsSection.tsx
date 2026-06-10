@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, ArrowRight, Eye } from "lucide-react";
+import { AlertTriangle, ArrowRight, ListTodo } from "lucide-react";
 import { useMemo } from "react";
 import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
 import { useReviewerPrograms } from "@/hooks/usePermissions";
@@ -157,11 +157,11 @@ function ReviewsSectionContent({
 
                   {community.milestoneReviewerPrograms.length > 0 ? (
                     <Link
-                      href={`${PAGES.ADMIN.MILESTONES(slug)}?programIds=${community.milestoneReviewerPrograms.map((p) => p.programId).join(",")}`}
+                      href={PAGES.MANAGE.ACTION_ITEMS(slug)}
                       className="flex items-center justify-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted"
                     >
-                      <Eye className="h-4 w-4" />
-                      View Milestones
+                      <ListTodo className="h-4 w-4" />
+                      Action Items
                       <ArrowRight className="h-4 w-4" />
                     </Link>
                   ) : null}

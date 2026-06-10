@@ -7,7 +7,7 @@
  * session's thread survived client-side navigation and silently swallowed
  * the new session's query.
  */
-export type ThreadSeedDecision =
+type ThreadSeedDecision =
   /** This component instance already seeded this searchId — do nothing. */
   | "already-seeded"
   /** The in-memory thread belongs to this searchId (remount/back-nav) — keep it. */

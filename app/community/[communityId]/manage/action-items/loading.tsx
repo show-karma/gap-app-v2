@@ -2,7 +2,7 @@ import { Skeleton } from "@/components/Utilities/Skeleton";
 
 export default function Loading() {
   return (
-    <output aria-label="Loading inbox" className="block w-full space-y-6">
+    <output aria-label="Loading action items" className="block w-full space-y-6">
       {/* Header */}
       <div className="flex items-start gap-3">
         <Skeleton className="h-11 w-11 rounded-xl" />

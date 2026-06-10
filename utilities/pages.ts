@@ -77,7 +77,7 @@ export const PAGES = {
   },
   MANAGE: {
     ROOT: (community: string) => `/community/${community}/manage`,
-    INBOX: (community: string) => `/community/${community}/manage/inbox`,
+    ACTION_ITEMS: (community: string) => `/community/${community}/manage/action-items`,
     FUNDING_PLATFORM: {
       ROOT: (community: string) => `/community/${community}/manage/funding-platform`,
       APPLICATIONS: (community: string, programId: string) =>

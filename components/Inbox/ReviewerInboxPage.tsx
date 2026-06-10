@@ -95,7 +95,7 @@ export function ReviewerInboxPage({ community }: ReviewerInboxPageProps) {
     return (
       <AccessDenied
         title="No reviewer access"
-        message="The Inbox is available to application and milestone reviewers for this community."
+        message="Action Items are available to application and milestone reviewers for this community."
         communityName={community?.details?.name}
       />
     );
@@ -108,7 +108,7 @@ export function ReviewerInboxPage({ community }: ReviewerInboxPageProps) {
       {error ? (
         <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-gray-200 bg-white p-12 text-center dark:border-zinc-700 dark:bg-zinc-900">
           <p className="text-gray-600 dark:text-gray-400">
-            There was an error loading your inbox. Please try again.
+            There was an error loading your action items. Please try again.
           </p>
           <Button variant="secondary" onClick={() => refetch()}>
             Try again
