@@ -52,6 +52,34 @@ vi.mock("@/src/features/home/components/cta-section", () => ({
   CTASection: () => <div data-testid="home-cta" />,
 }));
 
+// /nonprofits sections
+vi.mock("@/src/features/nonprofits/components/hero", () => ({
+  Hero: () => <div data-testid="nonprofits-hero" />,
+}));
+vi.mock("@/src/features/nonprofits/components/profile-preview", () => ({
+  ProfilePreview: () => <div data-testid="nonprofits-profile-preview" />,
+}));
+vi.mock("@/src/features/nonprofits/components/features-section", () => ({
+  FeaturesSection: () => <div data-testid="nonprofits-features" />,
+}));
+vi.mock("@/src/features/nonprofits/components/free-tools-section", () => ({
+  FreeToolsSection: () => <div data-testid="nonprofits-free-tools" />,
+}));
+vi.mock("@/src/features/nonprofits/components/cta-section", () => ({
+  CTASection: () => <div data-testid="nonprofits-cta" />,
+}));
+
+// /donor-advisors sections
+vi.mock("@/src/features/donor-advisors/components/hero", () => ({
+  Hero: () => <div data-testid="donor-advisors-hero" />,
+}));
+vi.mock("@/src/features/donor-advisors/components/features-section", () => ({
+  FeaturesSection: () => <div data-testid="donor-advisors-features" />,
+}));
+vi.mock("@/src/features/donor-advisors/components/cta-section", () => ({
+  CTASection: () => <div data-testid="donor-advisors-cta" />,
+}));
+
 // /funders sections
 vi.mock("@/src/features/funders/components/case-studies-section", () => ({
   CaseStudiesSection: () => <div data-testid="funders-case-studies" />,
@@ -187,6 +215,30 @@ describe("/ marketing page (audience-neutral)", () => {
     expect(screen.getByTestId("home-hero")).toBeInTheDocument();
     expect(screen.getByTestId("home-audience-switcher")).toBeInTheDocument();
     expect(screen.getByTestId("home-cta")).toBeInTheDocument();
+  });
+});
+
+describe("/nonprofits marketing page", () => {
+  it("renders hero, profile preview, features, free tools, cta", async () => {
+    await renderPage(() => import("@/app/nonprofits/page"));
+    [
+      "nonprofits-hero",
+      "nonprofits-profile-preview",
+      "nonprofits-features",
+      "nonprofits-free-tools",
+      "nonprofits-cta",
+    ].forEach((id) => {
+      expect(screen.getByTestId(id)).toBeInTheDocument();
+    });
+  });
+});
+
+describe("/donor-advisors marketing page", () => {
+  it("renders hero, features, cta", async () => {
+    await renderPage(() => import("@/app/donor-advisors/page"));
+    ["donor-advisors-hero", "donor-advisors-features", "donor-advisors-cta"].forEach((id) => {
+      expect(screen.getByTestId(id)).toBeInTheDocument();
+    });
   });
 });
 

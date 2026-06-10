@@ -2,8 +2,9 @@
 
 import { AlertTriangle, RefreshCw } from "lucide-react";
 import { Link } from "@/src/components/navigation/Link";
+import { PAGES } from "@/utilities/pages";
 
-export default function ForNonprofitsError({
+export default function NonprofitsError({
   error,
   reset,
 }: {
@@ -13,8 +14,8 @@ export default function ForNonprofitsError({
   return (
     <div className="mx-auto max-w-xl px-4 py-12">
       <div className="flex flex-col items-center gap-4 rounded-xl border border-border p-8 text-center">
-        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
-          <AlertTriangle className="h-6 w-6 text-red-600 dark:text-red-400" />
+        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10">
+          <AlertTriangle className="h-6 w-6 text-destructive" />
         </div>
         <h1 className="text-xl font-semibold text-foreground">Something went wrong</h1>
         <p className="text-sm text-muted-foreground">
@@ -33,7 +34,7 @@ export default function ForNonprofitsError({
             Try again
           </button>
           <Link
-            href="/"
+            href={PAGES.HOME}
             className="flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted"
           >
             Go home

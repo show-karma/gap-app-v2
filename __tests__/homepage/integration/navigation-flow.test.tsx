@@ -62,8 +62,10 @@ describe("Homepage Navigation Flows", () => {
       renderWithProviders(await HomePage());
 
       expect(screen.getByText(/Pick your side/i)).toBeInTheDocument();
-      expect(screen.getByText(/Try Donor Research/i)).toBeInTheDocument();
-      expect(screen.getByText(/Add your nonprofit free/i)).toBeInTheDocument();
+      // These labels appear in both the switcher panels (all panels stay
+      // in the DOM) and the closing CTA, so use getAllByText.
+      expect(screen.getAllByText(/Try Donor Research/i).length).toBeGreaterThanOrEqual(1);
+      expect(screen.getAllByText(/Add your nonprofit free/i).length).toBeGreaterThanOrEqual(1);
     });
   });
 

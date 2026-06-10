@@ -114,6 +114,53 @@ describe("AudienceSwitcher", () => {
     });
   });
 
+  describe("Stacked panels", () => {
+    it("keeps all three panels in the DOM so every aria-controls target resolves", () => {
+      render(<AudienceSwitcher />);
+      // All panels render (stacked in one grid cell) for SEO and so that
+      // each tab's aria-controls points at a real element...
+      expect(document.querySelectorAll('[role="tabpanel"]').length).toBe(3);
+      // ...but only the active panel is exposed to assistive technology.
+      expect(screen.getAllByRole("tabpanel").length).toBe(1);
+    });
+
+    it("hides inactive panels from AT and keyboard via aria-hidden and inert", () => {
+      render(<AudienceSwitcher />);
+      const donorsPanel = document.getElementById("audience-panel-donors");
+      const nonprofitsPanel = document.getElementById("audience-panel-nonprofits");
+      expect(donorsPanel).toHaveAttribute("aria-hidden", "true");
+      expect(donorsPanel).toHaveAttribute("inert");
+      expect(nonprofitsPanel).toHaveAttribute("aria-hidden", "true");
+      expect(nonprofitsPanel).toHaveAttribute("inert");
+
+      const foundationsPanel = document.getElementById("audience-panel-foundations");
+      expect(foundationsPanel).toHaveAttribute("aria-hidden", "false");
+      expect(foundationsPanel).not.toHaveAttribute("inert");
+    });
+
+    it("swaps the exposed panel when another tab is selected", () => {
+      render(<AudienceSwitcher />);
+      fireEvent.click(screen.getByRole("tab", { name: "Nonprofits" }));
+      expect(document.getElementById("audience-panel-nonprofits")).toHaveAttribute(
+        "aria-hidden",
+        "false"
+      );
+      expect(document.getElementById("audience-panel-foundations")).toHaveAttribute(
+        "aria-hidden",
+        "true"
+      );
+    });
+
+    it("renders no-JS anchor targets for each audience hash", () => {
+      render(<AudienceSwitcher />);
+      // The hero chips' plain hrefs (#foundations etc.) must land somewhere
+      // when JS is unavailable and the click handler can't intercept.
+      expect(document.getElementById("foundations")).toBeInTheDocument();
+      expect(document.getElementById("donors-advisors")).toBeInTheDocument();
+      expect(document.getElementById("nonprofits")).toBeInTheDocument();
+    });
+  });
+
   describe("URL hash sync", () => {
     it("selects the donors tab when mounted with #donors-advisors", () => {
       window.history.replaceState(null, "", "#donors-advisors");

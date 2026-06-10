@@ -3,42 +3,13 @@
 import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { SectionContainer } from "@/src/components/shared/section-container";
+import {
+  donorResearchBriefPreview,
+  donorResearchFeatures,
+} from "@/src/features/donor-advisors/content";
 import { ScrollReveal } from "@/src/features/home/components/scroll-reveal";
-import { marketingLayoutTheme } from "@/src/helper/theme";
+import { marketingLayoutTheme, marketingPreviewFrame } from "@/src/helper/theme";
 import { cn } from "@/utilities/tailwind";
-
-interface Feature {
-  label: string;
-  title: string;
-  description: string;
-}
-
-const features: Feature[] = [
-  {
-    label: "Compliance verified",
-    title: "Every pick passes the IRS check",
-    description:
-      "Karma verifies 501(c)(3) status against IRS Pub 78, pulls the most recent 990, and checks state charity registries before any nonprofit shows up in your brief.",
-  },
-  {
-    label: "Activity scored",
-    title: "See who's actually still doing the work",
-    description:
-      "Each recommendation comes with recent public mentions, a freshness score, and a last-active date. Quiet nonprofits don't slip onto your shortlist by accident.",
-  },
-  {
-    label: "Mission matched",
-    title: "Tell Karma the cause, get aligned nonprofits",
-    description:
-      "Set cause, geography, and grant size. Karma surfaces nonprofits whose recent work matches what you want to fund, with a transparent composite score.",
-  },
-  {
-    label: "Fast and Deep modes",
-    title: "10 minutes for a shortlist, 3 days for diligence",
-    description:
-      "Fast mode delivers ranked recommendations with EIN and address on every row. Deep mode adds outreach calls and emails so you can vet before you wire.",
-  },
-];
 
 export function FeaturesSection() {
   return (
@@ -78,7 +49,7 @@ export function FeaturesSection() {
         </ScrollReveal>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
-          {features.map((feature, index) => (
+          {donorResearchFeatures.map((feature, index) => (
             <ScrollReveal key={feature.label} variant="fade-up" delay={index * 80}>
               <div
                 className={cn("flex flex-col gap-3 p-8 md:p-10 h-full", "bg-secondary rounded-2xl")}
@@ -99,24 +70,18 @@ export function FeaturesSection() {
 
         <ScrollReveal variant="fade-up" delay={120} className="w-full">
           <figure className="flex flex-col gap-3 w-full">
-            <div
-              className={cn(
-                "relative w-full overflow-hidden",
-                "rounded-2xl border border-border bg-background",
-                "shadow-[0_24px_60px_-24px_rgba(15,23,42,0.25)]"
-              )}
-            >
+            <div className={marketingPreviewFrame}>
               <Image
-                src="/images/homepage/karma-donor-research-brief.png"
-                alt="Karma Donor Research brief: lead recommendation Northcoast Environmental Center with composite match 74/100, score breakdown across mission match, online presence, and IRS 990 recency, plus three-year financials and recent press coverage"
-                width={1500}
-                height={1049}
+                src={donorResearchBriefPreview.src}
+                alt={donorResearchBriefPreview.alt}
+                width={donorResearchBriefPreview.width}
+                height={donorResearchBriefPreview.height}
                 sizes="(min-width: 1280px) 1200px, 100vw"
                 className="w-full h-auto"
               />
             </div>
             <figcaption className="text-[11px] font-medium tracking-[0.12em] uppercase text-muted-foreground text-center">
-              From a recent research brief.
+              {donorResearchBriefPreview.caption}
             </figcaption>
           </figure>
         </ScrollReveal>

@@ -77,7 +77,8 @@ describe("Homepage User Journeys", () => {
     it("should see a Donor Research CTA in the closing section", async () => {
       renderWithProviders(await HomePage());
       await waitFor(() => {
-        expect(screen.getByText(/Try Donor Research/i)).toBeInTheDocument();
+        // Appears in both the switcher's donors panel and the closing CTA.
+        expect(screen.getAllByText(/Try Donor Research/i).length).toBeGreaterThanOrEqual(1);
       });
     });
   });
@@ -92,7 +93,8 @@ describe("Homepage User Journeys", () => {
     it("should see 'Add your nonprofit free' in the closing CTA", async () => {
       renderWithProviders(await HomePage());
       await waitFor(() => {
-        expect(screen.getByText(/Add your nonprofit free/i)).toBeInTheDocument();
+        // Appears in both the switcher's nonprofits panel and the closing CTA.
+        expect(screen.getAllByText(/Add your nonprofit free/i).length).toBeGreaterThanOrEqual(1);
       });
     });
   });

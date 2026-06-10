@@ -82,29 +82,22 @@ export function Hero() {
             plain anchors with an explicit handler rather than next/link
             because Link uses history.pushState internally, which per spec
             does NOT fire a hashchange event — the audience switcher's
-            hashchange listener would never hear the click. Setting
-            window.location.hash directly fires hashchange in every browser,
-            and on identical-hash re-clicks we scroll manually because the
-            hash didn't actually change. */}
+            hashchange listener would never hear the click. We replaceState
+            (matching the switcher's tab clicks, so neither control spams
+            history) and dispatch a synthetic hashchange, which also covers
+            identical-hash re-clicks where a native hashchange wouldn't fire.
+            Without JS, the plain href falls back to the anchor targets the
+            switcher renders for each audience hash. */}
         <ScrollReveal variant="fade-up" delay={300} duration={800}>
           <div className="flex flex-col items-center gap-3">
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
               {PERSONA_CHIPS.map((chip) => {
-                const target = chip.hash.replace(/^#/, "");
                 const onClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
                   e.preventDefault();
-                  if (typeof window === "undefined") return;
-                  if (window.location.hash === `#${target}`) {
-                    // Same hash — hashchange won't fire. Scroll manually.
-                    document.getElementById("who-its-for")?.scrollIntoView({
-                      block: "start",
-                      behavior: "smooth",
-                    });
-                    return;
-                  }
-                  // Mutating location.hash fires hashchange; the switcher's
-                  // listener then sets the active panel AND scrolls.
-                  window.location.hash = target;
+                  window.history.replaceState(null, "", chip.hash);
+                  // The switcher's hashchange listener sets the active panel
+                  // and scrolls it into view.
+                  window.dispatchEvent(new HashChangeEvent("hashchange"));
                 };
                 return (
                   <a

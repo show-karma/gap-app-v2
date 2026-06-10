@@ -18,7 +18,7 @@ const HorizontalLine = ({ className }: { className?: string }) => {
   return <hr className={cn("w-full h-[1px] bg-border max-w-[75%]", className)} />;
 };
 
-export default function ForNonprofitsPage() {
+export default function NonprofitsPage() {
   return (
     <main className="flex w-full flex-col flex-1 items-center bg-background">
       <div className="flex w-full max-w-[1920px] justify-center items-center flex-1 flex-col gap-16 lg:gap-24">

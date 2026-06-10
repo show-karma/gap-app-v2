@@ -2,11 +2,11 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CheckCircle2, Loader2 } from "lucide-react";
-import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { useNonprofitSubmission } from "@/src/features/nonprofits/hooks/use-nonprofit-submission";
+import { SOCIALS } from "@/utilities/socials";
 import { cn } from "@/utilities/tailwind";
 
 // Accept URLs with or without the protocol; we prepend https:// before
@@ -18,12 +18,17 @@ const submissionSchema = z.object({
     .transform((raw) => (/^https?:\/\//i.test(raw) ? raw : `https://${raw}`))
     .pipe(z.string().url("Enter a valid website URL")),
   email: z.string().min(1, "Email is required").email("Enter a valid email address"),
+  // Allow an optional leading +, then digits with common separators —
+  // including a leading "(" so the placeholder format "(555) 123-4567"
+  // validates. Require at least 5 digits so separators alone don't pass.
   phone: z
     .string()
     .trim()
     .optional()
     .refine(
-      (value) => !value || /^[+\d][\d\s()\-.]{5,}$/.test(value),
+      (value) =>
+        !value ||
+        (/^\+?[\d\s().-]{5,20}$/.test(value) && (value.match(/\d/g)?.length ?? 0) >= 5),
       "Enter a valid phone number"
     ),
 });
@@ -39,30 +44,30 @@ const inputClass = cn(
 );
 
 export function NonprofitSubmissionForm() {
-  const [submitted, setSubmitted] = useState(false);
   const submission = useNonprofitSubmission();
 
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<SubmissionInput>({
+  } = useForm<SubmissionInput, unknown, SubmissionOutput>({
     resolver: zodResolver(submissionSchema),
     mode: "onBlur",
   });
 
-  const onSubmit = handleSubmit(async (values) => {
-    // Zod transform has already normalized websiteUrl and trimmed phone.
-    const payload = values as unknown as SubmissionOutput;
-    await submission.mutateAsync({
-      websiteUrl: payload.websiteUrl,
-      email: payload.email,
-      phone: payload.phone || undefined,
+  // The third useForm generic types `values` as the zod OUTPUT, so the
+  // transformed websiteUrl/trimmed phone arrive here already normalized.
+  // mutate (not mutateAsync) so a failed request surfaces through
+  // submission.isError instead of rejecting out of handleSubmit.
+  const onSubmit = handleSubmit((values) => {
+    submission.mutate({
+      websiteUrl: values.websiteUrl,
+      email: values.email,
+      phone: values.phone || undefined,
     });
-    setSubmitted(true);
   });
 
-  if (submitted) {
+  if (submission.isSuccess) {
     return (
       <output
         className={cn(
@@ -151,7 +156,8 @@ export function NonprofitSubmissionForm() {
 
       {submission.isError ? (
         <p className="text-sm text-destructive" role="alert">
-          Something went wrong while submitting. Please try again or email us at hello@karmahq.xyz.
+          Something went wrong while submitting. Please try again or email us at{" "}
+          {SOCIALS.SUPPORT_EMAIL}.
         </p>
       ) : null}
 
