@@ -36,6 +36,17 @@ export async function GET(request: Request): Promise<NextResponse> {
     }
     const body = await indexRes.text();
     children = Array.from(body.matchAll(/<loc>([^<]+)<\/loc>/g), (m) => m[1]);
+    // A valid index from this app always lists children (static, communities,
+    // and one per kind), so a 200 that parses to zero <loc> entries means the
+    // warmer read the wrong payload — treat it as a failure and report it
+    // rather than returning ok=true after warming nothing.
+    if (children.length === 0) {
+      Sentry.captureException(
+        new Error("warm-sitemaps index parsed to zero child <loc> entries"),
+        { tags: { route: "/api/cron/warm-sitemaps" }, extra: { indexUrl } }
+      );
+      return NextResponse.json({ ok: false, warmed }, { status: 502 });
+    }
   } catch (err) {
     Sentry.captureException(err, { tags: { route: "/api/cron/warm-sitemaps" } });
     warmed[indexUrl] = 0;

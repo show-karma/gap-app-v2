@@ -291,4 +291,19 @@ describe("warm-sitemaps cron route", () => {
     expect(res.status).toBe(502);
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
+
+  it("reports failure when the index returns 200 but parses to zero children", async () => {
+    // A 200 whose body yields no <loc> entries means the warmer read the wrong
+    // payload — it must not report ok=true after warming nothing.
+    const fetchMock = vi.fn(async () => xmlResponse("<sitemapindex></sitemapindex>"));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const res = await warmGet(new Request(`${SITE}/api/cron/warm-sitemaps`));
+    const payload = (await res.json()) as { ok: boolean };
+
+    expect(res.status).toBe(502);
+    expect(payload.ok).toBe(false);
+    // Only the index was fetched; no child warming was attempted.
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
 });
