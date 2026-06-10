@@ -12,6 +12,7 @@
 import { ResultAsync } from "neverthrow";
 import { useCallback, useRef } from "react";
 import { z } from "zod";
+import { TokenManager } from "@/utilities/auth/token-manager";
 import { envVars } from "@/utilities/enviromentVars";
 import {
   type AgentAttachment,
@@ -187,9 +188,19 @@ export function streamPhilanthropyQuery(
         body.messages = messages;
       }
 
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      // Authenticated users bypass the indexer's anonymous search metering
+      // (IP-keyed free quota → 401 login_required), so always send the JWT
+      // when one exists. A token failure must not block the search — the
+      // request just proceeds anonymously.
+      const token = await TokenManager.getToken().catch(() => null);
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
+      }
+
       const response = await fetch(url, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify(body),
         signal,
       });
