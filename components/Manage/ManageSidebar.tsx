@@ -187,7 +187,7 @@ const NAV_GROUPS: NavGroup[] = [
   },
 ];
 
-const REVIEWER_SEGMENTS = new Set(["inbox", "funding-platform", "milestones-report"]);
+const REVIEWER_SEGMENTS = new Set(["action-items", "funding-platform", "milestones-report"]);
 
 function isActiveRoute(pathname: string, matchSegment: string, slug: string): boolean {
   const itemPath = `${PAGES.ADMIN.ROOT(slug)}/${matchSegment}`;
