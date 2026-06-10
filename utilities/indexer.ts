@@ -794,6 +794,6 @@ export const INDEXER = {
     // Public endpoint that accepts a website URL plus contact info from the
     // /nonprofits page form. The indexer persists the submission and emails
     // the team for follow-up.
-    SUBMIT: "/nonprofit-submissions/submit",
+    SUBMIT: "/v2/nonprofit-submissions/submit",
   },
 };
