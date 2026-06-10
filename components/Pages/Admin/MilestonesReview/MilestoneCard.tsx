@@ -17,6 +17,7 @@ import { DeleteDialog } from "@/components/DeleteDialog";
 import EthereumAddressToProfileName from "@/components/EthereumAddressToProfileName";
 import { Button } from "@/components/Utilities/Button";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
+import { Button as BrandButton } from "@/components/ui/button";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { useMilestoneImpactAnswers } from "@/hooks/useMilestoneImpactAnswers";
 import type { GrantMilestoneWithCompletion } from "@/services/milestones";
@@ -731,14 +732,15 @@ export function MilestoneCard({
                       className="w-full px-3 py-2 text-sm border border-green-300 dark:border-green-700 rounded-md bg-white dark:bg-zinc-800 text-black dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 dark:focus:ring-green-400"
                     />
                     <div className="flex gap-2">
-                      <Button
+                      <BrandButton
                         onClick={() => onSubmitVerification(milestone)}
-                        className="px-3 py-1 text-xs"
+                        size="sm"
+                        className="text-xs"
                         disabled={isVerifying}
                         isLoading={isVerifying}
                       >
                         Verify
-                      </Button>
+                      </BrandButton>
                       <Button
                         onClick={onCancelVerification}
                         className="px-3 py-1 text-xs bg-gray-500 hover:bg-gray-600"
@@ -750,13 +752,10 @@ export function MilestoneCard({
                   </div>
                 ) : (
                   <div className="flex items-center gap-2">
-                    <Button
-                      onClick={() => onVerifyClick(milestone.uid)}
-                      className="flex items-center gap-2 px-4 py-2 text-sm"
-                    >
+                    <BrandButton onClick={() => onVerifyClick(milestone.uid)}>
                       <CheckCircleIcon className="w-4 h-4" />
                       Verify Milestone
-                    </Button>
+                    </BrandButton>
                     {onRequestChanges && (
                       <Button
                         variant="secondary"
