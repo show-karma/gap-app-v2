@@ -45,8 +45,9 @@ const STATUS_TONE: Record<string, Tone> = {
   approved: "green",
   rejected: "red",
   withdrawn: "slate",
-  // milestones — tones mirror MILESTONE_STATUS_CONFIG in
-  // components/Pages/Admin/MilestonesReview/utils/milestone-review-status.ts
+  // milestones — hues follow MILESTONE_STATUS_CONFIG in
+  // components/Pages/Admin/MilestonesReview/utils/milestone-review-status.ts;
+  // dark mode keeps this file's standard /40 overlay opacity.
   completed: "yellow",
   pending_verification: "yellow",
   verified: "green",
