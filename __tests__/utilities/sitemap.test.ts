@@ -6,8 +6,10 @@ import {
   canonicalizeSitemapUrl,
   chunkCountFromTotal,
   countForKind,
+  fetchAllSitemapKindUrls,
   fetchSitemapKindPage,
   formatSitemapLastmod,
+  INDEXER_FETCH_PAGE_SIZE,
   type SitemapCounts,
 } from "@/utilities/sitemap";
 
@@ -161,13 +163,13 @@ describe("fetchSitemapKindPage", () => {
 });
 
 describe("buildSitemapIndexBody", () => {
-  it("sizes per-kind chunks from the live counts and includes the local children", async () => {
+  it("lists one consolidated child per kind plus the local children", async () => {
     const counts: SitemapCounts = {
-      projects: 7678, // 8 chunks
-      impacts: 0, // 1 chunk (empty)
-      grants: 1000, // 1 chunk
-      milestones: 2001, // 3 chunks
-      fundingPrograms: 77, // 1 chunk
+      projects: 7678,
+      impacts: 0,
+      grants: 1000,
+      milestones: 2001,
+      fundingPrograms: 77,
     };
     vi.stubGlobal(
       "fetch",
@@ -178,13 +180,62 @@ describe("buildSitemapIndexBody", () => {
 
     expect(xml).toContain(`<loc>${SITE}/sitemaps/static/sitemap.xml</loc>`);
     expect(xml).toContain(`<loc>${SITE}/sitemaps/communities/sitemap.xml</loc>`);
-    expect(xml).toContain(`<loc>${SITE}/sitemaps/projects/sitemap/8.xml</loc>`);
-    expect(xml).not.toContain(`<loc>${SITE}/sitemaps/projects/sitemap/9.xml</loc>`);
-    expect(xml).toContain(`<loc>${SITE}/sitemaps/milestones/sitemap/3.xml</loc>`);
-    expect(xml).toContain(`<loc>${SITE}/sitemaps/impacts/sitemap/1.xml</loc>`);
-    expect(xml).not.toContain(`<loc>${SITE}/sitemaps/impacts/sitemap/2.xml</loc>`);
-    // static + communities + projects 8 + impacts 1 + grants 1 + milestones 3 + funding-programs 1 = 16
-    expect((xml.match(/<sitemap>/g) ?? []).length).toBe(16);
+    expect(xml).toContain(`<loc>${SITE}/sitemaps/projects/sitemap.xml</loc>`);
+    expect(xml).toContain(`<loc>${SITE}/sitemaps/impacts/sitemap.xml</loc>`);
+    expect(xml).toContain(`<loc>${SITE}/sitemaps/grants/sitemap.xml</loc>`);
+    expect(xml).toContain(`<loc>${SITE}/sitemaps/milestones/sitemap.xml</loc>`);
+    expect(xml).toContain(`<loc>${SITE}/sitemaps/funding-programs/sitemap.xml</loc>`);
+    expect(xml).not.toContain("/sitemap/1.xml");
+    // static + communities + one per kind = 7
+    expect((xml.match(/<sitemap>/g) ?? []).length).toBe(7);
+  });
+
+  it("falls back to chunked children for a kind past the per-file URL limit", async () => {
+    const counts: SitemapCounts = {
+      projects: 46_000, // > MAX_URLS_PER_SITEMAP -> 46 chunks
+      impacts: 10,
+      grants: 10,
+      milestones: 10,
+      fundingPrograms: 10,
+    };
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => jsonResponse(counts))
+    );
+
+    const xml = await buildSitemapIndexBody();
+
+    expect(xml).not.toContain(`<loc>${SITE}/sitemaps/projects/sitemap.xml</loc>`);
+    expect(xml).toContain(`<loc>${SITE}/sitemaps/projects/sitemap/1.xml</loc>`);
+    expect(xml).toContain(`<loc>${SITE}/sitemaps/projects/sitemap/46.xml</loc>`);
+    expect(xml).toContain(`<loc>${SITE}/sitemaps/grants/sitemap.xml</loc>`);
+    // static + communities + projects 46 chunks + 4 consolidated kinds = 52
+    expect((xml.match(/<sitemap>/g) ?? []).length).toBe(52);
+  });
+
+  it("falls back to chunked children for a kind exactly at the per-file URL limit", async () => {
+    // At exactly MAX_URLS_PER_SITEMAP the consolidated route 404s (it can't
+    // prove the list isn't truncated), so the index must list chunks here —
+    // never a consolidated child that would 404. 45_000 / 1_000 = 45 chunks.
+    const counts: SitemapCounts = {
+      projects: 45_000,
+      impacts: 10,
+      grants: 10,
+      milestones: 10,
+      fundingPrograms: 10,
+    };
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => jsonResponse(counts))
+    );
+
+    const xml = await buildSitemapIndexBody();
+
+    expect(xml).not.toContain(`<loc>${SITE}/sitemaps/projects/sitemap.xml</loc>`);
+    expect(xml).toContain(`<loc>${SITE}/sitemaps/projects/sitemap/1.xml</loc>`);
+    expect(xml).toContain(`<loc>${SITE}/sitemaps/projects/sitemap/45.xml</loc>`);
+    expect(xml).not.toContain(`<loc>${SITE}/sitemaps/projects/sitemap/46.xml</loc>`);
+    expect(xml).toContain(`<loc>${SITE}/sitemaps/grants/sitemap.xml</loc>`);
   });
 
   it("throws when counts is unreachable so SWR keeps the last good index", async () => {
@@ -195,9 +246,9 @@ describe("buildSitemapIndexBody", () => {
     await expect(buildSitemapIndexBody()).rejects.toThrow("HTTP 500");
   });
 
-  it("falls back to one chunk for a kind missing from a partial counts payload", async () => {
-    // A malformed/partial counts response must not drop a kind or crash — each
-    // missing kind still lists exactly one chunk.
+  it("still lists the consolidated child for a kind missing from a partial counts payload", async () => {
+    // A malformed/partial counts response must not drop a kind or crash — the
+    // consolidated child derives completeness from page data, not this count.
     vi.stubGlobal(
       "fetch",
       vi.fn(async () => jsonResponse({ projects: 1500 }))
@@ -205,8 +256,53 @@ describe("buildSitemapIndexBody", () => {
 
     const xml = await buildSitemapIndexBody();
 
-    expect(xml).toContain(`<loc>${SITE}/sitemaps/projects/sitemap/2.xml</loc>`);
-    expect(xml).toContain(`<loc>${SITE}/sitemaps/grants/sitemap/1.xml</loc>`);
-    expect(xml).not.toContain(`<loc>${SITE}/sitemaps/grants/sitemap/2.xml</loc>`);
+    expect(xml).toContain(`<loc>${SITE}/sitemaps/projects/sitemap.xml</loc>`);
+    expect(xml).toContain(`<loc>${SITE}/sitemaps/grants/sitemap.xml</loc>`);
+    expect((xml.match(/<sitemap>/g) ?? []).length).toBe(7);
+  });
+});
+
+describe("fetchAllSitemapKindUrls", () => {
+  const pageOf = (count: number, prefix: string): string[] =>
+    Array.from({ length: count }, (_, i) => `https://staging.karmahq.xyz/${prefix}/${i}`);
+
+  it("pages until a short page and merges the results in order", async () => {
+    const fetchMock = vi.fn(async (url: string) => {
+      const page = new URL(url).searchParams.get("page");
+      return page === "1"
+        ? jsonResponse({ urls: pageOf(INDEXER_FETCH_PAGE_SIZE, "a") })
+        : jsonResponse({ urls: pageOf(2, "b") });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const urls = await fetchAllSitemapKindUrls("projects");
+
+    expect(urls).toHaveLength(INDEXER_FETCH_PAGE_SIZE + 2);
+    expect(urls[0]).toBe(`${SITE}/a/0`);
+    expect(urls[urls.length - 1]).toBe(`${SITE}/b/1`);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(fetchMock.mock.calls[0][0]).toContain(`pageSize=${INDEXER_FETCH_PAGE_SIZE}`);
+  });
+
+  it("stops after one fetch when the first page is already short", async () => {
+    const fetchMock = vi.fn(async () => jsonResponse({ urls: pageOf(3, "p") }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const urls = await fetchAllSitemapKindUrls("funding-programs");
+
+    expect(urls).toHaveLength(3);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("throws when any page fails so a partial list is never served as complete", async () => {
+    const fetchMock = vi.fn(async (url: string) => {
+      const page = new URL(url).searchParams.get("page");
+      return page === "1"
+        ? jsonResponse({ urls: pageOf(INDEXER_FETCH_PAGE_SIZE, "a") })
+        : jsonResponse({}, false, 503);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(fetchAllSitemapKindUrls("projects")).rejects.toThrow("HTTP 503");
   });
 });
