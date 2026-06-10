@@ -3,7 +3,7 @@ import { ReviewerInboxPage } from "@/components/Inbox/ReviewerInboxPage";
 import { defaultMetadata } from "@/utilities/meta";
 import { getCommunityDetails } from "@/utilities/queries/v2/community";
 
-export const metadata = defaultMetadata;
+export const metadata = { ...defaultMetadata, title: "Action Items" };
 
 interface Props {
   params: Promise<{ communityId: string }>;
