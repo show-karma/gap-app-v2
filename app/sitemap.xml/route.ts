@@ -1,5 +1,5 @@
-import { NextResponse } from "next/server";
-import { buildSitemapIndexBody, SITEMAP_CACHE_CONTROL } from "@/utilities/sitemap";
+import type { NextResponse } from "next/server";
+import { sitemapIndexResponse } from "@/utilities/sitemap";
 
 // `/sitemap.xml` is a reserved Next metadata path, so without this it gets
 // statically prerendered at build time — which calls the indexer during the
@@ -8,16 +8,9 @@ import { buildSitemapIndexBody, SITEMAP_CACHE_CONTROL } from "@/utilities/sitema
 // the indexer fetch is still cached via the Data Cache (see fetchSitemapCounts).
 export const dynamic = "force-dynamic";
 
-// Alias of /sitemap-index.xml. Both are advertised in robots.txt; GSC treats
-// the two URLs as independent submissions, so we keep serving both with
-// identical content.
+// Legacy alias of the index. robots.txt now advertises /sitemap_index.xml
+// instead (see that route for why); this URL keeps serving identical content
+// because crawlers probe /sitemap.xml by convention.
 export async function GET(): Promise<NextResponse> {
-  const body = await buildSitemapIndexBody();
-  return new NextResponse(body, {
-    status: 200,
-    headers: {
-      "Content-Type": "application/xml; charset=utf-8",
-      "Cache-Control": SITEMAP_CACHE_CONTROL,
-    },
-  });
+  return sitemapIndexResponse();
 }

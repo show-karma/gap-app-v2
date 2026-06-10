@@ -1,3 +1,4 @@
+import { NextResponse } from "next/server";
 import { envVars } from "@/utilities/enviromentVars";
 import { SITE_URL } from "@/utilities/meta";
 
@@ -171,4 +172,19 @@ export async function buildSitemapIndexBody(): Promise<string> {
   }
 
   return buildSitemapIndexXml(locs);
+}
+
+// Shared GET body for the three index routes (/sitemap.xml, /sitemap-index.xml,
+// /sitemap_index.xml) so the response headers can't drift between them. Each
+// route file still declares its own `dynamic = "force-dynamic"` — Next reads
+// that from the route module itself, so it can't live here.
+export async function sitemapIndexResponse(): Promise<NextResponse> {
+  const body = await buildSitemapIndexBody();
+  return new NextResponse(body, {
+    status: 200,
+    headers: {
+      "Content-Type": "application/xml; charset=utf-8",
+      "Cache-Control": SITEMAP_CACHE_CONTROL,
+    },
+  });
 }
