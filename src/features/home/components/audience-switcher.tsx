@@ -1,5 +1,6 @@
 "use client";
 
+import { ArrowUpRight, Search, Users } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import Image from "next/image";
 import Link from "next/link";
@@ -51,6 +52,20 @@ interface PreviewImage {
   caption?: string;
 }
 
+type IconName = "search" | "users";
+
+interface ExtraTrack {
+  icon: IconName;
+  title: string;
+  description: string;
+  cta: { label: string; href: string; external?: boolean };
+}
+
+interface ExtrasBand {
+  eyebrow: string;
+  items: ExtraTrack[];
+}
+
 interface AudiencePanel {
   key: AudienceKey;
   tabLabel: string;
@@ -61,6 +76,7 @@ interface AudiencePanel {
   primaryCta: { label: string; href: string; external?: boolean };
   secondaryCta: { label: string; href: string };
   preview?: PreviewImage;
+  extras?: ExtrasBand;
 }
 
 const PANELS: AudiencePanel[] = [
@@ -159,7 +175,7 @@ const PANELS: AudiencePanel[] = [
       },
       {
         label: "Always current",
-        title: "Your latest blog, social, and press posts, picked up automatically",
+        title: "Latest blogs, socials, and press, automatically",
         description:
           "Karma watches your public web. New blog posts, social updates, and press mentions flow into your profile so funders see what you're doing right now.",
       },
@@ -169,15 +185,28 @@ const PANELS: AudiencePanel[] = [
         description:
           "Karma is where foundations and donors search for grantees. A current, complete profile puts your work in their results.",
       },
-      {
-        label: "Free tools & a helping hand",
-        title: "Funder search, reports, and social, all free",
-        description:
-          "Search funders in plain English on /non-profits/find-funders. Want us to help run your reports or social? Just ask. Free, because funders pay us.",
-      },
     ],
+    extras: {
+      eyebrow: "Free tools & a helping hand",
+      items: [
+        {
+          icon: "search",
+          title: "Search funders in plain English",
+          description:
+            'Type what you\'re looking for: "foundations funding bilingual education in the Bay Area." No signup.',
+          cta: { label: "Try the funder search", href: NON_PROFITS_PAGES.HOME },
+        },
+        {
+          icon: "users",
+          title: "Want a hand with reports or social?",
+          description:
+            "Tight on time? Karma's team can help run your impact reporting or manage your social. Free, because AI agents keep our cost low.",
+          cta: { label: "Talk to us", href: SOCIALS.PARTNER_FORM, external: true },
+        },
+      ],
+    },
     primaryCta: { label: "Add your nonprofit free", href: PAGES.CREATE_PROJECT_PROFILE },
-    secondaryCta: { label: "Find funders for free", href: NON_PROFITS_PAGES.HOME },
+    secondaryCta: { label: "Explore the nonprofit experience", href: PAGES.FOR_NONPROFITS },
   },
 ];
 
@@ -336,8 +365,13 @@ export function AudienceSwitcher() {
                 </p>
               </div>
 
-              {/* Feature grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+              {/* Feature grid: 3-up when there are exactly 3 features, 2x2 otherwise */}
+              <div
+                className={cn(
+                  "grid grid-cols-1 gap-3 md:gap-4",
+                  panel.features.length === 3 ? "md:grid-cols-3" : "md:grid-cols-2"
+                )}
+              >
                 {panel.features.map((feature) => (
                   <article
                     key={feature.label}
@@ -359,6 +393,76 @@ export function AudienceSwitcher() {
                   </article>
                 ))}
               </div>
+
+              {/* Extras band: distinctly different from the feature grid above so
+                  the two categories don't read as equal weight */}
+              {panel.extras ? (
+                <div className="relative">
+                  {/* Subtle visual rule + eyebrow as a section break */}
+                  <div className="flex items-center gap-3 mb-4">
+                    <span className="text-[11px] font-medium tracking-[0.14em] uppercase text-muted-foreground whitespace-nowrap">
+                      {panel.extras.eyebrow}
+                    </span>
+                    <span aria-hidden className="flex-1 h-px bg-border" />
+                  </div>
+
+                  <div
+                    className={cn(
+                      "grid grid-cols-1 md:grid-cols-2 gap-px overflow-hidden",
+                      "rounded-2xl border border-border bg-border"
+                    )}
+                  >
+                    {panel.extras.items.map((item) => {
+                      const Icon = item.icon === "search" ? Search : Users;
+                      const linkProps = item.cta.external
+                        ? { target: "_blank" as const, rel: "noopener noreferrer" as const }
+                        : {};
+                      return (
+                        <Link
+                          key={item.title}
+                          href={item.cta.href}
+                          {...linkProps}
+                          className={cn(
+                            "group/extra relative flex flex-col gap-3 p-6 md:p-7",
+                            "bg-background",
+                            "transition-colors duration-200 hover:bg-secondary/40",
+                            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                          )}
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div
+                              className={cn(
+                                "inline-flex h-9 w-9 items-center justify-center rounded-full",
+                                "bg-secondary text-foreground"
+                              )}
+                            >
+                              <Icon className="h-4 w-4" />
+                            </div>
+                            <ArrowUpRight
+                              className={cn(
+                                "h-4 w-4 text-muted-foreground",
+                                "transition-transform duration-200 group-hover/extra:translate-x-0.5 group-hover/extra:-translate-y-0.5",
+                                "group-hover/extra:text-foreground"
+                              )}
+                            />
+                          </div>
+                          <div className="flex flex-col gap-1.5">
+                            <h4 className="text-foreground font-semibold text-[16px] leading-[130%] tracking-[-0.01em]">
+                              {item.title}
+                            </h4>
+                            <p className="text-muted-foreground text-sm leading-[150%]">
+                              {item.description}
+                            </p>
+                          </div>
+                          <span className="text-[13px] font-medium text-foreground/80 group-hover/extra:text-foreground transition-colors mt-1">
+                            {item.cta.label}
+                          </span>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : null}
 
               {/* Optional product preview */}
               {panel.preview ? (
