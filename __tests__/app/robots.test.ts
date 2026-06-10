@@ -100,16 +100,13 @@ describe("robots", () => {
   });
 
   describe("sitemaps", () => {
-    it("should reference the main sitemap index", () => {
-      expect(result.sitemap).toContain(`${SITE_URL}/sitemap.xml`);
+    it("should reference only the fresh sitemap index URL", () => {
+      expect(result.sitemap).toEqual([`${SITE_URL}/sitemap_index.xml`]);
     });
 
-    it("should reference the sitemap-index alias served at a fresh URL", () => {
-      expect(result.sitemap).toContain(`${SITE_URL}/sitemap-index.xml`);
-    });
-
-    it("should list exactly 2 sitemap entries (main + alias)", () => {
-      expect(result.sitemap).toHaveLength(2);
+    it("should not advertise the stuck legacy index URLs", () => {
+      expect(result.sitemap).not.toContain(`${SITE_URL}/sitemap.xml`);
+      expect(result.sitemap).not.toContain(`${SITE_URL}/sitemap-index.xml`);
     });
   });
 

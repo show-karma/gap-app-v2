@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { GET as freshIndexGet } from "@/app/sitemap_index.xml/route";
 import { GET as indexGet } from "@/app/sitemap-index.xml/route";
 import { GET as childGet } from "@/app/sitemaps/[kind]/sitemap/[chunk]/route";
 
@@ -95,5 +96,31 @@ describe("sitemap index route", () => {
     expect(body).toContain("<sitemapindex");
     expect(body).toContain(`<loc>${SITE}/sitemaps/projects/sitemap/2.xml</loc>`);
     expect(body).toContain(`<loc>${SITE}/sitemaps/static/sitemap.xml</loc>`);
+  });
+
+  it("serves the identical index at the fresh /sitemap_index.xml URL", async () => {
+    const counts = {
+      projects: 1500,
+      impacts: 0,
+      grants: 0,
+      milestones: 0,
+      fundingPrograms: 0,
+    };
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => jsonResponse(counts))
+    );
+    const legacyBody = await (await indexGet()).text();
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => jsonResponse(counts))
+    );
+    const freshRes = await freshIndexGet();
+    const freshBody = await freshRes.text();
+
+    expect(freshRes.status).toBe(200);
+    expect(freshRes.headers.get("Content-Type")).toContain("application/xml");
+    expect(freshBody).toBe(legacyBody);
   });
 });

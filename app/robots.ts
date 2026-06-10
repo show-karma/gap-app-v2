@@ -44,7 +44,11 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ["/"],
       },
     ],
-    sitemap: [`${SITE_URL}/sitemap.xml`, `${SITE_URL}/sitemap-index.xml`],
+    // Only the fresh index URL is advertised: Google's stored sitemap state is
+    // keyed per URL, and the old /sitemap.xml + /sitemap-index.xml entries are
+    // stuck on a degraded May 2026 parse (see app/sitemap_index.xml/route.ts).
+    // Both old URLs keep serving; they're just no longer advertised.
+    sitemap: [`${SITE_URL}/sitemap_index.xml`],
     host: SITE_URL,
   };
 }

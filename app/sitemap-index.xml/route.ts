@@ -1,22 +1,14 @@
-import { NextResponse } from "next/server";
-import { buildSitemapIndexBody, SITEMAP_CACHE_CONTROL } from "@/utilities/sitemap";
+import type { NextResponse } from "next/server";
+import { sitemapIndexResponse } from "@/utilities/sitemap";
 
 // Never prerender at build time — render on demand only. The indexer fetch is
-// still cached via the Data Cache (see fetchSitemapCounts), so this stays cheap.
+// still cached via the Data Cache (see fetchSitemapCounts).
 export const dynamic = "force-dynamic";
 
-// Dynamic sitemap index. The expensive per-kind URL derivation stays in the
-// indexer; this route just sizes the index from the indexer's /counts endpoint,
-// which is cached in Next's Data Cache with stale-while-revalidate (see
-// fetchSitemapCounts). A slow or unreachable indexer therefore serves the last
-// good index instead of a degraded one — no build-time generation, no cron.
+// Legacy index URL. Google's stored state for it is stuck on a degraded May
+// 2026 parse, so robots.txt now advertises /sitemap_index.xml instead (see
+// that route for the full story). Kept serving so existing submissions and
+// external references never break.
 export async function GET(): Promise<NextResponse> {
-  const body = await buildSitemapIndexBody();
-  return new NextResponse(body, {
-    status: 200,
-    headers: {
-      "Content-Type": "application/xml; charset=utf-8",
-      "Cache-Control": SITEMAP_CACHE_CONTROL,
-    },
-  });
+  return sitemapIndexResponse();
 }
