@@ -42,6 +42,14 @@ export async function GET(
 
   const urls = await fetchAllSitemapKindUrls(meta.kind);
 
+  // The fetcher stops at the per-file URL limit, so hitting it exactly means
+  // the list may be truncated (stale counts under-reporting a kind that has
+  // outgrown one file). Don't serve a silently incomplete sitemap — once the
+  // counts refresh, the index lists the chunked URLs for this kind instead.
+  if (urls.length >= MAX_URLS_PER_SITEMAP) {
+    return new NextResponse("Not Found", { status: 404 });
+  }
+
   return new NextResponse(buildUrlsetXml(urls, meta.priority, meta.changeFrequency), {
     status: 200,
     headers: {

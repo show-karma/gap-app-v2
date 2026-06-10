@@ -206,6 +206,22 @@ describe("consolidated per-kind sitemap route", () => {
     expect(res.status).toBe(404);
   });
 
+  it("404s instead of serving a possibly-truncated list at the per-file cap", async () => {
+    // Counts under-report (stale) but every page comes back full: the fetcher
+    // stops at the cap, which means the list may be incomplete — refuse it.
+    const fullPage = Array.from(
+      { length: INDEXER_FETCH_PAGE_SIZE },
+      (_, i) => `https://staging.karmahq.xyz/p/${i}`
+    );
+    stubKindFetch(fullPage);
+
+    const res = await kindGet(new Request(`${SITE}/sitemaps/projects/sitemap.xml`), {
+      params: Promise.resolve({ kind: "projects" }),
+    });
+
+    expect(res.status).toBe(404);
+  });
+
   it("fetches pages at the indexer page size, not the legacy chunk size", async () => {
     const fetchMock = stubKindFetch(["https://staging.karmahq.xyz/project/a"]);
 
