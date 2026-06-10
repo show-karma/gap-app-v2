@@ -41,10 +41,10 @@ export async function GET(request: Request): Promise<NextResponse> {
     // warmer read the wrong payload — treat it as a failure and report it
     // rather than returning ok=true after warming nothing.
     if (children.length === 0) {
-      Sentry.captureException(
-        new Error("warm-sitemaps index parsed to zero child <loc> entries"),
-        { tags: { route: "/api/cron/warm-sitemaps" }, extra: { indexUrl } }
-      );
+      Sentry.captureException(new Error("warm-sitemaps index parsed to zero child <loc> entries"), {
+        tags: { route: "/api/cron/warm-sitemaps" },
+        extra: { indexUrl },
+      });
       return NextResponse.json({ ok: false, warmed }, { status: 502 });
     }
   } catch (err) {
