@@ -29,7 +29,7 @@ import {
   useNavbarPermissions,
 } from "@/src/components/navbar/navbar-permissions-context";
 import { NavbarUserSkeleton } from "@/src/components/navbar/navbar-user-skeleton";
-import { NON_PROFITS_PAGES } from "@/utilities/pages";
+import { NON_PROFITS_PAGES, PAGES } from "@/utilities/pages";
 import { useResearchTray } from "../hooks/use-research-tray";
 import { FILINGS_STATS } from "../lib/stats";
 import { BookmarksDrawer } from "./bookmarks-drawer";
@@ -122,7 +122,7 @@ export function NonProfitsNavbar() {
     <>
       <nav className="lp-nav">
         <div className="lp-container lp-nav-inner">
-          <Link href={NON_PROFITS_PAGES.HOME} aria-label="Karma Find Funders home">
+          <Link href={PAGES.HOME} aria-label="Karma home">
             <BrandMark />
           </Link>
 
