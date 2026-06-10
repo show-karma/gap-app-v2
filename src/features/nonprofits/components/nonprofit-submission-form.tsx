@@ -18,17 +18,16 @@ const submissionSchema = z.object({
     .transform((raw) => (/^https?:\/\//i.test(raw) ? raw : `https://${raw}`))
     .pipe(z.string().url("Enter a valid website URL")),
   email: z.string().min(1, "Email is required").email("Enter a valid email address"),
-  // Allow an optional leading +, then digits with common separators —
-  // including a leading "(" so the placeholder format "(555) 123-4567"
-  // validates. Require at least 5 digits so separators alone don't pass.
+  // Must match the gap-indexer contract's PHONE_PATTERN exactly so client
+  // validation never accepts a number the backend will 400 on: a leading
+  // "+" or digit, then digits/spaces/()/-/. (min 6 chars total). A leading
+  // "(" is intentionally rejected on both sides.
   phone: z
     .string()
     .trim()
     .optional()
     .refine(
-      (value) =>
-        !value ||
-        (/^\+?[\d\s().-]{5,20}$/.test(value) && (value.match(/\d/g)?.length ?? 0) >= 5),
+      (value) => !value || /^[+\d][\d\s()\-.]{5,}$/.test(value),
       "Enter a valid phone number"
     ),
 });
@@ -141,7 +140,7 @@ export function NonprofitSubmissionForm() {
           id="nonprofit-phone"
           type="tel"
           autoComplete="tel"
-          placeholder="(555) 123-4567"
+          placeholder="+1 555 123 4567"
           aria-invalid={Boolean(errors.phone)}
           aria-describedby={errors.phone ? "nonprofit-phone-error" : undefined}
           className={inputClass}

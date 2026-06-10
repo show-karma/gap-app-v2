@@ -90,6 +90,20 @@ describe("NonprofitSubmissionForm", () => {
       expect(mockMutate).not.toHaveBeenCalled();
     });
 
+    it("rejects a leading-paren phone to match the backend PHONE_PATTERN", async () => {
+      // The gap-indexer contract's regex is /^[+\d][\d\s()\-.]{5,}$/ — a
+      // leading "(" is rejected server-side, so the client must reject it
+      // too rather than let the request 400.
+      render(<NonprofitSubmissionForm />);
+
+      fillValidForm();
+      fireEvent.change(screen.getByLabelText(/Phone/i), { target: { value: "(555) 123-4567" } });
+      fireEvent.click(screen.getByRole("button", { name: /Add your nonprofit free/i }));
+
+      expect(await screen.findByText("Enter a valid phone number")).toBeInTheDocument();
+      expect(mockMutate).not.toHaveBeenCalled();
+    });
+
     it("prepends https:// to a protocol-less URL before submitting", async () => {
       render(<NonprofitSubmissionForm />);
 
@@ -114,7 +128,7 @@ describe("NonprofitSubmissionForm", () => {
         target: { value: "you@yournonprofit.org" },
       });
       fireEvent.change(screen.getByLabelText(/Phone/i), {
-        target: { value: "(555) 123-4567" },
+        target: { value: "+1 555 123 4567" },
       });
       fireEvent.click(screen.getByRole("button", { name: /Add your nonprofit free/i }));
 
@@ -122,7 +136,7 @@ describe("NonprofitSubmissionForm", () => {
       expect(mockMutate).toHaveBeenCalledWith({
         websiteUrl: "http://legacy.yournonprofit.org",
         email: "you@yournonprofit.org",
-        phone: "(555) 123-4567",
+        phone: "+1 555 123 4567",
       });
     });
   });
