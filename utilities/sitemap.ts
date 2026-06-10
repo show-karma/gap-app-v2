@@ -210,8 +210,12 @@ export async function buildSitemapIndexBody(): Promise<string> {
     const total = countForKind(counts, kind);
     // A missing count (partial payload) lists the consolidated child rather
     // than dropping the kind — the child route derives completeness from the
-    // page data itself, not from this count.
-    if (!Number.isFinite(total) || total <= MAX_URLS_PER_SITEMAP) {
+    // page data itself, not from this count. The threshold is strict (`<`) to
+    // match the consolidated route's truncation guard, which 404s at exactly
+    // MAX_URLS_PER_SITEMAP (it can't prove that list isn't truncated): a kind
+    // sitting on the boundary must be listed as chunks, never as a child the
+    // route would 404.
+    if (!Number.isFinite(total) || total < MAX_URLS_PER_SITEMAP) {
       locs.push(`${SITE_URL}/sitemaps/${kind}/sitemap.xml`);
     } else {
       const chunks = chunkCountFromTotal(total);

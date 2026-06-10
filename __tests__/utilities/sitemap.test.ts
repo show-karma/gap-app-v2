@@ -213,6 +213,31 @@ describe("buildSitemapIndexBody", () => {
     expect((xml.match(/<sitemap>/g) ?? []).length).toBe(52);
   });
 
+  it("falls back to chunked children for a kind exactly at the per-file URL limit", async () => {
+    // At exactly MAX_URLS_PER_SITEMAP the consolidated route 404s (it can't
+    // prove the list isn't truncated), so the index must list chunks here —
+    // never a consolidated child that would 404. 45_000 / 1_000 = 45 chunks.
+    const counts: SitemapCounts = {
+      projects: 45_000,
+      impacts: 10,
+      grants: 10,
+      milestones: 10,
+      fundingPrograms: 10,
+    };
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => jsonResponse(counts))
+    );
+
+    const xml = await buildSitemapIndexBody();
+
+    expect(xml).not.toContain(`<loc>${SITE}/sitemaps/projects/sitemap.xml</loc>`);
+    expect(xml).toContain(`<loc>${SITE}/sitemaps/projects/sitemap/1.xml</loc>`);
+    expect(xml).toContain(`<loc>${SITE}/sitemaps/projects/sitemap/45.xml</loc>`);
+    expect(xml).not.toContain(`<loc>${SITE}/sitemaps/projects/sitemap/46.xml</loc>`);
+    expect(xml).toContain(`<loc>${SITE}/sitemaps/grants/sitemap.xml</loc>`);
+  });
+
   it("throws when counts is unreachable so SWR keeps the last good index", async () => {
     vi.stubGlobal(
       "fetch",
