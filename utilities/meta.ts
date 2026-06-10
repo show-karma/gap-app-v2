@@ -35,9 +35,9 @@ export const defaultMetadata: Metadata = {
   alternates: {
     canonical: "/",
   },
-  icons: {
-    icon: "/favicon.ico",
-  },
+  // No `icons` here: pages spread this object, and a hardcoded icon would
+  // override the per-tenant favicon set by the root layout on whitelabel
+  // domains. The root layout defines the default Karma icons itself.
   openGraph: {
     ...ogMeta,
   },
