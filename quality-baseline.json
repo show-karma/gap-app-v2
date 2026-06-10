@@ -15,8 +15,8 @@
   "violations": {
     "biome": 1245,
     "knipUnusedFiles": 212,
-    "knipUnusedExports": 420,
-    "knipUnusedTypes": 353,
+    "knipUnusedExports": 419,
+    "knipUnusedTypes": 354,
     "knipUnusedDeps": 20,
     "knipDuplicates": 34
   },
@@ -412,8 +412,8 @@
       "maxBytes": 40000
     },
     "src/features/non-profits/hooks/use-philanthropy-stream.ts": {
-      "lines": 627,
-      "bytes": 21111,
+      "lines": 638,
+      "bytes": 21642,
       "maxLines": 600,
       "maxBytes": 40000
     },
