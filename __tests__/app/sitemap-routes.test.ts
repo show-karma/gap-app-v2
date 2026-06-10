@@ -1,7 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { GET as warmGet } from "@/app/api/cron/warm-sitemaps/route";
 import { GET as freshIndexGet } from "@/app/sitemap_index.xml/route";
 import { GET as indexGet } from "@/app/sitemap-index.xml/route";
 import { GET as childGet } from "@/app/sitemaps/[kind]/sitemap/[chunk]/route";
+import { GET as kindGet } from "@/app/sitemaps/[kind]/sitemap.xml/route";
+import { INDEXER_FETCH_PAGE_SIZE } from "@/utilities/sitemap";
 
 const SITE = "https://www.karmahq.xyz";
 
@@ -74,7 +77,7 @@ describe("child sitemap route", () => {
 });
 
 describe("sitemap index route", () => {
-  it("serves a sitemap index sized from the live counts", async () => {
+  it("serves a sitemap index with one consolidated child per kind", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn(async () =>
@@ -94,8 +97,30 @@ describe("sitemap index route", () => {
     expect(res.status).toBe(200);
     expect(res.headers.get("Content-Type")).toContain("application/xml");
     expect(body).toContain("<sitemapindex");
-    expect(body).toContain(`<loc>${SITE}/sitemaps/projects/sitemap/2.xml</loc>`);
+    expect(body).toContain(`<loc>${SITE}/sitemaps/projects/sitemap.xml</loc>`);
     expect(body).toContain(`<loc>${SITE}/sitemaps/static/sitemap.xml</loc>`);
+  });
+
+  it("falls back to chunked children when a kind exceeds the per-file limit", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        jsonResponse({
+          projects: 46_000,
+          impacts: 0,
+          grants: 0,
+          milestones: 0,
+          fundingPrograms: 0,
+        })
+      )
+    );
+
+    const res = await indexGet();
+    const body = await res.text();
+
+    expect(body).not.toContain(`<loc>${SITE}/sitemaps/projects/sitemap.xml</loc>`);
+    expect(body).toContain(`<loc>${SITE}/sitemaps/projects/sitemap/46.xml</loc>`);
+    expect(body).toContain(`<loc>${SITE}/sitemaps/grants/sitemap.xml</loc>`);
   });
 
   it("serves the identical index at the fresh /sitemap_index.xml URL", async () => {
@@ -122,5 +147,132 @@ describe("sitemap index route", () => {
     expect(freshRes.status).toBe(200);
     expect(freshRes.headers.get("Content-Type")).toContain("application/xml");
     expect(freshBody).toBe(legacyBody);
+  });
+});
+
+describe("consolidated per-kind sitemap route", () => {
+  const counts = {
+    projects: 1500,
+    impacts: 0,
+    grants: 0,
+    milestones: 0,
+    fundingPrograms: 0,
+  };
+
+  function stubKindFetch(pageUrls: string[]): ReturnType<typeof vi.fn> {
+    const fetchMock = vi.fn(async (url: string) =>
+      url.includes("/counts") ? jsonResponse(counts) : jsonResponse({ urls: pageUrls })
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    return fetchMock;
+  }
+
+  it("serves the kind's complete urlset", async () => {
+    stubKindFetch(["https://staging.karmahq.xyz/project/a"]);
+
+    const res = await kindGet(new Request(`${SITE}/sitemaps/projects/sitemap.xml`), {
+      params: Promise.resolve({ kind: "projects" }),
+    });
+    const body = await res.text();
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get("Content-Type")).toContain("application/xml");
+    expect(body).toContain(`<loc>${SITE}/project/a</loc>`);
+    expect(body).not.toContain("staging.karmahq.xyz");
+  });
+
+  it("404s an unknown kind without calling the indexer", async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    const res = await kindGet(new Request(`${SITE}/sitemaps/bogus/sitemap.xml`), {
+      params: Promise.resolve({ kind: "bogus" }),
+    });
+
+    expect(res.status).toBe(404);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("404s a kind past the per-file limit (index lists chunks instead)", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => jsonResponse({ ...counts, projects: 46_000 }))
+    );
+
+    const res = await kindGet(new Request(`${SITE}/sitemaps/projects/sitemap.xml`), {
+      params: Promise.resolve({ kind: "projects" }),
+    });
+
+    expect(res.status).toBe(404);
+  });
+
+  it("fetches pages at the indexer page size, not the legacy chunk size", async () => {
+    const fetchMock = stubKindFetch(["https://staging.karmahq.xyz/project/a"]);
+
+    await kindGet(new Request(`${SITE}/sitemaps/projects/sitemap.xml`), {
+      params: Promise.resolve({ kind: "projects" }),
+    });
+
+    const urlsCall = fetchMock.mock.calls.find(([url]) => !String(url).includes("/counts"));
+    expect(String(urlsCall?.[0])).toContain(`pageSize=${INDEXER_FETCH_PAGE_SIZE}`);
+  });
+});
+
+describe("warm-sitemaps cron route", () => {
+  function xmlResponse(body: string, status = 200): Response {
+    return {
+      ok: status === 200,
+      status,
+      text: async () => body,
+    } as unknown as Response;
+  }
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it("rejects requests without the cron secret when one is configured", async () => {
+    vi.stubEnv("CRON_SECRET", "s3cret");
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    const res = await warmGet(new Request(`${SITE}/api/cron/warm-sitemaps`));
+
+    expect(res.status).toBe(401);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("warms the index and every child it lists", async () => {
+    vi.stubEnv("CRON_SECRET", "s3cret");
+    const index = `<?xml version="1.0"?><sitemapindex><sitemap><loc>${SITE}/sitemaps/static/sitemap.xml</loc></sitemap><sitemap><loc>${SITE}/sitemaps/projects/sitemap.xml</loc></sitemap></sitemapindex>`;
+    const fetchMock = vi.fn(async (url: string) =>
+      url.endsWith("/sitemap_index.xml") ? xmlResponse(index) : xmlResponse("<urlset/>")
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const res = await warmGet(
+      new Request(`${SITE}/api/cron/warm-sitemaps`, {
+        headers: { authorization: "Bearer s3cret" },
+      })
+    );
+    const payload = (await res.json()) as { ok: boolean; warmed: Record<string, number> };
+
+    expect(res.status).toBe(200);
+    expect(payload.ok).toBe(true);
+    expect(Object.keys(payload.warmed)).toEqual([
+      `${SITE}/sitemap_index.xml`,
+      `${SITE}/sitemaps/static/sitemap.xml`,
+      `${SITE}/sitemaps/projects/sitemap.xml`,
+    ]);
+  });
+
+  it("reports failure when the index itself cannot be fetched", async () => {
+    const fetchMock = vi.fn(async () => xmlResponse("oops", 503));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const res = await warmGet(new Request(`${SITE}/api/cron/warm-sitemaps`));
+
+    expect(res.status).toBe(502);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });
