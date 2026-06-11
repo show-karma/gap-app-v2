@@ -1,4 +1,8 @@
 import { MilestoneLifecycleStatus } from "@/src/features/payout-disbursement";
+import {
+  type MilestoneDueDateInput,
+  normalizeMilestoneDueDateMs,
+} from "@/utilities/milestones/milestoneDueDate";
 
 type MilestoneStatusInput =
   | MilestoneLifecycleStatus
@@ -9,16 +13,6 @@ type MilestoneStatusInput =
   | null
   | undefined;
 
-type MilestoneDueDateInput = Date | string | number | null | undefined;
-
-function toEpochMs(dueDate: MilestoneDueDateInput): number | null {
-  if (dueDate == null) return null;
-  if (dueDate instanceof Date) return dueDate.getTime();
-  if (typeof dueDate === "number") return dueDate;
-  const parsed = new Date(dueDate).getTime();
-  return Number.isNaN(parsed) ? null : parsed;
-}
-
 export function getEffectiveMilestoneStatus(
   status: MilestoneStatusInput,
   dueDate: MilestoneDueDateInput,
@@ -27,7 +21,7 @@ export function getEffectiveMilestoneStatus(
   const normalized = (status as MilestoneLifecycleStatus) || MilestoneLifecycleStatus.PENDING;
   if (normalized !== MilestoneLifecycleStatus.PENDING) return normalized;
 
-  const dueMs = toEpochMs(dueDate);
+  const dueMs = normalizeMilestoneDueDateMs(dueDate);
   if (dueMs == null) return MilestoneLifecycleStatus.PENDING;
   return dueMs < now ? MilestoneLifecycleStatus.PAST_DUE : MilestoneLifecycleStatus.PENDING;
 }

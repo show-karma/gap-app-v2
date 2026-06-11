@@ -30,6 +30,7 @@ import {
   getEffectiveMilestoneStatus,
   MILESTONE_STATUS_LABEL,
 } from "@/utilities/milestones/getEffectiveMilestoneStatus";
+import { normalizeMilestoneDueDateMs } from "@/utilities/milestones/milestoneDueDate";
 import { queryClient } from "@/utilities/query-client";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
 import { ReadMore } from "@/utilities/ReadMore";
@@ -525,13 +526,17 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
     ) : undefined;
 
   const showStatusBadge = type === "milestone" || type === "grant";
+  // Single normalized due timestamp drives both the status badge and the
+  // "Due by" pill, so the two can never disagree. Corrupted/ancient endsAt
+  // values resolve to null and degrade to no due date instead of a 1970 badge.
+  const dueMs = normalizeMilestoneDueDateMs(endsAt);
   const effectiveStatus = getEffectiveMilestoneStatus(
     completed ? MilestoneLifecycleStatus.COMPLETED : MilestoneLifecycleStatus.PENDING,
-    endsAt && endsAt > 0 ? endsAt * 1000 : null
+    dueMs
   );
   const showOrderBadge = type === "grant" && Boolean(milestone.grantMilestoneOrder);
   const showAllocationBadge = Boolean(allocationAmount);
-  const showDueBadge = Boolean(endsAt && endsAt > 0);
+  const showDueBadge = dueMs != null;
   const showAiEvaluationBadge = Boolean(completed && milestone.uid && completionReason);
   const hasAnyPill =
     showStatusBadge ||
@@ -576,7 +581,7 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
       {showDueBadge ? (
         <Badge variant="secondary" className="flex flex-row items-center gap-1.5">
           <Calendar className="w-3.5 h-3.5" />
-          <span>Due by {formatDate((endsAt ?? 0) * 1000)}</span>
+          <span>Due by {formatDate(dueMs)}</span>
         </Badge>
       ) : null}
       {showAiEvaluationBadge ? (
