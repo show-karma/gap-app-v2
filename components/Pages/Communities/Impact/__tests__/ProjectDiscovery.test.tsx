@@ -22,6 +22,10 @@ vi.mock("@/utilities/pages", () => ({
     ADMIN: {
       EDIT_CATEGORIES: (community: string) => `/community/${community}/manage/edit-categories`,
     },
+    PROJECT: {
+      OVERVIEW: (project: string) => `/project/${project}`,
+      GRANT: (project: string, grant: string) => `/project/${project}/funding/${grant}`,
+    },
   },
 }));
 

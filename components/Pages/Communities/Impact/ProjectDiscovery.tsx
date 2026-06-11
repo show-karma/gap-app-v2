@@ -560,14 +560,14 @@ const DiscoveryResultCard = memo(
       <div className="flex justify-between items-start gap-4">
         <div className="flex flex-col gap-2">
           <Link
-            href={`/project/${result.project.projectSlug}`}
+            href={PAGES.PROJECT.OVERVIEW(result.project.projectSlug)}
             className="text-2xl font-bold text-gray-900 dark:text-zinc-100 line-clamp-2"
           >
             {result.project.projectTitle}
           </Link>
           <div className="space-y-2">
             <Link
-              href={`/project/${result.project.projectSlug}/funding/${result.project.grantUID}`}
+              href={PAGES.PROJECT.GRANT(result.project.projectSlug, result.project.grantUID)}
               className="text-md text-gray-600 dark:text-zinc-400"
             >
               {result.project.grantTitle}
