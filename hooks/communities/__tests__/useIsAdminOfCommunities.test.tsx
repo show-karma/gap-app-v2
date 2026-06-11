@@ -26,15 +26,22 @@ const wrap = (queryClient: QueryClient) =>
     return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
   };
 
+let queryClient: QueryClient;
+
 const renderTarget = (communityUIDs?: string[]) =>
   renderHook(() => useIsAdminOfCommunities(communityUIDs), {
-    wrapper: wrap(createTestQueryClient()),
+    wrapper: wrap(queryClient),
   });
 
 describe("useIsAdminOfCommunities", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    queryClient = createTestQueryClient();
     mockUseAuth.mockReturnValue({ authenticated: true, address: ADDRESS, user: null });
+  });
+
+  afterEach(() => {
+    queryClient.clear();
   });
 
   it("should_return_true_when_admin_of_any_community", async () => {

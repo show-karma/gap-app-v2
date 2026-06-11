@@ -76,4 +76,12 @@ describe("isAdminOfAnyCommunity", () => {
 
     expect(mockGetCommunityDetails).toHaveBeenCalledTimes(1);
   });
+
+  it("should_return_false_when_resolution_throws", async () => {
+    mockGetCommunityDetails.mockRejectedValue(new Error("network down"));
+
+    const result = await isAdminOfAnyCommunity(["0xa"], [ADDRESS]);
+
+    expect(result).toBe(false);
+  });
 });

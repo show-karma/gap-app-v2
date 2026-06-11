@@ -106,13 +106,21 @@ export const isAdminOfAnyCommunity = async (
   const uniqueUIDs = Array.from(new Set(communityUIDs.filter(Boolean)));
   if (uniqueUIDs.length === 0 || addresses.length === 0) return false;
 
-  const communities = await Promise.all(uniqueUIDs.map((uid) => getCommunityDetails(uid)));
+  try {
+    const communities = await Promise.all(uniqueUIDs.map((uid) => getCommunityDetails(uid)));
 
-  const checks = await Promise.all(
-    communities
-      .filter((community): community is Community => !!community)
-      .map((community) => isCommunityAdminOfAny(community, addresses, signer))
-  );
+    const checks = await Promise.all(
+      communities
+        .filter((community): community is Community => !!community)
+        .map((community) => isCommunityAdminOfAny(community, addresses, signer))
+    );
 
-  return checks.some(Boolean);
+    return checks.some(Boolean);
+  } catch (error: unknown) {
+    errorManager("Error checking admin across communities", error, {
+      communityUIDs: uniqueUIDs,
+      addresses,
+    });
+    return false;
+  }
 };
