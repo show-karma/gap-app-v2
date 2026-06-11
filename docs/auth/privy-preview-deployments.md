@@ -94,16 +94,21 @@ unauthenticated), but documented here so the eager-load path stays auditable.
 
 `components/Utilities/PrivyOriginDiagnostic.tsx` is a **preview-only** advisory
 (`envVars.VERCEL_ENV === "preview"`) that makes the silent failure visible until a
-deployment is allowlisted. It arms only after a login attempt, then trips on either a
-parent-observable `auth.privy.io` 403/0 (`PerformanceResourceTiming.responseStatus`,
-Chromium 109+) or a 15 s timeout, and renders a dismissible `role="alert"` banner
-linking back to this runbook. It is fail-safe: if Privy changes its iframe semantics
-the diagnostic degrades to never firing.
+deployment is allowlisted. It arms only after a login attempt, then trips **only** on an
+explicit, parent-observable `auth.privy.io` HTTP 403
+(`PerformanceResourceTiming.responseStatus`, Chromium 109+) — the origin rejection — and
+renders a dismissible `role="alert"` banner linking back to this runbook. It does **not**
+trip on a bare timeout or on `responseStatus === 0`: a slow-but-working emailed-OTP flow
+routinely outlasts any reasonable timeout, and `0` is the normal cross-origin value for a
+successful subresource without `Timing-Allow-Origin`, so either would fire spuriously
+during ordinary preview QA. The diagnostic is fail-safe toward silence: if Privy changes
+its iframe semantics or the browser lacks `responseStatus`, it simply never fires rather
+than risk a false positive.
 
 `frame-ancestors` violations are **not** observable from the embedding page —
 `SecurityPolicyViolationEvent` fires inside the blocked iframe's own browsing context —
-which is why detection relies on the 403 subresource plus the login-never-completes
-timeout rather than a CSP listener.
+which is why detection relies on the parent-observable 403 subresource rather than a CSP
+listener.
 
 ## Re-validating the failure signature (spike)
 

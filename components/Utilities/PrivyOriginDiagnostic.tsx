@@ -22,36 +22,37 @@ import { envVars } from "@/utilities/enviromentVars";
  *    anonymous idle session that never tries to log in has nothing to diagnose.
  *  - While armed and still unauthenticated, a PerformanceObserver corroborates the
  *    block by observing a resource entry for the Privy auth origin whose
- *    responseStatus is 403 (frame-ancestors rejection) or 0 (opaque/blocked).
- *    PerformanceResourceTiming.responseStatus is Chromium 109+; where unsupported
- *    we degrade to a timeout-only path.
- *  - If no corroborating entry arrives, a generous timeout fires the advisory anyway,
- *    which also covers the variant-A failure mode (ready stalls) on engines that do
- *    not expose responseStatus.
- *  - The success condition (authenticated) cancels everything — no false banner.
+ *    responseStatus is exactly 403 — the frame-ancestors / origin rejection.
+ *    PerformanceResourceTiming.responseStatus is Chromium 109+; where unsupported,
+ *    no entry will ever corroborate and the advisory simply never shows (we accept a
+ *    miss over a false positive).
+ *  - The advisory only trips on that explicit, parent-observable 403. We deliberately
+ *    do NOT trip on a bare timeout or on status 0: a slow but working emailed-OTP flow
+ *    routinely takes longer than any reasonable timeout, and status 0 is the normal
+ *    responseStatus for cross-origin subresources lacking Timing-Allow-Origin even on
+ *    success. Tripping on either would fire spuriously during ordinary preview QA.
+ *  - The success condition (authenticated) clears everything — no false banner.
  *
  * frame-ancestors violations themselves are NOT observable from the embedding page
  * (SecurityPolicyViolationEvent fires inside the blocked iframe's own browsing
  * context), which is why detection relies on the parent-observable 403 subresource
- * plus the authentication-never-completes timeout rather than a CSP listener.
+ * rather than a CSP listener.
  */
 
 /** Origin that serves the Privy auth iframe and the blocking frame-ancestors CSP. */
 const PRIVY_AUTH_ORIGIN = "https://auth.privy.io";
 
-/**
- * How long to wait after a login attempt before assuming the auth iframe is blocked.
- * Generous so a slow connection completing login cancels the advisory first; copy
- * says "likely" because ad-blocker stalls can mimic the same signature.
- */
-const PRIVY_BLOCK_TIMEOUT_MS = 15_000;
-
 /** Runbook for resolving a blocked preview origin (module-level, not inlined). */
 const PRIVY_PREVIEW_RUNBOOK_URL =
   "https://github.com/show-karma/gap-app-v2/blob/main/docs/auth/privy-preview-deployments.md";
 
-/** Response statuses that indicate the Privy auth subresource was blocked/rejected. */
-const BLOCKED_RESPONSE_STATUSES = new Set([0, 403]);
+/**
+ * The only status we treat as a confirmed origin rejection. Status 0 is intentionally
+ * excluded: it is the normal cross-origin value for a successful subresource without a
+ * Timing-Allow-Origin header, so matching it would produce false positives on a working
+ * login.
+ */
+const ORIGIN_REJECTED_STATUS = 403;
 
 type ResourceEntryWithStatus = PerformanceResourceTiming & {
   responseStatus?: number;
@@ -61,16 +62,15 @@ function isPrivyAuthBlock(entry: PerformanceEntry): boolean {
   if (entry.entryType !== "resource") return false;
   const resource = entry as ResourceEntryWithStatus;
   if (!resource.name.startsWith(PRIVY_AUTH_ORIGIN)) return false;
-  // responseStatus is Chromium 109+. Where it is absent we cannot corroborate via
-  // this signal, so we leave the decision to the timeout path.
-  if (typeof resource.responseStatus !== "number") return false;
-  return BLOCKED_RESPONSE_STATUSES.has(resource.responseStatus);
+  // responseStatus is Chromium 109+. Where it is absent we cannot corroborate via this
+  // signal, so we leave the banner hidden rather than guess.
+  return resource.responseStatus === ORIGIN_REJECTED_STATUS;
 }
 
 /**
  * Renders nothing outside Vercel preview deployments. On a preview build, shows a
- * dismissible, accessible advisory when a login attempt appears blocked by a missing
- * Privy allowed-origin.
+ * dismissible, accessible advisory once a login attempt produces an explicit Privy
+ * origin rejection (HTTP 403 from auth.privy.io).
  */
 export function PrivyOriginDiagnostic() {
   const loadRequested = usePrivyLoadRequested();
@@ -83,44 +83,39 @@ export function PrivyOriginDiagnostic() {
   const armed = isPreview && loadRequested && !authenticated;
 
   useEffect(() => {
+    if (armed) return;
+    // Whenever we are not armed (e.g. auth succeeded), clear any pending advisory so a
+    // later successful login removes a previously shown banner.
+    setBlocked(false);
+  }, [armed]);
+
+  useEffect(() => {
     if (!armed) return;
-
-    let settled = false;
-    const trip = () => {
-      if (settled) return;
-      settled = true;
-      setBlocked(true);
-    };
-
-    const timer = setTimeout(trip, PRIVY_BLOCK_TIMEOUT_MS);
+    if (typeof PerformanceObserver === "undefined") return;
 
     let observer: PerformanceObserver | undefined;
-    if (typeof PerformanceObserver !== "undefined") {
-      try {
-        observer = new PerformanceObserver((list) => {
-          if (list.getEntries().some(isPrivyAuthBlock)) {
-            trip();
-          }
-        });
-        observer.observe({ type: "resource", buffered: true });
-      } catch {
-        // Older engines reject the options object; the timeout path still applies.
-        observer = undefined;
-      }
+    try {
+      observer = new PerformanceObserver((list) => {
+        if (list.getEntries().some(isPrivyAuthBlock)) {
+          setBlocked(true);
+        }
+      });
+      observer.observe({ type: "resource", buffered: true });
+    } catch {
+      // Older engines reject the options object; without responseStatus we cannot
+      // corroborate, so the advisory simply stays hidden.
+      observer = undefined;
     }
 
     return () => {
-      clearTimeout(timer);
       observer?.disconnect();
     };
   }, [armed]);
 
-  // Success cancels any pending advisory.
-  if (authenticated && blocked) {
-    setBlocked(false);
-  }
-
-  if (!isPreview || !blocked || dismissed) return null;
+  // Derive visibility instead of mutating state during render: never show once the user
+  // is authenticated, even before the clearing effect above has run.
+  const visible = isPreview && blocked && !authenticated && !dismissed;
+  if (!visible) return null;
 
   return (
     <div
@@ -128,8 +123,8 @@ export function PrivyOriginDiagnostic() {
       className="fixed inset-x-0 bottom-0 z-50 flex flex-col gap-2 border-t border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900 shadow-lg dark:border-amber-700 dark:bg-amber-950 dark:text-amber-100 sm:flex-row sm:items-center sm:justify-between"
     >
       <p className="max-w-3xl">
-        Privy login appears blocked on this preview origin — the deployment hostname is likely
-        missing from the Privy allowed-origins list.{" "}
+        Privy login is blocked on this preview origin — the deployment hostname is missing from the
+        Privy allowed-origins list.{" "}
         <a
           href={PRIVY_PREVIEW_RUNBOOK_URL}
           target="_blank"

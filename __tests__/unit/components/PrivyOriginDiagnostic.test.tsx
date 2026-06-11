@@ -70,100 +70,118 @@ describe("PrivyOriginDiagnostic", () => {
       mockEnv.VERCEL_ENV = "production";
       mockBridge.loadRequested = true;
       const { container } = render(<PrivyOriginDiagnostic />);
-      act(() => vi.advanceTimersByTime(20_000));
+      emitResource("https://auth.privy.io/api/v1/siwe/init", 403);
       expect(container).toBeEmptyDOMElement();
     });
   });
 
   describe("arming", () => {
-    it("does not arm (no banner) before a login attempt", () => {
-      mockBridge.loadRequested = false;
-      render(<PrivyOriginDiagnostic />);
-      act(() => vi.advanceTimersByTime(20_000));
-      expect(screen.queryByRole("alert")).not.toBeInTheDocument();
-    });
-
     it("does not register a PerformanceObserver before a login attempt", () => {
       mockBridge.loadRequested = false;
       render(<PrivyOriginDiagnostic />);
       expect(observeOptions).toBeUndefined();
     });
+
+    it("does not show the banner before a login attempt even on a 403", () => {
+      mockBridge.loadRequested = false;
+      render(<PrivyOriginDiagnostic />);
+      emitResource("https://auth.privy.io/api/v1/siwe/init", 403);
+      expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    });
   });
 
-  describe("timeout path", () => {
-    it("shows the alert with the runbook link after the block timeout", () => {
+  describe("no false positive without a 403", () => {
+    it("never shows on a slow-but-working login (no timeout trip)", () => {
       mockBridge.loadRequested = true;
       render(<PrivyOriginDiagnostic />);
-      expect(screen.queryByRole("alert")).not.toBeInTheDocument();
 
-      act(() => vi.advanceTimersByTime(15_000));
+      // A working but slow emailed-OTP flow: time passes, successful Privy traffic
+      // flows, but no 403 ever arrives. The banner must stay hidden.
+      act(() => vi.advanceTimersByTime(120_000));
+      emitResource("https://auth.privy.io/api/v1/siwe/init", 200);
+      emitResource("https://auth.privy.io/embedded", undefined);
+
+      expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    });
+
+    it("does not treat cross-origin status 0 as a block", () => {
+      mockBridge.loadRequested = true;
+      render(<PrivyOriginDiagnostic />);
+
+      // Status 0 is normal for a cross-origin success without Timing-Allow-Origin.
+      emitResource("https://auth.privy.io/embedded", 0);
+
+      expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    });
+  });
+
+  describe("PerformanceObserver corroboration", () => {
+    it("fires on an explicit 403 entry for the Privy auth origin", () => {
+      mockBridge.loadRequested = true;
+      render(<PrivyOriginDiagnostic />);
+
+      emitResource("https://auth.privy.io/api/v1/siwe/init", 403);
 
       const alert = screen.getByRole("alert");
       expect(alert).toBeInTheDocument();
       const link = screen.getByRole("link", { name: /runbook/i });
       expect(link).toHaveAttribute("href", RUNBOOK_HREF);
     });
-  });
 
-  describe("PerformanceObserver corroboration", () => {
-    it("fires immediately on a 403 entry for the Privy auth origin", () => {
-      mockBridge.loadRequested = true;
-      render(<PrivyOriginDiagnostic />);
-
-      emitResource("https://auth.privy.io/api/v1/siwe/init", 403);
-
-      expect(screen.getByRole("alert")).toBeInTheDocument();
-    });
-
-    it("fires on a blocked (status 0) entry for the Privy auth origin", () => {
-      mockBridge.loadRequested = true;
-      render(<PrivyOriginDiagnostic />);
-
-      emitResource("https://auth.privy.io/embedded", 0);
-
-      expect(screen.getByRole("alert")).toBeInTheDocument();
-    });
-
-    it("ignores entries for other origins and successful Privy responses", () => {
+    it("ignores a 403 for other origins", () => {
       mockBridge.loadRequested = true;
       render(<PrivyOriginDiagnostic />);
 
       emitResource("https://api.karmahq.xyz/api/projects", 403);
-      emitResource("https://auth.privy.io/api/v1/siwe/init", 200);
 
       expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     });
 
-    it("ignores entries without responseStatus support and waits for the timeout", () => {
+    it("ignores entries without responseStatus support", () => {
       mockBridge.loadRequested = true;
       render(<PrivyOriginDiagnostic />);
 
       emitResource("https://auth.privy.io/api/v1/siwe/init", undefined);
-      expect(screen.queryByRole("alert")).not.toBeInTheDocument();
 
-      act(() => vi.advanceTimersByTime(15_000));
-      expect(screen.getByRole("alert")).toBeInTheDocument();
+      expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     });
   });
 
-  describe("responseStatus unsupported engine", () => {
-    it("degrades to the timeout-only path when observe() throws", () => {
+  describe("unsupported engine", () => {
+    it("stays hidden when observe() throws (no responseStatus support)", () => {
       installPerformanceObserver(false);
       mockBridge.loadRequested = true;
       render(<PrivyOriginDiagnostic />);
 
-      act(() => vi.advanceTimersByTime(15_000));
-      expect(screen.getByRole("alert")).toBeInTheDocument();
+      expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     });
   });
 
-  describe("success cancels the advisory", () => {
-    it("renders nothing when authenticated before the timeout", () => {
+  describe("success clears the advisory", () => {
+    it("renders nothing when already authenticated", () => {
       mockBridge.loadRequested = true;
       mockBridge.authenticated = true;
       render(<PrivyOriginDiagnostic />);
 
-      act(() => vi.advanceTimersByTime(20_000));
+      emitResource("https://auth.privy.io/api/v1/siwe/init", 403);
+      expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    });
+
+    it("clears a shown banner once authentication later succeeds", () => {
+      mockBridge.loadRequested = true;
+      const { rerender } = render(<PrivyOriginDiagnostic />);
+
+      // The banner trips on a 403...
+      emitResource("https://auth.privy.io/api/v1/siwe/init", 403);
+      expect(screen.getByRole("alert")).toBeInTheDocument();
+
+      // ...then authentication succeeds (e.g. the origin was allowlisted and the user
+      // retried). The banner must disappear.
+      mockBridge.authenticated = true;
+      act(() => {
+        rerender(<PrivyOriginDiagnostic />);
+      });
+
       expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     });
   });
@@ -172,7 +190,7 @@ describe("PrivyOriginDiagnostic", () => {
     it("hides the banner when the dismiss button is clicked", () => {
       mockBridge.loadRequested = true;
       render(<PrivyOriginDiagnostic />);
-      act(() => vi.advanceTimersByTime(15_000));
+      emitResource("https://auth.privy.io/api/v1/siwe/init", 403);
 
       const dismiss = screen.getByRole("button", {
         name: /dismiss privy preview origin warning/i,
@@ -185,15 +203,6 @@ describe("PrivyOriginDiagnostic", () => {
   });
 
   describe("cleanup", () => {
-    it("clears the timer on unmount so no banner appears later", () => {
-      mockBridge.loadRequested = true;
-      const { unmount } = render(<PrivyOriginDiagnostic />);
-      unmount();
-
-      act(() => vi.advanceTimersByTime(20_000));
-      expect(screen.queryByRole("alert")).not.toBeInTheDocument();
-    });
-
     it("disconnects the PerformanceObserver on unmount", () => {
       mockBridge.loadRequested = true;
       const { unmount } = render(<PrivyOriginDiagnostic />);
