@@ -118,10 +118,15 @@ export function AudienceSwitcher() {
         </div>
 
         {/* Segmented tab strip */}
+        {/* tabIndex={-1}: the keydown handler lives on the tablist (the
+            roving-tabindex active tab bubbles its key events up here). The
+            container is programmatically focusable but stays out of the Tab
+            order — the active tab (tabIndex 0) remains the tab stop. */}
         <div
           ref={tablistRef}
           role="tablist"
           aria-label="Audience"
+          tabIndex={-1}
           onKeyDown={handleTablistKeyDown}
           className={cn(
             "relative inline-flex flex-col sm:flex-row items-stretch sm:items-center",
