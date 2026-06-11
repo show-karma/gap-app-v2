@@ -83,6 +83,9 @@ export class OffChainRevokeError extends Error {
  * correct and will appear on the next refetch — so it gets its own actionable
  * message.
  */
+export const INDEXING_TIMEOUT_MESSAGE =
+  "Your revocation was submitted but is still being indexed. Please refresh in a moment.";
+
 export class IndexingTimeoutError extends Error {
   readonly name = "IndexingTimeoutError";
   readonly code = "INDEXING_TIMEOUT" as const;
@@ -91,7 +94,7 @@ export class IndexingTimeoutError extends Error {
   readonly surfaced: boolean;
 
   constructor(
-    message = "Revocation was submitted but hasn't been indexed yet — please refresh in a moment.",
+    message = INDEXING_TIMEOUT_MESSAGE,
     context: Pick<OffChainRevokeErrorContext, "uid" | "chainID" | "surfaced"> = {}
   ) {
     super(message);

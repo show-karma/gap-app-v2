@@ -81,10 +81,14 @@ describe("useOffChainRevoke - performOffChainRevoke", () => {
   });
 
   it("maps an internal timeout abort in the tuple to a REQUEST_FAILED 'timed out' error", async () => {
-    // AbortSignal.timeout fires -> axios cancel lands in the tuple as an
-    // AbortError-shaped object. Because this hook owns the only signal, that is
-    // the internal timeout, never user cancellation.
-    const abortError = Object.assign(new Error("canceled"), { name: "AbortError" });
+    // AbortSignal.timeout fires -> axios re-wraps the external-signal abort as a
+    // CanceledError (name "CanceledError", code "ERR_CANCELED"), which lands in
+    // the tuple. Because this hook owns the only signal, that is the internal
+    // request timeout, never user cancellation.
+    const abortError = Object.assign(new Error("canceled"), {
+      name: "CanceledError",
+      code: "ERR_CANCELED",
+    });
     mockFetchData.mockResolvedValue([null, abortError, null, 500]);
     const performOffChainRevoke = setup();
 

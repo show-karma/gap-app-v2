@@ -9,7 +9,11 @@ import { useOwnerStore, useProjectStore } from "@/store";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
 import { chainNameDictionary } from "@/utilities/chainNameDictionary";
-import { IndexingTimeoutError, isSurfacedError } from "@/utilities/errors";
+import {
+  INDEXING_TIMEOUT_MESSAGE,
+  IndexingTimeoutError,
+  isSurfacedError,
+} from "@/utilities/errors";
 import fetchData from "@/utilities/fetchData";
 import { getProjectObjectives } from "@/utilities/gapIndexerApi/getProjectObjectives";
 import { sendMilestoneImpactAnswers } from "@/utilities/impact/milestoneImpactAnswers";
@@ -38,11 +42,7 @@ import { useProjectUpdates } from "./v2/useProjectUpdates";
  * through untouched.
  */
 const mapPollExhaustion = (error: unknown): unknown =>
-  isRetryConditionNotMetError(error)
-    ? new IndexingTimeoutError(
-        "Your revocation was submitted but is still being indexed. Please refresh in a moment."
-      )
-    : error;
+  isRetryConditionNotMetError(error) ? new IndexingTimeoutError(INDEXING_TIMEOUT_MESSAGE) : error;
 
 // Helper function to send outputs and deliverables data
 const sendOutputsAndDeliverables = async (

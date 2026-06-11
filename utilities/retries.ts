@@ -18,18 +18,30 @@ export class RetryAbortedError extends Error {
 }
 
 /**
- * Type guard for AbortSignal-style cancellation errors. Matches both
- * `RetryAbortedError` (this module) and axios's own AbortError shape,
- * which both expose `name === "AbortError"`. Use this instead of
- * `instanceof RetryAbortedError` so callers don't have to know which
- * abort point fired.
+ * Type guard for AbortSignal-style cancellation/timeout errors. Matches:
+ * - `RetryAbortedError` (this module) and a native `AbortController.abort()`,
+ *   which expose `name === "AbortError"`;
+ * - a native `AbortSignal.timeout()` firing, which surfaces as a DOMException
+ *   with `name === "TimeoutError"`;
+ * - axios re-wrapping an external-signal abort, which becomes a `CanceledError`
+ *   (`name === "CanceledError"`, `code === "ERR_CANCELED"`) — this is what a
+ *   `AbortSignal.timeout()` passed into a fetchData/axios request actually
+ *   produces, so without it the internal request timeout would never be
+ *   recognised.
+ * Use this instead of `instanceof RetryAbortedError` so callers don't have to
+ * know which abort point fired.
  */
 export function isAbortError(error: unknown): boolean {
+  if (!error || typeof error !== "object") {
+    return false;
+  }
+  const { name, code } = error as { name?: unknown; code?: unknown };
   return (
-    !!error &&
-    typeof error === "object" &&
-    "name" in error &&
-    (error as { name?: unknown }).name === "AbortError"
+    name === "AbortError" ||
+    name === "TimeoutError" ||
+    name === "CanceledError" ||
+    code === "ERR_CANCELED" ||
+    code === "ETIMEDOUT"
   );
 }
 

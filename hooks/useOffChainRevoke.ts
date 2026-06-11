@@ -1,6 +1,10 @@
 import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { envVars } from "@/utilities/enviromentVars";
-import { IndexingTimeoutError, OffChainRevokeError } from "@/utilities/errors";
+import {
+  INDEXING_TIMEOUT_MESSAGE,
+  IndexingTimeoutError,
+  OffChainRevokeError,
+} from "@/utilities/errors";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { isAbortError, isRetryConditionNotMetError } from "@/utilities/retries";
@@ -120,8 +124,7 @@ export const useOffChainRevoke = (injectedToast?: AttestationToast) => {
         throw pollError;
       }
       if (isRetryConditionNotMetError(pollError)) {
-        const message =
-          "Revocation was submitted but hasn't been indexed yet — please refresh in a moment.";
+        const message = INDEXING_TIMEOUT_MESSAGE;
         showError(message);
         throw new IndexingTimeoutError(message, { uid, chainID, surfaced: true });
       }
