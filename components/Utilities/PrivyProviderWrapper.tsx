@@ -12,6 +12,7 @@ import {
 import type { TenantConfig } from "@/src/infrastructure/types/tenant";
 import { queryClient } from "@/utilities/query-client";
 import { minimalWagmiConfig } from "@/utilities/wagmi/privy-config";
+import { PrivyOriginDiagnostic } from "./PrivyOriginDiagnostic";
 
 /**
  * @deprecated Import from `@/utilities/query-client` instead.
@@ -73,6 +74,7 @@ function PrivyLoader({
   return (
     <>
       {Privy && <Privy.default tenantConfig={tenantConfig} />}
+      <PrivyOriginDiagnostic />
       {children}
     </>
   );
