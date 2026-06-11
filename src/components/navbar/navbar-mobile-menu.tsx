@@ -29,6 +29,7 @@ import { Logo } from "../shared/logo";
 import {
   ExploreContent,
   ForFundersContent,
+  ForNonprofitsContent,
   ForProjectsContent,
   MenuSection,
   ResourcesContent,
@@ -216,6 +217,15 @@ export function NavbarMobileMenu() {
                   <div className="border-b border-border py-3">
                     <MenuSection title="For Funders" variant="mobile" />
                     <ForFundersContent variant="mobile" onClose={() => setMobileMenuOpen(false)} />
+                  </div>
+
+                  {/* For Nonprofits Section */}
+                  <div className="border-b border-border py-3">
+                    <MenuSection title="For Nonprofits" variant="mobile" />
+                    <ForNonprofitsContent
+                      variant="mobile"
+                      onClose={() => setMobileMenuOpen(false)}
+                    />
                   </div>
                 </>
               )}

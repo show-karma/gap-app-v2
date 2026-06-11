@@ -1,13 +1,14 @@
 /**
  * Homepage User Journeys Integration Tests
- * Tests complete visitor flows through the redesigned home page.
+ * Tests complete visitor flows through the funder-focused home page:
+ * hero + two-row "How Karma works" section (Donor Research + Foundations).
  */
 
 import HomePage from "@/app/page";
 import { renderWithProviders, screen, waitFor } from "../utils/test-helpers";
 import "@testing-library/jest-dom";
 
-const HERO_SR_TEXT = /Karma connects funders to organizations, projects, and individuals/i;
+const HERO_SR_TEXT = /Karma helps funders fund and track organizations, projects, and nonprofits/i;
 
 describe("Homepage User Journeys", () => {
   beforeEach(() => {
@@ -20,82 +21,57 @@ describe("Homepage User Journeys", () => {
       expect(screen.getByText(HERO_SR_TEXT)).toBeInTheDocument();
     });
 
-    it("should see persona chips as the primary entry", async () => {
+    it("should see two primary CTAs above the fold", async () => {
       renderWithProviders(await HomePage());
-      expect(screen.getByText(/^For foundations$/)).toBeInTheDocument();
-      expect(screen.getByText(/^For donors & advisors$/)).toBeInTheDocument();
-      expect(screen.getByText(/^For nonprofits$/)).toBeInTheDocument();
+      expect(screen.getAllByText(/Schedule a demo/i).length).toBeGreaterThanOrEqual(1);
+      expect(screen.getAllByText(/See how Karma works/i).length).toBeGreaterThanOrEqual(1);
     });
 
     it("should see the trust strip with funding programs kicker", async () => {
       renderWithProviders(await HomePage());
-      expect(screen.getByText(/Powering 30\+ funding programs/i)).toBeInTheDocument();
+      expect(screen.getByText(/Funding programs running on Karma/i)).toBeInTheDocument();
     });
 
-    it("should see the audience switcher heading below the hero", async () => {
+    it("should see the 'How Karma works' section heading", async () => {
+      renderWithProviders(await HomePage());
+      await waitFor(() => {
+        expect(screen.getByText(/One platform for two motions\./i)).toBeInTheDocument();
+      });
+    });
+
+    it("should see both product rows in the workflow section", async () => {
       renderWithProviders(await HomePage());
       await waitFor(() => {
         expect(
-          screen.getByText(/One platform\. Three sides of philanthropic capital\./i)
+          screen.getByText(/Donor Research: a research brief for every gift/i)
         ).toBeInTheDocument();
       });
-    });
-
-    it("should see the closing CTA section", async () => {
-      renderWithProviders(await HomePage());
-      await waitFor(() => {
-        expect(screen.getByText(/Pick your side/i)).toBeInTheDocument();
-      });
+      expect(screen.getByText(/AI-powered software for grant programs/i)).toBeInTheDocument();
     });
   });
 
-  describe("Foundation Visitor", () => {
-    it("should be able to click 'For foundations' chip routing to #foundations", async () => {
+  describe("Donor / advisor path", () => {
+    it("should route the Donor Research row CTA to /donor-advisors", async () => {
       renderWithProviders(await HomePage());
-      const chip = screen.getByText(/^For foundations$/).closest("a");
-      expect(chip).toHaveAttribute("href", "#foundations");
-    });
-
-    it("should see a closing CTA for foundations (Schedule a demo)", async () => {
-      renderWithProviders(await HomePage());
-      await waitFor(() => {
-        // The CTA section has multiple "Schedule a demo" labels; the hero
-        // also has the small text link. At least one is for foundations.
-        const demoLinks = screen.getAllByRole("link", { name: /schedule a demo/i });
-        expect(demoLinks.length).toBeGreaterThanOrEqual(1);
-      });
+      const exploreLinks = screen.getAllByRole("link", { name: /Explore Donor Research/i });
+      expect(exploreLinks[0]).toHaveAttribute("href", "/donor-advisors");
     });
   });
 
-  describe("Donor Visitor", () => {
-    it("should be able to click 'For donors & advisors' chip", async () => {
+  describe("Foundation path", () => {
+    it("should route the Foundations row CTA to /foundations", async () => {
       renderWithProviders(await HomePage());
-      const chip = screen.getByText(/^For donors & advisors$/).closest("a");
-      expect(chip).toHaveAttribute("href", "#donors-advisors");
-    });
-
-    it("should see a Donor Research CTA in the closing section", async () => {
-      renderWithProviders(await HomePage());
-      await waitFor(() => {
-        // Appears in both the switcher's donors panel and the closing CTA.
-        expect(screen.getAllByText(/Try Donor Research/i).length).toBeGreaterThanOrEqual(1);
+      const foundationLinks = screen.getAllByRole("link", {
+        name: /See how foundations use Karma/i,
       });
-    });
-  });
-
-  describe("Nonprofit Visitor", () => {
-    it("should be able to click 'For nonprofits' chip", async () => {
-      renderWithProviders(await HomePage());
-      const chip = screen.getByText(/^For nonprofits$/).closest("a");
-      expect(chip).toHaveAttribute("href", "#nonprofits");
+      expect(foundationLinks[0]).toHaveAttribute("href", "/foundations");
     });
 
-    it("should see 'Add your nonprofit free' in the closing CTA", async () => {
+    it("should expose at least one Schedule a demo external CTA", async () => {
       renderWithProviders(await HomePage());
-      await waitFor(() => {
-        // Appears in both the switcher's nonprofits panel and the closing CTA.
-        expect(screen.getAllByText(/Add your nonprofit free/i).length).toBeGreaterThanOrEqual(1);
-      });
+      const demoLinks = screen.getAllByRole("link", { name: /Schedule a demo/i });
+      const external = demoLinks.find((link) => link.getAttribute("target") === "_blank");
+      expect(external).toBeDefined();
     });
   });
 
@@ -105,10 +81,10 @@ describe("Homepage User Journeys", () => {
       expect(container.querySelector("main")).toBeInTheDocument();
     });
 
-    it("should render at least three sections", async () => {
+    it("should render at least two sections", async () => {
       const { container } = renderWithProviders(await HomePage());
       const sections = container.querySelectorAll("section");
-      expect(sections.length).toBeGreaterThanOrEqual(3);
+      expect(sections.length).toBeGreaterThanOrEqual(2);
     });
 
     it("should render external links with safe rel attributes", async () => {

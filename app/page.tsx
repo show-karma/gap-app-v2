@@ -1,36 +1,32 @@
 import type { Metadata } from "next";
-import { AudienceSwitcher } from "@/src/features/home/components/audience-switcher";
-import { CTASection } from "@/src/features/home/components/cta-section";
 import { Hero } from "@/src/features/home/components/hero";
+import { WorkflowSection } from "@/src/features/home/components/workflow-section";
 import { customMetadata } from "@/utilities/meta";
-import { cn } from "@/utilities/tailwind";
 
 export const metadata: Metadata = {
   ...customMetadata({
-    title: "Karma | Connecting funders to organizations, projects, and individuals worth backing",
+    title:
+      "Karma | Helping funders fund and track organizations, projects, and nonprofits worth backing",
     description:
-      "One platform for foundations, donors, and nonprofits. Karma connects funders to the organizations, projects, and individuals worth backing, and shows what happens next.",
+      "Karma helps funders fund and track the organizations, projects, and nonprofits worth backing, from one-off donor research to full grant programs.",
     path: "/",
   }),
   title: {
     absolute:
-      "Karma | Connecting funders to organizations, projects, and individuals worth backing",
+      "Karma | Helping funders fund and track organizations, projects, and nonprofits worth backing",
   },
 };
 
-const HorizontalLine = ({ className }: { className?: string }) => {
-  return <hr className={cn("w-full h-[1px] bg-border max-w-[75%] border-0", className)} />;
-};
-
 export default function Index() {
+  // Sections manage their own internal padding and full-bleed backgrounds
+  // (the WorkflowSection alternates row bands). No outer gap or HR — the
+  // editorial rhythm carries the visual transition between hero and
+  // workflow.
   return (
     <main className="flex w-full flex-col flex-1 items-center bg-background overflow-x-hidden">
-      <div className="flex w-full max-w-[1920px] justify-center items-center flex-1 flex-col gap-16 lg:gap-24">
+      <div className="flex w-full max-w-[1920px] flex-1 flex-col">
         <Hero />
-        <HorizontalLine className="max-w-full" />
-        <AudienceSwitcher />
-        <HorizontalLine />
-        <CTASection />
+        <WorkflowSection />
       </div>
     </main>
   );

@@ -42,14 +42,11 @@ vi.mock("@/src/features/home/components/platform-section", () => ({
 vi.mock("@/src/features/home/components/solution-bridge", () => ({
   SolutionBridge: () => <div data-testid="home-solution-bridge" />,
 }));
-vi.mock("@/src/features/home/components/audience-switcher", () => ({
-  AudienceSwitcher: () => <div data-testid="home-audience-switcher" />,
+vi.mock("@/src/features/home/components/workflow-section", () => ({
+  WorkflowSection: () => <div data-testid="home-workflow" />,
 }));
 vi.mock("@/src/features/home/components/hero", () => ({
   Hero: () => <div data-testid="home-hero" />,
-}));
-vi.mock("@/src/features/home/components/cta-section", () => ({
-  CTASection: () => <div data-testid="home-cta" />,
 }));
 
 // /nonprofits sections
@@ -209,12 +206,11 @@ describe("/foundations marketing page", () => {
   });
 });
 
-describe("/ marketing page (audience-neutral)", () => {
-  it("renders hero, audience switcher, cta", async () => {
+describe("/ marketing page (funder workflow)", () => {
+  it("renders hero and the workflow section", async () => {
     await renderPage(() => import("@/app/page"));
     expect(screen.getByTestId("home-hero")).toBeInTheDocument();
-    expect(screen.getByTestId("home-audience-switcher")).toBeInTheDocument();
-    expect(screen.getByTestId("home-cta")).toBeInTheDocument();
+    expect(screen.getByTestId("home-workflow")).toBeInTheDocument();
   });
 });
 

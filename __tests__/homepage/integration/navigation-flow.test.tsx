@@ -1,71 +1,76 @@
 /**
  * Homepage Navigation Flow Integration Tests
- * Tests the redesigned home page navigation: persona chips, audience switcher,
- * persona-aware CTA section, and quiet demo link.
+ * Tests the funder-focused home page navigation: hero CTAs and the
+ * two-row "How Karma works" section CTAs.
  */
 
 import HomePage from "@/app/page";
 import { renderWithProviders, screen } from "../utils/test-helpers";
 import "@testing-library/jest-dom";
 
-// Use real PAGES/SOCIALS modules so audience-switcher's many constants
-// (PAGES.FOUNDATIONS, NON_PROFITS_PAGES.HOME, PAGES.DONOR_RESEARCH,
-// PAGES.CREATE_PROJECT_PROFILE, PAGES.NONPROFITS, SOCIALS.DONOR_PARTNER_FORM,
-// SOCIALS.PARTNER_FORM) all resolve.
+// Use real PAGES/SOCIALS modules so PAGES.DONOR_RESEARCH.INDEX,
+// PAGES.DONOR_ADVISORS, PAGES.FOUNDATIONS, and SOCIALS.PARTNER_FORM
+// all resolve.
 
 describe("Homepage Navigation Flows", () => {
-  describe("Persona Chips in Hero", () => {
-    it("should render the three persona chips", async () => {
+  describe("Hero CTAs", () => {
+    it("should render the primary Schedule a demo CTA opening in a new tab", async () => {
       renderWithProviders(await HomePage());
 
-      expect(screen.getByText(/^For foundations$/)).toBeInTheDocument();
-      expect(screen.getByText(/^For donors & advisors$/)).toBeInTheDocument();
-      expect(screen.getByText(/^For nonprofits$/)).toBeInTheDocument();
-    });
-
-    it("should route chips to audience-switcher hash targets", async () => {
-      renderWithProviders(await HomePage());
-
-      const foundationsChip = screen.getByText(/^For foundations$/).closest("a");
-      const donorsChip = screen.getByText(/^For donors & advisors$/).closest("a");
-      const nonprofitsChip = screen.getByText(/^For nonprofits$/).closest("a");
-
-      expect(foundationsChip).toHaveAttribute("href", "#foundations");
-      expect(donorsChip).toHaveAttribute("href", "#donors-advisors");
-      expect(nonprofitsChip).toHaveAttribute("href", "#nonprofits");
-    });
-  });
-
-  describe("Quiet Demo Link", () => {
-    it("should render the secondary 'schedule a demo' text link in hero", async () => {
-      renderWithProviders(await HomePage());
-
-      // Hero's quiet escape hatch ("Or schedule a demo.")
-      const demoLinks = screen.getAllByRole("link", { name: /schedule a demo/i });
-      expect(demoLinks.length).toBeGreaterThanOrEqual(1);
-    });
-
-    it("should open external demo link in a new tab with security attributes", async () => {
-      renderWithProviders(await HomePage());
-
-      const demoLinks = screen.getAllByRole("link", { name: /schedule a demo/i });
+      const demoLinks = screen.getAllByRole("link", { name: /Schedule a demo/i });
       const externalDemoLink = demoLinks.find((link) => link.getAttribute("target") === "_blank");
       expect(externalDemoLink).toBeDefined();
 
       const rel = externalDemoLink?.getAttribute("rel") ?? "";
       expect(rel.includes("noopener") || rel.includes("noreferrer")).toBe(true);
     });
-  });
 
-  describe("Persona-aware CTA section", () => {
-    it("should render persona-aware closing CTAs", async () => {
+    it("should render the See how Karma works secondary CTA anchoring to #how-it-works", async () => {
       renderWithProviders(await HomePage());
 
-      expect(screen.getByText(/Pick your side/i)).toBeInTheDocument();
-      // These labels appear in both the switcher panels (all panels stay
-      // in the DOM) and the closing CTA, so use getAllByText.
-      expect(screen.getAllByText(/Try Donor Research/i).length).toBeGreaterThanOrEqual(1);
-      expect(screen.getAllByText(/Add your nonprofit free/i).length).toBeGreaterThanOrEqual(1);
+      const anchorLinks = screen.getAllByRole("link", { name: /See how Karma works/i });
+      expect(anchorLinks.length).toBeGreaterThanOrEqual(1);
+      expect(anchorLinks[0]).toHaveAttribute("href", "#how-it-works");
+    });
+  });
+
+  describe("How Karma works rows", () => {
+    it("should render both product rows", async () => {
+      renderWithProviders(await HomePage());
+
+      expect(
+        screen.getByText(/Donor Research: a research brief for every gift/i)
+      ).toBeInTheDocument();
+      expect(screen.getByText(/AI-powered software for grant programs/i)).toBeInTheDocument();
+    });
+
+    it("should route the Donor Research row CTA to /donor-advisors", async () => {
+      renderWithProviders(await HomePage());
+
+      const exploreLinks = screen.getAllByRole("link", { name: /Explore Donor Research/i });
+      expect(exploreLinks[0]).toHaveAttribute("href", "/donor-advisors");
+    });
+
+    it("should route the Foundations row CTA to /foundations", async () => {
+      renderWithProviders(await HomePage());
+
+      const foundationLinks = screen.getAllByRole("link", {
+        name: /See how foundations use Karma/i,
+      });
+      expect(foundationLinks[0]).toHaveAttribute("href", "/foundations");
+    });
+
+    it("should expose audience-differentiated secondary CTAs in each row", async () => {
+      renderWithProviders(await HomePage());
+
+      // Per-row CTAs are now differentiated by audience instead of
+      // sharing the generic "Schedule a demo" label.
+      expect(
+        screen.getAllByRole("link", { name: /Talk to a donor advisor/i }).length
+      ).toBeGreaterThanOrEqual(1);
+      expect(
+        screen.getAllByRole("link", { name: /Schedule a foundation demo/i }).length
+      ).toBeGreaterThanOrEqual(1);
     });
   });
 
@@ -97,7 +102,7 @@ describe("Homepage Navigation Flows", () => {
     it("should render the trust strip kicker", async () => {
       renderWithProviders(await HomePage());
 
-      expect(screen.getByText(/Powering 30\+ funding programs/i)).toBeInTheDocument();
+      expect(screen.getByText(/Funding programs running on Karma/i)).toBeInTheDocument();
     });
   });
 });

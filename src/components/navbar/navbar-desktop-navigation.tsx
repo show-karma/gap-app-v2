@@ -20,6 +20,7 @@ import { Logo } from "../shared/logo";
 import {
   ExploreContent,
   ForFundersContent,
+  ForNonprofitsContent,
   ForProjectsContent,
   MenuSection,
   ResourcesContent,
@@ -138,6 +139,16 @@ export function NavbarDesktopNavigation() {
               <DropdownMenuContent align="start" className="p-0">
                 <div className="min-w-[500px] p-4">
                   <ForFundersContent variant="desktop" />
+                </div>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* For Nonprofits Dropdown */}
+            <DropdownMenu>
+              <NavDropdownTrigger>For Nonprofits</NavDropdownTrigger>
+              <DropdownMenuContent align="start" className="p-0">
+                <div className="min-w-[400px] p-4">
+                  <ForNonprofitsContent variant="desktop" />
                 </div>
               </DropdownMenuContent>
             </DropdownMenu>

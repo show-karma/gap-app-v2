@@ -6,16 +6,12 @@ vi.mock("@/src/features/home/components/hero", () => ({
   Hero: () => <div data-testid="hero" />,
 }));
 
-vi.mock("@/src/features/home/components/audience-switcher", () => ({
-  AudienceSwitcher: () => <div data-testid="audience-switcher" />,
+vi.mock("@/src/features/home/components/workflow-section", () => ({
+  WorkflowSection: () => <div data-testid="workflow-section" />,
 }));
 
-vi.mock("@/src/features/home/components/cta-section", () => ({
-  CTASection: () => <div data-testid="cta-section" />,
-}));
-
-describe("Homepage (audience-switcher landing)", () => {
-  const sections = ["hero", "audience-switcher", "cta-section"];
+describe("Homepage (funder workflow landing)", () => {
+  const sections = ["hero", "workflow-section"];
 
   it("renders the three top-level sections", () => {
     render(<Index />);
@@ -48,15 +44,13 @@ describe("Homepage (audience-switcher landing)", () => {
     });
   });
 
-  it("contains horizontal dividers between sections", () => {
+  it("renders sections without horizontal dividers (alternating bands carry rhythm)", () => {
     const { container } = render(<Index />);
 
+    // Visual rhythm now comes from the workflow section's alternating
+    // bg-secondary band, not a horizontal rule.
     const horizontalLines = container.querySelectorAll("hr");
-    expect(horizontalLines.length).toBeGreaterThan(0);
-
-    horizontalLines.forEach((hr) => {
-      expect(hr).toHaveClass("w-full", "h-[1px]", "bg-border");
-    });
+    expect(horizontalLines.length).toBe(0);
   });
 
   it("has responsive inner container with max-width", () => {

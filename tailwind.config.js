@@ -38,6 +38,18 @@ module.exports = {
         '"Segoe UI Emoji"',
         '"Segoe UI Symbol"',
       ],
+      // Editorial display face (Spectral). Use only on marketing H1/H2
+      // and intentional editorial moments — never for body text. Serif
+      // fallbacks so a font-load failure stays inside the same family
+      // category.
+      display: [
+        "var(--font-display)",
+        "Georgia",
+        '"Iowan Old Style"',
+        "Baskerville",
+        '"Times New Roman"',
+        "serif",
+      ],
     },
     fontSize: {
       xs: "0.75rem",
