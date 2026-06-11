@@ -1,3 +1,30 @@
+export type ConditionOperator =
+  | "answered"
+  | "not_answered"
+  | "equals"
+  | "not_equals"
+  | "in"
+  | "includes_any"
+  | "includes_all"
+  | "contains"
+  | "gt"
+  | "gte"
+  | "lt"
+  | "lte";
+
+export interface FieldCondition {
+  /** Immutable id of an EARLIER field in the form. Never a label or index. */
+  fieldId: string;
+  operator: ConditionOperator;
+  /** Omitted for answered/not_answered. Array for in/includes_any/includes_all. */
+  value?: string | number | string[];
+}
+
+export interface FieldConditionGroup {
+  combinator: "and" | "or";
+  conditions: FieldCondition[];
+}
+
 export interface FormField {
   id: string;
   type:
@@ -32,6 +59,8 @@ export interface FormField {
     triggerOnChange?: boolean; // Whether to trigger AI evaluation when this field changes
     includeInEvaluation?: boolean; // Whether to include this field in AI evaluation context
   };
+  /** Undefined = always visible. Conditions may only reference earlier fields. */
+  visibleWhen?: FieldConditionGroup;
 }
 
 export interface FormSchema {

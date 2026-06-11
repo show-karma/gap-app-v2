@@ -28,8 +28,10 @@ import {
   XMarkIcon,
 } from "@heroicons/react/24/solid";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import pluralize from "pluralize";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
+import { DeleteDialog } from "@/components/DeleteDialog";
 import {
   EmptyStateGuidance,
   PostApprovalEmptyState,
@@ -43,13 +45,19 @@ import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
 import { useUpdateProgramEnrollment } from "@/hooks/useFundingPlatform";
-import type { FormField, FormSchema } from "@/types/question-builder";
+import type { FieldCondition, FormField, FormSchema } from "@/types/question-builder";
+import {
+  getDependentFields,
+  isFieldOrderValid,
+  validateConditionIntegrity,
+} from "@/utilities/form-visibility/evaluate-field-visibility";
 import { MarkdownEditor } from "../Utilities/MarkdownEditor";
 import { MarkdownPreview } from "../Utilities/MarkdownPreview";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
 import { AIPromptConfiguration } from "./AIPromptConfiguration";
 import { FieldEditor } from "./FieldEditor";
 import { FieldTypeSelector, fieldTypes } from "./FieldTypeSelector";
+import { FormFlowView } from "./FormFlowView/lazy";
 import { KycSettingsConfiguration } from "./KycSettingsConfiguration";
 import { SettingsConfiguration } from "./SettingsConfiguration";
 
@@ -68,6 +76,25 @@ const DEFAULT_TAB: SidebarTabKey = "build";
 
 const isTabKey = (value: string | null): value is SidebarTabKey =>
   !!value && TAB_KEYS.includes(value as SidebarTabKey);
+
+// Rewrites a condition's comparison value after a source option is renamed
+function renameConditionValue(
+  condition: FieldCondition,
+  sourceFieldId: string,
+  oldValue: string,
+  newValue: string
+): FieldCondition {
+  if (condition.fieldId !== sourceFieldId) return condition;
+  if (Array.isArray(condition.value)) {
+    if (!condition.value.includes(oldValue)) return condition;
+    return {
+      ...condition,
+      value: condition.value.map((entry) => (entry === oldValue ? newValue : entry)),
+    };
+  }
+  if (String(condition.value) !== oldValue) return condition;
+  return { ...condition, value: newValue };
+}
 
 const getValidTab = (value: string | null): SidebarTabKey =>
   isTabKey(value) ? value : DEFAULT_TAB;
@@ -204,6 +231,9 @@ export function QuestionBuilder({
   const [selectedFieldId, setSelectedFieldId] = useState<string | null>(null);
   const fieldRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
   const [newEmail, setNewEmail] = useState<string>("");
+
+  // Build-tab view: classic list editor or the read-only conditional-flow graph
+  const [builderView, setBuilderView] = useState<"list" | "flow">("list");
 
   // Helper to determine if we're working with post approval form
   const isPostApprovalMode = activeTab === "post-approval";
@@ -353,19 +383,79 @@ export function QuestionBuilder({
     [readOnly, setCurrentSchema]
   );
 
-  const handleFieldDelete = useCallback(
+  // Removes a field AND strips any conditions on other fields that reference
+  // it (a group left without conditions is removed entirely).
+  const performFieldDelete = useCallback(
     (fieldId: string) => {
-      if (readOnly) return; // Prevent deleting fields in read-only mode
-
       setCurrentSchema((prev) => ({
         ...prev,
-        fields: (prev.fields || []).filter((field) => field.id !== fieldId),
+        fields: (prev.fields || [])
+          .filter((field) => field.id !== fieldId)
+          .map((field) => {
+            const conditions = field.visibleWhen?.conditions;
+            if (!conditions?.some((condition) => condition.fieldId === fieldId)) {
+              return field;
+            }
+            const remaining = conditions.filter((condition) => condition.fieldId !== fieldId);
+            return {
+              ...field,
+              visibleWhen:
+                remaining.length > 0 && field.visibleWhen
+                  ? { ...field.visibleWhen, conditions: remaining }
+                  : undefined,
+            };
+          }),
       }));
 
       setSelectedFieldId((prevSelected) => (prevSelected === fieldId ? null : prevSelected));
 
       // Clean up the ref
       delete fieldRefs.current[fieldId];
+    },
+    [setCurrentSchema]
+  );
+
+  // Field id pending delete confirmation because other fields depend on it
+  const [pendingDeleteFieldId, setPendingDeleteFieldId] = useState<string | null>(null);
+
+  const handleFieldDelete = useCallback(
+    (fieldId: string) => {
+      if (readOnly) return; // Prevent deleting fields in read-only mode
+
+      const dependents = getDependentFields(currentSchema.fields || [], fieldId);
+      if (dependents.length > 0) {
+        setPendingDeleteFieldId(fieldId);
+        return;
+      }
+
+      performFieldDelete(fieldId);
+    },
+    [readOnly, currentSchema.fields, performFieldDelete]
+  );
+
+  // Keeps conditions in sync when a select/radio/checkbox option is renamed
+  const handleOptionRenamed = useCallback(
+    (sourceFieldId: string, oldValue: string, newValue: string) => {
+      if (readOnly) return;
+
+      setCurrentSchema((prev) => ({
+        ...prev,
+        fields: (prev.fields || []).map((field) => {
+          const conditions = field.visibleWhen?.conditions;
+          if (!conditions?.some((condition) => condition.fieldId === sourceFieldId)) {
+            return field;
+          }
+          return {
+            ...field,
+            visibleWhen: field.visibleWhen && {
+              ...field.visibleWhen,
+              conditions: conditions.map((condition) =>
+                renameConditionValue(condition, sourceFieldId, oldValue, newValue)
+              ),
+            },
+          };
+        }),
+      }));
     },
     [readOnly, setCurrentSchema]
   );
@@ -374,26 +464,32 @@ export function QuestionBuilder({
     (fieldId: string, direction: "up" | "down") => {
       if (readOnly) return; // Prevent moving fields in read-only mode
 
-      setCurrentSchema((prev) => {
-        if (!prev.fields) return prev;
+      const fields = currentSchema.fields || [];
+      const currentIndex = fields.findIndex((field) => field.id === fieldId);
+      if (currentIndex === -1) return;
 
-        const currentIndex = prev.fields.findIndex((field) => field.id === fieldId);
-        if (currentIndex === -1) return prev;
+      const newIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1;
+      if (newIndex < 0 || newIndex >= fields.length) return;
 
-        const newIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1;
-        if (newIndex < 0 || newIndex >= prev.fields.length) return prev;
+      const newFields = [...fields];
+      const [movedField] = newFields.splice(currentIndex, 1);
+      newFields.splice(newIndex, 0, movedField);
 
-        const newFields = [...prev.fields];
-        const [movedField] = newFields.splice(currentIndex, 1);
-        newFields.splice(newIndex, 0, movedField);
+      // Conditions may only reference earlier questions — reject moves that
+      // would put a question above an answer it depends on (or vice versa).
+      if (!isFieldOrderValid(newFields)) {
+        toast.error(
+          "Cannot move this question here: questions must stay below the answers their conditions depend on."
+        );
+        return;
+      }
 
-        return {
-          ...prev,
-          fields: newFields,
-        };
-      });
+      setCurrentSchema((prev) => ({
+        ...prev,
+        fields: newFields,
+      }));
     },
-    [readOnly, setCurrentSchema]
+    [readOnly, currentSchema.fields, setCurrentSchema]
   );
 
   // Handle KYC settings changes - merge with internal schema state and save
@@ -439,6 +535,16 @@ export function QuestionBuilder({
 
       if (oldIndex !== -1 && newIndex !== -1) {
         const newFields = arrayMove(currentSchema.fields, oldIndex, newIndex);
+
+        // Conditions may only reference earlier questions — reject drops that
+        // would break a conditional chain.
+        if (!isFieldOrderValid(newFields)) {
+          toast.error(
+            "Cannot move this question here: questions must stay below the answers their conditions depend on."
+          );
+          return;
+        }
+
         setCurrentSchema((prev) => ({
           ...prev,
           fields: newFields,
@@ -486,6 +592,15 @@ export function QuestionBuilder({
 
   const handleSave = async () => {
     try {
+      // Conditional-logic integrity gate (mirrors the backend validation):
+      // dangling refs, forward refs, operator/type mismatches block the save.
+      const conditionErrors = validateConditionIntegrity(currentSchema.fields || []);
+      if (conditionErrors.length > 0) {
+        toast.error(`Fix conditional logic before saving: ${conditionErrors[0].message}`);
+        setSelectedFieldId(conditionErrors[0].fieldId);
+        return;
+      }
+
       if (isPostApprovalMode) {
         // For post approval forms, email field is not required
         await onSavePostApproval?.(postApprovalSchema);
@@ -685,220 +800,289 @@ export function QuestionBuilder({
               icon={isPostApprovalMode ? CheckCircleIcon : WrenchScrewdriverIcon}
             />
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Field Types Panel */}
-              {!readOnly && (
-                <div className="lg:col-span-1">
-                  <FieldTypeSelector
-                    onFieldAdd={handleFieldAdd}
-                    isPostApprovalMode={isPostApprovalMode}
-                  />
-                </div>
-              )}
+            {/* List | Flow view toggle */}
+            {currentSchema.fields && currentSchema.fields.length > 0 && (
+              <div className="mb-4 inline-flex rounded-lg border border-gray-200 dark:border-gray-700 p-0.5 bg-gray-50 dark:bg-gray-800">
+                {(["list", "flow"] as const).map((view) => (
+                  <button
+                    key={view}
+                    type="button"
+                    onClick={() => setBuilderView(view)}
+                    aria-pressed={builderView === view}
+                    className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
+                      builderView === view
+                        ? "bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm font-medium"
+                        : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+                    }`}
+                  >
+                    {view === "list" ? "List" : "Flow"}
+                  </button>
+                ))}
+              </div>
+            )}
 
-              {/* Form Builder */}
-              <div className={readOnly ? "" : "lg:col-span-2"}>
-                {/* Form Title and Description - Only in Build/Post-Approval tabs */}
-                {renderFormTitleDescription()}
+            {builderView === "flow" && currentSchema.fields && currentSchema.fields.length > 0 ? (
+              <FormFlowView
+                fields={currentSchema.fields}
+                onNodeSelect={(fieldId) => {
+                  setBuilderView("list");
+                  setSelectedFieldId(fieldId);
+                }}
+              />
+            ) : (
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Field Types Panel */}
+                {!readOnly && (
+                  <div className="lg:col-span-1">
+                    <FieldTypeSelector
+                      onFieldAdd={handleFieldAdd}
+                      isPostApprovalMode={isPostApprovalMode}
+                    />
+                  </div>
+                )}
 
-                <div className="space-y-4">
-                  {/* Email Field Warning - only for main application form */}
-                  {needsEmailValidation() && (
-                    <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 flex items-start space-x-3">
-                      <ExclamationTriangleIcon className="w-5 h-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
-                      <div className="flex-1">
-                        <h4 className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
-                          Email Field Required
-                        </h4>
-                        <p className="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
-                          {`Your form must include at least one email field for
+                {/* Form Builder */}
+                <div className={readOnly ? "" : "lg:col-span-2"}>
+                  {/* Form Title and Description - Only in Build/Post-Approval tabs */}
+                  {renderFormTitleDescription()}
+
+                  <div className="space-y-4">
+                    {/* Email Field Warning - only for main application form */}
+                    {needsEmailValidation() && (
+                      <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 flex items-start space-x-3">
+                        <ExclamationTriangleIcon className="w-5 h-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
+                        <div className="flex-1">
+                          <h4 className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+                            Email Field Required
+                          </h4>
+                          <p className="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
+                            {`Your form must include at least one email field for
                         application tracking. Add a field with type "Email" or
                         label containing "email".`}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Post Approval Form Info */}
-                  {isPostApprovalMode && (
-                    <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 flex items-start space-x-3">
-                      <CheckCircleIcon className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
-                      <div className="flex-1">
-                        <h4 className="text-sm font-medium text-blue-800 dark:text-blue-200">
-                          Post Approval Form
-                        </h4>
-                        <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
-                          This form will be shown to applicants after their application is approved.
-                          {`Use it to collect additional information needed for the next steps. All fields are automatically set as private, and email fields are not required since we already have the applicant's information.`}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-
-                  {!currentSchema.fields || currentSchema.fields.length === 0 ? (
-                    isPostApprovalMode ? (
-                      <PostApprovalEmptyState />
-                    ) : (
-                      <EmptyStateGuidance />
-                    )
-                  ) : (
-                    <>
-                      {/* Form Fields List with Drag and Drop */}
-                      <DndContext
-                        sensors={sensors}
-                        collisionDetection={closestCenter}
-                        onDragEnd={handleDragEnd}
-                      >
-                        <SortableContext
-                          items={currentSchema.fields.map((field) => field.id)}
-                          strategy={verticalListSortingStrategy}
-                        >
-                          <div className="space-y-3">
-                            {currentSchema.fields.map((field, index) => (
-                              <SortableFieldItem
-                                key={field.id}
-                                field={field}
-                                index={index}
-                                selectedFieldId={selectedFieldId}
-                                setSelectedFieldId={setSelectedFieldId}
-                                handleFieldUpdate={handleFieldUpdate}
-                                handleFieldDelete={handleFieldDelete}
-                                handleFieldMove={handleFieldMove}
-                                readOnly={readOnly}
-                                isPostApprovalMode={isPostApprovalMode}
-                                totalFields={currentSchema.fields.length}
-                                fieldRefs={fieldRefs}
-                              />
-                            ))}
-                          </div>
-                        </SortableContext>
-                      </DndContext>
-                    </>
-                  )}
-
-                  {/* Post Approval Email Notification Section - Only show in post-approval mode */}
-                  {isPostApprovalMode && (
-                    <div className="mt-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
-                      <div className="flex items-start justify-between mb-4">
-                        <div>
-                          <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-                            Post Approval Email Notifications
-                          </h3>
-                          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                            Add email addresses that should receive notifications when post-approval
-                            forms are submitted.
                           </p>
                         </div>
                       </div>
+                    )}
 
-                      {/* Email List */}
-                      {currentSchema.emailNotifications &&
-                        currentSchema.emailNotifications.length > 0 && (
-                          <div className="space-y-2 mb-4">
-                            {currentSchema.emailNotifications.map((email, index) => (
-                              <div
-                                key={index}
-                                className="flex items-center justify-between bg-gray-50 dark:bg-gray-700 px-4 py-3 rounded-lg group hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
-                              >
-                                <div className="flex items-center gap-3">
-                                  <div className="flex-shrink-0 w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
-                                    <svg
-                                      className="w-4 h-4 text-blue-600 dark:text-blue-400"
-                                      fill="none"
-                                      stroke="currentColor"
-                                      viewBox="0 0 24 24"
-                                    >
-                                      <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                                      />
-                                    </svg>
+                    {/* Post Approval Form Info */}
+                    {isPostApprovalMode && (
+                      <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 flex items-start space-x-3">
+                        <CheckCircleIcon className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+                        <div className="flex-1">
+                          <h4 className="text-sm font-medium text-blue-800 dark:text-blue-200">
+                            Post Approval Form
+                          </h4>
+                          <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
+                            This form will be shown to applicants after their application is
+                            approved.
+                            {`Use it to collect additional information needed for the next steps. All fields are automatically set as private, and email fields are not required since we already have the applicant's information.`}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    {!currentSchema.fields || currentSchema.fields.length === 0 ? (
+                      isPostApprovalMode ? (
+                        <PostApprovalEmptyState />
+                      ) : (
+                        <EmptyStateGuidance />
+                      )
+                    ) : (
+                      <>
+                        {/* Form Fields List with Drag and Drop */}
+                        <DndContext
+                          sensors={sensors}
+                          collisionDetection={closestCenter}
+                          onDragEnd={handleDragEnd}
+                        >
+                          <SortableContext
+                            items={currentSchema.fields.map((field) => field.id)}
+                            strategy={verticalListSortingStrategy}
+                          >
+                            <div className="space-y-3">
+                              {currentSchema.fields.map((field, index) => (
+                                <SortableFieldItem
+                                  key={field.id}
+                                  field={field}
+                                  index={index}
+                                  selectedFieldId={selectedFieldId}
+                                  setSelectedFieldId={setSelectedFieldId}
+                                  handleFieldUpdate={handleFieldUpdate}
+                                  handleFieldDelete={handleFieldDelete}
+                                  handleFieldMove={handleFieldMove}
+                                  readOnly={readOnly}
+                                  isPostApprovalMode={isPostApprovalMode}
+                                  totalFields={currentSchema.fields.length}
+                                  fieldRefs={fieldRefs}
+                                  allFields={currentSchema.fields}
+                                  onOptionRenamed={handleOptionRenamed}
+                                />
+                              ))}
+                            </div>
+                          </SortableContext>
+                        </DndContext>
+                      </>
+                    )}
+
+                    {/* Post Approval Email Notification Section - Only show in post-approval mode */}
+                    {isPostApprovalMode && (
+                      <div className="mt-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
+                        <div className="flex items-start justify-between mb-4">
+                          <div>
+                            <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                              Post Approval Email Notifications
+                            </h3>
+                            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                              Add email addresses that should receive notifications when
+                              post-approval forms are submitted.
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Email List */}
+                        {currentSchema.emailNotifications &&
+                          currentSchema.emailNotifications.length > 0 && (
+                            <div className="space-y-2 mb-4">
+                              {currentSchema.emailNotifications.map((email, index) => (
+                                <div
+                                  key={index}
+                                  className="flex items-center justify-between bg-gray-50 dark:bg-gray-700 px-4 py-3 rounded-lg group hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+                                >
+                                  <div className="flex items-center gap-3">
+                                    <div className="flex-shrink-0 w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
+                                      <svg
+                                        className="w-4 h-4 text-blue-600 dark:text-blue-400"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                      >
+                                        <path
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                          strokeWidth={2}
+                                          d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                                        />
+                                      </svg>
+                                    </div>
+                                    <span className="text-sm font-medium text-gray-900 dark:text-white">
+                                      {email}
+                                    </span>
                                   </div>
-                                  <span className="text-sm font-medium text-gray-900 dark:text-white">
-                                    {email}
-                                  </span>
+                                  {!readOnly && (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleRemoveEmail(index)}
+                                      className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 transition-colors opacity-0 group-hover:opacity-100"
+                                      aria-label={`Remove ${email}`}
+                                    >
+                                      <XMarkIcon className="w-5 h-5" />
+                                    </button>
+                                  )}
                                 </div>
-                                {!readOnly && (
-                                  <button
-                                    type="button"
-                                    onClick={() => handleRemoveEmail(index)}
-                                    className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 transition-colors opacity-0 group-hover:opacity-100"
-                                    aria-label={`Remove ${email}`}
-                                  >
-                                    <XMarkIcon className="w-5 h-5" />
-                                  </button>
-                                )}
-                              </div>
-                            ))}
+                              ))}
+                            </div>
+                          )}
+
+                        {/* Empty state */}
+                        {(!currentSchema.emailNotifications ||
+                          currentSchema.emailNotifications.length === 0) && (
+                          <div className="text-center py-8 mb-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600">
+                            <svg
+                              className="mx-auto h-12 w-12 text-gray-400"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                              />
+                            </svg>
+                            <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                              No email addresses added yet
+                            </p>
                           </div>
                         )}
 
-                      {/* Empty state */}
-                      {(!currentSchema.emailNotifications ||
-                        currentSchema.emailNotifications.length === 0) && (
-                        <div className="text-center py-8 mb-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600">
-                          <svg
-                            className="mx-auto h-12 w-12 text-gray-400"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                            />
-                          </svg>
-                          <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                            No email addresses added yet
-                          </p>
-                        </div>
-                      )}
-
-                      {/* Add Email Input */}
-                      {!readOnly && (
-                        <div className="space-y-2">
-                          <label
-                            htmlFor="email-input"
-                            className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                          >
-                            Add Email Address
-                          </label>
-                          <div className="flex gap-2">
-                            <input
-                              id="email-input"
-                              type="email"
-                              value={newEmail}
-                              onChange={(e) => setNewEmail(e.target.value)}
-                              onKeyDown={handleEmailKeyDown}
-                              className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-400 dark:placeholder-gray-500"
-                              placeholder="Enter email address (e.g., admin@example.com)"
-                            />
-                            <Button
-                              type="button"
-                              onClick={handleAddEmail}
-                              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center gap-2"
+                        {/* Add Email Input */}
+                        {!readOnly && (
+                          <div className="space-y-2">
+                            <label
+                              htmlFor="email-input"
+                              className="block text-sm font-medium text-gray-700 dark:text-gray-300"
                             >
-                              <PlusIcon className="w-5 h-5" />
-                              Add
-                            </Button>
+                              Add Email Address
+                            </label>
+                            <div className="flex gap-2">
+                              <input
+                                id="email-input"
+                                type="email"
+                                value={newEmail}
+                                onChange={(e) => setNewEmail(e.target.value)}
+                                onKeyDown={handleEmailKeyDown}
+                                className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-400 dark:placeholder-gray-500"
+                                placeholder="Enter email address (e.g., admin@example.com)"
+                              />
+                              <Button
+                                type="button"
+                                onClick={handleAddEmail}
+                                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center gap-2"
+                              >
+                                <PlusIcon className="w-5 h-5" />
+                                Add
+                              </Button>
+                            </div>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                              Press Enter or click Add to include the email address
+                            </p>
                           </div>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">
-                            Press Enter or click Add to include the email address
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  )}
+                        )}
+                      </div>
+                    )}
 
-                  {/* Save Button at bottom of Build/Post-Approval tab */}
-                  {renderSaveButton()}
+                    {/* Save Button at bottom of Build/Post-Approval tab */}
+                    {renderSaveButton()}
+
+                    {/* Confirmation for deleting a question other questions depend on */}
+                    <DeleteDialog
+                      buttonElement={null}
+                      externalIsOpen={!!pendingDeleteFieldId}
+                      externalSetIsOpen={(open) => {
+                        if (!open) setPendingDeleteFieldId(null);
+                      }}
+                      isLoading={false}
+                      title={
+                        pendingDeleteFieldId
+                          ? (() => {
+                              const fields = currentSchema.fields || [];
+                              const target = fields.find(
+                                (field) => field.id === pendingDeleteFieldId
+                              );
+                              const dependents = getDependentFields(fields, pendingDeleteFieldId);
+                              const names = dependents
+                                .map((field) => `"${field.label || "Untitled question"}"`)
+                                .join(", ");
+                              return `Delete "${target?.label || "this question"}"? Its answer controls ${pluralize(
+                                "conditional question",
+                                dependents.length,
+                                true
+                              )} (${names}). Those conditions will be removed too.`;
+                            })()
+                          : ""
+                      }
+                      deleteFunction={async () => {
+                        if (pendingDeleteFieldId) {
+                          performFieldDelete(pendingDeleteFieldId);
+                        }
+                      }}
+                      afterFunction={() => setPendingDeleteFieldId(null)}
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
           </div>
         ) : activeTab === "settings" ? (
           <div className="p-4 sm:p-6 lg:p-8">
@@ -996,6 +1180,8 @@ interface SortableFieldItemProps {
   isPostApprovalMode: boolean;
   totalFields: number;
   fieldRefs: React.MutableRefObject<{ [key: string]: HTMLDivElement | null }>;
+  allFields: FormField[];
+  onOptionRenamed: (fieldId: string, oldValue: string, newValue: string) => void;
 }
 
 const SortableFieldItem = React.memo(function SortableFieldItem({
@@ -1010,6 +1196,8 @@ const SortableFieldItem = React.memo(function SortableFieldItem({
   isPostApprovalMode,
   totalFields,
   fieldRefs,
+  allFields,
+  onOptionRenamed,
 }: SortableFieldItemProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: field.id,
@@ -1073,6 +1261,18 @@ const SortableFieldItem = React.memo(function SortableFieldItem({
                       <span>Private</span>
                     </span>
                   )}
+                  {field.visibleWhen && (
+                    <span className="text-xs text-blue-700 bg-blue-50 dark:bg-blue-900/30 dark:text-blue-300 px-2 py-1 rounded flex items-center space-x-1">
+                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path
+                          fillRule="evenodd"
+                          d="M3 5a1 1 0 011-1h12a1 1 0 01.78 1.63L12 11.4V16a1 1 0 01-1.45.9l-2-1A1 1 0 018 15v-3.6L3.22 5.63A1 1 0 013 5z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                      <span>Conditional</span>
+                    </span>
+                  )}
                 </div>
                 <h4 className="font-medium text-gray-900 dark:text-white mt-1">{field.label}</h4>
                 {field.description && (
@@ -1104,6 +1304,8 @@ const SortableFieldItem = React.memo(function SortableFieldItem({
               onUpdate={handleFieldUpdate}
               onDelete={handleFieldDelete}
               readOnly={readOnly}
+              allFields={allFields}
+              onOptionRenamed={onOptionRenamed}
               onMoveUp={
                 index === 0 ? undefined : (fieldId: string) => handleFieldMove(fieldId, "up")
               }

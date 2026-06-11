@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useWatch } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -12,6 +13,10 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { useRealTimeAIEvaluation } from "@/hooks/useRealTimeAIEvaluation";
 import type { ApplicationQuestion, IFormSchema } from "@/types/whitelabel-entities";
+import {
+  evaluateVisibleFields,
+  getConditionSourceIds,
+} from "@/utilities/form-visibility/evaluate-field-visibility";
 import { cn } from "@/utilities/tailwind";
 import { useApplicationForm } from "../hooks/use-application-form";
 import type { ApplicationFormData } from "../types";
@@ -72,6 +77,28 @@ export function ApplicationForm({
     watch,
     trigger,
   } = useApplicationForm(questions, { initialData });
+
+  // Conditional visibility: subscribe to ONLY the fields referenced by
+  // conditions (not the whole form) and re-derive the visible set when any
+  // of them change. Forms without conditions take a zero-cost path.
+  const conditionSourceIds = useMemo(() => getConditionSourceIds(questions), [questions]);
+  const watchedSourceValues = useWatch({ control, name: conditionSourceIds });
+  const visibleQuestionIds = useMemo(() => {
+    if (conditionSourceIds.length === 0) return null;
+    const valuesById: Record<string, unknown> = {};
+    conditionSourceIds.forEach((id, index) => {
+      valuesById[id] = watchedSourceValues?.[index];
+    });
+    return evaluateVisibleFields(questions, (field) => valuesById[field.id]);
+  }, [questions, conditionSourceIds, watchedSourceValues]);
+
+  const currentQuestions = useMemo(
+    () =>
+      visibleQuestionIds
+        ? questions.filter((question) => visibleQuestionIds.has(question.id))
+        : questions,
+    [questions, visibleQuestionIds]
+  );
 
   const pendingSubmitRef = useRef(false);
   const authPersistenceKey = useMemo(
@@ -154,9 +181,9 @@ export function ApplicationForm({
   }, [watch, onDataChange]);
 
   const scrollToFirstError = () => {
-    const errorFieldIndex = questions.findIndex((q) => formState.errors[q.id]);
+    const errorFieldIndex = currentQuestions.findIndex((q) => formState.errors[q.id]);
     if (errorFieldIndex === -1) return;
-    const firstErrorField = questions[errorFieldIndex];
+    const firstErrorField = currentQuestions[errorFieldIndex];
 
     let element = document.querySelector(`[data-field-id="${firstErrorField.id}"]`);
 
@@ -207,8 +234,13 @@ export function ApplicationForm({
             }
           : undefined;
 
+      // Re-evaluate visibility against the final submitted values so answers
+      // typed into a branch the user later navigated away from never reach
+      // the payload (defense in depth — the resolver already strips them).
+      const visibleAtSubmit = evaluateVisibleFields(questions, (field) => data[field.id]);
       const labeledFormData: Record<string, unknown> = {};
       questions.forEach((question) => {
+        if (!visibleAtSubmit.has(question.id)) return;
         const key = question.label || question.id;
         const value = data[question.id];
         const hasValue =
@@ -275,8 +307,15 @@ export function ApplicationForm({
 
     setIsScoring(true);
     try {
+      // Hidden-branch answers are excluded from the AI evaluation context,
+      // mirroring what would actually be submitted.
+      const visibleForEvaluation = evaluateVisibleFields(
+        questions,
+        (field) => formState.data[field.id]
+      );
       const evaluationData: Record<string, unknown> = {};
       questions.forEach((question) => {
+        if (!visibleForEvaluation.has(question.id)) return;
         const value = formState.data[question.id];
         if (value !== undefined && value !== null && value !== "") {
           evaluationData[question.label || question.id] = value;
@@ -297,8 +336,6 @@ export function ApplicationForm({
     setHasScored(false);
     await handleScore();
   };
-
-  const currentQuestions = questions;
 
   return (
     <div className="w-full max-w-full" data-testid="application-form-container">

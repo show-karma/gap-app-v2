@@ -1,5 +1,6 @@
 import { type ZodType, z } from "zod";
 import type { ApplicationQuestion } from "@/types/whitelabel-entities";
+import { evaluateVisibleFields } from "@/utilities/form-visibility/evaluate-field-visibility";
 import { buildFileSchema } from "./schema-builders/file-schema";
 import {
   buildDefaultSchema,
@@ -26,11 +27,27 @@ const schemaBuilders: Record<string, (q: ApplicationQuestion) => ZodType> = {
   karma_profile_link: buildKarmaProfileLinkSchema,
 };
 
-export function buildDynamicSchema(questions: ApplicationQuestion[]) {
+/**
+ * Builds the zod schema for the application form.
+ *
+ * When `currentValues` is provided, conditionally hidden questions are
+ * excluded from the shape entirely: they are never validated (a hidden
+ * required field cannot block submission) and — because z.object strips
+ * unknown keys — their stale values are excluded from the parsed output.
+ */
+export function buildDynamicSchema(
+  questions: ApplicationQuestion[],
+  currentValues?: Record<string, unknown>
+) {
   const shape: Record<string, ZodType> = {};
+
+  const visibleIds = currentValues
+    ? evaluateVisibleFields(questions, (field) => currentValues[field.id])
+    : null;
 
   for (const q of questions) {
     if (q.type === "section_header") continue;
+    if (visibleIds && !visibleIds.has(q.id)) continue;
     const builder = schemaBuilders[q.type] ?? buildDefaultSchema;
     shape[q.id] = builder(q);
   }

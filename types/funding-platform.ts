@@ -1,3 +1,4 @@
+import type { FieldConditionGroup } from "@/types/question-builder";
 import type { MilestoneStatusEntry } from "@/types/whitelabel-entities";
 
 // V2 Status Types
@@ -69,6 +70,8 @@ export interface IFormField {
     minMilestones?: number;
   };
   description?: string; // Added for question builder
+  /** Undefined = always visible. Conditions may only reference earlier fields. */
+  visibleWhen?: FieldConditionGroup;
 }
 
 // V2 Form Schema - Can be either simple or full schema

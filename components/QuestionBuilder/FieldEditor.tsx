@@ -9,6 +9,7 @@ import { Button } from "@/components/Utilities/Button";
 import { QuestionTooltip } from "@/components/Utilities/QuestionTooltip";
 import type { FormField } from "@/types/question-builder";
 import { MarkdownEditor } from "../Utilities/MarkdownEditor";
+import { ConditionalLogicEditor } from "./ConditionalLogicEditor";
 
 const fieldSchema = z.object({
   label: z.string().min(1, "Label is required"),
@@ -45,6 +46,10 @@ interface FieldEditorProps {
   onMoveDown?: (fieldId: string) => void;
   isPostApprovalMode?: boolean;
   readOnly?: boolean;
+  /** All fields of the current form, in display order — required for conditional logic. */
+  allFields?: FormField[];
+  /** Called when a select/radio/checkbox option is renamed so conditions referencing it can follow. */
+  onOptionRenamed?: (fieldId: string, oldValue: string, newValue: string) => void;
 }
 
 export function FieldEditor({
@@ -55,6 +60,8 @@ export function FieldEditor({
   onMoveDown,
   readOnly = false,
   isPostApprovalMode = false,
+  allFields,
+  onOptionRenamed,
 }: FieldEditorProps) {
   const {
     register,
@@ -113,9 +120,14 @@ export function FieldEditor({
   }, [watch, onUpdate, field, hasOptions, isPostApprovalMode]);
 
   const updateOption = (index: number, value: string) => {
+    const oldValue = watchedOptions[index];
     const newOptions = [...watchedOptions];
     newOptions[index] = value;
     setValue("options", newOptions);
+    // Keep conditions on OTHER fields that reference this option string in sync
+    if (oldValue && oldValue !== value) {
+      onOptionRenamed?.(field.id, oldValue, value);
+    }
   };
 
   const addOption = () => {
@@ -291,6 +303,16 @@ export function FieldEditor({
               </div>
             )}
           </div>
+        )}
+
+        {/* Conditional Logic - email fields are exempt (required for tracking) */}
+        {field.type !== "email" && allFields && (
+          <ConditionalLogicEditor
+            field={field}
+            allFields={allFields}
+            onUpdate={onUpdate}
+            readOnly={readOnly}
+          />
         )}
 
         {/* AI Evaluation Configuration - Hidden in post-approval mode */}

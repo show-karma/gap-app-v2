@@ -1,6 +1,8 @@
 // Ported from gap-whitelabel-app — local type definitions for whitelabel features.
 // These types mirror the gap-indexer V2 API responses used by the whitelabel app.
 
+import type { FieldConditionGroup } from "@/types/question-builder";
+
 export type TenantId = string;
 
 // Status types
@@ -48,6 +50,8 @@ export interface ApplicationQuestion {
     maxMilestones?: number;
     minMilestones?: number;
   };
+  /** Undefined = always visible. Conditions may only reference earlier fields. */
+  visibleWhen?: FieldConditionGroup;
 }
 
 export interface MilestoneData {
@@ -117,6 +121,8 @@ export interface IFormField {
     includeInEvaluation?: boolean;
   };
   private?: boolean;
+  /** Undefined = always visible. Conditions may only reference earlier fields. */
+  visibleWhen?: FieldConditionGroup;
 }
 
 export interface IFormSchema {

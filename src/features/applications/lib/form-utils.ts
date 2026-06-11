@@ -30,6 +30,7 @@ export function transformFormSchemaToQuestions(formSchema: IFormSchema): Applica
         maxMilestones: field.validation?.maxMilestones,
         minMilestones: field.validation?.minMilestones,
       },
+      visibleWhen: field.visibleWhen,
     } as ApplicationQuestion;
   });
 }

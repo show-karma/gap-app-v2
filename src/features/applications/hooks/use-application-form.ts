@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useCallback, useEffect, useMemo } from "react";
-import { useForm } from "react-hook-form";
+import { type Resolver, useForm } from "react-hook-form";
 import type { ApplicationQuestion } from "@/types/whitelabel-entities";
 import { buildDynamicSchema } from "../lib/zod-schema-builder";
 import type { ApplicationFormData } from "../types";
@@ -15,7 +15,15 @@ export function useApplicationForm(
   questions: ApplicationQuestion[],
   options?: UseApplicationFormOptions
 ) {
-  const schema = useMemo(() => buildDynamicSchema(questions), [questions]);
+  // The schema is rebuilt per validation run from the candidate values so
+  // conditionally hidden questions are excluded: a hidden required field can
+  // never block submission, and (since z.object strips unknown keys) hidden
+  // values never reach the parsed submit payload.
+  const resolver = useMemo<Resolver<ApplicationFormData>>(
+    () => (values, context, options) =>
+      zodResolver(buildDynamicSchema(questions, values))(values, context, options),
+    [questions]
+  );
 
   const {
     control,
@@ -32,7 +40,7 @@ export function useApplicationForm(
     reset,
     watch,
   } = useForm<ApplicationFormData>({
-    resolver: zodResolver(schema),
+    resolver,
     defaultValues: options?.initialData || {},
     // mode: 'onSubmit' — RHF's useFieldArray has an internal effect that
     // fires the resolver on every append/remove whenever mode != 'onSubmit',

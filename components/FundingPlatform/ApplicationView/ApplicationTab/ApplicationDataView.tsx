@@ -10,11 +10,13 @@ import {
   lookupMilestoneStatus,
 } from "@/src/features/applications/lib/milestone-status";
 import type {
+  IFormField,
   IFundingApplication,
   IMilestoneData,
   ProgramWithFormSchema,
 } from "@/types/funding-platform";
 import { createFieldLabelsMap, createFieldTypeMap } from "@/utilities/form-schema-helpers";
+import { evaluateVisibleFields } from "@/utilities/form-visibility/evaluate-field-visibility";
 import { formatDate } from "@/utilities/formatDate";
 import { formatMilestoneAmount } from "@/utilities/formatMilestoneAmount";
 import { PROJECT_UID_REGEX } from "@/utilities/validation";
@@ -162,6 +164,27 @@ export const ApplicationDataView: FC<ApplicationDataViewProps> = ({
   };
 
   const { applicationData } = application;
+
+  // Conditional fields whose branch was never shown to the applicant render
+  // as an explicit "Not shown" row, so reviewers can tell a skipped branch
+  // apart from a question left blank.
+  const hiddenConditionalLabels = useMemo(() => {
+    const fields = (formSchema as { fields?: (IFormField & { deleted?: boolean })[] } | undefined)
+      ?.fields;
+    if (!Array.isArray(fields)) return [];
+    const activeFields = fields.filter((field) => !field.deleted);
+    const data = applicationData ?? {};
+    const visibleIds = evaluateVisibleFields(
+      activeFields,
+      (field) => data[field.label ?? ""] ?? data[field.id]
+    );
+    return activeFields
+      .filter(
+        (field) => field.visibleWhen && field.type !== "section_header" && !visibleIds.has(field.id)
+      )
+      .map((field) => field.label || field.id);
+  }, [formSchema, applicationData]);
+
   const dataToRender = useMemo(() => {
     if (!excludeMilestones || !applicationData) return applicationData;
     return Object.fromEntries(
@@ -192,6 +215,19 @@ export const ApplicationDataView: FC<ApplicationDataViewProps> = ({
           </dt>
           <dd className="text-base text-gray-900 dark:text-gray-100">
             {renderFieldValue(value, key)}
+          </dd>
+        </div>
+      ))}
+      {hiddenConditionalLabels.map((label) => (
+        <div
+          key={`hidden-${label}`}
+          className="border-b border-gray-100 dark:border-gray-700 pb-5 last:border-b-0"
+        >
+          <dt className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
+            {label}
+          </dt>
+          <dd className="text-sm italic text-gray-400 dark:text-gray-500">
+            Not shown (conditional question — the applicant&apos;s answers skipped this branch)
           </dd>
         </div>
       ))}

@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { Button } from "@/components/Utilities/Button";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import type { FormSchema } from "@/types/question-builder";
+import { evaluateVisibleFields } from "@/utilities/form-visibility/evaluate-field-visibility";
 
 interface QuestionFormRendererProps {
   schema: FormSchema;
@@ -22,8 +23,18 @@ export function QuestionFormRenderer({
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors },
   } = useForm();
+
+  // Live conditional visibility so operators can walk through branches in
+  // the preview. Whole-form watch is acceptable here — the preview is a
+  // low-traffic builder surface.
+  const formValues = watch();
+  const visibleFieldIds = evaluateVisibleFields(
+    schema.fields || [],
+    (field) => formValues[field.id]
+  );
 
   const onFormSubmit = (data: Record<string, any>) => {
     onSubmit?.(data);
@@ -318,6 +329,9 @@ export function QuestionFormRenderer({
 
       <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-6">
         {(schema.fields || []).map((field) => {
+          if (!visibleFieldIds.has(field.id)) {
+            return null;
+          }
           if (field.type === "section_header") {
             return (
               <div
