@@ -41,7 +41,8 @@ export const MessageResponse = memo(
       />
     );
   },
-  (prevProps, nextProps) => prevProps.children === nextProps.children
+  (prevProps, nextProps) =>
+    prevProps.children === nextProps.children && prevProps.mode === nextProps.mode
 );
 
 MessageResponse.displayName = "MessageResponse";

@@ -136,7 +136,9 @@ export const ProjectNavigation = ({
             key={tab.name}
             href={tab.href}
             aria-label={
-              tab.name === "Funding" && grantsLength ? `Funding (${grantsLength})` : undefined
+              tab.name === "Funding" && grantsLength
+                ? `Funding (${formatCurrency(grantsLength)})`
+                : undefined
             }
             className={cn(
               "whitespace-nowrap border-b-2 pb-2 text-base flex flex-row gap-2 items-center",

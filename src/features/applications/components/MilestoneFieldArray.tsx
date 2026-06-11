@@ -63,18 +63,16 @@ export const MilestoneFieldArray: React.FC<MilestoneFieldArrayProps> = ({
 
         return (
           <fieldset className="space-y-4 border-0 p-0 m-0" data-testid="milestones-container">
-            <div className="flex flex-col gap-2">
-              <legend className="text-sm font-medium leading-none">
-                {question.label}
-                {question.required && <span className="text-destructive ml-1">*</span>}
-              </legend>
-              {question.description && (
-                <MarkdownPreview
-                  source={question.description}
-                  className="text-sm text-zinc-500 dark:text-zinc-400"
-                />
-              )}
-            </div>
+            <legend className="text-sm font-medium leading-none">
+              {question.label}
+              {question.required && <span className="text-destructive ml-1">*</span>}
+            </legend>
+            {question.description && (
+              <MarkdownPreview
+                source={question.description}
+                className="text-sm text-zinc-500 dark:text-zinc-400"
+              />
+            )}
 
             <div className="space-y-4" data-testid="milestones-list">
               {fields.map((field, index) => (

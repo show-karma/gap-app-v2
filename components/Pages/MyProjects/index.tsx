@@ -162,15 +162,13 @@ export default function MyProjects() {
                           <div className="px-5 flex flex-col gap-1 flex-1 h-full">
                             <div className="line-clamp-2 text-base font-normal ">
                               <MarkdownPreview
+                                variant="excerpt"
                                 source={card.details?.description || ""}
                                 style={{
                                   backgroundColor: "transparent",
                                   color: currentTheme === "dark" ? "white" : "rgb(71, 85, 105)",
                                   width: "100%",
                                   fontSize: "16px",
-                                }}
-                                components={{
-                                  a: ({ children, href }) => <span>{children}</span>,
                                 }}
                               />
                             </div>

@@ -9,6 +9,9 @@
  *            unlabeled combobox button otherwise).
  *   - #1238: TokenSelector must not derive its id from Math.random (breaks the
  *            label/select association and SSR hydration); it must use useId.
+ *   - #1516: the milestone <fieldset>'s <legend> must be its direct first child
+ *            so it acts as the group's accessible name (a legend nested inside a
+ *            wrapper div is treated as a generic element and labels nothing).
  */
 
 import { readFileSync } from "node:fs";
@@ -58,6 +61,23 @@ describe("filter select labels (#1374)", () => {
         `A <SelectTrigger is missing aria-label/aria-labelledby: ${triggerProps.trim().slice(0, 80)}`
       ).toBe(true);
     }
+  });
+});
+
+describe("milestone fieldset legend (#1516)", () => {
+  it("legend is the direct first child of the fieldset so it names the group", () => {
+    const source = read("src/features/applications/components/MilestoneFieldArray.tsx");
+
+    // Grab the opening <fieldset ...> tag and the first non-whitespace tag that
+    // follows it. That tag must be <legend; anything else (e.g. a wrapper
+    // <div) demotes the legend to a generic element with no labelling role.
+    const fieldsetMatch = source.match(/<fieldset[^>]*>\s*</);
+    expect(fieldsetMatch, "no <fieldset> found").not.toBeNull();
+
+    const afterFieldset = source.slice(
+      (fieldsetMatch?.index ?? 0) + (fieldsetMatch?.[0]?.length ?? 0) - 1
+    );
+    expect(afterFieldset.trimStart().startsWith("<legend")).toBe(true);
   });
 });
 
