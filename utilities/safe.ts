@@ -1,9 +1,35 @@
-import SafeApiKit from "@safe-global/api-kit";
-import Safe from "@safe-global/protocol-kit";
+import type SafeApiKit from "@safe-global/api-kit";
+import type Safe from "@safe-global/protocol-kit";
 import { encodeFunctionData, erc20Abi, formatUnits, parseUnits, type WalletClient } from "viem";
 import { NATIVE_TOKENS, NETWORKS, type SupportedChainId } from "../config/tokens";
 import type { DisbursementRecipient } from "../types/disbursement";
 import { getRPCClient, getRPCUrlByChainId } from "./rpcClient";
+
+/**
+ * The Safe SDK ships deep CJS/ESM class hierarchies (embedded ethers v6) that are a known
+ * trigger for "Class extends value undefined is not a constructor" chunk-order crashes when
+ * webpack splits them across vendor chunks. Importing them lazily keeps the heavyweight Web3
+ * transaction stack out of any bundle that does not actually open a payout flow, and shields
+ * the modules that DO use it from the same vendor-chunk initialization hazard.
+ *
+ * The import promise is memoized at module scope so the SDK is only evaluated once per session.
+ */
+let safeProtocolKitPromise: Promise<typeof Safe> | null = null;
+let safeApiKitPromise: Promise<typeof SafeApiKit> | null = null;
+
+async function loadSafeProtocolKit(): Promise<typeof Safe> {
+  if (!safeProtocolKitPromise) {
+    safeProtocolKitPromise = import("@safe-global/protocol-kit").then((mod) => mod.default);
+  }
+  return safeProtocolKitPromise;
+}
+
+async function loadSafeApiKit(): Promise<typeof SafeApiKit> {
+  if (!safeApiKitPromise) {
+    safeApiKitPromise = import("@safe-global/api-kit").then((mod) => mod.default);
+  }
+  return safeApiKitPromise;
+}
 
 /**
  * Transaction status returned from Safe Transaction Service
@@ -73,7 +99,7 @@ export async function isSafeOwner(
     const rpcUrl = getRpcUrl(chainId);
 
     // Initialize Safe SDK with RPC URL
-    const safe = await Safe.init({
+    const safe = await (await loadSafeProtocolKit()).init({
       provider: rpcUrl,
       safeAddress,
     });
@@ -167,7 +193,7 @@ export async function isSafeIndexed(
   }
 
   try {
-    const apiKit = new SafeApiKit({
+    const apiKit = new (await loadSafeApiKit())({
       chainId: BigInt(chainId),
       txServiceUrl,
     });
@@ -289,7 +315,7 @@ export async function getSafeInfo(
   try {
     const rpcUrl = getRpcUrl(chainId);
 
-    const safe = await Safe.init({
+    const safe = await (await loadSafeProtocolKit()).init({
       provider: rpcUrl,
       safeAddress,
     });
@@ -330,7 +356,7 @@ export async function prepareDisbursementTransaction(
     const rpcUrl = getRpcUrl(chainId);
 
     // Initialize Safe SDK
-    const safe = await Safe.init({
+    const safe = await (await loadSafeProtocolKit()).init({
       provider: rpcUrl,
       safeAddress,
     });
@@ -546,13 +572,13 @@ export async function signAndProposeDisbursement(
     const provider = createEthereumProvider(walletClient, chainId);
     const signerAddress = walletClient.account.address;
 
-    const safe = await Safe.init({
+    const safe = await (await loadSafeProtocolKit()).init({
       provider,
       signer: signerAddress,
       safeAddress,
     });
 
-    const apiKit = new SafeApiKit({
+    const apiKit = new (await loadSafeApiKit())({
       chainId: BigInt(chainId),
       txServiceUrl,
     });
@@ -743,7 +769,7 @@ export async function getTransactionStatus(
   }
 
   try {
-    const apiKit = new SafeApiKit({
+    const apiKit = new (await loadSafeApiKit())({
       chainId: BigInt(chainId),
       txServiceUrl,
     });
@@ -855,7 +881,7 @@ export async function estimateGasFee(
   }
 
   // Initialize Safe SDK for transaction preparation
-  const safe = await Safe.init({
+  const safe = await (await loadSafeProtocolKit()).init({
     provider: rpcUrl,
     safeAddress,
   });

@@ -5,19 +5,21 @@ import { formatUnits, isAddress } from "viem";
 import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
 import { useCommunityDetails } from "@/hooks/communities/useCommunityDetails";
 import { useKycBatchStatuses, useKycConfig } from "@/hooks/useKycStatus";
-import type { PayoutDisbursement } from "@/src/features/payout-disbursement";
+import { getPaidAllocationIds } from "@/src/features/payout-disbursement/components/MilestoneSelectionStep";
 import {
-  type AggregatedDisbursementStatus,
-  type CommunityPayoutAgreementInfo,
-  type CommunityPayoutInvoiceInfo,
-  type CommunityPayoutsOptions,
-  type CommunityPayoutsSorting,
-  getPaidAllocationIds,
-  type PayoutGrantConfig,
-  type TokenTotal,
   useCommunityPayouts,
   usePayoutConfigsByCommunity,
-} from "@/src/features/payout-disbursement";
+} from "@/src/features/payout-disbursement/hooks/use-payout-disbursement";
+import type {
+  AggregatedDisbursementStatus,
+  CommunityPayoutAgreementInfo,
+  CommunityPayoutInvoiceInfo,
+  CommunityPayoutsOptions,
+  CommunityPayoutsSorting,
+  PayoutDisbursement,
+  PayoutGrantConfig,
+  TokenTotal,
+} from "@/src/features/payout-disbursement/types/payout-disbursement";
 import type { TableRow } from "./ControlCenterTable";
 
 // ─── Types ──────────────────────────────────────────────────────────────────

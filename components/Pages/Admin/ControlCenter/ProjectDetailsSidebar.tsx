@@ -25,22 +25,26 @@ import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { useCan } from "@/src/core/rbac/context/permission-context";
 import { Permission } from "@/src/core/rbac/types";
 import {
-  type CommunityPayoutAgreementInfo,
-  type CommunityPayoutInvoiceInfo,
-  fromSmallestUnit,
-  type MilestoneAllocation,
-  MilestoneLifecycleStatus,
   PayoutConfigurationContent,
   type PayoutConfigurationContentRef,
-  type PayoutDisbursement,
-  PayoutDisbursementStatus,
-  PayoutHistoryContent,
-  RecordPaymentDialog,
-  type TokenTotal,
+} from "@/src/features/payout-disbursement/components/PayoutConfigurationContent";
+import { PayoutHistoryContent } from "@/src/features/payout-disbursement/components/PayoutHistoryContent";
+import { RecordPaymentDialog } from "@/src/features/payout-disbursement/components/RecordPaymentDialog";
+import {
   useDeleteDisbursementByMilestone,
   useSaveMilestoneInvoices,
   useToggleAgreement,
-} from "@/src/features/payout-disbursement";
+} from "@/src/features/payout-disbursement/hooks/use-payout-disbursement";
+import {
+  type CommunityPayoutAgreementInfo,
+  type CommunityPayoutInvoiceInfo,
+  type MilestoneAllocation,
+  MilestoneLifecycleStatus,
+  type PayoutDisbursement,
+  PayoutDisbursementStatus,
+  type TokenTotal,
+} from "@/src/features/payout-disbursement/types/payout-disbursement";
+import { fromSmallestUnit } from "@/src/features/payout-disbursement/utils/format-token-amount";
 import type { KycStatusResponse } from "@/types/kyc";
 import { getChainNameById } from "@/utilities/network";
 import { PAGES } from "@/utilities/pages";

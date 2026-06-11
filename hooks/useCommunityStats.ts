@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { errorManager } from "@/components/Utilities/errorManager";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
+import { QUERY_KEYS } from "@/utilities/queryKeys";
 
 interface CommunityStatsResponse {
   activeCommunities: number;
@@ -18,7 +19,7 @@ interface SummaryStats {
 
 export const useCommunityStats = () => {
   return useQuery<SummaryStats[], Error>({
-    queryKey: ["community-stats"],
+    queryKey: QUERY_KEYS.PLATFORM.GLOBAL_STATS,
     queryFn: async (): Promise<SummaryStats[]> => {
       try {
         const endpoint = INDEXER.COMMUNITY.GLOBAL_STATS();

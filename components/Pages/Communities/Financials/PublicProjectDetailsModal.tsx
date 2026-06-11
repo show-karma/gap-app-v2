@@ -18,19 +18,21 @@ import {
 } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
+import { TokenBreakdown } from "@/src/features/payout-disbursement/components/TokenBreakdown";
 import {
   type CommunityPayoutAgreementInfo,
   type CommunityPayoutInvoiceInfo,
-  formatDisplayAmount,
-  fromSmallestUnit,
   type MilestoneAllocation,
   MilestoneLifecycleStatus,
   type MilestonePaymentStatus,
   type PayoutDisbursement,
   PayoutDisbursementStatus,
-  TokenBreakdown,
   type TokenTotal,
-} from "@/src/features/payout-disbursement";
+} from "@/src/features/payout-disbursement/types/payout-disbursement";
+import {
+  formatDisplayAmount,
+  fromSmallestUnit,
+} from "@/src/features/payout-disbursement/utils/format-token-amount";
 import { formatAddressForDisplay } from "@/utilities/donations/helpers";
 import { formatDate } from "@/utilities/formatDate";
 import { getChainNameById } from "@/utilities/network";

@@ -13,9 +13,11 @@ export async function GET(
   context: { params: Promise<{ communityId: string }> }
 ) {
   const communityId = (await context.params).communityId;
+  // getCommunityStats now rejects on indexer failure; degrade the social card gracefully
+  // (render without the stats column) rather than letting OG generation throw a 500.
   const [community, communityStats] = await Promise.all([
     getCommunityDetails(communityId),
-    getCommunityStats(communityId),
+    getCommunityStats(communityId).catch(() => null),
   ]);
 
   if (!community) {
@@ -48,21 +50,23 @@ export async function GET(
     );
   }
 
-  const grants = communityStats.totalGrants;
-  const projects = communityStats.totalProjects;
+  const grants = communityStats?.totalGrants ?? 0;
+  const projects = communityStats?.totalProjects ?? 0;
 
-  const stats = [
-    {
-      title: pluralize("Grant", grants),
-      value: grants || 0,
-      icon: "https://karmahq.xyz/icons/funding-lg.png",
-    },
-    {
-      title: pluralize("Project", projects),
-      value: projects || 0,
-      icon: "https://karmahq.xyz/icons/projects.png",
-    },
-  ];
+  const stats = communityStats
+    ? [
+        {
+          title: pluralize("Grant", grants),
+          value: grants,
+          icon: "https://karmahq.xyz/icons/funding-lg.png",
+        },
+        {
+          title: pluralize("Project", projects),
+          value: projects,
+          icon: "https://karmahq.xyz/icons/projects.png",
+        },
+      ]
+    : [];
 
   return new ImageResponse(
     <div

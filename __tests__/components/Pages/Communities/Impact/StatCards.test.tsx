@@ -184,8 +184,12 @@ describe("StatCards", () => {
   });
 
   describe("CommunityStatCards", () => {
+    // "Total Projects" now reads from the canonical community-stats query (single source of
+    // truth) instead of the Zustand store, so the query data carries totalProjects.
     const mockCommunityStatsData = {
+      totalProjects: 42,
       totalGrants: 50,
+      totalMilestones: 30,
       projectUpdates: 200,
       projectUpdatesBreakdown: {
         projectMilestones: 30,
@@ -202,6 +206,9 @@ describe("StatCards", () => {
         data: mockCommunityStatsData,
         isLoading: false,
         error: null,
+        isError: false,
+        refetch: vi.fn(),
+        isFetching: false,
       } as any);
     });
 
@@ -214,37 +221,21 @@ describe("StatCards", () => {
       expect(screen.getAllByText("Project Updates").length).toBeGreaterThanOrEqual(1);
     });
 
-    it("should display values from community store", () => {
-      mockUseCommunityStore.mockReturnValue({
-        totalProjects: 42,
-        totalGrants: 15,
-        totalMilestones: 30,
-        isLoadingFilters: false,
-      } as any);
-
+    it("should display Total Projects from the canonical community-stats query", () => {
       render(<CommunityStatCards />, { wrapper });
 
+      // 42 comes from the query data, NOT the Zustand store
       expect(screen.getByText("42")).toBeInTheDocument();
     });
 
-    it("should show skeletons when loading filters", () => {
-      mockUseCommunityStore.mockReturnValue({
-        totalProjects: 10,
-        totalGrants: 5,
-        totalMilestones: 20,
-        isLoadingFilters: true,
-      } as any);
-
-      render(<CommunityStatCards />, { wrapper });
-
-      expect(screen.getAllByTestId("skeleton").length).toBeGreaterThanOrEqual(1);
-    });
-
-    it("should show skeletons when query is loading", () => {
+    it("should show skeletons when the stats query is loading", () => {
       mockUseQuery.mockReturnValue({
         data: undefined,
         isLoading: true,
         error: null,
+        isError: false,
+        refetch: vi.fn(),
+        isFetching: true,
       } as any);
 
       render(<CommunityStatCards />, { wrapper });
@@ -252,25 +243,24 @@ describe("StatCards", () => {
       expect(screen.getAllByTestId("skeleton").length).toBeGreaterThanOrEqual(1);
     });
 
-    it("should show dash for zero or undefined values", () => {
-      mockUseCommunityStore.mockReturnValue({
-        totalProjects: 0,
-        totalGrants: 0,
-        totalMilestones: 0,
-        isLoadingFilters: false,
-      } as any);
-
+    it("should show dash for undefined values but render a real zero honestly", () => {
       mockUseQuery.mockReturnValue({
         data: {
+          totalProjects: 0,
           totalGrants: 0,
           projectUpdates: 0,
         },
         isLoading: false,
         error: null,
+        isError: false,
+        refetch: vi.fn(),
+        isFetching: false,
       } as any);
 
       render(<CommunityStatCards />, { wrapper });
 
+      // Total Projects is a genuine zero -> "0", grants/updates fall back to "-"
+      expect(screen.getByText("0")).toBeInTheDocument();
       const dashes = screen.getAllByText("-");
       expect(dashes.length).toBeGreaterThanOrEqual(1);
     });

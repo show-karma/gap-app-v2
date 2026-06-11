@@ -24,25 +24,27 @@ import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAc
 import { useCommunityDetails } from "@/hooks/communities/useCommunityDetails";
 import { useAuth } from "@/hooks/useAuth";
 import { useKycBatchStatuses, useKycConfig } from "@/hooks/useKycStatus";
+import { CreateDisbursementModal } from "@/src/features/payout-disbursement/components/CreateDisbursementModal";
+import { getPaidAllocationIds } from "@/src/features/payout-disbursement/components/MilestoneSelectionStep";
+import { PayoutConfigurationModal } from "@/src/features/payout-disbursement/components/PayoutConfigurationModal";
+import { PayoutHistoryDrawer } from "@/src/features/payout-disbursement/components/PayoutHistoryDrawer";
+import { TokenBreakdown } from "@/src/features/payout-disbursement/components/TokenBreakdown";
+import {
+  useCommunityPayouts,
+  usePayoutConfigsByCommunity,
+  useSavePayoutConfig,
+} from "@/src/features/payout-disbursement/hooks/use-payout-disbursement";
 import {
   AggregatedDisbursementStatus,
   type CommunityPayoutsOptions,
   type CommunityPayoutsSorting,
-  CreateDisbursementModal,
   type GrantDisbursementInfo,
-  getPaidAllocationIds,
   type PayoutConfigItem,
-  PayoutConfigurationModal,
   PayoutDisbursementStatus,
   type PayoutGrantConfig,
-  PayoutHistoryDrawer,
   type SavePayoutConfigRequest,
-  TokenBreakdown,
   type TokenTotal,
-  useCommunityPayouts,
-  usePayoutConfigsByCommunity,
-  useSavePayoutConfig,
-} from "@/src/features/payout-disbursement";
+} from "@/src/features/payout-disbursement/types/payout-disbursement";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";

@@ -4,8 +4,8 @@ import Image from "next/image";
 import { useState } from "react";
 import EthereumAddressToProfileName from "@/components/EthereumAddressToProfileName";
 import { useMilestoneImpactAnswers } from "@/hooks/useMilestoneImpactAnswers";
-import { MilestoneLifecycleStatus } from "@/src/features/payout-disbursement";
 import { useGrantInvoiceRequired } from "@/src/features/payout-disbursement/hooks/use-payout-disbursement";
+import { MilestoneLifecycleStatus } from "@/src/features/payout-disbursement/types/payout-disbursement";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
 import { formatDate } from "@/utilities/formatDate";
 import {

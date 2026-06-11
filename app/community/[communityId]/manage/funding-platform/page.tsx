@@ -89,6 +89,16 @@ function FundingPlatformContent() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [togglingPrograms, setTogglingPrograms] = useState<Set<string>>(new Set());
 
+  // In whitelabel mode the apply links should stay on the current origin. Resolve it in an
+  // effect rather than reading `window.location.origin` inline during render to avoid the
+  // SSR window-access hazard (window is undefined on the server).
+  const [whitelabelOrigin, setWhitelabelOrigin] = useState<string | undefined>(undefined);
+  useEffect(() => {
+    if (isWhitelabel && typeof window !== "undefined") {
+      setWhitelabelOrigin(window.location.origin);
+    }
+  }, [isWhitelabel]);
+
   // Auto-open create modal when navigated with ?create=true
   const createParam = searchParams.get("create");
   useEffect(() => {
@@ -662,11 +672,7 @@ function FundingPlatformContent() {
                       {isAdmin ? "Settings" : "Config"}
                     </Link>
                     <Link
-                      href={getProgramApplyUrl(
-                        communityId,
-                        program.programId,
-                        isWhitelabel ? window.location.origin : undefined
-                      )}
+                      href={getProgramApplyUrl(communityId, program.programId, whitelabelOrigin)}
                       target="_blank"
                       rel="noopener noreferrer"
                       title="View public application form"

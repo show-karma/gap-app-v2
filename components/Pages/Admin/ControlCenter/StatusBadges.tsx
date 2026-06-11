@@ -5,7 +5,7 @@ import {
   type CommunityPayoutAgreementInfo,
   type CommunityPayoutInvoiceInfo,
   MilestoneLifecycleStatus,
-} from "@/src/features/payout-disbursement";
+} from "@/src/features/payout-disbursement/types/payout-disbursement";
 import { formatDate } from "@/utilities/formatDate";
 import { cn } from "@/utilities/tailwind";
 

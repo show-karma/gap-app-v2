@@ -79,6 +79,14 @@ export const QUERY_KEYS = {
     CONTRACT_OWNER_BASE: ["contract-owner"] as const,
     PERMISSIONS_BASE: ["permissions"] as const,
   },
+  /**
+   * Platform-wide (cross-community) aggregate stats. Kept under a distinct prefix so it
+   * never collides with per-community stats (QUERY_KEYS.COMMUNITY.STATS), which previously
+   * shared the bare ["community-stats"] key and risked cross-contaminating invalidations.
+   */
+  PLATFORM: {
+    GLOBAL_STATS: ["platform-global-stats"] as const,
+  },
   MILESTONES: {
     PROJECT_GRANT_MILESTONES: (projectId: string, programId: string) =>
       ["project-grant-milestones", projectId, programId] as const,
@@ -113,6 +121,7 @@ export const QUERY_KEYS = {
     DETAILS: (communityUIDorSlug?: string) => ["communityDetails", communityUIDorSlug] as const,
     DETAILS_V2: (communityUIDorSlug?: string) =>
       ["community-details-v2", communityUIDorSlug] as const,
+    STATS: (communityUIDorSlug?: string) => ["community-stats", communityUIDorSlug] as const,
     PROJECTS: (slug: string, options?: unknown) =>
       ["community-projects-v2", slug, options] as const,
     GRANTS: (communitySlug: string) => ["community-grants", communitySlug] as const,

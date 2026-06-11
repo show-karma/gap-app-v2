@@ -1,5 +1,4 @@
 "use client";
-import { useQuery } from "@tanstack/react-query";
 import { ChevronLeftIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -9,12 +8,12 @@ import { HeaderStatsCards } from "@/components/Community/HeaderStatsCards";
 import { CommunityPageNavigator } from "@/components/Pages/Communities/CommunityPageNavigator";
 import { BorderBeam } from "@/components/ui/border-beam";
 import { useDominantColor } from "@/hooks/useDominantColor";
+import { useCommunityStats } from "@/hooks/v2/useCommunityStats";
 import { layoutTheme } from "@/src/helper/theme";
 import { useAgentChatStore } from "@/store/agentChat";
 import type { Community } from "@/types/v2/community";
 import { communityColors } from "@/utilities/communityColors";
 import { PAGES } from "@/utilities/pages";
-import { getCommunityStats } from "@/utilities/queries/v2/getCommunityData";
 import { cn } from "@/utilities/tailwind";
 import { useWhitelabel } from "@/utilities/whitelabel-context";
 
@@ -151,16 +150,11 @@ const NormalCommunityHeader = ({ community }: { community: Community }) => {
   const description = community?.details?.description ?? "";
 
   const {
-    data: communityStats,
+    stats: communityStats,
     isLoading: isStatsLoading,
     isError: isStatsError,
     refetch: refetchStats,
-  } = useQuery({
-    queryKey: ["community-stats", communityId],
-    queryFn: () => getCommunityStats(communityId),
-    enabled: !!communityId,
-    staleTime: 5 * 60 * 1000,
-  });
+  } = useCommunityStats(communityId);
 
   const projectsCount = communityStats?.totalProjects;
   const breakdown = communityStats?.projectUpdatesBreakdown;
