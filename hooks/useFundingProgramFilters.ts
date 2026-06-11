@@ -1,7 +1,6 @@
 "use client";
 
 import { useQueryState } from "nuqs";
-import { useCallback } from "react";
 
 export type FundingProgramStatusFilter = "all" | "enabled" | "disabled";
 
@@ -28,12 +27,13 @@ interface FundingProgramFiltersState {
  * by nuqs keeps the input responsive while the URL write is throttled.
  */
 export function useFundingProgramFilters(): FundingProgramFiltersState {
-  const [search, setSearchQuery] = useQueryState("search", {
+  const [search, setSearch] = useQueryState("search", {
     defaultValue: "",
+    clearOnDefault: true,
     throttleMs: 300,
   });
 
-  const [statusRaw, setStatusQuery] = useQueryState<FundingProgramStatusFilter>("status", {
+  const [statusRaw, setStatus] = useQueryState<FundingProgramStatusFilter>("status", {
     defaultValue: "all",
     clearOnDefault: true,
     serialize: (value) => (isValidStatus(value) ? value : ""),
@@ -41,20 +41,6 @@ export function useFundingProgramFilters(): FundingProgramFiltersState {
   });
 
   const status = isValidStatus(statusRaw) ? statusRaw : "all";
-
-  const setSearch = useCallback(
-    (value: string) => {
-      setSearchQuery(value);
-    },
-    [setSearchQuery]
-  );
-
-  const setStatus = useCallback(
-    (value: FundingProgramStatusFilter) => {
-      setStatusQuery(value);
-    },
-    [setStatusQuery]
-  );
 
   return {
     search,

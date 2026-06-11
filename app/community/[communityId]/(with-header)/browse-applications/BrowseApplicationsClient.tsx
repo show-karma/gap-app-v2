@@ -318,47 +318,25 @@ export function BrowseApplicationsClient({ communityId }: BrowseApplicationsClie
   // The query string is the single source of truth for these filters. nuqs
   // writes through history.replaceState (no App Router navigation), so updating
   // a filter never races or cancels a Link click (issue #1547).
-  const [selectedProgramId, setSelectedProgramIdQuery] = useQueryState("programId", {
+  const [selectedProgramId, setSelectedProgramId] = useQueryState("programId", {
     defaultValue: "",
     clearOnDefault: true,
   });
-  const [statusFilterRaw, setStatusFilterQuery] = useQueryState<ApplicationStatus | "all">(
-    "status",
-    {
-      defaultValue: "all",
-      clearOnDefault: true,
-      serialize: (value) => (isFilterableStatus(value) ? value : ""),
-      parse: (value) => (isFilterableStatus(value) ? value : "all"),
-    }
-  );
+  const [statusFilterRaw, setStatusFilter] = useQueryState<ApplicationStatus | "all">("status", {
+    defaultValue: "all",
+    clearOnDefault: true,
+    serialize: (value) => (isFilterableStatus(value) ? value : ""),
+    parse: (value) => (isFilterableStatus(value) ? value : "all"),
+  });
   const statusFilter: ApplicationStatus | "all" = isFilterableStatus(statusFilterRaw)
     ? statusFilterRaw
     : "all";
-  const [searchInput, setSearchInputQuery] = useQueryState("search", {
+  const [searchInput, setSearchInput] = useQueryState("search", {
     defaultValue: "",
     clearOnDefault: true,
     throttleMs: 300,
   });
   const [debouncedSearch, setDebouncedSearch] = useState(searchInput);
-
-  const setSelectedProgramId = useCallback(
-    (value: string) => {
-      setSelectedProgramIdQuery(value);
-    },
-    [setSelectedProgramIdQuery]
-  );
-  const setStatusFilter = useCallback(
-    (value: ApplicationStatus | "all") => {
-      setStatusFilterQuery(value);
-    },
-    [setStatusFilterQuery]
-  );
-  const setSearchInput = useCallback(
-    (value: string) => {
-      setSearchInputQuery(value);
-    },
-    [setSearchInputQuery]
-  );
 
   // Debounce only the value that drives the API query; the URL write is already
   // throttled by nuqs and the input stays responsive via the optimistic value.
