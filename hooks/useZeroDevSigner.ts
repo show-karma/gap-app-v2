@@ -175,11 +175,13 @@ export function useZeroDevSigner(): UseZeroDevSignerResult {
 
   // Get the address that will be used for attestations.
   // Email/Google/Farcaster users use the embedded wallet; wallet-login users use
-  // their linked external wallet. During embedded hydration this is null (never a
+  // their linked external wallet. Embedded-mode users without an embedded wallet
+  // (Farcaster / hybrid accounts) fall back to their LINKED external wallet,
+  // mirroring getAttestationSigner. During hydration this is null (never a
   // foreign address) because resolveSigningWallets only returns linked wallets.
   const attestationAddress = useMemo(() => {
     if (signingMode === "embedded") {
-      return embeddedWallet?.address ?? null;
+      return embeddedWallet?.address ?? externalWallet?.address ?? null;
     }
     if (signingMode === "external") {
       return externalWallet?.address ?? null;
@@ -270,10 +272,16 @@ export function useZeroDevSigner(): UseZeroDevSignerResult {
       }
 
       // Hard gate: an embedded-mode user (email/Google/Farcaster login) must
-      // NEVER reach the external-wallet path. A connected external wallet at
-      // this point is a stale, unlinked MetaMask — signing with it would prompt
-      // for someone else's account (issue #1574). Fail explicitly instead.
-      if (signingMode === "embedded") {
+      // NEVER reach the external-wallet path with an UNLINKED wallet — signing
+      // with a stale foreign MetaMask would prompt for someone else's account
+      // (issue #1574). A non-null `externalWallet` here is, by construction of
+      // resolveSigningWallets, LINKED to the authenticated user, so letting it
+      // fall through to Case 3 still satisfies the invariant. This keeps
+      // signing possible for embedded-mode users who have no embedded wallet
+      // at all: Farcaster users (their linked ownerAddress suppresses
+      // embedded-wallet creation in useEnsureEmbeddedWallet) and hybrid
+      // email+wallet accounts.
+      if (signingMode === "embedded" && !externalWallet) {
         if (!embeddedWallet) {
           // Embedded wallet hasn't hydrated into useWallets() yet. Truthful,
           // retryable error rather than a foreign MetaMask prompt.

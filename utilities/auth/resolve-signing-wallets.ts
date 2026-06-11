@@ -39,8 +39,11 @@ export interface ResolvedSigningWallets<T extends ResolvableWallet> {
  * Check if the user logged in with email/Google/Farcaster (not an external
  * wallet). These users sign with the embedded wallet via gasless transactions.
  *
- * Farcaster users get an embedded wallet via createOnLogin: "users-without-wallets",
- * so they belong in the embedded signing mode too.
+ * Farcaster users belong in the embedded signing mode too, but they may never
+ * get an embedded wallet: their linked ownerAddress counts as a linked wallet,
+ * which suppresses embedded-wallet creation in useEnsureEmbeddedWallet
+ * (createOnLogin is "off"). Consumers must therefore fall back to the LINKED
+ * external wallet when no embedded wallet exists in embedded mode.
  *
  * Exported here (rather than living privately in useZeroDevSigner) so identity
  * resolution and signer resolution share one definition and can never diverge.

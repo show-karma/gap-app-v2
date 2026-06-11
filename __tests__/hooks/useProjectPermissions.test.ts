@@ -372,6 +372,110 @@ describe("useProjectPermissions", () => {
     });
   });
 
+  describe("placeholder data scoping", () => {
+    const OWNER_WALLET = "0x1234567890abcdef1234567890abcdef12345678";
+
+    const projectA = {
+      uid: "project-a-uid",
+      details: { slug: "project-a" },
+      chainID: 10,
+      owner: OWNER_WALLET,
+    };
+
+    const projectB = {
+      uid: "project-b-uid",
+      details: { slug: "project-b" },
+      chainID: 10,
+      owner: "0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB",
+    };
+
+    const mockUser = { linkedAccounts: [{ type: "wallet", address: OWNER_WALLET }] };
+
+    const baseSetup = {
+      authenticated: true,
+      isConnected: true,
+      address: OWNER_WALLET,
+      user: mockUser,
+      // rpcUrl null → resolves via the API-owner fallback, no on-chain calls
+      rpcUrl: null,
+      linkedWalletAddresses: [OWNER_WALLET],
+    };
+
+    it("does not carry project A's owner flag as placeholder onto project B", async () => {
+      setupMocks({
+        ...baseSetup,
+        project: projectA,
+        projectInstance: { chainID: 10 },
+        compareAllWalletsResult: true, // owner of project A
+      });
+
+      const wrapper = createWrapper();
+      const { result, rerender } = renderHook(() => useProjectPermissions(), { wrapper });
+
+      await waitFor(() => {
+        expect(result.current.isProjectOwner).toBe(true);
+      });
+
+      // Navigate to project B (not owned). While B's check is in flight, the
+      // previous result must NOT be served as placeholder — owner-only controls
+      // would flash on someone else's project.
+      setupMocks({
+        ...baseSetup,
+        project: projectB,
+        projectInstance: { chainID: 10 },
+        compareAllWalletsResult: false,
+      });
+      mockSetIsProjectOwner.mockClear();
+      rerender();
+
+      expect(result.current.isProjectOwner).toBe(false);
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
+      });
+      expect(result.current.isProjectOwner).toBe(false);
+      // The stale owner flag must never have been pushed into the global store
+      // for project B after the switch.
+      expect(mockSetIsProjectOwner).not.toHaveBeenCalledWith(true);
+    });
+
+    it("keeps the previous owner flag while only the wallets key changes for the SAME project", async () => {
+      setupMocks({
+        ...baseSetup,
+        project: projectA,
+        projectInstance: { chainID: 10 },
+        compareAllWalletsResult: true,
+      });
+
+      const wrapper = createWrapper();
+      const { result, rerender } = renderHook(() => useProjectPermissions(), { wrapper });
+
+      await waitFor(() => {
+        expect(result.current.isProjectOwner).toBe(true);
+      });
+      mockSetIsProjectOwner.mockClear();
+
+      // A newly linked wallet shifts walletsKey; same projectId/chainID. The
+      // previous result must be kept as placeholder so owner controls don't
+      // flicker off during the refetch.
+      const secondWallet = "0x9999999999999999999999999999999999999999";
+      setupMocks({
+        ...baseSetup,
+        user: {
+          linkedAccounts: [...mockUser.linkedAccounts, { type: "wallet", address: secondWallet }],
+        },
+        linkedWalletAddresses: [OWNER_WALLET, secondWallet],
+        project: projectA,
+        projectInstance: { chainID: 10 },
+        compareAllWalletsResult: true,
+      });
+      rerender();
+
+      expect(result.current.isProjectOwner).toBe(true);
+      expect(mockSetIsProjectOwner).not.toHaveBeenCalledWith(false);
+    });
+  });
+
   describe("multi-wallet admin", () => {
     const ADMIN_WALLET = "0x741e2cdff080bd42cd30cfd6cc4a8a0f46a80a84";
     const ACTIVE_WALLET = "0xbec2de31b27f04ea906c139b1c665bcdfd81a1aa";

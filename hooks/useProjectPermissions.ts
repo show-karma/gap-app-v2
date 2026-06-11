@@ -1,4 +1,4 @@
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 
 import { useEffect, useMemo } from "react";
 import { errorManager } from "@/components/Utilities/errorManager";
@@ -149,10 +149,20 @@ export const useProjectPermissions = () => {
     enabled: !!projectInstance && chainID !== null && !!isAuth && !!walletsKey,
     ...defaultQueryOptions,
     gcTime: 1 * 60 * 1000, // 1 minutes
-    // Keep showing the previous owner/admin result while a legitimate query-key
-    // change refetches (e.g. a newly linked wallet shifts walletsKey), instead of
-    // dropping isProjectOwner to false and flickering owner-only controls off.
-    placeholderData: keepPreviousData,
+    // Keep showing the previous owner/admin result while a wallet/auth-driven
+    // query-key change refetches for the SAME project (e.g. a newly linked
+    // wallet shifts walletsKey), instead of dropping isProjectOwner to false
+    // and flickering owner-only controls off. Scoped via the function form:
+    // results must never carry across projectId/chainID changes, or project
+    // A's owner flag would flash as a placeholder on project B (and leak into
+    // the global store via the effect below).
+    placeholderData: (previousData: ProjectPermissionsResult | undefined, previousQuery) => {
+      const previousKey = previousQuery?.queryKey;
+      // Key shape: ["project-permissions", walletsKey, projectId, chainID, isAuth]
+      const isSameProject =
+        !!previousKey && previousKey[2] === (projectId ?? null) && previousKey[3] === chainID;
+      return isSameProject ? previousData : undefined;
+    },
   });
 
   // Update permission states when data changes
