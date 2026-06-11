@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 
 import { useEffect, useMemo } from "react";
 import { errorManager } from "@/components/Utilities/errorManager";
@@ -149,6 +149,10 @@ export const useProjectPermissions = () => {
     enabled: !!projectInstance && chainID !== null && !!isAuth && !!walletsKey,
     ...defaultQueryOptions,
     gcTime: 1 * 60 * 1000, // 1 minutes
+    // Keep showing the previous owner/admin result while a legitimate query-key
+    // change refetches (e.g. a newly linked wallet shifts walletsKey), instead of
+    // dropping isProjectOwner to false and flickering owner-only controls off.
+    placeholderData: keepPreviousData,
   });
 
   // Update permission states when data changes
