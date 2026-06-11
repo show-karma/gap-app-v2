@@ -70,6 +70,24 @@ describe("zod-primitives", () => {
     it("accepts a normal value", () => {
       expect(optionalString().safeParse("hello").success).toBe(true);
     });
+
+    it("still accepts the empty string when min/max are supplied", () => {
+      const schema = optionalString({ min: 3, max: 5 });
+      expect(schema.safeParse("").success).toBe(true);
+      expect(schema.safeParse(undefined).success).toBe(true);
+    });
+
+    it("enforces min/max on non-empty values", () => {
+      const schema = optionalString({
+        min: 3,
+        max: 5,
+        minMessage: "Too short",
+        maxMessage: "Too long",
+      });
+      expect(firstError(schema.safeParse("ab"))).toBe("Too short");
+      expect(firstError(schema.safeParse("abcdef"))).toBe("Too long");
+      expect(schema.safeParse("abcd").success).toBe(true);
+    });
   });
 
   describe("requiredUrl", () => {
