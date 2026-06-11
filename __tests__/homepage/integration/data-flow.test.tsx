@@ -1,7 +1,7 @@
 /**
  * Homepage Data Flow Integration Tests
  * Tests content and data display on the funder-focused home page:
- * hero + a two-row "How Karma works" section (Donor Research + Foundations).
+ * hero + a two-row "How Karma works" section (Nonprofit Research + Foundations).
  *
  * Target: 10 tests
  * - Page Structure (5)
@@ -77,11 +77,11 @@ describe("Homepage Data Flow", () => {
       });
     });
 
-    it("should render the Donor Research row with its product pitch", async () => {
+    it("should render the Nonprofit Research row with its product pitch", async () => {
       renderWithProviders(await HomePage());
       await waitFor(() => {
         expect(
-          screen.getByText(/Donor Research: a research brief for every gift/i)
+          screen.getByText(/Nonprofit Research: a research brief for every gift/i)
         ).toBeInTheDocument();
       });
     });
