@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { getCommunityCategories } from "@/utilities/queries/v2/community";
+import { getCommunityCategoriesOrThrow } from "@/utilities/queries/v2/community";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
 
 interface UseCommunityCategories {
@@ -15,16 +15,20 @@ interface UseCommunityCategories {
  * @returns React Query result with categories data
  *
  * @remarks
- * Returns an empty array on error instead of throwing.
+ * Surfaces a real error state: the query function throws on request failure,
+ * so `isError` is truthful and `refetch` is meaningful. A community with no
+ * configured categories resolves to an empty array (not an error), keeping
+ * the empty and error states distinguishable.
  * Automatically merges outputs into impact_segments to prevent duplication.
  *
  * @example
  * ```tsx
- * const { data: categories, isLoading, refetch } = useCommunityCategories('optimism');
+ * const { data: categories, isLoading, isError, refetch } = useCommunityCategories('optimism');
  *
- * // Check for empty categories
- * if (categories.length === 0 && !isLoading) {
- *   // Handle empty state
+ * if (isError) {
+ *   // Render an error state with retry
+ * } else if (!isLoading && categories?.length === 0) {
+ *   // Render the empty state
  * }
  * ```
  */
@@ -34,7 +38,7 @@ export const useCommunityCategories = (
 ) => {
   return useQuery({
     queryKey: QUERY_KEYS.COMMUNITY.CATEGORIES(communityUIDorSlug),
-    queryFn: () => getCommunityCategories(communityUIDorSlug!),
+    queryFn: () => getCommunityCategoriesOrThrow(communityUIDorSlug!),
     enabled: !!communityUIDorSlug && options?.enabled !== false,
     staleTime: 1000 * 60 * 5, // 5 minutes
     gcTime: 1000 * 60 * 10, // 10 minutes
