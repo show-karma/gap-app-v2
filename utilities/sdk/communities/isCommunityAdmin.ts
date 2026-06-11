@@ -3,7 +3,6 @@ import type { Hex } from "viem";
 import { errorManager } from "@/components/Utilities/errorManager";
 import type { Community } from "@/types/v2/community";
 import { getGapRpcConfig } from "@/utilities/gapRpcConfig";
-import { getCommunityDetails } from "@/utilities/queries/v2/community";
 
 /**
  * Check if ANY of the given wallet addresses is an admin of a community.
@@ -83,44 +82,3 @@ export const isCommunityAdminOf = async (
   address: string | Hex,
   signer?: SignerOrProvider
 ): Promise<boolean> => isCommunityAdminOfAny(community, [address], signer);
-
-/**
- * Check if ANY of the given wallet addresses is an admin of ANY of the given
- * communities, identified by UID or slug.
- *
- * A project may belong to several communities (via its grants), and managing
- * its team should be allowed if the user administers any one of them. Each
- * community is resolved to its on-chain details and checked in parallel; the
- * results are OR-ed together. Communities that fail to resolve are skipped.
- *
- * @param communityUIDs - Community UIDs (or slugs) to check
- * @param addresses - The wallet addresses to check
- * @param signer - Optional signer for blockchain calls
- * @returns boolean - true if any address is an admin of any community
- */
-export const isAdminOfAnyCommunity = async (
-  communityUIDs: string[],
-  addresses: (string | Hex)[],
-  signer?: SignerOrProvider
-): Promise<boolean> => {
-  const uniqueUIDs = Array.from(new Set(communityUIDs.filter(Boolean)));
-  if (uniqueUIDs.length === 0 || addresses.length === 0) return false;
-
-  try {
-    const communities = await Promise.all(uniqueUIDs.map((uid) => getCommunityDetails(uid)));
-
-    const checks = await Promise.all(
-      communities
-        .filter((community): community is Community => !!community)
-        .map((community) => isCommunityAdminOfAny(community, addresses, signer))
-    );
-
-    return checks.some(Boolean);
-  } catch (error: unknown) {
-    errorManager("Error checking admin across communities", error, {
-      communityUIDs: uniqueUIDs,
-      addresses,
-    });
-    return false;
-  }
-};

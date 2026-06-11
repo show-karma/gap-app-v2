@@ -2,11 +2,11 @@ import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import type { Hex } from "viem";
 import { useAuth } from "@/hooks/useAuth";
+import { isAdminOfAnyCommunity } from "@/services/community-admins.service";
 import { getLinkedWalletAddresses } from "@/utilities/auth/compare-all-wallets";
 import { ADMIN_CACHE_CONFIG } from "@/utilities/cache-config";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
-import { isAdminOfAnyCommunity } from "@/utilities/sdk/communities/isCommunityAdmin";
 
 /**
  * Hook to check if the current user is an admin of ANY community in a list.

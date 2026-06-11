@@ -5,11 +5,11 @@ import { useIsAdminOfCommunities } from "../useIsAdminOfCommunities";
 
 vi.mock("@/hooks/useAuth", () => ({ useAuth: vi.fn() }));
 vi.mock("@/utilities/eas-wagmi-utils", () => ({ useSigner: () => undefined }));
-vi.mock("@/utilities/sdk/communities/isCommunityAdmin", () => ({ isAdminOfAnyCommunity: vi.fn() }));
+vi.mock("@/services/community-admins.service", () => ({ isAdminOfAnyCommunity: vi.fn() }));
 vi.mock("@/utilities/auth/compare-all-wallets", () => ({ getLinkedWalletAddresses: () => [] }));
 
 import { useAuth } from "@/hooks/useAuth";
-import { isAdminOfAnyCommunity } from "@/utilities/sdk/communities/isCommunityAdmin";
+import { isAdminOfAnyCommunity } from "@/services/community-admins.service";
 
 const mockUseAuth = useAuth as unknown as ReturnType<typeof vi.fn>;
 const mockIsAdminOfAnyCommunity = isAdminOfAnyCommunity as unknown as ReturnType<typeof vi.fn>;
