@@ -2,7 +2,7 @@
 
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { ChevronDown, Lock, RefreshCw, Search, X } from "lucide-react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useQueryState } from "nuqs";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getProjectTitle } from "@/components/FundingPlatform/helper/getProjectTitle";
 import { useProgramsWithConfig } from "@/features/programs/hooks/use-programs-with-config";
@@ -15,6 +15,17 @@ import { cn } from "@/utilities/tailwind";
 interface BrowseApplicationsClientProps {
   communityId: string;
 }
+
+const FILTERABLE_STATUSES: ApplicationStatus[] = [
+  "pending",
+  "under_review",
+  "revision_requested",
+  "approved",
+  "rejected",
+];
+
+const isFilterableStatus = (value: string | null): value is ApplicationStatus =>
+  value != null && (FILTERABLE_STATUSES as string[]).includes(value);
 
 const statusOptions: Array<{
   value: ApplicationStatus | "all";
@@ -300,42 +311,61 @@ function ProgramPillSelector({
 }
 
 export function BrowseApplicationsClient({ communityId }: BrowseApplicationsClientProps) {
-  const searchParams = useSearchParams();
-  const router = useRouter();
-  const pathname = usePathname();
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
   const { programs } = useProgramsWithConfig(communityId);
 
-  const [selectedProgramId, setSelectedProgramId] = useState<string>(
-    () => searchParams.get("programId") || ""
-  );
-  const [statusFilter, setStatusFilter] = useState<ApplicationStatus | "all">(() => {
-    const s = searchParams.get("status");
-    if (
-      s &&
-      ["pending", "under_review", "revision_requested", "approved", "rejected"].includes(s)
-    ) {
-      return s as ApplicationStatus;
-    }
-    return "all";
+  // The query string is the single source of truth for these filters. nuqs
+  // writes through history.replaceState (no App Router navigation), so updating
+  // a filter never races or cancels a Link click (issue #1547).
+  const [selectedProgramId, setSelectedProgramIdQuery] = useQueryState("programId", {
+    defaultValue: "",
+    clearOnDefault: true,
   });
-  const [searchInput, setSearchInput] = useState(() => searchParams.get("search") || "");
+  const [statusFilterRaw, setStatusFilterQuery] = useQueryState<ApplicationStatus | "all">(
+    "status",
+    {
+      defaultValue: "all",
+      clearOnDefault: true,
+      serialize: (value) => (isFilterableStatus(value) ? value : ""),
+      parse: (value) => (isFilterableStatus(value) ? value : "all"),
+    }
+  );
+  const statusFilter: ApplicationStatus | "all" = isFilterableStatus(statusFilterRaw)
+    ? statusFilterRaw
+    : "all";
+  const [searchInput, setSearchInputQuery] = useQueryState("search", {
+    defaultValue: "",
+    clearOnDefault: true,
+    throttleMs: 300,
+  });
   const [debouncedSearch, setDebouncedSearch] = useState(searchInput);
 
+  const setSelectedProgramId = useCallback(
+    (value: string) => {
+      setSelectedProgramIdQuery(value);
+    },
+    [setSelectedProgramIdQuery]
+  );
+  const setStatusFilter = useCallback(
+    (value: ApplicationStatus | "all") => {
+      setStatusFilterQuery(value);
+    },
+    [setStatusFilterQuery]
+  );
+  const setSearchInput = useCallback(
+    (value: string) => {
+      setSearchInputQuery(value);
+    },
+    [setSearchInputQuery]
+  );
+
+  // Debounce only the value that drives the API query; the URL write is already
+  // throttled by nuqs and the input stays responsive via the optimistic value.
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(searchInput), 500);
     return () => clearTimeout(timer);
   }, [searchInput]);
-
-  useEffect(() => {
-    const params = new URLSearchParams();
-    if (selectedProgramId) params.set("programId", selectedProgramId);
-    if (statusFilter !== "all") params.set("status", statusFilter);
-    if (debouncedSearch) params.set("search", debouncedSearch);
-    const query = params.toString();
-    router.replace(`${pathname}${query ? `?${query}` : ""}`, { scroll: false });
-  }, [selectedProgramId, statusFilter, debouncedSearch, pathname, router]);
 
   const selectedProgram = programs.find((p) => p.programId === selectedProgramId);
   const hasPrivateApplicationsSetting =
