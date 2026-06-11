@@ -152,6 +152,19 @@ const nextConfig: NextConfig = {
         destination: "/community/:communityId/manage/:path*",
         permanent: true,
       },
+      // Reviewer Inbox was renamed to Action Items. The second rule covers
+      // whitelabel domains, where the /community/<slug> prefix is stripped
+      // from browser URLs before the middleware rewrite runs.
+      {
+        source: "/community/:communityId/manage/inbox",
+        destination: "/community/:communityId/manage/action-items",
+        permanent: true,
+      },
+      {
+        source: "/manage/inbox",
+        destination: "/manage/action-items",
+        permanent: true,
+      },
       // Redirect /grants to /funding-opportunities (common alias)
       {
         source: "/community/:communityId/grants",

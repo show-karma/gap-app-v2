@@ -64,10 +64,7 @@ export const ApplicationDataView: FC<ApplicationDataViewProps> = ({
         return (
           <div className="space-y-3">
             {value.map((metric: IMetricData, index) => (
-              <div
-                key={index}
-                className="bg-gray-50 dark:bg-zinc-700/50 rounded-lg p-4 border border-gray-200 dark:border-gray-600"
-              >
+              <div key={index} className="rounded-xl border border-border bg-muted/40 p-4">
                 <div className="space-y-2">
                   <h5 className="font-medium text-gray-900 dark:text-gray-100">
                     {metric.metric || `Metric ${index + 1}`}
@@ -108,10 +105,7 @@ export const ApplicationDataView: FC<ApplicationDataViewProps> = ({
                 milestone.title
               );
               return (
-                <div
-                  key={index}
-                  className="bg-gray-50 dark:bg-zinc-700/50 rounded-lg p-4 border border-gray-200 dark:border-gray-600"
-                >
+                <div key={index} className="rounded-xl border border-border bg-muted/40 p-4">
                   <div className="space-y-2">
                     <div className="flex justify-between items-start gap-4">
                       <div className="flex items-baseline gap-2 flex-wrap">
@@ -160,7 +154,7 @@ export const ApplicationDataView: FC<ApplicationDataViewProps> = ({
           {value.map((item, index) => (
             <span
               key={index}
-              className="inline-block bg-gray-100 dark:bg-zinc-700 text-gray-800 dark:text-gray-200 px-3 py-1 rounded-full text-sm"
+              className="inline-block rounded-full bg-muted px-3 py-1 text-sm text-foreground"
             >
               {String(item)}
             </span>
@@ -183,7 +177,7 @@ export const ApplicationDataView: FC<ApplicationDataViewProps> = ({
 
     if (typeof value === "object" && value !== null) {
       return (
-        <pre className="bg-gray-50 dark:bg-zinc-700/50 p-3 rounded-lg text-sm overflow-x-auto border border-gray-200 dark:border-gray-600">
+        <pre className="overflow-x-auto rounded-xl border border-border bg-muted/40 p-3 text-sm">
           {JSON.stringify(value, null, 2)}
         </pre>
       );
@@ -227,22 +221,20 @@ export const ApplicationDataView: FC<ApplicationDataViewProps> = ({
   }
 
   return (
-    <div className="space-y-6">
+    <dl className="divide-y divide-border">
       {Object.entries(dataToRender).map(([key, value]) => (
         <div
           key={key}
-          className="border-b border-gray-100 dark:border-gray-700 pb-5 last:border-b-0"
+          className="grid grid-cols-1 gap-2 py-4 first:pt-0 last:pb-0 sm:grid-cols-[200px_minmax(0,1fr)] sm:items-center sm:gap-6"
         >
-          <dt className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
+          <dt className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
             {fieldLabels[key] || key.replace(/_/g, " ")}
           </dt>
-          <dd className="text-base text-gray-900 dark:text-gray-100">
+          <dd className="text-[15px] leading-relaxed text-foreground">
             {renderFieldValue(value, key)}
           </dd>
         </div>
       ))}
-    </div>
+    </dl>
   );
 };
-
-export default ApplicationDataView;

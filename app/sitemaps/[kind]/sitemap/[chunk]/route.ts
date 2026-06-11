@@ -8,12 +8,12 @@ import {
   type SitemapKind,
 } from "@/utilities/sitemap";
 
-// Per-kind child sitemap chunk. Fetches the chunk's URLs from the indexer,
-// cached in Next's Data Cache with stale-while-revalidate (see
-// fetchSitemapKindPage), so a slow or unreachable indexer keeps serving the
-// last good chunk instead of an empty one. The index only lists chunks that
-// exist (sized from /counts), so a listed chunk normally has URLs; a chunk
-// fetched past the current end returns an empty-but-valid 200 urlset.
+// LEGACY per-kind child sitemap chunk (1,000 URLs per file). The index now
+// lists one consolidated file per kind (/sitemaps/<kind>/sitemap.xml) and only
+// falls back to these chunked URLs for a kind past the per-file URL limit.
+// Kept serving because the chunk URLs were submitted individually in GSC and
+// Google still re-crawls them; same Data Cache + SWR semantics as the
+// consolidated route.
 const KIND_META = new Map(SITEMAP_KINDS.map((meta) => [meta.kind, meta]));
 
 // Positive chunk filenames only — 1.xml, 2.xml, … never 0.xml or zero-padded.

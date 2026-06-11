@@ -58,6 +58,7 @@ import {
   useResearchTray,
 } from "../hooks/use-research-tray";
 import { FILINGS_STATS } from "../lib/stats";
+import { decideThreadSeed } from "../lib/thread-seed";
 import { searchHistoryService } from "../services/search-history.service";
 import type { FieldRect, PageTransitionFields } from "../store/page-transition";
 import { usePageTransitionStore } from "../store/page-transition";
@@ -351,29 +352,45 @@ export function ChatView({ searchId }: { searchId?: string }) {
   const [input, setInput] = useState("");
   const [trayOpen, setTrayOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
-  const initialQueryRanRef = useRef(false);
+  // searchId this component instance last seeded. A plain boolean is not
+  // enough: navigating between two session URLs reuses the same instance
+  // (same dynamic segment), so the ref must be keyed by session.
+  const seededSearchIdRef = useRef<string | null>(null);
 
-  // First-time load: when arriving on /nonprofits/find-funders/search/[id] with an empty
-  // thread, grab the initial query from the search session store and run it.
-  // Fallback: if the local session is missing (shared link / cold load),
-  // fetch via searchHistoryService.getById() to seed the search.
+  // Seed the thread for the session in the URL. The philanthropy store is
+  // global and survives client-side navigation, so arriving here can mean:
+  // - empty store (cold load) → seed from the session store, falling back
+  //   to searchHistoryService.getById() (shared link);
+  // - the store still holds THIS session's thread (remount/back-nav) →
+  //   keep it;
+  // - the store holds a PREVIOUS session's thread (landing → new search) →
+  //   reset it, then seed. Without this branch the new query was silently
+  //   swallowed and the stale conversation rendered until a hard refresh.
   useEffect(() => {
-    if (initialQueryRanRef.current) return;
     if (!searchId) return;
-    if (messages.length > 0) {
-      initialQueryRanRef.current = true;
-      return;
+    const store = usePhilanthropyStore.getState();
+    const decision = decideThreadSeed({
+      searchId,
+      seededSearchId: seededSearchIdRef.current,
+      messageCount: store.messages.length,
+      threadId: store.threadId,
+    });
+    if (decision === "already-seeded") return;
+    seededSearchIdRef.current = searchId;
+    if (decision === "adopt-existing-thread") return;
+    if (decision === "reset-then-seed") {
+      abort();
+      reset();
     }
+    usePhilanthropyStore.getState().setThreadId(searchId);
     // Fast path: local session store
     const session = useSearchSessionStore.getState().getSession(searchId);
     const localQuery = session?.query?.trim();
     if (localQuery) {
-      initialQueryRanRef.current = true;
       void search(localQuery, 1, { chat: true });
       return;
     }
     // Fallback: fetch from server (shared link / cold load)
-    initialQueryRanRef.current = true;
     void searchHistoryService.getById(searchId).match(
       (entry) => {
         const remoteQuery = entry.query?.trim();
@@ -385,7 +402,7 @@ export function ChatView({ searchId }: { searchId?: string }) {
         /* 404 or error — render empty workbench, degrade gracefully */
       }
     );
-  }, [searchId, messages.length, search]);
+  }, [searchId, messages.length, search, abort, reset]);
 
   const onSubmit = useCallback(
     (msg: PromptInputMessage) => {
@@ -412,7 +429,7 @@ export function ChatView({ searchId }: { searchId?: string }) {
     abort();
     reset();
     if (searchId) useSearchSessionStore.getState().clearSession(searchId);
-    initialQueryRanRef.current = false;
+    seededSearchIdRef.current = null;
   }, [abort, reset, searchId]);
 
   const showEmpty = messages.length === 0 && !isSearching;

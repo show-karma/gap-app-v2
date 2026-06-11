@@ -24,7 +24,9 @@ const InboxHeaderComponent: FC<InboxHeaderProps> = ({ role, stats }) => (
         <InboxIcon className="h-6 w-6" aria-hidden="true" />
       </div>
       <div>
-        <h1 className="text-2xl font-bold leading-tight text-gray-900 dark:text-white">Inbox</h1>
+        <h1 className="text-2xl font-bold leading-tight text-gray-900 dark:text-white">
+          Action Items
+        </h1>
         <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
           Everything assigned to you ·{" "}
           <span className="font-medium text-gray-700 dark:text-gray-200">{role}</span>

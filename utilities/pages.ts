@@ -32,6 +32,8 @@ export const PAGES = {
     APPLICATIONS: (community: string) => `/community/${community}/applications`,
     APPLICATION_DETAIL: (community: string, applicationId: string) =>
       `/community/${community}/applications/${applicationId}`,
+    APPLICATION_EDIT: (community: string, referenceNumber: string) =>
+      `/community/${community}/applications/${referenceNumber}/edit`,
     APPLICATION_SUCCESS: (community: string, applicationId: string) =>
       `/community/${community}/applications/${applicationId}/success`,
     BROWSE_APPLICATIONS: (community: string) => `/community/${community}/browse-applications`,
@@ -45,6 +47,12 @@ export const PAGES = {
   MY_REVIEWS: `/my-reviews`,
   DASHBOARD: `/dashboard`,
   DONATIONS: `/donations`,
+  DONOR_RESEARCH: {
+    INDEX: `/donor-research`,
+    ONBOARDING: `/donor-research/onboarding`,
+    REPORT: (reportId: string) => `/donor-research/${reportId}`,
+    SHARED: (token: string) => `/donor-research/shared/${token}`,
+  },
   EVALUATE: `/evaluate`,
   // REVIEWER routes now point to MANAGE (unified RBAC-based routes)
   REVIEWER: {
@@ -69,7 +77,7 @@ export const PAGES = {
   },
   MANAGE: {
     ROOT: (community: string) => `/community/${community}/manage`,
-    INBOX: (community: string) => `/community/${community}/manage/inbox`,
+    ACTION_ITEMS: (community: string) => `/community/${community}/manage/action-items`,
     FUNDING_PLATFORM: {
       ROOT: (community: string) => `/community/${community}/manage/funding-platform`,
       APPLICATIONS: (community: string, programId: string) =>

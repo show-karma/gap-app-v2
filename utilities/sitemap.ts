@@ -1,3 +1,4 @@
+import { NextResponse } from "next/server";
 import { envVars } from "@/utilities/enviromentVars";
 import { SITE_URL } from "@/utilities/meta";
 
@@ -7,9 +8,22 @@ export function formatSitemapLastmod(date: Date = new Date()): string {
   return date.toISOString().replace(/\.\d{3}Z$/, "Z");
 }
 
-// Must match SITEMAP_PAGE_SIZE in the indexer. GSC fails on >~1MB / 5000 URLs,
-// so each child sitemap holds at most this many URLs.
+// Page size of the LEGACY chunked child routes (/sitemaps/<kind>/sitemap/<n>.xml).
+// Those URLs were submitted to GSC individually and must keep serving the same
+// chunk boundaries; new crawling goes through the consolidated per-kind files.
 export const SITEMAP_PAGE_SIZE = 1000;
+
+// Page size used when fetching URL lists from the indexer — its hard cap
+// (limitQuerySchema max in gap-indexer's GetSitemapUrlsQuerySchema). Bigger
+// pages mean fewer indexer round-trips: a full cold rebuild of every kind is
+// ~9 requests, comfortably under the indexer's 30 req/min public rate limit
+// (which a 1000-per-page rebuild of 29 chunks sat exactly at).
+export const INDEXER_FETCH_PAGE_SIZE = 5000;
+
+// One consolidated sitemap per kind, capped with margin under the sitemaps.org
+// limit of 50,000 URLs per file. A kind that outgrows this falls back to the
+// legacy chunked URLs in the index; everything still serves.
+export const MAX_URLS_PER_SITEMAP = 45_000;
 
 // Upper bound on a chunk number parsed from a request path — ~100M URLs per
 // kind at SITEMAP_PAGE_SIZE. Guards the child route against absurd or crafted
@@ -23,8 +37,14 @@ export const MAX_SITEMAP_CHUNK = 100_000;
 // instead of an empty one.
 export const SITEMAP_REVALIDATE_SECONDS = 60 * 60 * 24; // 24h
 
-// CDN/browser cache window for the rendered XML response.
-export const SITEMAP_CACHE_CONTROL = "public, max-age=3600";
+// Crawlers get an instant edge hit for a day, then Vercel's CDN serves the
+// stale copy for up to a week while it revalidates in the background — a slow
+// function or indexer never makes Googlebot wait or time out. max-age=0 keeps
+// browsers honest (the CDN, not the client, owns staleness). The CDN layer is
+// opportunistic only (purged on deploy, evicts rarely-hit assets); the
+// deploy-persistent Data Cache underneath is what guarantees fast renders.
+export const SITEMAP_CACHE_CONTROL =
+  "public, max-age=0, s-maxage=86400, stale-while-revalidate=604800";
 
 export type SitemapKind = "projects" | "impacts" | "grants" | "milestones" | "funding-programs";
 
@@ -139,9 +159,13 @@ export async function fetchSitemapCounts(): Promise<SitemapCounts> {
 
 // Server-only. Fetches one chunk's worth of URLs for a kind, cached the same way
 // as the counts. Returns the canonicalized URLs.
-export async function fetchSitemapKindPage(kind: SitemapKind, page: number): Promise<string[]> {
+export async function fetchSitemapKindPage(
+  kind: SitemapKind,
+  page: number,
+  pageSize: number = SITEMAP_PAGE_SIZE
+): Promise<string[]> {
   const res = await fetch(
-    `${INDEXER_BASE_URL}/v2/sitemap?kind=${kind}&page=${page}&pageSize=${SITEMAP_PAGE_SIZE}`,
+    `${INDEXER_BASE_URL}/v2/sitemap?kind=${kind}&page=${page}&pageSize=${pageSize}`,
     { next: { revalidate: SITEMAP_REVALIDATE_SECONDS } }
   );
   if (!res.ok) {
@@ -151,10 +175,29 @@ export async function fetchSitemapKindPage(kind: SitemapKind, page: number): Pro
   return (data.urls ?? []).map(canonicalizeSitemapUrl);
 }
 
+// Server-only. Fetches a kind's complete URL list for the consolidated per-kind
+// sitemap. Pages sequentially (indexer-rate-limit friendly; each page is its
+// own Data Cache entry, safely under Vercel's 2MB per-entry cap) until a short
+// page marks the end — complete by construction, with no dependence on a
+// counts snapshot that could disagree with the page data. Any failed page
+// throws, so a partial list is never served as if complete — SWR keeps the
+// last good response instead. Page count is capped at the per-file URL limit;
+// kinds bigger than that are served by the chunked routes, not this path.
+export async function fetchAllSitemapKindUrls(kind: SitemapKind): Promise<string[]> {
+  const maxPages = Math.ceil(MAX_URLS_PER_SITEMAP / INDEXER_FETCH_PAGE_SIZE);
+  const urls: string[] = [];
+  for (let page = 1; page <= maxPages; page++) {
+    const pageUrls = await fetchSitemapKindPage(kind, page, INDEXER_FETCH_PAGE_SIZE);
+    urls.push(...pageUrls);
+    if (pageUrls.length < INDEXER_FETCH_PAGE_SIZE) break;
+  }
+  return urls;
+}
+
 // Server-only. Builds the sitemap index body: the two local-data children
-// (static, communities) plus the per-kind chunks sized from the live counts.
-// The chunk count is derived fresh on every (cached) refresh, so the index
-// grows automatically as the corpus grows — no committed floor to maintain.
+// (static, communities) plus one consolidated child per kind, sized from the
+// live counts. A kind that outgrows MAX_URLS_PER_SITEMAP falls back to the
+// legacy chunked URLs, so growth never breaks the index — it just adds files.
 export async function buildSitemapIndexBody(): Promise<string> {
   const counts = await fetchSitemapCounts();
 
@@ -164,11 +207,38 @@ export async function buildSitemapIndexBody(): Promise<string> {
   ];
 
   for (const { kind } of SITEMAP_KINDS) {
-    const chunks = chunkCountFromTotal(countForKind(counts, kind));
-    for (let page = 1; page <= chunks; page++) {
-      locs.push(`${SITE_URL}/sitemaps/${kind}/sitemap/${page}.xml`);
+    const total = countForKind(counts, kind);
+    // A missing count (partial payload) lists the consolidated child rather
+    // than dropping the kind — the child route derives completeness from the
+    // page data itself, not from this count. The threshold is strict (`<`) to
+    // match the consolidated route's truncation guard, which 404s at exactly
+    // MAX_URLS_PER_SITEMAP (it can't prove that list isn't truncated): a kind
+    // sitting on the boundary must be listed as chunks, never as a child the
+    // route would 404.
+    if (!Number.isFinite(total) || total < MAX_URLS_PER_SITEMAP) {
+      locs.push(`${SITE_URL}/sitemaps/${kind}/sitemap.xml`);
+    } else {
+      const chunks = chunkCountFromTotal(total);
+      for (let page = 1; page <= chunks; page++) {
+        locs.push(`${SITE_URL}/sitemaps/${kind}/sitemap/${page}.xml`);
+      }
     }
   }
 
   return buildSitemapIndexXml(locs);
+}
+
+// Shared GET body for the three index routes (/sitemap.xml, /sitemap-index.xml,
+// /sitemap_index.xml) so the response headers can't drift between them. Each
+// route file still declares its own `dynamic = "force-dynamic"` — Next reads
+// that from the route module itself, so it can't live here.
+export async function sitemapIndexResponse(): Promise<NextResponse> {
+  const body = await buildSitemapIndexBody();
+  return new NextResponse(body, {
+    status: 200,
+    headers: {
+      "Content-Type": "application/xml; charset=utf-8",
+      "Cache-Control": SITEMAP_CACHE_CONTROL,
+    },
+  });
 }

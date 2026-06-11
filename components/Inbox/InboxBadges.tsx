@@ -23,12 +23,13 @@ import { cn } from "@/utilities/tailwind";
 /* ------------------------------------------------------------------ */
 /* Status tones — raw application/milestone status -> Tailwind classes */
 /* ------------------------------------------------------------------ */
-type Tone = "blue" | "pink" | "amber" | "green" | "red" | "slate";
+type Tone = "blue" | "pink" | "amber" | "yellow" | "green" | "red" | "slate";
 
 const TONE_BADGE: Record<Tone, string> = {
   blue: "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300",
   pink: "bg-pink-100 text-pink-700 dark:bg-pink-900/40 dark:text-pink-300",
   amber: "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300",
+  yellow: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300",
   green: "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300",
   red: "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300",
   slate: "bg-slate-100 text-slate-600 dark:bg-zinc-700 dark:text-zinc-200",
@@ -44,9 +45,11 @@ const STATUS_TONE: Record<string, Tone> = {
   approved: "green",
   rejected: "red",
   withdrawn: "slate",
-  // milestones
-  completed: "pink",
-  pending_verification: "pink",
+  // milestones — hues follow MILESTONE_STATUS_CONFIG in
+  // components/Pages/Admin/MilestonesReview/utils/milestone-review-status.ts;
+  // dark mode keeps this file's standard /40 overlay opacity.
+  completed: "yellow",
+  pending_verification: "yellow",
   verified: "green",
 };
 
@@ -58,8 +61,8 @@ const STATUS_LABEL: Record<string, string> = {
   approved: "Approved",
   rejected: "Rejected",
   withdrawn: "Withdrawn",
-  completed: "Needs verification",
-  pending_verification: "Needs verification",
+  completed: "Pending Verification",
+  pending_verification: "Pending Verification",
   pending_completion: "In progress",
   verified: "Verified",
 };

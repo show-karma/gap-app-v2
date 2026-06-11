@@ -796,4 +796,14 @@ export const INDEXER = {
     // the team for follow-up.
     SUBMIT: "/v2/nonprofit-submissions/submit",
   },
+  DONOR_RESEARCH: {
+    ME: "/v2/donor-research/me",
+    ME_COUNTERS: "/v2/donor-research/me/counters",
+    HANDLES: "/v2/donor-research/handles",
+    REPORTS: "/v2/donor-research/reports",
+    REPORT_BY_ID: (reportId: string) => `/v2/donor-research/reports/${reportId}`,
+    REPORT_STREAM: (reportId: string) => `/v2/donor-research/reports/${reportId}/stream`,
+    SHARE_TOKEN: (reportId: string) => `/v2/donor-research/reports/${reportId}/share-token`,
+    SHARED: (token: string) => `/v2/donor-research/shared/${token}`,
+  },
 };
