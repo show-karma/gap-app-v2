@@ -9,6 +9,7 @@
 
 import { FUNDING_PLATFORM_DOMAINS } from "@/src/features/funding-map/utils/funding-platform-domains";
 import { envVars } from "./enviromentVars";
+import { PAGES } from "./pages";
 
 const LOCAL_HOSTNAMES = new Set(["localhost", "127.0.0.1", "0.0.0.0", "[::1]"]);
 
@@ -41,6 +42,15 @@ export function shouldUseExternalFundingPlatformLinks(): boolean {
 }
 
 /**
+ * Same-origin links apply when there is no whitelabel origin to honor and external
+ * tenant-domain links are disabled (local dev/QA by default, or forced off via env).
+ * In that regime the helpers return the canonical PAGES.COMMUNITY routes directly.
+ */
+function usesSameOriginLinks(whitelabelOrigin?: string): boolean {
+  return !whitelabelOrigin && !shouldUseExternalFundingPlatformLinks();
+}
+
+/**
  * Get the base path/domain for a community's funding platform links.
  *
  * - Whitelabel mode: the app *is* the funding platform, so links stay on the current origin.
@@ -63,9 +73,9 @@ export function getDomainForCommunity(communityId: string, whitelabelOrigin?: st
   }
 
   if (!shouldUseExternalFundingPlatformLinks()) {
-    // Same-origin: helpers append /programs/... etc. to this base, yielding paths that
-    // resolve on the current host (e.g. /community/optimism/programs/123/apply).
-    return `/community/${communityId}`;
+    // Same-origin: the canonical community base route (e.g. /community/optimism), so any
+    // appended sub-paths resolve on the current host.
+    return PAGES.COMMUNITY.ALL_GRANTS(communityId);
   }
 
   if (communityId in FUNDING_PLATFORM_DOMAINS) {
@@ -90,6 +100,9 @@ export function getProgramApplyUrl(
   programId: string,
   whitelabelOrigin?: string
 ): string {
+  if (usesSameOriginLinks(whitelabelOrigin)) {
+    return PAGES.COMMUNITY.PROGRAM_APPLY(communityId, programId);
+  }
   const domain = getDomainForCommunity(communityId, whitelabelOrigin);
   return `${domain}/programs/${programId}/apply`;
 }
@@ -124,6 +137,9 @@ export function getBrowseApplicationsUrl(
   programId: string,
   whitelabelOrigin?: string
 ): string {
+  if (usesSameOriginLinks(whitelabelOrigin)) {
+    return `${PAGES.COMMUNITY.BROWSE_APPLICATIONS(communityId)}?programId=${programId}`;
+  }
   const domain = getDomainForCommunity(communityId, whitelabelOrigin);
   return `${domain}/browse-applications?programId=${programId}`;
 }
@@ -140,6 +156,9 @@ export function getProgramPageUrl(
   programId: string,
   whitelabelOrigin?: string
 ): string {
+  if (usesSameOriginLinks(whitelabelOrigin)) {
+    return PAGES.COMMUNITY.PROGRAM_DETAIL(communityId, programId);
+  }
   const domain = getDomainForCommunity(communityId, whitelabelOrigin);
   return `${domain}/programs/${programId}`;
 }
