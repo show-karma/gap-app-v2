@@ -345,8 +345,8 @@ describe("Permission Boundary Tests", () => {
   });
 
   describe("Permission enum completeness", () => {
-    it("should have exactly 37 permissions", () => {
-      expect(Object.values(Permission)).toHaveLength(37);
+    it("should have exactly 42 permissions", () => {
+      expect(Object.values(Permission)).toHaveLength(42);
     });
 
     it("should include all registry permissions", () => {
