@@ -238,8 +238,9 @@ describe("ContributorProfileDialog", () => {
       expect(form).not.toBeNull();
       fireEvent.submit(form as HTMLFormElement);
 
+      // An empty required field reports "is required", not the min-length message.
       await waitFor(() => {
-        expect(screen.getByText("This name is too short")).toBeInTheDocument();
+        expect(screen.getByText("Name is required")).toBeInTheDocument();
       });
     });
 
@@ -264,7 +265,7 @@ describe("ContributorProfileDialog", () => {
       fireEvent.submit(form as HTMLFormElement);
 
       await waitFor(() => {
-        expect(screen.getByText("This name is too short")).toBeInTheDocument();
+        expect(screen.getByText("Name is required")).toBeInTheDocument();
       });
 
       // The real symptom of the regression: the submit handler never runs, so
@@ -272,6 +273,35 @@ describe("ContributorProfileDialog", () => {
       expect(mockContributorProfileCtor).not.toHaveBeenCalled();
       expect(mockAttest).not.toHaveBeenCalled();
       expect(mockSetupChainAndWallet).not.toHaveBeenCalled();
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // Issue #1508: a QA dogfood run reported the "Update profile" button staying
+  // enabled after the Name field was emptied. That was a harness artifact —
+  // Playwright's `fill('')` does not dispatch the React onChange that
+  // `mode: "onChange"` validation depends on. With real synthetic events
+  // (userEvent.clear) the button correctly disables. This test guards the
+  // `mode: "onChange"` + `!isValid` contract against regression.
+  // ---------------------------------------------------------------------------
+  describe("submit button disabled contract (issue #1508)", () => {
+    it("disables the submit button when the name is cleared with real events", async () => {
+      const user = userEvent.setup();
+      render(<ContributorProfileDialog />);
+
+      const submitButton = screen.getByRole("button", { name: /update profile/i });
+
+      // Fill a valid name -> button enables.
+      await user.type(getNameInput(), "Jane Doe");
+      await waitFor(() => {
+        expect(submitButton).not.toBeDisabled();
+      });
+
+      // Clear it with real synthetic events -> validation re-runs and disables.
+      await user.clear(getNameInput());
+      await waitFor(() => {
+        expect(submitButton).toBeDisabled();
+      });
     });
   });
 
