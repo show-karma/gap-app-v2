@@ -28,9 +28,9 @@ interface ProductRow {
 
 const ROWS: ProductRow[] = [
   {
-    audience: "For donors and advisors",
-    headline: "Nonprofit Research: a research brief for every gift",
-    body: "Search by cause, geography, or grant size and get a ranked shortlist in 10 minutes. Every pick comes with a composite score, the inputs that produced it, and the receipts attached.",
+    audience: "For donor advisors",
+    headline: "Generate a donor-ready research brief in 10 minutes",
+    body: "Donor advisors use Karma to build a ranked shortlist for any cause, geography, or grant size. Every brief ships with a composite score, the inputs that produced it, and the receipts attached, so you save hours of diligence and hand donors a recommendation they can act on with confidence.",
     features: [
       "Composite scoring with mission match, online presence, and IRS 990 recency",
       "IRS Pub 78, latest 990, and state registries verified up front",
