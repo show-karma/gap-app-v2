@@ -18,13 +18,17 @@ test.describe("Smoke Tests — Health", () => {
     await page.goto("/", GOTO_OPTIONS);
     await waitForPageReady(page);
 
-    // The homepage hero heading should be visible
+    // The homepage hero heading should be visible. The visible H1 uses a
+    // rotating decorative word (aria-hidden); its accessible name comes from
+    // the sr-only canonical sentence, so we match the stable prefix.
     await expect(
-      page.getByRole("heading", { name: /funding software that does the work/i }).first()
+      page.getByRole("heading", { name: /karma helps funders fund and track/i }).first()
     ).toBeVisible();
 
-    // The FAQ section should be present on the homepage
-    await expect(page.getByText(/frequently asked/i)).toBeVisible();
+    // The workflow section ("How Karma works") should render below the hero.
+    await expect(
+      page.getByRole("heading", { name: /one platform for two motions/i })
+    ).toBeVisible();
 
     assertNoJsErrors(jsErrors);
   });
