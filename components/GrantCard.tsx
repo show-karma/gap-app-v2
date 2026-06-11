@@ -6,7 +6,6 @@ import pluralize from "pluralize";
 import type { Grant } from "@/types/v2/grant";
 import formatCurrency from "@/utilities/formatCurrency";
 import { formatDate } from "@/utilities/formatDate";
-import { rewriteHeadingsToLevel } from "@/utilities/markdown";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 import { GrantPercentage } from "./Pages/Project/Grants/components/GrantPercentage";
@@ -78,8 +77,6 @@ const GrantCardContent = ({
   // Check if we have valid track IDs to display
   const hasTrackIds = selectedTrackIds && selectedTrackIds.length > 0;
 
-  const demoteAllHeadings = rewriteHeadingsToLevel(4);
-
   return (
     <div className="flex flex-col items-start justify-between w-full relative" id="grant-card">
       {actionSlot ? <div className="absolute bottom-1 left-1 z-20">{actionSlot}</div> : null}
@@ -137,12 +134,8 @@ const GrantCardContent = ({
           <div className="flex flex-col gap-1 flex-1 h-[48px]">
             <div className="text-sm text-gray-900 dark:text-gray-400 text-ellipsis line-clamp-3">
               <MarkdownPreview
+                variant="excerpt"
                 source={grant.project?.details?.description?.slice(0, 200)}
-                allowElement={(element) => {
-                  // Prevent rendering links to avoid nested <a> tags
-                  return element.tagName !== "a";
-                }}
-                rehypeRewrite={(node) => demoteAllHeadings(node)}
               />
             </div>
           </div>

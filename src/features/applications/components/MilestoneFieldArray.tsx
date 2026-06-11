@@ -1,5 +1,6 @@
 "use client";
 
+import pluralize from "pluralize";
 import type React from "react";
 import type { Control, FieldPath, UseFormTrigger } from "react-hook-form";
 import { Controller, useFieldArray } from "react-hook-form";
@@ -61,12 +62,12 @@ export const MilestoneFieldArray: React.FC<MilestoneFieldArrayProps> = ({
           (fieldState.error as Record<string, { message?: string }>)?.root?.message;
 
         return (
-          <div className="space-y-4" data-testid="milestones-container">
+          <fieldset className="space-y-4 border-0 p-0 m-0" data-testid="milestones-container">
             <div className="flex flex-col gap-2">
-              <span className="text-sm font-medium">
+              <legend className="text-sm font-medium leading-none">
                 {question.label}
                 {question.required && <span className="text-destructive ml-1">*</span>}
-              </span>
+              </legend>
               {question.description && (
                 <MarkdownPreview
                   source={question.description}
@@ -119,11 +120,10 @@ export const MilestoneFieldArray: React.FC<MilestoneFieldArrayProps> = ({
               minMilestones > 0 &&
               fields.length < minMilestones && (
                 <p className="text-sm text-yellow-600 dark:text-yellow-400">
-                  Please add at least {minMilestones} milestone
-                  {minMilestones > 1 ? "s" : ""}
+                  Please add at least {minMilestones} {pluralize("milestone", minMilestones)}
                 </p>
               )}
-          </div>
+          </fieldset>
         );
       }}
     />

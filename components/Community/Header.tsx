@@ -85,7 +85,18 @@ function hexToRgba(hex: string, alpha: number): string | null {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
-const NormalCommunityHeader = ({ community }: { community: Community }) => {
+const NormalCommunityHeader = ({
+  community,
+  headingAs = "h1",
+}: {
+  community: Community;
+  /**
+   * Element for the community-name heading. Defaults to "h1" (the community
+   * landing chrome legitimately owns the page's single h1). Surfaces that render
+   * their own h1 alongside this header pass "p" so the page keeps exactly one h1.
+   */
+  headingAs?: "h1" | "p";
+}) => {
   const params = useParams();
   const communityId = (params?.communityId as string) || community?.details?.slug || "";
   const [isMac, setIsMac] = useState(false);
@@ -250,9 +261,15 @@ const NormalCommunityHeader = ({ community }: { community: Community }) => {
             style={{ animationDelay: "120ms" }}
           >
             <div className="flex items-center gap-2.5 flex-wrap mb-1">
-              <h1 className="text-[34px] max-2xl:text-3xl max-lg:text-2xl font-body font-semibold tracking-[-0.02em] leading-none text-black dark:text-white m-0">
-                {name}
-              </h1>
+              {headingAs === "h1" ? (
+                <h1 className="text-[34px] max-2xl:text-3xl max-lg:text-2xl font-body font-semibold tracking-[-0.02em] leading-none text-black dark:text-white m-0">
+                  {name}
+                </h1>
+              ) : (
+                <p className="text-[34px] max-2xl:text-3xl max-lg:text-2xl font-body font-semibold tracking-[-0.02em] leading-none text-black dark:text-white m-0">
+                  {name}
+                </p>
+              )}
             </div>
             {description ? (
               <p className="text-sm leading-[1.5] text-gray-600 dark:text-zinc-400 font-medium line-clamp-1 max-w-[620px] m-0">
@@ -312,11 +329,24 @@ const NormalCommunityHeader = ({ community }: { community: Community }) => {
     </div>
   );
 };
-export default function CommunityHeader({ community }: { community: Community }) {
+export default function CommunityHeader({
+  community,
+  headingAs,
+}: {
+  community: Community;
+  /**
+   * Forwarded to the community-name heading. Surfaces that render their own h1
+   * (e.g. the Ask Karma assistant) pass "p" so the page keeps a single h1.
+   */
+  headingAs?: "h1" | "p";
+}) {
   const pathname = usePathname();
   const isAdminPage = pathname.includes("/manage");
   const isReviewerPage = pathname.includes("/reviewer");
   const isDonatePage = pathname.includes("/donate");
+  // The Ask Karma surface owns the page's single h1, so the header heading
+  // there must demote to a paragraph to avoid two h1s.
+  const isAskKarmaPage = pathname.includes("/ask-karma");
   if (isAdminPage) {
     return <AdminCommunityHeader community={community} />;
   }
@@ -328,5 +358,10 @@ export default function CommunityHeader({ community }: { community: Community })
   }
   // The (with-header) route group layout renders this component — if we're here, show it.
   // Pages that don't need the header belong in other route groups (e.g., (whitelabel)).
-  return <NormalCommunityHeader community={community} />;
+  return (
+    <NormalCommunityHeader
+      community={community}
+      headingAs={headingAs ?? (isAskKarmaPage ? "p" : "h1")}
+    />
+  );
 }

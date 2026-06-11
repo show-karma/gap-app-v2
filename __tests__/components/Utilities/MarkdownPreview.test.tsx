@@ -130,6 +130,86 @@ describe("MarkdownPreview", () => {
     });
   });
 
+  describe("excerpt variant (#1481)", () => {
+    it("renders links as inert spans, not anchors", async () => {
+      const { container } = render(
+        <MarkdownPreview variant="excerpt" source="See [the docs](https://example.com) here." />
+      );
+
+      await waitFor(
+        () => {
+          expect(container.querySelector(".wmdeMarkdown")).toBeInTheDocument();
+        },
+        { timeout: 3000 }
+      );
+
+      expect(container.querySelector("a")).not.toBeInTheDocument();
+      expect(screen.getByText("the docs").tagName.toLowerCase()).toBe("span");
+    });
+
+    it("renders no buttons for code blocks, images, or tables", async () => {
+      const source = [
+        "```ts",
+        "const x = 1;",
+        "```",
+        "",
+        "![alt text](https://example.com/x.png)",
+        "",
+        "| A | B |",
+        "| - | - |",
+        "| 1 | 2 |",
+      ].join("\n");
+
+      const { container } = render(<MarkdownPreview variant="excerpt" source={source} />);
+
+      await waitFor(
+        () => {
+          expect(container.querySelector(".wmdeMarkdown")).toBeInTheDocument();
+        },
+        { timeout: 3000 }
+      );
+
+      expect(container.querySelectorAll("button").length).toBe(0);
+      expect(container.querySelector("img")).not.toBeInTheDocument();
+    });
+
+    it("renders markdown headings as paragraphs, not heading elements", async () => {
+      const { container } = render(
+        <MarkdownPreview variant="excerpt" source={"# Big heading\n\nbody text"} />
+      );
+
+      await waitFor(
+        () => {
+          expect(container.querySelector(".wmdeMarkdown")).toBeInTheDocument();
+        },
+        { timeout: 3000 }
+      );
+
+      expect(container.querySelector("h1, h2, h3, h4, h5, h6")).not.toBeInTheDocument();
+      expect(screen.getByText("Big heading").tagName.toLowerCase()).toBe("p");
+    });
+
+    it("truncates long source at a word boundary before parsing", async () => {
+      const longWord = "word ".repeat(400); // ~2000 chars
+      const { container } = render(<MarkdownPreview variant="excerpt" source={longWord} />);
+
+      // The plain-text fallback paints first and already reflects the truncated
+      // source, so we can assert on its length without waiting for streamdown.
+      const rendered = container.textContent ?? "";
+      expect(rendered.length).toBeLessThan(longWord.length);
+      expect(rendered.length).toBeLessThanOrEqual(520); // 500 + ellipsis slack
+      expect(rendered.trimEnd().endsWith("…")).toBe(true);
+    });
+
+    it("does not truncate short source", () => {
+      const { container } = render(
+        <MarkdownPreview variant="excerpt" source="A short description." />
+      );
+      expect(container.textContent).toContain("A short description.");
+      expect(container.textContent).not.toContain("…");
+    });
+  });
+
   describe("custom components", () => {
     it("applies default paragraph component with mb-2 class", async () => {
       render(<MarkdownPreview source="A paragraph" />);
