@@ -169,7 +169,6 @@ export const PAGES = {
   NONPROFITS: `/nonprofits`,
   DONOR_ADVISORS: `/donor-advisors`,
   CREATE_PROJECT_PROFILE: `/create-project-profile`,
-  DONOR_RESEARCH: `/donor-research`,
   MCP_CONNECT: `/mcp/connect`,
   SEEDS: `/seeds`,
   SEEDS_FUND: `/seeds/fund`,

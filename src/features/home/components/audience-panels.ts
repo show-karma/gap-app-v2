@@ -112,7 +112,7 @@ export const PANELS: AudiencePanel[] = [
     subhead:
       "Karma's Donor Research scans thousands of 501(c)(3)s against your cause, geography, and grant size, then returns a ranked brief with compliance verified, activity scored, and mission matched. You move from “I want to give” to “here's the shortlist” in one session, not three weeks.",
     features: donorResearchFeatures,
-    primaryCta: { label: "Try Donor Research", href: PAGES.DONOR_RESEARCH },
+    primaryCta: { label: "Try Donor Research", href: PAGES.DONOR_RESEARCH.INDEX },
     secondaryCta: { label: "Talk to our team", href: SOCIALS.DONOR_PARTNER_FORM },
     preview: donorResearchBriefPreview,
   },

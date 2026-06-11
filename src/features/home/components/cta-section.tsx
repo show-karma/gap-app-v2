@@ -29,7 +29,7 @@ const personaCtas: PersonaCta[] = [
     audience: "Donors & advisors",
     description:
       "Get a ranked research brief in 10 minutes. Compliance verified, activity scored, mission matched.",
-    primary: { label: "Try Donor Research", href: PAGES.DONOR_RESEARCH },
+    primary: { label: "Try Donor Research", href: PAGES.DONOR_RESEARCH.INDEX },
     secondary: { label: "How it helps you give", href: PAGES.DONOR_ADVISORS },
   },
   {
