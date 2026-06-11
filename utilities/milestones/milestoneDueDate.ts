@@ -20,7 +20,10 @@ export type MilestoneDueDateInput = number | string | Date | null | undefined;
  * - `number`: disambiguated between Unix seconds and milliseconds via
  *   {@link normalizeTimestamp}'s digit-count heuristic, so the same field can be
  *   fed regardless of which denomination a given pipeline produced.
- * - `string`: parsed as a date (ISO or any `Date`-parseable string).
+ * - `string`: numeric strings (e.g. `"1780000000"` from pipelines that
+ *   serialize on-chain uint values) are coerced to numbers and disambiguated
+ *   like numeric input; anything else is parsed as a date (ISO or any
+ *   `Date`-parseable string).
  * - `Date`: read directly.
  * - `null` / `undefined` / `0` / `NaN` / unparseable / pre-2000 values: rejected.
  *
@@ -36,6 +39,13 @@ export function normalizeMilestoneDueDateMs(input: MilestoneDueDateInput): numbe
   } else if (typeof input === "number") {
     if (!Number.isFinite(input) || input <= 0) return null;
     ms = normalizeTimestamp(input);
+  } else if (/^\d+$/.test(input.trim())) {
+    // Numeric strings are serialized Unix timestamps, not dates —
+    // `new Date("1780000000")` is Invalid Date, so coerce and run the same
+    // seconds-vs-ms disambiguation as numeric input.
+    const numeric = Number(input.trim());
+    if (!Number.isFinite(numeric) || numeric <= 0) return null;
+    ms = normalizeTimestamp(numeric);
   } else {
     ms = new Date(input).getTime();
   }

@@ -53,6 +53,29 @@ describe("normalizeMilestoneDueDateMs", () => {
     });
   });
 
+  describe("numeric-string input (serialized Unix timestamps)", () => {
+    it("treats a 10-digit numeric string as Unix seconds", () => {
+      expect(normalizeMilestoneDueDateMs("1780000000")).toBe(1780000000 * 1000);
+    });
+
+    it("treats a 13-digit numeric string as Unix milliseconds (passthrough)", () => {
+      const ms = Date.UTC(2026, 0, 1);
+      expect(normalizeMilestoneDueDateMs(String(ms))).toBe(ms);
+    });
+
+    it("tolerates surrounding whitespace", () => {
+      expect(normalizeMilestoneDueDateMs(" 1780000000 ")).toBe(1780000000 * 1000);
+    });
+
+    it('returns null for the numeric string "0"', () => {
+      expect(normalizeMilestoneDueDateMs("0")).toBeNull();
+    });
+
+    it("returns null for an ancient numeric string (pre-2000 floor)", () => {
+      expect(normalizeMilestoneDueDateMs("1000")).toBeNull();
+    });
+  });
+
   describe("string and Date input", () => {
     it("parses an ISO string", () => {
       const iso = "2026-01-01T00:00:00.000Z";
