@@ -43,7 +43,7 @@ describe("Homepage User Journeys", () => {
       renderWithProviders(await HomePage());
       await waitFor(() => {
         expect(
-          screen.getByText(/Nonprofit Research: a research brief for every gift/i)
+          screen.getByText(/Generate a donor-ready research brief in 10 minutes/i)
         ).toBeInTheDocument();
       });
       expect(screen.getByText(/AI-powered software for grant programs/i)).toBeInTheDocument();
