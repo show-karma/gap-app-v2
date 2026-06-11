@@ -8,7 +8,7 @@ import { cn } from "@/utilities/tailwind";
 export const metadata: Metadata = customMetadata({
   title: "For donors and advisors: Every brief shows the work behind the recommendation",
   description:
-    "Karma Donor Research builds a ranked shortlist for any cause, geography, or grant size. Every pick gets a compliance check, an activity score, and a mission match, with the receipts attached.",
+    "Karma Nonprofit Research builds a ranked shortlist for any cause, geography, or grant size. Every pick gets a compliance check, an activity score, and a mission match, with the receipts attached.",
   path: "/donor-advisors",
 });
 
