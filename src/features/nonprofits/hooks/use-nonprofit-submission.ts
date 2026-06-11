@@ -4,7 +4,7 @@ import { useMutation } from "@tanstack/react-query";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
-export interface NonprofitSubmissionPayload {
+interface NonprofitSubmissionPayload {
   websiteUrl: string;
   email: string;
   phone?: string;

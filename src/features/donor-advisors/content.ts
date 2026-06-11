@@ -1,11 +1,9 @@
 /**
- * Canonical Donor Research marketing copy.
- *
- * Shared by the home audience switcher's donors panel and the
- * /donor-advisors features section so the two surfaces can't drift apart.
+ * Canonical Donor Research marketing copy for the /donor-advisors
+ * features section.
  */
 
-export interface MarketingFeature {
+interface MarketingFeature {
   label: string;
   title: string;
   description: string;
