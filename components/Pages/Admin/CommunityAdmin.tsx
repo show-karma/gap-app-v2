@@ -36,6 +36,8 @@ import {
 } from "@/services/communities.service";
 import { communityAdminsService } from "@/services/community-admins.service";
 import { Link } from "@/src/components/navigation/Link";
+import { AccessDenied } from "@/src/components/ui/AccessDenied";
+import { communityAdminDenial } from "@/src/components/ui/access-denied-presets";
 import { usePermissionsQuery } from "@/src/core/rbac/hooks/use-permissions";
 import { Role } from "@/src/core/rbac/types";
 import { layoutTheme } from "@/src/helper/theme";
@@ -82,7 +84,8 @@ export default function CommunitiesToAdminPage() {
   }, [searchQuery]);
 
   const isOwner = useOwnerStore((state) => state.isOwner);
-  const { authenticated, address } = useAuth();
+  const isOwnerLoading = useOwnerStore((state) => state.isOwnerLoading);
+  const { authenticated, address, ready } = useAuth();
 
   // Lazy-load admin communities only on /admin — React Query dedupes the
   // fetch with other pages that need this data (FundingContent, etc.).
@@ -246,8 +249,18 @@ export default function CommunitiesToAdminPage() {
     });
   }, [displayedCommunities]);
 
+  // Fold `authenticated` and `isOwnerLoading` into the loading computation so
+  // disabled queries can never strand anyone in a skeleton, and so an
+  // authenticated user whose owner check is still resolving sees a skeleton
+  // (not the NOT_ADMIN branch). The unauthenticated case is handled by an
+  // explicit AccessDenied branch below — once Privy is `ready`, guests never
+  // fall through to a blank/NOT_ADMIN area.
   const isLoadingData =
-    isLoading || isPermissionsLoading || (!isSuperAdminOrOwner && isLoadingUserCommunities);
+    authenticated &&
+    (isLoading ||
+      isPermissionsLoading ||
+      isOwnerLoading ||
+      (!isSuperAdminOrOwner && isLoadingUserCommunities));
 
   const handleRefetch = useCallback(async () => {
     try {
@@ -279,6 +292,35 @@ export default function CommunitiesToAdminPage() {
     const lastPart = hexString.substring(hexString.length - 6);
 
     return `${firstPart}...${lastPart}`;
+  }
+
+  // Privy still booting — show a skeleton, never a denial flash.
+  if (!ready) {
+    return (
+      <div className={layoutTheme.padding}>
+        <div className="flex flex-col gap-6">
+          <div className="flex justify-between items-center">
+            <Skeleton className="h-8 w-48" />
+            <Skeleton className="h-10 w-32 rounded" />
+          </div>
+          <div className="mt-5 w-full">
+            <CommunityAdminLoadingSkeleton />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Explicit guest branch: signed-out visitors get a sign-in CTA instead of
+  // falling through disabled queries to a blank/NOT_ADMIN area (#1213).
+  if (!authenticated) {
+    return (
+      <AccessDenied
+        title="Admin access required"
+        {...communityAdminDenial()}
+        cta={{ label: "Go to Home", href: PAGES.HOME }}
+      />
+    );
   }
 
   return (

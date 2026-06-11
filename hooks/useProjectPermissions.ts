@@ -19,7 +19,7 @@ export const useProjectPermissions = () => {
   const { address, isConnected, authenticated: isAuth, user } = useAuth();
   const project = useProjectStore((state) => state.project);
   const projectId = project?.details?.slug || project?.uid;
-  const { project: projectInstance } = useProjectInstance(projectId);
+  const { project: projectInstance, isLoading: instanceLoading } = useProjectInstance(projectId);
 
   const setIsProjectAdmin = useProjectStore((state) => state.setIsProjectAdmin);
   const setIsProjectOwner = useProjectStore((state) => state.setIsProjectOwner);
@@ -164,10 +164,32 @@ export const useProjectPermissions = () => {
     }
   }, [query.data, setIsProjectOwner, setIsProjectAdmin, isAuth]);
 
+  // Reset the GLOBAL project-permission flags whenever the active project
+  // changes. These flags live in a single store shared across every project
+  // page; without this reset, authorization resolved for project A stays true
+  // while project B's permission query is still pending/disabled, which
+  // wrongly enables admin-gated fetches (e.g. the contacts GET) for the new
+  // project. The tri-state `isResolving` below keeps the UI in a loading state
+  // during the recheck, so resetting here cannot reintroduce a denial flash.
+  useEffect(() => {
+    setIsProjectOwner(false);
+    setIsProjectAdmin(false);
+  }, [projectId, setIsProjectOwner, setIsProjectAdmin]);
+
+  // Authorization is still resolving while a prerequisite for the on-chain
+  // checks is pending. In React Query v5 a disabled query reports
+  // `isLoading=false` but `isPending=true` (no data yet), so we must read
+  // `isPending` — not `isLoading` — to keep undecided through the full chain:
+  // store project sync -> projectInstance fetch -> on-chain owner/admin checks.
+  // Guarded by `isAuth && walletsKey` so guests and wallet-less accounts
+  // resolve synchronously to a not-loading state.
+  const isResolving = !!isAuth && !!walletsKey && (!project || instanceLoading || query.isPending);
+
   return {
     isProjectOwner: query.data?.isProjectOwner ?? false,
     isProjectAdmin: query.data?.isProjectAdmin ?? false,
     isLoading: query.isLoading,
+    isResolving,
     isFetching: query.isFetching,
     error: query.error,
     refetch: query.refetch,
