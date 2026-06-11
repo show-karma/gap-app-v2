@@ -9,13 +9,18 @@ import { useOwnerStore, useProjectStore } from "@/store";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
 import { chainNameDictionary } from "@/utilities/chainNameDictionary";
+import { IndexingTimeoutError, isSurfacedError } from "@/utilities/errors";
 import fetchData from "@/utilities/fetchData";
 import { getProjectObjectives } from "@/utilities/gapIndexerApi/getProjectObjectives";
 import { sendMilestoneImpactAnswers } from "@/utilities/impact/milestoneImpactAnswers";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
-import { retryUntilConditionMet } from "@/utilities/retries";
+import {
+  INTERACTIVE_INDEXING_POLL,
+  isRetryConditionNotMetError,
+  retryUntilConditionMet,
+} from "@/utilities/retries";
 import { sanitizeInput, sanitizeObject } from "@/utilities/sanitize";
 import { getProjectById } from "@/utilities/sdk";
 import { SHARE_TEXTS } from "@/utilities/share/text";
@@ -24,6 +29,20 @@ import { useSetupChainAndWallet } from "./useSetupChainAndWallet";
 import { useWallet } from "./useWallet";
 import { useProjectGrants } from "./v2/useProjectGrants";
 import { useProjectUpdates } from "./v2/useProjectUpdates";
+
+/**
+ * Translate an indexing-poll rejection into a caller-meaningful error. Budget
+ * exhaustion (`RetryConditionNotMetError`) becomes an actionable
+ * `IndexingTimeoutError` so the user can tell "revoke rejected" apart from
+ * "revoke accepted, indexer lagging". Cancellation and any other error pass
+ * through untouched.
+ */
+const mapPollExhaustion = (error: unknown): unknown =>
+  isRetryConditionNotMetError(error)
+    ? new IndexingTimeoutError(
+        "Your revocation was submitted but is still being indexed. Please refresh in a moment."
+      )
+    : error;
 
 // Helper function to send outputs and deliverables data
 const sendOutputsAndDeliverables = async (
@@ -73,6 +92,7 @@ export const useMilestone = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const { chain } = useAccount();
   const { switchChainAsync } = useWallet();
+  const attestationToast = useAttestationToast();
   const {
     startAttestation,
     showLoading,
@@ -81,7 +101,7 @@ export const useMilestone = () => {
     changeStepperStep,
     dismiss,
     showChainProgress,
-  } = useAttestationToast();
+  } = attestationToast;
   const project = useProjectStore((state) => state.project);
   const { projectId } = useParams();
   const { refetch } = useProjectUpdates(projectId as string);
@@ -91,7 +111,7 @@ export const useMilestone = () => {
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const { openShareDialog } = useShareDialogStore();
   const _isOnChainAuthorized = isProjectOwner || isContractOwner;
-  const { performOffChainRevoke } = useOffChainRevoke();
+  const { performOffChainRevoke } = useOffChainRevoke(attestationToast);
   const { setupChainAndWallet } = useSetupChainAndWallet();
 
   const multiGrantDelete = async (milestone: UnifiedMilestone) => {
@@ -396,7 +416,9 @@ export const useMilestone = () => {
               },
               async () => {
                 callbackFn?.();
-              }
+              },
+              INTERACTIVE_INDEXING_POLL.maxRetries,
+              INTERACTIVE_INDEXING_POLL.delay
             );
           };
 
@@ -411,11 +433,14 @@ export const useMilestone = () => {
             }
           }
 
-          await checkIfCompletionExists(() => {
-            changeStepperStep("indexed");
-          }).then(() => {
-            refetch();
-          });
+          try {
+            await checkIfCompletionExists(() => {
+              changeStepperStep("indexed");
+            });
+          } catch (pollError) {
+            throw mapPollExhaustion(pollError);
+          }
+          refetch();
         }
         // Show final success message after all chains processed
         showSuccess("Milestone completion undone successfully!");
@@ -474,7 +499,9 @@ export const useMilestone = () => {
               },
               async () => {
                 callbackFn?.();
-              }
+              },
+              INTERACTIVE_INDEXING_POLL.maxRetries,
+              INTERACTIVE_INDEXING_POLL.delay
             );
           };
 
@@ -483,12 +510,15 @@ export const useMilestone = () => {
             chainID: objective.chainID || fetchedProject.chainID,
           });
 
-          await checkIfProjectCompletionExists(() => {
-            changeStepperStep("indexed");
-          }).then(() => {
-            showSuccess(MESSAGES.MILESTONES.COMPLETE.UNDO.SUCCESS);
-            refetch();
-          });
+          try {
+            await checkIfProjectCompletionExists(() => {
+              changeStepperStep("indexed");
+            });
+          } catch (pollError) {
+            throw mapPollExhaustion(pollError);
+          }
+          showSuccess(MESSAGES.MILESTONES.COMPLETE.UNDO.SUCCESS);
+          refetch();
 
           return;
         }
@@ -523,7 +553,9 @@ export const useMilestone = () => {
             },
             async () => {
               callbackFn?.();
-            }
+            },
+            INTERACTIVE_INDEXING_POLL.maxRetries,
+            INTERACTIVE_INDEXING_POLL.delay
           );
         };
 
@@ -532,19 +564,32 @@ export const useMilestone = () => {
           chainID: milestoneInstance.chainID,
         });
 
-        await checkIfCompletionExists(() => {
-          changeStepperStep("indexed");
-        }).then(() => {
-          showSuccess(MESSAGES.MILESTONES.COMPLETE.UNDO.SUCCESS);
-          refetch();
-        });
+        try {
+          await checkIfCompletionExists(() => {
+            changeStepperStep("indexed");
+          });
+        } catch (pollError) {
+          throw mapPollExhaustion(pollError);
+        }
+        showSuccess(MESSAGES.MILESTONES.COMPLETE.UNDO.SUCCESS);
+        refetch();
       }
     } catch (error) {
-      console.error("Error during completion revocation:", error);
-      showError(MESSAGES.MILESTONES.COMPLETE.UNDO.ERROR);
+      // A revoke rejection or indexing timeout has already shown its specific
+      // toast (surfaced); only show the generic fallback otherwise. Either way
+      // report to telemetry, then RETHROW so the confirmation dialog
+      // (DeleteDialog) knows the action did not succeed and stays open.
+      if (!isSurfacedError(error)) {
+        showError(
+          error instanceof IndexingTimeoutError
+            ? error.message
+            : MESSAGES.MILESTONES.COMPLETE.UNDO.ERROR
+        );
+      }
       errorManager("Error revoking milestone completion", error, {
         milestoneData: milestone,
       });
+      throw error;
     } finally {
       dismiss();
     }

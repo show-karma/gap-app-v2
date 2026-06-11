@@ -54,9 +54,9 @@ Cross-community pages: detect roles from data (`useReviewerPrograms()`, `useDash
 
 ## Testing Patterns
 
-Tests use Jest + RTL. Follow these established patterns (see `__tests__/` for examples):
+Tests use Vitest + RTL. Follow these established patterns (see `__tests__/` for examples):
 - Mock factories with override support: `createMockProgram(overrides)`
-- `jest.clearAllMocks()` in `beforeEach`, `queryClient.clear()` in `afterEach`
+- `vi.clearAllMocks()` in `beforeEach`, `queryClient.clear()` in `afterEach`
 - Wrap hooks in `QueryClientProvider` via `renderHook`
 - `waitFor(() => expect(...))` for async
 - Separate `describe` blocks for loading, success, empty, and error states

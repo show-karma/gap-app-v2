@@ -138,18 +138,19 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
           // Silently fallback to off-chain revoke
           setIsStepper(false); // Reset stepper since we're falling back
 
-          const success = await performOffChainRevoke({
-            uid: completionData?.uid as `0x${string}`,
-            chainID: instanceMilestone.chainID,
-            checkIfExists: checkIfAttestationExists,
-            toastMessages: {
-              success: MESSAGES.MILESTONES.COMPLETE.UNDO.SUCCESS,
-              loading: MESSAGES.MILESTONES.COMPLETE.UNDO.LOADING,
-            },
-          });
-
-          if (!success) {
-            // Both methods failed - throw the original error to maintain expected behavior
+          try {
+            await performOffChainRevoke({
+              uid: completionData?.uid as `0x${string}`,
+              chainID: instanceMilestone.chainID,
+              checkIfExists: checkIfAttestationExists,
+              toastMessages: {
+                success: MESSAGES.MILESTONES.COMPLETE.UNDO.SUCCESS,
+                loading: MESSAGES.MILESTONES.COMPLETE.UNDO.LOADING,
+              },
+            });
+          } catch {
+            // Both methods failed - throw the original on-chain error to
+            // preserve its context.
             throw onChainError;
           }
         }

@@ -1,7 +1,13 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import toast from "react-hot-toast";
 import { DeleteDialog } from "@/components/DeleteDialog";
 import { errorManager } from "@/components/Utilities/errorManager";
+
+vi.mock("react-hot-toast", () => ({
+  __esModule: true,
+  default: { error: vi.fn(), success: vi.fn(), loading: vi.fn(), dismiss: vi.fn() },
+}));
 
 // Mock Radix UI Dialog components
 vi.mock("@/components/ui/dialog", () => ({
@@ -245,6 +251,39 @@ describe("DeleteDialog", () => {
 
       await waitFor(() => {
         expect(errorManager).toHaveBeenCalledWith("Delete operation failed", error);
+      });
+    });
+
+    it("should skip the generic toast for surfaced errors but still report telemetry", async () => {
+      const user = userEvent.setup();
+      const surfaced = Object.assign(new Error("Forbidden"), { surfaced: true });
+      const errorDeleteFunction = vi.fn().mockRejectedValue(surfaced);
+
+      render(<DeleteDialog {...defaultProps} deleteFunction={errorDeleteFunction} />);
+
+      await user.click(screen.getByText("Delete Project"));
+      await user.click(screen.getByText("Continue"));
+
+      await waitFor(() => {
+        expect(errorManager).toHaveBeenCalledWith("Delete operation failed", surfaced);
+      });
+      // The primitive already toasted the specific message — no generic one.
+      expect(toast.error).not.toHaveBeenCalled();
+      // Dialog stays open so the user can retry.
+      expect(screen.getByTestId("dialog")).toBeInTheDocument();
+    });
+
+    it("should show the generic toast for non-surfaced errors", async () => {
+      const user = userEvent.setup();
+      const errorDeleteFunction = vi.fn().mockRejectedValue(new Error("Delete failed"));
+
+      render(<DeleteDialog {...defaultProps} deleteFunction={errorDeleteFunction} />);
+
+      await user.click(screen.getByText("Delete Project"));
+      await user.click(screen.getByText("Continue"));
+
+      await waitFor(() => {
+        expect(toast.error).toHaveBeenCalledWith("Operation failed. Please try again.");
       });
     });
 
