@@ -43,7 +43,7 @@ export function Hero() {
               "text-left md:text-center max-w-[820px] w-full md:mx-auto"
             )}
           >
-            Every brief shows the work behind the recommendation.
+            Generate a donor-ready research brief in 10 minutes.
           </h1>
         </ScrollReveal>
 
@@ -55,9 +55,10 @@ export function Hero() {
               "max-w-[760px] w-full md:mx-auto"
             )}
           >
-            Karma Nonprofit Research scores thousands of 501(c)(3)s against your cause, geography,
-            and grant size, then returns a ranked shortlist. Every pick gets a compliance check, an
-            activity score, and a mission match, with the receipts attached.
+            Donor advisors use Karma Nonprofit Research to build a ranked shortlist for any cause,
+            geography, or grant size. Compliance, activity, and mission match arrive already
+            verified, so you save hours of diligence and hand donors a recommendation they can act
+            on with confidence.
           </p>
         </ScrollReveal>
 

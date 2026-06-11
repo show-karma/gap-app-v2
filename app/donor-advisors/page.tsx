@@ -6,9 +6,9 @@ import { customMetadata } from "@/utilities/meta";
 import { cn } from "@/utilities/tailwind";
 
 export const metadata: Metadata = customMetadata({
-  title: "For donors and advisors: Every brief shows the work behind the recommendation",
+  title: "For donor advisors: Generate a donor-ready research brief in 10 minutes",
   description:
-    "Karma Nonprofit Research builds a ranked shortlist for any cause, geography, or grant size. Every pick gets a compliance check, an activity score, and a mission match, with the receipts attached.",
+    "Donor advisors use Karma Nonprofit Research to build a ranked shortlist for any cause, geography, or grant size. Compliance, activity, and mission match arrive already verified, so you save hours of diligence and hand donors a recommendation they can act on.",
   path: "/donor-advisors",
 });
 
