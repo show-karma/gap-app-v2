@@ -16,7 +16,7 @@ interface DonorResearchErrorProps {
  * Authenticated-side error boundary for the donor-research section.
  * Renders the failure plainly with a retry CTA and a fallback link back
  * to the section's index. Donor-facing pages have their own minimal
- * error UI under `app/donor-research/shared/[token]/error.tsx`.
+ * error UI under `app/nonprofit-research/shared/[token]/error.tsx`.
  */
 export function DonorResearchError({ error, reset }: DonorResearchErrorProps) {
   // Never surface raw backend/runtime error text (e.g. "Authorization
@@ -60,7 +60,7 @@ export function DonorResearchError({ error, reset }: DonorResearchErrorProps) {
           </div>
           <h1 className="text-xl font-semibold text-foreground">Please sign in</h1>
           <p className="text-sm text-muted-foreground">
-            You need to be signed in to view donor research.
+            You need to be signed in to view nonprofit research.
           </p>
           <button
             type="button"
@@ -83,7 +83,7 @@ export function DonorResearchError({ error, reset }: DonorResearchErrorProps) {
         </div>
         <h1 className="text-xl font-semibold text-foreground">Something went wrong</h1>
         <p className="text-sm text-muted-foreground">
-          We couldn&apos;t load this part of donor research. Please try again.
+          We couldn&apos;t load this part of nonprofit research. Please try again.
         </p>
         {error.digest ? (
           <p className="text-xs text-muted-foreground">Reference: {error.digest}</p>
@@ -101,7 +101,7 @@ export function DonorResearchError({ error, reset }: DonorResearchErrorProps) {
             href={PAGES.DONOR_RESEARCH.INDEX}
             className="text-sm text-muted-foreground underline underline-offset-2 hover:text-foreground"
           >
-            Back to donor research
+            Back to nonprofit research
           </Link>
         </div>
       </div>
