@@ -1,12 +1,11 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
 import { Skeleton } from "@/components/Utilities/Skeleton";
 import { useCommunityAccent } from "@/hooks/useCommunityAccent";
 import { useCommunityDetails } from "@/hooks/v2/useCommunityDetails";
+import { useCommunityStats } from "@/hooks/v2/useCommunityStats";
 import formatCurrency from "@/utilities/formatCurrency";
-import { getCommunityStats } from "@/utilities/queries/v2/getCommunityData";
 
 const SKELETON_KEYS = ["a", "b", "c", "d"];
 
@@ -17,11 +16,8 @@ export function ImpactOutcomes() {
   const { community } = useCommunityDetails(communityId);
   const slug = community?.details?.slug ?? communityId;
 
-  const { data: stats, isLoading } = useQuery({
-    queryKey: ["community-stats", communityId],
-    queryFn: () => getCommunityStats(slug || communityId),
+  const { stats, isLoading } = useCommunityStats(slug || communityId, {
     enabled: !!communityId,
-    staleTime: 5 * 60 * 1000,
   });
 
   if (isLoading) {

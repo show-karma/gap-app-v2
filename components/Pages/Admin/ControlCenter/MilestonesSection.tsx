@@ -19,12 +19,12 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { getInvoiceDownloadUrl } from "@/src/features/payout-disbursement/services/payout-disbursement.service";
 import {
   type CommunityPayoutInvoiceInfo,
-  formatDisplayAmount,
-  getInvoiceDownloadUrl,
   MilestoneLifecycleStatus,
-} from "@/src/features/payout-disbursement";
+} from "@/src/features/payout-disbursement/types/payout-disbursement";
+import { formatDisplayAmount } from "@/src/features/payout-disbursement/utils/format-token-amount";
 import { formatAddressForDisplay } from "@/utilities/donations/helpers";
 import { formatDate } from "@/utilities/formatDate";
 import { formatMilestoneTitle } from "@/utilities/formatMilestoneTitle";

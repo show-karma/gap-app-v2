@@ -1,7 +1,7 @@
 "use client";
 
 import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/20/solid";
-import type { CommunityPayoutsSorting } from "@/src/features/payout-disbursement";
+import type { CommunityPayoutsSorting } from "@/src/features/payout-disbursement/types/payout-disbursement";
 
 export function SortIcon({
   column,

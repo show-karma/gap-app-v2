@@ -6,11 +6,11 @@ import Papa from "papaparse";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { FileUpload } from "@/components/Utilities/FileUpload";
+import { validateBulkImportRows } from "@/src/features/payout-disbursement/services/payout-disbursement.service";
 import type {
   PayoutConfigItem,
   SavePayoutConfigResponse,
-} from "@/src/features/payout-disbursement";
-import { validateBulkImportRows } from "@/src/features/payout-disbursement/services/payout-disbursement.service";
+} from "@/src/features/payout-disbursement/types/payout-disbursement";
 import { cn } from "@/utilities/tailwind";
 import {
   buildPayoutConfigItems,
