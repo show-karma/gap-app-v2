@@ -100,4 +100,33 @@ describe("useSearchSessionStore", () => {
     const id2 = useSearchSessionStore.getState().createSession("query beta");
     expect(id1).not.toBe(id2);
   });
+
+  it("createSession marks the session fresh", () => {
+    const id = useSearchSessionStore.getState().createSession("brand new search");
+    expect(useSearchSessionStore.getState().getSession(id)?.fresh).toBe(true);
+  });
+
+  it("consumeFresh returns true exactly once for a fresh session", () => {
+    const id = useSearchSessionStore.getState().createSession("brand new search");
+
+    expect(useSearchSessionStore.getState().consumeFresh(id)).toBe(true);
+    // Second call: the flag was consumed — this is now a revisit.
+    expect(useSearchSessionStore.getState().consumeFresh(id)).toBe(false);
+    expect(useSearchSessionStore.getState().getSession(id)?.query).toBe("brand new search");
+  });
+
+  it("consumeFresh returns false for sessions written via setSession", () => {
+    useSearchSessionStore.getState().setSession("remote-id", "hydrated from server");
+    expect(useSearchSessionStore.getState().consumeFresh("remote-id")).toBe(false);
+  });
+
+  it("consumeFresh returns false for unknown ids", () => {
+    expect(useSearchSessionStore.getState().consumeFresh("nonexistent")).toBe(false);
+  });
+
+  it("setSession clears the fresh flag for an existing session", () => {
+    const id = useSearchSessionStore.getState().createSession("first query");
+    useSearchSessionStore.getState().setSession(id, "first query");
+    expect(useSearchSessionStore.getState().consumeFresh(id)).toBe(false);
+  });
 });

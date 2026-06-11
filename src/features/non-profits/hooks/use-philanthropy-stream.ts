@@ -22,6 +22,7 @@ import {
 } from "../lib/agentic-philanthropy";
 import { NON_PROFITS_API } from "../lib/api";
 import type { AppError } from "../lib/errors";
+import { chatTurnToTurnPayload } from "../lib/saved-conversation";
 import { type ChatTurn, usePhilanthropyStore } from "../store/philanthropy";
 import { useSearchSessionStore } from "../store/search-session";
 import type {
@@ -30,7 +31,7 @@ import type {
   QueryResponse,
   RankedEntity,
 } from "../types/philanthropy";
-import { useAddSearchHistory } from "./use-search-history";
+import { useAddSearchHistory, useAppendSearchTurn } from "./use-search-history";
 
 const DEFAULT_PAGE_SIZE = 500;
 
@@ -394,6 +395,7 @@ function buildConversationMessages(
 export function usePhilanthropySearch() {
   const abortRef = useRef<AbortController | null>(null);
   const addHistory = useAddSearchHistory();
+  const appendTurn = useAppendSearchTurn();
 
   const search = useCallback(
     async (
@@ -594,19 +596,56 @@ export function usePhilanthropySearch() {
               status: "done",
               progress: null,
             });
+
+            // Persist the completed turn so revisiting the URL replays the
+            // conversation instead of re-running the search. The first turn
+            // creates the history entry under the thread/URL id; follow-ups
+            // append to it. Both calls fail silently for anonymous users
+            // (the endpoints require auth) — the local session still works.
+            const state = usePhilanthropyStore.getState();
+            const threadId = state.threadId;
+            const completedTurn = state.messages[state.messages.length - 1];
+            if (threadId && completedTurn?.status === "done") {
+              const turnPayload = chatTurnToTurnPayload(completedTurn);
+              const doneCount = state.messages.filter((t) => t.status === "done").length;
+              if (doneCount === 1) {
+                addHistory.mutate(
+                  { query: normalizedQuery, id: threadId },
+                  {
+                    onSuccess: (entry) => {
+                      useSearchSessionStore.getState().setSession(entry.id, normalizedQuery);
+                      options?.onSearchId?.(entry.id);
+                      appendTurn.mutate({ searchId: entry.id, turn: turnPayload });
+                    },
+                    onError: () => {
+                      // Anonymous/offline: keep the local session so the
+                      // page keeps working without server persistence.
+                      useSearchSessionStore.getState().setSession(threadId, normalizedQuery);
+                      options?.onSearchId?.(threadId);
+                    },
+                  }
+                );
+              } else {
+                appendTurn.mutate({ searchId: threadId, turn: turnPayload });
+              }
+            }
+            return;
           }
 
           if (!isPagination) {
-            addHistory.mutate(normalizedQuery, {
-              onSuccess: (entry) => {
-                useSearchSessionStore.getState().setSession(entry.id, normalizedQuery);
-                options?.onSearchId?.(entry.id);
-              },
-              onError: () => {
-                const sessionId = useSearchSessionStore.getState().createSession(normalizedQuery);
-                options?.onSearchId?.(sessionId);
-              },
-            });
+            addHistory.mutate(
+              { query: normalizedQuery },
+              {
+                onSuccess: (entry) => {
+                  useSearchSessionStore.getState().setSession(entry.id, normalizedQuery);
+                  options?.onSearchId?.(entry.id);
+                },
+                onError: () => {
+                  const sessionId = useSearchSessionStore.getState().createSession(normalizedQuery);
+                  options?.onSearchId?.(sessionId);
+                },
+              }
+            );
           }
         },
         (appErr) => {
@@ -627,7 +666,7 @@ export function usePhilanthropySearch() {
 
       usePhilanthropyStore.getState().setSearching(false);
     },
-    [addHistory]
+    [addHistory, appendTurn]
   );
 
   const abort = useCallback(() => {
