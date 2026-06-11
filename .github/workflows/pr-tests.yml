@@ -233,13 +233,14 @@ jobs:
             const shardCount = parseInt('${{ needs.scope.outputs.shard_count }}', 10);
 
             // Read all shard outcome files; if any is not 'success' → failed.
-            // A missing/empty directory means the test job never produced an
-            // outcome (crash, cancellation) — treat that as a failure too, so
-            // the gate never silently passes.
+            // Fewer outcome files than expected shards means a test job never
+            // produced an outcome (runner loss, crash, cancellation, failed
+            // upload) — treat that as a failure too, so the gate never
+            // silently passes on a partial result.
             let passed = true;
             try {
               const files = fs.readdirSync(outcomesDir);
-              if (files.length === 0) {
+              if (!Number.isInteger(shardCount) || shardCount < 1 || files.length < shardCount) {
                 passed = false;
               }
               for (const file of files) {
