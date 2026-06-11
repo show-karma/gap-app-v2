@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import toast from "react-hot-toast";
 import { DeleteDialog } from "@/components/DeleteDialog";
 import { errorManager } from "@/components/Utilities/errorManager";
+import { IndexingTimeoutError, markSurfaced } from "@/utilities/errors";
 
 vi.mock("react-hot-toast", () => ({
   __esModule: true,
@@ -270,6 +271,26 @@ describe("DeleteDialog", () => {
       // The primitive already toasted the specific message — no generic one.
       expect(toast.error).not.toHaveBeenCalled();
       // Dialog stays open so the user can retry.
+      expect(screen.getByTestId("dialog")).toBeInTheDocument();
+    });
+
+    it("should not stack the generic toast when the indexing poll exhausts (timeout already toasted)", async () => {
+      const user = userEvent.setup();
+      // useMilestone shows the indexing-timeout toast, marks the error
+      // surfaced, then rethrows — DeleteDialog must not add a second toast.
+      const timeout = markSurfaced(new IndexingTimeoutError());
+      const errorDeleteFunction = vi.fn().mockRejectedValue(timeout);
+
+      render(<DeleteDialog {...defaultProps} deleteFunction={errorDeleteFunction} />);
+
+      await user.click(screen.getByText("Delete Project"));
+      await user.click(screen.getByText("Continue"));
+
+      await waitFor(() => {
+        expect(errorManager).toHaveBeenCalledWith("Delete operation failed", timeout);
+      });
+      expect(toast.error).not.toHaveBeenCalled();
+      // Dialog stays open so the user can retry / dismiss once indexed.
       expect(screen.getByTestId("dialog")).toBeInTheDocument();
     });
 

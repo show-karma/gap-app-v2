@@ -2,6 +2,7 @@ import {
   EligibilityConflictError,
   IndexingTimeoutError,
   isSurfacedError,
+  markSurfaced,
   OffChainRevokeError,
 } from "@/utilities/errors";
 
@@ -104,5 +105,24 @@ describe("isSurfacedError", () => {
     expect(isSurfacedError(new Error("plain"))).toBe(false);
     expect(isSurfacedError(null)).toBe(false);
     expect(isSurfacedError(Object.assign(new Error("ad-hoc"), { surfaced: true }))).toBe(true);
+  });
+});
+
+describe("markSurfaced", () => {
+  it("flags object errors as surfaced and returns the same instance", () => {
+    const plain = new Error("plain");
+    expect(markSurfaced(plain)).toBe(plain);
+    expect(isSurfacedError(plain)).toBe(true);
+
+    const timeout = new IndexingTimeoutError();
+    expect(isSurfacedError(timeout)).toBe(false);
+    markSurfaced(timeout);
+    expect(isSurfacedError(timeout)).toBe(true);
+  });
+
+  it("is a no-op for non-object errors", () => {
+    expect(markSurfaced("string error")).toBe("string error");
+    expect(markSurfaced(null)).toBe(null);
+    expect(isSurfacedError("string error")).toBe(false);
   });
 });

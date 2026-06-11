@@ -13,6 +13,7 @@ import {
   INDEXING_TIMEOUT_MESSAGE,
   IndexingTimeoutError,
   isSurfacedError,
+  markSurfaced,
 } from "@/utilities/errors";
 import fetchData from "@/utilities/fetchData";
 import { getProjectObjectives } from "@/utilities/gapIndexerApi/getProjectObjectives";
@@ -585,6 +586,10 @@ export const useMilestone = () => {
             ? error.message
             : MESSAGES.MILESTONES.COMPLETE.UNDO.ERROR
         );
+        // The toast above is now this failure's user-facing message — mark
+        // the error surfaced so outer catches (e.g. DeleteDialog) don't stack
+        // the generic "Operation failed" toast on top of it.
+        markSurfaced(error);
       }
       errorManager("Error revoking milestone completion", error, {
         milestoneData: milestone,

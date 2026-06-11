@@ -127,7 +127,7 @@ vi.mock("@/store", () => {
 });
 
 import { useMilestone } from "@/hooks/useMilestone";
-import { IndexingTimeoutError } from "@/utilities/errors";
+import { IndexingTimeoutError, isSurfacedError } from "@/utilities/errors";
 import { INTERACTIVE_INDEXING_POLL, RetryConditionNotMetError } from "@/utilities/retries";
 
 const baseMilestone = {
@@ -481,6 +481,26 @@ describe("useMilestone - undo completion", () => {
 
       expect(caught).toBeInstanceOf(IndexingTimeoutError);
       expect(mockShowError).toHaveBeenCalledWith(expect.stringContaining("indexed"));
+      // The rethrown error must carry the surfaced flag so outer catches
+      // (e.g. DeleteDialog) skip their generic "Operation failed" toast
+      // instead of stacking it on top of the timeout toast shown above.
+      expect(isSurfacedError(caught)).toBe(true);
+    });
+
+    it("marks generic non-surfaced errors as surfaced after showing the specific toast", async () => {
+      mockGetProjectById.mockResolvedValue(undefined);
+
+      const { result } = renderHook(() => useMilestone());
+
+      let caught: unknown;
+      await act(async () => {
+        await result.current.multiGrantUndoCompletion(singleGrantMilestone).catch((e) => {
+          caught = e;
+        });
+      });
+
+      expect(mockShowError).toHaveBeenCalledTimes(1);
+      expect(isSurfacedError(caught)).toBe(true);
     });
   });
 });

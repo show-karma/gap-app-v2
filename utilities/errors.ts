@@ -119,3 +119,17 @@ export function isSurfacedError(error: unknown): boolean {
     (error as { surfaced?: unknown }).surfaced === true
   );
 }
+
+/**
+ * Mark an error as surfaced after its user-facing toast has been shown, so
+ * outer catch blocks (see {@link isSurfacedError}) skip their generic toast
+ * instead of stacking it on top of the specific one. Returns the same error
+ * so it can be rethrown inline. No-op for non-object errors, which cannot
+ * carry the flag.
+ */
+export function markSurfaced<T>(error: T): T {
+  if (error && typeof error === "object") {
+    (error as { surfaced?: boolean }).surfaced = true;
+  }
+  return error;
+}
