@@ -8,11 +8,11 @@ vi.mock("@/utilities/enviromentVars", () => ({
 }));
 
 const mockBridge = {
-  loadRequested: false,
+  loginAttempted: false,
   authenticated: false,
 };
 vi.mock("@/contexts/privy-bridge-context", () => ({
-  usePrivyLoadRequested: () => mockBridge.loadRequested,
+  usePrivyLoginAttempted: () => mockBridge.loginAttempted,
   usePrivyBridge: () => ({ authenticated: mockBridge.authenticated }),
 }));
 
@@ -55,7 +55,7 @@ describe("PrivyOriginDiagnostic", () => {
     vi.clearAllMocks();
     vi.useFakeTimers();
     mockEnv.VERCEL_ENV = "preview";
-    mockBridge.loadRequested = false;
+    mockBridge.loginAttempted = false;
     mockBridge.authenticated = false;
     installPerformanceObserver(true);
   });
@@ -68,7 +68,7 @@ describe("PrivyOriginDiagnostic", () => {
   describe("environment gating", () => {
     it("renders nothing when VERCEL_ENV is not preview", () => {
       mockEnv.VERCEL_ENV = "production";
-      mockBridge.loadRequested = true;
+      mockBridge.loginAttempted = true;
       const { container } = render(<PrivyOriginDiagnostic />);
       emitResource("https://auth.privy.io/api/v1/siwe/init", 403);
       expect(container).toBeEmptyDOMElement();
@@ -77,13 +77,13 @@ describe("PrivyOriginDiagnostic", () => {
 
   describe("arming", () => {
     it("does not register a PerformanceObserver before a login attempt", () => {
-      mockBridge.loadRequested = false;
+      mockBridge.loginAttempted = false;
       render(<PrivyOriginDiagnostic />);
       expect(observeOptions).toBeUndefined();
     });
 
     it("does not show the banner before a login attempt even on a 403", () => {
-      mockBridge.loadRequested = false;
+      mockBridge.loginAttempted = false;
       render(<PrivyOriginDiagnostic />);
       emitResource("https://auth.privy.io/api/v1/siwe/init", 403);
       expect(screen.queryByRole("alert")).not.toBeInTheDocument();
@@ -92,7 +92,7 @@ describe("PrivyOriginDiagnostic", () => {
 
   describe("no false positive without a 403", () => {
     it("never shows on a slow-but-working login (no timeout trip)", () => {
-      mockBridge.loadRequested = true;
+      mockBridge.loginAttempted = true;
       render(<PrivyOriginDiagnostic />);
 
       // A working but slow emailed-OTP flow: time passes, successful Privy traffic
@@ -105,7 +105,7 @@ describe("PrivyOriginDiagnostic", () => {
     });
 
     it("does not treat cross-origin status 0 as a block", () => {
-      mockBridge.loadRequested = true;
+      mockBridge.loginAttempted = true;
       render(<PrivyOriginDiagnostic />);
 
       // Status 0 is normal for a cross-origin success without Timing-Allow-Origin.
@@ -117,7 +117,7 @@ describe("PrivyOriginDiagnostic", () => {
 
   describe("PerformanceObserver corroboration", () => {
     it("fires on an explicit 403 entry for the Privy auth origin", () => {
-      mockBridge.loadRequested = true;
+      mockBridge.loginAttempted = true;
       render(<PrivyOriginDiagnostic />);
 
       emitResource("https://auth.privy.io/api/v1/siwe/init", 403);
@@ -129,7 +129,7 @@ describe("PrivyOriginDiagnostic", () => {
     });
 
     it("ignores a 403 for other origins", () => {
-      mockBridge.loadRequested = true;
+      mockBridge.loginAttempted = true;
       render(<PrivyOriginDiagnostic />);
 
       emitResource("https://api.karmahq.xyz/api/projects", 403);
@@ -138,7 +138,7 @@ describe("PrivyOriginDiagnostic", () => {
     });
 
     it("ignores entries without responseStatus support", () => {
-      mockBridge.loadRequested = true;
+      mockBridge.loginAttempted = true;
       render(<PrivyOriginDiagnostic />);
 
       emitResource("https://auth.privy.io/api/v1/siwe/init", undefined);
@@ -150,7 +150,7 @@ describe("PrivyOriginDiagnostic", () => {
   describe("unsupported engine", () => {
     it("stays hidden when observe() throws (no responseStatus support)", () => {
       installPerformanceObserver(false);
-      mockBridge.loadRequested = true;
+      mockBridge.loginAttempted = true;
       render(<PrivyOriginDiagnostic />);
 
       expect(screen.queryByRole("alert")).not.toBeInTheDocument();
@@ -159,7 +159,7 @@ describe("PrivyOriginDiagnostic", () => {
 
   describe("success clears the advisory", () => {
     it("renders nothing when already authenticated", () => {
-      mockBridge.loadRequested = true;
+      mockBridge.loginAttempted = true;
       mockBridge.authenticated = true;
       render(<PrivyOriginDiagnostic />);
 
@@ -168,7 +168,7 @@ describe("PrivyOriginDiagnostic", () => {
     });
 
     it("clears a shown banner once authentication later succeeds", () => {
-      mockBridge.loadRequested = true;
+      mockBridge.loginAttempted = true;
       const { rerender } = render(<PrivyOriginDiagnostic />);
 
       // The banner trips on a 403...
@@ -188,7 +188,7 @@ describe("PrivyOriginDiagnostic", () => {
 
   describe("dismiss", () => {
     it("hides the banner when the dismiss button is clicked", () => {
-      mockBridge.loadRequested = true;
+      mockBridge.loginAttempted = true;
       render(<PrivyOriginDiagnostic />);
       emitResource("https://auth.privy.io/api/v1/siwe/init", 403);
 
@@ -204,7 +204,7 @@ describe("PrivyOriginDiagnostic", () => {
 
   describe("cleanup", () => {
     it("disconnects the PerformanceObserver on unmount", () => {
-      mockBridge.loadRequested = true;
+      mockBridge.loginAttempted = true;
       const { unmount } = render(<PrivyOriginDiagnostic />);
       unmount();
       expect(disconnect).toHaveBeenCalled();

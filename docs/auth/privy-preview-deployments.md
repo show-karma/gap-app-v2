@@ -94,7 +94,9 @@ unauthenticated), but documented here so the eager-load path stays auditable.
 
 `components/Utilities/PrivyOriginDiagnostic.tsx` is a **preview-only** advisory
 (`envVars.VERCEL_ENV === "preview"`) that makes the silent failure visible until a
-deployment is allowlisted. It arms only after a login attempt, then trips **only** on an
+deployment is allowlisted. It arms only after a real login attempt —
+`PrivyBridgeProvider` wraps the bridge `login()` so **every** sign-in path in the app
+sets the `usePrivyLoginAttempted()` flag — then trips **only** on an
 explicit, parent-observable `auth.privy.io` HTTP 403
 (`PerformanceResourceTiming.responseStatus`, Chromium 109+) — the origin rejection — and
 renders a dismissible `role="alert"` banner linking back to this runbook. It does **not**
@@ -118,6 +120,28 @@ allowlist): load the app, click Sign In, attempt email login, and record (a) whe
 `usePrivyBridge().ready` stalls at `false` or flips `true`, and (b) whether the
 `auth.privy.io` 403 is visible via `PerformanceObserver` resource entries. Update the
 diagnostic's trigger to whatever the spike confirms.
+
+### Spike result (2026-06-11): the 403 IS parent-observable
+
+Run against the current Privy app from a non-allowlisted origin
+(`http://127.0.0.1:8923`, plus `curl` with spoofed `Origin` headers):
+
+- `OPTIONS /api/v1/passwordless/init` (CORS preflight) → **204**, with
+  `access-control-allow-origin` **echoing the disallowed origin** and
+  `access-control-allow-credentials: true`. Privy's CORS layer reflects any origin;
+  origin enforcement happens at the application layer, not in CORS.
+- `POST /api/v1/siwe/init` and `POST /api/v1/passwordless/init` from a disallowed
+  origin → **403** `{"error":"Origin not allowed","code":"invalid_origin"}`, again
+  with the disallowed origin echoed in `access-control-allow-origin`. The same calls
+  from an allowlisted origin (`https://gap.karmahq.xyz`) → **200**.
+- Because the 403 response **passes the CORS check**, headless Chromium (145) exposes
+  it through Resource Timing: `performance.getEntriesByType("resource")` for the
+  `auth.privy.io` entry reports `responseStatus: 403`, `initiatorType: "fetch"`.
+  This is exactly the signal `PrivyOriginDiagnostic` trips on.
+- The iframe document (`GET /apps/<app-id>`) is a no-cors navigation: it returns
+  **200** with the `frame-ancestors` CSP and its resource entry reports
+  `responseStatus: 0` — which is why the diagnostic keys on the API 403, not the
+  iframe load.
 
 ## Verification checklist
 

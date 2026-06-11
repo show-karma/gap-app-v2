@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { usePrivyBridge, usePrivyLoadRequested } from "@/contexts/privy-bridge-context";
+import { usePrivyBridge, usePrivyLoginAttempted } from "@/contexts/privy-bridge-context";
 import { envVars } from "@/utilities/enviromentVars";
 
 /**
@@ -18,18 +18,25 @@ import { envVars } from "@/utilities/enviromentVars";
  * Detection (variant B, per the #1176 evidence that the email field renders inline
  * and only the subsequent OTP/wallet iframe step fails — i.e. the bridge reaches
  * ready=true before the block manifests):
- *  - Arm only after a login attempt (usePrivyLoadRequested() === true), since an
- *    anonymous idle session that never tries to log in has nothing to diagnose.
+ *  - Arm only after a real login attempt (usePrivyLoginAttempted() === true). The
+ *    bridge provider wraps `login` so every sign-in path in the app sets this flag;
+ *    an anonymous idle session that never tries to log in has nothing to diagnose.
  *  - While armed and still unauthenticated, a PerformanceObserver corroborates the
  *    block by observing a resource entry for the Privy auth origin whose
- *    responseStatus is exactly 403 — the frame-ancestors / origin rejection.
+ *    responseStatus is exactly 403 — the origin rejection.
  *    PerformanceResourceTiming.responseStatus is Chromium 109+; where unsupported,
  *    no entry will ever corroborate and the advisory simply never shows (we accept a
  *    miss over a false positive).
+ *  - The 403 IS parent-observable, verified by spike on 2026-06-11 (see the
+ *    "Failure signature" appendix in docs/auth/privy-preview-deployments.md):
+ *    auth.privy.io answers the CORS preflight 204 and the auth API POST
+ *    (e.g. /api/v1/siwe/init) with 403 {"code":"invalid_origin"} while echoing the
+ *    disallowed origin in Access-Control-Allow-Origin, so the response passes the
+ *    CORS check and headless Chromium reports responseStatus === 403 for the entry.
  *  - The advisory only trips on that explicit, parent-observable 403. We deliberately
  *    do NOT trip on a bare timeout or on status 0: a slow but working emailed-OTP flow
  *    routinely takes longer than any reasonable timeout, and status 0 is the normal
- *    responseStatus for cross-origin subresources lacking Timing-Allow-Origin even on
+ *    responseStatus for no-cors subresources (e.g. the iframe document itself) even on
  *    success. Tripping on either would fire spuriously during ordinary preview QA.
  *  - The success condition (authenticated) clears everything — no false banner.
  *
@@ -73,14 +80,14 @@ function isPrivyAuthBlock(entry: PerformanceEntry): boolean {
  * origin rejection (HTTP 403 from auth.privy.io).
  */
 export function PrivyOriginDiagnostic() {
-  const loadRequested = usePrivyLoadRequested();
+  const loginAttempted = usePrivyLoginAttempted();
   const { authenticated } = usePrivyBridge();
   const [blocked, setBlocked] = useState(false);
   const [dismissed, setDismissed] = useState(false);
 
   const isPreview = envVars.VERCEL_ENV === "preview";
   // Arm only after a login attempt while still unauthenticated.
-  const armed = isPreview && loadRequested && !authenticated;
+  const armed = isPreview && loginAttempted && !authenticated;
 
   useEffect(() => {
     if (armed) return;
