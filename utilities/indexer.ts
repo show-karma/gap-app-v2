@@ -790,6 +790,12 @@ export const INDEXER = {
       pageSize: number
     ) => `/v2/sitemap?kind=${kind}&page=${page}&pageSize=${pageSize}`,
   },
+  NONPROFITS: {
+    // Public endpoint that accepts a website URL plus contact info from the
+    // /nonprofits page form. The indexer persists the submission and emails
+    // the team for follow-up.
+    SUBMIT: "/v2/nonprofit-submissions/submit",
+  },
   DONOR_RESEARCH: {
     ME: "/v2/donor-research/me",
     ME_COUNTERS: "/v2/donor-research/me/counters",

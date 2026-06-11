@@ -398,9 +398,9 @@ describe("NavbarDesktopNavigation", () => {
         mockUseAuth: createMockUseAuth(authFixture.authState),
       });
 
-      // Auth buttons should be visible
+      // Sign in is the only nav-header auth button now
       expect(screen.getByText("Sign in")).toBeInTheDocument();
-      expect(screen.getByText("Contact sales")).toBeInTheDocument();
+      expect(screen.queryByText("Contact sales")).not.toBeInTheDocument();
     });
 
     it("should NOT render NavbarUserMenu when logged out", () => {

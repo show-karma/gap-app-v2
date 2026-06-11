@@ -35,7 +35,7 @@ describe("ConnectGuide", () => {
     expect(screen.getAllByText("https://gapapi.karmahq.xyz/mcp").length).toBeGreaterThan(0);
     expect(screen.getByRole("link", { name: /Using ChatGPT instead/i })).toHaveAttribute(
       "href",
-      "/non-profits/find-funders/connect/chatgpt"
+      "/nonprofits/find-funders/connect/chatgpt"
     );
   });
 
@@ -50,7 +50,7 @@ describe("ConnectGuide", () => {
     ).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Using Claude instead/i })).toHaveAttribute(
       "href",
-      "/non-profits/find-funders/connect/claude"
+      "/nonprofits/find-funders/connect/claude"
     );
   });
 

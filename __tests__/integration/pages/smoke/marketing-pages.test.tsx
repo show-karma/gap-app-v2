@@ -7,27 +7,74 @@ import { render, screen } from "@testing-library/react";
  * sentinel; we assert the page renders all expected sections.
  */
 
-// /foundations sections
+// /foundations sections (hero + cta remain in foundations feature folder;
+// body sections are shared with the home variants)
 vi.mock("@/src/features/foundations/components/cta-section", () => ({
   CTASection: () => <div data-testid="foundations-cta" />,
 }));
 vi.mock("@/src/features/foundations/components/hero", () => ({
   Hero: () => <div data-testid="foundations-hero" />,
 }));
-vi.mock("@/src/features/foundations/components/how-it-works-section", () => ({
-  HowItWorksSection: () => <div data-testid="foundations-how-it-works" />,
+vi.mock("@/components/Seo/FAQJsonLd", () => ({
+  FAQJsonLd: () => <div data-testid="foundations-faq-jsonld" />,
 }));
-vi.mock("@/src/features/foundations/components/objections-section", () => ({
-  ObjectionsSection: () => <div data-testid="foundations-objections" />,
+vi.mock("@/src/features/home/components/case-studies-section", () => ({
+  CaseStudiesSection: () => <div data-testid="home-case-studies" />,
 }));
-vi.mock("@/src/features/foundations/components/pain-points-section", () => ({
-  PainPointsSection: () => <div data-testid="foundations-pain-points" />,
+vi.mock("@/src/features/home/components/faq-section", () => ({
+  FAQSection: () => <div data-testid="home-faq" />,
 }));
-vi.mock("@/src/features/foundations/components/platform-section", () => ({
-  PlatformSection: () => <div data-testid="foundations-platform" />,
+vi.mock("@/src/features/home/components/how-it-works-section", () => ({
+  HowItWorksSection: () => <div data-testid="home-how-it-works" />,
 }));
-vi.mock("@/src/features/foundations/components/why-karma-section", () => ({
-  WhyKarmaSection: () => <div data-testid="foundations-why-karma" />,
+vi.mock("@/src/features/home/components/numbers-section", () => ({
+  NumbersSection: () => <div data-testid="home-numbers" />,
+}));
+vi.mock("@/src/features/home/components/objections-section", () => ({
+  ObjectionsSection: () => <div data-testid="home-objections" />,
+}));
+vi.mock("@/src/features/home/components/pain-points", () => ({
+  PainPoints: () => <div data-testid="home-pain-points" />,
+}));
+vi.mock("@/src/features/home/components/platform-section", () => ({
+  PlatformSection: () => <div data-testid="home-platform" />,
+}));
+vi.mock("@/src/features/home/components/solution-bridge", () => ({
+  SolutionBridge: () => <div data-testid="home-solution-bridge" />,
+}));
+vi.mock("@/src/features/home/components/workflow-section", () => ({
+  WorkflowSection: () => <div data-testid="home-workflow" />,
+}));
+vi.mock("@/src/features/home/components/hero", () => ({
+  Hero: () => <div data-testid="home-hero" />,
+}));
+
+// /nonprofits sections
+vi.mock("@/src/features/nonprofits/components/hero", () => ({
+  Hero: () => <div data-testid="nonprofits-hero" />,
+}));
+vi.mock("@/src/features/nonprofits/components/profile-preview", () => ({
+  ProfilePreview: () => <div data-testid="nonprofits-profile-preview" />,
+}));
+vi.mock("@/src/features/nonprofits/components/features-section", () => ({
+  FeaturesSection: () => <div data-testid="nonprofits-features" />,
+}));
+vi.mock("@/src/features/nonprofits/components/free-tools-section", () => ({
+  FreeToolsSection: () => <div data-testid="nonprofits-free-tools" />,
+}));
+vi.mock("@/src/features/nonprofits/components/cta-section", () => ({
+  CTASection: () => <div data-testid="nonprofits-cta" />,
+}));
+
+// /donor-advisors sections
+vi.mock("@/src/features/donor-advisors/components/hero", () => ({
+  Hero: () => <div data-testid="donor-advisors-hero" />,
+}));
+vi.mock("@/src/features/donor-advisors/components/features-section", () => ({
+  FeaturesSection: () => <div data-testid="donor-advisors-features" />,
+}));
+vi.mock("@/src/features/donor-advisors/components/cta-section", () => ({
+  CTASection: () => <div data-testid="donor-advisors-cta" />,
 }));
 
 // /funders sections
@@ -144,13 +191,48 @@ describe("/foundations marketing page", () => {
     await renderPage(() => import("@/app/foundations/page"));
     [
       "foundations-hero",
-      "foundations-pain-points",
-      "foundations-platform",
-      "foundations-why-karma",
-      "foundations-how-it-works",
-      "foundations-objections",
+      "home-pain-points",
+      "home-solution-bridge",
+      "home-numbers",
+      "home-platform",
+      "home-case-studies",
+      "home-how-it-works",
+      "home-objections",
+      "home-faq",
       "foundations-cta",
     ].forEach((id) => {
+      expect(screen.getByTestId(id)).toBeInTheDocument();
+    });
+  });
+});
+
+describe("/ marketing page (funder workflow)", () => {
+  it("renders hero and the workflow section", async () => {
+    await renderPage(() => import("@/app/page"));
+    expect(screen.getByTestId("home-hero")).toBeInTheDocument();
+    expect(screen.getByTestId("home-workflow")).toBeInTheDocument();
+  });
+});
+
+describe("/nonprofits marketing page", () => {
+  it("renders hero, profile preview, features, free tools, cta", async () => {
+    await renderPage(() => import("@/app/nonprofits/page"));
+    [
+      "nonprofits-hero",
+      "nonprofits-profile-preview",
+      "nonprofits-features",
+      "nonprofits-free-tools",
+      "nonprofits-cta",
+    ].forEach((id) => {
+      expect(screen.getByTestId(id)).toBeInTheDocument();
+    });
+  });
+});
+
+describe("/donor-advisors marketing page", () => {
+  it("renders hero, features, cta", async () => {
+    await renderPage(() => import("@/app/donor-advisors/page"));
+    ["donor-advisors-hero", "donor-advisors-features", "donor-advisors-cta"].forEach((id) => {
       expect(screen.getByTestId(id)).toBeInTheDocument();
     });
   });

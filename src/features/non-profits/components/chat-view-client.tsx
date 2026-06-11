@@ -4,7 +4,7 @@
  * ChatViewClient — ported from grant-atlas
  * features/grant-atlas/components/research-workbench/chat-view.tsx.
  *
- * Full SSE streaming search workbench for /non-profits/find-funders/search/[id].
+ * Full SSE streaming search workbench for /nonprofits/find-funders/search/[id].
  *
  * Key adaptations from grant-atlas:
  * - Router: TanStack Link → next/link
