@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useAuth } from "@/hooks/useAuth";
 import { useProjectStore } from "@/store";
@@ -171,7 +171,23 @@ export const useProjectPermissions = () => {
   // wrongly enables admin-gated fetches (e.g. the contacts GET) for the new
   // project. The tri-state `isResolving` below keeps the UI in a loading state
   // during the recheck, so resetting here cannot reintroduce a denial flash.
+  //
+  // The reset MUST only fire on an actual projectId transition within this
+  // instance — never on plain mount. This hook is instantiated by many
+  // components (including late-mounting ones like conditional dialogs and
+  // per-milestone items), and the data-sync effect above is declared first:
+  // on a late mount with cached query data the sync would set the flags true
+  // and an unconditional reset would immediately clobber them back to false,
+  // permanently, because `query.data` never changes afterwards. Tracking the
+  // previously-seen projectId in a ref skips the mount-time invocation while
+  // still resetting on every real project change.
+  const prevProjectIdRef = useRef<string | undefined>(undefined);
   useEffect(() => {
+    const prevProjectId = prevProjectIdRef.current;
+    prevProjectIdRef.current = projectId;
+    if (prevProjectId === undefined || prevProjectId === projectId) {
+      return;
+    }
     setIsProjectOwner(false);
     setIsProjectAdmin(false);
   }, [projectId, setIsProjectOwner, setIsProjectAdmin]);
