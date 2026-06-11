@@ -55,6 +55,8 @@ export function OnboardingFlow() {
   const onboard = useOnboardAdvisor();
   const [step, setStep] = useState<Step>("welcome");
 
+  // A single ref is shared across all three step headings because exactly one
+  // step <section> is mounted at a time, so only one heading ever binds it.
   const headingRef = useRef<HTMLHeadingElement>(null);
   const headingBaseId = useId();
   const welcomeHeadingId = `${headingBaseId}-welcome`;
