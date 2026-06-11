@@ -121,6 +121,8 @@ export const QUERY_KEYS = {
     IS_ADMIN: (communityUid?: string, chainId?: number, address?: string, signer?: unknown) =>
       ["isCommunityAdmin", communityUid, chainId, address, signer] as const,
     IS_ADMIN_BASE: ["isCommunityAdmin"] as const,
+    IS_ADMIN_OF_ANY: (communitiesKey?: string, walletsKey?: string, signer?: unknown) =>
+      ["isCommunityAdmin", "ofAny", communitiesKey, walletsKey, signer] as const,
     REPORT_MILESTONES: (
       communityId: string,
       page: number,
