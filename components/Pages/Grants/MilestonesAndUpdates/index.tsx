@@ -184,7 +184,7 @@ export const GrantCompletionCard = ({ completion, grant }: GrantCompletionCardPr
                   Track Integration
                 </h5>
                 <div className="flex flex-col gap-1">
-                  {trackExplanations.map((trackExplanation: any) => (
+                  {trackExplanations.map((trackExplanation) => (
                     <div
                       key={trackExplanation.trackUID}
                       className="bg-white/50 dark:bg-zinc-800 rounded-md p-3"

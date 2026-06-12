@@ -54,12 +54,16 @@ const ProjectCardSkeleton = ({ index }: { index: number }) => {
   );
 };
 
+const PROJECT_CARD_SKELETON_KEYS = Array.from(
+  { length: 12 },
+  (_, index) => `project-card-skeleton-${index}`
+);
+
 const ProjectCardListSkeleton = () => {
-  const cardArray = Array.from({ length: 12 }, (_, index) => index);
   return (
     <div className="grid grid-cols-4 w-full gap-4 max-[1600px]:grid-cols-4 max-[1500px]:grid-cols-3 max-[1100px]:grid-cols-2 max-sm:grid-cols-1">
-      {cardArray.map((_, index) => (
-        <ProjectCardSkeleton key={index} index={index} />
+      {PROJECT_CARD_SKELETON_KEYS.map((key, index) => (
+        <ProjectCardSkeleton key={key} index={index} />
       ))}
     </div>
   );

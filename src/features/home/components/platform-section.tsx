@@ -85,7 +85,7 @@ export function PlatformSection() {
         {/* Cards Grid */}
         <div className={cn("grid grid-cols-1 md:grid-cols-2 gap-4 w-full")}>
           {platformCards.map((card, index) => (
-            <ScrollReveal key={index} variant="scale-up" delay={index * 100}>
+            <ScrollReveal key={card.title} variant="scale-up" delay={index * 100}>
               <div
                 className={cn(
                   "flex flex-col justify-between gap-3 h-full",

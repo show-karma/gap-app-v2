@@ -1,3 +1,6 @@
+import type { GrantUpdate } from "@show-karma/karma-gap-sdk/core/class/entities/GrantUpdate";
+import type { ProjectImpact } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectImpact";
+import type { ProjectUpdate } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectUpdate";
 import type {
   IGrantUpdate,
   IMilestoneResponse,
@@ -121,7 +124,7 @@ export const useUpdateActions = (update: UpdateType) => {
 
       const { gapClient, walletSigner } = setup;
 
-      let findUpdate: any = null;
+      let findUpdate: ProjectUpdate | ProjectImpact | GrantUpdate | null | undefined = null;
       let deleteMessage = "";
       let _deleteErrorMessage = "";
 
@@ -226,7 +229,7 @@ export const useUpdateActions = (update: UpdateType) => {
         });
       } else {
         try {
-          const res = await findUpdate.revoke(walletSigner as any, changeStepperStep);
+          const res = await findUpdate.revoke(walletSigner, changeStepperStep);
           const txHash = res?.tx[0]?.hash;
           if (txHash) {
             await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, findUpdate.chainID), "POST", {});
@@ -237,7 +240,7 @@ export const useUpdateActions = (update: UpdateType) => {
           });
           showSuccess(deleteMessage);
           await refreshDataAfterDeletion();
-        } catch (onChainError: any) {
+        } catch (onChainError) {
           // Silently fallback to off-chain revoke
           dismiss(); // Reset toast since we're falling back
 
@@ -260,7 +263,7 @@ export const useUpdateActions = (update: UpdateType) => {
           }
         }
       }
-    } catch (error: any) {
+    } catch (error) {
       const errorMessage =
         update.type === "ProjectUpdate"
           ? MESSAGES.PROJECT_UPDATE_FORM.DELETE.ERROR

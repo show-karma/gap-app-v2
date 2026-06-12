@@ -10,7 +10,7 @@ import TablePagination from "@/components/Utilities/TablePagination";
 import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
 import { useCommunityDetails } from "@/hooks/communities/useCommunityDetails";
 import { useCommunityGrants } from "@/hooks/useCommunityGrants";
-import { useCommunityRegions } from "@/hooks/useCommunityRegions";
+import { type RegionOption, useCommunityRegions } from "@/hooks/useCommunityRegions";
 import { useCommunityProjects } from "@/hooks/v2/useCommunityProjects";
 import { Link } from "@/src/components/navigation/Link";
 import type { CommunityProject } from "@/types/v2/community";
@@ -23,7 +23,7 @@ import { RegionCreationDialog } from "./RegionCreationDialog";
 
 interface ProjectsTableProps {
   projects: CommunityProject[];
-  regions: any[];
+  regions: RegionOption[];
   selectedRegions: Record<string, string>;
   optimisticRegions: Record<string, string>;
   onRegionChange: (uid: string, region: string) => void;
@@ -238,7 +238,7 @@ export default function EditProjectsPage() {
         delete newState[uid];
         return newState;
       });
-    } catch (error: any) {
+    } catch (error) {
       errorManager(
         `Error updating region for project ${uid}`,
         error,

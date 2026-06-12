@@ -5,10 +5,8 @@ import Image from "next/image";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
 import pluralize from "pluralize";
 import { useCallback, useEffect, useMemo } from "react";
-import {
-  computeProgramView,
-  EditorialProgramCard,
-} from "@/components/Pages/Communities/Funding/EditorialProgramCard";
+import { EditorialProgramCard } from "@/components/Pages/Communities/Funding/EditorialProgramCard";
+import { computeProgramView } from "@/components/Pages/Communities/Funding/EditorialProgramCard.helpers";
 import { FeaturedProgram } from "@/components/Pages/Communities/Funding/FeaturedProgram";
 import { PageHero } from "@/components/Pages/Communities/PageHero";
 import { ProgramCardSkeleton } from "@/src/features/programs/components/ProgramCardSkeleton";

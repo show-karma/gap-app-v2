@@ -74,7 +74,7 @@ export function HowItWorksSection() {
           {steps.map((step, index) => {
             const IconComponent = step.icon;
             return (
-              <ScrollReveal key={index} variant="fade-up" delay={index * 150}>
+              <ScrollReveal key={step.title} variant="fade-up" delay={index * 150}>
                 <div className={cn("flex flex-col items-center gap-4 h-full")}>
                   <div
                     className={cn(

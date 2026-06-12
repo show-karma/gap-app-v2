@@ -123,7 +123,12 @@ export function SharedReportView({ token }: SharedReportViewProps) {
 
     return () => {
       cancelled = true;
-      stopPolling();
+      // Same as stopPolling(), inlined so static analysis can verify the
+      // interval is cleared on unmount.
+      if (interval !== null) {
+        clearInterval(interval);
+        interval = null;
+      }
     };
   }, [token]);
 

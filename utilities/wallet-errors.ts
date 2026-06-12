@@ -7,12 +7,19 @@
  * "user cancelled", "user canceled"). Also unwraps errors nested under
  * `originalError`.
  */
+interface WalletErrorLayer {
+  message?: unknown;
+  code?: unknown;
+  name?: unknown;
+  originalError?: unknown;
+}
+
 export function isUserCancellationError(error: unknown): boolean {
-  const err = error as Record<string, any> | null | undefined;
-  const layers = [err, err?.originalError].filter(Boolean);
+  const err = error as WalletErrorLayer | null | undefined;
+  const layers = [err, err?.originalError as WalletErrorLayer | undefined].filter(Boolean);
 
   return layers.some((layer) => {
-    const msg = (layer?.message ?? "").toLowerCase();
+    const msg = typeof layer?.message === "string" ? layer.message.toLowerCase() : "";
     return (
       layer?.code === 4001 ||
       msg.includes("user rejected") ||

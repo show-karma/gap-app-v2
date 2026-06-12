@@ -117,7 +117,7 @@ export default function EditCategoriesPage() {
       await refreshGrants();
       toast.success("Categories updated successfully.");
       setSelectedCategories({});
-    } catch (error: any) {
+    } catch (error) {
       errorManager(
         `Error updating categories of ${communityId}`,
         error,

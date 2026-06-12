@@ -1,5 +1,2 @@
-export {
-  getSidebarSections,
-  SettingsSidebar,
-  type SidebarTabKey,
-} from "./SettingsSidebar";
+export { SettingsSidebar, type SidebarTabKey } from "./SettingsSidebar";
+export { getSidebarSections } from "./SettingsSidebar.helpers";

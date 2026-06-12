@@ -31,6 +31,9 @@ import type { Community } from "@/types/v2/community";
 import { MESSAGES } from "@/utilities/messages";
 import { normalizeProgramId } from "@/utilities/normalizeProgramId";
 
+const STAT_CARD_SKELETON_KEYS = Array.from({ length: 8 }, (_, i) => `stat-card-${i + 1}`);
+const TABLE_ROW_SKELETON_KEYS = Array.from({ length: 10 }, (_, i) => `table-row-${i + 1}`);
+
 function MilestonesReportSkeleton() {
   return (
     <div className="space-y-6">
@@ -45,9 +48,9 @@ function MilestonesReportSkeleton() {
         </div>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {[...Array(8)].map((_, i) => (
+        {STAT_CARD_SKELETON_KEYS.map((key) => (
           <div
-            key={i}
+            key={key}
             className="flex items-center gap-4 p-4 rounded-xl border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/50"
           >
             <Skeleton className="h-10 w-10 rounded-lg flex-shrink-0" />
@@ -69,9 +72,9 @@ function MilestonesReportSkeleton() {
             <Skeleton className="h-3 w-14 rounded" />
           </div>
         </div>
-        {[...Array(10)].map((_, i) => (
+        {TABLE_ROW_SKELETON_KEYS.map((key) => (
           <div
-            key={i}
+            key={key}
             className="flex items-center gap-6 px-4 h-14 border-b border-gray-100 dark:border-zinc-800 last:border-b-0"
           >
             <Skeleton className="h-4 w-36 rounded" />

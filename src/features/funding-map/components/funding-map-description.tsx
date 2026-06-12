@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { Skeleton } from "@/components/ui/skeleton";
-import { HEADING_AS_BOLD_COMPONENTS } from "../utils/markdown-heading-components";
+import { HEADING_AS_BOLD_COMPONENTS } from "../utils/markdown-heading-components.constants";
 
 interface FundingMapDescriptionProps {
   description: string;

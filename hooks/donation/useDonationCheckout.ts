@@ -11,6 +11,7 @@ import {
   createCompletedDonations,
   type DonationPayment,
   ensureCorrectNetwork,
+  type FreshWalletClientGetter,
   getTargetChainId,
   waitForWalletSync,
 } from "@/utilities/donations/donationExecution";
@@ -184,7 +185,7 @@ export function useDonationCheckout() {
       chainPayoutAddresses: Record<string, ChainPayoutAddressMap>,
       activeChainId: number,
       switchToNetwork: (chainId: number) => Promise<void>,
-      getFreshWalletClient: (chainId: number) => Promise<any>
+      getFreshWalletClient: FreshWalletClientGetter
     ) => {
       let currentChainId = activeChainId;
       const payoutResolver = createPayoutAddressResolver(chainPayoutAddresses);
@@ -213,7 +214,7 @@ export function useDonationCheckout() {
       balanceByTokenKey: Record<string, string>,
       currentChainId: number | null,
       switchToNetwork: (chainId: number) => Promise<void>,
-      getFreshWalletClient: (chainId: number) => Promise<any>,
+      getFreshWalletClient: FreshWalletClientGetter,
       setMissingPayouts: (cb: (prev: string[]) => string[]) => void
     ) => {
       setShowStepsPreview(false);

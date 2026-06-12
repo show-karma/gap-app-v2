@@ -46,7 +46,7 @@ export const useContactInfo = (projectId: string | undefined, isAuthorized?: boo
         }));
 
         return contacts;
-      } catch (error: any) {
+      } catch (error) {
         console.error(error);
         errorManager(`Error fetching project contacts info from project ${projectId}`, error, {
           projectUID: projectId,

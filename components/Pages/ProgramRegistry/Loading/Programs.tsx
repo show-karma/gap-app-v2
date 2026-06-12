@@ -1,8 +1,9 @@
 import { Skeleton } from "@/components/Utilities/Skeleton";
 
+const HEADER_CELL_KEYS = Array.from({ length: 7 }, (_, i) => `header-${i + 1}`);
+const ROW_KEYS = Array.from({ length: 12 }, (_, i) => `row-${i + 1}`);
+
 export const LoadingProgramTable = () => {
-  const emptyArrayHeader = Array.from({ length: 7 });
-  const emptyArrayRows = Array.from({ length: 12 });
   return (
     <div className="w-full flex flex-col">
       <div className="mt-8 flow-root">
@@ -11,9 +12,9 @@ export const LoadingProgramTable = () => {
             <table className="min-w-full divide-y divide-gray-300 h-full">
               <thead>
                 <tr className="">
-                  {emptyArrayHeader.map((_row, index) => {
+                  {HEADER_CELL_KEYS.map((headerKey) => {
                     return (
-                      <th key={index}>
+                      <th key={headerKey}>
                         <Skeleton className="h-9 w-full max-lg:min-w-40 rounded-lg border-0 my-2" />
                       </th>
                     );
@@ -21,12 +22,12 @@ export const LoadingProgramTable = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {emptyArrayRows.map((_row, index) => {
+                {ROW_KEYS.map((rowKey) => {
                   return (
-                    <tr key={index}>
-                      {emptyArrayHeader.map((_row, indexH) => {
+                    <tr key={rowKey}>
+                      {HEADER_CELL_KEYS.map((headerKey) => {
                         return (
-                          <td key={indexH}>
+                          <td key={`${rowKey}-${headerKey}`}>
                             <Skeleton className="h-12 w-full max-lg:min-w-40 rounded-lg my-5" />
                           </td>
                         );

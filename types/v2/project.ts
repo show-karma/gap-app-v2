@@ -47,11 +47,12 @@ export interface Project {
   chainPayoutAddress?: Record<string, string>;
   details: ProjectDetails;
   external?: {
-    gitcoin?: any[];
-    oso?: any[];
-    divvi_wallets?: any[];
-    github?: any[];
-    network_addresses?: any[];
+    gitcoin?: unknown[];
+    oso?: string[];
+    divvi_wallets?: string[];
+    github?: string[];
+    /** Contract addresses in "network:address" format */
+    network_addresses?: string[];
     network_addresses_verified?: Array<{
       network: string;
       address: string;
@@ -65,9 +66,10 @@ export interface Project {
     role: string;
     joinedAt: string;
   }>;
+  // biome-ignore lint/suspicious/noExplicitAny: consumers disagree on the endorsement shape (SDK IProjectEndorsement vs local ProjectEndorsementV2); typing this requires aligning those components first.
   endorsements?: any[];
   communities?: string[];
-  symlinks?: any[];
+  symlinks?: string[];
   pointers?: ProjectPointer[];
   createdAt?: string;
   updatedAt?: string;

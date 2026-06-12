@@ -21,7 +21,7 @@ interface SearchGrantProgramProps {
       shouldValidate: boolean;
     }
   ) => void;
-  watch: (field: string) => any;
+  watch: (field: string) => unknown;
   searchForProgram?: string | string[];
   canAdd?: boolean;
 }

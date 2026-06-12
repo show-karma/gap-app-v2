@@ -98,7 +98,7 @@ export const InfiniteMovingCards = ({
           pauseOnHover && "hover:[animation-play-state:paused]"
         )}
       >
-        {items.map((item, idx) => {
+        {items.map((item) => {
           if (variant === "pill") {
             const pillItem = item as PillItem;
             const content = (
@@ -122,7 +122,7 @@ export const InfiniteMovingCards = ({
             );
 
             return (
-              <li key={`pill-${idx}`} className="shrink-0">
+              <li key={`pill-${pillItem.text}`} className="shrink-0">
                 {pillItem.href ? (
                   <Link
                     href={pillItem.href}
@@ -144,7 +144,7 @@ export const InfiniteMovingCards = ({
           return (
             <li
               className="relative w-[320px] max-w-full shrink-0 rounded-xl border border-b-0 bg-secondary px-6 py-6"
-              key={`${cardItem.name}-${idx}`}
+              key={`${cardItem.name}-${cardItem.quote}`}
             >
               <blockquote>
                 <div

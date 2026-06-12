@@ -1,6 +1,12 @@
 import { Skeleton } from "@/components/Utilities/Skeleton";
 import { layoutTheme } from "@/src/helper/theme";
 
+const DASHBOARD_CARD_SKELETON_KEYS = [
+  "dashboard-loading-card-1",
+  "dashboard-loading-card-2",
+  "dashboard-loading-card-3",
+];
+
 export function DashboardLoading() {
   return (
     <div className={layoutTheme.padding}>
@@ -13,11 +19,8 @@ export function DashboardLoading() {
           </div>
         </div>
         <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-          {Array.from({ length: 3 }, (_, index) => (
-            <div
-              key={`dashboard-loading-card-${index}`}
-              className="flex flex-col gap-4 rounded-xl border border-border p-6"
-            >
+          {DASHBOARD_CARD_SKELETON_KEYS.map((key) => (
+            <div key={key} className="flex flex-col gap-4 rounded-xl border border-border p-6">
               <Skeleton className="h-12 w-12 rounded-full" />
               <Skeleton className="h-5 w-40" />
               <Skeleton className="h-4 w-56" />

@@ -1,7 +1,17 @@
-import axios, { type AxiosResponse, type Method } from "axios";
+import axios, { type AxiosRequestConfig, type AxiosResponse, type Method } from "axios";
 import { TokenManager } from "@/utilities/auth/token-manager";
 import { envVars } from "./enviromentVars";
 import { sanitizeObject } from "./sanitize";
+
+/**
+ * Pagination metadata returned by indexer list endpoints.
+ */
+export interface PageInfo {
+  totalItems?: number;
+  page?: number;
+  pageLimit?: number;
+  [key: string]: unknown;
+}
 
 /**
  * Fetch data utility that uses Privy's TokenManager for authentication
@@ -22,8 +32,9 @@ import { sanitizeObject } from "./sanitize";
  * inspecting the error to distinguish cancellation from real failures.
  *
  * @template T - Optional type parameter for response data (defaults to any for backward compatibility)
- * @returns Promise<[T, null, any, number] | [null, string, null, number]> - Tuple of [data, error, pageInfo, status]
+ * @returns Promise<[T, null, PageInfo | null, number] | [null, string, null, number]> - Tuple of [data, error, pageInfo, status]
  */
+// biome-ignore lint/suspicious/noExplicitAny: the `any` default keeps hundreds of legacy untyped call sites compiling; new callers should pass an explicit T.
 export default async function fetchData<T = any>(
   endpoint: string,
   method: Method = "GET",
@@ -34,12 +45,15 @@ export default async function fetchData<T = any>(
   cache: boolean | undefined = false,
   baseUrl: string = envVars.NEXT_PUBLIC_GAP_INDEXER_URL,
   signal?: AbortSignal
-): Promise<[T, null, any, number] | [null, string, null, number]> {
+): Promise<[T, null, PageInfo | null, number] | [null, string, null, number]> {
   try {
     const sanitizedData = sanitizeObject(axiosData);
     const isIndexerUrl = baseUrl === envVars.NEXT_PUBLIC_GAP_INDEXER_URL;
 
-    const requestConfig: any = {
+    const requestHeaders: Record<string, string> = {
+      ...headers,
+    };
+    const requestConfig: AxiosRequestConfig = {
       url: isIndexerUrl
         ? `${baseUrl}${endpoint}${
             cache ? `${endpoint.includes("?") ? "&" : "?"}cache=${cache}` : ""
@@ -48,9 +62,7 @@ export default async function fetchData<T = any>(
       method,
       data: sanitizedData,
       params,
-      headers: {
-        ...headers,
-      },
+      headers: requestHeaders,
       signal,
       // Default timeout for all requests so a hung connection surfaces as
       // an axios error the data layer can retry instead of leaving the UI
@@ -68,14 +80,14 @@ export default async function fetchData<T = any>(
       if (isAuthorized) {
         const token = await TokenManager.getToken();
         if (token) {
-          requestConfig.headers.Authorization = `Bearer ${token}`;
+          requestHeaders.Authorization = `Bearer ${token}`;
         }
       }
     }
 
-    let res: AxiosResponse<T & { pageInfo?: any }>;
+    let res: AxiosResponse<T & { pageInfo?: PageInfo }>;
     try {
-      res = await axios.request<T & { pageInfo?: any }>(requestConfig);
+      res = await axios.request<T & { pageInfo?: PageInfo }>(requestConfig);
     } catch (err) {
       // Retry once on 401 for authorized indexer requests. The token may have
       // been absent or stale because Privy had not finished bootstrapping when
@@ -88,8 +100,8 @@ export default async function fetchData<T = any>(
         TokenManager.clearCache();
         const freshToken = await TokenManager.getToken();
         if (!freshToken) throw err;
-        requestConfig.headers.Authorization = `Bearer ${freshToken}`;
-        res = await axios.request<T & { pageInfo?: any }>(requestConfig);
+        requestHeaders.Authorization = `Bearer ${freshToken}`;
+        res = await axios.request<T & { pageInfo?: PageInfo }>(requestConfig);
       } else {
         throw err;
       }
@@ -97,14 +109,14 @@ export default async function fetchData<T = any>(
     const resData = res.data;
     const pageInfo = resData?.pageInfo || null;
     return [resData, null, pageInfo, res.status];
-  } catch (err: any) {
+  } catch (err) {
     let error = "";
     let status = 500;
-    if (!err.response) {
-      error = err;
-    } else {
-      error = err.response.data.message || err.message;
+    if (axios.isAxiosError(err) && err.response) {
+      error = err.response.data?.message || err.message;
       status = err.response.status;
+    } else {
+      error = err instanceof Error ? err.message : String(err);
     }
     return [null, error, null, status];
   }

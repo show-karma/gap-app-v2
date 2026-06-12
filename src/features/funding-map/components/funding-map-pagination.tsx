@@ -49,6 +49,11 @@ export function FundingMapPagination({ totalCount }: FundingMapPaginationProps) 
     postsPerPage: FUNDING_MAP_PAGE_SIZE,
   });
 
+  const pageItems = paginationRange?.map((page, index) => ({
+    page,
+    key: page === DOTS ? `dots-${index}` : `page-${page}`,
+  }));
+
   const startResult = (currentPage - 1) * FUNDING_MAP_PAGE_SIZE + 1;
   const endResult = Math.min(currentPage * FUNDING_MAP_PAGE_SIZE, totalCount);
 
@@ -86,16 +91,10 @@ export function FundingMapPagination({ totalCount }: FundingMapPaginationProps) 
           <span className="max-sm:hidden">Previous</span>
         </Button>
 
-        {paginationRange?.map((page, index) => {
+        {pageItems?.map(({ page, key }) => {
           if (page === DOTS) {
             return (
-              <Button
-                key={`dots-${index}`}
-                variant="ghost"
-                size="sm"
-                className="h-8 w-8 p-0"
-                disabled
-              >
+              <Button key={key} variant="ghost" size="sm" className="h-8 w-8 p-0" disabled>
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
             );
@@ -103,7 +102,7 @@ export function FundingMapPagination({ totalCount }: FundingMapPaginationProps) 
           const pageNumber = page as number;
           return (
             <PaginationButton
-              key={pageNumber}
+              key={key}
               page={pageNumber}
               isActive={currentPage === pageNumber}
               onClick={() => trackPagination("goto", pageNumber)}

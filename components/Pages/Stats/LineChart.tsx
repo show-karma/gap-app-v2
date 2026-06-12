@@ -28,7 +28,7 @@ interface StatChartProps {
 }
 
 const groupByPeriod = (data: StatChartData["data"], periodToGroup: StatPeriod) => {
-  const groupedData = _groupBy(data, (item: any) => {
+  const groupedData = _groupBy(data, (item) => {
     const date = new Date(item.Date);
     if (periodToGroup === "Weeks") {
       return formatDate(endOfWeek(date), "UTC");
@@ -44,7 +44,7 @@ const groupByPeriod = (data: StatChartData["data"], periodToGroup: StatPeriod) =
 
   const groupedDataArray = Object.entries(groupedData).map(([key, value]) => {
     let valueKey = "";
-    const values = (value as any).map((item: { Date: any; [key: string]: number }) => {
+    const values = value.map((item) => {
       const keys = Object.keys(item);
       const rightKey = keys.filter((keyItem) => keyItem !== "Date")[0];
       if (!rightKey) return 0;

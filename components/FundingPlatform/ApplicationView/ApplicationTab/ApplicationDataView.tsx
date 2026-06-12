@@ -46,7 +46,7 @@ export const ApplicationDataView: FC<ApplicationDataViewProps> = ({
     [application.milestoneStatuses]
   );
 
-  const renderFieldValue = (value: any, fieldKey?: string): JSX.Element => {
+  const renderFieldValue = (value: unknown, fieldKey?: string): JSX.Element => {
     if (Array.isArray(value)) {
       // Check if it's an array of milestones
       const isMilestoneArray =
@@ -64,7 +64,10 @@ export const ApplicationDataView: FC<ApplicationDataViewProps> = ({
         return (
           <div className="space-y-3">
             {value.map((metric: IMetricData, index) => (
-              <div key={index} className="rounded-xl border border-border bg-muted/40 p-4">
+              <div
+                key={`${metric.metric}-${metric.target}`}
+                className="rounded-xl border border-border bg-muted/40 p-4"
+              >
                 <div className="space-y-2">
                   <h5 className="font-medium text-gray-900 dark:text-gray-100">
                     {metric.metric || `Metric ${index + 1}`}
@@ -97,7 +100,7 @@ export const ApplicationDataView: FC<ApplicationDataViewProps> = ({
       if (isMilestoneArray) {
         return (
           <div className="space-y-3">
-            {value.map((milestone: IMilestoneData, index) => {
+            {value.map((milestone: IMilestoneData) => {
               const status = lookupMilestoneStatus(
                 statusByKey,
                 milestone.milestoneUID,
@@ -105,7 +108,10 @@ export const ApplicationDataView: FC<ApplicationDataViewProps> = ({
                 milestone.title
               );
               return (
-                <div key={index} className="rounded-xl border border-border bg-muted/40 p-4">
+                <div
+                  key={milestone.milestoneUID || milestone.title}
+                  className="rounded-xl border border-border bg-muted/40 p-4"
+                >
                   <div className="space-y-2">
                     <div className="flex justify-between items-start gap-4">
                       <div className="flex items-baseline gap-2 flex-wrap">
@@ -151,9 +157,9 @@ export const ApplicationDataView: FC<ApplicationDataViewProps> = ({
       // Regular array - render as tags
       return (
         <div className="flex flex-wrap gap-2">
-          {value.map((item, index) => (
+          {value.map((item) => (
             <span
-              key={index}
+              key={String(item)}
               className="inline-block rounded-full bg-muted px-3 py-1 text-sm text-foreground"
             >
               {String(item)}

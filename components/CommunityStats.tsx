@@ -12,16 +12,35 @@ interface CommunityStatsProps {
   communityId: string;
 }
 
+interface CommunityStatsResponse {
+  projects?: number;
+  ProjectEdits?: number;
+  ProjectEndorsements?: number;
+  ProjectImpacts?: number;
+  ProjectImpactVerifieds?: number;
+  grants?: number;
+  GrantEdits?: number;
+  GrantUpdates?: number;
+  GrantUpdateStatuses?: number;
+  GrantCompleted?: number;
+  Milestones?: number;
+  MilestoneCompleted?: number;
+  MilestoneVerified?: number;
+  MemberOf?: number;
+}
+
 export default function CommunityStats({ communityId }: CommunityStatsProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [stats, setStats] = useState<any>({});
-  const [error, setError] = useState<any>("");
+  const [stats, setStats] = useState<Record<string, number | undefined>>({});
+  const [error, setError] = useState<unknown>("");
   const [loading, setLoading] = useState<boolean>(true);
 
   async function fetchStats() {
     setLoading(true);
     try {
-      const [data, error]: any = await fetchData(INDEXER.COMMUNITY.STATS(communityId as string));
+      const [data, error] = await fetchData<CommunityStatsResponse>(
+        INDEXER.COMMUNITY.STATS(communityId)
+      );
       if (error) {
         console.error("Error fetching data:", error);
         setError(error);
@@ -43,20 +62,20 @@ export default function CommunityStats({ communityId }: CommunityStatsProps) {
             "No. of Milestones Verifications": data?.MilestoneVerified,
             "No. of Members Added": data?.MemberOf,
             "Total Attestations":
-              data?.projects +
-              data?.grants +
-              data?.GrantUpdates +
-              data?.GrantCompleted +
-              data?.ProjectImpacts +
-              data?.MemberOf +
-              data?.ProjectEndorsements +
-              data?.Milestones +
-              data?.MilestoneCompleted +
-              data?.MilestoneVerified +
-              data?.ProjectImpactVerifieds +
-              data?.GrantUpdateStatuses +
-              data?.GrantEdits +
-              data?.ProjectEdits,
+              (data?.projects ?? 0) +
+              (data?.grants ?? 0) +
+              (data?.GrantUpdates ?? 0) +
+              (data?.GrantCompleted ?? 0) +
+              (data?.ProjectImpacts ?? 0) +
+              (data?.MemberOf ?? 0) +
+              (data?.ProjectEndorsements ?? 0) +
+              (data?.Milestones ?? 0) +
+              (data?.MilestoneCompleted ?? 0) +
+              (data?.MilestoneVerified ?? 0) +
+              (data?.ProjectImpactVerifieds ?? 0) +
+              (data?.GrantUpdateStatuses ?? 0) +
+              (data?.GrantEdits ?? 0) +
+              (data?.ProjectEdits ?? 0),
           });
 
           setError("");
@@ -65,7 +84,7 @@ export default function CommunityStats({ communityId }: CommunityStatsProps) {
           setError("No stats found for community");
         }
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error fetching stats:", error);
       errorManager(`Error fetching stats: ${error}`, error, {
         communityId,
@@ -136,7 +155,7 @@ export default function CommunityStats({ communityId }: CommunityStatsProps) {
                     Object.entries(stats).map(([key, value]) => (
                       <div className="mx-1 flex items-center justify-between" key={key}>
                         <p>{key}</p>
-                        <p className="text-blue-500">{value as any}</p>
+                        <p className="text-blue-500">{value}</p>
                       </div>
                     ))
                   )}

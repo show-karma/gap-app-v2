@@ -126,7 +126,10 @@ export const UpdateCard: FC<UpdateCardProps> = ({ update, index, isAuthorized })
   // Get raw due date (epoch ms or ISO string) for milestones
   const getRawDueDate = (): number | string | null => {
     if (update.type === "Milestone" || update.type === "ProjectMilestone") {
-      const milestoneData = update.data as any;
+      const milestoneData = update.data as {
+        endsAt?: number;
+        endDate?: string;
+      };
       if (milestoneData.endsAt) return milestoneData.endsAt;
       if (milestoneData.endDate) return milestoneData.endDate;
     }
@@ -142,19 +145,15 @@ export const UpdateCard: FC<UpdateCardProps> = ({ update, index, isAuthorized })
   // Get completion status for milestones
   const getCompletionStatus = () => {
     if (update.type === "Milestone" || update.type === "ProjectMilestone") {
-      const milestoneData = update.data as any;
-      return (
-        milestoneData.completed ||
-        (milestoneData.completed &&
-          typeof milestoneData.completed === "object" &&
-          Object.keys(milestoneData.completed).length > 0)
-      );
+      const milestoneData = update.data as { completed?: unknown };
+      return Boolean(milestoneData.completed);
     }
     return false;
   };
 
-  const startDate = (update as any).data?.startDate;
-  const endDate = (update as any).data?.endDate;
+  const dateWindow = (update as { data?: { startDate?: string; endDate?: string } }).data;
+  const startDate = dateWindow?.startDate;
+  const endDate = dateWindow?.endDate;
 
   return (
     <div className="flex flex-col gap-0 w-full">

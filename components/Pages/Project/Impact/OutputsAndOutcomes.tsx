@@ -17,14 +17,15 @@ import type { IndicatorDatapoint, OutputForm, SelectedPointData } from "@/types/
 import formatCurrency from "@/utilities/formatCurrency";
 import { formatDate } from "@/utilities/formatDate";
 import { parseProofUrls, sortIndicatorsByPriority } from "@/utilities/impact";
+import { hasUniqueUsersData } from "@/utilities/indicator";
 import { MESSAGES } from "@/utilities/messages";
 import { urlRegex } from "@/utilities/regexs/urlRegex";
 import { cn } from "@/utilities/tailwind";
-import { prepareChartData } from "../../Communities/Impact/ImpactCharts";
+import { prepareChartData } from "../../Communities/Impact/ImpactCharts.helpers";
 import { GrantsOutputsLoading } from "../Loading/Grants/Outputs";
 import { AggregatedDataSection } from "./AggregatedDataSection";
 import { GroupedLinks } from "./GroupedLinks";
-import { hasUniqueUsersData, UniqueUsersSection } from "./UniqueUsersSection";
+import { UniqueUsersSection } from "./UniqueUsersSection";
 import { VirtualizedDatapointsTable } from "./VirtualizedDatapointsTable";
 
 // Dynamically import heavy Tremor chart component for bundle optimization
@@ -888,19 +889,17 @@ export const OutputsAndOutcomes = ({
                                         {datapoint.proof ? (
                                           <div className="flex flex-col gap-1">
                                             {parseProofUrls(datapoint.proof).length > 0 ? (
-                                              parseProofUrls(datapoint.proof).map(
-                                                (url, urlIndex) => (
-                                                  <a
-                                                    key={urlIndex}
-                                                    href={url}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="text-blue-500 underline dark:text-blue-400 truncate max-w-xs"
-                                                  >
-                                                    {url}
-                                                  </a>
-                                                )
-                                              )
+                                              parseProofUrls(datapoint.proof).map((url) => (
+                                                <a
+                                                  key={url}
+                                                  href={url}
+                                                  target="_blank"
+                                                  rel="noopener noreferrer"
+                                                  className="text-blue-500 underline dark:text-blue-400 truncate max-w-xs"
+                                                >
+                                                  {url}
+                                                </a>
+                                              ))
                                             ) : (
                                               <span className="text-gray-900 dark:text-zinc-100">
                                                 {datapoint.proof}
@@ -1070,7 +1069,7 @@ export const OutputsAndOutcomes = ({
                               {parseProofUrls(selectedPoint.data.proof).length > 0 ? (
                                 parseProofUrls(selectedPoint.data.proof).map((url, index) => (
                                   <a
-                                    key={index}
+                                    key={url}
                                     href={url}
                                     target="_blank"
                                     rel="noopener noreferrer"

@@ -1,5 +1,6 @@
 import type { VariantProps } from "class-variance-authority";
-import { Badge, type badgeVariants } from "@/components/ui/badge";
+import { Badge } from "@/components/ui/badge";
+import type { badgeVariants } from "@/components/ui/badge.variants";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/utilities/tailwind";
 import { getGrantTypeConfig } from "../utils/grant-type-config";

@@ -1,7 +1,3 @@
-import type {
-  IGrantUpdate,
-  IProjectUpdate,
-} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
 import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
@@ -34,10 +30,23 @@ const GrantItem = ({ href, title, communityImage, communityName, keyPrefix }: Gr
   </ExternalLink>
 );
 
+/**
+ * Structural type for the update prop. Updates come from several attestation
+ * shapes (project updates, grant updates, milestones, impacts), so only the
+ * members this component actually reads are declared.
+ */
+export interface AssociatedUpdate {
+  type?: string;
+  uid?: string;
+  refUID?: string;
+  title?: string;
+  data?: unknown;
+}
+
 // Props for the flexible grant association component
 interface GrantAssociationProps {
   // For updates (existing functionality)
-  update?: IProjectUpdate | IGrantUpdate | any;
+  update?: AssociatedUpdate | null;
   index?: number;
 
   // For milestones (new functionality)
@@ -170,7 +179,7 @@ export const GrantAssociation = ({
   const grant = grants.find((g) => g.uid?.toLowerCase() === update.refUID?.toLowerCase());
 
   const multipleGrants = grants.filter((g) =>
-    (update as IProjectUpdate)?.data?.grants?.some(
+    (update?.data as { grants?: string[] } | undefined)?.grants?.some(
       (grantId: string) => grantId.toLowerCase() === g.uid.toLowerCase()
     )
   );

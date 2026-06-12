@@ -11,7 +11,6 @@ import {
   getChainColor,
   getChainName,
   getLatestByPeriod,
-  hasUniqueUsersData,
   parseBreakdown,
   rollingPeriodLabels,
   rollingPeriodOrder,
@@ -33,8 +32,6 @@ interface UniqueUsersSectionProps {
   datapoints: PeriodDatapoint[];
   indicatorName: string;
 }
-
-export { hasUniqueUsersData };
 
 /**
  * Beautiful dashboard for Unique Users indicator

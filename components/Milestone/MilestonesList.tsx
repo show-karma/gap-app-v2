@@ -69,8 +69,8 @@ function MilestoneItemSkeleton() {
 function MilestonesLoadingSkeleton({ count = 3 }: { count?: number }) {
   return (
     <div className="flex flex-col gap-6" data-testid="milestones-loading-skeleton">
-      {Array.from({ length: count }, (_, i) => (
-        <MilestoneItemSkeleton key={i} />
+      {Array.from({ length: count }, (_, i) => `milestone-skeleton-${i}`).map((key) => (
+        <MilestoneItemSkeleton key={key} />
       ))}
     </div>
   );

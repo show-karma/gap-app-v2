@@ -1,3 +1,4 @@
+import { isAxiosError } from "axios";
 import type { FundingProgramMetadata } from "@/src/features/funding-map/types/funding-program";
 import type {
   ExportFormat,
@@ -193,12 +194,17 @@ export const fundingProgramsAPI = {
         INDEXER.V2.FUNDING_PROGRAMS.GET(programId)
       );
       return response.data || null;
-    } catch (error: any) {
-      if (error.response?.status === 404) {
-        return null;
+    } catch (error) {
+      if (isAxiosError(error)) {
+        if (error.response?.status === 404) {
+          return null;
+        }
+        throw new Error(
+          error.response?.data?.message || error.message || "Failed to fetch program configuration"
+        );
       }
       throw new Error(
-        error.response?.data?.message || error.message || "Failed to fetch program configuration"
+        error instanceof Error ? error.message : "Failed to fetch program configuration"
       );
     }
   },
@@ -352,7 +358,7 @@ export const fundingProgramsAPI = {
 
 // Funding Applications API (V2)
 // `data` is a parsed JSON document or a CSV Blob depending on `format`.
-type ApplicationExportResult = { data: any; filename?: string };
+type ApplicationExportResult = { data: unknown; filename?: string };
 
 /**
  * Shared implementation for the public and admin application export endpoints.
@@ -424,7 +430,7 @@ export const fundingApplicationsAPI = {
    */
   async updatePostApprovalData(
     applicationId: string,
-    postApprovalData: Record<string, any>
+    postApprovalData: Record<string, unknown>
   ): Promise<IFundingApplication> {
     const response = await apiClient.put(
       `/v2/funding-applications/${applicationId}/post-approval`,

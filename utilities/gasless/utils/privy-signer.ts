@@ -26,14 +26,22 @@ function hashAuthorization(authorization: {
 }
 
 /**
+ * Minimal EIP-1193 provider shape used for raw JSON-RPC requests.
+ * Privy's provider exposes a strongly-typed `request`, so we keep the
+ * wallet-facing return type opaque and narrow to this shape internally.
+ */
+interface EthereumProviderLike {
+  request: (args: { method: string; params?: unknown[] }) => Promise<unknown>;
+}
+
+/**
  * Privy embedded wallet interface.
  * Defines the required methods from Privy's wallet for gasless operations.
  */
 export interface PrivyEmbeddedWallet {
   address: string;
   switchChain: (chainId: number) => Promise<void>;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  getEthereumProvider: () => Promise<any>;
+  getEthereumProvider: () => Promise<unknown>;
   walletClientType?: string;
 }
 
@@ -53,12 +61,11 @@ export async function createPrivySignerForGasless(
   embeddedWallet: PrivyEmbeddedWallet,
   chainId: number
 ): Promise<LocalAccountWithEIP7702> {
-  const provider = await embeddedWallet.getEthereumProvider();
+  const provider = (await embeddedWallet.getEthereumProvider()) as EthereumProviderLike;
   const address = embeddedWallet.address as `0x${string}`;
   const isPrivyEmbedded = embeddedWallet.walletClientType === "privy";
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const account: any = {
+  const account: LocalAccountWithEIP7702 = {
     address,
     type: "local",
     publicKey: "0x" as `0x${string}`,
@@ -115,8 +122,7 @@ export async function createPrivySignerForGasless(
      * Sign typed data - handles EIP-712 typed data.
      * Properly serializes BigInt values which are common in typed data.
      */
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    signTypedData: async (typedData: any): Promise<`0x${string}`> => {
+    signTypedData: async (typedData: unknown): Promise<`0x${string}`> => {
       // Handle BigInt values which are common in EIP-712 typed data (amounts, timestamps)
       const replacer = (_key: string, value: unknown) =>
         typeof value === "bigint" ? value.toString() : value;

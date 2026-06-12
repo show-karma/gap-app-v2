@@ -40,11 +40,11 @@ export function useChat(options: UseChatOptions) {
   const { address } = useAccount();
   const sessionIdRef = useRef<string>(crypto.randomUUID());
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: { target: { value: string } }) => {
     setInput(e.target.value);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: { preventDefault: () => void }) => {
     e.preventDefault();
     if (!input.trim()) return;
 

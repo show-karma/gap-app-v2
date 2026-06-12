@@ -1,6 +1,7 @@
 import { fireEvent, screen } from "@testing-library/react";
 import { renderWithQueryClient as render } from "@/__tests__/helpers/renderWithQueryClient";
 import "@testing-library/jest-dom";
+import type React from "react";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
 import { ActivityFeed } from "../MainContent/ActivityFeed";
 import { ActivityFilters } from "../MainContent/ActivityFilters";
@@ -35,7 +36,11 @@ vi.mock("@/hooks/communities/useIsCommunityAdmin", () => ({
 // Mock next/link
 vi.mock("next/link", () => ({
   __esModule: true,
-  default: ({ children, href, ...props }: any) => (
+  default: ({
+    children,
+    href,
+    ...props
+  }: React.PropsWithChildren<{ href?: string }> & Record<string, unknown>) => (
     <a href={href} {...props}>
       {children}
     </a>
@@ -72,7 +77,9 @@ vi.mock("@/utilities/pages", () => ({
 
 // Mock Badge component
 vi.mock("@/components/ui/badge", () => ({
-  Badge: ({ children, ...props }: any) => <span {...props}>{children}</span>,
+  Badge: ({ children, ...props }: React.PropsWithChildren<Record<string, unknown>>) => (
+    <span {...props}>{children}</span>
+  ),
 }));
 
 // Mock the ActivityCard component

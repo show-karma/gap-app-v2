@@ -286,7 +286,9 @@ export const useMilestoneEdit = (options?: UseMilestoneEditOptions) => {
           const milestoneInstances = fetchedProject.grants
             .filter((grant) => grant.milestones.length > 0)
             .flatMap((grant) => grant.milestones)
-            .filter((m) => milestoneUIDs.includes((m as any)?._uid || m?.uid));
+            .filter((m) =>
+              milestoneUIDs.includes((m as unknown as { _uid?: string })?._uid || m?.uid)
+            );
 
           if (!milestoneInstances?.length) {
             throw new Error("Milestone instances couldn't be found for this chain");

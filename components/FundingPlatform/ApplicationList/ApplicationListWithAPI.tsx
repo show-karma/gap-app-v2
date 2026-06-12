@@ -30,7 +30,7 @@ interface IApplicationListWithAPIProps {
   onApplicationHover?: (applicationId: string) => void;
   showStatusActions?: boolean;
   initialFilters?: IApplicationFilters;
-  onStatusChange?: (applicationId: string, status: string, note?: string) => Promise<any>;
+  onStatusChange?: (applicationId: string, status: string, note?: string) => Promise<unknown>;
   isAdmin?: boolean;
 }
 

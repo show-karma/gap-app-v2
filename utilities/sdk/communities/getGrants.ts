@@ -49,7 +49,7 @@ export const getGrants = async (
     if (!grants || grants.length === 0) return { grants: [], pageInfo: {} };
 
     return { grants, pageInfo, uniqueProjectCount };
-  } catch (error: any) {
+  } catch (error) {
     errorManager(`Error getting grants of community: ${uid}`, error);
     return { grants: [], pageInfo: {} };
   }

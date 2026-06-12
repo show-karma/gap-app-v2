@@ -6,7 +6,7 @@ import { SidebarProfileCardStatic } from "../SidePanel/SidebarProfileCardStatic"
 // Mock next/image to render a simple img tag
 vi.mock("next/image", () => ({
   __esModule: true,
-  default: (props: any) => {
+  default: (props: Record<string, unknown>) => {
     // eslint-disable-next-line @next/next/no-img-element
     return <img alt="" {...props} />;
   },

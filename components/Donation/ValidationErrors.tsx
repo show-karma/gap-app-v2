@@ -117,12 +117,12 @@ export function ValidationErrors({
         })}
 
         {/* Validation errors with enhanced messaging */}
-        {validationErrors.map((error, index) => {
+        {validationErrors.map((error) => {
           const parsed = parseValidationError(error);
 
           return (
             <div
-              key={`validation-${index}`}
+              key={`validation-${error}`}
               className="rounded-xl border border-red-300 bg-white/70 p-3 dark:border-red-800 dark:bg-red-950/20"
             >
               <div className="mb-1 text-sm font-semibold text-red-800 dark:text-red-200">

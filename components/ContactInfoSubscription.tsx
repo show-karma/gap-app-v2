@@ -214,7 +214,7 @@ export const ContactInfoSubscription: FC<ContactInfoSubscriptionProps> = ({ cont
           }
         });
       }
-    } catch (error: any) {
+    } catch (error) {
       errorManager(
         "Error while updating contact info",
         error,
@@ -253,7 +253,7 @@ export const ContactInfoSubscription: FC<ContactInfoSubscriptionProps> = ({ cont
           throw Error(error);
         }
       });
-    } catch (error: any) {
+    } catch (error) {
       errorManager(
         "Error deleting contact info",
         error,

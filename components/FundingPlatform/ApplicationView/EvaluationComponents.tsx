@@ -143,8 +143,8 @@ export function EvaluationSummary({
             Strengths
           </h5>
           <ul className="space-y-1">
-            {summary.strengths.map((strength, index) => (
-              <li key={index} className="flex items-start gap-2 text-sm">
+            {summary.strengths.map((strength) => (
+              <li key={strength} className="flex items-start gap-2 text-sm">
                 <CheckCircleIcon className="w-4 h-4 text-green-500 dark:text-green-400 mt-1 flex-shrink-0" />
                 <div className="flex-1 text-gray-700 dark:text-gray-300">
                   <MarkdownPreview source={strength} />
@@ -161,8 +161,8 @@ export function EvaluationSummary({
             Concerns
           </h5>
           <ul className="space-y-1">
-            {summary.concerns.map((concern, index) => (
-              <li key={index} className="flex items-start gap-2 text-sm">
+            {summary.concerns.map((concern) => (
+              <li key={concern} className="flex items-start gap-2 text-sm">
                 <ExclamationTriangleIcon className="w-4 h-4 text-yellow-500 dark:text-yellow-400 mt-1 flex-shrink-0" />
                 <div className="flex-1 text-gray-700 dark:text-gray-300">
                   <MarkdownPreview source={concern} />
@@ -179,8 +179,8 @@ export function EvaluationSummary({
             Risk Factors
           </h5>
           <ul className="space-y-1">
-            {summary.risk_factors.map((risk, index) => (
-              <li key={index} className="flex items-start gap-2 text-sm">
+            {summary.risk_factors.map((risk) => (
+              <li key={risk} className="flex items-start gap-2 text-sm">
                 <XMarkIcon className="w-4 h-4 text-red-500 dark:text-red-400 mt-1 flex-shrink-0" />
                 <div className="flex-1 text-gray-700 dark:text-gray-300">
                   <MarkdownPreview source={risk} />
@@ -210,9 +210,9 @@ export function ImprovementRecommendations({
     <div>
       <h4 className="text-sm font-medium mb-3">Improvement Recommendations</h4>
       <div className="space-y-3">
-        {recommendations.map((rec, index) => (
+        {recommendations.map((rec) => (
           <div
-            key={index}
+            key={`${rec.priority ?? ""}-${rec.recommendation ?? ""}-${rec.impact ?? ""}`}
             className="bg-gray-50 dark:bg-zinc-800 rounded-lg p-3 border border-zinc-200 dark:border-zinc-600"
           >
             {rec.priority && (
@@ -320,8 +320,11 @@ export function EvaluationDisplay({
       }
       return (
         <div className={depth > 0 ? "ml-4" : ""}>
-          {value.map((item, index) => (
-            <div key={index} className="flex items-start gap-2 my-1">
+          {value.map((item) => (
+            <div
+              key={typeof item === "string" ? item : JSON.stringify(item)}
+              className="flex items-start gap-2 my-1"
+            >
               <span className="text-gray-400 dark:text-gray-500 select-none">•</span>
               {renderValue(item, depth + 1)}
             </div>
@@ -352,7 +355,29 @@ export function EvaluationDisplay({
     return <span className="text-gray-500 dark:text-gray-400">{String(value)}</span>;
   };
 
-  const evalData = data as any;
+  // The AI evaluation payload is free-form JSON; this captures the fields the
+  // UI knows how to render while keeping the rest indexable for the fallback.
+  interface AIEvaluationData {
+    final_score?: number;
+    score?: number;
+    evaluation_status?: string;
+    decision?: string;
+    disqualification_reason?: string;
+    evaluation_summary?: {
+      strengths?: string[];
+      concerns?: string[];
+      risk_factors?: string[];
+    };
+    improvement_recommendations?: Array<{
+      priority?: string;
+      recommendation?: string;
+      impact?: string;
+    }>;
+    additional_notes?: string;
+    reviewer_confidence?: string;
+    [key: string]: unknown;
+  }
+  const evalData = data as AIEvaluationData;
 
   // Compute which fields have been rendered by specialized components upfront
   // This avoids side effects in JSX and makes the rendering logic clearer
@@ -377,7 +402,7 @@ export function EvaluationDisplay({
       fields.add("evaluation_summary");
     }
 
-    if (evalData.improvement_recommendations?.length > 0) {
+    if ((evalData.improvement_recommendations?.length ?? 0) > 0) {
       fields.add("improvement_recommendations");
     }
 
@@ -425,9 +450,9 @@ export function EvaluationDisplay({
       {evalData.evaluation_summary && <EvaluationSummary summary={evalData.evaluation_summary} />}
 
       {/* Improvement Recommendations */}
-      {evalData.improvement_recommendations?.length > 0 && (
+      {(evalData.improvement_recommendations?.length ?? 0) > 0 && (
         <ImprovementRecommendations
-          recommendations={evalData.improvement_recommendations}
+          recommendations={evalData.improvement_recommendations ?? []}
           getPriorityColor={getPriorityColor}
         />
       )}

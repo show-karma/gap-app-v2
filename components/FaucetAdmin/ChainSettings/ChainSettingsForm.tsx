@@ -25,7 +25,7 @@ export function ChainSettingsForm({ settings, onSave, onCancel }: ChainSettingsF
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    const payload: any = {
+    const payload: Partial<FaucetChainSettings> = {
       maxAmountPerRequest: parseEther(formData.maxAmountPerRequest).toString(),
       lowBalanceThreshold: parseEther(formData.lowBalanceThreshold).toString(),
       enabled: formData.enabled,

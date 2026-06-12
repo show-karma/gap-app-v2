@@ -24,6 +24,11 @@ export default function TablePagination({
 
   const lastPage = paginationRange?.[paginationRange.length - 1];
 
+  const pageItems = paginationRange?.map((page, index) => ({
+    page,
+    key: page === DOTS ? `dots-${index}` : `page-${page}`,
+  }));
+
   function handlePageChange(page: number | string) {
     if (page === currentPage) {
       return `z-10 border-brand-blue relative inline-flex items-center px-4 py-2 border text-sm font-medium`;
@@ -94,12 +99,12 @@ export default function TablePagination({
               <span className="sr-only">Previous</span>
               <ArrowLeftIcon className="h-5 w-5" aria-hidden="true" />
             </button>
-            {paginationRange?.map((page, index) => {
+            {pageItems?.map(({ page, key }) => {
               if (page === DOTS) {
                 return (
                   <button
                     type="button"
-                    key={`${page}-${index}`}
+                    key={key}
                     className="bg-white  dark:bg-zinc-900 border-gray-300 dark:border-zinc-700 text-gray-500 dark:text-zinc-400 dark:hover:text-zinc-200 hover:bg-gray-50 dark:hover:bg-zinc-800 relative inline-flex items-center px-4 py-2 border text-sm font-medium duration-200 ease-in-out"
                   >
                     {DOTS}
@@ -109,7 +114,7 @@ export default function TablePagination({
               return (
                 <button
                   type="button"
-                  key={`${page}-${index}`}
+                  key={key}
                   className={handlePageChange(page)}
                   onClick={() => {
                     setCurrentPage(Number(page));

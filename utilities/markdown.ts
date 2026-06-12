@@ -134,10 +134,8 @@ type HastElement = {
 const isHastElement = (node: unknown): node is HastElement =>
   !!node &&
   typeof node === "object" &&
-  "type" in (node as object) &&
-  (node as any).type === "element" &&
-  "tagName" in (node as object) &&
-  typeof (node as any).tagName === "string";
+  (node as { type?: unknown }).type === "element" &&
+  typeof (node as { tagName?: unknown }).tagName === "string";
 
 /**
  * Creates a rehype rewrite callback that converts specified heading levels to a target level.

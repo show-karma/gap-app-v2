@@ -5,7 +5,8 @@ import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { useImpactAnswers } from "@/hooks/useImpactAnswers";
 import { useIsCommunityAdmin } from "@/src/core/rbac/context/permission-context";
 import { useOwnerStore, useProjectStore } from "@/store";
-import { FilteredOutputsAndOutcomes, filterIndicators } from "../Impact/FilteredOutputsAndOutcomes";
+import { FilteredOutputsAndOutcomes } from "../Impact/FilteredOutputsAndOutcomes";
+import { filterIndicators } from "../Impact/FilteredOutputsAndOutcomes.helpers";
 
 export const ProjectActivityBlock = ({ activity }: { activity: IProjectUpdate }) => {
   const project = useProjectStore((state) => state.project);
@@ -52,9 +53,9 @@ export const ProjectActivityBlock = ({ activity }: { activity: IProjectUpdate })
           <div className="w-full">
             {activity.data?.deliverables && activity.data?.deliverables?.length > 0 ? (
               <div className="grid grid-cols-1 gap-4">
-                {activity.data.deliverables.map((deliverable, index) => (
+                {activity.data.deliverables.map((deliverable) => (
                   <div
-                    key={index}
+                    key={deliverable.name}
                     className="flex flex-col p-4 bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg shadow-sm hover:shadow-md transition-all duration-200"
                   >
                     <div className="flex flex-col gap-1">

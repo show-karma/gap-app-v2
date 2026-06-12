@@ -58,7 +58,7 @@ interface GrantUpdateProps {
   title: string;
   description: string;
   index: number;
-  date: Date | number;
+  date: Date | number | string;
   update: GrantUpdateType;
 }
 
@@ -153,7 +153,7 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({ title, description, index, d
         });
       } else {
         try {
-          const res = await grantUpdateInstance.revoke(walletSigner as any, changeStepperStep);
+          const res = await grantUpdateInstance.revoke(walletSigner, changeStepperStep);
           changeStepperStep("indexing");
           const txHash = res?.tx[0]?.hash;
           if (txHash) {
@@ -168,7 +168,7 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({ title, description, index, d
             changeStepperStep("indexed");
           });
           showSuccess(MESSAGES.GRANT.GRANT_UPDATE.UNDO.SUCCESS);
-        } catch (onChainError: any) {
+        } catch (onChainError) {
           // Silently fallback to off-chain revoke
           setIsStepper(false); // Reset stepper since we're falling back
 
@@ -188,7 +188,7 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({ title, description, index, d
           }
         }
       }
-    } catch (error: any) {
+    } catch (error) {
       showError(MESSAGES.GRANT.GRANT_UPDATE.UNDO.ERROR);
       errorManager(
         MESSAGES.GRANT.GRANT_UPDATE.UNDO.ERROR,

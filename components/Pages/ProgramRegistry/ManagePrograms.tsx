@@ -34,6 +34,26 @@ import { LoadingManagePrograms } from "./Loading/ManagePrograms";
 import { LoadingProgramTable } from "./Loading/Programs";
 import { SearchDropdown } from "./SearchDropdown";
 
+const NotAllowedCases = ({
+  isLoggedOut,
+  onLogin,
+}: {
+  isLoggedOut: boolean;
+  onLogin: () => void;
+}) => {
+  if (isLoggedOut) {
+    return (
+      <div className="flex flex-col gap-2 justify-center items-center">
+        <p>You need to login to access this page</p>
+        <Button className="w-max" onClick={onLogin}>
+          Login
+        </Button>
+      </div>
+    );
+  }
+  return <p>Seems like you do not have programs to manage.</p>;
+};
+
 export const ManagePrograms = () => {
   const searchParams = useSearchParams();
   const defaultTab = searchParams.get("tab") || "";
@@ -175,7 +195,7 @@ export const ManagePrograms = () => {
       } else {
         throw Error(error || "Unknown error");
       }
-    } catch (error: any) {
+    } catch (error) {
       errorManager(`Error while fetching grant programs`, error);
       return {
         programs: [] as GrantProgram[],
@@ -240,7 +260,7 @@ export const ManagePrograms = () => {
       });
 
       await refreshPrograms();
-    } catch (error: any) {
+    } catch (error) {
       errorManager(`Error ${messageDict[value]} program ${program.programId}`, error, {
         programId: program.programId,
         isValid: value,
@@ -264,25 +284,6 @@ export const ManagePrograms = () => {
       }
       return newArray;
     });
-  };
-
-  const NotAllowedCases = () => {
-    if (!address || !isAuth || !isConnected) {
-      return (
-        <div className="flex flex-col gap-2 justify-center items-center">
-          <p>You need to login to access this page</p>
-          <Button
-            className="w-max"
-            onClick={() => {
-              login?.();
-            }}
-          >
-            Login
-          </Button>
-        </div>
-      );
-    }
-    return <p>Seems like you do not have programs to manage.</p>;
   };
 
   return (
@@ -492,7 +493,12 @@ export const ManagePrograms = () => {
           )
         ) : (
           <div className="w-full h-full flex flex-row justify-center items-center">
-            <NotAllowedCases />
+            <NotAllowedCases
+              isLoggedOut={!address || !isAuth || !isConnected}
+              onLogin={() => {
+                login?.();
+              }}
+            />
           </div>
         )}
       </section>

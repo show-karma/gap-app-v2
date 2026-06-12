@@ -32,7 +32,7 @@ import { ProgramTypeBadges } from "./ProgramTypeBadges";
 interface MyProgramListProps {
   grantPrograms: GrantProgram[];
   tab: "accepted" | "rejected" | "pending";
-  editFn: (program: GrantProgram) => any;
+  editFn: (program: GrantProgram) => void;
   selectProgram: (program: GrantProgram) => void;
   isAllowed: boolean;
   setSortField: (field: string) => void;
@@ -429,9 +429,9 @@ export const MyProgramList: FC<MyProgramListProps> = ({
 
           return (
             <div className="whitespace-nowrap max-w-[220px] flex flex-row flex-wrap gap-1 px-3 py-5 text-sm text-black dark:text-zinc-300">
-              {program.admins?.map((admin, index) => (
+              {program.admins?.map((admin) => (
                 <span
-                  key={index}
+                  key={admin}
                   className={`mr-1 inline-flex items-center rounded-md  px-2 py-1 text-xs font-medium text-black ring-1 ring-inset ring-zinc-600/20 ${
                     admin.toLowerCase() === normalizedAddress ? "bg-blue-100" : "bg-zinc-50"
                   }`}
@@ -492,7 +492,7 @@ export const MyProgramList: FC<MyProgramListProps> = ({
 
   const table = useReactTable({
     data: grantPrograms,
-    columns: columns as any,
+    columns,
     state: { sorting },
     onSortingChange: setSorting,
     getCoreRowModel: getCoreRowModel(),

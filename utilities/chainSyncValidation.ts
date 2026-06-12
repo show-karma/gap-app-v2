@@ -82,10 +82,15 @@ export async function waitForChainSync(
  */
 export async function getCurrentChainId(): Promise<number | null> {
   // Try window.ethereum first (most reliable)
-  if (typeof window !== "undefined" && (window as any).ethereum) {
+  const provider =
+    typeof window !== "undefined"
+      ? (window as { ethereum?: { request: (args: { method: string }) => Promise<unknown> } })
+          .ethereum
+      : undefined;
+  if (provider) {
     try {
-      const chainId = await (window as any).ethereum.request({ method: "eth_chainId" });
-      return parseInt(chainId, 16);
+      const chainId = await provider.request({ method: "eth_chainId" });
+      return parseInt(String(chainId), 16);
     } catch (error) {
       console.warn("Failed to get chain ID from window.ethereum:", error);
     }

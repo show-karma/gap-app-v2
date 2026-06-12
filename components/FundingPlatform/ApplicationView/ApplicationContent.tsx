@@ -19,7 +19,11 @@ import {
   lookupMilestoneStatus,
 } from "@/src/features/applications/lib/milestone-status";
 import { useApplicationVersionsStore } from "@/store/applicationVersions";
-import type { IFundingApplication, ProgramWithFormSchema } from "@/types/funding-platform";
+import type {
+  IFormSchema,
+  IFundingApplication,
+  ProgramWithFormSchema,
+} from "@/types/funding-platform";
 import { createFieldLabelsMap, createFieldTypeMap } from "@/utilities/form-schema-helpers";
 import { formatDate } from "@/utilities/formatDate";
 import { cn } from "@/utilities/tailwind";
@@ -81,6 +85,14 @@ const formatStatus = (status: string): string => {
     .join(" ");
 };
 
+/** Form schema as stored on program configs, which may carry AI settings. */
+type ApplicationFormSchema = IFormSchema & {
+  aiConfig?: {
+    internalLangfusePromptId?: string;
+    langfusePromptId?: string;
+  };
+};
+
 const ApplicationContent: FC<ApplicationContentProps> = ({
   application,
   program,
@@ -96,13 +108,22 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
   hideHeader = false,
 }) => {
   // Resolve form schema from program object (handling both FundingProgram and IFundingProgramConfig structures)
-  const formSchema = (program as any)?.applicationConfig?.formSchema || program?.formSchema;
+  const formSchema =
+    (
+      program as
+        | { applicationConfig?: { formSchema?: ApplicationFormSchema } | null }
+        | null
+        | undefined
+    )?.applicationConfig?.formSchema || (program?.formSchema as ApplicationFormSchema | undefined);
 
   // Show internal evaluation section if user has access (don't require config check)
   const shouldShowInternalEvaluation = showInternalEvaluation ?? showAIEvaluationButton;
 
   // Check if internal evaluation is configured (for button functionality)
-  const canRunInternalEvaluation = Boolean(formSchema?.aiConfig?.internalLangfusePromptId);
+  const canRunInternalEvaluation = Boolean(
+    (formSchema as { aiConfig?: { internalLangfusePromptId?: string } } | undefined)?.aiConfig
+      ?.internalLangfusePromptId
+  );
   const showMissingInternalPromptWarning = showAIEvaluationButton && !canRunInternalEvaluation;
   const internalPromptHelpText =
     "Configure the internal Langfuse prompt under the program's AI Evaluation settings to enable manual runs.";
@@ -197,7 +218,7 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
     return null;
   };
 
-  const renderFieldValue = (value: any, fieldKey?: string): JSX.Element => {
+  const renderFieldValue = (value: unknown, fieldKey?: string): JSX.Element => {
     if (Array.isArray(value)) {
       // Check if it's an array of milestones
       const isMilestoneArray =
@@ -230,7 +251,7 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
 
         return (
           <div className="space-y-2">
-            {value.map((milestone: any, index) => {
+            {value.map((milestone) => {
               // Get additional fields (excluding core fields)
               const additionalFields = Object.keys(milestone).filter(
                 (key) => !coreFields.includes(key) && milestone[key]
@@ -245,7 +266,7 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
 
               return (
                 <div
-                  key={index}
+                  key={milestone.milestoneUID || milestone.title}
                   className="bg-zinc-50 dark:bg-zinc-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700"
                 >
                   <div className="space-y-2">
@@ -318,9 +339,9 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
       // Regular array - render as tags
       return (
         <div className="flex flex-wrap gap-1">
-          {value.map((item, index) => (
+          {value.map((item) => (
             <span
-              key={index}
+              key={String(item)}
               className="inline-block bg-zinc-100 dark:bg-zinc-700 text-gray-800 dark:text-gray-200 px-2 py-1 rounded text-xs"
             >
               {String(item)}
@@ -520,7 +541,7 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
               onStatusChange && (
                 <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
                   <StatusActionButtons
-                    currentStatus={application.status as any}
+                    currentStatus={application.status}
                     onStatusChange={handleStatusChangeClick}
                     isUpdating={isUpdatingStatus}
                   />
@@ -543,7 +564,12 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
 
         {application.status === "approved" &&
           (!!(
-            (program as any)?.applicationConfig?.postApprovalFormSchema?.fields?.length ||
+            (
+              program as
+                | { applicationConfig?: { postApprovalFormSchema?: IFormSchema } | null }
+                | null
+                | undefined
+            )?.applicationConfig?.postApprovalFormSchema?.fields?.length ||
             program?.postApprovalFormSchema?.fields?.length
           ) ||
             (application?.postApprovalData &&

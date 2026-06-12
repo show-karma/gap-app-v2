@@ -151,7 +151,7 @@ const EditImpactFormBlock: FC<EditImpactFormBlockProps> = ({ onClose, impactId }
         createdAt: impactInstance.createdAt,
       });
 
-      await updatedImpact.attest(walletSigner as any, changeStepperStep).then(async (res) => {
+      await updatedImpact.attest(walletSigner, changeStepperStep).then(async (res) => {
         let retries = 1000;
         const txHash = res?.tx[0]?.hash;
         if (txHash) {
@@ -183,7 +183,7 @@ const EditImpactFormBlock: FC<EditImpactFormBlockProps> = ({ onClose, impactId }
           await new Promise((resolve) => setTimeout(resolve, 1500));
         }
       });
-    } catch (error: any) {
+    } catch (error) {
       showError("There was an error updating the impact. Please try again");
       errorManager(`Error updating impact ${impactId} from project ${project?.uid}`, error);
     } finally {

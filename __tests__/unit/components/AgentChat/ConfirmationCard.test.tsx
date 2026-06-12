@@ -1,11 +1,11 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { ConfirmationCard } from "@/components/AgentChat/ConfirmationCard";
 import {
-  ConfirmationCard,
   flattenPreviewData,
   formatToolLabel,
   humanizeLabel,
-} from "@/components/AgentChat/ConfirmationCard";
+} from "@/components/AgentChat/ConfirmationCard.helpers";
 import type { ToolResultData } from "@/store/agentChat";
 
 describe("formatToolLabel", () => {

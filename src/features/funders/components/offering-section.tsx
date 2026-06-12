@@ -102,8 +102,8 @@ export function OfferingSection() {
 
                   {/* Features List */}
                   <ul className="flex flex-col gap-2 mt-4 lg:mt-16">
-                    {tier.features.map((feature, index) => (
-                      <li key={index} className="flex gap-2 items-start">
+                    {tier.features.map((feature) => (
+                      <li key={feature} className="flex gap-2 items-start">
                         <SquareCheckBig className="w-3 h-3 text-foreground flex-shrink-0 mt-[3px]" />
                         <span className="text-foreground font-normal text-sm leading-[150%] tracking-[0.005em]">
                           {feature}
@@ -131,8 +131,8 @@ export function OfferingSection() {
 
                 {/* Features List */}
                 <ul className="flex flex-col gap-2">
-                  {tier.features.map((feature, index) => (
-                    <li key={index} className="flex gap-2 items-start">
+                  {tier.features.map((feature) => (
+                    <li key={feature} className="flex gap-2 items-start">
                       <SquareCheckBig className="w-3 h-3 text-foreground flex-shrink-0 mt-[3px]" />
                       <span className="text-foreground font-normal text-sm leading-[150%] tracking-[0.005em]">
                         {feature}

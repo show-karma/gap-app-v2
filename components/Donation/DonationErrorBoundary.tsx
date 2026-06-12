@@ -122,8 +122,8 @@ class DonationErrorBoundaryClass extends Component<Props, State> {
                     What you can do
                   </h2>
                   <ul className="space-y-1 text-sm text-blue-800 dark:text-blue-300">
-                    {parsedError.actionableSteps.map((step, index) => (
-                      <li key={index} className="flex items-start gap-2">
+                    {parsedError.actionableSteps.map((step) => (
+                      <li key={step} className="flex items-start gap-2">
                         <span className="mt-0.5 text-blue-500">•</span>
                         <span>{step}</span>
                       </li>

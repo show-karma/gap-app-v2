@@ -4,11 +4,11 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { type ReactNode, useEffect, useState } from "react";
 import { WagmiProvider } from "wagmi";
 import {
-  PRIVY_BRIDGE_DEFAULTS,
   PrivyBridgeProvider,
   usePrivyBridgeSetter,
   usePrivyLoadRequested,
 } from "@/contexts/privy-bridge-context";
+import { PRIVY_BRIDGE_DEFAULTS } from "@/contexts/privy-bridge-defaults";
 import type { TenantConfig } from "@/src/infrastructure/types/tenant";
 import { queryClient } from "@/utilities/query-client";
 import { minimalWagmiConfig } from "@/utilities/wagmi/privy-config";

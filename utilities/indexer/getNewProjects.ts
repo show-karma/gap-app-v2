@@ -1,7 +1,7 @@
 import { errorManager } from "@/components/Utilities/errorManager";
 import type { SortByOptions, SortOrder } from "@/types/newProjects";
 import type { ProjectFromList } from "@/types/project";
-import fetchData from "../fetchData";
+import fetchData, { type PageInfo } from "../fetchData";
 import { INDEXER } from "../indexer";
 
 export const getNewProjects = async (
@@ -10,19 +10,19 @@ export const getNewProjects = async (
   sortBy: SortByOptions = "createdAt",
   sortOrder: SortOrder = "desc"
 ): Promise<{
-  projects: any[];
-  pageInfo: any;
+  projects: ProjectFromList[];
+  pageInfo: PageInfo | null;
   nextOffset: number;
 }> => {
   try {
-    const [data, error, pageInfo] = await fetchData(
+    const [data, error, pageInfo] = await fetchData<{ data: ProjectFromList[] }>(
       INDEXER.PROJECTS.GET_ALL(page * pageSize, pageSize, sortBy, sortOrder)
     );
     if (error) {
       throw new Error("Something went wrong while fetching new projects");
     }
     return {
-      projects: data?.data as ProjectFromList[],
+      projects: data?.data ?? [],
       pageInfo: pageInfo,
       nextOffset: page + 1,
     };

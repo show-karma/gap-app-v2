@@ -7,7 +7,6 @@ import { Fragment, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { DeleteDialog } from "@/components/DeleteDialog";
-import { pickColor } from "@/components/GrantCard";
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { SelectDropdown } from "@/components/ui/select-dropdown";
@@ -16,6 +15,7 @@ import type { Category, ImpactSegment } from "@/types/impactMeasurement";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
+import { pickColor } from "@/utilities/pickColor";
 import { cn } from "@/utilities/tailwind";
 import { ActivityOutcomeModal } from "./ActivityOutcomeModal";
 

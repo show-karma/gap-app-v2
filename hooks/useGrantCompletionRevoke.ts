@@ -159,7 +159,7 @@ export const useGrantCompletionRevoke = ({ grant, project }: UseGrantCompletionR
         await refetchGrants();
         await refreshGrant();
         showSuccess(MESSAGES.GRANT.MARK_AS_COMPLETE.UNDO.SUCCESS);
-      } catch (onChainError: any) {
+      } catch (onChainError) {
         // Fallback to off-chain revocation if on-chain fails
         dismiss(); // Reset toast since we're falling back
 

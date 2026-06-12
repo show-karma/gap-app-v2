@@ -3,8 +3,8 @@ import userEvent from "@testing-library/user-event";
 import {
   ApplicationTabs,
   type TabConfig,
-  TabIcons,
 } from "@/components/FundingPlatform/ApplicationView/ApplicationTabs";
+import { TabIcons } from "@/components/FundingPlatform/ApplicationView/ApplicationTabs.constants";
 
 // Mock cn utility
 vi.mock("@/utilities/tailwind", () => ({

@@ -450,7 +450,7 @@ const CommentsTimeline: FC<CommentsTimelineProps> = ({
                   ? `comment-${(item.data as ApplicationComment).id}`
                   : item.type === "version"
                     ? `version-${(item.data as IApplicationVersion).id}`
-                    : `status-${idx}-${(item.data as any).timestamp}`;
+                    : `status-${idx}-${(item.data as IStatusHistoryEntry).timestamp}`;
 
               return (
                 <li key={itemKey}>

@@ -1,11 +1,8 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import {
-  calculateSelectedTotal,
-  getPaidAllocationIds,
-  MilestoneSelectionStep,
-} from "../components/MilestoneSelectionStep";
+import { MilestoneSelectionStep } from "../components/MilestoneSelectionStep";
 import type { MilestoneAllocation, PayoutDisbursement } from "../types/payout-disbursement";
 import { PayoutDisbursementStatus } from "../types/payout-disbursement";
+import { calculateSelectedTotal, getPaidAllocationIds } from "../utils/allocation-selection";
 
 describe("MilestoneSelectionStep", () => {
   // Note: Allocation amounts are stored as human-readable values (e.g., "10" for 10 USDC)

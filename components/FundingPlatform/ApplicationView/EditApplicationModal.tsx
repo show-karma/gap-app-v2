@@ -35,7 +35,7 @@ const EditApplicationModal: FC<EditApplicationModalProps> = ({
   const [formSchemaError, setFormSchemaError] = useState<string | null>(null);
   const [matchingDiagnostics, setMatchingDiagnostics] = useState<{
     matched: Array<{ fieldLabel: string; originalKey: string; fieldId: string }>;
-    unmatched: Array<{ originalKey: string; value: any }>;
+    unmatched: Array<{ originalKey: string; value: unknown }>;
     matchRate: number;
   } | null>(null);
 

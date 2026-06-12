@@ -257,7 +257,7 @@ export const GrantCompletion: FC = () => {
             "Grant completion is taking longer than expected. Please refresh the page in a moment to see if it completed."
           );
         });
-    } catch (error: any) {
+    } catch (error) {
       if (isUserCancellationError(error)) {
         showError("Grant completion cancelled");
       } else {

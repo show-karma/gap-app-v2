@@ -193,7 +193,7 @@ export const MilestonesScreen: React.FC = () => {
 
       // Attest grant
       await grant
-        .attest(walletSigner as any, selectedProject.chainID, changeStepperStep)
+        .attest(walletSigner, selectedProject.chainID, changeStepperStep)
         .then(async (res) => {
           let retries = 1000;
           const txHash = res?.tx[0]?.hash;
@@ -271,7 +271,7 @@ export const MilestonesScreen: React.FC = () => {
             await new Promise((resolve) => setTimeout(resolve, 1500));
           }
         });
-    } catch (error: any) {
+    } catch (error) {
       showError(
         flowType === "grant"
           ? MESSAGES.GRANT.CREATE.ERROR(formData.title)
@@ -328,7 +328,11 @@ export const MilestonesScreen: React.FC = () => {
           ) : (
             <div className="flex w-full flex-col items-center justify-center gap-8">
               {milestonesForms.map((milestone, index) => (
-                <Milestone currentMilestone={milestone.data} key={index} index={index} />
+                <Milestone
+                  currentMilestone={milestone.data}
+                  key={milestone.formKey}
+                  index={index}
+                />
               ))}
             </div>
           )}

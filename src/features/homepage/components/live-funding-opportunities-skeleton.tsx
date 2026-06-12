@@ -8,6 +8,8 @@ import { marketingLayoutTheme } from "@/src/helper/theme";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 
+const CAROUSEL_CARD_SKELETON_KEYS = ["carousel-card-1", "carousel-card-2", "carousel-card-3"];
+
 function FundingOpportunityCardSkeleton() {
   return (
     <Card className="h-full flex flex-col">
@@ -65,11 +67,8 @@ export function LiveFundingOpportunitiesSkeleton() {
           className="w-full"
         >
           <CarouselContent className="-ml-2 md:-ml-4">
-            {Array.from({ length: 3 }).map((_, index) => (
-              <CarouselItem
-                key={index}
-                className="pl-2 md:pl-4 basis-full sm:basis-1/2 xl:basis-1/3"
-              >
+            {CAROUSEL_CARD_SKELETON_KEYS.map((key) => (
+              <CarouselItem key={key} className="pl-2 md:pl-4 basis-full sm:basis-1/2 xl:basis-1/3">
                 <FundingOpportunityCardSkeleton />
               </CarouselItem>
             ))}

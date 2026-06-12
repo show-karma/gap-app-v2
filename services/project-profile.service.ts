@@ -57,7 +57,7 @@ export function transformImpactsToMilestones(impacts: ProjectImpact[]): UnifiedM
         endDate: impact.data?.endDate || 0,
       },
       verified: impact.verified || [],
-    } as any,
+    } as unknown as UnifiedMilestone["projectImpact"],
   }));
 }
 

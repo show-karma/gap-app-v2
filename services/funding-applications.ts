@@ -1,3 +1,4 @@
+import { isAxiosError } from "axios";
 import type { IFundingApplication } from "@/types/funding-platform";
 import { createAuthenticatedApiClient } from "@/utilities/auth/api-client";
 import { envVars } from "@/utilities/enviromentVars";
@@ -30,13 +31,16 @@ export async function fetchApplicationByProjectUID(
 export async function deleteApplication(referenceNumber: string): Promise<void> {
   try {
     await apiClient.delete(INDEXER.V2.APPLICATIONS.DELETE(referenceNumber));
-  } catch (error: any) {
+  } catch (error) {
+    const axiosError = isAxiosError<{ message?: string }>(error) ? error : undefined;
     // Log error with context before re-throwing for hook to handle
     console.error("Service layer: Failed to delete application", {
       referenceNumber,
-      status: error?.response?.status,
-      statusText: error?.response?.statusText,
-      errorMessage: error?.response?.data?.message || error?.message,
+      status: axiosError?.response?.status,
+      statusText: axiosError?.response?.statusText,
+      errorMessage:
+        axiosError?.response?.data?.message ||
+        (error instanceof Error ? error.message : String(error)),
       timestamp: new Date().toISOString(),
     });
     throw error;

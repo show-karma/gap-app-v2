@@ -4,12 +4,12 @@ import { PencilIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { useState } from "react";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { useChains } from "@/hooks/useFaucetAdmin";
-import { ChainForm } from "./ChainForm";
+import { ChainForm, type ChainFormData } from "./ChainForm";
 
 export function ChainManager() {
   const { chains, isLoading, createChain, updateChain, deleteChain, isUpdating } = useChains();
   const [showAddForm, setShowAddForm] = useState(false);
-  const [editingChain, setEditingChain] = useState<any>(null);
+  const [editingChain, setEditingChain] = useState<(typeof chains)[number] | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
 
   if (isLoading) {
@@ -20,12 +20,12 @@ export function ChainManager() {
     );
   }
 
-  const handleCreateChain = async (chainData: any) => {
+  const handleCreateChain = async (chainData: ChainFormData) => {
     createChain(chainData);
     setShowAddForm(false);
   };
 
-  const handleUpdateChain = async (chainData: any) => {
+  const handleUpdateChain = async (chainData: ChainFormData) => {
     if (editingChain) {
       const { chainId, ...updates } = chainData;
       updateChain({ chainId, updates });
@@ -43,7 +43,7 @@ export function ChainManager() {
     }
   };
 
-  const filteredChains = chains.filter((chain: any) => {
+  const filteredChains = chains.filter((chain) => {
     const searchLower = searchTerm.toLowerCase();
     return (
       chain.name?.toLowerCase().includes(searchLower) ||
@@ -113,7 +113,7 @@ export function ChainManager() {
       {/* Chains List */}
       {filteredChains.length > 0 ? (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {filteredChains.map((chain: any) => (
+          {filteredChains.map((chain) => (
             <div key={chain.chainId} className="bg-white dark:bg-zinc-800 rounded-lg shadow-sm p-6">
               <div className="flex justify-between items-start mb-4">
                 <div>

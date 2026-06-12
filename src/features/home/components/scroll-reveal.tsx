@@ -38,12 +38,14 @@ export function ScrollReveal({
       return;
     }
 
+    let revealTimeoutId: ReturnType<typeof setTimeout> | undefined;
+
     const observer = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
           if (entry.isIntersecting) {
             // Add revealed class after delay
-            setTimeout(() => {
+            revealTimeoutId = setTimeout(() => {
               el.classList.add("scroll-revealed");
             }, delay);
             observer.unobserve(el);
@@ -54,7 +56,12 @@ export function ScrollReveal({
     );
 
     observer.observe(el);
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      if (revealTimeoutId !== undefined) {
+        clearTimeout(revealTimeoutId);
+      }
+    };
   }, [delay, threshold]);
 
   return (

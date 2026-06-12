@@ -52,14 +52,13 @@ function useCommunitiesWithPrograms(programs: FundingProgram[]) {
   }, [programs]);
 }
 
+const REVIEW_SKELETON_KEYS = ["review-skeleton-1", "review-skeleton-2", "review-skeleton-3"];
+
 function ReviewsSkeleton() {
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-      {Array.from({ length: 3 }, (_, i) => (
-        <div
-          key={`review-skeleton-${i}`}
-          className="animate-pulse rounded-xl border border-border p-6"
-        >
+      {REVIEW_SKELETON_KEYS.map((key) => (
+        <div key={key} className="animate-pulse rounded-xl border border-border p-6">
           <div className="flex items-center gap-3 mb-4">
             <div className="h-12 w-12 rounded-full bg-muted" />
             <div className="flex-1 space-y-2">

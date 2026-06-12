@@ -4,10 +4,8 @@
 
 import { render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
-import {
-  getEmptyStateMessage,
-  PendingVerificationTable,
-} from "@/components/Pages/Admin/PendingVerificationTable";
+import { PendingVerificationTable } from "@/components/Pages/Admin/PendingVerificationTable";
+import { getEmptyStateMessage } from "@/components/Pages/Admin/PendingVerificationTable.helpers";
 import type { PendingVerificationMilestone } from "@/hooks/usePendingVerificationMilestones";
 
 vi.mock("@/components/Utilities/TablePagination", () => ({

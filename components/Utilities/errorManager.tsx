@@ -40,18 +40,19 @@ const errorContains = (error: ErrorLike | null | undefined, needle: string): boo
 
 export const errorManager = (
   errorMessage: string,
-  error: any,
-  extra?: any,
+  error: unknown,
+  extra?: object,
   toastError?: {
     error?: string;
   }
 ) => {
-  if (error?.originalError || error?.message) {
-    if (errorContains(error, "reject")) {
+  const err = error as ErrorLike | null | undefined;
+  if (err?.originalError || err?.message) {
+    if (errorContains(err, "reject")) {
       return;
     }
-    const targetNetwork = extra?.targetNetwork;
-    if (errorContains(error, "switch chain")) {
+    const targetNetwork = (extra as { targetNetwork?: string } | undefined)?.targetNetwork;
+    if (errorContains(err, "switch chain")) {
       const toastInstance = getToast();
       if (toastInstance) {
         toastInstance.error(
@@ -62,7 +63,7 @@ export const errorManager = (
     }
   }
   if (toastError?.error) {
-    const wasRPCIssue = errorContains(error, "rpc error");
+    const wasRPCIssue = errorContains(err, "rpc error");
     const toastInstance = getToast();
     if (toastInstance) {
       if (wasRPCIssue) {
@@ -93,7 +94,7 @@ export const errorManager = (
     return;
   }
 
-  const errorToCapture = error?.originalError || error?.message;
+  const errorToCapture = err?.originalError || err?.message;
   Sentry.captureException(error, {
     extra: {
       errorMessage,

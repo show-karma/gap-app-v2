@@ -6,7 +6,7 @@ import {
   PlusIcon,
   XMarkIcon,
 } from "@heroicons/react/24/solid";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { cn } from "@/utilities/tailwind";
 
 export interface DropdownItem {
@@ -51,6 +51,7 @@ export const MultiSelectDropdown = ({
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const listboxId = useId();
 
   // Maintain local state for selected IDs to handle rapid clicks
   // Sync with prop when it changes
@@ -146,6 +147,7 @@ export const MultiSelectDropdown = ({
         role="combobox"
         aria-expanded={isOpen}
         aria-haspopup="listbox"
+        aria-controls={listboxId}
         aria-disabled={isDisabled}
         tabIndex={isDisabled ? -1 : 0}
         className={cn(
@@ -229,7 +231,10 @@ export const MultiSelectDropdown = ({
       {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
 
       {isOpen && !isDisabled && (
-        <div className="absolute z-10 mt-1 w-full rounded-lg border border-gray-200 bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-800">
+        <div
+          id={listboxId}
+          className="absolute z-10 mt-1 w-full rounded-lg border border-gray-200 bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-800"
+        >
           <div className="p-2">
             <div className="relative">
               <MagnifyingGlassIcon className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 dark:text-zinc-500" />

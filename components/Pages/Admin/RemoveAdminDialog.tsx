@@ -85,7 +85,7 @@ export const RemoveAdmin: FC<RemoveAdminDialogProps> = ({
     const { walletSigner } = setup;
     try {
       startAttestation("Removing admin...");
-      const communityResolver = (await GAP.getCommunityResolver(walletSigner)) as any;
+      const communityResolver = await GAP.getCommunityResolver(walletSigner);
       const communityResponse = await communityResolver.delist(UUID, Admin);
 
       changeStepperStep("pending");
@@ -99,20 +99,15 @@ export const RemoveAdmin: FC<RemoveAdminDialogProps> = ({
         let addressRemoved = false;
         while (retries > 0) {
           try {
-            const [response, error] = await fetchData(
-              INDEXER.COMMUNITY.ADMINS(UUID),
-              "GET",
-              {},
-              {},
-              {},
-              false
-            );
+            const [response, error] = await fetchData<{
+              admins: Array<{ user: { id: string } }>;
+            }>(INDEXER.COMMUNITY.ADMINS(UUID), "GET", {}, {}, {}, false);
             if (!response || error) {
               throw new Error(`Error fetching admins for community ${UUID}`);
             }
 
             addressRemoved = !response.admins.some(
-              (admin: any) => admin.user.id.toLowerCase() === Admin.toLowerCase()
+              (admin) => admin.user.id.toLowerCase() === Admin.toLowerCase()
             );
 
             if (addressRemoved) {
@@ -122,14 +117,14 @@ export const RemoveAdmin: FC<RemoveAdminDialogProps> = ({
               closeModal(); // Close the dialog upon successful submission
               break;
             }
-          } catch (_error: any) {}
+          } catch (_error) {}
 
           retries -= 1;
           // eslint-disable-next-line no-await-in-loop
           await new Promise((resolve) => setTimeout(resolve, 1500));
         }
       });
-    } catch (error: any) {
+    } catch (error) {
       showError("Failed to remove admin. Please try again.");
       errorManager(`Error removing admin of ${UUID}`, error, {
         removingAdmin: Admin,

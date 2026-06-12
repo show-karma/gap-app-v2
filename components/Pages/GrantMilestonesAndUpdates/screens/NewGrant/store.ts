@@ -6,7 +6,15 @@ export interface MilestonesForms {
   isValid: boolean;
   isEditing: boolean;
   data: IMilestone;
+  /** Stable identity for React list rendering; assigned by the store. */
+  formKey?: string;
 }
+
+let milestoneFormKeyCounter = 0;
+const nextMilestoneFormKey = () => {
+  milestoneFormKeyCounter += 1;
+  return `milestone-form-${milestoneFormKeyCounter}`;
+};
 
 type FlowType = "grant" | "program";
 
@@ -79,6 +87,7 @@ export const useGrantFormStore = create<GrantFormStore>((set, get) => ({
     milestonesForms.push({
       isValid: false,
       isEditing: true,
+      formKey: nextMilestoneFormKey(),
       data: {
         title: "",
         description: "",
@@ -113,7 +122,12 @@ export const useGrantFormStore = create<GrantFormStore>((set, get) => ({
     milestonesForms[index] = newValue;
     set({ milestonesForms: milestonesForms });
   },
-  setMilestonesForms: (milestonesForms: MilestonesForms[]) => set({ milestonesForms }),
+  setMilestonesForms: (milestonesForms: MilestonesForms[]) =>
+    set({
+      milestonesForms: milestonesForms.map((form) =>
+        form.formKey ? form : { ...form, formKey: nextMilestoneFormKey() }
+      ),
+    }),
   isMilestonesFormsLoading: true,
   setIsMilestonesFormsLoading: (isMilestonesFormsLoading: boolean) =>
     set({ isMilestonesFormsLoading }),

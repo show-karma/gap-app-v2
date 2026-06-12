@@ -95,7 +95,7 @@ export const DeleteMemberDialog: FC<DeleteMemberDialogProps> = ({ memberAddress 
       };
 
       try {
-        const res = await member.revoke(walletSigner as any, changeStepperStep);
+        const res = await member.revoke(walletSigner, changeStepperStep);
         changeStepperStep("indexing");
         const txHash = res?.tx[0]?.hash;
         if (txHash) {
@@ -105,7 +105,7 @@ export const DeleteMemberDialog: FC<DeleteMemberDialogProps> = ({ memberAddress 
         changeStepperStep("indexed");
         showSuccess("Member removed successfully");
         closeModal();
-      } catch (onChainError: any) {
+      } catch (onChainError) {
         // Silently fallback to off-chain revoke
         setIsStepper(false); // Reset stepper since we're falling back
 
@@ -127,7 +127,7 @@ export const DeleteMemberDialog: FC<DeleteMemberDialogProps> = ({ memberAddress 
           throw onChainError;
         }
       }
-    } catch (error: any) {
+    } catch (error) {
       showError(`Failed to remove member ${memberAddress}.`);
       errorManager(
         `Error removing member ${memberAddress}`,

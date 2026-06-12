@@ -42,6 +42,13 @@ const AUTH_FAILURE_THRESHOLD = 3;
  * @see https://docs.privy.io/guide/react/configuration/cookies
  */
 const PRIVY_SESSION_COOKIE_NAME = "privy-session";
+
+/**
+ * Grace period (in ms) after login during which watchAccount checks are
+ * suppressed — wagmi state may be stale from the previous session during
+ * the Privy↔wagmi sync gap.
+ */
+const LOGIN_GRACE_PERIOD_MS = 2_000;
 const POST_LOGIN_REDIRECT_KEY = "postLoginRedirect";
 
 export const setPostLoginRedirect = (url: string) => {
@@ -144,8 +151,10 @@ export const useAuth = () => {
   const authFailureCount = useRef(0);
   // Snapshot of wallet addresses captured at auth time (security: use ref, not live array)
   const walletsSnapshotRef = useRef<string[]>([]);
-  // Grace period after login — suppresses watchAccount false positives from stale wagmi state
-  const loginGraceRef = useRef(false);
+  // Grace period after login — suppresses watchAccount false positives from stale wagmi state.
+  // Stores the timestamp when the grace period ends (deadline instead of a
+  // timer so the effect needs no setTimeout cleanup).
+  const loginGraceUntilRef = useRef(0);
   // Tracks the wallet address across renders to detect the undefined→defined
   // transition once Privy/Wagmi finish hydrating after auth (see refetch barrier).
   const prevAddressRef = useRef<Hex | undefined>(address);
@@ -165,10 +174,7 @@ export const useAuth = () => {
     if (!prevAuthRef.current && authenticated) {
       // Suppress watchAccount checks briefly — wagmi state may be stale
       // from the previous session during the Privy↔wagmi sync gap.
-      loginGraceRef.current = true;
-      setTimeout(() => {
-        loginGraceRef.current = false;
-      }, 2000);
+      loginGraceUntilRef.current = Date.now() + LOGIN_GRACE_PERIOD_MS;
 
       // After login, redirect to a saved post-login URL if one exists,
       // but only if we're on the homepage (not a deep link the user navigated to).
@@ -357,7 +363,7 @@ export const useAuth = () => {
             if (cancelled) return;
             // Skip during login grace period — wagmi state may be stale
             // from the previous session during the Privy↔wagmi sync gap.
-            if (loginGraceRef.current) return;
+            if (Date.now() < loginGraceUntilRef.current) return;
 
             const newAddress = account.address?.toLowerCase();
             if (!newAddress) return;

@@ -24,7 +24,8 @@ import { MilestoneLifecycleStatus } from "@/src/features/payout-disbursement";
 import { useGrantInvoiceRequired } from "@/src/features/payout-disbursement/hooks/use-payout-disbursement";
 import { getGrantInvoiceDownloadUrl } from "@/src/features/payout-disbursement/services/payout-disbursement.service";
 import { useProjectStore } from "@/store";
-import type { UnifiedMilestone } from "@/types/v2/roadmap";
+import type { ImpactIndicatorWithData } from "@/types/impactMeasurement";
+import type { ProjectUpdateDeliverable, UnifiedMilestone } from "@/types/v2/roadmap";
 import { formatDate } from "@/utilities/formatDate";
 import {
   getEffectiveMilestoneStatus,
@@ -215,8 +216,11 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
     (Array.isArray(projectMilestone?.verified) ? projectMilestone.verified : null) ||
     [];
   const completionDeliverables =
-    (projectMilestone?.completed?.data as any)?.deliverables ||
-    (grantMilestone?.milestone.completed?.data as any)?.deliverables;
+    (projectMilestone?.completed?.data as { deliverables?: ProjectUpdateDeliverable[] } | undefined)
+      ?.deliverables ||
+    (Array.isArray(grantMilestone?.milestone.completed?.data?.deliverables)
+      ? grantMilestone.milestone.completed.data.deliverables
+      : undefined);
 
   const { showSection: showCompletionSection, showTimelineHeader: showCompletionTimelineHeader } =
     computeMilestoneCardCompletionGate({
@@ -368,8 +372,8 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
           {completionDeliverables && completionDeliverables.length > 0 ? (
             <div className="flex flex-col gap-2">
               <p className="text-sm font-semibold text-foreground">Deliverables:</p>
-              {completionDeliverables.map((deliverable: any, index: number) => (
-                <div key={index} className="border rounded-lg p-3 bg-secondary">
+              {completionDeliverables.map((deliverable: ProjectUpdateDeliverable) => (
+                <div key={deliverable.name} className="border rounded-lg p-3 bg-secondary">
                   <div className="flex flex-col gap-1">
                     <p className="text-sm font-medium text-foreground">{deliverable.name}</p>
                     {deliverable.description && (
@@ -397,39 +401,41 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
           {milestoneImpactData && milestoneImpactData.length > 0 ? (
             <div className="flex flex-col gap-2">
               <p className="text-sm font-semibold text-foreground">Metrics:</p>
-              {milestoneImpactData.map((metric: any, index: number) => (
-                <div key={index} className="border rounded-lg p-3 bg-secondary">
-                  <div className="flex flex-col gap-1">
-                    <p className="text-sm font-medium text-foreground">
-                      {metric.name || metric.indicator?.name || "Untitled Indicator"}
-                    </p>
-                    {metric.datapoints && metric.datapoints.length > 0 && (
-                      <div className="flex flex-col gap-1">
-                        <p className="text-sm text-muted-foreground">
-                          Value:{" "}
-                          <span className="font-medium text-foreground">
-                            {metric.datapoints[0].value}
-                          </span>
-                        </p>
-                        {metric.datapoints[0].proof && (
-                          <a
-                            href={
-                              metric.datapoints[0].proof.includes("http")
-                                ? metric.datapoints[0].proof
-                                : `https://${metric.datapoints[0].proof}`
-                            }
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-brand-blue hover:underline text-sm break-all"
-                          >
-                            {metric.datapoints[0].proof}
-                          </a>
-                        )}
-                      </div>
-                    )}
+              {milestoneImpactData.map(
+                (metric: ImpactIndicatorWithData & { indicator?: { name?: string } }) => (
+                  <div key={metric.id} className="border rounded-lg p-3 bg-secondary">
+                    <div className="flex flex-col gap-1">
+                      <p className="text-sm font-medium text-foreground">
+                        {metric.name || metric.indicator?.name || "Untitled Indicator"}
+                      </p>
+                      {metric.datapoints && metric.datapoints.length > 0 && (
+                        <div className="flex flex-col gap-1">
+                          <p className="text-sm text-muted-foreground">
+                            Value:{" "}
+                            <span className="font-medium text-foreground">
+                              {metric.datapoints[0].value}
+                            </span>
+                          </p>
+                          {metric.datapoints[0].proof && (
+                            <a
+                              href={
+                                metric.datapoints[0].proof.includes("http")
+                                  ? metric.datapoints[0].proof
+                                  : `https://${metric.datapoints[0].proof}`
+                              }
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-brand-blue hover:underline text-sm break-all"
+                            >
+                              {metric.datapoints[0].proof}
+                            </a>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                )
+              )}
             </div>
           ) : null}
         </div>

@@ -161,7 +161,7 @@ export const ObjectiveOptionsMenu = ({
             changeStepperStep("indexed");
           });
           showSuccess(MESSAGES.PROJECT_OBJECTIVE_FORM.DELETE.SUCCESS);
-        } catch (onChainError: any) {
+        } catch (onChainError) {
           // Silently fallback to off-chain revoke
           setIsStepper(false); // Reset stepper since we're falling back
 
@@ -181,7 +181,7 @@ export const ObjectiveOptionsMenu = ({
           }
         }
       }
-    } catch (error: any) {
+    } catch (error) {
       showError(MESSAGES.PROJECT_OBJECTIVE_FORM.DELETE.ERROR);
       errorManager(
         MESSAGES.PROJECT_OBJECTIVE_FORM.DELETE.ERROR,

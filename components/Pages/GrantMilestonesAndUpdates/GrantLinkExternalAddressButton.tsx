@@ -13,7 +13,7 @@ import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
 interface GrantLinkExternalAddressButtonProps {
-  grant: Grant & { external: Record<string, string[]> };
+  grant: Grant & { external?: Record<string, string[]> };
 }
 
 export const GrantLinkExternalAddressButton: FC<GrantLinkExternalAddressButtonProps> = ({

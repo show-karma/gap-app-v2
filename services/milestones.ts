@@ -64,8 +64,8 @@ export interface GrantMilestoneWithCompletion {
 
 // Response from the project updates endpoint
 interface ProjectUpdatesResponse {
-  projectUpdates: any[];
-  projectMilestones: any[];
+  projectUpdates: unknown[];
+  projectMilestones: unknown[];
   grantMilestones: GrantMilestoneWithCompletion[];
 }
 

@@ -82,9 +82,9 @@ export function PlatformSection() {
 
         {/* Cards Grid */}
         <div className={cn("grid grid-cols-1 md:grid-cols-2 gap-4 w-full", " max-w-[1920px]")}>
-          {platformCards.map((card, index) => (
+          {platformCards.map((card) => (
             <div
-              key={index}
+              key={card.title}
               className={cn(
                 "flex flex-col justify-between gap-3",
                 "bg-secondary rounded-2xl",

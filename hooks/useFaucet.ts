@@ -160,8 +160,8 @@ export const useFaucetClaim = () => {
       toast.success("Funds received successfully!");
 
       return claimResponse;
-    } catch (error: any) {
-      const errorMessage = error.message || "Failed to claim faucet";
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to claim faucet";
       setClaimError(errorMessage);
       toast.error(errorMessage);
       throw error;

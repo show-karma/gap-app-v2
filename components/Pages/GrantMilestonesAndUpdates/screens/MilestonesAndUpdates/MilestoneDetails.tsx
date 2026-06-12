@@ -12,7 +12,9 @@ import type { UnifiedMilestone } from "@/types/v2/roadmap";
  * Helper to get the completion object from a milestone.
  * API may return completion as an object or an array.
  */
-const getCompletionData = (milestone: GrantMilestone) => {
+const getCompletionData = (
+  milestone: GrantMilestone
+): NonNullable<GrantMilestone["completed"]> | null => {
   const completed = milestone.completed;
   if (!completed) return null;
 
@@ -21,8 +23,8 @@ const getCompletionData = (milestone: GrantMilestone) => {
     const firstItem = completed[0];
     return {
       ...firstItem,
-      createdAt: firstItem?.createdAt ?? (completed as any).createdAt,
-      updatedAt: firstItem?.updatedAt ?? (completed as any).updatedAt,
+      createdAt: firstItem?.createdAt ?? completed.createdAt,
+      updatedAt: firstItem?.updatedAt ?? completed.updatedAt,
     };
   }
 
@@ -48,14 +50,16 @@ function toUnifiedMilestone(milestone: GrantMilestone, grant: GrantContext): Uni
     ? {
         uid: completion.uid,
         chainID: completion.chainID,
-        createdAt: completion.createdAt || (milestone as any).updatedAt || "",
+        createdAt: completion.createdAt || milestone.updatedAt || "",
         updatedAt: completion.updatedAt,
         attester: completion.attester,
         data: {
           proofOfWork: completion.data?.proofOfWork,
           reason: completion.data?.reason,
           completionPercentage: completion.data?.completionPercentage,
-          deliverables: (completion.data as any)?.deliverables,
+          deliverables: Array.isArray(completion.data?.deliverables)
+            ? completion.data.deliverables
+            : undefined,
         },
       }
     : null;
@@ -78,7 +82,7 @@ function toUnifiedMilestone(milestone: GrantMilestone, grant: GrantContext): Uni
     title: milestone.title,
     description: milestone.description,
     completed,
-    createdAt: (milestone as any).createdAt || "",
+    createdAt: milestone.createdAt || "",
     startsAt: milestone.startsAt,
     endsAt: milestone.endsAt,
     chainID,

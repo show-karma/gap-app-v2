@@ -114,20 +114,15 @@ export const AddAdmin: FC<AddAdminDialogProps> = ({
         let addressAdded = false;
         while (retries > 0) {
           try {
-            const [response, error] = await fetchData(
-              INDEXER.COMMUNITY.ADMINS(UUID),
-              "GET",
-              {},
-              {},
-              {},
-              false
-            );
+            const [response, error] = await fetchData<{
+              admins: Array<{ user: { id: string } }>;
+            }>(INDEXER.COMMUNITY.ADMINS(UUID), "GET", {}, {}, {}, false);
             if (!response || error) {
               throw new Error(`Error fetching admins for community ${UUID}`);
             }
 
             addressAdded = response.admins.some(
-              (admin: any) => admin.user.id.toLowerCase() === walletAddress
+              (admin) => admin.user.id.toLowerCase() === walletAddress
             );
 
             if (addressAdded) {
@@ -138,14 +133,14 @@ export const AddAdmin: FC<AddAdminDialogProps> = ({
               closeModal();
               break;
             }
-          } catch (_error: any) {}
+          } catch (_error) {}
 
           retries -= 1;
           // eslint-disable-next-line no-await-in-loop
           await new Promise((resolve) => setTimeout(resolve, 1500));
         }
       });
-    } catch (error: any) {
+    } catch (error) {
       showError("Failed to add admin. Please try again.");
       errorManager(`Error adding admin ${data.email} to community ${UUID}`, error, {
         community: UUID,

@@ -2,11 +2,11 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { type RenderOptions, render, renderHook } from "@testing-library/react";
 import { type ReactNode, useEffect } from "react";
 import {
-  PRIVY_BRIDGE_DEFAULTS,
   PrivyBridgeProvider,
   type PrivyBridgeValue,
   usePrivyBridgeSetter,
 } from "@/contexts/privy-bridge-context";
+import { PRIVY_BRIDGE_DEFAULTS } from "@/contexts/privy-bridge-defaults";
 
 // ---------------------------------------------------------------------------
 // Auth / wallet state that tests can inject through the provider tree.

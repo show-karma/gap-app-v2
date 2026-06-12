@@ -33,9 +33,9 @@ const renderFieldValue = (
       ) {
         return (
           <div className="space-y-2">
-            {parsed.map((milestone: any, index: number) => (
+            {parsed.map((milestone) => (
               <div
-                key={index}
+                key={milestone.title}
                 className="bg-zinc-50 dark:bg-zinc-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700"
               >
                 <div className="space-y-1">
@@ -130,9 +130,9 @@ const ApplicationVersionViewer: FC<ApplicationVersionViewerProps> = ({ version, 
 
   return (
     <div className="space-y-4">
-      {applicationFields.map((field, index) => (
+      {applicationFields.map((field) => (
         <div
-          key={index}
+          key={field.fieldLabel}
           className="border-b border-gray-100 dark:border-gray-700 pb-4 last:border-0"
         >
           {/* Field label */}

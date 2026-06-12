@@ -61,10 +61,15 @@ export function privyBridgeConnector(wallet: ConnectedWallet, initialChainId: nu
         currentChainId = targetChainId;
       }
       currentProvider = (await wallet.getEthereumProvider()) as EIP1193Provider;
+      const accounts = [wallet.address as `0x${string}`];
       return {
-        accounts: [wallet.address as `0x${string}`],
+        // wagmi's connect() return type is conditional on `withCapabilities`;
+        // `as never` mirrors the typing pattern used by wagmi's own connectors.
+        accounts: (params?.withCapabilities
+          ? accounts.map((address) => ({ address, capabilities: {} }))
+          : accounts) as never,
         chainId: currentChainId,
-      } as any;
+      };
     },
 
     async disconnect() {

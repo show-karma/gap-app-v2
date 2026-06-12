@@ -97,9 +97,9 @@ export const ProjectActivity = () => {
           ))}
         </Tab.List>
         <Tab.Panels className="mt-2">
-          {tabs.map((_tab, idx) => (
+          {tabs.map((tab) => (
             <Tab.Panel
-              key={idx}
+              key={tab.name}
               className={cn(
                 "rounded-xl p-3",
                 "ring-white ring-opacity-60 ring-offset-2 ring-offset-blue-400 focus:outline-none"

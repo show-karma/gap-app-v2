@@ -120,7 +120,7 @@ export const GrantDelete: FC<GrantDeleteProps> = ({ grant }) => {
             changeStepperStep("indexed");
             showSuccess(MESSAGES.GRANT.DELETE.SUCCESS);
           });
-        } catch (onChainError: any) {
+        } catch (onChainError) {
           // Silently fallback to off-chain revoke
           setIsStepper(false); // Reset stepper since we're falling back
 
@@ -143,7 +143,7 @@ export const GrantDelete: FC<GrantDeleteProps> = ({ grant }) => {
           }
         }
       }
-    } catch (error: any) {
+    } catch (error) {
       showError(MESSAGES.GRANT.DELETE.ERROR(grant.details?.title || shortAddress(grant.uid)));
       errorManager(
         MESSAGES.GRANT.DELETE.ERROR(grant.details?.title || shortAddress(grant.uid)),

@@ -25,6 +25,11 @@ import { useWallet } from "./useWallet";
 import { useProjectGrants } from "./v2/useProjectGrants";
 import { useProjectUpdates } from "./v2/useProjectUpdates";
 
+// Some SDK hydration paths keep the raw attestation uid on a private `_uid`
+// field; fall back to the public `uid` when it's absent.
+const getMilestoneInstanceUid = (milestone: { uid: string }): string =>
+  (milestone as unknown as { _uid?: string })?._uid || milestone?.uid;
+
 // Helper function to send outputs and deliverables data
 const sendOutputsAndDeliverables = async (
   milestoneUID: string,
@@ -167,9 +172,7 @@ export const useMilestone = () => {
           const milestoneInstances = fetchedProject.grants
             .filter((grant) => grant.milestones.length > 0)
             .flatMap((grant) => grant.milestones)
-            .filter((milestone) =>
-              milestoneUIDs.includes((milestone as any)?._uid || milestone?.uid)
-            );
+            .filter((milestone) => milestoneUIDs.includes(getMilestoneInstanceUid(milestone)));
 
           if (!milestoneInstances) {
             throw new Error("Milestone UIDs couldn't be found for this chain");
@@ -200,7 +203,7 @@ export const useMilestone = () => {
             .revokeMultipleAttestations(walletSigner, revocationArgs, changeStepperStep)
             .then(async (res) => {
               if (res.tx.length > 0) {
-                const txPromises = res.tx.map((tx: any) =>
+                const txPromises = res.tx.map((tx) =>
                   tx.hash
                     ? fetchData(INDEXER.ATTESTATION_LISTENER(tx.hash, chainId), "POST", {})
                     : Promise.resolve()
@@ -374,9 +377,7 @@ export const useMilestone = () => {
           const milestoneInstances = fetchedProject.grants
             .filter((grant) => grant.milestones.length > 0)
             .flatMap((grant) => grant.milestones)
-            .filter((milestone) =>
-              milestoneUIDs.includes((milestone as any)?._uid || milestone?.uid)
-            );
+            .filter((milestone) => milestoneUIDs.includes(getMilestoneInstanceUid(milestone)));
 
           if (!milestoneInstances?.length) {
             throw new Error("Milestone UIDs couldn't be found for this chain");
@@ -643,10 +644,10 @@ export const useMilestone = () => {
             }, 250);
           });
         });
-    } catch (error: any) {
+    } catch (error) {
       // errorManager filters "reject" / transient errors, so log raw cause first.
       console.error("[completeSingleMilestone] failed:", error);
-      if (error?.message !== "WALLET_SETUP_FAILED") {
+      if (!(error instanceof Error) || error.message !== "WALLET_SETUP_FAILED") {
         showError("There was an error completing the milestone");
         errorManager("Error completing milestone.", error, { milestoneData: milestone });
       }
@@ -738,7 +739,7 @@ export const useMilestone = () => {
         const milestoneInstances = fetchedProject.grants
           .filter((grant) => grant.milestones.length > 0)
           .flatMap((grant) => grant.milestones)
-          .filter((m) => milestonesOfChain.includes((m as any)?._uid || m?.uid));
+          .filter((m) => milestonesOfChain.includes(getMilestoneInstanceUid(m)));
 
         if (!milestoneInstances?.length) {
           throw new Error("Milestone instances couldn't be found for this chain");
@@ -750,7 +751,7 @@ export const useMilestone = () => {
           .completeForMultipleGrants(walletSigner, milestoneUIDs, completionData, changeStepperStep)
           .then(async (result) => {
             if (result.tx?.length > 0) {
-              const txPromises = result.tx.map((tx: any) =>
+              const txPromises = result.tx.map((tx) =>
                 tx.hash
                   ? fetchData(INDEXER.ATTESTATION_LISTENER(tx.hash, chainId), "POST", {})
                   : Promise.resolve()
@@ -890,9 +891,7 @@ export const useMilestone = () => {
           const milestoneInstances = fetchedProject.grants
             .filter((grant) => grant.milestones.length > 0)
             .flatMap((grant) => grant.milestones)
-            .filter((milestone) =>
-              milestoneUIDs.includes((milestone as any)?._uid || milestone?.uid)
-            );
+            .filter((milestone) => milestoneUIDs.includes(getMilestoneInstanceUid(milestone)));
 
           if (!milestoneInstances?.length) {
             throw new Error("Milestone UIDs couldn't be found for this chain");
@@ -1076,7 +1075,7 @@ export const useMilestone = () => {
           if (!fetchedMilestones || !gapClient?.network) return;
           const objectivesInstances = ProjectMilestone.from(fetchedMilestones, gapClient?.network);
           const objectiveInstance = objectivesInstances.find(
-            (item: any) => item.uid.toLowerCase() === milestone.uid.toLowerCase()
+            (item) => item.uid.toLowerCase() === milestone.uid.toLowerCase()
           );
           if (!objectiveInstance) return;
 
@@ -1096,7 +1095,7 @@ export const useMilestone = () => {
                   fetchedProject.chainID
                 );
                 const stillExists = fetchedObjectives.find(
-                  (item: any) => item.uid.toLowerCase() === milestone.uid.toLowerCase()
+                  (item) => item.uid.toLowerCase() === milestone.uid.toLowerCase()
                 );
 
                 return !!(
@@ -1120,7 +1119,7 @@ export const useMilestone = () => {
               },
               changeStepperStep
             )
-            .then(async (res: any) => {
+            .then(async (res) => {
               changeStepperStep("indexing");
               const txHash = res?.tx[0]?.hash;
               if (txHash) {

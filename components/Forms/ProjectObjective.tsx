@@ -120,7 +120,7 @@ export const ProjectObjectiveForm = ({
         text: sanitizeInput(data.text),
       };
       await newObjective
-        .attest(walletSigner as any, sanitizedData, changeStepperStep)
+        .attest(walletSigner, sanitizedData, changeStepperStep)
         .then(async (res) => {
           const _fetchedObjectives = null;
           const txHash = res?.tx[0]?.hash;
@@ -224,7 +224,7 @@ export const ProjectObjectiveForm = ({
       if (!objectiveInstance) return;
       objectiveInstance.setValues(sanitizedData);
       await objectiveInstance
-        .attest(walletSigner as any, sanitizedData, changeStepperStep)
+        .attest(walletSigner, sanitizedData, changeStepperStep)
         .then(async (res) => {
           const _fetchedObjectives = null;
           const txHash = res?.tx[0]?.hash;

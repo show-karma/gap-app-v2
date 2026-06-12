@@ -376,8 +376,8 @@ export function PayoutsCsvUpload({
                             Errors:
                           </p>
                           <div className="text-xs text-red-600 dark:text-red-400 space-y-1">
-                            {parseResults.errors.slice(0, 5).map((error, index) => (
-                              <p key={index}>{error}</p>
+                            {parseResults.errors.slice(0, 5).map((error) => (
+                              <p key={error}>{error}</p>
                             ))}
                             {parseResults.errors.length > 5 && (
                               <p className="text-gray-500 dark:text-gray-400">
@@ -394,8 +394,8 @@ export function PayoutsCsvUpload({
                             Unmatched project slugs:
                           </p>
                           <div className="text-xs text-orange-600 dark:text-orange-400 space-y-1">
-                            {unmatchedProjects.slice(0, 5).map((slug, index) => (
-                              <p key={index}>• {slug}</p>
+                            {unmatchedProjects.slice(0, 5).map((slug) => (
+                              <p key={slug}>• {slug}</p>
                             ))}
                             {unmatchedProjects.length > 5 && (
                               <p className="text-gray-500 dark:text-gray-400">

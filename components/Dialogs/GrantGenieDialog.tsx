@@ -49,8 +49,11 @@ function GrantGenieRecommendations({ projectId }: { projectId: string }) {
       ) : recommendations?.length === 0 || error ? (
         <div>No recommendations available at the moment.</div>
       ) : (
-        recommendations.map((recommendation, index) => (
-          <div key={index} className="rounded-xl bg-teal-50 shadow p-8 gap-5 grid grid-cols-2">
+        recommendations.map((recommendation) => (
+          <div
+            key={recommendation.title}
+            className="rounded-xl bg-teal-50 shadow p-8 gap-5 grid grid-cols-2"
+          >
             <div className="">
               <h3 className="font-semibold">{recommendation.title}</h3>
               <p>{recommendation.description}</p>

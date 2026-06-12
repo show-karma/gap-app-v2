@@ -22,15 +22,15 @@ interface IApplicationSubmissionProps {
   programId: string;
   chainId?: number;
   formSchema: IFormSchema;
-  onSubmit?: (applicationData: Record<string, any>) => Promise<void>;
+  onSubmit?: (applicationData: Record<string, unknown>) => Promise<void>;
   onCancel?: () => void;
   isLoading?: boolean;
-  initialData?: Record<string, any>;
+  initialData?: Record<string, unknown>;
   isEditMode?: boolean;
   onMatchingDiagnostics?: (
     diagnostics: {
       matched: Array<{ fieldLabel: string; originalKey: string; fieldId: string }>;
-      unmatched: Array<{ originalKey: string; value: any }>;
+      unmatched: Array<{ originalKey: string; value: unknown }>;
       matchRate: number;
     } | null
   ) => void;
@@ -55,7 +55,10 @@ function toFieldName(label: string): string {
  * Finds the original key in initialData that matches the given field.
  * Uses multiple matching strategies to handle different key formats.
  */
-function findOriginalKey(field: IFormField, initialData: Record<string, any>): string | undefined {
+function findOriginalKey(
+  field: IFormField,
+  initialData: Record<string, unknown>
+): string | undefined {
   const fieldName = toFieldName(field.label);
 
   // Strategy 1: Match with field.id (if available) - most reliable
@@ -119,7 +122,7 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
 
   // Generate dynamic Zod schema based on form schema
   const generateValidationSchema = useCallback((schema: IFormSchema) => {
-    const schemaObject: Record<string, any> = {};
+    const schemaObject: Record<string, z.ZodType> = {};
 
     schema.fields.forEach((field) => {
       if (field.type === "section_header") return;
@@ -214,7 +217,7 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
           }
 
           // Validate that the value is a valid number (not NaN)
-          numberSchema = (numberSchema as z.ZodUnion<any>).refine(
+          numberSchema = numberSchema.refine(
             (val: unknown) => {
               if (val === null || val === undefined) return !field.required;
               return typeof val === "number" && !Number.isNaN(val);
@@ -368,7 +371,7 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
 
   // Build default values for form fields
   const getDefaultValues = useCallback((): Partial<FormData> => {
-    const defaults: Record<string, any> = {};
+    const defaults: Record<string, unknown> = {};
     formSchema.fields.forEach((field) => {
       if (field.type === "section_header") return;
       const fieldName = toFieldName(field.label);
@@ -438,7 +441,7 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
 
     const diagnostics = {
       matched: [] as Array<{ fieldLabel: string; originalKey: string; fieldId: string }>,
-      unmatched: [] as Array<{ originalKey: string; value: any }>,
+      unmatched: [] as Array<{ originalKey: string; value: unknown }>,
       matchRate: 0,
     };
 
@@ -510,7 +513,7 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
   useEffect(() => {
     if (initialData && formSchema.fields.length > 0 && isEditMode) {
       try {
-        const formData: Record<string, any> = {};
+        const formData: Record<string, unknown> = {};
 
         formSchema.fields.forEach((field) => {
           if (field.type === "section_header") return;
@@ -573,9 +576,10 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
 
         reset(formData);
         // Trigger validation after reset
-        setTimeout(() => {
+        const triggerTimeoutId = setTimeout(() => {
           trigger();
         }, 0);
+        return () => clearTimeout(triggerTimeoutId);
       } catch (error) {
         console.error("Error pre-filling form:", error);
         toast.error(
@@ -598,7 +602,7 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
       // Always transform form data to use labels as keys (not field IDs)
       // This ensures payload always uses human-readable keys like "Project Name"
       // regardless of what the original key format was
-      const transformedData: Record<string, any> = {};
+      const transformedData: Record<string, unknown> = {};
 
       // Map all form field IDs to their current labels
       Object.entries(data).forEach(([formKey, value]) => {
@@ -638,7 +642,7 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
     }
   };
 
-  const renderField = (field: any, index: number) => {
+  const renderField = (field: IFormField, index: number) => {
     if (field.type === "section_header") {
       return (
         <div
@@ -701,8 +705,8 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
               {...register(fieldKey)}
             >
               <option value="">Select an option</option>
-              {field.options?.map((option: string, optIndex: number) => (
-                <option key={optIndex} value={option}>
+              {field.options?.map((option: string) => (
+                <option key={option} value={option}>
                   {option}
                 </option>
               ))}
@@ -722,8 +726,8 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
               control={control}
               render={({ field: { onChange, value } }) => (
                 <div className="mt-2 space-y-2">
-                  {field.options?.map((option: string, optIndex: number) => (
-                    <label key={optIndex} className="flex items-center">
+                  {field.options?.map((option: string) => (
+                    <label key={option} className="flex items-center">
                       <input
                         type="checkbox"
                         value={option}
@@ -755,8 +759,8 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
               {field.label} {field.required && <span className="text-red-500">*</span>}
             </div>
             <div className="mt-2 space-y-2">
-              {field.options?.map((option: string, optIndex: number) => (
-                <label key={optIndex} className="flex items-center">
+              {field.options?.map((option: string) => (
+                <label key={option} className="flex items-center">
                   <input
                     type="radio"
                     value={option}

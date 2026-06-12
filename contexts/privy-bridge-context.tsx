@@ -17,6 +17,7 @@
  */
 import type { ConnectedWallet, User } from "@privy-io/react-auth";
 import { createContext, type ReactNode, useCallback, useContext, useState } from "react";
+import { PRIVY_BRIDGE_DEFAULTS } from "./privy-bridge-defaults";
 
 export interface PrivyBridgeValue {
   // From usePrivy
@@ -37,20 +38,6 @@ export interface PrivyBridgeValue {
 }
 
 const noop = () => {};
-const noopAsync = async () => {};
-
-export const PRIVY_BRIDGE_DEFAULTS: PrivyBridgeValue = {
-  ready: false,
-  authenticated: false,
-  user: null,
-  login: noop,
-  logout: noopAsync,
-  getAccessToken: async () => null,
-  connectWallet: noop,
-  wallets: [],
-  smartWalletClient: null,
-  isConnected: false,
-};
 
 const PrivyBridgeContext = createContext<PrivyBridgeValue>(PRIVY_BRIDGE_DEFAULTS);
 const PrivyBridgeSetterContext = createContext<(v: PrivyBridgeValue) => void>(noop);

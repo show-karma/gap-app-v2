@@ -202,7 +202,7 @@ export const GrantTitleDropdown: FC<{
                       setTitle(e.target.value);
                     }}
                     // on enter key press, add the network
-                    onKeyDown={(e: any) => {
+                    onKeyDown={(e) => {
                       if (e.key === "Enter") {
                         addCustom(title);
                       }

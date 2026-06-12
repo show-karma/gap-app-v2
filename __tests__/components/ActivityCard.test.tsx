@@ -19,7 +19,7 @@ vi.mock("@/store", () => ({
 
 // Mock child components
 vi.mock("@/components/Shared/ActivityCard/UpdateCard", () => ({
-  UpdateCard: ({ update, index, isAuthorized }: any) => (
+  UpdateCard: ({ index, isAuthorized }: { index: number; isAuthorized?: boolean }) => (
     <div data-testid="update-card">
       <div data-testid="update-index">{index}</div>
       <div data-testid="update-authorized">{isAuthorized ? "true" : "false"}</div>
@@ -28,7 +28,13 @@ vi.mock("@/components/Shared/ActivityCard/UpdateCard", () => ({
 }));
 
 vi.mock("@/components/Shared/ActivityCard/MilestoneCard", () => ({
-  MilestoneCard: ({ milestone, isAuthorized }: any) => (
+  MilestoneCard: ({
+    milestone,
+    isAuthorized,
+  }: {
+    milestone: { title?: string };
+    isAuthorized?: boolean;
+  }) => (
     <div data-testid="milestone-card">
       <div data-testid="milestone-title">{milestone.title}</div>
       <div data-testid="milestone-authorized">{isAuthorized ? "true" : "false"}</div>
@@ -38,7 +44,7 @@ vi.mock("@/components/Shared/ActivityCard/MilestoneCard", () => ({
 
 // Mock ProjectUpdateCard to avoid SDK import issues
 vi.mock("@/components/Shared/ActivityCard/ProjectUpdateCard", () => ({
-  ProjectUpdateCard: ({ update, index, isAuthorized }: any) => (
+  ProjectUpdateCard: ({ index, isAuthorized }: { index: number; isAuthorized?: boolean }) => (
     <div data-testid="project-update-card">
       <div data-testid="update-index">{index}</div>
       <div data-testid="update-authorized">{isAuthorized ? "true" : "false"}</div>
@@ -67,7 +73,7 @@ describe("ActivityCard", () => {
         text: "Update description",
         type: "project-update",
       },
-      decodedDataJson: "{}" as any,
+      decodedDataJson: "{}",
       isOffchain: false,
       revocable: true,
       schemaId: "0xschema1" as `0x${string}`,
@@ -211,7 +217,7 @@ describe("ActivityCard", () => {
 
   describe("Store Integration", () => {
     it("should use owner store to check authorization", () => {
-      useOwnerStore.mockImplementation((selector: any) => {
+      useOwnerStore.mockImplementation((selector?: (state: { isOwner: boolean }) => unknown) => {
         const state = { isOwner: true };
         return selector ? selector(state) : state;
       });
@@ -221,52 +227,60 @@ describe("ActivityCard", () => {
       expect(screen.getByTestId("update-authorized")).toHaveTextContent("true");
 
       // Reset mock
-      useOwnerStore.mockImplementation((selector: any) => {
+      useOwnerStore.mockImplementation((selector?: (state: { isOwner: boolean }) => unknown) => {
         const state = { isOwner: false };
         return selector ? selector(state) : state;
       });
     });
 
     it("should use project store to check admin status", () => {
-      useProjectStore.mockImplementation((selector: any) => {
-        const state = { isProjectAdmin: true };
-        return selector ? selector(state) : state;
-      });
+      useProjectStore.mockImplementation(
+        (selector?: (state: { isProjectAdmin: boolean }) => unknown) => {
+          const state = { isProjectAdmin: true };
+          return selector ? selector(state) : state;
+        }
+      );
 
       render(<ActivityCard activity={mockUpdate} />);
 
       expect(screen.getByTestId("update-authorized")).toHaveTextContent("true");
 
       // Reset mock
-      useProjectStore.mockImplementation((selector: any) => {
-        const state = { isProjectAdmin: false };
-        return selector ? selector(state) : state;
-      });
+      useProjectStore.mockImplementation(
+        (selector?: (state: { isProjectAdmin: boolean }) => unknown) => {
+          const state = { isProjectAdmin: false };
+          return selector ? selector(state) : state;
+        }
+      );
     });
 
     it("should combine owner and admin checks correctly", () => {
-      useOwnerStore.mockImplementation((selector: any) => {
+      useOwnerStore.mockImplementation((selector?: (state: { isOwner: boolean }) => unknown) => {
         const state = { isOwner: true };
         return selector ? selector(state) : state;
       });
-      useProjectStore.mockImplementation((selector: any) => {
-        const state = { isProjectAdmin: true };
-        return selector ? selector(state) : state;
-      });
+      useProjectStore.mockImplementation(
+        (selector?: (state: { isProjectAdmin: boolean }) => unknown) => {
+          const state = { isProjectAdmin: true };
+          return selector ? selector(state) : state;
+        }
+      );
 
       render(<ActivityCard activity={mockUpdate} />);
 
       expect(screen.getByTestId("update-authorized")).toHaveTextContent("true");
 
       // Reset mocks
-      useOwnerStore.mockImplementation((selector: any) => {
+      useOwnerStore.mockImplementation((selector?: (state: { isOwner: boolean }) => unknown) => {
         const state = { isOwner: false };
         return selector ? selector(state) : state;
       });
-      useProjectStore.mockImplementation((selector: any) => {
-        const state = { isProjectAdmin: false };
-        return selector ? selector(state) : state;
-      });
+      useProjectStore.mockImplementation(
+        (selector?: (state: { isProjectAdmin: boolean }) => unknown) => {
+          const state = { isProjectAdmin: false };
+          return selector ? selector(state) : state;
+        }
+      );
     });
   });
 
@@ -358,7 +372,7 @@ describe("ActivityCard", () => {
             text: "",
             type: "project-update",
           },
-          decodedDataJson: "{}" as any,
+          decodedDataJson: "{}",
           isOffchain: false,
           revocable: true,
           schemaId: "0xschema1" as `0x${string}`,

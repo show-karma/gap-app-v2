@@ -11,7 +11,13 @@ import { useForm } from "react-hook-form";
 import type { IFormField } from "@/types/funding-platform";
 import { MetricInput } from "../MetricInput";
 
-function TestWrapper({ field, defaultValues = {} }: { field: IFormField; defaultValues?: any }) {
+function TestWrapper({
+  field,
+  defaultValues = {},
+}: {
+  field: IFormField;
+  defaultValues?: Record<string, unknown>;
+}) {
   const { control } = useForm({ defaultValues });
 
   return <MetricInput field={field} control={control} fieldKey="metrics" isLoading={false} />;

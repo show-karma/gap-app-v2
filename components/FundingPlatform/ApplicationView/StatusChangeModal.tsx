@@ -437,8 +437,11 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
                                 </Disclosure.Button>
                                 <Disclosure.Panel className="px-3 pb-3">
                                   <dl className="space-y-1.5">
-                                    {applicationSummary.map((field, index) => (
-                                      <div key={index} className="flex items-start gap-2 text-xs">
+                                    {applicationSummary.map((field) => (
+                                      <div
+                                        key={field.label}
+                                        className="flex items-start gap-2 text-xs"
+                                      >
                                         <dt className="font-medium text-gray-500 dark:text-gray-400 min-w-0 shrink-0">
                                           {field.label}:
                                         </dt>

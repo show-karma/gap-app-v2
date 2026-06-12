@@ -54,8 +54,8 @@ import type {
   GrantDisbursementRequest,
   MilestoneBreakdown,
 } from "../types/payout-disbursement";
-import { getAllocationSelectionError } from "../utils/allocation-selection";
-import { calculateSelectedTotal, MilestoneSelectionStep } from "./MilestoneSelectionStep";
+import { calculateSelectedTotal, getAllocationSelectionError } from "../utils/allocation-selection";
+import { MilestoneSelectionStep } from "./MilestoneSelectionStep";
 
 interface CreateDisbursementModalProps {
   isOpen: boolean;

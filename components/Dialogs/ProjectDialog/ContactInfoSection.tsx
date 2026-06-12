@@ -276,7 +276,7 @@ export const ContactInfoSection: FC<ContactInfoSectionProps> = ({
           }
         });
       }
-    } catch (error: any) {
+    } catch (error) {
       errorManager(
         `Error creating contact`,
         error,
@@ -324,7 +324,7 @@ export const ContactInfoSection: FC<ContactInfoSectionProps> = ({
           throw Error(error);
         }
       });
-    } catch (error: any) {
+    } catch (error) {
       errorManager(
         `Error deleting contact ${contactId} from project ${
           project?.details?.slug || project?.uid

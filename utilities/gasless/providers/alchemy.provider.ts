@@ -2,7 +2,7 @@ import { LocalAccountSigner } from "@aa-sdk/core";
 import { alchemy, celoMainnet } from "@account-kit/infra";
 import { createModularAccountV2Client } from "@account-kit/smart-contracts";
 import { BrowserProvider, type Signer } from "ethers";
-import type { Chain } from "viem";
+import type { Chain, LocalAccount } from "viem";
 import { celo } from "viem/chains";
 import type {
   ChainGaslessConfig,
@@ -20,6 +20,12 @@ import { serializeBySender } from "../utils/userOpQueue";
 const ALCHEMY_CHAIN_MAP: Record<number, Chain> = {
   [celo.id]: celoMainnet,
 };
+
+/**
+ * Concrete client type returned by `createModularAccountV2Client`. Used to
+ * narrow the opaque `SmartAccountClient` back to the Alchemy client.
+ */
+type AlchemyClient = Awaited<ReturnType<typeof createModularAccountV2Client>>;
 
 /**
  * Alchemy gasless provider implementation.
@@ -61,11 +67,11 @@ export class AlchemyProvider implements IGaslessProvider {
     }
 
     try {
-      // Create Alchemy signer from the Privy LocalAccount
-      // Cast to 'any' because LocalAccountSigner expects viem's LocalAccount type,
-      // but our LocalAccountWithEIP7702 is compatible at runtime
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const alchemySigner = new LocalAccountSigner(signer as any);
+      // Create Alchemy signer from the Privy LocalAccount.
+      // LocalAccountSigner expects viem's LocalAccount type, but our
+      // LocalAccountWithEIP7702 is compatible at runtime, so bridge the
+      // nominal type gap through `unknown`.
+      const alchemySigner = new LocalAccountSigner(signer as unknown as LocalAccount);
 
       // Create Modular Account V2 client with EIP-7702 mode
       const smartAccountClient = await createModularAccountV2Client({
@@ -115,7 +121,8 @@ export class AlchemyProvider implements IGaslessProvider {
    * Creates an EIP-1193 compatible provider that routes transaction calls
    * through the Alchemy smart account client.
    */
-  private createEIP1193Provider(client: SmartAccountClient, chainId: number, rpcUrl: string) {
+  private createEIP1193Provider(rawClient: SmartAccountClient, chainId: number, rpcUrl: string) {
+    const client = rawClient as AlchemyClient;
     return {
       request: async ({ method, params }: { method: string; params?: unknown[] }) => {
         // Route transaction-related calls through the smart account client

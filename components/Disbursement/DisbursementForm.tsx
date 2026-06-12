@@ -76,7 +76,7 @@ interface TransactionState {
     totalAmount: number;
     safeUrl: string;
     createTxUrl?: string;
-    transactionData?: any;
+    transactionData?: unknown;
     executed?: boolean;
   } | null;
 }
@@ -182,14 +182,14 @@ export const DisbursementForm = () => {
   );
 
   const parseCsv = (file: File) => {
-    Papa.parse(file, {
+    Papa.parse<string[]>(file, {
       header: false,
       skipEmptyLines: true,
       complete: (results) => {
         // Skip the first row (header row)
         const dataRows = results.data.slice(1);
 
-        const parsedData: DisbursementRecipient[] = dataRows.map((row: any) => {
+        const parsedData: DisbursementRecipient[] = dataRows.map((row) => {
           const address = row[0]?.trim();
           const amount = row[1]?.trim();
           let error: string | undefined;

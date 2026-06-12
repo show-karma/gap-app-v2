@@ -43,12 +43,16 @@ const MilestoneCard = () => {
   );
 };
 
+const MILESTONE_CARD_SKELETON_KEYS = Array.from(
+  { length: 6 },
+  (_, i) => `milestone-card-skeleton-${i + 1}`
+);
+
 export const ProjectGrantsMilestonesListLoading = () => {
-  const emptyArray = Array.from({ length: 6 }, () => ({}));
   return (
     <div className="mt-3 flex w-full flex-col gap-6">
-      {emptyArray.map((_item, index) => (
-        <div key={index}>
+      {MILESTONE_CARD_SKELETON_KEYS.map((key) => (
+        <div key={key}>
           <MilestoneCard />
         </div>
       ))}

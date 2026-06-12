@@ -8,7 +8,7 @@ import {
 } from "@heroicons/react/24/solid";
 import debounce from "lodash.debounce";
 import { type FC, useEffect, useMemo, useRef, useState } from "react";
-import type { Control, FieldError, FieldErrorsImpl, Merge } from "react-hook-form";
+import type { Control, FieldError, FieldErrorsImpl, FieldValues, Merge } from "react-hook-form";
 import { Controller, useWatch } from "react-hook-form";
 import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
 import { SEARCH_CONSTANTS } from "@/constants/search";
@@ -45,11 +45,9 @@ function AddProjectLink() {
 
 interface KarmaProfileLinkInputProps {
   field: IFormField;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Generic form control type for flexible form integration
-  control: Control<Record<string, any>>;
+  control: Control<FieldValues>;
   fieldKey: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Accepts various react-hook-form error types
-  error?: FieldError | Merge<FieldError, FieldErrorsImpl<any>>;
+  error?: FieldError | Merge<FieldError, FieldErrorsImpl<FieldValues>>;
   isLoading?: boolean;
 }
 

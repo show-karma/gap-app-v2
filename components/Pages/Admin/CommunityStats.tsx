@@ -52,7 +52,7 @@ export default function CommunityStats() {
   const fetchCommunityStats = useCallback(async (communities: Community[]) => {
     try {
       const statsPromises = communities.map(async (community) => {
-        const [data, error]: any = await fetchData(
+        const [data, error] = await fetchData<Record<string, number>>(
           INDEXER.COMMUNITY.STATS(community.uid as string)
         );
         if (error) {

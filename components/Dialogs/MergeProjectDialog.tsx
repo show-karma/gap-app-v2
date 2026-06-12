@@ -206,7 +206,7 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
         schema: gapClient.findSchema("ProjectPointer"),
       });
 
-      await projectPointer.attest(walletSigner as any, changeStepperStep).then(async (res) => {
+      await projectPointer.attest(walletSigner, changeStepperStep).then(async (res) => {
         showLoading("Indexing project merge...");
 
         let retries = 1000;
@@ -242,7 +242,7 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
             });
         }
       });
-    } catch (error: any) {
+    } catch (error) {
       showError("Failed to create project pointer.");
       errorManager(
         `Error creating project pointer`,

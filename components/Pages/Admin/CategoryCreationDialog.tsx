@@ -71,7 +71,7 @@ export const CategoryCreationDialog: FC<CategoryCreationDialogProps> = ({ refres
       toast.success("Category created successfully");
       refreshCategories();
       closeModal();
-    } catch (error: any) {
+    } catch (error) {
       errorManager(
         MESSAGES.CATEGORY.CREATE.ERROR,
         error,

@@ -29,11 +29,17 @@ export const WeeklyActiveUsersChart = () => {
   const { data = [], isLoading } = useQuery<WeeklyActiveUsersData[]>({
     queryKey: ["weekly-active-users"],
     queryFn: async () => {
-      const response = await getGAPWeeklyActiveUsers();
-      return response.map((item: any) => ({
+      // The weekly-active-users endpoint returns Mongo-style documents, not
+      // the IAttestationStats shape the fetcher is declared with.
+      const response = (await getGAPWeeklyActiveUsers()) as unknown as Array<{
+        date: { $date: string };
+        wau: number;
+        percentileChange: number;
+      }>;
+      return response.map((item) => ({
         Date: `${formatDate(reduceDays(item.date.$date, 7))} - ${formatDate(
           item.date.$date
-        )} ${item.percentileChange > 0 ? "🟢" : "🔴"} ${parseInt(item.percentileChange, 10)}%`,
+        )} ${item.percentileChange > 0 ? "🟢" : "🔴"} ${Math.trunc(item.percentileChange)}%`,
         "Weekly Active Users": item.wau,
         "Percent Change": item.percentileChange,
       }));

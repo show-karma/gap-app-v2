@@ -155,7 +155,7 @@ export function GrantDetailLayout({ children }: GrantDetailLayoutProps) {
         </div>
         {isAuthorized && grant && project ? (
           <div className="flex flex-row gap-2 items-center">
-            <GrantLinkExternalAddressButton grant={grant as any} />
+            <GrantLinkExternalAddressButton grant={grant} />
             <GrantCompleteButton project={project} grant={grant} />
             <GrantDelete grant={grant} />
           </div>

@@ -6,6 +6,19 @@ import type { DisbursementRecipient } from "../types/disbursement";
 import { getRPCClient, getRPCUrlByChainId } from "./rpcClient";
 
 /**
+ * Detects the Safe Transaction Service "Safe not indexed" failure mode
+ * (HTTP 404 or a message mentioning it).
+ */
+function isSafeNotFoundError(error: unknown): boolean {
+  const status =
+    typeof error === "object" && error !== null && "response" in error
+      ? (error as { response?: { status?: number } }).response?.status
+      : undefined;
+  const message = error instanceof Error ? error.message : "";
+  return status === 404 || message.includes("404") || message.includes("Not Found");
+}
+
+/**
  * Transaction status returned from Safe Transaction Service
  */
 export interface SafeTransactionStatus {
@@ -174,13 +187,9 @@ export async function isSafeIndexed(
 
     await apiKit.getSafeInfo(safeAddress);
     return true;
-  } catch (error: any) {
+  } catch (error) {
     // 404 means not indexed
-    if (
-      error?.response?.status === 404 ||
-      error?.message?.includes("404") ||
-      error?.message?.includes("Not Found")
-    ) {
+    if (isSafeNotFoundError(error)) {
       return false;
     }
     // Other errors - assume not indexed to be safe
@@ -407,25 +416,40 @@ export function createEthereumProvider(walletClient: WalletClient, chainId: Supp
 
   // Create a provider object that Safe SDK can understand
   return {
-    request: async (args: { method: string; params?: any }) => {
+    request: async (args: { method: string; params?: readonly unknown[] | object }) => {
       const { method, params } = args;
+      // EIP-1193 allows positional (array) or named (object) params; the
+      // methods handled below all use positional params.
+      const paramsList: readonly unknown[] = Array.isArray(params) ? params : [];
 
       try {
         // Handle signing methods through wallet client
         if (method === "eth_sendTransaction") {
-          return await walletClient.sendTransaction(params[0]);
+          return await walletClient.sendTransaction(
+            paramsList[0] as Parameters<WalletClient["sendTransaction"]>[0]
+          );
         }
 
         if (method === "eth_signTransaction") {
-          return await walletClient.signTransaction(params[0]);
+          return await walletClient.signTransaction(
+            paramsList[0] as Parameters<WalletClient["signTransaction"]>[0]
+          );
         }
 
         if (method === "eth_signTypedData_v4" || method === "eth_signTypedData") {
           // params[0] is the address, params[1] is the typed data
-          const [address, typedData] = params;
+          const [rawAddress, typedData] = paramsList;
+          const address = typeof rawAddress === "string" ? rawAddress : undefined;
 
           // Parse the typed data if it's a string
-          const parsedTypedData = typeof typedData === "string" ? JSON.parse(typedData) : typedData;
+          const parsedTypedData = (
+            typeof typedData === "string" ? JSON.parse(typedData) : typedData
+          ) as {
+            domain: Record<string, unknown>;
+            types: Record<string, unknown>;
+            primaryType: string;
+            message: Record<string, unknown>;
+          };
 
           const account = walletClient.account;
           if (!account || address?.toLowerCase() !== account.address.toLowerCase()) {
@@ -438,12 +462,13 @@ export function createEthereumProvider(walletClient: WalletClient, chainId: Supp
             types: parsedTypedData.types,
             primaryType: parsedTypedData.primaryType,
             message: parsedTypedData.message,
-          });
+          } as unknown as Parameters<WalletClient["signTypedData"]>[0]);
         }
 
         if (method === "personal_sign") {
           // params[0] is the message, params[1] is the address
-          const [message, address] = params;
+          const [message, rawAddress] = paramsList;
+          const address = typeof rawAddress === "string" ? rawAddress : undefined;
 
           const account = walletClient.account;
           if (!account || address?.toLowerCase() !== account.address.toLowerCase()) {
@@ -452,8 +477,9 @@ export function createEthereumProvider(walletClient: WalletClient, chainId: Supp
 
           return await walletClient.signMessage({
             account,
-            message:
-              typeof message === "string" && message.startsWith("0x") ? { raw: message } : message,
+            message: (typeof message === "string" && message.startsWith("0x")
+              ? { raw: message as `0x${string}` }
+              : message) as Parameters<WalletClient["signMessage"]>[0]["message"],
           });
         }
 
@@ -520,7 +546,7 @@ export async function signAndProposeDisbursement(
   recipients: DisbursementRecipient[],
   tokenAddress: string | null,
   chainId: SupportedChainId,
-  walletClient: any,
+  walletClient: WalletClient,
   decimals: number = 18
 ) {
   // Validate inputs
@@ -560,13 +586,8 @@ export async function signAndProposeDisbursement(
     // Check if the Safe is indexed by the Transaction Service
     try {
       await apiKit.getSafeInfo(safeAddress);
-    } catch (infoError: any) {
-      const is404 =
-        infoError?.response?.status === 404 ||
-        infoError?.message?.includes("404") ||
-        infoError?.message?.includes("Not Found");
-
-      if (is404) {
+    } catch (infoError) {
+      if (isSafeNotFoundError(infoError)) {
         throw new Error(
           `This Safe wallet is not yet indexed by Safe's Transaction Service. ` +
             `Please go to https://app.safe.global and add your Safe wallet there first, ` +

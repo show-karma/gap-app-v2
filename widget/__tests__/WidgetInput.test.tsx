@@ -1,9 +1,13 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ChatMention } from "@/store/agentChat";
-import { __test, WidgetInput } from "../WidgetInput";
-
-const { serializeEditor, buildMentionChip, insertMentionAtCaret, isEditorEmpty } = __test;
+import { WidgetInput } from "../WidgetInput";
+import {
+  buildMentionChip,
+  insertMentionAtCaret,
+  isEditorEmpty,
+  serializeEditor,
+} from "../WidgetInput.helpers";
 
 const milestoneMention: ChatMention = {
   id: "milestone-abc",

@@ -62,6 +62,10 @@ export const LinkGithubRepoButton: FC<LinkGithubRepoButtonProps> = ({
   const [validatedRepos, setValidatedRepos] = useState<Record<number, boolean>>({});
   const refreshProject = useProjectStore((state) => state.refreshProject);
 
+  // Row identity is positional in this component (validation state is keyed by
+  // position), so list keys are derived from the position outside the JSX map.
+  const repoItems = repos.map((repo, position) => ({ repo, key: `repo-${position}` }));
+
   // Auto open the dialog if buttonElement is null
   useEffect(() => {
     if (buttonElement === null) {
@@ -343,8 +347,8 @@ export const LinkGithubRepoButton: FC<LinkGithubRepoButtonProps> = ({
                     </p>
                   </Dialog.Title>
                   <div className="max-h-[60vh] flex flex-col gap-4 mt-8 overflow-y-auto">
-                    {repos.map((repo, index) => (
-                      <div key={index} className="flex flex-col">
+                    {repoItems.map(({ repo, key }, index) => (
+                      <div key={key} className="flex flex-col">
                         <div className="flex items-center space-x-2">
                           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 bg-gray-100 dark:bg-zinc-700 rounded-lg flex-grow gap-2 sm:gap-0">
                             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 w-full">

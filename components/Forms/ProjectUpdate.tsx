@@ -7,7 +7,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { FC } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { SubmitHandler } from "react-hook-form";
+import type { FieldErrors, SubmitHandler } from "react-hook-form";
 import { Controller, useForm } from "react-hook-form";
 import { useAccount } from "wagmi";
 import { z } from "zod";
@@ -176,7 +176,7 @@ const GrantSearchDropdown: FC<{
   );
 };
 
-const getFormErrorMessage = (errors: any, formValues: any) => {
+const getFormErrorMessage = (errors: FieldErrors<UpdateType>, formValues: UpdateType) => {
   const errorMessages = [];
 
   // Check for validation errors first
@@ -197,7 +197,7 @@ const getFormErrorMessage = (errors: any, formValues: any) => {
     errorMessages.push("Please check your metrics values");
   } else if (formValues.outputs?.length > 0) {
     const hasEmptyOutputs = formValues.outputs.some(
-      (output: any) => !output.outputId || output.value === "" || output.value === 0
+      (output) => !output.outputId || output.value === "" || output.value === 0
     );
     if (hasEmptyOutputs) {
       errorMessages.push("Please fill in all metric values");
@@ -206,13 +206,14 @@ const getFormErrorMessage = (errors: any, formValues: any) => {
 
   // Check deliverables
   if (errors.deliverables) {
-    const hasDeliverableErrors = errors.deliverables.some((d: any) => d?.name || d?.proof);
+    const deliverableErrors = Array.isArray(errors.deliverables) ? errors.deliverables : [];
+    const hasDeliverableErrors = deliverableErrors.some((d) => d?.name || d?.proof);
     if (hasDeliverableErrors) {
       errorMessages.push("Please fill in all required deliverable fields");
     }
   } else if (formValues.deliverables?.length > 0) {
     const hasEmptyDeliverables = formValues.deliverables.some(
-      (deliverable: any) => !deliverable.name || !deliverable.proof
+      (deliverable) => !deliverable.name || !deliverable.proof
     );
     if (hasEmptyDeliverables) {
       errorMessages.push("Name and proof are required for all deliverables");
@@ -475,9 +476,9 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
     const outputsToSet = indicators
       .filter((indicator) => indicator.id) // Filter out indicators without id
       .map((indicator) => {
-        const matchingOutput = indicatorsData.find((out: any) => out.id === indicator.id);
+        const matchingOutput = indicatorsData.find((out) => out.id === indicator.id);
         const orderedDatapoints = matchingOutput?.datapoints.sort(
-          (a: any, b: any) => new Date(a.endDate).getTime() - new Date(b.endDate).getTime()
+          (a, b) => new Date(a.endDate).getTime() - new Date(b.endDate).getTime()
         );
         const firstDatapoint = orderedDatapoints?.[0];
         return {
@@ -615,9 +616,9 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
         schema,
       };
 
-      const projectUpdate = new ProjectUpdate(projectUpdateData as any);
+      const projectUpdate = new ProjectUpdate(projectUpdateData);
 
-      await projectUpdate.attest(walletSigner as any, changeStepperStep).then(async (res) => {
+      await projectUpdate.attest(walletSigner, changeStepperStep).then(async (res) => {
         let retries = 1000;
         const txHash = res?.tx[0]?.hash;
         if (txHash) {
@@ -975,8 +976,8 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
                     <p>An activity with this title already exists</p>
                   ) : !isValid ? (
                     <div className="flex flex-col gap-2">
-                      {getFormErrorMessage(errors, formValues).map((message, index) => (
-                        <p key={index}>{message}</p>
+                      {getFormErrorMessage(errors, formValues).map((message) => (
+                        <p key={message}>{message}</p>
                       ))}
                     </div>
                   ) : (

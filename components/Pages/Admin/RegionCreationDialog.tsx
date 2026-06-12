@@ -86,7 +86,7 @@ export const RegionCreationDialog: FC<RegionCreationDialogProps> = ({ refreshReg
       toast.success("Region created successfully");
       refreshRegions();
       closeModal();
-    } catch (error: any) {
+    } catch (error) {
       errorManager(
         "Error creating region",
         error,

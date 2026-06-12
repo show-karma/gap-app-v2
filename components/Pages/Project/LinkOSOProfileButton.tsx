@@ -81,6 +81,10 @@ export const LinkOSOProfileButton: FC<LinkOSOProfileButtonProps> = ({
     }
   };
 
+  // Row identity is positional in this component (inputs edit the value in
+  // place), so list keys are derived from the position outside the JSX map.
+  const idItems = ids.map((id, position) => ({ id, key: `oso-id-${position}` }));
+
   const handleSave = async () => {
     setIsLoading(true);
     setError(null);
@@ -168,8 +172,8 @@ export const LinkOSOProfileButton: FC<LinkOSOProfileButtonProps> = ({
                     </p>
                   </Dialog.Title>
                   <div className="max-h-[60vh] flex flex-col gap-4 mt-8 overflow-y-auto">
-                    {ids.map((id, index) => (
-                      <div key={index} className="flex flex-col sm:flex-row items-center gap-2">
+                    {idItems.map(({ id, key }, index) => (
+                      <div key={key} className="flex flex-col sm:flex-row items-center gap-2">
                         <div className="flex items-center justify-between p-4 bg-gray-100 dark:bg-zinc-700 rounded-lg flex-grow w-full">
                           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 w-full">
                             <span className="text-md font-bold capitalize whitespace-nowrap">

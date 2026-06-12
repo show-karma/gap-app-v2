@@ -39,20 +39,26 @@ export const useFaucetConfig = () => {
       queryClient.invalidateQueries({ queryKey: ["faucet", "admin", "config"] });
       toast.success("Global configuration updated");
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message || "Failed to update global configuration");
     },
   });
 
   const updateChainSettingsMutation = useMutation({
-    mutationFn: ({ chainId, settings }: { chainId: number; settings: any }) => {
+    mutationFn: ({
+      chainId,
+      settings,
+    }: {
+      chainId: number;
+      settings: Parameters<typeof faucetService.updateChainSettings>[1];
+    }) => {
       return faucetService.updateChainSettings(chainId, settings);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["faucet", "admin", "config"] });
       toast.success("Chain settings updated");
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message || "Failed to update chain settings");
     },
   });
@@ -63,7 +69,7 @@ export const useFaucetConfig = () => {
       queryClient.invalidateQueries({ queryKey: ["faucet", "admin", "config"] });
       toast.success("Chain settings created");
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message || "Failed to create chain settings");
     },
   });
@@ -74,7 +80,7 @@ export const useFaucetConfig = () => {
       queryClient.invalidateQueries({ queryKey: ["faucet", "admin", "config"] });
       toast.success("Chain settings deleted");
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message || "Failed to delete chain settings");
     },
   });
@@ -115,7 +121,7 @@ export const useWhitelistedContracts = (chainId?: number) => {
       queryClient.invalidateQueries({ queryKey: ["faucet", "admin", "whitelist"] });
       toast.success("Contract whitelisted");
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message || "Failed to whitelist contract");
     },
   });
@@ -128,7 +134,7 @@ export const useWhitelistedContracts = (chainId?: number) => {
       queryClient.invalidateQueries({ queryKey: ["faucet", "admin", "whitelist"] });
       toast.success("Contract removed from whitelist");
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message || "Failed to remove from whitelist");
     },
   });
@@ -170,7 +176,7 @@ export const useBlockedAddresses = () => {
       queryClient.invalidateQueries({ queryKey: ["faucet", "admin", "blocked"] });
       toast.success("Address blocked");
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message || "Failed to block address");
     },
   });
@@ -183,7 +189,7 @@ export const useBlockedAddresses = () => {
       queryClient.invalidateQueries({ queryKey: ["faucet", "admin", "blocked"] });
       toast.success("Address unblocked");
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message || "Failed to unblock address");
     },
   });
@@ -211,7 +217,7 @@ export const useFaucetEmergency = () => {
       queryClient.invalidateQueries({ queryKey: ["faucet", "admin"] });
       toast.success("Emergency stop activated");
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message || "Failed to activate emergency stop");
     },
   });
@@ -222,7 +228,7 @@ export const useFaucetEmergency = () => {
       queryClient.invalidateQueries({ queryKey: ["faucet", "admin"] });
       toast.success("Operations resumed");
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message || "Failed to resume operations");
     },
   });
@@ -233,7 +239,7 @@ export const useFaucetEmergency = () => {
       queryClient.invalidateQueries({ queryKey: ["faucet", "admin"] });
       toast.success(`Expired ${data.count} requests`);
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message || "Failed to expire requests");
     },
   });
@@ -269,20 +275,26 @@ export const useChains = () => {
       queryClient.invalidateQueries({ queryKey: ["faucet", "admin", "chains"] });
       toast.success("Chain created successfully");
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message || "Failed to create chain");
     },
   });
 
   const updateChainMutation = useMutation({
-    mutationFn: ({ chainId, updates }: { chainId: number; updates: any }) => {
+    mutationFn: ({
+      chainId,
+      updates,
+    }: {
+      chainId: number;
+      updates: Parameters<typeof faucetService.updateChain>[1];
+    }) => {
       return faucetService.updateChain(chainId, updates);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["faucet", "admin", "chains"] });
       toast.success("Chain updated successfully");
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message || "Failed to update chain");
     },
   });
@@ -294,7 +306,7 @@ export const useChains = () => {
       queryClient.invalidateQueries({ queryKey: ["faucet", "admin", "config"] });
       toast.success("Chain deleted successfully");
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message || "Failed to delete chain");
     },
   });

@@ -95,7 +95,7 @@ interface ProjectDetails {
   missionSummary?: string;
   locationOfImpact?: string;
   imageURL?: string;
-  links?: any;
+  links?: unknown;
   slug?: string;
   tags?: string[];
   businessModel?: string;
@@ -113,8 +113,8 @@ interface ProjectInProgram {
   updates: ProjectUpdate[];
   projectDetails: ProjectDetails;
   project_categories: string[];
-  impacts: any; // Define specific type if known
-  external: any; // Define specific type if known
+  impacts: unknown[];
+  external: unknown;
 }
 
 // Update the Project interface to use the new type
@@ -242,9 +242,9 @@ function SuggestionsBlock({
       target: { value: suggestion },
       preventDefault: () => {},
     };
-    handleInputChange(fakeEvent as any);
+    handleInputChange(fakeEvent);
     setTimeout(() => {
-      handleSubmit(new Event("submit") as any);
+      handleSubmit(new Event("submit"));
     }, 0);
   };
 
@@ -296,10 +296,10 @@ function SuggestionsBlock({
       {/* Suggestions */}
       <div className="p-6">
         <div className="grid grid-cols-3 max-md:grid-cols-1 gap-4">
-          {suggestions.map((suggestion, index) => (
+          {suggestions.map((suggestion) => (
             <button
               type="button"
-              key={index}
+              key={suggestion.query}
               onClick={() => handleSuggestionClick(suggestion.query)}
               className={cn(
                 "bg-[#EEF4FF] dark:bg-gray-700 rounded-lg p-4 transition-colors flex flex-col items-start text-left w-full",
@@ -465,7 +465,7 @@ function ChatWithKarmaCoPilot({
   chatHook,
   isLoadingProjects,
 }: {
-  projects: any[];
+  projects: Project[];
   chatHook: ReturnType<typeof useChat>;
   isLoadingProjects: boolean;
 }) {
@@ -666,9 +666,9 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
           <div className="flex items-center justify-start gap-4 mt-2 flex-wrap">
             {Array.from(new Set(project?.project_categories || [])).length > 0 && (
               <div className="flex flex-wrap gap-2">
-                {Array.from(new Set(project?.project_categories || [])).map((category, i) => (
+                {Array.from(new Set(project?.project_categories || [])).map((category) => (
                   <div
-                    key={i}
+                    key={category}
                     className="flex h-max items-center justify-start rounded-full bg-slate-50 dark:bg-slate-700 text-slate-600 dark:text-gray-300 px-3 py-1 max-2xl:px-2"
                   >
                     <p className="text-center text-sm font-semibold text-slate-600 dark:text-slate-100 max-2xl:text-[13px]">
@@ -903,14 +903,14 @@ export const CommunityProjectEvaluatorPage = () => {
       communityId,
     ],
     queryFn: async () => {
-      const [data, error] = (await fetchData(
+      const [data, error] = await fetchData<Project[]>(
         INDEXER.PROJECTS.BY_PROGRAM(
           selectedProgram!.programId,
           Number(selectedProgram!.chainID),
           communityId
         )
-      )) as [Project[], string | null, any, number];
-      if (error) throw new Error(String(error));
+      );
+      if (error !== null) throw new Error(String(error));
       return data;
     },
     enabled: !!selectedProgram,

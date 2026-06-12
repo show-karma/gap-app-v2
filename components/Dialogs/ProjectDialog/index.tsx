@@ -189,7 +189,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   const [contacts, setContacts] = useState<Contact[]>(previousContacts || []);
   const [customLinks, setCustomLinks] = useState<CustomLink[]>(() => {
     const links = projectToUpdate?.details?.links || [];
-    return links.filter(isCustomLink).map((link: any, index: number) => ({
+    return links.filter(isCustomLink).map((link, index) => ({
       id: `custom-${index}`,
       name: link.name || "",
       url: link.url,
@@ -237,7 +237,9 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   const isConnected = wagmiIsConnected || authIsConnected || !!smartWalletAddress;
   const { startAttestation, showLoading, showSuccess, showError, dismiss, changeStepperStep } =
     useAttestationToast();
-  const [_walletSigner, setWalletSigner] = useState<any>(null);
+  const [_walletSigner, setWalletSigner] = useState<Awaited<
+    ReturnType<typeof walletClientToSigner>
+  > | null>(null);
   const [_faucetFunded, setFaucetFunded] = useState(false);
   // Flag to prevent form reset when reopening after an error
   const [shouldResetOnOpen, setShouldResetOnOpen] = useState(true);
@@ -714,7 +716,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
 
       // Use the gasless signer from setupChainAndWallet
       // Keep modal open while submitting so users don't lose context/data.
-      await project.attest(signer as any, changeStepperStep).then(async (res) => {
+      await project.attest(signer, changeStepperStep).then(async (res) => {
         showLoading("Indexing project...");
         let retries = 1000;
         const txHash = res?.tx[0]?.hash;
@@ -767,7 +769,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       setStep(0);
       setContacts([]);
       setCustomLinks([]);
-    } catch (error: any) {
+    } catch (error) {
       showError(MESSAGES.PROJECT.CREATE.ERROR(data.title));
       errorManager(
         MESSAGES.PROJECT.CREATE.ERROR(data.title),
@@ -900,7 +902,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
           }
         }, 1500);
       });
-    } catch (error: any) {
+    } catch (error) {
       showError(MESSAGES.PROJECT.UPDATE.ERROR);
       errorManager(
         `Error updating project ${projectToUpdate?.details?.slug || projectToUpdate?.uid}`,

@@ -8,6 +8,7 @@ import { ChevronDown } from "@/components/Icons/ChevronDown";
 import type { CommunityReviewer } from "@/hooks/useCommunityMilestoneReviewers";
 import { formatAddressForDisplay } from "@/utilities/donations/helpers";
 import { cn } from "@/utilities/tailwind";
+import { getReviewerLabel } from "./ReviewerFilterDropdown.helpers";
 
 interface ReviewerFilterDropdownProps {
   reviewers: CommunityReviewer[];
@@ -15,17 +16,6 @@ interface ReviewerFilterDropdownProps {
   selectedAddress: string | undefined;
   onSelect: (address: string | undefined) => void;
   currentUserAddress?: string;
-}
-
-export function getReviewerLabel(reviewer: CommunityReviewer, currentUserAddress?: string): string {
-  const name = reviewer.name || formatAddressForDisplay(reviewer.publicAddress);
-  if (
-    currentUserAddress &&
-    reviewer.publicAddress.toLowerCase() === currentUserAddress.toLowerCase()
-  ) {
-    return `${name} (You)`;
-  }
-  return name;
 }
 
 export function ReviewerFilterDropdown({

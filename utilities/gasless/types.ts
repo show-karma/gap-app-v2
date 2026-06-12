@@ -54,8 +54,7 @@ export interface LocalAccountWithEIP7702 {
   }) => Promise<`0x${string}`>;
 
   /** Sign EIP-712 typed data */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  signTypedData: (typedData: any) => Promise<`0x${string}`>;
+  signTypedData: (typedData: unknown) => Promise<`0x${string}`>;
 
   /** Sign a transaction (not used by smart accounts) */
   signTransaction?: () => Promise<`0x${string}`>;
@@ -104,9 +103,9 @@ export interface ChainGaslessConfig {
  * Generic smart account client type.
  * Both ZeroDev and Alchemy return different client types,
  * but they share similar transaction sending capabilities.
+ * Each provider narrows this back to its concrete client type internally.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type SmartAccountClient = any;
+export type SmartAccountClient = unknown;
 
 /**
  * Parameters for creating a gasless client.

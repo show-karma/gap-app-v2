@@ -195,7 +195,7 @@ export const ProjectOptionsMenu = () => {
         startAttestation,
         showSuccess
       );
-    } catch (error: any) {
+    } catch (error) {
       showError(MESSAGES.PROJECT.DELETE.ERROR);
       errorManager(
         MESSAGES.PROJECT.DELETE.ERROR,

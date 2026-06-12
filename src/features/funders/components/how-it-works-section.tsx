@@ -76,10 +76,10 @@ export function HowItWorksSection() {
             "items-stretch"
           )}
         >
-          {steps.map((step, index) => {
+          {steps.map((step) => {
             const IconComponent = step.icon;
             return (
-              <div key={index} className={cn("flex flex-col items-center gap-4 h-full")}>
+              <div key={step.title} className={cn("flex flex-col items-center gap-4 h-full")}>
                 {/* Icon Container */}
                 <div
                   className={cn(

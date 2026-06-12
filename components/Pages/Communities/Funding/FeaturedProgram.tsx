@@ -7,7 +7,7 @@ import type { FundingProgram } from "@/types/whitelabel-entities";
 import formatCurrency from "@/utilities/formatCurrency";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
-import { computeProgramView } from "./EditorialProgramCard";
+import { computeProgramView } from "./EditorialProgramCard.helpers";
 
 const URGENCY_BADGE: Record<string, string> = {
   urgent: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",

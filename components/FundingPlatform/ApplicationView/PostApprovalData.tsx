@@ -3,13 +3,14 @@
 import { type FC, useMemo } from "react";
 import { KarmaProjectLink } from "@/components/FundingPlatform/shared/KarmaProjectLink";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
+import type { ProgramWithFormSchema } from "@/types/funding-platform";
 import { createFieldTypeMap } from "@/utilities/form-schema-helpers";
 import { formatDate } from "@/utilities/formatDate";
 import { PROJECT_UID_REGEX } from "@/utilities/validation";
 
 interface PostApprovalDataProps {
-  postApprovalData: Record<string, any>;
-  program?: any;
+  postApprovalData: Record<string, unknown>;
+  program?: ProgramWithFormSchema;
 }
 
 const PostApprovalData: FC<PostApprovalDataProps> = ({ postApprovalData, program }) => {
@@ -17,7 +18,7 @@ const PostApprovalData: FC<PostApprovalDataProps> = ({ postApprovalData, program
   const fieldLabels = useMemo(() => {
     const labels: Record<string, string> = {};
     if (program?.postApprovalFormSchema?.fields) {
-      program.postApprovalFormSchema.fields.forEach((field: any) => {
+      program.postApprovalFormSchema.fields.forEach((field) => {
         if (field.id && field.label) {
           labels[field.id] = field.label;
         }
@@ -51,9 +52,9 @@ const PostApprovalData: FC<PostApprovalDataProps> = ({ postApprovalData, program
                 typeof value[0] === "object" &&
                 "title" in value[0] ? (
                   <div className="space-y-2">
-                    {value.map((milestone: any, index) => (
+                    {value.map((milestone) => (
                       <div
-                        key={index}
+                        key={milestone.title}
                         className="bg-zinc-50 dark:bg-zinc-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700"
                       >
                         <div className="space-y-1">
@@ -78,9 +79,9 @@ const PostApprovalData: FC<PostApprovalDataProps> = ({ postApprovalData, program
                   </div>
                 ) : (
                   <div className="flex flex-wrap gap-1">
-                    {value.map((item, index) => (
+                    {value.map((item) => (
                       <span
-                        key={index}
+                        key={String(item)}
                         className="inline-block bg-zinc-100 dark:bg-zinc-700 text-gray-800 dark:text-gray-200 px-2 py-1 rounded text-xs"
                       >
                         {String(item)}

@@ -53,9 +53,12 @@ export const SegmentSkeleton = ({
 
               {/* Tags skeleton */}
               <div className="flex flex-wrap gap-2">
-                {Array.from({ length: Math.min(indicatorCount, 3) }).map((_, index) => (
+                {Array.from(
+                  { length: Math.min(indicatorCount, 3) },
+                  (_, index) => `indicator-tag-${index}`
+                ).map((key) => (
                   <div
-                    key={index}
+                    key={key}
                     className="h-6 bg-gray-200 dark:bg-gray-600 rounded-full w-32 animate-pulse"
                   />
                 ))}

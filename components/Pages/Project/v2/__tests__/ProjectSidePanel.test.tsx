@@ -1,5 +1,6 @@
 import { fireEvent, render, renderHook, screen, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom";
+import type React from "react";
 import type { Project } from "@/types/v2/project";
 import { DonateSection, useDonationVisibility } from "../SidePanel/DonateSection";
 import { EndorseSection } from "../SidePanel/EndorseSection";
@@ -118,13 +119,13 @@ const mockOwnerStoreState = {
 };
 
 vi.mock("@/store", () => ({
-  useOwnerStore: vi.fn((selector?: (state: any) => any) => {
+  useOwnerStore: vi.fn((selector?: (state: typeof mockOwnerStoreState) => unknown) => {
     if (typeof selector === "function") {
       return selector(mockOwnerStoreState);
     }
     return mockOwnerStoreState;
   }),
-  useProjectStore: vi.fn((selector?: (state: any) => any) => {
+  useProjectStore: vi.fn((selector?: (state: typeof mockProjectStoreState) => unknown) => {
     if (typeof selector === "function") {
       return selector(mockProjectStoreState);
     }
@@ -151,14 +152,23 @@ vi.mock("@/store/modals/progress", () => ({
 
 // Mock SidebarProfileCard
 vi.mock("../SidePanel/SidebarProfileCard", () => ({
-  SidebarProfileCard: ({ project }: any) => (
+  SidebarProfileCard: ({ project }: { project?: { details?: { title?: string } } }) => (
     <div data-testid="sidebar-profile-card">{project?.details?.title}</div>
   ),
 }));
 
 // Mock ui/button to avoid shadcn dependencies
 vi.mock("@/components/ui/button", () => ({
-  Button: ({ children, onClick, className, ...props }: any) => (
+  Button: ({
+    children,
+    onClick,
+    className,
+    ...props
+  }: React.PropsWithChildren<{
+    onClick?: React.MouseEventHandler<HTMLButtonElement>;
+    className?: string;
+  }> &
+    Record<string, unknown>) => (
     <button onClick={onClick} className={className} {...props}>
       {children}
     </button>

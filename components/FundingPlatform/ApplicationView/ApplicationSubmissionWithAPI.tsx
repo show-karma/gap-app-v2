@@ -21,7 +21,7 @@ const ApplicationSubmissionWithAPI: FC<IApplicationSubmissionWithAPIProps> = ({
   const { submitApplication, isSubmitting } = useFundingApplications(programId);
   const [submissionError, setSubmissionError] = useState<string | null>(null);
 
-  const handleSubmit = async (applicationData: Record<string, any>) => {
+  const handleSubmit = async (applicationData: Record<string, unknown>) => {
     try {
       setSubmissionError(null);
       await submitApplication(applicationData);

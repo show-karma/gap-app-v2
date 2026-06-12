@@ -55,9 +55,9 @@ function GrantCardSkeleton() {
  * Skeleton loading state for FundingContent.
  * Shows placeholders for grant cards list.
  */
-export function FundingContentSkeleton({ className }: FundingContentSkeletonProps) {
-  const grantCount = 3;
+const GRANT_CARD_SKELETON_KEYS = ["grant-card-1", "grant-card-2", "grant-card-3"];
 
+export function FundingContentSkeleton({ className }: FundingContentSkeletonProps) {
   return (
     <div className={cn("flex flex-col gap-6", className)} data-testid="funding-content-skeleton">
       {/* Header */}
@@ -68,8 +68,8 @@ export function FundingContentSkeleton({ className }: FundingContentSkeletonProp
 
       {/* Grant cards */}
       <div className="flex flex-col gap-4">
-        {Array.from({ length: grantCount }, (_, i) => (
-          <GrantCardSkeleton key={i} />
+        {GRANT_CARD_SKELETON_KEYS.map((key) => (
+          <GrantCardSkeleton key={key} />
         ))}
       </div>
     </div>

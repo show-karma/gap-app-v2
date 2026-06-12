@@ -7,7 +7,7 @@ import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 interface SetupChainAndWalletParams {
   targetChainId: number;
   currentChainId?: number;
-  switchChainAsync: any;
+  switchChainAsync?: (params: { chainId: number }) => Promise<unknown>;
 }
 
 interface SetupChainAndWalletResult {

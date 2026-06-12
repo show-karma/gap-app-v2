@@ -16,7 +16,8 @@ export interface GrantDetails {
   startDate?: string | null;
   receivedDate?: string | null;
   payoutAddress?: string;
-  questions?: any[];
+  /** Mirrors the SDK's IGrantDetailsQuestion shape */
+  questions?: Array<{ query: string; explanation: string; type: string }>;
   selectedTrackIds?: string[];
   isCompleted?: boolean;
   completedAt?: string | null;

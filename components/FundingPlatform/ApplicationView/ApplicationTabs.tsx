@@ -1,11 +1,6 @@
 "use client";
 
-import {
-  ChatBubbleLeftRightIcon,
-  DocumentTextIcon,
-  FlagIcon,
-  SparklesIcon,
-} from "@heroicons/react/24/outline";
+import type { DocumentTextIcon } from "@heroicons/react/24/outline";
 import { type FC, type ReactNode, useEffect, useRef, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/utilities/tailwind";
@@ -111,12 +106,4 @@ export const ApplicationTabs: FC<ApplicationTabsProps> = ({
       </div>
     </Tabs>
   );
-};
-
-// Export commonly used icons for convenience
-export const TabIcons = {
-  Application: DocumentTextIcon,
-  AIAnalysis: SparklesIcon,
-  Discussion: ChatBubbleLeftRightIcon,
-  Milestones: FlagIcon,
 };

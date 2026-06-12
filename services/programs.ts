@@ -14,7 +14,7 @@ export const programService = {
       }
 
       return data as GrantProgram[];
-    } catch (error: any) {
+    } catch (error) {
       errorManager(`Error fetching programs for community ${communityId}`, error);
       throw error;
     }

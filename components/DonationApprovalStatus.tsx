@@ -63,8 +63,11 @@ export function DonationApprovalStatus({ executionState }: DonationApprovalStatu
 
           {executionState.phase === "approving" && executionState.approvals && (
             <div className="mt-3 space-y-2">
-              {executionState.approvals.map((approval, index) => (
-                <div key={index} className="flex items-center justify-between text-sm">
+              {executionState.approvals.map((approval) => (
+                <div
+                  key={approval.tokenAddress}
+                  className="flex items-center justify-between text-sm"
+                >
                   <span className="text-blue-800 dark:text-blue-200">
                     {approval.tokenSymbol} approval
                   </span>

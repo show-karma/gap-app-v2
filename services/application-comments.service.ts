@@ -60,7 +60,7 @@ export const applicationCommentsService = {
    * Delete a comment
    */
   async deleteComment(commentId: string, isAdmin?: boolean): Promise<void> {
-    const params: any = {};
+    const params: { admin?: string } = {};
     if (isAdmin) {
       params.admin = "true";
     }

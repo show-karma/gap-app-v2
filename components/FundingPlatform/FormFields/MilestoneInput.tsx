@@ -2,7 +2,7 @@
 
 import { TrashIcon } from "@heroicons/react/24/solid";
 import type { FC } from "react";
-import type { Control, FieldError } from "react-hook-form";
+import type { Control, FieldError, FieldErrorsImpl, FieldValues, Merge } from "react-hook-form";
 import { Controller, useFieldArray } from "react-hook-form";
 import { Button } from "@/components/Utilities/Button";
 import { DatePicker } from "@/components/Utilities/DatePicker";
@@ -12,9 +12,9 @@ import { cn } from "@/utilities/tailwind";
 
 interface MilestoneInputProps {
   field: IFormField;
-  control: Control<any>;
+  control: Control<FieldValues>;
   fieldKey: string;
-  error?: FieldError | any;
+  error?: FieldError | Merge<FieldError, FieldErrorsImpl<FieldValues>>;
   isLoading?: boolean;
 }
 

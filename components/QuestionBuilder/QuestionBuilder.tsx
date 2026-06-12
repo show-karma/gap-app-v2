@@ -34,7 +34,8 @@ import {
   EmptyStateGuidance,
   PostApprovalEmptyState,
 } from "@/components/FundingPlatform/EmptyStateGuidance";
-import { PAGE_HEADER_CONTENT, PageHeader } from "@/components/FundingPlatform/PageHeader";
+import { PageHeader } from "@/components/FundingPlatform/PageHeader";
+import { PAGE_HEADER_CONTENT } from "@/components/FundingPlatform/PageHeader.constants";
 import { NotificationConfigTab } from "@/components/FundingPlatform/QuestionBuilder/NotificationConfigTab";
 import { ProgramDetailsTab } from "@/components/FundingPlatform/QuestionBuilder/ProgramDetailsTab";
 import { ReviewerManagementTab } from "@/components/FundingPlatform/QuestionBuilder/ReviewerManagementTab";
@@ -49,7 +50,8 @@ import { MarkdownPreview } from "../Utilities/MarkdownPreview";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
 import { AIPromptConfiguration } from "./AIPromptConfiguration";
 import { FieldEditor } from "./FieldEditor";
-import { FieldTypeSelector, fieldTypes } from "./FieldTypeSelector";
+import { FieldTypeSelector } from "./FieldTypeSelector";
+import { fieldTypes } from "./FieldTypeSelector.constants";
 import { KycSettingsConfiguration } from "./KycSettingsConfiguration";
 import { SettingsConfiguration } from "./SettingsConfiguration";
 
@@ -89,7 +91,7 @@ interface QuestionBuilderProps {
   program?: {
     programId: string;
     chainID: number;
-    metadata: Record<string, any>;
+    metadata: { anyoneCanJoin?: boolean };
     communityUID?: string;
   } | null;
   /** Whether KYC is enabled for the community - controls visibility of KYC settings tab */
@@ -304,12 +306,13 @@ export function QuestionBuilder({
   // Scroll to the selected field editor when it opens
   useEffect(() => {
     if (selectedFieldId && fieldRefs.current[selectedFieldId]) {
-      setTimeout(() => {
+      const scrollTimeoutId = setTimeout(() => {
         fieldRefs.current[selectedFieldId]?.scrollIntoView({
           behavior: "smooth",
           block: "nearest",
         });
       }, 100);
+      return () => clearTimeout(scrollTimeoutId);
     }
   }, [selectedFieldId]);
 
@@ -797,7 +800,7 @@ export function QuestionBuilder({
                           <div className="space-y-2 mb-4">
                             {currentSchema.emailNotifications.map((email, index) => (
                               <div
-                                key={index}
+                                key={email}
                                 className="flex items-center justify-between bg-gray-50 dark:bg-gray-700 px-4 py-3 rounded-lg group hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
                               >
                                 <div className="flex items-center gap-3">

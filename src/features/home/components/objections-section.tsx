@@ -62,7 +62,7 @@ export function ObjectionsSection() {
         {/* Objections Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
           {objections.map((objection, index) => (
-            <ScrollReveal key={index} variant="fade-up" delay={index * 100}>
+            <ScrollReveal key={objection.question} variant="fade-up" delay={index * 100}>
               <div className="flex flex-col gap-3 rounded-2xl border border-border p-8 h-full">
                 <h3 className="text-foreground font-semibold text-lg leading-[120%] tracking-[-0.02em]">
                   {objection.question}

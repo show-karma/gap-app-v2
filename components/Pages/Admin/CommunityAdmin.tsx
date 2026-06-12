@@ -256,14 +256,14 @@ export default function CommunitiesToAdminPage() {
         setAllCommunities(result.data.communities);
         setCommunityAdmins(result.data.admins);
       }
-    } catch (error: any) {
+    } catch (error) {
       errorManager(`Error refetching communities`, error);
     }
     return undefined;
   }, [refetch]);
 
   // Ensure address has 0x prefix
-  const formatAdminAddress = (address: any): `0x${string}` => {
+  const formatAdminAddress = (address: string): `0x${string}` => {
     if (isAddress(address)) {
       return address as `0x${string}`;
     }

@@ -17,9 +17,9 @@ interface ChainResponse {
   chainId: number;
   createdAt: string;
   decimals: number;
-  explorerUrl?: number;
+  explorerUrl?: string;
   id: string;
-  metadata: any;
+  metadata: Record<string, unknown> | null;
   name: string;
   rpcUrl?: string;
   symbol: string;
@@ -241,8 +241,8 @@ class FaucetService {
     chainId?: number,
     page: number = 1,
     limit: number = 10
-  ): Promise<{ requests: FaucetRequest[]; pageInfo: any }> {
-    const params: any = {
+  ): Promise<{ requests: FaucetRequest[]; pageInfo: unknown }> {
+    const params: { address: string; page: number; limit: number; chainId?: number } = {
       address,
       page,
       limit,
@@ -265,7 +265,7 @@ class FaucetService {
    * Get faucet statistics
    */
   async getStats(chainId?: number, days: number = 7): Promise<FaucetStats> {
-    const params: any = {
+    const params: { days: number; chainId?: number } = {
       days,
     };
 
@@ -487,7 +487,7 @@ class FaucetService {
    * Get whitelisted contracts (admin only)
    */
   async getWhitelistedContracts(chainId?: number): Promise<WhitelistedPaginatedResponse> {
-    const params: any = {};
+    const params: { chainId?: number } = {};
     if (chainId !== undefined) {
       params.chainId = chainId;
     }
@@ -517,7 +517,7 @@ class FaucetService {
     chainId?: number,
     expiresAt?: string
   ): Promise<void> {
-    const payload: any = {
+    const payload: { address: string; reason: string; chainId?: number; expiresAt?: string } = {
       address,
       reason,
     };
@@ -541,7 +541,7 @@ class FaucetService {
    * Unblock an address (admin only)
    */
   async unblockAddress(address: string, chainId?: number): Promise<void> {
-    const params: any = {};
+    const params: { chainId?: number } = {};
     if (chainId !== undefined) {
       params.chainId = chainId;
     }
@@ -701,7 +701,7 @@ class FaucetService {
     explorerUrl?: string;
     decimals: number;
     enabled?: boolean;
-    metadata?: Record<string, any>;
+    metadata?: Record<string, unknown>;
   }): Promise<ChainResponse> {
     const [data, error] = await fetchData(`/v2/admin/chains`, "POST", chainData, {}, {}, true);
 
@@ -724,9 +724,9 @@ class FaucetService {
       explorerUrl?: string;
       decimals?: number;
       enabled?: boolean;
-      metadata?: Record<string, any>;
+      metadata?: Record<string, unknown>;
     }
-  ): Promise<any> {
+  ): Promise<ChainResponse> {
     const [data, error] = await fetchData(
       `/v2/admin/chains/${chainId}`,
       "PUT",

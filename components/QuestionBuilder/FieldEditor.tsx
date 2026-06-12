@@ -2,7 +2,7 @@
 
 import { TrashIcon } from "@heroicons/react/24/solid";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Button } from "@/components/Utilities/Button";
@@ -78,6 +78,10 @@ export function FieldEditor({
   });
 
   const watchedOptions = watch("options") || [];
+  const optionKeyCounter = useRef((field.options || []).length);
+  const [optionKeys, setOptionKeys] = useState<string[]>(() =>
+    (field.options || []).map((_, i) => `option-${i}`)
+  );
   const hasOptions = ["select", "radio", "checkbox"].includes(field.type);
   const isSectionHeader = field.type === "section_header";
 
@@ -120,11 +124,14 @@ export function FieldEditor({
 
   const addOption = () => {
     const newOptions = [...watchedOptions, ""];
+    optionKeyCounter.current += 1;
+    setOptionKeys((keys) => [...keys, `option-${optionKeyCounter.current}`]);
     setValue("options", newOptions);
   };
 
   const removeOption = (index: number) => {
     const newOptions = watchedOptions.filter((_, i) => i !== index);
+    setOptionKeys((keys) => keys.filter((_, i) => i !== index));
     setValue("options", newOptions);
   };
 
@@ -401,10 +408,10 @@ export function FieldEditor({
               Options
             </div>
             <div className="space-y-2">
-              {watchedOptions.map((option, index) => (
-                <div key={index} className="flex items-center space-x-2">
+              {optionKeys.map((optionKey, index) => (
+                <div key={optionKey} className="flex items-center space-x-2">
                   <input
-                    value={option}
+                    value={watchedOptions[index] ?? ""}
                     onChange={(e) => !readOnly && updateOption(index, e.target.value)}
                     disabled={readOnly}
                     className="flex-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100 dark:placeholder-zinc-300 disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"

@@ -83,7 +83,7 @@ export const IntroDialog: FC = () => {
       }
       closeModal();
       toast.success("Successfully requested intro!");
-    } catch (error: any) {
+    } catch (error) {
       errorManager(
         MESSAGES.REQUEST_INTRO.ERROR,
         error,

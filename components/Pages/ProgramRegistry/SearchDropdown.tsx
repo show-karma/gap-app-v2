@@ -253,9 +253,9 @@ export const SearchDropdown: FC<SearchDropdownProps> = ({
                   className="rounded-md py-1 px-2 w-full dark:text-white dark:bg-zinc-800 border-zinc-200"
                   placeholder={`${pluralize(type, 1)} name...`}
                   // on enter key press, add the network
-                  onKeyDown={(e: any) => {
+                  onKeyDown={(e) => {
                     if (e.key === "Enter") {
-                      addCustomNetwork(e.target?.value);
+                      addCustomNetwork((e.target as HTMLInputElement).value);
                     }
                   }}
                   value={title}

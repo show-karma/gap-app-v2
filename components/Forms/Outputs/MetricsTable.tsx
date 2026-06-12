@@ -250,7 +250,11 @@ export const MetricsTable = ({
   // Fetch auto-synced indicators from API
   const { data: autosyncedIndicators = [] } = useAutosyncedIndicators();
 
-  const handleOutputChange = (index: number, field: keyof OutputData, value: any) => {
+  const handleOutputChange = (
+    index: number,
+    field: keyof OutputData,
+    value: OutputData[keyof OutputData]
+  ) => {
     const newOutputs = [...outputs];
     newOutputs[index] = {
       ...newOutputs[index],

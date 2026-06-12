@@ -19,17 +19,30 @@ import formatCurrency, { formatWeiToEth } from "@/utilities/formatCurrency";
 import { formatDate } from "@/utilities/formatDate";
 import { cn } from "@/utilities/tailwind";
 import { SegmentSkeleton } from "./SegmentSkeleton";
-import { type TimeframeOption, TimeframeSelector, timeframeOptions } from "./TimeframeSelector";
+import { type TimeframeOption, TimeframeSelector } from "./TimeframeSelector";
+import { timeframeOptions } from "./TimeframeSelector.constants";
 
-const prepareAggregatedChartData = (indicators: any[]) => {
+/** Minimal structural shape of the aggregated indicators returned by useAggregatedIndicators. */
+interface AggregatedIndicatorLike {
+  name: string;
+  aggregatedData: { value: number; timestamp: string }[];
+}
+
+interface AggregatedChartDatapoint {
+  rawDate: string;
+  date: string;
+  [indicatorName: string]: number | string;
+}
+
+const prepareAggregatedChartData = (indicators: AggregatedIndicatorLike[]) => {
   if (!indicators.length) return [];
 
   // Combine all datapoints from all indicators into a single timeline
   // Use rawDate for sorting and date for display
-  const allDatapoints: any[] = [];
+  const allDatapoints: AggregatedChartDatapoint[] = [];
 
   indicators.forEach((indicator) => {
-    indicator.aggregatedData.forEach((datapoint: any) => {
+    indicator.aggregatedData.forEach((datapoint) => {
       const formattedDate = formatDate(new Date(datapoint.timestamp), "UTC");
       const existingIndex = allDatapoints.findIndex((dp) => dp.rawDate === datapoint.timestamp);
       if (existingIndex >= 0) {
@@ -37,7 +50,7 @@ const prepareAggregatedChartData = (indicators: any[]) => {
         allDatapoints[existingIndex][indicator.name] = datapoint.value;
       } else {
         // Create new datapoint entry with formatted date for display
-        const newDatapoint: any = {
+        const newDatapoint: AggregatedChartDatapoint = {
           rawDate: datapoint.timestamp,
           date: formattedDate,
         };

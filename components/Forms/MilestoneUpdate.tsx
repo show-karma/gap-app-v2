@@ -166,16 +166,16 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
     mode: "onChange",
     defaultValues: {
       description: previousData?.reason,
-      completionPercentage: (previousData as any)?.completionPercentage?.toString() || "0",
+      completionPercentage: previousData?.completionPercentage?.toString() || "0",
       outputs: [],
-      deliverables: (previousData as any)?.deliverables || [],
+      deliverables: Array.isArray(previousData?.deliverables) ? previousData.deliverables : [],
     },
   });
 
   // Update form values when milestone impact data is loaded
   useEffect(() => {
     if (milestoneImpactData && milestoneImpactData.length > 0) {
-      const transformedOutputs = milestoneImpactData.map((metric: any) => {
+      const transformedOutputs = milestoneImpactData.map((metric) => {
         const datapoint = metric.datapoints?.[0];
         return {
           _key: crypto.randomUUID(),

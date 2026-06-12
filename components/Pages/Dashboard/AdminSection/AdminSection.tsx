@@ -14,6 +14,8 @@ const CommunityDialog = dynamic(
 
 const gridClassName = "grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3";
 
+const COMMUNITY_CARD_SKELETON_KEYS = ["community-card-skeleton-1", "community-card-skeleton-2"];
+
 export function AdminSection() {
   const { communities, isLoading, isError, refetch } = useDashboardAdmin();
 
@@ -48,8 +50,8 @@ export function AdminSection() {
         </div>
       ) : isLoading ? (
         <div className={gridClassName}>
-          {Array.from({ length: 2 }, (_, index) => (
-            <CommunityHealthCardSkeleton key={`community-card-skeleton-${index}`} />
+          {COMMUNITY_CARD_SKELETON_KEYS.map((key) => (
+            <CommunityHealthCardSkeleton key={key} />
           ))}
         </div>
       ) : communities.length === 0 ? (

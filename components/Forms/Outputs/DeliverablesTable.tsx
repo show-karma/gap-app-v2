@@ -1,7 +1,7 @@
 "use client";
 
 import { TrashIcon } from "@heroicons/react/24/solid";
-import type { FieldErrors, UseFormRegister } from "react-hook-form";
+import type { FieldErrors, FieldValues, UseFormRegister } from "react-hook-form";
 import { InfoTooltip } from "@/components/Utilities/InfoTooltip";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/utilities/tailwind";
@@ -9,7 +9,7 @@ import { cn } from "@/utilities/tailwind";
 interface DeliverablesTableProps {
   fields: Record<"id", string>[];
   register: UseFormRegister<any>;
-  errors: FieldErrors<any>;
+  errors: FieldErrors<FieldValues>;
   onAdd: () => void;
   onRemove: (index: number) => void;
   labelStyle: string;
@@ -70,12 +70,11 @@ export const DeliverablesTable = ({
               const nameId = `deliverable-name-${field.id}`;
               const proofId = `deliverable-proof-${field.id}`;
               const descriptionId = `deliverable-description-${field.id}`;
-              const nameError = (errors.deliverables as any)?.[index]?.name?.message as
-                | string
+              const deliverableErrors = errors.deliverables as
+                | Array<{ name?: { message?: string }; proof?: { message?: string } } | undefined>
                 | undefined;
-              const proofError = (errors.deliverables as any)?.[index]?.proof?.message as
-                | string
-                | undefined;
+              const nameError = deliverableErrors?.[index]?.name?.message;
+              const proofError = deliverableErrors?.[index]?.proof?.message;
 
               return (
                 <div

@@ -4,10 +4,8 @@
  */
 
 import { render, screen } from "@testing-library/react";
-import {
-  hasFormConfigured,
-  ProgramSetupStatus,
-} from "@/components/FundingPlatform/ProgramSetupStatus";
+import { ProgramSetupStatus } from "@/components/FundingPlatform/ProgramSetupStatus";
+import { hasFormConfigured } from "@/components/FundingPlatform/ProgramSetupStatus.helpers";
 import "@testing-library/jest-dom";
 
 // Mock next/link

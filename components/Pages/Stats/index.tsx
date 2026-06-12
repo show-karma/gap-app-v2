@@ -58,8 +58,7 @@ const fetchGAPStats = async (): Promise<StatChartData[]> => {
   }
 
   const cleanStats = fetchedStats.filter(
-    (item: { name: IAttestationStatsNames; data: any }) =>
-      item.name !== "communities" && dataNameDictionary[item.name]
+    (item) => item.name !== "communities" && dataNameDictionary[item.name]
   );
 
   const filledStats = cleanStats.map((item) => ({

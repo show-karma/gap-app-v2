@@ -23,9 +23,9 @@ import { ApplicationSidebar } from "./components/ApplicationSidebar";
 import {
   ApplicationTabBar,
   type ApplicationTabKey,
-  TAB_ICONS,
   type TabDescriptor,
 } from "./components/ApplicationTabBar";
+import { TAB_ICONS } from "./components/ApplicationTabBar.constants";
 import type { ApplicationViewerRole } from "./components/NextStepCard";
 import { PostApprovalTab } from "./components/PostApprovalTab";
 import { useUrlTabState } from "./components/use-url-tab-state";

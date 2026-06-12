@@ -33,9 +33,15 @@ export function BulkResultTable({ sessionId, jobId, enabled, search = "" }: Bulk
 
   const filteredRows = useMemo(() => {
     if (!query.data) return [];
+    // The result set is immutable once loaded, so the original row position is
+    // a stable identity that survives search filtering.
+    const indexedRows = query.data.rows.map((row, originalIndex) => ({
+      row,
+      key: `result-row-${originalIndex}`,
+    }));
     const term = search.trim().toLowerCase();
-    if (!term) return query.data.rows;
-    return query.data.rows.filter((row) =>
+    if (!term) return indexedRows;
+    return indexedRows.filter(({ row }) =>
       query.data!.columns.some((col) => cellToString(row[col]).toLowerCase().includes(term))
     );
   }, [query.data, search]);
@@ -137,9 +143,9 @@ export function BulkResultTable({ sessionId, jobId, enabled, search = "" }: Bulk
             </tr>
           </thead>
           <tbody>
-            {visibleRows.map((row, rowIdx) => (
+            {visibleRows.map(({ row, key }, rowIdx) => (
               <BulkResultRow
-                key={rowIdx}
+                key={key}
                 row={row}
                 columns={orderedColumns}
                 rowIndex={rowIdx}

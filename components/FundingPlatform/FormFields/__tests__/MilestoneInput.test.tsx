@@ -12,7 +12,13 @@ import type { IFormField } from "@/types/funding-platform";
 import { MilestoneInput } from "../MilestoneInput";
 
 // Wrapper component to provide form context
-function TestWrapper({ field, defaultValues = {} }: { field: IFormField; defaultValues?: any }) {
+function TestWrapper({
+  field,
+  defaultValues = {},
+}: {
+  field: IFormField;
+  defaultValues?: Record<string, unknown>;
+}) {
   const { control } = useForm({
     defaultValues,
   });

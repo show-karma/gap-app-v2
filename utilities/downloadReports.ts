@@ -39,7 +39,7 @@ export const downloadCommunityReport = (options: DownloadReportOptions): void =>
 
     const url = `${envVars.NEXT_PUBLIC_GAP_INDEXER_URL}${path}`;
     window.open(url, "_blank");
-  } catch (error: any) {
+  } catch (error) {
     errorManager("Error downloading report", error);
   }
 };

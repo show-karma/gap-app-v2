@@ -125,6 +125,12 @@ vi.mock(
   "@/app/community/[communityId]/(whitelabel)/applications/[applicationId]/success/WhatHappensNext",
   () => ({
     WhatHappensNext: () => <div data-testid="what-happens-next">WhatHappensNext</div>,
+  })
+);
+
+vi.mock(
+  "@/app/community/[communityId]/(whitelabel)/applications/[applicationId]/success/WhatHappensNext.helpers",
+  () => ({
     extractApplicantName: (d: Record<string, unknown> | undefined) =>
       (d?.name as string) ?? "Applicant",
   })

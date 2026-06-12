@@ -5,7 +5,8 @@ export function sanitizeInput<T>(input: T): T {
   return input;
 }
 
-export function sanitizeObject(obj: any, seen?: WeakSet<object>): any {
+// biome-ignore lint/suspicious/noExplicitAny: returning the input's own type exposes dozens of latent mismatches at legacy call sites that relied on the `any`; keep `any` until those are fixed.
+export function sanitizeObject(obj: unknown, seen?: WeakSet<object>): any {
   if (typeof obj !== "object" || obj === null) {
     return sanitizeInput(obj);
   }
@@ -25,7 +26,7 @@ export function sanitizeObject(obj: any, seen?: WeakSet<object>): any {
     return obj.map((item) => sanitizeObject(item, visited));
   }
 
-  const sanitizedObj: any = {};
+  const sanitizedObj: Record<string, unknown> = {};
 
   for (const [key, value] of Object.entries(obj)) {
     sanitizedObj[key] = sanitizeObject(value, visited);

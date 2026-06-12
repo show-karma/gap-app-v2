@@ -15,6 +15,25 @@ import { queryClient } from "@/utilities/query-client";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
 
 /**
+ * Extra fields the API may include beyond the typed milestone/update shapes
+ * (raw attestation payloads, embedded grant info). Used for display fallbacks.
+ */
+interface AttestationExtras {
+  attester?: string;
+  dueDate?: string | number;
+  endsAt?: string | number;
+  data?: {
+    recipient?: string;
+    attester?: string;
+    endsAt?: string | number;
+  };
+  grant?: {
+    chainID?: string | number;
+    chainId?: string | number;
+  };
+}
+
+/**
  * Converts API response to UnifiedMilestone format for backward compatibility
  * with existing components.
  *
@@ -113,7 +132,7 @@ export const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMil
     // Recipient is the on-chain milestone owner (passes Gap.sol's revoke gate).
     // Attester may differ (Karma backend-signed milestones use a service wallet);
     // display attribution falls back to recipient when attester is unavailable.
-    const milestoneAny = milestone as any;
+    const milestoneAny = milestone as unknown as AttestationExtras;
     const recipient =
       milestone.recipient ||
       milestone.completionDetails?.completedBy ||
@@ -256,7 +275,7 @@ export const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMil
   // Convert grant updates to unified format
   data.grantUpdates?.forEach((update: GrantUpdateWithDetails) => {
     // Extract recipient and chain details with fallbacks - API may include additional fields
-    const updateAny = update as any;
+    const updateAny = update as unknown as AttestationExtras;
     const grantInfo = update.grant;
     const chainID =
       parseChainId(update.chainId) ||

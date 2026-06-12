@@ -8,6 +8,7 @@ import formatCurrency from "@/utilities/formatCurrency";
 import { formatDate } from "@/utilities/formatDate";
 import { rewriteHeadingsToLevel } from "@/utilities/markdown";
 import { PAGES } from "@/utilities/pages";
+import { pickColor } from "@/utilities/pickColor";
 import { cn } from "@/utilities/tailwind";
 import { GrantPercentage } from "./Pages/Project/Grants/components/GrantPercentage";
 import { TrackTags } from "./TrackTags";
@@ -23,22 +24,6 @@ interface GrantCardProps {
   actionSlot?: React.ReactNode;
   cardClassName?: string;
 }
-
-export const pickColor = (index: number) => {
-  const cardColors = [
-    "#5FE9D0",
-    "#875BF7",
-    "#F97066",
-    "#FDB022",
-    "#A6EF67",
-    "#84ADFF",
-    "#EF6820",
-    "#EE46BC",
-    "#EEAAFD",
-    "#67E3F9",
-  ];
-  return cardColors[index % cardColors.length];
-};
 
 const completedMilestonesCount = (milestones: Grant["milestones"]) =>
   milestones?.filter((milestone) => milestone.completed)?.length ?? 0;

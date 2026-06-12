@@ -242,8 +242,8 @@ export const MarkdownEditor: FC<MarkdownEditorProps> = ({
       {/* Content validation warnings */}
       {contentValidation.warnings.length > 0 && (
         <div className="mb-2 p-2 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded text-xs text-yellow-700 dark:text-yellow-400">
-          {contentValidation.warnings.map((warning, idx) => (
-            <p key={idx}>{warning}</p>
+          {contentValidation.warnings.map((warning) => (
+            <p key={warning}>{warning}</p>
           ))}
         </div>
       )}

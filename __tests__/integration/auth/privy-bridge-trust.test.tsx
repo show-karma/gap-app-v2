@@ -13,13 +13,13 @@ vi.unmock("@/contexts/privy-bridge-context");
 
 // We need to import directly since this context is the thing under test
 import {
-  PRIVY_BRIDGE_DEFAULTS,
   PrivyBridgeProvider,
   useLoadPrivy,
   usePrivyBridge,
   usePrivyBridgeSetter,
   usePrivyLoadRequested,
 } from "@/contexts/privy-bridge-context";
+import { PRIVY_BRIDGE_DEFAULTS } from "@/contexts/privy-bridge-defaults";
 
 // ---------------------------------------------------------------------------
 // Wrapper

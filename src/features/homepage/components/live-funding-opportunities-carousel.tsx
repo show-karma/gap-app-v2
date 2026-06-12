@@ -76,9 +76,14 @@ export function LiveFundingOpportunitiesCarousel({
     setCurrent(api.selectedScrollSnap() + 1);
 
     // Listen for carousel slide changes and update current slide
-    api.on("select", () => {
+    const handleSelect = () => {
       setCurrent(api.selectedScrollSnap() + 1);
-    });
+    };
+    api.on("select", handleSelect);
+
+    return () => {
+      api.off("select", handleSelect);
+    };
   }, [api]);
 
   // Empty state when there are no programs

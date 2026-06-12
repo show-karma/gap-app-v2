@@ -67,7 +67,7 @@ export const AdminTransferOwnershipDialog: FC = () => {
         "Transfer ownership request submitted successfully. It can take few minutes to reflect."
       );
       closeModal();
-    } catch (error: any) {
+    } catch (error) {
       showError("Failed to request ownership transfer.");
       errorManager(
         `Error requesting ownership transfer from ${project.owner} to ${data.email}`,

@@ -99,6 +99,14 @@ export function BulkUploadPanel({ sessionId }: BulkUploadPanelProps) {
     setValidationError(null);
   };
 
+  // CSV headers may be empty or duplicated, so column identity comes from the
+  // header position; keys are precomputed here instead of using map indices.
+  const previewColumns =
+    preview?.columns.map((name, position) => ({
+      name,
+      key: `${position}-${name}`,
+    })) ?? [];
+
   return (
     <section className="space-y-4 rounded-xl border border-border bg-card p-6">
       <div>
@@ -135,9 +143,9 @@ export function BulkUploadPanel({ sessionId }: BulkUploadPanelProps) {
             <table className="min-w-full text-left text-xs">
               <thead className="bg-muted/40 text-muted-foreground">
                 <tr>
-                  {preview.columns.map((c, i) => (
-                    <th key={`${i}-${c}`} className="px-3 py-2 font-semibold">
-                      {c || `col ${i + 1}`}
+                  {previewColumns.map((column, i) => (
+                    <th key={column.key} className="px-3 py-2 font-semibold">
+                      {column.name || `col ${i + 1}`}
                     </th>
                   ))}
                 </tr>
@@ -147,9 +155,9 @@ export function BulkUploadPanel({ sessionId }: BulkUploadPanelProps) {
                   const rowKey = `${idx}-${(row[0] ?? "").slice(0, 16)}`;
                   return (
                     <tr key={rowKey} className="border-t border-border">
-                      {preview.columns.map((col, i) => (
+                      {previewColumns.map((column, i) => (
                         <td
-                          key={`${rowKey}-${col}-${i}`}
+                          key={`${rowKey}-${column.key}`}
                           className="px-3 py-2 text-muted-foreground"
                         >
                           <span className="line-clamp-2">{row[i] ?? ""}</span>

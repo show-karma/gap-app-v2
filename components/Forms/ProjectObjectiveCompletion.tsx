@@ -181,7 +181,7 @@ export const ProjectObjectiveCompletionForm = ({
             await new Promise((resolve) => setTimeout(resolve, 1500));
           }
         });
-    } catch (error: any) {
+    } catch (error) {
       showError(MESSAGES.PROJECT_OBJECTIVE_FORM.COMPLETE.ERROR);
       errorManager(
         `Error completing milestone ${objectiveUID}`,

@@ -1,14 +1,10 @@
-import type {
-  IGrantUpdate,
-  IProjectUpdate,
-} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import type { FC } from "react";
 import { MilestoneLifecycleStatus } from "@/src/features/payout-disbursement";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
 import { getEffectiveMilestoneStatus } from "@/utilities/milestones/getEffectiveMilestoneStatus";
 import { ActivityStatus } from "./ActivityStatus";
 import type { ActivityType } from "./ActivityTypes";
-import { GrantAssociation } from "./GrantAssociation";
+import { type AssociatedUpdate, GrantAssociation } from "./GrantAssociation";
 
 interface ActivityStatusHeaderProps {
   /** The activity type to display in the left status pill */
@@ -24,7 +20,7 @@ interface ActivityStatusHeaderProps {
   /** Additional className for the completion status pill */
   completionStatusClassName?: string;
   /** Update data for grant association */
-  update?: IProjectUpdate | IGrantUpdate | any;
+  update?: AssociatedUpdate | null;
   /** Index for update data */
   index?: number;
   /** Milestone data for grant association */

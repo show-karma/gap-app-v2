@@ -16,6 +16,7 @@ interface SliderProps extends React.ComponentPropsWithoutRef<typeof SliderPrimit
 const Slider = React.forwardRef<React.ElementRef<typeof SliderPrimitive.Root>, SliderProps>(
   ({ className, thumbLabels, ...props }, ref) => {
     const values = props.value ?? props.defaultValue ?? [0];
+    const thumbKeys = values.map((_, index) => `thumb-${index}`);
 
     return (
       <SliderPrimitive.Root
@@ -26,10 +27,9 @@ const Slider = React.forwardRef<React.ElementRef<typeof SliderPrimitive.Root>, S
         <SliderPrimitive.Track className="relative h-1.5 w-full grow overflow-hidden rounded-full bg-border">
           <SliderPrimitive.Range className="absolute h-full bg-foreground" />
         </SliderPrimitive.Track>
-        {values.map((_, index) => (
+        {thumbKeys.map((thumbKey, index) => (
           <SliderPrimitive.Thumb
-            // eslint-disable-next-line react/no-array-index-key
-            key={index}
+            key={thumbKey}
             aria-label={thumbLabels?.[index]}
             className={cn(
               "block h-4 w-4 rounded-full border border-foreground/50 bg-background shadow transition-colors",

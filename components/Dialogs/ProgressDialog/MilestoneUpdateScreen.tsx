@@ -10,6 +10,81 @@ import type { Grant, GrantMilestone } from "@/types/v2/grant";
 import { Dropdown } from "./Dropdown";
 import { NoGrant } from "./NoGrant";
 
+interface GrantSelectionProps {
+  grants: Grant[];
+  selectedGrant: Grant | undefined;
+  setSelectedGrant: (grant: Grant | undefined) => void;
+  setSelectedMilestone: (milestone: GrantMilestone | undefined) => void;
+}
+
+const GrantSelection = ({
+  grants,
+  selectedGrant,
+  setSelectedGrant,
+  setSelectedMilestone,
+}: GrantSelectionProps) => {
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="text-sm font-bold text-black dark:text-zinc-100">Select Grant</div>
+      <Dropdown
+        list={grants.map((grant) => ({
+          value: grant.details?.title || "",
+          id: grant.uid,
+          timestamp: grant.createdAt,
+        }))}
+        onSelectFunction={(value: string) => {
+          const newGrant = grants.find((grant) => grant.uid === value);
+          setSelectedGrant(newGrant);
+          const availableMilestones = newGrant?.milestones?.filter(
+            (milestone) => !milestone.completed
+          );
+          if (availableMilestones && availableMilestones.length > 0) {
+            setSelectedMilestone(availableMilestones[0]);
+          } else {
+            setSelectedMilestone(undefined);
+          }
+        }}
+        type={"Grants"}
+        selected={selectedGrant?.uid || ""}
+      />
+    </div>
+  );
+};
+
+interface MilestoneSelectionProps {
+  selectedGrant: Grant | undefined;
+  selectedMilestone: GrantMilestone | undefined;
+  setSelectedMilestone: (milestone: GrantMilestone | undefined) => void;
+}
+
+const MilestoneSelection = ({
+  selectedGrant,
+  selectedMilestone,
+  setSelectedMilestone,
+}: MilestoneSelectionProps) => {
+  const possibleMilestones = selectedGrant?.milestones?.filter((milestone) => !milestone.completed);
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="text-sm font-bold text-black dark:text-zinc-100">Select Milestone</div>
+      {possibleMilestones?.length ? (
+        <Dropdown
+          list={possibleMilestones.map((milestone) => ({
+            value: milestone.title || "",
+            id: milestone.uid,
+            timestamp: milestone.createdAt,
+          }))}
+          onSelectFunction={(value: string) => {
+            const newMilestone = possibleMilestones.find((milestone) => milestone.uid === value);
+            setSelectedMilestone(newMilestone);
+          }}
+          type={"Milestones"}
+          selected={selectedMilestone?.uid || ""}
+        />
+      ) : null}
+    </div>
+  );
+};
+
 export const MilestoneUpdateScreen = () => {
   const project = useProjectStore((state) => state.project);
   const { closeProgressModal } = useProgressModalStore();
@@ -28,65 +103,15 @@ export const MilestoneUpdateScreen = () => {
     selectedGrant?.milestones?.length > 0 &&
     selectedGrant?.milestones?.some((milestone) => !milestone.completed);
 
-  const GrantSelection = () => {
-    return (
-      <div className="flex flex-col gap-2">
-        <div className="text-sm font-bold text-black dark:text-zinc-100">Select Grant</div>
-        <Dropdown
-          list={grants.map((grant) => ({
-            value: grant.details?.title || "",
-            id: grant.uid,
-            timestamp: grant.createdAt,
-          }))}
-          onSelectFunction={(value: string) => {
-            const newGrant = grants.find((grant) => grant.uid === value);
-            setSelectedGrant(newGrant);
-            const availableMilestones = newGrant?.milestones?.filter(
-              (milestone) => !milestone.completed
-            );
-            if (availableMilestones && availableMilestones.length > 0) {
-              setSelectedMilestone(availableMilestones[0]);
-            } else {
-              setSelectedMilestone(undefined);
-            }
-          }}
-          type={"Grants"}
-          selected={selectedGrant?.uid || ""}
-        />
-      </div>
-    );
-  };
-
-  const MilestoneSelection = () => {
-    const possibleMilestones = selectedGrant?.milestones?.filter(
-      (milestone) => !milestone.completed
-    );
-    return (
-      <div className="flex flex-col gap-2">
-        <div className="text-sm font-bold text-black dark:text-zinc-100">Select Milestone</div>
-        {possibleMilestones?.length ? (
-          <Dropdown
-            list={possibleMilestones.map((milestone) => ({
-              value: milestone.title || "",
-              id: milestone.uid,
-              timestamp: milestone.createdAt,
-            }))}
-            onSelectFunction={(value: string) => {
-              const newMilestone = possibleMilestones.find((milestone) => milestone.uid === value);
-              setSelectedMilestone(newMilestone);
-            }}
-            type={"Milestones"}
-            selected={selectedMilestone?.uid || ""}
-          />
-        ) : null}
-      </div>
-    );
-  };
-
   if (selectedGrant && !hasMilestones) {
     return (
       <div className="flex flex-col gap-2">
-        <GrantSelection />
+        <GrantSelection
+          grants={grants}
+          selectedGrant={selectedGrant}
+          setSelectedGrant={setSelectedGrant}
+          setSelectedMilestone={setSelectedMilestone}
+        />
         <div className="flex w-full flex-col items-center justify-center gap-4 rounded border border-gray-200 bg-blue-50 dark:bg-zinc-800 p-4">
           <Image
             src="/images/comments.png"
@@ -115,8 +140,19 @@ export const MilestoneUpdateScreen = () => {
 
   return (
     <div className="flex flex-col gap-2">
-      <GrantSelection />
-      {selectedGrant ? <MilestoneSelection /> : null}
+      <GrantSelection
+        grants={grants}
+        selectedGrant={selectedGrant}
+        setSelectedGrant={setSelectedGrant}
+        setSelectedMilestone={setSelectedMilestone}
+      />
+      {selectedGrant ? (
+        <MilestoneSelection
+          selectedGrant={selectedGrant}
+          selectedMilestone={selectedMilestone}
+          setSelectedMilestone={setSelectedMilestone}
+        />
+      ) : null}
       <div className="flex flex-col gap-2">
         {selectedMilestone ? (
           <MilestoneUpdateForm

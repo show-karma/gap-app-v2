@@ -41,11 +41,7 @@ import type {
   ReviewerRoleSelection,
   SelectedRow,
 } from "./ReviewerPickerModal.types";
-import {
-  emptyNewRow,
-  poolRowFromReviewer,
-  roleSelectionFromCommunityRole,
-} from "./ReviewerPickerModal.types";
+import { emptyNewRow, poolRowFromReviewer } from "./ReviewerPickerModal.types";
 import { RoleBadge } from "./RoleBadge";
 import { validateReviewerRow } from "./reviewer-validation";
 import { SelectedRowCard } from "./SelectedRowCard";
@@ -570,6 +566,3 @@ const ReviewerPickerModal = ({
 };
 
 export default ReviewerPickerModal;
-
-// Re-export the helper so other modules can derive role from API types
-export { roleSelectionFromCommunityRole };

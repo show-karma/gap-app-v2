@@ -234,7 +234,7 @@ export function DonationStepsPreview({
         <div className="max-h-96 overflow-y-auto px-6 py-4">
           <div className="space-y-4">
             {steps.map((step, index) => (
-              <div key={index} className="flex items-start gap-4">
+              <div key={`${step.type}-${step.chainId}`} className="flex items-start gap-4">
                 <div className="flex flex-col items-center">
                   {getStepIcon(step.type)}
                   {index < steps.length - 1 && (
@@ -254,8 +254,8 @@ export function DonationStepsPreview({
                   </div>
                   <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">{step.chainName}</p>
                   <ul className="mt-2 space-y-1">
-                    {step.details.map((detail, detailIndex) => (
-                      <li key={detailIndex} className="text-xs text-gray-600 dark:text-gray-400">
+                    {step.details.map((detail) => (
+                      <li key={detail} className="text-xs text-gray-600 dark:text-gray-400">
                         • {detail}
                       </li>
                     ))}

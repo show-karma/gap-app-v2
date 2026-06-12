@@ -70,7 +70,7 @@ function TestWrapper({
   children,
 }: {
   field: IFormField;
-  defaultValues?: any;
+  defaultValues?: Record<string, unknown>;
   children?: ReactNode;
 }) {
   const queryClient = new QueryClient({

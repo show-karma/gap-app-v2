@@ -70,7 +70,7 @@ export const useCommunities = (options: UseCommunitiesOptions = {}) => {
         }
 
         return response as CommunitiesResponse;
-      } catch (error: any) {
+      } catch (error) {
         errorManager("Error fetching communities", error);
         throw error;
       }

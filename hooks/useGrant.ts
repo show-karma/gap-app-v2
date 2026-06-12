@@ -81,7 +81,7 @@ export function useGrant() {
           : oldGrantInstance.details?.startDate,
         receivedDate: data.receivedDate
           ? new Date(data.receivedDate).getTime() / 1000
-          : (oldGrantInstance.details as any)?.receivedDate,
+          : (oldGrantInstance.details as unknown as { receivedDate?: number })?.receivedDate,
         selectedTrackIds: data.selectedTrackIds || formData.selectedTrackIds || [],
       });
 
@@ -92,49 +92,47 @@ export function useGrant() {
         (item) => item.uid.toLowerCase() === oldGrant.uid.toLowerCase()
       );
 
-      await oldGrantInstance.details
-        ?.attest(walletSigner as any, changeStepperStep)
-        .then(async (res) => {
-          let retries = 1000;
-          const txHash = res?.tx[0]?.hash;
-          if (txHash) {
-            await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, oldGrant.chainID), "POST", {});
-          }
-          changeStepperStep("indexing");
-          while (retries > 0) {
-            const fetchedGrants = await getProjectGrants(
-              oldGrant.refUID || oldGrant.projectUID || ""
-            ).catch(() => []);
-            const fetchedGrant = fetchedGrants?.find(
-              (item) => item.uid.toLowerCase() === oldGrant.uid.toLowerCase()
-            );
+      await oldGrantInstance.details?.attest(walletSigner, changeStepperStep).then(async (res) => {
+        let retries = 1000;
+        const txHash = res?.tx[0]?.hash;
+        if (txHash) {
+          await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, oldGrant.chainID), "POST", {});
+        }
+        changeStepperStep("indexing");
+        while (retries > 0) {
+          const fetchedGrants = await getProjectGrants(
+            oldGrant.refUID || oldGrant.projectUID || ""
+          ).catch(() => []);
+          const fetchedGrant = fetchedGrants?.find(
+            (item) => item.uid.toLowerCase() === oldGrant.uid.toLowerCase()
+          );
 
-            if (new Date(fetchedGrant?.updatedAt || 0) > new Date(oldGrantData?.updatedAt || 0)) {
-              clearMilestonesForms();
-              resetFormData();
-              setFormPriorities([]);
-              setCurrentStep(1);
-              setFlowType("grant");
-              retries = 0;
-              showSuccess(MESSAGES.GRANT.UPDATE.SUCCESS);
-              await refetchGrants().then(() => {
-                setTimeout(() => {
-                  router.push(
-                    PAGES.PROJECT.GRANT(
-                      selectedProject.details?.slug || selectedProject.uid,
-                      oldGrant.uid
-                    )
-                  );
-                  router.refresh();
-                }, 1500);
-              });
-            }
-            retries -= 1;
-            // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-            await new Promise((resolve) => setTimeout(resolve, 1500));
+          if (new Date(fetchedGrant?.updatedAt || 0) > new Date(oldGrantData?.updatedAt || 0)) {
+            clearMilestonesForms();
+            resetFormData();
+            setFormPriorities([]);
+            setCurrentStep(1);
+            setFlowType("grant");
+            retries = 0;
+            showSuccess(MESSAGES.GRANT.UPDATE.SUCCESS);
+            await refetchGrants().then(() => {
+              setTimeout(() => {
+                router.push(
+                  PAGES.PROJECT.GRANT(
+                    selectedProject.details?.slug || selectedProject.uid,
+                    oldGrant.uid
+                  )
+                );
+                router.refresh();
+              }, 1500);
+            });
           }
-        });
-    } catch (error: any) {
+          retries -= 1;
+          // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+          await new Promise((resolve) => setTimeout(resolve, 1500));
+        }
+      });
+    } catch (error) {
       showError(MESSAGES.GRANT.UPDATE.ERROR);
       errorManager(MESSAGES.GRANT.UPDATE.ERROR, error, {
         grantUID: oldGrant.uid,

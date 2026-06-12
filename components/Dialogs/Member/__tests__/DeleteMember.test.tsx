@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom";
+import type React from "react";
 import { useAccount } from "wagmi";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { DeleteMemberDialog } from "../DeleteMember";
@@ -33,46 +34,64 @@ vi.mock("next/dynamic", () => ({
 // Mock headlessui for simpler dialog handling in tests
 vi.mock("@headlessui/react", () => ({
   Dialog: Object.assign(
-    ({ children, ...props }: any) => (
+    ({ children, ...props }: React.PropsWithChildren<Record<string, unknown>>) => (
       <div data-testid="dialog" {...props}>
         {children}
       </div>
     ),
     {
-      Title: ({ children, ...props }: any) => (
+      Title: ({ children, ...props }: React.PropsWithChildren<Record<string, unknown>>) => (
         <h3 data-testid="dialog-title" {...props}>
           {children}
         </h3>
       ),
-      Panel: ({ children, ...props }: any) => (
+      Panel: ({ children, ...props }: React.PropsWithChildren<Record<string, unknown>>) => (
         <div data-testid="dialog-panel" {...props}>
           {children}
         </div>
       ),
     }
   ),
-  Transition: Object.assign(({ children, show }: any) => (show ? children : null), {
-    Child: ({ children }: any) => children,
-  }),
+  Transition: Object.assign(
+    ({ children, show }: React.PropsWithChildren<{ show?: boolean }>) => (show ? children : null),
+    {
+      Child: ({ children }: React.PropsWithChildren) => children,
+    }
+  ),
 }));
 
 // Radix tooltip mock
 vi.mock("@radix-ui/react-tooltip", () => ({
-  Provider: ({ children }: any) => children,
-  Root: ({ children }: any) => children,
-  Trigger: ({ children }: any) => children,
-  Portal: ({ children }: any) => children,
-  Content: ({ children }: any) => <div>{children}</div>,
+  Provider: ({ children }: React.PropsWithChildren) => children,
+  Root: ({ children }: React.PropsWithChildren) => children,
+  Trigger: ({ children }: React.PropsWithChildren) => children,
+  Portal: ({ children }: React.PropsWithChildren) => children,
+  Content: ({ children }: React.PropsWithChildren) => <div>{children}</div>,
 }));
 
 // Mock heroicons
 vi.mock("@heroicons/react/24/outline", () => ({
-  TrashIcon: ({ className }: any) => <svg data-testid="trash-icon" className={className} />,
+  TrashIcon: ({ className }: { className?: string }) => (
+    <svg data-testid="trash-icon" className={className} />
+  ),
 }));
 
 // Mock the Button component
 vi.mock("@/components/Utilities/Button", () => ({
-  Button: ({ children, onClick, disabled, isLoading, className, ...props }: any) => (
+  Button: ({
+    children,
+    onClick,
+    disabled,
+    isLoading,
+    className,
+    ...props
+  }: React.PropsWithChildren<{
+    onClick?: React.MouseEventHandler<HTMLButtonElement>;
+    disabled?: boolean;
+    isLoading?: boolean;
+    className?: string;
+  }> &
+    Record<string, unknown>) => (
     <button onClick={onClick} disabled={disabled} className={className} {...props}>
       {isLoading ? "Loading..." : children}
     </button>
@@ -82,7 +101,7 @@ vi.mock("@/components/Utilities/Button", () => ({
 // Mock error manager
 const mockErrorManager = vi.fn();
 vi.mock("@/components/Utilities/errorManager", () => ({
-  errorManager: (...args: any[]) => mockErrorManager(...args),
+  errorManager: (...args: unknown[]) => mockErrorManager(...args),
 }));
 
 // Mock attestation toast
@@ -126,7 +145,7 @@ vi.mock("@/hooks/useWallet", () => ({
 const mockFetchData = vi.fn();
 vi.mock("@/utilities/fetchData", () => ({
   __esModule: true,
-  default: (...args: any[]) => mockFetchData(...args),
+  default: (...args: unknown[]) => mockFetchData(...args),
 }));
 
 // Mock INDEXER
@@ -147,7 +166,7 @@ vi.mock("@/utilities/query-client", () => ({
 // Mock getProjectById - THIS IS THE KEY MOCK for reproducing the bug
 const mockGetProjectById = vi.fn();
 vi.mock("@/utilities/sdk", () => ({
-  getProjectById: (...args: any[]) => mockGetProjectById(...args),
+  getProjectById: (...args: unknown[]) => mockGetProjectById(...args),
 }));
 
 // Mock project store

@@ -24,10 +24,8 @@ import toast from "react-hot-toast";
 import { CreateProgramModal } from "@/components/FundingPlatform/CreateProgramModal";
 import { FundingPlatformStatsCard } from "@/components/FundingPlatform/Dashboard/card";
 import { NoProgramsEmptyState } from "@/components/FundingPlatform/NoProgramsEmptyState";
-import {
-  hasFormConfigured,
-  ProgramSetupStatus,
-} from "@/components/FundingPlatform/ProgramSetupStatus";
+import { ProgramSetupStatus } from "@/components/FundingPlatform/ProgramSetupStatus";
+import { hasFormConfigured } from "@/components/FundingPlatform/ProgramSetupStatus.helpers";
 import { Button } from "@/components/Utilities/Button";
 import { LoadingOverlay } from "@/components/Utilities/LoadingOverlay";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";

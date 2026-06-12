@@ -42,6 +42,7 @@ import {
   usePayoutConfigsByCommunity,
   useSavePayoutConfig,
 } from "@/src/features/payout-disbursement";
+import type { PayoutDisbursement } from "@/src/features/payout-disbursement/types/payout-disbursement";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
@@ -206,7 +207,10 @@ export default function PayoutsAdminPage() {
 
   // Create a map of grant UID to disbursement info from the payouts response
   const disbursementMap = useMemo(() => {
-    const map: Record<string, { totalsByToken: TokenTotal[]; status: string; history: any[] }> = {};
+    const map: Record<
+      string,
+      { totalsByToken: TokenTotal[]; status: string; history: PayoutDisbursement[] }
+    > = {};
     payouts.forEach((payout) => {
       map[payout.grant.uid] = {
         totalsByToken: payout.disbursements.totalsByToken || [],
@@ -267,7 +271,11 @@ export default function PayoutsAdminPage() {
   const computeDisplayStatus = useCallback(
     (
       _item: PayoutsTableData,
-      disbursementInfo?: { totalsByToken: TokenTotal[]; status: string; history: any[] }
+      disbursementInfo?: {
+        totalsByToken: TokenTotal[];
+        status: string;
+        history: PayoutDisbursement[];
+      }
     ): { label: string; color: string } => {
       const aggregatedStatus = disbursementInfo?.status;
       const history = disbursementInfo?.history || [];

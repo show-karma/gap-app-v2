@@ -7,7 +7,7 @@ import {
 import { getEntryPoint, KERNEL_V3_3, KernelVersionToAddressesMap } from "@zerodev/sdk/constants";
 import { KernelEIP1193Provider } from "@zerodev/sdk/providers";
 import { BrowserProvider, type Signer } from "ethers";
-import { createPublicClient, http } from "viem";
+import { createPublicClient, http, type PublicClient } from "viem";
 import type {
   ChainGaslessConfig,
   CreateClientParams,
@@ -26,6 +26,12 @@ const ENTRYPOINT = getEntryPoint("0.7");
  * Default kernel version for ZeroDev smart accounts.
  */
 const KERNEL_VERSION = KERNEL_V3_3;
+
+/**
+ * Concrete client type the ZeroDev EIP-1193 provider expects. Used to narrow
+ * the opaque `SmartAccountClient` back to the kernel client created above.
+ */
+type KernelClient = ConstructorParameters<typeof KernelEIP1193Provider>[0];
 
 /**
  * ZeroDev gasless provider implementation.
@@ -92,11 +98,9 @@ export class ZeroDevProvider implements IGaslessProvider {
    * Creates an EIP-7702 kernel client.
    * This upgrades the EOA to a smart account while keeping the SAME address.
    */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private async createEIP7702Client(
     params: CreateClientParams,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    publicClient: any,
+    publicClient: PublicClient,
     zeroDevRpcUrl: string
   ): Promise<SmartAccountClient | null> {
     const { chainId, signer, config } = params;
@@ -122,14 +126,15 @@ export class ZeroDevProvider implements IGaslessProvider {
       nonce: eoaNonce,
     });
 
-    // Create kernel account with EIP-7702
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // Create kernel account with EIP-7702. The signer/authorization shapes
+    // come from Privy and are runtime-compatible with viem's, so bridge the
+    // nominal type gap through `unknown` rather than `any`.
     const kernelAccount = await createKernelAccount(publicClient, {
-      eip7702Account: signer as any,
-      eip7702Auth: authorization as any,
+      eip7702Account: signer,
+      eip7702Auth: authorization,
       entryPoint: ENTRYPOINT,
       kernelVersion: KERNEL_VERSION,
-    } as any);
+    } as unknown as Parameters<typeof createKernelAccount>[1]);
 
     // Create paymaster client
     const paymasterClient = createZeroDevPaymasterClient({
@@ -154,29 +159,28 @@ export class ZeroDevProvider implements IGaslessProvider {
    */
   private async createRegularClient(
     params: CreateClientParams,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    publicClient: any,
+    publicClient: PublicClient,
     zeroDevRpcUrl: string
   ): Promise<SmartAccountClient | null> {
     const { signer, config } = params;
 
-    // Create ECDSA validator from the signer
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // Create ECDSA validator from the signer. The Privy signer is runtime-
+    // compatible with viem's LocalAccount, so bridge the nominal type gap
+    // through `unknown` rather than `any`.
     const ecdsaValidator = await signerToEcdsaValidator(publicClient, {
-      signer: signer as any,
+      signer: signer as unknown as Parameters<typeof signerToEcdsaValidator>[1]["signer"],
       entryPoint: ENTRYPOINT,
       kernelVersion: KERNEL_VERSION,
     });
 
     // Create kernel account
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const kernelAccount = await createKernelAccount(publicClient, {
       plugins: {
         sudo: ecdsaValidator,
       },
       entryPoint: ENTRYPOINT,
       kernelVersion: KERNEL_VERSION,
-    } as any);
+    } as unknown as Parameters<typeof createKernelAccount>[1]);
 
     // Create paymaster client
     const paymasterClient = createZeroDevPaymasterClient({
@@ -200,12 +204,14 @@ export class ZeroDevProvider implements IGaslessProvider {
     chainId: number,
     config: ChainGaslessConfig
   ): Promise<Signer> {
+    const kernelClient = client as KernelClient;
+
     // Create EIP-1193 provider from kernel client. Serialize UserOps per sender
     // so concurrent attestations (e.g. deleting several milestones in a row)
     // can't submit two ops on the same nonce and trip the bundler's AA25 guard.
     const kernelProvider = withUserOpSerialization(
-      new KernelEIP1193Provider(client),
-      client.account?.address
+      new KernelEIP1193Provider(kernelClient),
+      kernelClient.account?.address
     );
 
     // Wrap in ethers BrowserProvider, pinning the network to the kernel
@@ -233,7 +239,7 @@ export class ZeroDevProvider implements IGaslessProvider {
    */
   private async validateBundler(client: SmartAccountClient, chainId: number): Promise<void> {
     try {
-      const supportedEntryPoints = await client.getSupportedEntryPoints();
+      const supportedEntryPoints = await (client as KernelClient).getSupportedEntryPoints();
 
       if (!supportedEntryPoints || supportedEntryPoints.length === 0) {
         throw new GaslessProviderError(

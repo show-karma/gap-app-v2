@@ -57,7 +57,7 @@ export const useCommunityStats = () => {
             shouldRound: true,
           },
         ];
-      } catch (error: any) {
+      } catch (error) {
         errorManager("Error fetching community stats", error);
         throw error;
       }

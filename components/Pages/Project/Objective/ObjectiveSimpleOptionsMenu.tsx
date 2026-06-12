@@ -133,7 +133,7 @@ export const ObjectiveSimpleOptionsMenu = ({ objectiveId }: ObjectiveSimpleOptio
             changeStepperStep("indexed");
           });
           showSuccess(MESSAGES.PROJECT_OBJECTIVE_FORM.DELETE.SUCCESS);
-        } catch (onChainError: any) {
+        } catch (onChainError) {
           // Silently fallback to off-chain revoke
           setIsStepper(false); // Reset stepper since we're falling back
 
@@ -153,7 +153,7 @@ export const ObjectiveSimpleOptionsMenu = ({ objectiveId }: ObjectiveSimpleOptio
           }
         }
       }
-    } catch (error: any) {
+    } catch (error) {
       showError(MESSAGES.PROJECT_OBJECTIVE_FORM.DELETE.ERROR);
       errorManager(`Error deleting objective ${objectiveId}`, error, {
         project: projectId,

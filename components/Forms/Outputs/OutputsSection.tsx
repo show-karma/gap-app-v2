@@ -5,6 +5,7 @@ import { useMemo } from "react";
 import type {
   Control,
   FieldErrors,
+  FieldValues,
   UseFormRegister,
   UseFormSetValue,
   UseFormWatch,
@@ -26,7 +27,7 @@ interface OutputsSectionProps {
   control: Control<any>;
   setValue: UseFormSetValue<any>;
   watch: UseFormWatch<any>;
-  errors: FieldErrors<any>;
+  errors: FieldErrors<FieldValues>;
 
   // Data
   projectUID?: string;

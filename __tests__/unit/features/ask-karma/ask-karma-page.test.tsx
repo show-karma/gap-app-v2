@@ -2,7 +2,7 @@ import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AskKarmaPage } from "@/src/features/ask-karma/components/ask-karma-page";
-import { ASK_KARMA_ANIMATION } from "@/src/features/ask-karma/components/ask-karma-start";
+import { ASK_KARMA_ANIMATION } from "@/src/features/ask-karma/components/ask-karma-start.constants";
 import type { AskKarmaConfig } from "@/src/features/ask-karma/types";
 import { useAgentChatStore } from "@/store/agentChat";
 

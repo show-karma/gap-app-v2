@@ -6,6 +6,10 @@ export type CustomLink = {
   url: string;
 };
 
-export function isCustomLink(link: any): link is ExternalCustomLink {
-  return typeof link.name === "string" && typeof link.url === "string";
+export function isCustomLink(link: unknown): link is ExternalCustomLink {
+  if (!link || typeof link !== "object") {
+    return false;
+  }
+  const candidate = link as { name?: unknown; url?: unknown };
+  return typeof candidate.name === "string" && typeof candidate.url === "string";
 }

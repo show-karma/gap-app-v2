@@ -7,7 +7,7 @@ interface UseOffChainRevokeOptions {
   chainID: number;
   checkIfExists?: () => Promise<void>;
   onSuccess?: () => void;
-  onError?: (error: any) => void;
+  onError?: (error: unknown) => void;
   toastMessages?: {
     success: string;
     loading: string;
