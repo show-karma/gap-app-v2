@@ -30,6 +30,10 @@ vi.mock("@/hooks/communities/useIsCommunityAdmin", () => ({
   useIsCommunityAdmin: () => ({ isCommunityAdmin: false }),
 }));
 
+vi.mock("@/hooks/useProjectAuthorization", () => ({
+  useProjectAuthorization: () => ({ isAuthorized: false, isLoading: false }),
+}));
+
 vi.mock(
   "@/components/Pages/GrantMilestonesAndUpdates/screens/MilestonesAndUpdates/MilestoneDelete",
   () => ({ MilestoneDelete: () => null })

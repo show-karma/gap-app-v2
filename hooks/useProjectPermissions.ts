@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useAuth } from "@/hooks/useAuth";
 import { useProjectStore } from "@/store";
@@ -19,7 +19,7 @@ export const useProjectPermissions = () => {
   const { address, isConnected, authenticated: isAuth, user } = useAuth();
   const project = useProjectStore((state) => state.project);
   const projectId = project?.details?.slug || project?.uid;
-  const { project: projectInstance } = useProjectInstance(projectId);
+  const { project: projectInstance, isLoading: instanceLoading } = useProjectInstance(projectId);
 
   const setIsProjectAdmin = useProjectStore((state) => state.setIsProjectAdmin);
   const setIsProjectOwner = useProjectStore((state) => state.setIsProjectOwner);
@@ -178,10 +178,48 @@ export const useProjectPermissions = () => {
     }
   }, [query.data, setIsProjectOwner, setIsProjectAdmin, isAuth]);
 
+  // Reset the GLOBAL project-permission flags whenever the active project
+  // changes. These flags live in a single store shared across every project
+  // page; without this reset, authorization resolved for project A stays true
+  // while project B's permission query is still pending/disabled, which
+  // wrongly enables admin-gated fetches (e.g. the contacts GET) for the new
+  // project. The tri-state `isResolving` below keeps the UI in a loading state
+  // during the recheck, so resetting here cannot reintroduce a denial flash.
+  //
+  // The reset MUST only fire on an actual projectId transition within this
+  // instance — never on plain mount. This hook is instantiated by many
+  // components (including late-mounting ones like conditional dialogs and
+  // per-milestone items), and the data-sync effect above is declared first:
+  // on a late mount with cached query data the sync would set the flags true
+  // and an unconditional reset would immediately clobber them back to false,
+  // permanently, because `query.data` never changes afterwards. Tracking the
+  // previously-seen projectId in a ref skips the mount-time invocation while
+  // still resetting on every real project change.
+  const prevProjectIdRef = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    const prevProjectId = prevProjectIdRef.current;
+    prevProjectIdRef.current = projectId;
+    if (prevProjectId === undefined || prevProjectId === projectId) {
+      return;
+    }
+    setIsProjectOwner(false);
+    setIsProjectAdmin(false);
+  }, [projectId, setIsProjectOwner, setIsProjectAdmin]);
+
+  // Authorization is still resolving while a prerequisite for the on-chain
+  // checks is pending. In React Query v5 a disabled query reports
+  // `isLoading=false` but `isPending=true` (no data yet), so we must read
+  // `isPending` — not `isLoading` — to keep undecided through the full chain:
+  // store project sync -> projectInstance fetch -> on-chain owner/admin checks.
+  // Guarded by `isAuth && walletsKey` so guests and wallet-less accounts
+  // resolve synchronously to a not-loading state.
+  const isResolving = !!isAuth && !!walletsKey && (!project || instanceLoading || query.isPending);
+
   return {
     isProjectOwner: query.data?.isProjectOwner ?? false,
     isProjectAdmin: query.data?.isProjectAdmin ?? false,
     isLoading: query.isLoading,
+    isResolving,
     isFetching: query.isFetching,
     error: query.error,
     refetch: query.refetch,

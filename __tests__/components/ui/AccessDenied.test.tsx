@@ -257,4 +257,46 @@ describe("AccessDenied", () => {
       expect(screen.queryByTestId("markdown-mock")).toBeNull();
     });
   });
+
+  // Regression for #1213 / #1443: AccessDenied is rendered on pages that are
+  // NOT wrapped in a `PermissionProvider` (e.g. /admin, /admin/faucet). There,
+  // `usePermissionContext()` returns the default context whose `isLoading` is
+  // permanently `true`. The denial must still resolve — gating the skeleton on
+  // that flag strands these pages on a forever-spinner.
+  describe("RBAC loading outside a PermissionProvider", () => {
+    beforeEach(() => {
+      mockUseAuth.mockReturnValue({
+        authenticated: false,
+        login: mockLogin,
+      } as ReturnType<typeof useAuth>);
+      // Simulate being rendered with no provider: default context is loading.
+      mockUsePermissionContext.mockReturnValue({
+        roles: { primaryRole: "GUEST", roles: ["GUEST"], reviewerTypes: [] },
+        isLoading: true,
+      });
+    });
+
+    it("renders the denial (not the skeleton) when there is no communitySlug", () => {
+      const { container } = render(
+        <AccessDenied title="Admin access required" requiredRoles={["SUPER_ADMIN"]} />
+      );
+
+      // Resolved denial shows the alert icon + title; not the pulse skeleton.
+      expect(screen.getByText("Admin access required")).toBeInTheDocument();
+      expect(screen.getByTestId("alert-icon")).toBeInTheDocument();
+      expect(container.querySelector(".animate-pulse")).toBeNull();
+    });
+
+    it("still waits on the skeleton for community-scoped denials while RBAC/custom messages load", () => {
+      mockUseAccessDeniedMessages.mockReturnValue({
+        data: undefined,
+        isLoading: true,
+      });
+
+      const { container } = render(<AccessDenied communitySlug="octant" />);
+
+      expect(container.querySelector(".animate-pulse")).not.toBeNull();
+      expect(screen.queryByTestId("alert-icon")).toBeNull();
+    });
+  });
 });

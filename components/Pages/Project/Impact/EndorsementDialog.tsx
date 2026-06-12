@@ -41,7 +41,11 @@ export const EndorsementDialog: FC<EndorsementDialogProps> = () => {
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const router = useRouter();
   const pathname = usePathname();
-  const { data: contactsInfo } = useContactInfo(project?.uid, true);
+  // No hardcoded `true`: the admin-gated contacts GET must only fire for
+  // resolved project admins. Non-admin endorsers previously triggered a
+  // guaranteed 403 here (which nulled `contactsInfo` anyway), so dropping the
+  // override removes the console/Sentry noise without changing behavior.
+  const { data: contactsInfo } = useContactInfo(project?.uid);
 
   function closeModal() {
     setIsOpen(false);

@@ -2,8 +2,7 @@
 
 import type { FC } from "react";
 import { useGrantCompletionRevoke } from "@/hooks/useGrantCompletionRevoke";
-import { useIsCommunityAdmin } from "@/src/core/rbac/context/permission-context";
-import { useOwnerStore, useProjectStore } from "@/store";
+import { useProjectAuthorization } from "@/hooks/useProjectAuthorization";
 import type { Grant } from "@/types/v2/grant";
 import type { Project as ProjectResponse } from "@/types/v2/project";
 import { GrantCompletedButton } from "./GrantCompletedButton";
@@ -20,15 +19,22 @@ export const GrantCompleteButton: FC<GrantCompleteProps> = ({
   project,
   text = "Mark as Complete",
 }) => {
-  const isOwner = useOwnerStore((state) => state.isOwner);
-  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
-  const isCommunityAdmin = useIsCommunityAdmin();
-  const isAuthorized = isOwner || isProjectAdmin || isCommunityAdmin;
+  const { isAuthorized, isLoading: isAuthLoading } = useProjectAuthorization(grant.communityUID);
 
   const { revokeCompletion, isRevoking } = useGrantCompletionRevoke({
     grant,
     project,
   });
+
+  if (isAuthLoading) {
+    return (
+      <div
+        aria-hidden="true"
+        data-testid="grant-complete-button-skeleton"
+        className="animate-pulse h-9 w-40 bg-gray-200 dark:bg-zinc-800 rounded-md"
+      />
+    );
+  }
 
   if (grant.completed) {
     return (

@@ -25,6 +25,13 @@ vi.mock("@/store", () => ({
   useProjectStore: vi.fn(),
 }));
 
+// Authorization moved into useProjectAuthorization; mock it so the component
+// never reaches the real useQuery-backed hook chain. The mock derives
+// isAuthorized from the same stores these tests already control.
+vi.mock("@/hooks/useProjectAuthorization", () => ({
+  useProjectAuthorization: vi.fn(),
+}));
+
 // Mock next/navigation
 vi.mock("next/navigation", () => ({
   useSearchParams: vi.fn(),
@@ -32,11 +39,15 @@ vi.mock("next/navigation", () => ({
 }));
 
 import { useSearchParams } from "next/navigation";
+import { useProjectAuthorization } from "@/hooks/useProjectAuthorization";
 import { useOwnerStore, useProjectStore } from "@/store";
 
 const mockUseOwnerStore = useOwnerStore as vi.MockedFunction<typeof useOwnerStore>;
 const mockUseProjectStore = useProjectStore as vi.MockedFunction<typeof useProjectStore>;
 const mockUseSearchParams = useSearchParams as vi.MockedFunction<typeof useSearchParams>;
+const mockUseProjectAuthorization = useProjectAuthorization as vi.MockedFunction<
+  typeof useProjectAuthorization
+>;
 
 describe("ImpactContent", () => {
   beforeEach(() => {
@@ -50,6 +61,21 @@ describe("ImpactContent", () => {
       return selector ? selector(state as never) : state;
     });
     mockUseSearchParams.mockReturnValue(new URLSearchParams());
+    // Derive authorization from the same stores the tests control, so existing
+    // store-based test setups keep driving isAuthorized after #1624.
+    mockUseProjectAuthorization.mockImplementation(() => {
+      const ownerState = mockUseOwnerStore() as unknown as { isOwner?: boolean };
+      const projectState = mockUseProjectStore() as unknown as {
+        isProjectAdmin?: boolean;
+        isProjectOwner?: boolean;
+      };
+      return {
+        isAuthorized: Boolean(
+          ownerState?.isOwner || projectState?.isProjectAdmin || projectState?.isProjectOwner
+        ),
+        isLoading: false,
+      };
+    });
   });
 
   describe("Rendering", () => {

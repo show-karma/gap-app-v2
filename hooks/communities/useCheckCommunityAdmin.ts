@@ -87,6 +87,12 @@ export const useCheckCommunityAdmin = (
     // Return false immediately if not authenticated (defense-in-depth)
     isAdmin: isAuth ? (query.data ?? false) : false,
     isLoading: query.isLoading,
+    // `isPending` is true whenever the query has no data — including while it
+    // is disabled waiting on prerequisites. Authorization-resolution logic must
+    // read this (not `isLoading`) so a disabled-but-undecided check is not
+    // mistaken for resolved-denied under React Query v5.
+    isPending: query.isPending,
+    hasCandidateWallets: checkAddresses.length > 0,
     isError: query.isError,
     error: query.error,
     refetch: query.refetch,

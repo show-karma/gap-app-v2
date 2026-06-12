@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useProjectAuthorization } from "@/hooks/useProjectAuthorization";
 import { useProjectProfile } from "@/hooks/v2/useProjectProfile";
 import { useOwnerStore, useProjectStore } from "@/store";
 import type { ActivityFilterType } from "@/types/v2/project-profile.types";
@@ -15,6 +16,12 @@ vi.mock("next/navigation", () => ({
 
 vi.mock("@/hooks/v2/useProjectProfile", () => ({
   useProjectProfile: vi.fn(),
+}));
+
+// Authorization now comes from useProjectAuthorization (not the stores directly);
+// mock it so the component never reaches the real useQuery-backed hook chain.
+vi.mock("@/hooks/useProjectAuthorization", () => ({
+  useProjectAuthorization: vi.fn(() => ({ isAuthorized: false })),
 }));
 
 vi.mock("@/store", () => ({
@@ -48,6 +55,9 @@ function mockStores({ isOwner = false, isProjectAdmin = false, isProjectOwner = 
   (useProjectStore as unknown as vi.Mock).mockImplementation((sel) =>
     sel({ isProjectAdmin, isProjectOwner })
   );
+  (useProjectAuthorization as unknown as vi.Mock).mockReturnValue({
+    isAuthorized: isOwner || isProjectAdmin || isProjectOwner,
+  });
 }
 
 function mockProjectProfile(overrides: Record<string, unknown> = {}) {

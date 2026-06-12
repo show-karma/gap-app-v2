@@ -25,7 +25,7 @@ interface ImpactContentProps {
  * alongside the project info, separated by a vertical divider.
  */
 export function ImpactContent({ className }: ImpactContentProps) {
-  const isAuthorized = useProjectAuthorization();
+  const { isAuthorized } = useProjectAuthorization();
 
   const searchParams = useSearchParams();
   const grantScreen = searchParams?.get("tab");

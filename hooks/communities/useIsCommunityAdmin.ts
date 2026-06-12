@@ -30,7 +30,7 @@ export const useIsCommunityAdmin = (
   userAddress?: string | Hex,
   options?: UseIsCommunityAdminOptions
 ) => {
-  const { address: accountAddress } = useAuth();
+  const { address: accountAddress, authenticated } = useAuth();
   const address = userAddress || accountAddress;
   const communityQuery = useCommunityDetails(communityUIDorSlug);
 
@@ -46,9 +46,25 @@ export const useIsCommunityAdmin = (
 
   const isLoading = communityQuery.isLoading || (!!communityQuery.data && adminQuery.isLoading);
 
+  // isPending-aware resolution state for authorization gating (React Query v5).
+  // Stays `true` through the full chain — community fetch then admin check —
+  // even while a downstream query is disabled-with-prerequisites-pending, so a
+  // disabled-but-undecided admin check is never read as resolved-denied.
+  // Treated as resolved (not loading) for: unauthenticated users, a missing
+  // community arg, a failed community fetch, and accounts with no candidate
+  // wallets — none of those can ever flip to admin, so stranding a consumer in
+  // a skeleton there would be a bug.
+  const isResolving =
+    !!authenticated &&
+    !!communityUIDorSlug &&
+    !(communityQuery.isError || adminQuery.isError) &&
+    adminQuery.hasCandidateWallets &&
+    (communityQuery.isPending || (!!communityQuery.data && adminQuery.isPending));
+
   return {
     isCommunityAdmin: adminQuery.isAdmin,
     isLoading,
+    isResolving,
     isError: communityQuery.isError || adminQuery.isError,
     error: communityQuery.error || adminQuery.error,
     refetch: adminQuery.refetch,
