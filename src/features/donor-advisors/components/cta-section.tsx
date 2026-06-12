@@ -24,7 +24,7 @@ export function CTASection() {
             </p>
             <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto px-4 md:px-0">
               <Button asChild className="rounded-md font-semibold px-6 py-2.5">
-                <Link href={PAGES.DONOR_RESEARCH.INDEX}>Try Donor Research</Link>
+                <Link href={PAGES.DONOR_RESEARCH.INDEX}>Try Nonprofit Research</Link>
               </Button>
               <Button asChild variant="outline" className="rounded-md font-medium px-6 py-2.5">
                 <Link href={SOCIALS.DONOR_PARTNER_FORM} target="_blank" rel="noopener noreferrer">

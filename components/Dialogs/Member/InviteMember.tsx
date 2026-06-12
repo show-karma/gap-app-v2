@@ -9,6 +9,7 @@ import { Spinner } from "@/components/Utilities/Spinner";
 import { Button } from "@/components/ui/button";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { useInviteLink, useInviteUrl } from "@/hooks/useInviteLink";
+import { useProjectAuthorization } from "@/hooks/useProjectAuthorization";
 import { useProjectStore } from "@/store";
 
 interface InviteMemberDialogProps {
@@ -20,9 +21,12 @@ export const InviteMemberDialog: FC<InviteMemberDialogProps> = ({ shouldDisable 
   const [isCopied, setIsCopied] = useState(false);
   const project = useProjectStore((state) => state.project);
   const [, copyToClipboard] = useCopyToClipboard();
+  // get-invite-link is admin-gated; only fetch once authorization has resolved
+  // to true so non-admins never trigger a 403.
+  const { isAuthorized, isLoading: isAuthLoading } = useProjectAuthorization();
 
   const { inviteCode, isLoading, isGenerating, generateCode, revokeCode, isSuccess } =
-    useInviteLink(project?.uid);
+    useInviteLink(project?.uid, { enabled: isAuthorized && !isAuthLoading });
 
   const code = inviteCode?.hash;
   const inviteUrl = useInviteUrl(project, code);

@@ -39,6 +39,13 @@ pnpm lint:fix           # Biome lint + format
 - **Zustand resets**: When adding state properties, update `initialState` too — `reset()` spreads it and will miss new fields.
 - **Pluralization**: Any dynamic count rendered next to a noun MUST use the `pluralize` library (`pluralize("team", count)`). No manual ternaries, no hardcoded plural-only nouns. Strings like `"1 teams"`, `"0 apply"`, `"1 days left"` are bugs.
 - **Empty-state conditional rendering**: UI blocks tied to a count or array (e.g. "Closing this week — N apply before deadline") must be hidden entirely when the count is 0. Don't render "0 …" copy.
+- **Authorization is tri-state, not boolean**: Gate auth-sensitive UI through a tri-state hook that returns `{ isAuthorized, isLoading }` (e.g. `useProjectAuthorization`). Render a skeleton while `isLoading`, never the authorized controls or a denial. Specifically:
+  - Never read `useOwnerStore.isOwner` without `isOwnerLoading`.
+  - For authorization-resolved decisions, never use a query's `isLoading` when that query can be disabled — a disabled React Query v5 query reports `isLoading=false` while still undecided. Use `isPending`-aware composition (`isResolving`).
+  - Never enable an admin-gated fetch from bare/optimistic store booleans — gate on *resolved* authorization (`isAuthorized && !isLoading`). Project-store permission flags are global and go stale across project navigations.
+  - Treat an expected admin denial (HTTP 403) as data (return `null`), not an error — don't log it to `console`/`errorManager`.
+  - Never pair a `useEffect` redirect with an `AccessDenied` render for the same condition — the redirect makes the denial unreachable. Render the denial as a terminal state.
+  - Never gate denial UI on wagmi `isConnected` — use Privy `ready`/`authenticated` (the two initialize independently at startup).
 
 ## Auth Gotchas
 

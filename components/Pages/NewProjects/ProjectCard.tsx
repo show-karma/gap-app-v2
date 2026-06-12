@@ -64,7 +64,7 @@ export const ProjectCard = ({ project, index }: ProjectCardProps) => {
           </p>
           <div className="flex flex-col gap-1 flex-1 h-[48px]">
             <div className="text-sm text-gray-900 dark:text-gray-400 text-ellipsis line-clamp-3">
-              <MarkdownPreview source={project?.description?.slice(0, 160)} />
+              <MarkdownPreview variant="excerpt" source={project?.description} />
             </div>
           </div>
         </div>

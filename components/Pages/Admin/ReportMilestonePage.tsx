@@ -6,7 +6,7 @@ import { toast } from "react-hot-toast";
 import { PendingVerificationTable } from "@/components/Pages/Admin/PendingVerificationTable";
 import { ReviewerFilterDropdown } from "@/components/Pages/Admin/ReviewerFilterDropdown";
 import { StatsGrid } from "@/components/Pages/Admin/StatsGrid";
-import { StatsTable } from "@/components/Pages/Admin/StatsTable";
+import { StatsTable, StatsTableSkeleton } from "@/components/Pages/Admin/StatsTable";
 import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
 import { SearchDropdown } from "@/components/Pages/ProgramRegistry/SearchDropdown";
 import { Button } from "@/components/Utilities/Button";
@@ -61,31 +61,7 @@ function MilestonesReportSkeleton() {
           </div>
         ))}
       </div>
-      <div className="rounded-xl border border-gray-200 dark:border-zinc-700 overflow-hidden bg-white dark:bg-zinc-900">
-        <div className="bg-gray-50 dark:bg-zinc-800/50 border-b border-gray-200 dark:border-zinc-700">
-          <div className="flex items-center h-11 px-4 gap-6">
-            <Skeleton className="h-3 w-20 rounded" />
-            <Skeleton className="h-3 w-16 rounded" />
-            <Skeleton className="h-3 w-10 rounded" />
-            <Skeleton className="h-3 w-12 rounded" />
-            <Skeleton className="h-3 w-16 rounded" />
-            <Skeleton className="h-3 w-14 rounded" />
-          </div>
-        </div>
-        {[...Array(10)].map((_, i) => (
-          <div
-            key={i}
-            className="flex items-center gap-6 px-4 h-14 border-b border-gray-100 dark:border-zinc-800 last:border-b-0"
-          >
-            <Skeleton className="h-4 w-36 rounded" />
-            <Skeleton className="h-4 w-28 rounded" />
-            <Skeleton className="h-4 w-10 rounded" />
-            <Skeleton className="h-4 w-10 rounded" />
-            <Skeleton className="h-4 w-10 rounded" />
-            <Skeleton className="h-8 w-16 rounded-md" />
-          </div>
-        ))}
-      </div>
+      <StatsTableSkeleton />
     </div>
   );
 }

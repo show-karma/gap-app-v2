@@ -6,7 +6,7 @@ import { useProjectAuthorization } from "@/hooks/useProjectAuthorization";
 import { MESSAGES } from "@/utilities/messages";
 
 export const EmptyImpactScreen: FC = () => {
-  const isAuthorized = useProjectAuthorization();
+  const { isAuthorized } = useProjectAuthorization();
   const [, changeTab] = useQueryState("tab");
   if (!isAuthorized) {
     return (

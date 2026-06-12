@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { MESSAGES } from "@/utilities/messages";
 import { urlRegex } from "@/utilities/regexs/urlRegex";
+import { requiredString } from "@/utilities/validation/zod-primitives";
 
 /**
  * Preprocessor for optional numeric fields.
@@ -101,10 +102,15 @@ export const createProgramSchema = z
     acceleratorMeta: acceleratorMetadataSchema,
     vcFundMeta: vcFundMetadataSchema,
     rfpMeta: rfpMetadataSchema,
-    name: z
-      .string()
-      .min(3, { message: MESSAGES.REGISTRY.FORM.NAME.MIN })
-      .max(50, { message: MESSAGES.REGISTRY.FORM.NAME.MAX }),
+    name: requiredString("Name", {
+      min: 3,
+      max: 50,
+      messages: {
+        required: MESSAGES.REGISTRY.FORM.NAME.REQUIRED,
+        min: MESSAGES.REGISTRY.FORM.NAME.MIN,
+        max: MESSAGES.REGISTRY.FORM.NAME.MAX,
+      },
+    }),
     dates: z
       .object({
         endsAt: z.date().optional(),
@@ -205,8 +211,12 @@ export const createProgramSchema = z
       .optional()
       .or(z.literal("")),
     amountDistributed: optionalNumber,
-    description: z.string().min(3, {
-      message: MESSAGES.REGISTRY.FORM.DESCRIPTION,
+    description: requiredString("Description", {
+      min: 3,
+      messages: {
+        required: MESSAGES.REGISTRY.FORM.DESCRIPTION_REQUIRED,
+        min: MESSAGES.REGISTRY.FORM.DESCRIPTION,
+      },
     }),
     networkToCreate: optionalNumber,
     budget: optionalNumber,

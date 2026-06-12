@@ -10,9 +10,25 @@ import type {
   UpdatesApiResponse,
 } from "@/types/v2/roadmap";
 import { assignGrantMilestoneOrder } from "@/utilities/milestones/assignGrantMilestoneOrder";
+import {
+  type MilestoneDueDateInput,
+  normalizeMilestoneDueDateMs,
+} from "@/utilities/milestones/milestoneDueDate";
 import { parseChainId } from "@/utilities/parseChainId";
 import { queryClient } from "@/utilities/query-client";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
+
+/**
+ * Resolve a raw milestone due date (ISO string, epoch seconds, or epoch ms)
+ * to UNIX seconds for the `UnifiedMilestone.endsAt` contract, or `undefined`
+ * when the value is missing or corrupted. Delegates to the canonical
+ * {@link normalizeMilestoneDueDateMs} so seconds-vs-ms disambiguation and the
+ * pre-2000 validity floor live in exactly one place.
+ */
+const resolveEndsAtSeconds = (raw: MilestoneDueDateInput): number | undefined => {
+  const ms = normalizeMilestoneDueDateMs(raw);
+  return ms == null ? undefined : Math.floor(ms / 1000);
+};
 
 /**
  * Converts API response to UnifiedMilestone format for backward compatibility
@@ -130,25 +146,12 @@ export const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMil
       0;
 
     // Extract dueDate with fallbacks - API may pass raw data with endsAt
-    let milestoneEndsAt: number | undefined;
-    if (milestone.dueDate) {
-      milestoneEndsAt = Math.floor(new Date(milestone.dueDate).getTime() / 1000);
-    } else if (milestoneAny.data?.endsAt) {
-      // Raw attestation data may have endsAt as Unix timestamp
-      const endsAt = Number(milestoneAny.data.endsAt);
-      if (!isNaN(endsAt) && endsAt > 0) {
-        // Check if seconds (10 digits) or milliseconds (13+ digits)
-        const digitCount = Math.floor(Math.log10(Math.abs(endsAt))) + 1;
-        milestoneEndsAt = digitCount <= 10 ? endsAt : Math.floor(endsAt / 1000);
-      }
-    } else if (milestoneAny.endsAt) {
-      // Direct endsAt field
-      const endsAt = Number(milestoneAny.endsAt);
-      if (!isNaN(endsAt) && endsAt > 0) {
-        const digitCount = Math.floor(Math.log10(Math.abs(endsAt))) + 1;
-        milestoneEndsAt = digitCount <= 10 ? endsAt : Math.floor(endsAt / 1000);
-      }
-    }
+    // (ISO string, epoch seconds, or epoch ms). The shared normalizer owns the
+    // seconds-vs-ms disambiguation and the pre-2000 validity floor.
+    const milestoneEndsAt =
+      resolveEndsAtSeconds(milestone.dueDate) ??
+      resolveEndsAtSeconds(milestoneAny.data?.endsAt) ??
+      resolveEndsAtSeconds(milestoneAny.endsAt);
 
     // Use grant info directly from API response
     const grantInfo = milestone.grant;
@@ -272,22 +275,12 @@ export const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMil
       "";
 
     // Extract endsAt with fallbacks - API may pass raw data with endsAt
-    let updateEndsAt: number | undefined;
-    if (updateAny.dueDate) {
-      updateEndsAt = Math.floor(new Date(updateAny.dueDate).getTime() / 1000);
-    } else if (updateAny.data?.endsAt) {
-      const endsAt = Number(updateAny.data.endsAt);
-      if (!isNaN(endsAt) && endsAt > 0) {
-        const digitCount = Math.floor(Math.log10(Math.abs(endsAt))) + 1;
-        updateEndsAt = digitCount <= 10 ? endsAt : Math.floor(endsAt / 1000);
-      }
-    } else if (updateAny.endsAt) {
-      const endsAt = Number(updateAny.endsAt);
-      if (!isNaN(endsAt) && endsAt > 0) {
-        const digitCount = Math.floor(Math.log10(Math.abs(endsAt))) + 1;
-        updateEndsAt = digitCount <= 10 ? endsAt : Math.floor(endsAt / 1000);
-      }
-    }
+    // (ISO string, epoch seconds, or epoch ms). Routed through the shared
+    // normalizer to keep seconds-vs-ms disambiguation in one place.
+    const updateEndsAt =
+      resolveEndsAtSeconds(updateAny.dueDate) ??
+      resolveEndsAtSeconds(updateAny.data?.endsAt) ??
+      resolveEndsAtSeconds(updateAny.endsAt);
 
     unified.push({
       uid: update.uid,

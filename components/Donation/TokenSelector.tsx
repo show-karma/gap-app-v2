@@ -1,4 +1,5 @@
 "use client";
+import { useId } from "react";
 import { SUPPORTED_NETWORKS, type SupportedToken } from "@/constants/supportedTokens";
 
 interface TokenSelectorProps {
@@ -18,7 +19,9 @@ export function TokenSelector({
     ? SUPPORTED_NETWORKS[selectedToken.chainId]?.chainName || selectedToken.chainName
     : undefined;
 
-  const selectId = `token-selector-${Math.random().toString(36).substr(2, 9)}`;
+  // Stable across renders and SSR-safe; a per-render random id breaks the
+  // label/select association and hydration.
+  const selectId = useId();
 
   return (
     <div className="col-span-4">

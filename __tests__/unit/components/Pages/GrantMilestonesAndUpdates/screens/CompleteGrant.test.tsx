@@ -195,6 +195,20 @@ vi.mock("@/store/communityAdmin", () => ({
   }),
 }));
 
+// Authorization now flows through the tri-state hook. Derive its result from
+// the same ref-backed signals the original store mocks used, so the existing
+// authorization scenarios keep exercising the component's real branches.
+vi.mock("@/hooks/useProjectAuthorization", () => ({
+  useProjectAuthorization: vi.fn(() => ({
+    isAuthorized:
+      mockIsProjectOwner.current ||
+      mockIsProjectAdmin.current ||
+      mockIsOwner.current ||
+      mockIsCommunityAdmin.current,
+    isLoading: false,
+  })),
+}));
+
 vi.mock("@/store/modals/shareDialog", () => ({
   useShareDialogStore: vi.fn(() => ({
     openShareDialog: mockOpenShareDialog,

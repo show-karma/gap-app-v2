@@ -12,6 +12,140 @@ import { cn } from "@/utilities/tailwind";
 
 const skeletonArray = Array.from({ length: 12 }, (_, i) => i);
 
+interface StatsTableHeadProps {
+  sortBy?: string;
+  sortOrder?: string;
+  onSort?: (field: string) => void;
+}
+
+/**
+ * Canonical header row for the milestones stats table. Shared by the live table
+ * and {@link StatsTableSkeleton} so the loading and loaded states cannot diverge
+ * in column count — adding a column here updates both at once.
+ */
+function StatsTableHead({ sortBy = "", sortOrder = "", onSort = () => {} }: StatsTableHeadProps) {
+  return (
+    <thead className="bg-gray-50 dark:bg-zinc-800/50">
+      <tr>
+        <SortableHeader
+          label="Grant Title"
+          field="grantTitle"
+          sortBy={sortBy}
+          sortOrder={sortOrder}
+          onSort={onSort}
+        />
+        <SortableHeader
+          label="Project"
+          field="projectTitle"
+          sortBy={sortBy}
+          sortOrder={sortOrder}
+          onSort={onSort}
+        />
+        <th
+          scope="col"
+          className="h-11 px-4 text-left align-middle font-medium text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400"
+        >
+          Amount
+        </th>
+        <SortableHeader
+          label="Total"
+          field="totalMilestones"
+          sortBy={sortBy}
+          sortOrder={sortOrder}
+          onSort={onSort}
+        />
+        <SortableHeader
+          label="Pending"
+          field="pendingMilestones"
+          sortBy={sortBy}
+          sortOrder={sortOrder}
+          onSort={onSort}
+        />
+        <SortableHeader
+          label="Past Due"
+          field="pastDueMilestones"
+          sortBy={sortBy}
+          sortOrder={sortOrder}
+          onSort={onSort}
+        />
+        <SortableHeader
+          label="Completed"
+          field="completedMilestones"
+          sortBy={sortBy}
+          sortOrder={sortOrder}
+          onSort={onSort}
+        />
+        <th
+          scope="col"
+          className="h-11 px-4 text-left align-middle font-medium text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400"
+        >
+          Actions
+        </th>
+      </tr>
+    </thead>
+  );
+}
+
+/** The 8 skeleton cells for a single stats-table row, in column order. */
+function StatsTableSkeletonRowCells() {
+  return (
+    <>
+      <td className="px-4 py-3">
+        <Skeleton className="h-4 w-36 rounded" />
+      </td>
+      <td className="px-4 py-3">
+        <Skeleton className="h-4 w-28 rounded" />
+      </td>
+      <td className="px-4 py-3">
+        <Skeleton className="h-4 w-20 rounded" />
+      </td>
+      <td className="px-4 py-3">
+        <Skeleton className="h-4 w-10 rounded" />
+      </td>
+      <td className="px-4 py-3">
+        <Skeleton className="h-4 w-10 rounded" />
+      </td>
+      <td className="px-4 py-3">
+        <Skeleton className="h-4 w-10 rounded" />
+      </td>
+      <td className="px-4 py-3">
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-4 w-8 rounded" />
+          <Skeleton className="h-1.5 w-16 rounded-full" />
+        </div>
+      </td>
+      <td className="px-4 py-3">
+        <Skeleton className="h-8 w-16 rounded-md" />
+      </td>
+    </>
+  );
+}
+
+/**
+ * Loading placeholder that reuses {@link StatsTableHead} and the table's own
+ * skeleton row markup, so it is structurally incapable of diverging from the
+ * loaded {@link StatsTable} (the previous hand-rolled page-level skeleton
+ * rendered 6 columns against the table's 8 — issue #1298).
+ */
+export function StatsTableSkeleton() {
+  return (
+    <div className="bg-white dark:bg-zinc-900 rounded-xl border border-gray-200 dark:border-zinc-700 overflow-hidden">
+      <div className="overflow-x-auto">
+        <table className="min-w-full divide-y divide-gray-200 dark:divide-zinc-700">
+          <StatsTableHead />
+          <tbody className="divide-y divide-gray-100 dark:divide-zinc-800">
+            {skeletonArray.map((i) => (
+              <tr key={i}>
+                <StatsTableSkeletonRowCells />
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
 function ProgressBar({ completed, total }: { completed: number; total: number }) {
   if (total === 0) return null;
   const pct = Math.round((completed / total) * 100);
@@ -66,95 +200,12 @@ export function StatsTable({
     <div className="bg-white dark:bg-zinc-900 rounded-xl border border-gray-200 dark:border-zinc-700 overflow-hidden">
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200 dark:divide-zinc-700">
-          <thead className="bg-gray-50 dark:bg-zinc-800/50">
-            <tr>
-              <SortableHeader
-                label="Grant Title"
-                field="grantTitle"
-                sortBy={sortBy}
-                sortOrder={sortOrder}
-                onSort={onSort}
-              />
-              <SortableHeader
-                label="Project"
-                field="projectTitle"
-                sortBy={sortBy}
-                sortOrder={sortOrder}
-                onSort={onSort}
-              />
-              <th
-                scope="col"
-                className="h-11 px-4 text-left align-middle font-medium text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400"
-              >
-                Amount
-              </th>
-              <SortableHeader
-                label="Total"
-                field="totalMilestones"
-                sortBy={sortBy}
-                sortOrder={sortOrder}
-                onSort={onSort}
-              />
-              <SortableHeader
-                label="Pending"
-                field="pendingMilestones"
-                sortBy={sortBy}
-                sortOrder={sortOrder}
-                onSort={onSort}
-              />
-              <SortableHeader
-                label="Past Due"
-                field="pastDueMilestones"
-                sortBy={sortBy}
-                sortOrder={sortOrder}
-                onSort={onSort}
-              />
-              <SortableHeader
-                label="Completed"
-                field="completedMilestones"
-                sortBy={sortBy}
-                sortOrder={sortOrder}
-                onSort={onSort}
-              />
-              <th
-                scope="col"
-                className="h-11 px-4 text-left align-middle font-medium text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400"
-              >
-                Actions
-              </th>
-            </tr>
-          </thead>
+          <StatsTableHead sortBy={sortBy} sortOrder={sortOrder} onSort={onSort} />
           <tbody className="divide-y divide-gray-100 dark:divide-zinc-800">
             {isLoading ? (
               skeletonArray.map((i) => (
                 <tr key={i}>
-                  <td className="px-4 py-3">
-                    <Skeleton className="h-4 w-36 rounded" />
-                  </td>
-                  <td className="px-4 py-3">
-                    <Skeleton className="h-4 w-28 rounded" />
-                  </td>
-                  <td className="px-4 py-3">
-                    <Skeleton className="h-4 w-20 rounded" />
-                  </td>
-                  <td className="px-4 py-3">
-                    <Skeleton className="h-4 w-10 rounded" />
-                  </td>
-                  <td className="px-4 py-3">
-                    <Skeleton className="h-4 w-10 rounded" />
-                  </td>
-                  <td className="px-4 py-3">
-                    <Skeleton className="h-4 w-10 rounded" />
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-2">
-                      <Skeleton className="h-4 w-8 rounded" />
-                      <Skeleton className="h-1.5 w-16 rounded-full" />
-                    </div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <Skeleton className="h-8 w-16 rounded-md" />
-                  </td>
+                  <StatsTableSkeletonRowCells />
                 </tr>
               ))
             ) : error ? (

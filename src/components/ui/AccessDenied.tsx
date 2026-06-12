@@ -170,7 +170,15 @@ export function AccessDenied({
     requiredList,
   ]);
 
-  if (isLoading || isRbacLoading || (communitySlug && isCustomLoading)) {
+  // `isRbacLoading`/`isCustomLoading` only matter when we actually render
+  // RBAC-derived content, which happens exclusively on the community-scoped
+  // path (custom Markdown messages keyed off detected roles). Outside a
+  // `PermissionProvider`, `usePermissionContext()` returns the default context
+  // whose `isLoading` is permanently `true`, so gating every denial on it would
+  // strand admin / faucet / unauthenticated denials on the skeleton forever
+  // (#1213, #1443). Scope the wait to the community path that consumes it.
+  const waitingForCommunityRbac = !!communitySlug && (isRbacLoading || isCustomLoading);
+  if (isLoading || waitingForCommunityRbac) {
     return <DenialSkeleton />;
   }
 
