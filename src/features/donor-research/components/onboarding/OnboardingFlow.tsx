@@ -76,10 +76,10 @@ export function OnboardingFlow() {
     if (advisorQuery.isSuccess && advisorQuery.data) {
       router.replace(PAGES.DONOR_RESEARCH.INDEX);
     }
-    // `router` is intentionally omitted: the app-router instance is
-    // referentially stable, and the repo Pre-PR checklist disallows using
-    // useRouter() return values directly as effect dependencies.
-  }, [advisorQuery.isSuccess, advisorQuery.data]);
+    // `router` is kept in the deps: the app-router instance is referentially
+    // stable so it never causes a re-run, and listing it satisfies the
+    // exhaustive-deps gate (react-doctor) rather than fighting it.
+  }, [advisorQuery.isSuccess, advisorQuery.data, router]);
 
   // Move focus to the active step's heading on every transition. This is the
   // canonical wizard focus pattern (WCAG 2.4.3 Focus Order) and gives any
