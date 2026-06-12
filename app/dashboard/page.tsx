@@ -11,5 +11,9 @@ export const metadata: Metadata = customMetadata({
 });
 
 export default function Page() {
-  return <Dashboard />;
+  return (
+    <main className="flex w-full flex-col">
+      <Dashboard />
+    </main>
+  );
 }

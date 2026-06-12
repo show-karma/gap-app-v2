@@ -7,6 +7,15 @@ vi.mock("@/utilities/enviromentVars", () => ({
     NEXT_PUBLIC_GAP_INDEXER_URL: "http://localhost:4000",
   },
 }));
+// The service pulls in isCommunityAdminOfAny, which imports the GAP SDK and the
+// RPC config. gapRpcConfig reads envVars.RPC.MAINNET at module load, and the
+// mocked envVars above intentionally omits RPC — so the real module would throw
+// "Cannot read properties of undefined (reading 'MAINNET')" on import. Stub the
+// SDK/RPC chain so importing the service stays cheap and side-effect free.
+vi.mock("@show-karma/karma-gap-sdk", () => ({ GAP: { getCommunityResolver: vi.fn() } }));
+vi.mock("@/utilities/gapRpcConfig", () => ({ getGapRpcConfig: () => ({}) }));
+vi.mock("@/utilities/queries/v2/community", () => ({ getCommunityDetails: vi.fn() }));
+vi.mock("@/components/Utilities/errorManager", () => ({ errorManager: vi.fn() }));
 
 // Create a persistent mock instance using var (hoisted) so it's available in vi.mock factory
 var mockAxiosInstance: vi.Mocked<AxiosInstance>;

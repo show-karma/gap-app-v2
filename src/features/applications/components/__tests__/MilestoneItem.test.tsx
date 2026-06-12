@@ -33,6 +33,27 @@ describe("MilestoneItem", () => {
     expect(screen.getByTestId("milestone-title-input-0")).toHaveValue("Test Milestone");
   });
 
+  it("derives required indicators from the schema: description has no asterisk, others do (#1179)", () => {
+    render(
+      <MilestoneItem
+        index={0}
+        milestone={mockMilestone}
+        onUpdate={mockOnUpdate}
+        onRemove={mockOnRemove}
+        canRemove={true}
+      />
+    );
+
+    // Required sub-fields keep their asterisk.
+    expect(screen.getByText("Title").parentElement?.textContent).toContain("*");
+    expect(screen.getByText("Due Date").parentElement?.textContent).toContain("*");
+    expect(screen.getByText("Funding Requested").parentElement?.textContent).toContain("*");
+    expect(screen.getByText("Completion Criteria").textContent).toContain("*");
+
+    // Description is optional now, so its label must NOT advertise an asterisk.
+    expect(screen.getByText("Description").textContent).not.toContain("*");
+  });
+
   it("should display milestoneUID when present", () => {
     const milestoneWithUID: MilestoneData = {
       ...mockMilestone,

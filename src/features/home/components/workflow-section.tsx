@@ -28,9 +28,9 @@ interface ProductRow {
 
 const ROWS: ProductRow[] = [
   {
-    audience: "For donors and advisors",
-    headline: "Donor Research: a research brief for every gift",
-    body: "Search by cause, geography, or grant size and get a ranked shortlist in 10 minutes. Every pick comes with a composite score, the inputs that produced it, and the receipts attached.",
+    audience: "For donor advisors",
+    headline: "Generate a donor-ready research brief in 10 minutes",
+    body: "Donor advisors use Karma to build a ranked shortlist for any cause, geography, or grant size. Every brief ships with a composite score, the inputs that produced it, and the receipts attached, so you save hours of diligence and hand donors a recommendation they can act on with confidence.",
     features: [
       "Composite scoring with mission match, online presence, and IRS 990 recency",
       "IRS Pub 78, latest 990, and state registries verified up front",
@@ -39,14 +39,14 @@ const ROWS: ProductRow[] = [
     visual: {
       kind: "single",
       src: "/images/homepage/karma-donor-research-brief.png",
-      alt: "A Karma Donor Research brief showing the lead recommendation with composite match score, breakdown across mission match, online presence and IRS 990 recency, plus three-year financials and recent press coverage",
+      alt: "A Karma Nonprofit Research brief showing the lead recommendation with composite match score, breakdown across mission match, online presence and IRS 990 recency, plus three-year financials and recent press coverage",
       width: 1500,
       height: 1049,
     },
     caption: "A research brief from a recent gift, with the score breakdown.",
-    primaryCta: { label: "Explore Donor Research", href: PAGES.DONOR_ADVISORS },
+    primaryCta: { label: "Explore Nonprofit Research", href: PAGES.DONOR_ADVISORS },
     secondaryCta: {
-      label: "Talk to a donor advisor",
+      label: "Get a demo",
       href: SOCIALS.DONOR_PARTNER_FORM,
       external: true,
     },
@@ -208,8 +208,8 @@ export function WorkflowSection() {
                 One platform for two motions.
               </h2>
               <p className="text-muted-foreground text-base md:text-lg leading-[160%]">
-                Donor Research for one-off gifts. Funding platform for running grant programs. Same
-                data, same standards, different surfaces.
+                Nonprofit Research for one-off gifts. Funding platform for running grant programs.
+                Same data, same standards, different surfaces.
               </p>
             </div>
           </ScrollReveal>

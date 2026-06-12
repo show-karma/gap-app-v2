@@ -46,6 +46,21 @@ describe("createProgramSchema", () => {
       }
     });
 
+    it("should report 'required' (not the min-length message) for an empty name (issue #1506)", () => {
+      const result = createProgramSchema.safeParse({
+        name: "",
+        description: "Test description",
+        shortDescription: "Short desc",
+        ...validEmails,
+      });
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        const nameIssue = result.error.issues.find((issue) => issue.path[0] === "name");
+        expect(nameIssue?.message).toBe("Program name is required");
+      }
+    });
+
     it("should reject name longer than 50 characters", () => {
       const result = createProgramSchema.safeParse({
         name: "a".repeat(51),
@@ -98,7 +113,7 @@ describe("createProgramSchema", () => {
       expect(result.success).toBe(true);
     });
 
-    it("should reject description shorter than 3 characters", () => {
+    it("should reject description shorter than 3 characters with the min-length message (issue #1506)", () => {
       const result = createProgramSchema.safeParse({
         name: "Test Program",
         description: "ab",
@@ -108,7 +123,23 @@ describe("createProgramSchema", () => {
 
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.issues[0].message).toBe("Description is required");
+        const descIssue = result.error.issues.find((issue) => issue.path[0] === "description");
+        expect(descIssue?.message).toBe("Description must be at least 3 characters");
+      }
+    });
+
+    it("should report 'required' for an empty description (issue #1506)", () => {
+      const result = createProgramSchema.safeParse({
+        name: "Test Program",
+        description: "",
+        shortDescription: "Short desc",
+        ...validEmails,
+      });
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        const descIssue = result.error.issues.find((issue) => issue.path[0] === "description");
+        expect(descIssue?.message).toBe("Description is required");
       }
     });
 
