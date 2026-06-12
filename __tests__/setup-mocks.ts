@@ -8,11 +8,51 @@
  * vi.mock() call -- file-level mocks take precedence over setup-file mocks.
  *
  * Modules mocked here:
+ *   - next/font/google + next/font/local  (compiler features — see below)
  *   - @/utilities/enviromentVars  (was in 26+ files with identical shape)
  *   - @/components/Utilities/errorManager  (was in 31 files)
  *   - react-hot-toast  (was in 29 files)
  *   - next/navigation  (used by components that call useRouter/usePathname)
  */
+
+// ---------------------------------------------------------------------------
+// next/font/google + next/font/local
+// `next/font` is a Next.js *compiler* feature: in a real build the loader
+// calls (e.g. `Spectral({ ... })`) are transformed at build time. Under
+// vitest's jsdom runtime the real module is never compiled, so calling a font
+// loader throws `TypeError: <Font> is not a function`. We replace each loader
+// with a stub returning the NextFont shape the codebase reads
+// (`className` / `variable` / `style`).
+//
+// IMPORTANT: the named exports MUST be listed explicitly. A Proxy-based module
+// factory does NOT survive vitest's static export enumeration, so any font
+// imported by name (`import { Spectral } from "next/font/google"`) would come
+// back `undefined`. When the codebase starts using a NEW Google font, add it
+// to the `next/font/google` factory below — that is the single place to keep
+// in sync, and a missing entry surfaces as a loud, attributable CI failure on
+// the PR that introduces the font.
+//
+// Fonts currently used in source:
+//   - Spectral            (app/layout.tsx, donor-research report-brief/fonts.ts)
+//   - Bricolage_Grotesque (donor-research report-brief/fonts.ts)
+//
+// Individual test files may still override these with their own vi.mock().
+// ---------------------------------------------------------------------------
+const mockFontLoader = () => ({
+  className: "mock-font",
+  variable: "--mock-font",
+  style: { fontFamily: "mock" },
+});
+
+vi.mock("next/font/google", () => ({
+  Spectral: mockFontLoader,
+  Bricolage_Grotesque: mockFontLoader,
+}));
+
+vi.mock("next/font/local", () => ({
+  __esModule: true,
+  default: mockFontLoader,
+}));
 
 // ---------------------------------------------------------------------------
 // next/navigation

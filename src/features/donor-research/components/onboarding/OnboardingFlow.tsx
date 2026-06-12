@@ -302,7 +302,7 @@ function WelcomeStep({
         Defensible philanthropy research for your donor clients.
       </h2>
       <p className="mb-4 text-sm text-muted-foreground">
-        Karma Donor Research helps boutique advisors produce current, ranked nonprofit
+        Karma Nonprofit Research helps boutique advisors produce current, ranked nonprofit
         recommendations grounded in real-time public data — and reach out to organizations directly
         when public data isn't enough.
       </p>

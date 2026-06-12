@@ -16,10 +16,35 @@ on:
       - '.github/PULL_REQUEST_TEMPLATE.md'
       - 'LICENSE'
       - '.gitignore'
+  # Post-merge guard: two individually-green PRs can still combine red on
+  # main (a semantic merge race). Branch protection cannot catch this, so we
+  # re-run the full suite on every push to main and file/update a tracking
+  # issue if the baseline goes red — the fastest signal short of a merge queue.
+  push:
+    branches: [main]
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - '**/*.png'
+      - '**/*.jpg'
+      - '**/*.jpeg'
+      - '**/*.svg'
+      - '**/*.gif'
+      - '.github/ISSUE_TEMPLATE/**'
+      - '.github/PULL_REQUEST_TEMPLATE.md'
+      - 'LICENSE'
+      - '.gitignore'
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
 
 concurrency:
-  group: pr-tests-${{ github.event.pull_request.number }}
-  cancel-in-progress: true
+  # PRs cancel in-progress runs per PR; pushes to main are keyed by SHA so a
+  # post-merge baseline run is never cancelled by a later push.
+  group: pr-tests-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   # ── Step 1: determine test scope ────────────────────────────────────────────
@@ -41,6 +66,16 @@ jobs:
       - name: Detect test scope
         id: detect
         run: |
+          # Post-merge runs on `main` always execute the full suite (2 shards):
+          # there is no PR base to diff against, and the whole point of the
+          # push trigger is to catch a red baseline regardless of what changed.
+          if [ "${{ github.event_name }}" = "push" ]; then
+            echo "push event on main — forcing full mode"
+            echo "mode=full" >> "$GITHUB_OUTPUT"
+            echo "shard_count=2" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
           BASE="${{ github.event.pull_request.base.sha }}"
 
           # All changed TS/TSX source files (including test files — they affect scope)
@@ -125,12 +160,8 @@ jobs:
       - name: Run tests (changed mode)
         id: tests
         if: needs.scope.outputs.mode == 'changed'
-        # Pre-existing test debt (issue #1306) — main currently fails dozens
-        # of test files but is hidden by this same flag. Removing it is
-        # tracked as separate cleanup; do not gate this CI-optimization PR
-        # on a pre-existing red baseline. The step's `outcome` is still
-        # surfaced via the job output so the report comment shows reality.
-        continue-on-error: true
+        # No continue-on-error: a red test must fail the job. The aggregated
+        # `report` check is what should be marked required on `main`.
         run: |
           pnpm run test -- \
             --reporter=dot \
@@ -144,7 +175,6 @@ jobs:
       - name: Run tests (full mode, shard ${{ matrix.shard }}/2)
         id: tests_full
         if: needs.scope.outputs.mode == 'full'
-        continue-on-error: true
         run: |
           pnpm run test -- \
             --reporter=dot \
@@ -172,9 +202,13 @@ jobs:
           path: /tmp/shard-${{ matrix.shard }}-outcome.txt
           retention-days: 1
 
-  # ── Step 3 & 4: aggregate results and post PR comment ───────────────────────
+  # ── Step 3 & 4: aggregate shard outcomes, gate the merge, report ────────────
+  # This job produces the single stable check name ("report") that is the same
+  # whether the run used 1 shard (changed mode) or 2 (full mode), which is what
+  # should be marked as the REQUIRED status check on `main`. It fails the build
+  # (core.setFailed) whenever any shard was not green — that is the hard gate.
   report:
-    if: always() && github.event_name == 'pull_request'
+    if: always()
     needs: [scope, test]
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -186,7 +220,7 @@ jobs:
           path: /tmp/outcomes
           merge-multiple: true
 
-      - name: Comment PR with test results
+      - name: Aggregate, report, and gate
         uses: actions/github-script@v8
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -199,9 +233,16 @@ jobs:
             const shardCount = parseInt('${{ needs.scope.outputs.shard_count }}', 10);
 
             // Read all shard outcome files; if any is not 'success' → failed.
+            // Fewer outcome files than expected shards means a test job never
+            // produced an outcome (runner loss, crash, cancellation, failed
+            // upload) — treat that as a failure too, so the gate never
+            // silently passes on a partial result.
             let passed = true;
             try {
               const files = fs.readdirSync(outcomesDir);
+              if (!Number.isInteger(shardCount) || shardCount < 1 || files.length < shardCount) {
+                passed = false;
+              }
               for (const file of files) {
                 const content = fs.readFileSync(path.join(outcomesDir, file), 'utf8').trim();
                 if (content !== 'success') {
@@ -210,7 +251,6 @@ jobs:
                 }
               }
             } catch (e) {
-              // Artifact download failed (e.g. test job never ran) — treat as failure.
               passed = false;
             }
 
@@ -218,35 +258,91 @@ jobs:
               ? '`changed` (affected files only)'
               : `\`full\` (${shardCount} shards)`;
 
-            const marker = '<!-- pr-tests-report -->';
+            // ── PR event: post/update the test-result comment ──────────────
+            if (context.eventName === 'pull_request') {
+              const marker = '<!-- pr-tests-report -->';
+              const body = passed
+                ? `${marker}\n## ✅ All Tests Passed!\n\nRan in **${modeLabel}** mode.\n\n---\n*Automated test report*`
+                : `${marker}\n## ❌ Tests Failed — merge blocked\n\nRan in **${modeLabel}** mode. One or more test files failed; this **blocks merge** (the \`report\` check is required on \`main\`).\n\nReproduce locally with \`pnpm test\` (or \`pnpm test:unit\`), then re-run only the affected files. If the failure was introduced by a previously merged PR rather than your change (\`changed\` mode re-runs co-imported modules), say so on the PR and escalate — do **not** force-merge past a red gate.\n\n---\n*Automated test report*`;
 
-            const body = passed
-              ? `${marker}\n## ✅ All Tests Passed!\n\nRan in **${modeLabel}** mode.\n\n---\n*Automated test report*`
-              : `${marker}\n## ❌ Tests Failed\n\nRan in **${modeLabel}** mode. Check the workflow logs for details.\n\n_Note: this PR's test job uses \`continue-on-error\` to allow merging while pre-existing test debt is being cleaned up (issue #1306). Failures here will not block merge until #1306 is resolved._\n\n---\n*Automated test report*`;
-
-            const { data: comments } = await github.rest.issues.listComments({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-            });
-
-            // Match by hidden marker so we don't clobber unrelated bot comments.
-            const botComment = comments.find(comment =>
-              comment.user.type === 'Bot' && comment.body.includes(marker)
-            );
-
-            if (botComment) {
-              await github.rest.issues.updateComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                comment_id: botComment.id,
-                body,
-              });
-            } else {
-              await github.rest.issues.createComment({
+              const { data: comments } = await github.rest.issues.listComments({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: context.issue.number,
-                body,
               });
+              const botComment = comments.find(comment =>
+                comment.user.type === 'Bot' && comment.body.includes(marker)
+              );
+              if (botComment) {
+                await github.rest.issues.updateComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  comment_id: botComment.id,
+                  body,
+                });
+              } else {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: context.issue.number,
+                  body,
+                });
+              }
+            }
+
+            // ── push-to-main event: file/update a tracking issue on red ────
+            // No PR to comment on; instead open (or update) a single tracking
+            // issue so a red baseline is loud and attributable. On green, close
+            // any open tracker so the signal stays accurate.
+            if (context.eventName === 'push') {
+              const issueMarker = '<!-- main-baseline-red -->';
+              const issueTitle = 'main test baseline is red';
+              const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+
+              const { data: openIssues } = await github.rest.issues.listForRepo({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                state: 'open',
+                labels: 'ci',
+                per_page: 100,
+              });
+              const tracker = openIssues.find(i => i.body && i.body.includes(issueMarker));
+
+              if (!passed) {
+                const issueBody = `${issueMarker}\nThe full unit suite failed on a push to \`main\` (commit \`${context.sha}\`).\n\nRan in **${modeLabel}** mode. Logs: ${runUrl}\n\nThis is a post-merge baseline regression — likely a semantic merge race between two individually-green PRs. Fix forward or revert the offending merge, then push to clear this issue.\n\nReproduce locally with \`pnpm test\`.`;
+                if (tracker) {
+                  await github.rest.issues.createComment({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: tracker.number,
+                    body: `Still red on \`${context.sha}\`. Logs: ${runUrl}`,
+                  });
+                } else {
+                  await github.rest.issues.create({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    title: issueTitle,
+                    body: issueBody,
+                    labels: ['ci', 'bug'],
+                  });
+                }
+              } else if (tracker) {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: tracker.number,
+                  body: `Baseline green again on \`${context.sha}\`. Closing. Logs: ${runUrl}`,
+                });
+                await github.rest.issues.update({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: tracker.number,
+                  state: 'closed',
+                });
+              }
+            }
+
+            // ── Hard gate: fail this job (and thus the required check) on red ─
+            if (!passed) {
+              core.setFailed('Unit tests failed — see logs. This blocks merge.');
             }
