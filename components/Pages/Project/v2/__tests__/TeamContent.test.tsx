@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom";
+import { useIsAdminOfCommunities } from "@/hooks/communities/useIsAdminOfCommunities";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { TeamContent } from "../TeamContent/TeamContent";
 
@@ -24,6 +25,11 @@ vi.mock("@/src/core/rbac/hooks/use-permissions", () => ({
     data: null,
     isLoading: false,
   }),
+}));
+
+// Mock community admin hook (on-chain check is exercised in its own unit test)
+vi.mock("@/hooks/communities/useIsAdminOfCommunities", () => ({
+  useIsAdminOfCommunities: vi.fn(() => ({ isCommunityAdmin: false, isLoading: false })),
 }));
 
 // Mock wagmi
@@ -203,6 +209,40 @@ describe("TeamContent", () => {
       render(<TeamContent />);
 
       expect(screen.getByTestId("invite-member-dialog")).toBeInTheDocument();
+    });
+
+    it("should show invite member dialog for community admins who are not project owners", () => {
+      (useProjectStore as unknown as ReturnType<typeof vi.fn>).mockImplementation(
+        (selector?: (state: unknown) => unknown) => {
+          const state = { project: mockProject, isProjectOwner: false, isProjectAdmin: false };
+          return typeof selector === "function" ? selector(state) : state;
+        }
+      );
+      (useIsAdminOfCommunities as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
+        isCommunityAdmin: true,
+        isLoading: false,
+      });
+
+      render(<TeamContent />);
+
+      expect(screen.getByTestId("invite-member-dialog")).toBeInTheDocument();
+    });
+
+    it("should hide invite member dialog when user has no qualifying role", () => {
+      (useProjectStore as unknown as ReturnType<typeof vi.fn>).mockImplementation(
+        (selector?: (state: unknown) => unknown) => {
+          const state = { project: mockProject, isProjectOwner: false, isProjectAdmin: false };
+          return typeof selector === "function" ? selector(state) : state;
+        }
+      );
+      (useIsAdminOfCommunities as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
+        isCommunityAdmin: false,
+        isLoading: false,
+      });
+
+      render(<TeamContent />);
+
+      expect(screen.queryByTestId("invite-member-dialog")).not.toBeInTheDocument();
     });
   });
 

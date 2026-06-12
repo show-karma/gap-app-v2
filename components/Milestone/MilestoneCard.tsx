@@ -12,6 +12,7 @@ import {
   getEffectiveMilestoneStatus,
   MILESTONE_STATUS_LABEL,
 } from "@/utilities/milestones/getEffectiveMilestoneStatus";
+import { normalizeMilestoneDueDateMs } from "@/utilities/milestones/milestoneDueDate";
 import { PAGES } from "@/utilities/pages";
 import { ReadMore } from "@/utilities/ReadMore";
 import { cn } from "@/utilities/tailwind";
@@ -111,9 +112,13 @@ export const MilestoneCard = ({ milestone, isAuthorized, canEdit }: MilestoneCar
     grantMilestone?.completionDetails?.deliverables ||
     (grantMilestone?.milestone.completed?.data as any)?.deliverables;
 
+  // Single normalized due timestamp drives both the status badge and the
+  // "Due by" line so they cannot disagree, and corrupted endsAt degrades to
+  // no due date rather than a 1970 date plus a spurious past-due badge.
+  const dueMs = normalizeMilestoneDueDateMs(endsAt);
   const effectiveStatus = getEffectiveMilestoneStatus(
     completed ? MilestoneLifecycleStatus.COMPLETED : MilestoneLifecycleStatus.PENDING,
-    endsAt && endsAt > 0 ? endsAt * 1000 : null
+    dueMs
   );
   const isPastDue = effectiveStatus === MilestoneLifecycleStatus.PAST_DUE;
 
@@ -231,9 +236,9 @@ export const MilestoneCard = ({ milestone, isAuthorized, canEdit }: MilestoneCar
         </div>
 
         {/* Due date */}
-        {type === "grant" && endsAt ? (
+        {type === "grant" && dueMs != null ? (
           <div className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400">
-            <span>Due by {formatDate(endsAt)}</span>
+            <span>Due by {formatDate(dueMs)}</span>
           </div>
         ) : null}
 

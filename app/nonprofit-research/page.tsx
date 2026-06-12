@@ -3,10 +3,10 @@ import { DonorResearchHome } from "@/src/features/donor-research/components/comm
 import { customMetadata } from "@/utilities/meta";
 
 export const metadata: Metadata = customMetadata({
-  title: "Donor Research",
+  title: "Nonprofit Research",
   description:
     "Research current, ranked nonprofit recommendations for donor clients with compliance verification and live activity signals.",
-  path: "/donor-research",
+  path: "/nonprofit-research",
   robots: { index: false, follow: true },
 });
 

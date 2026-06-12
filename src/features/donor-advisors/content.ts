@@ -1,5 +1,5 @@
 /**
- * Canonical Donor Research marketing copy for the /donor-advisors
+ * Canonical Nonprofit Research marketing copy for the /donor-advisors
  * features section.
  */
 
@@ -38,7 +38,7 @@ export const donorResearchFeatures: MarketingFeature[] = [
 
 export const donorResearchBriefPreview = {
   src: "/images/homepage/karma-donor-research-brief.png",
-  alt: "Karma Donor Research brief: lead recommendation Northcoast Environmental Center with composite match 74/100, score breakdown across mission match, online presence, and IRS 990 recency, plus three-year financials and recent press coverage",
+  alt: "Karma Nonprofit Research brief: lead recommendation Northcoast Environmental Center with composite match 74/100, score breakdown across mission match, online presence, and IRS 990 recency, plus three-year financials and recent press coverage",
   width: 1500,
   height: 1049,
   caption: "From a recent research brief.",
