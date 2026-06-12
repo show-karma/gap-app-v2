@@ -17,7 +17,7 @@ export const metadata = customMetadata({
 
 export default function Projects() {
   return (
-    <div className="flex flex-col w-full">
+    <main className="flex flex-col w-full">
       <CollectionPageJsonLd
         name="Explore Grant-Funded Projects"
         description="Discover thousands of projects using Karma to track grants, share progress, and build reputation. Explore projects making a difference across funding ecosystems."
@@ -28,6 +28,6 @@ export default function Projects() {
         <ProjectsExplorer />
       </Suspense>
       <ProjectsStatsSection />
-    </div>
+    </main>
   );
 }

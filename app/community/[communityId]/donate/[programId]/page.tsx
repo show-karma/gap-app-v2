@@ -23,8 +23,8 @@ export default async function Page(props: Props) {
   });
 
   return (
-    <div className="flex flex-col w-full max-w-full sm:px-3 md:px-4 px-6 py-2">
+    <main className="flex flex-col w-full max-w-full sm:px-3 md:px-4 px-6 py-2">
       <CommunityGrantsDonate initialProjects={initialProjects} />
-    </div>
+    </main>
   );
 }
