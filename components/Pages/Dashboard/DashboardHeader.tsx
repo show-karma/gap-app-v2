@@ -25,6 +25,7 @@ export function DashboardHeader({ address }: DashboardHeaderProps) {
           alt="Farcaster avatar"
           width={48}
           height={48}
+          unoptimized
           className="h-12 w-12 min-h-12 min-w-12 rounded-full border border-border"
         />
       ) : address ? (

@@ -110,14 +110,16 @@ export default async function fetchData<T = any>(
     const pageInfo = resData?.pageInfo || null;
     return [resData, null, pageInfo, res.status];
   } catch (err) {
-    let error = "";
+    let error: unknown = "";
     let status = 500;
-    if (axios.isAxiosError(err) && err.response) {
-      error = err.response.data?.message || err.message;
-      status = err.response.status;
+    const response = (err as { response?: { data?: { message?: string }; status?: number } })
+      ?.response;
+    if (!response) {
+      error = err;
     } else {
-      error = err instanceof Error ? err.message : String(err);
+      error = response.data?.message || (err as { message?: string }).message;
+      status = response.status ?? 500;
     }
-    return [null, error, null, status];
+    return [null, error as string, null, status];
   }
 }

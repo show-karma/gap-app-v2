@@ -125,6 +125,7 @@ export function NavbarUserMenu() {
                 alt="Farcaster avatar"
                 width={32}
                 height={32}
+                unoptimized
                 className="h-8 w-8 min-h-8 min-w-8 max-h-8 max-w-8 rounded-full"
               />
             ) : address ? (

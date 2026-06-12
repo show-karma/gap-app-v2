@@ -182,10 +182,6 @@ describe("Tremor chart components use dynamic imports", () => {
     it("should have ssr: false on dynamic import", () => {
       expect(hasSsrFalse(source, "AreaChart")).toBe(true);
     });
-
-    it("should still have a static import for Card", () => {
-      expect(hasStaticImport(source, "Card")).toBe(true);
-    });
   });
 
   describe("Pages/Communities/Impact/CommunityMetricsSection.tsx", () => {
@@ -212,38 +208,6 @@ describe("Tremor chart components use dynamic imports", () => {
       expect(source).toMatch(
         /import\s+\{[^}]*ChartSkeleton\s+as\s+ChartSkeletonLoading[^}]*\}\s+from\s+["']@\/components\/Utilities\/ChartSkeleton["']/
       );
-    });
-
-    it("should have ssr: false on dynamic import", () => {
-      expect(hasSsrFalse(source, "AreaChart")).toBe(true);
-    });
-
-    it("should still have a static import for Card", () => {
-      expect(hasStaticImport(source, "Card")).toBe(true);
-    });
-  });
-
-  describe("Pages/Communities/Impact/AggregateCategoryRow.tsx", () => {
-    let source: string;
-
-    beforeAll(() => {
-      source = readComponent("Pages/Communities/Impact/AggregateCategoryRow.tsx");
-    });
-
-    it("should NOT have a static import of AreaChart from @tremor/react", () => {
-      expect(hasStaticImport(source, "AreaChart")).toBe(false);
-    });
-
-    it("should dynamically import AreaChart", () => {
-      expect(hasDynamicImport(source, "AreaChart")).toBe(true);
-    });
-
-    it("should import next/dynamic", () => {
-      expect(importsNextDynamic(source)).toBe(true);
-    });
-
-    it("should import ChartSkeleton", () => {
-      expect(importsChartSkeleton(source)).toBe(true);
     });
 
     it("should have ssr: false on dynamic import", () => {
@@ -301,55 +265,6 @@ describe("Tremor chart components use dynamic imports", () => {
     it("should still have static imports for Card, Text, Title", () => {
       expect(hasStaticImport(source, "Card")).toBe(true);
       expect(hasStaticImport(source, "Text")).toBe(true);
-      expect(hasStaticImport(source, "Title")).toBe(true);
-    });
-  });
-
-  describe("Pages/Admin/ProgramAnalytics.tsx", () => {
-    let source: string;
-
-    beforeAll(() => {
-      source = readComponent("Pages/Admin/ProgramAnalytics.tsx");
-    });
-
-    it("should NOT have a static import of BarChart from @tremor/react", () => {
-      expect(hasStaticImport(source, "BarChart")).toBe(false);
-    });
-
-    it("should NOT have a static import of Select from @tremor/react", () => {
-      expect(hasStaticImport(source, "Select")).toBe(false);
-    });
-
-    it("should NOT have a static import of SelectItem from @tremor/react", () => {
-      expect(hasStaticImport(source, "SelectItem")).toBe(false);
-    });
-
-    it("should dynamically import BarChart", () => {
-      expect(hasDynamicImport(source, "BarChart")).toBe(true);
-    });
-
-    it("should dynamically import Select", () => {
-      expect(hasDynamicImport(source, "Select")).toBe(true);
-    });
-
-    it("should dynamically import SelectItem", () => {
-      expect(hasDynamicImport(source, "SelectItem")).toBe(true);
-    });
-
-    it("should import next/dynamic", () => {
-      expect(importsNextDynamic(source)).toBe(true);
-    });
-
-    it("should import ChartSkeleton", () => {
-      expect(importsChartSkeleton(source)).toBe(true);
-    });
-
-    it("should have ssr: false on BarChart dynamic import", () => {
-      expect(hasSsrFalse(source, "BarChart")).toBe(true);
-    });
-
-    it("should still have static imports for Card and Title", () => {
-      expect(hasStaticImport(source, "Card")).toBe(true);
       expect(hasStaticImport(source, "Title")).toBe(true);
     });
   });

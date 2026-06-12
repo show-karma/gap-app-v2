@@ -1,4 +1,3 @@
-import { isAxiosError } from "axios";
 import type { FundingProgramMetadata } from "@/src/features/funding-map/types/funding-program";
 import type {
   ExportFormat,
@@ -195,16 +194,15 @@ export const fundingProgramsAPI = {
       );
       return response.data || null;
     } catch (error) {
-      if (isAxiosError(error)) {
-        if (error.response?.status === 404) {
-          return null;
-        }
-        throw new Error(
-          error.response?.data?.message || error.message || "Failed to fetch program configuration"
-        );
+      const response = (error as { response?: { status?: number; data?: { message?: string } } })
+        ?.response;
+      if (response?.status === 404) {
+        return null;
       }
       throw new Error(
-        error instanceof Error ? error.message : "Failed to fetch program configuration"
+        response?.data?.message ||
+          (error instanceof Error ? error.message : "") ||
+          "Failed to fetch program configuration"
       );
     }
   },
