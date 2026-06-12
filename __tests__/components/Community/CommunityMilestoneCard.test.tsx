@@ -36,16 +36,12 @@ vi.mock("@/utilities/ReadMore", () => ({
   ),
 }));
 
-// Mock formatDate utility
-vi.mock("@/utilities/formatDate", () => ({
-  formatDate: vi.fn((dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
-  }),
+// Keep real exports (normalizeTimestamp backs milestoneDueDate's normalizer).
+vi.mock("@/utilities/formatDate", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/utilities/formatDate")>()),
+  formatDate: vi.fn((d: string) =>
+    new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+  ),
 }));
 
 // Mock MilestoneCompletionInfo component
