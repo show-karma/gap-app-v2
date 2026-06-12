@@ -55,8 +55,8 @@ export function Hero() {
               "max-w-[760px] w-full md:mx-auto"
             )}
           >
-            Karma Donor Research scores thousands of 501(c)(3)s against your cause, geography, and
-            grant size, then returns a ranked shortlist. Every pick gets a compliance check, an
+            Karma Nonprofit Research scores thousands of 501(c)(3)s against your cause, geography,
+            and grant size, then returns a ranked shortlist. Every pick gets a compliance check, an
             activity score, and a mission match, with the receipts attached.
           </p>
         </ScrollReveal>
@@ -64,7 +64,7 @@ export function Hero() {
         <ScrollReveal variant="fade-up" delay={300}>
           <div className="w-full flex flex-col sm:flex-row justify-start md:justify-center gap-3 max-w-[640px] md:mx-auto">
             <Button asChild className="rounded-md font-semibold px-6 py-2.5">
-              <Link href={PAGES.DONOR_RESEARCH.INDEX}>Try Donor Research</Link>
+              <Link href={PAGES.DONOR_RESEARCH.INDEX}>Try Nonprofit Research</Link>
             </Button>
             <Button asChild variant="outline" className="rounded-md font-medium px-6 py-2.5">
               <Link href={SOCIALS.DONOR_PARTNER_FORM} target="_blank" rel="noopener noreferrer">

@@ -40,9 +40,18 @@ function formatTime(timestamp: number): string {
 
 interface MessageBubbleProps {
   message: ChatMessage;
+  /**
+   * Whether this assistant message is still streaming. Completed messages render
+   * with `mode="static"` so Streamdown's streaming/animation wrappers can't
+   * suppress finished content from the accessibility tree (WCAG 4.1.2 / #1462).
+   */
+  isStreaming?: boolean;
 }
 
-const MessageBubble = memo(function MessageBubble({ message }: MessageBubbleProps) {
+const MessageBubble = memo(function MessageBubble({
+  message,
+  isStreaming = false,
+}: MessageBubbleProps) {
   const isUser = message.role === "user";
 
   return (
@@ -80,7 +89,9 @@ const MessageBubble = memo(function MessageBubble({ message }: MessageBubbleProp
           {isUser ? (
             <p className="whitespace-pre-wrap">{message.content}</p>
           ) : (
-            <MessageResponse>{message.content}</MessageResponse>
+            <MessageResponse mode={isStreaming ? "streaming" : "static"}>
+              {message.content}
+            </MessageResponse>
           )}
         </div>
         <time
@@ -299,7 +310,12 @@ export function AskKarmaChat({
         </button>
       </header>
 
-      <div className="flex flex-1 flex-col gap-6 overflow-y-auto py-6">
+      <div
+        role="log"
+        aria-label="Conversation"
+        aria-live="polite"
+        className="flex flex-1 flex-col gap-6 overflow-y-auto py-6"
+      >
         {messages.length === 0 && !isStreaming && (
           <div
             className={cn(
@@ -314,14 +330,21 @@ export function AskKarmaChat({
           </div>
         )}
 
-        {messages.map((message) => {
+        {messages.map((message, index) => {
           // While the agent stream is warming up the assistant message
           // exists with `content: ""` — rendering MessageBubble at that
           // point produces a hollow rounded box stacked on top of the
           // thinking panel. Skip the empty placeholder; the thinking
           // panel below carries the visual.
           if (message.role === "assistant" && !message.content) return null;
-          return <MessageBubble key={message.id} message={message} />;
+          // Only the last assistant message is actively streaming; every
+          // earlier message is complete and must render statically so its
+          // content is queryable in the accessibility tree.
+          const messageStreaming =
+            isStreaming && message.role === "assistant" && index === messages.length - 1;
+          return (
+            <MessageBubble key={message.id} message={message} isStreaming={messageStreaming} />
+          );
         })}
 
         {showThinking && (

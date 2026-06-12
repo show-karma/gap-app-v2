@@ -327,6 +327,25 @@ describe("ProjectNavigation", () => {
       expect(screen.getByText("Impact")).toBeInTheDocument();
       expect(screen.getByText("Team")).toBeInTheDocument();
     });
+
+    it("announces the Funding tab badge via the link's accessible name (#1433)", () => {
+      render(<ProjectNavigation {...defaultProps} grantsLength={7} />);
+
+      // The Link carries aria-label="Funding (7)" so screen readers announce
+      // "Funding (7)" instead of concatenating the badge into "Funding 7".
+      const fundingTab = screen.getByRole("link", { name: "Funding (7)" });
+      expect(fundingTab).toBeInTheDocument();
+      // The badge itself is hidden from assistive tech.
+      const badge = screen.getByText("7");
+      expect(badge).toHaveAttribute("aria-hidden", "true");
+    });
+
+    it("does not set a Funding aria-label when there are no grants (#1433)", () => {
+      render(<ProjectNavigation {...defaultProps} grantsLength={0} />);
+
+      const fundingTab = screen.getByRole("link", { name: /funding/i });
+      expect(fundingTab).not.toHaveAttribute("aria-label");
+    });
   });
 
   describe("Integration", () => {

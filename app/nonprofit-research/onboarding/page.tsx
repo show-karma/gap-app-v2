@@ -3,9 +3,9 @@ import { OnboardingFlow } from "@/src/features/donor-research/components/onboard
 import { customMetadata } from "@/utilities/meta";
 
 export const metadata: Metadata = customMetadata({
-  title: "Donor Research — Onboarding",
-  description: "Set up your donor-research advisor profile.",
-  path: "/donor-research/onboarding",
+  title: "Nonprofit Research — Onboarding",
+  description: "Set up your nonprofit-research advisor profile.",
+  path: "/nonprofit-research/onboarding",
   robots: { index: false, follow: false },
 });
 

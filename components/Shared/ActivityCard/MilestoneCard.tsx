@@ -28,8 +28,10 @@ import type { UnifiedMilestone } from "@/types/v2/roadmap";
 import { formatDate } from "@/utilities/formatDate";
 import {
   getEffectiveMilestoneStatus,
+  MILESTONE_STATUS_BADGE_CLASS,
   MILESTONE_STATUS_LABEL,
 } from "@/utilities/milestones/getEffectiveMilestoneStatus";
+import { normalizeMilestoneDueDateMs } from "@/utilities/milestones/milestoneDueDate";
 import { queryClient } from "@/utilities/query-client";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
 import { ReadMore } from "@/utilities/ReadMore";
@@ -525,13 +527,17 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
     ) : undefined;
 
   const showStatusBadge = type === "milestone" || type === "grant";
+  // Single normalized due timestamp drives both the status badge and the
+  // "Due by" pill, so the two can never disagree. Corrupted/ancient endsAt
+  // values resolve to null and degrade to no due date instead of a 1970 badge.
+  const dueMs = normalizeMilestoneDueDateMs(endsAt);
   const effectiveStatus = getEffectiveMilestoneStatus(
     completed ? MilestoneLifecycleStatus.COMPLETED : MilestoneLifecycleStatus.PENDING,
-    endsAt && endsAt > 0 ? endsAt * 1000 : null
+    dueMs
   );
   const showOrderBadge = type === "grant" && Boolean(milestone.grantMilestoneOrder);
   const showAllocationBadge = Boolean(allocationAmount);
-  const showDueBadge = Boolean(endsAt && endsAt > 0);
+  const showDueBadge = dueMs != null;
   const showAiEvaluationBadge = Boolean(completed && milestone.uid && completionReason);
   const hasAnyPill =
     showStatusBadge ||
@@ -543,17 +549,7 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
   const pills = hasAnyPill ? (
     <>
       {showStatusBadge && (
-        <Badge
-          variant="secondary"
-          className={cn(
-            effectiveStatus === MilestoneLifecycleStatus.COMPLETED ||
-              effectiveStatus === MilestoneLifecycleStatus.VERIFIED
-              ? "text-emerald-700 bg-emerald-50 hover:bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-950 dark:hover:bg-emerald-950"
-              : effectiveStatus === MilestoneLifecycleStatus.PAST_DUE
-                ? "text-red-700 bg-red-50 hover:bg-red-50 dark:text-red-300 dark:bg-red-950 dark:hover:bg-red-950"
-                : "bg-orange-50 hover:bg-orange-50 text-orange-700 dark:bg-orange-950 dark:hover:bg-orange-950 dark:text-orange-300"
-          )}
-        >
+        <Badge variant="secondary" className={MILESTONE_STATUS_BADGE_CLASS[effectiveStatus]}>
           {MILESTONE_STATUS_LABEL[effectiveStatus]}
         </Badge>
       )}
@@ -576,7 +572,7 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
       {showDueBadge ? (
         <Badge variant="secondary" className="flex flex-row items-center gap-1.5">
           <Calendar className="w-3.5 h-3.5" />
-          <span>Due by {formatDate((endsAt ?? 0) * 1000)}</span>
+          <span>Due by {formatDate(dueMs)}</span>
         </Badge>
       ) : null}
       {showAiEvaluationBadge ? (

@@ -1,7 +1,7 @@
 /**
  * Homepage User Journeys Integration Tests
  * Tests complete visitor flows through the funder-focused home page:
- * hero + two-row "How Karma works" section (Donor Research + Foundations).
+ * hero + two-row "How Karma works" section (Nonprofit Research + Foundations).
  */
 
 import HomePage from "@/app/page";
@@ -43,7 +43,7 @@ describe("Homepage User Journeys", () => {
       renderWithProviders(await HomePage());
       await waitFor(() => {
         expect(
-          screen.getByText(/Donor Research: a research brief for every gift/i)
+          screen.getByText(/Generate a donor-ready research brief in 10 minutes/i)
         ).toBeInTheDocument();
       });
       expect(screen.getByText(/AI-powered software for grant programs/i)).toBeInTheDocument();
@@ -51,9 +51,9 @@ describe("Homepage User Journeys", () => {
   });
 
   describe("Donor / advisor path", () => {
-    it("should route the Donor Research row CTA to /donor-advisors", async () => {
+    it("should route the Nonprofit Research row CTA to /donor-advisors", async () => {
       renderWithProviders(await HomePage());
-      const exploreLinks = screen.getAllByRole("link", { name: /Explore Donor Research/i });
+      const exploreLinks = screen.getAllByRole("link", { name: /Explore Nonprofit Research/i });
       expect(exploreLinks[0]).toHaveAttribute("href", "/donor-advisors");
     });
   });

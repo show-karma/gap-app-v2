@@ -8,7 +8,7 @@ export const metadata: Metadata = {
     title:
       "Karma | Helping funders fund and track organizations, projects, and nonprofits worth backing",
     description:
-      "Karma helps funders fund and track the organizations, projects, and nonprofits worth backing, from one-off donor research to full grant programs.",
+      "Karma helps funders fund and track the organizations, projects, and nonprofits worth backing, from one-off nonprofit research to full grant programs.",
     path: "/",
   }),
   title: {

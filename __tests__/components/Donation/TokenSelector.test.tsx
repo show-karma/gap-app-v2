@@ -193,5 +193,46 @@ describe("TokenSelector", () => {
 
       expect(screen.getByLabelText("Select token for donation")).toBeInTheDocument();
     });
+
+    it("associates the <label> with the <select> via a stable id (#1238)", () => {
+      renderWithProviders(
+        <TokenSelector
+          tokenOptions={tokenOptions}
+          balanceByTokenKey={balanceByTokenKey}
+          onTokenSelect={onTokenSelect}
+        />
+      );
+
+      const select = screen.getByTestId("token-selector");
+      const id = select.getAttribute("id");
+      expect(id).toBeTruthy();
+      // useId never produces a "Math.random"-style id and is stable, so the
+      // label's htmlFor must point at exactly this select.
+      const label = document.querySelector(`label[for="${id}"]`);
+      expect(label).toBeInTheDocument();
+      expect(label).toHaveTextContent("Select token for donation");
+    });
+
+    it("keeps the same select id across re-renders (#1238)", () => {
+      const { rerender } = renderWithProviders(
+        <TokenSelector
+          tokenOptions={tokenOptions}
+          balanceByTokenKey={balanceByTokenKey}
+          onTokenSelect={onTokenSelect}
+        />
+      );
+      const firstId = screen.getByTestId("token-selector").getAttribute("id");
+
+      rerender(
+        <TokenSelector
+          selectedToken={mockUSDC}
+          tokenOptions={tokenOptions}
+          balanceByTokenKey={balanceByTokenKey}
+          onTokenSelect={onTokenSelect}
+        />
+      );
+      const secondId = screen.getByTestId("token-selector").getAttribute("id");
+      expect(secondId).toBe(firstId);
+    });
   });
 });

@@ -39,15 +39,15 @@ describe("Homepage Navigation Flows", () => {
       renderWithProviders(await HomePage());
 
       expect(
-        screen.getByText(/Donor Research: a research brief for every gift/i)
+        screen.getByText(/Generate a donor-ready research brief in 10 minutes/i)
       ).toBeInTheDocument();
       expect(screen.getByText(/AI-powered software for grant programs/i)).toBeInTheDocument();
     });
 
-    it("should route the Donor Research row CTA to /donor-advisors", async () => {
+    it("should route the Nonprofit Research row CTA to /donor-advisors", async () => {
       renderWithProviders(await HomePage());
 
-      const exploreLinks = screen.getAllByRole("link", { name: /Explore Donor Research/i });
+      const exploreLinks = screen.getAllByRole("link", { name: /Explore Nonprofit Research/i });
       expect(exploreLinks[0]).toHaveAttribute("href", "/donor-advisors");
     });
 
@@ -63,11 +63,7 @@ describe("Homepage Navigation Flows", () => {
     it("should expose audience-differentiated secondary CTAs in each row", async () => {
       renderWithProviders(await HomePage());
 
-      // Per-row CTAs are now differentiated by audience instead of
-      // sharing the generic "Schedule a demo" label.
-      expect(
-        screen.getAllByRole("link", { name: /Talk to a donor advisor/i }).length
-      ).toBeGreaterThanOrEqual(1);
+      expect(screen.getAllByRole("link", { name: /Get a demo/i }).length).toBeGreaterThanOrEqual(1);
       expect(
         screen.getAllByRole("link", { name: /Schedule a foundation demo/i }).length
       ).toBeGreaterThanOrEqual(1);
