@@ -13,6 +13,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useReEvaluateInternalAI } from "@/hooks/useReEvaluateInternalAI";
+import { extractApiErrorMessage } from "@/utilities/errors";
 
 interface ReEvaluateInternalButtonProps {
   referenceNumber: string;
@@ -50,8 +51,7 @@ export const ReEvaluateInternalButton: FC<ReEvaluateInternalButtonProps> = ({
       toast.success("Internal AI evaluation re-run successfully");
       setIsDialogOpen(false);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to re-run evaluation";
-      toast.error(message);
+      toast.error(extractApiErrorMessage(error, "Failed to re-run evaluation"));
     }
   };
 
