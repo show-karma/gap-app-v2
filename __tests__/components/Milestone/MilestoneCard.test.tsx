@@ -79,7 +79,11 @@ vi.mock("@/hooks/useMilestoneImpactAnswers", () => ({
 }));
 
 // Mock formatDate utility
-vi.mock("@/utilities/formatDate", () => ({
+// Keep the real module's other exports (e.g. normalizeTimestamp, which
+// milestoneDueDate's normalizer depends on) so the status/due-date derivation
+// under test runs against real logic.
+vi.mock("@/utilities/formatDate", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/utilities/formatDate")>()),
   formatDate: vi.fn((timestamp: number) => {
     return new Date(timestamp).toLocaleDateString("en-US", {
       month: "short",

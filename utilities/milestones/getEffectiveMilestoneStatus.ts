@@ -32,3 +32,16 @@ export const MILESTONE_STATUS_LABEL: Record<MilestoneLifecycleStatus, string> = 
   [MilestoneLifecycleStatus.VERIFIED]: "Verified",
   [MilestoneLifecycleStatus.PAST_DUE]: "Past Due",
 };
+
+// Status badge color classes, colocated with the labels so the status pill's
+// text and color derive from the same single source of truth.
+export const MILESTONE_STATUS_BADGE_CLASS: Record<MilestoneLifecycleStatus, string> = {
+  [MilestoneLifecycleStatus.PENDING]:
+    "bg-orange-50 hover:bg-orange-50 text-orange-700 dark:bg-orange-950 dark:hover:bg-orange-950 dark:text-orange-300",
+  [MilestoneLifecycleStatus.COMPLETED]:
+    "text-emerald-700 bg-emerald-50 hover:bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-950 dark:hover:bg-emerald-950",
+  [MilestoneLifecycleStatus.VERIFIED]:
+    "text-emerald-700 bg-emerald-50 hover:bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-950 dark:hover:bg-emerald-950",
+  [MilestoneLifecycleStatus.PAST_DUE]:
+    "text-red-700 bg-red-50 hover:bg-red-50 dark:text-red-300 dark:bg-red-950 dark:hover:bg-red-950",
+};

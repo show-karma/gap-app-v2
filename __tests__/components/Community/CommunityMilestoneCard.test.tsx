@@ -36,8 +36,11 @@ vi.mock("@/utilities/ReadMore", () => ({
   ),
 }));
 
-// Mock formatDate utility
-vi.mock("@/utilities/formatDate", () => ({
+// Mock formatDate utility. Keep the real module's other exports (e.g.
+// normalizeTimestamp, which milestoneDueDate's normalizer depends on) so the
+// status/due-date derivation under test runs against real logic.
+vi.mock("@/utilities/formatDate", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/utilities/formatDate")>()),
   formatDate: vi.fn((dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString("en-US", {

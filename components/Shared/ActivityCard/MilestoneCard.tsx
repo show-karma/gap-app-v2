@@ -28,6 +28,7 @@ import type { UnifiedMilestone } from "@/types/v2/roadmap";
 import { formatDate } from "@/utilities/formatDate";
 import {
   getEffectiveMilestoneStatus,
+  MILESTONE_STATUS_BADGE_CLASS,
   MILESTONE_STATUS_LABEL,
 } from "@/utilities/milestones/getEffectiveMilestoneStatus";
 import { normalizeMilestoneDueDateMs } from "@/utilities/milestones/milestoneDueDate";
@@ -548,17 +549,7 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
   const pills = hasAnyPill ? (
     <>
       {showStatusBadge && (
-        <Badge
-          variant="secondary"
-          className={cn(
-            effectiveStatus === MilestoneLifecycleStatus.COMPLETED ||
-              effectiveStatus === MilestoneLifecycleStatus.VERIFIED
-              ? "text-emerald-700 bg-emerald-50 hover:bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-950 dark:hover:bg-emerald-950"
-              : effectiveStatus === MilestoneLifecycleStatus.PAST_DUE
-                ? "text-red-700 bg-red-50 hover:bg-red-50 dark:text-red-300 dark:bg-red-950 dark:hover:bg-red-950"
-                : "bg-orange-50 hover:bg-orange-50 text-orange-700 dark:bg-orange-950 dark:hover:bg-orange-950 dark:text-orange-300"
-          )}
-        >
+        <Badge variant="secondary" className={MILESTONE_STATUS_BADGE_CLASS[effectiveStatus]}>
           {MILESTONE_STATUS_LABEL[effectiveStatus]}
         </Badge>
       )}
