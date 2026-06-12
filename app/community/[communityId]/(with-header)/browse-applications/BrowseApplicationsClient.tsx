@@ -2,10 +2,10 @@
 
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { ChevronDown, Lock, RefreshCw, Search, X } from "lucide-react";
-import { useQueryState } from "nuqs";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getProjectTitle } from "@/components/FundingPlatform/helper/getProjectTitle";
 import { useProgramsWithConfig } from "@/features/programs/hooks/use-programs-with-config";
+import { useBrowseApplicationFilters } from "@/hooks/useBrowseApplicationFilters";
 import { Link } from "@/src/components/navigation/Link";
 import type { Application, ApplicationStatus } from "@/types/whitelabel-entities";
 import fetchData from "@/utilities/fetchData";
@@ -15,17 +15,6 @@ import { cn } from "@/utilities/tailwind";
 interface BrowseApplicationsClientProps {
   communityId: string;
 }
-
-const FILTERABLE_STATUSES: ApplicationStatus[] = [
-  "pending",
-  "under_review",
-  "revision_requested",
-  "approved",
-  "rejected",
-];
-
-const isFilterableStatus = (value: string | null): value is ApplicationStatus =>
-  value != null && (FILTERABLE_STATUSES as string[]).includes(value);
 
 const statusOptions: Array<{
   value: ApplicationStatus | "all";
@@ -315,27 +304,17 @@ export function BrowseApplicationsClient({ communityId }: BrowseApplicationsClie
 
   const { programs } = useProgramsWithConfig(communityId);
 
-  // The query string is the single source of truth for these filters. nuqs
-  // writes through history.replaceState (no App Router navigation), so updating
-  // a filter never races or cancels a Link click (issue #1547).
-  const [selectedProgramId, setSelectedProgramId] = useQueryState("programId", {
-    defaultValue: "",
-    clearOnDefault: true,
-  });
-  const [statusFilterRaw, setStatusFilter] = useQueryState<ApplicationStatus | "all">("status", {
-    defaultValue: "all",
-    clearOnDefault: true,
-    serialize: (value) => (isFilterableStatus(value) ? value : ""),
-    parse: (value) => (isFilterableStatus(value) ? value : "all"),
-  });
-  const statusFilter: ApplicationStatus | "all" = isFilterableStatus(statusFilterRaw)
-    ? statusFilterRaw
-    : "all";
-  const [searchInput, setSearchInput] = useQueryState("search", {
-    defaultValue: "",
-    clearOnDefault: true,
-    throttleMs: 300,
-  });
+  // The query string is the single source of truth for these filters (see
+  // useBrowseApplicationFilters): nuqs writes through history.replaceState, so
+  // updating a filter never races or cancels a Link click (issue #1547).
+  const {
+    programId: selectedProgramId,
+    setProgramId: setSelectedProgramId,
+    status: statusFilter,
+    setStatus: setStatusFilter,
+    search: searchInput,
+    setSearch: setSearchInput,
+  } = useBrowseApplicationFilters();
   const [debouncedSearch, setDebouncedSearch] = useState(searchInput);
 
   // Debounce only the value that drives the API query; the URL write is already
