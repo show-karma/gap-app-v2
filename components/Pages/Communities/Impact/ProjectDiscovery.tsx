@@ -21,6 +21,13 @@ const UNTITLED_PROGRAM = "Untitled Program";
 const programLabel = (program: FundingProgramResponse | null): string =>
   program?.metadata?.title || UNTITLED_PROGRAM;
 
+// Static empty-state help — hoisted so it isn't re-created on every render.
+const PROGRAMS_EMPTY_HELP = (
+  <p className="text-sm text-gray-600 dark:text-zinc-400">
+    No programs have been configured for this community yet.
+  </p>
+);
+
 export const ProjectDiscovery = () => {
   const params = useParams();
   const communityId = params.communityId as string;
@@ -208,11 +215,7 @@ export const ProjectDiscovery = () => {
                 placeholder="Select Program"
                 isEmpty={programsEmpty}
                 emptyButtonLabel="No programs available"
-                emptyHelp={
-                  <p className="text-sm text-gray-600 dark:text-zinc-400">
-                    No programs have been configured for this community yet.
-                  </p>
-                }
+                emptyHelp={PROGRAMS_EMPTY_HELP}
               />
             </div>
           </div>
