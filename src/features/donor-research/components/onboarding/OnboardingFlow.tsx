@@ -76,13 +76,26 @@ export function OnboardingFlow() {
     if (advisorQuery.isSuccess && advisorQuery.data) {
       router.replace(PAGES.DONOR_RESEARCH.INDEX);
     }
-  }, [advisorQuery.isSuccess, advisorQuery.data, router]);
+    // `router` is intentionally omitted: the app-router instance is
+    // referentially stable, and the repo Pre-PR checklist disallows using
+    // useRouter() return values directly as effect dependencies.
+  }, [advisorQuery.isSuccess, advisorQuery.data]);
 
   // Move focus to the active step's heading on every transition. This is the
   // canonical wizard focus pattern (WCAG 2.4.3 Focus Order) and gives any
   // assistive tech / automated QA an unambiguous "the step changed" signal.
   // Keyed on the `step` primitive per the repo rule about primitive deps.
+  //
+  // The initial mount is skipped: focus must only move in response to a real
+  // step change, never be stolen on first page load — which otherwise fires
+  // inconsistently depending on whether the advisor query resolved from a warm
+  // React Query cache (staleTime 5 min) before the first commit.
+  const isInitialStep = useRef(true);
   useEffect(() => {
+    if (isInitialStep.current) {
+      isInitialStep.current = false;
+      return;
+    }
     headingRef.current?.focus({ preventScroll: false });
   }, [step]);
 
@@ -210,7 +223,7 @@ export function OnboardingFlow() {
 
             {onboard.isError ? (
               <p role="alert" className="mt-3 text-sm text-red-600 dark:text-red-400">
-                {(onboard.error as Error)?.message || "Couldn't complete onboarding. Try again."}
+                {onboard.error?.message || "Couldn't complete onboarding. Try again."}
               </p>
             ) : null}
 
