@@ -44,7 +44,7 @@ describe("ShareTokenControls", () => {
 
     expect(mockCopy).toHaveBeenCalledTimes(1);
     expect(mockCopy).toHaveBeenCalledWith(
-      expect.stringContaining("/donor-research/shared/existing-token")
+      expect.stringContaining("/nonprofit-research/shared/existing-token")
     );
     // Copying must never rotate the token.
     expect(mockGenerateMutateAsync).not.toHaveBeenCalled();

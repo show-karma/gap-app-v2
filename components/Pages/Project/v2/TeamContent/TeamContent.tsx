@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { InviteMemberDialog } from "@/components/Dialogs/Member/InviteMember";
+import { useIsAdminOfCommunities } from "@/hooks/communities/useIsAdminOfCommunities";
 import { useAuth } from "@/hooks/useAuth";
 import { usePermissionsQuery } from "@/src/core/rbac/hooks/use-permissions";
 import { Role } from "@/src/core/rbac/types";
@@ -37,7 +38,8 @@ export function TeamContent({ className }: TeamContentProps) {
   const { authenticated } = useAuth();
   const { data: permissions } = usePermissionsQuery({}, { enabled: authenticated });
   const isSuperAdmin = permissions?.roles?.roles?.includes(Role.SUPER_ADMIN) ?? false;
-  const isAuthorized = isProjectOwner || isContractOwner || isSuperAdmin;
+  const { isCommunityAdmin } = useIsAdminOfCommunities(project?.communities);
+  const isAuthorized = isProjectOwner || isContractOwner || isSuperAdmin || isCommunityAdmin;
 
   const { data: memberRoles } = useQuery<Record<string, Member["role"]>>({
     queryKey: ["memberRoles", project?.uid],
