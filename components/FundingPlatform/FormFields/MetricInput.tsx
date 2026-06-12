@@ -5,9 +5,13 @@ import pluralize from "pluralize";
 import type { FC } from "react";
 import type { Control } from "react-hook-form";
 import { Controller, useFieldArray } from "react-hook-form";
+import { METRIC_FIELD_REQUIRED } from "@/components/FundingPlatform/ApplicationView/lib/repeatable-item-schemas";
 import { Button } from "@/components/Utilities/Button";
 import type { IFormField, IMetricData } from "@/types/funding-platform";
 import { cn } from "@/utilities/tailwind";
+
+/** Asterisk shown next to required sub-field labels, driven by the schema. */
+const RequiredMark: FC = () => <span className="text-red-500 ml-1">{" *"}</span>;
 
 interface MetricInputProps {
   field: IFormField;
@@ -100,7 +104,8 @@ export const MetricInput: FC<MetricInputProps> = ({
                 render={({ field: metricField, fieldState }) => (
                   <div>
                     <label htmlFor={`${fieldKey}-${index}-metric`} className={labelStyle}>
-                      Metric *
+                      Metric
+                      {METRIC_FIELD_REQUIRED.metric && <RequiredMark />}
                     </label>
                     <input
                       {...metricField}
@@ -127,7 +132,8 @@ export const MetricInput: FC<MetricInputProps> = ({
                 render={({ field: sourceField, fieldState }) => (
                   <div>
                     <label htmlFor={`${fieldKey}-${index}-dataSource`} className={labelStyle}>
-                      Data Source *
+                      Data Source
+                      {METRIC_FIELD_REQUIRED.dataSource && <RequiredMark />}
                     </label>
                     <input
                       {...sourceField}
@@ -154,7 +160,8 @@ export const MetricInput: FC<MetricInputProps> = ({
                 render={({ field: measuredField, fieldState }) => (
                   <div>
                     <label htmlFor={`${fieldKey}-${index}-howItsMeasured`} className={labelStyle}>
-                      How It's Measured *
+                      How It's Measured
+                      {METRIC_FIELD_REQUIRED.howItsMeasured && <RequiredMark />}
                     </label>
                     <textarea
                       {...measuredField}
@@ -182,7 +189,8 @@ export const MetricInput: FC<MetricInputProps> = ({
                 render={({ field: targetField, fieldState }) => (
                   <div>
                     <label htmlFor={`${fieldKey}-${index}-target`} className={labelStyle}>
-                      Target *
+                      Target
+                      {METRIC_FIELD_REQUIRED.target && <RequiredMark />}
                     </label>
                     <input
                       {...targetField}

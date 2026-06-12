@@ -1,15 +1,24 @@
 import { z } from "zod";
+import { requiredString } from "@/utilities/validation/zod-primitives";
 
 /**
  * Base schema fields shared between create and update program forms.
  * Used by both admin (CreateProgramModal, ProgramDetailsTab) and public (AddProgram) schemas.
  */
 export const baseProgramFields = {
-  name: z
-    .string()
-    .min(3, { message: "Program name must be at least 3 characters" })
-    .max(50, { message: "Program name must be at most 50 characters" }),
-  description: z.string().min(3, { message: "Description is required" }),
+  name: requiredString("Program name", {
+    min: 3,
+    max: 50,
+    messages: {
+      required: "Program name is required",
+      min: "Program name must be at least 3 characters",
+      max: "Program name must be at most 50 characters",
+    },
+  }),
+  description: requiredString("Description", {
+    min: 3,
+    messages: { min: "Description must be at least 3 characters" },
+  }),
   shortDescription: z
     .string()
     .max(100, { message: "Short description must be at most 100 characters" })
