@@ -26,9 +26,10 @@ import { INDEXER } from "@/utilities/indexer";
 import { gapSupportedNetworks, getChainIdByName } from "@/utilities/network";
 import { urlRegex } from "@/utilities/regexs/urlRegex";
 import { cn } from "@/utilities/tailwind";
+import { requiredString } from "@/utilities/validation/zod-primitives";
 
 const profileSchema = z.object({
-  name: z.string().min(3, { message: "This name is too short" }),
+  name: requiredString("Name", { min: 3, messages: { min: "This name is too short" } }),
   aboutMe: z.string().optional(),
   github: z
     .string()
