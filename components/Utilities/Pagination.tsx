@@ -55,6 +55,7 @@ export default function Pagination({
         <div>
           <nav className="relative z-0 inline-flex rounded-md  -space-x-px" aria-label="Pagination">
             <button
+              type="button"
               onClick={() => {
                 setCurrentPage(currentPage - 1);
               }}
@@ -72,6 +73,7 @@ export default function Pagination({
               if (page === DOTS) {
                 return (
                   <button
+                    type="button"
                     key={`${page}-${index}`}
                     className="bg-white dark:bg-zinc-900 border-gray-300 dark:border-zinc-800 text-gray-500 dark:text-zinc-400 hover:bg-gray-50 relative inline-flex items-center px-4 py-2 max-sm:px-2 max-sm:py-1 border text-sm font-medium duration-200 ease-in-out"
                   >
@@ -93,6 +95,7 @@ export default function Pagination({
               );
             })}
             <button
+              type="button"
               onClick={() => {
                 setCurrentPage(currentPage + 1);
               }}

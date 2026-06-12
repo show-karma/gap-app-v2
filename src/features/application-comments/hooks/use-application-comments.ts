@@ -20,7 +20,7 @@ export function useApplicationComments({
   ownerAddress,
   canViewComments = true,
 }: UseApplicationCommentsOptions): UseApplicationCommentsReturn {
-  const { address, authenticated, user } = useAuth();
+  const { authenticated, user } = useAuth();
   const queryClient = useQueryClient();
 
   const isOwner = useMemo(() => {

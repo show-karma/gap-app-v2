@@ -73,27 +73,3 @@ export const prefetchProjectProfileData = cache(
     };
   }
 );
-
-/**
- * Get cached project grants data for server-side use.
- * Uses React.cache() for request deduplication.
- */
-const getProjectGrantsCached = cache(async (projectId: string) => {
-  return getProjectGrants(projectId);
-});
-
-/**
- * Get cached project updates data for server-side use.
- * Uses React.cache() for request deduplication.
- */
-const getProjectUpdatesCached = cache(async (projectId: string) => {
-  return getProjectUpdates(projectId);
-});
-
-/**
- * Get cached project impacts data for server-side use.
- * Uses React.cache() for request deduplication.
- */
-const getProjectImpactsCached = cache(async (projectId: string) => {
-  return getProjectImpacts(projectId);
-});

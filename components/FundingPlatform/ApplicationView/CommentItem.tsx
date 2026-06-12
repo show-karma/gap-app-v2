@@ -41,7 +41,6 @@ interface CommentItemProps {
 const CommentItem: FC<CommentItemProps> = ({
   comment,
   isAdmin,
-  currentUserAddress,
   onEdit,
   onDelete,
   programId,
@@ -238,6 +237,7 @@ const CommentItem: FC<CommentItemProps> = ({
               <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
                 {canEdit && (
                   <button
+                    type="button"
                     onClick={() => {
                       setEditContent(comment.content); // Ensure we have the current content
                       setIsEditing(true);
@@ -257,6 +257,7 @@ const CommentItem: FC<CommentItemProps> = ({
                 )}
                 {canDelete && (
                   <button
+                    type="button"
                     onClick={() => setIsDeleteDialogOpen(true)}
                     disabled={isUpdating}
                     className={cn(
@@ -316,6 +317,7 @@ const CommentItem: FC<CommentItemProps> = ({
                 </div>
                 <div className="flex items-center space-x-2">
                   <button
+                    type="button"
                     onClick={handleSaveEdit}
                     disabled={!editContent.trim() || isUpdating}
                     className={cn(
@@ -341,6 +343,7 @@ const CommentItem: FC<CommentItemProps> = ({
                     )}
                   </button>
                   <button
+                    type="button"
                     onClick={handleCancelEdit}
                     disabled={isUpdating}
                     className={cn(

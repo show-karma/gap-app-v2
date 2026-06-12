@@ -21,15 +21,6 @@ import { cn } from "@/utilities/tailwind";
 import { SegmentSkeleton } from "./SegmentSkeleton";
 import { type TimeframeOption, TimeframeSelector, timeframeOptions } from "./TimeframeSelector";
 
-const fundedAmountFormatter = (value: string) => {
-  const amount = Number(value.includes(" ") ? value.split(" ")[0] : value);
-  const formattedAmount = Number(amount.toFixed(2));
-  if (Number.isNaN(formattedAmount)) {
-    return value;
-  }
-  return formattedAmount;
-};
-
 const prepareAggregatedChartData = (indicators: any[]) => {
   if (!indicators.length) return [];
 

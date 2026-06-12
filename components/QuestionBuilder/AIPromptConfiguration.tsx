@@ -60,6 +60,7 @@ function PromptTabs({ programId, readOnly }: { programId: string; readOnly: bool
           Failed to load prompts: {error?.message || "Unknown error"}
         </p>
         <button
+          type="button"
           onClick={() => refetch()}
           className="text-red-600 dark:text-red-400 underline text-sm hover:no-underline"
         >
@@ -114,7 +115,6 @@ export function AIPromptConfiguration({
   onUpdate,
   className = "",
   programId,
-  chainId,
   readOnly = false,
 }: AIPromptConfigurationProps) {
   // Fetch available AI models from backend

@@ -567,6 +567,7 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
             {versions.length > 0 && (
               <div className="flex items-center bg-gray-100 dark:bg-zinc-700 rounded-lg p-1">
                 <button
+                  type="button"
                   onClick={() => setViewMode("details")}
                   className={cn(
                     "flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all",
@@ -579,6 +580,7 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
                   Details
                 </button>
                 <button
+                  type="button"
                   onClick={() => setViewMode("changes")}
                   className={cn(
                     "flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all",

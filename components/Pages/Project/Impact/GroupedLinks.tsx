@@ -67,6 +67,7 @@ export const GroupedLinks = ({ proofs }: { proofs: string[] }) => {
               className="relative"
             >
               <button
+                type="button"
                 onClick={() => toggleDropdown(name)}
                 className="text-sm text-gray-500 dark:text-zinc-400 underline truncate flex items-center gap-1 hover:text-gray-700 dark:hover:text-zinc-300"
               >

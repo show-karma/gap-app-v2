@@ -69,6 +69,7 @@ const FLAGS = {
 const REACT_DOCTOR_VERSION = "0.2.2";
 
 // ── utils ───────────────────────────────────────────────────────────────────
+// biome-ignore lint/suspicious/noConsole: CLI script reports progress to stdout
 const log = (...a) => console.log("[quality]", ...a);
 const warn = (...a) => console.warn("[quality:warn]", ...a);
 
@@ -261,7 +262,9 @@ function collectReactDoctor() {
   } catch {
     /* noop */
   }
-  const score = parsed.score ?? parsed.healthScore ?? 0;
+  // react-doctor's JSON (schemaVersion 1) reports the health score under
+  // `summary.score`; older shapes used a top-level `score`/`healthScore`.
+  const score = parsed.summary?.score ?? parsed.score ?? parsed.healthScore ?? 0;
   const findings = parsed.findings ?? parsed.diagnostics ?? [];
   let errors = 0;
   let warnings = 0;

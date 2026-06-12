@@ -64,7 +64,6 @@ export const DetailsSection = memo(function DetailsSection({
   totalsByToken,
   remainingBalance,
   awaitingTx,
-  chainInfo,
   milestoneSummary,
   invoiceRequired,
 }: DetailsSectionProps) {

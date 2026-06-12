@@ -25,7 +25,7 @@ const normalizeProgramId = (id: string | null): string | null => {
 export const ProgramBanner = () => {
   const searchParams = useSearchParams();
   const { communityId } = useParams();
-  const { data, isLoading } = useCommunityPrograms(communityId as string);
+  const { data } = useCommunityPrograms(communityId as string);
   const rawProgramId = searchParams.get("programId");
   // Normalize to handle both "programId" and legacy "programId_chainId" formats
   const programId = normalizeProgramId(rawProgramId);

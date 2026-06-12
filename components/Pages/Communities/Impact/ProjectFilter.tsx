@@ -1,5 +1,5 @@
 "use client";
-import { useParams, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useQueryState } from "nuqs";
 import { useEffect, useRef } from "react";
 import { useCommunityProjects } from "@/hooks/useCommunityProjects";
@@ -10,11 +10,7 @@ interface ProjectFilterProps {
   defaultProgramSelected?: string;
 }
 
-export const ProjectFilter = ({
-  defaultProjectSelected,
-  defaultProgramSelected,
-}: ProjectFilterProps) => {
-  const { communityId } = useParams();
+export const ProjectFilter = ({ defaultProjectSelected }: ProjectFilterProps) => {
   const searchParams = useSearchParams();
   const programSelected = searchParams.get("programId");
 
@@ -28,7 +24,7 @@ export const ProjectFilter = ({
   );
 
   // Filter projects by selected program
-  const { data: projects, isLoading } = useCommunityProjects(programSelected);
+  const { data: projects } = useCommunityProjects(programSelected);
 
   // Track previous program to detect actual changes (not initial load)
   const previousProgramRef = useRef<string | null>(null);

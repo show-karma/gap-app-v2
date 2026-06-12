@@ -269,6 +269,7 @@ export const SearchDropdown: FC<SearchDropdownProps> = ({
             ) : (
               <div className="my-2 px-2">
                 <button
+                  type="button"
                   className="px-3 py-2 text-sm rounded-md bg-zinc-600 dark:bg-zinc-900 text-white dark:text-white w-full"
                   onClick={(e) => {
                     e?.preventDefault?.();

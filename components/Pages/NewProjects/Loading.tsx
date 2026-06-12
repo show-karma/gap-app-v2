@@ -64,17 +64,6 @@ const ProjectCardListSkeleton = () => {
     </div>
   );
 };
-const FilterByProgramsSkeleton = () => {
-  const programsArray = Array.from({ length: 6 }, (_, index) => index);
-  return (
-    <div className="flex flex-col gap-2 w-full">
-      {programsArray.map((_, index) => (
-        <Skeleton key={index} className={"h-7 w-full"} />
-      ))}
-    </div>
-  );
-};
-
 export const NewProjectsLoading = () => {
   return (
     <div

@@ -28,7 +28,6 @@ interface PollForGrantCompletionParams {
  * ```
  */
 export const pollForGrantCompletion = async ({
-  gapClient,
   projectUid,
   grantUid,
   maxRetries = 40,
@@ -90,7 +89,6 @@ interface PollForMilestoneStatusParams {
  * ```
  */
 export const pollForMilestoneStatus = async ({
-  gapClient,
   projectUid,
   programId,
   milestoneUid,

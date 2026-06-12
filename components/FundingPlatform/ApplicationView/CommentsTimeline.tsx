@@ -350,6 +350,7 @@ const CommentsTimeline: FC<CommentsTimelineProps> = ({
             </div>
             {onVersionClick && (
               <button
+                type="button"
                 onClick={() => onVersionClick(version.id)}
                 className="ml-2 inline-flex items-center px-2.5 py-1 rounded text-xs font-medium bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900/50 transition-colors"
               >

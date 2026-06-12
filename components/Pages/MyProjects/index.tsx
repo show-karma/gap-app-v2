@@ -65,11 +65,7 @@ export default function MyProjects() {
     }
   };
 
-  const {
-    data: projects,
-    isLoading,
-    refetch,
-  } = useQuery({
+  const { data: projects, isLoading } = useQuery({
     queryKey: ["totalProjects", address],
     queryFn: () => fetchMyProjects(address as `0x${string}` | undefined),
     enabled: Boolean(address),
@@ -170,7 +166,7 @@ export default function MyProjects() {
                                   fontSize: "16px",
                                 }}
                                 components={{
-                                  a: ({ children, href }) => <span>{children}</span>,
+                                  a: ({ children }) => <span>{children}</span>,
                                 }}
                               />
                             </div>

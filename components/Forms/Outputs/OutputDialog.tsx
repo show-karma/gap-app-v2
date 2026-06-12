@@ -14,13 +14,7 @@ interface OutputDialogProps {
   onError: () => void;
 }
 
-export const OutputDialog: FC<OutputDialogProps> = ({
-  open,
-  onOpenChange,
-  selectedPrograms,
-  onSuccess,
-  onError,
-}) => (
+export const OutputDialog: FC<OutputDialogProps> = ({ open, onOpenChange, onSuccess, onError }) => (
   <Dialog.Root open={open} onOpenChange={onOpenChange}>
     <Dialog.Portal>
       <Dialog.Overlay className="fixed z-[11] inset-0 bg-black/50 backdrop-blur-sm" />

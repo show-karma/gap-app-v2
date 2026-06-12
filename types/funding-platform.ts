@@ -136,14 +136,6 @@ export interface IFundingProgramConfig {
   updatedAt: string | Date;
 }
 
-interface IAIConfig {
-  systemPrompt?: string;
-  detailedPrompt?: string;
-  aiModel?: string;
-  enableRealTimeEvaluation?: boolean;
-  internalLangfusePromptId?: string;
-}
-
 // V2 Funding Application
 export interface IFundingApplication {
   id: string;
@@ -216,33 +208,6 @@ export interface IApplicationStatistics {
   revisionRequestedApplications?: number;
   underReviewApplications?: number;
   resubmittedApplications?: number;
-}
-
-// V2 API Error Response
-interface IFundingPlatformError {
-  error: string;
-  message: string;
-  details?: Array<{
-    field: string;
-    message: string;
-  }>;
-}
-
-// Component Props
-interface IFormBuilderProps {
-  schema?: IFormSchema;
-  onSchemaChange: (schema: IFormSchema) => void;
-  disabled?: boolean;
-}
-
-interface IApplicationViewProps {
-  application: IFundingApplication;
-  onStatusChange?: (
-    applicationId: string,
-    status: FundingApplicationStatusV2,
-    reason?: string
-  ) => void;
-  isAdmin?: boolean;
 }
 
 export interface IApplicationListProps {
@@ -357,50 +322,6 @@ export interface IApplicationVersion {
 
 export interface IApplicationVersionTimeline {
   timeline: IApplicationVersion[];
-}
-
-// Legacy version interface for backward compatibility during migration
-interface IApplicationVersionLegacy {
-  id: string;
-  applicationId: string;
-  versionNumber: number;
-  applicationData: Record<string, any>;
-  status: FundingApplicationStatusV2;
-  statusHistory: IStatusHistoryEntry[];
-  editorAddress?: string;
-  editorName?: string;
-  editorRole?: "applicant" | "admin" | "reviewer";
-  changesSummary?: string;
-  createdAt: string | Date;
-}
-
-// Internal Component Props (for gradual migration)
-interface IApplicationListComponentProps {
-  programId: string;
-  chainID: number;
-  applications: IFundingApplication[];
-  isLoading: boolean;
-  onApplicationSelect?: (application: IFundingApplication) => void;
-  onStatusChange?: (
-    applicationId: string,
-    status: string,
-    note?: string,
-    approvedAmount?: string,
-    approvedCurrency?: string
-  ) => void;
-  showStatusActions?: boolean;
-}
-
-// Type conversion helpers
-function isFormSchema(schema: any): boolean {
-  return (
-    schema &&
-    typeof schema === "object" &&
-    Array.isArray(schema.fields) &&
-    (schema.id === undefined || typeof schema.id === "string") &&
-    (schema.title === undefined || typeof schema.title === "string") &&
-    (schema.settings === undefined || typeof schema.settings === "object")
-  );
 }
 
 /**

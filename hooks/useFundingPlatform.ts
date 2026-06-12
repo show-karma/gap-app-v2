@@ -15,8 +15,6 @@ import type { ProgramMetadata } from "@/src/features/program-registry/types";
 import type {
   ExportFormat,
   FundingApplicationStatusV2,
-  IApplicationStatusUpdateRequest,
-  IApplicationSubmitRequest,
   IApplicationUpdateRequest,
   IFormSchema,
   IFundingApplication,
@@ -133,26 +131,6 @@ export const useUpdateProgramEnrollment = (
 /**
  * Hook for managing a specific program configuration
  */
-const useProgramStats = (programId: string) => {
-  const statsQuery = useQuery({
-    queryKey: QUERY_KEYS.programStats(programId),
-    queryFn: () => fundingPlatformService.programs.getProgramStats(programId),
-    enabled: !!programId,
-  });
-
-  return {
-    stats: statsQuery.data,
-    isLoading: statsQuery.isLoading,
-    error: statsQuery.error,
-    refetch: () => {
-      statsQuery.refetch();
-    },
-  };
-};
-
-/**
- * Hook for managing a specific program configuration
- */
 export const useProgramConfig = (programId: string) => {
   const queryClient = useQueryClient();
 
@@ -228,7 +206,7 @@ export const useFundingApplications = (programId: string, filters: IApplicationF
   const queryClient = useQueryClient();
 
   // Set default limit to 25 if not provided, exclude page from filters for infinite scroll
-  const { page, ...filtersWithoutPage } = filters;
+  const { page: _page, ...filtersWithoutPage } = filters;
   const filtersWithDefaults = {
     limit: 25,
     ...filtersWithoutPage,
@@ -407,96 +385,6 @@ export const useFundingApplication = (applicationId: string) => {
 };
 
 /**
- * Hook for form schema management with auto-save
- */
-const useFormSchemaManager = (programId: string, _chainId: number) => {
-  const [isDirty, setIsDirty] = useState(false);
-  const [lastSaved, setLastSaved] = useState<Date | null>(null);
-
-  const { config, updateFormSchema, isUpdating } = useProgramConfig(programId);
-
-  const saveSchema = useCallback(
-    (schema: IFormSchema) => {
-      updateFormSchema(schema);
-      setIsDirty(false);
-      setLastSaved(new Date());
-    },
-    [updateFormSchema]
-  );
-
-  const markDirty = useCallback(() => {
-    setIsDirty(true);
-  }, []);
-
-  return {
-    currentSchema: config?.formSchema,
-    saveSchema,
-    markDirty,
-    isDirty,
-    lastSaved,
-    isSaving: isUpdating,
-  };
-};
-
-/**
- * Hook for V2 application submission with better error handling
- */
-const useApplicationSubmissionV2 = (programId: string, _chainId: number) => {
-  const queryClient = useQueryClient();
-
-  // Check if user already has an application
-  const checkExistingApplication = useCallback(
-    async (email: string) => {
-      try {
-        const existing = await fundingPlatformService.applications.getApplicationByEmail(
-          programId,
-          email
-        );
-        return existing;
-      } catch (error) {
-        console.error("Error checking existing application:", error);
-        return null;
-      }
-    },
-    [programId]
-  );
-
-  const submitMutation = useMutation({
-    mutationFn: async (request: IApplicationSubmitRequest) => {
-      // Check for existing application first
-      const existing = await checkExistingApplication(request.applicantEmail);
-      if (existing) {
-        throw new Error("You have already submitted an application for this program");
-      }
-
-      return fundingPlatformService.applications.submitApplication(request);
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.applications(programId, { limit: 25 }),
-      });
-      queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.applicationStats(programId),
-      });
-      toast.success(`Application submitted successfully! Reference: ${data.referenceNumber}`);
-    },
-    onError: (error: any) => {
-      console.error("Failed to submit application:", error);
-      const message =
-        error.response?.data?.message || error.message || "Failed to submit application";
-      toast.error(message);
-    },
-  });
-
-  return {
-    submitApplication: submitMutation.mutate,
-    isSubmitting: submitMutation.isPending,
-    error: submitMutation.error,
-    checkExistingApplication,
-  };
-};
-
-/**
  * Hook for application updates (for users updating their applications)
  */
 export const useApplicationUpdateV2 = () => {
@@ -596,73 +484,6 @@ export const usePostApprovalUpdate = () => {
     updatePostApprovalDataAsync: updateMutation.mutateAsync,
     isUpdating: updateMutation.isPending,
     error: updateMutation.error,
-  };
-};
-
-/**
- * Hook for admin status updates with V2 reason support
- */
-const useApplicationStatusV2 = (applicationId?: string) => {
-  const queryClient = useQueryClient();
-
-  const updateStatusMutation = useMutation({
-    mutationFn: ({
-      applicationId: appId,
-      request,
-    }: {
-      applicationId: string;
-      request: IApplicationStatusUpdateRequest;
-    }) =>
-      fundingPlatformService.applications.updateApplicationStatus(appId || applicationId!, request),
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.application(variables.applicationId),
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["applications"], // Invalidate all application lists
-      });
-
-      toast.success(`Application ${variables.request.status.replace("_", " ")}`);
-    },
-    onError: (error: any) => {
-      console.error("Failed to update application status:", error);
-      toast.error("Failed to update application status");
-    },
-  });
-
-  return {
-    updateStatus: (
-      appId: string,
-      status: FundingApplicationStatusV2,
-      reason: string,
-      approvedAmount?: string,
-      approvedCurrency?: string
-    ) =>
-      updateStatusMutation.mutate({
-        applicationId: appId,
-        request: { status, reason, approvedAmount, approvedCurrency },
-      }),
-    isUpdating: updateStatusMutation.isPending,
-    error: updateStatusMutation.error,
-  };
-};
-
-/**
- * Hook for searching applications by Application ID
- */
-const useApplicationByReference = (referenceNumber: string) => {
-  const applicationQuery = useQuery({
-    queryKey: QUERY_KEYS.applicationByReference(referenceNumber),
-    queryFn: () => fundingPlatformService.applications.getApplicationByReference(referenceNumber),
-    enabled: !!referenceNumber && referenceNumber.length > 0,
-    retry: false,
-  });
-
-  return {
-    application: applicationQuery.data,
-    isLoading: applicationQuery.isLoading,
-    error: applicationQuery.error,
-    isNotFound: applicationQuery.error && (applicationQuery.error as any)?.response?.status === 404,
   };
 };
 

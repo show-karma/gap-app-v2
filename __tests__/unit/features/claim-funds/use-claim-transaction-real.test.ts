@@ -14,7 +14,6 @@ import { createElement } from "react";
 // ---------------------------------------------------------------------------
 
 const {
-  mockToast,
   mockWriteContract,
   mockWalletClient,
   mockWallets,
@@ -23,11 +22,6 @@ const {
   mockSwitchOrAddChain,
   mockWaitForTransactionReceipt,
 } = vi.hoisted(() => {
-  const mockToast = {
-    loading: vi.fn(),
-    success: vi.fn(),
-    error: vi.fn(),
-  };
   const mockWriteContract = vi.fn();
   const mockWalletClient = { writeContract: mockWriteContract };
   const mockWallets: Array<{
@@ -45,7 +39,6 @@ const {
   const mockWaitForTransactionReceipt = vi.fn();
 
   return {
-    mockToast,
     mockWriteContract,
     mockWalletClient,
     mockWallets,

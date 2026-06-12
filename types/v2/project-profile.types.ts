@@ -83,31 +83,6 @@ export const ACTIVITY_FILTER_OPTIONS: ActivityFilterOption[] = [
 ] as const;
 
 // =============================================================================
-// Content Tab Types
-// =============================================================================
-
-/**
- * Tab options for the main content area.
- */
-type ContentTab = "roadmap" | "reviews";
-
-/**
- * Content tab configuration for UI display.
- */
-interface ContentTabOption {
-  id: ContentTab;
-  label: string;
-}
-
-/**
- * Default tab options for the content area.
- */
-const CONTENT_TAB_OPTIONS: ContentTabOption[] = [
-  { id: "roadmap", label: "Roadmap" },
-  { id: "reviews", label: "Reviews" },
-] as const;
-
-// =============================================================================
 // Project Profile Stats Types
 // =============================================================================
 

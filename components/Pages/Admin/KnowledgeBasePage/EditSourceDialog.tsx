@@ -54,7 +54,6 @@ export function EditSourceDialog({ communityIdOrSlug, source, open, onOpenChange
   // effect would run twice and overwrite anything the curator typed
   // during the round-trip. Keying on `source?.id` keeps hydration tied
   // to "this is a different row" without coupling to identity churn.
-  // biome-ignore lint/correctness/useExhaustiveDependencies: hydration is intentionally driven by row identity, not source-object reference; see comment above
   useEffect(() => {
     if (open && source) {
       setTitle(source.title);

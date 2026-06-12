@@ -592,7 +592,7 @@ describe("IndicatorForm", () => {
     it("should stop propagation on Enter key when preventPropagation is true", () => {
       const handleKeyDown = vi.fn();
 
-      const { container } = render(
+      render(
         <div onKeyDown={handleKeyDown}>
           <IndicatorForm preventPropagation={true} />
         </div>

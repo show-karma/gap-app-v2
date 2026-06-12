@@ -1,13 +1,5 @@
 import type { Community } from "./community";
 
-type GrantScreen =
-  | "milestones-and-updates"
-  | "new"
-  | "edit"
-  | "impact-criteria"
-  | "overview"
-  | "outputs";
-
 /**
  * V2 Grant Details - flat structure with properties at top level
  *

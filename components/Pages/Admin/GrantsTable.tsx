@@ -56,6 +56,7 @@ export const GrantsTable = ({
 
   const renderColumnHeader = (field: SortField, label: string) => (
     <button
+      type="button"
       onClick={() => onSort(field)}
       className="flex items-center text-left font-medium hover:text-primary-600 transition-colors"
     >

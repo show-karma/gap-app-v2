@@ -3,7 +3,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { trackService } from "@/services/tracks";
-import { fetchTrackById } from "@/utilities/sdk/tracks";
 
 // Query keys
 const TRACK_QUERY_KEYS = {
@@ -26,17 +25,6 @@ export const useTracksForCommunity = (communityUID: string, includeArchived: boo
     queryFn: () => trackService.getAllTracks(communityUID, includeArchived),
     enabled: !!communityUID,
     staleTime: 5 * 60 * 1000, // 5 minutes
-  });
-};
-
-/**
- * Hook to fetch a single track by ID
- */
-const useTrack = (id: string) => {
-  return useQuery({
-    queryKey: ["track", id],
-    queryFn: () => fetchTrackById(id),
-    enabled: !!id,
   });
 };
 
@@ -150,27 +138,6 @@ export const useAssignTracksToProgram = (programId: string, communityUID: string
 };
 
 /**
- * Hook to remove a track from a program
- */
-const useRemoveTrackFromProgram = (programId: string, communityUID: string) => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (trackId: string) =>
-      trackService.removeTrackFromProgram(programId, trackId, communityUID),
-    onSuccess: () => {
-      toast.success("Track removed from program successfully");
-      queryClient.invalidateQueries({
-        queryKey: TRACK_QUERY_KEYS.program(programId),
-      });
-    },
-    onError: (error: Error) => {
-      toast.error(error.message || "Failed to remove track from program");
-    },
-  });
-};
-
-/**
  * Hook to remove multiple tracks from a program in batch
  */
 export const useRemoveTracksFromProgramBatch = (programId: string, communityUID: string) => {
@@ -205,47 +172,6 @@ export const useTracksForProject = (projectId: string, programId: string) => {
   });
 };
 
-/**
- * Hook to assign tracks to a project (V2)
- */
-const useAssignTracksToProject = (projectId: string) => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({ trackIds, programId }: { trackIds: string[]; programId: string }) =>
-      trackService.assignTracksToProject(projectId, trackIds, programId),
-    onSuccess: (_, variables) => {
-      toast.success("Tracks assigned to project successfully");
-      queryClient.invalidateQueries({
-        queryKey: TRACK_QUERY_KEYS.project(projectId, variables.programId),
-      });
-    },
-    onError: (error: Error) => {
-      toast.error(error.message || "Failed to assign tracks to project");
-    },
-  });
-};
-
-/**
- * Hook to unassign tracks from a project (V2)
- */
-const useUnassignTracksFromProject = (projectId: string) => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({ trackIds, programId }: { trackIds: string[]; programId: string }) =>
-      trackService.unassignTracksFromProject(programId, projectId, trackIds),
-    onSuccess: (_, variables) => {
-      toast.success("Tracks removed from project successfully");
-      queryClient.invalidateQueries({
-        queryKey: TRACK_QUERY_KEYS.project(projectId, variables.programId),
-      });
-    },
-    onError: (error: Error) => {
-      toast.error(error.message || "Failed to remove tracks from project");
-    },
-  });
-};
 /**
  * Hook to fetch projects by track (V2)
  */

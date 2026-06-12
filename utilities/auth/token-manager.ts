@@ -15,64 +15,64 @@ interface PrivyTokenProvider {
  */
 const TOKEN_CACHE_TTL_MS = 20_000;
 
-export class TokenManager {
-  private static privyInstance: PrivyTokenProvider | null = null;
-  private static cachedToken: string | null = null;
-  private static cacheExpiry = 0;
-  private static pendingRequest: Promise<string | null> | null = null;
-  private static instanceReadyResolvers: Array<() => void> = [];
+let privyInstance: PrivyTokenProvider | null = null;
+let cachedToken: string | null = null;
+let cacheExpiry = 0;
+let pendingRequest: Promise<string | null> | null = null;
+let instanceReadyResolvers: Array<() => void> = [];
 
+// Resolves once a Privy instance with getAccessToken has been registered,
+// or after `timeoutMs` if Privy never finishes bootstrapping (e.g. the SDK
+// failed to load). Lets API calls fired on cold page load wait for auth
+// bootstrap instead of racing it and 401'ing.
+function waitForInstance(timeoutMs = 3000): Promise<void> {
+  if (privyInstance?.getAccessToken) return Promise.resolve();
+  return new Promise<void>((resolve) => {
+    let settled = false;
+    const done = () => {
+      if (settled) return;
+      settled = true;
+      resolve();
+    };
+    instanceReadyResolvers.push(done);
+    setTimeout(done, timeoutMs);
+  });
+}
+
+export const TokenManager = {
   /**
    * Set the Privy instance to use for token operations
    * This should be called once when the app initializes
    */
-  static setPrivyInstance(privy: PrivyTokenProvider | null): void {
-    if (privy !== TokenManager.privyInstance) {
+  setPrivyInstance(privy: PrivyTokenProvider | null): void {
+    if (privy !== privyInstance) {
       TokenManager.clearCache();
     }
-    TokenManager.privyInstance = privy;
+    privyInstance = privy;
     if (privy?.getAccessToken) {
-      const resolvers = TokenManager.instanceReadyResolvers;
-      TokenManager.instanceReadyResolvers = [];
+      const resolvers = instanceReadyResolvers;
+      instanceReadyResolvers = [];
       for (const resolve of resolvers) {
         resolve();
       }
     }
-  }
-
-  // Resolves once a Privy instance with getAccessToken has been registered,
-  // or after `timeoutMs` if Privy never finishes bootstrapping (e.g. the SDK
-  // failed to load). Lets API calls fired on cold page load wait for auth
-  // bootstrap instead of racing it and 401'ing.
-  private static waitForInstance(timeoutMs = 3000): Promise<void> {
-    if (TokenManager.privyInstance?.getAccessToken) return Promise.resolve();
-    return new Promise<void>((resolve) => {
-      let settled = false;
-      const done = () => {
-        if (settled) return;
-        settled = true;
-        resolve();
-      };
-      TokenManager.instanceReadyResolvers.push(done);
-      setTimeout(done, timeoutMs);
-    });
-  }
+  },
 
   /**
    * Clear the token cache. Call this on logout or user switch
    * to force fresh token retrieval on next request.
    */
-  static clearCache(): void {
-    TokenManager.cachedToken = null;
-    TokenManager.cacheExpiry = 0;
-    TokenManager.pendingRequest = null;
-  }
+  clearCache(): void {
+    cachedToken = null;
+    cacheExpiry = 0;
+    pendingRequest = null;
+  },
 
   /**
    * Get token from cookies for server-side requests
    * This should only be called from server components/actions
    */
-  static async getServerToken(): Promise<string | null> {
+  async getServerToken(): Promise<string | null> {
     if (typeof window !== "undefined") {
       console.warn("getServerToken should only be called server-side");
       return null;
@@ -110,7 +110,7 @@ export class TokenManager {
       console.error("Failed to get JWT from cookies:", error);
       return null;
     }
-  }
+  },
 
   /**
    * Get the current access token from Privy
@@ -119,7 +119,7 @@ export class TokenManager {
    * Client-side: Uses a 30s TTL cache + request deduplication to prevent
    * excessive getAccessToken() calls from polling intervals + API interceptors.
    */
-  static async getToken(): Promise<string | null> {
+  async getToken(): Promise<string | null> {
     // Server-side: Use getServerToken (no caching needed)
     if (typeof window === "undefined") {
       return TokenManager.getServerToken();
@@ -134,60 +134,60 @@ export class TokenManager {
     }
 
     // Return cached token if still valid
-    if (TokenManager.cachedToken && Date.now() < TokenManager.cacheExpiry) {
-      return TokenManager.cachedToken;
+    if (cachedToken && Date.now() < cacheExpiry) {
+      return cachedToken;
     }
 
     // Deduplicate concurrent requests — if a request is already in-flight,
     // return the same promise instead of making parallel getAccessToken() calls
-    if (TokenManager.pendingRequest) {
-      return TokenManager.pendingRequest;
+    if (pendingRequest) {
+      return pendingRequest;
     }
 
     // Client-side: wait briefly for Privy bootstrap if it hasn't run yet.
     // Fixes 401 race when a page mounts an authenticated query before any
     // component has called useAuth() to register the Privy instance.
-    if (!TokenManager.privyInstance?.getAccessToken) {
-      await TokenManager.waitForInstance();
+    if (!privyInstance?.getAccessToken) {
+      await waitForInstance();
     }
 
     // Client-side: Use Privy instance
-    if (TokenManager.privyInstance?.getAccessToken) {
-      TokenManager.pendingRequest = (async () => {
+    if (privyInstance?.getAccessToken) {
+      pendingRequest = (async () => {
         try {
-          const token = await TokenManager.privyInstance!.getAccessToken!();
-          TokenManager.cachedToken = token;
-          TokenManager.cacheExpiry = Date.now() + TOKEN_CACHE_TTL_MS;
+          const token = await privyInstance!.getAccessToken!();
+          cachedToken = token;
+          cacheExpiry = Date.now() + TOKEN_CACHE_TTL_MS;
           return token;
         } catch (error) {
           console.error("Failed to get Privy access token:", error);
           return null;
         } finally {
-          TokenManager.pendingRequest = null;
+          pendingRequest = null;
         }
       })();
-      return TokenManager.pendingRequest;
+      return pendingRequest;
     }
 
     // Fallback: Try to get from cookies if Privy stores there
     // Privy handles this automatically based on your configuration
     return null;
-  }
+  },
 
   /**
    * Get authorization header with the current token
    */
-  static async getAuthHeader(): Promise<Record<string, string>> {
+  async getAuthHeader(): Promise<Record<string, string>> {
     const token = await TokenManager.getToken();
     return token ? { Authorization: `Bearer ${token}` } : {};
-  }
+  },
 
   /**
    * Check if user is authenticated
    * This should be replaced with Privy's authenticated state
    */
-  static async isAuthenticated(): Promise<boolean> {
+  async isAuthenticated(): Promise<boolean> {
     const token = await TokenManager.getToken();
     return !!token;
-  }
-}
+  },
+};

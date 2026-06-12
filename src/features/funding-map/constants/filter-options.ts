@@ -6,18 +6,6 @@ import type { OpportunityType } from "../types/funding-program";
  */
 
 /**
- * All opportunity types in display order
- */
-const OPPORTUNITY_TYPES: readonly OpportunityType[] = [
-  "grant",
-  "hackathon",
-  "bounty",
-  "accelerator",
-  "vc_fund",
-  "rfp",
-] as const;
-
-/**
  * Human-readable labels for each opportunity type
  */
 export const OPPORTUNITY_TYPE_LABELS: Record<OpportunityType, string> = {
@@ -40,12 +28,6 @@ export const OPPORTUNITY_TYPE_SINGULAR_LABELS: Record<OpportunityType, string> =
   vc_fund: "VC Fund",
   rfp: "RFP",
 };
-
-const BOUNTY_DIFFICULTY_LEVELS = ["beginner", "intermediate", "advanced"] as const;
-
-const ACCELERATOR_STAGES = ["pre-seed", "seed", "series-a"] as const;
-
-const VC_FUND_STAGES = ["pre-seed", "seed", "series-a", "series-b+"] as const;
 
 export const FUNDING_MAP_NETWORKS = [
   "Aleo",
@@ -261,12 +243,6 @@ export const OPPORTUNITY_TO_GRANT_TYPE: Partial<Record<OpportunityType, string>>
 
 export const FUNDING_MAP_STATUSES = ["Active", "Inactive"] as const;
 
-const FUNDING_MAP_SORT_OPTIONS = [
-  { value: "featured", label: "Featured" },
-  { value: "newest", label: "Newest" },
-  { value: "ending-soon", label: "Ending Soon" },
-] as const;
-
 export const FUNDING_MAP_PAGE_SIZE = 24;
 
 export const FUNDING_MAP_DEFAULT_CHAIN_ID =
@@ -365,9 +341,3 @@ export const NETWORK_IMAGES: Record<string, { light: string; dark: string }> = {
     dark: "/images/networks/zcash.svg",
   },
 };
-
-type FundingMapNetwork = (typeof FUNDING_MAP_NETWORKS)[number];
-type FundingMapEcosystem = (typeof FUNDING_MAP_ECOSYSTEMS)[number];
-type FundingMapCategory = (typeof FUNDING_MAP_CATEGORIES)[number];
-type FundingMapGrantType = (typeof FUNDING_MAP_GRANT_TYPES)[number];
-type FundingMapStatus = (typeof FUNDING_MAP_STATUSES)[number];

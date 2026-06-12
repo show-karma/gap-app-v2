@@ -58,6 +58,7 @@ export const ProjectsHeroSection = () => {
       {/* Buttons */}
       <div className="flex gap-4 mb-4">
         <button
+          type="button"
           onClick={handleScrollToProjects}
           className="px-5 py-2 border border-brand-blue text-brand-blue dark:border-zinc-600 rounded-sm font-medium hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors dark:text-white h-[40px]"
         >

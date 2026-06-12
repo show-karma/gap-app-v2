@@ -86,7 +86,6 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
     handleSubmit,
     setValue,
     watch,
-    control,
     formState: { errors, isSubmitting, isValid },
   } = useForm<MilestoneType>({
     resolver: zodResolver(milestoneSchema),
@@ -98,22 +97,13 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
   const { chain } = useAccount();
   const { switchChainAsync } = useWallet();
   const { setupChainAndWallet, smartWalletAddress } = useSetupChainAndWallet();
-  const refreshProject = useProjectStore((state) => state.refreshProject);
   const isCommunityAdmin = useIsCommunityAdmin();
   const project = useProjectStore((state) => state.project);
   const projectUID = project?.uid;
   const { refetch: refetchGrants } = useProjectGrants(projectUID || "");
 
-  const {
-    startAttestation,
-    showLoading,
-    showSuccess,
-    showError,
-    dismiss,
-    updateStep,
-    changeStepperStep,
-    setIsStepper,
-  } = useAttestationToast();
+  const { startAttestation, showSuccess, showError, updateStep, changeStepperStep, setIsStepper } =
+    useAttestationToast();
 
   const router = useRouter();
 
@@ -231,7 +221,7 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
           <Controller
             name="priority"
             control={form.control}
-            render={({ field, formState, fieldState }) => (
+            render={({ field, formState }) => (
               <div className="flex w-full flex-col gap-2">
                 <div className={labelStyle}>Milestone priority (optional)</div>
                 <div>
@@ -244,6 +234,7 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
                       {({ close }) => (
                         <>
                           <button
+                            type="button"
                             key={"none"}
                             className="cursor-pointer hover:opacity-75 text-sm flex flex-row items-center justify-start py-2 px-4 hover:bg-zinc-200 dark:hover:bg-zinc-900 w-full disabled:opacity-30 disabled:cursor-not-allowed disabled:bg-zinc-200 dark:disabled:bg-zinc-900"
                             onClick={(event) => {
@@ -261,6 +252,7 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
                           </button>
                           {priorities.map((priority) => (
                             <button
+                              type="button"
                               key={priority}
                               className="cursor-pointer hover:opacity-75 text-sm flex flex-row items-center justify-start py-2 px-4 hover:bg-zinc-200 dark:hover:bg-zinc-900 w-full disabled:opacity-30 disabled:cursor-not-allowed disabled:bg-zinc-200 dark:disabled:bg-zinc-900"
                               disabled={milestones?.some((m) => m.priority === priority)}

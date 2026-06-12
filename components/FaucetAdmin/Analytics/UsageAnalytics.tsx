@@ -23,10 +23,7 @@ export function UsageAnalytics() {
     status: selectedStatus,
     chainId: selectedChain,
   });
-  const { data: recentHistory, isLoading: historyLoading } = useFaucetHistory(
-    undefined,
-    selectedChain
-  );
+  const { isLoading: historyLoading } = useFaucetHistory(undefined, selectedChain);
 
   const isLoading = statsLoading || isRequestsPending || historyLoading;
 
@@ -259,6 +256,7 @@ export function UsageAnalytics() {
                 </div>
                 <div className="flex space-x-2">
                   <button
+                    type="button"
                     onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                     disabled={currentPage === 1}
                     className="px-3 py-1 text-sm bg-white dark:bg-zinc-800 border border-gray-300 dark:border-zinc-600 rounded-lg hover:bg-gray-50 dark:hover:bg-zinc-700 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -275,6 +273,7 @@ export function UsageAnalytics() {
                         return null;
                       return (
                         <button
+                          type="button"
                           key={pageNum}
                           onClick={() => setCurrentPage(pageNum)}
                           className={`px-3 py-1 text-sm rounded-lg ${
@@ -290,6 +289,7 @@ export function UsageAnalytics() {
                   ).filter(Boolean)}
 
                   <button
+                    type="button"
                     onClick={() =>
                       setCurrentPage(
                         Math.min(

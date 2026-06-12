@@ -15,7 +15,6 @@ import { DatePicker } from "@/components/Utilities/DatePicker";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { useAttestationToast } from "@/hooks/useAttestationToast";
-import { useGap } from "@/hooks/useGap";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
 import { useProjectImpacts } from "@/hooks/v2/useProjectImpacts";
@@ -41,9 +40,7 @@ const _inputStyle =
 
 type UpdateType = z.infer<typeof updateSchema>;
 
-type AddImpactScreenProps = {};
-
-export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
+export const AddImpactScreen: FC = () => {
   const [proof, setProof] = useState("");
   const [impact, setImpact] = useState("");
   const [work, setWork] = useState("");
@@ -57,11 +54,10 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
   const { refetch: refetchImpacts } = useProjectImpacts(projectIdOrSlug);
   const [, changeTab] = useQueryState("tab");
   const {
-    register,
     handleSubmit,
     control,
     setValue,
-    formState: { errors, isSubmitting, isValid },
+    formState: { isSubmitting, isValid },
     watch,
   } = useForm<UpdateType>({
     resolver: zodResolver(updateSchema),
@@ -73,7 +69,6 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
     },
   });
   const [isLoading, setIsLoading] = useState(false);
-  const { gap } = useGap();
   const { startAttestation, changeStepperStep, showSuccess, dismiss } = useAttestationToast();
 
   const onSubmit: SubmitHandler<UpdateType> = async (data, event) => {
@@ -167,6 +162,7 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
         <div className="flex w-full flex-row justify-between">
           <h4 className="text-2xl font-bold text-black dark:text-zinc-100">Add impact work</h4>
           <button
+            type="button"
             className="bg-transparent p-4 hover:bg-transparent hover:opacity-75"
             onClick={() => {
               changeTab(null);

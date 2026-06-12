@@ -3,7 +3,6 @@
 import { cva, type VariantProps } from "class-variance-authority";
 import type * as React from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/utilities/tailwind";
 
@@ -69,7 +68,6 @@ function InputGroupAddon({
 
   return (
     // biome-ignore lint/a11y/useSemanticElements: InputGroupAddon is a layout wrapper, not a form fieldset
-    // biome-ignore lint/a11y/useKeyWithClickEvents: keyboard handler is provided via onKeyDown
     <div
       role="group"
       data-slot="input-group-addon"
@@ -112,31 +110,6 @@ function InputGroupButton({
       data-size={size}
       variant={variant}
       className={cn(inputGroupButtonVariants({ size }), className)}
-      {...props}
-    />
-  );
-}
-
-function InputGroupText({ className, ...props }: React.ComponentProps<"span">) {
-  return (
-    <span
-      className={cn(
-        "text-muted-foreground flex items-center gap-2 text-sm [&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none",
-        className
-      )}
-      {...props}
-    />
-  );
-}
-
-function InputGroupInput({ className, ...props }: React.ComponentProps<"input">) {
-  return (
-    <Input
-      data-slot="input-group-control"
-      className={cn(
-        "flex-1 rounded-none border-0 bg-transparent shadow-none focus-visible:ring-0 dark:bg-transparent",
-        className
-      )}
       {...props}
     />
   );

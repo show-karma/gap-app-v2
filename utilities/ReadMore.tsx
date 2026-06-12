@@ -23,7 +23,6 @@ export const ReadMore = ({
   readLessText = "Read less",
   side = "right",
   markdownClass,
-  markdownComponents,
   othersideButton,
 }: Props) => {
   const [isReadMore, setIsReadMore] = useState(true);

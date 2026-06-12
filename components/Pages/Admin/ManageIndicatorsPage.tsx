@@ -12,13 +12,10 @@ import {
 } from "@/hooks/communities";
 import type { Category } from "@/types/impactMeasurement";
 import { MESSAGES } from "@/utilities/messages";
-import { defaultMetadata } from "@/utilities/meta";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 import { CategoryView } from "./CategoryView";
 import { IndicatorsView } from "./IndicatorsView";
-
-const metadata = defaultMetadata;
 
 export default function ManageIndicatorsPage() {
   const router = useRouter();

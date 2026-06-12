@@ -15,7 +15,6 @@ export { RecordPaymentDialog } from "./components/RecordPaymentDialog";
 export { TokenBreakdown } from "./components/TokenBreakdown";
 // Hooks
 export * from "./hooks/use-payout-disbursement";
-export * from "./hooks/use-transaction-status-poller";
 // Services
 export * from "./services/payout-disbursement.service";
 export * from "./types/payout-disbursement";

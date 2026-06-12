@@ -76,7 +76,6 @@ export const PaymentStatusDropdown = memo(function PaymentStatusDropdown({
   milestoneUID,
   grantUID,
   communityUID,
-  paymentStatusDate,
   onRequestRecordPayment,
   onRequestDeleteDisbursement,
 }: PaymentStatusDropdownProps) {

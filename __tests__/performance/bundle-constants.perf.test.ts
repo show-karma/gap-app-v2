@@ -276,12 +276,7 @@ describe("Bundle constants -- module-level extraction", () => {
       }
     }
 
-    // If there are violations, report them clearly
     if (allDiagnostics.length > 0) {
-      const report = allDiagnostics
-        .map((d) => [`  ${d.file}:`, ...d.issues.map((i) => `    - ${i}`)].join("\n"))
-        .join("\n");
-
       // Currently informational -- can be made strict by uncommenting:
       // expect(allDiagnostics).toEqual([]);
       expect(allDiagnostics.length).toBeGreaterThanOrEqual(0);

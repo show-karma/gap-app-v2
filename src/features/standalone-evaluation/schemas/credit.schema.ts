@@ -4,11 +4,6 @@ export const CREDIT_PACKS = ["PACK_50", "PACK_100", "PACK_500"] as const;
 export const creditPackSchema = z.enum(CREDIT_PACKS);
 export type CreditPack = z.infer<typeof creditPackSchema>;
 
-const creditPurchaseSchema = z.object({
-  pack: creditPackSchema,
-});
-type CreditPurchaseInput = z.infer<typeof creditPurchaseSchema>;
-
 interface CreditPackInfo {
   id: CreditPack;
   label: string;

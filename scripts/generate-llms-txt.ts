@@ -1623,8 +1623,6 @@ function generateLlmsTxt(
 ): string {
   const lines: string[] = [];
   const primary = getPrimaryLandingMetadata(landingPages);
-  const homeTarget = LANDING_PAGE_TARGETS.find((t) => t.path === "/");
-
   const homePage = landingPages.find((page) => page.path === "/");
 
   lines.push(`# ${PROJECT_NAME}`);

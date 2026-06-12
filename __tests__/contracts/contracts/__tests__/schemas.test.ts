@@ -58,7 +58,7 @@ describe("payout schemas", () => {
   });
 
   it("rejects PayoutDisbursement with missing required fields", () => {
-    const { id, ...incomplete } = validDisbursement;
+    const { id: _id, ...incomplete } = validDisbursement;
     const result = payoutDisbursementSchema.safeParse(incomplete);
     expect(result.success).toBe(false);
   });
@@ -531,7 +531,7 @@ describe("milestone schemas", () => {
   });
 
   it("rejects milestone missing required verified array", () => {
-    const { verified, ...incomplete } = validMilestone;
+    const { verified: _verified, ...incomplete } = validMilestone;
     const result = grantMilestoneSchema.safeParse(incomplete);
     expect(result.success).toBe(false);
   });

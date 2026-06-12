@@ -143,61 +143,6 @@ export const getGroupedIndicatorsByCommunity = async (communityId: string) => {
 };
 
 /**
- * Get all indicators with pagination using V2 API
- */
-const getIndicatorsV2 = async (params?: {
-  communityUID?: string;
-  programId?: number;
-  chainId?: number;
-  syncType?: "auto" | "manual";
-  page?: number;
-  limit?: number;
-}): Promise<PaginatedResponse<Indicator>> => {
-  try {
-    const [data, error] = await fetchData(INDEXER.INDICATORS.V2.LIST(params));
-    if (error) {
-      throw error;
-    }
-    const paginatedData = data as PaginatedResponse<V2Indicator>;
-    return {
-      payload: (paginatedData.payload || []).map(transformIndicator),
-      pagination: paginatedData.pagination,
-    };
-  } catch (error) {
-    errorManager("Error fetching indicators", error);
-    return {
-      payload: [],
-      pagination: {
-        totalCount: 0,
-        page: 1,
-        limit: 20,
-        totalPages: 0,
-        nextPage: null,
-        prevPage: null,
-        hasNextPage: false,
-        hasPrevPage: false,
-      },
-    };
-  }
-};
-
-/**
- * Get a single indicator by ID using V2 API
- */
-const getIndicatorById = async (indicatorId: string): Promise<Indicator | null> => {
-  try {
-    const [data, error] = await fetchData(INDEXER.INDICATORS.V2.GET_BY_ID(indicatorId));
-    if (error) {
-      throw error;
-    }
-    return transformIndicator(data as V2Indicator);
-  } catch (error) {
-    errorManager("Error fetching indicator by ID", error);
-    return null;
-  }
-};
-
-/**
  * Get all auto-synced (system) indicators
  * These are indicators with syncType='auto' that are managed by the system
  */

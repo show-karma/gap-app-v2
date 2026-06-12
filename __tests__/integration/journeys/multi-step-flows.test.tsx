@@ -427,11 +427,8 @@ describe("Multi-Step Navigation Journey Tests", () => {
         }),
       ];
 
-      let requestCount = 0;
-
       server.use(
         http.get("*/v2/projects", ({ request }) => {
-          requestCount++;
           const url = new URL(request.url);
           const page = Number(url.searchParams.get("page") || "1");
 

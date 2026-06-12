@@ -17,7 +17,6 @@ import { InfoTooltip } from "@/components/Utilities/InfoTooltip";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useAutosyncedIndicators } from "@/hooks/useAutosyncedIndicators";
-import { useGap } from "@/hooks/useGap";
 import { useImpactAnswers } from "@/hooks/useImpactAnswers";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useUnlinkedIndicators } from "@/hooks/useUnlinkedIndicators";
@@ -46,20 +45,6 @@ interface GrantOption {
   value: string;
   chain: number;
   communityUID: string;
-}
-
-interface OutputData {
-  value: string;
-  proof: string;
-}
-
-interface CommunityIndicator {
-  id: string;
-  name: string;
-  description: string;
-  unitOfMeasure: string;
-  communityId: string;
-  communityName?: string;
 }
 
 const updateSchema = z.object({
@@ -262,7 +247,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
   // Fetch grants using dedicated hook
   const { grants: projectGrants } = useProjectGrants(project?.uid || "");
 
-  const { register, handleSubmit, watch, control, setValue, formState, reset, setError } =
+  const { register, handleSubmit, watch, control, setValue, formState, setError } =
     useForm<UpdateType>({
       resolver: zodResolver(updateSchema),
       reValidateMode: "onChange",
@@ -522,8 +507,6 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
   } = useAttestationToast();
 
   const { openShareDialog } = useShareDialogStore();
-
-  const { gap } = useGap();
 
   const indicatorsList = categorizedIndicators.map((output) => ({
     indicatorId: output.id,

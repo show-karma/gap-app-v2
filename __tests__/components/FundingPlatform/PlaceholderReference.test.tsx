@@ -88,7 +88,7 @@ describe("PlaceholderReference", () => {
 
   describe("icon states", () => {
     it("should show chevron down icon when collapsed", () => {
-      const { container } = render(<PlaceholderReference />);
+      render(<PlaceholderReference />);
 
       // The collapsed state should have a specific SVG path
       const button = screen.getByRole("button");

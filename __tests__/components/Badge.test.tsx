@@ -1,5 +1,4 @@
 import { render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import { Badge } from "@/components/ui/badge";
 import "@testing-library/jest-dom";
 
@@ -317,7 +316,6 @@ describe("Badge", () => {
     });
 
     it("should accept onMouseEnter handler", async () => {
-      const user = userEvent.setup();
       const handleMouseEnter = vi.fn();
 
       render(<Badge onMouseEnter={handleMouseEnter}>Badge</Badge>);

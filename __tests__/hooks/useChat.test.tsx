@@ -121,7 +121,6 @@ describe("useChat – state transitions", () => {
     mockClient.stopChatRun.mockResolvedValue(undefined);
 
     // A stream that never finishes — we'll abort it
-    let externalController!: AbortController;
     mockClient.openChatStream.mockImplementation(
       (_slug: string, _role: string, _runId: string, signal: AbortSignal) => {
         return new Promise<ReadableStream<Uint8Array>>((resolve) => {
@@ -137,7 +136,7 @@ describe("useChat – state transitions", () => {
         });
       }
     );
-    externalController = new AbortController();
+    const externalController = new AbortController();
 
     const { result } = renderHook(() => useChat("acme", "orchestrator"));
 

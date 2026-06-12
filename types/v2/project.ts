@@ -23,12 +23,6 @@ export interface ProjectDetails {
   lastDetailsUpdate?: string;
 }
 
-interface ProjectMember {
-  address: string;
-  role: string;
-  joinedAt: string;
-}
-
 export interface ProjectPointer {
   uid: string;
   originalProjectUID: string;

@@ -12,7 +12,6 @@ import {
   projectObjectiveCompletionSchema as schema,
 } from "@/components/Forms/projectObjectiveCompletionPayload";
 import { useAttestationToast } from "@/hooks/useAttestationToast";
-import { useGap } from "@/hooks/useGap";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
 import { useProjectUpdates } from "@/hooks/v2/useProjectUpdates";
@@ -46,7 +45,6 @@ export const ProjectObjectiveCompletionForm = ({
   const project = useProjectStore((state) => state.project);
   const [isCompleting, setIsCompleting] = useState(false);
   const { chain, address } = useAccount();
-  const { gap } = useGap();
   const { startAttestation, showSuccess, showError, changeStepperStep, setIsStepper } =
     useAttestationToast();
   const { switchChainAsync } = useWallet();

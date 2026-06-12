@@ -8,9 +8,6 @@ interface E2EAuthState {
   };
 }
 
-/** @deprecated Use E2EAuthState instead */
-type CypressAuthState = E2EAuthState;
-
 const E2E_AUTH_STATE_STORAGE_KEY = "privy:auth_state";
 
 const isE2EAuthBypassEnabled = (): boolean => process.env.NEXT_PUBLIC_E2E_AUTH_BYPASS === "true";
@@ -44,6 +41,3 @@ export const getE2EMockAuthState = (): E2EAuthState | null => {
 
   return null;
 };
-
-/** @deprecated Use getE2EMockAuthState instead */
-const getCypressMockAuthState = getE2EMockAuthState;

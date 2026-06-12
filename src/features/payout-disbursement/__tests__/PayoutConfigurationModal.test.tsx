@@ -631,8 +631,6 @@ describe("PayoutConfigurationModal", () => {
     });
 
     it("should still allow editing unpaid custom line items when some are paid", async () => {
-      const user = userEvent.setup();
-
       const configWithMultipleCustom: PayoutGrantConfig = {
         ...existingConfigWithCustom,
         milestoneAllocations: [

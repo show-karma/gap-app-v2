@@ -330,7 +330,7 @@ describe("MilestoneCard", () => {
         ],
       } as unknown as UnifiedMilestone;
 
-      const { container } = renderCard(milestoneWithUnsortedGrants);
+      renderCard(milestoneWithUnsortedGrants);
 
       const grants = screen.getAllByText(/Grant$/);
       expect(grants[0]).toHaveTextContent("Alpha Grant");

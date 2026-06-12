@@ -3,7 +3,6 @@ import {
   isSharedDomain as checkIsSharedDomain,
   getDefaultSharedDomain,
   getExclusiveDomainsForTenant,
-  getTenantForExclusiveDomain,
 } from "./domain-constants";
 
 interface DomainMapping {
@@ -98,12 +97,6 @@ const DOMAIN_MAPPINGS: DomainMapping[] = [
 
 export function getDomainMappingByCommunity(communityId: TenantId): DomainMapping | undefined {
   return DOMAIN_MAPPINGS.find((mapping) => mapping.id === communityId);
-}
-
-function getDomainMappingByDomain(domain: string): DomainMapping | undefined {
-  const tenant = getTenantForExclusiveDomain(domain);
-  if (tenant) return getDomainMappingByCommunity(tenant);
-  return undefined;
 }
 
 export function getDomainMappingBySlug(slug: string): DomainMapping | undefined {

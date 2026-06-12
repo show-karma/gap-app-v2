@@ -7,7 +7,6 @@ import { Button } from "@/components/Utilities/Button";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { useCommunityAdminAccess, useCommunityDetails } from "@/hooks/communities";
 import { Link } from "@/src/components/navigation/Link";
-import { defaultMetadata } from "@/utilities/meta";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 import { OutputMetrics } from "./OutputMetrics";
@@ -58,6 +57,7 @@ export default function ProgramImpactPage() {
               <nav className="flex space-x-8" aria-label="Program Impact Tabs">
                 {tabs.map((tab) => (
                   <button
+                    type="button"
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id as Tab)}
                     className={cn(
@@ -96,5 +96,3 @@ export default function ProgramImpactPage() {
     </div>
   );
 }
-
-const metadata = defaultMetadata;

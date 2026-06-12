@@ -284,7 +284,6 @@ interface EvaluationDisplayProps {
 // Component to render evaluation data
 export function EvaluationDisplay({
   data,
-  programName,
   getScoreIcon,
   getStatusColor,
   getScoreColor,

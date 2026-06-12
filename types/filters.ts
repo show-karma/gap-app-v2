@@ -10,7 +10,3 @@ export type StatusOptions =
   | "maturity-stage-3"
   | "maturity-stage-4";
 export type MaturityStageOptions = "all" | "0" | "1" | "2" | "3" | "4";
-type Category = {
-  id: number;
-  name: string;
-};

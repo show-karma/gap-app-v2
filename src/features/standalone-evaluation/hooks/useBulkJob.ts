@@ -87,15 +87,6 @@ export const useStartBulkJob = () => {
   });
 };
 
-const useBulkJobStatus = (sessionId: string, jobId: string | null) => {
-  return useQuery<BulkJobResponse>({
-    queryKey: BULK_JOB_KEYS.job(sessionId, jobId ?? ""),
-    queryFn: () => standaloneEvaluationService.getBulkJob(sessionId, jobId as string),
-    enabled: Boolean(sessionId && jobId),
-    staleTime: 0,
-  });
-};
-
 interface SSEEvent {
   type: string;
   payload: Record<string, unknown>;

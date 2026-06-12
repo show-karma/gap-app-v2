@@ -100,6 +100,7 @@ export function FieldTypeSelector({
       <div className="grid grid-cols-1 gap-2">
         {fieldTypes.map((fieldType) => (
           <button
+            type="button"
             key={fieldType.type}
             onClick={() => onFieldAdd(fieldType.type)}
             className={`flex items-center p-3 text-left border rounded-lg transition-colors ${

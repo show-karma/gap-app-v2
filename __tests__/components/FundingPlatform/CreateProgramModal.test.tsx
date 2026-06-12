@@ -229,8 +229,6 @@ import { useAccount } from "wagmi";
 import { useCommunityDetails } from "@/hooks/communities/useCommunityDetails";
 import { useAuth } from "@/hooks/useAuth";
 
-const INDEXER_API_BASE_URL = process.env.NEXT_PUBLIC_GAP_INDEXER_URL || "http://localhost:4000";
-
 // Test data
 const mockCommunity = {
   uid: "0x1234567890123456789012345678901234567890",
@@ -513,13 +511,9 @@ describe("CreateProgramModal", () => {
       await user.type(screen.getByLabelText(/program description/i), "Test Description");
       await user.type(screen.getByLabelText(/short description/i), "Short desc");
 
-      // Set dates - end before start
-      const startDate = new Date("2024-12-31");
-      const endDate = new Date("2024-01-01");
-
-      // Mock DatePicker to set dates
-      const startDatePicker = screen.getByText(/start date/i).closest("div");
-      const endDatePicker = screen.getByText(/end date/i).closest("div");
+      // Verify the date pickers are rendered (getByText throws if missing)
+      screen.getByText(/start date/i).closest("div");
+      screen.getByText(/end date/i).closest("div");
 
       // This is a simplified test - in reality, DatePicker would handle this
       // For now, we'll test the validation logic through form submission

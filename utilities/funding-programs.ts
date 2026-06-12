@@ -1,51 +1,9 @@
-import { errorManager } from "@/components/Utilities/errorManager";
-import type { FundingProgram } from "@/services/fundingPlatformService";
-
 /** Minimal structural type accepted by program-check utilities — satisfied by both FundingProgram variants. */
 interface ProgramLike {
   applicationConfig?: { isEnabled?: boolean; formSchema?: unknown } | null;
   metadata?: { endsAt?: string; startsAt?: string; title?: string };
   name?: string;
 }
-
-/**
- * Program Status Types and Interfaces
- * Aligned with gap-whitelabel-app rules for consistency
- */
-type ProgramStatusType = "open" | "closed" | "coming-soon" | "deadline-passed";
-
-type ProgramStatusColor = "success" | "danger" | "warning" | "default" | "primary";
-
-interface ProgramStatusInfo {
-  status: ProgramStatusType;
-  label: string;
-  color: ProgramStatusColor;
-  dotColor: string;
-  endsSoon: boolean;
-}
-
-const statusConfig: Record<ProgramStatusType, Omit<ProgramStatusInfo, "status" | "endsSoon">> = {
-  open: {
-    label: "Open for Applications",
-    color: "success",
-    dotColor: "bg-green-600",
-  },
-  closed: {
-    label: "Applications Closed",
-    color: "default",
-    dotColor: "bg-gray-600",
-  },
-  "coming-soon": {
-    label: "Coming Soon",
-    color: "primary",
-    dotColor: "bg-blue-600",
-  },
-  "deadline-passed": {
-    label: "Deadline Passed",
-    color: "warning",
-    dotColor: "bg-amber-600",
-  },
-};
 
 /**
  * Check if a program is within its open date range
@@ -87,56 +45,6 @@ export function isProgramEnabled(program: ProgramLike): boolean {
 }
 
 /**
- * Get the display status information for a funding program.
- * Returns status type, label, color, dot color, and endsSoon flag for UI display.
- * Rules aligned with gap-whitelabel-app for consistency across apps.
- */
-function getProgramStatusInfo(program: ProgramLike): ProgramStatusInfo {
-  const isEnabled = program.applicationConfig?.isEnabled ?? false;
-  const hasFormConfig = !!program.applicationConfig?.formSchema;
-  const isApplicationDeadlinePassed = program.metadata?.endsAt
-    ? new Date(program.metadata.endsAt) < new Date()
-    : false;
-
-  const isOpen =
-    program.metadata?.startsAt && program.metadata?.endsAt
-      ? isProgramOpen(program.metadata?.startsAt, program.metadata?.endsAt)
-      : true;
-
-  let status: ProgramStatusType;
-  let endsSoon = false;
-
-  if (!hasFormConfig || !isEnabled) {
-    status = "closed";
-  } else if (isApplicationDeadlinePassed) {
-    status = "deadline-passed";
-  } else if (!isOpen) {
-    if (program.metadata?.startsAt && new Date(program.metadata.startsAt) > new Date()) {
-      status = "coming-soon";
-    } else {
-      status = "closed";
-    }
-  } else {
-    status = "open";
-    const endsAt = program.metadata?.endsAt;
-    if (endsAt) {
-      const daysUntilEnd = Math.ceil(
-        (new Date(endsAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
-      );
-      if (daysUntilEnd <= 7 && daysUntilEnd > 0) {
-        endsSoon = true;
-      }
-    }
-  }
-
-  return {
-    status,
-    endsSoon,
-    ...statusConfig[status],
-  };
-}
-
-/**
  * Constants for funding program detection across the application
  */
 
@@ -150,9 +58,6 @@ export const FUNDING_PROGRAM_GRANT_NAMES = [
   "GoodDollar",
   "Cel'Eu Cirkvit",
 ] as const;
-
-type FundingProgramCommunity = (typeof FUNDING_PROGRAM_COMMUNITIES)[number];
-type FundingProgramGrantName = (typeof FUNDING_PROGRAM_GRANT_NAMES)[number];
 
 /**
  * Check if a community is a funding program community
@@ -192,79 +97,3 @@ export const isFundingProgramGrant = (communityName?: string, grantName?: string
   const isGrantFundingProgram = isFundingProgramGrantName(grantName);
   return isCommunityFundingProgram && isGrantFundingProgram;
 };
-
-/**
- * Get funding program display name
- * @param communityName - The community name
- * @returns Formatted display name for the funding program
- */
-const getFundingProgramDisplayName = (communityName: string): string => {
-  const normalized = communityName.toLowerCase();
-
-  if (normalized.includes("celo")) return "Celo";
-  if (normalized.includes("gooddollar")) return "GoodDollar";
-  if (normalized.includes("divvi")) return "Divvi";
-
-  return communityName;
-};
-
-/**
- * Transform and filter enabled funding programs
- * Shared utility for both client and server-side usage
- *
- * Uses isProgramEnabled for filtering, which checks:
- * - isEnabled flag is true
- * - formSchema is configured
- * - Current date is within startsAt/endsAt range
- * - Application deadline has not passed
- */
-function transformLiveFundingOpportunities(programs: any[]): FundingProgram[] {
-  try {
-    if (!Array.isArray(programs)) {
-      throw new Error("Expected programs to be an array");
-    }
-
-    // Transform to FundingProgram[] - backend returns full program objects
-    const transformedPrograms = programs.map((program: any, index: number): FundingProgram => {
-      if (!program || typeof program !== "object") {
-        throw new Error(
-          `Invalid program data at index ${index}: expected object, got ${typeof program}`
-        );
-      }
-      return program as FundingProgram;
-    });
-
-    // Filter to only include programs that are open for applications
-    // Uses isProgramEnabled which applies the same rules as gap-whitelabel-app
-    const validPrograms = transformedPrograms.filter(
-      (program) => (program.metadata?.title || program.name) && isProgramEnabled(program)
-    );
-
-    // Sort by startsAt date (most recent first)
-    const sortedPrograms = validPrograms.sort((a, b) => {
-      const aStartsAt = a.metadata?.startsAt;
-      const bStartsAt = b.metadata?.startsAt;
-      if (!aStartsAt && !bStartsAt) return 0;
-      if (!aStartsAt) return 1;
-      if (!bStartsAt) return -1;
-
-      try {
-        return new Date(bStartsAt).getTime() - new Date(aStartsAt).getTime();
-      } catch (dateError) {
-        errorManager(`Invalid date format in funding program: ${dateError}`, dateError, {
-          programA: a.metadata?.title || a.name,
-          programB: b.metadata?.title || b.name,
-        });
-        return 0;
-      }
-    });
-
-    return sortedPrograms;
-  } catch (error) {
-    errorManager(`Error transforming funding opportunities: ${error}`, error, {
-      context: "transformLiveFundingOpportunities",
-      programsCount: programs?.length,
-    });
-    throw error;
-  }
-}

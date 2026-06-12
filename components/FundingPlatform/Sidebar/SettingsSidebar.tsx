@@ -150,7 +150,6 @@ export function SettingsSidebar({
   activeTab,
   onTabChange,
   communityId,
-  programId,
   programTitle,
   completedSteps = EMPTY_COMPLETED_STEPS,
   className,
@@ -198,6 +197,7 @@ export function SettingsSidebar({
                 return (
                   <li key={item.key}>
                     <button
+                      type="button"
                       onClick={() => onTabChange(item.key)}
                       className={cn(
                         "w-full flex items-start gap-3 px-3 py-2.5 rounded-lg text-left transition-all",

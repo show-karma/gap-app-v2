@@ -164,19 +164,3 @@ class ContractsService {
 
 // Export singleton instance
 export const contractsService = new ContractsService();
-
-// Export individual functions for convenience
-const lookupDeployer = (network: string, contractAddress: string) =>
-  contractsService.lookupDeployer(network, contractAddress);
-
-const requestVerificationMessage = (
-  network: string,
-  contractAddress: string,
-  userAddress: string
-) => contractsService.requestVerificationMessage(network, contractAddress, userAddress);
-
-const verifyContractSignature = (params: VerifySignatureParams) =>
-  contractsService.verifyContractSignature(params);
-
-const checkAddressAvailability = (address: string, network: string, excludeProjectId?: string) =>
-  contractsService.checkAddressAvailability(address, network, excludeProjectId);

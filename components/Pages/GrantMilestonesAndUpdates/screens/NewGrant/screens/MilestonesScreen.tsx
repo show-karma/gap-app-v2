@@ -38,7 +38,6 @@ export const MilestonesScreen: React.FC = () => {
     saveMilestone,
     clearMilestonesForms,
     setFormPriorities,
-    updateFormData,
     resetFormData,
     setFlowType,
     communityNetworkId,
@@ -47,19 +46,12 @@ export const MilestonesScreen: React.FC = () => {
   const selectedProject = useProjectStore((state) => state.project);
   const { refetch: refetchGrants } = useProjectGrants(selectedProject?.uid || "");
   const router = useRouter();
-  const { connector, chain } = useAccount();
+  const { chain } = useAccount();
   const { authenticated: isAuth, address, isConnected } = useAuth();
   const { gap } = useGap();
   const { smartWalletAddress, setupChainAndWallet } = useSetupChainAndWallet();
-  const {
-    startAttestation,
-    changeStepperStep,
-    setIsStepper,
-    showLoading,
-    showSuccess,
-    showError,
-    dismiss,
-  } = useAttestationToast();
+  const { startAttestation, changeStepperStep, setIsStepper, showSuccess, showError } =
+    useAttestationToast();
   const queryClient = useQueryClient();
 
   const pathname = usePathname();

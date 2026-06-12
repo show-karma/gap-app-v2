@@ -221,9 +221,6 @@ describe("ProjectHeader", () => {
     it("should render profile pictures for desktop and mobile", () => {
       render(<ProjectHeader project={mockProject} />);
 
-      // ProfilePicture renders img element when valid URL is provided
-      const images = screen.queryAllByRole("img");
-      // We expect at least some images to be rendered (could be avatars)
       // The component should render successfully
       expect(screen.getByTestId("project-header")).toBeInTheDocument();
     });

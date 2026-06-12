@@ -38,17 +38,6 @@ interface UserPermissionsResponse {
 }
 
 /**
- * Reviewer program
- */
-interface ReviewerProgram {
-  programId: string;
-  chainID: number;
-  name?: string;
-  assignedAt: string;
-  permissions: string[];
-}
-
-/**
  * Service for handling permission checks and role management
  */
 export class PermissionsService {

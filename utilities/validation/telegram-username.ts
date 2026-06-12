@@ -26,13 +26,3 @@ export const telegramUsernameSchema = z
   .string()
   .regex(TELEGRAM_USERNAME_REGEX, TELEGRAM_USERNAME_ERROR)
   .or(z.literal(""));
-
-/**
- * Imperative validator for non-Zod call sites. Returns true when the value
- * matches a valid Telegram username (or is the empty string). Useful for
- * inline validation outside of React Hook Form.
- */
-const validateTelegramUsername = (value: string): boolean => {
-  if (value === "") return true;
-  return TELEGRAM_USERNAME_REGEX.test(value);
-};

@@ -165,6 +165,7 @@ beforeEach(() => {
   sessionStorage.clear();
   // Reset document.cookie
   document.cookie.split(";").forEach((c) => {
+    // biome-ignore lint/suspicious/noDocumentCookie: jsdom lacks the Cookie Store API; tests must clear document.cookie directly
     document.cookie = c
       .replace(/^ +/, "")
       .replace(/=.*/, "=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/");

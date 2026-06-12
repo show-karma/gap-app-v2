@@ -70,7 +70,7 @@ describe("GrantCompletedButton", () => {
     });
 
     it("should apply correct CSS classes", () => {
-      const { container } = render(
+      render(
         <GrantCompletedButton
           onClick={mockOnClick}
           disabled={false}

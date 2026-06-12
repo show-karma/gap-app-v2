@@ -643,6 +643,7 @@ export const FilteredOutputsAndOutcomes = ({
                     !form?.isEditing &&
                     isAuthorized && (
                       <button
+                        type="button"
                         onClick={() => handleEditClick(item.id)}
                         className="rounded-sm px-6 py-2 text-sm font-medium text-white bg-black dark:bg-zinc-700 hover:bg-zinc-700 dark:hover:bg-zinc-900/20  focus:outline-none focus:ring-2 focus:ring-zinc-500/40 transition-colors"
                       >
@@ -652,6 +653,7 @@ export const FilteredOutputsAndOutcomes = ({
                   {form?.isEditing && isAuthorized && (
                     <div className="flex gap-3 pt-2 flex-row">
                       <button
+                        type="button"
                         onClick={() => handleCancel()}
                         disabled={form?.isSaving}
                         className="rounded-sm border border-black dark:border-zinc-100 px-6 py-2 text-sm font-medium text-black bg-white dark:bg-zinc-100 hover:bg-zinc-200 dark:hover:bg-zinc-100/20  focus:outline-none focus:ring-2 focus:ring-zinc-500/40 transition-colors"

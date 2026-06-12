@@ -11,7 +11,6 @@ import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { Button } from "@/components/ui/button";
 import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
-import { useTracksForProgram } from "@/hooks/useTracks";
 import { useWallet } from "@/hooks/useWallet";
 import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { getProjectGrants } from "@/services/project-grants.service";
@@ -53,9 +52,7 @@ export const GrantCompletion: FC = () => {
   >([]);
   const [isFundingProgram, setIsFundingProgram] = useState(false);
 
-  // Get tracks for the program to check if they exist
   const programIdWithChain = grant?.details?.programId;
-  const { data: availableTracks = [] } = useTracksForProgram(programIdWithChain || "");
 
   // Validation states
   const [validationErrors, setValidationErrors] = useState<{

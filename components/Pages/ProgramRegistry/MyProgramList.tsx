@@ -41,7 +41,6 @@ interface MyProgramListProps {
 
 export const MyProgramList: FC<MyProgramListProps> = ({
   grantPrograms,
-  tab,
   editFn,
   selectProgram,
   isAllowed,

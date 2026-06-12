@@ -9,7 +9,6 @@ import { Spinner } from "@/components/Utilities/Spinner";
 import TablePagination from "@/components/Utilities/TablePagination";
 import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
 import { useCommunityDetails } from "@/hooks/communities/useCommunityDetails";
-import { useAuth } from "@/hooks/useAuth";
 import { useCommunityGrants } from "@/hooks/useCommunityGrants";
 import { useCommunityRegions } from "@/hooks/useCommunityRegions";
 import { useCommunityProjects } from "@/hooks/v2/useCommunityProjects";
@@ -18,12 +17,9 @@ import type { CommunityProject } from "@/types/v2/community";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
-import { defaultMetadata } from "@/utilities/meta";
 import { PAGES } from "@/utilities/pages";
 import { ProgramFilter } from "./ProgramFilter";
 import { RegionCreationDialog } from "./RegionCreationDialog";
-
-const metadata = defaultMetadata;
 
 interface ProjectsTableProps {
   projects: CommunityProject[];
@@ -41,7 +37,6 @@ interface ProjectsTableProps {
 const ProjectsTable: React.FC<ProjectsTableProps> = ({
   projects,
   regions,
-  selectedRegions,
   optimisticRegions,
   onRegionChange,
   currentPage,
@@ -160,19 +155,14 @@ const ProjectsTable: React.FC<ProjectsTableProps> = ({
 
 export default function EditProjectsPage() {
   const router = useRouter();
-  const { address, isConnected } = useAccount();
-  const { authenticated: isAuth } = useAuth();
+  const { address } = useAccount();
   const params = useParams();
   const communityId = params.communityId as string;
   const [selectedRegions, _setSelectedRegions] = useState<Record<string, string>>({});
   const [optimisticRegions, setOptimisticRegions] = useState<Record<string, string>>({});
   const [isSaving, setIsSaving] = useState<boolean>(false);
 
-  const {
-    data: community,
-    isLoading: isLoadingCommunity,
-    error: communityError,
-  } = useCommunityDetails(communityId);
+  const { data: community, error: communityError } = useCommunityDetails(communityId);
 
   const { hasAccess, isLoading: isLoadingAdmin } = useCommunityAdminAccess(community?.uid);
 

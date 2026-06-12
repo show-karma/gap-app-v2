@@ -60,6 +60,7 @@ const ApplicationSubmissionWithAPI: FC<IApplicationSubmissionWithAPIProps> = ({
           </p>
           {onCancel && (
             <button
+              type="button"
               onClick={onCancel}
               className="mt-4 px-4 py-2 text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400"
             >
@@ -85,6 +86,7 @@ const ApplicationSubmissionWithAPI: FC<IApplicationSubmissionWithAPIProps> = ({
           </p>
           {onCancel && (
             <button
+              type="button"
               onClick={onCancel}
               className="mt-4 px-4 py-2 text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400"
             >
@@ -111,6 +113,7 @@ const ApplicationSubmissionWithAPI: FC<IApplicationSubmissionWithAPIProps> = ({
           </p>
           {onCancel && (
             <button
+              type="button"
               onClick={onCancel}
               className="mt-4 px-4 py-2 text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400"
             >

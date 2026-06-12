@@ -29,9 +29,6 @@ const getCompletionData = (milestone: GrantMilestone) => {
   return completed;
 };
 
-const isMilestoneCompleted = (milestone: GrantMilestone): boolean =>
-  getCompletionData(milestone) !== null;
-
 type GrantContext =
   | {
       uid?: string;

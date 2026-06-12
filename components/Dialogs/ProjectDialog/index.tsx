@@ -249,7 +249,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       mode: "onChange",
       defaultValues: dataToUpdate,
     });
-  const { errors, isValid } = formState;
+  const { errors } = formState;
 
   // Watch the chainID value for the useEffect
   const chainIDValue = watch("chainID");
@@ -586,7 +586,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         links: Array<ExternalLink[0] | ExternalCustomLink>;
         recipient?: string;
       }
-      const { chainID, ...rest } = data;
+      const { chainID: _chainID, ...rest } = data;
       const newProjectInfo: NewProjectData = {
         ...rest,
         members: [resolvedAddress as Hex],
@@ -815,7 +815,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         return;
       }
 
-      const { gapClient, walletSigner, chainId } = setup;
+      const { gapClient, walletSigner } = setup;
 
       // Resolve address after setup — Farcaster users get smartWalletAddress from setupChainAndWallet
       if (!smartWalletAddress && !address) {
@@ -949,7 +949,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   };
 
   const [isValidatingGithub, setIsValidatingGithub] = useState(false);
-  const [githubValidatedAs, setGithubValidatedAs] = useState<"org" | null>(null);
+  const [, setGithubValidatedAs] = useState<"org" | null>(null);
 
   const validateGithubUrl = debounce(async (value: string) => {
     setGithubValidatedAs(null);

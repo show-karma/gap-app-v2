@@ -42,7 +42,6 @@ export function MilestoneSelectionStep({
   selectedAllocationIds,
   onSelectionChange,
   tokenSymbol,
-  tokenDecimals,
   grantName,
   projectName,
   compact = false,
@@ -77,7 +76,7 @@ export function MilestoneSelectionStep({
 
   // Calculate totals
   // Note: Allocation amounts are stored in human-readable format (e.g., "50000" for 50000 USDC)
-  const { totalUnpaid, selectedTotal } = useMemo(() => {
+  const { selectedTotal } = useMemo(() => {
     let unpaidSum = 0;
     let selectedSum = 0;
 

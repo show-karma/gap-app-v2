@@ -26,10 +26,7 @@ describe("Application API Contract", () => {
     it("default factory output passes schema validation", () => {
       const mock = createMockApplication();
       const result = fundingApplicationSchema.safeParse(mock);
-      if (!result.success) {
-        // eslint-disable-next-line no-console -- diagnostic output for test failures
-        console.log("Validation issues:", result.error.issues);
-      }
+      expect(result.error?.issues ?? []).toEqual([]);
       expect(result.success).toBe(true);
     });
 
@@ -75,49 +72,49 @@ describe("Application API Contract", () => {
 
   describe("required fields validation", () => {
     it("rejects when id is missing", () => {
-      const { id, ...rest } = createMockApplication();
+      const { id: _id, ...rest } = createMockApplication();
       const result = fundingApplicationSchema.safeParse(rest);
       expect(result.success).toBe(false);
     });
 
     it("rejects when programId is missing", () => {
-      const { programId, ...rest } = createMockApplication();
+      const { programId: _programId, ...rest } = createMockApplication();
       const result = fundingApplicationSchema.safeParse(rest);
       expect(result.success).toBe(false);
     });
 
     it("rejects when applicantEmail is missing", () => {
-      const { applicantEmail, ...rest } = createMockApplication();
+      const { applicantEmail: _applicantEmail, ...rest } = createMockApplication();
       const result = fundingApplicationSchema.safeParse(rest);
       expect(result.success).toBe(false);
     });
 
     it("rejects when ownerAddress is missing", () => {
-      const { ownerAddress, ...rest } = createMockApplication();
+      const { ownerAddress: _ownerAddress, ...rest } = createMockApplication();
       const result = fundingApplicationSchema.safeParse(rest);
       expect(result.success).toBe(false);
     });
 
     it("rejects when status is missing", () => {
-      const { status, ...rest } = createMockApplication();
+      const { status: _status, ...rest } = createMockApplication();
       const result = fundingApplicationSchema.safeParse(rest);
       expect(result.success).toBe(false);
     });
 
     it("rejects when statusHistory is missing", () => {
-      const { statusHistory, ...rest } = createMockApplication();
+      const { statusHistory: _statusHistory, ...rest } = createMockApplication();
       const result = fundingApplicationSchema.safeParse(rest);
       expect(result.success).toBe(false);
     });
 
     it("rejects when referenceNumber is missing", () => {
-      const { referenceNumber, ...rest } = createMockApplication();
+      const { referenceNumber: _referenceNumber, ...rest } = createMockApplication();
       const result = fundingApplicationSchema.safeParse(rest);
       expect(result.success).toBe(false);
     });
 
     it("rejects when submissionIP is missing", () => {
-      const { submissionIP, ...rest } = createMockApplication();
+      const { submissionIP: _submissionIP, ...rest } = createMockApplication();
       const result = fundingApplicationSchema.safeParse(rest);
       expect(result.success).toBe(false);
     });

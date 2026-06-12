@@ -86,8 +86,6 @@ export function PayoutConfigurationContent({
   grantUID,
   projectUID,
   communityUID,
-  grantName,
-  projectName,
   existingConfig,
   onSuccess,
   onDirtyChange,

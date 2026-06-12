@@ -73,7 +73,7 @@ describe("MilestoneItem", () => {
       milestoneUID: "0x1234567890abcdef",
     };
 
-    const { rerender } = render(
+    render(
       <MilestoneItem
         index={0}
         milestone={milestoneWithUID}

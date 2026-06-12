@@ -81,9 +81,7 @@ vi.mock("@safe-global/protocol-kit", () => ({
 
 vi.mock("@safe-global/api-kit", () => {
   // Use Proxy to delegate all property access to mockApiKitInstance
-  const MockApiKit = function MockApiKit() {
-    // biome-ignore lint: mock constructor intentionally returns proxy
-  };
+  const MockApiKit = function MockApiKit() {};
   MockApiKit.prototype = new Proxy(
     {},
     {

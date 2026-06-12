@@ -257,5 +257,3 @@ export const standaloneEvaluationService = {
     return unwrap(result, "Failed to create purchase session");
   },
 };
-
-type StandaloneEvaluationService = typeof standaloneEvaluationService;

@@ -6,13 +6,6 @@ import { InfoTooltip } from "@/components/Utilities/InfoTooltip";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/utilities/tailwind";
 
-interface DeliverableField {
-  id: string;
-  name?: string;
-  proof?: string;
-  description?: string;
-}
-
 interface DeliverablesTableProps {
   fields: Record<"id", string>[];
   register: UseFormRegister<any>;

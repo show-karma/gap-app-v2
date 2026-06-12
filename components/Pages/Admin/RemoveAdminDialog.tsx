@@ -28,10 +28,6 @@ const schema = z.object({
 });
 
 type SchemaType = z.infer<typeof schema>;
-interface CommunityAdmin {
-  id: string;
-  admins: { user: { id: string } }[];
-}
 
 type RemoveAdminDialogProps = {
   UUID: `0x${string}`;
@@ -60,10 +56,7 @@ export const RemoveAdmin: FC<RemoveAdminDialogProps> = ({
     setIsOpen(true);
   }
 
-  const {
-    handleSubmit,
-    formState: { errors },
-  } = useForm<SchemaType>({
+  const { handleSubmit } = useForm<SchemaType>({
     resolver: zodResolver(schema),
     mode: "onChange",
   });
@@ -151,7 +144,7 @@ export const RemoveAdmin: FC<RemoveAdminDialogProps> = ({
 
   return (
     <>
-      <button className="bg-transparent" onClick={openModal}>
+      <button type="button" className="bg-transparent" onClick={openModal}>
         <TrashIcon width={20} color="red" />
       </button>
       <Transition appear show={isOpen} as={Fragment}>

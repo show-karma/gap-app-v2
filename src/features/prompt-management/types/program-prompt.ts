@@ -45,10 +45,6 @@ export interface TestProgramPromptResult {
   error?: string;
 }
 
-interface TriggerBulkEvaluationRequest {
-  promptType: PromptType;
-}
-
 export interface TriggerBulkEvaluationResult {
   jobId: string;
   totalApplications: number;

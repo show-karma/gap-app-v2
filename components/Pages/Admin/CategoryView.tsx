@@ -268,6 +268,7 @@ export const CategoryView = ({
                         <Menu.Item>
                           {({ active }) => (
                             <button
+                              type="button"
                               className={`${
                                 active ? "bg-gray-100 dark:bg-zinc-700" : ""
                               } w-full px-4 py-2 text-left flex items-center text-sm`}
@@ -284,6 +285,7 @@ export const CategoryView = ({
                         <Menu.Item>
                           {({ active }) => (
                             <button
+                              type="button"
                               className={`${
                                 active ? "bg-gray-100 dark:bg-zinc-700" : ""
                               } w-full px-4 py-2 text-left flex items-center text-sm text-red-500`}

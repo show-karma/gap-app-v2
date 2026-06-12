@@ -36,7 +36,7 @@ export const CategoryCreationDialog: FC<CategoryCreationDialogProps> = ({ refres
   const {
     register,
     handleSubmit,
-    formState: { errors, isValid },
+    formState: { errors },
   } = useForm<SchemaType>({
     resolver: zodResolver(schema),
     reValidateMode: "onChange",

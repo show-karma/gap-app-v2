@@ -125,6 +125,7 @@ export const VerificationsDialog: FC<VerificationsDialogProps> = ({
             >
               <Dialog.Panel className="w-full max-w-4xl h-max transform overflow-hidden rounded-2xl dark:bg-zinc-800 bg-white p-6 text-left align-middle  transition-all">
                 <button
+                  type="button"
                   className="p-2 text-black dark:text-white absolute top-4 right-4"
                   onClick={() => closeDialog()}
                 >

@@ -92,8 +92,6 @@ function truncateAddress(address: string): string {
 export function PayoutHistoryContent({
   isActive,
   grantUID,
-  grantName,
-  projectName,
   approvedAmount,
 }: PayoutHistoryContentProps) {
   const {

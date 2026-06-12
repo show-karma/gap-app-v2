@@ -60,27 +60,6 @@ export const useSubmitFeedback = () => {
   });
 };
 
-interface SetSampleInput {
-  sessionId: string;
-  sampleApplication: string;
-}
-
-const useSetSample = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation<SessionResponse, Error, SetSampleInput>({
-    mutationFn: ({ sessionId, sampleApplication }) =>
-      standaloneEvaluationService.setSample(sessionId, sampleApplication),
-    onSuccess: (session) => {
-      queryClient.setQueryData(EVALUATION_SESSION_KEYS.detail(session.id), session);
-      queryClient.invalidateQueries({ queryKey: EVALUATION_SESSION_KEYS.all });
-    },
-    onError: (error) => {
-      toast.error(error.message || "Failed to save sample");
-    },
-  });
-};
-
 interface UpdatePromptInput {
   sessionId: string;
   prompt: string;
@@ -99,22 +78,6 @@ export const useUpdatePrompt = () => {
     },
     onError: (error) => {
       toast.error(error.message || "Failed to update prompt");
-    },
-  });
-};
-
-const useMarkReadyForBulk = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation<SessionResponse, Error, string>({
-    mutationFn: (sessionId) => standaloneEvaluationService.markReadyForBulk(sessionId),
-    onSuccess: (session) => {
-      toast.success("Session ready for bulk processing");
-      queryClient.setQueryData(EVALUATION_SESSION_KEYS.detail(session.id), session);
-      queryClient.invalidateQueries({ queryKey: EVALUATION_SESSION_KEYS.all });
-    },
-    onError: (error) => {
-      toast.error(error.message || "Failed to mark session ready");
     },
   });
 };

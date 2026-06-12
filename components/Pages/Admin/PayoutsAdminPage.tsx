@@ -6,7 +6,6 @@ import { useParams, usePathname, useRouter, useSearchParams } from "next/navigat
 import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { formatUnits, isAddress } from "viem";
-import { useAccount } from "wagmi";
 import { KycStatusBadge } from "@/components/KycStatusIcon";
 import { ProgramFilter } from "@/components/Pages/Communities/Impact/ProgramFilter";
 import { Button } from "@/components/Utilities/Button";
@@ -71,7 +70,6 @@ export default function PayoutsAdminPage() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { address } = useAccount();
   const { ready: authReady } = useAuth();
   const params = useParams();
   const communityId = params.communityId as string;
@@ -79,8 +77,6 @@ export default function PayoutsAdminPage() {
   // State for tracking edits
   const [editedFields, setEditedFields] = useState<Record<string, EditableFields>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
-  // State for tracking individual field saves (key format: "grantUID-fieldName")
-  const [savingFields, setSavingFields] = useState<Set<string>>(new Set());
 
   // State for row selection (for disbursement)
   const [selectedGrants, setSelectedGrants] = useState<Set<string>>(new Set());
@@ -183,8 +179,6 @@ export default function PayoutsAdminPage() {
 
   // Save payout config mutation (saves to payout_grant_config collection)
   const { mutate: saveConfigs, isPending: isSaving } = useSavePayoutConfig();
-  // Separate mutation for inline single-field saves
-  const { mutate: saveSingleField } = useSavePayoutConfig();
 
   // Process payouts into table data format
   const tableData: PayoutsTableData[] = useMemo(() => {
@@ -238,7 +232,7 @@ export default function PayoutsAdminPage() {
   );
 
   // KYC: Fetch KYC configuration for the community
-  const { config: kycConfig, isEnabled: isKycEnabled } = useKycConfig(community?.uid, {
+  const { isEnabled: isKycEnabled } = useKycConfig(community?.uid, {
     enabled: !!community?.uid,
   });
 
@@ -370,24 +364,6 @@ export default function PayoutsAdminPage() {
     router.push(`${pathname}?${query}`);
   };
 
-  // Handle field changes
-  const handleFieldChange = (uid: string, field: keyof EditableFields, value: string) => {
-    setEditedFields((prev) => ({
-      ...prev,
-      [uid]: {
-        ...prev[uid],
-        [field]: value,
-      },
-    }));
-
-    // Clear error when user starts typing
-    setErrors((prev) => {
-      const newErrors = { ...prev };
-      delete newErrors[`${uid}-${field}`];
-      return newErrors;
-    });
-  };
-
   // Validate a single field
   const validateField = (uid: string, field: keyof EditableFields, value: string): boolean => {
     if (field === "payoutAddress" && value) {
@@ -411,90 +387,6 @@ export default function PayoutsAdminPage() {
     }
 
     return true;
-  };
-
-  // Handle saving a single field inline
-  const handleSaveField = (
-    grantUID: string,
-    projectUID: string,
-    field: "payoutAddress" | "amount"
-  ) => {
-    const fieldValue = editedFields[grantUID]?.[field];
-
-    // Validate the field before saving
-    if (fieldValue && !validateField(grantUID, field, fieldValue)) {
-      return;
-    }
-
-    // Find the item to get current values for other fields
-    const item = tableData.find((d) => d.uid === grantUID);
-    if (!item) return;
-
-    const savingKey = `${grantUID}-${field}`;
-    setSavingFields((prev) => new Set(prev).add(savingKey));
-
-    // Build the config item with the single field being saved
-    const configItem: PayoutConfigItem = {
-      grantUID,
-      projectUID,
-    };
-
-    if (field === "payoutAddress") {
-      configItem.payoutAddress = fieldValue || undefined;
-      // Include current amount if exists
-      if (item.currentAmount) {
-        configItem.totalGrantAmount = item.currentAmount;
-      }
-    } else if (field === "amount") {
-      configItem.totalGrantAmount = fieldValue || undefined;
-      // Include current payout address if exists
-      if (item.currentPayoutAddress) {
-        configItem.payoutAddress = item.currentPayoutAddress;
-      }
-    }
-
-    const request: SavePayoutConfigRequest = {
-      configs: [configItem],
-      communityUID: community?.uid || "",
-    };
-
-    saveSingleField(request, {
-      onSuccess: (data) => {
-        setSavingFields((prev) => {
-          const newSet = new Set(prev);
-          newSet.delete(savingKey);
-          return newSet;
-        });
-
-        if (data.success.length > 0) {
-          toast.success(`Saved ${field === "payoutAddress" ? "payout address" : "grant amount"}`);
-          // Clear the edited field for this specific field only
-          setEditedFields((prev) => {
-            const newEdited = { ...prev };
-            if (newEdited[grantUID]) {
-              delete newEdited[grantUID][field];
-              // If no more edited fields for this grant, remove the entry
-              if (Object.keys(newEdited[grantUID]).length === 0) {
-                delete newEdited[grantUID];
-              }
-            }
-            return newEdited;
-          });
-        } else if (data.failed.length > 0) {
-          toast.error(
-            `Failed to save ${field === "payoutAddress" ? "payout address" : "grant amount"}`
-          );
-        }
-      },
-      onError: (error) => {
-        setSavingFields((prev) => {
-          const newSet = new Set(prev);
-          newSet.delete(savingKey);
-          return newSet;
-        });
-        toast.error(error.message || "Failed to save");
-      },
-    });
   };
 
   // State to store last CSV result for display
@@ -684,8 +576,10 @@ export default function PayoutsAdminPage() {
 
     const grantsInfo: GrantDisbursementInfo[] = selectedItems.map((item) => {
       // Use the same logic as the input display: prefer editedFields if the key exists
-      const hasEditedPayoutAddress = editedFields[item.uid]?.hasOwnProperty("payoutAddress");
-      const hasEditedAmount = editedFields[item.uid]?.hasOwnProperty("amount");
+      const hasEditedPayoutAddress =
+        editedFields[item.uid] && Object.hasOwn(editedFields[item.uid], "payoutAddress");
+      const hasEditedAmount =
+        editedFields[item.uid] && Object.hasOwn(editedFields[item.uid], "amount");
 
       const payoutAddress = hasEditedPayoutAddress
         ? editedFields[item.uid].payoutAddress || ""
@@ -729,7 +623,8 @@ export default function PayoutsAdminPage() {
   // Open history drawer for a specific grant
   const handleOpenHistoryDrawer = (item: PayoutsTableData) => {
     // Use the same logic as the input display: prefer editedFields if the key exists
-    const hasEditedAmount = editedFields[item.uid]?.hasOwnProperty("amount");
+    const hasEditedAmount =
+      editedFields[item.uid] && Object.hasOwn(editedFields[item.uid], "amount");
     const approvedAmount = hasEditedAmount
       ? editedFields[item.uid].amount || "0"
       : item.currentAmount || "0";
@@ -1180,6 +1075,7 @@ export default function PayoutsAdminPage() {
                       {/* Status column - clickable to open history */}
                       <td className="px-4 py-2 text-center">
                         <button
+                          type="button"
                           onClick={() => handleOpenHistoryDrawer(item)}
                           className={cn(
                             "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium cursor-pointer hover:opacity-80 transition-opacity",
@@ -1193,6 +1089,7 @@ export default function PayoutsAdminPage() {
                       {/* Actions column */}
                       <td className="px-4 py-2 text-center">
                         <button
+                          type="button"
                           onClick={() => handleOpenConfigModal(item)}
                           className={cn(
                             "p-2 rounded-md transition-colors",

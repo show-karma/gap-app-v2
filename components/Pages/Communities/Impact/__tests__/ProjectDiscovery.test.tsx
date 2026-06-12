@@ -51,20 +51,9 @@ import { ProjectDiscovery } from "../ProjectDiscovery";
 
 const mockedFetchData = vi.mocked(fetchData);
 
-/**
- * Helper: collects all className strings from the rendered container.
- * Returns a single joined string for substring matching.
- */
-function getAllClassNames(container: HTMLElement): string {
-  const elements = container.querySelectorAll("[class]");
-  return Array.from(elements)
-    .map((el) => el.getAttribute("class") || "")
-    .join(" ");
-}
-
 describe("ProjectDiscovery dark mode support", () => {
   it("should have dark: variants on the page heading", async () => {
-    const { container } = render(<ProjectDiscovery />);
+    render(<ProjectDiscovery />);
 
     await waitFor(() => {
       expect(screen.getByText("Project Discovery")).toBeInTheDocument();
@@ -75,7 +64,7 @@ describe("ProjectDiscovery dark mode support", () => {
   });
 
   it("should have dark: variants on the subtitle text", async () => {
-    const { container } = render(<ProjectDiscovery />);
+    render(<ProjectDiscovery />);
 
     await waitFor(() => {
       expect(screen.getByText(/Discover projects based on/)).toBeInTheDocument();
@@ -86,7 +75,7 @@ describe("ProjectDiscovery dark mode support", () => {
   });
 
   it("should have dark: variants on label elements", async () => {
-    const { container } = render(<ProjectDiscovery />);
+    render(<ProjectDiscovery />);
 
     await waitFor(() => {
       expect(screen.getByText("Category")).toBeInTheDocument();
@@ -103,7 +92,7 @@ describe("ProjectDiscovery dark mode support", () => {
   });
 
   it("should have dark:bg- classes on Listbox buttons", async () => {
-    const { container } = render(<ProjectDiscovery />);
+    render(<ProjectDiscovery />);
 
     await waitFor(() => {
       expect(screen.getByText("Select Category")).toBeInTheDocument();
@@ -120,7 +109,7 @@ describe("ProjectDiscovery dark mode support", () => {
   });
 
   it("should have dark:text- classes on Listbox button text spans", async () => {
-    const { container } = render(<ProjectDiscovery />);
+    render(<ProjectDiscovery />);
 
     await waitFor(() => {
       expect(screen.getByText("Select Category")).toBeInTheDocument();
@@ -134,7 +123,7 @@ describe("ProjectDiscovery dark mode support", () => {
   });
 
   it("should have dark:border- classes on Listbox buttons", async () => {
-    const { container } = render(<ProjectDiscovery />);
+    render(<ProjectDiscovery />);
 
     await waitFor(() => {
       expect(screen.getByText("Select Category")).toBeInTheDocument();
@@ -145,7 +134,7 @@ describe("ProjectDiscovery dark mode support", () => {
   });
 
   it("should have dark: classes on the endorser input field", async () => {
-    const { container } = render(<ProjectDiscovery />);
+    render(<ProjectDiscovery />);
 
     await waitFor(() => {
       expect(screen.getByPlaceholderText("Enter endorser address")).toBeInTheDocument();
@@ -162,7 +151,7 @@ describe("ProjectDiscovery dark mode support", () => {
 
     mockedFetchData.mockReturnValue(new Promise(() => {}));
 
-    const { container } = render(<ProjectDiscovery />);
+    render(<ProjectDiscovery />);
 
     const loadingText = screen.getByText("Loading...");
     expect(loadingText.className).toContain("dark:");

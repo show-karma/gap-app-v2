@@ -5,7 +5,6 @@ import { useAccount } from "wagmi";
 import { DeleteDialog } from "@/components/DeleteDialog";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useAttestationToast } from "@/hooks/useAttestationToast";
-import { useGap } from "@/hooks/useGap";
 import { useOffChainRevoke } from "@/hooks/useOffChainRevoke";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
@@ -35,10 +34,9 @@ export const GrantDelete: FC<GrantDeleteProps> = ({ grant }) => {
 
   const project = useProjectStore((state) => state.project);
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
-  const { refetch: refetchGrants, grants } = useProjectGrants(project?.uid || "");
+  const { refetch: refetchGrants } = useProjectGrants(project?.uid || "");
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isOnChainAuthorized = isProjectOwner || isContractOwner;
-  const { gap } = useGap();
   const { performOffChainRevoke } = useOffChainRevoke();
 
   const router = useRouter();

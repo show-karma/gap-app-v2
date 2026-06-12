@@ -15,17 +15,15 @@ import { PAGES } from "@/utilities/pages";
 import { sanitizeObject } from "@/utilities/sanitize";
 import { getProjectById } from "@/utilities/sdk";
 import { useAttestationToast } from "./useAttestationToast";
-import { useGap } from "./useGap";
 import { useSetupChainAndWallet } from "./useSetupChainAndWallet";
 import { useWallet } from "./useWallet";
 
 export function useGrant() {
   const [isLoading, setIsLoading] = useState(false);
-  const { gap } = useGap();
   const { address, chain } = useAccount();
   const { switchChainAsync } = useWallet();
   const { setupChainAndWallet } = useSetupChainAndWallet();
-  const { startAttestation, showLoading, showSuccess, showError, dismiss, changeStepperStep } =
+  const { startAttestation, showSuccess, showError, dismiss, changeStepperStep } =
     useAttestationToast();
   const selectedProject = useProjectStore((state) => state.project);
   const { refetch: refetchGrants } = useProjectGrants(selectedProject?.uid || "");
@@ -37,7 +35,6 @@ export function useGrant() {
     setCurrentStep,
     setFlowType,
     formData,
-    communityNetworkId,
   } = useGrantFormStore();
 
   /**
@@ -62,7 +59,7 @@ export function useGrant() {
         return;
       }
 
-      const { gapClient, walletSigner } = setup;
+      const { walletSigner } = setup;
 
       const projectInstance = await getProjectById(oldGrant.refUID);
       const oldGrantInstance = projectInstance?.grants?.find(

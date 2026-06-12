@@ -215,6 +215,7 @@ export const ActivityOutcomeModal = ({
                     {editingSegment ? "Edit" : "Add a new"} Activity or Outcome
                   </Dialog.Title>
                   <button
+                    type="button"
                     onClick={handleClose}
                     className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
                   >

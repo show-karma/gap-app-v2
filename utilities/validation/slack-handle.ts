@@ -20,8 +20,3 @@ export const slackHandleSchema = z
   .string()
   .regex(SLACK_HANDLE_REGEX, SLACK_HANDLE_ERROR)
   .or(z.literal(""));
-
-const validateSlackHandle = (value: string): boolean => {
-  if (value === "") return true;
-  return SLACK_HANDLE_REGEX.test(value);
-};

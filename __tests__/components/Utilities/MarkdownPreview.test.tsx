@@ -122,7 +122,7 @@ describe("MarkdownPreview", () => {
     });
 
     it("renders with mode='static' (no streaming animation)", async () => {
-      const { container } = render(<MarkdownPreview source="hello" />);
+      render(<MarkdownPreview source="hello" />);
 
       await waitFor(() => {
         expect(screen.getByText("hello")).toBeInTheDocument();

@@ -143,7 +143,7 @@ export const Stats = () => {
                               }
                               value={item}
                             >
-                              {({ selected, active }) => (
+                              {({ selected }) => (
                                 <>
                                   <span
                                     className={cn(

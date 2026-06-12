@@ -49,15 +49,3 @@ export function useIsFundingPlatformAdmin(): boolean {
   const { hasRoleOrHigher, isLoading } = usePermissionContext();
   return !isLoading && hasRoleOrHigher(Role.PROGRAM_ADMIN);
 }
-
-/**
- * Checks if user has reviewer access to the funding platform.
- * Uses context-aware `isReviewer` which is computed by the backend based on:
- * - Global context: true if reviewer in any program
- * - Community context: true if reviewer in any program of that community
- * - Program context: true if reviewer in that specific program
- */
-function useIsFundingPlatformReviewer(): boolean {
-  const { isLoading, isReviewer } = usePermissionContext();
-  return !isLoading && isReviewer;
-}

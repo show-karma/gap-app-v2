@@ -141,11 +141,6 @@ export function useIsReviewerType(type: ReviewerType): boolean {
   return !isLoading && isReviewerType(type);
 }
 
-function useUserRoles(): UserRoles {
-  const { roles } = usePermissionContext();
-  return roles;
-}
-
 export function useIsCommunityAdmin(): boolean {
   const { isCommunityAdmin, isLoading } = usePermissionContext();
   return !isLoading && isCommunityAdmin;

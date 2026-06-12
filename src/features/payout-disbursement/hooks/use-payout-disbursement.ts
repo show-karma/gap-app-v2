@@ -290,52 +290,6 @@ export function useBatchTotalDisbursed(grantUIDs: string[], options?: { enabled?
 }
 
 /**
- * Hook for fetching payout history for multiple grants to determine their status
- * Returns a map of grantUID to latest disbursement status
- */
-function useBatchGrantStatus(grantUIDs: string[], options?: { enabled?: boolean }) {
-  const queries = useQueries({
-    queries: grantUIDs.map((grantUID) => ({
-      queryKey: payoutDisbursementKeys.grantHistory(grantUID, 1, 1), // Only fetch latest
-      queryFn: () => payoutService.getPayoutHistory(grantUID, 1, 1),
-      enabled: options?.enabled ?? true,
-      staleTime: 1000 * 60 * 2, // 2 minutes
-    })),
-  });
-
-  // Transform results into a map of grantUID to latest status
-  const statusMap: Record<
-    string,
-    {
-      status: PayoutDisbursement["status"] | "PENDING" | "PARTIALLY_DISBURSED";
-      latestDisbursement?: PayoutDisbursement;
-    }
-  > = {};
-  const isLoading = queries.some((q) => q.isLoading);
-  const isError = queries.some((q) => q.isError);
-
-  grantUIDs.forEach((grantUID, index) => {
-    const query = queries[index];
-    if (query?.data?.payload?.[0]) {
-      statusMap[grantUID] = {
-        status: query.data.payload[0].status,
-        latestDisbursement: query.data.payload[0],
-      };
-    } else {
-      // No disbursements yet
-      statusMap[grantUID] = { status: "PENDING" };
-    }
-  });
-
-  return {
-    data: statusMap,
-    isLoading,
-    isError,
-    queries,
-  };
-}
-
-/**
  * Hook for fetching community payouts publicly (no auth required)
  */
 export function useCommunityPayoutsPublic(
@@ -472,38 +426,6 @@ export function usePayoutConfigByGrantPublic(grantUID: string, options?: { enabl
     queryFn: () => payoutService.getPayoutConfigByGrantPublic(grantUID),
     enabled: options?.enabled ?? !!grantUID,
     staleTime: 1000 * 60 * 5, // 5 minutes
-  });
-}
-
-/**
- * Hook for deleting a payout config
- */
-function useDeletePayoutConfig(options?: {
-  onSuccess?: () => void;
-  onError?: (error: Error) => void;
-}) {
-  const queryClient = useQueryClient();
-
-  return useMutation<void, Error, { grantUID: string; communityUID: string }>({
-    mutationFn: ({ grantUID }) => payoutService.deletePayoutConfig(grantUID),
-    onSuccess: (_, variables) => {
-      // Invalidate the specific grant config
-      queryClient.invalidateQueries({
-        queryKey: payoutDisbursementKeys.payoutConfigs.byGrant(variables.grantUID),
-      });
-      // Invalidate community configs
-      queryClient.invalidateQueries({
-        queryKey: payoutDisbursementKeys.payoutConfigs.byCommunity(variables.communityUID),
-      });
-      // Invalidate community payouts
-      queryClient.invalidateQueries({
-        queryKey: [...payoutDisbursementKeys.all, "communityPayouts", variables.communityUID],
-      });
-      options?.onSuccess?.();
-    },
-    onError: (error) => {
-      options?.onError?.(error);
-    },
   });
 }
 
@@ -684,76 +606,6 @@ export function useUpdateMilestonePaymentStatus(
         queryKey: [...payoutDisbursementKeys.all, "communityPayouts", communityUID],
       });
       options?.onSuccess?.();
-    },
-    onError: (error) => {
-      options?.onError?.(error);
-    },
-  });
-}
-
-/**
- * Hook for updating a single line item in a grant payout config
- */
-function useUpdateLineItem(
-  communityUID: string,
-  options?: {
-    onSuccess?: (data: PayoutGrantConfig) => void;
-    onError?: (error: Error) => void;
-  }
-) {
-  const queryClient = useQueryClient();
-
-  return useMutation<
-    PayoutGrantConfig,
-    Error,
-    { grantUID: string; allocationId: string; updates: { label?: string; amount?: string } }
-  >({
-    mutationFn: ({ grantUID, allocationId, updates }) =>
-      payoutService.updateLineItem(grantUID, allocationId, updates),
-    onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: payoutDisbursementKeys.payoutConfigs.byGrant(variables.grantUID),
-      });
-      queryClient.invalidateQueries({
-        queryKey: payoutDisbursementKeys.payoutConfigs.byCommunity(communityUID),
-      });
-      queryClient.invalidateQueries({
-        queryKey: [...payoutDisbursementKeys.all, "communityPayouts", communityUID],
-      });
-      options?.onSuccess?.(data);
-    },
-    onError: (error) => {
-      options?.onError?.(error);
-    },
-  });
-}
-
-/**
- * Hook for deleting a single line item from a grant payout config
- */
-function useDeleteLineItem(
-  communityUID: string,
-  options?: {
-    onSuccess?: (data: PayoutGrantConfig) => void;
-    onError?: (error: Error) => void;
-  }
-) {
-  const queryClient = useQueryClient();
-
-  return useMutation<PayoutGrantConfig, Error, { grantUID: string; allocationId: string }>({
-    mutationFn: ({ grantUID, allocationId }) =>
-      payoutService.deleteLineItem(grantUID, allocationId),
-    onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: payoutDisbursementKeys.payoutConfigs.byGrant(variables.grantUID),
-      });
-      queryClient.invalidateQueries({
-        queryKey: payoutDisbursementKeys.payoutConfigs.byCommunity(communityUID),
-      });
-      queryClient.invalidateQueries({
-        queryKey: [...payoutDisbursementKeys.all, "communityPayouts", communityUID],
-      });
-      options?.onSuccess?.(data);
     },
     onError: (error) => {
       options?.onError?.(error);

@@ -79,9 +79,7 @@ describe("AIAnalysisSubTabs", () => {
     });
 
     it("applies purple color to internal icon when active", () => {
-      const { container } = render(
-        <AIAnalysisSubTabs activeTab="internal" onTabChange={vi.fn()} />
-      );
+      render(<AIAnalysisSubTabs activeTab="internal" onTabChange={vi.fn()} />);
 
       // The second button's icon should have purple styling
       const internalButton = screen.getByText("Internal Evaluation").closest("button");

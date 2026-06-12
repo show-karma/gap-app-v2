@@ -32,21 +32,6 @@ export interface GetPermissionsParams {
   chainId?: number;
 }
 
-const DEFAULT_GUEST_PERMISSIONS: PermissionsResponse = {
-  roles: {
-    primaryRole: Role.GUEST,
-    roles: [Role.GUEST],
-    reviewerTypes: [],
-  },
-  permissions: [],
-  resourceContext: {},
-  isCommunityAdmin: false,
-  isProgramAdmin: false,
-  isReviewer: false,
-  isRegistryAdmin: false,
-  isProgramCreator: false,
-};
-
 export const authorizationService = {
   async getPermissions(params: GetPermissionsParams = {}): Promise<PermissionsResponse> {
     const [response, error] = await fetchData<AuthPermissionsApiResponse>(

@@ -1,7 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { useAuth } from "@/hooks/useAuth";
-import type { FundingProgram } from "@/services/fundingPlatformService";
 import { PermissionsService } from "@/services/permissions.service";
 import { createAuthenticatedApiClient } from "@/utilities/auth/api-client";
 import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
@@ -21,19 +20,6 @@ interface PermissionOptions {
   /** Whether the query should be enabled. Defaults to true when prerequisites are met */
   enabled?: boolean;
 }
-
-/**
- * Permission check response
- */
-interface PermissionCheckResponse {
-  hasPermission: boolean;
-  permissions: string[];
-}
-
-/**
- * Reviewer programs response
- */
-type ReviewerProgramsResponse = FundingProgram[];
 
 /**
  * Generic hook for checking permissions and roles
@@ -70,7 +56,7 @@ type ReviewerProgramsResponse = FundingProgram[];
  * ```
  */
 export const usePermissions = (options: PermissionOptions = {}) => {
-  const { authenticated: isAuth, getAccessToken: getToken, ready, address } = useAuth();
+  const { authenticated: isAuth, ready, address } = useAuth();
   const { programId, action, role, enabled = true } = options;
 
   const query = useQuery({

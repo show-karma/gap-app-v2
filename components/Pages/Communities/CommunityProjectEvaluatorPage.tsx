@@ -207,7 +207,6 @@ function ChatInput({
 }
 
 function SuggestionsBlock({
-  projects,
   selectedProgram,
   onClose,
   chatHook,
@@ -285,6 +284,7 @@ function SuggestionsBlock({
           </span>
         </div>
         <button
+          type="button"
           onClick={handleClose}
           className="p-2 text-gray-500 hover:text-gray-700 dark:text-zinc-400 dark:hover:text-zinc-200 dark:bg-transparent rounded-full hover:bg-gray-100 transition-colors"
           aria-label="Close"
@@ -706,6 +706,7 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
       </div>
       <div className="px-2 w-max">
         <button
+          type="button"
           className="hover:text-gray-300 dark:hover:text-zinc-300 rounded-full transition-colors"
           aria-label={`Ask about ${project.projectDetails?.title}`}
         >
@@ -769,15 +770,7 @@ function ChatScreen({
     },
   });
 
-  const {
-    messages,
-    input,
-    handleInputChange,
-    setInput,
-    handleSubmit,
-    isLoading: isLoadingChat,
-    isStreaming,
-  } = chatHook;
+  const { messages, setInput } = chatHook;
 
   const _handleProjectClick = useCallback(
     (title: string) => {
@@ -852,6 +845,7 @@ function ChatScreen({
               </div>
             </div>
             <button
+              type="button"
               onClick={handleShare}
               className="flex flex-row rounded items-center h-max hover:opacity-80 justify-center gap-2 px-3 py-2 border border-brand-blue text-brand-blue bg-transparent"
               aria-label="Share current page"

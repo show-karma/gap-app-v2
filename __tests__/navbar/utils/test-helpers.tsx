@@ -652,8 +652,8 @@ export const renderWithProviders = (
     mockUseAuth,
     mockUsePrivy,
     mockPermissions,
-    mockUseLogout,
-    mockModalStore,
+    mockUseLogout: _mockUseLogout,
+    mockModalStore: _mockModalStore,
     mockUseTheme,
     mockUseContributorProfileModalStore,
     ...renderOptions

@@ -30,7 +30,7 @@ const OnrampFlow = dynamic(() => import("./OnrampFlow").then((m) => ({ default: 
 
 export const SingleProjectDonateModal = React.memo<SingleProjectDonateModalProps>(
   ({ isOpen, onClose, project, initialAmount }) => {
-    const { authenticated, login, connectWallet } = useAuth();
+    const { authenticated, connectWallet } = useAuth();
     const {
       paymentMethod,
       selectedToken,

@@ -59,6 +59,7 @@ export const SimplePagination: FC<SimplePaginationProps> = ({
   return (
     <div className="flex items-center justify-center space-x-1">
       <button
+        type="button"
         onClick={handlePrevious}
         disabled={currentPage === 1}
         className={cn(
@@ -74,6 +75,7 @@ export const SimplePagination: FC<SimplePaginationProps> = ({
       <div className="flex space-x-1">
         {getPageNumbers().map((page) => (
           <button
+            type="button"
             key={page}
             onClick={() => onPageChange(page)}
             className={cn(
@@ -89,6 +91,7 @@ export const SimplePagination: FC<SimplePaginationProps> = ({
       </div>
 
       <button
+        type="button"
         onClick={handleNext}
         disabled={currentPage === totalPages}
         className={cn(

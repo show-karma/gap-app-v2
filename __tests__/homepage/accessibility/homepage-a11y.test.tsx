@@ -36,7 +36,7 @@ describe("Homepage Accessibility", () => {
 
   describe("Automated Accessibility Checks", () => {
     it("Hero section passes axe with minor violations", async () => {
-      const { container } = renderWithProviders(await HomePage());
+      renderWithProviders(await HomePage());
 
       // Find Hero section
       const heroSection = screen.getAllByText(/Get funded/i)[0].closest("section");
@@ -54,7 +54,7 @@ describe("Homepage Accessibility", () => {
     });
 
     it("Live Funding section passes axe", async () => {
-      const { container } = renderWithProviders(await HomePage());
+      renderWithProviders(await HomePage());
 
       await waitFor(() => {
         expect(screen.getByText(/Live funding opportunities/i)).toBeInTheDocument();
@@ -69,7 +69,7 @@ describe("Homepage Accessibility", () => {
     });
 
     it("Platform Features passes axe", async () => {
-      const { container } = renderWithProviders(await HomePage());
+      renderWithProviders(await HomePage());
 
       // Find PlatformFeatures section
       const featuresSection = screen.getByText(/Karma connects builders/i).closest("section");
@@ -80,7 +80,7 @@ describe("Homepage Accessibility", () => {
     });
 
     it("How It Works passes axe", async () => {
-      const { container } = renderWithProviders(await HomePage());
+      renderWithProviders(await HomePage());
 
       // Find HowItWorks section
       const howItWorksSection = screen.getAllByText(/One profile./i)[0].closest("section");
@@ -91,7 +91,7 @@ describe("Homepage Accessibility", () => {
     });
 
     it("Join Community passes axe", async () => {
-      const { container } = renderWithProviders(await HomePage());
+      renderWithProviders(await HomePage());
 
       // Find JoinCommunity section
       const communitySection = screen.getByText(/Join our community/i).closest("section");
@@ -102,7 +102,7 @@ describe("Homepage Accessibility", () => {
     });
 
     it("FAQ section passes axe", async () => {
-      const { container } = renderWithProviders(await HomePage());
+      renderWithProviders(await HomePage());
 
       // Find FAQ section
       const faqSection = screen.getByText(/What is Karma/i).closest("section");
@@ -113,7 +113,7 @@ describe("Homepage Accessibility", () => {
     });
 
     it("Where Builders Grow passes axe", async () => {
-      const { container } = renderWithProviders(await HomePage());
+      renderWithProviders(await HomePage());
 
       // Find WhereBuildersGrow section
       const buildersSection = screen.getAllByText(/Where builders grow/i)[0].closest("section");

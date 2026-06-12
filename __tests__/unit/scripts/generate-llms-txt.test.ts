@@ -1488,7 +1488,7 @@ describe("constants integrity", () => {
   });
 
   it("SITEMAP_DESCRIPTION_MAP has non-empty descriptions", () => {
-    for (const [key, desc] of Object.entries(SITEMAP_DESCRIPTION_MAP)) {
+    for (const desc of Object.values(SITEMAP_DESCRIPTION_MAP)) {
       expect(desc.length).toBeGreaterThan(10);
     }
   });

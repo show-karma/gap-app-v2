@@ -236,7 +236,7 @@ export const Milestone: FC<MilestoneProps> = ({ currentMilestone, index }) => {
               <Controller
                 name="priority"
                 control={form.control}
-                render={({ field, formState, fieldState }) => (
+                render={({ field, formState }) => (
                   <div className="flex w-full flex-col gap-2">
                     <div className={labelStyle}>Priority (optional)</div>
                     <div>
@@ -249,6 +249,7 @@ export const Milestone: FC<MilestoneProps> = ({ currentMilestone, index }) => {
                           {({ close }) => (
                             <>
                               <button
+                                type="button"
                                 key={"none"}
                                 className="cursor-pointer hover:opacity-75 text-sm flex flex-row items-center justify-start py-2 px-4 hover:bg-zinc-200 dark:hover:bg-zinc-900 w-full disabled:opacity-30 disabled:cursor-not-allowed disabled:bg-zinc-200 dark:disabled:bg-zinc-900"
                                 onClick={(event) => {
@@ -266,6 +267,7 @@ export const Milestone: FC<MilestoneProps> = ({ currentMilestone, index }) => {
                               </button>
                               {priorities.map((priority) => (
                                 <button
+                                  type="button"
                                   key={priority}
                                   className="cursor-pointer hover:opacity-75 text-sm flex flex-row items-center justify-start py-2 px-4 hover:bg-zinc-200 dark:hover:bg-zinc-900 w-full disabled:opacity-30 disabled:cursor-not-allowed disabled:bg-zinc-200 dark:disabled:bg-zinc-900"
                                   disabled={

@@ -96,7 +96,7 @@ export const UnifiedMilestoneScreen = () => {
   const { address, chain } = useAccount();
   const { switchChainAsync } = useWallet();
   const { setupChainAndWallet, smartWalletAddress } = useSetupChainAndWallet();
-  const { startAttestation, showLoading, showSuccess, showError, dismiss, changeStepperStep } =
+  const { startAttestation, showSuccess, showError, dismiss, changeStepperStep } =
     useAttestationToast();
   const { projectId } = useParams();
   const { refetch: refetchUpdates } = useProjectUpdates(projectId as string);
@@ -271,7 +271,6 @@ export const UnifiedMilestoneScreen = () => {
       for (const chainIdStr of sortedChainIds) {
         const chainId = Number(chainIdStr);
         const chainGrants = grantsByChain[chainId];
-        const chainName = chainNameDictionary(chainId);
 
         // Notify user we're processing grants on this chain
         toast.loading(`Creating milestone`, {

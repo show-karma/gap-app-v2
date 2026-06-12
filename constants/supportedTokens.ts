@@ -117,10 +117,6 @@ export const SUPPORTED_NETWORKS: Record<number, NetworkConfig> = includeTestNetw
   ? TEST_NETWORKS
   : MAINNET_NETWORKS;
 
-// Export mainnet chain IDs for reuse
-const MAINNET_CHAIN_IDS = [1, 10, 42161, 8453, 42220, 137] as const;
-const MAINNET_CHAINS: number[] = [...MAINNET_CHAIN_IDS];
-
 // Supported tokens configuration
 export const SUPPORTED_TOKENS: SupportedToken[] = [
   // USDT - All 6 networks
@@ -521,10 +517,6 @@ if (includeTestNetworks) {
 // Helper functions
 export function getTokensByChain(chainId: number): SupportedToken[] {
   return SUPPORTED_TOKENS.filter((token) => token.chainId === chainId);
-}
-
-function getTokenBySymbolAndChain(symbol: string, chainId: number): SupportedToken | undefined {
-  return SUPPORTED_TOKENS.find((token) => token.symbol === symbol && token.chainId === chainId);
 }
 
 export function getTokenByAddressAndChain(

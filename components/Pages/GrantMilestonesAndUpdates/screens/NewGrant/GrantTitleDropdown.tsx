@@ -212,6 +212,7 @@ export const GrantTitleDropdown: FC<{
               ) : (
                 <div className="my-2 px-2">
                   <button
+                    type="button"
                     className="text-brand-blue dark:text-blue-200 font-semibold text-sm"
                     onClick={(e) => {
                       e?.preventDefault?.();

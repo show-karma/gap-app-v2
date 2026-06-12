@@ -76,15 +76,9 @@ const buttonClassName = `group cursor-pointer font-normal text-gray-900 dark:tex
  */
 export const ProjectOptionsDialogs = () => {
   const project = useProjectStore((state) => state.project);
-  const refreshProject = useProjectStore((state) => state.refreshProject);
   const params = useParams();
   const projectId = params.projectId as string;
-  const { address, chain } = useAccount();
-  const router = useRouter();
-  const { switchChainAsync } = useWallet();
-  const { startAttestation, showSuccess, showError, changeStepperStep, setIsStepper } =
-    useAttestationToast();
-  const { setupChainAndWallet } = useSetupChainAndWallet();
+  const { address } = useAccount();
   const { data: contactsInfo } = useContactInfo(projectId);
 
   // Global modal stores
@@ -139,7 +133,6 @@ export const ProjectOptionsMenu = () => {
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const refreshProject = useProjectStore((state) => state.refreshProject);
-  const { data: contactsInfo } = useContactInfo(projectId);
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isCommunityAdmin = useIsCommunityAdmin();
   const isAuthorized = isProjectAdmin || isProjectOwner || isContractOwner || isCommunityAdmin;

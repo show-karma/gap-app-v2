@@ -9,7 +9,7 @@ test.describe("Smoke Tests -- Tenant Theme", () => {
     withApiMocks,
     withTenant,
   }) => {
-    const tenant = await withTenant("optimism");
+    await withTenant("optimism");
     const community = MOCK_COMMUNITIES.optimism;
 
     await withApiMocks({
@@ -42,7 +42,7 @@ test.describe("Smoke Tests -- Tenant Theme", () => {
     withApiMocks,
     withTenant,
   }) => {
-    const tenant = await withTenant("filecoin");
+    await withTenant("filecoin");
     const community = MOCK_COMMUNITIES.filecoin;
 
     await withApiMocks({
@@ -72,7 +72,7 @@ test.describe("Smoke Tests -- Tenant Theme", () => {
     withTenant,
   }) => {
     // First, visit as Optimism tenant and capture the --primary value
-    const optimismTenant = await withTenant("optimism");
+    await withTenant("optimism");
     const optimismCommunity = MOCK_COMMUNITIES.optimism;
 
     await withApiMocks({

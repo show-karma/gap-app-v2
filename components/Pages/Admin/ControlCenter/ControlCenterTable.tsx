@@ -372,6 +372,7 @@ export function ControlCenterTable({
                   </p>
                   {hasActiveFilters && (
                     <button
+                      type="button"
                       onClick={onClearFilters}
                       className="mt-2 text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400"
                     >

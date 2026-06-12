@@ -184,6 +184,7 @@ export function DonationStepsPreview({
               </p>
             </div>
             <button
+              type="button"
               onClick={onCancel}
               className="rounded-full p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800 dark:hover:text-gray-300"
             >
@@ -285,12 +286,14 @@ export function DonationStepsPreview({
 
           <div className="flex gap-3">
             <button
+              type="button"
               onClick={onCancel}
               className="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
             >
               Review Changes
             </button>
             <button
+              type="button"
               onClick={onProceed}
               disabled={isLoading}
               className="flex-1 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"

@@ -188,6 +188,7 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
             There was an error loading the applications. Please try again.
           </p>
           <button
+            type="button"
             onClick={() => refetch()}
             className="mt-4 px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700"
           >

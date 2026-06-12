@@ -52,7 +52,7 @@ vi.mock("@/components/Pages/Project/Loading/Grants/Overview", () => ({
 
 vi.mock("next/image", () => ({
   __esModule: true,
-  default: (props: any) => <img {...props} />,
+  default: (props: any) => <img alt="" {...props} />,
 }));
 
 vi.mock("@/utilities/chainImgDictionary", () => ({

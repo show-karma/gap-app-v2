@@ -48,14 +48,6 @@ export function renderToPlainText(markdownSourceText: string) {
   });
 }
 
-function truncateDescription(description: string, maxLength: number) {
-  if (description.length > maxLength) {
-    return `${description.slice(0, maxLength)}...`;
-  } else {
-    return description;
-  }
-}
-
 /**
  * Utilities for working with markdown text
  */
@@ -129,18 +121,6 @@ export function cleanMarkdownForPlainText(markdownText: string, maxLength?: numb
   }
 
   return text;
-}
-
-/**
- * Safely truncates a string to a maximum length without breaking in the middle of a word
- * and cleans any markdown syntax
- *
- * @param text - The text to truncate and clean
- * @param maxLength - Maximum length for the resulting string
- * @returns Truncated and markdown-free text
- */
-function truncateAndCleanMarkdown(text: string, maxLength: number): string {
-  return cleanMarkdownForPlainText(text, maxLength);
 }
 
 // Rehype rewrite utilities

@@ -3,11 +3,6 @@ import toast from "react-hot-toast";
 
 export type AttestationStep = "preparing" | "pending" | "confirmed" | "indexing" | "indexed";
 
-/**
- * @deprecated Use AttestationStep instead
- */
-type TxStepperSteps = AttestationStep;
-
 const stepMessages: Record<AttestationStep, string> = {
   preparing: "Preparing attestation...",
   pending: "Waiting for wallet signature...",

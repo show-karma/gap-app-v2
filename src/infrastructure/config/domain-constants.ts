@@ -56,10 +56,6 @@ export function getTenantForExclusiveDomain(hostname: string): TenantId | null {
   return domainInfo?.tenantId || null;
 }
 
-function getSharedDomains(): string[] {
-  return DOMAIN_CONFIGS.filter((config) => config.isShared).map((config) => config.domain);
-}
-
 export function getExclusiveDomainsForTenant(tenantId: TenantId): string[] {
   return DOMAIN_CONFIGS.filter((config) => config.tenantId === tenantId).map(
     (config) => config.domain

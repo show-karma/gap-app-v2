@@ -36,6 +36,7 @@ export default function TablePagination({
     <div className="md:py-5 py-2 px-4 flex items-center justify-between border-t border-gray-200 dark:border-zinc-700">
       <div className="flex-1 flex justify-between sm:hidden">
         <button
+          type="button"
           onClick={() => {
             setCurrentPage(currentPage - 1);
           }}
@@ -48,6 +49,7 @@ export default function TablePagination({
           Previous
         </button>
         <button
+          type="button"
           className={`border-t-2 border-transparent inline-flex items-center text-sm font-medium text-gray-500 ${
             currentPage !== lastPage &&
             lastPage !== undefined &&
@@ -82,6 +84,7 @@ export default function TablePagination({
         <div>
           <nav className="relative z-0 inline-flex rounded-md  -space-x-px" aria-label="Pagination">
             <button
+              type="button"
               onClick={() => {
                 setCurrentPage(currentPage - 1);
               }}
@@ -95,6 +98,7 @@ export default function TablePagination({
               if (page === DOTS) {
                 return (
                   <button
+                    type="button"
                     key={`${page}-${index}`}
                     className="bg-white  dark:bg-zinc-900 border-gray-300 dark:border-zinc-700 text-gray-500 dark:text-zinc-400 dark:hover:text-zinc-200 hover:bg-gray-50 dark:hover:bg-zinc-800 relative inline-flex items-center px-4 py-2 border text-sm font-medium duration-200 ease-in-out"
                   >
@@ -116,6 +120,7 @@ export default function TablePagination({
               );
             })}
             <button
+              type="button"
               onClick={() => {
                 setCurrentPage(currentPage + 1);
               }}

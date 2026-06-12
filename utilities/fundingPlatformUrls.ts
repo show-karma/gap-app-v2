@@ -83,19 +83,3 @@ export function getBrowseApplicationsUrl(
   const domain = getDomainForCommunity(communityId, whitelabelOrigin);
   return `${domain}/browse-applications?programId=${programId}`;
 }
-
-/**
- * Generate the program details page URL
- *
- * @param communityId - The community slug
- * @param programId - The program ID
- * @returns The full URL to the program details page
- */
-function getProgramPageUrl(
-  communityId: string,
-  programId: string,
-  whitelabelOrigin?: string
-): string {
-  const domain = getDomainForCommunity(communityId, whitelabelOrigin);
-  return `${domain}/programs/${programId}`;
-}

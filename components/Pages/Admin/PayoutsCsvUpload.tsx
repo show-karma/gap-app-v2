@@ -258,6 +258,7 @@ export function PayoutsCsvUpload({
   return (
     <div className="w-full mb-6 border border-gray-200 dark:border-zinc-700 rounded-lg">
       <button
+        type="button"
         onClick={() => setIsExpanded(!isExpanded)}
         className="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors"
       >
@@ -290,6 +291,7 @@ export function PayoutsCsvUpload({
             </p>
             {onDownloadExample && (
               <button
+                type="button"
                 onClick={onDownloadExample}
                 className="ml-4 text-sm text-blue-600 dark:text-blue-400 hover:underline whitespace-nowrap"
               >
@@ -308,6 +310,7 @@ export function PayoutsCsvUpload({
                   </p>
                 </div>
                 <button
+                  type="button"
                   onClick={handleNewUpload}
                   className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
                 >
@@ -323,6 +326,7 @@ export function PayoutsCsvUpload({
                     </h4>
                     {parseResults.errors.length > 0 && (
                       <button
+                        type="button"
                         onClick={() => {
                           const errorText = parseResults.errors.join("\n");
                           const blob = new Blob([errorText], {

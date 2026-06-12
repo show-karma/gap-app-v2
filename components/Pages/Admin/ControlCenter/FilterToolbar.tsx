@@ -108,6 +108,7 @@ function ActiveFilterChips({
         >
           {chip.label}
           <button
+            type="button"
             onClick={chip.onRemove}
             className="ml-0.5 hover:text-blue-900 dark:hover:text-blue-100 transition-colors"
             aria-label={`Remove ${chip.label} filter`}
@@ -118,6 +119,7 @@ function ActiveFilterChips({
       ))}
       {chips.length >= 2 && (
         <button
+          type="button"
           onClick={onClearAll}
           className="text-xs text-gray-500 hover:text-gray-700 dark:text-zinc-400 dark:hover:text-zinc-200 underline ml-1"
         >

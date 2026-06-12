@@ -7,7 +7,6 @@ import { useAccount } from "wagmi";
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useAttestationToast } from "@/hooks/useAttestationToast";
-import { useGap } from "@/hooks/useGap";
 import { useOffChainRevoke } from "@/hooks/useOffChainRevoke";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
@@ -28,7 +27,6 @@ interface DeleteMemberDialogProps {
 export const DeleteMemberDialog: FC<DeleteMemberDialogProps> = ({ memberAddress }) => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
-  const { gap } = useGap();
   const { address, chain } = useAccount();
   const project = useProjectStore((state) => state.project);
   const { startAttestation, showSuccess, showError, changeStepperStep, setIsStepper } =
@@ -56,7 +54,7 @@ export const DeleteMemberDialog: FC<DeleteMemberDialogProps> = ({ memberAddress 
         return;
       }
 
-      const { walletSigner, gapClient } = setup;
+      const { walletSigner } = setup;
       const fetchedProject = await getProjectById(project.uid);
       if (!fetchedProject) throw new Error("Project not found");
       const member = fetchedProject.members.find(

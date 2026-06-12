@@ -37,7 +37,7 @@ describe("communityColors", () => {
 
     it("should have all values as valid hex color strings", () => {
       const hexPattern = /^#[0-9a-fA-F]{6}$/;
-      for (const [key, color] of Object.entries(communityColors)) {
+      for (const color of Object.values(communityColors)) {
         expect(color).toMatch(hexPattern);
       }
     });

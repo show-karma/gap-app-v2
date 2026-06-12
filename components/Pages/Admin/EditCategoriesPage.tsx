@@ -14,14 +14,11 @@ import { useGrantsTable } from "@/hooks/useGrantsTable";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
-import { defaultMetadata } from "@/utilities/meta";
 import { PAGES } from "@/utilities/pages";
 import { reduceText } from "@/utilities/reduceText";
 import { CategoryCreationDialog } from "./CategoryCreationDialog";
 import { GrantsTable } from "./GrantsTable";
 import { ProgramFilter } from "./ProgramFilter";
-
-const metadata = defaultMetadata;
 
 export interface CategoriesOptions {
   id: number;
@@ -36,11 +33,7 @@ export default function EditCategoriesPage() {
   const [selectedCategories, setSelectedCategories] = useState<Record<string, string[]>>({});
   const [isSaving, setIsSaving] = useState<boolean>(false);
 
-  const {
-    data: community,
-    isLoading: isLoadingCommunity,
-    error: communityError,
-  } = useCommunityDetails(communityId);
+  const { data: community, error: communityError } = useCommunityDetails(communityId);
 
   const { hasAccess, isLoading: loading } = useCommunityAdminAccess(community?.uid);
 
@@ -83,7 +76,6 @@ export default function EditCategoriesPage() {
     currentPage,
     totalItems,
     paginatedGrants,
-    uniquePrograms,
     selectedProgramId,
     sort,
     handlePageChange,

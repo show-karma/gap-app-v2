@@ -65,6 +65,7 @@ export function ChainManager() {
           </p>
         </div>
         <button
+          type="button"
           onClick={() => setShowAddForm(true)}
           className="flex items-center px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
         >
@@ -127,6 +128,7 @@ export function ChainManager() {
                 </div>
                 <div className="flex space-x-2">
                   <button
+                    type="button"
                     onClick={() => setEditingChain(chain)}
                     className="p-2 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
                     title="Edit"
@@ -134,6 +136,7 @@ export function ChainManager() {
                     <PencilIcon className="w-5 h-5" />
                   </button>
                   <button
+                    type="button"
                     onClick={() => handleDeleteChain(chain.chainId)}
                     className="p-2 text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400"
                     title="Delete"
@@ -198,6 +201,7 @@ export function ChainManager() {
           </p>
           {!searchTerm && !showAddForm && (
             <button
+              type="button"
               onClick={() => setShowAddForm(true)}
               className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
             >

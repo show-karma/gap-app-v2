@@ -4,7 +4,7 @@ import { ExternalLink, Loader2, Plus, Search, X } from "lucide-react";
 import type React from "react";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import type { Control, FieldPath } from "react-hook-form";
-import { Controller, useWatch } from "react-hook-form";
+import { Controller } from "react-hook-form";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -63,11 +63,6 @@ export const KarmaProfileLinkInput: React.FC<KarmaProfileLinkInputProps> = ({
   const baseId = useId();
   const inputId = `${baseId}-input`;
   const listboxId = `${baseId}-listbox`;
-
-  const formValue = useWatch({
-    control,
-    name: name as FieldPath<ApplicationFormData>,
-  });
 
   // Debounce search query
   useEffect(() => {

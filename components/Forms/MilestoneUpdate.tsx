@@ -15,7 +15,6 @@ import { Button } from "@/components/Utilities/Button";
 import { FileUpload } from "@/components/Utilities/FileUpload";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { useAttestationToast } from "@/hooks/useAttestationToast";
-import { useGap } from "@/hooks/useGap";
 import {
   MILESTONE_IMPACT_QUERY_KEY,
   useMilestoneImpactAnswers,
@@ -203,7 +202,6 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
     });
   };
 
-  const { gap } = useGap();
   const { startAttestation, changeStepperStep, setIsStepper, showSuccess, showError } =
     useAttestationToast();
   const project = useProjectStore((state) => state.project);

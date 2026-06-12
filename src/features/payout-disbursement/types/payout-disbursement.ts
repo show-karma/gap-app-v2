@@ -118,11 +118,6 @@ export interface TotalDisbursedResponse {
   totalDisbursed: string;
 }
 
-interface PayoutDisbursementFilters {
-  page?: number;
-  limit?: number;
-}
-
 /**
  * Simplified milestone info for disbursement purposes
  */

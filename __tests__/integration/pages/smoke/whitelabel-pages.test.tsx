@@ -101,7 +101,6 @@ vi.mock("@/src/components/ui/ApplicationStatusChip", () => ({
 
 vi.mock("@/src/components/navigation/Link", () => ({
   Link: ({ children, ...props }: { children: React.ReactNode } & Record<string, unknown>) => (
-    // biome-ignore lint/a11y/useValidAnchor: stub
     <a {...(props as React.AnchorHTMLAttributes<HTMLAnchorElement>)}>{children}</a>
   ),
 }));

@@ -69,18 +69,6 @@ export interface MetricData {
   target: string;
 }
 
-interface ApplicationConfig {
-  questions: ApplicationQuestion[];
-  requiresAIEvaluation?: boolean;
-  aiEvaluationCriteria?: string[];
-  multiStep?: boolean;
-  steps?: Array<{
-    id: string;
-    title: string;
-    questionIds: string[];
-  }>;
-}
-
 // AI Evaluation result
 export interface AIEvaluation {
   score: number;
@@ -234,9 +222,6 @@ export interface FundingProgram {
   };
 }
 
-// Alias for backward compat
-type Program = FundingProgram;
-
 // Core application entity
 export interface MilestoneStatusEntry {
   // "application" = milestone authored on the application form (in
@@ -308,66 +293,10 @@ export interface Application {
   milestoneStatuses?: MilestoneStatusEntry[];
 }
 
-interface User {
-  id: string;
-  address: string;
-  chainId: number;
-  ens?: string;
-  avatar?: string;
-  email?: string;
-  name?: string;
-  bio?: string;
-  twitter?: string;
-  github?: string;
-  applications?: Application[];
-  createdAt?: string;
-  updatedAt?: string;
-}
-
-interface Grant {
-  id: string;
-  programId: string;
-  name: string;
-  description: string;
-  amount: string;
-  currency: string;
-  chainId: number;
-  recipientAddress?: string;
-  recipientId?: string;
-  transactionHash?: string;
-  milestone?: string;
-  disbursedAt?: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-// API Response types
-interface PaginationMeta {
-  total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
-}
-
-interface ApiResponse<T> {
-  data: T;
-  meta?: PaginationMeta;
-  error?: string;
-}
-
 // Filter types
 export interface ProgramFilters {
   status?: ProgramStatus;
   communityId?: TenantId;
-  search?: string;
-  page?: number;
-  limit?: number;
-}
-
-interface ApplicationFilters {
-  status?: ApplicationStatus;
-  programId?: string;
-  userId?: string;
   search?: string;
   page?: number;
   limit?: number;

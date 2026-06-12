@@ -128,24 +128,3 @@ export function TokenBreakdown({ totalsByToken, className, size = "md" }: TokenB
     </div>
   );
 }
-
-/**
- * Inline version for table cells - shows all tokens separated by comma
- */
-function TokenBreakdownInline({ totalsByToken, className }: Omit<TokenBreakdownProps, "size">) {
-  if (!totalsByToken || totalsByToken.length === 0) {
-    return <span className={cn("text-sm", className)}>0</span>;
-  }
-
-  return (
-    <span className={cn("text-sm", className)}>
-      {totalsByToken.map((t, i) => (
-        <span key={`${t.tokenAddress}-${t.chainID}`}>
-          {i > 0 && ", "}
-          {formatTokenAmount(t.totalAmount, t.tokenDecimals)}{" "}
-          {getTokenDisplayName(t, totalsByToken)}
-        </span>
-      ))}
-    </span>
-  );
-}

@@ -128,7 +128,11 @@ const VerifiedBadgeLegacy: FC<{
         closeDialog={closeDialog}
         title={title}
       />
-      <button className="ml-2 flex flex-row -space-x-1 flex-wrap" onClick={openDialog}>
+      <button
+        type="button"
+        className="ml-2 flex flex-row -space-x-1 flex-wrap"
+        onClick={openDialog}
+      >
         {orderedSort.slice(0, 4).map((verification) => (
           <EthereumAddressToENSAvatar
             key={verification.attester}

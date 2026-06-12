@@ -2,7 +2,7 @@
 
 import { ArrowLeftIcon, PencilSquareIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
-import { useParams, usePathname, useRouter } from "next/navigation";
+import { useParams, usePathname } from "next/navigation";
 import { useEffect } from "react";
 import { GrantCompleteButton } from "@/components/Pages/GrantMilestonesAndUpdates/GrantCompleteButton";
 import { GrantContext } from "@/components/Pages/GrantMilestonesAndUpdates/GrantContext";
@@ -37,7 +37,6 @@ function getActiveTab(pathname: string): GrantTab {
 export function GrantDetailLayout({ children }: GrantDetailLayoutProps) {
   const params = useParams();
   const pathname = usePathname();
-  const router = useRouter();
 
   const projectIdFromUrl = params.projectId as string;
   const grantUid = params.grantUid as string;

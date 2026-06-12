@@ -51,7 +51,6 @@ interface MilestonesCardProps {
 const MilestonesCard = ({ completed, total, isLoading }: MilestonesCardProps) => {
   const safeCompleted = Math.max(0, Math.min(completed, total));
   const completedPct = total > 0 ? (safeCompleted / total) * 100 : 0;
-  const pendingPct = total > 0 ? 100 - completedPct : 0;
 
   const isComplete = total > 0 && safeCompleted === total;
 
@@ -147,12 +146,7 @@ export const CommunityStatCards = () => {
   const searchParams = useSearchParams();
   const communityId = params.communityId as string;
   const programId = searchParams.get("programId");
-  const {
-    totalProjects: filteredProjectsCount,
-    totalGrants: filteredGrantsCount,
-    totalMilestones: filteredMilestonesCount,
-    isLoadingFilters,
-  } = useCommunityStore();
+  const { totalProjects: filteredProjectsCount, isLoadingFilters } = useCommunityStore();
   const { data, isLoading } = useQuery({
     queryKey: ["community-stats", communityId],
     queryFn: () => getCommunityStats(communityId),

@@ -105,7 +105,6 @@ export const MarkdownEditor: FC<MarkdownEditorProps> = ({
   height = 300,
   minHeight = 270,
   disabled, // Legacy prop
-  overflow = false,
   id,
   "data-field-id": dataFieldId,
   "aria-describedby": ariaDescribedBy,

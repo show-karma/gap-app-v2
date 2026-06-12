@@ -199,7 +199,7 @@ describe("usePayoutDisbursement hooks", () => {
     });
 
     it("should not fetch when communityUID is empty", () => {
-      const { result } = renderHook(() => usePendingDisbursements(""), {
+      renderHook(() => usePendingDisbursements(""), {
         wrapper,
       });
 

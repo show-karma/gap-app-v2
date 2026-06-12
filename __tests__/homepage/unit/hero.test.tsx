@@ -205,7 +205,7 @@ describe("Hero Component", () => {
     });
 
     it("should show hero image on desktop but hide on mobile", () => {
-      const { container } = renderWithProviders(<Hero />);
+      renderWithProviders(<Hero />);
 
       const heroImage = screen.getByAltText("Builder Hero");
       expect(heroImage).toBeInTheDocument();

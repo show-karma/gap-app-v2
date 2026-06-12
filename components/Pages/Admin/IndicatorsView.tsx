@@ -24,7 +24,7 @@ interface IndicatorsViewProps {
   communityId?: string;
 }
 
-export const IndicatorsView = ({ categories, onRefresh, communityId }: IndicatorsViewProps) => {
+export const IndicatorsView = ({ onRefresh, communityId }: IndicatorsViewProps) => {
   const { address } = useAccount();
   const [indicatorViewType, setIndicatorViewType] = useState<"all" | "automated" | "manual">("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -385,6 +385,7 @@ export const IndicatorsView = ({ categories, onRefresh, communityId }: Indicator
                       Create New Indicator
                     </Dialog.Title>
                     <button
+                      type="button"
                       onClick={() => {
                         setIsFormModalOpen(false);
                         setFormDefaultValues({

@@ -166,8 +166,3 @@ export const getCommunityCategories = cache(async (communityId: string): Promise
     return [];
   }
 });
-
-// Aliases for backward compatibility during migration
-const getCommunityDetailsV2 = getCommunityDetails;
-const getCommunityStatsV2 = getCommunityStats;
-const getCommunityProjectsV2 = getCommunityProjects;

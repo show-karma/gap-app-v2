@@ -24,8 +24,7 @@ interface EndorseSectionProps {
  * Note: The project prop is accepted for API consistency with other SidePanel components.
  * The EndorsementDialog currently gets project info from route params.
  */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export function EndorseSection({ project, className }: EndorseSectionProps) {
+export function EndorseSection({ className }: EndorseSectionProps) {
   const { setIsEndorsementOpen } = useEndorsementStore();
   const { authenticated, login } = useAuth();
 

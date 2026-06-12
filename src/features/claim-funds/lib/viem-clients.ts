@@ -21,8 +21,6 @@ export function getChainByName(networkName: string): Chain {
   return chain;
 }
 
-const SUPPORTED_CHAINS = Object.values(CHAIN_MAP);
-
 /**
  * Cache of public clients keyed by network name
  */

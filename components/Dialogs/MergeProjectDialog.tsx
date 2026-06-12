@@ -11,7 +11,6 @@ import { useAccount } from "wagmi";
 import { z } from "zod";
 import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useAuth } from "@/hooks/useAuth";
-import { useGap } from "@/hooks/useGap";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
 import { searchProjects } from "@/services/project-search.service";
@@ -157,7 +156,6 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [validAddress, setValidAddress] = useState(true);
 
-  const { gap } = useGap();
   const { address, chain } = useAccount();
   const router = useRouter();
   function closeModal() {

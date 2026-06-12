@@ -240,7 +240,7 @@ describe("ProjectModals", () => {
       // This test ensures the component uses {condition ? <Modal /> : null} pattern
       // which is more explicit than {condition && <Modal />}
       mockIsIntroModalOpen = true;
-      const { container } = render(<ProjectModals />);
+      render(<ProjectModals />);
 
       // When modal is open, it should be rendered
       expect(screen.getByTestId("intro-dialog")).toBeInTheDocument();

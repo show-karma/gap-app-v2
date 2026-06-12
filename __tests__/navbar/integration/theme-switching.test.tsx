@@ -391,7 +391,7 @@ describe("Theme Switching Integration Tests", () => {
       const mockSetTheme = vi.fn();
       const authFixture = getAuthFixture("authenticated-basic");
 
-      const { rerender, unmount } = renderWithProviders(<Navbar />, {
+      const { unmount } = renderWithProviders(<Navbar />, {
         mockUsePrivy: createMockUseAuth(authFixture.authState),
         mockPermissions: createMockPermissions(authFixture.permissions),
         mockUseTheme: createMockUseTheme({

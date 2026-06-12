@@ -5,15 +5,6 @@
  * and human-readable display formats, supporting various token decimals.
  */
 
-/** Default decimals for common tokens */
-const TOKEN_DECIMALS = {
-  USDC: 6,
-  USDT: 6,
-  DAI: 18,
-  ETH: 18,
-  DEFAULT: 18,
-} as const;
-
 /**
  * Formats a raw token amount (in smallest units) to a human-readable string.
  *
@@ -141,20 +132,4 @@ export function formatDisplayAmount(amount: string, maxDecimals = 2): string {
   const num = parseFloat(sanitized);
   if (Number.isNaN(num)) return "0";
   return num.toLocaleString("en-US", { maximumFractionDigits: maxDecimals });
-}
-
-/**
- * Gets the default decimals for a known token symbol, or returns the default.
- *
- * @param tokenSymbol - Token symbol (e.g., "USDC", "ETH")
- * @returns Number of decimals for the token
- */
-function getDefaultDecimals(tokenSymbol: string): number {
-  const upperSymbol = tokenSymbol.toUpperCase();
-
-  if (upperSymbol in TOKEN_DECIMALS) {
-    return TOKEN_DECIMALS[upperSymbol as keyof typeof TOKEN_DECIMALS];
-  }
-
-  return TOKEN_DECIMALS.DEFAULT;
 }

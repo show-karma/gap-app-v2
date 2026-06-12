@@ -86,7 +86,7 @@ export const TrackFilter: React.FC<TrackFilterProps> = ({ onChange, selectedTrac
                       }
                       value={track.id}
                     >
-                      {({ selected, active }) => (
+                      {({ selected }) => (
                         <>
                           <div className="flex items-center">
                             <span

@@ -274,7 +274,6 @@ describe("Integration: Donation Cart & Checkout UI", () => {
     });
 
     it("fires onAmountChange when amount is updated", async () => {
-      const user = userEvent.setup();
       const onAmountChange = vi.fn();
       const token = createMockToken();
 

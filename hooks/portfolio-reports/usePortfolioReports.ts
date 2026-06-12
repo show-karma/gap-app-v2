@@ -32,14 +32,6 @@ export function useReportConfigs(communitySlug: string) {
   });
 }
 
-function useReportConfig(communitySlug: string, configId: string) {
-  return useQuery({
-    queryKey: [...QUERY_KEYS.configs(communitySlug), configId],
-    queryFn: () => portfolioService.getReportConfig(communitySlug, configId),
-    enabled: Boolean(communitySlug && configId),
-  });
-}
-
 export function useCreateReportConfig(communitySlug: string) {
   const queryClient = useQueryClient();
   return useMutation({
@@ -268,13 +260,4 @@ export function usePublishedReport(communitySlug: string, runDate: string) {
     queryFn: () => portfolioService.getPublishedReportByRunDate(communitySlug, runDate),
     enabled: Boolean(communitySlug && runDate),
   });
-}
-
-function useReportConfigsExist(communitySlug: string) {
-  const { data, isLoading, isError } = useReportConfigs(communitySlug);
-  return {
-    hasConfigs: !isLoading && !isError && (data?.length ?? 0) > 0,
-    isLoading,
-    isError,
-  };
 }

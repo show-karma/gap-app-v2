@@ -14,21 +14,7 @@ import { renderWithProviders } from "../utils/test-helpers";
 vi.mock("next/dynamic", () => ({
   default: (fn: () => Promise<any>, _opts?: any) => {
     // Return a lazy component wrapper that renders the real (mocked) component.
-    // We return a function component that calls the import and renders the default export.
-    // In tests, the import resolves synchronously via the vi.mock registry.
-    const LazyComponent = (props: any) => {
-      // Use React.use / Suspense not needed — vi.mock makes imports sync in test env
-      const [Component, setComponent] = (globalThis as any).__dynamicComponent || [null, () => {}];
-      if (Component) return (globalThis as any).React.createElement(Component, props);
-      // Trigger the import and re-render — but in tests vi.mock makes it sync so just call fn()
-      let resolved: any = null;
-      fn().then((mod: any) => {
-        resolved = mod.default || Object.values(mod)[0];
-      });
-      if (resolved) return (globalThis as any).React.createElement(resolved, props);
-      return null;
-    };
-    // Simpler approach: execute the factory synchronously using promise resolution
+    // Execute the factory synchronously using promise resolution.
     let syncComponent: any = null;
     // In Vitest with vi.mock, the dynamic import factory resolves synchronously
     const promise = fn();

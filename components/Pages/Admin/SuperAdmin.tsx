@@ -8,22 +8,34 @@ export default function SuperAdminPage() {
     <div className="m-12 flex gap-8 flex-row max-lg:flex-col-reverse w-full ">
       <div className="flex flex-row flex-wrap gap-8">
         <a href={PAGES.STATS}>
-          <button className="px-10 py-8 bg-yellow-200 rounded-md  transition-all ease-in-out duration-200 dark:bg-yellow-900">
+          <button
+            type="button"
+            className="px-10 py-8 bg-yellow-200 rounded-md  transition-all ease-in-out duration-200 dark:bg-yellow-900"
+          >
             Stats
           </button>
         </a>
         <a href={PAGES.ADMIN.COMMUNITY_STATS}>
-          <button className="px-10 py-8 bg-blue-200 rounded-md  transition-all ease-in-out duration-200 dark:bg-blue-900">
+          <button
+            type="button"
+            className="px-10 py-8 bg-blue-200 rounded-md  transition-all ease-in-out duration-200 dark:bg-blue-900"
+          >
             Community Stats
           </button>
         </a>
         <a href={PAGES.ADMIN.PROJECTS}>
-          <button className="px-10 py-8 bg-yellow-200 rounded-md  transition-all ease-in-out duration-200 dark:bg-yellow-900">
+          <button
+            type="button"
+            className="px-10 py-8 bg-yellow-200 rounded-md  transition-all ease-in-out duration-200 dark:bg-yellow-900"
+          >
             Projects
           </button>
         </a>
         <a href={PAGES.SUMUP_CONFIG}>
-          <button className="px-10 py-8 bg-blue-200 rounded-md  transition-all ease-in-out duration-200 dark:bg-blue-900">
+          <button
+            type="button"
+            className="px-10 py-8 bg-blue-200 rounded-md  transition-all ease-in-out duration-200 dark:bg-blue-900"
+          >
             Sumup Config
           </button>
         </a>

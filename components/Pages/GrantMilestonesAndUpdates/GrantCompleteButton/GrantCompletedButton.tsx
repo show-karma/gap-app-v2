@@ -16,6 +16,7 @@ export const GrantCompletedButton: React.FC<GrantCompletedButtonProps> = ({
 }) => {
   return (
     <button
+      type="button"
       onClick={onClick}
       disabled={disabled}
       aria-label="Revoke grant completion"

@@ -17,10 +17,7 @@ describe("Community API Contract", () => {
     it("default factory output passes community schema validation", () => {
       const mock = createMockCommunity();
       const result = communitySchema.safeParse(mock);
-      if (!result.success) {
-        // eslint-disable-next-line no-console -- diagnostic output for test failures
-        console.log("Validation issues:", result.error.issues);
-      }
+      expect(result.error?.issues ?? []).toEqual([]);
       expect(result.success).toBe(true);
     });
 
@@ -50,26 +47,26 @@ describe("Community API Contract", () => {
 
   describe("required fields validation", () => {
     it("rejects when uid is missing", () => {
-      const { uid, ...rest } = createMockCommunity();
+      const { uid: _uid, ...rest } = createMockCommunity();
       const result = communitySchema.safeParse(rest);
       expect(result.success).toBe(false);
     });
 
     it("rejects when chainID is missing", () => {
-      const { chainID, ...rest } = createMockCommunity();
+      const { chainID: _chainID, ...rest } = createMockCommunity();
       const result = communitySchema.safeParse(rest);
       expect(result.success).toBe(false);
     });
 
     it("rejects when details is missing", () => {
-      const { details, ...rest } = createMockCommunity();
+      const { details: _details, ...rest } = createMockCommunity();
       const result = communitySchema.safeParse(rest);
       expect(result.success).toBe(false);
     });
 
     it("rejects when details.name is missing", () => {
       const mock = createMockCommunity();
-      const { name, ...detailsRest } = mock.details;
+      const { name: _name, ...detailsRest } = mock.details;
       const result = communitySchema.safeParse({
         ...mock,
         details: detailsRest,
@@ -79,7 +76,7 @@ describe("Community API Contract", () => {
 
     it("rejects when details.slug is missing", () => {
       const mock = createMockCommunity();
-      const { slug, ...detailsRest } = mock.details;
+      const { slug: _slug, ...detailsRest } = mock.details;
       const result = communitySchema.safeParse({
         ...mock,
         details: detailsRest,

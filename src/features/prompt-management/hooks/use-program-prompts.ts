@@ -130,31 +130,6 @@ export function useTriggerBulkEvaluation(
 }
 
 /**
- * Hook for fetching bulk evaluation job status
- *
- * @param programId - The program ID
- * @param jobId - The job ID
- * @param options - Optional settings
- */
-function useBulkEvaluationJob(
-  programId: string,
-  jobId: string | null,
-  options?: {
-    enabled?: boolean;
-    refetchInterval?: number | false;
-  }
-) {
-  return useQuery({
-    queryKey: promptKeys.job(programId, jobId ?? ""),
-    queryFn: () => programPromptService.getJobStatus(programId, jobId!),
-    enabled: !!jobId && (options?.enabled ?? true),
-    refetchInterval: options?.refetchInterval ?? false,
-    staleTime: 30 * 1000, // 30 seconds
-    gcTime: 5 * 60 * 1000, // 5 minutes
-  });
-}
-
-/**
  * Hook for polling bulk evaluation job status
  *
  * Uses refs to prevent stale closures and memory leaks, and ensures

@@ -106,8 +106,6 @@ function findOriginalKey(field: IFormField, initialData: Record<string, any>): s
 }
 
 const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
-  programId,
-  chainId,
   formSchema,
   onSubmit,
   onCancel,

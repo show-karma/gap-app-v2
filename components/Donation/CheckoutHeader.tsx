@@ -27,6 +27,7 @@ export function CheckoutHeader({ onClear }: CheckoutHeaderProps) {
             Continue exploring
           </button>
           <button
+            type="button"
             data-testid="clear-cart"
             onClick={onClear}
             className="px-4 py-2.5 rounded font-semibold flex items-center justify-center border border-red-600 text-sm text-red-600"

@@ -6,8 +6,6 @@ import { OnrampProvider } from "@/hooks/donation/types";
  */
 export const STRIPE_SUPPORTED_CHAIN_IDS = [1, 8453, 137, 43114] as const;
 
-const ALLOWED_ONRAMP_DOMAINS = ["crypto.link.com"] as const;
-
 /**
  * EU member states (27 countries) - ISO 3166-1 alpha-2 country codes.
  * Used for EUR currency selection and as part of allowed countries.
@@ -113,8 +111,4 @@ export function getProviderConfig(provider: OnrampProvider): OnrampProviderConfi
     throw new Error(`Unsupported onramp provider: ${provider}`);
   }
   return config;
-}
-
-function getSupportedProviders(): OnrampProviderConfig[] {
-  return Object.values(PROVIDER_CONFIGS);
 }

@@ -108,20 +108,6 @@ export const parseBreakdown = (
 };
 
 /**
- * Check if datapoints have period-based structure (30d, 90d, 180d, 1y)
- */
-const hasPeriodBasedData = (datapoints: PeriodDatapoint[]): boolean => {
-  return datapoints.some((dp) => dp.period && rollingPeriodOrder.includes(dp.period));
-};
-
-/**
- * Check if datapoints have monthly historical data
- */
-const hasMonthlyData = (datapoints: PeriodDatapoint[]): boolean => {
-  return datapoints.some((dp) => dp.period === "monthly");
-};
-
-/**
  * Check if this indicator has unique users data structure (period-based)
  */
 export const hasUniqueUsersData = (datapoints: PeriodDatapoint[]): boolean => {

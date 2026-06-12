@@ -396,7 +396,7 @@ describe("useDonationCheckout", () => {
     });
 
     it("should show special success message when approvals were needed", async () => {
-      const { result } = renderHook(() => useDonationCheckout());
+      renderHook(() => useDonationCheckout());
 
       mockUseDonationTransfer.validatePayments.mockResolvedValue({
         valid: true,

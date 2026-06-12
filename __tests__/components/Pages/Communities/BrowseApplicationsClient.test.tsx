@@ -3,9 +3,6 @@ import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { BrowseApplicationsClient } from "@/app/community/[communityId]/(with-header)/browse-applications/BrowseApplicationsClient";
-import fetchData from "@/utilities/fetchData";
-
-const mockFetchData = vi.mocked(fetchData);
 
 // --- Mocks ---
 

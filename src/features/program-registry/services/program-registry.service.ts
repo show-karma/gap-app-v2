@@ -15,14 +15,14 @@ import type {
  * Handles business logic for program creation and approval
  * Following Domain-Driven Design principles
  */
-export class ProgramRegistryService {
+export const ProgramRegistryService = {
   /**
    * Build program metadata from form data and community.
    * Default: anyoneCanJoin = true (open enrollment).
    * Both admin (CreateProgramModal) and public (AddProgram) forms now explicitly pass the value.
    * Includes adminEmails and financeEmails from form data.
    */
-  static buildProgramMetadata(
+  buildProgramMetadata(
     formData: CreateProgramFormData,
     community: Community,
     options?: { anyoneCanJoin?: boolean }
@@ -67,13 +67,13 @@ export class ProgramRegistryService {
       adminEmails: formData.adminEmails,
       financeEmails: formData.financeEmails,
     };
-  }
+  },
 
   /**
    * Build metadata object for API update from form data and existing metadata.
    * Merges form changes into existing program metadata.
    */
-  static buildUpdateMetadata(
+  buildUpdateMetadata(
     formData: UpdateProgramFormSchema,
     existingMetadata: GrantProgram["metadata"]
   ): ProgramMetadata {
@@ -93,13 +93,13 @@ export class ProgramRegistryService {
       ...existingMetadata,
       ...updatedFields,
     }) as ProgramMetadata;
-  }
+  },
 
   /**
    * Extract program ID from various response formats
    * Handles different API response structures (V1 and V2)
    */
-  static extractProgramId(response: unknown): string | undefined {
+  extractProgramId(response: unknown): string | undefined {
     if (!response) return undefined;
 
     // V2 format: { programId: "..." }
@@ -151,12 +151,12 @@ export class ProgramRegistryService {
     }
 
     return undefined;
-  }
+  },
 
   /**
    * Extract MongoDB ID (for approve endpoint which still uses _id)
    */
-  static extractMongoId(response: unknown): string | undefined {
+  extractMongoId(response: unknown): string | undefined {
     if (!response) return undefined;
 
     // V2 format: { id: "..." } (MongoDB _id)
@@ -181,7 +181,7 @@ export class ProgramRegistryService {
     }
 
     return undefined;
-  }
+  },
 
   /**
    * Create a program (V2 endpoint)
@@ -190,7 +190,7 @@ export class ProgramRegistryService {
    * @param metadata - Program metadata
    * @param topLevelFields - Optional top-level fields (type, deadline, submissionUrl, typed metadata)
    */
-  static async createProgram(
+  async createProgram(
     _owner: string,
     chainId: number,
     metadata: ProgramMetadata | Record<string, unknown>,
@@ -234,7 +234,7 @@ export class ProgramRegistryService {
       success: true,
       requiresManualApproval,
     };
-  }
+  },
 
   /**
    * Update a program (V2 endpoint)
@@ -242,7 +242,7 @@ export class ProgramRegistryService {
    * @param metadata - The program metadata
    * @param topLevelFields - Optional top-level fields (type, deadline, submissionUrl, typed metadata)
    */
-  static async updateProgram(
+  async updateProgram(
     programId: string,
     metadata: ProgramMetadata,
     topLevelFields?: Record<string, unknown>
@@ -265,13 +265,13 @@ export class ProgramRegistryService {
     if (updateError) {
       throw new Error(updateError);
     }
-  }
+  },
 
   /**
    * Approve/reject/pending a program (V2 endpoint)
    * Uses programId only (chainId removed from endpoint)
    */
-  static async approveProgram(
+  async approveProgram(
     programId: string,
     isValid: "accepted" | "rejected" | "pending" = "accepted"
   ): Promise<void> {
@@ -292,5 +292,5 @@ export class ProgramRegistryService {
     if (approveError) {
       throw new Error(approveError);
     }
-  }
-}
+  },
+};

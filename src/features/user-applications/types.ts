@@ -59,13 +59,6 @@ export interface UseUserApplicationsReturn {
   refresh: () => void;
 }
 
-interface UseUserApplicationReturn {
-  application: Application | null;
-  isLoading: boolean;
-  error: Error | null;
-  refresh: () => void;
-}
-
 // API response types
 export interface UserApplicationsResponse {
   applications: Application[];

@@ -26,7 +26,6 @@ const statusOptions: Array<{
 
 export function ApplicationsFilters({
   filters,
-  programs,
   onFiltersChange,
   onReset,
 }: ApplicationsFiltersProps) {

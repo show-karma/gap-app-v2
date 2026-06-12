@@ -53,8 +53,6 @@ export function FieldEditor({
   field,
   onUpdate,
   onDelete,
-  onMoveUp,
-  onMoveDown,
   readOnly = false,
   isPostApprovalMode = false,
 }: FieldEditorProps) {
@@ -136,6 +134,7 @@ export function FieldEditor({
         <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400">Field Settings</h3>
         <div className="flex items-center space-x-2">
           <button
+            type="button"
             onClick={() => !readOnly && onDelete(field.id)}
             disabled={readOnly}
             className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-transparent"

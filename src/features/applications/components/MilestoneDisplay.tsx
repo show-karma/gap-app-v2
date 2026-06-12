@@ -18,7 +18,6 @@ interface MilestoneDisplayProps {
 export function MilestoneDisplay({
   milestones,
   fieldLabel,
-  referenceNumber,
   grantMilestones = [],
 }: MilestoneDisplayProps) {
   return (

@@ -30,7 +30,6 @@ export function ChainForm({ chain, onSave, onCancel, isLoading }: ChainFormProps
     register,
     handleSubmit,
     formState: { errors },
-    setValue,
   } = useForm<ChainFormData>({
     resolver: zodResolver(chainSchema),
     defaultValues: {

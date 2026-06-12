@@ -262,6 +262,7 @@ export function ProgramScoresUpload({
         {parsedData && (
           <div className="border border-gray-200 rounded-md">
             <button
+              type="button"
               onClick={() => setIsPreviewExpanded(!isPreviewExpanded)}
               className="w-full px-4 py-3 flex items-center justify-between text-left bg-secondary transition-colors"
             >

@@ -352,6 +352,7 @@ export function FileUpload({
               <p className="bg-red-50 dark:bg-red-950/20 px-3 py-2 rounded-lg">{validationError}</p>
               {useS3Upload && (
                 <button
+                  type="button"
                   onClick={retryUpload}
                   className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 underline text-xs"
                   disabled={isUploading}

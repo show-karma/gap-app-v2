@@ -449,6 +449,3 @@ export function useProjectUpdates(
     refetch,
   };
 }
-
-// Alias for backward compatibility during migration
-const useProjectUpdatesV2 = useProjectUpdates;

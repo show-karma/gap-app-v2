@@ -55,6 +55,7 @@ export function WhitelistManager() {
           Whitelisted Contracts
         </h2>
         <button
+          type="button"
           onClick={() => setShowAddForm(true)}
           className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
         >
@@ -223,6 +224,7 @@ export function WhitelistManager() {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
                   <button
+                    type="button"
                     onClick={() => {
                       if (
                         confirm("Are you sure you want to remove this contract from the whitelist?")

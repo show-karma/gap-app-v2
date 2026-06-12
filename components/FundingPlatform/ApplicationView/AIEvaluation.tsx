@@ -70,10 +70,8 @@ function EvaluationContent({
 
 export function AIEvaluationDisplay({
   evaluation,
-  isLoading,
   isEnabled,
   className = "",
-  hasError = false,
   programName,
 }: AIEvaluationDisplayProps) {
   if (!isEnabled) {

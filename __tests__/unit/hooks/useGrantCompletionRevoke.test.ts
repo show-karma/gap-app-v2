@@ -58,21 +58,6 @@ const {
   mockRefreshGrant: vi.fn(),
 }));
 
-// Create a mock toast function that can be called directly
-const createMockToastDefault = () => {
-  const fn = vi.fn() as vi.Mock & {
-    success: vi.Mock;
-    error: vi.Mock;
-    loading: vi.Mock;
-    dismiss: vi.Mock;
-  };
-  fn.success = mockToastSuccess;
-  fn.error = mockToastError;
-  fn.loading = vi.fn();
-  fn.dismiss = vi.fn();
-  return fn;
-};
-
 // Mock gasless utilities to avoid ESM parsing issues with @account-kit/infra
 vi.mock("@/utilities/gasless", () => ({
   createGaslessClient: vi.fn().mockResolvedValue(null),
@@ -219,17 +204,12 @@ vi.mock("@/store/grant", () => ({
 }));
 
 import { act, renderHook } from "@testing-library/react";
-// Get the mocked toast function
-import toast from "react-hot-toast";
 
 // Import the hook to test AFTER mocking dependencies
 import { useGrantCompletionRevoke } from "@/hooks/useGrantCompletionRevoke";
-import { MESSAGES } from "@/utilities/messages";
-
-const mockToastFn = (global as Record<string, unknown>).__mockToastFn || toast;
-
 // Get reference to mock store state for modifying in tests
 import * as storeModule from "@/store";
+import { MESSAGES } from "@/utilities/messages";
 
 const mockStoreState = (storeModule as Record<string, unknown>).__mockState;
 

@@ -36,10 +36,6 @@ export interface KycConfigResponse {
   isEnabled: boolean;
 }
 
-interface KycBatchStatusRequest {
-  projectUIDs: string[];
-}
-
 export interface KycBatchStatusResponse {
   statuses: Record<string, KycStatusResponse | null>;
 }

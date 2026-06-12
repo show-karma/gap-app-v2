@@ -240,7 +240,7 @@ describe("Integration: token refresh flow", () => {
       // timers that timer must be advanced or fetchData never resolves.
       const fetchPromise = fetchData("/no-auth");
       await vi.advanceTimersByTimeAsync(3000);
-      const [data, error] = await fetchPromise;
+      const [, error] = await fetchPromise;
 
       // fetchData should still work, just without auth header
       expect(error).toBeNull();
@@ -307,7 +307,7 @@ describe("Integration: token refresh flow", () => {
         status: 200,
       });
 
-      const [data, error] = await fetchData("/ssr-no-auth");
+      const [, error] = await fetchData("/ssr-no-auth");
 
       expect(error).toBeNull();
       const sentConfig = requestSpy.mock.calls[0][0];
