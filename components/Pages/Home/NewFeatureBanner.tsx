@@ -1,49 +1,33 @@
 import Link from "next/link";
-import { MegaphoneIcon } from "@/components/Icons/Megaphone";
 import { RightArrowIcon } from "@/components/Icons/RightArrow";
 import { NON_PROFITS_PAGES } from "@/utilities/pages";
 
 const bannerLink = NON_PROFITS_PAGES.HOME;
 
-// Brand announcement colors are one-off marketing tokens with no Tailwind
-// theme equivalent, so they live as inline styles rather than arbitrary
-// color classes.
-const BANNER_BG = "#bee1d8";
-const BRAND_TEAL = "#1de9b6";
-const BRAND_INK = "#080a0e";
-
 export function NewFeatureBanner() {
   return (
-    <div className="flex w-full">
-      <div
-        className="flex w-full justify-between border-l-[5px] rounded-l-lg p-4 gap-4 max-md:p-2 max-md:flex-col"
-        style={{ backgroundColor: BANNER_BG, borderColor: BRAND_TEAL }}
+    <div className="relative w-full">
+      <span
+        aria-hidden
+        className="pointer-events-none absolute -inset-0.5 animate-pulse rounded-2xl bg-gradient-to-r from-emerald-400/25 via-teal-300/15 to-emerald-400/25 blur-md [animation-duration:4s] dark:from-emerald-500/15 dark:via-teal-400/10 dark:to-emerald-500/15"
+      />
+      <Link
+        href={bannerLink}
+        className="group relative flex w-full items-center justify-between gap-4 rounded-xl border border-zinc-200 bg-white px-5 py-4 shadow-sm transition hover:border-emerald-300 hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-emerald-700 max-md:flex-col max-md:items-start max-md:gap-3 max-md:px-4 max-md:py-3"
       >
-        <div className="flex flex-row gap-4 items-center max-md:gap-2.5">
-          <MegaphoneIcon />
-          <div className="flex flex-row gap-1">
-            <p className="text-sm font-semibold max-md:text-xs" style={{ color: BRAND_INK }}>
-              We just launched funder search for nonprofits
-            </p>{" "}
-            <Link
-              href={bannerLink}
-              className="text-sm font-semibold text-blue-600 max-md:text-xs underline"
-            >
-              Try it now
-            </Link>
-          </div>
+        <div className="flex items-center gap-3">
+          <span className="shrink-0 bg-emerald-500 px-3 py-1 text-[11px] font-bold uppercase text-white [clip-path:polygon(0_0,100%_0,calc(100%-8px)_50%,100%_100%,0_100%)]">
+            New
+          </span>
+          <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 max-md:text-xs">
+            We just launched funder search for nonprofits
+          </p>
         </div>
-        <Link href={bannerLink}>
-          <button
-            type="button"
-            className="max-md:text-xs max-md:p-[8px_12px] rounded-[4px] flex items-center justify-center gap-[8px] p-[16px_24px] outline-none border-none font-semibold text-[14px] leading-[16px]"
-            style={{ backgroundColor: BRAND_INK, color: BRAND_TEAL }}
-          >
-            View details
-            <RightArrowIcon />
-          </button>
-        </Link>
-      </div>
+        <span className="flex shrink-0 items-center gap-1.5 text-sm font-semibold text-emerald-600 underline underline-offset-4 dark:text-emerald-400 max-md:text-xs">
+          Try it now
+          <RightArrowIcon />
+        </span>
+      </Link>
     </div>
   );
 }
