@@ -17,7 +17,7 @@ export const metadata: Metadata = customMetadata({
   title: "Philanthropy Research",
   description: "Research prepared by your philanthropy advisor.",
   // Shared view is intentionally noindex — donor-facing private link.
-  path: "/donor-research/shared",
+  path: "/nonprofit-research/shared",
   robots: { index: false, follow: false },
 });
 

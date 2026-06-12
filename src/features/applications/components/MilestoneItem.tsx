@@ -8,8 +8,13 @@ import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { MILESTONE_ITEM_FIELD_REQUIRED } from "@/features/applications/lib/schema-builders/milestone-schema";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import type { MilestoneData } from "@/types/whitelabel-entities";
+
+/** Renders a trailing required-indicator asterisk for required sub-fields only. */
+const RequiredMark = ({ required }: { required: boolean }) =>
+  required ? <span className="text-destructive"> *</span> : null;
 
 interface MilestoneItemProps {
   index: number;
@@ -87,7 +92,10 @@ export const MilestoneItem: React.FC<MilestoneItemProps> = ({
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor={`milestone-title-${index}`}>Title *</Label>
+        <Label htmlFor={`milestone-title-${index}`}>
+          Title
+          <RequiredMark required={MILESTONE_ITEM_FIELD_REQUIRED.title} />
+        </Label>
         <Input
           id={`milestone-title-${index}`}
           placeholder="Enter milestone title"
@@ -108,12 +116,15 @@ export const MilestoneItem: React.FC<MilestoneItemProps> = ({
         value={milestone.description}
         onChange={(value) => handleFieldChange("description", value)}
         isDisabled={disabled}
-        isRequired
+        isRequired={MILESTONE_ITEM_FIELD_REQUIRED.description}
         error={errors?.description?.message}
       />
 
       <div className="space-y-2">
-        <span className="text-sm font-medium">Due Date *</span>
+        <span className="text-sm font-medium">
+          Due Date
+          <RequiredMark required={MILESTONE_ITEM_FIELD_REQUIRED.dueDate} />
+        </span>
         <DatePicker
           selected={dueDateAsDate}
           onSelect={handleDueDateSelect}
@@ -129,7 +140,10 @@ export const MilestoneItem: React.FC<MilestoneItemProps> = ({
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor={`milestone-funding-${index}`}>Funding Requested *</Label>
+        <Label htmlFor={`milestone-funding-${index}`}>
+          Funding Requested
+          <RequiredMark required={MILESTONE_ITEM_FIELD_REQUIRED.fundingRequested} />
+        </Label>
         <Input
           id={`milestone-funding-${index}`}
           placeholder="e.g., $5,000 USD or 5000"
@@ -150,7 +164,7 @@ export const MilestoneItem: React.FC<MilestoneItemProps> = ({
         value={milestone.completionCriteria || ""}
         onChange={(value) => handleFieldChange("completionCriteria", value)}
         isDisabled={disabled}
-        isRequired
+        isRequired={MILESTONE_ITEM_FIELD_REQUIRED.completionCriteria}
         error={errors?.completionCriteria?.message}
       />
 
