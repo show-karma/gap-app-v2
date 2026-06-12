@@ -8,23 +8,17 @@ test.describe("Smoke Tests — Health", () => {
   test("T35-01: homepage loads and shows main content", async ({ page, withApiMocks }) => {
     const jsErrors = collectJsErrors(page);
 
-    await withApiMocks({
-      "**/v2/communities/stats**": mockJson({
-        totalCommunities: 12,
-        totalProjects: 340,
-        totalGrants: 150,
-      }),
-    });
+    await withApiMocks();
     await page.goto("/", GOTO_OPTIONS);
     await waitForPageReady(page);
 
-    // The homepage hero heading should be visible (the h1's accessible name is the
-    // sr-only canonical sentence; the rotating word span is aria-hidden).
+    // The hero heading should be visible — its accessible name comes from
+    // the sr-only span (the rotating-word variant is aria-hidden)
     await expect(
-      page.getByRole("heading", { name: /funders fund and track/i }).first()
+      page.getByRole("heading", { name: /karma helps funders fund and track/i }).first()
     ).toBeVisible();
 
-    // The "How Karma works" workflow section should render below the hero.
+    // The workflow section should be present on the homepage
     await expect(
       page.getByRole("heading", { name: /one platform for two motions/i })
     ).toBeVisible();

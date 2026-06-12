@@ -28,7 +28,7 @@ export function DonorResearchHome() {
 
   // Effect-only redirect — never call `login()` / `logout()` from a
   // useEffect combined with auth state (Auth Gotchas). Routing within
-  // the donor-research section is safe here.
+  // the nonprofit-research section is safe here.
   useEffect(() => {
     if (advisorQuery.isSuccess && advisorQuery.data === null) {
       router.replace(PAGES.DONOR_RESEARCH.ONBOARDING);
@@ -56,7 +56,7 @@ export function DonorResearchHome() {
       <header className="mb-10 flex flex-wrap items-end justify-between gap-x-6 gap-y-4 border-b border-border/60 pb-6">
         <div className="max-w-xl">
           <p className="mb-1 text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
-            Karma · Donor Research
+            Karma · Nonprofit Research
           </p>
           <h1 className="text-balance text-3xl font-medium tracking-tight text-foreground sm:text-4xl">
             Find nonprofits worth your client's next gift.
