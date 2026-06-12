@@ -25,6 +25,26 @@ vi.mock("@/store", () => ({
   useProjectStore: vi.fn(),
 }));
 
+// useProjectAuthorization composes auth + permission signals from Privy and
+// react-query. These tests drive authorization purely through the owner/admin
+// store flags, so stub the async collaborators to their resolved,
+// not-authorized-by-this-path defaults and keep the store signals decisive.
+vi.mock("@/hooks/useAuth", () => ({
+  useAuth: () => ({ ready: true, authenticated: true }),
+}));
+
+vi.mock("@/hooks/useProjectPermissions", () => ({
+  useProjectPermissions: () => ({
+    isProjectOwner: false,
+    isProjectAdmin: false,
+    isResolving: false,
+  }),
+}));
+
+vi.mock("@/hooks/communities/useIsCommunityAdmin", () => ({
+  useIsCommunityAdmin: () => ({ isCommunityAdmin: false, isResolving: false }),
+}));
+
 // Mock next/navigation
 vi.mock("next/navigation", () => ({
   useSearchParams: vi.fn(),
