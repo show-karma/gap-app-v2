@@ -18,13 +18,14 @@ test.describe("Smoke Tests — Health", () => {
     await page.goto("/", GOTO_OPTIONS);
     await waitForPageReady(page);
 
-    // The homepage hero heading should be visible
+    // The homepage hero heading should be visible (accessible name comes from
+    // the sr-only span, since the visible copy includes a rotating word).
     await expect(
-      page.getByRole("heading", { name: /funding software that does the work/i }).first()
+      page.getByRole("heading", { name: /karma helps funders fund and track/i }).first()
     ).toBeVisible();
 
-    // The FAQ section should be present on the homepage
-    await expect(page.getByText(/frequently asked/i)).toBeVisible();
+    // The primary hero CTA should be present on the homepage
+    await expect(page.getByRole("link", { name: /schedule a demo/i }).first()).toBeVisible();
 
     assertNoJsErrors(jsErrors);
   });

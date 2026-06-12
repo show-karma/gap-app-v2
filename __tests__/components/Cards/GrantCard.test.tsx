@@ -85,10 +85,6 @@ vi.mock("@/utilities/pages", () => ({
   },
 }));
 
-vi.mock("@/utilities/markdown", () => ({
-  rewriteHeadingsToLevel: vi.fn(() => vi.fn()),
-}));
-
 describe("GrantCard", () => {
   // V2 flat structure - details properties are at top level, not nested in data
   const mockGrant = {
