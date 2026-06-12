@@ -10,19 +10,19 @@ import { compareAllWallets } from "./compare-all-wallets";
  * - "external": wallet login — the user signs with their own external wallet.
  * - "none": no resolvable user (pre-auth / hydration) — nothing may sign.
  */
-export type SigningMode = "embedded" | "external" | "none";
+type SigningMode = "embedded" | "external" | "none";
 
 /**
  * Minimal shape the resolver needs from a Privy connected wallet. Accepting a
  * structural type (rather than the full ConnectedWallet) keeps this pure and
  * trivially testable.
  */
-export interface ResolvableWallet {
+interface ResolvableWallet {
   address: string;
   walletClientType: string;
 }
 
-export interface ResolvedSigningWallets<T extends ResolvableWallet> {
+interface ResolvedSigningWallets<T extends ResolvableWallet> {
   /** The connected embedded (Privy-managed) wallet, or null while it hydrates. */
   embeddedWallet: T | null;
   /**

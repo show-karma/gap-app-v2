@@ -41,14 +41,10 @@ vi.mock("@/store/modals/projectCreate", () => ({
   },
 }));
 
-// Mock compareAllWallets used in watchAccount effect
-vi.mock("@/utilities/auth/compare-all-wallets", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@/utilities/auth/compare-all-wallets")>();
-  return {
-    ...actual,
-    compareAllWallets: vi.fn(() => true),
-  };
-});
+vi.mock("@/utilities/auth/compare-all-wallets", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/utilities/auth/compare-all-wallets")>()),
+  compareAllWallets: vi.fn(() => true),
+}));
 
 // Mock PAGES constants
 vi.mock("@/utilities/pages", () => ({
