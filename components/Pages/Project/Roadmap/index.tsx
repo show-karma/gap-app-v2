@@ -55,7 +55,7 @@ export const ProjectRoadmap = ({ project: propProject }: ProjectRoadmapProps) =>
 
   const { setIsProgressModalOpen, setProgressModalScreen } = useProgressModalStore();
 
-  const isAuthorized = useProjectAuthorization();
+  const { isAuthorized } = useProjectAuthorization();
 
   // Derive active filters directly from URL params - no state synchronization needed
   const activeFilters = useMemo(() => {
