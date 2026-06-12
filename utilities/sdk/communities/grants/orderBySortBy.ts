@@ -6,7 +6,7 @@ import { sortGrantByCompletePercentage } from "./sort/sortGrantByCompletePercent
 import { sortGrantByMilestones } from "./sort/sortGrantByMilestones";
 import { sortGrantByMostRecent } from "./sort/sortGrantByMostRecent";
 
-export const orderBySortBy = (option: SortByOptions, grantsToChange: Grant[]) => {
+const orderBySortBy = (option: SortByOptions, grantsToChange: Grant[]) => {
   if (option === "completed") {
     const completedGrants = sortGrantByCompletePercentage(grantsToChange);
     return completedGrants;

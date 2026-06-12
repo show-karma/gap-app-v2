@@ -41,7 +41,7 @@ export function isAbortError(error: unknown): boolean {
  * @param maxDelay The maximum delay in milliseconds
  * @returns The result of the operation, or throws an error if all retries fail
  */
-export async function retry<T>(
+async function retry<T>(
   operation: () => Promise<T>,
   maxRetries: number = 5,
   initialDelay: number = 1000,

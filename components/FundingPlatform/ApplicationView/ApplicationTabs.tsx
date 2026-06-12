@@ -17,7 +17,7 @@ export interface TabConfig {
   content: ReactNode;
 }
 
-export interface ApplicationTabsProps {
+interface ApplicationTabsProps {
   tabs: TabConfig[];
   defaultIndex?: number;
   onChange?: (index: number) => void;
@@ -120,5 +120,3 @@ export const TabIcons = {
   Discussion: ChatBubbleLeftRightIcon,
   Milestones: FlagIcon,
 };
-
-export default ApplicationTabs;

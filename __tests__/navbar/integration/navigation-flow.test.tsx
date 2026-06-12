@@ -14,7 +14,7 @@ import {
   cleanupAfterEach,
   createMockPermissions,
   createMockRouter,
-  createMockUsePrivy,
+  createMockUseAuth,
   renderWithProviders,
 } from "../utils/test-helpers";
 
@@ -29,7 +29,7 @@ describe("Navigation Flow Integration Tests", () => {
       const authFixture = getAuthFixture("unauthenticated");
 
       renderWithProviders(<NavbarDesktopNavigation />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
       });
 
       // Find For Projects trigger
@@ -54,7 +54,7 @@ describe("Navigation Flow Integration Tests", () => {
       const authFixture = getAuthFixture("unauthenticated");
 
       renderWithProviders(<NavbarDesktopNavigation />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
       });
 
       const forFundersTrigger = screen.getByRole("button", {
@@ -77,7 +77,7 @@ describe("Navigation Flow Integration Tests", () => {
       const authFixture = getAuthFixture("unauthenticated");
 
       renderWithProviders(<NavbarDesktopNavigation />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
       });
 
       const exploreTrigger = screen.getByRole("button", {
@@ -99,7 +99,7 @@ describe("Navigation Flow Integration Tests", () => {
       const authFixture = getAuthFixture("unauthenticated");
 
       renderWithProviders(<NavbarDesktopNavigation />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
       });
 
       const exploreTrigger = screen.getByRole("button", { name: /explore/i });
@@ -124,7 +124,7 @@ describe("Navigation Flow Integration Tests", () => {
       const authFixture = getAuthFixture("unauthenticated");
 
       renderWithProviders(<NavbarDesktopNavigation />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
       });
 
       const resourcesTrigger = screen.queryByRole("button", {
@@ -152,7 +152,7 @@ describe("Navigation Flow Integration Tests", () => {
       const authFixture = getAuthFixture("authenticated-basic");
 
       renderWithProviders(<NavbarDesktopNavigation />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
         mockPermissions: createMockPermissions(authFixture.permissions),
       });
 
@@ -170,7 +170,7 @@ describe("Navigation Flow Integration Tests", () => {
       const authFixture = getAuthFixture("unauthenticated");
 
       renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
       });
 
       // Open mobile drawer
@@ -194,7 +194,7 @@ describe("Navigation Flow Integration Tests", () => {
       const authFixture = getAuthFixture("unauthenticated");
 
       renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
       });
 
       // Open drawer
@@ -221,7 +221,7 @@ describe("Navigation Flow Integration Tests", () => {
       const authFixture = getAuthFixture("unauthenticated");
 
       renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
       });
 
       const mobileMenuButton = await screen.findByLabelText("Open menu");
@@ -246,7 +246,7 @@ describe("Navigation Flow Integration Tests", () => {
       const authFixture = getAuthFixture("authenticated-basic");
 
       renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
         mockPermissions: createMockPermissions(authFixture.permissions),
       });
 
@@ -273,7 +273,7 @@ describe("Navigation Flow Integration Tests", () => {
       const authFixture = getAuthFixture("unauthenticated");
 
       renderWithProviders(<NavbarDesktopNavigation />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
       });
 
       const resourcesTrigger = screen.queryByRole("button", {
@@ -298,7 +298,7 @@ describe("Navigation Flow Integration Tests", () => {
       const authFixture = getAuthFixture("unauthenticated");
 
       renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
       });
 
       expect(screen.queryByText("Contact sales")).not.toBeInTheDocument();
@@ -309,7 +309,7 @@ describe("Navigation Flow Integration Tests", () => {
       const authFixture = getAuthFixture("authenticated-basic");
 
       renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
         mockPermissions: createMockPermissions(authFixture.permissions),
       });
 
@@ -336,7 +336,7 @@ describe("Navigation Flow Integration Tests", () => {
       const authFixture = getAuthFixture("unauthenticated");
 
       renderWithProviders(<NavbarDesktopNavigation />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
         mockRouter,
       });
 
@@ -368,7 +368,7 @@ describe("Navigation Flow Integration Tests", () => {
       const authFixture = getAuthFixture("unauthenticated");
 
       renderWithProviders(<NavbarDesktopNavigation />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
         mockRouter,
       });
 
@@ -403,7 +403,7 @@ describe("Navigation Flow Integration Tests", () => {
       document.body.appendChild(modalButton);
 
       renderWithProviders(<NavbarDesktopNavigation />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
       });
 
       // Open For Projects dropdown
@@ -436,7 +436,7 @@ describe("Navigation Flow Integration Tests", () => {
       const authFixture = getAuthFixture("unauthenticated");
 
       renderWithProviders(<NavbarDesktopNavigation />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
         mockRouter,
       });
 
@@ -465,7 +465,7 @@ describe("Navigation Flow Integration Tests", () => {
       const authFixture = getAuthFixture("unauthenticated");
 
       renderWithProviders(<NavbarDesktopNavigation />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
       });
 
       // Open Explore dropdown
@@ -492,7 +492,7 @@ describe("Navigation Flow Integration Tests", () => {
       const authFixture = getAuthFixture("unauthenticated");
 
       renderWithProviders(<NavbarDesktopNavigation />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
       });
 
       const exploreTrigger = screen.getByRole("button", { name: /explore/i });
@@ -513,7 +513,7 @@ describe("Navigation Flow Integration Tests", () => {
       const authFixture = getAuthFixture("authenticated-basic");
 
       renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
         mockPermissions: createMockPermissions(authFixture.permissions),
       });
 
@@ -539,7 +539,7 @@ describe("Navigation Flow Integration Tests", () => {
       const authFixture = getAuthFixture("authenticated-basic");
 
       renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
         mockPermissions: createMockPermissions(authFixture.permissions),
       });
 
@@ -565,7 +565,7 @@ describe("Navigation Flow Integration Tests", () => {
       const authFixture = getAuthFixture("authenticated-basic");
 
       renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
         mockPermissions: createMockPermissions(authFixture.permissions),
       });
 
@@ -593,7 +593,7 @@ describe("Navigation Flow Integration Tests", () => {
       const authFixture = getAuthFixture("unauthenticated");
 
       renderWithProviders(<NavbarDesktopNavigation />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
       });
 
       // Open dropdown
@@ -618,7 +618,7 @@ describe("Navigation Flow Integration Tests", () => {
       const authFixture = getAuthFixture("unauthenticated");
 
       renderWithProviders(<NavbarDesktopNavigation />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
       });
 
       // Open first dropdown
@@ -655,7 +655,7 @@ describe("Navigation Flow Integration Tests", () => {
       const authFixture = getAuthFixture("unauthenticated");
 
       renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
       });
 
       // Open drawer

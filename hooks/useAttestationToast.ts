@@ -6,7 +6,7 @@ export type AttestationStep = "preparing" | "pending" | "confirmed" | "indexing"
 /**
  * @deprecated Use AttestationStep instead
  */
-export type TxStepperSteps = AttestationStep;
+type TxStepperSteps = AttestationStep;
 
 const stepMessages: Record<AttestationStep, string> = {
   preparing: "Preparing attestation...",

@@ -12,11 +12,11 @@ interface ProgramLike {
  * Program Status Types and Interfaces
  * Aligned with gap-whitelabel-app rules for consistency
  */
-export type ProgramStatusType = "open" | "closed" | "coming-soon" | "deadline-passed";
+type ProgramStatusType = "open" | "closed" | "coming-soon" | "deadline-passed";
 
-export type ProgramStatusColor = "success" | "danger" | "warning" | "default" | "primary";
+type ProgramStatusColor = "success" | "danger" | "warning" | "default" | "primary";
 
-export interface ProgramStatusInfo {
+interface ProgramStatusInfo {
   status: ProgramStatusType;
   label: string;
   color: ProgramStatusColor;
@@ -53,7 +53,7 @@ const statusConfig: Record<ProgramStatusType, Omit<ProgramStatusInfo, "status" |
  * @param endsAt - Program end date
  * @returns true if current date is within the date range
  */
-export function isProgramOpen(startsAt: string | undefined, endsAt: string | undefined): boolean {
+function isProgramOpen(startsAt: string | undefined, endsAt: string | undefined): boolean {
   if (!startsAt || !endsAt) return true;
 
   const now = new Date();
@@ -91,7 +91,7 @@ export function isProgramEnabled(program: ProgramLike): boolean {
  * Returns status type, label, color, dot color, and endsSoon flag for UI display.
  * Rules aligned with gap-whitelabel-app for consistency across apps.
  */
-export function getProgramStatusInfo(program: ProgramLike): ProgramStatusInfo {
+function getProgramStatusInfo(program: ProgramLike): ProgramStatusInfo {
   const isEnabled = program.applicationConfig?.isEnabled ?? false;
   const hasFormConfig = !!program.applicationConfig?.formSchema;
   const isApplicationDeadlinePassed = program.metadata?.endsAt
@@ -140,7 +140,7 @@ export function getProgramStatusInfo(program: ProgramLike): ProgramStatusInfo {
  * Constants for funding program detection across the application
  */
 
-export const FUNDING_PROGRAM_COMMUNITIES = ["celo", "gooddollar", "divvi"] as const;
+const FUNDING_PROGRAM_COMMUNITIES = ["celo", "gooddollar", "divvi"] as const;
 
 export const FUNDING_PROGRAM_GRANT_NAMES = [
   "Proof of",
@@ -151,8 +151,8 @@ export const FUNDING_PROGRAM_GRANT_NAMES = [
   "Cel'Eu Cirkvit",
 ] as const;
 
-export type FundingProgramCommunity = (typeof FUNDING_PROGRAM_COMMUNITIES)[number];
-export type FundingProgramGrantName = (typeof FUNDING_PROGRAM_GRANT_NAMES)[number];
+type FundingProgramCommunity = (typeof FUNDING_PROGRAM_COMMUNITIES)[number];
+type FundingProgramGrantName = (typeof FUNDING_PROGRAM_GRANT_NAMES)[number];
 
 /**
  * Check if a community is a funding program community
@@ -170,7 +170,7 @@ export const isFundingProgramCommunity = (communityName?: string): boolean => {
  * @param grantName - The grant name to check
  * @returns true if the grant name indicates a funding program
  */
-export const isFundingProgramGrantName = (grantName?: string): boolean => {
+const isFundingProgramGrantName = (grantName?: string): boolean => {
   if (!grantName) return false;
   // Special handling for "Proof of" - check if it starts with this phrase
   if (grantName.toLowerCase().startsWith("proof of")) return true;
@@ -198,7 +198,7 @@ export const isFundingProgramGrant = (communityName?: string, grantName?: string
  * @param communityName - The community name
  * @returns Formatted display name for the funding program
  */
-export const getFundingProgramDisplayName = (communityName: string): string => {
+const getFundingProgramDisplayName = (communityName: string): string => {
   const normalized = communityName.toLowerCase();
 
   if (normalized.includes("celo")) return "Celo";
@@ -218,7 +218,7 @@ export const getFundingProgramDisplayName = (communityName: string): string => {
  * - Current date is within startsAt/endsAt range
  * - Application deadline has not passed
  */
-export function transformLiveFundingOpportunities(programs: any[]): FundingProgram[] {
+function transformLiveFundingOpportunities(programs: any[]): FundingProgram[] {
   try {
     if (!Array.isArray(programs)) {
       throw new Error("Expected programs to be an array");

@@ -14,7 +14,7 @@ import type { AskKarmaConfig } from "../types";
 import { AskKarmaChat } from "./ask-karma-chat";
 import { AskKarmaStart } from "./ask-karma-start";
 
-export type AskKarmaView = "start" | "leaving-start" | "chat" | "leaving-chat";
+type AskKarmaView = "start" | "leaving-start" | "chat" | "leaving-chat";
 
 interface AskKarmaPageProps {
   config: AskKarmaConfig;

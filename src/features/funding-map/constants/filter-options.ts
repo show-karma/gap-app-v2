@@ -8,7 +8,7 @@ import type { OpportunityType } from "../types/funding-program";
 /**
  * All opportunity types in display order
  */
-export const OPPORTUNITY_TYPES: readonly OpportunityType[] = [
+const OPPORTUNITY_TYPES: readonly OpportunityType[] = [
   "grant",
   "hackathon",
   "bounty",
@@ -41,11 +41,11 @@ export const OPPORTUNITY_TYPE_SINGULAR_LABELS: Record<OpportunityType, string> =
   rfp: "RFP",
 };
 
-export const BOUNTY_DIFFICULTY_LEVELS = ["beginner", "intermediate", "advanced"] as const;
+const BOUNTY_DIFFICULTY_LEVELS = ["beginner", "intermediate", "advanced"] as const;
 
-export const ACCELERATOR_STAGES = ["pre-seed", "seed", "series-a"] as const;
+const ACCELERATOR_STAGES = ["pre-seed", "seed", "series-a"] as const;
 
-export const VC_FUND_STAGES = ["pre-seed", "seed", "series-a", "series-b+"] as const;
+const VC_FUND_STAGES = ["pre-seed", "seed", "series-a", "series-b+"] as const;
 
 export const FUNDING_MAP_NETWORKS = [
   "Aleo",
@@ -261,7 +261,7 @@ export const OPPORTUNITY_TO_GRANT_TYPE: Partial<Record<OpportunityType, string>>
 
 export const FUNDING_MAP_STATUSES = ["Active", "Inactive"] as const;
 
-export const FUNDING_MAP_SORT_OPTIONS = [
+const FUNDING_MAP_SORT_OPTIONS = [
   { value: "featured", label: "Featured" },
   { value: "newest", label: "Newest" },
   { value: "ending-soon", label: "Ending Soon" },
@@ -366,8 +366,8 @@ export const NETWORK_IMAGES: Record<string, { light: string; dark: string }> = {
   },
 };
 
-export type FundingMapNetwork = (typeof FUNDING_MAP_NETWORKS)[number];
-export type FundingMapEcosystem = (typeof FUNDING_MAP_ECOSYSTEMS)[number];
-export type FundingMapCategory = (typeof FUNDING_MAP_CATEGORIES)[number];
-export type FundingMapGrantType = (typeof FUNDING_MAP_GRANT_TYPES)[number];
-export type FundingMapStatus = (typeof FUNDING_MAP_STATUSES)[number];
+type FundingMapNetwork = (typeof FUNDING_MAP_NETWORKS)[number];
+type FundingMapEcosystem = (typeof FUNDING_MAP_ECOSYSTEMS)[number];
+type FundingMapCategory = (typeof FUNDING_MAP_CATEGORIES)[number];
+type FundingMapGrantType = (typeof FUNDING_MAP_GRANT_TYPES)[number];
+type FundingMapStatus = (typeof FUNDING_MAP_STATUSES)[number];

@@ -3,7 +3,7 @@ import type { IFundingApplication } from "@/types/funding-platform";
 /**
  * Evaluation source type for different AI evaluation types
  */
-export type EvaluationSource = "aiEvaluation" | "internalAIEvaluation";
+type EvaluationSource = "aiEvaluation" | "internalAIEvaluation";
 
 /**
  * Supported score field names in evaluation objects (lowercase for case-insensitive matching)

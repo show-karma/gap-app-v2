@@ -70,5 +70,3 @@ export const useCommunityStats = () => {
     retry: 2,
   });
 };
-
-export type { CommunityStatsResponse, SummaryStats };

@@ -1,6 +1,6 @@
 import type { ProjectWithGrantsResponse } from "@/types/v2/project";
 
-export interface PendingActions {
+interface PendingActions {
   milestonesNeedingSubmission: number;
   grantsInProgress: number;
 }

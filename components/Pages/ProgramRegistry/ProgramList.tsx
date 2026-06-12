@@ -33,7 +33,7 @@ interface ProgramListProps {
   selectProgram: (program: FundingProgramResponse) => void;
 }
 
-export const ProgramList: FC<ProgramListProps> = ({ grantPrograms, selectProgram }) => {
+const ProgramList: FC<ProgramListProps> = ({ grantPrograms, selectProgram }) => {
   const columns = useMemo<ColumnDef<FundingProgramResponse>[]>(
     () => [
       {

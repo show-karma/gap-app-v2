@@ -10,7 +10,7 @@ import type {
 } from "@/types/funding-platform";
 import { TimelineContainer } from "./TimelineContainer";
 
-export interface DiscussionTabProps {
+interface DiscussionTabProps {
   /** Application ID */
   applicationId: string;
   /** Comments on the application */
@@ -122,5 +122,3 @@ export const DiscussionTab: FC<DiscussionTabProps> = ({
     </div>
   );
 };
-
-export default DiscussionTab;

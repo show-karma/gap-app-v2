@@ -74,7 +74,7 @@ export function extractApplicantName(
  * Replaces {{variableName}} template variables with actual values.
  * Unmatched variables are replaced with empty strings.
  */
-export function interpolateTemplate(template: string, variables: Record<string, string>): string {
+function interpolateTemplate(template: string, variables: Record<string, string>): string {
   return template.replace(/\{\{(\w+)\}\}/g, (_match, variableName: string) => {
     return variables[variableName] ?? "";
   });

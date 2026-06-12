@@ -22,7 +22,7 @@ import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 import { ProjectOptionsMenu } from "../ProjectOptionsMenu";
 
-export interface ProjectNavigationProps {
+interface ProjectNavigationProps {
   /** The project ID or slug */
   projectId: string;
   /** Whether contact info exists for the project */

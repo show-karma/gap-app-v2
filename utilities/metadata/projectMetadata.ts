@@ -23,7 +23,7 @@ const getRealDescriptionExcerpt = (project: ProjectResponse, maxLength = 160): s
 };
 
 // Base project metadata generator
-export const generateProjectMetadata = (
+const generateProjectMetadata = (
   project: ProjectResponse,
   options: {
     title?: string;
@@ -295,7 +295,7 @@ export const generateNewGrantMetadata = (project: ProjectResponse, projectId: st
 };
 
 // Enhanced metadata composition functions
-export const createMetadataFromContext = (
+const createMetadataFromContext = (
   project: ProjectResponse | null,
   projectId: string,
   metadataType: "overview" | "about" | "team" | "impact" | "contact" | "updates" | "funding",
@@ -337,7 +337,7 @@ export const createMetadataFromContext = (
 };
 
 // Grant-specific metadata composition functions
-export const createGrantMetadataFromContext = (
+const createGrantMetadataFromContext = (
   project: ProjectResponse | null,
   grant: Grant | null,
   projectId: string,

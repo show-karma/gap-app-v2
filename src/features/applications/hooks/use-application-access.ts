@@ -50,7 +50,7 @@ interface ApplicationAccessInfo {
   accessRole: ApplicationAccessRole;
 }
 
-export interface UseApplicationAccessReturn {
+interface UseApplicationAccessReturn {
   accessInfo: ApplicationAccessInfo | null;
   isLoading: boolean;
   error: ApplicationAccessError | null;

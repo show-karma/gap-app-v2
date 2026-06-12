@@ -14,7 +14,7 @@ import {
   cleanupAfterEach,
   createMockPermissions,
   createMockRouter,
-  createMockUsePrivy,
+  createMockUseAuth,
   renderWithProviders,
 } from "../utils/test-helpers";
 
@@ -33,7 +33,7 @@ describe("Modal Integration Tests", () => {
       const authFixture = getAuthFixture("authenticated-basic");
 
       renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
         mockPermissions: createMockPermissions(authFixture.permissions),
         mockUseContributorProfileModalStore: {
           isOpen: false,
@@ -74,7 +74,7 @@ describe("Modal Integration Tests", () => {
       const authFixture = getAuthFixture("authenticated-basic");
 
       renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
         mockPermissions: createMockPermissions(authFixture.permissions),
         mockUseContributorProfileModalStore: {
           isOpen: false,
@@ -103,7 +103,7 @@ describe("Modal Integration Tests", () => {
       const authFixture = getAuthFixture("authenticated-basic");
 
       renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
         mockPermissions: createMockPermissions(authFixture.permissions),
         mockUseContributorProfileModalStore: {
           isOpen: false,
@@ -135,7 +135,7 @@ describe("Modal Integration Tests", () => {
       const authFixture = getAuthFixture("authenticated-basic");
 
       renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
         mockPermissions: createMockPermissions(authFixture.permissions),
         mockUseContributorProfileModalStore: {
           isOpen: false,
@@ -160,7 +160,7 @@ describe("Modal Integration Tests", () => {
       const authFixture = getAuthFixture("authenticated-basic");
 
       renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
         mockPermissions: createMockPermissions(authFixture.permissions),
         mockUseContributorProfileModalStore: {
           isOpen: false,
@@ -190,7 +190,7 @@ describe("Modal Integration Tests", () => {
         const authFixture = getAuthFixture(role as keyof typeof getAuthFixture);
 
         const { unmount } = renderWithProviders(<Navbar />, {
-          mockUsePrivy: createMockUsePrivy(authFixture.authState),
+          mockUsePrivy: createMockUseAuth(authFixture.authState),
           mockPermissions: createMockPermissions(authFixture.permissions),
           mockUseContributorProfileModalStore: {
             isOpen: false,
@@ -226,7 +226,7 @@ describe("Modal Integration Tests", () => {
       document.body.appendChild(mockModalButton);
 
       renderWithProviders(<NavbarDesktopNavigation />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
       });
 
       // Open For Builders dropdown
@@ -260,7 +260,7 @@ describe("Modal Integration Tests", () => {
       const authFixture = getAuthFixture("unauthenticated");
 
       renderWithProviders(<NavbarDesktopNavigation />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
         mockRouter,
       });
 
@@ -294,7 +294,7 @@ describe("Modal Integration Tests", () => {
       const authFixture = getAuthFixture("unauthenticated");
 
       renderWithProviders(<NavbarDesktopNavigation />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
         mockRouter,
       });
 
@@ -328,7 +328,7 @@ describe("Modal Integration Tests", () => {
       const authFixture = getAuthFixture("unauthenticated");
 
       renderWithProviders(<NavbarDesktopNavigation />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
         mockRouter,
       });
 
@@ -356,7 +356,7 @@ describe("Modal Integration Tests", () => {
       const authFixture = getAuthFixture("unauthenticated");
 
       renderWithProviders(<NavbarDesktopNavigation />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
         mockRouter,
       });
 
@@ -384,7 +384,7 @@ describe("Modal Integration Tests", () => {
       const authFixture = getAuthFixture("unauthenticated");
 
       renderWithProviders(<NavbarDesktopNavigation />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
       });
 
       // Open dropdown
@@ -415,7 +415,7 @@ describe("Modal Integration Tests", () => {
       const authFixture = getAuthFixture("authenticated-basic");
 
       renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
         mockPermissions: createMockPermissions(authFixture.permissions),
         mockUseContributorProfileModalStore: {
           isOpen: false,
@@ -448,7 +448,7 @@ describe("Modal Integration Tests", () => {
       const authFixture = getAuthFixture("authenticated-basic");
 
       renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
         mockPermissions: createMockPermissions(authFixture.permissions),
         mockUseContributorProfileModalStore: {
           isOpen: false,
@@ -481,7 +481,7 @@ describe("Modal Integration Tests", () => {
       const authFixture = getAuthFixture("authenticated-basic");
 
       renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
         mockPermissions: createMockPermissions(authFixture.permissions),
         mockUseContributorProfileModalStore: {
           isOpen: false,
@@ -517,7 +517,7 @@ describe("Modal Integration Tests", () => {
       const authFixture = getAuthFixture("authenticated-basic");
 
       renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
         mockPermissions: createMockPermissions(authFixture.permissions),
         mockUseContributorProfileModalStore: {
           isOpen: false,
@@ -537,7 +537,7 @@ describe("Modal Integration Tests", () => {
       const authFixture = getAuthFixture("authenticated-basic");
 
       renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
         mockPermissions: createMockPermissions(authFixture.permissions),
         mockUseContributorProfileModalStore: {
           isOpen: false,

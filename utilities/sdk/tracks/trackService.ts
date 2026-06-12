@@ -27,7 +27,7 @@ const mapToSdkTrack = (track: Track): ITrackResponse => ({
 /**
  * Fetches tracks for a community (V2)
  */
-export const fetchCommunityTracks = async (
+const fetchCommunityTracks = async (
   communityUID: string,
   includeArchived: boolean = false
 ): Promise<ITrackResponse[]> => {
@@ -82,7 +82,7 @@ export const fetchTrackById = async (id: string): Promise<ITrackResponse> => {
 /**
  * Creates a new track (V2)
  */
-export const createTrack = async (
+const createTrack = async (
   name: string,
   communityUID: string,
   description?: string
@@ -116,7 +116,7 @@ export const createTrack = async (
 /**
  * Updates an existing track (V2)
  */
-export const updateTrack = async (
+const updateTrack = async (
   id: string,
   data: { name?: string; description?: string; communityUID?: string }
 ): Promise<ITrackResponse> => {
@@ -145,7 +145,7 @@ export const updateTrack = async (
 /**
  * Archives a track (V2)
  */
-export const archiveTrack = async (id: string): Promise<ITrackResponse> => {
+const archiveTrack = async (id: string): Promise<ITrackResponse> => {
   try {
     const [data, error] = await fetchData<Track>(
       INDEXER.V2.TRACKS.ARCHIVE(id),
@@ -171,7 +171,7 @@ export const archiveTrack = async (id: string): Promise<ITrackResponse> => {
 /**
  * Assigns tracks to a program (V2)
  */
-export const assignTracksToProgram = async (
+const assignTracksToProgram = async (
   programId: string,
   trackIds: string[]
 ): Promise<ITrackAssignmentResponse[]> => {
@@ -200,10 +200,7 @@ export const assignTracksToProgram = async (
 /**
  * Removes a track from a program (V2)
  */
-export const unassignTrackFromProgram = async (
-  programId: string,
-  trackId: string
-): Promise<void> => {
+const unassignTrackFromProgram = async (programId: string, trackId: string): Promise<void> => {
   try {
     const [, error] = await fetchData(
       INDEXER.V2.TRACKS.UNASSIGN_FROM_PROGRAM(programId, trackId),
@@ -227,7 +224,7 @@ export const unassignTrackFromProgram = async (
 /**
  * Fetches tracks for a program (V2)
  */
-export const fetchProgramTracks = async (programId: string): Promise<ITrackResponse[]> => {
+const fetchProgramTracks = async (programId: string): Promise<ITrackResponse[]> => {
   try {
     // Normalize programId (remove chainId suffix if present) before sending to API
     const normalizedProgramId = programId.includes("_") ? programId.split("_")[0] : programId;
@@ -255,7 +252,7 @@ export const fetchProgramTracks = async (programId: string): Promise<ITrackRespo
 /**
  * Fetches tracks associated with a project in a program (V2)
  */
-export const fetchProjectTracks = async (
+const fetchProjectTracks = async (
   projectId: string,
   programId: string,
   _activeOnly: boolean = true
@@ -285,7 +282,7 @@ export const fetchProjectTracks = async (
 /**
  * Assigns tracks to a project (V2)
  */
-export const assignTracksToProject = async (
+const assignTracksToProject = async (
   projectId: string,
   programId: string,
   trackIds: string[]
@@ -315,7 +312,7 @@ export const assignTracksToProject = async (
 /**
  * Removes tracks from a project (V2)
  */
-export const unassignTracksFromProject = async (
+const unassignTracksFromProject = async (
   projectId: string,
   programId: string,
   trackIds: string[]
@@ -343,7 +340,7 @@ export const unassignTracksFromProject = async (
 /**
  * Fetches projects associated with a community and program, optionally filtered by track (V2)
  */
-export const fetchProjectsByTrack = async (
+const fetchProjectsByTrack = async (
   communityId: string,
   programId: string,
   trackId?: string

@@ -62,7 +62,7 @@ export interface VerificationResult {
 /**
  * Parameters for signature verification
  */
-export interface VerifySignatureParams {
+interface VerifySignatureParams {
   network: string;
   contractAddress: string;
   signature: string;
@@ -73,7 +73,7 @@ export interface VerifySignatureParams {
 /**
  * Contract address validation response
  */
-export interface ContractValidationResponse {
+interface ContractValidationResponse {
   isValid: boolean;
   exists?: boolean;
   message?: string;
@@ -82,7 +82,7 @@ export interface ContractValidationResponse {
 /**
  * Service for handling contract-related operations
  */
-export class ContractsService {
+class ContractsService {
   /**
    * Look up the deployer address of a contract
    * @param network - The blockchain network
@@ -166,20 +166,17 @@ export class ContractsService {
 export const contractsService = new ContractsService();
 
 // Export individual functions for convenience
-export const lookupDeployer = (network: string, contractAddress: string) =>
+const lookupDeployer = (network: string, contractAddress: string) =>
   contractsService.lookupDeployer(network, contractAddress);
 
-export const requestVerificationMessage = (
+const requestVerificationMessage = (
   network: string,
   contractAddress: string,
   userAddress: string
 ) => contractsService.requestVerificationMessage(network, contractAddress, userAddress);
 
-export const verifyContractSignature = (params: VerifySignatureParams) =>
+const verifyContractSignature = (params: VerifySignatureParams) =>
   contractsService.verifyContractSignature(params);
 
-export const checkAddressAvailability = (
-  address: string,
-  network: string,
-  excludeProjectId?: string
-) => contractsService.checkAddressAvailability(address, network, excludeProjectId);
+const checkAddressAvailability = (address: string, network: string, excludeProjectId?: string) =>
+  contractsService.checkAddressAvailability(address, network, excludeProjectId);

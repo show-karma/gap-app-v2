@@ -13,7 +13,7 @@ import type { ClaimCampaign } from "../providers/types";
 
 const EMPTY_MAP = new Map<string, boolean>();
 
-export interface UseClaimedStatusesReturn {
+interface UseClaimedStatusesReturn {
   claimedStatuses: Map<string, boolean>;
   isLoading: boolean;
   error: Error | null;

@@ -4,7 +4,7 @@ import { useParams } from "next/navigation";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
-export interface CommunityProject {
+interface CommunityProject {
   uid: string;
   title: string;
   slug: string;

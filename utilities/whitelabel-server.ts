@@ -4,7 +4,7 @@ import type { TenantConfig } from "@/src/infrastructure/types/tenant";
 import { isKnownTenant } from "@/src/infrastructure/types/tenant";
 import { getWhitelabelByDomain, type WhitelabelDomain } from "./whitelabel-config";
 
-export interface WhitelabelContext {
+interface WhitelabelContext {
   isWhitelabel: boolean;
   communitySlug: string | null;
   config: WhitelabelDomain | null;

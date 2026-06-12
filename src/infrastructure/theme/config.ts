@@ -1,6 +1,6 @@
 import type { TenantId, TenantTheme } from "../types/tenant";
 
-export function getBaseTheme(): TenantTheme {
+function getBaseTheme(): TenantTheme {
   return {
     mode: "light",
     colors: {
@@ -205,10 +205,7 @@ export function getTenantTheme(tenantId: TenantId): TenantTheme {
   return mergeThemes(getBaseTheme(), tenantThemes[tenantId]);
 }
 
-export function mergeThemes(
-  baseTheme: TenantTheme,
-  partialTheme: Partial<TenantTheme>
-): TenantTheme {
+function mergeThemes(baseTheme: TenantTheme, partialTheme: Partial<TenantTheme>): TenantTheme {
   return {
     mode: partialTheme.mode || baseTheme.mode,
     colors: { ...baseTheme.colors, ...(partialTheme.colors || {}) },

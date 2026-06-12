@@ -30,7 +30,7 @@ const networkNames: Record<string, string> = {
   sei: "Sei",
 };
 
-export const linkFormatter = (link: string) => {
+const linkFormatter = (link: string) => {
   if (link.includes("github.com")) {
     const githubFromField = link.includes("http") ? link : `https://${link}`;
     const repoUrl = new URL(githubFromField);

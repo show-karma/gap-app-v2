@@ -54,7 +54,7 @@ export const formatMetricValue = (value: string, unit: string): string => {
  * @returns Array of moving average values (same length as input, with leading NaNs)
  * @internal - Only for use within CommunityMetricsSection component
  */
-export function calculateCommunityMetricsMovingAverage(
+function calculateCommunityMetricsMovingAverage(
   values: number[],
   windowSize: number = 30
 ): number[] {

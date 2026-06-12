@@ -213,5 +213,3 @@ export const OutputMetrics = ({ communitySlug }: { communitySlug: string }) => {
     </div>
   );
 };
-
-export default OutputMetrics;

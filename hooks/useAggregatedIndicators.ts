@@ -7,7 +7,7 @@ import { INDEXER } from "@/utilities/indexer";
 import { getCommunityDetails } from "@/utilities/queries/v2/getCommunityData";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
 
-export interface AggregatedIndicator {
+interface AggregatedIndicator {
   id: string;
   name: string;
   description: string;

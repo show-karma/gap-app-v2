@@ -1,7 +1,7 @@
 import fetchData from "../fetchData";
 
 // Types
-export interface FaucetEligibilityResponse {
+interface FaucetEligibilityResponse {
   eligible: boolean;
   reason?: string;
   gasUnits?: string;
@@ -13,7 +13,7 @@ export interface FaucetEligibilityResponse {
   currentBalance?: string;
 }
 
-export interface ChainResponse {
+interface ChainResponse {
   chainId: number;
   createdAt: string;
   decimals: number;
@@ -25,7 +25,7 @@ export interface ChainResponse {
   symbol: string;
   updatedAt: string;
 }
-export interface FaucetRequestResponse {
+interface FaucetRequestResponse {
   requestId: string;
   eligible: boolean;
   gasUnits: string;
@@ -35,7 +35,7 @@ export interface FaucetRequestResponse {
   faucetAddress: string;
 }
 
-export interface FaucetClaimResponse {
+interface FaucetClaimResponse {
   requestId: string;
   transactionHash: string;
   status: string;
@@ -43,7 +43,7 @@ export interface FaucetClaimResponse {
   gasUsed?: string;
 }
 
-export interface FaucetRequest {
+interface FaucetRequest {
   id: string;
   chainId: number;
   walletAddress: string;
@@ -60,7 +60,7 @@ export interface FaucetRequest {
   updatedAt: Date;
 }
 
-export interface PaginatedResponse {
+interface PaginatedResponse {
   totalCount: number;
   page: number;
   limit: number;
@@ -70,22 +70,22 @@ export interface PaginatedResponse {
   hasNextPage: boolean;
   hasPrevPage: boolean;
 }
-export interface FaucetRequests {
+interface FaucetRequests {
   payload: FaucetRequest[];
   pagination: PaginatedResponse;
 }
 
-export interface WhitelistedPaginatedResponse {
+interface WhitelistedPaginatedResponse {
   data: WhitelistedContract[];
   pagination: PaginatedResponse;
 }
 
-export interface BlockedPaginatedResponse {
+interface BlockedPaginatedResponse {
   data: BlockedAddress[];
   pagination: PaginatedResponse;
 }
 
-export interface FaucetBalance {
+interface FaucetBalance {
   chainId: number;
   chainName: string;
   balance: string;
@@ -94,7 +94,7 @@ export interface FaucetBalance {
   threshold: string;
 }
 
-export interface FaucetStats {
+interface FaucetStats {
   totalRequests: number;
   successfulClaims: number;
   failedClaims: number;
@@ -120,7 +120,7 @@ export interface FaucetChainSettings {
   updatedAt?: Date;
 }
 
-export interface FaucetGlobalConfig {
+interface FaucetGlobalConfig {
   id?: string;
   defaultRateLimitHours: number;
   defaultBufferPercentage: number;
@@ -130,7 +130,7 @@ export interface FaucetGlobalConfig {
   updatedAt?: Date;
 }
 
-export interface WhitelistedContract {
+interface WhitelistedContract {
   id?: string;
   chainId: number;
   contractAddress: string;
@@ -142,7 +142,7 @@ export interface WhitelistedContract {
   updatedAt?: Date;
 }
 
-export interface BlockedAddress {
+interface BlockedAddress {
   id?: string;
   address: string;
   chainId?: number;

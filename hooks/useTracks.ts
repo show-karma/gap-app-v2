@@ -6,7 +6,7 @@ import { trackService } from "@/services/tracks";
 import { fetchTrackById } from "@/utilities/sdk/tracks";
 
 // Query keys
-export const TRACK_QUERY_KEYS = {
+const TRACK_QUERY_KEYS = {
   all: ["tracks"] as const,
   community: (communityUID: string) =>
     [...TRACK_QUERY_KEYS.all, "community", communityUID] as const,
@@ -32,7 +32,7 @@ export const useTracksForCommunity = (communityUID: string, includeArchived: boo
 /**
  * Hook to fetch a single track by ID
  */
-export const useTrack = (id: string) => {
+const useTrack = (id: string) => {
   return useQuery({
     queryKey: ["track", id],
     queryFn: () => fetchTrackById(id),
@@ -152,7 +152,7 @@ export const useAssignTracksToProgram = (programId: string, communityUID: string
 /**
  * Hook to remove a track from a program
  */
-export const useRemoveTrackFromProgram = (programId: string, communityUID: string) => {
+const useRemoveTrackFromProgram = (programId: string, communityUID: string) => {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -208,7 +208,7 @@ export const useTracksForProject = (projectId: string, programId: string) => {
 /**
  * Hook to assign tracks to a project (V2)
  */
-export const useAssignTracksToProject = (projectId: string) => {
+const useAssignTracksToProject = (projectId: string) => {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -229,7 +229,7 @@ export const useAssignTracksToProject = (projectId: string) => {
 /**
  * Hook to unassign tracks from a project (V2)
  */
-export const useUnassignTracksFromProject = (projectId: string) => {
+const useUnassignTracksFromProject = (projectId: string) => {
   const queryClient = useQueryClient();
 
   return useMutation({

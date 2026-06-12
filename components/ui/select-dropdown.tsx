@@ -4,7 +4,7 @@ import { ChevronDownIcon } from "@heroicons/react/24/outline";
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/utilities/tailwind";
 
-export interface SelectDropdownOption {
+interface SelectDropdownOption {
   value: string;
   label: string;
 }

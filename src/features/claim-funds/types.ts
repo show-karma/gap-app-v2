@@ -77,14 +77,14 @@ export interface ClaimEligibility {
 /**
  * Campaign with eligibility info for display
  */
-export interface CampaignWithEligibility extends HedgeyCampaign {
+interface CampaignWithEligibility extends HedgeyCampaign {
   eligibility?: ClaimEligibility;
 }
 
 /**
  * Status of a claim transaction
  */
-export type ClaimStatus =
+type ClaimStatus =
   | "idle"
   | "checking"
   | "eligible"
@@ -96,7 +96,7 @@ export type ClaimStatus =
 /**
  * Return type for useHedgeyCampaigns hook
  */
-export interface UseHedgeyCampaignsReturn {
+interface UseHedgeyCampaignsReturn {
   campaigns: HedgeyCampaign[];
   isLoading: boolean;
   error: Error | null;
@@ -106,7 +106,7 @@ export interface UseHedgeyCampaignsReturn {
 /**
  * Return type for useClaimEligibility hook
  */
-export interface UseClaimEligibilityReturn {
+interface UseClaimEligibilityReturn {
   eligibilities: Map<string, ClaimEligibility>;
   isLoading: boolean;
   error: Error | null;
@@ -116,7 +116,7 @@ export interface UseClaimEligibilityReturn {
 /**
  * Parameters for claim transaction
  */
-export interface ClaimParams {
+interface ClaimParams {
   campaignId: string;
   proof: `0x${string}`[];
   amount: bigint;

@@ -4,7 +4,7 @@ import { filterGrantsByCompleted } from "./filter/filterGrantsByCompleted";
 import { filterGrantsByStarting } from "./filter/filterGrantsByStarting";
 import { filterGrantsByToBeCompleted } from "./filter/filterGrantsByToBeCompleted";
 
-export const filterByStatus = (option: StatusOptions, grantToFilter: Grant[]) => {
+const filterByStatus = (option: StatusOptions, grantToFilter: Grant[]) => {
   if (option === "completed") {
     return filterGrantsByCompleted(grantToFilter);
   }

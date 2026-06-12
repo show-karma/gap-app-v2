@@ -7,7 +7,7 @@ import {
 } from "@/services/donor-research.service";
 import type { DonorHandleList } from "@/types/donor-research";
 
-export const donorHandlesQueryKey = (options: ListHandlesOptions = {}) =>
+const donorHandlesQueryKey = (options: ListHandlesOptions = {}) =>
   ["donor-research", "handles", options] as const;
 
 export function useDonorHandles(options: ListHandlesOptions = {}) {

@@ -47,4 +47,4 @@ export async function sendEmailToGrantees(params: SendEmailParams): Promise<Send
   return data;
 }
 
-export type { GranteeEmail, SendEmailParams, SendEmailResponse };
+export type { SendEmailParams };

@@ -141,7 +141,7 @@ export function useIsReviewerType(type: ReviewerType): boolean {
   return !isLoading && isReviewerType(type);
 }
 
-export function useUserRoles(): UserRoles {
+function useUserRoles(): UserRoles {
   const { roles } = usePermissionContext();
   return roles;
 }

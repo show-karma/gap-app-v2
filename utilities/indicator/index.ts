@@ -7,7 +7,7 @@ import type { PeriodDatapoint } from "@/types/indicator";
 /**
  * Chain ID to name mapping
  */
-export const chainNames: Record<string, string> = {
+const chainNames: Record<string, string> = {
   "1": "Ethereum",
   "10": "Optimism",
   "137": "Polygon",
@@ -23,7 +23,7 @@ export const chainNames: Record<string, string> = {
 /**
  * Chain colors for visualizations
  */
-export const chainColors: Record<string, string> = {
+const chainColors: Record<string, string> = {
   "1": "#627EEA", // Ethereum - blue
   "10": "#FF0420", // Optimism - red
   "137": "#8247E5", // Polygon - purple
@@ -110,14 +110,14 @@ export const parseBreakdown = (
 /**
  * Check if datapoints have period-based structure (30d, 90d, 180d, 1y)
  */
-export const hasPeriodBasedData = (datapoints: PeriodDatapoint[]): boolean => {
+const hasPeriodBasedData = (datapoints: PeriodDatapoint[]): boolean => {
   return datapoints.some((dp) => dp.period && rollingPeriodOrder.includes(dp.period));
 };
 
 /**
  * Check if datapoints have monthly historical data
  */
-export const hasMonthlyData = (datapoints: PeriodDatapoint[]): boolean => {
+const hasMonthlyData = (datapoints: PeriodDatapoint[]): boolean => {
   return datapoints.some((dp) => dp.period === "monthly");
 };
 

@@ -133,7 +133,7 @@ export const useUpdateProgramEnrollment = (
 /**
  * Hook for managing a specific program configuration
  */
-export const useProgramStats = (programId: string) => {
+const useProgramStats = (programId: string) => {
   const statsQuery = useQuery({
     queryKey: QUERY_KEYS.programStats(programId),
     queryFn: () => fundingPlatformService.programs.getProgramStats(programId),
@@ -409,7 +409,7 @@ export const useFundingApplication = (applicationId: string) => {
 /**
  * Hook for form schema management with auto-save
  */
-export const useFormSchemaManager = (programId: string, _chainId: number) => {
+const useFormSchemaManager = (programId: string, _chainId: number) => {
   const [isDirty, setIsDirty] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
 
@@ -441,7 +441,7 @@ export const useFormSchemaManager = (programId: string, _chainId: number) => {
 /**
  * Hook for V2 application submission with better error handling
  */
-export const useApplicationSubmissionV2 = (programId: string, _chainId: number) => {
+const useApplicationSubmissionV2 = (programId: string, _chainId: number) => {
   const queryClient = useQueryClient();
 
   // Check if user already has an application
@@ -602,7 +602,7 @@ export const usePostApprovalUpdate = () => {
 /**
  * Hook for admin status updates with V2 reason support
  */
-export const useApplicationStatusV2 = (applicationId?: string) => {
+const useApplicationStatusV2 = (applicationId?: string) => {
   const queryClient = useQueryClient();
 
   const updateStatusMutation = useMutation({
@@ -650,7 +650,7 @@ export const useApplicationStatusV2 = (applicationId?: string) => {
 /**
  * Hook for searching applications by Application ID
  */
-export const useApplicationByReference = (referenceNumber: string) => {
+const useApplicationByReference = (referenceNumber: string) => {
   const applicationQuery = useQuery({
     queryKey: QUERY_KEYS.applicationByReference(referenceNumber),
     queryFn: () => fundingPlatformService.applications.getApplicationByReference(referenceNumber),

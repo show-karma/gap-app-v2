@@ -46,7 +46,7 @@ export const LoadingProgramTable = () => {
   );
 };
 
-export const LoadingPrograms = () => {
+const LoadingPrograms = () => {
   return (
     <section
       className={cn(

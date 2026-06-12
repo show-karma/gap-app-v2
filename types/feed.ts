@@ -1,6 +1,6 @@
 import type { Hex } from "@show-karma/karma-gap-sdk";
 
-export interface Feed {
+interface Feed {
   attester: Hex | string;
   timestamp: number;
   uid: string;

@@ -38,7 +38,7 @@ interface UseGrantsResult {
   totalItems: number;
 }
 
-export const useGrants = (communityId: string, options?: UseGrantsOptions) => {
+const useGrants = (communityId: string, options?: UseGrantsOptions) => {
   return useQuery<UseGrantsResult>({
     queryKey: ["all-grants", communityId, options?.filter, options?.paginationOps, options?.sortBy],
     queryFn: async () => {

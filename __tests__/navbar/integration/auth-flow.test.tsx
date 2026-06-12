@@ -96,7 +96,7 @@ import {
 import {
   cleanupAfterEach,
   createMockPermissions,
-  createMockUsePrivy,
+  createMockUseAuth,
   renderWithProviders,
   updateMocks,
 } from "../utils/test-helpers";
@@ -133,7 +133,7 @@ describe("Authentication Flow Integration Tests", () => {
       const unauthFixture = getAuthFixture("unauthenticated");
 
       const { rerender } = renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy({
+        mockUsePrivy: createMockUseAuth({
           ...unauthFixture.authState,
           authenticate: mockAuthenticate,
           logout: mockLogout,
@@ -156,7 +156,7 @@ describe("Authentication Flow Integration Tests", () => {
       // Simulate auth success - update to authenticated
       const authFixture = getAuthFixture("authenticated-basic");
       rerender(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy({
+        mockUsePrivy: createMockUseAuth({
           ...authFixture.authState,
           authenticate: mockAuthenticate,
           logout: mockLogout,
@@ -180,7 +180,7 @@ describe("Authentication Flow Integration Tests", () => {
       const authFixture = getAuthFixture("authenticated-basic");
 
       renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
         mockPermissions: createMockPermissions(authFixture.permissions),
       });
 
@@ -210,7 +210,7 @@ describe("Authentication Flow Integration Tests", () => {
       };
 
       renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
         mockPermissions: createMockPermissions(authFixture.permissions),
       });
 
@@ -242,7 +242,7 @@ describe("Authentication Flow Integration Tests", () => {
       };
 
       renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
         mockPermissions: createMockPermissions(authFixture.permissions),
       });
 
@@ -266,7 +266,7 @@ describe("Authentication Flow Integration Tests", () => {
       const authFixture = getAuthFixture("authenticated-basic");
 
       const { rerender } = renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy({
+        mockUsePrivy: createMockUseAuth({
           ...authFixture.authState,
           logout: mockLogout,
         }),
@@ -311,7 +311,7 @@ describe("Authentication Flow Integration Tests", () => {
       // Simulate logout success - update to unauthenticated
       const unauthFixture = getAuthFixture("unauthenticated");
       updateMocks({
-        mockUsePrivy: createMockUsePrivy({
+        mockUsePrivy: createMockUseAuth({
           ...unauthFixture.authState,
           logout: mockLogout,
         }),
@@ -333,7 +333,7 @@ describe("Authentication Flow Integration Tests", () => {
       const authFixture = getAuthFixture("authenticated-basic");
 
       renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy({
+        mockUsePrivy: createMockUseAuth({
           ...authFixture.authState,
           logout: mockLogout,
         }),
@@ -366,7 +366,7 @@ describe("Authentication Flow Integration Tests", () => {
       const loadingFixture = getAuthFixture("loading");
 
       renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(loadingFixture.authState),
+        mockUsePrivy: createMockUseAuth(loadingFixture.authState),
       });
 
       // When ready is false, the NavbarUserMenu shows skeleton, but other parts may still render
@@ -381,12 +381,12 @@ describe("Authentication Flow Integration Tests", () => {
       const authFixture = getAuthFixture("authenticated-basic");
 
       const { rerender } = renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(loadingFixture.authState),
+        mockUsePrivy: createMockUseAuth(loadingFixture.authState),
       });
 
       // Update to ready and authenticated
       updateMocks({
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
         mockPermissions: createMockPermissions(authFixture.permissions),
       });
       rerender(<Navbar />);
@@ -402,12 +402,12 @@ describe("Authentication Flow Integration Tests", () => {
       const unauthFixture = getAuthFixture("unauthenticated");
 
       const { rerender } = renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(loadingFixture.authState),
+        mockUsePrivy: createMockUseAuth(loadingFixture.authState),
       });
 
       // Update to ready and unauthenticated
       updateMocks({
-        mockUsePrivy: createMockUsePrivy(unauthFixture.authState),
+        mockUsePrivy: createMockUseAuth(unauthFixture.authState),
       });
       rerender(<Navbar />);
 
@@ -426,7 +426,7 @@ describe("Authentication Flow Integration Tests", () => {
       const authFixture = getAuthFixture("authenticated-basic");
 
       const { rerender } = renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
         mockPermissions: createMockPermissions(authFixture.permissions),
       });
 
@@ -435,7 +435,7 @@ describe("Authentication Flow Integration Tests", () => {
 
       // Rerender with same state
       updateMocks({
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
         mockPermissions: createMockPermissions(authFixture.permissions),
       });
       rerender(<Navbar />);
@@ -448,7 +448,7 @@ describe("Authentication Flow Integration Tests", () => {
       const authFixture = getAuthFixture("community-admin-single");
 
       renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
         mockPermissions: createMockPermissions(authFixture.permissions),
       });
 
@@ -457,12 +457,12 @@ describe("Authentication Flow Integration Tests", () => {
 
       // Simulate navigation by rerendering
       const { rerender } = renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
         mockPermissions: createMockPermissions(authFixture.permissions),
       });
 
       updateMocks({
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
         mockPermissions: createMockPermissions(authFixture.permissions),
       });
       rerender(<Navbar />);
@@ -479,7 +479,7 @@ describe("Authentication Flow Integration Tests", () => {
       const unauthFixture = getAuthFixture("unauthenticated");
 
       renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy({
+        mockUsePrivy: createMockUseAuth({
           ...unauthFixture.authState,
           authenticate: mockAuthenticate,
         }),
@@ -517,7 +517,7 @@ describe("Authentication Flow Integration Tests", () => {
       const authFixture = getAuthFixture("authenticated-basic");
 
       renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
         mockPermissions: createMockPermissions(authFixture.permissions),
       });
 

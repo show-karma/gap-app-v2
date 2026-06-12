@@ -12,7 +12,7 @@ import { useCommunityDetails } from "@/hooks/communities/useCommunityDetails";
 import { useAuth } from "@/hooks/useAuth";
 import { useCommunityGrants } from "@/hooks/useCommunityGrants";
 import { useCommunityRegions } from "@/hooks/useCommunityRegions";
-import { useCommunityProjectsV2 } from "@/hooks/v2/useCommunityProjects";
+import { useCommunityProjects } from "@/hooks/v2/useCommunityProjects";
 import { Link } from "@/src/components/navigation/Link";
 import type { CommunityProject } from "@/types/v2/community";
 import fetchData from "@/utilities/fetchData";
@@ -23,7 +23,7 @@ import { PAGES } from "@/utilities/pages";
 import { ProgramFilter } from "./ProgramFilter";
 import { RegionCreationDialog } from "./RegionCreationDialog";
 
-export const metadata = defaultMetadata;
+const metadata = defaultMetadata;
 
 interface ProjectsTableProps {
   projects: CommunityProject[];
@@ -194,7 +194,7 @@ export default function EditProjectsPage() {
     data: projectsData,
     isLoading: isLoadingProjects,
     refetch: refreshProjects,
-  } = useCommunityProjectsV2(community?.details?.slug || communityId, {
+  } = useCommunityProjects(community?.details?.slug || communityId, {
     page: currentPage,
     limit: 12,
     selectedProgramId: selectedProgramId || undefined,

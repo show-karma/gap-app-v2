@@ -7,7 +7,7 @@ export type SortByOptions =
 
 export type SortOrder = "asc" | "desc";
 
-export const sortOptions: Record<SortByOptions, string> = {
+const sortOptions: Record<SortByOptions, string> = {
   createdAt: "Recently Added",
   updatedAt: "Recently Updated",
   title: "Title",

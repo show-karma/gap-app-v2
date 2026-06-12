@@ -11,7 +11,7 @@ const _apiClient = createAuthenticatedApiClient();
 /**
  * Options for configuring the usePermissions hook
  */
-export interface PermissionOptions {
+interface PermissionOptions {
   /** Program ID to check permissions for */
   programId?: string;
   /** Specific action to check permission for (e.g., 'comment', 'view', 'edit') */

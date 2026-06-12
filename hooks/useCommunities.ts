@@ -84,4 +84,4 @@ export const useCommunities = (options: UseCommunitiesOptions = {}) => {
   });
 };
 
-export type { CommunityWithStats, CommunitiesResponse };
+export type { CommunityWithStats };

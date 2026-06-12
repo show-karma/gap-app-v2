@@ -46,7 +46,7 @@ const SLACK_WEBHOOK_PREFIX = "https://hooks.slack.com/";
 // Synchronous client-side validator for Slack incoming webhook URLs. Returns
 // null when valid or blank (blank rows are filtered at save time). The Save
 // bar also blocks persistence when any row is invalid.
-export function validateSlackWebhookUrl(value: string): string | null {
+function validateSlackWebhookUrl(value: string): string | null {
   const trimmed = value.trim();
   if (!trimmed) return null;
   let parsed: URL;

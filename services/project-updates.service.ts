@@ -7,7 +7,7 @@ import { INDEXER } from "@/utilities/indexer";
 /**
  * Options bag for getProjectUpdates.
  */
-export interface GetProjectUpdatesOptions extends UpdatesFeedFilters {
+interface GetProjectUpdatesOptions extends UpdatesFeedFilters {
   milestoneStatus?: "pending" | "completed" | "verified";
   /**
    * Whether the request should attach a Privy auth token. Defaults to `true`.

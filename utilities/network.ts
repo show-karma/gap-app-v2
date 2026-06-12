@@ -64,7 +64,6 @@ export const gapSupportedNetworks = appNetwork.filter(
  * Includes all app networks (including mainnet) since donations don't require
  * GAP SDK/attestation support - only the batch donations contract deployment.
  */
-export const PAYOUT_CHAINS = appNetwork;
 
 export function getExplorerUrl(chainId: number, transactionHash: string) {
   const chain = appNetwork.find((c) => c.id === chainId);

@@ -19,12 +19,12 @@ import { isAbortError, retryUntilConditionMet } from "@/utilities/retries";
 import { sanitizeObject } from "@/utilities/sanitize";
 import { isUserCancellationError } from "@/utilities/wallet-errors";
 
-export interface InvoiceFile {
+interface InvoiceFile {
   fileKey: string;
   fileUrl: string;
 }
 
-export interface SubmitMilestoneCompletionParams {
+interface SubmitMilestoneCompletionParams {
   milestoneTitle: string;
   /** On-chain milestone UID — refUID for the completion attestation. */
   milestoneUID: string;

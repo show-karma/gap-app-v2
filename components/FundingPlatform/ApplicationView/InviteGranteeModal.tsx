@@ -24,7 +24,7 @@ const inviteGranteeSchema = z.object({
 
 type InviteGranteeFormData = z.infer<typeof inviteGranteeSchema>;
 
-export interface InvitedGrantee {
+interface InvitedGrantee {
   name: string;
   email: string;
 }

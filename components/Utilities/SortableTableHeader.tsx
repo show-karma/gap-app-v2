@@ -4,7 +4,7 @@ import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/outline";
 import type { FC } from "react";
 import { cn } from "@/utilities/tailwind";
 
-export type SortDirection = "asc" | "desc" | null;
+type SortDirection = "asc" | "desc" | null;
 
 interface ISortableTableHeaderProps {
   label: string;

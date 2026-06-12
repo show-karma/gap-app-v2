@@ -1,12 +1,10 @@
 import type { Application, ApplicationQuestion } from "@/types/whitelabel-entities";
 
-export type { ApplicationQuestion };
-
 export interface ApplicationFormData {
   [questionId: string]: unknown;
 }
 
-export interface ApplicationFormErrors {
+interface ApplicationFormErrors {
   [questionId: string]: string;
 }
 
@@ -22,14 +20,14 @@ export interface UseApplicationSubmitReturn {
   error: Error | null;
 }
 
-export interface UseApplicationReturn {
+interface UseApplicationReturn {
   application: Application | null;
   isLoading: boolean;
   error: Error | null;
   refetch: () => void;
 }
 
-export interface UseApplicationDraftReturn {
+interface UseApplicationDraftReturn {
   saveDraft: (
     programId: string,
     data: ApplicationFormData,

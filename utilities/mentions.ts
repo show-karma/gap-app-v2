@@ -6,7 +6,7 @@
  * On submit, they are resolved to the full format using a name→email map.
  */
 
-export interface ParsedMention {
+interface ParsedMention {
   displayName: string;
   email: string;
   raw: string;

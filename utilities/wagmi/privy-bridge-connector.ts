@@ -115,6 +115,6 @@ export function privyBridgeConnector(wallet: ConnectedWallet, initialChainId: nu
   }));
 }
 
-export function isPrivyChainIdLookupError(err: unknown): boolean {
+function isPrivyChainIdLookupError(err: unknown): boolean {
   return err instanceof Error && err.message === "Unable to determine current chainId.";
 }

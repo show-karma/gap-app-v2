@@ -55,7 +55,7 @@ export const ExternalLinkIcon: React.FC<IconProps> = ({ className = "", size = "
   </svg>
 );
 
-export const RocketIcon: React.FC<IconProps> = ({ className = "", size = "md" }) => (
+const RocketIcon: React.FC<IconProps> = ({ className = "", size = "md" }) => (
   <svg
     className={`${sizeClasses[size]} ${className}`}
     fill="none"
@@ -114,7 +114,7 @@ export const DocumentIcon: React.FC<IconProps> = ({ className = "", size = "md" 
   </svg>
 );
 
-export const ChartIcon: React.FC<IconProps> = ({ className = "", size = "md" }) => (
+const ChartIcon: React.FC<IconProps> = ({ className = "", size = "md" }) => (
   <svg
     className={`${sizeClasses[size]} ${className}`}
     fill="none"
@@ -130,7 +130,7 @@ export const ChartIcon: React.FC<IconProps> = ({ className = "", size = "md" }) 
   </svg>
 );
 
-export const CheckCircleFilledIcon: React.FC<IconProps> = ({ className = "", size = "md" }) => (
+const CheckCircleFilledIcon: React.FC<IconProps> = ({ className = "", size = "md" }) => (
   <svg
     className={`${sizeClasses[size]} ${className}`}
     fill="none"

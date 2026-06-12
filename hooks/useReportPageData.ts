@@ -68,7 +68,7 @@ interface ReportAPIResponse {
   };
 }
 
-export type { Report, ReportAPIResponse, TabId };
+export type { Report, ReportAPIResponse };
 
 export const itemsPerPage = 50;
 

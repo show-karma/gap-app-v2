@@ -3,7 +3,7 @@
 import { SparklesIcon } from "@heroicons/react/24/outline";
 import type { FC } from "react";
 
-export interface EmptyEvaluationStateProps {
+interface EmptyEvaluationStateProps {
   /** Title text */
   title?: string;
   /** Description text */
@@ -32,5 +32,3 @@ export const EmptyEvaluationState: FC<EmptyEvaluationStateProps> = ({
     </div>
   );
 };
-
-export default EmptyEvaluationState;

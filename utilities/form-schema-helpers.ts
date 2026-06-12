@@ -84,7 +84,7 @@ const getFieldValue = (
   return undefined;
 };
 
-export interface ExtractedAmountField {
+interface ExtractedAmountField {
   fieldId: string;
   fieldLabel: string;
   value: string | number;

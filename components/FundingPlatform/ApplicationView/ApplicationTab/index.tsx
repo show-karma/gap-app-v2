@@ -13,7 +13,7 @@ import { ApplicationDataView } from "./ApplicationDataView";
 import { ApplicationSubTabs, type SubTabId } from "./ApplicationSubTabs";
 import { PostApprovalDataView } from "./PostApprovalDataView";
 
-export interface ApplicationTabProps {
+interface ApplicationTabProps {
   application: IFundingApplication;
   program?: ProgramWithFormSchema;
   /** Controlled view mode */
@@ -155,5 +155,3 @@ export const ApplicationTab: FC<ApplicationTabProps> = ({
     </div>
   );
 };
-
-export default ApplicationTab;

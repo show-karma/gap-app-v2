@@ -70,7 +70,7 @@ const statusConfig: Record<
 /**
  * Shared helper to get the effective status accounting for expiration
  */
-export function getEffectiveKycStatus(status: KycStatusResponse | null): KycVerificationStatus {
+function getEffectiveKycStatus(status: KycStatusResponse | null): KycVerificationStatus {
   return status?.isExpired
     ? KycVerificationStatus.EXPIRED
     : (status?.status ?? KycVerificationStatus.NOT_STARTED);
@@ -84,7 +84,7 @@ interface KycTooltipContentProps {
   showDates?: boolean;
 }
 
-export function KycTooltipContent({ status, showDates = true }: KycTooltipContentProps) {
+function KycTooltipContent({ status, showDates = true }: KycTooltipContentProps) {
   const effectiveStatus = getEffectiveKycStatus(status);
   const config = statusConfig[effectiveStatus];
 

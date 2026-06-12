@@ -12,9 +12,9 @@ export const COMPONENT_WEIGHTS = {
   compliance: 0.15,
 } as const;
 
-export type ComponentKey = keyof typeof COMPONENT_WEIGHTS;
+type ComponentKey = keyof typeof COMPONENT_WEIGHTS;
 
-export interface ComponentRow {
+interface ComponentRow {
   key: ComponentKey;
   label: string;
   /** 0..1 — already on the same scale as `candidate.components.*`. */

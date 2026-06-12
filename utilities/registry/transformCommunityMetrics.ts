@@ -200,7 +200,7 @@ export function transformCommunityMetrics(
 /**
  * Chart display configuration for a metric
  */
-export interface ChartDisplayConfig {
+interface ChartDisplayConfig {
   chartDisplayLabel?: string;
   yTransform?: (value: number) => number;
   yDomain?: [number, number];

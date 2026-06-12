@@ -33,7 +33,7 @@ interface InvoiceFileState {
   fileName: string;
 }
 
-export interface ExistingInvoice {
+interface ExistingInvoice {
   invoiceFileKey: string | null;
 }
 

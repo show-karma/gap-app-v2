@@ -3,7 +3,7 @@
 import type { ReactNode } from "react";
 import { cn } from "@/utilities/tailwind";
 
-export interface KpiItem {
+interface KpiItem {
   label: string;
   value: ReactNode;
   sub?: ReactNode;
@@ -87,7 +87,7 @@ export function PageHero({
   );
 }
 
-export function KpiStrip({ items }: { items: KpiItem[] }) {
+function KpiStrip({ items }: { items: KpiItem[] }) {
   const cols =
     items.length >= 4
       ? "sm:grid-cols-2 lg:grid-cols-2"

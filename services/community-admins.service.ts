@@ -16,7 +16,7 @@ interface ResolveEmailResponse {
   walletAddress: string;
 }
 
-export interface UserProfileInfo {
+interface UserProfileInfo {
   publicAddress: string;
   name: string;
   email: string;

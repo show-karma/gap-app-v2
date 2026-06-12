@@ -23,7 +23,7 @@ export interface ProjectDetails {
   lastDetailsUpdate?: string;
 }
 
-export interface ProjectMember {
+interface ProjectMember {
   address: string;
   role: string;
   joinedAt: string;

@@ -11,7 +11,7 @@ import { useClaimProvider } from "./use-claim-provider";
 const EMPTY_ELIGIBILITIES = new Map<string, ClaimEligibility>();
 const EMPTY_CAMPAIGNS: ClaimCampaign[] = [];
 
-export interface UseEligibilityReturn {
+interface UseEligibilityReturn {
   eligibilities: Map<string, ClaimEligibility>;
   eligibleCampaigns: ClaimCampaign[];
   isLoading: boolean;

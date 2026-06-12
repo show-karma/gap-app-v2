@@ -31,7 +31,7 @@ interface ListConnectionsResponse {
   connections: OAuthConnection[];
 }
 
-export type GetPrivyJwt = () => Promise<string | null>;
+type GetPrivyJwt = () => Promise<string | null>;
 
 class OAuthConnectionsError extends Error {
   constructor(
@@ -88,5 +88,3 @@ export async function revokeConnection(clientId: string, getPrivyJwt: GetPrivyJw
     );
   }
 }
-
-export { OAuthConnectionsError };

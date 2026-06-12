@@ -168,6 +168,6 @@ export const getCommunityCategories = cache(async (communityId: string): Promise
 });
 
 // Aliases for backward compatibility during migration
-export const getCommunityDetailsV2 = getCommunityDetails;
-export const getCommunityStatsV2 = getCommunityStats;
-export const getCommunityProjectsV2 = getCommunityProjects;
+const getCommunityDetailsV2 = getCommunityDetails;
+const getCommunityStatsV2 = getCommunityStats;
+const getCommunityProjectsV2 = getCommunityProjects;

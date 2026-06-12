@@ -351,5 +351,3 @@ export function VirtualizedTable<T>({
     </div>
   );
 }
-
-export default VirtualizedTable;

@@ -257,24 +257,6 @@ export function useUpdateDisbursementStatus(options?: {
 }
 
 /**
- * Hook for fetching recent disbursements for a community (all statuses)
- */
-export function useRecentCommunityDisbursements(
-  communityUID: string,
-  page?: number,
-  limit?: number,
-  status?: string,
-  options?: { enabled?: boolean }
-) {
-  return useQuery<PaginatedDisbursementsResponse, Error>({
-    queryKey: payoutDisbursementKeys.communityRecent(communityUID, page, limit, status),
-    queryFn: () => payoutService.getRecentCommunityDisbursements(communityUID, page, limit, status),
-    enabled: options?.enabled ?? !!communityUID,
-    staleTime: 1000 * 60 * 1, // 1 minute
-  });
-}
-
-/**
  * Hook for fetching total disbursed amounts for multiple grants in parallel
  * Returns a map of grantUID to total disbursed amount
  */
@@ -312,7 +294,7 @@ export function useBatchTotalDisbursed(grantUIDs: string[], options?: { enabled?
  * Hook for fetching payout history for multiple grants to determine their status
  * Returns a map of grantUID to latest disbursement status
  */
-export function useBatchGrantStatus(grantUIDs: string[], options?: { enabled?: boolean }) {
+function useBatchGrantStatus(grantUIDs: string[], options?: { enabled?: boolean }) {
   const queries = useQueries({
     queries: grantUIDs.map((grantUID) => ({
       queryKey: payoutDisbursementKeys.grantHistory(grantUID, 1, 1), // Only fetch latest
@@ -497,7 +479,7 @@ export function usePayoutConfigByGrantPublic(grantUID: string, options?: { enabl
 /**
  * Hook for deleting a payout config
  */
-export function useDeletePayoutConfig(options?: {
+function useDeletePayoutConfig(options?: {
   onSuccess?: () => void;
   onError?: (error: Error) => void;
 }) {
@@ -713,7 +695,7 @@ export function useUpdateMilestonePaymentStatus(
 /**
  * Hook for updating a single line item in a grant payout config
  */
-export function useUpdateLineItem(
+function useUpdateLineItem(
   communityUID: string,
   options?: {
     onSuccess?: (data: PayoutGrantConfig) => void;
@@ -750,7 +732,7 @@ export function useUpdateLineItem(
 /**
  * Hook for deleting a single line item from a grant payout config
  */
-export function useDeleteLineItem(
+function useDeleteLineItem(
   communityUID: string,
   options?: {
     onSuccess?: (data: PayoutGrantConfig) => void;

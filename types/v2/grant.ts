@@ -1,6 +1,6 @@
 import type { Community } from "./community";
 
-export type GrantScreen =
+type GrantScreen =
   | "milestones-and-updates"
   | "new"
   | "edit"
@@ -136,7 +136,7 @@ export interface GrantUpdate {
   };
 }
 
-export interface GrantCompletedTrackExplanation {
+interface GrantCompletedTrackExplanation {
   trackUID: string;
   explanation: string;
 }

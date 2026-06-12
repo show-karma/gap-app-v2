@@ -110,7 +110,7 @@ export const PERMISSION_MATRIX: Record<Role, PermissionString[]> = {
   [Role.NONE]: [],
 };
 
-export function getPermissionsForRole(role: Role): PermissionString[] {
+function getPermissionsForRole(role: Role): PermissionString[] {
   return PERMISSION_MATRIX[role] ?? [];
 }
 

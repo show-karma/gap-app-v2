@@ -9,7 +9,7 @@ export interface ProgramsUIState {
 }
 
 // Program Card Props
-export interface ProgramCardProps {
+interface ProgramCardProps {
   program: FundingProgram;
   communityId: string;
   onApply?: (programId: string) => void;
@@ -17,7 +17,7 @@ export interface ProgramCardProps {
 }
 
 // Program List Props
-export interface ProgramListProps {
+interface ProgramListProps {
   programs: FundingProgram[];
   communityId: string;
   loading?: boolean;
@@ -29,7 +29,7 @@ export interface ProgramListProps {
 }
 
 // Program Filters Props
-export interface ProgramFiltersProps {
+interface ProgramFiltersProps {
   filters: ProgramFilters;
   onChange: (filters: ProgramFilters) => void;
   totalCount?: number;

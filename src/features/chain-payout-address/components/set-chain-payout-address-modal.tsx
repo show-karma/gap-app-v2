@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/dialog";
 import { useProjectStore } from "@/store";
 import { chainImgDictionary } from "@/utilities/chainImgDictionary";
-import { PAYOUT_CHAINS } from "@/utilities/network";
+import { appNetwork } from "@/utilities/network";
 import {
   hasConfiguredPayoutAddresses,
   useUpdateChainPayoutAddress,
@@ -50,7 +50,7 @@ export function SetChainPayoutAddressModal({
   // Initialize form entries from current addresses and supported chains
   useEffect(() => {
     if (isOpen) {
-      const entries: ChainPayoutAddressFormEntry[] = PAYOUT_CHAINS.map((chain) => {
+      const entries: ChainPayoutAddressFormEntry[] = appNetwork.map((chain) => {
         const existingAddress = currentAddresses?.[String(chain.id)] || "";
         return {
           chainId: chain.id,

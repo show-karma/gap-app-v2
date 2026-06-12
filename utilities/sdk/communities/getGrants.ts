@@ -5,7 +5,7 @@ import type { Grant } from "@/types/v2/grant";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
-export interface GrantsResponse {
+interface GrantsResponse {
   // TODO: needs to be added to the SDK
   grants: (Grant & { regions: [] })[];
   pageInfo: {

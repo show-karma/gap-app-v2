@@ -691,5 +691,3 @@ export const fundingPlatformService = {
   programs: fundingProgramsAPI,
   applications: fundingApplicationsAPI,
 };
-
-export default fundingPlatformService;

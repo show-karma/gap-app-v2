@@ -36,7 +36,7 @@ export function transformFormSchemaToQuestions(formSchema: IFormSchema): Applica
   });
 }
 
-export function mapFieldsToLabels(
+function mapFieldsToLabels(
   fieldData: Record<string, FormFieldValue>,
   questions: ApplicationQuestion[]
 ): PostApprovalData {
@@ -58,7 +58,7 @@ export function mapFieldsToLabels(
   return mappedData;
 }
 
-export function mapLabelsToFields(
+function mapLabelsToFields(
   labelData: PostApprovalData,
   questions: ApplicationQuestion[]
 ): Record<string, FormFieldValue> {

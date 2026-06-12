@@ -97,4 +97,4 @@ export default function ProgramImpactPage() {
   );
 }
 
-export const metadata = defaultMetadata;
+const metadata = defaultMetadata;

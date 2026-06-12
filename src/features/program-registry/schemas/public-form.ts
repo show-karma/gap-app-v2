@@ -25,7 +25,7 @@ export const OPPORTUNITY_TYPE_OPTIONS = [
 // --- Type-specific metadata sub-schemas ---
 // Fields that are conditionally required (enforced in superRefine for the active type)
 // use .default("") instead of .optional() to avoid schema/validation contradiction.
-export const hackathonMetadataSchema = z
+const hackathonMetadataSchema = z
   .object({
     location: z.string().default(""),
     tracks: z.string().optional(),
@@ -37,7 +37,7 @@ export const hackathonMetadataSchema = z
   })
   .optional();
 
-export const bountyMetadataSchema = z
+const bountyMetadataSchema = z
   .object({
     rewardAmount: optionalNumber,
     rewardCurrency: z.string().optional(),
@@ -47,7 +47,7 @@ export const bountyMetadataSchema = z
   })
   .optional();
 
-export const acceleratorMetadataSchema = z
+const acceleratorMetadataSchema = z
   .object({
     stage: z.enum(["pre-seed", "seed", "series-a"]).optional(),
     equity: z.string().optional(),
@@ -59,7 +59,7 @@ export const acceleratorMetadataSchema = z
   })
   .optional();
 
-export const vcFundMetadataSchema = z
+const vcFundMetadataSchema = z
   .object({
     stage: z.enum(["pre-seed", "seed", "series-a", "series-b+"]).optional(),
     checkSizeMin: optionalNumber,
@@ -72,7 +72,7 @@ export const vcFundMetadataSchema = z
   })
   .optional();
 
-export const rfpMetadataSchema = z
+const rfpMetadataSchema = z
   .object({
     issuingOrganization: z.string().default(""),
     budgetAmount: optionalNumber,

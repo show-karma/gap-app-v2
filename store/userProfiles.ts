@@ -2,7 +2,7 @@ import { create } from "zustand";
 import type { PublicUserProfileInfo } from "@/services/community-admins.service";
 import { communityAdminsService } from "@/services/community-admins.service";
 
-export interface UserProfileEntry extends PublicUserProfileInfo {
+interface UserProfileEntry extends PublicUserProfileInfo {
   isFetching?: boolean;
   isTried?: boolean;
 }

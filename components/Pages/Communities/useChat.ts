@@ -3,7 +3,7 @@ import { useAccount } from "wagmi";
 import { envVars } from "@/utilities/enviromentVars";
 import type { Project } from "./CommunityProjectEvaluatorPage";
 
-export interface Message {
+interface Message {
   id: string;
   role: "user" | "assistant" | "tool" | "system";
   content: string;

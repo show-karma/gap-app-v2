@@ -10,7 +10,7 @@ export function roleSelectionFromCommunityRole(role: CommunityReviewerRole): Rev
 }
 
 // ─── Role constants ──────────────────────────────────────────────────────────
-export const COMMUNITY_REVIEWER_ROLES = {
+const COMMUNITY_REVIEWER_ROLES = {
   PROGRAM: "program-reviewer",
   MILESTONE: "milestone-reviewer",
 } as const;

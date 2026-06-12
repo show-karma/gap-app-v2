@@ -6,7 +6,7 @@ import type { ClaimCampaign, ClaimProvider, HedgeyProviderConfig } from "../type
  * Hedgey claim provider implementation.
  * Integrates with Hedgey Finance's token claim infrastructure.
  */
-export class HedgeyProvider implements ClaimProvider {
+class HedgeyProvider implements ClaimProvider {
   readonly id = "hedgey";
   readonly name = "Hedgey Finance";
 

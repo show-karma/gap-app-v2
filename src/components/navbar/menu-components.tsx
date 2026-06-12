@@ -20,10 +20,10 @@ const menuStyles = {
 };
 
 // Re-export MenuItemClient as MenuItem for backward compatibility
-export const MenuItem = MenuItemClient;
+const MenuItem = MenuItemClient;
 
 // Re-export SimpleMenuItemClient as SimpleMenuItem for backward compatibility
-export const SimpleMenuItem = SimpleMenuItemClient;
+const SimpleMenuItem = SimpleMenuItemClient;
 
 interface MenuSectionProps {
   title: string;

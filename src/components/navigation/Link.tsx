@@ -8,7 +8,7 @@ import { useUrlBuilder } from "@/hooks/use-url-builder";
 import { cn } from "@/utilities/tailwind";
 import { useWhitelabel } from "@/utilities/whitelabel-context";
 
-export type CustomLinkProps = Omit<LinkProps, "href"> &
+type CustomLinkProps = Omit<LinkProps, "href"> &
   Omit<ComponentProps<"a">, "href"> & {
     href: string;
     useBuilder?: boolean;
@@ -48,5 +48,3 @@ export const Link = forwardRef<HTMLAnchorElement, CustomLinkProps>(
 );
 
 Link.displayName = "Link";
-
-export default Link;

@@ -22,7 +22,7 @@ import { useProjectUpdates } from "./useProjectUpdates";
 /**
  * Return type for useProjectProfile hook.
  */
-export interface UseProjectProfileResult extends ProjectProfileData, ProjectProfileState {
+interface UseProjectProfileResult extends ProjectProfileData, ProjectProfileState {
   /** The project data */
   project: Project | null;
   /** Whether the project fetch failed (e.g., not found) */

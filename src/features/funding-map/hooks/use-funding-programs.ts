@@ -75,7 +75,7 @@ export function useTypeCounts(options?: { onlyOnKarma?: boolean }) {
  * Hook to fetch organization/community filters for the funding map dropdown
  * Returns a list of organizations and communities that have programs
  */
-export function useOrganizationFilters() {
+function useOrganizationFilters() {
   return useQuery({
     queryKey: fundingProgramsKeys.organizationFilters(),
     queryFn: () => fundingProgramsService.getOrganizationFilters(),

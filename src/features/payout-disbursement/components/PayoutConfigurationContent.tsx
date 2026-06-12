@@ -40,7 +40,7 @@ import type {
   PayoutGrantConfig,
 } from "../types/payout-disbursement";
 
-export interface PayoutConfigurationContentProps {
+interface PayoutConfigurationContentProps {
   ref?: Ref<PayoutConfigurationContentRef>;
   isActive: boolean;
   grantUID: string;

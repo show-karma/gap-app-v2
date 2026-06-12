@@ -4,20 +4,20 @@ import { validateEmail, validateSlack, validateTelegram } from "@/utilities/vali
 // (app/modules/v2/api/controllers/shared/dto/reviewer-data.dto.ts).
 // Rules come from utilities/validators.ts (same regex/length bounds as BE).
 
-export const TELEGRAM_ERROR =
+const TELEGRAM_ERROR =
   "Invalid Telegram handle (5-32 letters, digits or underscores, optional @ prefix)";
-export const SLACK_ERROR = "Slack value must be between 2 and 254 characters";
+const SLACK_ERROR = "Slack value must be between 2 and 254 characters";
 
 const NAME_MAX = 200;
 
-export interface ReviewerRowInput {
+interface ReviewerRowInput {
   name: string;
   email: string;
   telegram: string;
   slack: string;
 }
 
-export interface ReviewerRowValidationResult {
+interface ReviewerRowValidationResult {
   ok: boolean;
   error?: string;
 }

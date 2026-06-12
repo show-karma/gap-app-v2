@@ -1,16 +1,15 @@
 export { BlogIcon } from "./Blog";
-export { ChevronDown } from "./ChevronDown";
+
 export { DiscordIcon } from "./Discord";
 export { Discord2Icon } from "./Discord2";
 export { DiscussionIcon } from "./Discussion";
 export { GithubIcon } from "./Github";
 export { Globe } from "./Globe";
 export { LinkedInIcon } from "./LinkedIn";
-export { LogOutIcon } from "./LogOutIcon";
-export { MirrorIcon } from "./Mirror";
+
 export { OrganizationIcon } from "./Organization";
 export { SlackIcon } from "./Slack";
-export { StarIcon } from "./Star";
+
 export { TelegramIcon } from "./Telegram";
 export { Telegram2Icon } from "./Telegram2";
 export { TwitterIcon } from "./Twitter";

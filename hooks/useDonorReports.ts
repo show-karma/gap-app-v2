@@ -12,7 +12,7 @@ import type {
   ResearchReportList,
 } from "@/types/donor-research";
 
-export const donorReportsQueryKey = (options: ListReportsOptions = {}) =>
+const donorReportsQueryKey = (options: ListReportsOptions = {}) =>
   ["donor-research", "reports", options] as const;
 
 export const donorReportQueryKey = (reportId: string) =>

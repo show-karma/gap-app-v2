@@ -22,13 +22,13 @@ import type { TableRow } from "./ControlCenterTable";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
-export interface DisbursementMapEntry {
+interface DisbursementMapEntry {
   totalsByToken: TokenTotal[];
   status: string;
   history: PayoutDisbursement[];
 }
 
-export interface ControlCenterFilters {
+interface ControlCenterFilters {
   programId: string | null;
   agreementFilter: "signed" | "not_signed" | undefined;
   invoiceFilter: "all_received" | "needs_invoices" | "has_invoices" | undefined;

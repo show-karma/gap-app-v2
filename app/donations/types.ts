@@ -1,6 +1,6 @@
 import type { DonationApiResponse } from "@/hooks/donation/types";
 
-export interface DonationHistoryFilters {
+interface DonationHistoryFilters {
   dateRange?: { from: Date; to: Date };
   tokenSymbol?: string;
   chainId?: number;

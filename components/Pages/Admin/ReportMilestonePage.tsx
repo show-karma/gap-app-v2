@@ -32,7 +32,7 @@ import { MESSAGES } from "@/utilities/messages";
 import { defaultMetadata } from "@/utilities/meta";
 import { normalizeProgramId } from "@/utilities/normalizeProgramId";
 
-export const metadata = defaultMetadata;
+const metadata = defaultMetadata;
 
 function MilestonesReportSkeleton() {
   return (

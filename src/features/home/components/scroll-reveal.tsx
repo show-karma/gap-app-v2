@@ -89,7 +89,7 @@ interface StaggerRevealProps {
   itemClassName?: string;
 }
 
-export function StaggerReveal({
+function StaggerReveal({
   children,
   className,
   variant = "fade-up",

@@ -69,7 +69,7 @@ export interface MetricData {
   target: string;
 }
 
-export interface ApplicationConfig {
+interface ApplicationConfig {
   questions: ApplicationQuestion[];
   requiresAIEvaluation?: boolean;
   aiEvaluationCriteria?: string[];
@@ -235,7 +235,7 @@ export interface FundingProgram {
 }
 
 // Alias for backward compat
-export type Program = FundingProgram;
+type Program = FundingProgram;
 
 // Core application entity
 export interface MilestoneStatusEntry {
@@ -308,7 +308,7 @@ export interface Application {
   milestoneStatuses?: MilestoneStatusEntry[];
 }
 
-export interface User {
+interface User {
   id: string;
   address: string;
   chainId: number;
@@ -324,7 +324,7 @@ export interface User {
   updatedAt?: string;
 }
 
-export interface Grant {
+interface Grant {
   id: string;
   programId: string;
   name: string;
@@ -342,14 +342,14 @@ export interface Grant {
 }
 
 // API Response types
-export interface PaginationMeta {
+interface PaginationMeta {
   total: number;
   page: number;
   limit: number;
   totalPages: number;
 }
 
-export interface ApiResponse<T> {
+interface ApiResponse<T> {
   data: T;
   meta?: PaginationMeta;
   error?: string;
@@ -364,7 +364,7 @@ export interface ProgramFilters {
   limit?: number;
 }
 
-export interface ApplicationFilters {
+interface ApplicationFilters {
   status?: ApplicationStatus;
   programId?: string;
   userId?: string;

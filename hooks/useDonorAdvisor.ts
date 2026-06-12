@@ -7,8 +7,8 @@ import {
 } from "@/services/donor-research.service";
 import type { DonorAdvisor, DonorResearchCountersSnapshot } from "@/types/donor-research";
 
-export const donorAdvisorQueryKey = ["donor-research", "advisor", "me"] as const;
-export const donorCountersQueryKey = ["donor-research", "advisor", "counters"] as const;
+const donorAdvisorQueryKey = ["donor-research", "advisor", "me"] as const;
+const donorCountersQueryKey = ["donor-research", "advisor", "counters"] as const;
 
 /**
  * Loads the current advisor row.

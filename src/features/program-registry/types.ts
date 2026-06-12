@@ -55,7 +55,7 @@ export interface ProgramMetadata {
   financeEmails?: string[];
 }
 
-export interface ProgramCreationRequest {
+interface ProgramCreationRequest {
   owner: string;
   chainId: number;
   metadata: ProgramMetadata;
@@ -67,7 +67,7 @@ export interface ProgramCreationResult {
   requiresManualApproval?: boolean;
 }
 
-export interface ProgramApprovalRequest {
+interface ProgramApprovalRequest {
   programId: string;
   isValid: "accepted" | "rejected" | "pending";
 }

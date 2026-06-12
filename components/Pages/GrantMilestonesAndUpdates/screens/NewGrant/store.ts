@@ -8,9 +8,9 @@ export interface MilestonesForms {
   data: IMilestone;
 }
 
-export type FlowType = "grant" | "program";
+type FlowType = "grant" | "program";
 
-export interface GrantFormData {
+interface GrantFormData {
   title: string;
   programId?: string;
   amount?: string;

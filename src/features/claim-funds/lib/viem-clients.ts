@@ -1,7 +1,7 @@
 import { type Chain, createPublicClient, http } from "viem";
 import { arbitrum, mainnet, optimism, sepolia } from "viem/chains";
 
-export type SupportedChainName = "optimism" | "arbitrum" | "mainnet" | "sepolia";
+type SupportedChainName = "optimism" | "arbitrum" | "mainnet" | "sepolia";
 
 const CHAIN_MAP: Record<SupportedChainName, Chain> = {
   optimism,
@@ -21,7 +21,7 @@ export function getChainByName(networkName: string): Chain {
   return chain;
 }
 
-export const SUPPORTED_CHAINS = Object.values(CHAIN_MAP);
+const SUPPORTED_CHAINS = Object.values(CHAIN_MAP);
 
 /**
  * Cache of public clients keyed by network name

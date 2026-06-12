@@ -37,7 +37,7 @@ function ScrollOnNewMessage({ lastMessageContent }: { lastMessageContent: string
   return null;
 }
 
-export interface ChatBubbleShellProps {
+interface ChatBubbleShellProps {
   isOpen: boolean;
   onToggle: () => void;
   onClear: () => void;

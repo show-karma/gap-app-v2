@@ -6,7 +6,7 @@ import {
   getTenantForExclusiveDomain,
 } from "./domain-constants";
 
-export interface DomainMapping {
+interface DomainMapping {
   id: TenantId;
   slug: string;
   name: string;
@@ -15,7 +15,7 @@ export interface DomainMapping {
   useSharedSubdomain: boolean;
 }
 
-export const DOMAIN_MAPPINGS: DomainMapping[] = [
+const DOMAIN_MAPPINGS: DomainMapping[] = [
   {
     id: "karma",
     slug: "karma",
@@ -100,7 +100,7 @@ export function getDomainMappingByCommunity(communityId: TenantId): DomainMappin
   return DOMAIN_MAPPINGS.find((mapping) => mapping.id === communityId);
 }
 
-export function getDomainMappingByDomain(domain: string): DomainMapping | undefined {
+function getDomainMappingByDomain(domain: string): DomainMapping | undefined {
   const tenant = getTenantForExclusiveDomain(domain);
   if (tenant) return getDomainMappingByCommunity(tenant);
   return undefined;

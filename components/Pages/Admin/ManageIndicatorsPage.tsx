@@ -18,7 +18,7 @@ import { cn } from "@/utilities/tailwind";
 import { CategoryView } from "./CategoryView";
 import { IndicatorsView } from "./IndicatorsView";
 
-export const metadata = defaultMetadata;
+const metadata = defaultMetadata;
 
 export default function ManageIndicatorsPage() {
   const router = useRouter();

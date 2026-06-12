@@ -8,7 +8,7 @@ export const karmaLinks = {
   llmsTxt: "https://www.karmahq.xyz/llms.txt",
 };
 
-export const karmaAPI = {
+const karmaAPI = {
   findDelegate: (dao: string, user: string) =>
     `${envVars.NEXT_PUBLIC_KARMA_API}/dao/find-delegate?dao=${dao}&user=${user}`,
 };

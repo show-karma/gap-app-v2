@@ -33,7 +33,7 @@ export function useReportConfigs(communitySlug: string) {
   });
 }
 
-export function useReportConfig(communitySlug: string, configId: string) {
+function useReportConfig(communitySlug: string, configId: string) {
   return useQuery({
     queryKey: [...QUERY_KEYS.configs(communitySlug), configId],
     queryFn: () => portfolioService.getReportConfig(communitySlug, configId),
@@ -271,7 +271,7 @@ export function usePublishedReport(communitySlug: string, runDate: string) {
   });
 }
 
-export function useReportConfigsExist(communitySlug: string) {
+function useReportConfigsExist(communitySlug: string) {
   const { data, isLoading, isError } = useReportConfigs(communitySlug);
   return {
     hasConfigs: !isLoading && !isError && (data?.length ?? 0) > 0,

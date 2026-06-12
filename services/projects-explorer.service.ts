@@ -5,12 +5,12 @@ import type { PaginatedProjectsResponse, Project as ProjectResponse } from "@/ty
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
-export interface ExplorerProjectsParams {
+interface ExplorerProjectsParams {
   search?: string;
   limit?: number;
 }
 
-export interface ExplorerProjectsPaginatedParams {
+interface ExplorerProjectsPaginatedParams {
   search?: string;
   page: number;
   limit?: number;

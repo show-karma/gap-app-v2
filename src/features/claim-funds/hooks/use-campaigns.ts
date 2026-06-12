@@ -5,7 +5,7 @@ import type { ClaimGrantsConfig } from "@/src/infrastructure/types/tenant";
 import type { ClaimCampaign } from "../providers/types";
 import { useClaimProvider } from "./use-claim-provider";
 
-export interface UseCampaignsReturn {
+interface UseCampaignsReturn {
   campaigns: ClaimCampaign[];
   isLoading: boolean;
   error: Error | null;

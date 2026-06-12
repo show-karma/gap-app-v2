@@ -54,7 +54,7 @@ const ProjectCardSkeleton = ({ index }: { index: number }) => {
   );
 };
 
-export const ProjectCardListSkeleton = () => {
+const ProjectCardListSkeleton = () => {
   const cardArray = Array.from({ length: 12 }, (_, index) => index);
   return (
     <div className="grid grid-cols-4 w-full gap-4 max-[1600px]:grid-cols-4 max-[1500px]:grid-cols-3 max-[1100px]:grid-cols-2 max-sm:grid-cols-1">
@@ -64,7 +64,7 @@ export const ProjectCardListSkeleton = () => {
     </div>
   );
 };
-export const FilterByProgramsSkeleton = () => {
+const FilterByProgramsSkeleton = () => {
   const programsArray = Array.from({ length: 6 }, (_, index) => index);
   return (
     <div className="flex flex-col gap-2 w-full">

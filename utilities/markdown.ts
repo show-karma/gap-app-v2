@@ -48,7 +48,7 @@ export function renderToPlainText(markdownSourceText: string) {
   });
 }
 
-export function truncateDescription(description: string, maxLength: number) {
+function truncateDescription(description: string, maxLength: number) {
   if (description.length > maxLength) {
     return `${description.slice(0, maxLength)}...`;
   } else {
@@ -139,12 +139,12 @@ export function cleanMarkdownForPlainText(markdownText: string, maxLength?: numb
  * @param maxLength - Maximum length for the resulting string
  * @returns Truncated and markdown-free text
  */
-export function truncateAndCleanMarkdown(text: string, maxLength: number): string {
+function truncateAndCleanMarkdown(text: string, maxLength: number): string {
   return cleanMarkdownForPlainText(text, maxLength);
 }
 
 // Rehype rewrite utilities
-export type RehypeRewrite = (node: unknown, index?: number, parent?: unknown) => void;
+type RehypeRewrite = (node: unknown, index?: number, parent?: unknown) => void;
 
 type HastElement = {
   type: string;
@@ -181,5 +181,3 @@ export function rewriteHeadingsToLevel(
     }
   };
 }
-
-export default { renderToHTML, renderToPlainText };

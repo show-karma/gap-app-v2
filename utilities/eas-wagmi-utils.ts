@@ -55,7 +55,7 @@ export function useSigner() {
   return signer;
 }
 
-export function useProvider() {
+function useProvider() {
   const publicClient = usePublicClient();
 
   const [provider, setProvider] = useState<JsonRpcProvider | undefined>(undefined);

@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 
-export type NavigationTab = "updates" | "about" | "funding" | "impact" | "team";
+type NavigationTab = "updates" | "about" | "funding" | "impact" | "team";
 
 interface ProjectNavigationTabsProps {
   fundingCount?: number;

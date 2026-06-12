@@ -10,7 +10,7 @@ import { urlRegex } from "@/utilities/regexs/urlRegex";
  * Priority 1: Blockchain/On-chain indicators
  * Priority 2: All other indicators (lowest - appear last)
  */
-export const getIndicatorSortPriority = (indicatorName: string): number => {
+const getIndicatorSortPriority = (indicatorName: string): number => {
   const name = indicatorName.toLowerCase();
 
   // Priority 0: GitHub indicators (highest priority - appear first)

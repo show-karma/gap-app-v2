@@ -769,7 +769,7 @@ export async function getTransactionStatus(
 /**
  * Gas fee estimation result
  */
-export interface GasEstimation {
+interface GasEstimation {
   /** Estimated gas in wei */
   gasEstimate: bigint;
   /** Current gas price in wei */

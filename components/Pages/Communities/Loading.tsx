@@ -127,7 +127,7 @@ export const CardListSkeleton = () => {
   );
 };
 
-export const FilterByProgramsSkeleton = () => {
+const FilterByProgramsSkeleton = () => {
   const programIndexes = Array.from({ length: 6 }, (_, index) => index);
   return (
     <div className="flex flex-col gap-2 w-full">
@@ -253,7 +253,7 @@ export const CommunitiesSkeleton = () => {
   );
 };
 
-export const CommunitiesLoading = () => {
+const CommunitiesLoading = () => {
   return (
     <div className="flex w-full max-w-full flex-row justify-start gap-6 px-12 pb-7 pt-5 max-2xl:px-8 max-md:px-4  max-lg:flex-col">
       <div className="flex w-full max-w-full flex-col justify-start items-center gap-6">

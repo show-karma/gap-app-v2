@@ -28,7 +28,7 @@ interface PendingClaimViaASafe {
   claimAmount: bigint;
 }
 
-export interface UseClaimViaASafeReturn {
+interface UseClaimViaASafeReturn {
   requestClaim: (
     campaignId: string,
     eligibility: ClaimEligibility,

@@ -84,7 +84,7 @@ export const privyConfig = createConfig({
   ssr: true,
 }) as unknown as Config;
 
-export function getPrivyWagmiConfig() {
+function getPrivyWagmiConfig() {
   return privyConfig;
 }
 

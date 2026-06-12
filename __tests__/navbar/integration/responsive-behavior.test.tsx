@@ -11,7 +11,7 @@ import { getAuthFixture } from "../fixtures/auth-fixtures";
 import {
   cleanupAfterEach,
   createMockPermissions,
-  createMockUsePrivy,
+  createMockUseAuth,
   renderWithProviders,
   setViewportSize,
   updateMocks,
@@ -32,7 +32,7 @@ describe("Responsive Behavior Integration Tests", () => {
       const authFixture = getAuthFixture("unauthenticated");
 
       renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
       });
 
       // Mobile menu button should be visible
@@ -48,7 +48,7 @@ describe("Responsive Behavior Integration Tests", () => {
       const authFixture = getAuthFixture("unauthenticated");
 
       renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
       });
 
       // Open drawer
@@ -72,7 +72,7 @@ describe("Responsive Behavior Integration Tests", () => {
       const authFixture = getAuthFixture("unauthenticated");
 
       renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
       });
 
       // Open drawer
@@ -98,7 +98,7 @@ describe("Responsive Behavior Integration Tests", () => {
       const authFixture = getAuthFixture("authenticated-basic");
 
       renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
         mockPermissions: createMockPermissions(authFixture.permissions),
       });
 
@@ -122,7 +122,7 @@ describe("Responsive Behavior Integration Tests", () => {
       const authFixture = getAuthFixture("super-user");
 
       renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
         mockPermissions: createMockPermissions(authFixture.permissions),
       });
 
@@ -155,7 +155,7 @@ describe("Responsive Behavior Integration Tests", () => {
       const authFixture = getAuthFixture("unauthenticated");
 
       renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
       });
 
       // Desktop navigation elements should be visible
@@ -173,7 +173,7 @@ describe("Responsive Behavior Integration Tests", () => {
       const authFixture = getAuthFixture("unauthenticated");
 
       renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
       });
 
       // Open For Projects dropdown
@@ -194,7 +194,7 @@ describe("Responsive Behavior Integration Tests", () => {
       const authFixture = getAuthFixture("authenticated-basic");
 
       renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
         mockPermissions: createMockPermissions(authFixture.permissions),
       });
 
@@ -214,7 +214,7 @@ describe("Responsive Behavior Integration Tests", () => {
       const authFixture = getAuthFixture("unauthenticated");
 
       renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
       });
 
       // Search should be visible in navbar (not in drawer)
@@ -227,7 +227,7 @@ describe("Responsive Behavior Integration Tests", () => {
       const authFixture = getAuthFixture("unauthenticated");
 
       renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
       });
 
       // Sign in is the only auth button in the nav header now
@@ -247,7 +247,7 @@ describe("Responsive Behavior Integration Tests", () => {
       const authFixture = getAuthFixture("unauthenticated");
 
       renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
       });
 
       // Mobile menu button should be visible
@@ -262,7 +262,7 @@ describe("Responsive Behavior Integration Tests", () => {
       const authFixture = getAuthFixture("unauthenticated");
 
       renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
       });
 
       const mobileMenuButton = await screen.findByLabelText("Open menu");
@@ -282,7 +282,7 @@ describe("Responsive Behavior Integration Tests", () => {
       const authFixture = getAuthFixture("authenticated-basic");
 
       renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
         mockPermissions: createMockPermissions(authFixture.permissions),
       });
 
@@ -309,7 +309,7 @@ describe("Responsive Behavior Integration Tests", () => {
       setViewportSize(375, 812);
 
       const { rerender } = renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
       });
 
       // Open mobile drawer
@@ -325,7 +325,7 @@ describe("Responsive Behavior Integration Tests", () => {
 
       // Rerender to apply new viewport
       updateMocks({
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
       });
       rerender(<Navbar />);
 
@@ -345,7 +345,7 @@ describe("Responsive Behavior Integration Tests", () => {
       setViewportSize(375, 812);
 
       renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
       });
 
       // Open mobile drawer
@@ -374,7 +374,7 @@ describe("Responsive Behavior Integration Tests", () => {
       setViewportSize(375, 812);
 
       const { rerender } = renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
         mockPermissions: createMockPermissions(authFixture.permissions),
       });
 
@@ -385,7 +385,7 @@ describe("Responsive Behavior Integration Tests", () => {
       setViewportSize(1440, 900);
 
       updateMocks({
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
         mockPermissions: createMockPermissions(authFixture.permissions),
       });
       rerender(<Navbar />);
@@ -409,7 +409,7 @@ describe("Responsive Behavior Integration Tests", () => {
       setViewportSize(1440, 900);
 
       const { rerender } = renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
       });
 
       // Desktop navigation should be visible
@@ -419,7 +419,7 @@ describe("Responsive Behavior Integration Tests", () => {
       setViewportSize(375, 812);
 
       updateMocks({
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
       });
       rerender(<Navbar />);
 
@@ -436,7 +436,7 @@ describe("Responsive Behavior Integration Tests", () => {
       setViewportSize(1440, 900);
 
       renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
       });
 
       // Open desktop dropdown
@@ -463,7 +463,7 @@ describe("Responsive Behavior Integration Tests", () => {
       setViewportSize(1440, 900);
 
       const { rerender } = renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
         mockPermissions: createMockPermissions(authFixture.permissions),
         mockUseTheme: { theme: "dark", setTheme: vi.fn() },
       });
@@ -472,7 +472,7 @@ describe("Responsive Behavior Integration Tests", () => {
       setViewportSize(375, 812);
 
       rerender(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
         mockPermissions: createMockPermissions(authFixture.permissions),
         mockUseTheme: { theme: "dark", setTheme: vi.fn() },
       });
@@ -488,7 +488,7 @@ describe("Responsive Behavior Integration Tests", () => {
       const authFixture = getAuthFixture("unauthenticated");
 
       renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
       });
 
       // Search should be in main navbar
@@ -502,7 +502,7 @@ describe("Responsive Behavior Integration Tests", () => {
       const authFixture = getAuthFixture("unauthenticated");
 
       renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
       });
 
       // Open drawer
@@ -525,7 +525,7 @@ describe("Responsive Behavior Integration Tests", () => {
       const authFixture = getAuthFixture("unauthenticated");
 
       renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
       });
 
       // Open drawer
@@ -554,7 +554,7 @@ describe("Responsive Behavior Integration Tests", () => {
       const authFixture = getAuthFixture("unauthenticated");
 
       renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
       });
 
       // Logo should be present (Karma or similar)
@@ -568,7 +568,7 @@ describe("Responsive Behavior Integration Tests", () => {
       const authFixture = getAuthFixture("unauthenticated");
 
       renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
       });
 
       // Navbar should be properly laid out
@@ -585,7 +585,7 @@ describe("Responsive Behavior Integration Tests", () => {
       const authFixture = getAuthFixture("unauthenticated");
 
       renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
       });
 
       // Navbar should have proper desktop layout

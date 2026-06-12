@@ -145,7 +145,7 @@ interface RequireReviewerProps {
  * - Program context: true if reviewer in that specific program
  * If `type` is specified, also requires that specific reviewer type.
  */
-export function RequireReviewer({ type, children, fallback = null }: RequireReviewerProps) {
+function RequireReviewer({ type, children, fallback = null }: RequireReviewerProps) {
   const { roles, isLoading, isReviewer } = usePermissionContext();
 
   if (isLoading) {
@@ -199,7 +199,7 @@ export function AdminOnly({ children, fallback = null, level = "program" }: Admi
  * </Can>
  * ```
  */
-export function PermissionDeniedMessage({
+function PermissionDeniedMessage({
   message = "You do not have permission to view this content.",
 }: {
   message?: string;

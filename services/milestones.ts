@@ -63,7 +63,7 @@ export interface GrantMilestoneWithCompletion {
 }
 
 // Response from the project updates endpoint
-export interface ProjectUpdatesResponse {
+interface ProjectUpdatesResponse {
   projectUpdates: any[];
   projectMilestones: any[];
   grantMilestones: GrantMilestoneWithCompletion[];
@@ -93,7 +93,7 @@ export interface MilestoneEvaluationItem {
   createdAt: string;
 }
 
-export interface MilestoneEvaluationResponse {
+interface MilestoneEvaluationResponse {
   evaluations: MilestoneEvaluationItem[];
 }
 

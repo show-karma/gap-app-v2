@@ -104,7 +104,7 @@ export const getProgramIdForUrl = (program: GrantProgram): string => {
  * @param program - The GrantProgram object to normalize
  * @returns The program with normalized grantTypes
  */
-export const normalizeGrantTypes = (program: GrantProgram): GrantProgram => {
+const normalizeGrantTypes = (program: GrantProgram): GrantProgram => {
   if (program.metadata?.grantTypes && typeof program.metadata.grantTypes === "string") {
     return {
       ...program,
@@ -179,7 +179,7 @@ export const buildMetadata = (data: ProgramFormData) => ({
  * Build type-specific metadata payload from form data.
  * Maps form fields to the API shape expected by the indexer for each opportunity type.
  */
-export const buildTypedMetadata = (data: ProgramFormData): Record<string, unknown> => {
+const buildTypedMetadata = (data: ProgramFormData): Record<string, unknown> => {
   const type = data.opportunityType;
   if (type === "hackathon" && data.hackathonMeta) {
     const m = data.hackathonMeta;

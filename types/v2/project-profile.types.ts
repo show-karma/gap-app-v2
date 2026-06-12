@@ -15,7 +15,7 @@ import type { UnifiedMilestone } from "./roadmap";
  * Date range filter for the updates feed.
  * Values are ISO 8601 strings (e.g., "2024-01-01" or full datetime).
  */
-export interface DateRangeFilter {
+interface DateRangeFilter {
   dateFrom?: string;
   dateTo?: string;
 }
@@ -28,7 +28,7 @@ export interface DateRangeFilter {
  * - `aiScoreMax`: integer 0–10; upper bound of the score range filter.
  *   If `aiScoreMin > aiScoreMax`, the service swaps them defensively before sending.
  */
-export interface AIEvaluationFilter {
+interface AIEvaluationFilter {
   hasAIEvaluation?: boolean;
   aiScoreMin?: number;
   aiScoreMax?: number;
@@ -64,7 +64,7 @@ export type ActivityFilterType =
 /**
  * Activity filter option for UI display.
  */
-export interface ActivityFilterOption {
+interface ActivityFilterOption {
   value: ActivityFilterType;
   label: string;
 }
@@ -89,12 +89,12 @@ export const ACTIVITY_FILTER_OPTIONS: ActivityFilterOption[] = [
 /**
  * Tab options for the main content area.
  */
-export type ContentTab = "roadmap" | "reviews";
+type ContentTab = "roadmap" | "reviews";
 
 /**
  * Content tab configuration for UI display.
  */
-export interface ContentTabOption {
+interface ContentTabOption {
   id: ContentTab;
   label: string;
 }
@@ -102,7 +102,7 @@ export interface ContentTabOption {
 /**
  * Default tab options for the content area.
  */
-export const CONTENT_TAB_OPTIONS: ContentTabOption[] = [
+const CONTENT_TAB_OPTIONS: ContentTabOption[] = [
   { id: "roadmap", label: "Roadmap" },
   { id: "reviews", label: "Reviews" },
 ] as const;

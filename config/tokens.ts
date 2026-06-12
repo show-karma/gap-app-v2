@@ -195,7 +195,7 @@ export const NATIVE_TOKENS: Record<
 };
 
 export type SupportedChainId = keyof typeof NETWORKS;
-export type SupportedToken = keyof typeof TOKEN_ADDRESSES;
+type SupportedToken = keyof typeof TOKEN_ADDRESSES;
 
 /** Default chain ID for USDC payments when a grant's chain has no USDC configured */
 export const DEFAULT_USDC_CHAIN_ID: SupportedChainId = 1;

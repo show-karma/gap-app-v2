@@ -74,7 +74,7 @@ const socialMediaInputStyle =
   "bg-transparent border-0 flex flex-1 p-2 focus:outline-none outline-none focus-visible:outline-none dark:bg-zinc-900 dark:text-white text-sm rounded-md";
 const labelStyle = "text-slate-700 text-sm font-bold leading-tight dark:text-slate-200";
 
-export const projectSchema = z.object({
+const projectSchema = z.object({
   title: z
     .string()
     .min(3, { message: MESSAGES.PROJECT_FORM.TITLE.MIN })

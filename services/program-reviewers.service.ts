@@ -17,7 +17,7 @@ const apiClient = createAuthenticatedApiClient(API_URL, 30000);
 /**
  * User profile information
  */
-export interface UserProfile {
+interface UserProfile {
   id: string;
   publicAddress: string;
   name: string;
@@ -31,7 +31,7 @@ export interface UserProfile {
 /**
  * Reviewer information from API
  */
-export interface ProgramReviewerResponse {
+interface ProgramReviewerResponse {
   publicAddress: string;
   programId: string;
   chainID: number;
@@ -66,7 +66,7 @@ export interface AddReviewerRequest {
 /**
  * Update reviewer contact request (PATCH by email)
  */
-export interface UpdateReviewerContactRequest {
+interface UpdateReviewerContactRequest {
   email: string;
   telegram?: string;
   slack?: string;

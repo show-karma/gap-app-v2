@@ -179,5 +179,3 @@ export const EmptyProjectsState: FC<EmptyProjectsStateProps> = ({ onStartWalkthr
     </div>
   );
 };
-
-export default EmptyProjectsState;

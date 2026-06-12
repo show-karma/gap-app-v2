@@ -22,7 +22,7 @@ import { cn } from "@/utilities/tailwind";
 import { SegmentSkeleton } from "./SegmentSkeleton";
 import { type TimeframeOption, TimeframeSelector, timeframeOptions } from "./TimeframeSelector";
 
-export const fundedAmountFormatter = (value: string) => {
+const fundedAmountFormatter = (value: string) => {
   const amount = Number(value.includes(" ") ? value.split(" ")[0] : value);
   const formattedAmount = Number(amount.toFixed(2));
   if (Number.isNaN(formattedAmount)) {
@@ -275,13 +275,7 @@ const AggregatedSegmentCard = ({ segment }: { segment: ProgramImpactSegment }) =
   );
 };
 
-export const EmptySegment = ({
-  type,
-  category,
-}: {
-  type: "output" | "outcome";
-  category: string;
-}) => {
+const EmptySegment = ({ type, category }: { type: "output" | "outcome"; category: string }) => {
   return (
     <div className="p-6 bg-[#f8f9fb] dark:bg-zinc-800 flex flex-col justify-center items-center w-full h-full">
       <div className="flex flex-col justify-center items-center gap-8 h-full w-full border border-dashed border-gray-400 dark:border-gray-600 rounded-xl px-12 py-6">

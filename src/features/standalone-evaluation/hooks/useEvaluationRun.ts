@@ -65,7 +65,7 @@ interface SetSampleInput {
   sampleApplication: string;
 }
 
-export const useSetSample = () => {
+const useSetSample = () => {
   const queryClient = useQueryClient();
 
   return useMutation<SessionResponse, Error, SetSampleInput>({
@@ -103,7 +103,7 @@ export const useUpdatePrompt = () => {
   });
 };
 
-export const useMarkReadyForBulk = () => {
+const useMarkReadyForBulk = () => {
   const queryClient = useQueryClient();
 
   return useMutation<SessionResponse, Error, string>({

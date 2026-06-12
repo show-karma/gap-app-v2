@@ -118,7 +118,7 @@ export interface TotalDisbursedResponse {
   totalDisbursed: string;
 }
 
-export interface PayoutDisbursementFilters {
+interface PayoutDisbursementFilters {
   page?: number;
   limit?: number;
 }
@@ -225,7 +225,7 @@ export interface CommunityPayoutDisbursementInfo {
 /**
  * Agreement status for a grant
  */
-export type AgreementStatus = "signed" | "not_signed";
+type AgreementStatus = "signed" | "not_signed";
 
 export interface CommunityPayoutAgreementInfo {
   signed: boolean;

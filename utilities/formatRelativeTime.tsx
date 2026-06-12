@@ -37,7 +37,7 @@ export function renderRelativeTime(
  * Returns a formatted absolute timestamp string ("MMM dd, yyyy HH:mm") for the
  * given value, or "Invalid date" if it cannot be parsed.
  */
-export function formatAbsoluteTime(value: string | Date): string {
+function formatAbsoluteTime(value: string | Date): string {
   try {
     const date = toDate(value);
     if (!isValid(date)) return "Invalid date";

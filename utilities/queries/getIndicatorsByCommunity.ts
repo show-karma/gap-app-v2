@@ -19,7 +19,7 @@ export interface Indicator {
   updatedAt?: string;
 }
 
-export interface PaginatedResponse<T> {
+interface PaginatedResponse<T> {
   payload: T[];
   pagination: {
     totalCount: number;
@@ -145,7 +145,7 @@ export const getGroupedIndicatorsByCommunity = async (communityId: string) => {
 /**
  * Get all indicators with pagination using V2 API
  */
-export const getIndicatorsV2 = async (params?: {
+const getIndicatorsV2 = async (params?: {
   communityUID?: string;
   programId?: number;
   chainId?: number;
@@ -184,7 +184,7 @@ export const getIndicatorsV2 = async (params?: {
 /**
  * Get a single indicator by ID using V2 API
  */
-export const getIndicatorById = async (indicatorId: string): Promise<Indicator | null> => {
+const getIndicatorById = async (indicatorId: string): Promise<Indicator | null> => {
   try {
     const [data, error] = await fetchData(INDEXER.INDICATORS.V2.GET_BY_ID(indicatorId));
     if (error) {

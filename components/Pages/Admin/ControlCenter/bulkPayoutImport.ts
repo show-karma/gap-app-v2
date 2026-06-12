@@ -16,7 +16,7 @@ const HEADER_ALIASES = {
   amount: ["amount", "grantamount", "totalgrant", "payoutamount", "prize", "value"],
 } as const;
 
-export type ImportMatchSource =
+type ImportMatchSource =
   | "direct_uid_pair"
   | "grant_uid"
   | "project_uid"
@@ -46,7 +46,7 @@ export interface ValidatedImportRow extends ImportDraftRow {
   target: ResolvedImportTarget | null;
 }
 
-export interface ParsedImportData {
+interface ParsedImportData {
   rows: ImportDraftRow[];
   fatalErrors: string[];
 }

@@ -268,4 +268,3 @@ export function SettingsSidebar({
 }
 
 export { getSidebarSections };
-export type { SidebarSection, SidebarItem };

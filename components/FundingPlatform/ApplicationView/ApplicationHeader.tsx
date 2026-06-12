@@ -45,7 +45,7 @@ const formatStatus = (status: string): string => {
     .join(" ");
 };
 
-export interface ApplicationHeaderProps {
+interface ApplicationHeaderProps {
   application: IFundingApplication;
   program?: ProgramWithFormSchema;
   /** Status action buttons (Approve, Reject, etc.) */
@@ -60,7 +60,7 @@ export interface ApplicationHeaderProps {
   isKycEnabled?: boolean;
 }
 
-export const ApplicationHeader: FC<ApplicationHeaderProps> = ({
+const ApplicationHeader: FC<ApplicationHeaderProps> = ({
   application,
   program: _program,
   statusActions,

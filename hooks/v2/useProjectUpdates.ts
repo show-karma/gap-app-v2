@@ -451,4 +451,4 @@ export function useProjectUpdates(
 }
 
 // Alias for backward compatibility during migration
-export const useProjectUpdatesV2 = useProjectUpdates;
+const useProjectUpdatesV2 = useProjectUpdates;

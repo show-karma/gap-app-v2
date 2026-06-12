@@ -6,7 +6,7 @@ import { Button } from "@/components/Utilities/Button";
 
 export type TimeframeOption = "all" | "1_month" | "3_months" | "6_months" | "1_year";
 
-export interface TimeframeConfig {
+interface TimeframeConfig {
   label: string;
   value: TimeframeOption;
   months?: number;

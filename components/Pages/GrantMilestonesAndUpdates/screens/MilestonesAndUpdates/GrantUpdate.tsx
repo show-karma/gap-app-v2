@@ -26,7 +26,7 @@ import { SHARE_TEXTS } from "@/utilities/share/text";
 interface UpdateTagProps {
   index: number;
 }
-export const FlagIcon = () => {
+const FlagIcon = () => {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"

@@ -91,7 +91,7 @@ export function getBrowseApplicationsUrl(
  * @param programId - The program ID
  * @returns The full URL to the program details page
  */
-export function getProgramPageUrl(
+function getProgramPageUrl(
   communityId: string,
   programId: string,
   whitelabelOrigin?: string

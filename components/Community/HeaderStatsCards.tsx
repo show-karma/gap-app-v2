@@ -98,7 +98,7 @@ const MilestoneStatCard = ({ completed, total, isLoading }: MilestoneStatCardPro
   );
 };
 
-export interface HeaderStatsCardsProps {
+interface HeaderStatsCardsProps {
   projectsCount?: number;
   totalGrants?: number;
   projectUpdates?: number;

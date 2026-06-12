@@ -8,14 +8,14 @@ import { useUpdateDisbursementStatus } from "./use-payout-disbursement";
 
 const POLLING_INTERVAL_MS = 30_000; // 30 seconds
 
-export interface TransactionPollerState {
+interface TransactionPollerState {
   isPolling: boolean;
   status: SafeTransactionStatus | null;
   error: string | null;
   lastChecked: Date | null;
 }
 
-export interface UseTransactionStatusPollerParams {
+interface UseTransactionStatusPollerParams {
   safeTxHash: string | null;
   chainId: SupportedChainId;
   disbursementIds: string[];
@@ -24,7 +24,7 @@ export interface UseTransactionStatusPollerParams {
   onFailed?: () => void;
 }
 
-export interface UseTransactionStatusPollerReturn {
+interface UseTransactionStatusPollerReturn {
   state: TransactionPollerState;
   startPolling: () => void;
   stopPolling: () => void;
@@ -59,7 +59,7 @@ export interface UseTransactionStatusPollerReturn {
  * }
  * ```
  */
-export function useTransactionStatusPoller({
+function useTransactionStatusPoller({
   safeTxHash,
   chainId,
   disbursementIds,

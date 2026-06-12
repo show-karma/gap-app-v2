@@ -16,7 +16,7 @@ import type {
 /**
  * Query key factory for program prompt queries
  */
-export const promptKeys = {
+const promptKeys = {
   all: ["prompts"] as const,
   program: (programId: string) => [...promptKeys.all, programId] as const,
   jobs: ["prompt-jobs"] as const,
@@ -136,7 +136,7 @@ export function useTriggerBulkEvaluation(
  * @param jobId - The job ID
  * @param options - Optional settings
  */
-export function useBulkEvaluationJob(
+function useBulkEvaluationJob(
   programId: string,
   jobId: string | null,
   options?: {

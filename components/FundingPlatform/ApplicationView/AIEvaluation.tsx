@@ -12,7 +12,7 @@ import {
   parseEvaluation,
 } from "./evaluationUtils";
 
-export type AIEvaluationData = string;
+type AIEvaluationData = string;
 
 interface AIEvaluationDisplayProps {
   evaluation: AIEvaluationData | null;

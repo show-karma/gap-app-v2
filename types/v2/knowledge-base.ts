@@ -51,7 +51,7 @@ export interface KnowledgeSource {
   updatedAt: string;
 }
 
-export interface KnowledgeDocument {
+interface KnowledgeDocument {
   id: string;
   sourceId: string;
   externalId: string;

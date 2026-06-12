@@ -7,8 +7,8 @@ import {
 } from "./session.schema";
 
 export const TEMPLATE_NAME_MAX = 120;
-export const FEEDBACK_INSTRUCTION_MAX = 1_000;
-export const FEEDBACK_INSTRUCTIONS_MAX_ITEMS = 50;
+const FEEDBACK_INSTRUCTION_MAX = 1_000;
+const FEEDBACK_INSTRUCTIONS_MAX_ITEMS = 50;
 
 export const templateCreateSchema = z.object({
   name: z

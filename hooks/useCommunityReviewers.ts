@@ -6,7 +6,7 @@ import { QUERY_KEYS } from "@/utilities/queryKeys";
 
 const DEFAULT_PAGE_LIMIT = 50;
 
-export interface UseCommunityReviewersParams {
+interface UseCommunityReviewersParams {
   communityUID: string;
   programId?: string;
   search?: string;

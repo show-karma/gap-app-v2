@@ -19,7 +19,7 @@ import { usePayoutHistory, useUpdateDisbursementStatus } from "../hooks/use-payo
 import { type PayoutDisbursement, PayoutDisbursementStatus } from "../types/payout-disbursement";
 import { formatTokenAmount } from "../utils/format-token-amount";
 
-export interface PayoutHistoryContentProps {
+interface PayoutHistoryContentProps {
   isActive: boolean;
   grantUID: string;
   grantName: string;

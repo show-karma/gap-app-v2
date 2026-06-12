@@ -21,7 +21,7 @@ export const FUNDING_PLATFORM_DOMAINS = {
   },
 };
 
-export const FUNDING_PLATFORM_TENANT_IDS = [
+const FUNDING_PLATFORM_TENANT_IDS = [
   "optimism",
   "arbitrum",
   "celo",

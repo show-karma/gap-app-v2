@@ -1,6 +1,6 @@
 import type { Grant } from "@show-karma/karma-gap-sdk";
 
-export const filterByCategory = (categoriesToFilter: string[], grantToFilter: Grant[]) => {
+const filterByCategory = (categoriesToFilter: string[], grantToFilter: Grant[]) => {
   if (categoriesToFilter.length === 0) {
     return grantToFilter;
   }

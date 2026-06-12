@@ -30,7 +30,7 @@ export function createClaimProvider(
 /**
  * Type guard to check if a provider config is for Hedgey
  */
-export function isHedgeyConfig(
+function isHedgeyConfig(
   config: ClaimGrantsConfig
 ): config is ClaimGrantsConfig & { providerConfig: HedgeyProviderConfig } {
   return config.provider === "hedgey" && config.providerConfig?.type === "hedgey";

@@ -20,7 +20,7 @@ import { formatDate } from "@/utilities/formatDate";
 import { formatMilestoneAmount } from "@/utilities/formatMilestoneAmount";
 import { PROJECT_UID_REGEX } from "@/utilities/validation";
 
-export interface ApplicationDataViewProps {
+interface ApplicationDataViewProps {
   application: IFundingApplication;
   program?: ProgramWithFormSchema;
   excludeMilestones?: boolean;

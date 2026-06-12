@@ -3,7 +3,7 @@
 import { type FC, useRef, useState } from "react";
 import { CommentInput } from "@/src/features/application-comments/components/CommentInput";
 
-export interface StickyCommentInputProps {
+interface StickyCommentInputProps {
   /** Callback when comment is submitted */
   onSubmit: (content: string) => Promise<void>;
   /** Whether the input is disabled */
@@ -70,5 +70,3 @@ export const StickyCommentInput: FC<StickyCommentInputProps> = ({
     </div>
   );
 };
-
-export default StickyCommentInput;

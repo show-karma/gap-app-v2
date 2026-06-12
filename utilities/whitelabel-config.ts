@@ -193,7 +193,7 @@ export function toHslToken(color: string): string | null {
   return null;
 }
 
-export function isWhitelabelDomain(hostname: string): boolean {
+function isWhitelabelDomain(hostname: string): boolean {
   return getWhitelabelByDomain(hostname) !== null;
 }
 

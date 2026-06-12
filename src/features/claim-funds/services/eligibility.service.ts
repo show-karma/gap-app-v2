@@ -2,7 +2,7 @@ import { fetchCampaignInfo, fetchClaimProof } from "../lib/hedgey-api";
 import type { ClaimCampaign } from "../providers/types";
 import type { CampaignInfo, ClaimEligibility, ClaimProof } from "../types";
 
-export interface EligibilityResult {
+interface EligibilityResult {
   eligibilities: Map<string, ClaimEligibility>;
   eligibleCampaigns: ClaimCampaign[];
 }

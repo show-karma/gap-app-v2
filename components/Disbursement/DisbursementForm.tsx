@@ -44,7 +44,7 @@ const getTokenName = (tokenId: string): string => {
   return TOKEN_OPTIONS.find((t) => t.id === tokenId)?.name || tokenId.toUpperCase();
 };
 
-export const formatNumber = (value: number): string => {
+const formatNumber = (value: number): string => {
   if (value >= 1_000_000) {
     return `${(value / 1_000_000).toFixed(1)}M`;
   }

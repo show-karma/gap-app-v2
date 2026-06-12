@@ -57,7 +57,7 @@ export function useIsFundingPlatformAdmin(): boolean {
  * - Community context: true if reviewer in any program of that community
  * - Program context: true if reviewer in that specific program
  */
-export function useIsFundingPlatformReviewer(): boolean {
+function useIsFundingPlatformReviewer(): boolean {
   const { isLoading, isReviewer } = usePermissionContext();
   return !isLoading && isReviewer;
 }

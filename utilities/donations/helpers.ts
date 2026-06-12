@@ -194,7 +194,7 @@ export function calculateTotalByToken(payments: DonationPayment[], tokenKey: str
 /**
  * Get summary of donations by network
  */
-export interface NetworkDonationSummary {
+interface NetworkDonationSummary {
   chainId: number;
   chainName: string;
   projectCount: number;

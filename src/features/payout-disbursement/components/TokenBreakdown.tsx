@@ -132,10 +132,7 @@ export function TokenBreakdown({ totalsByToken, className, size = "md" }: TokenB
 /**
  * Inline version for table cells - shows all tokens separated by comma
  */
-export function TokenBreakdownInline({
-  totalsByToken,
-  className,
-}: Omit<TokenBreakdownProps, "size">) {
+function TokenBreakdownInline({ totalsByToken, className }: Omit<TokenBreakdownProps, "size">) {
   if (!totalsByToken || totalsByToken.length === 0) {
     return <span className={cn("text-sm", className)}>0</span>;
   }

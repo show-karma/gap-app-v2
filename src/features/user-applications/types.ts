@@ -59,7 +59,7 @@ export interface UseUserApplicationsReturn {
   refresh: () => void;
 }
 
-export interface UseUserApplicationReturn {
+interface UseUserApplicationReturn {
   application: Application | null;
   isLoading: boolean;
   error: Error | null;

@@ -21,7 +21,7 @@ import { CategoryCreationDialog } from "./CategoryCreationDialog";
 import { GrantsTable } from "./GrantsTable";
 import { ProgramFilter } from "./ProgramFilter";
 
-export const metadata = defaultMetadata;
+const metadata = defaultMetadata;
 
 export interface CategoriesOptions {
   id: number;

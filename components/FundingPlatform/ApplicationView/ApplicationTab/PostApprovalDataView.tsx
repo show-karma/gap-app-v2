@@ -9,7 +9,7 @@ import { createFieldTypeMap } from "@/utilities/form-schema-helpers";
 import { formatDate } from "@/utilities/formatDate";
 import { PROJECT_UID_REGEX } from "@/utilities/validation";
 
-export interface PostApprovalDataViewProps {
+interface PostApprovalDataViewProps {
   application: IFundingApplication;
   program?: ProgramWithFormSchema;
 }
@@ -151,5 +151,3 @@ export const PostApprovalDataView: FC<PostApprovalDataViewProps> = ({ applicatio
     </div>
   );
 };
-
-export default PostApprovalDataView;

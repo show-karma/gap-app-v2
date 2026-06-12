@@ -45,7 +45,7 @@ export interface TestProgramPromptResult {
   error?: string;
 }
 
-export interface TriggerBulkEvaluationRequest {
+interface TriggerBulkEvaluationRequest {
   promptType: PromptType;
 }
 

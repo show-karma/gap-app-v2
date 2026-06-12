@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
-export interface MetricData {
+interface MetricData {
   lastUpdated: string;
   source: string;
   unit: string;
@@ -11,7 +11,7 @@ export interface MetricData {
   breakdown?: Record<string, number>;
 }
 
-export interface ProjectImpactResponse {
+interface ProjectImpactResponse {
   metrics: {
     gitCommits: MetricData | null;
     mergedPRs: MetricData | null;

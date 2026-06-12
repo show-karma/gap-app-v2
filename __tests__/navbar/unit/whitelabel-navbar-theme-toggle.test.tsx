@@ -28,7 +28,7 @@ import { getAuthFixture } from "../fixtures/auth-fixtures";
 import {
   cleanupAfterEach,
   createMockPermissions,
-  createMockUsePrivy,
+  createMockUseAuth,
   createMockUseTheme,
   renderWithProviders,
 } from "../utils/test-helpers";
@@ -71,7 +71,7 @@ describe("WhitelabelNavbar Theme Toggle", () => {
       const authFixture = getAuthFixture("authenticated-basic");
 
       renderWithProviders(<WhitelabelNavbar />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
         mockPermissions: createMockPermissions(authFixture.permissions),
         mockUseTheme: createMockUseTheme("light"),
       });
@@ -95,7 +95,7 @@ describe("WhitelabelNavbar Theme Toggle", () => {
       };
 
       renderWithProviders(<WhitelabelNavbar />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
         mockPermissions: createMockPermissions(authFixture.permissions),
       });
 
@@ -111,7 +111,7 @@ describe("WhitelabelNavbar Theme Toggle", () => {
       const authFixture = getAuthFixture("authenticated-basic");
 
       renderWithProviders(<WhitelabelNavbar />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
         mockPermissions: createMockPermissions(authFixture.permissions),
         mockUseTheme: createMockUseTheme("light"),
       });
@@ -127,7 +127,7 @@ describe("WhitelabelNavbar Theme Toggle", () => {
       const authFixture = getAuthFixture("unauthenticated");
 
       renderWithProviders(<WhitelabelNavbar />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
         mockPermissions: createMockPermissions(authFixture.permissions),
         mockUseTheme: createMockUseTheme("dark"),
       });

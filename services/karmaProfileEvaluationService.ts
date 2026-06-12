@@ -10,7 +10,7 @@ import { envVars } from "@/utilities/enviromentVars";
 // 150s timeout matches Internal — the aggregator can take ~120s on cache miss.
 const apiClient = createAuthenticatedApiClient(envVars.NEXT_PUBLIC_GAP_INDEXER_URL, 150000);
 
-export interface RunKarmaProfileEvaluationResponse {
+interface RunKarmaProfileEvaluationResponse {
   success: boolean;
   referenceNumber: string;
   status: "pending" | "in_progress" | "completed" | "failed" | "skipped";

@@ -1,4 +1,4 @@
-export interface ProgramImpactDatapoint {
+interface ProgramImpactDatapoint {
   value: number;
   proof: string;
   outputTimestamp: string | null;
@@ -50,7 +50,7 @@ export interface ProgramImpactData {
   data: ProgramImpactDataResponse[];
 }
 
-export interface ImpactAggregateDatapoint {
+interface ImpactAggregateDatapoint {
   outputTimestamp: string;
   avg_value: number;
   total_value: number;
@@ -58,7 +58,7 @@ export interface ImpactAggregateDatapoint {
   max_value: number;
 }
 
-export interface ImpactAggregateIndicator {
+interface ImpactAggregateIndicator {
   impactIndicatorId: string;
   indicatorName: string;
   indicatorDescription: string;
@@ -73,7 +73,7 @@ export interface ImpactAggregateIndicator {
   datapoints: ImpactAggregateDatapoint[];
 }
 
-export interface ImpactAggregateSegment {
+interface ImpactAggregateSegment {
   categoryName: string;
   impactSegmentName: string;
   impactSegmentId: string;
@@ -82,7 +82,7 @@ export interface ImpactAggregateSegment {
   indicators: ImpactAggregateIndicator[];
 }
 
-export interface ImpactAggregateData {
+interface ImpactAggregateData {
   categoryName: string;
   impacts: ImpactAggregateSegment[];
 }

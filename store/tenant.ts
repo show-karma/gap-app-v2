@@ -56,7 +56,7 @@ export const useTenantStore = create<TenantState>()(
   )
 );
 
-export function useTenant(): TenantConfig {
+function useTenant(): TenantConfig {
   const tenant = useTenantStore((state) => state.tenant);
   if (!tenant) {
     return getTenantConfig("karma");

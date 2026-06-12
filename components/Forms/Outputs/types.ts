@@ -15,7 +15,7 @@ export interface OutputData {
   _key?: string;
 }
 
-export interface DeliverableData {
+interface DeliverableData {
   name: string;
   proof: string;
   description?: string;

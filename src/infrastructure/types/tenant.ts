@@ -62,7 +62,7 @@ export interface TenantAssets {
 }
 
 // Navigation types
-export interface NavDropdownSubItem {
+interface NavDropdownSubItem {
   label: string;
   href: string;
   isExternal?: boolean;

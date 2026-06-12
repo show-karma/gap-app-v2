@@ -13,7 +13,7 @@ import { getChainByName, getPublicClient, switchOrAddChain } from "../lib/viem-c
 import type { ClaimEligibility } from "../types";
 import { useClaimProvider } from "./use-claim-provider";
 
-export interface UseClaimTransactionReturn {
+interface UseClaimTransactionReturn {
   claim: (
     campaignId: string,
     eligibility: ClaimEligibility,

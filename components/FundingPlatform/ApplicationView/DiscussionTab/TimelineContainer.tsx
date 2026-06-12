@@ -26,7 +26,7 @@ import { renderRelativeTime } from "@/utilities/formatRelativeTime";
 import { cn } from "@/utilities/tailwind";
 import CommentItem from "../CommentItem";
 
-export interface TimelineContainerProps {
+interface TimelineContainerProps {
   /** Comments to display */
   comments: ApplicationComment[];
   /** Status history entries */
@@ -388,5 +388,3 @@ export const TimelineContainer: FC<TimelineContainerProps> = ({
     </div>
   );
 };
-
-export default TimelineContainer;

@@ -12,7 +12,7 @@ import { getAuthFixture } from "../fixtures/auth-fixtures";
 import {
   cleanupAfterEach,
   createMockPermissions,
-  createMockUsePrivy,
+  createMockUseAuth,
   createMockUseTheme,
   renderWithProviders,
 } from "../utils/test-helpers";
@@ -29,7 +29,7 @@ describe("Theme Switching Integration Tests", () => {
       const authFixture = getAuthFixture("authenticated-basic");
 
       renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
         mockPermissions: createMockPermissions(authFixture.permissions),
         mockUseTheme: createMockUseTheme({
           theme: "light",
@@ -62,7 +62,7 @@ describe("Theme Switching Integration Tests", () => {
       const authFixture = getAuthFixture("authenticated-basic");
 
       renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
         mockPermissions: createMockPermissions(authFixture.permissions),
         mockUseTheme: createMockUseTheme({
           theme: "dark",
@@ -95,7 +95,7 @@ describe("Theme Switching Integration Tests", () => {
       const authFixture = getAuthFixture("authenticated-basic");
 
       renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
         mockPermissions: createMockPermissions(authFixture.permissions),
         mockUseTheme: createMockUseTheme({
           theme: "light",
@@ -129,7 +129,7 @@ describe("Theme Switching Integration Tests", () => {
       const authFixture = getAuthFixture("authenticated-basic");
 
       renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
         mockPermissions: createMockPermissions(authFixture.permissions),
         mockUseTheme: createMockUseTheme({
           theme: "dark",
@@ -164,7 +164,7 @@ describe("Theme Switching Integration Tests", () => {
 
       // Start in light mode
       const { rerender } = renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
         mockPermissions: createMockPermissions(authFixture.permissions),
         mockUseTheme: createMockUseTheme({
           theme: "light",
@@ -188,7 +188,7 @@ describe("Theme Switching Integration Tests", () => {
 
         // Simulate theme change by rerendering with dark theme
         rerender(<Navbar />, {
-          mockUsePrivy: createMockUsePrivy(authFixture.authState),
+          mockUsePrivy: createMockUseAuth(authFixture.authState),
           mockPermissions: createMockPermissions(authFixture.permissions),
           mockUseTheme: createMockUseTheme({
             theme: "dark",
@@ -216,7 +216,7 @@ describe("Theme Switching Integration Tests", () => {
       const authFixture = getAuthFixture("authenticated-basic");
 
       renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
         mockPermissions: createMockPermissions(authFixture.permissions),
         mockUseTheme: createMockUseTheme({
           theme: "light",
@@ -244,7 +244,7 @@ describe("Theme Switching Integration Tests", () => {
       const authFixture = getAuthFixture("authenticated-basic");
 
       renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
         mockPermissions: createMockPermissions(authFixture.permissions),
         mockUseTheme: createMockUseTheme({
           theme: "dark",
@@ -272,7 +272,7 @@ describe("Theme Switching Integration Tests", () => {
       const authFixture = getAuthFixture("authenticated-basic");
 
       renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
         mockPermissions: createMockPermissions(authFixture.permissions),
         mockUseTheme: createMockUseTheme({
           theme: "light",
@@ -304,7 +304,7 @@ describe("Theme Switching Integration Tests", () => {
       const authFixture = getAuthFixture("authenticated-basic");
 
       renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
         mockPermissions: createMockPermissions(authFixture.permissions),
         mockUseTheme: createMockUseTheme({
           theme: "light",
@@ -338,7 +338,7 @@ describe("Theme Switching Integration Tests", () => {
       const authFixture = getAuthFixture("authenticated-basic");
 
       const { rerender } = renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
         mockPermissions: createMockPermissions(authFixture.permissions),
         mockUseTheme: createMockUseTheme({
           theme: "light",
@@ -361,7 +361,7 @@ describe("Theme Switching Integration Tests", () => {
 
       // Rerender with dark theme
       rerender(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
         mockPermissions: createMockPermissions(authFixture.permissions),
         mockUseTheme: createMockUseTheme({
           theme: "dark",
@@ -392,7 +392,7 @@ describe("Theme Switching Integration Tests", () => {
       const authFixture = getAuthFixture("authenticated-basic");
 
       const { rerender, unmount } = renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
         mockPermissions: createMockPermissions(authFixture.permissions),
         mockUseTheme: createMockUseTheme({
           theme: "dark",
@@ -404,7 +404,7 @@ describe("Theme Switching Integration Tests", () => {
       unmount();
 
       renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
         mockPermissions: createMockPermissions(authFixture.permissions),
         mockUseTheme: createMockUseTheme({
           theme: "dark",
@@ -422,7 +422,7 @@ describe("Theme Switching Integration Tests", () => {
       const authFixture = getAuthFixture("authenticated-basic");
 
       const { rerender } = renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
         mockPermissions: createMockPermissions(authFixture.permissions),
         mockUseTheme: createMockUseTheme({
           theme: "light",
@@ -446,7 +446,7 @@ describe("Theme Switching Integration Tests", () => {
       // Rerender multiple times with dark theme
       for (let i = 0; i < 3; i++) {
         rerender(<Navbar />, {
-          mockUsePrivy: createMockUsePrivy(authFixture.authState),
+          mockUsePrivy: createMockUseAuth(authFixture.authState),
           mockPermissions: createMockPermissions(authFixture.permissions),
           mockUseTheme: createMockUseTheme({
             theme: "dark",
@@ -479,7 +479,7 @@ describe("Theme Switching Integration Tests", () => {
         const authFixture = getAuthFixture(role as keyof typeof getAuthFixture);
 
         renderWithProviders(<Navbar />, {
-          mockUsePrivy: createMockUsePrivy(authFixture.authState),
+          mockUsePrivy: createMockUseAuth(authFixture.authState),
           mockPermissions: createMockPermissions(authFixture.permissions),
           mockUseTheme: createMockUseTheme({
             theme: "light",
@@ -516,7 +516,7 @@ describe("Theme Switching Integration Tests", () => {
       const authFixture = getAuthFixture("authenticated-basic");
 
       renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
         mockPermissions: createMockPermissions(authFixture.permissions),
         mockUseTheme: createMockUseTheme({
           theme: "light",
@@ -544,7 +544,7 @@ describe("Theme Switching Integration Tests", () => {
       const authFixture = getAuthFixture("authenticated-basic");
 
       renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
         mockPermissions: createMockPermissions(authFixture.permissions),
         mockUseTheme: createMockUseTheme({
           theme: "dark",
@@ -574,7 +574,7 @@ describe("Theme Switching Integration Tests", () => {
       const authFixture = getAuthFixture("authenticated-basic");
 
       renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
         mockPermissions: createMockPermissions(authFixture.permissions),
         mockUseTheme: createMockUseTheme({
           theme: "system",

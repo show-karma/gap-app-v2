@@ -4,7 +4,7 @@ import type { FC, ReactNode } from "react";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { cn } from "@/utilities/tailwind";
 
-export interface TabPanelProps {
+interface TabPanelProps {
   children: ReactNode;
   className?: string;
   isLoading?: boolean;
@@ -76,5 +76,3 @@ export const TabPanel: FC<TabPanelProps> = ({
     </div>
   );
 };
-
-export default TabPanel;

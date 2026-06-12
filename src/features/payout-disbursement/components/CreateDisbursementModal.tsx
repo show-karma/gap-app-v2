@@ -57,7 +57,7 @@ import type {
 import { getAllocationSelectionError } from "../utils/allocation-selection";
 import { calculateSelectedTotal, MilestoneSelectionStep } from "./MilestoneSelectionStep";
 
-export interface CreateDisbursementModalProps {
+interface CreateDisbursementModalProps {
   isOpen: boolean;
   onClose: () => void;
   grants: GrantDisbursementInfo[];

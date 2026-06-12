@@ -20,7 +20,7 @@ const ReviewerPickerModal = dynamic(
  * Shared base interface for reviewer types
  * Both ProgramReviewer and MilestoneReviewer share these common properties
  */
-export interface ReviewerBase {
+interface ReviewerBase {
   publicAddress?: string;
   name: string;
   email: string;

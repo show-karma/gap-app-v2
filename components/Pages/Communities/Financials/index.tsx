@@ -84,9 +84,3 @@ export function CommunityFinancials() {
     </div>
   );
 }
-
-export { FinancialsEmptyState } from "./FinancialsEmptyState";
-export { FinancialsSummary } from "./FinancialsSummary";
-export { ProgramSelector } from "./ProgramSelector";
-export { ProjectFinancialRow } from "./ProjectFinancialRow";
-export { ProjectFinancialsList } from "./ProjectFinancialsList";

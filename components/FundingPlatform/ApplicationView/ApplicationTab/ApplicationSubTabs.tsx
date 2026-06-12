@@ -5,7 +5,7 @@ import { cn } from "@/utilities/tailwind";
 
 export type SubTabId = "application" | "post-approval";
 
-export interface ApplicationSubTabsProps {
+interface ApplicationSubTabsProps {
   activeTab: SubTabId;
   onTabChange: (tab: SubTabId) => void;
   /** Whether to show the Post Approval tab */
@@ -42,5 +42,3 @@ export const ApplicationSubTabs: FC<ApplicationSubTabsProps> = ({
     </div>
   );
 };
-
-export default ApplicationSubTabs;

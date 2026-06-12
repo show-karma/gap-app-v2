@@ -46,7 +46,7 @@ const parseAsCommaSeparatedArray = createParser({
 /**
  * Parsed organization filter value
  */
-export interface OrganizationFilterValue {
+interface OrganizationFilterValue {
   type: "community" | "organization";
   id: string;
 }
@@ -54,7 +54,7 @@ export interface OrganizationFilterValue {
 /**
  * Interface for the filter state
  */
-export interface FundingFilters {
+interface FundingFilters {
   page: number;
   search: string;
   status: string;

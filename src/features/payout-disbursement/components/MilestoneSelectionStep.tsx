@@ -10,7 +10,7 @@ import { formatMilestoneTitle } from "@/utilities/formatMilestoneTitle";
 import { cn } from "@/utilities/tailwind";
 import type { MilestoneAllocation, PayoutDisbursement } from "../types/payout-disbursement";
 
-export interface MilestoneSelectionStepProps {
+interface MilestoneSelectionStepProps {
   /** Milestone allocations available for selection */
   allocations: MilestoneAllocation[];
   /** IDs of allocations that have already been paid (from previous disbursements) */

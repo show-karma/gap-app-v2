@@ -22,7 +22,7 @@ import { formatDate } from "@/utilities/formatDate";
 import { cn } from "@/utilities/tailwind";
 import type { ProjectDetailsSidebarGrant } from "./ProjectDetailsSidebar";
 
-export interface DetailsSectionProps {
+interface DetailsSectionProps {
   grant: ProjectDetailsSidebarGrant;
   kycStatus: KycStatusResponse | null;
   agreement: CommunityPayoutAgreementInfo | null;

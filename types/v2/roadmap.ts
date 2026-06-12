@@ -16,12 +16,12 @@ export type ProjectUpdateDeliverable = {
   description?: string;
 };
 
-export type FundingAssociation = {
+type FundingAssociation = {
   name?: string;
   uid?: string;
 };
 
-export type IndicatorAssociation = {
+type IndicatorAssociation = {
   id?: string;
   name?: string;
   description?: string;

@@ -6,7 +6,7 @@ import toast from "react-hot-toast";
 import type { Application } from "@/types/whitelabel-entities";
 import fetchData from "@/utilities/fetchData";
 
-export enum PostApprovalErrorType {
+enum PostApprovalErrorType {
   NETWORK = "NETWORK",
   VALIDATION = "VALIDATION",
   AUTH = "AUTH",
@@ -15,7 +15,7 @@ export enum PostApprovalErrorType {
   UNKNOWN = "UNKNOWN",
 }
 
-export interface PostApprovalError {
+interface PostApprovalError {
   type: PostApprovalErrorType;
   message: string;
   details?: unknown;

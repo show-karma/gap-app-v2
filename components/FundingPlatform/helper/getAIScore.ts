@@ -28,7 +28,7 @@ export const formatAIScore = (application: IFundingApplication): string => {
  * @returns string | null - The AI evaluation response or null if not available
  * @throws Never throws - handles all errors gracefully
  */
-export const getAIResponse = (application: IFundingApplication): string | null => {
+const getAIResponse = (application: IFundingApplication): string | null => {
   return getAIResponseBase(application, "aiEvaluation");
 };
 
@@ -38,6 +38,6 @@ export const getAIResponse = (application: IFundingApplication): string | null =
  * @param application - The funding application to extract response from
  * @returns string - Formatted evaluation response or empty string if not available
  */
-export const getFormattedAIResponse = (application: IFundingApplication): string => {
+const getFormattedAIResponse = (application: IFundingApplication): string => {
   return formatEvaluationResponse(getAIResponse(application));
 };

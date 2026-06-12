@@ -70,7 +70,7 @@ export interface FormSchema {
   emailNotifications?: string[];
 }
 
-export interface FormSubmission {
+interface FormSubmission {
   id: string;
   formId: string;
   data: Record<string, any>;

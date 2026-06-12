@@ -136,7 +136,7 @@ export interface IFundingProgramConfig {
   updatedAt: string | Date;
 }
 
-export interface IAIConfig {
+interface IAIConfig {
   systemPrompt?: string;
   detailedPrompt?: string;
   aiModel?: string;
@@ -219,7 +219,7 @@ export interface IApplicationStatistics {
 }
 
 // V2 API Error Response
-export interface IFundingPlatformError {
+interface IFundingPlatformError {
   error: string;
   message: string;
   details?: Array<{
@@ -229,13 +229,13 @@ export interface IFundingPlatformError {
 }
 
 // Component Props
-export interface IFormBuilderProps {
+interface IFormBuilderProps {
   schema?: IFormSchema;
   onSchemaChange: (schema: IFormSchema) => void;
   disabled?: boolean;
 }
 
-export interface IApplicationViewProps {
+interface IApplicationViewProps {
   application: IFundingApplication;
   onStatusChange?: (
     applicationId: string,
@@ -332,7 +332,7 @@ export interface IReviewerInboxResponse {
 export type ExportFormat = "csv" | "json";
 
 // Application Version Types
-export interface IFieldChange {
+interface IFieldChange {
   fieldLabel: string;
   changeType: string; // 'added' | 'modified' | 'removed'
   oldValue: string;
@@ -360,7 +360,7 @@ export interface IApplicationVersionTimeline {
 }
 
 // Legacy version interface for backward compatibility during migration
-export interface IApplicationVersionLegacy {
+interface IApplicationVersionLegacy {
   id: string;
   applicationId: string;
   versionNumber: number;
@@ -375,7 +375,7 @@ export interface IApplicationVersionLegacy {
 }
 
 // Internal Component Props (for gradual migration)
-export interface IApplicationListComponentProps {
+interface IApplicationListComponentProps {
   programId: string;
   chainID: number;
   applications: IFundingApplication[];
@@ -392,7 +392,7 @@ export interface IApplicationListComponentProps {
 }
 
 // Type conversion helpers
-export function isFormSchema(schema: any): boolean {
+function isFormSchema(schema: any): boolean {
   return (
     schema &&
     typeof schema === "object" &&

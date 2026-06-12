@@ -10,7 +10,7 @@ import type {
 } from "../schemas/template.schema";
 import { standaloneEvaluationService } from "../services/standaloneEvaluationService";
 
-export const TEMPLATES_QUERY_KEYS = {
+const TEMPLATES_QUERY_KEYS = {
   all: ["evaluation-templates"] as const,
   user: () => [...TEMPLATES_QUERY_KEYS.all, "user"] as const,
   builtIn: () => [...TEMPLATES_QUERY_KEYS.all, "built-in"] as const,
