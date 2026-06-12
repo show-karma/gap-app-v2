@@ -33,7 +33,7 @@ function parseIntParam(value: string | null): number | undefined {
  */
 export function UpdatesContent({ className }: UpdatesContentProps) {
   const { projectId } = useParams();
-  const isAuthorized = useProjectAuthorization();
+  const { isAuthorized } = useProjectAuthorization();
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
