@@ -102,6 +102,67 @@ describe("OnboardingPage", () => {
     });
   });
 
+  // ───────────────────────────────────────────────────────────────────────────
+  // Issue #1426: the old page gated submit on a truthy-only `canSubmit`, so an
+  // invalid Runtime URL ("not-a-valid-url") still enabled the button, and a
+  // click silently did nothing (native browser bubbles only). The form now uses
+  // zodResolver and renders inline, ARIA-associated errors; clicking submit on
+  // an invalid form surfaces the error and never calls the mutation.
+  // ───────────────────────────────────────────────────────────────────────────
+  describe("inline validation (issue #1426)", () => {
+    it("shows an inline error for an invalid Runtime URL and does not provision", async () => {
+      const user = userEvent.setup();
+      renderPage();
+
+      await user.type(screen.getByLabelText(/organization handle/i), "acme-nonprofit");
+      await user.type(screen.getByLabelText(/runtime url/i), "not-a-valid-url");
+      await user.type(screen.getByLabelText(/runtime session token/i), "tok_aaaaaaaaaaaaaaaa");
+
+      await user.click(screen.getByRole("button", { name: /set up team/i }));
+
+      const urlInput = screen.getByLabelText(/runtime url/i);
+      await waitFor(() => {
+        expect(screen.getByText(/please enter a valid url/i)).toBeInTheDocument();
+      });
+
+      // Error is associated with the field for assistive tech.
+      expect(urlInput).toHaveAttribute("aria-invalid", "true");
+      const describedBy = urlInput.getAttribute("aria-describedby");
+      expect(describedBy).toBeTruthy();
+      expect(document.getElementById(describedBy as string)).toHaveTextContent(
+        /please enter a valid url/i
+      );
+
+      // The mutation must NOT fire for an invalid form.
+      expect(mockClient.provision).not.toHaveBeenCalled();
+      expect(mockPush).not.toHaveBeenCalled();
+    });
+
+    it("shows an inline error when the session token is shorter than 16 characters", async () => {
+      const user = userEvent.setup();
+      renderPage();
+
+      await user.type(screen.getByLabelText(/organization handle/i), "acme-nonprofit");
+      await user.type(screen.getByLabelText(/runtime url/i), "https://team-acme.karma.xyz");
+      await user.type(screen.getByLabelText(/runtime session token/i), "short");
+
+      await user.click(screen.getByRole("button", { name: /set up team/i }));
+
+      await waitFor(() => {
+        expect(screen.getByText(/at least 16 characters/i)).toBeInTheDocument();
+      });
+      expect(mockClient.provision).not.toHaveBeenCalled();
+    });
+
+    it("keeps the submit button enabled on an invalid form so errors can surface", () => {
+      renderPage();
+      // Unlike the old truthy-only gate, the button is only disabled while the
+      // mutation is pending — an invalid form still allows a click that reveals
+      // the inline errors.
+      expect(screen.getByRole("button", { name: /set up team/i })).not.toBeDisabled();
+    });
+  });
+
   it("renders the error message when provisioning fails", async () => {
     const user = userEvent.setup();
     mockClient.provision.mockRejectedValue(new Error("Container unreachable"));
