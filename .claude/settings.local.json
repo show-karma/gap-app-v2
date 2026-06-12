@@ -54,7 +54,11 @@
       "Bash(git status:*)",
       "Bash(git fetch:*)",
       "Bash(git rebase:*)",
-      "Bash(git stash:*)"
+      "Bash(git stash:*)",
+      "mcp__Vercel__deploy_to_vercel",
+      "mcp__Vercel__list_teams",
+      "mcp__Vercel__list_projects",
+      "mcp__Vercel__list_deployments"
     ],
     "deny": [],
     "defaultMode": "acceptEdits",
@@ -65,5 +69,9 @@
       "/Users/mmurthy/dev/dapps/karma_protocol/gap-whitelabel-app"
     ]
   },
-  "enabledMcpjsonServers": ["sentry", "asana", "playwright"]
+  "enabledMcpjsonServers": [
+    "sentry",
+    "asana",
+    "playwright"
+  ]
 }
