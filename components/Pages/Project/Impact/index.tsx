@@ -8,7 +8,7 @@ import { AddImpactScreen } from "./AddImpactScreen";
 type ImpactComponentProps = {};
 
 export const ImpactComponent: FC<ImpactComponentProps> = () => {
-  const isAuthorized = useProjectAuthorization();
+  const { isAuthorized } = useProjectAuthorization();
 
   const searchParams = useSearchParams();
   const grantScreen = searchParams?.get("tab");

@@ -94,6 +94,7 @@ function setupMocks(
     rpcUrl?: string | null;
     compareAllWalletsResult?: boolean;
     linkedWalletAddresses?: string[];
+    instanceLoading?: boolean;
   } = {}
 ) {
   const {
@@ -106,6 +107,7 @@ function setupMocks(
     rpcUrl = null,
     compareAllWalletsResult = false,
     linkedWalletAddresses = [],
+    instanceLoading = false,
   } = overrides;
 
   mockUseAuth.mockReturnValue({
@@ -130,7 +132,10 @@ function setupMocks(
     };
   });
 
-  mockUseProjectInstance.mockReturnValue({ project: projectInstance });
+  mockUseProjectInstance.mockReturnValue({
+    project: projectInstance,
+    isLoading: instanceLoading,
+  });
   mockGetRPCUrlByChainId.mockReturnValue(rpcUrl);
   mockCompareAllWallets.mockReturnValue(compareAllWalletsResult);
   mockGetLinkedWalletAddresses.mockReturnValue(linkedWalletAddresses);
@@ -455,6 +460,170 @@ describe("useProjectPermissions", () => {
 
       expect(result.current.isProjectAdmin).toBe(false);
       expect(result.current.isProjectOwner).toBe(false);
+    });
+  });
+
+  describe("isResolving (isPending-aware loading)", () => {
+    const mockUser = {
+      linkedAccounts: [{ type: "wallet", address: "0x1234567890abcdef1234567890abcdef12345678" }],
+    };
+
+    it("is false for an unauthenticated user (resolves synchronously)", () => {
+      setupMocks();
+      const { result } = renderHook(() => useProjectPermissions(), {
+        wrapper: createWrapper(),
+      });
+      expect(result.current.isResolving).toBe(false);
+    });
+
+    it("is false for an authenticated account with no candidate wallets", () => {
+      setupMocks({ authenticated: true, isConnected: true, address: null, user: null });
+      const { result } = renderHook(() => useProjectPermissions(), {
+        wrapper: createWrapper(),
+      });
+      expect(result.current.isResolving).toBe(false);
+    });
+
+    it("is true while the store project is not yet set", () => {
+      setupMocks({
+        authenticated: true,
+        isConnected: true,
+        address: "0x1234567890abcdef1234567890abcdef12345678",
+        user: mockUser,
+        project: null,
+      });
+      const { result } = renderHook(() => useProjectPermissions(), {
+        wrapper: createWrapper(),
+      });
+      expect(result.current.isResolving).toBe(true);
+    });
+
+    it("is true while projectInstance is still fetching even though owner store is resolved", () => {
+      // The exact disabled-query window: project set, but the projectInstance
+      // fetch is still in flight, so the permissions query is disabled-pending.
+      setupMocks({
+        authenticated: true,
+        isConnected: true,
+        address: "0x1234567890abcdef1234567890abcdef12345678",
+        user: mockUser,
+        project: { uid: "p1", details: { slug: "p1" }, chainID: 10 },
+        projectInstance: null,
+        instanceLoading: true,
+      });
+      const { result } = renderHook(() => useProjectPermissions(), {
+        wrapper: createWrapper(),
+      });
+      expect(result.current.isResolving).toBe(true);
+    });
+
+    it("is false once the on-chain checks resolve", async () => {
+      const mockProjectInstance = {
+        chainID: 10,
+        isOwner: vi.fn().mockResolvedValue(true),
+        isAdmin: vi.fn().mockResolvedValue(false),
+      };
+      setupMocks({
+        authenticated: true,
+        isConnected: true,
+        address: "0x1234567890abcdef1234567890abcdef12345678",
+        user: mockUser,
+        project: { uid: "p1", details: { slug: "p1" }, chainID: 10 },
+        projectInstance: mockProjectInstance,
+        rpcUrl: "https://rpc.example.com",
+      });
+      const { result } = renderHook(() => useProjectPermissions(), {
+        wrapper: createWrapper(),
+      });
+      await waitFor(() => {
+        expect(result.current.isProjectOwner).toBe(true);
+      });
+      expect(result.current.isResolving).toBe(false);
+    });
+  });
+
+  describe("stale-flag reset on project change", () => {
+    it("resets the global owner/admin flags when projectId changes", () => {
+      const mockUser = {
+        linkedAccounts: [{ type: "wallet", address: "0x1234567890abcdef1234567890abcdef12345678" }],
+      };
+      setupMocks({
+        authenticated: true,
+        isConnected: true,
+        address: "0x1234567890abcdef1234567890abcdef12345678",
+        user: mockUser,
+        project: { uid: "projectA", details: { slug: "projectA" }, chainID: 10 },
+      });
+
+      const { rerender } = renderHook(() => useProjectPermissions(), {
+        wrapper: createWrapper(),
+      });
+
+      mockSetIsProjectOwner.mockClear();
+      mockSetIsProjectAdmin.mockClear();
+
+      // Navigate to a different project — the global flags must be reset so
+      // project A's authorization is never reused for project B (#1581).
+      setupMocks({
+        authenticated: true,
+        isConnected: true,
+        address: "0x1234567890abcdef1234567890abcdef12345678",
+        user: mockUser,
+        project: { uid: "projectB", details: { slug: "projectB" }, chainID: 10 },
+      });
+      rerender();
+
+      expect(mockSetIsProjectOwner).toHaveBeenCalledWith(false);
+      expect(mockSetIsProjectAdmin).toHaveBeenCalledWith(false);
+    });
+
+    it("does not clobber resolved flags when a second instance mounts late on the same project", async () => {
+      // Regression: the reset effect must not fire on plain mount. The hook is
+      // instantiated by many components, some of which mount late (conditional
+      // dialogs, per-milestone items) AFTER another instance already resolved
+      // owner/admin to true. A mount-time reset would run after the late
+      // instance's data-sync effect (declared first) re-set the flags from
+      // cached query data, clobbering them to false permanently — query.data
+      // never changes again, so nothing re-syncs.
+      const mockUser = {
+        linkedAccounts: [{ type: "wallet", address: "0x1234567890abcdef1234567890abcdef12345678" }],
+      };
+      const mockProjectInstance = {
+        chainID: 10,
+        isOwner: vi.fn().mockResolvedValue(true),
+        isAdmin: vi.fn().mockResolvedValue(true),
+      };
+      setupMocks({
+        authenticated: true,
+        isConnected: true,
+        address: "0x1234567890abcdef1234567890abcdef12345678",
+        user: mockUser,
+        project: { uid: "projectA", details: { slug: "projectA" }, chainID: 10 },
+        projectInstance: mockProjectInstance,
+        rpcUrl: "https://rpc.example.com",
+      });
+
+      // Both instances must share the same QueryClient so the late mount sees
+      // the cached, already-resolved permissions data.
+      const wrapper = createWrapper();
+      const first = renderHook(() => useProjectPermissions(), { wrapper });
+      await waitFor(() => {
+        expect(first.result.current.isProjectOwner).toBe(true);
+      });
+
+      mockSetIsProjectOwner.mockClear();
+      mockSetIsProjectAdmin.mockClear();
+
+      // Late-mounting second instance (e.g. a dialog rendered only after auth
+      // resolves) on the SAME project.
+      const second = renderHook(() => useProjectPermissions(), { wrapper });
+      await waitFor(() => {
+        expect(second.result.current.isProjectOwner).toBe(true);
+      });
+
+      // The late mount must never reset the already-resolved global flags —
+      // ~20 legacy components still read them from the store.
+      expect(mockSetIsProjectOwner).not.toHaveBeenCalledWith(false);
+      expect(mockSetIsProjectAdmin).not.toHaveBeenCalledWith(false);
     });
   });
 });

@@ -62,6 +62,15 @@ vi.mock("@/utilities/fetchData", () => ({
   default: vi.fn(),
 }));
 
+vi.mock("@/src/components/ui/AccessDenied", () => ({
+  AccessDenied: ({ title, cta }: { title?: string; cta?: { label: string } }) => (
+    <div data-testid="access-denied">
+      <span>{title}</span>
+      {cta ? <span data-testid="access-denied-cta">{cta.label}</span> : null}
+    </div>
+  ),
+}));
+
 const mockUseQuery = useQuery as unknown as vi.Mock;
 const mockUseAdminCommunities = useAdminCommunities as unknown as vi.Mock;
 const mockUseAuth = useAuth as unknown as vi.Mock;
@@ -76,6 +85,7 @@ describe("CommunityAdmin", () => {
 
     mockUseAdminCommunities.mockReturnValue({ communities: [], isLoading: false });
     mockUseAuth.mockReturnValue({
+      ready: true,
       authenticated: true,
       address: "0x1234567890123456789012345678901234567890",
     });
@@ -98,8 +108,9 @@ describe("CommunityAdmin", () => {
       }
     );
 
-    mockUseOwnerStore.mockImplementation((selector: (state: { isOwner: boolean }) => unknown) =>
-      selector({ isOwner: false })
+    mockUseOwnerStore.mockImplementation(
+      (selector: (state: { isOwner: boolean; isOwnerLoading: boolean }) => unknown) =>
+        selector({ isOwner: false, isOwnerLoading: false })
     );
   });
 
@@ -128,5 +139,30 @@ describe("CommunityAdmin", () => {
 
     expect(await screen.findByText("Optimism Builders")).toBeInTheDocument();
     expect(mockGetCommunities).not.toHaveBeenCalled();
+  });
+
+  it("renders an explicit AccessDenied with sign-in CTA for guests once Privy is ready (#1213)", () => {
+    mockUseAuth.mockReturnValue({
+      ready: true,
+      authenticated: false,
+      address: undefined,
+    });
+    mockUseQuery.mockReturnValue({ data: undefined, isLoading: false, refetch: vi.fn() });
+
+    render(<CommunitiesToAdminPage />);
+
+    expect(screen.getByTestId("access-denied")).toBeInTheDocument();
+    expect(screen.getByTestId("access-denied-cta")).toBeInTheDocument();
+    // Never the blank NOT_ADMIN fall-through for a signed-out visitor.
+    expect(screen.queryByText("You are not an admin of any community.")).not.toBeInTheDocument();
+  });
+
+  it("does not show AccessDenied while Privy is still initializing", () => {
+    mockUseAuth.mockReturnValue({ ready: false, authenticated: false, address: undefined });
+    mockUseQuery.mockReturnValue({ data: undefined, isLoading: false, refetch: vi.fn() });
+
+    render(<CommunitiesToAdminPage />);
+
+    expect(screen.queryByTestId("access-denied")).not.toBeInTheDocument();
   });
 });
