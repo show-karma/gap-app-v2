@@ -7,9 +7,9 @@ interface PageProps {
 }
 
 export const metadata: Metadata = customMetadata({
-  title: "Donor Research — Report",
-  description: "View a donor-research report.",
-  path: "/donor-research",
+  title: "Nonprofit Research — Report",
+  description: "View a nonprofit-research report.",
+  path: "/nonprofit-research",
   robots: { index: false, follow: false },
 });
 
