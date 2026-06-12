@@ -20,11 +20,11 @@ test.describe("Smoke Tests — Health", () => {
 
     // The homepage hero heading should be visible
     await expect(
-      page.getByRole("heading", { name: /funding software that does the work/i }).first()
+      page.getByRole("heading", { name: /karma helps funders fund and track/i }).first()
     ).toBeVisible();
 
-    // The FAQ section should be present on the homepage
-    await expect(page.getByText(/frequently asked/i)).toBeVisible();
+    // The "How Karma works" section should be present on the homepage
+    await expect(page.getByText(/how karma works/i).first()).toBeVisible();
 
     assertNoJsErrors(jsErrors);
   });
