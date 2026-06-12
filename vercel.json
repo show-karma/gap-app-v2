@@ -6,5 +6,11 @@
     }
   },
   "ignoreCommand": "bash vercel-ignore.sh",
-  "buildCommand": "timeout -k 30s 900s pnpm build || ( rm -rf .next && timeout -k 30s 900s pnpm build )"
+  "buildCommand": "timeout -k 30s 900s pnpm build || ( rm -rf .next && timeout -k 30s 900s pnpm build )",
+  "crons": [
+    {
+      "path": "/api/cron/warm-sitemaps",
+      "schedule": "0 */6 * * *"
+    }
+  ]
 }

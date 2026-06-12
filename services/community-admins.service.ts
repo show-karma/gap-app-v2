@@ -1,6 +1,12 @@
+import type { SignerOrProvider } from "@show-karma/karma-gap-sdk";
+import type { Hex } from "viem";
+import { errorManager } from "@/components/Utilities/errorManager";
+import type { Community } from "@/types/v2/community";
 import { createAuthenticatedApiClient } from "@/utilities/auth/api-client";
 import { envVars } from "@/utilities/enviromentVars";
 import { INDEXER } from "@/utilities/indexer";
+import { getCommunityDetails } from "@/utilities/queries/v2/community";
+import { isCommunityAdminOfAny } from "@/utilities/sdk/communities/isCommunityAdmin";
 
 const API_URL = envVars.NEXT_PUBLIC_GAP_INDEXER_URL;
 
@@ -85,4 +91,46 @@ export const communityAdminsService = {
       throw error;
     }
   },
+};
+
+/**
+ * Resolve whether ANY of the given wallet addresses is an admin of ANY of the
+ * given communities, identified by UID or slug.
+ *
+ * A project may belong to several communities (via its grants), and managing
+ * its team should be allowed if the user administers any one of them. Each
+ * community's details are fetched, then the on-chain admin check runs in
+ * parallel and the results are OR-ed together. Communities that fail to resolve
+ * are skipped, and any unexpected failure resolves to `false` (logged) so
+ * callers never throw from an authorization check.
+ *
+ * @param communityUIDs - Community UIDs (or slugs) to check
+ * @param addresses - The wallet addresses to check
+ * @param signer - Optional signer for blockchain calls
+ */
+export const isAdminOfAnyCommunity = async (
+  communityUIDs: string[],
+  addresses: (string | Hex)[],
+  signer?: SignerOrProvider
+): Promise<boolean> => {
+  const uniqueUIDs = Array.from(new Set(communityUIDs.filter(Boolean)));
+  if (uniqueUIDs.length === 0 || addresses.length === 0) return false;
+
+  try {
+    const communities = await Promise.all(uniqueUIDs.map((uid) => getCommunityDetails(uid)));
+
+    const checks = await Promise.all(
+      communities
+        .filter((community): community is Community => !!community)
+        .map((community) => isCommunityAdminOfAny(community, addresses, signer))
+    );
+
+    return checks.some(Boolean);
+  } catch (error: unknown) {
+    errorManager("Error checking admin across communities", error, {
+      communityUIDs: uniqueUIDs,
+      addresses,
+    });
+    return false;
+  }
 };

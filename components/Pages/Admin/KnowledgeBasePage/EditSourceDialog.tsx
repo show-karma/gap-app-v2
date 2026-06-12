@@ -249,7 +249,9 @@ export function EditSourceDialog({ communityIdOrSlug, source, open, onOpenChange
                         ? "Google Doc URL or ID"
                         : source.kind === "pdf_url"
                           ? "PDF URL"
-                          : "Web page URL"
+                          : source.kind === "agentic_site"
+                            ? "Site URL"
+                            : "Web page URL"
                     }
                     hint={
                       KNOWLEDGE_SOURCE_KIND_HINTS[source.kind] ??
@@ -270,7 +272,11 @@ export function EditSourceDialog({ communityIdOrSlug, source, open, onOpenChange
 
                   <FormField
                     label="Purpose (optional)"
-                    hint="One sentence on what this source is for. Prepended to each chunk at embed time so the chatbot ranks it higher when a question matches the intent. Editing this re-embeds every chunk under this source on the next sync."
+                    hint={
+                      source.kind === "agentic_site"
+                        ? "One sentence on when this manifest applies. Sent alongside the SKILL.md text so the chatbot uses it to decide whether to draw on this source."
+                        : "One sentence on what this source is for. Prepended to each chunk at embed time so the chatbot ranks it higher when a question matches the intent. Editing this re-embeds every chunk under this source on the next sync."
+                    }
                     htmlFor="kb-edit-goal"
                   >
                     <div className="relative">
@@ -335,6 +341,7 @@ export function EditSourceDialog({ communityIdOrSlug, source, open, onOpenChange
 
       <ConfirmEditDialog
         open={confirmOpen}
+        kind={source.kind}
         changes={changes}
         loading={edit.isPending}
         onCancel={() => setConfirmOpen(false)}
@@ -383,12 +390,14 @@ function KindLockedBadge({ kind }: { kind: KnowledgeSource["kind"] }) {
 
 function ConfirmEditDialog({
   open,
+  kind,
   changes,
   loading,
   onCancel,
   onConfirm,
 }: {
   open: boolean;
+  kind: KnowledgeSource["kind"];
   changes: EditChanges | null;
   loading: boolean;
   onCancel: () => void;
@@ -399,12 +408,16 @@ function ConfirmEditDialog({
     const items: string[] = [];
     if (changes.goalChanged) {
       items.push(
-        "Re-embed every chunk under this source. The new purpose will be prepended to each chunk at embed time."
+        kind === "agentic_site"
+          ? "Update the purpose line sent alongside this manifest to the chatbot on the next request."
+          : "Re-embed every chunk under this source. The new purpose will be prepended to each chunk at embed time."
       );
     }
     if (changes.externalIdChanged) {
       items.push(
-        "Re-fetch and re-index documents under the new URL/ID. For folder-style sources, documents that no longer match are soft-deleted on the next sync."
+        kind === "agentic_site"
+          ? "Re-fetch SKILL.md from the new URL on the next sync. The previous manifest text is replaced."
+          : "Re-fetch and re-index documents under the new URL/ID. For folder-style sources, documents that no longer match are soft-deleted on the next sync."
       );
     }
     if (changes.followLinksTurnedOn) {
@@ -413,7 +426,7 @@ function ConfirmEditDialog({
       );
     }
     return items;
-  }, [changes]);
+  }, [changes, kind]);
 
   return (
     <Dialog.Root open={open} onOpenChange={(next) => !next && onCancel()}>

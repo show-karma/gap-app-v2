@@ -15,7 +15,6 @@ export function NavbarAuthButtonsSkeleton() {
   return (
     <div className="flex items-center gap-3">
       <Skeleton className="h-9 w-20 rounded-md" />
-      <Skeleton className="h-9 w-32 rounded-md" />
     </div>
   );
 }

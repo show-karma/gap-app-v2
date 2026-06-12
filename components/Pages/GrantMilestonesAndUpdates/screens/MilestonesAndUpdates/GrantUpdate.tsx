@@ -4,9 +4,9 @@ import { useAccount } from "wagmi";
 import { DeleteDialog } from "@/components/DeleteDialog";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { errorManager } from "@/components/Utilities/errorManager";
-import { useIsCommunityAdmin } from "@/hooks/communities/useIsCommunityAdmin";
 import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useOffChainRevoke } from "@/hooks/useOffChainRevoke";
+import { useProjectAuthorization } from "@/hooks/useProjectAuthorization";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
 import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
@@ -202,10 +202,7 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({ title, description, index, d
     }
   };
 
-  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
-  const { isCommunityAdmin } = useIsCommunityAdmin(grant?.communityUID);
-
-  const isAuthorized = isProjectOwner || isProjectAdmin || isContractOwner || isCommunityAdmin;
+  const { isAuthorized } = useProjectAuthorization(grant?.communityUID);
 
   const isVerified: boolean = Array.isArray(update?.verified) && update.verified.length > 0;
 

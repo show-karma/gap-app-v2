@@ -6,57 +6,14 @@ vi.mock("@/src/features/home/components/hero", () => ({
   Hero: () => <div data-testid="hero" />,
 }));
 
-vi.mock("@/src/features/home/components/pain-points", () => ({
-  PainPoints: () => <div data-testid="pain-points" />,
+vi.mock("@/src/features/home/components/workflow-section", () => ({
+  WorkflowSection: () => <div data-testid="workflow-section" />,
 }));
 
-vi.mock("@/src/features/home/components/numbers-section", () => ({
-  NumbersSection: () => <div data-testid="numbers-section" />,
-}));
+describe("Homepage (funder workflow landing)", () => {
+  const sections = ["hero", "workflow-section"];
 
-vi.mock("@/src/features/home/components/platform-section", () => ({
-  PlatformSection: () => <div data-testid="platform-section" />,
-}));
-
-vi.mock("@/src/features/home/components/case-studies-section", () => ({
-  CaseStudiesSection: () => <div data-testid="case-studies-section" />,
-}));
-
-vi.mock("@/src/features/home/components/how-it-works-section", () => ({
-  HowItWorksSection: () => <div data-testid="how-it-works-section" />,
-}));
-
-vi.mock("@/src/features/home/components/objections-section", () => ({
-  ObjectionsSection: () => <div data-testid="objections-section" />,
-}));
-
-vi.mock("@/src/features/home/components/offering-section", () => ({
-  OfferingSection: () => <div data-testid="offering-section" />,
-}));
-
-vi.mock("@/src/features/home/components/faq-section", () => ({
-  FAQSection: () => <div data-testid="faq-section" />,
-}));
-
-vi.mock("@/src/features/home/components/cta-section", () => ({
-  CTASection: () => <div data-testid="cta-section" />,
-}));
-
-describe("Homepage (funder landing)", () => {
-  const sections = [
-    "hero",
-    "pain-points",
-    "numbers-section",
-    "platform-section",
-    "case-studies-section",
-    "how-it-works-section",
-    "objections-section",
-    "offering-section",
-    "faq-section",
-    "cta-section",
-  ];
-
-  it("renders all main sections", () => {
+  it("renders the three top-level sections", () => {
     render(<Index />);
     sections.forEach((testId) => {
       expect(screen.getByTestId(testId)).toBeInTheDocument();
@@ -87,15 +44,13 @@ describe("Homepage (funder landing)", () => {
     });
   });
 
-  it("contains horizontal dividers between sections", () => {
+  it("renders sections without horizontal dividers (alternating bands carry rhythm)", () => {
     const { container } = render(<Index />);
 
+    // Visual rhythm now comes from the workflow section's alternating
+    // bg-secondary band, not a horizontal rule.
     const horizontalLines = container.querySelectorAll("hr");
-    expect(horizontalLines.length).toBeGreaterThan(0);
-
-    horizontalLines.forEach((hr) => {
-      expect(hr).toHaveClass("w-full", "h-[1px]", "bg-border");
-    });
+    expect(horizontalLines.length).toBe(0);
   });
 
   it("has responsive inner container with max-width", () => {

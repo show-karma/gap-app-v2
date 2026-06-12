@@ -230,11 +230,10 @@ describe("Responsive Behavior Integration Tests", () => {
         mockUsePrivy: createMockUsePrivy(authFixture.authState),
       });
 
-      // Auth buttons should be visible (both mobile and desktop have them)
+      // Sign in is the only auth button in the nav header now
       const signInButtons = screen.getAllByText("Sign in");
       expect(signInButtons.length).toBeGreaterThan(0);
-      const contactSalesButtons = screen.getAllByText("Contact sales");
-      expect(contactSalesButtons.length).toBeGreaterThan(0);
+      expect(screen.queryByText("Contact sales")).not.toBeInTheDocument();
     });
   });
 

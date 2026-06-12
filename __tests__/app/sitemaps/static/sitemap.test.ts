@@ -14,10 +14,10 @@ describe("app/sitemaps/static/sitemap.ts", () => {
     const { default: staticSitemap } = await import("@/app/sitemaps/static/sitemap");
     const entries = staticSitemap();
     const urls = entries.map((e) => e.url);
-    expect(urls).toContain(`${SITE_URL}/non-profits/find-funders`);
-    expect(urls).toContain(`${SITE_URL}/non-profits/find-funders/connect`);
-    expect(urls).toContain(`${SITE_URL}/non-profits/find-funders/connect/claude`);
-    expect(urls).toContain(`${SITE_URL}/non-profits/find-funders/connect/chatgpt`);
+    expect(urls).toContain(`${SITE_URL}/nonprofits/find-funders`);
+    expect(urls).toContain(`${SITE_URL}/nonprofits/find-funders/connect`);
+    expect(urls).toContain(`${SITE_URL}/nonprofits/find-funders/connect/claude`);
+    expect(urls).toContain(`${SITE_URL}/nonprofits/find-funders/connect/chatgpt`);
   });
 
   it("sets homepage priority to 1 and changeFrequency to daily", async () => {
@@ -28,14 +28,10 @@ describe("app/sitemaps/static/sitemap.ts", () => {
     expect(homepage?.changeFrequency).toBe("daily");
   });
 
-  it("downgrades privacy/terms/dashboard to yearly low-priority entries", async () => {
+  it("downgrades privacy/terms to yearly low-priority entries", async () => {
     const { default: staticSitemap } = await import("@/app/sitemaps/static/sitemap");
     const entries = staticSitemap();
-    const lowPriorityUrls = [
-      `${SITE_URL}/privacy-policy`,
-      `${SITE_URL}/terms-and-conditions`,
-      `${SITE_URL}/dashboard`,
-    ];
+    const lowPriorityUrls = [`${SITE_URL}/privacy-policy`, `${SITE_URL}/terms-and-conditions`];
     for (const url of lowPriorityUrls) {
       const entry = entries.find((e) => e.url === url);
       expect(entry?.priority).toBe(0.3);

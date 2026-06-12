@@ -15,6 +15,7 @@ import type {
   SmartAccountClient,
 } from "../types";
 import { GaslessProviderError } from "../types";
+import { withUserOpSerialization } from "../utils/userOpQueue";
 
 /**
  * EntryPoint v0.7 for ERC-4337.
@@ -197,13 +198,26 @@ export class ZeroDevProvider implements IGaslessProvider {
   async toEthersSigner(
     client: SmartAccountClient,
     chainId: number,
-    _config: ChainGaslessConfig
+    config: ChainGaslessConfig
   ): Promise<Signer> {
-    // Create EIP-1193 provider from kernel client
-    const kernelProvider = new KernelEIP1193Provider(client);
+    // Create EIP-1193 provider from kernel client. Serialize UserOps per sender
+    // so concurrent attestations (e.g. deleting several milestones in a row)
+    // can't submit two ops on the same nonce and trip the bundler's AA25 guard.
+    const kernelProvider = withUserOpSerialization(
+      new KernelEIP1193Provider(client),
+      client.account?.address
+    );
 
-    // Wrap in ethers BrowserProvider
-    const ethersProvider = new BrowserProvider(kernelProvider);
+    // Wrap in ethers BrowserProvider, pinning the network to the kernel
+    // client's chain. Without an explicit network, ethers v6 lazily probes
+    // eth_chainId on the underlying provider, which can still report a stale
+    // chain (e.g. mainnet/1 right after an embedded-wallet switch) and make the
+    // GAP SDK throw "Network mainnet not supported." The kernel client is
+    // already built for `chainId`, so this static network is consistent.
+    const ethersProvider = new BrowserProvider(kernelProvider, {
+      chainId,
+      name: config.chain?.name ?? String(chainId),
+    });
 
     // Get signer from provider
     const signer = await ethersProvider.getSigner();

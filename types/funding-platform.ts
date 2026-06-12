@@ -281,6 +281,53 @@ export interface IPaginatedApplicationsResponse {
   };
 }
 
+/**
+ * Unified reviewer-inbox feed item, as returned by
+ * GET /v2/funding-applications/community/:communityId/reviewer-inbox.
+ * The indexer merges, buckets and sorts both review streams server-side.
+ */
+export interface IReviewerInboxItem {
+  id: string;
+  kind: "application" | "milestone";
+  bucket: "action" | "waiting" | "done";
+  status: string;
+  title: string;
+  subtitle?: string;
+  who?: string;
+  project?: string;
+  programId: string;
+  chainID?: number | null;
+  aiScore?: number;
+  dueLabel?: string;
+  overdue?: boolean;
+  activitySort: number;
+  referenceNumber?: string;
+  projectUid?: string;
+  grantUid?: string;
+  projectSlug?: string;
+  milestoneUid?: string;
+}
+
+export interface IReviewerInboxStats {
+  action: number;
+  waiting: number;
+  done: number;
+  overdue: number;
+  applications: number;
+  milestones: number;
+}
+
+export interface IReviewerInboxResponse {
+  items: IReviewerInboxItem[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+  stats: IReviewerInboxStats;
+}
+
 // Export Format Types
 export type ExportFormat = "csv" | "json";
 

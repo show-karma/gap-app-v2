@@ -2,29 +2,29 @@
 
 import { AlertCircle, MessageSquare, RefreshCw } from "lucide-react";
 import pluralize from "pluralize";
-import React, { useMemo, useState } from "react";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
+import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Spinner } from "@/components/ui/spinner";
 import { useAuth } from "@/hooks/useAuth";
 import { compareAllWallets } from "@/utilities/auth/compare-all-wallets";
+import { cn } from "@/utilities/tailwind";
+
+type ActivityFilter = "all" | "comment" | "status";
+
+const ACTIVITY_FILTERS: { key: ActivityFilter; label: string }[] = [
+  { key: "all", label: "All" },
+  { key: "status", label: "Status" },
+  { key: "comment", label: "Comments" },
+];
+
 import { useApplicationComments } from "../hooks/use-application-comments";
 import type { CommentTimelineProps } from "../types";
 import { CommentInput } from "./CommentInput";
 import { CommentItem } from "./CommentItem";
 import { StatusChangeItem } from "./StatusChangeItem";
 
-export function CommentTimeline({
-  applicationId,
-  statusHistory,
-  communityId,
-}: CommentTimelineProps) {
+export function CommentTimeline({ applicationId, statusHistory }: CommentTimelineProps) {
   const { user } = useAuth();
   const {
     comments,
@@ -44,6 +44,7 @@ export function CommentTimeline({
   const [newComment, setNewComment] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [filter, setFilter] = useState<ActivityFilter>("all");
 
   // Combine comments with status history for unified timeline
   const timelineItems = useMemo(() => {
@@ -113,77 +114,90 @@ export function CommentTimeline({
     );
   }
 
-  const totalItems = timelineItems.length;
+  const statusCount = statusHistory.length;
+  const commentCount = comments.length;
+  const filteredItems =
+    filter === "all" ? timelineItems : timelineItems.filter((item) => item.type === filter);
 
   return (
-    <Accordion type="single" collapsible defaultValue="comments">
-      <AccordionItem value="comments">
-        <AccordionTrigger className="px-4">
-          <div className="flex items-center gap-2">
-            <MessageSquare className="w-5 h-5" />
-            <span className="text-xl font-semibold">Comments & Activity</span>
-            <span className="text-sm text-muted-foreground">
-              {totalItems} {pluralize("item", totalItems)}
-            </span>
+    <section className="rounded-2xl border border-border bg-card shadow-sm">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-5 py-4">
+        <div className="flex items-center gap-2">
+          <MessageSquare className="h-5 w-5 text-muted-foreground" />
+          <div>
+            <h2 className="text-base font-semibold text-foreground">Activity</h2>
+            <p className="text-[13px] text-muted-foreground">
+              {pluralize("status update", statusCount, true)} ·{" "}
+              {pluralize("comment", commentCount, true)}
+            </p>
           </div>
-        </AccordionTrigger>
-        <AccordionContent className="px-0">
-          <div className="relative pb-4">
-            {/* Timeline items */}
-            <div className="relative space-y-4 mb-4 px-2 py-2 max-h-[500px] overflow-y-auto">
-              {timelineItems.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  <MessageSquare className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                  <p className="text-lg font-medium">No activity yet</p>
-                  <p className="text-sm">Be the first to add a comment</p>
-                </div>
-              ) : (
-                timelineItems.map((item, index) => {
-                  if (item.type === "comment") {
-                    const isUserComment = user
-                      ? compareAllWallets(user, item.authorAddress)
-                      : false;
-
-                    return (
-                      <div key={item.id} data-testid={`timeline-item-comment-${index}`}>
-                        <CommentItem
-                          comment={item}
-                          isOwner={isUserComment}
-                          isEditing={editingId === item.id}
-                          onEdit={() => setEditingId(item.id)}
-                          onSave={(content) => handleEdit(item.id, content)}
-                          onCancel={() => setEditingId(null)}
-                          onDelete={() => handleDelete(item.id)}
-                        />
-                      </div>
-                    );
-                  }
-                  return (
-                    <div
-                      key={`status-${item.timestamp}`}
-                      data-testid={`timeline-item-status-${index}`}
-                    >
-                      <StatusChangeItem status={item} />
-                    </div>
-                  );
-                })
+        </div>
+        <div className="flex gap-1.5">
+          {ACTIVITY_FILTERS.map(({ key, label }) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setFilter(key)}
+              className={cn(
+                "rounded-full border px-3 py-1 text-[12.5px] font-medium transition-colors",
+                filter === key
+                  ? "border-foreground bg-foreground text-background"
+                  : "border-border bg-card text-muted-foreground hover:text-foreground"
               )}
-            </div>
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
 
-            {/* Comment input */}
-            {canComment && (
-              <CommentInput
-                value={newComment}
-                onChange={setNewComment}
-                onSubmit={handleSubmit}
-                placeholder="Add a comment..."
-                disabled={isSubmitting}
-                isLoading={isSubmitting}
-              />
-            )}
-          </div>
-        </AccordionContent>
-      </AccordionItem>
-    </Accordion>
+      <div className="px-5 py-4">
+        <div className="relative mb-4 max-h-[500px] space-y-4 overflow-y-auto">
+          {filteredItems.length === 0 ? (
+            <div className="py-8 text-center text-muted-foreground">
+              <MessageSquare className="mx-auto mb-2 h-12 w-12 opacity-50" />
+              <p className="text-lg font-medium">No activity yet</p>
+              <p className="text-sm">Be the first to add a comment</p>
+            </div>
+          ) : (
+            filteredItems.map((item, index) => {
+              if (item.type === "comment") {
+                const isUserComment = user ? compareAllWallets(user, item.authorAddress) : false;
+
+                return (
+                  <div key={item.id} data-testid={`timeline-item-comment-${index}`}>
+                    <CommentItem
+                      comment={item}
+                      isOwner={isUserComment}
+                      isEditing={editingId === item.id}
+                      onEdit={() => setEditingId(item.id)}
+                      onSave={(content) => handleEdit(item.id, content)}
+                      onCancel={() => setEditingId(null)}
+                      onDelete={() => handleDelete(item.id)}
+                    />
+                  </div>
+                );
+              }
+              return (
+                <div key={`status-${item.timestamp}`} data-testid={`timeline-item-status-${index}`}>
+                  <StatusChangeItem status={item} />
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        {canComment && (
+          <CommentInput
+            value={newComment}
+            onChange={setNewComment}
+            onSubmit={handleSubmit}
+            placeholder="Add a comment..."
+            disabled={isSubmitting}
+            isLoading={isSubmitting}
+          />
+        )}
+      </div>
+    </section>
   );
 }

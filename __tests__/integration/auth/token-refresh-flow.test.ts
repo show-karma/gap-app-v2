@@ -235,7 +235,12 @@ describe("Integration: token refresh flow", () => {
       TokenManager.clearCache();
       TokenManager.setPrivyInstance(null);
 
-      const [data, error] = await fetchData("/no-auth");
+      // With no Privy instance registered, getToken() awaits an internal
+      // waitForInstance() backed by a setTimeout(3000) fallback. Under fake
+      // timers that timer must be advanced or fetchData never resolves.
+      const fetchPromise = fetchData("/no-auth");
+      await vi.advanceTimersByTimeAsync(3000);
+      const [data, error] = await fetchPromise;
 
       // fetchData should still work, just without auth header
       expect(error).toBeNull();

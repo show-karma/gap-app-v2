@@ -7,6 +7,7 @@ import {
   getEffectiveMilestoneStatus,
   MILESTONE_STATUS_LABEL,
 } from "@/utilities/milestones/getEffectiveMilestoneStatus";
+import { normalizeMilestoneDueDateMs } from "@/utilities/milestones/milestoneDueDate";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 import { STATUS_BADGE_CLASSES } from "./milestoneStatusStyles";
@@ -28,7 +29,10 @@ const CommunityMilestonesTableRowComponent: FC<CommunityMilestonesTableRowProps>
   const projectTitle = milestone.project.details?.data?.title;
   const grantTitle = milestone.grant?.details?.data?.title || "Project Milestone";
 
-  const effectiveStatus = getEffectiveMilestoneStatus(milestone.status, milestone.details.dueDate);
+  // Single normalized due timestamp drives both the status cell and the due
+  // date cell, so a corrupted/missing dueDate cannot disagree across the two.
+  const dueMs = normalizeMilestoneDueDateMs(milestone.details.dueDate);
+  const effectiveStatus = getEffectiveMilestoneStatus(milestone.status, dueMs);
 
   const grantHref = milestone.grant
     ? PAGES.PROJECT.GRANT(projectSlug, milestone.grant.uid)
@@ -107,9 +111,9 @@ const CommunityMilestonesTableRowComponent: FC<CommunityMilestonesTableRowProps>
 
       {/* Due date */}
       <td className={cellClasses}>
-        {milestone.details.dueDate ? (
+        {dueMs != null ? (
           <span className="text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">
-            {formatDate(milestone.details.dueDate)}
+            {formatDate(dueMs)}
           </span>
         ) : (
           placeholder
@@ -129,13 +133,34 @@ const CommunityMilestonesTableRowComponent: FC<CommunityMilestonesTableRowProps>
 
       {/* Milestone X of Y */}
       <td className={cellClasses}>
-        {hasMilestonePosition ? (
-          <span className="text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap tabular-nums">
-            {milestone.grantMilestoneIndex} of {milestone.grantMilestoneTotal}
-          </span>
-        ) : (
-          placeholder
-        )}
+        {hasMilestonePosition
+          ? (() => {
+              const index = milestone.grantMilestoneIndex as number;
+              const total = milestone.grantMilestoneTotal as number;
+              const progressPct = total > 0 ? Math.min(100, Math.max(0, (index / total) * 100)) : 0;
+              return (
+                <div className="flex flex-col gap-1 min-w-[88px]">
+                  <span className="text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap tabular-nums">
+                    {index} of {total}
+                  </span>
+                  <div
+                    aria-hidden="true"
+                    className="h-1.5 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-zinc-700"
+                  >
+                    <div
+                      className={cn(
+                        "h-full origin-left rounded-full transition-[width] duration-300 ease-out",
+                        progressPct >= 100
+                          ? "bg-green-500 dark:bg-green-400"
+                          : "bg-brand-blue dark:bg-blue-400"
+                      )}
+                      style={{ width: `${progressPct}%` }}
+                    />
+                  </div>
+                </div>
+              );
+            })()
+          : placeholder}
       </td>
 
       {/* Completion date */}

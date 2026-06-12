@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { Spectral } from "next/font/google";
 import localFont from "next/font/local";
 import { defaultMetadata } from "@/utilities/meta";
 
@@ -7,6 +8,19 @@ const inter = localFont({
   variable: "--font-inter",
   display: "optional",
   weight: "100 900",
+});
+
+// Editorial display face for marketing H1 and section H2. Spectral
+// (Production Type) is a literary serif with real italic cuts — the
+// rotating word in the hero becomes proper cursive instead of slanted
+// sans. Paired with Inter as body, it carries the "modern, opinionated,
+// trustworthy with warmth" direction without going corporate.
+const displayFont = Spectral({
+  subsets: ["latin"],
+  weight: ["500", "600"],
+  style: ["normal", "italic"],
+  variable: "--font-display",
+  display: "swap",
 });
 import "@/styles/globals.css";
 import "@/styles/index.scss";
@@ -110,7 +124,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html
       lang="en"
-      className={`h-full ${inter.variable}`}
+      className={`h-full ${inter.variable} ${displayFont.variable}`}
       suppressHydrationWarning
       style={themeStyle}
     >

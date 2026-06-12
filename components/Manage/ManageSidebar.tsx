@@ -14,6 +14,7 @@ import {
   Globe,
   Home,
   LayoutGrid,
+  ListTodo,
   Mail,
   ShieldAlert,
   Tag,
@@ -85,6 +86,12 @@ const NAV_GROUPS: NavGroup[] = [
         matchSegment: "funding-platform",
         label: "Funding Platform",
         icon: CircleDollarSign,
+      },
+      {
+        href: PAGES.MANAGE.ACTION_ITEMS,
+        matchSegment: "action-items",
+        label: "Action Items",
+        icon: ListTodo,
       },
       {
         href: PAGES.ADMIN.MILESTONES,
@@ -180,7 +187,7 @@ const NAV_GROUPS: NavGroup[] = [
   },
 ];
 
-const REVIEWER_SEGMENTS = new Set(["funding-platform", "milestones-report"]);
+const REVIEWER_SEGMENTS = new Set(["action-items", "funding-platform", "milestones-report"]);
 
 function isActiveRoute(pathname: string, matchSegment: string, slug: string): boolean {
   const itemPath = `${PAGES.ADMIN.ROOT(slug)}/${matchSegment}`;

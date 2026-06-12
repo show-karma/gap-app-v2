@@ -10,7 +10,6 @@ import type React from "react";
 import { CreateProgramModal } from "@/components/FundingPlatform/CreateProgramModal";
 import "@testing-library/jest-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { server } from "@/__tests__/utils/msw/setup";
 import { ProgramRegistryService } from "@/src/features/program-registry/services/program-registry.service";
 
 // Mock useRouter from next/navigation
@@ -137,6 +136,39 @@ vi.mock("@/components/Utilities/MarkdownEditor", () => ({
         data-testid={`markdown-editor-${id}`}
       />
       {error && <p className="text-sm text-red-400">{error}</p>}
+    </div>
+  ),
+}));
+
+// Mock DateTimePicker (pulls in react-day-picker ESM which breaks the transform)
+vi.mock("@/components/Utilities/DateTimePicker", () => ({
+  DateTimePicker: ({
+    selected,
+    onSelect,
+    placeholder,
+    buttonClassName,
+    clearButtonFn,
+  }: {
+    selected?: Date;
+    onSelect?: (date: Date | undefined) => void;
+    placeholder?: string;
+    buttonClassName?: string;
+    clearButtonFn?: () => void;
+  }) => (
+    <div data-testid="date-picker">
+      <button
+        type="button"
+        data-testid={`date-picker-${placeholder?.toLowerCase().replace(/\s+/g, "-") || "default"}`}
+        onClick={() => onSelect?.(selected || new Date("2024-06-01T00:00:00Z"))}
+        className={buttonClassName}
+      >
+        {selected ? selected.toISOString() : placeholder || "Pick a date"}
+      </button>
+      {clearButtonFn && (
+        <button type="button" onClick={clearButtonFn}>
+          Clear
+        </button>
+      )}
     </div>
   ),
 }));
@@ -274,10 +306,6 @@ describe("CreateProgramModal", () => {
     (ProgramRegistryService.approveProgram as vi.Mock).mockResolvedValue(undefined);
   });
 
-  afterEach(() => {
-    server.resetHandlers();
-  });
-
   describe("Rendering", () => {
     it("should render dialog when isOpen is true", () => {
       renderWithProviders(
@@ -389,10 +417,9 @@ describe("CreateProgramModal", () => {
       await user.click(submitButton);
 
       await waitFor(() => {
-        // AriaLiveError renders a duplicate in sr-only, so use getAllByText
-        expect(
-          screen.getAllByText(/program name must be at least 3 characters/i).length
-        ).toBeGreaterThan(0);
+        // Empty required field reports "is required", not the min-length message (issue #1506).
+        // AriaLiveError renders a duplicate in sr-only, so use getAllByText.
+        expect(screen.getAllByText(/program name is required/i).length).toBeGreaterThan(0);
       });
     });
 
