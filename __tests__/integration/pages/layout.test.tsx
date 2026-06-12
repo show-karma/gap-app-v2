@@ -2,14 +2,9 @@ import { render, screen } from "@testing-library/react";
 import RootLayout from "@/app/layout";
 import "@testing-library/jest-dom";
 
-vi.mock("next/font/local", () => ({
-  __esModule: true,
-  default: () => ({
-    className: "mock-font",
-    variable: "--mock-font",
-    style: { fontFamily: "mock" },
-  }),
-}));
+// next/font/local and next/font/google are mocked globally in
+// __tests__/setup-mocks.ts (they are Next compiler features, unavailable in
+// jsdom). app/layout.tsx imports both, so no file-local font mock is needed.
 
 vi.mock("@next/third-parties/google", () => ({
   GoogleAnalytics: () => <div data-testid="google-analytics" />,

@@ -2,8 +2,7 @@
 
 import type { FC } from "react";
 import { useGrantCompletionRevoke } from "@/hooks/useGrantCompletionRevoke";
-import { useScopedCommunityAdmin } from "@/src/core/rbac/hooks/use-resource-access";
-import { useOwnerStore, useProjectStore } from "@/store";
+import { useProjectAuthorization } from "@/hooks/useProjectAuthorization";
 import type { Grant } from "@/types/v2/grant";
 import type { Project as ProjectResponse } from "@/types/v2/project";
 import { GrantCompletedButton } from "./GrantCompletedButton";
@@ -20,18 +19,22 @@ export const GrantCompleteButton: FC<GrantCompleteProps> = ({
   project,
   text = "Mark as Complete",
 }) => {
-  const isContractOwner = useOwnerStore((state) => state.isOwner);
-  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
-  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
-  // Scope community-admin to THIS grant's community (fixes the bug where a
-  // community admin of any community could complete any grant).
-  const { isCommunityAdmin } = useScopedCommunityAdmin(grant.communityUID, grant.chainID);
-  const isAuthorized = isContractOwner || isProjectOwner || isProjectAdmin || isCommunityAdmin;
+  const { isAuthorized, isLoading: isAuthLoading } = useProjectAuthorization(grant.communityUID);
 
   const { revokeCompletion, isRevoking } = useGrantCompletionRevoke({
     grant,
     project,
   });
+
+  if (isAuthLoading) {
+    return (
+      <div
+        aria-hidden="true"
+        data-testid="grant-complete-button-skeleton"
+        className="animate-pulse h-9 w-40 bg-gray-200 dark:bg-zinc-800 rounded-md"
+      />
+    );
+  }
 
   if (grant.completed) {
     return (

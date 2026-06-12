@@ -45,7 +45,10 @@ const platformCards: PlatformCard[] = [
 
 export function PlatformSection() {
   return (
-    <section className={cn(marketingLayoutTheme.padding, "flex flex-col items-start w-full")}>
+    <section
+      id="the-platform"
+      className={cn(marketingLayoutTheme.padding, "flex flex-col items-start w-full")}
+    >
       <SectionContainer className="flex flex-col items-start gap-12">
         <ScrollReveal variant="fade-up">
           <div className="flex flex-col items-start gap-4 w-full max-w-[768px]">
@@ -85,9 +88,8 @@ export function PlatformSection() {
             <ScrollReveal key={index} variant="scale-up" delay={index * 100}>
               <div
                 className={cn(
-                  "flex flex-col justify-between gap-3",
-                  "bg-secondary rounded-2xl",
-                  "h-[540px]"
+                  "flex flex-col justify-between gap-3 h-full",
+                  "bg-secondary rounded-2xl overflow-hidden"
                 )}
               >
                 {/* Text Content */}
@@ -115,8 +117,8 @@ export function PlatformSection() {
                   </p>
                 </div>
 
-                {/* Image */}
-                <div className="relative w-full h-[320px] overflow-hidden">
+                {/* Image with intrinsic aspect ratio, no fixed pixel height */}
+                <div className="relative w-full aspect-[16/9] overflow-hidden">
                   <ThemeImage
                     src={card.image}
                     alt={card.title}

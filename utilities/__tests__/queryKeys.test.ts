@@ -158,13 +158,23 @@ describe("queryKeys", () => {
     describe("PROJECT_UPDATES", () => {
       it("should generate correct query key", () => {
         const key = QUERY_KEYS.COMMUNITY.PROJECT_UPDATES("community-123", "all", 1, 25);
-        expect(key).toEqual(["community-project-updates", "community-123", "all", 1, 25, "", ""]);
+        expect(key).toEqual([
+          "community-project-updates",
+          "community-123",
+          "all",
+          1,
+          25,
+          "",
+          "",
+          "",
+          "",
+        ]);
       });
 
       it("should return as const tuple", () => {
         const key = QUERY_KEYS.COMMUNITY.PROJECT_UPDATES("comm-1", "active", 0, 25);
         expect(Array.isArray(key)).toBe(true);
-        expect(key.length).toBe(7);
+        expect(key.length).toBe(9);
       });
 
       it("should handle different filters, pages, and limits", () => {
@@ -202,6 +212,8 @@ describe("queryKeys", () => {
           25,
           "program-1",
           "",
+          "",
+          "",
         ]);
         expect(key2).toEqual([
           "community-project-updates",
@@ -211,6 +223,8 @@ describe("queryKeys", () => {
           25,
           "program-1",
           "project-1",
+          "",
+          "",
         ]);
         expect(key1).not.toEqual(key2);
       });

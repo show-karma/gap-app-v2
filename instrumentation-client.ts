@@ -5,6 +5,7 @@
 import * as Sentry from "@sentry/nextjs";
 import { sentryIgnoreErrors } from "./utilities/sentry/ignoreErrors";
 import { isTransientHttpError, isTransientNetworkError } from "./utilities/sentry/transientErrors";
+import { isIndexedDbInternalError } from "./utilities/sentry/walletStorageErrors";
 
 Sentry.init({
   enabled: process.env.NEXT_PUBLIC_VERCEL_ENV === "production",
@@ -18,7 +19,15 @@ Sentry.init({
   // DEV-271 / GAP-FRONTEND-1R1.
   beforeSend(event, hint) {
     const original = hint?.originalException;
-    if (isTransientNetworkError(original) || isTransientHttpError(original)) {
+    if (
+      isTransientNetworkError(original) ||
+      isTransientHttpError(original) ||
+      // Wallet SDKs (WalletConnect/Coinbase/base-account) leak an un-awaited
+      // IndexedDB read rejection on startup when the browser's IDB store is
+      // corrupted/unavailable. Environmental and not actionable from our code.
+      // See GAP-FRONTEND-WS and ./utilities/sentry/walletStorageErrors.ts
+      isIndexedDbInternalError(original)
+    ) {
       return null;
     }
     return event;

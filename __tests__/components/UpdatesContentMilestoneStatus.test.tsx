@@ -33,6 +33,10 @@ vi.mock("@/store", () => ({
   }),
 }));
 
+vi.mock("@/hooks/useProjectAuthorization", () => ({
+  useProjectAuthorization: () => ({ isAuthorized: false, isLoading: false }),
+}));
+
 vi.mock("@/services/project-profile.service", () => ({
   getActivityFilterType: vi.fn(() => "milestones"),
 }));

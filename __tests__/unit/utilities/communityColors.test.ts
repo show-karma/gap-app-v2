@@ -27,12 +27,12 @@ describe("communityColors", () => {
       ).toBe("#FC031F");
 
       expect(
-        communityColors["0x838fa5fcdf99f4e6e28aef702d1780b155015602413c15e7242819e2e5dd0113"]
-      ).toBe("#4cc38a");
+        communityColors["0x1853e9a16f73afccb73a3801127d760cc3ab54d300573ebd4ec6f57119875d39"]
+      ).toBe("#FF0420");
 
       expect(
-        communityColors["0x5e85f26150e28595525573a8ed18a98049435256d1c93a7132079914864902be"]
-      ).toBe("#ecf0f1");
+        communityColors["0xa33a7c83cca23dca0537615282a89000e4d4c6d07b47d057c37d7b9f34b05d97"]
+      ).toBe("#000000");
     });
 
     it("should have all values as valid hex color strings", () => {

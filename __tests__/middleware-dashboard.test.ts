@@ -105,3 +105,38 @@ describe("middleware dashboard redirects", () => {
     expect(response?.headers.get("location")).toBeNull();
   });
 });
+
+describe("middleware project URL-structure redirects", () => {
+  const uid = `0x${"a".repeat(64)}`;
+
+  it("permanently (308) redirects legacy /grants/:uid to /funding/:uid", async () => {
+    const response = await middleware(createRequest(`/project/karma/grants/${uid}`));
+
+    expect(response?.headers.get("location")).toBe(
+      `http://${STANDARD_HOST}/project/karma/funding/${uid}`
+    );
+    expect(response?.status).toBe(308);
+  });
+
+  it("permanently (308) redirects /funding/create-grant to /funding/new", async () => {
+    const response = await middleware(createRequest("/project/karma/funding/create-grant"));
+
+    expect(response?.headers.get("location")).toBe(
+      `http://${STANDARD_HOST}/project/karma/funding/new`
+    );
+    expect(response?.status).toBe(308);
+  });
+
+  it("redirects legacy /roadmap straight to the project overview (no chain) with 308", async () => {
+    const response = await middleware(createRequest("/project/karma/roadmap"));
+
+    expect(response?.headers.get("location")).toBe(`http://${STANDARD_HOST}/project/karma`);
+    expect(response?.status).toBe(308);
+  });
+
+  it("does not redirect a project literally named 'grants'", async () => {
+    const response = await middleware(createRequest("/project/grants"));
+
+    expect(response?.headers.get("location")).toBeNull();
+  });
+});

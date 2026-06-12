@@ -24,6 +24,25 @@ _Avoid_: "Community admin" without qualifier — ambiguous with the broader flag
 True when the current user is an admin of at least one Community in the system. Derived from `useCommunitiesStore.communities.length > 0`. Populated globally by `useAdminCommunities()` mounted in `PermissionsProvider`.
 _Avoid_: `isCommunityAdminOfSome` is the convention for the boolean derivation — don't reinvent.
 
+### Reviewer roles
+
+**Application Reviewer**:
+A wallet assigned to review funding **Applications** for a program. Detected via the RBAC `reviewerTypes` containing `ReviewerType.PROGRAM` (`useIsReviewerType(ReviewerType.PROGRAM)`), or cross-community via `useReviewerPrograms()`. Per-program list via `useProgramReviewers(programId)`.
+_Avoid_: "Program Reviewer" and "App reviewer" — both are code-internal names for this same role (`ReviewerType.PROGRAM` in `src/core/rbac/types/role.ts`; `ReviewerType.APP` in the legacy `hooks/useReviewerAssignment.ts`). Use **Application Reviewer** in product language.
+
+**Milestone Reviewer**:
+A wallet assigned to verify grantee **Milestone** completions for a program. Detected via `useIsReviewerType(ReviewerType.MILESTONE)`; per-program list via `useMilestoneReviewers(programId)`; cross-program via `useCommunityMilestoneReviewers(programIds)`.
+
+**Reviewer Inbox**:
+A community-scoped page (`/community/[communityId]/manage/inbox`) that unifies everything assigned to the current user as a reviewer **within one community, across all its programs**. Shows the **Application** review stream to an **Application Reviewer**, the **Milestone** review stream to a **Milestone Reviewer**, and both to a user holding both roles. The streams shown derive from the user's actual roles — not a manual switch.
+_Avoid_: "persona switcher" — a device in the design mock only; the real page derives streams from roles.
+
+**Review bucket**:
+The priority grouping each Inbox item falls into, framed by "who must act next":
+- **Waiting on you** (action): the reviewer must act. Applications: `pending`, `under_review`, `resubmitted`. Milestones: `completed` (grantee submitted proof, awaiting verification).
+- **In progress** (waiting): action is on the other party. Applications: `revision_requested` (back with the applicant). Milestones: `pending` (grantee has not submitted completion yet).
+- **Cleared** (done): no action needed. Applications: `approved`, `rejected`. Milestones: `verified`.
+
 ### Funding platform form fields
 
 **Metric (intake form field)**:
@@ -38,6 +57,7 @@ Structured, queryable project-level impact data tracked over time (project outpu
 - A user can be **Community Admin of Any** without being **Community Admin (per-grant)** in any given page context (no grant in scope).
 - A user who is **Community Admin (per-grant)** for a grant is always a **Community Admin of Any** — the inverse is not true.
 - Pages on the project profile root (no grant in URL) gate management UIs on **Community Admin of Any**. Pages scoped to a specific grant gate on **Community Admin (per-grant)**.
+- The **Reviewer Inbox** aggregates an **Application Reviewer**'s queue across all programs in one community via a dedicated gap-indexer endpoint (merge/sort/bucket server-side) — not by frontend fan-out across per-program feeds. The **Milestone Reviewer** queue already aggregates cross-program through the milestones-report data layer (`useReportPageData`).
 
 ## Example dialogue
 
@@ -50,3 +70,5 @@ Structured, queryable project-level impact data tracked over time (project outpu
 
 - The unqualified term "community admin" was used to gate behavior on both the project profile root (where the per-grant flag is always false) and grant-scoped pages — causing the "+ Add Funding" button and "set up payout" CTA to be hidden for users who legitimately had access. Resolved: always qualify as **per-grant** or **of-any**.
 - "Metric" is overloaded: the **Metric** intake form field (free-text captured on an application) is distinct from the project-level **Indicator** system (structured, on-chain-adjacent impact data). The intake field deliberately does not feed Indicators. Always qualify which one is meant.
+- The **Application Reviewer** role has three names in code: `ReviewerType.PROGRAM` (canonical RBAC), `ReviewerType.APP` (legacy `useReviewerAssignment`), and "Application reviewer" (product/design language). They are the same role. Resolved: product language is **Application Reviewer**; the canonical RBAC enum is `ReviewerType.PROGRAM`.
+- The actionable milestone state — grantee has submitted proof and the reviewer must verify — is `completed` in the codebase (`MilestoneStatusEntry.currentStatus`), but the design mock labels it `pending_verification` and shows it as "Needs verification". Same state. Resolved: the underlying status is `completed`; the **Waiting on you** UI label is "Needs verification".

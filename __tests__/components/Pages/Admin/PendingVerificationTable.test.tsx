@@ -1,8 +1,47 @@
 /**
- * Tests for PendingVerificationTable empty state logic.
+ * Tests for PendingVerificationTable empty state logic and row rendering.
  */
 
-import { getEmptyStateMessage } from "@/components/Pages/Admin/PendingVerificationTable";
+import { render, screen } from "@testing-library/react";
+import type { ReactNode } from "react";
+import {
+  getEmptyStateMessage,
+  PendingVerificationTable,
+} from "@/components/Pages/Admin/PendingVerificationTable";
+import type { PendingVerificationMilestone } from "@/hooks/usePendingVerificationMilestones";
+
+vi.mock("@/components/Utilities/TablePagination", () => ({
+  __esModule: true,
+  default: (props: { totalPosts: number }) => (
+    <div data-testid="table-pagination" data-total={props.totalPosts} />
+  ),
+}));
+
+vi.mock("@/src/components/navigation/Link", () => ({
+  Link: ({ children }: { children: ReactNode }) => <a href="#">{children}</a>,
+}));
+
+vi.mock("@/components/Utilities/ExternalLink", () => ({
+  ExternalLink: ({ children }: { children: ReactNode }) => <a href="#">{children}</a>,
+}));
+
+function makeMilestone(
+  overrides: Partial<PendingVerificationMilestone> = {}
+): PendingVerificationMilestone {
+  return {
+    milestoneUid: "0xmilestone",
+    milestoneTitle: "Milestone Title",
+    completedAt: "2026-06-01T00:00:00.000Z",
+    grantUid: "0xgrant",
+    grantTitle: "Grant Title",
+    programId: "992",
+    projectUid: "0xproject",
+    projectTitle: "Project Title",
+    projectSlug: "project-slug",
+    status: "pending_verification",
+    ...overrides,
+  };
+}
 
 describe("PendingVerificationTable empty state", () => {
   const userAddress = "0x1234567890abcdef1234567890abcdef12345678";
@@ -39,6 +78,57 @@ describe("PendingVerificationTable empty state", () => {
 
     it("returns generic message when both are undefined", () => {
       expect(getEmptyStateMessage(undefined, undefined)).toBe("All milestones are verified");
+    });
+  });
+
+  // DEV-365: the rendered rows must match exactly the milestones provided —
+  // never more (a stale/foreign row) and never fewer than the data set.
+  describe("row rendering", () => {
+    const baseProps = {
+      isLoading: false,
+      error: null,
+      communityId: "filecoin",
+      page: 1,
+      onPageChange: vi.fn(),
+      itemsPerPage: 50,
+    };
+
+    it("renders exactly one data row per milestone", () => {
+      const milestones = [
+        makeMilestone({ milestoneUid: "0xa", grantUid: "0xg1", milestoneTitle: "Alpha" }),
+        makeMilestone({ milestoneUid: "0xb", grantUid: "0xg2", milestoneTitle: "Beta" }),
+        makeMilestone({ milestoneUid: "0xc", grantUid: "0xg3", milestoneTitle: "Gamma" }),
+      ];
+
+      const { container } = render(
+        <PendingVerificationTable {...baseProps} milestones={milestones} totalItems={3} />
+      );
+
+      expect(container.querySelectorAll("tbody tr")).toHaveLength(milestones.length);
+    });
+
+    it("does not render rows that are absent from the milestones prop", () => {
+      const milestones = [
+        makeMilestone({ milestoneUid: "0xa", grantUid: "0xg1", milestoneTitle: "Kept" }),
+      ];
+
+      render(<PendingVerificationTable {...baseProps} milestones={milestones} totalItems={1} />);
+
+      expect(screen.getByText("Kept")).toBeInTheDocument();
+      expect(screen.queryByText("Double Cursor Ingest")).not.toBeInTheDocument();
+    });
+
+    it("passes the API total (not the visible row count) to pagination", () => {
+      const milestones = [
+        makeMilestone({ milestoneUid: "0xa", grantUid: "0xg1" }),
+        makeMilestone({ milestoneUid: "0xb", grantUid: "0xg2" }),
+      ];
+
+      // API total deliberately differs from the rendered row count: the badge
+      // and pagination must reflect totalItems, never milestones.length.
+      render(<PendingVerificationTable {...baseProps} milestones={milestones} totalItems={57} />);
+
+      expect(screen.getByTestId("table-pagination")).toHaveAttribute("data-total", "57");
     });
   });
 });

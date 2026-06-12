@@ -10,6 +10,45 @@ import { TextDecoder, TextEncoder } from "node:util";
 // Set timezone for consistent test results
 process.env.TZ = "UTC";
 
+// ---------------------------------------------------------------------------
+// Pin the default locale so number/date formatting is deterministic across
+// machines. CI runs en-US, but a developer machine on another locale (e.g.
+// one that uses "." as the thousands separator) makes any test that asserts
+// formatted output — `(12345).toLocaleString()` → "12,345" vs "12.345" — fail
+// locally while staying green on CI. We default the locale to en-US ONLY when
+// a call site omits it; explicit locales (`toLocaleString("de-DE")`,
+// `new Intl.NumberFormat("en-US")`) are left untouched. Test-environment only.
+// ---------------------------------------------------------------------------
+const FIXED_LOCALE = "en-US";
+const pinToLocale = (proto: object, method: string) => {
+  const original = (proto as Record<string, unknown>)[method] as
+    | ((...args: unknown[]) => unknown)
+    | undefined;
+  if (typeof original !== "function" || (original as { __localePinned?: boolean }).__localePinned) {
+    return;
+  }
+  const patched = function (this: unknown, locales?: unknown, options?: unknown) {
+    return original.call(this, locales ?? FIXED_LOCALE, options);
+  };
+  (patched as { __localePinned?: boolean }).__localePinned = true;
+  (proto as Record<string, unknown>)[method] = patched;
+};
+pinToLocale(Number.prototype, "toLocaleString");
+pinToLocale(BigInt.prototype, "toLocaleString");
+pinToLocale(Date.prototype, "toLocaleString");
+pinToLocale(Date.prototype, "toLocaleDateString");
+pinToLocale(Date.prototype, "toLocaleTimeString");
+for (const ctor of ["NumberFormat", "DateTimeFormat"] as const) {
+  const Original = Intl[ctor] as unknown as { new (...a: unknown[]): unknown };
+  if ((Original as { __localePinned?: boolean }).__localePinned) continue;
+  const Patched = function (this: unknown, locales?: unknown, options?: unknown) {
+    return new Original(locales ?? FIXED_LOCALE, options);
+  } as unknown as { new (...a: unknown[]): unknown; prototype: unknown; __localePinned?: boolean };
+  Patched.prototype = Original.prototype;
+  Patched.__localePinned = true;
+  (Intl as Record<string, unknown>)[ctor] = Patched;
+}
+
 // Polyfills for jsdom environment
 global.TextEncoder = TextEncoder;
 global.TextDecoder = TextDecoder as typeof global.TextDecoder;

@@ -11,6 +11,10 @@ vi.mock("axios", () => {
 vi.mock("@/utilities/auth/token-manager", () => ({
   TokenManager: {
     getToken: vi.fn(),
+    // fetchData's 401-retry path calls clearCache() before re-fetching a fresh
+    // token, so the mock must expose it or the retry throws a TypeError that
+    // masks the real error tuple.
+    clearCache: vi.fn(),
   },
 }));
 
@@ -358,22 +362,26 @@ describe("fetchData trust tests", () => {
       expect(config.timeout).toBe(360000);
     });
 
-    it("does not set timeout for non-authorized requests", async () => {
+    it("keeps the 360s indexer ceiling even for non-authorized requests", async () => {
       mockRequest.mockResolvedValue(makeAxiosResponse({}, 200));
 
       await fetchData("/test", "GET", {}, {}, {}, false);
 
       const config = mockRequest.mock.calls[0][0];
-      expect(config.timeout).toBeUndefined();
+      // Indexer requests get the generous ceiling regardless of token presence
+      // so anonymous optional-auth calls don't run unbounded.
+      expect(config.timeout).toBe(360000);
     });
 
-    it("does not set timeout for non-indexer requests", async () => {
+    it("uses the default 30s timeout for non-indexer requests", async () => {
       mockRequest.mockResolvedValue(makeAxiosResponse({}, 200));
 
       await fetchData("/test", "GET", {}, {}, {}, true, false, "https://other.com");
 
       const config = mockRequest.mock.calls[0][0];
-      expect(config.timeout).toBeUndefined();
+      // Non-indexer requests fall back to the default timeout so a hung
+      // connection surfaces as an axios error instead of an infinite load.
+      expect(config.timeout).toBe(30000);
     });
   });
 

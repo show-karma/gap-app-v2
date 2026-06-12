@@ -38,16 +38,12 @@ export const useSearchSessionStore = create<SearchSessionStore>()(
       currentId: null,
 
       createSession: (query: string) => {
+        // Always mint a fresh session. The prior implementation deduped
+        // by query text, which meant submitting the same question twice
+        // (from the landing page after navigating back) routed the user
+        // to the cached old result instead of a re-run. A refresh fixed
+        // it, which is exactly the smell of stale-session-on-replay.
         const { sessions } = get();
-
-        // Reuse existing session for the same query
-        for (const [id, session] of Object.entries(sessions)) {
-          if (session.query.toLowerCase() === query.toLowerCase()) {
-            set({ currentId: id });
-            return id;
-          }
-        }
-
         const id = generateId();
         const entries = Object.entries(sessions);
         const trimmed =

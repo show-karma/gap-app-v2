@@ -15,6 +15,11 @@ vi.mock("@/utilities/enviromentVars", () => ({
   },
 }));
 
+const mockGetToken = vi.hoisted(() => vi.fn<() => Promise<string | null>>());
+vi.mock("@/utilities/auth/token-manager", () => ({
+  TokenManager: { getToken: mockGetToken },
+}));
+
 // ── SSE stream builder helpers ────────────────────────────────────────────────
 
 function encodeSSEFrame(event: string, data: unknown): Uint8Array {
@@ -72,6 +77,82 @@ const NO_OP_CALLBACKS = {
 describe("streamPhilanthropyQuery", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockGetToken.mockResolvedValue(null);
+  });
+
+  it("attaches Authorization header when a session token exists", async () => {
+    // Without the JWT, logged-in users hit the indexer as anonymous and
+    // burn the IP-keyed search-metering quota until a 401 login_required.
+    mockGetToken.mockResolvedValue("privy-jwt-123");
+    const stream = makeSSEStream([encodeSSEFrame("final_answer", FINAL_ANSWER_PAYLOAD)]);
+    const fetchMock = vi.fn().mockResolvedValue(makeResponse(stream));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const controller = new AbortController();
+    await streamPhilanthropyQuery(
+      "test query",
+      undefined,
+      1,
+      controller.signal,
+      true,
+      undefined,
+      undefined,
+      NO_OP_CALLBACKS
+    );
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          Authorization: "Bearer privy-jwt-123",
+        }),
+      })
+    );
+  });
+
+  it("omits Authorization header when no session token exists", async () => {
+    mockGetToken.mockResolvedValue(null);
+    const stream = makeSSEStream([encodeSSEFrame("final_answer", FINAL_ANSWER_PAYLOAD)]);
+    const fetchMock = vi.fn().mockResolvedValue(makeResponse(stream));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const controller = new AbortController();
+    await streamPhilanthropyQuery(
+      "test query",
+      undefined,
+      1,
+      controller.signal,
+      true,
+      undefined,
+      undefined,
+      NO_OP_CALLBACKS
+    );
+
+    const headers = (fetchMock.mock.calls[0][1] as RequestInit).headers as Record<string, string>;
+    expect(headers.Authorization).toBeUndefined();
+  });
+
+  it("still issues the request when token retrieval fails", async () => {
+    mockGetToken.mockRejectedValue(new Error("privy unavailable"));
+    const stream = makeSSEStream([encodeSSEFrame("final_answer", FINAL_ANSWER_PAYLOAD)]);
+    const fetchMock = vi.fn().mockResolvedValue(makeResponse(stream));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const controller = new AbortController();
+    const result = await streamPhilanthropyQuery(
+      "test query",
+      undefined,
+      1,
+      controller.signal,
+      true,
+      undefined,
+      undefined,
+      NO_OP_CALLBACKS
+    );
+
+    expect(result.isOk()).toBe(true);
+    const headers = (fetchMock.mock.calls[0][1] as RequestInit).headers as Record<string, string>;
+    expect(headers.Authorization).toBeUndefined();
   });
 
   it("resolves with header and narrative on a valid final_answer event", async () => {

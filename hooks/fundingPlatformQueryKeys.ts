@@ -15,6 +15,13 @@ export const QUERY_KEYS = {
     programId,
     filters,
   ],
+  // Community-scoped reviewer inbox (applications across all programs). The
+  // leading `[name, communityId]` segments act as invalidation prefixes.
+  reviewerInbox: (communityId: string, filters: IApplicationFilters) => [
+    "reviewer-inbox",
+    communityId,
+    filters,
+  ],
   application: (applicationId: string) => ["funding-application", applicationId],
   applicationByReference: (referenceNumber: string) => [
     "application-by-reference",

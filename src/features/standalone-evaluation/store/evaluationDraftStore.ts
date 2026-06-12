@@ -111,6 +111,11 @@ function installWalletChangeWatcher(): void {
   window.setInterval(checkAndReact, 1000);
 }
 
+// Consumers: never return a freshly-built array/object from a selector
+// (e.g. `(s) => s.resultsBySession[id] ?? []`). Zustand v5 compares snapshots
+// with Object.is, so a new reference each render causes React #185. Select the
+// raw value and apply a stable fallback (EMPTY_ARRAY from utilities/safeEmpty)
+// outside the selector.
 export const useEvaluationDraftStore = create<EvaluationDraftState>()(
   persist(
     (set) => ({

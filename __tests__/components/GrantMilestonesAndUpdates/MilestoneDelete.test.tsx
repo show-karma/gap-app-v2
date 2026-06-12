@@ -39,8 +39,10 @@ describe("MilestoneDelete", () => {
       expect(componentCode).toContain('import { useGrantStore } from "@/store/grant"');
     });
 
-    it("should destructure refreshGrant from useGrantStore", () => {
-      expect(componentCode).toContain("const { refreshGrant } = useGrantStore()");
+    it("should obtain refreshGrant from useGrantStore", () => {
+      expect(componentCode).toContain(
+        "const refreshGrant = useGrantStore((state) => state.refreshGrant)"
+      );
     });
 
     it("should call refreshGrant at least 3 times (off-chain, on-chain, fallback)", () => {

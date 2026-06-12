@@ -203,17 +203,6 @@ export async function fetchProjectGrantMilestones(
   };
 }
 
-export async function updateMilestoneCompletion(
-  completionId: string,
-  completionText: string
-): Promise<MilestoneCompletionData> {
-  const response = await apiClient.put<{ completion: MilestoneCompletionData }>(
-    `/v2/milestone-completions/${completionId}`,
-    { completionText }
-  );
-  return response.data.completion;
-}
-
 /**
  * Attest milestone completion as a program reviewer (backend creates on-chain attestation)
  */

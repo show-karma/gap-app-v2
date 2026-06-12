@@ -1,5 +1,5 @@
 /**
- * NonProfitsFooter — dedicated footer for the /non-profits/find-funders section.
+ * NonProfitsFooter — dedicated footer for the /nonprofits/find-funders section.
  *
  * Ported from grant-atlas src/components/landing-footer.tsx (the footer shown on
  * karmagrants.org). Adaptations for gap-app-v2:

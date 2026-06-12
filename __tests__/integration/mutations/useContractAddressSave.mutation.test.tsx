@@ -33,9 +33,10 @@ vi.mock("@/utilities/auth/token-manager", () => ({
 // Mock project store
 const mockRefreshProject = vi.fn();
 vi.mock("@/store", () => ({
-  useProjectStore: () => ({
-    refreshProject: mockRefreshProject,
-  }),
+  useProjectStore: (selector?: any) => {
+    const state = { refreshProject: mockRefreshProject };
+    return typeof selector === "function" ? selector(state) : state;
+  },
 }));
 
 // Mock contract address validation hook

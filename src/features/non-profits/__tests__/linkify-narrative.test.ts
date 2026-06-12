@@ -31,7 +31,7 @@ describe("linkifyNarrative", () => {
   it("links an exact case-insensitive match", () => {
     const entities = [entity({ id: "f1", name: "Ford Foundation" })];
     expect(linkifyNarrative("The Ford Foundation funds work.", entities)).toContain(
-      "[The Ford Foundation](/non-profits/find-funders/foundations/f1)"
+      "[The Ford Foundation](/nonprofits/find-funders/foundations/f1)"
     );
   });
 
@@ -39,14 +39,14 @@ describe("linkifyNarrative", () => {
     const entities = [entity({ id: "walton", name: "Alice L Walton Foundation" })];
     const result = linkifyNarrative("the Alice L. Walton Foundation in Bentonville", entities);
     expect(result).toContain(
-      "the [Alice L. Walton Foundation](/non-profits/find-funders/foundations/walton)"
+      "the [Alice L. Walton Foundation](/nonprofits/find-funders/foundations/walton)"
     );
   });
 
   it("does not include a lowercase leading article in the anchor", () => {
     const entities = [entity({ id: "ford", name: "Ford Foundation" })];
     const result = linkifyNarrative("Grants from the Ford Foundation support work.", entities);
-    expect(result).toContain("the [Ford Foundation](/non-profits/find-funders/foundations/ford)");
+    expect(result).toContain("the [Ford Foundation](/nonprofits/find-funders/foundations/ford)");
     expect(result).not.toContain("[the Ford Foundation]");
   });
 
@@ -54,7 +54,7 @@ describe("linkifyNarrative", () => {
     const entities = [entity({ id: "kresge", name: "THE KRESGE FOUNDATION" })];
     const result = linkifyNarrative("The Kresge Foundation in Troy.", entities);
     expect(result).toContain(
-      "[The Kresge Foundation](/non-profits/find-funders/foundations/kresge)"
+      "[The Kresge Foundation](/nonprofits/find-funders/foundations/kresge)"
     );
   });
 
@@ -62,7 +62,7 @@ describe("linkifyNarrative", () => {
     const entities = [entity({ id: "casey", name: "Annie E Casey Foundation Inc" })];
     const result = linkifyNarrative("the Annie E. Casey Foundation is based", entities);
     expect(result).toContain(
-      "the [Annie E. Casey Foundation](/non-profits/find-funders/foundations/casey)"
+      "the [Annie E. Casey Foundation](/nonprofits/find-funders/foundations/casey)"
     );
   });
 
@@ -72,14 +72,14 @@ describe("linkifyNarrative", () => {
       entity({ id: "long", name: "Henry Ford Foundation" }),
     ];
     const result = linkifyNarrative("The Henry Ford Foundation supports work.", entities);
-    expect(result).toContain("/non-profits/find-funders/foundations/long");
-    expect(result).not.toContain("/non-profits/find-funders/foundations/short");
+    expect(result).toContain("/nonprofits/find-funders/foundations/long");
+    expect(result).not.toContain("/nonprofits/find-funders/foundations/short");
   });
 
   it("does not double-link overlapping mentions", () => {
     const entities = [entity({ id: "f1", name: "Ford Foundation" })];
     const result = linkifyNarrative("Ford Foundation and Ford Foundation", entities);
-    const linkCount = result.match(/\/non-profits\/find-funders\/foundations\/f1/g)?.length ?? 0;
+    const linkCount = result.match(/\/nonprofits\/find-funders\/foundations\/f1/g)?.length ?? 0;
     expect(linkCount).toBe(2);
   });
 
@@ -96,12 +96,12 @@ describe("linkifyNarrative", () => {
     const grants = [entity({ id: "x", name: "Test Grant", entityType: "grant" })];
 
     expect(linkifyNarrative("Test Foundation", foundations)).toContain(
-      "/non-profits/find-funders/foundations/x"
+      "/nonprofits/find-funders/foundations/x"
     );
     expect(linkifyNarrative("Test Nonprofit", nonprofits)).toContain(
-      "/non-profits/find-funders/nonprofits/x"
+      "/nonprofits/find-funders/nonprofits/x"
     );
-    expect(linkifyNarrative("Test Grant", grants)).toContain("/non-profits/find-funders/grants/x");
+    expect(linkifyNarrative("Test Grant", grants)).toContain("/nonprofits/find-funders/grants/x");
   });
 
   it("handles a realistic narrative with mixed name variations", () => {
@@ -118,10 +118,10 @@ describe("linkifyNarrative", () => {
       "Charles Stewart Mott Foundation.";
 
     const result = linkifyNarrative(narrative, entities);
-    expect(result).toContain("/non-profits/find-funders/foundations/ford");
-    expect(result).toContain("/non-profits/find-funders/foundations/arnold");
-    expect(result).toContain("/non-profits/find-funders/foundations/walton");
-    expect(result).toContain("/non-profits/find-funders/foundations/kresge");
-    expect(result).toContain("/non-profits/find-funders/foundations/mott");
+    expect(result).toContain("/nonprofits/find-funders/foundations/ford");
+    expect(result).toContain("/nonprofits/find-funders/foundations/arnold");
+    expect(result).toContain("/nonprofits/find-funders/foundations/walton");
+    expect(result).toContain("/nonprofits/find-funders/foundations/kresge");
+    expect(result).toContain("/nonprofits/find-funders/foundations/mott");
   });
 });

@@ -166,9 +166,10 @@ const mockProject = {
 } as any;
 
 vi.mock("@/store/grant", () => ({
-  useGrantStore: vi.fn(() => ({
-    grant: mockGrant,
-  })),
+  useGrantStore: vi.fn((selector?: any) => {
+    const state = { grant: mockGrant };
+    return selector ? selector(state) : state;
+  }),
 }));
 
 vi.mock("@/store", () => ({
@@ -192,6 +193,20 @@ vi.mock("@/store/communityAdmin", () => ({
     const state = { isCommunityAdmin: mockIsCommunityAdmin.current };
     return selector ? selector(state) : state;
   }),
+}));
+
+// Authorization now flows through the tri-state hook. Derive its result from
+// the same ref-backed signals the original store mocks used, so the existing
+// authorization scenarios keep exercising the component's real branches.
+vi.mock("@/hooks/useProjectAuthorization", () => ({
+  useProjectAuthorization: vi.fn(() => ({
+    isAuthorized:
+      mockIsProjectOwner.current ||
+      mockIsProjectAdmin.current ||
+      mockIsOwner.current ||
+      mockIsCommunityAdmin.current,
+    isLoading: false,
+  })),
 }));
 
 vi.mock("@/store/modals/shareDialog", () => ({

@@ -467,6 +467,8 @@ function MilestonesReviewPageContent({
   const { data, isLoading, error, refetch } = useProjectGrantMilestones(projectId, programId);
   const [verifyingMilestoneId, setVerifyingMilestoneId] = useState<string | null>(null);
   const [verificationComment, setVerificationComment] = useState("");
+  const [completingMilestoneId, setCompletingMilestoneId] = useState<string | null>(null);
+  const [completionComment, setCompletionComment] = useState("");
   const [deletingMilestoneId, setDeletingMilestoneId] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<MilestoneFilterKey | null>(null);
   const [selectedMilestoneUid, setSelectedMilestoneUid] = useState<string | null>(null);
@@ -496,6 +498,11 @@ function MilestonesReviewPageContent({
   // backend service-level auth in milestone-on-chain-{edit,delete}.write.service.
   // Milestone reviewers verify completions but cannot mutate milestone definitions.
   const canEditOrDeleteMilestones = isStaff || hasAdminAccess;
+
+  // Completing a milestone on the grantee's behalf is an admin/staff action only.
+  // Milestone reviewers are explicitly excluded — they review completions, they
+  // do not author them.
+  const canCompleteMilestones = isStaff || hasAdminAccess;
 
   // Delete milestone hook with proper React Query mutation/query relationship
   const { deleteMilestoneAsync, isDeleting } = useDeleteMilestone({
@@ -595,15 +602,18 @@ function MilestonesReviewPageContent({
     parsedProgramId,
   ]);
 
-  const { verifyMilestone, isVerifying } = useMilestoneCompletionVerification({
-    projectId,
-    programId,
-    onSuccess: async () => {
-      await refetch();
-      setVerifyingMilestoneId(null);
-      setVerificationComment("");
-    },
-  });
+  const { verifyMilestone, isVerifying, completeMilestone, isCompleting } =
+    useMilestoneCompletionVerification({
+      projectId,
+      programId,
+      onSuccess: async () => {
+        await refetch();
+        setVerifyingMilestoneId(null);
+        setVerificationComment("");
+        setCompletingMilestoneId(null);
+        setCompletionComment("");
+      },
+    });
 
   const handleVerifyClick = useCallback((completionId: string) => {
     setVerifyingMilestoneId(completionId);
@@ -622,6 +632,24 @@ function MilestonesReviewPageContent({
       await verifyMilestone(milestone, isMilestoneReviewer || false, data, verificationComment);
     },
     [data, verifyMilestone, isMilestoneReviewer, verificationComment]
+  );
+
+  const handleCompleteClick = useCallback((milestoneUid: string) => {
+    setCompletingMilestoneId(milestoneUid);
+    setCompletionComment("");
+  }, []);
+
+  const handleCancelCompletion = useCallback(() => {
+    setCompletingMilestoneId(null);
+    setCompletionComment("");
+  }, []);
+
+  const handleSubmitCompletion = useCallback(
+    async (milestone: GrantMilestoneWithCompletion) => {
+      if (!data) return;
+      await completeMilestone(milestone, data, completionComment);
+    },
+    [data, completeMilestone, completionComment]
   );
 
   const handleDeleteMilestone = useCallback(
@@ -955,6 +983,10 @@ function MilestonesReviewPageContent({
                       verificationComment={verificationComment}
                       isVerifying={isVerifying}
                       canVerifyMilestones={canVerifyMilestones}
+                      canCompleteMilestones={canCompleteMilestones}
+                      completingMilestoneId={completingMilestoneId}
+                      completionComment={completionComment}
+                      isCompleting={isCompleting}
                       canDeleteMilestones={canEditOrDeleteMilestones}
                       canEditMilestones={canEditOrDeleteMilestones}
                       grantUID={grant?.uid}
@@ -967,6 +999,10 @@ function MilestonesReviewPageContent({
                       onCancelVerification={handleCancelVerification}
                       onVerificationCommentChange={setVerificationComment}
                       onSubmitVerification={handleSubmitVerification}
+                      onCompleteClick={handleCompleteClick}
+                      onCancelCompletion={handleCancelCompletion}
+                      onCompletionCommentChange={setCompletionComment}
+                      onSubmitCompletion={handleSubmitCompletion}
                       onRequestChanges={handleRequestChanges}
                       onDeleteMilestone={handleDeleteMilestone}
                       isDeleting={isDeleting && deletingMilestoneId === selectedMilestone.uid}

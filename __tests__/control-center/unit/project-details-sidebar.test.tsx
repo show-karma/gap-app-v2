@@ -414,7 +414,7 @@ describe("ProjectDetailsSidebar", () => {
       expect(screen.getByText("Pending")).toBeInTheDocument();
     });
 
-    it("shows 'Past due' when status is pending and dueDate is in the past", () => {
+    it("shows 'Past Due' when status is pending and dueDate is in the past", () => {
       renderSidebar({
         milestoneInvoices: [
           createMockInvoice({
@@ -426,10 +426,10 @@ describe("ProjectDetailsSidebar", () => {
         ],
       });
 
-      expect(screen.getByText("Past due")).toBeInTheDocument();
+      expect(screen.getByText("Past Due")).toBeInTheDocument();
     });
 
-    it("does not show 'Past due' when status is completed even with past dueDate", () => {
+    it("does not show 'Past Due' when status is completed even with past dueDate", () => {
       renderSidebar({
         milestoneInvoices: [
           createMockInvoice({
@@ -442,7 +442,7 @@ describe("ProjectDetailsSidebar", () => {
       });
 
       expect(screen.getByText("Completed")).toBeInTheDocument();
-      expect(screen.queryByText("Past due")).not.toBeInTheDocument();
+      expect(screen.queryByText("Past Due")).not.toBeInTheDocument();
     });
 
     it("falls back to 'Pending' config when milestoneStatus is null", () => {
@@ -509,7 +509,7 @@ describe("ProjectDetailsSidebar", () => {
         ],
       });
 
-      await user.hover(screen.getByText("Past due"));
+      await user.hover(screen.getByText("Past Due"));
       const tooltip = await screen.findByRole("tooltip");
       expect(tooltip).toHaveTextContent(/Due.*Jun 1, 2020/);
     });

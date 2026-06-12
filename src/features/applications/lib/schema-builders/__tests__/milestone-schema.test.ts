@@ -70,6 +70,23 @@ describe("buildMilestoneSchema — required sub-fields", () => {
     expect(result.success).toBe(false);
   });
 
+  it("accepts a milestone with an empty description (#1179)", () => {
+    const schema = buildMilestoneSchema(baseQuestion);
+
+    const result = schema.safeParse([{ ...validMilestone, description: "" }]);
+
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts a milestone missing description entirely (#1179)", () => {
+    const schema = buildMilestoneSchema(baseQuestion);
+    const { description: _drop, ...withoutDescription } = validMilestone;
+
+    const result = schema.safeParse([withoutDescription]);
+
+    expect(result.success).toBe(true);
+  });
+
   it("applies required sub-field validation even on optional milestone arrays", () => {
     // When the milestone field is itself optional but a user adds a
     // milestone, the new row's sub-fields must still meet the schema.

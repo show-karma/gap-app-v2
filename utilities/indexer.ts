@@ -167,14 +167,14 @@ export const INDEXER = {
       ACCESS: (referenceNumber: string) => `/v2/funding-applications/${referenceNumber}/access`,
       MY_APPLICATIONS: (communitySlug: string) =>
         `/v2/funding-applications/user/my-applications?communitySlug=${communitySlug}`,
-      MILESTONE_COMPLETIONS: (referenceNumber: string) =>
-        `/v2/funding-applications/${referenceNumber}/milestone-completions`,
       INVOICE_CONFIG: (referenceNumber: string) =>
         `/v2/funding-applications/${referenceNumber}/invoice-config`,
       MILESTONE_EVALUATION: (referenceNumber: string, milestoneTitle: string) =>
         `/v2/funding-applications/${referenceNumber}/milestones/${encodeURIComponent(milestoneTitle)}/evaluation`,
       GRANTEE_CONTACTS: (referenceNumber: string) =>
         `/v2/funding-applications/${referenceNumber}/grantee-contacts`,
+      REVIEWER_INBOX: (communityId: string, qs?: string) =>
+        `/v2/funding-applications/community/${communityId}/reviewer-inbox${qs ? `?${qs}` : ""}`,
     },
     AUTH: {
       PERMISSIONS: (params?: {
@@ -787,5 +787,21 @@ export const INDEXER = {
       page: number,
       pageSize: number
     ) => `/v2/sitemap?kind=${kind}&page=${page}&pageSize=${pageSize}`,
+  },
+  NONPROFITS: {
+    // Public endpoint that accepts a website URL plus contact info from the
+    // /nonprofits page form. The indexer persists the submission and emails
+    // the team for follow-up.
+    SUBMIT: "/v2/nonprofit-submissions/submit",
+  },
+  DONOR_RESEARCH: {
+    ME: "/v2/donor-research/me",
+    ME_COUNTERS: "/v2/donor-research/me/counters",
+    HANDLES: "/v2/donor-research/handles",
+    REPORTS: "/v2/donor-research/reports",
+    REPORT_BY_ID: (reportId: string) => `/v2/donor-research/reports/${reportId}`,
+    REPORT_STREAM: (reportId: string) => `/v2/donor-research/reports/${reportId}/stream`,
+    SHARE_TOKEN: (reportId: string) => `/v2/donor-research/reports/${reportId}/share-token`,
+    SHARED: (token: string) => `/v2/donor-research/shared/${token}`,
   },
 };

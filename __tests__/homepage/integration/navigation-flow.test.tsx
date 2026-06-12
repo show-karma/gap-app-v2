@@ -1,122 +1,84 @@
 /**
  * Homepage Navigation Flow Integration Tests
- * Tests navigation and link flows throughout the main homepage (funder-facing)
- *
- * Target: 12 tests
- * - CTA Navigation (6)
- * - External Links (3)
- * - Navigation Context (3)
+ * Tests the funder-focused home page navigation: hero CTAs and the
+ * two-row "How Karma works" section CTAs.
  */
 
 import HomePage from "@/app/page";
 import { renderWithProviders, screen } from "../utils/test-helpers";
 import "@testing-library/jest-dom";
 
-// Mock PAGES utility
-vi.mock("@/utilities/pages", () => ({
-  PAGES: {
-    FUNDERS: "/funders",
-    FUNDING_APP: "/funding-map",
-    COMMUNITIES: "/communities",
-    PROJECTS_EXPLORER: "/projects",
-    COMMUNITY: {
-      ALL_GRANTS: (slug: string) => `/community/${slug}/grants`,
-    },
-    REGISTRY: {
-      ROOT: "/funding-map",
-      ADD_PROGRAM: "/funding-map/add-program",
-      MANAGE_PROGRAMS: "/funding-map/manage-programs",
-    },
-  },
-}));
-
-// Mock SOCIALS utility
-vi.mock("@/utilities/socials", () => ({
-  SOCIALS: {
-    PARTNER_FORM: "https://forms.example.com/partner",
-    DISCORD: "https://discord.gg/karmahq",
-  },
-}));
+// Use real PAGES/SOCIALS modules so PAGES.DONOR_RESEARCH.INDEX,
+// PAGES.DONOR_ADVISORS, PAGES.FOUNDATIONS, and SOCIALS.PARTNER_FORM
+// all resolve.
 
 describe("Homepage Navigation Flows", () => {
-  describe("CTA Navigation", () => {
-    it("should have 'Schedule a Demo' CTA in Hero section", async () => {
+  describe("Hero CTAs", () => {
+    it("should render the primary Schedule a demo CTA opening in a new tab", async () => {
       renderWithProviders(await HomePage());
 
-      const demoLinks = screen.getAllByRole("link", { name: /Schedule a Demo/i });
-      expect(demoLinks.length).toBeGreaterThanOrEqual(1);
-    });
-
-    it("should have 'Explore Organizations' link to /communities", async () => {
-      renderWithProviders(await HomePage());
-
-      const orgLinks = screen.getAllByRole("link", { name: /Explore Organizations/i });
-      expect(orgLinks.length).toBeGreaterThanOrEqual(1);
-      expect(orgLinks[0]).toHaveAttribute("href", "/communities");
-    });
-
-    it("should have 'Schedule a Demo' links opening in new tab", async () => {
-      renderWithProviders(await HomePage());
-
-      const demoLinks = screen.getAllByRole("link", { name: /Schedule a Demo/i });
-      expect(demoLinks.length).toBeGreaterThanOrEqual(1);
-
+      const demoLinks = screen.getAllByRole("link", { name: /Schedule a demo/i });
       const externalDemoLink = demoLinks.find((link) => link.getAttribute("target") === "_blank");
       expect(externalDemoLink).toBeDefined();
+
+      const rel = externalDemoLink?.getAttribute("rel") ?? "";
+      expect(rel.includes("noopener") || rel.includes("noreferrer")).toBe(true);
     });
 
-    it("should render hero heading", async () => {
+    it("should render the See how Karma works secondary CTA anchoring to #how-it-works", async () => {
       renderWithProviders(await HomePage());
 
-      expect(screen.getByText(/AI powered funding software/i)).toBeInTheDocument();
+      const anchorLinks = screen.getAllByRole("link", { name: /See how Karma works/i });
+      expect(anchorLinks.length).toBeGreaterThanOrEqual(1);
+      expect(anchorLinks[0]).toHaveAttribute("href", "#how-it-works");
+    });
+  });
+
+  describe("How Karma works rows", () => {
+    it("should render both product rows", async () => {
+      renderWithProviders(await HomePage());
+
+      expect(
+        screen.getByText(/Generate a donor-ready research brief in 10 minutes/i)
+      ).toBeInTheDocument();
+      expect(screen.getByText(/AI-powered software for grant programs/i)).toBeInTheDocument();
     });
 
-    it("should have multiple CTA links throughout the page", async () => {
+    it("should route the Nonprofit Research row CTA to /donor-advisors", async () => {
       renderWithProviders(await HomePage());
 
-      // Schedule a Demo appears in hero, offering section, and CTA section
-      const demoLinks = screen.getAllByRole("link", { name: /Schedule a Demo/i });
-      expect(demoLinks.length).toBeGreaterThanOrEqual(2);
+      const exploreLinks = screen.getAllByRole("link", { name: /Explore Nonprofit Research/i });
+      expect(exploreLinks[0]).toHaveAttribute("href", "/donor-advisors");
     });
 
-    it("should have 'Explore Organizations' link in hero", async () => {
+    it("should route the Foundations row CTA to /foundations", async () => {
       renderWithProviders(await HomePage());
 
-      const orgLinks = screen.getAllByRole("link", { name: /Explore Organizations/i });
-      expect(orgLinks.length).toBeGreaterThanOrEqual(1);
+      const foundationLinks = screen.getAllByRole("link", {
+        name: /See how foundations use Karma/i,
+      });
+      expect(foundationLinks[0]).toHaveAttribute("href", "/foundations");
+    });
+
+    it("should expose audience-differentiated secondary CTAs in each row", async () => {
+      renderWithProviders(await HomePage());
+
+      expect(screen.getAllByRole("link", { name: /Get a demo/i }).length).toBeGreaterThanOrEqual(1);
+      expect(
+        screen.getAllByRole("link", { name: /Schedule a foundation demo/i }).length
+      ).toBeGreaterThanOrEqual(1);
     });
   });
 
   describe("External Links", () => {
-    it("should have 'Schedule a Demo' that opens in new tab with security attributes", async () => {
+    it("should have at least one external link with proper security attributes", async () => {
       const { container } = renderWithProviders(await HomePage());
 
       const externalLinks = Array.from(container.querySelectorAll('a[target="_blank"]'));
       expect(externalLinks.length).toBeGreaterThanOrEqual(1);
-
-      // At least one should point to partner form
-      const partnerLink = externalLinks.find((link) =>
-        link.getAttribute("href")?.includes("forms.example.com")
-      );
-      expect(partnerLink).toBeDefined();
-    });
-
-    it("should have case study links opening in new tab", async () => {
-      const { container } = renderWithProviders(await HomePage());
-
-      const externalLinks = Array.from(container.querySelectorAll('a[target="_blank"]'));
-      expect(externalLinks.length).toBeGreaterThanOrEqual(1);
-    });
-
-    it("should have external links with proper security attributes", async () => {
-      const { container } = renderWithProviders(await HomePage());
-
-      const externalLinks = Array.from(container.querySelectorAll('a[target="_blank"]'));
 
       externalLinks.forEach((link) => {
-        expect(link).toHaveAttribute("rel");
         const rel = link.getAttribute("rel") || "";
-        // noreferrer implies noopener in modern browsers
         expect(rel.includes("noopener") || rel.includes("noreferrer")).toBe(true);
       });
     });
@@ -129,25 +91,14 @@ describe("Homepage Navigation Flows", () => {
       const main = container.querySelector("main");
       expect(main).toBeInTheDocument();
 
-      // All links should be within main
       const links = main?.querySelectorAll("a");
       expect(links?.length).toBeGreaterThan(0);
     });
 
-    it("should have proper link structure for internal navigation", async () => {
+    it("should render the trust strip kicker", async () => {
       renderWithProviders(await HomePage());
 
-      // Check for Next.js Link components (rendered as <a>)
-      const orgLinks = screen.getAllByRole("link", { name: /Explore Organizations/i });
-      expect(orgLinks[0].tagName).toBe("A");
-    });
-
-    it("should maintain consistent navigation patterns across sections", async () => {
-      renderWithProviders(await HomePage());
-
-      // Multiple CTAs throughout the page
-      const demoLinks = screen.getAllByRole("link", { name: /Schedule a Demo/i });
-      expect(demoLinks.length).toBeGreaterThanOrEqual(2);
+      expect(screen.getByText(/Funding programs running on Karma/i)).toBeInTheDocument();
     });
   });
 });

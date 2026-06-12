@@ -60,18 +60,21 @@ vi.mock("@/hooks/v2/useProjectGrants", () => ({
 }));
 
 vi.mock("@/store", () => ({
-  useProjectStore: () => ({
-    isProjectOwner: false,
-  }),
-  useOwnerStore: () => ({
-    isOwner: false,
-  }),
+  useProjectStore: (selector?: any) => {
+    const state = { isProjectOwner: false };
+    return typeof selector === "function" ? selector(state) : state;
+  },
+  useOwnerStore: (selector?: any) => {
+    const state = { isOwner: false };
+    return typeof selector === "function" ? selector(state) : state;
+  },
 }));
 
 vi.mock("@/store/grant", () => ({
-  useGrantStore: () => ({
-    refreshGrant: vi.fn().mockResolvedValue(undefined),
-  }),
+  useGrantStore: (selector?: any) => {
+    const state = { refreshGrant: vi.fn().mockResolvedValue(undefined) };
+    return typeof selector === "function" ? selector(state) : state;
+  },
 }));
 
 vi.mock("@/utilities/grantCompletionHelpers", () => ({

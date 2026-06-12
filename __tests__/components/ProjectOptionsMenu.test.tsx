@@ -194,7 +194,7 @@ describe("ProjectOptionsMenu", () => {
     render(<ProjectOptionsMenu />);
 
     expect(screen.getByTestId("project-options-menu")).toBeInTheDocument();
-    expect(screen.getByText("Project Settings")).toBeInTheDocument();
+    expect(screen.getByLabelText("Project settings")).toBeInTheDocument();
   });
 
   it("renders the project settings button for super admins", () => {

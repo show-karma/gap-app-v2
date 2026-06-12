@@ -47,36 +47,16 @@ vi.mock("@/hooks/useGrantCompletionRevoke", () => ({
   })),
 }));
 
-const mockIsContractOwner = vi.fn(() => false);
-const mockIsProjectOwner = vi.fn(() => false);
-const mockIsProjectAdmin = vi.fn(() => false);
-const mockIsCommunityAdmin = vi.fn(() => false);
+// Authorization is resolved by the tri-state hook (signal composition is
+// unit-tested in useProjectAuthorization.test.ts). These flags drive its
+// resolved result so the existing button scenarios keep working.
+const mockIsAuthorized = vi.fn(() => false);
+const mockIsAuthLoading = vi.fn(() => false);
 
-vi.mock("@/store", () => ({
-  useOwnerStore: vi.fn((selector: any) => {
-    if (selector.toString().includes("isOwner")) {
-      return mockIsContractOwner();
-    }
-    return undefined;
-  }),
-  useProjectStore: vi.fn((selector: any) => {
-    const source = selector.toString();
-    if (source.includes("isProjectOwner")) {
-      return mockIsProjectOwner();
-    }
-    if (source.includes("isProjectAdmin")) {
-      return mockIsProjectAdmin();
-    }
-    return undefined;
-  }),
-}));
-
-// Grant completion is gated on community-admin scoped to the grant's community
-// (backend-resolved). Mock the scoped hook the component actually consumes.
-vi.mock("@/src/core/rbac/hooks/use-resource-access", () => ({
-  useScopedCommunityAdmin: vi.fn(() => ({
-    isCommunityAdmin: mockIsCommunityAdmin(),
-    isLoading: false,
+vi.mock("@/hooks/useProjectAuthorization", () => ({
+  useProjectAuthorization: vi.fn(() => ({
+    isAuthorized: mockIsAuthorized(),
+    isLoading: mockIsAuthLoading(),
   })),
 }));
 
@@ -93,10 +73,8 @@ describe("GrantCompleteButton", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockIsRevoking.mockReturnValue(false);
-    mockIsContractOwner.mockReturnValue(false);
-    mockIsProjectOwner.mockReturnValue(false);
-    mockIsProjectAdmin.mockReturnValue(false);
-    mockIsCommunityAdmin.mockReturnValue(false);
+    mockIsAuthorized.mockReturnValue(false);
+    mockIsAuthLoading.mockReturnValue(false);
   });
 
   describe("Completed Grant", () => {
@@ -145,9 +123,7 @@ describe("GrantCompleteButton", () => {
     });
 
     it("should disable button when !isAuthorized", () => {
-      mockIsContractOwner.mockReturnValue(false);
-      mockIsProjectAdmin.mockReturnValue(false);
-      mockIsCommunityAdmin.mockReturnValue(false);
+      mockIsAuthorized.mockReturnValue(false);
 
       const completedGrant = {
         ...mockGrant,
@@ -174,7 +150,7 @@ describe("GrantCompleteButton", () => {
     });
 
     it("should pass isAuthorized prop correctly", () => {
-      mockIsContractOwner.mockReturnValue(true);
+      mockIsAuthorized.mockReturnValue(true);
       const completedGrant = {
         ...mockGrant,
         completed: { uid: "0xcompletion123" },
@@ -187,7 +163,7 @@ describe("GrantCompleteButton", () => {
     });
 
     it("should not disable button when authorized and not revoking", () => {
-      mockIsContractOwner.mockReturnValue(true);
+      mockIsAuthorized.mockReturnValue(true);
       mockIsRevoking.mockReturnValue(false);
       const completedGrant = {
         ...mockGrant,
@@ -203,7 +179,7 @@ describe("GrantCompleteButton", () => {
 
   describe("Not Completed Grant (Authorized)", () => {
     it("should show GrantNotCompletedButton when grant.completed is falsy and isAuthorized === true", () => {
-      mockIsContractOwner.mockReturnValue(true);
+      mockIsAuthorized.mockReturnValue(true);
       const notCompletedGrant = {
         ...mockGrant,
         completed: null,
@@ -216,7 +192,7 @@ describe("GrantCompleteButton", () => {
     });
 
     it("should show GrantNotCompletedButton when grant.completed is undefined", () => {
-      mockIsProjectAdmin.mockReturnValue(true);
+      mockIsAuthorized.mockReturnValue(true);
       const notCompletedGrant = {
         ...mockGrant,
         completed: undefined,
@@ -228,7 +204,7 @@ describe("GrantCompleteButton", () => {
     });
 
     it("should show GrantNotCompletedButton when grant.completed is false", () => {
-      mockIsCommunityAdmin.mockReturnValue(true);
+      mockIsAuthorized.mockReturnValue(true);
       const notCompletedGrant = {
         ...mockGrant,
         completed: false,
@@ -240,7 +216,7 @@ describe("GrantCompleteButton", () => {
     });
 
     it("should pass project prop correctly", () => {
-      mockIsContractOwner.mockReturnValue(true);
+      mockIsAuthorized.mockReturnValue(true);
       const notCompletedGrant = {
         ...mockGrant,
         completed: null,
@@ -256,7 +232,7 @@ describe("GrantCompleteButton", () => {
     });
 
     it("should pass grantUID prop correctly", () => {
-      mockIsContractOwner.mockReturnValue(true);
+      mockIsAuthorized.mockReturnValue(true);
       const customGrant = {
         ...mockGrant,
         uid: "custom-grant-789",
@@ -270,7 +246,7 @@ describe("GrantCompleteButton", () => {
     });
 
     it("should pass default text prop", () => {
-      mockIsContractOwner.mockReturnValue(true);
+      mockIsAuthorized.mockReturnValue(true);
       const notCompletedGrant = {
         ...mockGrant,
         completed: null,
@@ -283,7 +259,7 @@ describe("GrantCompleteButton", () => {
     });
 
     it("should pass custom text prop", () => {
-      mockIsContractOwner.mockReturnValue(true);
+      mockIsAuthorized.mockReturnValue(true);
       const notCompletedGrant = {
         ...mockGrant,
         completed: null,
@@ -304,9 +280,7 @@ describe("GrantCompleteButton", () => {
 
   describe("Not Authorized", () => {
     it("should return null when grant.completed is falsy and !isAuthorized", () => {
-      mockIsContractOwner.mockReturnValue(false);
-      mockIsProjectAdmin.mockReturnValue(false);
-      mockIsCommunityAdmin.mockReturnValue(false);
+      mockIsAuthorized.mockReturnValue(false);
 
       const notCompletedGrant = {
         ...mockGrant,
@@ -323,7 +297,7 @@ describe("GrantCompleteButton", () => {
     });
 
     it("should return null when project is missing", () => {
-      mockIsContractOwner.mockReturnValue(true);
+      mockIsAuthorized.mockReturnValue(true);
       const notCompletedGrant = {
         ...mockGrant,
         completed: null,
@@ -337,7 +311,7 @@ describe("GrantCompleteButton", () => {
     });
 
     it("should return null when project is undefined", () => {
-      mockIsContractOwner.mockReturnValue(true);
+      mockIsAuthorized.mockReturnValue(true);
       const notCompletedGrant = {
         ...mockGrant,
         completed: null,
@@ -353,7 +327,7 @@ describe("GrantCompleteButton", () => {
 
   describe("Authorization Logic", () => {
     it("should check isOwner from useOwnerStore", () => {
-      mockIsContractOwner.mockReturnValue(true);
+      mockIsAuthorized.mockReturnValue(true);
       const completedGrant = {
         ...mockGrant,
         completed: { uid: "0xcompletion123" },
@@ -366,7 +340,7 @@ describe("GrantCompleteButton", () => {
     });
 
     it("should check isProjectAdmin from useProjectStore", () => {
-      mockIsProjectAdmin.mockReturnValue(true);
+      mockIsAuthorized.mockReturnValue(true);
       const completedGrant = {
         ...mockGrant,
         completed: { uid: "0xcompletion123" },
@@ -379,7 +353,7 @@ describe("GrantCompleteButton", () => {
     });
 
     it("should check isCommunityAdmin from useCommunityAdminStore", () => {
-      mockIsCommunityAdmin.mockReturnValue(true);
+      mockIsAuthorized.mockReturnValue(true);
       const completedGrant = {
         ...mockGrant,
         completed: { uid: "0xcompletion123" },
@@ -391,27 +365,8 @@ describe("GrantCompleteButton", () => {
       expect(button).toHaveAttribute("data-is-authorized", "true");
     });
 
-    it("should set isAuthorized to true if isOwner is true", () => {
-      mockIsContractOwner.mockReturnValue(true);
-      mockIsProjectAdmin.mockReturnValue(false);
-      mockIsCommunityAdmin.mockReturnValue(false);
-
-      const completedGrant = {
-        ...mockGrant,
-        completed: { uid: "0xcompletion123" },
-      };
-
-      render(<GrantCompleteButton grant={completedGrant} project={mockProject} />);
-
-      const button = screen.getByTestId("grant-completed-button");
-      expect(button).toHaveAttribute("data-is-authorized", "true");
-    });
-
-    it("should authorize a plain project owner who is not contract owner, admin, or community admin", () => {
-      mockIsContractOwner.mockReturnValue(false);
-      mockIsProjectOwner.mockReturnValue(true);
-      mockIsProjectAdmin.mockReturnValue(false);
-      mockIsCommunityAdmin.mockReturnValue(false);
+    it("should forward isAuthorized=true when the hook resolves authorized", () => {
+      mockIsAuthorized.mockReturnValue(true);
 
       const completedGrant = {
         ...mockGrant,
@@ -424,55 +379,8 @@ describe("GrantCompleteButton", () => {
       expect(button).toHaveAttribute("data-is-authorized", "true");
     });
 
-    it("should show the complete button for a plain project owner on an uncompleted grant", () => {
-      mockIsProjectOwner.mockReturnValue(true);
-
-      const notCompletedGrant = {
-        ...mockGrant,
-        completed: null,
-      };
-
-      render(<GrantCompleteButton grant={notCompletedGrant} project={mockProject} />);
-
-      expect(screen.getByTestId("grant-not-completed-button")).toBeInTheDocument();
-    });
-
-    it("should set isAuthorized to true if isProjectAdmin is true", () => {
-      mockIsContractOwner.mockReturnValue(false);
-      mockIsProjectAdmin.mockReturnValue(true);
-      mockIsCommunityAdmin.mockReturnValue(false);
-
-      const completedGrant = {
-        ...mockGrant,
-        completed: { uid: "0xcompletion123" },
-      };
-
-      render(<GrantCompleteButton grant={completedGrant} project={mockProject} />);
-
-      const button = screen.getByTestId("grant-completed-button");
-      expect(button).toHaveAttribute("data-is-authorized", "true");
-    });
-
-    it("should set isAuthorized to true if isCommunityAdmin is true", () => {
-      mockIsContractOwner.mockReturnValue(false);
-      mockIsProjectAdmin.mockReturnValue(false);
-      mockIsCommunityAdmin.mockReturnValue(true);
-
-      const completedGrant = {
-        ...mockGrant,
-        completed: { uid: "0xcompletion123" },
-      };
-
-      render(<GrantCompleteButton grant={completedGrant} project={mockProject} />);
-
-      const button = screen.getByTestId("grant-completed-button");
-      expect(button).toHaveAttribute("data-is-authorized", "true");
-    });
-
-    it("should set isAuthorized to false if none are true", () => {
-      mockIsContractOwner.mockReturnValue(false);
-      mockIsProjectAdmin.mockReturnValue(false);
-      mockIsCommunityAdmin.mockReturnValue(false);
+    it("should forward isAuthorized=false when the hook resolves denied", () => {
+      mockIsAuthorized.mockReturnValue(false);
 
       const completedGrant = {
         ...mockGrant,
@@ -483,6 +391,19 @@ describe("GrantCompleteButton", () => {
 
       const button = screen.getByTestId("grant-completed-button");
       expect(button).toHaveAttribute("data-is-authorized", "false");
+    });
+
+    it("should render a skeleton (not the button) while authorization is loading", () => {
+      mockIsAuthLoading.mockReturnValue(true);
+      const completedGrant = {
+        ...mockGrant,
+        completed: { uid: "0xcompletion123" },
+      };
+
+      render(<GrantCompleteButton grant={completedGrant} project={mockProject} />);
+
+      expect(screen.getByTestId("grant-complete-button-skeleton")).toBeInTheDocument();
+      expect(screen.queryByTestId("grant-completed-button")).not.toBeInTheDocument();
     });
   });
 
@@ -563,9 +484,7 @@ describe("GrantCompleteButton", () => {
     });
 
     it("should handle multiple authorization flags being true", () => {
-      mockIsContractOwner.mockReturnValue(true);
-      mockIsProjectAdmin.mockReturnValue(true);
-      mockIsCommunityAdmin.mockReturnValue(true);
+      mockIsAuthorized.mockReturnValue(true);
 
       const completedGrant = {
         ...mockGrant,

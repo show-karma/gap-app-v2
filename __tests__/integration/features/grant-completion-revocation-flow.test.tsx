@@ -25,6 +25,7 @@ import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useGap } from "@/hooks/useGap";
 import { useGrantCompletionRevoke } from "@/hooks/useGrantCompletionRevoke";
 import { useOffChainRevoke } from "@/hooks/useOffChainRevoke";
+import { useProjectAuthorization } from "@/hooks/useProjectAuthorization";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
@@ -162,6 +163,16 @@ vi.mock("@/hooks/v2/useProjectGrants", () => ({
 
 vi.mock("@/store/communityAdmin", () => ({
   useCommunityAdminStore: vi.fn(),
+}));
+
+// The button now resolves authorization through the tri-state
+// `useProjectAuthorization` hook (which internally pulls `useProjectPermissions`
+// → `useProjectInstance` → `useQuery`). These integration tests render the
+// button without a QueryClientProvider and drive authorization through the
+// zustand stores below, so mock the hook to derive `isAuthorized` from those
+// same store signals (matching the pre-tri-state behavior the tests assert).
+vi.mock("@/hooks/useProjectAuthorization", () => ({
+  useProjectAuthorization: vi.fn(() => ({ isAuthorized: false, isLoading: false })),
 }));
 
 // Note: We don't mock useGrantCompletionRevoke here - we want to test the actual hook
@@ -321,8 +332,26 @@ describe("Integration: Grant Completion Revocation Flow", () => {
       }
       return { isCommunityAdmin: mockIsCommunityAdmin() };
     });
+
+    // Derive tri-state authorization from the same store signals each test
+    // controls. Read them lazily (at render time) so per-test store overrides
+    // are reflected, and never report loading (no async resolution to wait on).
+    vi.mocked(useProjectAuthorization).mockImplementation(() => {
+      const isProjectOwner = useProjectStore((state: any) => state.isProjectOwner);
+      const isProjectAdmin = useProjectStore((state: any) => state.isProjectAdmin);
+      const isOwner = useOwnerStore((state: any) => state.isOwner);
+      const isCommunityAdmin = useCommunityAdminStore((state: any) => state.isCommunityAdmin);
+      return {
+        isAuthorized: Boolean(isProjectOwner || isProjectAdmin || isOwner || isCommunityAdmin),
+        isLoading: false,
+      };
+    });
+
     const mockRefreshGrant = vi.fn();
-    vi.mocked(useGrantStore).mockReturnValue({ refreshGrant: mockRefreshGrant });
+    vi.mocked(useGrantStore).mockImplementation((selector?: any) => {
+      const state = { refreshGrant: mockRefreshGrant };
+      return typeof selector === "function" ? selector(state) : state;
+    });
     // Mock checkIfCompletionExists to invoke the callback when called
     mockCheckIfCompletionExists.mockImplementation(async (callback?: () => void) => {
       // Simulate async completion check
@@ -440,6 +469,24 @@ describe("Integration: Grant Completion Revocation Flow", () => {
       // Verify initial text
       expect(screen.getByText("Marked as complete")).toBeInTheDocument();
 
+      // Gate the first awaited async (setupChainAndWallet) on a deferred promise
+      // so the in-flight loading state is STABLE while we assert it. Otherwise
+      // every mock resolves instantly and the disabled/"Revoking..." state can
+      // come and go between waitFor polls — a race that flakes under load.
+      let releaseSetup: () => void = () => {};
+      mockSetupChainAndWallet.mockImplementation(
+        () =>
+          new Promise((resolve) => {
+            releaseSetup = () =>
+              resolve({
+                gapClient: mockGapClient,
+                walletSigner: mockWalletSigner,
+                chainId: 42161,
+                isGasless: false,
+              });
+          })
+      );
+
       // Click button to trigger revocation
       await user.click(button);
 
@@ -448,6 +495,11 @@ describe("Integration: Grant Completion Revocation Flow", () => {
         expect(button).toBeDisabled();
         expect(screen.getByTestId("spinner")).toBeInTheDocument();
         expect(screen.getByText("Revoking...")).toBeInTheDocument();
+      });
+
+      // Release the gated async so the rest of the flow proceeds to completion.
+      await act(async () => {
+        releaseSetup();
       });
 
       // Verify stepper was activated (now uses changeStepperStep instead of setIsStepper)
@@ -535,16 +587,15 @@ describe("Integration: Grant Completion Revocation Flow", () => {
       // Render component
       render(<GrantCompleteButton grant={mockGrant} project={mockProject} />);
 
-      // Verify button is visible but disabled (unauthorized)
-      const button = screen.getByRole("button", {
-        name: /revoke grant completion/i,
-      });
-      expect(button).toBeInTheDocument();
-      expect(button).toBeDisabled();
+      // Unauthorized viewers get a non-interactive completion badge — the
+      // revoke control is removed structurally, never just disabled (#1609).
+      expect(
+        screen.queryByRole("button", { name: /revoke grant completion/i })
+      ).not.toBeInTheDocument();
+      expect(screen.getByRole("status")).toHaveTextContent(/marked as complete/i);
 
-      // For unauthorized users, button should be disabled
-      // But if we simulate authorization change, we can test the flow
-      // Let's test via hook directly for unauthorized flow
+      // The off-chain revocation path is exercised directly through the hook,
+      // independent of the (now absent) unauthorized button.
       const { result } = renderHook(() =>
         useGrantCompletionRevoke({
           grant: mockGrant,
@@ -934,7 +985,7 @@ describe("Integration: Grant Completion Revocation Flow", () => {
       expect(button).not.toBeDisabled();
     });
 
-    it("should disable button when user is not authorized", () => {
+    it("should render a non-interactive completion badge when user is not authorized", () => {
       // Setup: Unauthorized user - need to set up mocks before rendering
 
       // Override mocks for this test - all authorization flags should be false
@@ -985,13 +1036,13 @@ describe("Integration: Grant Completion Revocation Flow", () => {
 
       render(<GrantCompleteButton grant={mockGrant} project={mockProject} />);
 
-      // Verify button is disabled (disabled={isRevoking || !isAuthorized})
-      // Since isAuthorized is false, button should be disabled
-      const button = screen.getByRole("button", {
-        name: /revoke grant completion/i,
-      });
-      expect(button).toBeInTheDocument();
-      expect(button).toBeDisabled();
+      // Unauthorized viewers no longer get a disabled revoke button — the
+      // affordance is removed structurally in favor of a non-interactive
+      // completion status badge (#1609).
+      expect(
+        screen.queryByRole("button", { name: /revoke grant completion/i })
+      ).not.toBeInTheDocument();
+      expect(screen.getByRole("status")).toHaveTextContent(/marked as complete/i);
     });
 
     it("should render GrantNotCompletedButton when grant is not completed and user is authorized", () => {

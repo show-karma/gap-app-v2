@@ -21,6 +21,14 @@ vi.mock("next/headers", () => ({
   cookies: vi.fn(),
 }));
 
+// When no Privy instance with getAccessToken is registered, getToken() awaits
+// an internal waitForInstance() that resolves via a setTimeout(3000) fallback.
+// Under fake timers that timer must be advanced or the await hangs forever.
+async function resolveTokenWithTimers<T>(promise: Promise<T>): Promise<T> {
+  await vi.advanceTimersByTimeAsync(3000);
+  return promise;
+}
+
 describe("TokenManager — edge cases", () => {
   let mockGetAccessToken: ReturnType<typeof vi.fn>;
 
@@ -300,7 +308,7 @@ describe("TokenManager — edge cases", () => {
       // Set instance to null (simulates logout)
       TokenManager.setPrivyInstance(null);
 
-      const token = await TokenManager.getToken();
+      const token = await resolveTokenWithTimers(TokenManager.getToken());
       expect(token).toBeNull();
     });
 
@@ -375,7 +383,7 @@ describe("TokenManager — edge cases", () => {
       vi.advanceTimersByTime(21_000);
 
       TokenManager.setPrivyInstance(null);
-      const header = await TokenManager.getAuthHeader();
+      const header = await resolveTokenWithTimers(TokenManager.getAuthHeader());
       expect(header).toEqual({});
     });
   });
@@ -393,7 +401,7 @@ describe("TokenManager — edge cases", () => {
       TokenManager.clearCache();
       TokenManager.setPrivyInstance(null);
 
-      expect(await TokenManager.isAuthenticated()).toBe(false);
+      expect(await resolveTokenWithTimers(TokenManager.isAuthenticated())).toBe(false);
     });
 
     it("should return true after clearCache when Privy instance can provide token", async () => {

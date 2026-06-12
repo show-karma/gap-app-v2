@@ -32,6 +32,8 @@ export const PAGES = {
     APPLICATIONS: (community: string) => `/community/${community}/applications`,
     APPLICATION_DETAIL: (community: string, applicationId: string) =>
       `/community/${community}/applications/${applicationId}`,
+    APPLICATION_EDIT: (community: string, referenceNumber: string) =>
+      `/community/${community}/applications/${referenceNumber}/edit`,
     APPLICATION_SUCCESS: (community: string, applicationId: string) =>
       `/community/${community}/applications/${applicationId}/success`,
     BROWSE_APPLICATIONS: (community: string) => `/community/${community}/browse-applications`,
@@ -45,6 +47,12 @@ export const PAGES = {
   MY_REVIEWS: `/my-reviews`,
   DASHBOARD: `/dashboard`,
   DONATIONS: `/donations`,
+  DONOR_RESEARCH: {
+    INDEX: `/nonprofit-research`,
+    ONBOARDING: `/nonprofit-research/onboarding`,
+    REPORT: (reportId: string) => `/nonprofit-research/${reportId}`,
+    SHARED: (token: string) => `/nonprofit-research/shared/${token}`,
+  },
   EVALUATE: `/evaluate`,
   // REVIEWER routes now point to MANAGE (unified RBAC-based routes)
   REVIEWER: {
@@ -69,6 +77,7 @@ export const PAGES = {
   },
   MANAGE: {
     ROOT: (community: string) => `/community/${community}/manage`,
+    ACTION_ITEMS: (community: string) => `/community/${community}/manage/action-items`,
     FUNDING_PLATFORM: {
       ROOT: (community: string) => `/community/${community}/manage/funding-platform`,
       APPLICATIONS: (community: string, programId: string) =>
@@ -157,6 +166,9 @@ export const PAGES = {
   FUNDERS: `/funders`,
   FOR_PROJECTS: `/for-projects`,
   FOR_AGENTS: `/for-agents`,
+  NONPROFITS: `/nonprofits`,
+  DONOR_ADVISORS: `/donor-advisors`,
+  CREATE_PROJECT_PROFILE: `/create-project-profile`,
   MCP_CONNECT: `/mcp/connect`,
   SEEDS: `/seeds`,
   SEEDS_FUND: `/seeds/fund`,
@@ -227,11 +239,11 @@ export const FUNDING_PLATFORM_PAGES = (tenantId: string, _domain?: string) => {
 };
 
 // ── Find Funders (foundations + nonprofits search) ──────────────────────────
-// Route constants for the /non-profits/find-funders feature area. Surfaces
+// Route constants for the /nonprofits/find-funders feature area. Surfaces
 // foundation profiles, nonprofit profiles, grants, and the agentic search
 // workbench grounded in IRS 990 filings.
 
-const FIND_FUNDERS = "/non-profits/find-funders";
+const FIND_FUNDERS = "/nonprofits/find-funders";
 
 export const NON_PROFITS_PAGES = {
   HOME: FIND_FUNDERS,

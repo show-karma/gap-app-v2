@@ -27,10 +27,15 @@ describe("useSearchSessionStore", () => {
     expect(useSearchSessionStore.getState().currentId).toBe(id);
   });
 
-  it("createSession reuses an existing session for a duplicate query (case-insensitive)", () => {
+  it("createSession ALWAYS mints a fresh session even for an identical query", () => {
+    // The prior dedup behaviour caused stale results when the user
+    // navigated back to the landing page and submitted the same chip
+    // again — the route pointed at the cached old session instead of
+    // a fresh run. Each submit must be a brand-new session.
     const id1 = useSearchSessionStore.getState().createSession("Youth literacy");
     const id2 = useSearchSessionStore.getState().createSession("youth LITERACY");
-    expect(id2).toBe(id1);
+    expect(id2).not.toBe(id1);
+    expect(useSearchSessionStore.getState().currentId).toBe(id2);
   });
 
   it("setSession creates or overwrites a session with the given id", () => {

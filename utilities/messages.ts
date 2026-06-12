@@ -383,9 +383,11 @@ export const MESSAGES = {
   REGISTRY: {
     FORM: {
       NAME: {
+        REQUIRED: "Name is required",
         MIN: "Name must be at least 3 characters",
         MAX: "Name must be less than 50 characters",
       },
+      DESCRIPTION_REQUIRED: "Description is required",
       DESCRIPTION: "Description must be at least 3 characters",
       BUDGET: "You need to specify a budget",
       AMOUNT_DISTRIBUTED: "You need to specify an amount distributed to date",

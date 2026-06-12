@@ -324,8 +324,7 @@ describe("Authentication Flow Integration Tests", () => {
         expect(signInButtons.length).toBeGreaterThan(0);
       });
 
-      const contactSalesButtons = screen.getAllByText("Contact sales");
-      expect(contactSalesButtons.length).toBeGreaterThan(0);
+      expect(screen.queryByText("Contact sales")).not.toBeInTheDocument();
     });
 
     it("should close menu after logout", async () => {
@@ -418,8 +417,7 @@ describe("Authentication Flow Integration Tests", () => {
         expect(signInButtons.length).toBeGreaterThan(0);
       });
 
-      const contactSalesButtons = screen.getAllByText("Contact sales");
-      expect(contactSalesButtons.length).toBeGreaterThan(0);
+      expect(screen.queryByText("Contact sales")).not.toBeInTheDocument();
     });
   });
 

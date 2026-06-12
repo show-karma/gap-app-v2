@@ -10,11 +10,19 @@ const mockGrantStore = {
 };
 
 vi.mock("@/store/grant", () => ({
-  useGrantStore: vi.fn(() => mockGrantStore),
+  useGrantStore: vi.fn((selector?: (state: typeof mockGrantStore) => unknown) =>
+    selector ? selector(mockGrantStore) : mockGrantStore
+  ),
 }));
 
+const mockOwnerStore = {
+  isOwner: false,
+};
+
 vi.mock("@/store/owner", () => ({
-  useOwnerStore: vi.fn(() => false),
+  useOwnerStore: vi.fn((selector?: (state: typeof mockOwnerStore) => unknown) =>
+    selector ? selector(mockOwnerStore) : mockOwnerStore
+  ),
 }));
 
 // Mock heavy/external dependencies

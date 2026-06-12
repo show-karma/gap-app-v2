@@ -130,11 +130,6 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
-      {
-        source: "/non-profits",
-        destination: "/non-profits/find-funders",
-        permanent: true,
-      },
       // Redirect all old /community/:communityId/admin routes to /community/:communityId/manage
       {
         source: "/community/:communityId/admin",
@@ -155,6 +150,19 @@ const nextConfig: NextConfig = {
       {
         source: "/community/:communityId/reviewer/:path*",
         destination: "/community/:communityId/manage/:path*",
+        permanent: true,
+      },
+      // Reviewer Inbox was renamed to Action Items. The second rule covers
+      // whitelabel domains, where the /community/<slug> prefix is stripped
+      // from browser URLs before the middleware rewrite runs.
+      {
+        source: "/community/:communityId/manage/inbox",
+        destination: "/community/:communityId/manage/action-items",
+        permanent: true,
+      },
+      {
+        source: "/manage/inbox",
+        destination: "/manage/action-items",
         permanent: true,
       },
       // Redirect /grants to /funding-opportunities (common alias)

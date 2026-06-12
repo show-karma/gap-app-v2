@@ -5,12 +5,8 @@ import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
 import { Button } from "@/components/ui/button";
 import { formatDate } from "@/utilities/formatDate";
-import { rewriteHeadingsToLevel } from "@/utilities/markdown";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
-
-// Demote all headings (h1-h5) to h6 for card descriptions
-const demoteAllHeadings = rewriteHeadingsToLevel(6);
 
 export interface SeedsProject {
   uid: string;
@@ -90,12 +86,9 @@ export const SeedsProjectCard = ({ project }: SeedsProjectCardProps) => {
           {/* Description with markdown */}
           <div className="text-sm text-gray-600 dark:text-gray-300 line-clamp-3 overflow-hidden mb-4 flex-1">
             <MarkdownPreview
+              variant="excerpt"
               source={details.description || details.missionSummary || "No description available"}
               className="!text-sm !leading-relaxed [&>*]:!m-0 [&>*]:!p-0"
-              rehypeRewrite={(node) => demoteAllHeadings(node)}
-              components={{
-                a: ({ children }) => <span>{children}</span>,
-              }}
             />
           </div>
 

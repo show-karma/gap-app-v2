@@ -124,7 +124,7 @@ describe("ReviewsSection", () => {
     expect(screen.getByText("8")).toBeInTheDocument();
   });
 
-  it("shows View Milestones button for milestone reviewers", () => {
+  it("shows Action Items button for milestone reviewers", () => {
     mockUseReviewerPrograms.mockReturnValue({
       programs: [
         createProgram({
@@ -141,10 +141,10 @@ describe("ReviewsSection", () => {
 
     render(<ReviewsSection />);
 
-    expect(screen.getByText("View Milestones")).toBeInTheDocument();
+    expect(screen.getByText("Action Items")).toBeInTheDocument();
   });
 
-  it("does not show View Milestones when not milestone reviewer", () => {
+  it("does not show Action Items when not milestone reviewer", () => {
     mockUseReviewerPrograms.mockReturnValue({
       programs: [
         createProgram({
@@ -161,7 +161,7 @@ describe("ReviewsSection", () => {
 
     render(<ReviewsSection />);
 
-    expect(screen.queryByText("View Milestones")).not.toBeInTheDocument();
+    expect(screen.queryByText("Action Items")).not.toBeInTheDocument();
   });
 
   it("sorts communities alphabetically", () => {

@@ -5,6 +5,7 @@ import type { FC } from "react";
 import toast from "react-hot-toast";
 import { Button } from "@/components/Utilities/Button";
 import { useReEvaluateKarmaProfileAI } from "@/hooks/useReEvaluateKarmaProfileAI";
+import { extractApiErrorMessage } from "@/utilities/errors";
 
 interface RunKarmaProfileButtonProps {
   referenceNumber: string;
@@ -34,17 +35,7 @@ export const RunKarmaProfileButton: FC<RunKarmaProfileButtonProps> = ({
       await mutation.mutateAsync(referenceNumber);
       toast.success("Track-record evaluation completed");
     } catch (error) {
-      let message = "Failed to run track-record evaluation";
-      if (error && typeof error === "object" && "isAxiosError" in error) {
-        const axiosError = error as {
-          response?: { data?: { message?: string } };
-          message?: string;
-        };
-        message = axiosError.response?.data?.message || axiosError.message || message;
-      } else if (error instanceof Error) {
-        message = error.message;
-      }
-      toast.error(message);
+      toast.error(extractApiErrorMessage(error, "Failed to run track-record evaluation"));
     }
   };
 

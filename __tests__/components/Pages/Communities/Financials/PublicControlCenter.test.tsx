@@ -208,7 +208,9 @@ describe("PublicControlCenter", () => {
 
     expect(screen.getByText("Financials")).toBeInTheDocument();
     expect(
-      screen.getByText("Overview of project agreements, milestones, and payments")
+      screen.getByText(
+        "Overview of grants, agreements, milestones, and disbursements made through programs in this community."
+      )
     ).toBeInTheDocument();
   });
 

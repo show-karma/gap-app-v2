@@ -98,12 +98,11 @@ describe("Navbar Skeleton Components", () => {
       expect(container.firstChild).toBeInTheDocument();
     });
 
-    it("should have proper loading indicators for auth buttons", () => {
+    it("should have a single h-9 loading indicator (Sign in only)", () => {
       const { container } = render(<NavbarAuthButtonsSkeleton />);
 
-      // Should have 2 skeleton elements (sign in + contact sales)
       const skeletons = container.querySelectorAll('[class*="h-9"]');
-      expect(skeletons.length).toBeGreaterThanOrEqual(2);
+      expect(skeletons.length).toBe(1);
     });
 
     it("should match sign in button dimensions", () => {
@@ -114,19 +113,19 @@ describe("Navbar Skeleton Components", () => {
       expect(signInSkeleton).toBeInTheDocument();
     });
 
-    it("should match contact sales button dimensions", () => {
+    it("should NOT render a contact sales skeleton (removed from nav header)", () => {
       const { container } = render(<NavbarAuthButtonsSkeleton />);
 
-      // Contact sales button skeleton: h-9 w-32
+      // Contact sales skeleton (h-9 w-32) was removed alongside the button
       const contactSalesSkeleton = container.querySelector(".h-9.w-32");
-      expect(contactSalesSkeleton).toBeInTheDocument();
+      expect(contactSalesSkeleton).not.toBeInTheDocument();
     });
 
-    it("should have rounded corners on skeleton elements", () => {
+    it("should have rounded corners on the skeleton element", () => {
       const { container } = render(<NavbarAuthButtonsSkeleton />);
 
       const skeletons = container.querySelectorAll(".rounded-md");
-      expect(skeletons.length).toBe(2);
+      expect(skeletons.length).toBe(1);
     });
 
     it("should have flex layout", () => {
@@ -152,21 +151,21 @@ describe("Navbar Skeleton Components", () => {
       expect(mainContainer).not.toHaveClass("hidden");
     });
 
-    it("should render two distinct skeleton elements", () => {
+    it("should render exactly one skeleton element (Sign in only)", () => {
       const { container } = render(<NavbarAuthButtonsSkeleton />);
 
       const skeletons = container.querySelectorAll('[class*="rounded-md"]');
-      expect(skeletons.length).toBe(2);
+      expect(skeletons.length).toBe(1);
     });
 
-    it("should have different widths for each button skeleton", () => {
+    it("should size the skeleton to the Sign in button width", () => {
       const { container } = render(<NavbarAuthButtonsSkeleton />);
 
       const narrowSkeleton = container.querySelector(".w-20");
       const wideSkeleton = container.querySelector(".w-32");
 
       expect(narrowSkeleton).toBeInTheDocument();
-      expect(wideSkeleton).toBeInTheDocument();
+      expect(wideSkeleton).not.toBeInTheDocument();
     });
   });
 
@@ -248,15 +247,15 @@ describe("Navbar Skeleton Components", () => {
       expect(skeletons.length).toBe(2);
     });
 
-    it("NavbarAuthButtonsSkeleton should reflect actual button widths", () => {
+    it("NavbarAuthButtonsSkeleton should reflect the Sign in button width", () => {
       const { container } = render(<NavbarAuthButtonsSkeleton />);
 
-      // Widths should approximate "Sign in" and "Contact sales" text
+      // Only the Sign in skeleton remains; Contact sales (w-32) was removed.
       const narrowButton = container.querySelector(".w-20"); // ~Sign in
-      const wideButton = container.querySelector(".w-32"); // ~Contact sales
+      const wideButton = container.querySelector(".w-32"); // ~Contact sales (gone)
 
       expect(narrowButton).toBeInTheDocument();
-      expect(wideButton).toBeInTheDocument();
+      expect(wideButton).not.toBeInTheDocument();
     });
 
     it("all skeletons should use consistent height for buttons", () => {

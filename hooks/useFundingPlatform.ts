@@ -815,6 +815,12 @@ export const useApplicationStatus = (programId?: string, _chainId?: number) => {
 
       // Invalidate all applications lists
       queryClient.invalidateQueries({ queryKey: ["funding-applications"] });
+
+      // Refresh the cross-program Reviewer Inbox feed + header stats. Uses the
+      // `["reviewer-inbox"]` prefix so every community/filter variant refetches.
+      // No-op when the inbox isn't mounted (e.g. the per-program "My
+      // Applications" page), so it doesn't change that surface's behavior.
+      queryClient.invalidateQueries({ queryKey: ["reviewer-inbox"] });
     },
     onError: (error: any) => {
       const errorMessage = error?.response?.data?.message || "Failed to update application status";

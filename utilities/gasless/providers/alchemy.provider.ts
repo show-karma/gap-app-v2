@@ -11,6 +11,7 @@ import type {
   SmartAccountClient,
 } from "../types";
 import { GaslessProviderError } from "../types";
+import { serializeBySender } from "../utils/userOpQueue";
 
 /**
  * Maps viem chain IDs to Alchemy Account Kit chain definitions.
@@ -121,23 +122,28 @@ export class AlchemyProvider implements IGaslessProvider {
         if (method === "eth_sendTransaction") {
           const tx = (params as Array<{ to: string; data: string; value?: string }>)[0];
 
-          try {
-            // Alchemy uses sendUserOperation for smart account transactions
-            const result = await client.sendUserOperation({
-              uo: {
-                target: tx.to as `0x${string}`,
-                data: (tx.data || "0x") as `0x${string}`,
-                value: tx.value ? BigInt(tx.value) : 0n,
-              },
-            });
+          // Serialize UserOps per sender: an ERC-4337 nonce only advances once
+          // an op is included, so two concurrent ops would share a nonce and
+          // the bundler rejects the second with AA25.
+          return serializeBySender(client.account?.address, async () => {
+            try {
+              // Alchemy uses sendUserOperation for smart account transactions
+              const result = await client.sendUserOperation({
+                uo: {
+                  target: tx.to as `0x${string}`,
+                  data: (tx.data || "0x") as `0x${string}`,
+                  value: tx.value ? BigInt(tx.value) : 0n,
+                },
+              });
 
-            // Wait for the user operation to be included
-            const txHash = await client.waitForUserOperationTransaction(result);
-            return txHash;
-          } catch (txError) {
-            console.error("[Alchemy] Transaction failed:", txError);
-            throw txError;
-          }
+              // Wait for the user operation to be included
+              const txHash = await client.waitForUserOperationTransaction(result);
+              return txHash;
+            } catch (txError) {
+              console.error("[Alchemy] Transaction failed:", txError);
+              throw txError;
+            }
+          });
         }
 
         if (method === "eth_accounts" || method === "eth_requestAccounts") {

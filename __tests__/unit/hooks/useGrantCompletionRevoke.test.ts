@@ -211,7 +211,11 @@ vi.mock("@/hooks/v2/useProjectGrants", () => ({
 }));
 
 vi.mock("@/store/grant", () => ({
-  useGrantStore: vi.fn(() => ({ refreshGrant: mockRefreshGrant })),
+  useGrantStore: vi.fn((selector?: any) => {
+    const storeState = { refreshGrant: mockRefreshGrant };
+    if (typeof selector === "function") return selector(storeState);
+    return storeState;
+  }),
 }));
 
 import { act, renderHook } from "@testing-library/react";

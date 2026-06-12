@@ -1,7 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { useSearchParams } from "next/navigation";
 import type { ReactNode } from "react";
 import { BrowseApplicationsClient } from "@/app/community/[communityId]/(with-header)/browse-applications/BrowseApplicationsClient";
 import fetchData from "@/utilities/fetchData";
@@ -84,12 +83,24 @@ vi.mock("@/utilities/formatDate", () => ({
   formatDate: (d: string) => d,
 }));
 
-vi.mock("lucide-react", () => ({
-  Lock: (props: Record<string, unknown>) => <svg data-testid="lock-icon" {...props} />,
-  RefreshCw: (props: Record<string, unknown>) => <svg data-testid="refresh-icon" {...props} />,
-  Search: (props: Record<string, unknown>) => <svg data-testid="search-icon" {...props} />,
-  X: (props: Record<string, unknown>) => <svg data-testid="x-icon" {...props} />,
-}));
+// Robust mock: builds a stub SVG for every icon the component imports today,
+// plus any reasonable icon it may add later, so future icon additions do not
+// break this test file. We resolve the icon set from the actual lucide-react
+// package exports and stub each one, rather than hand-listing names.
+vi.mock("lucide-react", async () => {
+  const actual = await vi.importActual<Record<string, unknown>>("lucide-react");
+  const toTestId = (name: string) =>
+    `${name.replace(/([a-z0-9])([A-Z])/g, "$1-$2").toLowerCase()}-icon`;
+  const stubbed: Record<string, unknown> = { __esModule: true };
+  for (const name of Object.keys(actual)) {
+    const Icon = (props: Record<string, unknown>) => (
+      <svg data-testid={toTestId(name)} {...props} />
+    );
+    Icon.displayName = name;
+    stubbed[name] = Icon;
+  }
+  return stubbed;
+});
 
 // --- Helpers ---
 
@@ -105,6 +116,29 @@ function createWrapper() {
   };
 }
 
+// The program selector is a custom listbox: a button (aria-haspopup="listbox")
+// that opens a popup with role="option" entries — not a native <select>.
+async function selectProgram(user: ReturnType<typeof userEvent.setup>, name: string) {
+  const trigger = screen.getByRole("button", {
+    name: /choose a program|test grant program|another program/i,
+  });
+  await user.click(trigger);
+  const option = within(screen.getByRole("listbox")).getByRole("option", { name });
+  await user.click(option);
+}
+
+// Status filters are chip buttons inside a "Filter by status" fieldset.
+async function clickStatusChip(user: ReturnType<typeof userEvent.setup>, label: string) {
+  const fieldset = screen.getByRole("group", { name: "Filter by status" });
+  const chip = within(fieldset).getByRole("button", { name: new RegExp(`^${label}`, "i") });
+  await user.click(chip);
+}
+
+function lastReplaceUrl(): string {
+  const calls = mockRouterReplace.mock.calls;
+  return calls[calls.length - 1][0] as string;
+}
+
 // --- Tests ---
 
 describe("BrowseApplicationsClient - URL sync on filter change", () => {
@@ -118,8 +152,7 @@ describe("BrowseApplicationsClient - URL sync on filter change", () => {
       wrapper: createWrapper(),
     });
 
-    const programSelect = screen.getByLabelText("Funding Program");
-    await user.selectOptions(programSelect, "program-abc");
+    await selectProgram(user, "Test Grant Program");
 
     // The component should call router.replace with the programId in the URL
     expect(mockRouterReplace).toHaveBeenCalledWith(
@@ -134,14 +167,12 @@ describe("BrowseApplicationsClient - URL sync on filter change", () => {
       wrapper: createWrapper(),
     });
 
-    // First select a program so the status filter is enabled
-    const programSelect = screen.getByLabelText("Funding Program");
-    await user.selectOptions(programSelect, "program-abc");
+    // First select a program so the status filter is rendered
+    await selectProgram(user, "Test Grant Program");
 
     mockRouterReplace.mockClear();
 
-    const statusSelect = screen.getByLabelText("Status");
-    await user.selectOptions(statusSelect, "approved");
+    await clickStatusChip(user, "Approved");
 
     expect(mockRouterReplace).toHaveBeenCalledWith(
       expect.stringContaining("status=approved"),
@@ -155,21 +186,21 @@ describe("BrowseApplicationsClient - URL sync on filter change", () => {
       wrapper: createWrapper(),
     });
 
-    // First select a program so the search input is enabled
-    const programSelect = screen.getByLabelText("Funding Program");
-    await user.selectOptions(programSelect, "program-abc");
+    // First select a program so the search input is rendered
+    await selectProgram(user, "Test Grant Program");
 
     mockRouterReplace.mockClear();
 
-    const searchInput = screen.getByLabelText("Search");
+    const searchInput = screen.getByLabelText("Search applications");
     await user.type(searchInput, "my project");
 
-    // The component should update the URL with the search param
-    // (may be debounced, so we check that it was called at some point)
-    expect(mockRouterReplace).toHaveBeenCalledWith(
-      expect.stringContaining("search="),
-      expect.anything()
-    );
+    // The search term is debounced before being pushed to the URL.
+    await waitFor(() => {
+      expect(mockRouterReplace).toHaveBeenCalledWith(
+        expect.stringContaining("search="),
+        expect.anything()
+      );
+    });
   });
 
   it("reflects combined filter state in the URL", async () => {
@@ -178,15 +209,12 @@ describe("BrowseApplicationsClient - URL sync on filter change", () => {
       wrapper: createWrapper(),
     });
 
-    const programSelect = screen.getByLabelText("Funding Program");
-    await user.selectOptions(programSelect, "program-abc");
-
-    const statusSelect = screen.getByLabelText("Status");
-    await user.selectOptions(statusSelect, "pending");
+    await selectProgram(user, "Test Grant Program");
+    await clickStatusChip(user, "Pending");
 
     // The last call to replace should include both programId and status
     expect(mockRouterReplace).toHaveBeenCalled();
-    const lastCall = mockRouterReplace.mock.calls[mockRouterReplace.mock.calls.length - 1][0];
+    const lastCall = lastReplaceUrl();
     expect(lastCall).toContain("programId=program-abc");
     expect(lastCall).toContain("status=pending");
   });
@@ -197,31 +225,31 @@ describe("BrowseApplicationsClient - URL sync on filter change", () => {
       wrapper: createWrapper(),
     });
 
-    const programSelect = screen.getByLabelText("Funding Program");
-    await user.selectOptions(programSelect, "program-abc");
+    await selectProgram(user, "Test Grant Program");
 
-    const statusSelect = screen.getByLabelText("Status");
-    await user.selectOptions(statusSelect, "approved");
-    await user.selectOptions(statusSelect, "all");
+    await clickStatusChip(user, "Approved");
+    await clickStatusChip(user, "All");
 
     expect(mockRouterReplace).toHaveBeenCalled();
-    const lastCall = mockRouterReplace.mock.calls[mockRouterReplace.mock.calls.length - 1][0];
+    const lastCall = lastReplaceUrl();
     expect(lastCall).not.toContain("status=");
   });
 
-  it("removes programId from URL when program is deselected", async () => {
+  it("keeps programId in the URL after a status filter is toggled off", async () => {
+    // The pill selector has no "deselect" affordance, so once chosen the
+    // programId persists. Toggling status back to "all" must not drop it.
     const user = userEvent.setup();
     render(<BrowseApplicationsClient communityId="test-community" />, {
       wrapper: createWrapper(),
     });
 
-    const programSelect = screen.getByLabelText("Funding Program");
-    await user.selectOptions(programSelect, "program-abc");
-    // Deselect by choosing the placeholder option
-    await user.selectOptions(programSelect, "");
+    await selectProgram(user, "Test Grant Program");
+    await clickStatusChip(user, "Approved");
+    await clickStatusChip(user, "All");
 
     expect(mockRouterReplace).toHaveBeenCalled();
-    const lastCall = mockRouterReplace.mock.calls[mockRouterReplace.mock.calls.length - 1][0];
-    expect(lastCall).not.toContain("programId=");
+    const lastCall = lastReplaceUrl();
+    expect(lastCall).toContain("programId=program-abc");
+    expect(lastCall).not.toContain("status=");
   });
 });

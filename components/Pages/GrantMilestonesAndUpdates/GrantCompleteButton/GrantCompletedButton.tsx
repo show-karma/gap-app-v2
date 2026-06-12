@@ -14,6 +14,23 @@ export const GrantCompletedButton: React.FC<GrantCompletedButtonProps> = ({
   isRevoking,
   isAuthorized,
 }) => {
+  // Unauthorized viewers only get a non-interactive completion status badge.
+  // The hover-to-reveal "Revoke completion" affordance (and its revoke
+  // aria-label) is removed structurally — not hidden behind a `disabled` flag —
+  // so the misleading revoke control never reaches users who cannot revoke.
+  if (!isAuthorized) {
+    return (
+      // biome-ignore lint/a11y/useSemanticElements: a styled status badge, not a form output — role="status" on a span is the documented pattern
+      <span
+        role="status"
+        className="flex flex-row items-center justify-center gap-2 rounded-md border border-emerald-600 bg-green-100 px-3.5 py-2 text-sm font-semibold text-emerald-700"
+      >
+        <span>Marked as complete</span>
+        <CheckCircleIcon className="h-5 w-5" />
+      </span>
+    );
+  }
+
   return (
     <button
       onClick={onClick}
@@ -22,7 +39,7 @@ export const GrantCompletedButton: React.FC<GrantCompletedButtonProps> = ({
       aria-busy={isRevoking}
       aria-disabled={disabled}
       className="group relative flex flex-row items-center justify-center gap-2 rounded-md border border-emerald-600 bg-green-100 px-3.5 py-2 text-sm font-semibold text-emerald-700 hover:border-red-600 hover:bg-red-100 hover:text-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-      title={isAuthorized ? "Click to revoke grant completion" : undefined}
+      title="Click to revoke grant completion"
     >
       {isRevoking ? (
         <>

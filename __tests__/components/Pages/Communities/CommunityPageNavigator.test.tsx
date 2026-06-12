@@ -4,14 +4,12 @@ import type { ReactNode } from "react";
 import { CommunityPageNavigator } from "@/components/Pages/Communities/CommunityPageNavigator";
 import { useCommunityDetails } from "@/hooks/communities/useCommunityDetails";
 import { usePublishedReports } from "@/hooks/portfolio-reports/usePortfolioReports";
-import { useFundingOpportunitiesCount } from "@/hooks/useFundingOpportunitiesCount";
 import { useCommunityPrograms } from "@/hooks/usePrograms";
 import { useWhitelabel } from "@/utilities/whitelabel-context";
 
 // Mock hooks
 vi.mock("@/hooks/communities/useCommunityDetails");
 vi.mock("@/hooks/portfolio-reports/usePortfolioReports");
-vi.mock("@/hooks/useFundingOpportunitiesCount");
 vi.mock("@/hooks/usePrograms");
 vi.mock("@/utilities/whitelabel-context");
 
@@ -64,9 +62,6 @@ const mockUseCommunityDetails = useCommunityDetails as vi.MockedFunction<
 const mockUsePublishedReports = usePublishedReports as vi.MockedFunction<
   typeof usePublishedReports
 >;
-const mockUseFundingOpportunitiesCount = useFundingOpportunitiesCount as vi.MockedFunction<
-  typeof useFundingOpportunitiesCount
->;
 const mockUseCommunityPrograms = useCommunityPrograms as vi.MockedFunction<
   typeof useCommunityPrograms
 >;
@@ -111,10 +106,6 @@ describe("CommunityPageNavigator", () => {
           slug: "test-community",
         },
       },
-      isLoading: false,
-    } as any);
-    mockUseFundingOpportunitiesCount.mockReturnValue({
-      data: 5, // Default to having some funding opportunities
       isLoading: false,
     } as any);
     mockUsePublishedReports.mockReturnValue({
@@ -333,9 +324,9 @@ describe("CommunityPageNavigator", () => {
       const { container } = render(<CommunityPageNavigator />, { wrapper });
 
       const nav = container.firstChild;
-      expect(nav).toHaveClass("max-md:overflow-x-auto");
-      expect(nav).toHaveClass("max-md:scrollbar-none");
-      expect(nav).toHaveClass("max-md:flex-nowrap");
+      expect(nav).toHaveClass("overflow-x-auto");
+      expect(nav).toHaveClass("scrollbar-none");
+      expect(nav).toHaveClass("flex-nowrap");
     });
 
     it("should have links with gap between icon and text", () => {
@@ -426,9 +417,9 @@ describe("CommunityPageNavigator", () => {
   });
 
   describe("Funding Opportunities Visibility", () => {
-    it("should hide funding opportunities tab when count is 0", () => {
-      mockUseFundingOpportunitiesCount.mockReturnValue({
-        data: 0,
+    it("should hide funding opportunities tab when community has no programs", () => {
+      mockUseCommunityPrograms.mockReturnValue({
+        data: [],
         isLoading: false,
       } as any);
 
@@ -438,9 +429,9 @@ describe("CommunityPageNavigator", () => {
       expect(screen.queryByTestId("dollar-sign-icon")).not.toBeInTheDocument();
     });
 
-    it("should show funding opportunities tab when count is greater than 0", () => {
-      mockUseFundingOpportunitiesCount.mockReturnValue({
-        data: 10,
+    it("should show funding opportunities tab when community has programs", () => {
+      mockUseCommunityPrograms.mockReturnValue({
+        data: [{ programId: "program-1", metadata: { title: "Program One" } }],
         isLoading: false,
       } as any);
 
@@ -450,14 +441,14 @@ describe("CommunityPageNavigator", () => {
       expect(screen.getByTestId("dollar-sign-icon")).toBeInTheDocument();
     });
 
-    it("should always show funding opportunities tab in whitelabel mode even when count is 0", () => {
+    it("should always show funding opportunities tab in whitelabel mode even when there are no programs", () => {
       mockUseWhitelabel.mockReturnValue({
         isWhitelabel: true,
         communitySlug: "test-community",
         config: null,
       } as any);
-      mockUseFundingOpportunitiesCount.mockReturnValue({
-        data: 0,
+      mockUseCommunityPrograms.mockReturnValue({
+        data: [],
         isLoading: false,
       } as any);
 
@@ -466,16 +457,16 @@ describe("CommunityPageNavigator", () => {
       expect(screen.getByText("Funding opportunities")).toBeInTheDocument();
     });
 
-    it("should show funding opportunities tab when count is undefined (loading)", () => {
-      mockUseFundingOpportunitiesCount.mockReturnValue({
+    it("should hide funding opportunities tab when programs are undefined (loading)", () => {
+      mockUseCommunityPrograms.mockReturnValue({
         data: undefined,
         isLoading: true,
       } as any);
 
       render(<CommunityPageNavigator />, { wrapper });
 
-      // Tab should be visible while loading (undefined !== 0)
-      expect(screen.getByText("Funding opportunities")).toBeInTheDocument();
+      // Tab is hidden while loading because programs?.length ?? 0 evaluates to 0 when undefined
+      expect(screen.queryByText("Funding opportunities")).not.toBeInTheDocument();
     });
   });
 

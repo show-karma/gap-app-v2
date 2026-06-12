@@ -177,9 +177,11 @@ describe("CommunityStats", () => {
 
     it("should show loading state when fetching stats", async () => {
       const user = userEvent.setup();
-      (fetchData as vi.Mock).mockImplementation(
-        () => new Promise((resolve) => setTimeout(() => resolve([mockStatsData, null]), 100))
-      );
+      // Never-settling promise keeps the component in its loading state for the
+      // whole assertion window. A timer-based resolve (e.g. setTimeout 100ms) is
+      // flaky: under load the click + waitFor can overrun the delay, the data
+      // arrives, and "Loading stats..." is already gone before we look.
+      (fetchData as vi.Mock).mockImplementation(() => new Promise<never>(() => {}));
 
       render(<CommunityStats communityId={mockCommunityId} />);
 

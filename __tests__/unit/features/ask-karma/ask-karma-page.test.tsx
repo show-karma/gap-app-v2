@@ -44,6 +44,14 @@ vi.mock("@/utilities/whitelabel-context", () => ({
   useWhitelabel: () => mockUseWhitelabel(),
 }));
 
+// Persona resolution hits useAuth + a React Query permission check; stub it
+// so the page test stays focused on view transitions and the exit CTA. The
+// persona → prompt mapping is covered in use-ask-karma-persona.test.tsx and
+// config.test.ts.
+vi.mock("@/src/features/ask-karma/hooks/use-ask-karma-persona", () => ({
+  useAskKarmaPersona: () => "grantee",
+}));
+
 const config: AskKarmaConfig = {
   heading: "Ask Karma",
   subheading: "Sub",

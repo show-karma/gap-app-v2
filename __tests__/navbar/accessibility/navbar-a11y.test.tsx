@@ -34,7 +34,6 @@ vi.mock("@/src/components/navbar/navbar-desktop-navigation", () => ({
       <nav aria-label="Main navigation">
         <input type="search" aria-label="Search" placeholder="Search..." />
         <button type="button">Sign in</button>
-        <a href="/contact">Contact sales</a>
       </nav>
     </div>
   ),
@@ -70,9 +69,6 @@ vi.mock("@/src/components/navbar/navbar-auth-buttons", () => ({
   NavbarAuthButtons: () => (
     <div data-testid="auth-buttons">
       <button type="button">Sign in</button>
-      <a href="/contact" target="_blank" rel="noopener noreferrer">
-        Contact sales
-      </a>
     </div>
   ),
 }));

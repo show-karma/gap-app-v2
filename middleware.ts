@@ -195,18 +195,24 @@ export async function middleware(request: NextRequest) {
   }
 
   if (path.startsWith("/project/")) {
-    // Check if the path contains /grants and redirect to /funding
+    // These are permanent URL-structure changes, so emit 308 (not the default
+    // 307). A 307 tells Google the old URL is temporary, so it keeps the
+    // legacy URL in "Page with redirect" instead of consolidating to the new
+    // one; 308 lets it transfer signals to the new URL and drop the old.
     if (path.includes("/grants") && !path.includes("/project/grants")) {
       const newPath = path.replace("/grants", "/funding");
-      return NextResponse.redirect(new URL(newPath, request.url));
+      return NextResponse.redirect(new URL(newPath, request.url), 308);
     }
     if (path.includes("/funding/create-grant")) {
       const newPath = path.replace("/funding/create-grant", "/funding/new");
-      return NextResponse.redirect(new URL(newPath, request.url));
+      return NextResponse.redirect(new URL(newPath, request.url), 308);
     }
+    // Send legacy /roadmap straight to the project overview. It used to
+    // redirect to /updates, which then redirects to the overview — a redirect
+    // chain Google has to follow; collapse it to a single hop.
     if (path.includes("/roadmap") && !path.includes("/project/roadmap")) {
-      const newPath = path.replace("/roadmap", "/updates");
-      return NextResponse.redirect(new URL(newPath, request.url));
+      const newPath = path.replace(/\/roadmap.*$/, "");
+      return NextResponse.redirect(new URL(newPath, request.url), 308);
     }
   }
 

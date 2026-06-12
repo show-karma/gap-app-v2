@@ -18,12 +18,9 @@ export function CTASection() {
             foundations your size.
           </p>
           <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto px-4 md:px-0">
-            <Button
-              asChild
-              className="bg-foreground text-background hover:bg-foreground/90 rounded-md font-medium px-6 py-2.5"
-            >
+            <Button asChild className="rounded-md font-semibold px-6 py-2.5">
               <Link href={SOCIALS.PARTNER_FORM} target="_blank" rel="noopener noreferrer">
-                Schedule a Demo
+                Schedule a demo
               </Link>
             </Button>
           </div>

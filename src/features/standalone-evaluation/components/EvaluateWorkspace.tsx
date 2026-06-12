@@ -18,6 +18,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { EMPTY_ARRAY } from "@/utilities/safeEmpty";
 import { cn } from "@/utilities/tailwind";
 import { useEvaluateApplication, useSubmitFeedback } from "../hooks/useEvaluationRun";
 import { useSession } from "../hooks/useEvaluationSessions";
@@ -38,11 +39,6 @@ interface EvaluateWorkspaceProps {
 
 type WorkbenchTab = "iterate" | "bulk" | "history";
 
-// Stable empty array — must be module-level so the reference never changes.
-// Inline `?? []` in a Zustand selector creates a new array on every render
-// and causes infinite re-renders in Zustand v5.
-const EMPTY_RESULTS: ReadonlyArray<EvaluationResultResponse> = [];
-
 const TABS: ReadonlyArray<{ id: WorkbenchTab; label: string; icon: typeof Sparkles }> = [
   { id: "iterate", label: "Iterate on sample", icon: Sparkles },
   { id: "bulk", label: "Bulk run", icon: Upload },
@@ -60,10 +56,11 @@ export function EvaluateWorkspace({ sessionId }: EvaluateWorkspaceProps) {
   );
 
   const session = sessionQuery.data;
-  // The `?? []` fallback must not be inlined — it would produce a new array
-  // reference on every render and trigger infinite re-renders in Zustand v5.
+  // Select the raw slice and apply the stable empty fallback OUTSIDE the
+  // selector — see utilities/safeEmpty. An inline `?? []` would allocate a new
+  // array every render and trigger React #185 in Zustand v5.
   const resultsRaw = useEvaluationDraftStore((s) => s.resultsBySession[sessionId]);
-  const results = resultsRaw ?? EMPTY_RESULTS;
+  const results = resultsRaw ?? EMPTY_ARRAY;
   const sortedResults = useMemo(
     () => [...results].sort((a, b) => a.iterationNumber - b.iterationNumber),
     [results]

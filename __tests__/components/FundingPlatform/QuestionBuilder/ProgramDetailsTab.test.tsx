@@ -416,8 +416,8 @@ describe("ProgramDetailsTab", () => {
       await user.click(submitButton);
 
       await waitFor(() => {
-        // Find the visible error message (not the sr-only one)
-        const errorMessages = screen.getAllByText(/program name must be at least 3 characters/i);
+        // Empty required field reports "is required", not min-length (#1506); pick the visible (non-sr-only) one.
+        const errorMessages = screen.getAllByText(/program name is required/i);
         const visibleError = errorMessages.find(
           (el) => !el.closest('[class*="sr-only"]') && el.getAttribute("role") === "alert"
         );

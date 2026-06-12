@@ -92,6 +92,14 @@ interface SearchResult {
 interface PhilanthropyStore {
   // ── Chat-style multi-turn state ──
   messages: ReadonlyArray<ChatTurn>;
+  /**
+   * The search-session id the current `messages` thread belongs to, or null
+   * when no thread has been seeded. The store is global and survives
+   * client-side navigation, so ChatView uses this to tell "returning to the
+   * same session" (keep the thread) apart from "arriving on a new session
+   * while a previous thread is still in memory" (reset, then seed).
+   */
+  threadId: string | null;
 
   // ── Legacy single-query state ──
   // Preserved during transition. New code should read `messages`.
@@ -107,6 +115,7 @@ interface PhilanthropyStore {
   // ── Chat actions (Phase 3 — included now to avoid store refactor) ──
   appendTurn: (turn: ChatTurn) => void;
   updateLastTurn: (patch: Partial<ChatTurn>) => void;
+  setThreadId: (id: string | null) => void;
 
   // ── Legacy actions ──
   setQuery: (query: string) => void;
@@ -122,6 +131,7 @@ interface PhilanthropyStore {
 
 const initialState = {
   messages: EMPTY_MESSAGES as ReadonlyArray<ChatTurn>,
+  threadId: null as string | null,
   query: "",
   narrative: "",
   traceId: null as string | null,
@@ -132,6 +142,7 @@ const initialState = {
   PhilanthropyStore,
   | "appendTurn"
   | "updateLastTurn"
+  | "setThreadId"
   | "setQuery"
   | "setNarrative"
   | "setTraceId"
@@ -161,6 +172,7 @@ export const usePhilanthropyStore = create<PhilanthropyStore>((set) => ({
       return { messages: [...s.messages.slice(0, -1), updated] };
     }),
 
+  setThreadId: (threadId) => set({ threadId }),
   setQuery: (query) => set({ query }),
   setNarrative: (narrative) => set({ narrative }),
   setTraceId: (traceId) => set({ traceId }),

@@ -120,13 +120,10 @@ describe("Permission Matrix Integration Tests", () => {
             expect(signInButtons.length).toBe(0);
           }
 
-          // Check Contact Sales button (may have multiple)
+          // Contact sales was removed from the nav header; it should never
+          // be present regardless of permission state.
           const contactSalesButtons = screen.queryAllByText("Contact sales");
-          if (expected.contactSales) {
-            expect(contactSalesButtons.length).toBeGreaterThan(0);
-          } else {
-            expect(contactSalesButtons.length).toBe(0);
-          }
+          expect(contactSalesButtons.length).toBe(0);
 
           // Check Skeleton
           const skeleton = screen.queryByTestId("user-skeleton");
@@ -199,11 +196,10 @@ describe("Permission Matrix Integration Tests", () => {
         mockUsePrivy: createMockUsePrivy(fixture.authState),
       });
 
-      // Should see auth buttons (both mobile and desktop may have these)
+      // Sign in is the only auth button in the nav header now
       const signInButtons = screen.getAllByText("Sign in");
       expect(signInButtons.length).toBeGreaterThan(0);
-      const contactSalesButtons = screen.getAllByText("Contact sales");
-      expect(contactSalesButtons.length).toBeGreaterThan(0);
+      expect(screen.queryByText("Contact sales")).not.toBeInTheDocument();
 
       // Should not see user avatar (authenticated only)
       expect(screen.queryByLabelText("Open profile")).not.toBeInTheDocument();

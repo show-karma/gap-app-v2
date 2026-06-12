@@ -52,7 +52,7 @@ export function MilestonesTab({ application, isOwner, invoiceRequired }: Milesto
     // window because it implies a permanent absence.
     const isApprovedPipelinePending = application.status.toLowerCase() === "approved";
     return (
-      <div className="rounded-xl border border-border p-6">
+      <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
         <p className="text-muted-foreground">
           {isApprovedPipelinePending
             ? "Setting up milestones… On-chain attestations land within a few minutes of approval."
@@ -63,11 +63,11 @@ export function MilestonesTab({ application, isOwner, invoiceRequired }: Milesto
   }
 
   return (
-    <div className="rounded-xl border border-border">
-      <div className="border-b border-border p-4">
-        <h2 className="text-xl font-semibold text-foreground">Milestones</h2>
+    <div className="rounded-2xl border border-border bg-card shadow-sm">
+      <div className="border-b border-border px-5 py-4">
+        <h2 className="text-base font-semibold text-foreground">Milestones</h2>
       </div>
-      <div className="p-6 space-y-3">
+      <div className="space-y-3 p-5">
         {entries.map((entry) => {
           // Stable key: prefer milestoneUID; fall back to fieldLabel:title
           // for application-source slots that haven't been anchored on-chain

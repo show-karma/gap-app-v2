@@ -39,7 +39,11 @@ vi.mock("@/components/Utilities/ProfilePicture", () => ({
 
 // Mock MarkdownPreview component
 vi.mock("@/components/Utilities/MarkdownPreview", () => ({
-  MarkdownPreview: ({ source }: any) => <div data-testid="markdown-preview">{source}</div>,
+  MarkdownPreview: ({ source, variant }: any) => (
+    <div data-testid="markdown-preview" data-variant={variant}>
+      {source}
+    </div>
+  ),
 }));
 
 // Mock utilities
@@ -121,11 +125,11 @@ describe("ProjectCard", () => {
       expect(profilePic).toHaveAttribute("aria-label", "Test Project");
     });
 
-    it("should truncate description to 160 characters", () => {
+    it("renders the description through MarkdownPreview's excerpt variant", () => {
       render(<ProjectCard project={mockProject} index={0} />);
 
       const markdown = screen.getByTestId("markdown-preview");
-      expect(markdown.textContent?.length).toBeLessThanOrEqual(160);
+      expect(markdown.getAttribute("data-variant")).toBe("excerpt");
     });
   });
 
@@ -283,15 +287,17 @@ describe("ProjectCard", () => {
       expect(title.className).toContain("line-clamp-1");
     });
 
-    it("should handle very long description", () => {
+    it("hands the full (untruncated) description to MarkdownPreview", () => {
       const projectWithLongDescription = {
         ...mockProject,
         description: "A".repeat(300),
       };
       render(<ProjectCard project={projectWithLongDescription} index={0} />);
 
+      // The card no longer pre-slices; excerpt truncation is centralized in
+      // MarkdownPreview, so the complete source is passed through here.
       const markdown = screen.getByTestId("markdown-preview");
-      expect(markdown.textContent?.length).toBe(160);
+      expect(markdown.textContent?.length).toBe(300);
     });
 
     it("should handle null grant milestones", () => {

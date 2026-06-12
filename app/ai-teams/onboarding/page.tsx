@@ -1,13 +1,16 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
 import { AlertCircle, ArrowLeft, Globe, Hash, KeyRound, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { type ReactNode, useState } from "react";
+import type { ReactNode } from "react";
+import { type FieldError, useForm } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { useProvisionOrg } from "@/hooks/useTeam";
 import { humanizeApiError } from "@/lib/ai-agent-error";
 import { PAGES } from "@/utilities/pages";
+import { normalizeSlug, type OnboardingFormValues, onboardingSchema } from "./onboarding-schema";
 
 // Phase 1 wizard: collects the four fields gap-indexer's
 // POST /v2/hermes/orgs/:slug/provision needs to register a pre-existing
@@ -16,12 +19,38 @@ import { PAGES } from "@/utilities/pages";
 export default function OnboardingPage() {
   const router = useRouter();
   const provision = useProvisionOrg();
-  const [slug, setSlug] = useState("");
-  const [containerUrl, setContainerUrl] = useState("");
-  const [sessionToken, setSessionToken] = useState("");
-  const [communityId, setCommunityId] = useState("");
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<OnboardingFormValues>({
+    resolver: zodResolver(onboardingSchema),
+    mode: "onChange",
+    defaultValues: {
+      slug: "",
+      containerUrl: "",
+      sessionToken: "",
+      communityId: "",
+    },
+  });
 
-  const canSubmit = slug && containerUrl && sessionToken && !provision.isPending;
+  const onSubmit = handleSubmit((values) => {
+    provision.mutate(
+      {
+        slug: values.slug.trim(),
+        containerUrl: values.containerUrl.trim(),
+        sessionToken: values.sessionToken.trim(),
+        communityId: values.communityId?.trim() || null,
+      },
+      {
+        onSuccess: (org) => {
+          router.push(PAGES.TEAM.DIRECTORY(org.slug));
+        },
+      }
+    );
+  });
+
+  const slugField = register("slug");
 
   return (
     <main className="mx-auto max-w-2xl px-6 py-12">
@@ -44,23 +73,8 @@ export default function OnboardingPage() {
 
       <form
         className="mt-10 space-y-5 rounded-2xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 shadow-sm"
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (!canSubmit) return;
-          provision.mutate(
-            {
-              slug: slug.trim(),
-              containerUrl: containerUrl.trim(),
-              sessionToken: sessionToken.trim(),
-              communityId: communityId.trim() || null,
-            },
-            {
-              onSuccess: (org) => {
-                router.push(PAGES.TEAM.DIRECTORY(org.slug));
-              },
-            }
-          );
-        }}
+        onSubmit={onSubmit}
+        noValidate
       >
         <Field
           id="slug"
@@ -68,14 +82,21 @@ export default function OnboardingPage() {
           hint="Lowercase letters, numbers, hyphens. This is internal — won't be shown publicly."
           icon={<Hash className="h-4 w-4" aria-hidden />}
           required
+          error={errors.slug}
         >
           <Input
             id="slug"
-            value={slug}
-            onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))}
+            {...slugField}
+            onChange={(e) => {
+              // Normalize as the user types so the handle always stays valid,
+              // then delegate to RHF's own change handler (keeps dirty/validation).
+              e.target.value = normalizeSlug(e.target.value);
+              slugField.onChange(e);
+            }}
+            aria-invalid={errors.slug ? true : undefined}
+            aria-describedby={errors.slug ? "slug-error" : undefined}
             placeholder="acme-nonprofit"
             className="h-auto rounded-none border-0 bg-transparent py-2 pl-0 pr-3 text-sm text-gray-900 dark:text-zinc-100 shadow-none placeholder:text-gray-400 dark:placeholder:text-zinc-600 focus-visible:ring-0"
-            required
           />
         </Field>
 
@@ -85,15 +106,16 @@ export default function OnboardingPage() {
           hint="Where your team lives — usually provided by ops when the container spins up."
           icon={<Globe className="h-4 w-4" aria-hidden />}
           required
+          error={errors.containerUrl}
         >
           <Input
             id="containerUrl"
             type="url"
-            value={containerUrl}
-            onChange={(e) => setContainerUrl(e.target.value)}
+            {...register("containerUrl")}
+            aria-invalid={errors.containerUrl ? true : undefined}
+            aria-describedby={errors.containerUrl ? "containerUrl-error" : undefined}
             placeholder="https://team-acme.karma.xyz"
             className="h-auto rounded-none border-0 bg-transparent py-2 pl-0 pr-3 text-sm text-gray-900 dark:text-zinc-100 shadow-none placeholder:text-gray-400 dark:placeholder:text-zinc-600 focus-visible:ring-0"
-            required
           />
         </Field>
 
@@ -103,17 +125,17 @@ export default function OnboardingPage() {
           hint="From the runtime's welcome banner. Stored encrypted in our backend and never exposed in logs."
           icon={<KeyRound className="h-4 w-4" aria-hidden />}
           required
+          error={errors.sessionToken}
         >
           <Input
             id="sessionToken"
             type="password"
-            value={sessionToken}
-            onChange={(e) => setSessionToken(e.target.value)}
+            {...register("sessionToken")}
+            aria-invalid={errors.sessionToken ? true : undefined}
+            aria-describedby={errors.sessionToken ? "sessionToken-error" : undefined}
             placeholder="Runtime session token"
             autoComplete="new-password"
             className="h-auto rounded-none border-0 bg-transparent py-2 pl-0 pr-3 font-mono text-sm text-gray-900 dark:text-zinc-100 shadow-none placeholder:text-gray-400 dark:placeholder:text-zinc-600 focus-visible:ring-0"
-            required
-            minLength={16}
           />
         </Field>
 
@@ -122,11 +144,11 @@ export default function OnboardingPage() {
           label="Karma community"
           hint="Optional — link this team to an existing community for shared admin."
           icon={<Hash className="h-4 w-4" aria-hidden />}
+          error={errors.communityId}
         >
           <Input
             id="communityId"
-            value={communityId}
-            onChange={(e) => setCommunityId(e.target.value)}
+            {...register("communityId")}
             placeholder="Leave blank to skip"
             className="h-auto rounded-none border-0 bg-transparent py-2 pl-0 pr-3 text-sm text-gray-900 dark:text-zinc-100 shadow-none placeholder:text-gray-400 dark:placeholder:text-zinc-600 focus-visible:ring-0"
           />
@@ -146,7 +168,7 @@ export default function OnboardingPage() {
 
         <button
           type="submit"
-          disabled={!canSubmit}
+          disabled={provision.isPending}
           className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-gray-900 dark:bg-zinc-100 py-2.5 text-sm font-medium text-white dark:text-zinc-900 shadow-sm transition hover:bg-gray-800 dark:hover:bg-zinc-200 disabled:cursor-not-allowed disabled:bg-gray-300 dark:disabled:bg-zinc-700 disabled:shadow-none"
         >
           {provision.isPending ? (
@@ -173,10 +195,11 @@ interface FieldProps {
   hint?: string;
   icon?: ReactNode;
   required?: boolean;
+  error?: FieldError;
   children: ReactNode;
 }
 
-function Field({ id, label, hint, icon, required, children }: FieldProps) {
+function Field({ id, label, hint, icon, required, error, children }: FieldProps) {
   return (
     <div>
       <label htmlFor={id} className="block text-sm font-medium text-gray-900 dark:text-zinc-100">
@@ -195,7 +218,17 @@ function Field({ id, label, hint, icon, required, children }: FieldProps) {
         ) : null}
         {children}
       </div>
-      {hint ? <p className="mt-1.5 text-xs text-gray-500 dark:text-zinc-400">{hint}</p> : null}
+      {error ? (
+        <p
+          id={`${id}-error`}
+          role="alert"
+          className="mt-1.5 text-xs text-red-600 dark:text-red-400"
+        >
+          {error.message}
+        </p>
+      ) : hint ? (
+        <p className="mt-1.5 text-xs text-gray-500 dark:text-zinc-400">{hint}</p>
+      ) : null}
     </div>
   );
 }

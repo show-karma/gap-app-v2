@@ -146,6 +146,10 @@ export const generateProjectContactMetadata = (
     description:
       getRealDescriptionExcerpt(project) || `Contact information for ${projectTitle} project team.`,
     canonicalPath: `/project/${projectId}/contact-info`,
+    // Contact info is auth-gated (Project Admin/Owner/Staff/Contract Owner) and
+    // renders near-identical chrome across every project to anonymous crawlers,
+    // so it should not be indexed — keep it out of the duplicate/low-value pool.
+    robots: { index: false, follow: true },
   });
 };
 

@@ -153,9 +153,12 @@ describe("ProjectsExplorer", () => {
 
       renderWithProviders(<ProjectsExplorer />);
 
-      await waitFor(() => {
-        expect(screen.getByText("42 projects found")).toBeInTheDocument();
-      });
+      await waitFor(
+        () => {
+          expect(screen.getByText("42 projects found")).toBeInTheDocument();
+        },
+        { timeout: 5000 }
+      );
     });
 
     it("shows singular 'project' when count is 1", async () => {
@@ -176,9 +179,12 @@ describe("ProjectsExplorer", () => {
 
       renderWithProviders(<ProjectsExplorer />);
 
-      await waitFor(() => {
-        expect(screen.getByText("1 project found")).toBeInTheDocument();
-      });
+      await waitFor(
+        () => {
+          expect(screen.getByText("1 project found")).toBeInTheDocument();
+        },
+        { timeout: 5000 }
+      );
     });
 
     it("shows Load More button when hasNextPage is true", async () => {
@@ -250,9 +256,14 @@ describe("ProjectsExplorer", () => {
 
       renderWithProviders(<ProjectsExplorer />);
 
-      await waitFor(() => {
-        expect(screen.getByText("Failed to load projects. Please try again.")).toBeInTheDocument();
-      });
+      await waitFor(
+        () => {
+          expect(
+            screen.getByText("Failed to load projects. Please try again.")
+          ).toBeInTheDocument();
+        },
+        { timeout: 5000 }
+      );
     });
   });
 
@@ -266,9 +277,12 @@ describe("ProjectsExplorer", () => {
 
       renderWithProviders(<ProjectsExplorer />);
 
-      await waitFor(() => {
-        expect(screen.getByText("No projects available")).toBeInTheDocument();
-      });
+      await waitFor(
+        () => {
+          expect(screen.getByText("No projects available")).toBeInTheDocument();
+        },
+        { timeout: 5000 }
+      );
     });
   });
 

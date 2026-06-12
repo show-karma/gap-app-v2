@@ -13,6 +13,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useReEvaluateKarmaProfileAI } from "@/hooks/useReEvaluateKarmaProfileAI";
+import { extractApiErrorMessage } from "@/utilities/errors";
 
 interface ReEvaluateKarmaProfileButtonProps {
   referenceNumber: string;
@@ -47,8 +48,7 @@ export const ReEvaluateKarmaProfileButton: FC<ReEvaluateKarmaProfileButtonProps>
       toast.success("Track-record evaluation re-run successfully");
       setIsDialogOpen(false);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to re-run evaluation";
-      toast.error(message);
+      toast.error(extractApiErrorMessage(error, "Failed to re-run evaluation"));
     }
   };
 

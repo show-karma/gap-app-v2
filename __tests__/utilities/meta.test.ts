@@ -83,9 +83,11 @@ describe("meta utilities", () => {
       expect(defaultMetadata.alternates?.canonical).toBe("/");
     });
 
-    it("should set favicon", () => {
-      const icons = defaultMetadata.icons as { icon: string };
-      expect(icons.icon).toBe("/favicon.ico");
+    it("should not define icons so whitelabel favicons are inherited", () => {
+      // Pages spread defaultMetadata; an icons entry here would override the
+      // per-tenant favicon the root layout sets on whitelabel domains. The
+      // root layout declares the default Karma icons itself.
+      expect(defaultMetadata.icons).toBeUndefined();
     });
 
     it("should include openGraph metadata", () => {

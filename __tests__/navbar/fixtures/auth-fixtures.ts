@@ -737,7 +737,7 @@ export const authFixtures: AuthFixture[] = [
   },
 
   // 20. Loading State
-  // Note: Even during loading, mobile menu shows Sign in/Contact sales because authenticated=false
+  // Note: Even during loading, mobile menu shows Sign in because authenticated=false
   {
     name: "loading",
     description: "Authentication is loading (ready = false)",
