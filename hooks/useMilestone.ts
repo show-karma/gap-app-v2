@@ -9,85 +9,22 @@ import { useOwnerStore, useProjectStore } from "@/store";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
 import { chainNameDictionary } from "@/utilities/chainNameDictionary";
-import {
-  INDEXING_TIMEOUT_MESSAGE,
-  IndexingTimeoutError,
-  isSurfacedError,
-  markSurfaced,
-} from "@/utilities/errors";
+import { IndexingTimeoutError, isSurfacedError, markSurfaced } from "@/utilities/errors";
 import fetchData from "@/utilities/fetchData";
 import { getProjectObjectives } from "@/utilities/gapIndexerApi/getProjectObjectives";
-import { sendMilestoneImpactAnswers } from "@/utilities/impact/milestoneImpactAnswers";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
-import {
-  INTERACTIVE_INDEXING_POLL,
-  isRetryConditionNotMetError,
-  retryUntilConditionMet,
-} from "@/utilities/retries";
+import { INTERACTIVE_INDEXING_POLL, retryUntilConditionMet } from "@/utilities/retries";
 import { sanitizeInput, sanitizeObject } from "@/utilities/sanitize";
 import { getProjectById } from "@/utilities/sdk";
 import { SHARE_TEXTS } from "@/utilities/share/text";
+import { mapPollExhaustion, sendOutputsAndDeliverables } from "./useMilestone.helpers";
 import { useOffChainRevoke } from "./useOffChainRevoke";
 import { useSetupChainAndWallet } from "./useSetupChainAndWallet";
 import { useWallet } from "./useWallet";
 import { useProjectGrants } from "./v2/useProjectGrants";
 import { useProjectUpdates } from "./v2/useProjectUpdates";
-
-/**
- * Translate an indexing-poll rejection into a caller-meaningful error. Budget
- * exhaustion (`RetryConditionNotMetError`) becomes an actionable
- * `IndexingTimeoutError` so the user can tell "revoke rejected" apart from
- * "revoke accepted, indexer lagging". Cancellation and any other error pass
- * through untouched.
- */
-const mapPollExhaustion = (error: unknown): unknown =>
-  isRetryConditionNotMetError(error) ? new IndexingTimeoutError(INDEXING_TIMEOUT_MESSAGE) : error;
-
-// Helper function to send outputs and deliverables data
-const sendOutputsAndDeliverables = async (
-  milestoneUID: string,
-  data: MilestoneCompletedFormData
-) => {
-  try {
-    // Send outputs (metrics) data if any
-    if (data.outputs && data.outputs.length > 0) {
-      for (const output of data.outputs) {
-        if (output.outputId && output.value !== undefined && output.value !== "") {
-          // Default to today's date if not specified (matching project behavior)
-          const today = new Date().toISOString().split("T")[0];
-
-          const datapoints = [
-            {
-              value: output.value,
-              proof: output.proof || "",
-              startDate: output.startDate || today,
-              endDate: output.endDate || today,
-            },
-          ];
-
-          await sendMilestoneImpactAnswers(
-            milestoneUID,
-            output.outputId,
-            datapoints,
-            () => {},
-            (error) => {
-              console.error(`Error sending output data for indicator ${output.outputId}:`, error);
-            }
-          );
-        }
-      }
-    }
-
-    // Send deliverables data if any
-    if (data.deliverables && data.deliverables.length > 0) {
-    }
-  } catch (error) {
-    console.error("Error sending outputs and deliverables:", error);
-    // Don't throw - we don't want to fail the milestone completion if outputs fail
-  }
-};
 
 export const useMilestone = () => {
   const [isDeleting, setIsDeleting] = useState(false);
