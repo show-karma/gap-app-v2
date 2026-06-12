@@ -37,7 +37,11 @@ vi.mock("@/components/Utilities/ProfilePicture", () => ({
 
 // Mock MarkdownPreview component
 vi.mock("@/components/Utilities/MarkdownPreview", () => ({
-  MarkdownPreview: ({ source }: any) => <div data-testid="markdown-preview">{source}</div>,
+  MarkdownPreview: ({ source, variant }: any) => (
+    <div data-testid="markdown-preview" data-variant={variant}>
+      {source}
+    </div>
+  ),
 }));
 
 // Mock TrackTags component
@@ -401,7 +405,7 @@ describe("GrantCard", () => {
       expect(screen.getByText(/1\/2.*Milestones/i)).toBeInTheDocument();
     });
 
-    it("should truncate description to 200 characters", () => {
+    it("delegates excerpt truncation to MarkdownPreview (passes full source, excerpt variant)", () => {
       const grantWithLongDescription = {
         ...mockGrant,
         project: {
@@ -415,8 +419,12 @@ describe("GrantCard", () => {
 
       render(<GrantCard grant={grantWithLongDescription} index={0} />);
 
+      // The card no longer pre-slices the markdown; it hands the untruncated
+      // source to MarkdownPreview's excerpt variant so the centralized
+      // word-boundary truncation can run on the complete input.
       const markdownPreview = screen.getByTestId("markdown-preview");
-      expect(markdownPreview.textContent?.length).toBe(200);
+      expect(markdownPreview.getAttribute("data-variant")).toBe("excerpt");
+      expect(markdownPreview.textContent?.length).toBe(400);
     });
 
     it("should show milestone completed/total and activity updates separately", () => {
