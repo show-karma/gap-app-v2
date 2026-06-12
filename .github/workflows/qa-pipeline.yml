@@ -930,6 +930,24 @@ jobs:
           echo "Server failed to start within $((SECONDS - start))s"
           exit 1
 
+      # Persist the Privy storage state across pipeline runs. auth.setup.ts
+      # probes the cached session first and only does the OTP email flow if
+      # it has expired — Privy throttles OTP sends per address, and logging
+      # in fresh on every pipeline run was the root cause of flaky
+      # dogfood-auth-prep failures. Daily key + restore-keys means at most
+      # ~one OTP send per day instead of one per run.
+      - name: Get date for auth-state cache key
+        id: authdate
+        run: echo "date=$(date -u +%F)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Privy auth state
+        uses: actions/cache@v5
+        with:
+          path: e2e/.auth/user.json
+          key: privy-auth-state-${{ steps.authdate.outputs.date }}
+          restore-keys: |
+            privy-auth-state-
+
       - name: Run Privy auth setup
         env:
           QA_TEST_EMAIL: ${{ secrets.QA_TEST_EMAIL }}
