@@ -6,7 +6,7 @@ import { expect, mockJson, test } from "../../fixtures";
 import { waitForPageReady } from "../../helpers/navigation";
 
 test.describe("Private Comments", () => {
-  const setupApplicationPage = async (page: any, withApiMocks: Function, comments: any[] = []) => {
+  const setupApplicationPage = async (_page: any, withApiMocks: Function, comments: any[] = []) => {
     const community = createMockCommunity({ slug: "optimism" });
     const program = createMockProgram({ programId: "p1" });
     const application = createMockApplication({ referenceNumber: "APP-2024-001", programId: "p1" });

@@ -1,4 +1,4 @@
-import { createMockCommunity, MOCK_COMMUNITIES } from "../../data/communities";
+import { MOCK_COMMUNITIES } from "../../data/communities";
 import { createMockProgram } from "../../data/programs";
 import { expect, mockJson, TENANTS, test } from "../../fixtures";
 import { GOTO_OPTIONS, waitForPageReady } from "../../helpers/navigation";

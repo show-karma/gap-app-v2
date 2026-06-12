@@ -26,7 +26,6 @@ import * as wagmiModule from "wagmi";
 import { useDonationTransfer } from "@/hooks/useDonationTransfer";
 import type { DonationPayment } from "@/store/donationCart";
 import { useDonationCart } from "@/store/donationCart";
-import * as chainSyncValidationModule from "@/utilities/chainSyncValidation";
 import * as erc20Module from "@/utilities/erc20";
 import * as walletClientFallbackModule from "@/utilities/walletClientFallback";
 import {

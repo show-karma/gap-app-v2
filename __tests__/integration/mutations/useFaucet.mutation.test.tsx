@@ -8,7 +8,7 @@
  * - Shows success/error toasts
  */
 
-import { act, waitFor } from "@testing-library/react";
+import { act } from "@testing-library/react";
 import { HttpResponse, http } from "msw";
 import toast from "react-hot-toast";
 import { useFaucetClaim } from "@/hooks/useFaucet";

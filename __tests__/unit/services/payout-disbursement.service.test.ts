@@ -25,7 +25,7 @@ vi.mock("@/utilities/indexer", () => ({
         UPDATE_STATUS: (id: string) => `/v2/payouts/${id}/status`,
         SAFE_AWAITING: (addr: string, page?: number, limit?: number) =>
           `/v2/payouts/safe/${addr}/awaiting?page=${page ?? 1}&limit=${limit ?? 10}`,
-        COMMUNITY_RECENT: (uid: string, page?: number, limit?: number, status?: string) =>
+        COMMUNITY_RECENT: (uid: string, _page?: number, _limit?: number, _status?: string) =>
           `/v2/payouts/community/${uid}/recent`,
         COMMUNITY_PAYOUTS: (uid: string, _opts?: Record<string, unknown>) =>
           `/v2/payouts/community/${uid}/payouts`,
@@ -63,8 +63,6 @@ import {
   createDisbursements,
   deletePayoutConfig,
   getAwaitingSignaturesDisbursements,
-  getCommunityPayouts,
-  getCommunityPayoutsPublic,
   getGrantInvoiceDownloadUrl,
   getInvoiceDownloadUrl,
   getPayoutConfigByGrant,
@@ -73,7 +71,6 @@ import {
   getPayoutConfigsByCommunityPublic,
   getPayoutHistory,
   getPendingDisbursements,
-  getRecentCommunityDisbursements,
   getTotalDisbursed,
   recordPayment,
   recordSafeTransaction,

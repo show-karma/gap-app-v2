@@ -3,7 +3,6 @@
 import { PaperClipIcon, PencilSquareIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { zodResolver } from "@hookform/resolvers/zod";
 
-import type { IMilestoneCompleted } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useQueryClient } from "@tanstack/react-query";
 import { usePathname, useRouter } from "next/navigation";
 import { type FC, useCallback, useEffect, useMemo, useRef, useState } from "react";

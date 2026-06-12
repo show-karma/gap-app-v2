@@ -1,7 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import type { Application } from "@/types/whitelabel-entities";
 import fetchData from "@/utilities/fetchData";
 import { useUserApplicationsStore } from "../lib/store";
 import type { UserApplicationsResponse, UseUserApplicationsReturn } from "../types";

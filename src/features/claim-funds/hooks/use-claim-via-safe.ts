@@ -57,7 +57,7 @@ interface PrepareClaimVariables {
 }
 
 export function useClaimViaASafe(
-  tenantId: string,
+  _tenantId: string,
   networkName: string = "optimism"
 ): UseClaimViaASafeReturn {
   const { address: userAddress } = useAccount();

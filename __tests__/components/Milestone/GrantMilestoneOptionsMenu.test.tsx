@@ -14,7 +14,7 @@ vi.mock("@/hooks/useMilestone", () => ({
 
 vi.mock("next/dynamic", () => ({
   __esModule: true,
-  default: (loader: any) => {
+  default: (_loader: any) => {
     const Component = (props: any) => (
       <div data-testid="milestone-edit-dialog" data-is-open={props.isOpen}>
         MockMilestoneEditDialog

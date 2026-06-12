@@ -3,7 +3,6 @@ import {
   hasAllPermissions,
   hasAnyPermission,
   hasPermission,
-  PERMISSION_MATRIX,
 } from "../policies/permission-matrix";
 import { isValidPermission, Permission } from "../types/permission";
 import { getHighestRole, getRoleLevel, isRoleAtLeast, isValidRole, Role } from "../types/role";

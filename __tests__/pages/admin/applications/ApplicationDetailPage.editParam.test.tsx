@@ -1,4 +1,4 @@
-import { act, renderHook, waitFor } from "@testing-library/react";
+import { renderHook } from "@testing-library/react";
 import { useEffect, useState } from "react";
 import type { IFundingApplication } from "@/types/funding-platform";
 

@@ -4,8 +4,8 @@ import type { ProjectWithGrantsResponse } from "@/types/v2/project";
 
 // next/dynamic resolves synchronously in test environment — mock the inner module
 vi.mock("next/dynamic", () => ({
-  default: (fn: () => Promise<any>, _opts?: any) => {
-    const Component = (props: any) => {
+  default: (_fn: () => Promise<any>, _opts?: any) => {
+    const Component = (_props: any) => {
       // Render a stable Create Project button placeholder
       return <button type="button">Create Project</button>;
     };

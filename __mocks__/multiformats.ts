@@ -13,7 +13,7 @@ export class CID {
     this.bytes = bytes || new Uint8Array();
   }
 
-  static parse(cid: string): CID {
+  static parse(_cid: string): CID {
     return new CID(1, 0, new Uint8Array(), new Uint8Array());
   }
 

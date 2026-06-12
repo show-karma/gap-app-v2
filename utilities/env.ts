@@ -1,10 +1,4 @@
-import {
-  type ClientEnv,
-  clientSchema,
-  type ServerEnv,
-  serverSchema,
-  validateEnv,
-} from "./env.schema";
+import { clientSchema, type ServerEnv, serverSchema, validateEnv } from "./env.schema";
 
 /**
  * Validated and typed client environment variables.

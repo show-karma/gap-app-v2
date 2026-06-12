@@ -136,7 +136,7 @@ export const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMil
     } else if (milestoneAny.data?.endsAt) {
       // Raw attestation data may have endsAt as Unix timestamp
       const endsAt = Number(milestoneAny.data.endsAt);
-      if (!isNaN(endsAt) && endsAt > 0) {
+      if (!Number.isNaN(endsAt) && endsAt > 0) {
         // Check if seconds (10 digits) or milliseconds (13+ digits)
         const digitCount = Math.floor(Math.log10(Math.abs(endsAt))) + 1;
         milestoneEndsAt = digitCount <= 10 ? endsAt : Math.floor(endsAt / 1000);
@@ -144,7 +144,7 @@ export const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMil
     } else if (milestoneAny.endsAt) {
       // Direct endsAt field
       const endsAt = Number(milestoneAny.endsAt);
-      if (!isNaN(endsAt) && endsAt > 0) {
+      if (!Number.isNaN(endsAt) && endsAt > 0) {
         const digitCount = Math.floor(Math.log10(Math.abs(endsAt))) + 1;
         milestoneEndsAt = digitCount <= 10 ? endsAt : Math.floor(endsAt / 1000);
       }
@@ -277,13 +277,13 @@ export const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMil
       updateEndsAt = Math.floor(new Date(updateAny.dueDate).getTime() / 1000);
     } else if (updateAny.data?.endsAt) {
       const endsAt = Number(updateAny.data.endsAt);
-      if (!isNaN(endsAt) && endsAt > 0) {
+      if (!Number.isNaN(endsAt) && endsAt > 0) {
         const digitCount = Math.floor(Math.log10(Math.abs(endsAt))) + 1;
         updateEndsAt = digitCount <= 10 ? endsAt : Math.floor(endsAt / 1000);
       }
     } else if (updateAny.endsAt) {
       const endsAt = Number(updateAny.endsAt);
-      if (!isNaN(endsAt) && endsAt > 0) {
+      if (!Number.isNaN(endsAt) && endsAt > 0) {
         const digitCount = Math.floor(Math.log10(Math.abs(endsAt))) + 1;
         updateEndsAt = digitCount <= 10 ? endsAt : Math.floor(endsAt / 1000);
       }

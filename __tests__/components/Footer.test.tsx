@@ -4,8 +4,8 @@ import "@testing-library/jest-dom";
 
 // Mock next/dynamic so that dynamic imports resolve synchronously in tests
 vi.mock("next/dynamic", () => ({
-  default: (fn: () => Promise<any>) => {
-    const Component = (props: any) => {
+  default: (_fn: () => Promise<any>) => {
+    const Component = (_props: any) => {
       // Render the mock Newsletter directly
       return <div data-testid="newsletter">Newsletter Signup</div>;
     };

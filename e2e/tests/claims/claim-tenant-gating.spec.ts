@@ -1,8 +1,7 @@
-import { createApprovedApplication, createMockApplication } from "../../data/applications";
-import { createMockCommunity, MOCK_COMMUNITIES } from "../../data/communities";
+import { createApprovedApplication } from "../../data/applications";
+import { MOCK_COMMUNITIES } from "../../data/communities";
 import { createMockProgram } from "../../data/programs";
 import { expect, mockJson, test } from "../../fixtures";
-import { assertMetaTag, assertNoJsErrors, collectJsErrors } from "../../helpers/assertions";
 import { waitForPageReady } from "../../helpers/navigation";
 
 test.describe("Claim Tenant Gating", () => {

@@ -42,7 +42,7 @@ describe("ProjectProfileLayout - Dynamic Imports", () => {
       "ProjectOptionsMenu",
     ];
     for (const name of dialogs) {
-      expect(sourceCode).toMatch(new RegExp("dynamic\\([\\s\\S]*?" + name));
+      expect(sourceCode).toMatch(new RegExp(`dynamic\\([\\s\\S]*?${name}`));
     }
   });
 

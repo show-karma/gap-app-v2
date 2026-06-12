@@ -1,7 +1,7 @@
 "use client";
 
 import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/20/solid";
-import { BanknotesIcon, CheckIcon, Cog6ToothIcon } from "@heroicons/react/24/outline";
+import { BanknotesIcon, Cog6ToothIcon } from "@heroicons/react/24/outline";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
@@ -46,7 +46,6 @@ import {
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
-import { sanitizeNumericInput } from "@/utilities/validation";
 import { type CsvParseResult, PayoutsCsvUpload } from "./PayoutsCsvUpload";
 
 // Component-specific types

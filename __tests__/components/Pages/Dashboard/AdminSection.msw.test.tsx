@@ -11,7 +11,7 @@ import { HttpResponse, http } from "msw";
 import { createMockCommunity } from "@/__tests__/factories/community.factory";
 import { resetSeq } from "@/__tests__/factories/utils";
 import { installMswLifecycle, server } from "@/__tests__/msw/server";
-import { createTestQueryClient, renderWithProviders } from "@/__tests__/utils/render";
+import { renderWithProviders } from "@/__tests__/utils/render";
 import { AdminSection } from "@/components/Pages/Dashboard/AdminSection/AdminSection";
 
 const BASE = "http://localhost:4000";

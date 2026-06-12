@@ -81,9 +81,9 @@ describe("Gasless providers lazy instantiation", () => {
 
 describe("No static re-exports", () => {
   it("should not statically export AlchemyProvider or ZeroDevProvider", async () => {
-    const fs = await import("fs");
-    const path = await import("path");
-    const { fileURLToPath } = await import("url");
+    const fs = await import("node:fs");
+    const path = await import("node:path");
+    const { fileURLToPath } = await import("node:url");
     const currentDir = path.dirname(fileURLToPath(import.meta.url));
     const source = fs.readFileSync(
       path.resolve(currentDir, "../../../../utilities/gasless/providers/index.ts"),

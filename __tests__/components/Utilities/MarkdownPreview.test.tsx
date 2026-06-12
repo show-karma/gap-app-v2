@@ -1,4 +1,4 @@
-import { act, configure, render, screen, waitFor } from "@testing-library/react";
+import { configure, render, screen, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom";
 
 // MarkdownPreview lazy-loads streamdown + plugins via 5 real dynamic import()s

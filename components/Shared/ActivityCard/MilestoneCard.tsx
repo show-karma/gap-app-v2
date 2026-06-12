@@ -124,8 +124,6 @@ const getActivityTypeLabel = (type: string): string => {
       return "Project Activity";
     case "impact":
       return "Project Impact";
-    case "grant":
-    case "milestone":
     default:
       return "Milestone Update";
   }

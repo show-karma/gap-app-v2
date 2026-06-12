@@ -1,10 +1,10 @@
 import { test as base, expect } from "@playwright/test";
 import type { MockUserRole } from "../data/users";
-import { type AnvilConfig, anvilFixture } from "./anvil.fixture";
+import type { AnvilConfig } from "./anvil.fixture";
 import { mock404, mockError, mockJson, setupApiMocks } from "./api-mocks";
-import { type LoginOptions, loginAs, logout } from "./auth";
-import { type RpcFailureOptions, rpcFixture } from "./rpc.fixture";
-import { type WalletConfig, walletFixture } from "./wallet.fixture";
+import { type LoginOptions, loginAs } from "./auth";
+import type { RpcFailureOptions } from "./rpc.fixture";
+import type { WalletConfig } from "./wallet.fixture";
 import { setupWhitelabelContext, TENANTS, type TenantConfig } from "./whitelabel";
 
 type RouteHandler = (route: import("@playwright/test").Route) => Promise<void> | void;

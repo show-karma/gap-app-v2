@@ -26,9 +26,9 @@ vi.mock("@/utilities/indexer", () => ({
           return `/v2/payouts/communities/${uid}/pending${qs ? `?${qs}` : ""}`;
         },
         UPDATE_STATUS: (id: string) => `/v2/payouts/${id}/status`,
-        SAFE_AWAITING: (addr: string, page?: number, limit?: number) =>
+        SAFE_AWAITING: (addr: string, _page?: number, _limit?: number) =>
           `/v2/payouts/safe/${addr}/awaiting`,
-        COMMUNITY_RECENT: (uid: string, page?: number, limit?: number, status?: string) =>
+        COMMUNITY_RECENT: (uid: string, _page?: number, _limit?: number, _status?: string) =>
           `/v2/payouts/communities/${uid}/recent`,
         COMMUNITY_PAYOUTS: (uid: string, _opts?: any) => `/v2/payouts/communities/${uid}/payouts`,
       },

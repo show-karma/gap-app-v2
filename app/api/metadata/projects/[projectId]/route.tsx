@@ -49,7 +49,7 @@ export async function GET(
 
   const projectTitle = project?.details?.title || "";
   const title =
-    projectTitle && projectTitle.length > 55 ? projectTitle.substring(0, 55) + "..." : projectTitle;
+    projectTitle && projectTitle.length > 55 ? `${projectTitle.substring(0, 55)}...` : projectTitle;
 
   const description = cleanMarkdownForPlainText(project?.details?.description || "", 200);
 

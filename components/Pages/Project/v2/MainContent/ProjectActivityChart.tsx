@@ -105,7 +105,6 @@ export function ProjectActivityChart({ className, embedded = false }: ProjectAct
         return new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
       case "1y":
         return new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
-      case "all":
       default:
         return null;
     }

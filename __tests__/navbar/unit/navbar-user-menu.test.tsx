@@ -74,7 +74,7 @@ vi.mock("@/store/modals/contributorProfile", () => ({
   useContributorProfileModalStore: vi.fn(() => _localRefs.modalState.current),
 }));
 
-import { cleanup, screen, waitFor } from "@testing-library/react";
+import { cleanup, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { NavbarUserMenu } from "@/src/components/navbar/navbar-user-menu";
 import { useContributorProfileModalStore } from "@/store/modals/contributorProfile";

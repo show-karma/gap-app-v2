@@ -2,7 +2,7 @@
 
 import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getProjectGrants } from "@/services/project-grants.service";
-import type { Grant, GrantMilestone } from "@/types/v2/grant";
+import type { GrantMilestone } from "@/types/v2/grant";
 import * as payoutService from "../services/payout-disbursement.service";
 import type {
   CommunityPayoutAgreementInfo,
@@ -10,7 +10,6 @@ import type {
   CommunityPayoutsOptions,
   CommunityPayoutsResponse,
   CreateDisbursementsRequest,
-  MilestonePaymentStatus,
   PaginatedDisbursementsResponse,
   PayoutDisbursement,
   PayoutGrantConfig,

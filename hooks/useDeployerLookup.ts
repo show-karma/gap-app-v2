@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { contractsService, type DeployerInfo } from "@/services/contracts.service";
+import { contractsService } from "@/services/contracts.service";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
 
 interface UseDeployerLookupOptions {

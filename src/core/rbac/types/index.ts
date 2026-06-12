@@ -1,4 +1,3 @@
-
 export { isValidPermission, Permission } from "./permission";
 export type {
   PermissionContextValue,

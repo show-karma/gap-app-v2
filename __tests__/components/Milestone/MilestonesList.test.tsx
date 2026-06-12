@@ -1,5 +1,4 @@
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import { MilestonesList } from "@/components/Milestone/MilestonesList";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
 

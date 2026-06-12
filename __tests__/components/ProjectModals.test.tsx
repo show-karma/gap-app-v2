@@ -55,8 +55,8 @@ vi.mock("@/store/modals/contributorProfile", () => ({
 
 // Mock dynamic imports for modal components
 vi.mock("next/dynamic", () => ({
-  default: (loader: () => Promise<any>, options?: { ssr?: boolean }) => {
-    const DynamicComponent = (props: any) => {
+  default: (loader: () => Promise<any>, _options?: { ssr?: boolean }) => {
+    const DynamicComponent = (_props: any) => {
       // Return a placeholder for each modal that can be identified in tests
       // We detect which modal it is based on the loader string representation
       const loaderStr = loader.toString();

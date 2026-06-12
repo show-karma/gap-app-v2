@@ -20,7 +20,7 @@ vi.mock("next-themes", () => ({
   ThemeProvider: ({ children }: { children: unknown }) => children,
 }));
 
-import { screen, within } from "@testing-library/react";
+import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { WhitelabelNavbar } from "@/src/components/navbar/whitelabel-navbar";
 import type { TenantConfig } from "@/src/infrastructure/types/tenant";

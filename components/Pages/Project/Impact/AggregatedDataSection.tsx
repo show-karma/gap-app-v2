@@ -1,6 +1,6 @@
 "use client";
 
-import { Card, Title } from "@tremor/react";
+import { Title } from "@tremor/react";
 import dynamic from "next/dynamic";
 import { useMemo, useState } from "react";
 import { ChartSkeleton } from "@/components/Utilities/ChartSkeleton";

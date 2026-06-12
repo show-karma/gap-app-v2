@@ -30,7 +30,7 @@ vi.mock("next/navigation", () => ({
 
 // Mock next/dynamic — needed because dialogs are now dynamically imported
 vi.mock("next/dynamic", () => ({
-  default: (loader: () => Promise<any>, _options?: { ssr?: boolean }) => {
+  default: (_loader: () => Promise<any>, _options?: { ssr?: boolean }) => {
     const DynamicComponent = () => null;
     DynamicComponent.displayName = "DynamicMock";
     return DynamicComponent;

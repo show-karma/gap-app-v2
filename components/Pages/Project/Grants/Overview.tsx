@@ -40,10 +40,10 @@ const isValidAmount = (grant?: { amount?: string; details?: { amount?: string } 
         minimumFractionDigits: 0,
         maximumFractionDigits: 2,
       }).format(+split0);
-      return amountToFormat + " " + split[1];
+      return `${amountToFormat} ${split[1]}`;
     }
     // it should format and round to 2 decimal places without use formatCurrency
-    return formatCurrency(+split0) + " " + split[1];
+    return `${formatCurrency(+split0)} ${split[1]}`;
   }
   const number = Number(amountToFormat);
   if (Number.isNaN(number)) return amountToFormat;

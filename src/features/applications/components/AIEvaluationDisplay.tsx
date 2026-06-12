@@ -2,7 +2,6 @@
 
 import * as Sentry from "@sentry/nextjs";
 import { Info, Loader2, Sparkles } from "lucide-react";
-import type React from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/utilities/tailwind";
 import {

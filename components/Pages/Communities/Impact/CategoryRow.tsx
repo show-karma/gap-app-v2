@@ -1,5 +1,4 @@
 "use client";
-import { Card } from "@tremor/react";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import { ChartSkeleton } from "@/components/Utilities/ChartSkeleton";

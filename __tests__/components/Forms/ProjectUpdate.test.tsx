@@ -1,6 +1,6 @@
 import { ProjectUpdate as MockedProjectUpdate } from "@show-karma/karma-gap-sdk";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { vi } from "vitest";
 import { ProjectUpdateForm } from "@/components/Forms/ProjectUpdate";
@@ -147,7 +147,7 @@ vi.mock("@/utilities/fetchData", () => ({
 }));
 
 vi.mock("@/utilities/formatDate", () => ({
-  formatDate: vi.fn((date: any) => "2024-01-01"),
+  formatDate: vi.fn((_date: any) => "2024-01-01"),
 }));
 
 vi.mock("@/utilities/impact", () => ({

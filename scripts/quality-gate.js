@@ -632,7 +632,7 @@ function main() {
       reactDoctor: current.reactDoctor ??
         baseline.reactDoctor ?? { score: 0, errors: 0, warnings: 0, byCategory: {} },
     };
-    writeFileSafe(BASELINE_PATH, JSON.stringify(next, null, 2) + "\n");
+    writeFileSafe(BASELINE_PATH, `${JSON.stringify(next, null, 2)}\n`);
     log(`baseline updated → ${path.relative(ROOT, BASELINE_PATH)}`);
     process.exit(0);
   }
@@ -642,11 +642,11 @@ function main() {
   const report = render({ status, current, baseline, regressions, improvements });
 
   writeFileSafe(REPORT_PATH, report);
-  process.stdout.write(report + "\n");
+  process.stdout.write(`${report}\n`);
 
   if (FLAGS.ci && process.env.GITHUB_STEP_SUMMARY) {
     try {
-      fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, report + "\n");
+      fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, `${report}\n`);
     } catch {
       /* noop */
     }

@@ -7,7 +7,6 @@ import {
   type CreateReportConfigRequest,
   type GenerateReportRequest,
   type PortfolioReport,
-  type ReportConfig,
   reportPollIntervalMs,
   type UpdateReportConfigRequest,
 } from "@/types/portfolio-report";

@@ -37,9 +37,6 @@ function getActivityTypeLabel(type: string, milestone?: UnifiedMilestone): strin
     case "activity":
     case "update":
       return "Project Activity";
-    case "impact":
-    case "grant":
-    case "milestone":
     default:
       return "Milestone";
   }

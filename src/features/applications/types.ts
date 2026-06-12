@@ -1,4 +1,4 @@
-import type { Application, ApplicationQuestion } from "@/types/whitelabel-entities";
+import type { Application } from "@/types/whitelabel-entities";
 
 export interface ApplicationFormData {
   [questionId: string]: unknown;

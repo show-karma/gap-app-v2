@@ -12,6 +12,7 @@ import {
 import type { TenantConfig } from "@/src/infrastructure/types/tenant";
 import { queryClient } from "@/utilities/query-client";
 import { minimalWagmiConfig } from "@/utilities/wagmi/privy-config";
+
 /**
  * @deprecated Import from `@/utilities/query-client` instead.
  * This re-export exists only for backwards compatibility and will be removed in a future version.

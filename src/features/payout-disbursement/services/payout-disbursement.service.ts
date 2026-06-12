@@ -8,7 +8,6 @@ import type {
   CommunityPayoutsResponse,
   CreateDisbursementsRequest,
   CreateDisbursementsResponse,
-  MilestonePaymentStatus,
   PaginatedDisbursementsResponse,
   PayoutDisbursement,
   PayoutGrantConfig,

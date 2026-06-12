@@ -44,7 +44,7 @@ export const MilestoneItem: React.FC<MilestoneItemProps> = ({
 
   const dueDateAsDate = useMemo(() => {
     if (!milestone.dueDate) return undefined;
-    const d = new Date(milestone.dueDate + "T00:00:00");
+    const d = new Date(`${milestone.dueDate}T00:00:00`);
     return Number.isNaN(d.getTime()) ? undefined : d;
   }, [milestone.dueDate]);
 

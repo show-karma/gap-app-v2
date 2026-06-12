@@ -150,7 +150,7 @@ export const MilestoneInput: FC<MilestoneInputProps> = ({
                 render={({ field: dateField, fieldState }) => {
                   const dateValue = dateField.value
                     ? (() => {
-                        const d = new Date(dateField.value + "T00:00:00");
+                        const d = new Date(`${dateField.value}T00:00:00`);
                         return Number.isNaN(d.getTime()) ? undefined : d;
                       })()
                     : undefined;

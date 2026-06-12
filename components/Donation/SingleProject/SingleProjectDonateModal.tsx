@@ -231,28 +231,25 @@ export const SingleProjectDonateModal = React.memo<SingleProjectDonateModalProps
               </>
             )}
 
-            {paymentMethod === PaymentMethod.FIAT && (
-              <>
-                {fiatPayoutConfig.address && fiatPayoutConfig.isSupported ? (
-                  <OnrampFlow
-                    projectUid={project.uid}
-                    payoutAddress={fiatPayoutConfig.address}
-                    chainId={fiatPayoutConfig.chainId}
-                    initialAmount={amount}
-                    isAuthenticated={authenticated}
-                    onDonationComplete={onClose}
-                  />
-                ) : configuredChainIds.length > 0 ? (
-                  <p className="text-sm text-gray-500 dark:text-gray-400 py-2">
-                    Card payments are not available for this project&apos;s configured networks.
-                  </p>
-                ) : (
-                  <p className="text-sm text-gray-500 dark:text-gray-400 py-2">
-                    This project hasn&apos;t set up donation addresses yet.
-                  </p>
-                )}
-              </>
-            )}
+            {paymentMethod === PaymentMethod.FIAT &&
+              (fiatPayoutConfig.address && fiatPayoutConfig.isSupported ? (
+                <OnrampFlow
+                  projectUid={project.uid}
+                  payoutAddress={fiatPayoutConfig.address}
+                  chainId={fiatPayoutConfig.chainId}
+                  initialAmount={amount}
+                  isAuthenticated={authenticated}
+                  onDonationComplete={onClose}
+                />
+              ) : configuredChainIds.length > 0 ? (
+                <p className="text-sm text-gray-500 dark:text-gray-400 py-2">
+                  Card payments are not available for this project&apos;s configured networks.
+                </p>
+              ) : (
+                <p className="text-sm text-gray-500 dark:text-gray-400 py-2">
+                  This project hasn&apos;t set up donation addresses yet.
+                </p>
+              ))}
           </div>
         </DialogContent>
       </Dialog>

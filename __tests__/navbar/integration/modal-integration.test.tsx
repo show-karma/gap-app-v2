@@ -5,7 +5,7 @@
 
 import "../setup";
 import "./setup-dynamic-mock";
-import { fireEvent, screen, waitFor, within } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Navbar } from "@/src/components/navbar/navbar";
 import { NavbarDesktopNavigation } from "@/src/components/navbar/navbar-desktop-navigation";
