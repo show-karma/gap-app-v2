@@ -16,7 +16,7 @@ import { urlRegex } from "@/utilities/regexs/urlRegex";
  * and so `z.infer` resolves to `string` for form typing.
  */
 
-export interface RequiredStringMessages {
+interface RequiredStringMessages {
   /** Message when the trimmed value is empty. Defaults to "{label} is required". */
   required?: string;
   /** Message when the value is shorter than `min`. */
@@ -25,7 +25,7 @@ export interface RequiredStringMessages {
   max?: string;
 }
 
-export interface RequiredStringOptions {
+interface RequiredStringOptions {
   min?: number;
   max?: number;
   messages?: RequiredStringMessages;
@@ -57,7 +57,7 @@ export function requiredString(label: string, options: RequiredStringOptions = {
   return schema;
 }
 
-export interface OptionalStringOptions {
+interface OptionalStringOptions {
   min?: number;
   max?: number;
   /** Message when a non-empty value is shorter than `min`. */
