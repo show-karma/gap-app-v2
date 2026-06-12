@@ -123,20 +123,16 @@ export const UpdateCard: FC<UpdateCardProps> = ({ update, index, isAuthorized })
     update.type === "Milestone" ||
     update.type === "ProjectMilestone";
 
-  // Get raw due date (epoch ms or ISO string) for milestones
+  // Get raw due date (epoch seconds/ms or ISO string) for milestones.
+  // ActivityStatusHeader normalizes this once and drives both the displayed
+  // "Due by" date and the past-due status from the same value.
   const getRawDueDate = (): number | string | null => {
     if (update.type === "Milestone" || update.type === "ProjectMilestone") {
-      const milestoneData = update.data as any;
+      const milestoneData = update.data as { endsAt?: number; endDate?: string };
       if (milestoneData.endsAt) return milestoneData.endsAt;
       if (milestoneData.endDate) return milestoneData.endDate;
     }
     return null;
-  };
-
-  // Get formatted due date for milestones
-  const getDueDate = () => {
-    const raw = getRawDueDate();
-    return raw == null ? null : formatDate(raw);
   };
 
   // Get completion status for milestones
@@ -166,8 +162,7 @@ export const UpdateCard: FC<UpdateCardProps> = ({ update, index, isAuthorized })
           <div className="flex flex-row items-start justify-between gap-3">
             <ActivityStatusHeader
               activityType={update.type as ActivityType}
-              dueDate={getDueDate()}
-              rawDueDate={getRawDueDate()}
+              dueDate={getRawDueDate()}
               showCompletionStatus={
                 update.type === "Milestone" || update.type === "ProjectMilestone"
               }

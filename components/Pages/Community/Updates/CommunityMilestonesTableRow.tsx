@@ -7,6 +7,7 @@ import {
   getEffectiveMilestoneStatus,
   MILESTONE_STATUS_LABEL,
 } from "@/utilities/milestones/getEffectiveMilestoneStatus";
+import { normalizeMilestoneDueDateMs } from "@/utilities/milestones/milestoneDueDate";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 import { STATUS_BADGE_CLASSES } from "./milestoneStatusStyles";
@@ -28,7 +29,10 @@ const CommunityMilestonesTableRowComponent: FC<CommunityMilestonesTableRowProps>
   const projectTitle = milestone.project.details?.data?.title;
   const grantTitle = milestone.grant?.details?.data?.title || "Project Milestone";
 
-  const effectiveStatus = getEffectiveMilestoneStatus(milestone.status, milestone.details.dueDate);
+  // Single normalized due timestamp drives both the status cell and the due
+  // date cell, so a corrupted/missing dueDate cannot disagree across the two.
+  const dueMs = normalizeMilestoneDueDateMs(milestone.details.dueDate);
+  const effectiveStatus = getEffectiveMilestoneStatus(milestone.status, dueMs);
 
   const grantHref = milestone.grant
     ? PAGES.PROJECT.GRANT(projectSlug, milestone.grant.uid)
@@ -107,9 +111,9 @@ const CommunityMilestonesTableRowComponent: FC<CommunityMilestonesTableRowProps>
 
       {/* Due date */}
       <td className={cellClasses}>
-        {milestone.details.dueDate ? (
+        {dueMs != null ? (
           <span className="text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">
-            {formatDate(milestone.details.dueDate)}
+            {formatDate(dueMs)}
           </span>
         ) : (
           placeholder

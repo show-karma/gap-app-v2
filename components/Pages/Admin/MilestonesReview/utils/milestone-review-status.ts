@@ -1,4 +1,6 @@
 import type { GrantMilestoneWithCompletion } from "@/services/milestones";
+import { MilestoneLifecycleStatus } from "@/src/features/payout-disbursement";
+import { MILESTONE_STATUS_LABEL } from "@/utilities/milestones/getEffectiveMilestoneStatus";
 
 export enum MilestoneReviewStatus {
   Verified = "verified",
@@ -27,9 +29,9 @@ export const MILESTONE_STATUS_CONFIG: Record<
   }
 > = {
   [MilestoneReviewStatus.Verified]: {
-    label: "Verified",
+    label: MILESTONE_STATUS_LABEL[MilestoneLifecycleStatus.VERIFIED],
     badgeColor: "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300",
-    filterLabel: "Verified",
+    filterLabel: MILESTONE_STATUS_LABEL[MilestoneLifecycleStatus.VERIFIED],
     icon: "check",
     stepperColor: "bg-green-500",
   },
@@ -62,16 +64,20 @@ export const MILESTONE_STATUS_CONFIG: Record<
     stepperColor: "bg-red-500",
   },
   [MilestoneReviewStatus.Pending]: {
-    label: "Pending",
+    // Labels for statuses shared with the milestone lifecycle vocabulary are
+    // derived from MILESTONE_STATUS_LABEL via explicit per-entry mapping (no
+    // key coercion across the two enums) so the review tabs can never drift
+    // from the canonical "Pending"/"Verified"/"Past Due" copy.
+    label: MILESTONE_STATUS_LABEL[MilestoneLifecycleStatus.PENDING],
     badgeColor: "bg-gray-100 text-gray-700 dark:bg-gray-900 dark:text-gray-300",
-    filterLabel: "Pending",
+    filterLabel: MILESTONE_STATUS_LABEL[MilestoneLifecycleStatus.PENDING],
     icon: "clock",
     stepperColor: "bg-gray-500",
   },
   [MilestoneReviewStatus.Late]: {
-    label: "Past Due",
+    label: MILESTONE_STATUS_LABEL[MilestoneLifecycleStatus.PAST_DUE],
     badgeColor: "bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300",
-    filterLabel: "Past Due",
+    filterLabel: MILESTONE_STATUS_LABEL[MilestoneLifecycleStatus.PAST_DUE],
     icon: "arrow-path",
     stepperColor: "bg-orange-500",
   },
