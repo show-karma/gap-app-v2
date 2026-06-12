@@ -9,7 +9,7 @@ export function NewFeatureBanner() {
     <div className="relative w-full">
       <span
         aria-hidden
-        className="pointer-events-none absolute -inset-0.5 animate-pulse rounded-2xl bg-gradient-to-r from-emerald-400/25 via-teal-300/15 to-emerald-400/25 blur-md [animation-duration:4s] dark:from-emerald-500/15 dark:via-teal-400/10 dark:to-emerald-500/15"
+        className="pointer-events-none absolute -inset-0.5 animate-pulse rounded-2xl bg-gradient-to-r from-emerald-400/25 via-teal-300/15 to-emerald-400/25 blur-md [animation-duration:4s] motion-reduce:animate-none dark:from-emerald-500/15 dark:via-teal-400/10 dark:to-emerald-500/15"
       />
       <Link
         href={bannerLink}
