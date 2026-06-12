@@ -423,8 +423,12 @@ jobs:
         uses: actions/cache@v5
         with:
           path: .next/cache
-          key: ${{ runner.os }}-nextjs-qa-${{ needs.gate-check.outputs.head_sha }}
+          # Key on the lockfile so a restored cache is always compatible with
+          # the current dependency graph; the SHA suffix keeps the freshest
+          # cache per PR head while restore-keys fall back to the latest one.
+          key: ${{ runner.os }}-nextjs-qa-${{ hashFiles('pnpm-lock.yaml') }}-${{ needs.gate-check.outputs.head_sha }}
           restore-keys: |
+            ${{ runner.os }}-nextjs-qa-${{ hashFiles('pnpm-lock.yaml') }}-
             ${{ runner.os }}-nextjs-qa-
             ${{ runner.os }}-nextjs-
 
@@ -449,13 +453,13 @@ jobs:
         # `[externals]_node:inspector_*.js`, so uploading raw paths fails.
         # Packaging into a tarball sidesteps the per-file validator and
         # also keeps the artifact ~3-5× smaller than packing all of .next/.
-        run: tar -czf next-build.tar.gz .next/standalone
+        run: tar --zstd -cf next-build.tar.zst .next/standalone
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v5
         with:
           name: qa-build
-          path: next-build.tar.gz
+          path: next-build.tar.zst
           retention-days: 1
           if-no-files-found: error
 
@@ -575,7 +579,7 @@ jobs:
 
       - name: Unpack standalone bundle
         if: steps.shard-count.outputs.shard_count != '0'
-        run: tar -xzf next-build.tar.gz
+        run: tar --zstd -xf next-build.tar.zst
 
       - name: Start local server
         if: steps.shard-count.outputs.shard_count != '0'
@@ -895,7 +899,7 @@ jobs:
           name: qa-build
 
       - name: Unpack standalone bundle
-        run: tar -xzf next-build.tar.gz
+        run: tar --zstd -xf next-build.tar.zst
 
       - name: Start local server
         run: node .next/standalone/server.js &
@@ -1041,7 +1045,7 @@ jobs:
 
       - name: Unpack standalone bundle
         if: steps.scope.outputs.scope_pages != ''
-        run: tar -xzf next-build.tar.gz
+        run: tar --zstd -xf next-build.tar.zst
 
       - name: Start local server
         if: steps.scope.outputs.scope_pages != ''
