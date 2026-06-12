@@ -56,6 +56,7 @@ const PrivyBridgeContext = createContext<PrivyBridgeValue>(PRIVY_BRIDGE_DEFAULTS
 const PrivyBridgeSetterContext = createContext<(v: PrivyBridgeValue) => void>(noop);
 const LoadPrivyContext = createContext<() => void>(noop);
 const PrivyLoadRequestedContext = createContext<boolean>(false);
+const PrivyLoginAttemptedContext = createContext<boolean>(false);
 
 export function usePrivyBridge(): PrivyBridgeValue {
   return useContext(PrivyBridgeContext);
@@ -74,19 +75,47 @@ export function usePrivyLoadRequested(): boolean {
 }
 
 /**
+ * True once any consumer has invoked the bridge's `login()`. Every login path in
+ * the app (useAuth's `login`/`authenticate`, auto-login after logout, etc.) goes
+ * through the bridge value pushed by PrivyBridgeUpdater, so the provider wraps
+ * that `login` to record the attempt. Used by preview-only diagnostics that must
+ * only arm after a real sign-in attempt (see PrivyOriginDiagnostic).
+ */
+export function usePrivyLoginAttempted(): boolean {
+  return useContext(PrivyLoginAttemptedContext);
+}
+
+/**
  * Provider that holds bridge state. Wrap the app once at the root.
  */
 export function PrivyBridgeProvider({ children }: { children: ReactNode }) {
   const [value, setValue] = useState<PrivyBridgeValue>(PRIVY_BRIDGE_DEFAULTS);
   const [loadRequested, setLoadRequested] = useState(false);
-  const setter = useCallback((v: PrivyBridgeValue) => setValue(v), []);
+  const [loginAttempted, setLoginAttempted] = useState(false);
+  // Wrap login so every sign-in attempt — whatever UI triggered it — flips
+  // loginAttempted. This is the only reliable "user tried to log in" signal:
+  // consumers call bridge.login directly and nothing in the app calls
+  // useLoadPrivy(), so a separate opt-in flag would never be set.
+  const setter = useCallback(
+    (v: PrivyBridgeValue) =>
+      setValue({
+        ...v,
+        login: () => {
+          setLoginAttempted(true);
+          v.login();
+        },
+      }),
+    []
+  );
   const loadPrivy = useCallback(() => setLoadRequested(true), []);
 
   return (
     <PrivyBridgeSetterContext.Provider value={setter}>
       <LoadPrivyContext.Provider value={loadPrivy}>
         <PrivyLoadRequestedContext.Provider value={loadRequested}>
-          <PrivyBridgeContext.Provider value={value}>{children}</PrivyBridgeContext.Provider>
+          <PrivyLoginAttemptedContext.Provider value={loginAttempted}>
+            <PrivyBridgeContext.Provider value={value}>{children}</PrivyBridgeContext.Provider>
+          </PrivyLoginAttemptedContext.Provider>
         </PrivyLoadRequestedContext.Provider>
       </LoadPrivyContext.Provider>
     </PrivyBridgeSetterContext.Provider>
