@@ -1,4 +1,5 @@
 import { cache } from "react";
+import { errorManager } from "@/components/Utilities/errorManager";
 import type { Category } from "@/types/impactMeasurement";
 import type { Community, CommunityProjects, CommunityStats } from "@/types/v2/community";
 import { zeroUID } from "@/utilities/commons";
@@ -122,46 +123,75 @@ export const getCommunityProjects = async (
 };
 
 /**
- * Fetches community categories with impact segments merged from outputs
+ * Fetches community categories with impact segments merged from outputs,
+ * throwing when the underlying request fails.
  *
  * @remarks
- * Returns empty array on error instead of throwing.
+ * Throws (via `errorManager`) when the indexer returns an error so callers
+ * using React Query get a truthful `isError` state. A community with no
+ * configured categories legitimately resolves to an empty array — this is
+ * NOT an error and must stay distinguishable from a request failure.
+ *
+ * Use this variant for client-side queries (`useCommunityCategories`).
+ * Server pages that must degrade gracefully should use the non-throwing
+ * {@link getCommunityCategories} wrapper instead.
+ *
  * Automatically merges outputs into impact_segments to avoid duplication.
+ */
+export const getCommunityCategoriesOrThrow = async (communityId: string): Promise<Category[]> => {
+  const [data, error] = await fetchData(INDEXER.COMMUNITY.CATEGORIES(communityId));
+
+  if (error) {
+    errorManager(`Error fetching categories for community ${communityId}`, error);
+    throw new Error(error);
+  }
+
+  if (!data?.length) {
+    return [];
+  }
+
+  // Merge outputs into impact_segments to avoid duplication
+  const categoriesWithMergedSegments = data.map((category: Category) => {
+    const outputsNotDuplicated = category.outputs?.filter(
+      (output) =>
+        !category.impact_segments?.some(
+          (segment) => segment.id === output.id || segment.name === output.name
+        )
+    );
+
+    return {
+      ...category,
+      impact_segments: [
+        ...(category.impact_segments || []),
+        ...(outputsNotDuplicated || []).map((output) => ({
+          id: output.id,
+          name: output.name,
+          description: output.description,
+          impact_indicators: [],
+          type: output.type,
+        })),
+      ],
+    };
+  });
+
+  return categoriesWithMergedSegments;
+};
+
+/**
+ * Fetches community categories with impact segments merged from outputs.
+ *
+ * @remarks
+ * Returns empty array on error instead of throwing — preserves the contract
+ * the SSR community pages rely on so a category fetch failure degrades to
+ * rendering without category filters rather than hitting the error boundary.
  * Uses React cache() for request deduplication.
+ *
+ * Client components should prefer {@link getCommunityCategoriesOrThrow} (via
+ * `useCommunityCategories`) so they can surface a real error state.
  */
 export const getCommunityCategories = cache(async (communityId: string): Promise<Category[]> => {
   try {
-    const [data] = await fetchData(INDEXER.COMMUNITY.CATEGORIES(communityId));
-
-    if (!data?.length) {
-      return [];
-    }
-
-    // Merge outputs into impact_segments to avoid duplication
-    const categoriesWithMergedSegments = data.map((category: Category) => {
-      const outputsNotDuplicated = category.outputs?.filter(
-        (output) =>
-          !category.impact_segments?.some(
-            (segment) => segment.id === output.id || segment.name === output.name
-          )
-      );
-
-      return {
-        ...category,
-        impact_segments: [
-          ...(category.impact_segments || []),
-          ...(outputsNotDuplicated || []).map((output) => ({
-            id: output.id,
-            name: output.name,
-            description: output.description,
-            impact_indicators: [],
-            type: output.type,
-          })),
-        ],
-      };
-    });
-
-    return categoriesWithMergedSegments;
+    return await getCommunityCategoriesOrThrow(communityId);
   } catch (_error) {
     return [];
   }
