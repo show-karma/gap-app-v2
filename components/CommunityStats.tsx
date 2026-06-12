@@ -148,7 +148,7 @@ export default function CommunityStats({ communityId }: CommunityStatsProps) {
                     </Button>
                   </div>
                   {loading ? (
-                    <div>Loading stats...</div>
+                    <div>Loading stats…</div>
                   ) : error ? (
                     <div className="font-bold">Error fetching stats: {JSON.stringify(error)}</div>
                   ) : (

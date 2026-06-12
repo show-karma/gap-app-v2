@@ -23,7 +23,7 @@ import { RateLimitCounter } from "./RateLimitCounter";
  * (primary action) and the report-list panel below (history).
  */
 export function DonorResearchHome() {
-  const router = useRouter();
+  const { replace } = useRouter();
   const advisorQuery = useDonorAdvisor();
 
   // Effect-only redirect — never call `login()` / `logout()` from a
@@ -31,9 +31,9 @@ export function DonorResearchHome() {
   // the nonprofit-research section is safe here.
   useEffect(() => {
     if (advisorQuery.isSuccess && advisorQuery.data === null) {
-      router.replace(PAGES.DONOR_RESEARCH.ONBOARDING);
+      replace(PAGES.DONOR_RESEARCH.ONBOARDING);
     }
-  }, [advisorQuery.isSuccess, advisorQuery.data, router]);
+  }, [advisorQuery.isSuccess, advisorQuery.data, replace]);
 
   if (advisorQuery.isLoading) {
     return <DonorResearchLoading label="Loading your advisor profile…" />;

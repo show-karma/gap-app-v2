@@ -137,7 +137,7 @@ function MessageSkeleton() {
   return (
     <div className="flex flex-col justify-start">
       <div className="w-52 justify-center items-center rounded-lg p-3 py-5 bg-[#EEF4FF]">
-        <div className="flex justify-center items-center space-x-2">
+        <div className="flex justify-center items-center gap-x-2">
           <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" />
           <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-100" />
           <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-200" />
@@ -219,14 +219,14 @@ function SuggestionsBlock({
   isLoadingProjects: boolean;
 }) {
   const { input, handleInputChange, handleSubmit, isLoading: isLoadingChat } = chatHook;
-  const router = useRouter();
+  const { push } = useRouter();
   const searchParams = useSearchParams();
 
   const handleClose = () => {
     // Remove programId from URL
     const newSearchParams = new URLSearchParams(searchParams);
     newSearchParams.delete("programId");
-    router.push(
+    push(
       `${window.location.pathname}${
         newSearchParams.toString() ? `?${newSearchParams.toString()}` : ""
       }`
@@ -332,7 +332,7 @@ function SuggestionsBlock({
       {isLoadingProjects && (
         <div className="px-4 pb-4">
           <p className="text-sm text-center text-gray-600 dark:text-zinc-400">
-            Loading projects... Please wait.
+            Loading projects… Please wait.
           </p>
         </div>
       )}
@@ -868,7 +868,7 @@ function ChatScreen({
 
 export const CommunityProjectEvaluatorPage = () => {
   const params = useParams();
-  const router = useRouter();
+  const { push } = useRouter();
   const searchParams = useSearchParams();
   const communityId = params.communityId as string;
   const programId = searchParams.get("programId");
@@ -930,7 +930,7 @@ export const CommunityProjectEvaluatorPage = () => {
     // Update URL with the normalized program ID
     const newSearchParams = new URLSearchParams(searchParams);
     newSearchParams.set("programId", normalizedProgramId);
-    router.push(`${window.location.pathname}?${newSearchParams.toString()}`);
+    push(`${window.location.pathname}?${newSearchParams.toString()}`);
   };
 
   return (

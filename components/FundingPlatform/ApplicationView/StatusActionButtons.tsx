@@ -123,8 +123,8 @@ export const StatusActionButtons: FC<StatusActionButtonsProps> = ({
   }
 
   return (
-    <div className="flex flex-col space-y-2">
-      <div className="flex space-x-3">
+    <div className="flex flex-col gap-y-2">
+      <div className="flex gap-x-3">
         {availableTransitions.map((transition) => (
           <Can key={transition.targetStatus} permission={transition.permission}>
             <StatusActionButton

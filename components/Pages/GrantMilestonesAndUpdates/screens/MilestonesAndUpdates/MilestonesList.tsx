@@ -220,11 +220,11 @@ export const MilestonesList: FC<MilestonesListProps> = ({ grant }) => {
 
     return {
       // Completed: descending by completion/creation date (newest first)
-      completedMilestones: [...unsortedCompleted].sort(
+      completedMilestones: unsortedCompleted.toSorted(
         (a, b) => getCompletedDate(b) - getCompletedDate(a)
       ),
       // Pending: ascending by due date (soonest first)
-      pendingMilestones: [...unsortedPending].sort((a, b) => getPendingDate(a) - getPendingDate(b)),
+      pendingMilestones: unsortedPending.toSorted((a, b) => getPendingDate(a) - getPendingDate(b)),
       // All: completed milestones first, then everything else by createdAt desc
       allMilestones: [...completedMilestoneBucket, ...restBucket],
     };

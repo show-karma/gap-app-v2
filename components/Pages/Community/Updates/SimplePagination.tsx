@@ -57,7 +57,7 @@ export const SimplePagination: FC<SimplePaginationProps> = ({
   if (totalPages <= 1) return null;
 
   return (
-    <div className="flex items-center justify-center space-x-1">
+    <div className="flex items-center justify-center gap-x-1">
       <button
         type="button"
         onClick={handlePrevious}
@@ -72,7 +72,7 @@ export const SimplePagination: FC<SimplePaginationProps> = ({
         <ChevronLeftIcon className="h-4 w-4" />
       </button>
 
-      <div className="flex space-x-1">
+      <div className="flex gap-x-1">
         {getPageNumbers().map((page) => (
           <button
             type="button"

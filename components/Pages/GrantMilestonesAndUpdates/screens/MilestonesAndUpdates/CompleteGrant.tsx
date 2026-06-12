@@ -62,7 +62,7 @@ export const GrantCompletion: FC = () => {
   }>({});
 
   const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter();
+  const { push } = useRouter();
   const pathname = usePathname();
 
   const { chain, address } = useAccount();
@@ -233,7 +233,7 @@ export const GrantCompletion: FC = () => {
               // Let the share dialog render before any route transition.
               if (pathname !== targetPath) {
                 setTimeout(() => {
-                  router.push(targetPath);
+                  push(targetPath);
                 }, 250);
               }
 

@@ -115,7 +115,7 @@ describe("GrantCompletedButton", () => {
       expect(screen.getByTestId("spinner")).toBeInTheDocument();
     });
 
-    it("should show 'Revoking...' text when loading", () => {
+    it("should show 'Revoking…' text when loading", () => {
       render(
         <GrantCompletedButton
           onClick={mockOnClick}
@@ -125,7 +125,7 @@ describe("GrantCompletedButton", () => {
         />
       );
 
-      expect(screen.getByText("Revoking...")).toBeInTheDocument();
+      expect(screen.getByText("Revoking…")).toBeInTheDocument();
     });
 
     it("should hide default text/icon when loading", () => {

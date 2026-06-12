@@ -38,7 +38,7 @@ const getIndicatorSortPriority = (indicatorName: string): number => {
  * Within same priority, sort alphabetically by name
  */
 export const sortIndicatorsByPriority = <T extends { name: string }>(indicators: T[]): T[] => {
-  return [...indicators].sort((a, b) => {
+  return indicators.toSorted((a, b) => {
     const aPriority = getIndicatorSortPriority(a.name);
     const bPriority = getIndicatorSortPriority(b.name);
 

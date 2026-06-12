@@ -26,12 +26,10 @@ function validateChainPayoutAddresses(
   payments: DonationPayment[],
   chainPayoutAddresses: Record<string, ChainPayoutAddressMap>
 ): { valid: boolean; missingProjectIds: string[] } {
-  const missingProjectIds = payments
-    .filter((payment) => {
-      const projectAddresses = chainPayoutAddresses[payment.projectId];
-      return !getPayoutAddressForChain(projectAddresses, payment.chainId);
-    })
-    .map((p) => p.projectId);
+  const missingProjectIds = payments.flatMap((payment) => {
+    const projectAddresses = chainPayoutAddresses[payment.projectId];
+    return getPayoutAddressForChain(projectAddresses, payment.chainId) ? [] : [payment.projectId];
+  });
 
   return {
     valid: missingProjectIds.length === 0,

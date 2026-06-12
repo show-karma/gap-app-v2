@@ -85,16 +85,19 @@ const CategorizedIndicatorDropdown = ({
   });
 
   const communityItems = useMemo(() => {
-    const communityIds = selectedCommunities.map((c) => c.uid);
-    const items = indicators
-      .filter(
-        (ind) =>
-          ind.source === "community" && ind.communityId && communityIds.includes(ind.communityId)
-      )
-      .map((indicator) => ({
-        value: indicator.id,
-        title: `${indicator.name} [${indicator.communityName || "Community"}]`,
-      }));
+    const communityIds = new Set(selectedCommunities.map((c) => c.uid));
+    const items = indicators.flatMap((indicator) =>
+      indicator.source === "community" &&
+      indicator.communityId &&
+      communityIds.has(indicator.communityId)
+        ? [
+            {
+              value: indicator.id,
+              title: `${indicator.name} [${indicator.communityName || "Community"}]`,
+            },
+          ]
+        : []
+    );
 
     if (!searchTerm) return items;
     const lower = searchTerm.toLowerCase();

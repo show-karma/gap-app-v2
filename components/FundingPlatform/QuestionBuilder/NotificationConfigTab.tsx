@@ -34,7 +34,7 @@ export function NotificationConfigTab({
       // we extract them here and only branch on the channel-specific fields.
       // (Previously two near-identical TG/SLACK branches duplicated the
       // onSuccess/onError boilerplate — extract the shared shape.)
-      const tgChatIds = config?.telegramChats?.map((c) => c.id).filter((id) => id.trim()) ?? [];
+      const tgChatIds = config?.telegramChats?.flatMap((c) => (c.id.trim() ? [c.id] : [])) ?? [];
       const slackUrls = config?.slackWebhookUrls?.filter((u) => u.trim()) ?? [];
 
       const payload: TestNotificationConfigRequest =

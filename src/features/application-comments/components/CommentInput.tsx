@@ -70,7 +70,7 @@ export function CommentInput({
   const mentionItems = useMemo(
     () => [
       ...filteredReviewers.map((r) => ({ name: r.name, email: r.email })),
-      ...filteredGrantees.filter((g) => !!g.email).map((g) => ({ name: g.name, email: g.email })),
+      ...filteredGrantees.flatMap((g) => (g.email ? [{ name: g.name, email: g.email }] : [])),
     ],
     [filteredReviewers, filteredGrantees]
   );

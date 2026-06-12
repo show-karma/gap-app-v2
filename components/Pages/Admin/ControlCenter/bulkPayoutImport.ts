@@ -59,11 +59,17 @@ function normalizeHeader(value: string): string {
 }
 
 function findColumnIndex(headers: string[], aliases: readonly string[]): number {
-  const normalizedHeaders = headers.map((header) => normalizeHeader(header));
+  const headerIndexByValue = new Map<string, number>();
+  headers.forEach((header, index) => {
+    const normalized = normalizeHeader(header);
+    if (!headerIndexByValue.has(normalized)) {
+      headerIndexByValue.set(normalized, index);
+    }
+  });
   for (const alias of aliases) {
     const normalizedAlias = normalizeHeader(alias);
-    const index = normalizedHeaders.indexOf(normalizedAlias);
-    if (index !== -1) {
+    const index = headerIndexByValue.get(normalizedAlias);
+    if (index !== undefined) {
       return index;
     }
   }
@@ -237,14 +243,18 @@ export function validateFieldFormats(rows: ImportDraftRow[]): ValidatedImportRow
 }
 
 export function buildPayoutConfigItems(rows: ValidatedImportRow[]): PayoutConfigItem[] {
-  return rows
-    .filter((row) => row.status === "valid" && row.target)
-    .map((row) => ({
-      grantUID: row.target!.grantUID,
-      projectUID: row.target!.projectUID,
-      payoutAddress: row.payoutAddress,
-      totalGrantAmount: row.amount,
-    }));
+  return rows.flatMap((row) =>
+    row.status === "valid" && row.target
+      ? [
+          {
+            grantUID: row.target.grantUID,
+            projectUID: row.target.projectUID,
+            payoutAddress: row.payoutAddress,
+            totalGrantAmount: row.amount,
+          },
+        ]
+      : []
+  );
 }
 
 export function toErrorReport(rows: ValidatedImportRow[], fatalErrors: string[]): string {

@@ -61,7 +61,7 @@ function ResourcesDropdown() {
     <DropdownMenu>
       <NavDropdownTrigger>Resources</NavDropdownTrigger>
       <DropdownMenuContent align="end" className="p-0">
-        <div className="flex flex-col gap-4 px-4 py-4 w-max">
+        <div className="flex flex-col gap-4 p-4 w-max">
           <ResourcesContent variant="desktop" />
           <hr className="h-[1px] w-full border-border" />
           <div className="flex flex-col items-start justify-start w-full">

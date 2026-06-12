@@ -136,7 +136,7 @@ export function BlocklistManager() {
               </div>
             </div>
 
-            <div className="flex justify-end space-x-2">
+            <div className="flex justify-end gap-x-2">
               <button
                 type="button"
                 onClick={() => setShowAddForm(false)}

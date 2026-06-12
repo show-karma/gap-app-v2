@@ -9,7 +9,7 @@ interface CheckoutHeaderProps {
 }
 
 export function CheckoutHeader({ onClear }: CheckoutHeaderProps) {
-  const router = useRouter();
+  const { back } = useRouter();
   return (
     <div className="mb-4 -mt-3">
       <div className="flex items-center justify-between">
@@ -21,7 +21,7 @@ export function CheckoutHeader({ onClear }: CheckoutHeaderProps) {
         <div className="gap-4 flex flex-row flex-wrap">
           <button
             type="button"
-            onClick={() => router.back()}
+            onClick={() => back()}
             className="px-4 py-2.5 rounded font-semibold flex items-center justify-center border border-brand-blue text-sm text-brand-blue"
           >
             Continue exploring

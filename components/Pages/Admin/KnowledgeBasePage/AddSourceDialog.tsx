@@ -217,6 +217,7 @@ export function AddSourceDialog({ communityIdOrSlug, open, onOpenChange, initial
                   <input
                     id="kb-title"
                     type="text"
+                    aria-label="Title"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     placeholder="Filecoin community docs"
@@ -241,6 +242,7 @@ export function AddSourceDialog({ communityIdOrSlug, open, onOpenChange, initial
                   <input
                     id="kb-external"
                     type="text"
+                    aria-label="Source URL or ID"
                     value={externalId}
                     onChange={(e) => setExternalId(e.target.value)}
                     placeholder={PLACEHOLDER_BY_KIND[kind] ?? ""}
@@ -262,6 +264,7 @@ export function AddSourceDialog({ communityIdOrSlug, open, onOpenChange, initial
                   <div className="relative">
                     <textarea
                       id="kb-goal"
+                      aria-label="Purpose"
                       value={goal}
                       onChange={(e) => setGoal(e.target.value.slice(0, GOAL_MAX))}
                       placeholder={
@@ -291,6 +294,7 @@ export function AddSourceDialog({ communityIdOrSlug, open, onOpenChange, initial
                     <input
                       id="kb-citation-url"
                       type="url"
+                      aria-label="Citation link"
                       value={citationUrl}
                       onChange={(e) => setCitationUrl(e.target.value)}
                       placeholder="https://example.com/published-handbook"
@@ -482,6 +486,7 @@ function FollowLinksToggle({
         <input
           type="checkbox"
           checked={checked}
+          aria-label="Follow links to other Google Docs"
           onChange={(e) => onChange(e.target.checked)}
           className="mt-[2px] h-3.5 w-3.5 shrink-0 cursor-pointer rounded border-stone-300 text-sky-600 focus:ring-2 focus:ring-sky-500/40 dark:border-zinc-700 dark:bg-zinc-800 dark:focus:ring-sky-400/40"
         />

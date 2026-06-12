@@ -55,7 +55,7 @@ export const ProjectUpdateCard: FC<ProjectUpdateCardProps> = ({ update, index, i
 
   return (
     <div className="flex flex-col gap-0 w-full">
-      <div className="flex flex-col gap-3 w-full px-6 py-6">
+      <div className="flex flex-col gap-3 w-full p-6">
         <div className="flex flex-col gap-3 w-full">
           <div className="flex flex-row items-start justify-between gap-3">
             <ActivityStatusHeader

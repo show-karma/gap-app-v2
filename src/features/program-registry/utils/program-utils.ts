@@ -184,10 +184,10 @@ const buildTypedMetadata = (data: ProgramFormData): Record<string, unknown> => {
   if (type === "hackathon" && data.hackathonMeta) {
     const m = data.hackathonMeta;
     const tracks = m.tracks
-      ? m.tracks
-          .split(",")
-          .map((t) => t.trim())
-          .filter(Boolean)
+      ? m.tracks.split(",").flatMap((t) => {
+          const track = t.trim();
+          return track ? [track] : [];
+        })
       : undefined;
     return {
       hackathonMetadata: {
@@ -217,10 +217,10 @@ const buildTypedMetadata = (data: ProgramFormData): Record<string, unknown> => {
   if (type === "bounty" && data.bountyMeta) {
     const m = data.bountyMeta;
     const skills = m.skills
-      ? m.skills
-          .split(",")
-          .map((s) => s.trim())
-          .filter(Boolean)
+      ? m.skills.split(",").flatMap((s) => {
+          const skill = s.trim();
+          return skill ? [skill] : [];
+        })
       : undefined;
     return {
       bountyMetadata: {
@@ -258,10 +258,10 @@ const buildTypedMetadata = (data: ProgramFormData): Record<string, unknown> => {
   if (type === "vc_fund" && data.vcFundMeta) {
     const m = data.vcFundMeta;
     const portfolio = m.portfolio
-      ? m.portfolio
-          .split(",")
-          .map((p) => p.trim())
-          .filter(Boolean)
+      ? m.portfolio.split(",").flatMap((p) => {
+          const company = p.trim();
+          return company ? [company] : [];
+        })
       : undefined;
     return {
       vcFundMetadata: {
@@ -285,10 +285,10 @@ const buildTypedMetadata = (data: ProgramFormData): Record<string, unknown> => {
   if (type === "rfp" && data.rfpMeta) {
     const m = data.rfpMeta;
     const requirements = m.requirements
-      ? m.requirements
-          .split("\n")
-          .map((r) => r.trim())
-          .filter(Boolean)
+      ? m.requirements.split("\n").flatMap((r) => {
+          const requirement = r.trim();
+          return requirement ? [requirement] : [];
+        })
       : undefined;
     return {
       rfpMetadata: {

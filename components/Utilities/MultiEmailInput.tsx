@@ -33,10 +33,10 @@ export function MultiEmailInput({
     if (!trimmedInput) return;
 
     // Support comma-separated emails
-    const parts = trimmedInput
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean);
+    const parts = trimmedInput.split(",").flatMap((s) => {
+      const part = s.trim();
+      return part ? [part] : [];
+    });
     const updated = [...emails];
     let hasInvalid = false;
 

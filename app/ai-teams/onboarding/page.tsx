@@ -14,7 +14,7 @@ import { PAGES } from "@/utilities/pages";
 // container. Real-container-spawn is an ops concern; this UI is the seam
 // for "tell us where your team lives + the auth token" until that's wired.
 export default function OnboardingPage() {
-  const router = useRouter();
+  const { push } = useRouter();
   const provision = useProvisionOrg();
   const [slug, setSlug] = useState("");
   const [containerUrl, setContainerUrl] = useState("");
@@ -56,7 +56,7 @@ export default function OnboardingPage() {
             },
             {
               onSuccess: (org) => {
-                router.push(PAGES.TEAM.DIRECTORY(org.slug));
+                push(PAGES.TEAM.DIRECTORY(org.slug));
               },
             }
           );

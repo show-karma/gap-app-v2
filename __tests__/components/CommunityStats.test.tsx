@@ -180,7 +180,7 @@ describe("CommunityStats", () => {
       // Never-settling promise keeps the component in its loading state for the
       // whole assertion window. A timer-based resolve (e.g. setTimeout 100ms) is
       // flaky: under load the click + waitFor can overrun the delay, the data
-      // arrives, and "Loading stats..." is already gone before we look.
+      // arrives, and "Loading stats…" is already gone before we look.
       (fetchData as vi.Mock).mockImplementation(() => new Promise<never>(() => {}));
 
       render(<CommunityStats communityId={mockCommunityId} />);
@@ -189,7 +189,7 @@ describe("CommunityStats", () => {
       await user.click(statsButton);
 
       await waitFor(() => {
-        expect(screen.getByText("Loading stats...")).toBeInTheDocument();
+        expect(screen.getByText("Loading stats…")).toBeInTheDocument();
       });
     });
   });
@@ -567,7 +567,7 @@ describe("CommunityStats", () => {
       const statsButton = screen.getByText("Stats");
       await user.click(statsButton);
 
-      expect(await screen.findByText("Loading stats...")).toBeInTheDocument();
+      expect(await screen.findByText("Loading stats…")).toBeInTheDocument();
     });
 
     it("should hide loading after stats are fetched", async () => {
@@ -578,7 +578,7 @@ describe("CommunityStats", () => {
       await user.click(statsButton);
 
       await waitFor(() => {
-        expect(screen.queryByText("Loading stats...")).not.toBeInTheDocument();
+        expect(screen.queryByText("Loading stats…")).not.toBeInTheDocument();
       });
     });
 
@@ -600,7 +600,7 @@ describe("CommunityStats", () => {
       const refreshButton = screen.getByTestId("refresh-icon").closest("button");
       if (refreshButton) await user.click(refreshButton);
 
-      expect(await screen.findByText("Loading stats...")).toBeInTheDocument();
+      expect(await screen.findByText("Loading stats…")).toBeInTheDocument();
     });
   });
 });

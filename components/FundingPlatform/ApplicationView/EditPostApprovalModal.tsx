@@ -143,7 +143,7 @@ const EditPostApprovalModal: FC<EditPostApprovalModalProps> = ({
             <div className="flex flex-col items-center justify-center py-12">
               <Spinner className="h-8 w-8" />
               <p className="mt-4 text-sm text-gray-600 dark:text-gray-400">
-                Loading form configuration...
+                Loading form configuration…
               </p>
             </div>
           ) : errorMessage ? (

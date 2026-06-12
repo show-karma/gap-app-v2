@@ -79,11 +79,12 @@ export function MilestoneSelectionStep({
   const { selectedTotal } = useMemo(() => {
     let unpaidSum = 0;
     let selectedSum = 0;
+    const selectedIdSet = new Set(selectedAllocationIds);
 
     for (const allocation of unpaidAllocations) {
       const amount = parseFloat(allocation.amount) || 0;
       unpaidSum += amount;
-      if (selectedAllocationIds.includes(allocation.id)) {
+      if (selectedIdSet.has(allocation.id)) {
         selectedSum += amount;
       }
     }
@@ -259,6 +260,10 @@ export function MilestoneSelectionStep({
             >
               <input
                 type="checkbox"
+                aria-label={`Select ${formatMilestoneTitle(
+                  allocationIndexById.get(allocation.id) ?? 0,
+                  allocation.label
+                )}`}
                 checked={isSelected}
                 onChange={() => handleToggle(allocation.id)}
                 className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"

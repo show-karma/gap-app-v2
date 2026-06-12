@@ -69,7 +69,7 @@ export const SegmentSkeleton = ({
             <div className="h-72 bg-gray-100 dark:bg-gray-600 rounded animate-pulse flex items-center justify-center">
               <div className="text-center">
                 <div className="w-8 h-8 bg-gray-300 dark:bg-gray-500 rounded-full mx-auto mb-2 animate-pulse" />
-                <p className="text-sm text-gray-500 dark:text-gray-400">Loading chart data...</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Loading chart data…</p>
               </div>
             </div>
           </Card>

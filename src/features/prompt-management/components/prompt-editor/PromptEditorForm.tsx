@@ -108,7 +108,7 @@ export function PromptEditorForm({
             )}
           >
             {isLoadingModels ? (
-              <option value="">Loading models...</option>
+              <option value="">Loading models…</option>
             ) : (
               availableModels.map((model) => (
                 <option key={model} value={model}>

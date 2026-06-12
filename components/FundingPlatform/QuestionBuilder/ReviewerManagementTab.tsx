@@ -437,7 +437,7 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
-                    className="flex items-center space-x-2"
+                    className="flex items-center gap-x-2"
                     data-testid="open-reviewer-picker-btn"
                   >
                     <PlusIcon className="h-5 w-5" aria-hidden="true" />

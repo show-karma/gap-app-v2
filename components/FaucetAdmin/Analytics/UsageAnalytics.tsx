@@ -254,7 +254,7 @@ export function UsageAnalytics() {
                   {Math.min(currentPage * pageSize, requests?.pagination.totalCount)} of{" "}
                   {requests.pagination.totalCount} results
                 </div>
-                <div className="flex space-x-2">
+                <div className="flex gap-x-2">
                   <button
                     type="button"
                     onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}

@@ -349,9 +349,8 @@ export const OutputsAndOutcomes = ({
       const candidate =
         item.lastUpdatedAt ??
         item.datapoints
-          ?.map((dp) => dp.endDate)
-          .filter(Boolean)
-          .sort((a, b) => new Date(b as string).getTime() - new Date(a as string).getTime())[0];
+          ?.flatMap((dp) => (dp.endDate ? [dp.endDate] : []))
+          .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())[0];
       if (!candidate) continue;
       const t = new Date(candidate).getTime();
       if (Number.isFinite(t) && (latest === null || t > latest)) latest = t;
@@ -374,14 +373,13 @@ export const OutputsAndOutcomes = ({
     const endDate = new Date(timestamp);
     endDate.setHours(0, 0, 0, 0); // Normalize to start of day
 
-    const timestamps = form.datapoints
-      .map((dp) => dp.endDate || dp.outputTimestamp)
-      .filter(Boolean)
-      .map((date) => {
-        const d = new Date(date as string);
-        d.setHours(0, 0, 0, 0);
-        return d.getTime();
-      });
+    const timestamps = form.datapoints.flatMap((dp) => {
+      const date = dp.endDate || dp.outputTimestamp;
+      if (!date) return [];
+      const d = new Date(date);
+      d.setHours(0, 0, 0, 0);
+      return [d.getTime()];
+    });
 
     return timestamps.filter((t) => t === endDate.getTime()).length > 1;
   };
@@ -663,6 +661,7 @@ export const OutputsAndOutcomes = ({
                                       <div className="flex items-center gap-2">
                                         <input
                                           type="number"
+                                          aria-label={item.name}
                                           value={datapoint.value || ""}
                                           onChange={(e) =>
                                             handleInputChange(
@@ -709,6 +708,7 @@ export const OutputsAndOutcomes = ({
                                       </span>
                                       <input
                                         type="text"
+                                        aria-label="Proof"
                                         value={datapoint.proof || ""}
                                         onChange={(e) =>
                                           handleInputChange(item.id, "proof", e.target.value, index)
@@ -738,6 +738,7 @@ export const OutputsAndOutcomes = ({
                                       </span>
                                       <input
                                         type="date"
+                                        aria-label="Start Date"
                                         value={
                                           datapoint.startDate?.split("T")[0] ||
                                           new Date().toISOString().split("T")[0]
@@ -773,6 +774,7 @@ export const OutputsAndOutcomes = ({
                                       </span>
                                       <input
                                         type="date"
+                                        aria-label="End Date"
                                         value={
                                           datapoint.endDate?.split("T")[0] ||
                                           datapoint.outputTimestamp?.split("T")[0] ||
@@ -972,7 +974,7 @@ export const OutputsAndOutcomes = ({
                       >
                         {form?.isSaving ? (
                           <div className="flex items-center justify-center gap-2">
-                            <span>Saving...</span>
+                            <span>Saving…</span>
                           </div>
                         ) : (
                           "Save Changes"

@@ -61,6 +61,7 @@ export function ApplicationsFilters({
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <input
             type="text"
+            aria-label="Search applications"
             placeholder="Search applications..."
             value={searchValue}
             onChange={(e) => setSearchValue(e.target.value)}

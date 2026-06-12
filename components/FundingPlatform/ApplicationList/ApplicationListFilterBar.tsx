@@ -105,7 +105,7 @@ export const ApplicationListFilterBar: FC<ApplicationListFilterBarProps> = ({
       </div>
     </div>
 
-    <div className="flex justify-between mt-4 space-x-2">
+    <div className="flex justify-between mt-4 gap-x-2">
       <div className="flex flex-row items-center gap-2">
         <div className="w-64">
           <ReviewerFilterDropdown
@@ -117,7 +117,7 @@ export const ApplicationListFilterBar: FC<ApplicationListFilterBarProps> = ({
           />
         </div>
       </div>
-      <div className="flex justify-end space-x-2">
+      <div className="flex justify-end gap-x-2">
         <Button onClick={onClearFilters} variant="secondary" className={actionButtonClass}>
           <FunnelIcon className="w-5 h-5" />
           Clear Filters

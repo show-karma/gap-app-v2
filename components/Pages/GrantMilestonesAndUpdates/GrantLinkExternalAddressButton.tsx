@@ -116,10 +116,11 @@ export const GrantLinkExternalAddressButton: FC<GrantLinkExternalAddressButtonPr
                   <div className="max-h-[60vh] flex flex-col gap-2 mt-8 overflow-y-auto">
                     <div className="space-y-4">
                       <div className="flex items-center justify-between p-4 bg-gray-100 dark:bg-zinc-700 rounded-lg">
-                        <div className="flex items-center space-x-4 w-full">
+                        <div className="flex items-center gap-x-4 w-full">
                           <span className="text-md font-bold capitalize">Octant</span>
                           <input
                             type="text"
+                            aria-label="Octant address"
                             value={editedAddress || grant?.external?.octant?.[0]}
                             onChange={(e) => setEditedAddress(e.target.value)}
                             className="text-sm rounded-md w-full text-gray-600 dark:text-gray-300 bg-transparent border-b border-gray-300 dark:border-gray-600 focus:outline-none focus:border-blue-500"

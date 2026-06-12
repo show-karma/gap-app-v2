@@ -53,7 +53,7 @@ export function GlobalCount() {
           </Button>
         </div>
         {isLoading ? (
-          <div>Loading stats...</div>
+          <div>Loading stats…</div>
         ) : isError ? (
           <div className="font-bold">Error fetching stats</div>
         ) : (

@@ -73,6 +73,7 @@ export const StylePicker = React.memo(function StylePicker({
               <input
                 type="radio"
                 name={groupName}
+                aria-label={opt.title}
                 className="sr-only"
                 value={opt.id}
                 checked={isSelected}

@@ -68,7 +68,7 @@ interface PayoutsTableData {
 }
 
 export default function PayoutsAdminPage() {
-  const router = useRouter();
+  const { push } = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { ready: authReady } = useAuth();
@@ -340,7 +340,7 @@ export default function PayoutsAdminPage() {
       programId: programId,
       page: "1", // Reset to first page when changing program
     });
-    router.push(`${pathname}?${query}`);
+    push(`${pathname}?${query}`);
   };
 
   const handleItemsPerPageChange = (limit: number) => {
@@ -348,14 +348,14 @@ export default function PayoutsAdminPage() {
       limit: limit.toString(),
       page: "1", // Reset to first page when changing items per page
     });
-    router.push(`${pathname}?${query}`);
+    push(`${pathname}?${query}`);
   };
 
   const handlePageChange = (page: number) => {
     const query = createQueryString({
       page: page.toString(),
     });
-    router.push(`${pathname}?${query}`);
+    push(`${pathname}?${query}`);
   };
 
   const handleSort = (column: CommunityPayoutsSorting["sortBy"]) => {
@@ -369,7 +369,7 @@ export default function PayoutsAdminPage() {
       sortOrder: newSortOrder,
       page: "1", // Reset to first page when changing sort
     });
-    router.push(`${pathname}?${query}`);
+    push(`${pathname}?${query}`);
   };
 
   // Validate a single field
@@ -800,9 +800,9 @@ export default function PayoutsAdminPage() {
       communityError?.message === "Community not found" ||
       communityError?.message?.includes("422")
     ) {
-      router.push(PAGES.NOT_FOUND);
+      push(PAGES.NOT_FOUND);
     }
-  }, [communityError, router]);
+  }, [communityError, push]);
 
   // Loading state
   if (!authReady || loadingAdmin || isLoadingPayouts || isLoadingCommunity) {
@@ -881,6 +881,11 @@ export default function PayoutsAdminPage() {
                       onChange={(e) => handleSelectAll(e.target.checked)}
                       disabled={selectableGrants.length === 0}
                       title={
+                        selectableGrants.length === 0
+                          ? "No grants have valid payout address and amount"
+                          : `Select all ${selectableGrants.length} eligible grants`
+                      }
+                      aria-label={
                         selectableGrants.length === 0
                           ? "No grants have valid payout address and amount"
                           : `Select all ${selectableGrants.length} eligible grants`
@@ -1011,7 +1016,7 @@ export default function PayoutsAdminPage() {
                         checkboxState.disabled && !isFullyDisbursed && "opacity-60"
                       )}
                     >
-                      <td className="px-2 py-2 text-center">
+                      <td className="p-2 text-center">
                         <input
                           type="checkbox"
                           className={cn(
@@ -1022,6 +1027,9 @@ export default function PayoutsAdminPage() {
                           onChange={(e) => handleSelectGrant(item.uid, e.target.checked)}
                           disabled={checkboxState.disabled}
                           title={checkboxState.reason || "Select for disbursement"}
+                          aria-label={
+                            checkboxState.reason || `Select ${item.projectName} for disbursement`
+                          }
                         />
                       </td>
                       <td className="px-4 py-2 font-medium h-16">
@@ -1105,6 +1113,7 @@ export default function PayoutsAdminPage() {
                             "dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-zinc-800"
                           )}
                           title="Configure payout settings"
+                          aria-label="Configure payout settings"
                         >
                           <Cog6ToothIcon className="h-5 w-5" />
                         </button>

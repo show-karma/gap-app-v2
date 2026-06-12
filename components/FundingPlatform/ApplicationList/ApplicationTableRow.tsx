@@ -109,18 +109,18 @@ const ApplicationTableRowComponent: FC<ApplicationTableRowProps> = ({
         }}
         onMouseEnter={() => onApplicationHover?.(application.referenceNumber)}
       >
-        <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
+        <td className="p-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
           {application.referenceNumber}
         </td>
-        <td className="px-4 py-4 text-sm text-gray-900 dark:text-white">
+        <td className="p-4 text-sm text-gray-900 dark:text-white">
           <div className="max-w-xs truncate" title={projectDisplayName}>
             {projectDisplayName}
           </div>
         </td>
-        <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
+        <td className="p-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
           {application.applicantEmail}
         </td>
-        <td className="px-4 py-4 whitespace-nowrap">
+        <td className="p-4 whitespace-nowrap">
           <div className="flex items-center gap-2">
             <ApplicationStatusBadge status={application.status} />
             {application.status === "approved" && application.postApprovalCompleted && (
@@ -134,7 +134,7 @@ const ApplicationTableRowComponent: FC<ApplicationTableRowProps> = ({
           </div>
         </td>
         {isKycEnabled && (
-          <td className="px-4 py-4 whitespace-nowrap">
+          <td className="p-4 whitespace-nowrap">
             {isLoadingKycStatus ? (
               <Spinner className="w-4 h-4" />
             ) : (
@@ -143,7 +143,7 @@ const ApplicationTableRowComponent: FC<ApplicationTableRowProps> = ({
           </td>
         )}
         {showAIScoreColumn && (
-          <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400 text-center">
+          <td className="p-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400 text-center">
             {application.aiEvaluation?.evaluation ? (
               <button
                 type="button"
@@ -158,7 +158,7 @@ const ApplicationTableRowComponent: FC<ApplicationTableRowProps> = ({
           </td>
         )}
         {showInternalAIScoreColumn && (
-          <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400 text-center">
+          <td className="p-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400 text-center">
             {application.internalAIEvaluation?.evaluation ? (
               <button
                 type="button"
@@ -172,14 +172,14 @@ const ApplicationTableRowComponent: FC<ApplicationTableRowProps> = ({
             )}
           </td>
         )}
-        <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
+        <td className="p-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
           {formatDate(application.createdAt)}
         </td>
-        <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
+        <td className="p-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
           {formatDate(application.updatedAt)}
         </td>
         {showAppReviewersColumn && (
-          <td className="px-4 py-4 text-sm">
+          <td className="p-4 text-sm">
             {/* biome-ignore lint/a11y/noStaticElementInteractions: This div only stops event propagation, interactivity is handled by the dropdown */}
             <div onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
               <ReviewerAssignmentDropdown
@@ -197,7 +197,7 @@ const ApplicationTableRowComponent: FC<ApplicationTableRowProps> = ({
           </td>
         )}
         {showMilestoneReviewersColumn && (
-          <td className="px-4 py-4 text-sm">
+          <td className="p-4 text-sm">
             {/* biome-ignore lint/a11y/noStaticElementInteractions: This div only stops event propagation, interactivity is handled by the dropdown */}
             <div onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
               <ReviewerAssignmentDropdown
@@ -215,7 +215,7 @@ const ApplicationTableRowComponent: FC<ApplicationTableRowProps> = ({
           </td>
         )}
         {showStatusActions && onStatusChange && (
-          <td className="px-4 py-4 whitespace-nowrap text-sm">
+          <td className="p-4 whitespace-nowrap text-sm">
             <TableStatusActionButtons
               applicationId={application.referenceNumber}
               currentStatus={application.status as FundingApplicationStatusV2}

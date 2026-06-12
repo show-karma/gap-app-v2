@@ -116,7 +116,7 @@ vi.mock("@heroicons/react/24/outline", () => ({
 vi.mock("@/components/Utilities/Button", () => ({
   Button: ({ onClick, disabled, children, className, variant }: any) => {
     const testId =
-      children === "Confirm" || children === "Processing..." ? "confirm-button" : "cancel-button";
+      children === "Confirm" || children === "Processing…" ? "confirm-button" : "cancel-button";
     return (
       <button
         onClick={disabled ? undefined : onClick}
@@ -542,7 +542,7 @@ describe("StatusChangeModal", () => {
       );
 
       const cancelButtons = screen.getAllByTestId("cancel-button");
-      // Click the actual Cancel button (not the Processing... button)
+      // Click the actual Cancel button (not the Processing… button)
       const cancelButton = cancelButtons.find((btn) => btn.textContent === "Cancel");
       if (cancelButton) {
         await user.click(cancelButton);
@@ -552,10 +552,10 @@ describe("StatusChangeModal", () => {
       expect(onClose).not.toHaveBeenCalled();
     });
 
-    it('should show "Processing..." text when isSubmitting is true', () => {
+    it('should show "Processing…" text when isSubmitting is true', () => {
       renderWithQueryClient(<StatusChangeModal {...defaultProps} isSubmitting={true} />);
 
-      expect(screen.getByText("Processing...")).toBeInTheDocument();
+      expect(screen.getByText("Processing…")).toBeInTheDocument();
       expect(screen.queryByText("Confirm")).not.toBeInTheDocument();
     });
 

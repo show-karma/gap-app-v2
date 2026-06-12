@@ -205,7 +205,7 @@ export function ProgramScoresUpload({
             className="bg-background text-foreground w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             disabled={isUploading}
           >
-            <option value="">Choose a program...</option>
+            <option value="">Choose a program…</option>
             {programs.map((program) => (
               <option
                 key={buildCompositeProgramId(program.programId, program.chainID)}

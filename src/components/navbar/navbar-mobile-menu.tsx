@@ -2,6 +2,7 @@
 
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/solid";
 import { CircleHelp, KeyRound, LogOutIcon, ToggleLeft, ToggleRight } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { useTheme } from "next-themes";
 import { useState } from "react";
@@ -129,9 +130,11 @@ export function NavbarMobileMenu() {
             aria-label="Open profile"
           >
             {user?.farcaster?.pfp ? (
-              <img
+              <Image
                 src={user.farcaster.pfp}
                 alt="Farcaster avatar"
+                width={32}
+                height={32}
                 className="h-8 w-8 min-h-8 min-w-8 max-h-8 max-w-8 rounded-full"
               />
             ) : (

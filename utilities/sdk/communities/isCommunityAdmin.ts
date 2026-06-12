@@ -27,7 +27,7 @@ export const isCommunityAdminOfAny = async (
   // Dedupe case-insensitively while preserving the original-cased address.
   const uniqueAddresses = Array.from(
     new Map(
-      addresses.filter((address) => !!address).map((address) => [address.toLowerCase(), address])
+      addresses.flatMap((address) => (address ? [[address.toLowerCase(), address]] : []))
     ).values()
   );
   if (uniqueAddresses.length === 0) return false;

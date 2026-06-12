@@ -68,7 +68,7 @@ export const DetailsScreen: React.FC = () => {
   const { setCurrentStep, flowType, formData, updateFormData } = useGrantFormStore();
   const selectedProject = useProjectStore((state) => state.project);
   const _refreshProject = useProjectStore((state) => state.refreshProject);
-  const router = useRouter();
+  const { push } = useRouter();
 
   // Fetch grants using dedicated hook
   const { grants } = useProjectGrants(selectedProject?.uid || "");
@@ -112,7 +112,7 @@ export const DetailsScreen: React.FC = () => {
 
   const handleCancel = () => {
     if (!selectedProject) return;
-    router.push(PAGES.PROJECT.GRANTS(selectedProject.details?.slug || selectedProject?.uid));
+    push(PAGES.PROJECT.GRANTS(selectedProject.details?.slug || selectedProject?.uid));
   };
 
   const handleNext = () => {

@@ -26,7 +26,7 @@ import { ReviewsSection } from "./ReviewsSection/ReviewsSection";
 import { SuperAdminSection } from "./SuperAdminSection/SuperAdminSection";
 
 export function Dashboard() {
-  const router = useRouter();
+  const { replace } = useRouter();
   const { authenticated, address, ready } = useAuth();
   const { isWhitelabel, communitySlug } = useWhitelabel();
   const {
@@ -80,8 +80,8 @@ export function Dashboard() {
     if (isWhitelabel) return;
 
     setPostLoginRedirect(`${PAGES.DASHBOARD}${window.location.hash}`);
-    router.replace(PAGES.HOME);
-  }, [authenticated, ready, router, isWhitelabel]);
+    replace(PAGES.HOME);
+  }, [authenticated, ready, replace, isWhitelabel]);
 
   useEffect(() => {
     if (!ready || isLoading || !window.location.hash) return;

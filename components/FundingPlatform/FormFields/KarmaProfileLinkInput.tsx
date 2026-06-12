@@ -270,6 +270,7 @@ export const KarmaProfileLinkInput: FC<KarmaProfileLinkInputProps> = ({
                     type="button"
                     onClick={() => handleClear(onChange)}
                     disabled={isLoading}
+                    aria-label="Clear selection"
                     className="absolute right-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors disabled:opacity-50"
                   >
                     <XMarkIcon className="w-5 h-5" />
@@ -332,7 +333,7 @@ export const KarmaProfileLinkInput: FC<KarmaProfileLinkInputProps> = ({
                         className="w-6 h-6 border-2 border-gray-300 dark:border-gray-600 border-t-blue-500 rounded-full animate-spin"
                         aria-hidden="true"
                       />
-                      <span className="sr-only">Loading search results...</span>
+                      <span className="sr-only">Loading search results…</span>
                     </div>
                   ) : isSearchError ? (
                     <div className="py-4 text-center">

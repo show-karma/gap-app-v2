@@ -185,6 +185,7 @@ export function DonationStepsPreview({
             </div>
             <button
               type="button"
+              aria-label="Close dialog"
               onClick={onCancel}
               className="rounded-full p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800 dark:hover:text-gray-300"
             >

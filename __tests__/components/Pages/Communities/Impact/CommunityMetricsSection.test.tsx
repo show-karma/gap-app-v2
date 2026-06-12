@@ -133,7 +133,7 @@ describe("CommunityMetricsSection", () => {
     render(<CommunityMetricsSection />, { wrapper });
 
     expect(screen.getByText("Filecoin Network Metrics")).toBeInTheDocument();
-    expect(screen.getAllByText("Loading chart data...")).toHaveLength(2);
+    expect(screen.getAllByText("Loading chart data…")).toHaveLength(2);
   });
 
   it("should render nothing on error", () => {

@@ -1,8 +1,7 @@
-/* eslint-disable @next/next/no-img-element */
-
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ProjectImpact } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectImpact";
 import type { SignerOrProvider } from "@show-karma/karma-gap-sdk/core/types";
+import Image from "next/image";
 import { useQueryState } from "nuqs";
 import type { FC } from "react";
 import { useState } from "react";
@@ -168,7 +167,7 @@ export const AddImpactScreen: FC = () => {
               changeTab(null);
             }}
           >
-            <img src="/icons/close.svg" alt="Close" className="h-5 w-5 " />
+            <Image src="/icons/close.svg" alt="Close" width={20} height={20} className="h-5 w-5 " />
           </button>
         </div>
         <form onSubmit={handleSubmit(onSubmit)} className="flex w-full flex-col gap-4">

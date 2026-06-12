@@ -51,7 +51,7 @@ const EditImpactFormBlock: FC<EditImpactFormBlockProps> = ({ onClose, impactId }
   const { switchChainAsync } = useWallet();
   const project = useProjectStore((state) => state.project);
   const projectIdOrSlug = project?.details?.slug || project?.uid || "";
-  const router = useRouter();
+  const { refresh } = useRouter();
 
   // Fetch impacts using dedicated hook
   const { impacts, refetch: refetchImpacts } = useProjectImpacts(projectIdOrSlug);
@@ -173,7 +173,7 @@ const EditImpactFormBlock: FC<EditImpactFormBlockProps> = ({ onClose, impactId }
                 if (onClose) {
                   onClose();
                 }
-                router.refresh();
+                refresh();
               }, 1500);
             }
           } catch {

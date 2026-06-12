@@ -4,6 +4,7 @@ import { PaperClipIcon, PencilSquareIcon, XMarkIcon } from "@heroicons/react/24/
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import { useQueryClient } from "@tanstack/react-query";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { type FC, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -113,7 +114,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
   const { switchChainAsync } = useWallet();
   const { setupChainAndWallet } = useSetupChainAndWallet();
   const { openShareDialog, closeShareDialog } = useShareDialogStore();
-  const router = useRouter();
+  const { push } = useRouter();
   const pathname = usePathname();
 
   // Invoice state
@@ -268,13 +269,15 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
       // Delete removed metrics: compare initial indicators with submitted ones
       if (milestoneImpactData && milestoneImpactData.length > 0) {
         const submittedIds = new Set(
-          (data.outputs || [])
-            .filter((o) => o.outputId && o.value !== undefined && o.value !== "")
-            .map((o) => o.outputId)
+          (data.outputs || []).flatMap((o) =>
+            o.outputId && o.value !== undefined && o.value !== "" ? [o.outputId] : []
+          )
         );
-        const removals = milestoneImpactData
-          .filter((metric) => metric.id && metric.hasData && !submittedIds.has(metric.id))
-          .map((metric) => deleteMilestoneImpactAnswers(milestoneUID, metric.id));
+        const removals = milestoneImpactData.flatMap((metric) =>
+          metric.id && metric.hasData && !submittedIds.has(metric.id)
+            ? [deleteMilestoneImpactAnswers(milestoneUID, metric.id)]
+            : []
+        );
         await Promise.all(removals);
       }
     } catch (error) {
@@ -368,7 +371,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
                 // Let the share dialog render before any route transition.
                 if (pathname !== targetPath) {
                   setTimeout(() => {
-                    router.push(targetPath);
+                    push(targetPath);
                   }, 250);
                 }
               }
@@ -752,7 +755,13 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
           {isEditing ? (
             <PencilSquareIcon className="h-4 w-4" />
           ) : (
-            <img src="/icons/rounded-check.svg" className="h-4 w-4" alt="Complete" />
+            <Image
+              src="/icons/rounded-check.svg"
+              width={16}
+              height={16}
+              className="h-4 w-4"
+              alt="Complete"
+            />
           )}
         </Button>
       </div>

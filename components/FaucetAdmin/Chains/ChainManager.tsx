@@ -78,6 +78,7 @@ export function ChainManager() {
       <div className="bg-white dark:bg-zinc-800 rounded-lg shadow-sm p-4">
         <input
           type="text"
+          aria-label="Search chains by name, symbol, or chain ID"
           placeholder="Search by name, symbol, or chain ID..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
@@ -117,7 +118,7 @@ export function ChainManager() {
             <div key={chain.chainId} className="bg-white dark:bg-zinc-800 rounded-lg shadow-sm p-6">
               <div className="flex justify-between items-start mb-4">
                 <div>
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center gap-x-2">
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                       {chain.name}
                     </h3>
@@ -126,7 +127,7 @@ export function ChainManager() {
                     Chain ID: {chain.chainId}
                   </p>
                 </div>
-                <div className="flex space-x-2">
+                <div className="flex gap-x-2">
                   <button
                     type="button"
                     onClick={() => setEditingChain(chain)}

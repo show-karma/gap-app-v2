@@ -53,7 +53,7 @@ const CommunityCardSkeleton = () => (
     </div>
 
     {/* Stats Skeleton */}
-    <div className="flex justify-center space-x-4 mb-3 min-w-0">
+    <div className="flex justify-center gap-x-4 mb-3 min-w-0">
       <div className="text-center min-w-0">
         <div className="h-4 w-6 bg-gray-300 dark:bg-gray-600 rounded mb-1"></div>
         <div className="h-4 w-10 bg-gray-300 dark:bg-gray-600 rounded"></div>

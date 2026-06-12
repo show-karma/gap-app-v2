@@ -11,7 +11,7 @@ interface ContactsProps {
 }
 
 const rowClass =
-  "text-normal  text-zinc-800 dark:text-zinc-200 text-base break-normal line-clamp-2 w-full max-w-[320px] px-0 py-0";
+  "text-normal  text-zinc-800 dark:text-zinc-200 text-base break-normal line-clamp-2 w-full max-w-[320px] p-0";
 
 const ContactLine = ({ contact }: { contact: Contact }) => {
   const isLink = (link?: string) => {
@@ -73,7 +73,7 @@ export const ProjectContacts: FC<ContactsProps> = ({ contacts }) => {
           <button
             type="button"
             onClick={() => setIsContactExpanded(!isContactExpanded)}
-            className="rounded-md flex flex-row items-center text-sm font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 disabled:opacity-35 hover:opacity-75 transition-all ease-in-out duration-300 px-0 py-0 bg-transparent text-blue-500 underline hover:bg-transparent dark:hover:bg-transparent"
+            className="rounded-md flex flex-row items-center text-sm font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 disabled:opacity-35 hover:opacity-75 transition-all ease-in-out duration-300 p-0 bg-transparent text-blue-500 underline hover:bg-transparent dark:hover:bg-transparent"
           >
             {isContactExpanded ? "See less" : "See more"}
           </button>

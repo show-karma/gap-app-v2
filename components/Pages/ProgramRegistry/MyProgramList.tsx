@@ -291,7 +291,7 @@ export const MyProgramList: FC<MyProgramListProps> = ({
                     <Tooltip.Trigger asChild>
                       <p
                         key={grant.programId}
-                        className="whitespace-nowrap rounded-full w-6 h-6 items-center flex flex-col justify-center px-1 py-1 text-[11px] truncate text-center text-blue-700 bg-[#EFF8FF] border border-[#B2DDFF] mr-2"
+                        className="whitespace-nowrap rounded-full w-6 h-6 items-center flex flex-col justify-center p-1 text-[11px] truncate text-center text-blue-700 bg-[#EFF8FF] border border-[#B2DDFF] mr-2"
                       >
                         +{restNetworks.length}
                       </p>

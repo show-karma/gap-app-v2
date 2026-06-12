@@ -287,7 +287,7 @@ export const ContactInfoSubscription: FC<ContactInfoSubscriptionProps> = ({ cont
   };
 
   return isAuthorized ? (
-    <div className="px-4 py-4 rounded-md border border-transparent dark:bg-zinc-800 dark:border flex flex-col gap-4 items-start">
+    <div className="p-4 rounded-md border border-transparent dark:bg-zinc-800 dark:border flex flex-col gap-4 items-start">
       <h3 className="text-xl font-bold leading-6 text-gray-900 dark:text-zinc-100">Contact Info</h3>
       <p className="text-zinc-600 dark:text-blue-100">
         We promise to never spam you. We will send notifications to inform you if your project
@@ -365,7 +365,7 @@ export const ContactInfoSubscription: FC<ContactInfoSubscriptionProps> = ({ cont
       </form>
     </div>
   ) : (
-    <div className="px-4 py-4 rounded-md border border-transparent dark:bg-zinc-800 dark:border flex flex-col gap-4 items-start">
+    <div className="p-4 rounded-md border border-transparent dark:bg-zinc-800 dark:border flex flex-col gap-4 items-start">
       <h3 className="text-xl font-bold leading-6 text-gray-900 dark:text-zinc-100">
         You are not authorized
       </h3>

@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import type { Hex } from "viem";
 import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
 import EthereumAddressToProfileName from "@/components/EthereumAddressToProfileName";
@@ -19,9 +20,11 @@ export function DashboardHeader({ address }: DashboardHeaderProps) {
   return (
     <div className="flex items-center gap-4">
       {user?.farcaster?.pfp ? (
-        <img
+        <Image
           src={user.farcaster.pfp}
           alt="Farcaster avatar"
+          width={48}
+          height={48}
           className="h-12 w-12 min-h-12 min-w-12 rounded-full border border-border"
         />
       ) : address ? (

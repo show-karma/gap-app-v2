@@ -143,7 +143,7 @@ export const InfiniteMovingCards = ({
           const cardItem = item as TestimonialItem;
           return (
             <li
-              className="relative w-[320px] max-w-full shrink-0 rounded-xl border border-b-0 bg-secondary px-6 py-6"
+              className="relative w-[320px] max-w-full shrink-0 rounded-xl border border-b-0 bg-secondary p-6"
               key={`${cardItem.name}-${cardItem.quote}`}
             >
               <blockquote>

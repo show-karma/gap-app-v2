@@ -104,7 +104,7 @@ export function DonationExecutor({
                   className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"
                   aria-hidden="true"
                 />
-                <span>Processing...</span>
+                <span>Processing…</span>
               </div>
             ) : (
               <div className="flex items-center gap-2">

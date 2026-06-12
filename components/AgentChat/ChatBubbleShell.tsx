@@ -153,7 +153,7 @@ export function ChatBubbleShell({
         {isOpen && (
           <Conversation className="flex-1 min-h-0">
             <ScrollOnNewMessage lastMessageContent={messages[messages.length - 1]?.content} />
-            <ConversationContent className="gap-4 px-4 py-4">
+            <ConversationContent className="gap-4 p-4">
               {messages.length === 0 ? (
                 <ConversationEmptyState
                   icon={

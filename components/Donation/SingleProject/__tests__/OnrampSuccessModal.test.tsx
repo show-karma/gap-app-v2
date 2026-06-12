@@ -178,7 +178,7 @@ describe("OnrampSuccessModal", () => {
   });
 
   describe("Polling Indicator", () => {
-    it("shows 'Checking status...' when isPolling is true", () => {
+    it("shows 'Checking status…' when isPolling is true", () => {
       mockUseDonationPolling.mockReturnValue({
         ...defaultPollingReturn,
         isPolling: true,
@@ -187,10 +187,10 @@ describe("OnrampSuccessModal", () => {
 
       render(<OnrampSuccessModal {...defaultProps} />);
 
-      expect(screen.getByText("Checking status...")).toBeInTheDocument();
+      expect(screen.getByText("Checking status…")).toBeInTheDocument();
     });
 
-    it("hides 'Checking status...' when isPolling is false", () => {
+    it("hides 'Checking status…' when isPolling is false", () => {
       mockUseDonationPolling.mockReturnValue({
         ...defaultPollingReturn,
         isPolling: false,
@@ -199,7 +199,7 @@ describe("OnrampSuccessModal", () => {
 
       render(<OnrampSuccessModal {...defaultProps} />);
 
-      expect(screen.queryByText("Checking status...")).not.toBeInTheDocument();
+      expect(screen.queryByText("Checking status…")).not.toBeInTheDocument();
     });
   });
 

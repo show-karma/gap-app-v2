@@ -28,7 +28,7 @@ const SKELETON_KEYS = ["sk-1", "sk-2", "sk-3", "sk-4", "sk-5", "sk-6"];
 
 export default function FundingOpportunitiesPage() {
   const { communityId } = useParams<{ communityId: string }>();
-  const router = useRouter();
+  const { replace } = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { programs, loading, error, filters, setFilters, refetch } = usePrograms(communityId);
@@ -64,9 +64,9 @@ export default function FundingOpportunitiesPage() {
         params.delete("q");
       }
       const qs = params.toString();
-      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+      replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
     },
-    [pathname, router, searchParams]
+    [pathname, replace, searchParams]
   );
 
   const stats = useMemo(() => {

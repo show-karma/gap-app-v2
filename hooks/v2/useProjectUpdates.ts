@@ -375,7 +375,7 @@ export const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMil
  * Note: endsAt is in seconds, createdAt needs conversion from ISO string to seconds
  */
 const sortByDateDescending = (milestones: UnifiedMilestone[]): UnifiedMilestone[] => {
-  return [...milestones].sort((a, b) => {
+  return milestones.toSorted((a, b) => {
     const getTimestamp = (item: UnifiedMilestone): number => {
       // endsAt is already in seconds (Unix timestamp)
       if (item.endsAt) return item.endsAt;

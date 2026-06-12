@@ -40,7 +40,7 @@ const ApplicationSubmissionWithAPI: FC<IApplicationSubmissionWithAPIProps> = ({
       <div className="flex items-center justify-center p-12">
         <div className="text-center space-y-4">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="text-gray-600 dark:text-gray-400">Loading application form...</p>
+          <p className="text-gray-600 dark:text-gray-400">Loading application form…</p>
         </div>
       </div>
     );

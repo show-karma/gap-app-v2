@@ -39,7 +39,7 @@ export const GrantDelete: FC<GrantDeleteProps> = ({ grant }) => {
   const isOnChainAuthorized = isProjectOwner || isContractOwner;
   const { performOffChainRevoke } = useOffChainRevoke();
 
-  const router = useRouter();
+  const { push } = useRouter();
 
   const deleteFn = async () => {
     if (!address) return;
@@ -92,7 +92,7 @@ export const GrantDelete: FC<GrantDeleteProps> = ({ grant }) => {
 
         // Redirect if the grant was deleted and there are other grants
         if (shouldRedirect) {
-          router.push(PAGES.PROJECT.GRANTS(project?.uid || project?.details?.slug || ""));
+          push(PAGES.PROJECT.GRANTS(project?.uid || project?.details?.slug || ""));
         }
       };
       if (!isOnChainAuthorized) {

@@ -423,8 +423,8 @@ export const MilestoneCard = ({ milestone, isAuthorized, canEdit }: MilestoneCar
           <div className="flex flex-wrap gap-2">
             {milestone.mergedGrants && milestone.mergedGrants.length > 0 ? (
               // Display all merged grants with their images
-              [...milestone.mergedGrants]
-                .sort((a, b) => {
+              milestone.mergedGrants
+                .toSorted((a, b) => {
                   // Sort alphabetically by grant title
                   const titleA = a.grantTitle || "Untitled Grant";
                   const titleB = b.grantTitle || "Untitled Grant";

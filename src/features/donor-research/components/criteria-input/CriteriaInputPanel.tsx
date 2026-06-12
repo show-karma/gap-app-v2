@@ -27,7 +27,7 @@ export type CriteriaFormValues = z.infer<typeof CriteriaSchema>;
  * mode is postponed with Phase C, so the form only runs Fast reports.)
  */
 export function CriteriaInputPanel() {
-  const router = useRouter();
+  const { push } = useRouter();
   const handlesQuery = useDonorHandles({ limit: 200 });
   const createReport = useCreateDonorReport();
 
@@ -50,7 +50,7 @@ export function CriteriaInputPanel() {
       amountMin: values.amountMin ?? null,
       amountMax: values.amountMax ?? null,
     });
-    router.push(PAGES.DONOR_RESEARCH.REPORT(result.reportId));
+    push(PAGES.DONOR_RESEARCH.REPORT(result.reportId));
   };
 
   return (

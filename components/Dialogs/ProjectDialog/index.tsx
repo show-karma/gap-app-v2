@@ -13,13 +13,13 @@ import {
   ProjectDetails,
 } from "@show-karma/karma-gap-sdk";
 import debounce from "lodash.debounce";
+import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { type FC, Fragment, type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { type Hex, isAddress, zeroHash } from "viem";
 import { useAccount } from "wagmi";
 import { z } from "zod";
-/* eslint-disable @next/next/no-img-element */
 import {
   DiscordIcon,
   GithubIcon,
@@ -228,7 +228,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   const { switchChainAsync } = useWallet();
   const [isLoading, setIsLoading] = useState(false);
   const [isChangingNetwork, setIsChangingNetwork] = useState(false);
-  const router = useRouter();
+  const { push, refresh } = useRouter();
   const { gap } = useGap();
   const { openSimilarProjectsModal, isSimilarProjectsModalOpen } = useSimilarProjectsModalStore();
   const { setupChainAndWallet, smartWalletAddress } = useSetupChainAndWallet();
@@ -759,8 +759,8 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
           setTimeout(() => {
             dismiss();
             closeModal();
-            router.push(PAGES.PROJECT.SCREENS.NEW_GRANT(slug || project.uid));
-            router.refresh();
+            push(PAGES.PROJECT.SCREENS.NEW_GRANT(slug || project.uid));
+            refresh();
           }, 1500);
         }
       });
@@ -897,8 +897,8 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
             refreshProject();
           } else {
             const project = res.details?.slug || res.uid;
-            router.push(PAGES.PROJECT.OVERVIEW(project));
-            router.refresh();
+            push(PAGES.PROJECT.OVERVIEW(project));
+            refresh();
           }
         }, 1500);
       });
@@ -941,7 +941,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   const tooltipText = () => {
     const errors = hasErrors();
     if (isLoading) {
-      return <p>Loading...</p>;
+      return <p>Loading…</p>;
     }
     if (!errors) {
       return;
@@ -1308,9 +1308,11 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
             </label>
             {logoPreviewUrl && !isLogoUploading && (
               <div className="flex flex-col gap-2">
-                <img
+                <Image
                   src={logoPreviewUrl}
                   alt="Logo preview"
+                  width={80}
+                  height={80}
                   className="w-20 h-20 object-cover rounded-lg border border-gray-300"
                 />
                 <button
@@ -1405,6 +1407,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                     <div className="flex items-end">
                       <button
                         type="button"
+                        aria-label="Remove custom link"
                         onClick={() => {
                           const updatedLinks = customLinks.filter((_, i) => i !== index);
                           setCustomLinks(updatedLinks);
@@ -1555,7 +1558,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                 <div className="mt-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
                   <p className="text-sm text-blue-800 dark:text-blue-200 font-medium flex items-center gap-2">
                     <span className="h-4 w-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
-                    Switching to selected network...
+                    Switching to selected network…
                   </p>
                 </div>
               )}

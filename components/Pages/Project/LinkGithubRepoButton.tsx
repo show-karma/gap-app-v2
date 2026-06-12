@@ -349,7 +349,7 @@ export const LinkGithubRepoButton: FC<LinkGithubRepoButtonProps> = ({
                   <div className="max-h-[60vh] flex flex-col gap-4 mt-8 overflow-y-auto">
                     {repoItems.map(({ repo, key }, index) => (
                       <div key={key} className="flex flex-col">
-                        <div className="flex items-center space-x-2">
+                        <div className="flex items-center gap-x-2">
                           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 bg-gray-100 dark:bg-zinc-700 rounded-lg flex-grow gap-2 sm:gap-0">
                             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 w-full">
                               <span className="text-md font-bold capitalize whitespace-nowrap">
@@ -357,6 +357,7 @@ export const LinkGithubRepoButton: FC<LinkGithubRepoButtonProps> = ({
                               </span>
                               <input
                                 type="text"
+                                aria-label={`Repository ${index + 1} URL`}
                                 value={repo}
                                 onChange={(e) => handleRepoChange(index, e.target.value)}
                                 className="text-sm rounded-md w-full text-gray-600 dark:text-gray-300 bg-transparent border-b border-gray-300 dark:border-gray-600 focus:outline-none focus:border-blue-500"
@@ -365,7 +366,7 @@ export const LinkGithubRepoButton: FC<LinkGithubRepoButtonProps> = ({
                             </div>
                             <div className="flex items-center self-end sm:self-auto mt-2 sm:mt-0">
                               {validatingRepo === index ? (
-                                <span className="text-sm animate-pulse mx-2">Validating...</span>
+                                <span className="text-sm animate-pulse mx-2">Validating…</span>
                               ) : validatedRepos[index] ? (
                                 <div className="relative group">
                                   <CheckIcon

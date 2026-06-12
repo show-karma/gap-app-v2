@@ -84,7 +84,7 @@ export function WorkBoard({ slug }: Props) {
   const { data: tasks, isLoading, isError, refetch } = useWorkTasks(slug);
   const create = useCreateWorkTask(slug);
   const update = useUpdateWorkTaskStatus(slug);
-  const router = useRouter();
+  const { replace } = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const openTaskId = searchParams.get("task");
@@ -97,9 +97,9 @@ export function WorkBoard({ slug }: Props) {
         params.delete("task");
       }
       const query = params.toString();
-      router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+      replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
     },
-    [pathname, router, searchParams]
+    [pathname, replace, searchParams]
   );
   const [showNew, setShowNew] = useState(false);
 

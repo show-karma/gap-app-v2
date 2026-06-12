@@ -408,6 +408,7 @@ function IndicatorGroup({ title, items, selection, onToggle }: IndicatorGroupPro
                 <input
                   type="checkbox"
                   className="mt-0.5 rounded border-zinc-300"
+                  aria-label={indicator.name}
                   checked={checked}
                   onChange={() => onToggle(indicator.id)}
                 />

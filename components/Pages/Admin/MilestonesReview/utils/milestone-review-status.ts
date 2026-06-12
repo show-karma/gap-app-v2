@@ -120,7 +120,7 @@ export function sortMilestones(
   milestones: GrantMilestoneWithCompletion[],
   statusFn: (m: GrantMilestoneWithCompletion) => MilestoneReviewStatus = getMilestoneStatus
 ): GrantMilestoneWithCompletion[] {
-  return [...milestones].sort((a, b) => {
+  return milestones.toSorted((a, b) => {
     const aVerified = statusFn(a) === MilestoneReviewStatus.Verified ? 1 : 0;
     const bVerified = statusFn(b) === MilestoneReviewStatus.Verified ? 1 : 0;
     if (aVerified !== bVerified) return aVerified - bVerified;

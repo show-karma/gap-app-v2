@@ -35,7 +35,7 @@ export const EndorsementDialog: FC = () => {
   const { chain } = useAccount();
   const { address } = useAccount();
   const refreshProject = useProjectStore((state) => state.refreshProject);
-  const router = useRouter();
+  const { push } = useRouter();
   const pathname = usePathname();
   const { data: contactsInfo } = useContactInfo(project?.uid, true);
 
@@ -144,7 +144,7 @@ export const EndorsementDialog: FC = () => {
               // Let the share dialog render before any route transition.
               if (pathname !== targetPath) {
                 setTimeout(() => {
-                  router.push(targetPath);
+                  push(targetPath);
                 }, 250);
               }
             }, 1500);

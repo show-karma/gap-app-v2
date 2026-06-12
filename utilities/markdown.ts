@@ -146,9 +146,7 @@ export function rewriteHeadingsToLevel(
   fromLevels: number[] = [1, 2, 3, 4, 5]
 ): RehypeRewrite {
   const toTag = `h${Math.min(Math.max(targetLevel, 1), 6)}`;
-  const fromTags = new Set(
-    fromLevels.filter((lvl) => lvl >= 1 && lvl <= 6).map((lvl) => `h${lvl}`)
-  );
+  const fromTags = new Set(fromLevels.flatMap((lvl) => (lvl >= 1 && lvl <= 6 ? [`h${lvl}`] : [])));
 
   return (node: unknown) => {
     if (isHastElement(node)) {

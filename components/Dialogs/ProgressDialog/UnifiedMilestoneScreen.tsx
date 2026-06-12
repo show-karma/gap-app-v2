@@ -101,7 +101,7 @@ export const UnifiedMilestoneScreen = () => {
     useAttestationToast();
   const { projectId } = useParams();
   const { refetch: refetchUpdates } = useProjectUpdates(projectId as string);
-  const router = useRouter();
+  const { push } = useRouter();
 
   const {
     register,
@@ -396,12 +396,13 @@ export const UnifiedMilestoneScreen = () => {
 
       // Poll until at least one milestone is indexed (indicates indexing is working)
       let indexed = false;
+      const selectedGrantIdSet = new Set(selectedGrantIds);
       for (let i = 0; i < 30; i++) {
         const { data: updatedGrants } = await refetchGrants();
 
         // Check if any of the selected grants now have a milestone with the title we just created
         const foundNewMilestone = updatedGrants?.some((grant) => {
-          if (!selectedGrantIds.includes(grant.uid)) return false;
+          if (!selectedGrantIdSet.has(grant.uid)) return false;
           return grant.milestones?.some((m) => m.title === data.title);
         });
 
@@ -424,7 +425,7 @@ export const UnifiedMilestoneScreen = () => {
 
       setTimeout(() => {
         dismiss();
-        router.push(PAGES.PROJECT.UPDATES(project?.details?.slug || project?.uid || ""));
+        push(PAGES.PROJECT.UPDATES(project?.details?.slug || project?.uid || ""));
         closeProgressModal();
       }, 1500);
     } catch (error) {

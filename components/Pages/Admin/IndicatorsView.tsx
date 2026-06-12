@@ -200,7 +200,7 @@ export const IndicatorsView = ({ onRefresh, communityId }: IndicatorsViewProps) 
             ))}
           </div>
         ) : (
-          <div className="py-8 px-8 flex flex-col items-center justify-center text-center rounded border border-gray-300 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800">
+          <div className="p-8 flex flex-col items-center justify-center text-center rounded border border-gray-300 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800">
             <p className="text-gray-500 dark:text-gray-400">
               No {title.toLowerCase()} found with current filters.
             </p>
@@ -245,6 +245,7 @@ export const IndicatorsView = ({ onRefresh, communityId }: IndicatorsViewProps) 
                 <input
                   type="text"
                   placeholder="Search indicators..."
+                  aria-label="Search indicators"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full px-4 py-2 border rounded-md dark:bg-zinc-800 dark:border-zinc-700"

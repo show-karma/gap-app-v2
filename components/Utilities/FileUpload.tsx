@@ -319,6 +319,7 @@ export function FileUpload({
                 id={inputId}
                 name="file-upload"
                 type="file"
+                aria-label="Upload a file"
                 className="sr-only"
                 accept={acceptedFormats}
                 onChange={handleFileChange}

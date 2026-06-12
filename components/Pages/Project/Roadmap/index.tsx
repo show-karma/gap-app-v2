@@ -70,7 +70,7 @@ export const ProjectRoadmap = ({ project: propProject }: ProjectRoadmapProps) =>
 
     const allItems = [...apiMilestones, ...impactItems];
 
-    return [...allItems].sort(compareMilestonesNewestFirst);
+    return allItems.toSorted(compareMilestonesNewestFirst);
   }, [impacts, apiMilestones]);
 
   // Filter items based on active filters

@@ -45,7 +45,7 @@ const SkeletonLoader: FC<{ className?: string }> = ({ className }) => (
         </div>
       </div>
     </div>
-    <span className="sr-only">Loading...</span>
+    <span className="sr-only">Loading…</span>
   </output>
 );
 

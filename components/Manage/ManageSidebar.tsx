@@ -20,6 +20,7 @@ import {
   Tag,
   TrendingUp,
 } from "lucide-react";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useMemo } from "react";
 import {
@@ -231,7 +232,7 @@ function CommunitySwitcher({
   communityLogo?: string;
   roleLabel?: string;
 }) {
-  const router = useRouter();
+  const { push } = useRouter();
   const { communities } = useDashboardAdmin();
   const hasSwitcher = communities.length > 1;
 
@@ -242,7 +243,13 @@ function CommunitySwitcher({
       {/* Logo — always visible */}
       <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-sidebar-primary text-sidebar-primary-foreground overflow-hidden">
         {communityLogo ? (
-          <img src={communityLogo} alt={communityName} className="size-full object-cover" />
+          <Image
+            src={communityLogo}
+            alt={communityName}
+            width={32}
+            height={32}
+            className="size-full object-cover"
+          />
         ) : (
           <span className="text-sm font-bold">{communityName.charAt(0).toUpperCase()}</span>
         )}
@@ -283,7 +290,7 @@ function CommunitySwitcher({
             {communities.map((c) => (
               <DropdownMenuItem
                 key={c.slug}
-                onSelect={() => router.push(c.manageUrl)}
+                onSelect={() => push(c.manageUrl)}
                 className={cn(
                   "flex items-center gap-2 cursor-pointer",
                   c.slug === currentSlug && "bg-sidebar-accent"
@@ -291,7 +298,13 @@ function CommunitySwitcher({
               >
                 <div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-sidebar-primary text-sidebar-primary-foreground overflow-hidden">
                   {c.logoUrl ? (
-                    <img src={c.logoUrl} alt={c.name} className="size-full object-cover" />
+                    <Image
+                      src={c.logoUrl}
+                      alt={c.name}
+                      width={24}
+                      height={24}
+                      className="size-full object-cover"
+                    />
                   ) : (
                     <span className="text-xs font-bold">{c.name.charAt(0).toUpperCase()}</span>
                   )}
@@ -331,17 +344,17 @@ export function ManageSidebar({ communityId, community }: ManageSidebarProps) {
     if (isLoading || (!hasAdminAccess && !hasReviewerAccess)) return [];
     if (hasAdminAccess) {
       if (!isCommunityAdmin) {
-        return NAV_GROUPS.map((group) => ({
-          ...group,
-          items: group.items.filter((item) => !item.communityAdminOnly),
-        })).filter((group) => group.items.length > 0);
+        return NAV_GROUPS.flatMap((group) => {
+          const items = group.items.filter((item) => !item.communityAdminOnly);
+          return items.length > 0 ? [{ ...group, items }] : [];
+        });
       }
       return NAV_GROUPS;
     }
-    return NAV_GROUPS.map((group) => ({
-      ...group,
-      items: group.items.filter((item) => REVIEWER_SEGMENTS.has(item.matchSegment)),
-    })).filter((group) => group.items.length > 0);
+    return NAV_GROUPS.flatMap((group) => {
+      const items = group.items.filter((item) => REVIEWER_SEGMENTS.has(item.matchSegment));
+      return items.length > 0 ? [{ ...group, items }] : [];
+    });
   }, [isLoading, hasAdminAccess, hasReviewerAccess, isCommunityAdmin]);
 
   const communityName = community?.details?.name || communityId;

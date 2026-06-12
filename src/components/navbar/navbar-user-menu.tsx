@@ -9,6 +9,7 @@ import {
   LogOutIcon,
   Settings,
 } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
 import EthereumAddressToProfileName from "@/components/EthereumAddressToProfileName";
@@ -119,9 +120,11 @@ export function NavbarUserMenu() {
         <MenubarTrigger className="cursor-pointer p-0 rounded-full data-[state=open]:opacity-90">
           <div className="flex items-center rounded-full border border-border p-1">
             {user?.farcaster?.pfp ? (
-              <img
+              <Image
                 src={user.farcaster.pfp}
                 alt="Farcaster avatar"
+                width={32}
+                height={32}
                 className="h-8 w-8 min-h-8 min-w-8 max-h-8 max-w-8 rounded-full"
               />
             ) : address ? (
@@ -152,7 +155,7 @@ export function NavbarUserMenu() {
             ) : null}
           </div>
         </MenubarTrigger>
-        <MenubarContent align="end" className="flex flex-col gap-4 px-4 py-4 w-max">
+        <MenubarContent align="end" className="flex flex-col gap-4 p-4 w-max">
           <div className="flex flex-col w-full">
             <MenubarItem
               className="w-full cursor-pointer"

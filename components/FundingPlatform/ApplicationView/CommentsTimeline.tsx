@@ -246,7 +246,7 @@ const CommentsTimeline: FC<CommentsTimelineProps> = ({
     const isCurrent = status.status === currentStatus && isLatest;
 
     return (
-      <div className="flex space-x-3">
+      <div className="flex gap-x-3">
         <div className="flex-shrink-0">
           <span
             className={cn(
@@ -304,7 +304,7 @@ const CommentsTimeline: FC<CommentsTimelineProps> = ({
     const EditIcon = config?.icon || PencilSquareIcon;
 
     return (
-      <div className="flex space-x-3">
+      <div className="flex gap-x-3">
         <div className="flex-shrink-0">
           <span
             className={`h-8 w-8 rounded-full flex items-center justify-center ${
@@ -395,7 +395,7 @@ const CommentsTimeline: FC<CommentsTimelineProps> = ({
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center gap-x-2">
           <ChatBubbleLeftRightIcon className="h-5 w-5 text-gray-500 dark:text-gray-400" />
           <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
             Activity Timeline

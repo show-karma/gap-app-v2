@@ -33,12 +33,16 @@ const ReviewerFilterDropdownComponent: FC<IReviewerFilterDropdownProps> = ({
   // backend matches applications by reviewer address).
   const selectableReviewers = useMemo(
     () =>
-      reviewers
-        .filter((reviewer) => !!reviewer.publicAddress)
-        .map((reviewer) => ({
-          ...reviewer,
-          address: reviewer.publicAddress!.toLowerCase(),
-        })),
+      reviewers.flatMap((reviewer) =>
+        reviewer.publicAddress
+          ? [
+              {
+                ...reviewer,
+                address: reviewer.publicAddress.toLowerCase(),
+              },
+            ]
+          : []
+      ),
     [reviewers]
   );
 

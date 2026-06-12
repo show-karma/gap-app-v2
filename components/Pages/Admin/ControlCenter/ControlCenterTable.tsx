@@ -99,6 +99,7 @@ const ControlCenterTableRow = memo(function ControlCenterTableRow({
             onChange={(e) => onSelectGrant?.(item.grantUid, e.target.checked)}
             disabled={checkboxDisabled}
             title={checkboxReason || "Select for disbursement"}
+            aria-label={checkboxReason || `Select ${item.projectName} for disbursement`}
           />
         </td>
       )}
@@ -274,6 +275,11 @@ export function ControlCenterTable({
                     onChange={(e) => onSelectAll?.(e.target.checked)}
                     disabled={(selectableGrants?.length ?? 0) === 0}
                     title={
+                      (selectableGrants?.length ?? 0) === 0
+                        ? "No grants have valid payout address and amount"
+                        : `Select all ${selectableGrants?.length ?? 0} eligible grants`
+                    }
+                    aria-label={
                       (selectableGrants?.length ?? 0) === 0
                         ? "No grants have valid payout address and amount"
                         : `Select all ${selectableGrants?.length ?? 0} eligible grants`

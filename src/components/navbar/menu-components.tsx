@@ -157,7 +157,7 @@ export function ExploreContent({ variant = "desktop", onClose }: ExploreContentP
   }
 
   return (
-    <div className="flex flex-col gap-4 px-4 py-4 w-max">
+    <div className="flex flex-col gap-4 p-4 w-max">
       <div className="flex flex-col w-full">
         <MenuSection title="Projects" variant="desktop" />
         {exploreItems.projects.map((item) => (

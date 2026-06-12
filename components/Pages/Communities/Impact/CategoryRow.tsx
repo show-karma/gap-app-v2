@@ -192,7 +192,7 @@ const AggregatedSegmentCard = ({ segment }: { segment: ProgramImpactSegment }) =
       </div>
 
       {/* Chart body */}
-      <div className="px-5 py-5">
+      <div className="p-5">
         {isLoading ? (
           <div className="flex h-40 items-center justify-center">
             <Spinner />

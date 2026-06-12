@@ -62,7 +62,7 @@ export const CommunityCard = ({ community }: CommunityCardProps) => {
         </h3>
       </div>
 
-      <div className="flex justify-center space-x-4 mb-3 min-w-0">
+      <div className="flex justify-center gap-x-4 mb-3 min-w-0">
         <div className="text-center min-w-0">
           <div className="text-base font-bold text-neutral-600 dark:text-neutral-400">
             {stats.projects.toLocaleString()}

@@ -77,7 +77,7 @@ export function ChainSettingsManager() {
                   Chain ID: {settings.chainId}
                 </p>
               </div>
-              <div className="flex space-x-2">
+              <div className="flex gap-x-2">
                 <EmergencyControls
                   chainId={settings.chainId}
                   enabled={settings.enabled}

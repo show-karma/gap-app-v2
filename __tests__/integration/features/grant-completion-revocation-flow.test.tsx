@@ -445,7 +445,7 @@ describe("Integration: Grant Completion Revocation Flow", () => {
 
       // Gate the first awaited async (setupChainAndWallet) on a deferred promise
       // so the in-flight loading state is STABLE while we assert it. Otherwise
-      // every mock resolves instantly and the disabled/"Revoking..." state can
+      // every mock resolves instantly and the disabled/"Revoking…" state can
       // come and go between waitFor polls — a race that flakes under load.
       let releaseSetup: () => void = () => {};
       mockSetupChainAndWallet.mockImplementation(
@@ -468,7 +468,7 @@ describe("Integration: Grant Completion Revocation Flow", () => {
       await waitFor(() => {
         expect(button).toBeDisabled();
         expect(screen.getByTestId("spinner")).toBeInTheDocument();
-        expect(screen.getByText("Revoking...")).toBeInTheDocument();
+        expect(screen.getByText("Revoking…")).toBeInTheDocument();
       });
 
       // Release the gated async so the rest of the flow proceeds to completion.

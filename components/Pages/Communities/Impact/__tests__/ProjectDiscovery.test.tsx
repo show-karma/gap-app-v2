@@ -153,7 +153,7 @@ describe("ProjectDiscovery dark mode support", () => {
 
     render(<ProjectDiscovery />);
 
-    const loadingText = screen.getByText("Loading...");
+    const loadingText = screen.getByText("Loading…");
     expect(loadingText.className).toContain("dark:");
   });
 

@@ -170,9 +170,9 @@ const ReviewerPickerModal = ({
     }
     setRows((prev) => {
       const existingIds = new Set(prev.map((r) => r.id));
-      const toAdd = selectablePoolItems
-        .filter((r) => !existingIds.has(r.publicAddress))
-        .map((r) => poolRowFromReviewer(r, defaultRole));
+      const toAdd = selectablePoolItems.flatMap((r) =>
+        existingIds.has(r.publicAddress) ? [] : [poolRowFromReviewer(r, defaultRole)]
+      );
       return [...prev, ...toAdd];
     });
   }, [selectablePoolItems, isAllSelected, defaultRole]);
@@ -231,9 +231,9 @@ const ReviewerPickerModal = ({
         })
       );
 
-      const failures = settled
-        .map((result, i) => ({ result, row: toSave[i] }))
-        .filter((x) => x.result.status === "rejected");
+      const failures = settled.flatMap((result, i) =>
+        result.status === "rejected" ? [{ result, row: toSave[i] }] : []
+      );
 
       return { totalCount: toSave.length, failures };
     },
@@ -254,11 +254,15 @@ const ReviewerPickerModal = ({
 
       // Partial failure: keep only failed rows annotated with their error.
       const failedIds = new Set(failures.map((f) => f.row.id));
+      const failureByRowId = new Map<string, (typeof failures)[number]>();
+      for (const f of failures) {
+        if (!failureByRowId.has(f.row.id)) failureByRowId.set(f.row.id, f);
+      }
       setRows((prev) =>
         prev
           .filter((r) => failedIds.has(r.id))
           .map((r) => {
-            const failure = failures.find((f) => f.row.id === r.id);
+            const failure = failureByRowId.get(r.id);
             const reason = failure?.result.status === "rejected" ? failure.result.reason : null;
             const errorMsg = reason instanceof Error ? reason.message : "Failed to add";
             return { ...r, error: errorMsg };
@@ -553,7 +557,7 @@ const ReviewerPickerModal = ({
             disabled={isSaving || rows.length === 0}
             isLoading={isSaving}
             data-testid="save-btn"
-            className="flex items-center space-x-2"
+            className="flex items-center gap-x-2"
           >
             {isSaving
               ? "Adding…"

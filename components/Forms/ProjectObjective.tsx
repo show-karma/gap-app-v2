@@ -52,7 +52,7 @@ export const ProjectObjectiveForm = ({
   const { setupChainAndWallet, smartWalletAddress } = useSetupChainAndWallet();
   const params = useParams();
   const projectId = params.projectId as string;
-  const router = useRouter();
+  const { push } = useRouter();
 
   const isEditing = !!previousObjective;
 
@@ -152,9 +152,7 @@ export const ProjectObjectiveForm = ({
                   stateHandler?.(false);
                   setTimeout(() => {
                     dismiss();
-                    router.push(
-                      PAGES.PROJECT.UPDATES(project?.details?.slug || project?.uid || "")
-                    );
+                    push(PAGES.PROJECT.UPDATES(project?.details?.slug || project?.uid || ""));
                   }, 1500);
                 }
                 retries -= 1;

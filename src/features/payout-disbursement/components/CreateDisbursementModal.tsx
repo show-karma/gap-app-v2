@@ -1199,7 +1199,7 @@ export function CreateDisbursementModal({
                         <div className="flex items-center justify-center py-8">
                           <Spinner className="w-6 h-6 mr-3" />
                           <span className="text-gray-600 dark:text-gray-400">
-                            Loading disbursement history...
+                            Loading disbursement history…
                           </span>
                         </div>
                       ) : (
@@ -1319,7 +1319,7 @@ export function CreateDisbursementModal({
                         <div className="flex items-center justify-center py-8">
                           <Spinner className="w-6 h-6 mr-3" />
                           <span className="text-gray-600 dark:text-gray-400">
-                            Verifying Safe access...
+                            Verifying Safe access…
                           </span>
                         </div>
                       ) : (
@@ -1385,7 +1385,7 @@ Find proposer section and click "Add proposer" and add ${userAddress ? `${userAd
                       Proposing Transaction
                     </h4>
                     <p className="text-gray-600 dark:text-gray-400">
-                      Submitting transaction to Safe...
+                      Submitting transaction to Safe…
                     </p>
                   </div>
                 )}
@@ -1830,6 +1830,7 @@ function ProjectReviewStep({
                   <div className="w-32">
                     <input
                       type="text"
+                      aria-label={`Amount for ${milestone.title}`}
                       value={milestoneBreakdown[milestone.uid] || ""}
                       onChange={(e) => onMilestoneAmountChange(milestone.uid, e.target.value)}
                       placeholder="0"

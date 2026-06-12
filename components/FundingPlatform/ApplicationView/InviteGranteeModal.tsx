@@ -149,7 +149,7 @@ const InviteGranteeModal: FC<InviteGranteeModalProps> = ({
               {isInviting ? (
                 <>
                   <Spinner className="h-4 w-4 mr-2 border-2" />
-                  Inviting...
+                  Inviting…
                 </>
               ) : (
                 "Invite Grantee"

@@ -26,6 +26,7 @@ export function SlackOauthTextField({
       <input
         type={type}
         value={value}
+        aria-label={label}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         disabled={disabled}

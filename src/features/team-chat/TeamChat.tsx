@@ -256,6 +256,7 @@ function ChatComposer({
       <div className="flex items-end gap-2">
         <textarea
           ref={textareaRef}
+          aria-label={placeholder}
           value={value}
           onChange={(e) => {
             setValue(e.target.value);

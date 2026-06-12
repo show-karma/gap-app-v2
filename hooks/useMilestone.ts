@@ -169,10 +169,11 @@ export const useMilestone = () => {
 
           const milestoneSchema = gapClient.findSchema("Milestone");
 
+          const milestoneUIDSet = new Set(milestoneUIDs);
           const milestoneInstances = fetchedProject.grants
             .filter((grant) => grant.milestones.length > 0)
             .flatMap((grant) => grant.milestones)
-            .filter((milestone) => milestoneUIDs.includes(getMilestoneInstanceUid(milestone)));
+            .filter((milestone) => milestoneUIDSet.has(getMilestoneInstanceUid(milestone)));
 
           if (!milestoneInstances) {
             throw new Error("Milestone UIDs couldn't be found for this chain");
@@ -188,7 +189,7 @@ export const useMilestone = () => {
               async () => {
                 const { data: fetchedGrants } = await refetchGrants();
                 const isMilestoneExists = (fetchedGrants || []).some((grant) =>
-                  grant.milestones?.some((milestone) => milestoneUIDs.includes(milestone.uid))
+                  grant.milestones?.some((milestone) => milestoneUIDSet.has(milestone.uid))
                 );
 
                 return !isMilestoneExists || false;
@@ -374,10 +375,11 @@ export const useMilestone = () => {
             throw new Error("No milestones found for this chain");
           }
 
+          const milestoneUIDSet = new Set(milestoneUIDs);
           const milestoneInstances = fetchedProject.grants
             .filter((grant) => grant.milestones.length > 0)
             .flatMap((grant) => grant.milestones)
-            .filter((milestone) => milestoneUIDs.includes(getMilestoneInstanceUid(milestone)));
+            .filter((milestone) => milestoneUIDSet.has(getMilestoneInstanceUid(milestone)));
 
           if (!milestoneInstances?.length) {
             throw new Error("Milestone UIDs couldn't be found for this chain");
@@ -389,7 +391,7 @@ export const useMilestone = () => {
                 const { data: fetchedGrants } = await refetchGrants();
                 const areCompletionsRemoved = (fetchedGrants || []).every((grant) =>
                   grant.milestones
-                    ?.filter((milestone) => milestoneUIDs.includes(milestone.uid))
+                    ?.filter((milestone) => milestoneUIDSet.has(milestone.uid))
                     .every((milestone) => !milestone.completed)
                 );
 
@@ -736,16 +738,18 @@ export const useMilestone = () => {
         }
 
         // Find milestone instances for this chain
+        const milestonesOfChainSet = new Set(milestonesOfChain);
         const milestoneInstances = fetchedProject.grants
           .filter((grant) => grant.milestones.length > 0)
           .flatMap((grant) => grant.milestones)
-          .filter((m) => milestonesOfChain.includes(getMilestoneInstanceUid(m)));
+          .filter((m) => milestonesOfChainSet.has(getMilestoneInstanceUid(m)));
 
         if (!milestoneInstances?.length) {
           throw new Error("Milestone instances couldn't be found for this chain");
         }
 
         const milestoneUIDs = milestonesOfChain.map((m) => m as `0x${string}`);
+        const milestoneUIDSet = new Set(milestoneUIDs);
 
         await milestoneInstances[0]
           .completeForMultipleGrants(walletSigner, milestoneUIDs, completionData, changeStepperStep)
@@ -769,7 +773,7 @@ export const useMilestone = () => {
                 // Check if any of the milestones have been completed
                 const areMilestonesCompleted = fetchedGrants.some((grant) =>
                   grant.milestones?.some(
-                    (m) => milestoneUIDs.includes(m.uid as `0x${string}`) && !!m.completed
+                    (m) => milestoneUIDSet.has(m.uid as `0x${string}`) && !!m.completed
                   )
                 );
                 return areMilestonesCompleted || false;
@@ -888,14 +892,19 @@ export const useMilestone = () => {
             throw new Error("No milestones found for this chain");
           }
 
+          const milestoneUIDSet = new Set(milestoneUIDs);
           const milestoneInstances = fetchedProject.grants
             .filter((grant) => grant.milestones.length > 0)
             .flatMap((grant) => grant.milestones)
-            .filter((milestone) => milestoneUIDs.includes(getMilestoneInstanceUid(milestone)));
+            .filter((milestone) => milestoneUIDSet.has(getMilestoneInstanceUid(milestone)));
 
           if (!milestoneInstances?.length) {
             throw new Error("Milestone UIDs couldn't be found for this chain");
           }
+
+          const milestoneInstanceByUid = new Map<string, (typeof milestoneInstances)[number]>(
+            milestoneInstances.map((instance) => [instance.uid, instance])
+          );
 
           const completionData = sanitizeObject({
             reason: data.description,
@@ -912,12 +921,12 @@ export const useMilestone = () => {
                 if (!fetchedGrants?.length) return false;
                 const areCompletionsUpdated = fetchedGrants.some((grant) =>
                   (grant.milestones || [])
-                    .filter((milestone) => milestoneUIDs.includes(milestone.uid))
+                    .filter((milestone) => milestoneUIDSet.has(milestone.uid))
                     .some((milestone) => {
                       if (!milestone.completed) return false;
 
-                      const originalCompletion = milestoneInstances.find(
-                        (m) => m.uid === milestone.uid
+                      const originalCompletion = milestoneInstanceByUid.get(
+                        milestone.uid
                       )?.completed;
 
                       return !!(

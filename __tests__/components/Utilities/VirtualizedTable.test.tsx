@@ -313,7 +313,7 @@ describe("VirtualizedTable", () => {
     it("should show default loading spinner when isLoading is true", () => {
       renderVirtualizedTable({ isLoading: true });
 
-      expect(screen.getByText("Loading...")).toBeInTheDocument();
+      expect(screen.getByText("Loading…")).toBeInTheDocument();
     });
 
     it("should render custom loading component", () => {

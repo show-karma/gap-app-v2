@@ -146,7 +146,7 @@ const GrantSearchDropdown: FC<{
                   href={PAGES.PROJECT.SCREENS.NEW_GRANT(
                     project?.details?.slug || project?.uid || ""
                   )}
-                  className="text-sm h-full w-full px-2 py-2 rounded bg-zinc-700 text-white text-center hover:bg-zinc-600 transition-colors"
+                  className="text-sm h-full w-full p-2 rounded bg-zinc-700 text-white text-center hover:bg-zinc-600 transition-colors"
                 >
                   Add Grant
                 </ExternalLink>
@@ -232,7 +232,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
   const { switchChainAsync } = useWallet();
   const { setupChainAndWallet } = useSetupChainAndWallet();
   const project = useProjectStore((state) => state.project);
-  const router = useRouter();
+  const { push } = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const editId = propEditId || searchParams.get("editId");
@@ -441,7 +441,10 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
     // Set grants from funding associations if they exist
     const fundingAssociations = updateToEdit.associations?.funding || [];
     if (fundingAssociations.length > 0) {
-      setValue("grants", fundingAssociations.map((f) => f.uid || "").filter(Boolean));
+      setValue(
+        "grants",
+        fundingAssociations.flatMap((f) => (f.uid ? [f.uid] : []))
+      );
     }
 
     // Set deliverables if they exist
@@ -473,10 +476,11 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
 
     outputsInitializedRef.current = editId;
 
+    const indicatorsDataById = new Map(indicatorsData.map((out) => [out.id, out]));
     const outputsToSet = indicators
       .filter((indicator) => indicator.id) // Filter out indicators without id
       .map((indicator) => {
-        const matchingOutput = indicatorsData.find((out) => out.id === indicator.id);
+        const matchingOutput = indicator.id ? indicatorsDataById.get(indicator.id) : undefined;
         const orderedDatapoints = matchingOutput?.datapoints.sort(
           (a, b) => new Date(a.endDate).getTime() - new Date(b.endDate).getTime()
         );
@@ -547,13 +551,12 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
       }
 
       // Filter out autosynced indicators and prepare impact data for submission
+      const indicatorsListById = new Map(indicatorsList.map((i) => [i.indicatorId, i]));
       const outputsData = data.outputs
         .filter(
           (output) =>
             !autosyncedIndicators.find(
-              (indicator) =>
-                indicator.name ===
-                indicatorsList.find((i) => i.indicatorId === output.outputId)?.name
+              (indicator) => indicator.name === indicatorsListById.get(output.outputId)?.name
             )
         )
         .map((output) => ({
@@ -566,10 +569,10 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
 
       // Update impact data through the API
       if (outputsData.length > 0) {
+        const indicatorsDataById = new Map((indicatorsData ?? []).map((i) => [i.id, i]));
         await Promise.all(
           outputsData.map((indicator) => {
-            const restOfDatapoints =
-              indicatorsData?.find((i) => i.id === indicator.id)?.datapoints || [];
+            const restOfDatapoints = indicatorsDataById.get(indicator.id)?.datapoints || [];
 
             const filteredDatapoints = restOfDatapoints.filter(
               (dp) => dp.startDate !== indicator.startDate && dp.endDate !== indicator.endDate
@@ -593,6 +596,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
       }
 
       // Create the base project update object
+      const categorizedIndicatorsById = new Map(categorizedIndicators.map((o) => [o.id, o]));
       const projectUpdateData = {
         data: {
           title: data.title,
@@ -602,7 +606,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
           grants: data.grants || [],
           indicators: data.outputs.map((indicator) => ({
             indicatorId: indicator.outputId,
-            name: categorizedIndicators.find((o) => o.id === indicator.outputId)?.name || "",
+            name: categorizedIndicatorsById.get(indicator.outputId)?.name || "",
           })),
           deliverables: data.deliverables.map((deliverable) => ({
             name: deliverable.name,
@@ -656,7 +660,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
                 // Only redirect new activities. Edits stay on the current page (e.g. funding page) to show in-place refresh.
                 if (!isEditMode && pathname !== updatesPath) {
                   setTimeout(() => {
-                    router.push(updatesPath);
+                    push(updatesPath);
                   }, 250);
                 }
               }, 1500);

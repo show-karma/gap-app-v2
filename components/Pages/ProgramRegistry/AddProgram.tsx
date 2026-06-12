@@ -76,19 +76,19 @@ export default function AddProgram({
   // Programs on the Karma funding platform require admin + finance emails
   const isFundingProgram = Boolean(programToEdit?.isOnKarma);
 
-  const router = useRouter();
-  const _supportedChains = appNetwork
-    .filter((chain) => {
-      const support = [10, 42161, 11155111];
-      return support.includes(chain.id);
-    })
-    .map((chain) => {
-      return {
-        label: chain.name,
-        value: chain.id,
-        img: chainImgDictionary(chain.id),
-      };
-    });
+  const { push } = useRouter();
+  const _supportedChains = appNetwork.flatMap((chain) => {
+    const support = [10, 42161, 11155111];
+    return support.includes(chain.id)
+      ? [
+          {
+            label: chain.name,
+            value: chain.id,
+            img: chainImgDictionary(chain.id),
+          },
+        ]
+      : [];
+  });
 
   const [allCommunities, setAllCommunities] = useState<Community[]>([]);
   const typeSelectorRef = useRef<HTMLDivElement>(null);
@@ -324,7 +324,7 @@ export default function AddProgram({
           duration: 20000,
         }
       );
-      router.push(PAGES.REGISTRY.ROOT);
+      push(PAGES.REGISTRY.ROOT);
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       const lowerError = errorMessage.toLowerCase();

@@ -51,7 +51,7 @@ export const WeeklyActiveUsersChart = () => {
   return (
     <div className="container mx-auto sm:px-0 lg:px-20 w-full flex-col items-center justify-center">
       {isLoading ? (
-        <p>Loading...</p>
+        <p>Loading…</p>
       ) : (
         <Card className="min-w-[400px]">
           <Title className="flex flex-row flex-wrap items-center gap-2">Weekly Active Users</Title>

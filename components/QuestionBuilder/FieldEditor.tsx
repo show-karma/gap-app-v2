@@ -139,7 +139,7 @@ export function FieldEditor({
     <div className="p-6">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400">Field Settings</h3>
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center gap-x-2">
           <button
             type="button"
             onClick={() => !readOnly && onDelete(field.id)}
@@ -409,8 +409,9 @@ export function FieldEditor({
             </div>
             <div className="space-y-2">
               {optionKeys.map((optionKey, index) => (
-                <div key={optionKey} className="flex items-center space-x-2">
+                <div key={optionKey} className="flex items-center gap-x-2">
                   <input
+                    aria-label={`Option ${index + 1}`}
                     value={watchedOptions[index] ?? ""}
                     onChange={(e) => !readOnly && updateOption(index, e.target.value)}
                     disabled={readOnly}
@@ -421,6 +422,7 @@ export function FieldEditor({
                     type="button"
                     onClick={() => !readOnly && removeOption(index)}
                     disabled={readOnly}
+                    aria-label={`Remove option ${index + 1}`}
                     className="p-2 text-red-400 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     <TrashIcon className="w-4 h-4" />

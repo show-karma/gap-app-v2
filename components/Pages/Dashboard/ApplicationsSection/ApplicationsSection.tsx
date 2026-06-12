@@ -76,12 +76,13 @@ export function ApplicationsSection({
     if (communitySlug) return applications;
 
     const knownCommunities = chosenCommunities(true);
+    const knownCommunitiesBySlug = new Map(knownCommunities.map((c) => [c.slug, c]));
     const communityMap = new Map<string, CommunityInfo>();
 
     for (let i = 0; i < uniqueProgramIds.length; i++) {
       const program = programQueries[i]?.data;
       if (program?.communitySlug && !communityMap.has(uniqueProgramIds[i])) {
-        const known = knownCommunities.find((c) => c.slug === program.communitySlug);
+        const known = knownCommunitiesBySlug.get(program.communitySlug);
         communityMap.set(uniqueProgramIds[i], {
           slug: program.communitySlug,
           name: known?.name || program.communitySlug,

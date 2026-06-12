@@ -243,7 +243,7 @@ export function requiresCrossChainDonations(payments: DonationPayment[]): boolea
  * Groups payments by chain ID
  */
 export function sortPaymentsByChain(payments: DonationPayment[]): DonationPayment[] {
-  return [...payments].sort((a, b) => a.chainId - b.chainId);
+  return payments.toSorted((a, b) => a.chainId - b.chainId);
 }
 
 /**

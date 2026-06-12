@@ -45,7 +45,7 @@ export const MilestonesScreen: React.FC = () => {
   const { switchChainAsync } = useWallet();
   const selectedProject = useProjectStore((state) => state.project);
   const { refetch: refetchGrants } = useProjectGrants(selectedProject?.uid || "");
-  const router = useRouter();
+  const { push } = useRouter();
   const { chain } = useAccount();
   const { authenticated: isAuth, address, isConnected } = useAuth();
   const { gap } = useGap();
@@ -67,7 +67,7 @@ export const MilestonesScreen: React.FC = () => {
 
   const handleCancel = () => {
     if (!selectedProject) return;
-    router.push(PAGES.PROJECT.GRANTS(selectedProject.details?.slug || selectedProject?.uid));
+    push(PAGES.PROJECT.GRANTS(selectedProject.details?.slug || selectedProject?.uid));
   };
 
   // Check if all milestones are valid
@@ -257,7 +257,7 @@ export const MilestonesScreen: React.FC = () => {
               await refetchGrants();
               setTimeout(() => {
                 setIsStepper(false);
-                router.push(
+                push(
                   PAGES.PROJECT.GRANT(
                     selectedProject?.details?.slug || selectedProject.uid,
                     grant.uid

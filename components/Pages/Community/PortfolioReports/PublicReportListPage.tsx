@@ -90,7 +90,7 @@ export function PublicReportListPage({ community }: Props) {
   const seededRef = useRef(false);
 
   const sortedReports = useMemo(
-    () => (reports ? [...reports].sort((a, b) => b.runDate.localeCompare(a.runDate)) : []),
+    () => (reports ? reports.toSorted((a, b) => b.runDate.localeCompare(a.runDate)) : []),
     [reports]
   );
 

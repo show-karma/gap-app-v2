@@ -117,7 +117,7 @@ function ReportTableRow({
 
 export function PortfolioReportListPage({ community }: Props) {
   const slug = community.details.slug;
-  const router = useRouter();
+  const { push } = useRouter();
   const { hasAccess, isLoading: accessLoading } = useCommunityAdminAccess(community.uid);
   const { data: reports, isLoading } = usePortfolioReports(slug);
   const {
@@ -259,7 +259,7 @@ export function PortfolioReportListPage({ community }: Props) {
             Reports generated from your configured prompts.
           </p>
         </div>
-        <Button onClick={() => router.push(`${PAGES.ADMIN.PORTFOLIO_REPORTS_CONFIG(slug)}?new=1`)}>
+        <Button onClick={() => push(`${PAGES.ADMIN.PORTFOLIO_REPORTS_CONFIG(slug)}?new=1`)}>
           <Plus className="mr-2 h-4 w-4" />
           Configure New Report
         </Button>
@@ -281,7 +281,7 @@ export function PortfolioReportListPage({ community }: Props) {
             <button
               type="button"
               className="text-blue-600 underline dark:text-blue-400"
-              onClick={() => router.push(`${PAGES.ADMIN.PORTFOLIO_REPORTS_CONFIG(slug)}?new=1`)}
+              onClick={() => push(`${PAGES.ADMIN.PORTFOLIO_REPORTS_CONFIG(slug)}?new=1`)}
             >
               Configure your first report
             </button>{" "}
@@ -309,7 +309,7 @@ export function PortfolioReportListPage({ community }: Props) {
                     size="sm"
                     onClick={() =>
                       cfg.id &&
-                      router.push(`${PAGES.ADMIN.PORTFOLIO_REPORTS_CONFIG(slug)}?editId=${cfg.id}`)
+                      push(`${PAGES.ADMIN.PORTFOLIO_REPORTS_CONFIG(slug)}?editId=${cfg.id}`)
                     }
                   >
                     <Settings className="mr-1 h-3 w-3" />
@@ -373,10 +373,8 @@ export function PortfolioReportListPage({ community }: Props) {
                   configName={configById.get(report.reportConfigId)?.name ?? "(deleted config)"}
                   rowPending={isRowPending(report.id)}
                   activeMutationType={activeMutationType}
-                  onEdit={() => router.push(`${PAGES.ADMIN.PORTFOLIO_REPORTS(slug)}/${report.id}`)}
-                  onPreview={() =>
-                    router.push(PAGES.ADMIN.PORTFOLIO_REPORTS_PREVIEW(slug, report.id))
-                  }
+                  onEdit={() => push(`${PAGES.ADMIN.PORTFOLIO_REPORTS(slug)}/${report.id}`)}
+                  onPreview={() => push(PAGES.ADMIN.PORTFOLIO_REPORTS_PREVIEW(slug, report.id))}
                   onPublish={() => handlePublish(report.id)}
                   onUnpublish={() => handleUnpublish(report.id)}
                   onRegenerate={() => setRegenerateTargetId(report.id)}

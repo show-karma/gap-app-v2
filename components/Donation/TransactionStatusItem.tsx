@@ -84,7 +84,7 @@ export function TransactionStatusItem({
               />
             </svg>
             <span className="text-xs text-gray-600 dark:text-gray-400">
-              Processing transaction...
+              Processing transaction…
             </span>
           </div>
         )}

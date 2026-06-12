@@ -142,7 +142,7 @@ export const CommunitiesPage = () => {
       <div className="w-full overflow-hidden">
         {communitiesLoading && communities.length === 0 ? (
           <div className="flex items-center justify-center py-20">
-            <p className="text-gray-500 dark:text-gray-400">Loading communities...</p>
+            <p className="text-gray-500 dark:text-gray-400">Loading communities…</p>
           </div>
         ) : communities.length > 0 ? (
           <InfiniteScroll

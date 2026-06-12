@@ -38,7 +38,7 @@ export function ApplicationFormClient({
   isDisabled = false,
   programName,
 }: ApplicationFormClientProps) {
-  const router = useRouter();
+  const { push } = useRouter();
   const searchParams = useSearchParams();
   const { isWhitelabel, communitySlug } = useWhitelabel();
 
@@ -195,7 +195,7 @@ export function ApplicationFormClient({
         // Ignore
       }
       const appId = application.referenceNumber || application.id;
-      router.push(toPath(PAGES.COMMUNITY.APPLICATION_SUCCESS(communityId, appId)));
+      push(toPath(PAGES.COMMUNITY.APPLICATION_SUCCESS(communityId, appId)));
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Failed to submit application";
 
@@ -238,7 +238,7 @@ export function ApplicationFormClient({
     return (
       <div className="flex flex-col items-center justify-center py-16 px-4">
         <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-        <p className="text-muted-foreground mt-4">Validating access code...</p>
+        <p className="text-muted-foreground mt-4">Validating access code…</p>
       </div>
     );
   }
@@ -247,7 +247,7 @@ export function ApplicationFormClient({
     return (
       <div className="flex flex-col items-center justify-center py-16 px-4">
         <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-        <p className="text-muted-foreground mt-4">Checking permissions...</p>
+        <p className="text-muted-foreground mt-4">Checking permissions…</p>
       </div>
     );
   }

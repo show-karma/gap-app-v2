@@ -62,7 +62,7 @@ export function EvaluateWorkspace({ sessionId }: EvaluateWorkspaceProps) {
   const resultsRaw = useEvaluationDraftStore((s) => s.resultsBySession[sessionId]);
   const results = resultsRaw ?? EMPTY_ARRAY;
   const sortedResults = useMemo(
-    () => [...results].sort((a, b) => a.iterationNumber - b.iterationNumber),
+    () => results.toSorted((a, b) => a.iterationNumber - b.iterationNumber),
     [results]
   );
   const latestResult = sortedResults.at(-1) ?? null;

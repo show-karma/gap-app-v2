@@ -33,7 +33,7 @@ export const ProgramBanner = () => {
 
   if (!programId || !program) return null;
   return (
-    <div className="flex flex-row gap-5 bg-brand-lightblue dark:bg-zinc-800 rounded-xl  px-4 py-4">
+    <div className="flex flex-row gap-5 bg-brand-lightblue dark:bg-zinc-800 rounded-xl p-4">
       <div className="h-full items-start">
         <Image
           width={32}

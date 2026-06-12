@@ -33,7 +33,7 @@ export function ApplicationStatusStepper({ status, statusHistory }: ApplicationS
   // Oldest → newest so the timeline reads top-to-bottom chronologically.
   const sortedHistory = useMemo(
     () =>
-      [...(statusHistory ?? [])].sort(
+      (statusHistory ?? []).toSorted(
         (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
       ),
     [statusHistory]

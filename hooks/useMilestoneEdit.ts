@@ -283,11 +283,12 @@ export const useMilestoneEdit = (options?: UseMilestoneEditOptions) => {
             throw new Error("No milestones found for this chain");
           }
 
+          const milestoneUIDSet = new Set(milestoneUIDs);
           const milestoneInstances = fetchedProject.grants
             .filter((grant) => grant.milestones.length > 0)
             .flatMap((grant) => grant.milestones)
             .filter((m) =>
-              milestoneUIDs.includes((m as unknown as { _uid?: string })?._uid || m?.uid)
+              milestoneUIDSet.has((m as unknown as { _uid?: string })?._uid || m?.uid)
             );
 
           if (!milestoneInstances?.length) {
@@ -315,13 +316,14 @@ export const useMilestoneEdit = (options?: UseMilestoneEditOptions) => {
             }
           }
 
+          const editedUIDSet = new Set(editedUIDs);
           await retryUntilConditionMet(
             async () => {
               const { data: fetchedGrants } = await refetchGrants();
               if (!fetchedGrants?.length) return false;
               const foundMilestones = fetchedGrants
                 .flatMap((g) => g.milestones || [])
-                .filter((m) => editedUIDs.includes(m.uid));
+                .filter((m) => editedUIDSet.has(m.uid));
               return foundMilestones.some(
                 (m) => m.title === sanitizedData.title || !sanitizedData.title
               );

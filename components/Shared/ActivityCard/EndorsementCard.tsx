@@ -9,7 +9,7 @@ export const EndorsementCard: FC<EndorsementCardProps> = ({ milestone }) => {
   const comment = milestone.endorsement?.comment;
 
   return (
-    <div className="flex flex-col gap-3 w-full px-6 py-6">
+    <div className="flex flex-col gap-3 w-full p-6">
       {comment ? (
         <p className="text-sm text-muted-foreground italic">"{comment}"</p>
       ) : (

@@ -386,10 +386,8 @@ export function FundingProgramDetailsDialog({
           programId: program.programId,
           programTitle: program.metadata?.title,
           organization:
-            program.communities
-              ?.filter((c) => c.name)
-              .map((c) => c.name)
-              .join(", ") || program.metadata?.organizations?.join(", "),
+            program.communities?.flatMap((c) => (c.name ? [c.name] : [])).join(", ") ||
+            program.metadata?.organizations?.join(", "),
           isOnKarma: program.isOnKarma,
           isActive: isProgramActive(program),
           source,

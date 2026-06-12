@@ -27,7 +27,7 @@ function StatusDot({ status }: { status: string }) {
 
 export default function TeamDirectoryPage() {
   const { slug } = useParams<{ slug: string }>();
-  const router = useRouter();
+  const { refresh } = useRouter();
   const { data: org, isLoading, isError, error } = useTeamOrg(slug);
 
   if (isLoading) {
@@ -52,7 +52,7 @@ export default function TeamDirectoryPage() {
         </p>
         <button
           type="button"
-          onClick={() => router.refresh()}
+          onClick={() => refresh()}
           className="mt-6 rounded border dark:border-zinc-700 px-4 py-2 dark:text-zinc-300"
         >
           Try again

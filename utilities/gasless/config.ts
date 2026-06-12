@@ -224,7 +224,7 @@ export function getProviderForChain(chainId: number): GaslessProviderType | null
  * Get all supported chain IDs for gasless transactions.
  */
 export function getSupportedChainIds(): number[] {
-  return Object.entries(CHAIN_GASLESS_CONFIG)
-    .filter(([, config]) => config.enabled)
-    .map(([chainId]) => Number(chainId));
+  return Object.entries(CHAIN_GASLESS_CONFIG).flatMap(([chainId, config]) =>
+    config.enabled ? [Number(chainId)] : []
+  );
 }

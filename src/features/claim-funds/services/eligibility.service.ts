@@ -90,9 +90,9 @@ export async function fetchEligibilities(
 
   const proofResults = await fetchProofsInBatches(campaigns, walletAddress, onProgress);
 
-  const eligibleCampaignIds = campaigns
-    .filter((c) => proofResults.get(c.id)?.canClaim)
-    .map((c) => c.id);
+  const eligibleCampaignIds = campaigns.flatMap((c) =>
+    proofResults.get(c.id)?.canClaim ? [c.id] : []
+  );
 
   if (eligibleCampaignIds.length === 0) {
     return { eligibilities: new Map(), eligibleCampaigns: [] };

@@ -172,6 +172,7 @@ export const ProjectsExplorer = () => {
           <label className="flex items-center gap-2 cursor-pointer select-none">
             <input
               type="checkbox"
+              aria-label="Raising Funds"
               checked={isPayoutAddressFilterActive}
               onChange={() => setHasPayoutAddress(isPayoutAddressFilterActive ? null : "true")}
               className="sr-only peer"
@@ -278,7 +279,7 @@ export const ProjectsExplorer = () => {
                 {isFetchingNextPage ? (
                   <>
                     <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    Loading...
+                    Loading…
                   </>
                 ) : (
                   "Load More Projects"
@@ -300,7 +301,7 @@ export const ProjectsExplorer = () => {
       {isFetching && !isLoading && !isFetchingNextPage && (
         <div className="fixed bottom-4 right-4 bg-blue-500 text-white px-4 py-2 rounded-lg shadow-lg text-sm flex items-center gap-2">
           <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-          Updating...
+          Updating…
         </div>
       )}
     </section>

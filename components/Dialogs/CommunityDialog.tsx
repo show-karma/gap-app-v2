@@ -75,7 +75,7 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
   const [selectedChain, setSelectedChain] = useState(gapSupportedNetworks[0].id);
 
   const { authenticated, login } = useAuth();
-  const router = useRouter();
+  const { push } = useRouter();
 
   function closeModal() {
     setIsOpen(false);
@@ -174,7 +174,7 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
       } catch {
         // Non-critical — community was already created
       }
-      router.push(PAGES.COMMUNITY.ALL_GRANTS(communitySlug));
+      push(PAGES.COMMUNITY.ALL_GRANTS(communitySlug));
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       if (errorMessage.includes("already exists")) {

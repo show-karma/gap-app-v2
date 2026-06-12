@@ -70,7 +70,7 @@ export const TrackFilter: React.FC<TrackFilterProps> = ({ onChange, selectedTrac
               <Listbox.Options className="absolute z-10 mt-1 max-h-60 w-max overflow-auto rounded-md bg-white py-1 text-base dark:bg-zinc-800 dark:text-zinc-200 ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
                 {isLoading ? (
                   <div className="relative cursor-default select-none py-2 pl-3 pr-9">
-                    Loading tracks...
+                    Loading tracks…
                   </div>
                 ) : (
                   tracks.map((track: Track) => (

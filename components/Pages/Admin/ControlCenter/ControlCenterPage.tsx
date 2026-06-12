@@ -28,7 +28,7 @@ import { useControlCenterData } from "./useControlCenterData";
 
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: This page intentionally orchestrates URL state, data-loading guards, and modal coordination in one container component.
 export function ControlCenterPage() {
-  const router = useRouter();
+  const { replace, push } = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { ready: authReady } = useAuth();
@@ -129,8 +129,8 @@ export function ControlCenterPage() {
     }
 
     const query = createQueryString({ page: "1" });
-    router.replace(`${pathname}?${query}`);
-  }, [createQueryString, currentPage, filterSignature, pathname, router]);
+    replace(`${pathname}?${query}`);
+  }, [createQueryString, currentPage, filterSignature, pathname, replace, push]);
 
   // ─── Data fetching (extracted hook) ───────────────────────────────────────
 
@@ -209,10 +209,10 @@ export function ControlCenterPage() {
     if (!match) {
       if (searchQuery === projectParam) {
         // Already filtered by this slug but no match — project not in community.
-        router.replace(`${pathname}?${createQueryString({ project: null, search: null })}`);
+        replace(`${pathname}?${createQueryString({ project: null, search: null })}`);
       } else {
         // Narrow the dataset to this slug and retry when data reloads.
-        router.replace(`${pathname}?${createQueryString({ search: projectParam, page: "1" })}`);
+        replace(`${pathname}?${createQueryString({ search: projectParam, page: "1" })}`);
       }
       return;
     }
@@ -222,7 +222,7 @@ export function ControlCenterPage() {
     setDetailsModalOpen(true);
     // Strip `project` and the transient search param we may have injected.
     const clearSearch = searchQuery === projectParam ? null : searchQuery || null;
-    router.replace(`${pathname}?${createQueryString({ project: null, search: clearSearch })}`);
+    replace(`${pathname}?${createQueryString({ project: null, search: clearSearch })}`);
   }, [projectParam, isLoadingPayouts, tableData, searchQuery]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const saveBulkImportMutation = useSavePayoutConfig();
@@ -244,17 +244,17 @@ export function ControlCenterPage() {
 
   const handleProgramChange = (programId: string | null) => {
     const query = createQueryString({ programId, page: "1" });
-    router.push(`${pathname}?${query}`);
+    push(`${pathname}?${query}`);
   };
 
   const handleItemsPerPageChange = (value: string) => {
     const query = createQueryString({ limit: value, page: "1" });
-    router.push(`${pathname}?${query}`);
+    push(`${pathname}?${query}`);
   };
 
   const handlePageChange = (page: number) => {
     const query = createQueryString({ page: page.toString() });
-    router.push(`${pathname}?${query}`);
+    push(`${pathname}?${query}`);
   };
 
   const handleSort = (column: CommunityPayoutsSorting["sortBy"]) => {
@@ -267,17 +267,17 @@ export function ControlCenterPage() {
       sortOrder: newSortOrder,
       page: "1",
     });
-    router.push(`${pathname}?${query}`);
+    push(`${pathname}?${query}`);
   };
 
   const handleSearch = () => {
     const query = createQueryString({ search: localSearch || null, page: "1" });
-    router.push(`${pathname}?${query}`);
+    push(`${pathname}?${query}`);
   };
 
   const handleFilterChange = (key: string, value: string | null) => {
     const query = createQueryString({ [key]: value, page: "1" });
-    router.push(`${pathname}?${query}`);
+    push(`${pathname}?${query}`);
   };
 
   // ─── Selection handlers ──────────────────────────────────────────────────
@@ -372,7 +372,7 @@ export function ControlCenterPage() {
 
   const handleClearFilters = () => {
     setLocalSearch("");
-    router.push(pathname);
+    push(pathname);
   };
 
   // ─── Error / redirect handling ───────────────────────────────────────────
@@ -382,7 +382,7 @@ export function ControlCenterPage() {
       communityError?.message === "Community not found" ||
       communityError?.message?.includes("422")
     ) {
-      router.push(PAGES.NOT_FOUND);
+      push(PAGES.NOT_FOUND);
     }
   }, [communityError]); // eslint-disable-line react-hooks/exhaustive-deps
 

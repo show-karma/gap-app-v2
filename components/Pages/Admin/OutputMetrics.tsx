@@ -150,7 +150,7 @@ export const OutputMetrics = ({ communitySlug }: { communitySlug: string }) => {
         <div className="col-span-9">
           {isLoading ? (
             <div className="h-72 flex items-center justify-center">
-              <Text>Loading data...</Text>
+              <Text>Loading data…</Text>
             </div>
           ) : (
             <div className="space-y-6">

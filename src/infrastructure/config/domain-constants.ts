@@ -57,7 +57,5 @@ export function getTenantForExclusiveDomain(hostname: string): TenantId | null {
 }
 
 export function getExclusiveDomainsForTenant(tenantId: TenantId): string[] {
-  return DOMAIN_CONFIGS.filter((config) => config.tenantId === tenantId).map(
-    (config) => config.domain
-  );
+  return DOMAIN_CONFIGS.flatMap((config) => (config.tenantId === tenantId ? [config.domain] : []));
 }

@@ -26,7 +26,7 @@ export interface CategoriesOptions {
 }
 
 export default function EditCategoriesPage() {
-  const router = useRouter();
+  const { push } = useRouter();
   const { address } = useAccount();
   const params = useParams();
   const communityId = params.communityId as string;
@@ -42,9 +42,9 @@ export default function EditCategoriesPage() {
       communityError?.message === "Community not found" ||
       communityError?.message?.includes("422")
     ) {
-      router.push(PAGES.NOT_FOUND);
+      push(PAGES.NOT_FOUND);
     }
-  }, [communityError, router]);
+  }, [communityError, push]);
 
   // Fetch grants data using V2 endpoint
   const {

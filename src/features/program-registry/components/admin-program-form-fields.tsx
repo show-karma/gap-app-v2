@@ -274,6 +274,7 @@ export function AdminProgramFormFields({
                 <input
                   type="radio"
                   name="invoiceRequired"
+                  aria-label="Yes"
                   checked={field.value === true}
                   onChange={() => field.onChange(true)}
                   disabled={isDisabled}
@@ -285,6 +286,7 @@ export function AdminProgramFormFields({
                 <input
                   type="radio"
                   name="invoiceRequired"
+                  aria-label="No"
                   checked={field.value === false}
                   onChange={() => field.onChange(false)}
                   disabled={isDisabled}

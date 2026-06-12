@@ -2,6 +2,7 @@
 
 import { PencilIcon } from "@heroicons/react/24/outline";
 import { useQuery } from "@tanstack/react-query";
+import Image from "next/image";
 import { useEffect } from "react";
 import type { Hex } from "viem";
 import { DeleteMemberDialog } from "@/components/Dialogs/Member/DeleteMember";
@@ -146,9 +147,11 @@ export function TeamMemberCard({ member, className }: TeamMemberCardProps) {
             aria-label="Copy address"
             data-testid="copy-address-button"
           >
-            <img
+            <Image
               src="/icons/copy-2.svg"
               alt="Copy"
+              width={16}
+              height={16}
               className="text-zinc-500 dark:text-zinc-400 w-4 h-4"
             />
           </button>

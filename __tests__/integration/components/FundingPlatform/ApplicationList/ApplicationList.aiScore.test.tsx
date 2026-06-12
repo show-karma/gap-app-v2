@@ -210,8 +210,7 @@ describe("ApplicationList - AI Score Column", () => {
       const aiScoreCell = cells[4]; // AI Score is the 5th column (index 4)
 
       expect(aiScoreCell).toHaveClass(
-        "px-4",
-        "py-4",
+        "p-4",
         "whitespace-nowrap",
         "text-sm",
         "text-gray-600",
@@ -395,7 +394,7 @@ describe("ApplicationList - AI Score Column", () => {
       );
 
       expect(screen.queryByText("AI Score")).not.toBeInTheDocument();
-      expect(screen.getByText("Loading applications...")).toBeInTheDocument();
+      expect(screen.getByText("Loading applications…")).toBeInTheDocument();
     });
 
     it("should not render AI Score header when no applications", () => {

@@ -444,24 +444,24 @@ export function PublicProjectDetailsModal({
                     <table className="w-full text-sm">
                       <thead>
                         <tr className="bg-gray-50 dark:bg-zinc-800 border-b border-gray-200 dark:border-zinc-700">
-                          <th className="text-left py-3 px-3 font-medium text-gray-600 dark:text-zinc-400 min-w-[140px]">
+                          <th className="text-left p-3 font-medium text-gray-600 dark:text-zinc-400 min-w-[140px]">
                             Milestone
                           </th>
-                          <th className="text-center py-3 px-3 font-medium text-gray-600 dark:text-zinc-400 min-w-[100px]">
+                          <th className="text-center p-3 font-medium text-gray-600 dark:text-zinc-400 min-w-[100px]">
                             Milestone Status
                           </th>
-                          <th className="text-right py-3 px-3 font-medium text-gray-600 dark:text-zinc-400 min-w-[80px]">
+                          <th className="text-right p-3 font-medium text-gray-600 dark:text-zinc-400 min-w-[80px]">
                             Allocation
                           </th>
                           {invoiceRequired && (
-                            <th className="text-center py-3 px-3 font-medium text-gray-600 dark:text-zinc-400 min-w-[110px]">
+                            <th className="text-center p-3 font-medium text-gray-600 dark:text-zinc-400 min-w-[110px]">
                               Invoice Status
                             </th>
                           )}
-                          <th className="text-center py-3 px-3 font-medium text-gray-600 dark:text-zinc-400 min-w-[110px]">
+                          <th className="text-center p-3 font-medium text-gray-600 dark:text-zinc-400 min-w-[110px]">
                             Payment
                           </th>
-                          <th className="text-center py-3 px-3 font-medium text-gray-600 dark:text-zinc-400 min-w-[100px]">
+                          <th className="text-center p-3 font-medium text-gray-600 dark:text-zinc-400 min-w-[100px]">
                             AI Score
                           </th>
                         </tr>
@@ -489,12 +489,12 @@ export function PublicProjectDetailsModal({
                               key={invoice.milestoneUID || `${invoice.milestoneLabel}-${idx}`}
                               className="bg-white dark:bg-zinc-950"
                             >
-                              <td className="py-3 px-3">
+                              <td className="p-3">
                                 <span className="font-medium text-gray-900 dark:text-zinc-100 line-clamp-2">
                                   {invoice.milestoneLabel}
                                 </span>
                               </td>
-                              <td className="py-3 px-3 text-center">
+                              <td className="p-3 text-center">
                                 <Tooltip>
                                   <TooltipTrigger asChild>
                                     <span
@@ -527,7 +527,7 @@ export function PublicProjectDetailsModal({
                                   </Tooltip>
                                 )}
                               </td>
-                              <td className="py-3 px-3 text-right">
+                              <td className="p-3 text-right">
                                 {(() => {
                                   const amount =
                                     invoice.allocatedAmount ??
@@ -555,7 +555,7 @@ export function PublicProjectDetailsModal({
                                 })()}
                               </td>
                               {invoiceRequired && (
-                                <td className="py-3 px-3 text-center">
+                                <td className="p-3 text-center">
                                   <div className="flex flex-col items-center gap-0.5">
                                     <span
                                       className={cn(
@@ -573,7 +573,7 @@ export function PublicProjectDetailsModal({
                                   </div>
                                 </td>
                               )}
-                              <td className="py-3 px-3 text-center">
+                              <td className="p-3 text-center">
                                 <div className="flex flex-col items-center gap-0.5">
                                   <span
                                     className={cn(
@@ -596,7 +596,7 @@ export function PublicProjectDetailsModal({
                                   )}
                                 </div>
                               </td>
-                              <td className="py-3 px-3 text-center">
+                              <td className="p-3 text-center">
                                 {invoice.milestoneUID &&
                                 (effectiveMsStatus === MilestoneLifecycleStatus.COMPLETED ||
                                   effectiveMsStatus === MilestoneLifecycleStatus.VERIFIED) ? (

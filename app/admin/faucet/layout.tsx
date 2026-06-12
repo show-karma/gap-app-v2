@@ -10,21 +10,21 @@ import { faucetAdminDenial } from "@/src/components/ui/access-denied-presets";
 import { PAGES } from "@/utilities/pages";
 
 export default function FaucetAdminLayout({ children }: { children: React.ReactNode }) {
-  const router = useRouter();
+  const { push } = useRouter();
   const { isConnected, ready } = useAuth();
   const { isAdmin, isLoading } = useFaucetAdmin();
   useEffect(() => {
     if (!ready) return;
 
     if (!isConnected) {
-      router.push(PAGES.HOME);
+      push(PAGES.HOME);
       return;
     }
 
     if (!isLoading && !isAdmin) {
-      router.push(PAGES.HOME);
+      push(PAGES.HOME);
     }
-  }, [ready, isConnected, isAdmin, isLoading, router]);
+  }, [ready, isConnected, isAdmin, isLoading, push]);
 
   if (!ready || isLoading) {
     return (

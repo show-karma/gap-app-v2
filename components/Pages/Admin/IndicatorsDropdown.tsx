@@ -83,7 +83,7 @@ export const IndicatorsDropdown: FC<IndicatorsDropdownProps> = ({
 
   // Sort and filter default/auto indicators in a single pass
   const filteredDefaultIndicators = useMemo(() => {
-    const sorted = [...autosyncedIndicators].sort((a, b) =>
+    const sorted = autosyncedIndicators.toSorted((a, b) =>
       a.name.toLowerCase().localeCompare(b.name.toLowerCase())
     );
 
@@ -105,9 +105,10 @@ export const IndicatorsDropdown: FC<IndicatorsDropdownProps> = ({
   // Get selected indicator names for display
   const selectedNames = useMemo(() => {
     const allIndicators = [...allCommunityIndicators, ...autosyncedIndicators];
-    return selectedIndicators
-      .map((id) => allIndicators.find((i) => i.id === id)?.name)
-      .filter(Boolean);
+    return selectedIndicators.flatMap((id) => {
+      const name = allIndicators.find((i) => i.id === id)?.name;
+      return name ? [name] : [];
+    });
   }, [selectedIndicators, allCommunityIndicators, autosyncedIndicators]);
 
   // Clear search when dropdown closes
@@ -192,14 +193,14 @@ export const IndicatorsDropdown: FC<IndicatorsDropdownProps> = ({
         <Popover.Trigger asChild>
           <button
             type="button"
-            className="flex w-full items-center justify-between px-3 py-3 text-sm font-medium bg-white dark:bg-zinc-800 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm hover:bg-gray-50 dark:hover:bg-zinc-700 focus:outline-none text-left"
+            className="flex w-full items-center justify-between p-3 text-sm font-medium bg-white dark:bg-zinc-800 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm hover:bg-gray-50 dark:hover:bg-zinc-700 focus:outline-none text-left"
             disabled={isLoading}
           >
             <span className="truncate">
               {isLoading ? (
                 <span className="flex items-center gap-2">
                   <LoadingSpinner size="sm" color="gray" />
-                  Loading indicators...
+                  Loading indicators…
                 </span>
               ) : selectedIndicators.length > 0 ? (
                 selectedNames.length <= 2 ? (
@@ -259,6 +260,7 @@ export const IndicatorsDropdown: FC<IndicatorsDropdownProps> = ({
                 <input
                   className="w-full pl-10 pr-4 py-2 text-sm border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-zinc-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="Search indicators..."
+                  aria-label="Search indicators"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   disabled={isLoading}

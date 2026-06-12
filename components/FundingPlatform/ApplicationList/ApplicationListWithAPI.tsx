@@ -116,7 +116,12 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
 
   // KYC: Collect unique reference numbers from loaded applications
   const referenceNumbers = useMemo(
-    () => [...new Set(applications.map((app) => app.referenceNumber).filter(Boolean))].sort(),
+    () =>
+      [
+        ...new Set(
+          applications.flatMap((app) => (app.referenceNumber ? [app.referenceNumber] : []))
+        ),
+      ].sort(),
     [applications]
   );
 
@@ -225,7 +230,7 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
         loader={
           <div className="flex items-center justify-center py-4">
             <div className="text-sm text-gray-600 dark:text-gray-400">
-              Loading more applications...
+              Loading more applications…
             </div>
           </div>
         }

@@ -35,7 +35,13 @@ const EmptyMilestone = ({ grant }: { grant?: Grant; project?: ProjectResponse })
     return (
       <div className="flex w-full items-center justify-center rounded-md border border-gray-200 px-6 py-10">
         <div className="flex max-w-[438px] flex-col items-center justify-center gap-6">
-          <img src="/images/comments.png" alt="" className="h-[185px] w-[438px] object-cover" />
+          <Image
+            src="/images/comments.png"
+            alt=""
+            width={438}
+            height={185}
+            className="h-[185px] w-[438px] object-cover"
+          />
           <div className="flex w-full flex-col items-center justify-center gap-3">
             <p className="text-center text-lg font-semibold text-black dark:text-zinc-100">
               {MESSAGES.PROJECT.EMPTY.GRANTS.UPDATES}
@@ -51,7 +57,13 @@ const EmptyMilestone = ({ grant }: { grant?: Grant; project?: ProjectResponse })
   return (
     <div className="flex w-full items-center justify-center rounded-md border border-gray-200 px-6 py-10">
       <div className="flex max-w-[438px] flex-col items-center justify-center gap-6">
-        <img src="/images/comments.png" alt="" className="h-[185px] w-[438px] object-cover" />
+        <Image
+          src="/images/comments.png"
+          alt=""
+          width={438}
+          height={185}
+          className="h-[185px] w-[438px] object-cover"
+        />
         <div className="flex w-full flex-col items-center justify-center gap-3">
           <p className="text-center text-lg font-semibold text-black dark:text-white">
             {MESSAGES.PROJECT.EMPTY.GRANTS.NOT_ADDED_MILESTONE}
@@ -62,7 +74,13 @@ const EmptyMilestone = ({ grant }: { grant?: Grant; project?: ProjectResponse })
               onClick={handleAddMilestone}
               className="items-center flex flex-row justify-center gap-2 rounded border border-blue-600 dark:bg-blue-800 bg-brand-blue px-4 py-2.5 text-base font-semibold text-white hover:bg-brand-blue"
             >
-              <img src="/icons/plus.svg" alt="Add" className="relative h-5 w-5" />
+              <Image
+                src="/icons/plus.svg"
+                alt="Add"
+                width={20}
+                height={20}
+                className="relative h-5 w-5"
+              />
               Add a new Milestone
             </button>
           </div>

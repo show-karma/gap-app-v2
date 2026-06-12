@@ -254,24 +254,24 @@ export const MilestonesSection = memo(function MilestonesSection({
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-gray-50 dark:bg-zinc-800 border-b border-gray-200 dark:border-zinc-700">
-                  <th className="text-left py-3 px-3 font-medium text-gray-600 dark:text-zinc-400 min-w-[140px]">
+                  <th className="text-left p-3 font-medium text-gray-600 dark:text-zinc-400 min-w-[140px]">
                     Milestone
                   </th>
-                  <th className="text-center py-3 px-3 font-medium text-gray-600 dark:text-zinc-400 min-w-[100px]">
+                  <th className="text-center p-3 font-medium text-gray-600 dark:text-zinc-400 min-w-[100px]">
                     Milestone Status
                   </th>
-                  <th className="text-right py-3 px-3 font-medium text-gray-600 dark:text-zinc-400 min-w-[80px]">
+                  <th className="text-right p-3 font-medium text-gray-600 dark:text-zinc-400 min-w-[80px]">
                     Allocation
                   </th>
                   {invoiceRequired && (
-                    <th className="text-center py-3 px-3 font-medium text-gray-600 dark:text-zinc-400 min-w-[160px]">
+                    <th className="text-center p-3 font-medium text-gray-600 dark:text-zinc-400 min-w-[160px]">
                       Invoice
                     </th>
                   )}
-                  <th className="text-center py-3 px-3 font-medium text-gray-600 dark:text-zinc-400 min-w-[110px]">
+                  <th className="text-center p-3 font-medium text-gray-600 dark:text-zinc-400 min-w-[110px]">
                     Payment
                   </th>
-                  <th className="text-center py-3 px-3 font-medium text-gray-600 dark:text-zinc-400 min-w-[100px]">
+                  <th className="text-center p-3 font-medium text-gray-600 dark:text-zinc-400 min-w-[100px]">
                     AI Score
                   </th>
                 </tr>
@@ -321,7 +321,7 @@ export const MilestonesSection = memo(function MilestonesSection({
                             : "bg-white dark:bg-zinc-950"
                       )}
                     >
-                      <td className="py-3 px-3">
+                      <td className="p-3">
                         <div className="flex items-center gap-1.5">
                           {isEdited && (
                             <span
@@ -342,7 +342,7 @@ export const MilestonesSection = memo(function MilestonesSection({
                           </Link>
                         </div>
                       </td>
-                      <td className="py-3 px-3 text-center">
+                      <td className="p-3 text-center">
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <span
@@ -372,7 +372,7 @@ export const MilestonesSection = memo(function MilestonesSection({
                           </Tooltip>
                         )}
                       </td>
-                      <td className="py-3 px-3 text-right">
+                      <td className="p-3 text-right">
                         {(() => {
                           const amount =
                             invoice.allocatedAmount ??
@@ -400,7 +400,7 @@ export const MilestonesSection = memo(function MilestonesSection({
                         })()}
                       </td>
                       {invoiceRequired && (
-                        <td className="py-3 px-3">
+                        <td className="p-3">
                           <div className="flex flex-col items-center gap-1.5">
                             {/* Row 1: File action */}
                             {hasFile ? (
@@ -525,7 +525,7 @@ export const MilestonesSection = memo(function MilestonesSection({
                           </div>
                         </td>
                       )}
-                      <td className="py-3 px-3 text-center">
+                      <td className="p-3 text-center">
                         <div className="flex flex-col items-center gap-0.5">
                           <PaymentStatusDropdown
                             currentStatus={invoice.paymentStatus ?? "unpaid"}
@@ -544,7 +544,7 @@ export const MilestonesSection = memo(function MilestonesSection({
                           )}
                         </div>
                       </td>
-                      <td className="py-3 px-3 text-center">
+                      <td className="p-3 text-center">
                         {invoice.milestoneUID &&
                         (effectiveMsStatus === MilestoneLifecycleStatus.COMPLETED ||
                           effectiveMsStatus === MilestoneLifecycleStatus.VERIFIED) ? (

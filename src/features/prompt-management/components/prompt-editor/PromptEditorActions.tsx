@@ -45,7 +45,7 @@ export function PromptEditorActions({
       {isSaving ? (
         <>
           <Loader2 className="w-4 h-4 animate-spin" />
-          Saving...
+          Saving…
         </>
       ) : (
         <>
@@ -99,7 +99,7 @@ export function PromptEditorActions({
           {isBulkEvaluating ? (
             <>
               <Loader2 className="w-4 h-4 animate-spin" />
-              Starting...
+              Starting…
             </>
           ) : (
             <>

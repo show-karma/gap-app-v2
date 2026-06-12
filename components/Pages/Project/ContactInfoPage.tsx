@@ -30,9 +30,9 @@ const ContactInfoPage = () => {
   return (
     <div className="pt-5 pb-20">
       {isLoading || isAuthorizationLoading ? (
-        <div className="px-4 py-4 rounded-md border border-transparent dark:bg-zinc-800  dark:border flex flex-col gap-4 items-start">
+        <div className="p-4 rounded-md border border-transparent dark:bg-zinc-800 dark:border flex flex-col gap-4 items-start">
           <h3 className="text-xl font-bold leading-6 text-gray-900 dark:text-zinc-100">
-            Loading contact info...
+            Loading contact info…
           </h3>
           <Spinner />
         </div>

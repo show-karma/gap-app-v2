@@ -200,7 +200,7 @@ export const GrantOverview = () => {
                 <p className="font-semibold text-black dark:text-white">Breakdown of Fund Usage</p>
               </div>
               <div
-                className="flex flex-col gap-4 px-4 py-4 border-t border-gray-200 w-full"
+                className="flex flex-col gap-4 p-4 border-t border-gray-200 w-full"
                 data-color-mode="light"
               >
                 <MarkdownPreview

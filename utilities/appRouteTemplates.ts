@@ -20,11 +20,10 @@ function paramSentinels(fn: (...args: string[]) => unknown): string[] {
   const parens = src.match(/^[^(]*\(([^)]*)\)/);
   const single = src.match(/^\s*([A-Za-z_$][\w$]*)\s*=>/);
   const raw = parens ? parens[1] : single ? single[1] : "";
-  return raw
-    .split(",")
-    .map((part) => part.trim().split(/[=:?]/)[0].trim())
-    .filter(Boolean)
-    .map((name) => `:${name}`);
+  return raw.split(",").flatMap((part) => {
+    const name = part.trim().split(/[=:?]/)[0].trim();
+    return name ? [`:${name}`] : [];
+  });
 }
 
 function addRoute(result: unknown, out: Set<string>): void {

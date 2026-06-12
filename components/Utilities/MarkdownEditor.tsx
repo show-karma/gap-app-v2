@@ -47,7 +47,7 @@ const MdEditor = dynamic(() => import("md-editor-rt").then((mod) => mod.MdEditor
   loading: () => (
     <div className="flex items-center justify-center h-[300px] border border-gray-200 dark:border-gray-700 rounded-lg">
       <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
-      <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">Loading editor...</span>
+      <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">Loading editor…</span>
     </div>
   ),
 });
@@ -197,7 +197,7 @@ export const MarkdownEditor: FC<MarkdownEditorProps> = ({
         style={{ height }}
       >
         <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
-        <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">Loading editor...</span>
+        <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">Loading editor…</span>
       </div>
     );
   }

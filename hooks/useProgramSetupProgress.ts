@@ -122,9 +122,9 @@ export function useProgramSetupProgress(communityId: string, programId: string):
 
     const completedSteps = steps.filter((s) => s.status === "completed");
     const requiredSteps = steps.filter((s) => s.required);
-    const missingRequired = requiredSteps
-      .filter((s) => s.status !== "completed")
-      .map((s) => s.title);
+    const missingRequired = requiredSteps.flatMap((s) =>
+      s.status !== "completed" ? [s.title] : []
+    );
 
     // Program is ready to enable if all required steps except "enable-program" are completed
     const requiredBeforeEnable = requiredSteps.filter((s) => s.id !== "enable-program");

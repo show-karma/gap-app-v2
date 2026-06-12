@@ -195,7 +195,7 @@ function RotatingOutcomeStack({ items }: RotatingOutcomeStackProps) {
         return (
           <div
             key={key}
-            className="absolute left-0 right-0 bottom-0 rounded-xl border-2 border-border bg-background px-6 py-6 flex flex-col justify-between gap-6 transition-all ease-out origin-bottom pointer-events-none"
+            className="absolute left-0 right-0 bottom-0 rounded-xl border-2 border-border bg-background p-6 flex flex-col justify-between gap-6 transition-all ease-out origin-bottom pointer-events-none"
             style={{
               transform: `scale(${scale}) translateY(${y}px)`,
               opacity,
@@ -213,7 +213,7 @@ function RotatingOutcomeStack({ items }: RotatingOutcomeStackProps) {
       {/* Entering card - rendered separately during animation */}
       <div
         key={`entering-${enteringCardIndex}`}
-        className="absolute left-0 right-0 bottom-0 rounded-xl border-2 border-border bg-background px-6 py-6 flex flex-col justify-between gap-6 transition-all ease-out origin-bottom pointer-events-none"
+        className="absolute left-0 right-0 bottom-0 rounded-xl border-2 border-border bg-background p-6 flex flex-col justify-between gap-6 transition-all ease-out origin-bottom pointer-events-none"
         style={{
           transform: `scale(${
             isAnimating

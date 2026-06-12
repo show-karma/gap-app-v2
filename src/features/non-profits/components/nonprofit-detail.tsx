@@ -131,7 +131,7 @@ const GrantsTable = React.memo(function GrantsTable({
 }: GrantsTableProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  const sorted = [...grants].sort((a, b) => {
+  const sorted = grants.toSorted((a, b) => {
     let cmp = 0;
     if (sort.field === "amount") {
       cmp = (a.amount ?? 0) - (b.amount ?? 0);

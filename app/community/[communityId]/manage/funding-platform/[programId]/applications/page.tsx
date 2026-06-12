@@ -98,7 +98,7 @@ export default function ApplicationsPage() {
         <div className="bg-white dark:bg-zinc-800 border-b border-gray-200 dark:border-gray-700">
           <div className="sm:px-3 md:px-4 px-6 py-2">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex items-center space-x-4 mb-4 sm:mb-0">
+              <div className="flex items-center gap-x-4 mb-4 sm:mb-0">
                 <Button onClick={handleBackClick} variant="secondary" className="flex items-center">
                   <ArrowLeftIcon className="w-4 h-4 mr-2" />
                   Back
@@ -114,7 +114,7 @@ export default function ApplicationsPage() {
                 </div>
               </div>
 
-              <div className="flex items-center space-x-3">
+              <div className="flex items-center gap-x-3">
                 <AdminOnly>
                   <Link
                     href={PAGES.MANAGE.FUNDING_PLATFORM.QUESTION_BUILDER(

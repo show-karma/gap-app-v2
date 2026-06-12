@@ -148,7 +148,7 @@ export function ChainSettingsForm({ settings, onSave, onCancel }: ChainSettingsF
         </div>
       </div>
 
-      <div className="flex items-center space-x-2">
+      <div className="flex items-center gap-x-2">
         <input
           type="checkbox"
           id="enabled"
@@ -161,7 +161,7 @@ export function ChainSettingsForm({ settings, onSave, onCancel }: ChainSettingsF
         </label>
       </div>
 
-      <div className="flex justify-end space-x-2 pt-4">
+      <div className="flex justify-end gap-x-2 pt-4">
         <button
           type="button"
           onClick={onCancel}

@@ -910,9 +910,9 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
   }
 
   return (
-    <div className="flex flex-col w-full space-y-6 pr-2">
+    <div className="flex flex-col w-full gap-y-6 pr-2">
       {/* Header */}
-      <div className="flex flex-col space-y-2">
+      <div className="flex flex-col gap-y-2">
         <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{formSchema.title}</h2>
         {formSchema.description && (
           <p className="text-gray-600 dark:text-gray-400">{formSchema.description}</p>
@@ -961,7 +961,7 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
         )}
 
         {/* Action Buttons */}
-        <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200 dark:border-gray-700">
+        <div className="flex justify-end gap-x-3 pt-6 border-t border-gray-200 dark:border-gray-700">
           {onCancel && (
             <Button
               type="button"

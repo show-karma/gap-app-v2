@@ -271,7 +271,7 @@ export const OnrampFlow = React.memo<OnrampFlowProps>(
           {isLoading ? (
             <span className="flex items-center justify-center gap-2">
               <Loader2 className="animate-spin h-4 w-4" />
-              Creating session...
+              Creating session…
             </span>
           ) : (
             <span className="flex items-center justify-center gap-2">

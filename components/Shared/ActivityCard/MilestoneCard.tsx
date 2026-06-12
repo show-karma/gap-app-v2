@@ -317,7 +317,7 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
 
     return (
       <div className={cn(containerClassName, "flex flex-col gap-1 w-full")}>
-        <div className={"w-full flex-col flex gap-2 px-6 py-6"}>
+        <div className={"w-full flex-col flex gap-2 p-6"}>
           {/* UPDATE label - matches Figma design for nested milestone updates */}
           <div className="flex flex-row items-start justify-between gap-2">
             <div className="flex flex-row items-center gap-2 min-w-0 flex-1">

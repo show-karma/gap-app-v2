@@ -490,7 +490,7 @@ export function PayoutConfigurationContent({
       <div className="flex items-center justify-center py-12">
         <Spinner className="w-8 h-8" />
         <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">
-          Loading configuration...
+          Loading configuration…
         </span>
       </div>
     );

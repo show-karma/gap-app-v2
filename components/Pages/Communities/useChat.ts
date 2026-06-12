@@ -61,9 +61,9 @@ export function useChat(options: UseChatOptions) {
     };
 
     // Filter out tool-related messages
-    const messagesToSend = allMessages
-      .filter((msg) => (msg.role === "user" || msg.role === "assistant") && !msg.tool_calls)
-      .map(({ role, content }) => ({ role, content }));
+    const messagesToSend = allMessages.flatMap(({ role, content, tool_calls }) =>
+      (role === "user" || role === "assistant") && !tool_calls ? [{ role, content }] : []
+    );
 
     setAllMessages((prev) => [...prev, userMessage]);
 

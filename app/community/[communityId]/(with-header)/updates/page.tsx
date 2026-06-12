@@ -46,7 +46,7 @@ const getEmptyStateMessage = (filter: FilterOption): string => {
 
 export default function CommunityUpdatesPage() {
   const { communityId } = useParams<{ communityId: string }>();
-  const router = useRouter();
+  const { push } = useRouter();
   const searchParams = useSearchParams();
 
   // Get filter from URL searchParams, default to 'all' if not present or invalid
@@ -167,9 +167,9 @@ export default function CommunityUpdatesPage() {
       setCurrentPage(1);
 
       // Update URL
-      router.push(`?${params.toString()}`);
+      push(`?${params.toString()}`);
     },
-    [searchParams, router]
+    [searchParams, push]
   );
 
   // Memoize page change handler

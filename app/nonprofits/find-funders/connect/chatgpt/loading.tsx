@@ -6,7 +6,7 @@ export default function ConnectChatGPTLoading() {
           className="h-10 w-10 animate-spin rounded-full border-2 border-border border-t-primary"
           aria-hidden="true"
         />
-        <span className="sr-only">Loading ChatGPT setup guide...</span>
+        <span className="sr-only">Loading ChatGPT setup guide…</span>
       </output>
     </main>
   );

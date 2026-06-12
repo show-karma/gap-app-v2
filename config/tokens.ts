@@ -211,13 +211,17 @@ export function hasUSDC(chainId: number): boolean {
 
 /** Helper to get networks filtered by environment */
 export function getAvailableNetworks(includeTestnets: boolean = false) {
-  return Object.entries(NETWORKS)
-    .filter(([, network]) => includeTestnets || !network.isTestnet)
-    .map(([id, network]) => ({
-      id: Number(id) as SupportedChainId,
-      name: network.name,
-      isTestnet: network.isTestnet,
-    }));
+  return Object.entries(NETWORKS).flatMap(([id, network]) =>
+    includeTestnets || !network.isTestnet
+      ? [
+          {
+            id: Number(id) as SupportedChainId,
+            name: network.name,
+            isTestnet: network.isTestnet,
+          },
+        ]
+      : []
+  );
 }
 
 /** Check if a network is a testnet */

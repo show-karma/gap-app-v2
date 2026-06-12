@@ -70,7 +70,7 @@ export const ProjectObjectiveCompletionForm = ({
   });
 
   const [noProofCheckbox, setNoProofCheckbox] = useState(false);
-  const router = useRouter();
+  const { push } = useRouter();
   const { openShareDialog } = useShareDialogStore();
 
   const { refetch } = useProjectUpdates(projectId as string);
@@ -172,7 +172,7 @@ export const ProjectObjectiveCompletionForm = ({
               });
 
               setTimeout(() => {
-                router.push(PAGES.PROJECT.UPDATES(slugOrUid));
+                push(PAGES.PROJECT.UPDATES(slugOrUid));
               }, 250);
               return;
             }

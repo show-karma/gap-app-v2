@@ -22,7 +22,7 @@ interface ApplicationEditClientProps {
 }
 
 export function ApplicationEditClient({ communityId, application }: ApplicationEditClientProps) {
-  const router = useRouter();
+  const { push } = useRouter();
   const queryClient = useQueryClient();
   const isAdmin = useIsFundingPlatformAdmin();
 
@@ -70,7 +70,7 @@ export function ApplicationEditClient({ communityId, application }: ApplicationE
       toast.success(
         isRevision ? "Application resubmitted for review" : "Application updated successfully"
       );
-      router.push(`/community/${communityId}/applications/${application.referenceNumber}`);
+      push(`/community/${communityId}/applications/${application.referenceNumber}`);
     },
     onError: (error: Error) => {
       toast.error(error.message || "Failed to update application");
@@ -98,7 +98,7 @@ export function ApplicationEditClient({ communityId, application }: ApplicationE
       <div className="flex flex-col gap-5">
         <div className="flex flex-col items-center justify-center rounded-xl border border-border py-24">
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-          <p className="mt-4 text-muted-foreground">Loading application...</p>
+          <p className="mt-4 text-muted-foreground">Loading application…</p>
         </div>
       </div>
     );
@@ -204,7 +204,7 @@ export function ApplicationEditClient({ communityId, application }: ApplicationE
           initialData={initialData}
           onSubmit={handleSubmit}
           onCancel={() =>
-            router.push(`/community/${communityId}/applications/${application.referenceNumber}`)
+            push(`/community/${communityId}/applications/${application.referenceNumber}`)
           }
           isDisabled={isDisabled}
           programName={programName}

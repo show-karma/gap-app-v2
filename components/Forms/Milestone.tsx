@@ -105,7 +105,7 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
   const { startAttestation, showSuccess, showError, updateStep, changeStepperStep, setIsStepper } =
     useAttestationToast();
 
-  const router = useRouter();
+  const { push, refresh } = useRouter();
 
   const onSubmit: SubmitHandler<MilestoneType> = async (data, event) => {
     event?.preventDefault();
@@ -163,7 +163,7 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
             if (milestoneExists) {
               retries = 0;
               showSuccess(MESSAGES.MILESTONES.CREATE.SUCCESS);
-              router.push(
+              push(
                 PAGES.PROJECT.SCREENS.SELECTED_SCREEN(
                   (project?.details?.slug || project?.uid) as string,
                   fetchedGrant?.uid as string,
@@ -171,7 +171,7 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
                 )
               );
               setTimeout(() => {
-                router.refresh();
+                refresh();
                 afterSubmit?.();
               }, 1500);
             }

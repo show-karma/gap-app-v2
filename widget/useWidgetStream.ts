@@ -55,10 +55,7 @@ function extractTextFromAssistantMessage(event: SSEEvent): string {
   const message = event.message as Record<string, unknown> | undefined;
   if (!message?.content) return "";
   const contentBlocks = message.content as Array<{ type: string; text?: string }>;
-  return contentBlocks
-    .filter((b) => b.type === "text" && b.text)
-    .map((b) => b.text)
-    .join("");
+  return contentBlocks.flatMap((b) => (b.type === "text" && b.text ? [b.text] : [])).join("");
 }
 
 function buildConversationHistory(

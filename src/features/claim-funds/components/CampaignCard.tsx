@@ -179,7 +179,7 @@ function CampaignCardComponent({
           aria-label={`Checking wallet type for ${alternateAddress ? truncateAddress(alternateAddress) : "alternate wallet"}`}
           aria-busy={true}
         >
-          Checking wallet type...
+          Checking wallet type…
         </Button>
       );
     }
@@ -193,7 +193,7 @@ function CampaignCardComponent({
           aria-label={`Submit claim transaction for ${displayName}`}
           aria-busy={isThisCampaignSubmitting}
         >
-          {isThisCampaignSubmitting ? "Submitting..." : "Submit Claim"}
+          {isThisCampaignSubmitting ? "Submitting…" : "Submit Claim"}
         </Button>
       );
     }
@@ -273,7 +273,7 @@ function CampaignCardComponent({
                 aria-label={`Claim ${claimableAmount} ${campaign.token.ticker} from ${displayName}`}
                 aria-busy={isThisCampaignClaiming}
               >
-                {isThisCampaignClaiming ? "Claiming..." : "Claim"}
+                {isThisCampaignClaiming ? "Claiming…" : "Claim"}
               </Button>
             </>
           )}
@@ -287,7 +287,7 @@ function CampaignCardComponent({
                   <p className="text-sm text-muted-foreground">
                     Checking whether{" "}
                     <span title={alternateAddress}>{truncateAddress(alternateAddress)}</span> is a
-                    Safe you can propose to...
+                    Safe you can propose to…
                   </p>
                 </div>
               ) : canProposeViaSafe ? (

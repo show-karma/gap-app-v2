@@ -288,7 +288,7 @@ export function sortActivities(
   items: UnifiedMilestone[],
   sortOption: SortOption
 ): UnifiedMilestone[] {
-  return [...items].sort((a, b) => {
+  return items.toSorted((a, b) => {
     const dateA = new Date(a.createdAt).getTime();
     const dateB = new Date(b.createdAt).getTime();
     return sortOption === "newest" ? dateB - dateA : dateA - dateB;

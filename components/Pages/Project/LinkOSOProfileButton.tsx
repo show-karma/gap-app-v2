@@ -181,6 +181,7 @@ export const LinkOSOProfileButton: FC<LinkOSOProfileButtonProps> = ({
                             </span>
                             <input
                               type="text"
+                              aria-label={`OSO Profile ${index + 1} ID`}
                               value={id}
                               onChange={(e) => handleIdChange(index, e.target.value)}
                               className="text-sm rounded-md w-full text-gray-600 dark:text-gray-300 bg-transparent border-b border-gray-300 dark:border-gray-600 focus:outline-none focus:border-blue-500"

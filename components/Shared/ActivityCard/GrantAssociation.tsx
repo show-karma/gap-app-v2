@@ -78,12 +78,11 @@ export const GrantAssociation = ({
     if (fundingLinks.length === 0) return null;
 
     const projectSlug = project?.details?.slug || project?.uid || "";
-    const matched = fundingLinks
-      .map((funding) => {
-        const grant = grants.find((g) => g.uid?.toLowerCase() === funding.uid?.toLowerCase());
-        return { funding, grant };
-      })
-      .filter((entry) => entry.funding.uid);
+    const matched = fundingLinks.flatMap((funding) => {
+      if (!funding.uid) return [];
+      const grant = grants.find((g) => g.uid?.toLowerCase() === funding.uid?.toLowerCase());
+      return [{ funding, grant }];
+    });
 
     if (matched.length === 0) return null;
 
@@ -131,8 +130,8 @@ export const GrantAssociation = ({
         <div className="flex flex-wrap gap-2">
           {milestone.mergedGrants && milestone.mergedGrants.length > 0 ? (
             // Display all merged grants with their images
-            [...milestone.mergedGrants]
-              .sort((a, b) => {
+            milestone.mergedGrants
+              .toSorted((a, b) => {
                 const titleA = a.grantTitle || "Untitled Grant";
                 const titleB = b.grantTitle || "Untitled Grant";
                 return titleA.localeCompare(titleB);

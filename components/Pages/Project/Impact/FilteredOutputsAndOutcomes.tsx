@@ -262,14 +262,13 @@ export const FilteredOutputsAndOutcomes = ({
     const endDate = new Date(timestamp);
     endDate.setHours(0, 0, 0, 0); // Normalize to start of day
 
-    const timestamps = form.datapoints
-      .map((dp) => dp.endDate || dp.outputTimestamp)
-      .filter(Boolean)
-      .map((date) => {
-        const d = new Date(date as string);
-        d.setHours(0, 0, 0, 0);
-        return d.getTime();
-      });
+    const timestamps = form.datapoints.flatMap((dp) => {
+      const date = dp.endDate || dp.outputTimestamp;
+      if (!date) return [];
+      const d = new Date(date);
+      d.setHours(0, 0, 0, 0);
+      return [d.getTime()];
+    });
 
     return timestamps.filter((t) => t === endDate.getTime()).length > 1;
   };
@@ -434,6 +433,7 @@ export const FilteredOutputsAndOutcomes = ({
                                             <div className="flex items-center gap-2">
                                               <input
                                                 type={"number"}
+                                                aria-label="Value"
                                                 value={form?.datapoints?.[index]?.value || ""}
                                                 onChange={(e) =>
                                                   handleInputChange(
@@ -479,6 +479,7 @@ export const FilteredOutputsAndOutcomes = ({
                                         {form?.isEditing && isAuthorized ? (
                                           <input
                                             type="date"
+                                            aria-label="Start date"
                                             value={
                                               form?.datapoints?.[index]?.startDate?.split("T")[0] ||
                                               new Date().toISOString().split("T")[0]
@@ -515,6 +516,7 @@ export const FilteredOutputsAndOutcomes = ({
                                         {form?.isEditing && isAuthorized ? (
                                           <input
                                             type="date"
+                                            aria-label="End date"
                                             value={
                                               form?.datapoints?.[index]?.endDate?.split("T")[0] ||
                                               form?.datapoints?.[index]?.outputTimestamp?.split(
@@ -566,6 +568,7 @@ export const FilteredOutputsAndOutcomes = ({
                                         {form?.isEditing && isAuthorized ? (
                                           <input
                                             type="text"
+                                            aria-label="Proof"
                                             value={form?.datapoints?.[index]?.proof || ""}
                                             onChange={(e) =>
                                               handleInputChange(
@@ -664,7 +667,7 @@ export const FilteredOutputsAndOutcomes = ({
                       >
                         {form?.isSaving ? (
                           <div className="flex items-center justify-center gap-2">
-                            <span>Saving...</span>
+                            <span>Saving…</span>
                           </div>
                         ) : (
                           "Save Changes"

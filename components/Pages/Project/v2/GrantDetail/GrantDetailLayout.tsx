@@ -164,7 +164,7 @@ export function GrantDetailLayout({ children }: GrantDetailLayoutProps) {
 
       {/* Tab Navigation */}
       <nav
-        className="isolate flex flex-row max-lg:w-full flex-wrap gap-4 divide-x divide-gray-200 rounded-lg py-1 px-1 bg-[#F2F4F7] dark:bg-zinc-900 w-max transition-all duration-300 ease-in-out"
+        className="isolate flex flex-row max-lg:w-full flex-wrap gap-4 divide-x divide-gray-200 rounded-lg p-1 bg-[#F2F4F7] dark:bg-zinc-900 w-max transition-all duration-300 ease-in-out"
         aria-label="Grant Tabs"
       >
         {tabs.map((tab) => (

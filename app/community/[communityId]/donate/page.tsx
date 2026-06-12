@@ -10,7 +10,7 @@ import { getCommunityDetails } from "@/utilities/queries/v2/getCommunityData";
 
 export default function DonateProgramSelectPage() {
   const params = useParams();
-  const router = useRouter();
+  const { push } = useRouter();
   const communityId = params.communityId as string;
 
   const [selectedProgramId, setSelectedProgramId] = useState<string>("");
@@ -38,7 +38,7 @@ export default function DonateProgramSelectPage() {
   // Sort programs alphabetically by title
   const sortedPrograms = useMemo(() => {
     if (!programs) return [];
-    return [...programs].sort((a, b) => {
+    return programs.toSorted((a, b) => {
       const aTitle = a.metadata?.title || "";
       const bTitle = b.metadata?.title || "";
       return aTitle.localeCompare(bTitle);
@@ -49,15 +49,15 @@ export default function DonateProgramSelectPage() {
   useEffect(() => {
     if (sortedPrograms.length === 1 && sortedPrograms[0].programId) {
       // Use programId only (backward compatibility handles old programId_chainId format)
-      router.push(`/community/${communityId}/donate/${sortedPrograms[0].programId}`);
+      push(`/community/${communityId}/donate/${sortedPrograms[0].programId}`);
     }
-  }, [sortedPrograms, communityId, router]);
+  }, [sortedPrograms, communityId, push]);
 
   const handleProgramSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedId = e.target.value; // Format: programId (preferred) or programId_chainId (legacy)
     setSelectedProgramId(selectedId);
     if (selectedId) {
-      router.push(`/community/${communityId}/donate/${selectedId}`);
+      push(`/community/${communityId}/donate/${selectedId}`);
     }
   };
 
@@ -65,7 +65,7 @@ export default function DonateProgramSelectPage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-        <p className="text-gray-600 dark:text-gray-400">Loading programs...</p>
+        <p className="text-gray-600 dark:text-gray-400">Loading programs…</p>
       </div>
     );
   }
@@ -175,7 +175,7 @@ export default function DonateProgramSelectPage() {
                 value={selectedProgramId}
               >
                 <option value="" disabled>
-                  Select a program...
+                  Select a program…
                 </option>
                 {sortedPrograms.map((program) => (
                   <option key={program.programId} value={program.programId || ""}>

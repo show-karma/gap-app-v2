@@ -1,5 +1,4 @@
-/* eslint-disable @next/next/no-img-element */
-
+import Image from "next/image";
 import { type FC, useMemo, useState } from "react";
 import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
 import { VerificationsDialog } from "./VerificationsDialog";
@@ -69,7 +68,13 @@ const VerifiedBadgeLegacy: FC<{
 
   return (
     <div className="flex flex-row items-center gap-2 flex-1">
-      <img alt="Verified Badge" src={"/icons/milestone-verified-badge.svg"} className="w-6 h-6" />
+      <Image
+        alt="Verified Badge"
+        src={"/icons/milestone-verified-badge.svg"}
+        width={24}
+        height={24}
+        className="w-6 h-6"
+      />
       <span className="text-sm font-semibold text-gray-700 dark:text-gray-400">Verified by</span>
       <VerificationsDialog
         verifications={orderedSort}

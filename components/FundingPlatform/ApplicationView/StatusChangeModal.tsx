@@ -585,7 +585,7 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
                                   id="currency-info"
                                   className="mt-1 text-xs text-gray-500 dark:text-gray-400"
                                 >
-                                  Loading currency from program funding details...
+                                  Loading currency from program funding details…
                                 </p>
                               ) : isCurrencyFromAPI ? (
                                 <p
@@ -669,7 +669,7 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
                           : ""
                     }`}
                   >
-                    {isSubmitting ? "Processing..." : "Confirm"}
+                    {isSubmitting ? "Processing…" : "Confirm"}
                   </Button>
                   <Button
                     variant="secondary"

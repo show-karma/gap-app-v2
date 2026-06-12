@@ -34,7 +34,7 @@ interface SidebarProfileCardProps {
  */
 export function SidebarProfileCard({ project, isVerified, className }: SidebarProfileCardProps) {
   const params = useParams();
-  const router = useRouter();
+  const { push } = useRouter();
   const pathname = usePathname();
   const projectId = params?.projectId as string;
   const socials = useProjectSocials(project?.details?.links);
@@ -107,7 +107,7 @@ export function SidebarProfileCard({ project, isVerified, className }: SidebarPr
         .getElementById("description")
         ?.scrollIntoView({ behavior: "smooth", block: "start" });
     } else {
-      router.push(`${aboutPath}?scrollTo=description`);
+      push(`${aboutPath}?scrollTo=description`);
     }
   };
 

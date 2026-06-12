@@ -44,7 +44,7 @@ function GrantGenieRecommendations({ projectId }: { projectId: string }) {
       {isLoading ? (
         <div className="flex flex-col  gap-5 justify-center items-center h-full">
           <Spinner />
-          <div>Hold on, Grants Genie is working on finding you the best programs...</div>
+          <div>Hold on, Grants Genie is working on finding you the best programs…</div>
         </div>
       ) : recommendations?.length === 0 || error ? (
         <div>No recommendations available at the moment.</div>

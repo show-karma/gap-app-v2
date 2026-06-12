@@ -1,6 +1,7 @@
 "use client";
 
 import { AlertCircle, ArrowLeft, RefreshCw } from "lucide-react";
+import Image from "next/image";
 import { useParams } from "next/navigation";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { ProgramByline } from "@/features/programs/components/ProgramByline";
@@ -115,9 +116,11 @@ function ProgramDetailContent() {
           {/* Banner Image */}
           {program.metadata?.bannerImg ? (
             <div className="mb-6 overflow-hidden rounded-xl">
-              <img
+              <Image
                 src={program.metadata.bannerImg}
                 alt={`${program.metadata?.title || program.name} banner`}
+                width={1200}
+                height={192}
                 className="h-48 w-full object-cover"
               />
             </div>

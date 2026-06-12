@@ -727,6 +727,7 @@ export function MilestoneCard({
                     <textarea
                       value={verificationComment}
                       onChange={(e) => onVerificationCommentChange(e.target.value)}
+                      aria-label="Verification comment"
                       placeholder="Add verification comment (optional)..."
                       rows={3}
                       className="w-full px-3 py-2 text-sm border border-green-300 dark:border-green-700 rounded-md bg-white dark:bg-zinc-800 text-black dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 dark:focus:ring-green-400"

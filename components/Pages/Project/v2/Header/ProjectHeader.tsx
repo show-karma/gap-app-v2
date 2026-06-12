@@ -43,7 +43,7 @@ interface ProjectHeaderProps {
  */
 export function ProjectHeader({ project, isVerified = false, className }: ProjectHeaderProps) {
   const params = useParams();
-  const router = useRouter();
+  const { push } = useRouter();
   const pathname = usePathname();
   const projectId = params?.projectId as string;
   const socials = useProjectSocials(project?.details?.links);
@@ -116,7 +116,7 @@ export function ProjectHeader({ project, isVerified = false, className }: Projec
       }
     } else {
       // Navigate to About page with query param (not hash to avoid browser jump)
-      router.push(`${aboutPath}?scrollTo=description`);
+      push(`${aboutPath}?scrollTo=description`);
     }
   };
 

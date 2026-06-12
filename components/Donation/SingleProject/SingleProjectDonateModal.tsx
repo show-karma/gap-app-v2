@@ -217,7 +217,7 @@ export const SingleProjectDonateModal = React.memo<SingleProjectDonateModalProps
                       {isExecuting ? (
                         <span className="flex items-center justify-center gap-2">
                           <Loader2 className="animate-spin h-4 w-4" />
-                          Processing...
+                          Processing…
                         </span>
                       ) : (
                         <span className="flex items-center justify-center gap-2">

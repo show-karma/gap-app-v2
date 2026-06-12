@@ -166,7 +166,7 @@ export const InviteMemberDialog: FC<InviteMemberDialogProps> = ({ shouldDisable 
                         </div>
                       </div>
                     ) : isLoading || isGenerating ? (
-                      <p className="text-black dark:text-zinc-200 text-base">Generating code...</p>
+                      <p className="text-black dark:text-zinc-200 text-base">Generating code…</p>
                     ) : (
                       <Spinner />
                     )}

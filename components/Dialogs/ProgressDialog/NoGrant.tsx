@@ -6,7 +6,7 @@ import { PAGES } from "@/utilities/pages";
 
 export const NoGrant = () => {
   const project = useProjectStore((state) => state.project);
-  const router = useRouter();
+  const { push, refresh } = useRouter();
   const { closeProgressModal } = useProgressModalStore();
 
   if (!project) return null;
@@ -25,8 +25,8 @@ export const NoGrant = () => {
         type="button"
         className="items-center flex flex-row justify-center gap-2 rounded border border-blue-600 bg-blue-600 px-4 py-2.5 text-base font-semibold text-white hover:bg-blue-600"
         onClick={() => {
-          router.push(PAGES.PROJECT.SCREENS.NEW_GRANT(project.details?.slug || project.uid));
-          router.refresh();
+          push(PAGES.PROJECT.SCREENS.NEW_GRANT(project.details?.slug || project.uid));
+          refresh();
           closeProgressModal();
         }}
       >

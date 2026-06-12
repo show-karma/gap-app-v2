@@ -289,7 +289,7 @@ export const OnrampSuccessModal = React.memo<OnrampSuccessModalProps>(
 
             {isPolling && (
               <p className="text-center text-xs text-gray-400 dark:text-zinc-500">
-                Checking status...
+                Checking status…
               </p>
             )}
 

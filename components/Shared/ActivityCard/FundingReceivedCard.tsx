@@ -35,7 +35,7 @@ export const FundingReceivedCard: FC<FundingReceivedCardProps> = ({ milestone, p
   const buttonLabel = getButtonLabel(programType);
 
   return (
-    <div className="flex flex-col gap-4 w-full px-6 py-6">
+    <div className="flex flex-col gap-4 w-full p-6">
       <div className="flex flex-row items-start justify-between gap-3">
         {/* Amount */}
         {formattedAmount ? (

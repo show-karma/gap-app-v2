@@ -36,7 +36,7 @@ const DEFAULT_TIMEZONE =
  * main page keeps the advisor's mental model coherent.
  */
 export function OnboardingFlow() {
-  const router = useRouter();
+  const { replace } = useRouter();
   const advisorQuery = useDonorAdvisor();
   const onboard = useOnboardAdvisor();
   const [step, setStep] = useState<Step>("welcome");
@@ -52,9 +52,9 @@ export function OnboardingFlow() {
 
   useEffect(() => {
     if (advisorQuery.isSuccess && advisorQuery.data) {
-      router.replace(PAGES.DONOR_RESEARCH.INDEX);
+      replace(PAGES.DONOR_RESEARCH.INDEX);
     }
-  }, [advisorQuery.isSuccess, advisorQuery.data, router]);
+  }, [advisorQuery.isSuccess, advisorQuery.data, replace]);
 
   if (advisorQuery.isLoading) {
     return <DonorResearchLoading label="Checking your account…" />;
@@ -70,7 +70,7 @@ export function OnboardingFlow() {
       orgName: values.orgName || null,
       timezone: values.timezone,
     });
-    router.replace(PAGES.DONOR_RESEARCH.INDEX);
+    replace(PAGES.DONOR_RESEARCH.INDEX);
   };
 
   return (

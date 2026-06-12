@@ -138,7 +138,7 @@ function LoadingState() {
           <div className="h-5 w-5 rounded bg-muted animate-pulse" />
           API Key
         </DialogTitle>
-        <DialogDescription>Loading your API key information...</DialogDescription>
+        <DialogDescription>Loading your API key information…</DialogDescription>
       </DialogHeader>
       <div className="space-y-3 py-2">
         {LOADING_ROW_KEYS.map((key) => (

@@ -322,6 +322,7 @@ export function ApplicationFormField({
                         type="radio"
                         name={question.id}
                         value={option.value}
+                        aria-label={option.label}
                         checked={field.value === option.value}
                         onChange={() => field.onChange(option.value)}
                         disabled={disabled}

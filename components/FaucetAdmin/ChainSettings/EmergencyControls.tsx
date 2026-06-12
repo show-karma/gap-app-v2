@@ -16,7 +16,7 @@ export function EmergencyControls({
   onResume,
 }: EmergencyControlsProps) {
   return (
-    <div className="flex space-x-2">
+    <div className="flex gap-x-2">
       {enabled ? (
         <button
           type="button"
@@ -29,7 +29,7 @@ export function EmergencyControls({
               onEmergencyStop();
             }
           }}
-          className="flex items-center space-x-1 px-3 py-1 text-sm bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-400 rounded hover:bg-red-200 dark:hover:bg-red-900/30 transition-colors"
+          className="flex items-center gap-x-1 px-3 py-1 text-sm bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-400 rounded hover:bg-red-200 dark:hover:bg-red-900/30 transition-colors"
         >
           <ExclamationTriangleIcon className="w-4 h-4" />
           <span>Emergency Stop</span>
@@ -42,7 +42,7 @@ export function EmergencyControls({
               onResume();
             }
           }}
-          className="flex items-center space-x-1 px-3 py-1 text-sm bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400 rounded hover:bg-green-200 dark:hover:bg-green-900/30 transition-colors"
+          className="flex items-center gap-x-1 px-3 py-1 text-sm bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400 rounded hover:bg-green-200 dark:hover:bg-green-900/30 transition-colors"
         >
           <PlayIcon className="w-4 h-4" />
           <span>Resume</span>

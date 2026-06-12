@@ -30,7 +30,7 @@ export function FieldTypeSelector({
           >
             <span className="text-2xl mr-3">{fieldType.icon}</span>
             <div className="flex-1">
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center gap-x-2">
                 <span className="font-medium text-gray-900 dark:text-white">{fieldType.label}</span>
                 {fieldType.type === "email" && !isPostApprovalMode && (
                   <span className="text-xs bg-yellow-200 dark:bg-yellow-800 text-yellow-800 dark:text-yellow-200 px-2 py-0.5 rounded-full">

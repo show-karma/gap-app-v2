@@ -166,7 +166,7 @@ interface SendEmailComposerProps {
 }
 
 export function SendEmailComposer({ programs }: SendEmailComposerProps) {
-  const router = useRouter();
+  const { replace } = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [selectedProgramId, setSelectedProgramId] = useState(
@@ -202,7 +202,7 @@ export function SendEmailComposer({ programs }: SendEmailComposerProps) {
     } else {
       params.delete(key);
     }
-    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    replace(`${pathname}?${params.toString()}`, { scroll: false });
   }
 
   function handleProgramChange(programId: string) {
@@ -308,7 +308,7 @@ export function SendEmailComposer({ programs }: SendEmailComposerProps) {
               onChange={(e) => handleProgramChange(e.target.value)}
               className="w-full rounded-lg border border-gray-200 dark:border-zinc-600 bg-white dark:bg-zinc-800 px-3.5 py-2.5 text-sm text-gray-900 dark:text-white focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 focus:outline-none transition-shadow"
             >
-              <option value="">Choose a program...</option>
+              <option value="">Choose a program…</option>
               {programs.map((program) => (
                 <option key={program.programId} value={program.programId}>
                   {program.metadata?.title || program.name || program.programId}
@@ -360,7 +360,7 @@ export function SendEmailComposer({ programs }: SendEmailComposerProps) {
                     <output className="flex items-center gap-2 py-1" aria-live="polite">
                       <Spinner className="w-4 h-4" />
                       <span className="text-sm text-gray-500 dark:text-gray-400">
-                        Loading grantee emails...
+                        Loading grantee emails…
                       </span>
                     </output>
                   ) : isEmailsError ? (
@@ -454,7 +454,7 @@ export function SendEmailComposer({ programs }: SendEmailComposerProps) {
                   {sendEmailMutation.isPending ? (
                     <>
                       <Spinner className="w-4 h-4" />
-                      <span>Sending...</span>
+                      <span>Sending…</span>
                     </>
                   ) : (
                     <>

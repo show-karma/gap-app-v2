@@ -49,7 +49,7 @@ export function TeamContent({ className }: TeamContentProps) {
   });
 
   // Sort members by role: Owner > Admin > Member
-  const sortedMembers = [...members].sort((a, b) => {
+  const sortedMembers = members.toSorted((a, b) => {
     const roleA = memberRoles?.[a.toLowerCase()] || "Member";
     const roleB = memberRoles?.[b.toLowerCase()] || "Member";
 

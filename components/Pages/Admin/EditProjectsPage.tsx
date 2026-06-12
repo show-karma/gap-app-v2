@@ -92,7 +92,7 @@ const ProjectsTable: React.FC<ProjectsTableProps> = ({
                 : currentRegionName || "None";
 
             return (
-              <tr key={project.uid} className="dark:text-zinc-300 text-gray-900 px-4 py-4">
+              <tr key={project.uid} className="dark:text-zinc-300 text-gray-900 p-4">
                 <td className="px-4 py-2 font-medium h-16">
                   <Link
                     href={PAGES.PROJECT.OVERVIEW(project.details.slug)}
@@ -154,7 +154,7 @@ const ProjectsTable: React.FC<ProjectsTableProps> = ({
 };
 
 export default function EditProjectsPage() {
-  const router = useRouter();
+  const { push } = useRouter();
   const { address } = useAccount();
   const params = useParams();
   const communityId = params.communityId as string;
@@ -171,9 +171,9 @@ export default function EditProjectsPage() {
       communityError?.message === "Community not found" ||
       communityError?.message?.includes("422")
     ) {
-      router.push(PAGES.NOT_FOUND);
+      push(PAGES.NOT_FOUND);
     }
-  }, [communityError, router]);
+  }, [communityError, push]);
 
   // Simple state management for pagination since we're using the v2 endpoint
   const [currentPage, setCurrentPage] = useState(1);

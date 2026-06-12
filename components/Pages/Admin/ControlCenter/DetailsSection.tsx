@@ -145,7 +145,7 @@ export const DetailsSection = memo(function DetailsSection({
                 />
                 {toggleAgreementMutation.isPending && (
                   <span className="text-[11px] text-gray-400 dark:text-zinc-500 animate-pulse">
-                    Saving...
+                    Saving…
                   </span>
                 )}
               </div>
