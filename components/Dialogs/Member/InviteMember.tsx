@@ -4,7 +4,7 @@
 import { Dialog, Transition } from "@headlessui/react";
 import { ArrowPathIcon, CheckIcon, ClipboardDocumentIcon } from "@heroicons/react/24/outline";
 import * as Tooltip from "@radix-ui/react-tooltip";
-import { type FC, Fragment, useEffect, useState } from "react";
+import { type FC, Fragment, type ReactNode, useEffect, useState } from "react";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { Button } from "@/components/ui/button";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
@@ -16,6 +16,107 @@ interface InviteMemberDialogProps {
   shouldDisable?: boolean;
 }
 
+interface InviteLinkContentProps {
+  inviteUrl: string | null;
+  inviteId?: string;
+  isCopied: boolean;
+  setIsCopied: (value: boolean) => void;
+  copyToClipboard: (text: string) => void;
+  revokeCode: (inviteId: string) => void;
+}
+
+/** Renders a resolved invite link with copy + regenerate controls. */
+const InviteLinkContent: FC<InviteLinkContentProps> = ({
+  inviteUrl,
+  inviteId,
+  isCopied,
+  setIsCopied,
+  copyToClipboard,
+  revokeCode,
+}) => {
+  const handleCopy = () => {
+    if (inviteUrl) {
+      copyToClipboard(inviteUrl);
+      setIsCopied(true);
+    }
+  };
+
+  const handleRevoke = () => {
+    setIsCopied(false);
+    if (inviteId) {
+      revokeCode(inviteId);
+    }
+  };
+
+  return (
+    <div className="flex flex-col gap-2 h-full">
+      <p className="text-zinc-800 dark:text-zinc-100">
+        Share this invite link with your team member to join your project.
+      </p>
+      <div className=" items-center flex flex-row gap-2 h-max max-h-40">
+        <Button
+          className="text-zinc-800 font-normal hover:opacity-75 dark:text-zinc-100 w-full h-full bg-zinc-100 dark:bg-zinc-900 hover:bg-zinc-200 dark:hover:bg-zinc-800 p-2 rounded-md text-wrap break-all text-left"
+          onClick={handleCopy}
+        >
+          {inviteUrl}
+        </Button>
+        <div className="flex flex-row gap-0 h-full">
+          <Tooltip.Provider>
+            <Tooltip.Root delayDuration={0}>
+              <Tooltip.Trigger asChild>
+                <div className="flex w-max h-max">
+                  <Button
+                    className="text-zinc-600 p-2 hover:opacity-75 bg-zinc-200 dark:bg-zinc-700 dark:text-zinc-100 hover:bg-zinc-300 dark:hover:bg-zinc-600 h-full rounded-l-md rounded-r-none"
+                    onClick={handleCopy}
+                  >
+                    {isCopied ? (
+                      <CheckIcon className="w-6 h-6" />
+                    ) : (
+                      <ClipboardDocumentIcon className="w-6 h-6" />
+                    )}
+                  </Button>
+                </div>
+              </Tooltip.Trigger>
+              <Tooltip.Portal>
+                <Tooltip.Content
+                  className="TooltipContent bg-brand-darkblue rounded-lg text-white p-3 max-w-[360px] z-[1000]"
+                  sideOffset={5}
+                  side="top"
+                >
+                  <p>Copy to clipboard</p>
+                </Tooltip.Content>
+              </Tooltip.Portal>
+            </Tooltip.Root>
+          </Tooltip.Provider>
+          <Tooltip.Provider>
+            <Tooltip.Root delayDuration={0}>
+              <Tooltip.Trigger asChild>
+                <div className="flex w-max h-max">
+                  <Button
+                    className=" text-blue-900 bg-blue-200 dark:text-blue-200 dark:bg-blue-900 p-2 hover:opacity-75 hover:bg-blue-300 dark:hover:bg-blue-800 rounded-r-md rounded-l-none h-full"
+                    onClick={handleRevoke}
+                  >
+                    <ArrowPathIcon className="w-6 h-6" />
+                  </Button>
+                </div>
+              </Tooltip.Trigger>
+              <Tooltip.Portal>
+                <Tooltip.Content
+                  className="TooltipContent bg-brand-darkblue rounded-lg text-white p-3 max-w-[360px] z-[1000]"
+                  sideOffset={5}
+                  side="top"
+                >
+                  <p>Generate a new code</p>
+                </Tooltip.Content>
+              </Tooltip.Portal>
+            </Tooltip.Root>
+          </Tooltip.Provider>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export const InviteMemberDialog: FC<InviteMemberDialogProps> = ({ shouldDisable = false }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
@@ -25,8 +126,18 @@ export const InviteMemberDialog: FC<InviteMemberDialogProps> = ({ shouldDisable 
   // to true so non-admins never trigger a 403.
   const { isAuthorized, isLoading: isAuthLoading } = useProjectAuthorization();
 
-  const { inviteCode, isLoading, isGenerating, generateCode, revokeCode, isSuccess } =
-    useInviteLink(project?.uid, { enabled: isAuthorized && !isAuthLoading });
+  const {
+    inviteCode,
+    isLoading,
+    isGenerating,
+    generateCode,
+    revokeCode,
+    isSuccess,
+    isError,
+    isGenerateError,
+  } = useInviteLink(project?.uid, { enabled: isAuthorized && !isAuthLoading });
+
+  const hasError = isError || isGenerateError;
 
   const code = inviteCode?.hash;
   const inviteUrl = useInviteUrl(project, code);
@@ -43,6 +154,52 @@ export const InviteMemberDialog: FC<InviteMemberDialogProps> = ({ shouldDisable 
       generateCode();
     }
   }, [isSuccess, inviteCode, isOpen, generateCode]);
+
+  // Tri-state rendering: every branch is terminal — we never fall through to a
+  // perpetual spinner when authorization is denied or a request fails.
+  const renderBody = (): ReactNode => {
+    if (isAuthLoading) {
+      return <Spinner />;
+    }
+    if (!isAuthorized) {
+      return (
+        <p className="text-black dark:text-zinc-200 text-base">
+          You don&apos;t have permission to invite members to this project.
+        </p>
+      );
+    }
+    if (code) {
+      return (
+        <InviteLinkContent
+          inviteUrl={inviteUrl}
+          inviteId={inviteCode?.id}
+          isCopied={isCopied}
+          setIsCopied={setIsCopied}
+          copyToClipboard={copyToClipboard}
+          revokeCode={revokeCode}
+        />
+      );
+    }
+    if (hasError) {
+      return (
+        <div className="flex flex-col gap-3">
+          <p className="text-black dark:text-zinc-200 text-base">
+            Something went wrong while creating the invite link.
+          </p>
+          <Button
+            onClick={() => generateCode()}
+            className="w-max flex items-center gap-x-1 rounded-md px-3 py-2 text-base font-semibold"
+          >
+            Try again
+          </Button>
+        </div>
+      );
+    }
+    if (isLoading || isGenerating) {
+      return <p className="text-black dark:text-zinc-200 text-base">Generating code...</p>;
+    }
+    return <Spinner />;
+  };
 
   return (
     <>
@@ -87,94 +244,7 @@ export const InviteMemberDialog: FC<InviteMemberDialogProps> = ({ shouldDisable 
                   >
                     Invite team member to your project
                   </Dialog.Title>
-                  <div className="flex flex-col gap-2 mt-8 h-full">
-                    {code ? (
-                      <div className="flex flex-col gap-2 h-full">
-                        <p className="text-zinc-800 dark:text-zinc-100">
-                          Share this invite link with your team member to join your project.
-                        </p>
-                        <div className=" items-center flex flex-row gap-2 h-max max-h-40">
-                          <Button
-                            className="text-zinc-800 font-normal hover:opacity-75 dark:text-zinc-100 w-full h-full bg-zinc-100 dark:bg-zinc-900 hover:bg-zinc-200 dark:hover:bg-zinc-800 p-2 rounded-md text-wrap break-all text-left"
-                            onClick={() => {
-                              if (inviteUrl) {
-                                copyToClipboard(inviteUrl);
-                                setIsCopied(true);
-                              }
-                            }}
-                          >
-                            {inviteUrl}
-                          </Button>
-                          <div className="flex flex-row gap-0 h-full">
-                            <Tooltip.Provider>
-                              <Tooltip.Root delayDuration={0}>
-                                <Tooltip.Trigger asChild>
-                                  <div className="flex w-max h-max">
-                                    <Button
-                                      className="text-zinc-600 p-2 hover:opacity-75 bg-zinc-200 dark:bg-zinc-700 dark:text-zinc-100 hover:bg-zinc-300 dark:hover:bg-zinc-600 h-full rounded-l-md rounded-r-none"
-                                      onClick={() => {
-                                        if (inviteUrl) {
-                                          copyToClipboard(inviteUrl);
-                                          setIsCopied(true);
-                                        }
-                                      }}
-                                    >
-                                      {isCopied ? (
-                                        <CheckIcon className="w-6 h-6" />
-                                      ) : (
-                                        <ClipboardDocumentIcon className="w-6 h-6" />
-                                      )}
-                                    </Button>
-                                  </div>
-                                </Tooltip.Trigger>
-                                <Tooltip.Portal>
-                                  <Tooltip.Content
-                                    className="TooltipContent bg-brand-darkblue rounded-lg text-white p-3 max-w-[360px] z-[1000]"
-                                    sideOffset={5}
-                                    side="top"
-                                  >
-                                    <p>Copy to clipboard</p>
-                                  </Tooltip.Content>
-                                </Tooltip.Portal>
-                              </Tooltip.Root>
-                            </Tooltip.Provider>
-                            <Tooltip.Provider>
-                              <Tooltip.Root delayDuration={0}>
-                                <Tooltip.Trigger asChild>
-                                  <div className="flex w-max h-max">
-                                    <Button
-                                      className=" text-blue-900 bg-blue-200 dark:text-blue-200 dark:bg-blue-900 p-2 hover:opacity-75 hover:bg-blue-300 dark:hover:bg-blue-800 rounded-r-md rounded-l-none h-full"
-                                      onClick={() => {
-                                        setIsCopied(false);
-                                        if (inviteCode?.id) {
-                                          revokeCode(inviteCode.id);
-                                        }
-                                      }}
-                                    >
-                                      <ArrowPathIcon className="w-6 h-6" />
-                                    </Button>
-                                  </div>
-                                </Tooltip.Trigger>
-                                <Tooltip.Portal>
-                                  <Tooltip.Content
-                                    className="TooltipContent bg-brand-darkblue rounded-lg text-white p-3 max-w-[360px] z-[1000]"
-                                    sideOffset={5}
-                                    side="top"
-                                  >
-                                    <p>Generate a new code</p>
-                                  </Tooltip.Content>
-                                </Tooltip.Portal>
-                              </Tooltip.Root>
-                            </Tooltip.Provider>
-                          </div>
-                        </div>
-                      </div>
-                    ) : isLoading || isGenerating ? (
-                      <p className="text-black dark:text-zinc-200 text-base">Generating code...</p>
-                    ) : (
-                      <Spinner />
-                    )}
-                  </div>
+                  <div className="flex flex-col gap-2 mt-8 h-full">{renderBody()}</div>
                 </Dialog.Panel>
               </Transition.Child>
             </div>
