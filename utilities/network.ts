@@ -60,20 +60,14 @@ export const gapSupportedNetworks = appNetwork.filter(
 ) as [Chain, ...Chain[]];
 
 /**
- * Networks shown in the project creation network selector.
+ * Network that new projects are created on.
  *
- * This is intentionally a curated subset of `gapSupportedNetworks`: every chain
- * in `gapSupportedNetworks` still works everywhere else (existing projects,
- * attestations, etc.), but new projects can only be created on these networks.
- *
- * NOTE: This is a UI/availability restriction only — do NOT remove the other
- * chains from `appNetwork`/`gapSupportedNetworks`, they remain fully supported.
+ * Project creation no longer exposes a network selector — every new project is
+ * created on this chain. Existing projects on other chains keep working
+ * everywhere else (editing, attestations, donations, etc.); `appNetwork` and
+ * `gapSupportedNetworks` are intentionally left untouched.
  */
-const projectCreationChainIds: number[] = [optimism.id, base.id, celo.id];
-
-export const projectCreationNetworks = gapSupportedNetworks.filter((chain) =>
-  projectCreationChainIds.includes(chain.id)
-) as [Chain, ...Chain[]];
+export const PROJECT_CREATION_DEFAULT_CHAIN_ID = base.id;
 
 /**
  * Networks where projects can configure payout addresses for donations.
