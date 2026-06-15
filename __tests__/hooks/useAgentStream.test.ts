@@ -566,7 +566,15 @@ describe("useAgentStream", () => {
       expect(Sentry.captureException).toHaveBeenCalledWith(
         dropError,
         expect.objectContaining({
-          tags: expect.objectContaining({ feature: "ask-karma" }),
+          tags: expect.objectContaining({
+            feature: "ask-karma",
+            phase: "agent-stream",
+          }),
+          extra: expect.objectContaining({
+            rawMessage: "network error",
+            displayedMessage:
+              "Unable to reach the server. Please check your connection and try again.",
+          }),
         })
       );
     });
