@@ -12,7 +12,7 @@ import { useEnsureEmbeddedWallet } from "@/hooks/useEnsureEmbeddedWallet";
 import type { TenantConfig } from "@/src/infrastructure/types/tenant";
 import { selectPrimaryWallet } from "@/utilities/auth/select-primary-wallet";
 import { envVars } from "@/utilities/enviromentVars";
-import { appNetwork, gapSupportedNetworks } from "@/utilities/network";
+import { appNetwork } from "@/utilities/network";
 import { privyConfig } from "@/utilities/wagmi/privy-config";
 
 // Security policy — explicit review required before adding or removing methods/wallets
@@ -200,11 +200,7 @@ export default function PrivyWagmiProviders({ tenantConfig }: PrivyWagmiProvider
     return null;
   }
 
-  // Embedded (email/Google) wallets initialise on Privy's defaultChain. appNetwork[0]
-  // is mainnet (chain 1), which the GAP SDK rejects for attestations — so every
-  // embedded-wallet attestation had to switch off chain 1 first, and a slow switch
-  // surfaced as "still on chain 1". Default to the first GAP-supported chain instead.
-  const defaultChain = gapSupportedNetworks[0];
+  const defaultChain = appNetwork[0];
 
   // Use current origin for relative logo paths so whitelabel custom domains
   // resolve correctly. Fall back to VERCEL_URL during SSR (no window).
