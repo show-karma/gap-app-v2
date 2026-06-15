@@ -57,7 +57,7 @@ import fetchData from "@/utilities/fetchData";
 import { validateGithubInput } from "@/utilities/github";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
-import { gapSupportedNetworks } from "@/utilities/network";
+import { projectCreationNetworks } from "@/utilities/network";
 import { PAGES } from "@/utilities/pages";
 import { sanitizeObject } from "@/utilities/sanitize";
 import { getProjectById } from "@/utilities/sdk";
@@ -1543,7 +1543,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                 }}
                 onNetworkChange={handleNetworkChange}
                 isChangingNetwork={isChangingNetwork}
-                networks={gapSupportedNetworks}
+                networks={projectCreationNetworks}
                 previousValue={watch("chainID")}
               />
               <p className="text-red-500">{errors.chainID?.message}</p>
