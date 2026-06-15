@@ -128,10 +128,14 @@ export const useEnsureEmbeddedWallet = (
   const { createWallet } = useCreateWallet();
 
   // Latest live values, read inside the deferred create after the settle window.
+  // Synced in an effect (not during render) so we never mutate a ref mid-render —
+  // by the time settleThenCreate reads them (post-await) the last commit has run.
   const hasEmbeddedWalletRef = useRef(hasEmbeddedWallet);
-  hasEmbeddedWalletRef.current = hasEmbeddedWallet;
   const userRef = useRef(user);
-  userRef.current = user;
+  useEffect(() => {
+    hasEmbeddedWalletRef.current = hasEmbeddedWallet;
+    userRef.current = user;
+  });
 
   useEffect(() => {
     if (!ready || !authenticated || !user) return;
