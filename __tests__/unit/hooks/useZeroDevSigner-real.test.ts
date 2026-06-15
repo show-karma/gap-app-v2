@@ -689,6 +689,76 @@ describe("useZeroDevSigner (real hook)", () => {
       expect(embeddedWallet.switchChain).toHaveBeenCalledTimes(1);
       expect(embeddedWallet.getEthereumProvider).toHaveBeenCalledTimes(1);
     });
+
+    it("keeps polling after switchChain rejects transiently, then returns the signer", async () => {
+      // switchChain can reject while the embedded wallet is still initialising —
+      // the helper must swallow that and retry rather than fail outright.
+      setupEmailUser({ embeddedOpts: { initialChainId: 1, propagateAfterReads: 0 } });
+      (isChainSupportedForGasless as ReturnType<typeof vi.fn>).mockReturnValue(false);
+      const embeddedWallet = mockPrivyState.wallets[0];
+      embeddedWallet.switchChain.mockRejectedValueOnce(new Error("wallet not ready"));
+
+      vi.useFakeTimers();
+      try {
+        const { result } = renderHook(() => useZeroDevSigner());
+
+        const promise = result.current.getAttestationSigner(10);
+        await vi.runAllTimersAsync();
+        const signer = await promise;
+
+        expect(await chainIdOf(signer)).toBe(10);
+        // First switch rejected, second succeeded.
+        expect(embeddedWallet.switchChain).toHaveBeenCalledTimes(2);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it("accepts a numeric eth_chainId result (non-hex provider)", async () => {
+      // EIP-1193 returns hex, but a non-conforming provider may return a number;
+      // readProviderChainId must coerce it rather than reject the wallet.
+      setupEmailUser({ embeddedOpts: { initialChainId: 1, propagateAfterReads: 0 } });
+      (isChainSupportedForGasless as ReturnType<typeof vi.fn>).mockReturnValue(false);
+      const embeddedWallet = mockPrivyState.wallets[0];
+      embeddedWallet.getEthereumProvider = vi.fn().mockResolvedValue({
+        request: vi.fn().mockResolvedValue(10),
+        __chainId: 10,
+      });
+
+      const { result } = renderHook(() => useZeroDevSigner());
+
+      let signer: unknown;
+      await act(async () => {
+        signer = await result.current.getAttestationSigner(10);
+      });
+
+      expect(await chainIdOf(signer)).toBe(10);
+    });
+
+    it("reports 'still on chain unknown' when the provider can't report its chain", async () => {
+      // The provider's eth_chainId request fails on every attempt → the chain can
+      // never be confirmed; the error must degrade to "unknown", not crash.
+      setupEmailUser({ embeddedOpts: { initialChainId: 1, propagateAfterReads: 0 } });
+      (isChainSupportedForGasless as ReturnType<typeof vi.fn>).mockReturnValue(false);
+      const embeddedWallet = mockPrivyState.wallets[0];
+      embeddedWallet.getEthereumProvider = vi.fn().mockResolvedValue({
+        request: vi.fn().mockRejectedValue(new Error("provider unavailable")),
+      });
+
+      vi.useFakeTimers();
+      try {
+        const { result } = renderHook(() => useZeroDevSigner());
+
+        const promise = result.current.getAttestationSigner(10);
+        const assertion = expect(promise).rejects.toThrow(/still on chain unknown/i);
+        await vi.runAllTimersAsync();
+        await assertion;
+
+        expect(embeddedWallet.switchChain).toHaveBeenCalledTimes(5);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
   });
 
   // =========================================================================
