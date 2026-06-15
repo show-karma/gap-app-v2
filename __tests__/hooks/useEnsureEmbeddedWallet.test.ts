@@ -140,6 +140,47 @@ describe("useEnsureEmbeddedWallet", () => {
     }
   });
 
+  it("does not create when the user logs out during the settle window", async () => {
+    vi.useFakeTimers();
+    try {
+      // Creation is scheduled, then the user logs out (user → null) before the
+      // settle elapses. A stale timer must NOT create a wallet for the dead session.
+      const { rerender } = renderHook(
+        ({ user }: { user: User | null }) => useEnsureEmbeddedWallet(true, true, user, 0, false),
+        { initialProps: { user: makeUser("u-logout") as User | null } }
+      );
+
+      await vi.advanceTimersByTimeAsync(SETTLE_BEFORE_CREATE_MS / 2);
+      rerender({ user: null });
+      await vi.advanceTimersByTimeAsync(SETTLE_BEFORE_CREATE_MS);
+
+      expect(mockCreateWallet).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("does not create for the original user when a different user logs in mid-settle", async () => {
+    vi.useFakeTimers();
+    try {
+      const { rerender } = renderHook(
+        ({ user }: { user: User | null }) => useEnsureEmbeddedWallet(true, true, user, 0, false),
+        { initialProps: { user: makeUser("u-first") as User | null } }
+      );
+
+      await vi.advanceTimersByTimeAsync(SETTLE_BEFORE_CREATE_MS / 2);
+      // A different user is now active — the original user's timer must abort.
+      rerender({ user: makeUser("u-second") });
+      await vi.advanceTimersByTimeAsync(SETTLE_BEFORE_CREATE_MS * 2);
+
+      // u-second has no wallet and its own settle elapses → exactly one creation,
+      // and never for the abandoned u-first session.
+      expect(mockCreateWallet).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("still creates a wallet when a stale, unlinked wallet is connected", async () => {
     vi.useFakeTimers();
     try {
