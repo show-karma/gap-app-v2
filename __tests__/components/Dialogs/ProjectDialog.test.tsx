@@ -352,6 +352,11 @@ vi.mock("@/utilities/network", () => ({
     { id: 10, name: "Optimism" },
     { id: 42161, name: "Arbitrum" },
   ],
+  projectCreationNetworks: [
+    { id: 10, name: "Optimism" },
+    { id: 8453, name: "Base" },
+    { id: 42220, name: "Celo" },
+  ],
 }));
 
 vi.mock("@/utilities/pages", () => ({
