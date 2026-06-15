@@ -352,11 +352,7 @@ vi.mock("@/utilities/network", () => ({
     { id: 10, name: "Optimism" },
     { id: 42161, name: "Arbitrum" },
   ],
-  projectCreationNetworks: [
-    { id: 10, name: "Optimism" },
-    { id: 8453, name: "Base" },
-    { id: 42220, name: "Celo" },
-  ],
+  PROJECT_CREATION_DEFAULT_CHAIN_ID: 8453,
 }));
 
 vi.mock("@/utilities/pages", () => ({
@@ -475,14 +471,6 @@ vi.mock("@/components/Dialogs/ProjectDialog/ContactInfoSection", () => ({
   ),
 }));
 
-vi.mock("@/components/Dialogs/ProjectDialog/NetworkDropdown", () => ({
-  NetworkDropdown: ({ onSelectFunction }: any) => (
-    <button type="button" onClick={() => onSelectFunction(10)}>
-      Select Optimism
-    </button>
-  ),
-}));
-
 class mockProjectClass {
   attest = (...args: any[]) => mockProjectAttest(...args);
   uid = "0xproject-uid";
@@ -556,11 +544,14 @@ describe("ProjectDialog", () => {
 
     await user.click(screen.getByRole("button", { name: /next/i }));
     await waitFor(() => {
-      expect(screen.getByText("Choose a network to create your project")).toBeInTheDocument();
+      expect(
+        screen.getByText("Your project will be created on the Base network.")
+      ).toBeInTheDocument();
     });
 
+    // No network selection step — chainID defaults to Base. Adding a contact is
+    // the only remaining requirement to enable submission.
     await user.click(screen.getByRole("button", { name: /add contact/i }));
-    await user.click(screen.getByRole("button", { name: /select optimism/i }));
     await waitFor(() => {
       expect(screen.getByRole("button", { name: /create project/i })).not.toBeDisabled();
     });
@@ -649,7 +640,7 @@ describe("ProjectDialog", () => {
     expect(mockStartAttestation).not.toHaveBeenCalled();
   });
 
-  it('surfaces "Network is required" when submitting without selecting a network and does not attest', async () => {
+  it("defaults to the Base network without a selector and never surfaces a network error", async () => {
     const { ProjectDialog } = await import("@/components/Dialogs/ProjectDialog");
     const user = userEvent.setup();
 
@@ -664,7 +655,7 @@ describe("ProjectDialog", () => {
     await user.type(markdownEditors[2], "Solution");
     await user.type(markdownEditors[3], "Mission summary");
 
-    // Advance through steps 0 -> 1 -> 2 -> 3 (Contact info / network selection).
+    // Advance through steps 0 -> 1 -> 2 -> 3 (Contact info).
     await user.click(screen.getByRole("button", { name: /next/i }));
     await waitFor(() => {
       expect(screen.getByPlaceholderText("Your/organization handle")).toBeInTheDocument();
@@ -677,20 +668,22 @@ describe("ProjectDialog", () => {
 
     await user.click(screen.getByRole("button", { name: /next/i }));
     await waitFor(() => {
-      expect(screen.getByText("Choose a network to create your project")).toBeInTheDocument();
+      expect(
+        screen.getByText("Your project will be created on the Base network.")
+      ).toBeInTheDocument();
     });
 
-    // Add a contact but intentionally DO NOT select a network, then submit.
+    // No network selector is rendered — chainID is pre-set to Base.
+    expect(screen.queryByText("Choose a network to create your project")).not.toBeInTheDocument();
+
+    // Add a contact and submit: validation passes with the default chain, so the
+    // "Network is required" error must never appear.
     await user.click(screen.getByRole("button", { name: /add contact/i }));
     submitForm();
 
-    // chainID is missing: the resolver must surface "Network is required" in the
-    // DOM (the exact Sentry GAP-FRONTEND-221/223/224 crash path). When the
-    // resolver throws instead, this text never renders.
-    expect(await screen.findByText("Network is required")).toBeInTheDocument();
-
-    // No attestation should be attempted on validation failure.
-    expect(mockProjectAttest).not.toHaveBeenCalled();
-    expect(mockStartAttestation).not.toHaveBeenCalled();
+    await waitFor(() => {
+      expect(mockStartAttestation).toHaveBeenCalledWith("Creating project...");
+    });
+    expect(screen.queryByText("Network is required")).not.toBeInTheDocument();
   });
 });
