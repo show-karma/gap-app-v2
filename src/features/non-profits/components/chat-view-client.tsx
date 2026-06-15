@@ -70,6 +70,7 @@ import { BookmarksDrawer } from "./bookmarks-drawer";
 import { ConnectorNudge } from "./connector-nudge";
 import { NarrativeBlock } from "./narrative-block";
 import { ProgressView } from "./progress-view";
+import { SearchFeedback } from "./search-feedback";
 import { SearchHistoryPanel } from "./search-history-panel";
 
 // ── Entity presentation constants ──────────────────────────────────────────
@@ -312,17 +313,13 @@ const AssistantTurn = memo(function AssistantTurn({
         )}
         {isStreaming && turn.progress && <ProgressView progress={turn.progress} />}
         {hasNarrative && (
-          <NarrativeBlock
-            narrative={turn.narrative}
-            entities={[...turn.entities]}
-            traceId={turn.traceId}
-            status={turn.status}
-          />
+          <NarrativeBlock narrative={turn.narrative} entities={[...turn.entities]} />
         )}
         {turn.entities.length > 0 && (
           <EntityList entities={[...turn.entities]} searchId={searchId} />
         )}
         {turn.attachments.length > 0 && <AttachmentsPanel attachments={[...turn.attachments]} />}
+        {turn.status === "done" && turn.traceId && <SearchFeedback traceId={turn.traceId} />}
       </MessageContent>
     </Message>
   );
