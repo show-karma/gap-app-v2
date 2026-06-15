@@ -544,9 +544,7 @@ describe("ProjectDialog", () => {
 
     await user.click(screen.getByRole("button", { name: /next/i }));
     await waitFor(() => {
-      expect(
-        screen.getByText("Your project will be created on the Base network.")
-      ).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /add contact/i })).toBeInTheDocument();
     });
 
     // No network selection step — chainID defaults to Base. Adding a contact is
@@ -668,13 +666,12 @@ describe("ProjectDialog", () => {
 
     await user.click(screen.getByRole("button", { name: /next/i }));
     await waitFor(() => {
-      expect(
-        screen.getByText("Your project will be created on the Base network.")
-      ).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /add contact/i })).toBeInTheDocument();
     });
 
-    // No network selector is rendered — chainID is pre-set to Base.
+    // No network selector or network note is rendered — chainID is pre-set to Base.
     expect(screen.queryByText("Choose a network to create your project")).not.toBeInTheDocument();
+    expect(screen.queryByText(/created on the Base network/i)).not.toBeInTheDocument();
 
     // Add a contact and submit: validation passes with the default chain, so the
     // "Network is required" error must never appear.
