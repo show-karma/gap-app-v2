@@ -12,7 +12,7 @@ import { useEnsureEmbeddedWallet } from "@/hooks/useEnsureEmbeddedWallet";
 import type { TenantConfig } from "@/src/infrastructure/types/tenant";
 import { selectPrimaryWallet } from "@/utilities/auth/select-primary-wallet";
 import { envVars } from "@/utilities/enviromentVars";
-import { appNetwork } from "@/utilities/network";
+import { appNetwork, gapSupportedNetworks } from "@/utilities/network";
 import { privyConfig } from "@/utilities/wagmi/privy-config";
 
 // Security policy — explicit review required before adding or removing methods/wallets
@@ -51,10 +51,19 @@ function PrivyBridgeUpdater() {
 
   const userId = privy.user?.id;
   const walletCount = wallets.length;
+  // True once a Privy embedded wallet is live in useWallets() — lets the hook
+  // skip creating its own when Privy already provisioned one (the duplicate race).
+  const hasEmbeddedWallet = wallets.some((wallet) => wallet.walletClientType === "privy");
 
   // Create the single embedded wallet for new users. Replaces the SDK's
   // createOnLogin auto-creation, which double-fired and minted two wallets.
-  useEnsureEmbeddedWallet(privy.ready, privy.authenticated, privy.user, walletCount);
+  useEnsureEmbeddedWallet(
+    privy.ready,
+    privy.authenticated,
+    privy.user,
+    walletCount,
+    hasEmbeddedWallet
+  );
 
   useEffect(() => {
     const p = privyRef.current;
@@ -191,7 +200,11 @@ export default function PrivyWagmiProviders({ tenantConfig }: PrivyWagmiProvider
     return null;
   }
 
-  const defaultChain = appNetwork[0];
+  // Embedded (email/Google) wallets initialise on Privy's defaultChain. appNetwork[0]
+  // is mainnet (chain 1), which the GAP SDK rejects for attestations — so every
+  // embedded-wallet attestation had to switch off chain 1 first, and a slow switch
+  // surfaced as "still on chain 1". Default to the first GAP-supported chain instead.
+  const defaultChain = gapSupportedNetworks[0];
 
   // Use current origin for relative logo paths so whitelabel custom domains
   // resolve correctly. Fall back to VERCEL_URL during SSR (no window).

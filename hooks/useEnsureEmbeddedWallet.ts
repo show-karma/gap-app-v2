@@ -1,5 +1,5 @@
 import { type User, useCreateWallet } from "@privy-io/react-auth";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { getLinkedWalletAddresses } from "@/utilities/auth/compare-all-wallets";
 
@@ -19,6 +19,13 @@ const creationAttemptedUserIds = new Set<string>();
 
 const MAX_CREATE_ATTEMPTS = 3;
 export const RETRY_BASE_DELAY_MS = 1000;
+
+// Privy auto-provisions an embedded wallet for new email/social signups, and it
+// lands in useWallets() a beat after authentication. We wait this long before
+// creating one ourselves so that wallet has time to appear — creating in that
+// window is what produced duplicate embedded wallets (~17% of email/Google
+// signups). If an embedded wallet shows up during the wait, we create nothing.
+export const SETTLE_BEFORE_CREATE_MS = 2500;
 
 const wait = (ms: number): Promise<void> =>
   new Promise((resolve) => {
@@ -65,21 +72,58 @@ const createEmbeddedWalletWithRetry = async (
 const userHasLinkedWallet = (user: User): boolean => getLinkedWalletAddresses(user).length > 0;
 
 /**
- * Creates exactly one Privy embedded wallet for a freshly authenticated user
- * who has no linked wallet, replacing the SDK's `createOnLogin: "users-without-wallets"`
- * (which double-fires and creates two wallets — see fix/privy-duplicate-embedded-wallet).
+ * Waits for wallet state to settle, then creates an embedded wallet only if one
+ * still hasn't appeared. `hasEmbeddedWalletRef`/`userRef` are read AFTER the
+ * wait so a wallet that hydrates during the window (notably Privy's own
+ * auto-created one) suppresses our creation and avoids a duplicate.
+ */
+const settleThenCreate = async (
+  createWallet: () => Promise<unknown>,
+  userId: string,
+  hasEmbeddedWalletRef: { current: boolean },
+  userRef: { current: User | null }
+): Promise<void> => {
+  await wait(SETTLE_BEFORE_CREATE_MS);
+
+  const currentUser = userRef.current;
+  if (hasEmbeddedWalletRef.current || (currentUser && userHasLinkedWallet(currentUser))) {
+    // A wallet (Privy's auto-created one or another path's) showed up — don't
+    // add a second. Slot stays claimed so we never reconsider for this user.
+    return;
+  }
+
+  await createEmbeddedWalletWithRetry(createWallet, userId);
+};
+
+/**
+ * Ensures a freshly authenticated user who has no wallet ends up with exactly
+ * one embedded wallet, without ever minting a duplicate.
+ *
+ * Two creators can race here: Privy auto-provisions an embedded wallet for new
+ * email/social signups, and this hook also creates one. The previous guard only
+ * checked LINKED wallets (which hydrate late), so ~17% of email/Google signups
+ * got two embedded wallets created 1–2s apart. We now (1) skip if a live
+ * embedded wallet already exists and (2) wait for state to settle before
+ * creating, re-checking once Privy's wallet has had time to appear.
  *
  * Lives in the always-mounted PrivyBridgeUpdater so it runs no matter where or
- * how the user logs in (navbar, deep link, modal, returning session). `walletCount`
- * re-triggers the check once the new embedded wallet appears so the guard settles.
+ * how the user logs in (navbar, deep link, modal, returning session).
+ * `walletCount`/`hasEmbeddedWallet` re-trigger the check as wallets hydrate.
  */
 export const useEnsureEmbeddedWallet = (
   ready: boolean,
   authenticated: boolean,
   user: User | null,
-  walletCount: number
+  walletCount: number,
+  hasEmbeddedWallet: boolean
 ) => {
   const { createWallet } = useCreateWallet();
+
+  // Latest live values, read inside the deferred create after the settle window.
+  const hasEmbeddedWalletRef = useRef(hasEmbeddedWallet);
+  hasEmbeddedWalletRef.current = hasEmbeddedWallet;
+  const userRef = useRef(user);
+  userRef.current = user;
 
   useEffect(() => {
     if (!ready || !authenticated || !user) return;
@@ -87,9 +131,9 @@ export const useEnsureEmbeddedWallet = (
     const userId = user.id;
     if (creationAttemptedUserIds.has(userId)) return;
 
-    // A wallet-login user already has a linked wallet and must not get an extra
-    // embedded wallet. Stale connected-but-unlinked wallets are ignored.
-    if (userHasLinkedWallet(user)) {
+    // Already has an embedded wallet (Privy's auto-created one or a prior run) or
+    // a linked wallet (wallet-login user). Stale unlinked wallets are ignored.
+    if (hasEmbeddedWallet || userHasLinkedWallet(user)) {
       creationAttemptedUserIds.add(userId);
       return;
     }
@@ -98,6 +142,6 @@ export const useEnsureEmbeddedWallet = (
     // remount, rapid re-render) cannot launch a parallel createWallet().
     creationAttemptedUserIds.add(userId);
 
-    void createEmbeddedWalletWithRetry(createWallet, userId);
-  }, [ready, authenticated, user, walletCount, createWallet]);
+    void settleThenCreate(createWallet, userId, hasEmbeddedWalletRef, userRef);
+  }, [ready, authenticated, user, walletCount, hasEmbeddedWallet, createWallet]);
 };
