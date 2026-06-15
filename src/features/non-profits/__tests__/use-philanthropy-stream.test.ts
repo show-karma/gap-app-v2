@@ -314,6 +314,86 @@ describe("streamPhilanthropyQuery", () => {
     );
   });
 
+  it("streams narrative_delta progressively as accumulated text", async () => {
+    const stream = makeSSEStream([
+      encodeSSEFrame("narrative_delta", { text: "Top " }),
+      encodeSSEFrame("narrative_delta", { text: "funders " }),
+      encodeSSEFrame("narrative_delta", { text: "are…" }),
+      encodeSSEFrame("final_answer", FINAL_ANSWER_PAYLOAD),
+    ]);
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(makeResponse(stream)));
+
+    const onNarrativeDelta = vi.fn();
+    const controller = new AbortController();
+    const result = await streamPhilanthropyQuery(
+      "stream query",
+      undefined,
+      1,
+      controller.signal,
+      true,
+      undefined,
+      undefined,
+      { onHeader: vi.fn(), onNarrative: vi.fn(), onNarrativeDelta, onProgress: vi.fn() }
+    );
+
+    expect(result.isOk()).toBe(true);
+    expect(onNarrativeDelta.mock.calls.map((c) => c[0])).toEqual([
+      "Top ",
+      "Top funders ",
+      "Top funders are…",
+    ]);
+  });
+
+  it("resets the streamed narrative when a tool call starts", async () => {
+    const stream = makeSSEStream([
+      encodeSSEFrame("narrative_delta", { text: "thinking out loud" }),
+      encodeSSEFrame("tool_progress", { tool: "search_grants", status: "started" }),
+      encodeSSEFrame("narrative_delta", { text: "Real answer." }),
+      encodeSSEFrame("final_answer", FINAL_ANSWER_PAYLOAD),
+    ]);
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(makeResponse(stream)));
+
+    const onNarrativeDelta = vi.fn();
+    const controller = new AbortController();
+    await streamPhilanthropyQuery(
+      "reset query",
+      undefined,
+      1,
+      controller.signal,
+      true,
+      undefined,
+      undefined,
+      { onHeader: vi.fn(), onNarrative: vi.fn(), onNarrativeDelta, onProgress: vi.fn() }
+    );
+
+    // Pre-tool text is discarded; the visible narrative is only what streams
+    // after the last tool call.
+    expect(onNarrativeDelta).toHaveBeenLastCalledWith("Real answer.");
+  });
+
+  it("does not stream narrative_delta when includeNarrative=false", async () => {
+    const stream = makeSSEStream([
+      encodeSSEFrame("narrative_delta", { text: "hidden" }),
+      encodeSSEFrame("final_answer", FINAL_ANSWER_PAYLOAD),
+    ]);
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(makeResponse(stream)));
+
+    const onNarrativeDelta = vi.fn();
+    const controller = new AbortController();
+    await streamPhilanthropyQuery(
+      "no narrative",
+      undefined,
+      1,
+      controller.signal,
+      false,
+      undefined,
+      undefined,
+      { onHeader: vi.fn(), onNarrative: vi.fn(), onNarrativeDelta, onProgress: vi.fn() }
+    );
+
+    expect(onNarrativeDelta).not.toHaveBeenCalled();
+  });
+
   it("calls onProgress for matched_entities events", async () => {
     const matchedFrame = encodeSSEFrame("matched_entities", {
       names: ["MacArthur Foundation", "Ford Foundation"],

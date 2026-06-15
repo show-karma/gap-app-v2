@@ -147,6 +147,13 @@ interface StreamProgressEvent {
 interface StreamCallbacks {
   onHeader: (header: StreamHeader) => void;
   onNarrative: (text: string) => void;
+  /**
+   * Called as the answer narrative streams in token-by-token (the running
+   * accumulated text, not the delta). Lets the UI render the answer as it
+   * writes itself instead of waiting for `final_answer`. `onNarrative` still
+   * fires at the end with the canonical text.
+   */
+  onNarrativeDelta?: (narrativeSoFar: string) => void;
   /** Called for every progress event emitted before final_answer. */
   onProgress: (event: StreamProgressEvent) => void;
 }
@@ -224,6 +231,10 @@ export function streamPhilanthropyQuery(
       let buffer = "";
       let header: StreamHeader | null = null;
       let narrative = "";
+      // Accumulates streamed answer tokens. Reset whenever a tool call
+      // starts so any pre-tool reasoning text is discarded — the real
+      // answer is whatever streams after the last tool.
+      let streamingNarrative = "";
 
       while (true) {
         const { done, value } = await reader.read();
@@ -289,6 +300,9 @@ export function streamPhilanthropyQuery(
                 const status = data.status as string | undefined;
                 const durationMs = typeof data.durationMs === "number" ? data.durationMs : null;
                 if (status === "started") {
+                  // A new tool call means any text streamed so far was
+                  // reasoning, not the answer — drop it.
+                  streamingNarrative = "";
                   callbacks.onProgress({ kind: "tool_started", tool, toolUseId });
                 } else if (status === "completed") {
                   callbacks.onProgress({
@@ -313,6 +327,16 @@ export function streamPhilanthropyQuery(
                     kind: "matched_entities",
                     names: data.names.filter((n): n is string => typeof n === "string"),
                   });
+                }
+                break;
+              case "narrative_delta":
+                // The answer prose, streaming token-by-token. Accumulate and
+                // surface progressively so the user watches it write itself
+                // (~12s) instead of waiting for final_answer (~26s). Only
+                // applies when the caller wants the narrative rendered.
+                if (includeNarrative && typeof data.text === "string") {
+                  streamingNarrative += data.text;
+                  callbacks.onNarrativeDelta?.(streamingNarrative);
                 }
                 break;
               case "assumptions":
@@ -518,6 +542,18 @@ export function usePhilanthropySearch() {
             }
             if (!isPagination) {
               usePhilanthropyStore.getState().setNarrative(text);
+            }
+          },
+          onNarrativeDelta: (narrativeSoFar) => {
+            // Render the answer as it streams. Same targets as onNarrative,
+            // just called progressively; final_answer overwrites with the
+            // canonical text at the end.
+            if (isChat) {
+              usePhilanthropyStore.getState().updateLastTurn({ narrative: narrativeSoFar });
+              return;
+            }
+            if (!isPagination) {
+              usePhilanthropyStore.getState().setNarrative(narrativeSoFar);
             }
           },
           onProgress: (event) => {
