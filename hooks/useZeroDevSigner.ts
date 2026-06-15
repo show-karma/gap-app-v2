@@ -31,6 +31,7 @@ import {
   isChainSupportedForGasless,
 } from "@/utilities/gasless";
 import { appNetwork } from "@/utilities/network";
+import { wait } from "@/utilities/wait";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 
 /**
@@ -110,11 +111,6 @@ interface SwitchableWallet {
 
 const CHAIN_SWITCH_MAX_ATTEMPTS = 5;
 const CHAIN_SWITCH_BASE_DELAY_MS = 250;
-
-const wait = (ms: number): Promise<void> =>
-  new Promise((resolve) => {
-    setTimeout(resolve, ms);
-  });
 
 /**
  * Reads the chain a raw EIP-1193 provider reports via `eth_chainId`. Used

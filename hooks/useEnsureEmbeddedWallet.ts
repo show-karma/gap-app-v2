@@ -2,35 +2,31 @@ import { type User, useCreateWallet } from "@privy-io/react-auth";
 import { useEffect, useRef } from "react";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { getLinkedWalletAddresses } from "@/utilities/auth/compare-all-wallets";
+import { wait } from "@/utilities/wait";
 
 // Value of Privy's PrivyErrorCode.EMBEDDED_WALLET_ALREADY_EXISTS. Inlined because
 // the enum is type-only in the runtime ESM build — importing it as a value crashes SSR.
 const EMBEDDED_WALLET_ALREADY_EXISTS = "embedded_wallet_already_exists";
 
 /**
- * Module-level guard, keyed by Privy user id. Survives component remounts and
- * React Strict Mode's double-invoked effects within a page session, so the
- * embedded-wallet creation is attempted at most once per user — never twice
- * concurrently. This is what prevents the duplicate-wallet bug: Privy's own
- * `createOnLogin` auto-creation re-evaluates "user without wallet" on every
- * provider initialization and mints a second wallet before the first persists.
+ * Module-level guard, keyed by Privy user id, claimed before the async create so
+ * concurrent effect runs (React Strict Mode, remount, rapid re-render) within a
+ * page session can't each launch a createWallet. NOTE: this is in-memory only,
+ * so it does NOT survive Google's OAuth redirect (a full page reload wipes it) —
+ * that is why the live `hasEmbeddedWallet` check and the settle window below, not
+ * this Set, are what prevent the cross-reload duplicate.
  */
 const creationAttemptedUserIds = new Set<string>();
 
 const MAX_CREATE_ATTEMPTS = 3;
 export const RETRY_BASE_DELAY_MS = 1000;
 
-// Privy auto-provisions an embedded wallet for new email/social signups, and it
-// lands in useWallets() a beat after authentication. We wait this long before
-// creating one ourselves so that wallet has time to appear — creating in that
-// window is what produced duplicate embedded wallets (~17% of email/Google
-// signups). If an embedded wallet shows up during the wait, we create nothing.
+// A second embedded wallet can appear shortly after auth (e.g. one created in the
+// pre-redirect context that hydrates after Google's OAuth reload). We wait this
+// long before creating one ourselves so any existing wallet has time to appear —
+// creating in that window is what produced the duplicate embedded wallets. If a
+// wallet shows up during the wait, we create nothing.
 export const SETTLE_BEFORE_CREATE_MS = 2500;
-
-const wait = (ms: number): Promise<void> =>
-  new Promise((resolve) => {
-    setTimeout(resolve, ms);
-  });
 
 /**
  * Create the embedded wallet, retrying transient failures with exponential

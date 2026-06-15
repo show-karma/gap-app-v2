@@ -140,6 +140,25 @@ describe("useEnsureEmbeddedWallet", () => {
     }
   });
 
+  it("does not create when a wallet becomes linked during the settle window", async () => {
+    vi.useFakeTimers();
+    try {
+      // No linked wallet at schedule time, but one links mid-settle (e.g. the
+      // freshly created wallet finishes linking). The post-settle linked check
+      // must suppress creation.
+      mockGetLinkedWalletAddresses.mockReturnValue([]);
+      renderHook(() => useEnsureEmbeddedWallet(true, true, makeUser("u-link-mid"), 0, false));
+
+      await vi.advanceTimersByTimeAsync(SETTLE_BEFORE_CREATE_MS / 2);
+      mockGetLinkedWalletAddresses.mockReturnValue(["0xabc"]);
+      await vi.advanceTimersByTimeAsync(SETTLE_BEFORE_CREATE_MS);
+
+      expect(mockCreateWallet).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("does not create when the user logs out during the settle window", async () => {
     vi.useFakeTimers();
     try {
