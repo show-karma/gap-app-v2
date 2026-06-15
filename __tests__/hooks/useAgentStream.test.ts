@@ -132,6 +132,51 @@ function createErrorResponse(status: number, body: string): Response {
   } as Response;
 }
 
+// Mock Response whose body reader rejects mid-stream — simulates the SSE
+// connection being severed AFTER a successful 200 (e.g. an upstream idle
+// timeout during a long agent run). The browser surfaces this as a
+// TypeError on reader.read(); see DEV-394.
+function createDroppedStreamResponse(error: Error): Response {
+  const body = {
+    getReader() {
+      return {
+        async read(): Promise<never> {
+          throw error;
+        },
+        releaseLock() {},
+        cancel: async () => {},
+        closed: Promise.resolve(undefined),
+      };
+    },
+    locked: false,
+    cancel: async () => {},
+    tee: () => [null, null],
+    pipeTo: async () => {},
+    pipeThrough: () => null,
+    [Symbol.asyncIterator]: async function* () {},
+  };
+  return {
+    ok: true,
+    status: 200,
+    statusText: "OK",
+    headers: new Headers({ "content-type": "text/event-stream" }),
+    body: body as unknown as ReadableStream<Uint8Array>,
+    bodyUsed: false,
+    redirected: false,
+    type: "default" as ResponseType,
+    url: "https://api.test.com/v2/agent/stream",
+    text: async () => "",
+    json: async () => ({}),
+    blob: async () => new Blob([]),
+    formData: async () => new FormData(),
+    arrayBuffer: async () => new ArrayBuffer(0),
+    bytes: async () => new Uint8Array(),
+    clone() {
+      return createDroppedStreamResponse(error);
+    },
+  } as Response;
+}
+
 // Direct fetch mock — avoids MSW + jsdom ReadableStream incompatibility
 const mockFetch = vi.fn<(input: RequestInfo | URL, init?: RequestInit) => Promise<Response>>();
 let savedFetch: typeof globalThis.fetch;
@@ -476,6 +521,101 @@ describe("useAgentStream", () => {
       });
 
       expect(useAgentChatStore.getState().error).toBeTruthy();
+    });
+
+    // DEV-394: a long agent run kept the SSE stream open until an upstream
+    // idle timeout cut it. The browser raised `TypeError: network error` on
+    // reader.read(), which we previously displayed verbatim and never
+    // reported to Sentry. These cover both regressions.
+    it("should show a friendly message when the stream drops mid-response", async () => {
+      mockFetch.mockResolvedValue(createDroppedStreamResponse(new TypeError("network error")));
+
+      const { result } = renderHook(() => useAgentStream(), { wrapper });
+
+      await act(async () => {
+        await result.current.sendMessage("what is pending Eva Shon's review?");
+      });
+
+      expect(useAgentChatStore.getState().error).toBe(
+        "Unable to reach the server. Please check your connection and try again."
+      );
+    });
+
+    it("should not leak the raw browser 'network error' string to the user", async () => {
+      mockFetch.mockResolvedValue(createDroppedStreamResponse(new TypeError("network error")));
+
+      const { result } = renderHook(() => useAgentStream(), { wrapper });
+
+      await act(async () => {
+        await result.current.sendMessage("Test");
+      });
+
+      expect(useAgentChatStore.getState().error).not.toBe("network error");
+    });
+
+    it("should capture mid-stream connection drops in Sentry", async () => {
+      const dropError = new TypeError("network error");
+      mockFetch.mockResolvedValue(createDroppedStreamResponse(dropError));
+
+      const { result } = renderHook(() => useAgentStream(), { wrapper });
+
+      await act(async () => {
+        await result.current.sendMessage("Test");
+      });
+
+      expect(Sentry.captureException).toHaveBeenCalledWith(
+        dropError,
+        expect.objectContaining({
+          tags: expect.objectContaining({ feature: "ask-karma" }),
+        })
+      );
+    });
+
+    it("should treat a Firefox NetworkError stream drop as a connection issue", async () => {
+      mockFetch.mockResolvedValue(
+        createDroppedStreamResponse(
+          new TypeError("NetworkError when attempting to fetch resource.")
+        )
+      );
+
+      const { result } = renderHook(() => useAgentStream(), { wrapper });
+
+      await act(async () => {
+        await result.current.sendMessage("Test");
+      });
+
+      expect(useAgentChatStore.getState().error).toBe(
+        "Unable to reach the server. Please check your connection and try again."
+      );
+    });
+
+    it("should not double-report HTTP errors that were already captured", async () => {
+      const captureSpy = Sentry.captureException as unknown as ReturnType<typeof vi.fn>;
+      captureSpy.mockClear();
+      mockFetch.mockResolvedValue(createErrorResponse(500, "Internal Server Error"));
+
+      const { result } = renderHook(() => useAgentStream(), { wrapper });
+
+      await act(async () => {
+        await result.current.sendMessage("Test");
+      });
+
+      expect(captureSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it("should not report user-initiated aborts to Sentry", async () => {
+      const captureSpy = Sentry.captureException as unknown as ReturnType<typeof vi.fn>;
+      captureSpy.mockClear();
+      const abortError = new DOMException("Aborted", "AbortError");
+      mockFetch.mockResolvedValue(createDroppedStreamResponse(abortError));
+
+      const { result } = renderHook(() => useAgentStream(), { wrapper });
+
+      await act(async () => {
+        await result.current.sendMessage("Test");
+      });
+
+      expect(captureSpy).not.toHaveBeenCalled();
     });
 
     it("should handle multi-line SSE data fields per spec", async () => {
