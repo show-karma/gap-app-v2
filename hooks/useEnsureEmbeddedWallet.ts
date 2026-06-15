@@ -85,8 +85,16 @@ const settleThenCreate = async (
 ): Promise<void> => {
   await wait(SETTLE_BEFORE_CREATE_MS);
 
+  // Auth context can change during the settle window: a logout (user → null) or
+  // a switch to a different user. Never create a wallet for a session that is no
+  // longer active — release the slot so the genuine user can be reconsidered.
   const currentUser = userRef.current;
-  if (hasEmbeddedWalletRef.current || (currentUser && userHasLinkedWallet(currentUser))) {
+  if (!currentUser || currentUser.id !== userId) {
+    creationAttemptedUserIds.delete(userId);
+    return;
+  }
+
+  if (hasEmbeddedWalletRef.current || userHasLinkedWallet(currentUser)) {
     // A wallet (Privy's auto-created one or another path's) showed up — don't
     // add a second. Slot stays claimed so we never reconsider for this user.
     return;
