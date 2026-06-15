@@ -1,7 +1,7 @@
 "use client";
 
 import { ThumbsDown, ThumbsUp } from "lucide-react";
-import { memo, useCallback, useEffect, useState } from "react";
+import { memo, useCallback, useState } from "react";
 import { useSubmitFeedback } from "../hooks/use-feedback";
 
 interface SearchFeedbackProps {
@@ -14,13 +14,6 @@ export const SearchFeedback = memo(function SearchFeedback({ traceId }: SearchFe
   const [comment, setComment] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const { mutate: submitFeedback, isPending: isSending } = useSubmitFeedback();
-
-  useEffect(() => {
-    setFeedback(null);
-    setCommentOpen(false);
-    setComment("");
-    setSubmitted(false);
-  }, [traceId]);
 
   const handleThumbsUp = useCallback(() => {
     if (isSending || feedback === "up") return;
@@ -129,6 +122,7 @@ export const SearchFeedback = memo(function SearchFeedback({ traceId }: SearchFe
           </label>
           <textarea
             id={`search-feedback-comment-${traceId}`}
+            aria-label="What was missing or inaccurate?"
             value={comment}
             onChange={(e) => setComment(e.target.value.slice(0, 2000))}
             rows={3}

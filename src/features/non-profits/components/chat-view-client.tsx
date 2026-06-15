@@ -319,7 +319,9 @@ const AssistantTurn = memo(function AssistantTurn({
           <EntityList entities={[...turn.entities]} searchId={searchId} />
         )}
         {turn.attachments.length > 0 && <AttachmentsPanel attachments={[...turn.attachments]} />}
-        {turn.status === "done" && turn.traceId && <SearchFeedback traceId={turn.traceId} />}
+        {turn.status === "done" && turn.traceId && (
+          <SearchFeedback key={turn.traceId} traceId={turn.traceId} />
+        )}
       </MessageContent>
     </Message>
   );
