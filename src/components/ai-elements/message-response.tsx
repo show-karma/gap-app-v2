@@ -30,18 +30,15 @@ function useStreamdownPlugins() {
   return plugins;
 }
 
-export const MessageResponse = memo(
-  ({ className, ...props }: MessageResponseProps) => {
-    const plugins = useStreamdownPlugins();
-    return (
-      <Streamdown
-        className={cn("size-full [&>*:first-child]:mt-0 [&>*:last-child]:mb-0", className)}
-        plugins={plugins}
-        {...props}
-      />
-    );
-  },
-  (prevProps, nextProps) => prevProps.children === nextProps.children
-);
+export const MessageResponse = memo(({ className, ...props }: MessageResponseProps) => {
+  const plugins = useStreamdownPlugins();
+  return (
+    <Streamdown
+      className={cn("size-full [&>*:first-child]:mt-0 [&>*:last-child]:mb-0", className)}
+      plugins={plugins}
+      {...props}
+    />
+  );
+});
 
 MessageResponse.displayName = "MessageResponse";

@@ -152,6 +152,34 @@ function toFriendlyError(status: number, rawMessage: unknown): string {
   }
 }
 
+/**
+ * Errors thrown from the `!response.ok` branch are already reported to Sentry
+ * at the throw site. Tagging them lets the stream's catch block skip a second
+ * capture while still showing the user-friendly message.
+ */
+class AgentStreamReportedError extends Error {}
+
+/**
+ * True when an error represents the network connection failing — either the
+ * initial fetch never reaching the server, or (DEV-394) the SSE stream being
+ * severed mid-response by an upstream idle timeout. Browsers report these as a
+ * `TypeError` with engine-specific wording: Chrome "Failed to fetch" /
+ * "network error", Firefox "NetworkError when attempting to fetch resource.",
+ * Safari "Load failed". We map all of them to one friendly, retry-able message
+ * instead of leaking the raw string into the chat.
+ */
+function isConnectionDropError(err: unknown): boolean {
+  if (!(err instanceof TypeError)) return false;
+  const message = err.message.toLowerCase();
+  return (
+    message.includes("failed to fetch") ||
+    message.includes("network error") ||
+    message.includes("networkerror") ||
+    message.includes("load failed") ||
+    message.includes("network request failed")
+  );
+}
+
 function buildConversationHistory(
   messages: ChatMessage[],
   maxMessages: number = 12
@@ -251,11 +279,11 @@ export function useAgentStream() {
             extra: { status: response.status, errorText, errorMsg },
           });
           if (response.status === 409) {
-            throw new Error(
+            throw new AgentStreamReportedError(
               "Please wait for your current request to complete before sending another."
             );
           }
-          throw new Error(errorMsg);
+          throw new AgentStreamReportedError(errorMsg);
         }
 
         const reader = response.body?.getReader();
@@ -413,9 +441,20 @@ export function useAgentStream() {
           // User cancelled — not an error
           return;
         }
-        let msg = err instanceof Error ? err.message : "Failed to connect to agent";
-        if (err instanceof TypeError && msg === "Failed to fetch") {
-          msg = "Unable to reach the server. Please check your connection and try again.";
+        const rawMsg = err instanceof Error ? err.message : "Failed to connect to agent";
+        // A dropped connection (initial fetch OR mid-stream SSE break) gets the
+        // same friendly, retry-able message — never the raw browser string.
+        const msg = isConnectionDropError(err)
+          ? "Unable to reach the server. Please check your connection and try again."
+          : rawMsg;
+        // HTTP errors were already reported in the `!response.ok` branch.
+        // Capture everything else — mid-stream drops, malformed bodies — so
+        // these otherwise-invisible failures (DEV-394) surface in Sentry.
+        if (!(err instanceof AgentStreamReportedError)) {
+          Sentry.captureException(err instanceof Error ? err : new Error(rawMsg), {
+            tags: { feature: "ask-karma", phase: "agent-stream" },
+            extra: { rawMessage: rawMsg, displayedMessage: msg },
+          });
         }
         useAgentChatStore.getState().setError(msg);
       } finally {
