@@ -119,15 +119,28 @@ const InviteLinkContent: FC<InviteLinkContentProps> = ({
   );
 };
 
-interface InviteMemberBodyProps {
+type InviteBodyState = "loading" | "denied" | "link" | "error" | "generating";
+
+/** Resolves the single terminal state the dialog body should render. */
+function resolveInviteBodyState(input: {
   isAuthLoading: boolean;
   isAuthorized: boolean;
-  code?: string;
+  hasCode: boolean;
+  hasError: boolean;
+  isBusy: boolean;
+}): InviteBodyState {
+  if (input.isAuthLoading) return "loading";
+  if (!input.isAuthorized) return "denied";
+  if (input.hasCode) return "link";
+  if (input.hasError) return "error";
+  if (input.isBusy) return "generating";
+  return "loading";
+}
+
+interface InviteMemberBodyProps {
+  state: InviteBodyState;
   inviteUrl: string | null;
   inviteId?: string;
-  hasError: boolean;
-  isLoading: boolean;
-  isGenerating: boolean;
   isCopied: boolean;
   setIsCopied: (value: boolean) => void;
   copyToClipboard: (text: string) => void;
@@ -136,67 +149,58 @@ interface InviteMemberBodyProps {
 }
 
 /**
- * Tri-state body of the invite dialog. Every branch is terminal — we never fall
- * through to a perpetual spinner when authorization is denied or a request
- * fails. A named component (rendered as an element) keeps React's identity
- * stable across renders.
+ * Body of the invite dialog. Every state is terminal — we never fall through to
+ * a perpetual spinner when authorization is denied or a request fails. A named
+ * component (rendered as an element) keeps React's identity stable across
+ * renders.
  */
 const InviteMemberBody: FC<InviteMemberBodyProps> = ({
-  isAuthLoading,
-  isAuthorized,
-  code,
+  state,
   inviteUrl,
   inviteId,
-  hasError,
-  isLoading,
-  isGenerating,
   isCopied,
   setIsCopied,
   copyToClipboard,
   revokeCode,
   onRetry,
 }) => {
-  if (isAuthLoading) {
-    return <Spinner />;
-  }
-  if (!isAuthorized) {
-    return (
-      <p className="text-black dark:text-zinc-200 text-base">
-        You don&apos;t have permission to invite members to this project.
-      </p>
-    );
-  }
-  if (code) {
-    return (
-      <InviteLinkContent
-        inviteUrl={inviteUrl}
-        inviteId={inviteId}
-        isCopied={isCopied}
-        setIsCopied={setIsCopied}
-        copyToClipboard={copyToClipboard}
-        revokeCode={revokeCode}
-      />
-    );
-  }
-  if (hasError) {
-    return (
-      <div className="flex flex-col gap-3">
+  switch (state) {
+    case "denied":
+      return (
         <p className="text-black dark:text-zinc-200 text-base">
-          Something went wrong while creating the invite link.
+          You don&apos;t have permission to invite members to this project.
         </p>
-        <Button
-          onClick={onRetry}
-          className="w-max flex items-center gap-x-1 rounded-md px-3 py-2 text-base font-semibold"
-        >
-          Try again
-        </Button>
-      </div>
-    );
+      );
+    case "link":
+      return (
+        <InviteLinkContent
+          inviteUrl={inviteUrl}
+          inviteId={inviteId}
+          isCopied={isCopied}
+          setIsCopied={setIsCopied}
+          copyToClipboard={copyToClipboard}
+          revokeCode={revokeCode}
+        />
+      );
+    case "error":
+      return (
+        <div className="flex flex-col gap-3">
+          <p className="text-black dark:text-zinc-200 text-base">
+            Something went wrong while creating the invite link.
+          </p>
+          <Button
+            onClick={onRetry}
+            className="w-max flex items-center gap-x-1 rounded-md px-3 py-2 text-base font-semibold"
+          >
+            Try again
+          </Button>
+        </div>
+      );
+    case "generating":
+      return <p className="text-black dark:text-zinc-200 text-base">Generating code...</p>;
+    default:
+      return <Spinner />;
   }
-  if (isLoading || isGenerating) {
-    return <p className="text-black dark:text-zinc-200 text-base">Generating code...</p>;
-  }
-  return <Spinner />;
 };
 
 export const InviteMemberDialog: FC<InviteMemberDialogProps> = ({ shouldDisable = false }) => {
@@ -282,14 +286,15 @@ export const InviteMemberDialog: FC<InviteMemberDialogProps> = ({ shouldDisable 
                   </Dialog.Title>
                   <div className="flex flex-col gap-2 mt-8 h-full">
                     <InviteMemberBody
-                      isAuthLoading={isAuthLoading}
-                      isAuthorized={isAuthorized}
-                      code={code}
+                      state={resolveInviteBodyState({
+                        isAuthLoading,
+                        isAuthorized,
+                        hasCode: !!code,
+                        hasError,
+                        isBusy: isLoading || isGenerating,
+                      })}
                       inviteUrl={inviteUrl}
                       inviteId={inviteCode?.id}
-                      hasError={hasError}
-                      isLoading={isLoading}
-                      isGenerating={isGenerating}
                       isCopied={isCopied}
                       setIsCopied={setIsCopied}
                       copyToClipboard={copyToClipboard}
