@@ -684,6 +684,14 @@ describe("ProjectDialog", () => {
     await waitFor(() => {
       expect(mockStartAttestation).toHaveBeenCalledWith("Creating project...");
     });
+
+    // The critical contract: creation targets the Base default chain (8453),
+    // not the connected wallet chain (mocked to Optimism / 10 above).
+    await waitFor(() => {
+      expect(mockSetupChainAndWallet).toHaveBeenCalledWith(
+        expect.objectContaining({ targetChainId: 8453 })
+      );
+    });
     expect(screen.queryByText("Network is required")).not.toBeInTheDocument();
   });
 });
