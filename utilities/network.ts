@@ -60,6 +60,22 @@ export const gapSupportedNetworks = appNetwork.filter(
 ) as [Chain, ...Chain[]];
 
 /**
+ * Networks shown in the project creation network selector.
+ *
+ * This is intentionally a curated subset of `gapSupportedNetworks`: every chain
+ * in `gapSupportedNetworks` still works everywhere else (existing projects,
+ * attestations, etc.), but new projects can only be created on these networks.
+ *
+ * NOTE: This is a UI/availability restriction only — do NOT remove the other
+ * chains from `appNetwork`/`gapSupportedNetworks`, they remain fully supported.
+ */
+const projectCreationChainIds: number[] = [optimism.id, base.id, celo.id];
+
+export const projectCreationNetworks = gapSupportedNetworks.filter((chain) =>
+  projectCreationChainIds.includes(chain.id)
+) as [Chain, ...Chain[]];
+
+/**
  * Networks where projects can configure payout addresses for donations.
  * Includes all app networks (including mainnet) since donations don't require
  * GAP SDK/attestation support - only the batch donations contract deployment.
