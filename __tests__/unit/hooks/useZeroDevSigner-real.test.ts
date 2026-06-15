@@ -367,8 +367,9 @@ describe("useZeroDevSigner (real hook)", () => {
         expect.objectContaining({ account: { address: EMBEDDED_WALLET_ADDRESS } }),
         10
       );
-      // Gasless path must NOT touch the embedded-direct provider.
-      expect(mockPrivyState.wallets[0].getEthereumProvider).not.toHaveBeenCalled();
+      // Gasless path must NOT build the embedded-direct BrowserProvider signer.
+      // (getEthereumProvider IS now called to confirm the chain switch first.)
+      expect(mockGetSigner).not.toHaveBeenCalled();
     });
 
     it("should switch embedded wallet chain before creating gasless client", async () => {
@@ -600,9 +601,9 @@ describe("useZeroDevSigner (real hook)", () => {
   // =========================================================================
 
   describe("chain verification (GAP-FRONTEND-1T9 regression)", () => {
-    it("recovers from the switchChain propagation race by rebuilding once (embedded-direct)", async () => {
+    it("recovers from the switchChain propagation race by re-polling the chain (embedded-direct)", async () => {
       // First getEthereumProvider read still reports chain 1; the second
-      // reflects the switch. The hook must rebuild and return a chain-999 signer.
+      // reflects the switch. The hook must re-poll and return a chain-999 signer.
       setupEmailUser({ embeddedOpts: { initialChainId: 1, propagateAfterReads: 1 } });
       (isChainSupportedForGasless as ReturnType<typeof vi.fn>).mockReturnValue(false);
       const embeddedWallet = mockPrivyState.wallets[0];
@@ -615,7 +616,7 @@ describe("useZeroDevSigner (real hook)", () => {
       });
 
       expect(await chainIdOf(signer)).toBe(999);
-      // Built twice: once stale, once after the switch propagated.
+      // Polled twice: once stale, once after the switch propagated.
       expect(embeddedWallet.switchChain).toHaveBeenCalledTimes(2);
       expect(embeddedWallet.getEthereumProvider).toHaveBeenCalledTimes(2);
     });
@@ -628,17 +629,26 @@ describe("useZeroDevSigner (real hook)", () => {
       (isChainSupportedForGasless as ReturnType<typeof vi.fn>).mockReturnValue(false);
       const embeddedWallet = mockPrivyState.wallets[0];
 
-      const { result } = renderHook(() => useZeroDevSigner());
+      // Fake timers so the backoff between switch attempts doesn't add real wall
+      // time; runAllTimersAsync drains the sequential setTimeout chain.
+      vi.useFakeTimers();
+      try {
+        const { result } = renderHook(() => useZeroDevSigner());
 
-      await act(async () => {
         const promise = result.current.getAttestationSigner(999);
-        // Surfaces the target + actual chain and tells the user to retry —
-        // it must NOT instruct an embedded user to "switch your network".
-        await expect(promise).rejects.toThrow(/chain 999.*still on chain 1.*try again/is);
-      });
+        const assertion = expect(promise).rejects.toThrow(
+          // Surfaces the target + actual chain and tells the user to retry — it
+          // must NOT instruct an embedded user to "switch your network".
+          /chain 999.*still on chain 1.*try again/is
+        );
+        await vi.runAllTimersAsync();
+        await assertion;
 
-      // Exactly one rebuild attempt before giving up.
-      expect(embeddedWallet.switchChain).toHaveBeenCalledTimes(2);
+        // Retries the switch up to the attempt cap before giving up.
+        expect(embeddedWallet.switchChain).toHaveBeenCalledTimes(5);
+      } finally {
+        vi.useRealTimers();
+      }
     });
 
     it("rejects a gasless signer reporting the wrong chain and recovers via the direct path", async () => {

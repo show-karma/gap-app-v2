@@ -79,7 +79,17 @@ export function createEmbeddedWallet(
         readsUntilPropagation -= 1;
         if (readsUntilPropagation <= 0) reportedChainId = targetChainId;
       }
-      return { request: vi.fn(), __chainId: chainId };
+      // `request({ method: "eth_chainId" })` reflects the chain this provider
+      // snapshot was on — the production switch helper polls this (not ethers'
+      // cached getNetwork) to confirm a switch propagated. `__chainId` is kept
+      // for the BrowserProvider mock's getNetwork().
+      return {
+        request: vi.fn().mockImplementation(async ({ method }: { method: string }) => {
+          if (method === "eth_chainId") return `0x${chainId.toString(16)}`;
+          return undefined;
+        }),
+        __chainId: chainId,
+      };
     }),
   };
 }

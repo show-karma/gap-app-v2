@@ -97,6 +97,76 @@ async function assertSignerOnChain(signer: Signer, expectedChainId: number): Pro
   return signer;
 }
 
+/** Minimal EIP-1193 provider surface the chain-switch helper relies on. */
+interface Eip1193Provider {
+  request: (args: { method: string; params?: unknown[] }) => Promise<unknown>;
+}
+
+/** Minimal shape of a Privy embedded wallet used by the chain-switch helper. */
+interface SwitchableWallet {
+  switchChain: (chainId: number) => Promise<void>;
+  getEthereumProvider: () => Promise<Eip1193Provider>;
+}
+
+const CHAIN_SWITCH_MAX_ATTEMPTS = 5;
+const CHAIN_SWITCH_BASE_DELAY_MS = 250;
+
+const wait = (ms: number): Promise<void> =>
+  new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+
+/**
+ * Reads the chain a raw EIP-1193 provider reports via `eth_chainId`. Used
+ * instead of ethers' `getNetwork()` because a BrowserProvider caches the
+ * network it detects on first use — so a provider that was on chain 1 keeps
+ * reporting chain 1 even after the wallet switches. The raw request always
+ * reflects the wallet's live chain.
+ */
+async function readProviderChainId(provider: Eip1193Provider): Promise<number | undefined> {
+  try {
+    const raw = await provider.request({ method: "eth_chainId" });
+    const chainId = typeof raw === "string" ? Number.parseInt(raw, 16) : Number(raw);
+    return Number.isFinite(chainId) ? chainId : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * Switches a Privy embedded wallet to the target chain and CONFIRMS the switch
+ * has propagated to the provider before returning it. Embedded (email/Google)
+ * wallets default to mainnet (chain 1), and Privy's `switchChain()` can resolve
+ * before the underlying provider reports the new chain — handing that
+ * not-yet-switched provider to the GAP SDK throws "still on chain 1". Polling
+ * `eth_chainId` on a freshly-fetched provider with backoff absorbs that race;
+ * if every attempt is exhausted, the mismatch is surfaced explicitly.
+ */
+async function switchEmbeddedWalletChain(
+  wallet: SwitchableWallet,
+  targetChainId: number
+): Promise<Eip1193Provider> {
+  let lastChainId: number | undefined;
+  for (let attempt = 0; attempt < CHAIN_SWITCH_MAX_ATTEMPTS; attempt += 1) {
+    try {
+      await wallet.switchChain(targetChainId);
+    } catch {
+      // switchChain can reject transiently while the embedded wallet is still
+      // initialising — keep polling rather than failing on the first attempt.
+    }
+    // Re-fetch the provider each attempt: a stale reference can keep pointing
+    // at the pre-switch chain.
+    const provider = await wallet.getEthereumProvider();
+    lastChainId = await readProviderChainId(provider);
+    if (lastChainId === targetChainId) return provider;
+    // No point sleeping after the last attempt — we're about to give up.
+    if (attempt < CHAIN_SWITCH_MAX_ATTEMPTS - 1) {
+      await wait(CHAIN_SWITCH_BASE_DELAY_MS * (attempt + 1));
+    }
+  }
+  throw chainMismatchError(targetChainId, lastChainId);
+}
+
 /**
  * Check if user logged in with email/Google (not wallet).
  * These users should use embedded wallet with gasless transactions.
@@ -206,7 +276,10 @@ export function useZeroDevSigner(): UseZeroDevSignerResult {
       // Case 1: Email/Google login with gasless support
       if (isEmailOrSocialLogin && embeddedWallet && isChainSupportedForGasless(targetChainId)) {
         try {
-          await embeddedWallet.switchChain(targetChainId);
+          // Confirm the embedded wallet is actually on the target chain before
+          // building the signer — switchChain resolving early would otherwise
+          // leave it on its mainnet default and fail downstream.
+          await switchEmbeddedWalletChain(embeddedWallet, targetChainId);
 
           // Create signer compatible with gasless providers
           const signer = await createPrivySignerForGasless(embeddedWallet, targetChainId);
@@ -243,26 +316,12 @@ export function useZeroDevSigner(): UseZeroDevSignerResult {
       // This handles: gasless fallback failures AND chains that don't support gasless
       if (isEmailOrSocialLogin && embeddedWallet) {
         try {
-          const buildEmbeddedSigner = async (): Promise<Signer> => {
-            await embeddedWallet.switchChain(targetChainId);
-            const provider = await embeddedWallet.getEthereumProvider();
-            return new BrowserProvider(provider).getSigner();
-          };
-
-          let signer = await buildEmbeddedSigner();
-          let signerChainId = await getSignerChainId(signer);
-          // Privy's switchChain can resolve before getEthereumProvider reports
-          // the new chain. Rebuild once to absorb that propagation race; the
-          // BrowserProvider is intentionally left un-pinned here so it reflects
-          // the wallet's real chain rather than masking a genuine mismatch.
-          if (signerChainId !== targetChainId) {
-            signer = await buildEmbeddedSigner();
-            signerChainId = await getSignerChainId(signer);
-          }
-          if (signerChainId !== targetChainId) {
-            throw chainMismatchError(targetChainId, signerChainId);
-          }
-          return signer;
+          // switchEmbeddedWalletChain only returns once the provider confirms
+          // it is on the target chain (polling eth_chainId with backoff), so the
+          // BrowserProvider built from it can't surface a stale "still on chain 1".
+          const provider = await switchEmbeddedWalletChain(embeddedWallet, targetChainId);
+          const signer = await new BrowserProvider(provider).getSigner();
+          return await assertSignerOnChain(signer, targetChainId);
         } catch (error) {
           console.warn("[Gasless] Embedded wallet error:", error);
           lastError = error;
