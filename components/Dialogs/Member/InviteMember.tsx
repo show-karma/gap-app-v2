@@ -4,7 +4,7 @@
 import { Dialog, Transition } from "@headlessui/react";
 import { ArrowPathIcon, CheckIcon, ClipboardDocumentIcon } from "@heroicons/react/24/outline";
 import * as Tooltip from "@radix-ui/react-tooltip";
-import { type FC, Fragment, type ReactNode, useEffect, useState } from "react";
+import { type FC, Fragment, useEffect, useState } from "react";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { Button } from "@/components/ui/button";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
@@ -66,6 +66,7 @@ const InviteLinkContent: FC<InviteLinkContentProps> = ({
               <Tooltip.Trigger asChild>
                 <div className="flex w-max h-max">
                   <Button
+                    aria-label="Copy invite link"
                     className="text-zinc-600 p-2 hover:opacity-75 bg-zinc-200 dark:bg-zinc-700 dark:text-zinc-100 hover:bg-zinc-300 dark:hover:bg-zinc-600 h-full rounded-l-md rounded-r-none"
                     onClick={handleCopy}
                   >
@@ -93,6 +94,7 @@ const InviteLinkContent: FC<InviteLinkContentProps> = ({
               <Tooltip.Trigger asChild>
                 <div className="flex w-max h-max">
                   <Button
+                    aria-label="Generate a new invite code"
                     className=" text-blue-900 bg-blue-200 dark:text-blue-200 dark:bg-blue-900 p-2 hover:opacity-75 hover:bg-blue-300 dark:hover:bg-blue-800 rounded-r-md rounded-l-none h-full"
                     onClick={handleRevoke}
                   >
@@ -115,6 +117,86 @@ const InviteLinkContent: FC<InviteLinkContentProps> = ({
       </div>
     </div>
   );
+};
+
+interface InviteMemberBodyProps {
+  isAuthLoading: boolean;
+  isAuthorized: boolean;
+  code?: string;
+  inviteUrl: string | null;
+  inviteId?: string;
+  hasError: boolean;
+  isLoading: boolean;
+  isGenerating: boolean;
+  isCopied: boolean;
+  setIsCopied: (value: boolean) => void;
+  copyToClipboard: (text: string) => void;
+  revokeCode: (inviteId: string) => void;
+  onRetry: () => void;
+}
+
+/**
+ * Tri-state body of the invite dialog. Every branch is terminal — we never fall
+ * through to a perpetual spinner when authorization is denied or a request
+ * fails. A named component (rendered as an element) keeps React's identity
+ * stable across renders.
+ */
+const InviteMemberBody: FC<InviteMemberBodyProps> = ({
+  isAuthLoading,
+  isAuthorized,
+  code,
+  inviteUrl,
+  inviteId,
+  hasError,
+  isLoading,
+  isGenerating,
+  isCopied,
+  setIsCopied,
+  copyToClipboard,
+  revokeCode,
+  onRetry,
+}) => {
+  if (isAuthLoading) {
+    return <Spinner />;
+  }
+  if (!isAuthorized) {
+    return (
+      <p className="text-black dark:text-zinc-200 text-base">
+        You don&apos;t have permission to invite members to this project.
+      </p>
+    );
+  }
+  if (code) {
+    return (
+      <InviteLinkContent
+        inviteUrl={inviteUrl}
+        inviteId={inviteId}
+        isCopied={isCopied}
+        setIsCopied={setIsCopied}
+        copyToClipboard={copyToClipboard}
+        revokeCode={revokeCode}
+      />
+    );
+  }
+  if (hasError) {
+    return (
+      <div className="flex flex-col gap-3">
+        <p className="text-black dark:text-zinc-200 text-base">
+          Something went wrong while creating the invite link.
+        </p>
+        <Button
+          onClick={onRetry}
+          className="w-max flex items-center gap-x-1 rounded-md px-3 py-2 text-base font-semibold"
+        >
+          Try again
+        </Button>
+      </div>
+    );
+  }
+  if (isLoading || isGenerating) {
+    return <p className="text-black dark:text-zinc-200 text-base">Generating code...</p>;
+  }
+  return <Spinner />;
 };
 
 export const InviteMemberDialog: FC<InviteMemberDialogProps> = ({ shouldDisable = false }) => {
@@ -154,52 +236,6 @@ export const InviteMemberDialog: FC<InviteMemberDialogProps> = ({ shouldDisable 
       generateCode();
     }
   }, [isSuccess, inviteCode, isOpen, generateCode]);
-
-  // Tri-state rendering: every branch is terminal — we never fall through to a
-  // perpetual spinner when authorization is denied or a request fails.
-  const renderBody = (): ReactNode => {
-    if (isAuthLoading) {
-      return <Spinner />;
-    }
-    if (!isAuthorized) {
-      return (
-        <p className="text-black dark:text-zinc-200 text-base">
-          You don&apos;t have permission to invite members to this project.
-        </p>
-      );
-    }
-    if (code) {
-      return (
-        <InviteLinkContent
-          inviteUrl={inviteUrl}
-          inviteId={inviteCode?.id}
-          isCopied={isCopied}
-          setIsCopied={setIsCopied}
-          copyToClipboard={copyToClipboard}
-          revokeCode={revokeCode}
-        />
-      );
-    }
-    if (hasError) {
-      return (
-        <div className="flex flex-col gap-3">
-          <p className="text-black dark:text-zinc-200 text-base">
-            Something went wrong while creating the invite link.
-          </p>
-          <Button
-            onClick={() => generateCode()}
-            className="w-max flex items-center gap-x-1 rounded-md px-3 py-2 text-base font-semibold"
-          >
-            Try again
-          </Button>
-        </div>
-      );
-    }
-    if (isLoading || isGenerating) {
-      return <p className="text-black dark:text-zinc-200 text-base">Generating code...</p>;
-    }
-    return <Spinner />;
-  };
 
   return (
     <>
@@ -244,7 +280,23 @@ export const InviteMemberDialog: FC<InviteMemberDialogProps> = ({ shouldDisable 
                   >
                     Invite team member to your project
                   </Dialog.Title>
-                  <div className="flex flex-col gap-2 mt-8 h-full">{renderBody()}</div>
+                  <div className="flex flex-col gap-2 mt-8 h-full">
+                    <InviteMemberBody
+                      isAuthLoading={isAuthLoading}
+                      isAuthorized={isAuthorized}
+                      code={code}
+                      inviteUrl={inviteUrl}
+                      inviteId={inviteCode?.id}
+                      hasError={hasError}
+                      isLoading={isLoading}
+                      isGenerating={isGenerating}
+                      isCopied={isCopied}
+                      setIsCopied={setIsCopied}
+                      copyToClipboard={copyToClipboard}
+                      revokeCode={revokeCode}
+                      onRetry={() => generateCode()}
+                    />
+                  </div>
                 </Dialog.Panel>
               </Transition.Child>
             </div>

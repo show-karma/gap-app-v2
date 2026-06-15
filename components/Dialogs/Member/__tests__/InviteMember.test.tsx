@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom";
-import { InviteMemberDialog } from "../InviteMember";
+import { InviteMemberDialog } from "@/components/Dialogs/Member/InviteMember";
 
 const mockAuth = vi.fn();
 const mockInvite = vi.fn();
