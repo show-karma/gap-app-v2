@@ -81,6 +81,10 @@ interface ProjectProfileLayoutProps {
   /** Server-rendered sidebar panel (RSC slot pattern). When provided, renders
    *  project content in the initial HTML before client hydration. */
   serverSidePanel?: ReactNode;
+  /** Server-rendered project header (<h1> + description + tags) rendered at the
+   *  top of the main content column. Same RSC slot pattern as serverSidePanel —
+   *  puts real, indexable content in the initial HTML of every tab. */
+  serverHeader?: ReactNode;
 }
 
 /**
@@ -105,6 +109,7 @@ export function ProjectProfileLayout({
   children,
   className,
   serverSidePanel,
+  serverHeader,
 }: ProjectProfileLayoutProps) {
   const { projectId } = useParams();
   const pathname = usePathname();
@@ -243,6 +248,7 @@ export function ProjectProfileLayout({
               </div>
             </aside>
             <div className="flex flex-col gap-6 flex-1 min-w-0">
+              {serverHeader}
               <div className="hidden lg:block">
                 <ContentTabsSkeleton />
               </div>
@@ -357,6 +363,10 @@ export function ProjectProfileLayout({
             className="flex flex-col gap-6 flex-1 min-w-0"
             data-testid="project-main-content-area"
           >
+            {/* Server-rendered project header (<h1> + description + tags) — the
+                indexable content crawlers see in the initial HTML of every tab. */}
+            {serverHeader}
+
             {/* Desktop: Post an update + Project Settings above tabs */}
             <div className="hidden lg:flex lg:justify-end items-center gap-2">
               <PostUpdateButton />
