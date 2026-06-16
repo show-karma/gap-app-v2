@@ -57,7 +57,11 @@ import fetchData from "@/utilities/fetchData";
 import { validateGithubInput } from "@/utilities/github";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
-import { PROJECT_CREATION_DEFAULT_CHAIN_ID } from "@/utilities/network";
+import {
+  gapSupportedNetworks,
+  PROJECT_CREATION_DEFAULT_CHAIN_ID,
+  SHOW_PROJECT_CREATION_NETWORK_SELECTOR,
+} from "@/utilities/network";
 import { PAGES } from "@/utilities/pages";
 import { sanitizeObject } from "@/utilities/sanitize";
 import { getProjectById } from "@/utilities/sdk";
@@ -1492,6 +1496,28 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       desc: "How can we contact you?",
       fields: (
         <div className="flex w-full min-w-[320px] flex-col gap-8">
+          {SHOW_PROJECT_CREATION_NETWORK_SELECTOR && !projectToUpdate && (
+            <div className="flex w-full flex-col gap-2">
+              <label htmlFor="network-select" className={labelStyle}>
+                Network *
+              </label>
+              <select
+                id="network-select"
+                className={inputStyle}
+                value={watch("chainID") ?? PROJECT_CREATION_DEFAULT_CHAIN_ID}
+                onChange={(e) => {
+                  setValue("chainID", +e.target.value, { shouldValidate: true });
+                }}
+              >
+                {gapSupportedNetworks.map((chain) => (
+                  <option key={chain.id} value={chain.id}>
+                    {chain.name}
+                  </option>
+                ))}
+              </select>
+              <p className="text-red-500">{errors.chainID?.message}</p>
+            </div>
+          )}
           <ContactInfoSection
             existingContacts={contacts}
             isEditing={!!projectToUpdate}
