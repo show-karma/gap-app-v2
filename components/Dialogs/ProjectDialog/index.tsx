@@ -52,7 +52,6 @@ import { useOwnerStore } from "@/store/owner";
 import type { Contact } from "@/types/project";
 import type { Project as ProjectResponse } from "@/types/v2/project";
 import { type CustomLink, isCustomLink } from "@/utilities/customLink";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";
 import { validateGithubInput } from "@/utilities/github";
 import { INDEXER } from "@/utilities/indexer";
@@ -64,7 +63,6 @@ import { getProjectById } from "@/utilities/sdk";
 import { updateProject } from "@/utilities/sdk/projects/editProject";
 import { SOCIALS } from "@/utilities/socials";
 import { cn } from "@/utilities/tailwind";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { SimilarProjectsDialog } from "../SimilarProjectsDialog";
 import { ContactInfoSection } from "./ContactInfoSection";
 import { NetworkDropdown } from "./NetworkDropdown";
@@ -231,13 +229,12 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   const router = useRouter();
   const { gap } = useGap();
   const { openSimilarProjectsModal, isSimilarProjectsModalOpen } = useSimilarProjectsModalStore();
-  const { setupChainAndWallet, smartWalletAddress } = useSetupChainAndWallet();
+  const { setupChainAndWallet, smartWalletAddress, hasEmbeddedWallet } = useSetupChainAndWallet();
   // Resolve address: wagmi (external wallet) > useAuth (Privy wallets) > smartWalletAddress (embedded wallet for social login)
   const address = wagmiAddress || authAddress || (smartWalletAddress as `0x${string}` | undefined);
   const isConnected = wagmiIsConnected || authIsConnected || !!smartWalletAddress;
   const { startAttestation, showLoading, showSuccess, showError, dismiss, changeStepperStep } =
     useAttestationToast();
-  const [_walletSigner, setWalletSigner] = useState<any>(null);
   const [_faucetFunded, setFaucetFunded] = useState(false);
   // Flag to prevent form reset when reopening after an error
   const [shouldResetOnOpen, setShouldResetOnOpen] = useState(true);
@@ -251,76 +248,26 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
     });
   const { errors, isValid } = formState;
 
-  // Watch the chainID value for the useEffect
-  const chainIDValue = watch("chainID");
-
-  // Handle network change and chain switching
+  // Switch an external wallet to the selected network when the user picks it.
+  // Embedded (email/Google) wallets are skipped: they switch chains at submit via
+  // setupChainAndWallet (→ getAttestationSigner / gasless), and useWallets() can
+  // also surface an unlinked injected wallet — running the wagmi switch here would
+  // prompt the wrong wallet or fail with a misleading connect error.
   const handleNetworkChange = async (networkId: number) => {
-    if (!isConnected || !address) {
+    if (!isConnected || !address || hasEmbeddedWallet || chain?.id === networkId) {
       return;
     }
 
     setIsChangingNetwork(true);
-
     try {
-      // If we're not on the selected network, switch to it
-      if (chain?.id !== networkId) {
-        await switchChainAsync({ chainId: networkId });
-        // Wait a bit for the chain switch to complete
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-      }
-
-      // Now get the wallet client for the new chain
-      const { walletClient, error } = await safeGetWalletClient(networkId);
-
-      if (!error && walletClient) {
-        const signer = await walletClientToSigner(walletClient);
-        setWalletSigner(signer);
-      } else {
-        setWalletSigner(null);
-        showError("Failed to connect to the selected network");
-      }
+      await switchChainAsync({ chainId: networkId });
     } catch (error) {
       showError("Failed to switch network. Please try again.");
-      setWalletSigner(null);
       throw error; // Re-throw to let NetworkDropdown handle it
     } finally {
       setIsChangingNetwork(false);
     }
   };
-
-  // Prepare wallet signer when wallet is connected and chain is selected
-  useEffect(() => {
-    const prepareSigner = async () => {
-      if (isConnected && address && chainIDValue) {
-        try {
-          // Check if we're on the correct chain
-          if (chain?.id === chainIDValue) {
-            // Get wallet client for the current chain
-            const { walletClient, error } = await safeGetWalletClient(chainIDValue);
-
-            if (!error && walletClient) {
-              const signer = await walletClientToSigner(walletClient);
-              setWalletSigner(signer);
-            } else {
-              setWalletSigner(null);
-            }
-          } else {
-            // Chain mismatch, signer will be set after chain switch
-            setWalletSigner(null);
-          }
-        } catch (error) {
-          setWalletSigner(null);
-          // Track for debugging without user-facing notification
-          errorManager("Failed to prepare wallet signer", error, { chainIDValue }, {});
-        }
-      } else {
-        setWalletSigner(null);
-      }
-    };
-
-    prepareSigner();
-  }, [isConnected, address, chainIDValue, chain?.id]);
 
   // Reset form when switching between create/edit modes or when modal opens
   useEffect(() => {

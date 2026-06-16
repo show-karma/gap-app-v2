@@ -372,18 +372,23 @@ describe("useZeroDevSigner (real hook)", () => {
       expect(mockGetSigner).not.toHaveBeenCalled();
     });
 
-    it("should switch embedded wallet chain before creating gasless client", async () => {
+    it("does not switch the embedded wallet chain for the gasless path (signer is chain-pinned)", async () => {
       setupEmailUser();
       const embeddedWallet = mockPrivyState.wallets[0];
       enableGaslessOnChain(42161);
 
       const { result } = renderHook(() => useZeroDevSigner());
 
+      let signer: unknown;
       await act(async () => {
-        await result.current.getAttestationSigner(42161);
+        signer = await result.current.getAttestationSigner(42161);
       });
 
-      expect(embeddedWallet.switchChain).toHaveBeenCalledWith(42161);
+      expect(await chainIdOf(signer)).toBe(42161);
+      // The gasless smart account targets the chain regardless of the embedded
+      // EOA's current chain (its ethers provider is pinned by toEthersSigner), so
+      // the embedded wallet is never asked to switch.
+      expect(embeddedWallet.switchChain).not.toHaveBeenCalled();
     });
 
     it("should return gasless signer for Google OAuth user", async () => {

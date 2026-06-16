@@ -296,6 +296,37 @@ describe("useZeroDevSigner — chain verification (GAP-FRONTEND-1T9 regression)"
     expect(await chainIdOf(signer)).toBe(10);
   });
 
+  it("does not fall back to a connected external wallet when the embedded path fails", async () => {
+    // Email user with BOTH an embedded wallet and an unlinked injected wallet
+    // (useWallets() surfaces browser-connected wallets that aren't linked). The
+    // embedded wallet is stuck on chain 1, so the embedded path throws — the hook
+    // must surface that error, NOT silently sign with the external wallet (which
+    // would use the wrong identity and prompt an unexpected popup).
+    setupEmailUser({
+      embedded: true,
+      external: true,
+      embeddedOpts: { initialChainId: 1, propagateAfterReads: Number.POSITIVE_INFINITY },
+    });
+    (isChainSupportedForGasless as ReturnType<typeof vi.fn>).mockReturnValue(false);
+    const externalWallet = mockPrivyState.wallets[1];
+
+    vi.useFakeTimers();
+    try {
+      const { result } = renderHook(() => useZeroDevSigner());
+
+      const promise = result.current.getAttestationSigner(999);
+      const assertion = expect(promise).rejects.toThrow(/still on chain 1/i);
+      await vi.runAllTimersAsync();
+      await assertion;
+
+      // The external wallet must never be touched for a social-login user.
+      expect(externalWallet.switchChain).not.toHaveBeenCalled();
+      expect(externalWallet.getEthereumProvider).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("reports 'still on chain unknown' when the provider can't report its chain", async () => {
     // The provider's eth_chainId request fails on every attempt → the chain can
     // never be confirmed; the error must degrade to "unknown", not crash.

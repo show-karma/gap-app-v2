@@ -272,12 +272,12 @@ export function useZeroDevSigner(): UseZeroDevSignerResult {
       // Case 1: Email/Google login with gasless support
       if (isEmailOrSocialLogin && embeddedWallet && isChainSupportedForGasless(targetChainId)) {
         try {
-          // Confirm the embedded wallet is actually on the target chain before
-          // building the signer — switchChain resolving early would otherwise
-          // leave it on its mainnet default and fail downstream.
-          await switchEmbeddedWalletChain(embeddedWallet, targetChainId);
-
-          // Create signer compatible with gasless providers
+          // No embedded-wallet chain switch here on purpose: the gasless signer's
+          // provider is pinned to targetChainId by the provider's toEthersSigner,
+          // and the smart account runs on targetChainId regardless of the embedded
+          // EOA's current chain. Signing (secp256k1/personal/typed-data) is
+          // chain-agnostic, so requiring a switch would only add a failure mode
+          // (embedded wallets that can't switch) without any benefit.
           const signer = await createPrivySignerForGasless(embeddedWallet, targetChainId);
 
           // Create gasless client (provider is selected automatically based on chain config)
@@ -329,7 +329,14 @@ export function useZeroDevSigner(): UseZeroDevSignerResult {
       // state desync (chain?.id can be undefined during startup, causing wagmi's
       // getWalletClient to fail). This follows the same pattern used in claim-funds.
       // Fallback: wagmi's getWalletClient for environments where Privy provider isn't available.
-      if (externalWallet) {
+      //
+      // An email/Google user with an embedded wallet must NEVER reach here, even if
+      // the embedded path above failed: useWallets() also lists browser-connected
+      // wallets that are NOT linked to the account (e.g. an injected MetaMask/Rabby),
+      // and signing an attestation with one would use the wrong identity and prompt
+      // an unexpected wallet popup. For those users we surface the embedded error
+      // below instead of silently falling back.
+      if (externalWallet && !(isEmailOrSocialLogin && embeddedWallet)) {
         try {
           await externalWallet.switchChain(targetChainId);
           const provider = await externalWallet.getEthereumProvider();
