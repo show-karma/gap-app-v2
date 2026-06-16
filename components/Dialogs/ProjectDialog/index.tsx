@@ -16,10 +16,15 @@ import debounce from "lodash.debounce";
 import { useRouter, useSearchParams } from "next/navigation";
 import { type FC, Fragment, type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
-import { type Hex, isAddress, zeroHash } from "viem";
+import { type Hex, zeroHash } from "viem";
 import { useAccount } from "wagmi";
-import { z } from "zod";
 /* eslint-disable @next/next/no-img-element */
+import {
+  PROJECT_DETAILS_COUNTER_THRESHOLD,
+  PROJECT_DETAILS_MAX_LENGTH,
+  projectSchema,
+  type SchemaType,
+} from "@/components/Dialogs/ProjectDialog/schema";
 import {
   DiscordIcon,
   GithubIcon,
@@ -77,61 +82,6 @@ const inputStyle = "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zi
 const socialMediaInputStyle =
   "bg-transparent border-0 flex flex-1 p-2 focus:outline-none outline-none focus-visible:outline-none dark:bg-zinc-900 dark:text-white text-sm rounded-md";
 const labelStyle = "text-slate-700 text-sm font-bold leading-tight dark:text-slate-200";
-
-export const projectSchema = z.object({
-  title: z
-    .string()
-    .min(3, { message: MESSAGES.PROJECT_FORM.TITLE.MIN })
-    .max(50, { message: MESSAGES.PROJECT_FORM.TITLE.MAX }),
-  chainID: z.number({
-    error: "Network is required",
-  }),
-  locationOfImpact: z.string().optional(),
-  description: z.string().min(1, {
-    message: "Description is required",
-  }),
-  problem: z.string().min(1, {
-    message: "Problem is required",
-  }),
-  solution: z.string().min(1, {
-    message: "Solution is required",
-  }),
-  missionSummary: z.string().min(1, {
-    message: "Mission Summary is required",
-  }),
-  recipient: z
-    .string()
-    .optional()
-    .refine(
-      (input) => !input || input?.length === 0 || isAddress(input),
-      MESSAGES.PROJECT_FORM.RECIPIENT
-    ),
-  // tags: z.custom<string>(
-  //   (input) =>
-  //     (input as string).split(',').every((field) => field.trim().length >= 3),
-  //   MESSAGES.PROJECT_FORM.TAGS
-  // ),
-  twitter: z
-    .string()
-    .refine((value) => !value.includes("@"), {
-      message: MESSAGES.PROJECT_FORM.SOCIALS.TWITTER,
-    })
-    .optional(),
-  github: z.string().optional(),
-  discord: z.string().optional(),
-  website: z.string().optional(),
-  linkedin: z.string().optional(),
-  pitchDeck: z.string().optional(),
-  demoVideo: z.string().optional(),
-  farcaster: z.string().optional(),
-  profilePicture: z.string().optional(),
-  businessModel: z.string().optional(),
-  stageIn: z.string().optional(),
-  raisedMoney: z.string().optional(),
-  pathToTake: z.string().optional(),
-});
-
-type SchemaType = z.infer<typeof projectSchema>;
 
 type ProjectDialogProps = {
   buttonElement?: {
@@ -1066,6 +1016,9 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                   shouldValidate: true,
                 });
               }}
+              maxLength={PROJECT_DETAILS_MAX_LENGTH}
+              showCharacterCount
+              characterCountThreshold={PROJECT_DETAILS_COUNTER_THRESHOLD}
             />
             <p className="text-red-500">{errors.description?.message}</p>
           </div>
@@ -1082,6 +1035,9 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                   shouldValidate: true,
                 });
               }}
+              maxLength={PROJECT_DETAILS_MAX_LENGTH}
+              showCharacterCount
+              characterCountThreshold={PROJECT_DETAILS_COUNTER_THRESHOLD}
             />
             <p className="text-red-500">{errors.problem?.message}</p>
           </div>
@@ -1097,6 +1053,9 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                   shouldValidate: true,
                 });
               }}
+              maxLength={PROJECT_DETAILS_MAX_LENGTH}
+              showCharacterCount
+              characterCountThreshold={PROJECT_DETAILS_COUNTER_THRESHOLD}
             />
             <p className="text-red-500">{errors.solution?.message}</p>
           </div>
@@ -1112,6 +1071,9 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                   shouldValidate: true,
                 });
               }}
+              maxLength={PROJECT_DETAILS_MAX_LENGTH}
+              showCharacterCount
+              characterCountThreshold={PROJECT_DETAILS_COUNTER_THRESHOLD}
             />
             <p className="text-red-500">{errors.missionSummary?.message}</p>
           </div>
