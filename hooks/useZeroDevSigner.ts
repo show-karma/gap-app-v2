@@ -105,7 +105,6 @@ interface Eip1193Provider {
 
 /** Minimal shape of a Privy embedded wallet used by the chain-switch helper. */
 interface SwitchableWallet {
-  switchChain: (chainId: number) => Promise<void>;
   getEthereumProvider: () => Promise<Eip1193Provider>;
 }
 
@@ -130,37 +129,50 @@ async function readProviderChainId(provider: Eip1193Provider): Promise<number | 
 }
 
 /**
- * Switches a Privy embedded wallet to the target chain and CONFIRMS the switch
- * has propagated to the provider before returning it. Embedded (email/Google)
- * wallets default to mainnet (chain 1), and Privy's `switchChain()` can resolve
- * before the underlying provider reports the new chain — handing that
- * not-yet-switched provider to the GAP SDK throws "still on chain 1". Polling
- * `eth_chainId` on a freshly-fetched provider with backoff absorbs that race;
- * if every attempt is exhausted, the mismatch is surfaced explicitly.
+ * Switches a Privy embedded wallet's EIP-1193 provider to the target chain and
+ * returns that provider. Embedded (email/Google) wallets default to mainnet
+ * (chain 1), and the GAP SDK rejects a signer whose provider reports chain 1
+ * ("still on chain 1").
+ *
+ * Crucially this switches at the PROVIDER level (`wallet_switchEthereumChain`),
+ * NOT via the high-level `wallet.switchChain()`. In Privy's SDK the latter only
+ * updates internal React state — the provider instance we hold (and build the
+ * signer from) keeps its original chain, so `eth_chainId` never reflects the
+ * switch. `wallet_switchEthereumChain` updates this exact provider instance
+ * (its `chainId` + RPC client), which is what makes the signer report the
+ * target chain. We then confirm via `eth_chainId`, retrying with backoff.
  */
 async function switchEmbeddedWalletChain(
   wallet: SwitchableWallet,
   targetChainId: number
 ): Promise<Eip1193Provider> {
-  let lastChainId: number | undefined;
-  for (let attempt = 0; attempt < CHAIN_SWITCH_MAX_ATTEMPTS; attempt += 1) {
+  const provider = await wallet.getEthereumProvider();
+  const hexChainId = `0x${targetChainId.toString(16)}`;
+  let lastChainId = await readProviderChainId(provider);
+
+  for (
+    let attempt = 0;
+    attempt < CHAIN_SWITCH_MAX_ATTEMPTS && lastChainId !== targetChainId;
+    attempt += 1
+  ) {
     try {
-      await wallet.switchChain(targetChainId);
+      await provider.request({
+        method: "wallet_switchEthereumChain",
+        params: [{ chainId: hexChainId }],
+      });
     } catch {
-      // switchChain can reject transiently while the embedded wallet is still
-      // initialising — keep polling rather than failing on the first attempt.
+      // Transient/initialising — confirm via eth_chainId and retry with backoff.
     }
-    // Re-fetch the provider each attempt: a stale reference can keep pointing
-    // at the pre-switch chain.
-    const provider = await wallet.getEthereumProvider();
     lastChainId = await readProviderChainId(provider);
-    if (lastChainId === targetChainId) return provider;
-    // No point sleeping after the last attempt — we're about to give up.
-    if (attempt < CHAIN_SWITCH_MAX_ATTEMPTS - 1) {
+    if (lastChainId !== targetChainId && attempt < CHAIN_SWITCH_MAX_ATTEMPTS - 1) {
       await wait(CHAIN_SWITCH_BASE_DELAY_MS * (attempt + 1));
     }
   }
-  throw chainMismatchError(targetChainId, lastChainId);
+
+  if (lastChainId !== targetChainId) {
+    throw chainMismatchError(targetChainId, lastChainId);
+  }
+  return provider;
 }
 
 /**
