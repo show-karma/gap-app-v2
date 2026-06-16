@@ -46,90 +46,29 @@ concurrency:
   group: pr-tests-${{ github.event.pull_request.number || github.sha }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
+# The full suite always runs, split across a fixed number of shards. The
+# previous "changed" mode (vitest --changed) was dropped: the transitive
+# import graph pulled in most of the suite anyway (~8 min on one runner),
+# so a sharded full run is both faster wall-clock and a stronger signal.
+env:
+  SHARD_COUNT: 4
+
 jobs:
-  # ── Step 1: determine test scope ────────────────────────────────────────────
-  # Fast pre-job (<30s): counts changed source files and decides whether to run
-  # only affected tests ("changed" mode, 1 shard) or the full suite ("full"
-  # mode, 2 shards). Config-file changes always force full mode.
-  scope:
-    runs-on: ubuntu-latest
-    timeout-minutes: 2
-    outputs:
-      mode: ${{ steps.detect.outputs.mode }}
-      shard_count: ${{ steps.detect.outputs.shard_count }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v5
-        with:
-          fetch-depth: 0
-
-      - name: Detect test scope
-        id: detect
-        run: |
-          # Post-merge runs on `main` always execute the full suite (2 shards):
-          # there is no PR base to diff against, and the whole point of the
-          # push trigger is to catch a red baseline regardless of what changed.
-          if [ "${{ github.event_name }}" = "push" ]; then
-            echo "push event on main — forcing full mode"
-            echo "mode=full" >> "$GITHUB_OUTPUT"
-            echo "shard_count=2" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-
-          BASE="${{ github.event.pull_request.base.sha }}"
-
-          # All changed TS/TSX source files (including test files — they affect scope)
-          CHANGED_FILES=$(git diff --name-only "${BASE}...HEAD" -- '*.ts' '*.tsx' 2>/dev/null || echo "")
-          CHANGED_COUNT=$(echo "${CHANGED_FILES}" | grep -c '.' || true)
-          # grep -c returns 1 for empty input, so normalise:
-          [ -z "${CHANGED_FILES}" ] && CHANGED_COUNT=0
-
-          echo "Changed TS/TSX files: ${CHANGED_COUNT}"
-          echo "${CHANGED_FILES}"
-
-          # Config files that invalidate the incremental "changed" mode
-          CONFIG_CHANGED=$(git diff --name-only "${BASE}...HEAD" -- \
-            'vitest.config.*' \
-            'tsconfig.json' \
-            'package.json' \
-            'pnpm-lock.yaml' \
-            '.github/workflows/pr-tests.yml' \
-          2>/dev/null || echo "")
-
-          if [ -n "${CONFIG_CHANGED}" ]; then
-            echo "Config files changed — forcing full mode:"
-            echo "${CONFIG_CHANGED}"
-            echo "mode=full" >> "$GITHUB_OUTPUT"
-            echo "shard_count=2" >> "$GITHUB_OUTPUT"
-          elif [ "${CHANGED_COUNT}" -le 30 ]; then
-            echo "mode=changed" >> "$GITHUB_OUTPUT"
-            echo "shard_count=1" >> "$GITHUB_OUTPUT"
-          else
-            echo "mode=full" >> "$GITHUB_OUTPUT"
-            echo "shard_count=2" >> "$GITHUB_OUTPUT"
-          fi
-
-  # ── Step 2: run tests (matrix of 1 or 2 shards) ─────────────────────────────
+  # ── Step 1: run tests (4 shards) ────────────────────────────────────────────
   test:
-    needs: [scope]
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 10
     strategy:
       fail-fast: false
       matrix:
-        shard: ${{ fromJSON(needs.scope.outputs.shard_count == '2' && '[1,2]' || '[1]') }}
+        shard: [1, 2, 3, 4]
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
-        with:
-          # changed mode needs history to resolve the base SHA
-          fetch-depth: 0
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v5
-        with:
-          version: 10
 
       - name: Setup Node.js
         uses: actions/setup-node@v5
@@ -140,45 +79,18 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      # Vite/vitest transform cache — speeds up cold-start by reusing
-      # transformed module graph across runs. Keyed on lockfile + source
-      # hash so dep or code changes invalidate cleanly.
-      - name: Cache vitest transform
-        uses: actions/cache@v5
-        with:
-          path: |
-            node_modules/.vite
-            node_modules/.cache/vitest
-          key: ${{ runner.os }}-vitest-${{ hashFiles('**/pnpm-lock.yaml') }}-${{ hashFiles('**/*.ts', '**/*.tsx', '!node_modules/**', '!.next/**') }}
-          restore-keys: |
-            ${{ runner.os }}-vitest-${{ hashFiles('**/pnpm-lock.yaml') }}-
-            ${{ runner.os }}-vitest-
-
-      # changed mode: only test files affected by this PR's diff.
-      # --passWithNoTests guards against "no tests found" exit 1 (e.g. docs-only PRs
-      # that slip past paths-ignore because they also touch a .ts file).
-      - name: Run tests (changed mode)
+      - name: Run tests (shard ${{ matrix.shard }}/${{ env.SHARD_COUNT }})
         id: tests
-        if: needs.scope.outputs.mode == 'changed'
         # No continue-on-error: a red test must fail the job. The aggregated
         # `report` check is what should be marked required on `main`.
+        #
+        # Invoke vitest directly: `pnpm run test -- <flags>` forwards the
+        # literal `--` to vitest, which then parses the flags as test-name
+        # filters — silently running the whole suite unsharded.
         run: |
-          pnpm run test -- \
+          pnpm exec vitest run --project unit \
             --reporter=dot \
-            --changed=${{ github.event.pull_request.base.sha }} \
-            --passWithNoTests
-        env:
-          NODE_ENV: test
-          NODE_OPTIONS: --max-old-space-size=8192
-
-      # full mode: run the entire suite split across N shards.
-      - name: Run tests (full mode, shard ${{ matrix.shard }}/2)
-        id: tests_full
-        if: needs.scope.outputs.mode == 'full'
-        run: |
-          pnpm run test -- \
-            --reporter=dot \
-            --shard=${{ matrix.shard }}/2
+            --shard=${{ matrix.shard }}/${{ env.SHARD_COUNT }}
         env:
           NODE_ENV: test
           NODE_OPTIONS: --max-old-space-size=8192
@@ -188,11 +100,7 @@ jobs:
       # artifacts are the reliable cross-shard signal.
       - name: Upload shard outcome
         if: always()
-        run: |
-          # Prefer the changed-mode step; fall back to the full-mode step.
-          OUTCOME="${{ steps.tests.outcome }}"
-          [ -z "${OUTCOME}" ] || [ "${OUTCOME}" = "skipped" ] && OUTCOME="${{ steps.tests_full.outcome }}"
-          echo "${OUTCOME}" > /tmp/shard-${{ matrix.shard }}-outcome.txt
+        run: echo "${{ steps.tests.outcome }}" > /tmp/shard-${{ matrix.shard }}-outcome.txt
 
       - name: Upload shard outcome artifact
         if: always()
@@ -202,14 +110,13 @@ jobs:
           path: /tmp/shard-${{ matrix.shard }}-outcome.txt
           retention-days: 1
 
-  # ── Step 3 & 4: aggregate shard outcomes, gate the merge, report ────────────
-  # This job produces the single stable check name ("report") that is the same
-  # whether the run used 1 shard (changed mode) or 2 (full mode), which is what
-  # should be marked as the REQUIRED status check on `main`. It fails the build
+  # ── Step 2: aggregate shard outcomes, gate the merge, report ────────────────
+  # This job produces the single stable check name ("report") that should be
+  # marked as the REQUIRED status check on `main`. It fails the build
   # (core.setFailed) whenever any shard was not green — that is the hard gate.
   report:
     if: always()
-    needs: [scope, test]
+    needs: [test]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -229,8 +136,7 @@ jobs:
             const path = require('path');
 
             const outcomesDir = '/tmp/outcomes';
-            const mode = '${{ needs.scope.outputs.mode }}';
-            const shardCount = parseInt('${{ needs.scope.outputs.shard_count }}', 10);
+            const shardCount = parseInt(process.env.SHARD_COUNT, 10);
 
             // Read all shard outcome files; if any is not 'success' → failed.
             // Fewer outcome files than expected shards means a test job never
@@ -254,16 +160,14 @@ jobs:
               passed = false;
             }
 
-            const modeLabel = mode === 'changed'
-              ? '`changed` (affected files only)'
-              : `\`full\` (${shardCount} shards)`;
+            const modeLabel = `\`full\` (${shardCount} shards)`;
 
             // ── PR event: post/update the test-result comment ──────────────
             if (context.eventName === 'pull_request') {
               const marker = '<!-- pr-tests-report -->';
               const body = passed
                 ? `${marker}\n## ✅ All Tests Passed!\n\nRan in **${modeLabel}** mode.\n\n---\n*Automated test report*`
-                : `${marker}\n## ❌ Tests Failed — merge blocked\n\nRan in **${modeLabel}** mode. One or more test files failed; this **blocks merge** (the \`report\` check is required on \`main\`).\n\nReproduce locally with \`pnpm test\` (or \`pnpm test:unit\`), then re-run only the affected files. If the failure was introduced by a previously merged PR rather than your change (\`changed\` mode re-runs co-imported modules), say so on the PR and escalate — do **not** force-merge past a red gate.\n\n---\n*Automated test report*`;
+                : `${marker}\n## ❌ Tests Failed — merge blocked\n\nRan in **${modeLabel}** mode. One or more test files failed; this **blocks merge** (the \`report\` check is required on \`main\`).\n\nReproduce locally with \`pnpm test\` (or \`pnpm test:unit\`), then re-run only the affected files. If the failure was introduced by a previously merged PR rather than your change, say so on the PR and escalate — do **not** force-merge past a red gate.\n\n---\n*Automated test report*`;
 
               const { data: comments } = await github.rest.issues.listComments({
                 owner: context.repo.owner,

@@ -14,6 +14,21 @@ on:
       - '**/*.gif'
       - 'LICENSE'
       - '.gitignore'
+  # Coverage collection requires a full suite run (~10 min), which is too slow
+  # to block every PR. PRs run the gate with --skip-coverage; the full gate
+  # (including coverage regression vs baseline) runs post-merge on main.
+  push:
+    branches: [main]
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - '**/*.png'
+      - '**/*.jpg'
+      - '**/*.jpeg'
+      - '**/*.svg'
+      - '**/*.gif'
+      - 'LICENSE'
+      - '.gitignore'
 
 permissions:
   contents: read
@@ -26,6 +41,7 @@ concurrency:
 jobs:
   # Guard: baseline file may only change on PRs labelled `quality-baseline`.
   baseline-guard:
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 2
     steps:
@@ -53,6 +69,7 @@ jobs:
           fi
 
   static-checks:
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -62,8 +79,6 @@ jobs:
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v5
-        with:
-          version: 10
 
       - name: Setup Node.js
         uses: actions/setup-node@v5
@@ -89,7 +104,10 @@ jobs:
   quality-gate:
     # static-checks is purely informational (every step is continue-on-error)
     # so we don't gate on it; baseline-guard is the real prerequisite.
+    # On push to main there is no baseline-guard (it is skipped), so allow
+    # this job to run as long as nothing actually failed.
     needs: [baseline-guard]
+    if: always() && needs.baseline-guard.result != 'failure' && needs.baseline-guard.result != 'cancelled'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -99,8 +117,6 @@ jobs:
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v5
-        with:
-          version: 10
 
       - name: Setup Node.js
         uses: actions/setup-node@v5
@@ -111,15 +127,26 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Test with coverage
+      # Coverage needs a full suite run (~10 min) — far too slow to block
+      # every PR, and pr-tests.yml already gates correctness. Collect it only
+      # post-merge on main, where wall-clock time doesn't block anyone.
+      - name: Test with coverage (main only)
+        if: github.event_name == 'push'
         run: pnpm test:coverage
         continue-on-error: true
         env:
           NODE_ENV: test
           NODE_OPTIONS: --max-old-space-size=8192
 
-      - name: Run quality gate
-        id: gate
+      - name: Run quality gate (PR — without coverage)
+        if: github.event_name == 'pull_request'
+        id: gate_pr
+        run: pnpm quality --ci --skip-coverage
+        continue-on-error: true
+
+      - name: Run quality gate (main — full, with coverage)
+        if: github.event_name == 'push'
+        id: gate_main
         run: pnpm quality --ci
         continue-on-error: true
 
@@ -162,12 +189,13 @@ jobs:
             });
 
       - name: Fail on regression
-        if: steps.gate.outcome == 'failure'
+        if: steps.gate_pr.outcome == 'failure' || steps.gate_main.outcome == 'failure'
         run: |
           echo "::error::Quality gate failed — see PR comment / .quality/report.md for details."
           exit 1
 
   react-doctor:
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:

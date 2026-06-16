@@ -57,7 +57,7 @@ import fetchData from "@/utilities/fetchData";
 import { validateGithubInput } from "@/utilities/github";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
-import { gapSupportedNetworks } from "@/utilities/network";
+import { PROJECT_CREATION_DEFAULT_CHAIN_ID } from "@/utilities/network";
 import { PAGES } from "@/utilities/pages";
 import { sanitizeObject } from "@/utilities/sanitize";
 import { getProjectById } from "@/utilities/sdk";
@@ -67,7 +67,6 @@ import { cn } from "@/utilities/tailwind";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { SimilarProjectsDialog } from "../SimilarProjectsDialog";
 import { ContactInfoSection } from "./ContactInfoSection";
-import { NetworkDropdown } from "./NetworkDropdown";
 
 const inputStyle = "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";
 const socialMediaInputStyle =
@@ -227,7 +226,6 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   const { chain } = useAccount();
   const { switchChainAsync } = useWallet();
   const [isLoading, setIsLoading] = useState(false);
-  const [isChangingNetwork, setIsChangingNetwork] = useState(false);
   const router = useRouter();
   const { gap } = useGap();
   const { openSimilarProjectsModal, isSimilarProjectsModalOpen } = useSimilarProjectsModalStore();
@@ -247,47 +245,14 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       resolver: zodResolver(projectSchema),
       reValidateMode: "onChange",
       mode: "onChange",
-      defaultValues: dataToUpdate,
+      // New projects are always created on the default chain; existing projects
+      // keep their own chainID.
+      defaultValues: dataToUpdate ?? { chainID: PROJECT_CREATION_DEFAULT_CHAIN_ID },
     });
   const { errors, isValid } = formState;
 
   // Watch the chainID value for the useEffect
   const chainIDValue = watch("chainID");
-
-  // Handle network change and chain switching
-  const handleNetworkChange = async (networkId: number) => {
-    if (!isConnected || !address) {
-      return;
-    }
-
-    setIsChangingNetwork(true);
-
-    try {
-      // If we're not on the selected network, switch to it
-      if (chain?.id !== networkId) {
-        await switchChainAsync({ chainId: networkId });
-        // Wait a bit for the chain switch to complete
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-      }
-
-      // Now get the wallet client for the new chain
-      const { walletClient, error } = await safeGetWalletClient(networkId);
-
-      if (!error && walletClient) {
-        const signer = await walletClientToSigner(walletClient);
-        setWalletSigner(signer);
-      } else {
-        setWalletSigner(null);
-        showError("Failed to connect to the selected network");
-      }
-    } catch (error) {
-      showError("Failed to switch network. Please try again.");
-      setWalletSigner(null);
-      throw error; // Re-throw to let NetworkDropdown handle it
-    } finally {
-      setIsChangingNetwork(false);
-    }
-  };
 
   // Prepare wallet signer when wallet is connected and chain is selected
   useEffect(() => {
@@ -369,8 +334,9 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         setLogoUploadProgress(0);
         setTempLogoKey(null);
       } else {
-        // Create mode - reset to empty form
+        // Create mode - reset to empty form (always on the default chain)
         reset({
+          chainID: PROJECT_CREATION_DEFAULT_CHAIN_ID,
           title: "",
           description: "",
           problem: "",
@@ -1528,37 +1494,6 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
             }}
             removeContact={(contact) => setContacts(contacts.filter((c) => c.id !== contact.id))}
           />
-          {!projectToUpdate ? (
-            <div className="flex w-full flex-col gap-2 border-t border-zinc-200 dark:border-zinc-700 pt-8">
-              <label htmlFor="chain-id-input" className={labelStyle}>
-                Choose a network to create your project
-              </label>
-              <NetworkDropdown
-                onSelectFunction={(networkId) => {
-                  setValue("chainID", networkId, {
-                    shouldValidate: true,
-                  });
-                  // Reset faucet funding status when network changes
-                  setFaucetFunded(false);
-                }}
-                onNetworkChange={handleNetworkChange}
-                isChangingNetwork={isChangingNetwork}
-                networks={gapSupportedNetworks}
-                previousValue={watch("chainID")}
-              />
-              <p className="text-red-500">{errors.chainID?.message}</p>
-
-              {/* Show network status */}
-              {isChangingNetwork && (
-                <div className="mt-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                  <p className="text-sm text-blue-800 dark:text-blue-200 font-medium flex items-center gap-2">
-                    <span className="h-4 w-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
-                    Switching to selected network...
-                  </p>
-                </div>
-              )}
-            </div>
-          ) : null}
         </div>
       ),
     },
