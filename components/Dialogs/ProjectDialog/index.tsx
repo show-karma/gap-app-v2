@@ -56,8 +56,13 @@ import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";
 import { validateGithubInput } from "@/utilities/github";
 import { INDEXER } from "@/utilities/indexer";
+import { isRetryableChainError } from "@/utilities/isRetryableChainError";
 import { MESSAGES } from "@/utilities/messages";
-import { PROJECT_CREATION_DEFAULT_CHAIN_ID } from "@/utilities/network";
+import {
+  gapSupportedNetworks,
+  PROJECT_CREATION_DEFAULT_CHAIN_ID,
+  SHOW_PROJECT_CREATION_NETWORK_SELECTOR,
+} from "@/utilities/network";
 import { PAGES } from "@/utilities/pages";
 import { sanitizeObject } from "@/utilities/sanitize";
 import { getProjectById } from "@/utilities/sdk";
@@ -741,12 +746,18 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       setContacts([]);
       setCustomLinks([]);
     } catch (error: any) {
-      showError(MESSAGES.PROJECT.CREATE.ERROR(data.title));
+      // A transient chain-switch / bundler-RPC hiccup (GAP-FRONTEND-23C) is
+      // recoverable by retrying — tell the user that instead of a dead-end
+      // generic error. The form data is preserved either way.
+      const userMessage = isRetryableChainError(error)
+        ? MESSAGES.PROJECT.CREATE.RETRYABLE_ERROR
+        : MESSAGES.PROJECT.CREATE.ERROR(data.title);
+      showError(userMessage);
       errorManager(
         MESSAGES.PROJECT.CREATE.ERROR(data.title),
         error,
         { address, data },
-        { error: MESSAGES.PROJECT.CREATE.ERROR(data.title) }
+        { error: userMessage }
       );
       // Don't reset form on error - keep user's data and reopen modal
       setShouldResetOnOpen(false);
@@ -874,12 +885,15 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         }, 1500);
       });
     } catch (error: any) {
-      showError(MESSAGES.PROJECT.UPDATE.ERROR);
+      const userMessage = isRetryableChainError(error)
+        ? MESSAGES.PROJECT.UPDATE.RETRYABLE_ERROR
+        : MESSAGES.PROJECT.UPDATE.ERROR;
+      showError(userMessage);
       errorManager(
         `Error updating project ${projectToUpdate?.details?.slug || projectToUpdate?.uid}`,
         error,
         { ...data, address },
-        { error: MESSAGES.PROJECT.UPDATE.ERROR }
+        { error: userMessage }
       );
       setShouldResetOnOpen(false);
       openModal();
@@ -1492,6 +1506,28 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       desc: "How can we contact you?",
       fields: (
         <div className="flex w-full min-w-[320px] flex-col gap-8">
+          {SHOW_PROJECT_CREATION_NETWORK_SELECTOR && !projectToUpdate && (
+            <div className="flex w-full flex-col gap-2">
+              <label htmlFor="network-select" className={labelStyle}>
+                Network *
+              </label>
+              <select
+                id="network-select"
+                className={inputStyle}
+                value={watch("chainID") ?? PROJECT_CREATION_DEFAULT_CHAIN_ID}
+                onChange={(e) => {
+                  setValue("chainID", +e.target.value, { shouldValidate: true });
+                }}
+              >
+                {gapSupportedNetworks.map((chain) => (
+                  <option key={chain.id} value={chain.id}>
+                    {chain.name}
+                  </option>
+                ))}
+              </select>
+              <p className="text-red-500">{errors.chainID?.message}</p>
+            </div>
+          )}
           <ContactInfoSection
             existingContacts={contacts}
             isEditing={!!projectToUpdate}
