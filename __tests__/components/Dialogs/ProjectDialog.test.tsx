@@ -779,6 +779,14 @@ describe("projectSchema combined body length cap", () => {
     expect(PROJECT_DETAILS_MAX_LENGTH).toBe(15000);
   });
 
+  it("surfaces the per-field counter at 10,000 characters, below the cap", async () => {
+    const { PROJECT_DETAILS_COUNTER_THRESHOLD, PROJECT_DETAILS_MAX_LENGTH } = await import(
+      "@/components/Dialogs/ProjectDialog"
+    );
+    expect(PROJECT_DETAILS_COUNTER_THRESHOLD).toBe(10000);
+    expect(PROJECT_DETAILS_COUNTER_THRESHOLD).toBeLessThan(PROJECT_DETAILS_MAX_LENGTH);
+  });
+
   it("accepts the four fields when their combined length is at the limit", async () => {
     const { projectSchema, PROJECT_DETAILS_MAX_LENGTH } = await import(
       "@/components/Dialogs/ProjectDialog"

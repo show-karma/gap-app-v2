@@ -85,6 +85,10 @@ const labelStyle = "text-slate-700 text-sm font-bold leading-tight dark:text-sla
 // is driven by their sum.
 export const PROJECT_DETAILS_MAX_LENGTH = 15000;
 
+// Only surface the per-field live character counter as a field approaches the cap,
+// so shorter fields stay uncluttered.
+export const PROJECT_DETAILS_COUNTER_THRESHOLD = 10000;
+
 export const projectSchema = z
   .object({
     title: z
@@ -1095,6 +1099,8 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                 });
               }}
               maxLength={PROJECT_DETAILS_MAX_LENGTH}
+              showCharacterCount
+              characterCountThreshold={PROJECT_DETAILS_COUNTER_THRESHOLD}
             />
             <p className="text-red-500">{errors.description?.message}</p>
           </div>
@@ -1112,6 +1118,8 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                 });
               }}
               maxLength={PROJECT_DETAILS_MAX_LENGTH}
+              showCharacterCount
+              characterCountThreshold={PROJECT_DETAILS_COUNTER_THRESHOLD}
             />
             <p className="text-red-500">{errors.problem?.message}</p>
           </div>
@@ -1128,6 +1136,8 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                 });
               }}
               maxLength={PROJECT_DETAILS_MAX_LENGTH}
+              showCharacterCount
+              characterCountThreshold={PROJECT_DETAILS_COUNTER_THRESHOLD}
             />
             <p className="text-red-500">{errors.solution?.message}</p>
           </div>
@@ -1144,6 +1154,8 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                 });
               }}
               maxLength={PROJECT_DETAILS_MAX_LENGTH}
+              showCharacterCount
+              characterCountThreshold={PROJECT_DETAILS_COUNTER_THRESHOLD}
             />
             <p className="text-red-500">{errors.missionSummary?.message}</p>
           </div>

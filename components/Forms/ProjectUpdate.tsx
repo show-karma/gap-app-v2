@@ -68,6 +68,10 @@ interface CommunityIndicator {
 // keeps a single update comfortably within that limit.
 export const PROJECT_UPDATE_MAX_LENGTH = 15000;
 
+// Only surface the live character counter as the body approaches the cap, so
+// short updates stay uncluttered.
+export const PROJECT_UPDATE_COUNTER_THRESHOLD = 10000;
+
 export const updateSchema = z.object({
   title: z
     .string()
@@ -851,6 +855,8 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
               })
             }
             maxLength={PROJECT_UPDATE_MAX_LENGTH}
+            showCharacterCount
+            characterCountThreshold={PROJECT_UPDATE_COUNTER_THRESHOLD}
             placeholderText="Conducted user research and published a report, worked with our developers, added new features, etc."
           />
         </div>

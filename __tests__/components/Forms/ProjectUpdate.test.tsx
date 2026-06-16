@@ -4,6 +4,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { vi } from "vitest";
 import {
+  PROJECT_UPDATE_COUNTER_THRESHOLD,
   PROJECT_UPDATE_MAX_LENGTH,
   ProjectUpdateForm,
   updateSchema,
@@ -622,6 +623,11 @@ describe("updateSchema body length cap", () => {
 
   it("caps the limit at 15,000 characters", () => {
     expect(PROJECT_UPDATE_MAX_LENGTH).toBe(15000);
+  });
+
+  it("surfaces the counter at 10,000 characters, below the cap", () => {
+    expect(PROJECT_UPDATE_COUNTER_THRESHOLD).toBe(10000);
+    expect(PROJECT_UPDATE_COUNTER_THRESHOLD).toBeLessThan(PROJECT_UPDATE_MAX_LENGTH);
   });
 
   it("accepts a body exactly at the limit", () => {
