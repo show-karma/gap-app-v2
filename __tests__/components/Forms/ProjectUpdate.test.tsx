@@ -3,12 +3,12 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { vi } from "vitest";
+import { ProjectUpdateForm } from "@/components/Forms/ProjectUpdate";
 import {
   PROJECT_UPDATE_COUNTER_THRESHOLD,
   PROJECT_UPDATE_MAX_LENGTH,
-  ProjectUpdateForm,
   updateSchema,
-} from "@/components/Forms/ProjectUpdate";
+} from "@/components/Forms/ProjectUpdate.schema";
 import { useImpactAnswers } from "@/hooks/useImpactAnswers";
 import { useProjectUpdates } from "@/hooks/v2/useProjectUpdates";
 import { MESSAGES } from "@/utilities/messages";

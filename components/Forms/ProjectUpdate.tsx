@@ -10,7 +10,12 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { SubmitHandler } from "react-hook-form";
 import { Controller, useForm } from "react-hook-form";
 import { useAccount } from "wagmi";
-import { z } from "zod";
+import {
+  PROJECT_UPDATE_COUNTER_THRESHOLD,
+  PROJECT_UPDATE_MAX_LENGTH,
+  type UpdateType,
+  updateSchema,
+} from "@/components/Forms/ProjectUpdate.schema";
 import { Button } from "@/components/Utilities/Button";
 import { DatePicker } from "@/components/Utilities/DatePicker";
 import { InfoTooltip } from "@/components/Utilities/InfoTooltip";
@@ -62,51 +67,9 @@ interface CommunityIndicator {
   communityName?: string;
 }
 
-// Cap the update body length. The whole body is serialized into the attestation
-// payload, and for sponsored (gasless) submissions the resulting operation must fit
-// under the bundler's gas limit — cost scales ~linearly with length. 15k characters
-// keeps a single update comfortably within that limit.
-export const PROJECT_UPDATE_MAX_LENGTH = 15000;
-
-// Only surface the live character counter as the body approaches the cap, so
-// short updates stay uncluttered.
-export const PROJECT_UPDATE_COUNTER_THRESHOLD = 10000;
-
-export const updateSchema = z.object({
-  title: z
-    .string()
-    .min(3, { message: MESSAGES.PROJECT_UPDATE_FORM.TITLE.MIN })
-    .max(75, { message: MESSAGES.PROJECT_UPDATE_FORM.TITLE.MAX }),
-  text: z
-    .string()
-    .min(3, { message: MESSAGES.PROJECT_UPDATE_FORM.TEXT.MIN })
-    .max(PROJECT_UPDATE_MAX_LENGTH, { message: MESSAGES.PROJECT_UPDATE_FORM.TEXT.MAX }),
-  startDate: z.date().optional(),
-  endDate: z.date().optional(),
-  grants: z.array(z.string()).optional(),
-  outputs: z.array(
-    z.object({
-      outputId: z.string().min(1, "Output is required"),
-      value: z.union([z.number().min(0), z.string()]),
-      proof: z.string().optional(),
-      startDate: z.string().optional(),
-      endDate: z.string().optional(),
-    })
-  ),
-  deliverables: z.array(
-    z.object({
-      name: z.string().min(1, "Name is required"),
-      proof: z.string().min(1, "Proof is required"),
-      description: z.string().optional(),
-    })
-  ),
-});
-
 const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
 const inputStyle =
   "mt-2 w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100 dark:placeholder-zinc-300";
-
-type UpdateType = z.infer<typeof updateSchema>;
 
 interface ProjectUpdateFormProps {
   afterSubmit?: () => void;
