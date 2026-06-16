@@ -161,6 +161,31 @@ export interface CandidateFinancialYear {
   assets: number | null;
 }
 
+export type SocialChannel = "linkedin" | "facebook" | "instagram" | "x";
+
+export interface SocialChannelMetric {
+  channel: SocialChannel;
+  /** False = no handle for this channel, or the fetch did not resolve. */
+  available: boolean;
+  followers: number | null;
+  /** Posts in the trailing 60-day window. */
+  postsInWindow: number;
+  lastPostAt: string | null;
+  avgLikes: number | null;
+}
+
+/**
+ * Per-channel social-activity snapshot captured at report time (DEV-385).
+ * `null` for candidates with no social data persisted.
+ */
+export interface SocialMetrics {
+  byChannel: SocialChannelMetric[];
+  /** Most recent post across all channels. */
+  lastPostAt: string | null;
+  /** Sum of non-null follower counts across channels. */
+  totalFollowers: number | null;
+}
+
 export interface ResearchReportCandidate {
   id: string;
   fundingOrganizationId: string;
@@ -186,6 +211,12 @@ export interface ResearchReportCandidate {
   activitySignalStatus: ActivitySignalStatus;
   websiteLastUpdatedAt: string | null;
   socialLastPostAt: string | null;
+  /**
+   * Per-channel social-activity snapshot (followers, posts-in-60d, last
+   * post, avg likes). `null` for candidates predating the social signal
+   * or with no social data.
+   */
+  socialMetrics: SocialMetrics | null;
   reasoningSummary: string | null;
   onePagerText: string | null;
   detailedText: string | null;

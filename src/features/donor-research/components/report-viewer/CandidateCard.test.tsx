@@ -62,6 +62,7 @@ function buildCandidate(overrides: Partial<ResearchReportCandidate> = {}): Resea
     activitySignalStatus: "no_signal",
     websiteLastUpdatedAt: null,
     socialLastPostAt: null,
+    socialMetrics: null,
     reasoningSummary: null,
     onePagerText: null,
     detailedText: null,
@@ -179,5 +180,78 @@ describe("CandidateCard score evidence", () => {
     ).toBeInTheDocument();
     expect(screen.getByText("Program update")).toBeInTheDocument();
     expect(screen.getByText("Coverage")).toBeInTheDocument();
+  });
+});
+
+describe("CandidateCard social presence", () => {
+  it("renders available channels with compact follower counts", () => {
+    render(
+      <CandidateCard
+        candidate={buildCandidate({
+          socialMetrics: {
+            byChannel: [
+              {
+                channel: "linkedin",
+                available: true,
+                followers: 68247,
+                postsInWindow: 5,
+                lastPostAt: "2026-06-12T00:00:00Z",
+                avgLikes: 85,
+              },
+              {
+                channel: "facebook",
+                available: false,
+                followers: null,
+                postsInWindow: 0,
+                lastPostAt: null,
+                avgLikes: null,
+              },
+            ],
+            lastPostAt: "2026-06-12T00:00:00Z",
+            totalFollowers: 68247,
+          },
+        })}
+        variant="detail"
+      />
+    );
+
+    expect(screen.getByText("Social presence")).toBeInTheDocument();
+    expect(screen.getByText("LinkedIn")).toBeInTheDocument();
+    // 68247 → "68.2K", rendered for both the channel row and the total.
+    expect(screen.getAllByText("68.2K").length).toBeGreaterThan(0);
+    // Unavailable channel is not rendered.
+    expect(screen.queryByText("Facebook")).not.toBeInTheDocument();
+  });
+
+  it("omits the social section when socialMetrics is null", () => {
+    render(<CandidateCard candidate={buildCandidate({ socialMetrics: null })} variant="detail" />);
+
+    expect(screen.queryByText("Social presence")).not.toBeInTheDocument();
+  });
+
+  it("omits the social section when no channel is available", () => {
+    render(
+      <CandidateCard
+        candidate={buildCandidate({
+          socialMetrics: {
+            byChannel: [
+              {
+                channel: "x",
+                available: false,
+                followers: null,
+                postsInWindow: 0,
+                lastPostAt: null,
+                avgLikes: null,
+              },
+            ],
+            lastPostAt: null,
+            totalFollowers: null,
+          },
+        })}
+        variant="detail"
+      />
+    );
+
+    expect(screen.queryByText("Social presence")).not.toBeInTheDocument();
   });
 });
