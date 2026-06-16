@@ -73,7 +73,9 @@ export const SITEMAP_KINDS: readonly SitemapKindMeta[] = [
 // near-duplicates of the project root, are now noindexed, and would dilute
 // crawl budget if listed — so they are dropped from the index. Their per-kind
 // routes still serve (see SITEMAP_KINDS) so already-submitted URLs stay 200.
-export const INDEXED_SITEMAP_KINDS: readonly SitemapKindMeta[] = SITEMAP_KINDS.filter(
+// Module-local (not exported): only buildSitemapIndexBody consumes it, and an
+// unused export trips the repo's knip quality gate.
+const INDEXED_SITEMAP_KINDS: readonly SitemapKindMeta[] = SITEMAP_KINDS.filter(
   (meta) => meta.kind === "projects" || meta.kind === "funding-programs"
 );
 
