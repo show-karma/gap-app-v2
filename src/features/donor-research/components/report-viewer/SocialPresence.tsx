@@ -1,4 +1,5 @@
-import type { SocialChannel, SocialChannelMetric, SocialMetrics } from "@/types/donor-research";
+import type { SocialChannel, SocialMetrics } from "@/types/donor-research";
+import { briefDisplay } from "../report-brief/fonts";
 import { formatCompactNumber, relativeDays } from "../report-brief/text-utils";
 
 const CHANNEL_LABELS: Record<SocialChannel, string> = {
@@ -14,65 +15,71 @@ interface SocialPresenceProps {
 
 /**
  * Per-channel social-activity snapshot on a candidate (DEV-385): followers,
- * 60-day posting cadence, average likes, and recency. Mirrors the
- * `RecentActivity` section's visual register.
+ * 60-day posting cadence, average likes, and recency. Styled to match the
+ * brief's "Financials (last 3 years)" table.
  *
  * Renders only the channels we actually resolved; if none resolved the
- * section is silent (no "no social" noise) — same convention as
- * RecentActivity.
+ * section is silent (no "no social" noise).
  */
 export function SocialPresence({ metrics }: SocialPresenceProps) {
   const channels = metrics?.byChannel.filter((channel) => channel.available) ?? [];
   if (!metrics || channels.length === 0) return null;
 
-  return (
-    <section className="rounded-md border border-border/60 bg-muted/20 p-4">
-      <div className="mb-3 flex items-center justify-between gap-2">
-        <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
-          Social presence
-        </p>
-        {metrics.totalFollowers !== null ? (
-          <span className="text-[11px] text-muted-foreground">
-            <span className="font-mono tabular-nums text-foreground/80">
-              {formatCompactNumber(metrics.totalFollowers)}
-            </span>{" "}
-            followers
-          </span>
-        ) : null}
-      </div>
-
-      <ul className="flex flex-col gap-3">
-        {channels.map((channel) => (
-          <SocialChannelRow key={channel.channel} metric={channel} />
-        ))}
-      </ul>
-    </section>
-  );
-}
-
-function SocialChannelRow({ metric }: { metric: SocialChannelMetric }) {
-  const lastPost = metric.lastPostAt ? relativeDays(Date.parse(metric.lastPostAt)) : null;
-
-  const stats: string[] = [];
-  if (metric.followers !== null) {
-    stats.push(`${formatCompactNumber(metric.followers)} followers`);
-  }
-  stats.push(`${metric.postsInWindow} ${metric.postsInWindow === 1 ? "post" : "posts"} · 60d`);
-  if (metric.avgLikes !== null) {
-    stats.push(`~${formatCompactNumber(metric.avgLikes)} avg likes`);
-  }
+  const headCell =
+    "py-2 pl-4 text-right text-[10px] font-medium uppercase tracking-[0.16em] text-muted-foreground";
+  const cell = "py-2 pl-4 text-right tabular-nums text-foreground/70";
 
   return (
-    <li className="text-sm">
-      <span className="flex items-baseline justify-between gap-2">
-        <span className="font-medium text-foreground/90">{CHANNEL_LABELS[metric.channel]}</span>
-        {lastPost ? (
-          <span className="shrink-0 text-[11px] text-muted-foreground">{lastPost}</span>
-        ) : null}
-      </span>
-      <span className="mt-0.5 block text-[11px] tabular-nums text-muted-foreground">
-        {stats.join(" · ")}
-      </span>
-    </li>
+    <div className="mt-8">
+      <p
+        className={`${briefDisplay.className} text-[10px] font-medium uppercase tracking-[0.28em] text-muted-foreground`}
+      >
+        Social presence (last 60 days)
+      </p>
+      <table className={`${briefDisplay.className} mt-3 w-full border-collapse text-sm`}>
+        <thead>
+          <tr className="border-y border-border/50">
+            <th className="py-2 pr-4 text-left text-[10px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
+              Channel
+            </th>
+            <th className={headCell}>Followers</th>
+            <th className={headCell}>Posts</th>
+            <th className={headCell}>Likes / post</th>
+            <th className={headCell}>Last post</th>
+          </tr>
+        </thead>
+        <tbody>
+          {channels.map((channel) => {
+            const lastPost = channel.lastPostAt
+              ? (relativeDays(Date.parse(channel.lastPostAt)) ?? "—")
+              : "—";
+            return (
+              <tr key={channel.channel} className="border-b border-border/50 last:border-b-0">
+                <td className="py-2 pr-4 text-left font-medium tabular-nums text-foreground/80">
+                  {channel.profileUrl ? (
+                    <a
+                      href={channel.profileUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="underline-offset-[3px] hover:text-foreground hover:underline"
+                    >
+                      {CHANNEL_LABELS[channel.channel]}
+                    </a>
+                  ) : (
+                    CHANNEL_LABELS[channel.channel]
+                  )}
+                </td>
+                <td className={cell}>{formatCompactNumber(channel.followers)}</td>
+                <td className={cell}>{channel.postsInWindow}</td>
+                <td className={cell}>
+                  {channel.avgLikes !== null ? `~${formatCompactNumber(channel.avgLikes)}` : "—"}
+                </td>
+                <td className={cell}>{lastPost}</td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
   );
 }

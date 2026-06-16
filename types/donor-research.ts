@@ -172,6 +172,8 @@ export interface SocialChannelMetric {
   postsInWindow: number;
   lastPostAt: string | null;
   avgLikes: number | null;
+  /** Public profile URL, when known — makes the channel row a link. */
+  profileUrl?: string | null;
 }
 
 /**
