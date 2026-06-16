@@ -229,7 +229,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   const router = useRouter();
   const { gap } = useGap();
   const { openSimilarProjectsModal, isSimilarProjectsModalOpen } = useSimilarProjectsModalStore();
-  const { setupChainAndWallet, smartWalletAddress } = useSetupChainAndWallet();
+  const { setupChainAndWallet, smartWalletAddress, hasEmbeddedWallet } = useSetupChainAndWallet();
   // Resolve address: wagmi (external wallet) > useAuth (Privy wallets) > smartWalletAddress (embedded wallet for social login)
   const address = wagmiAddress || authAddress || (smartWalletAddress as `0x${string}` | undefined);
   const isConnected = wagmiIsConnected || authIsConnected || !!smartWalletAddress;
@@ -257,6 +257,13 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   // Prepare wallet signer when wallet is connected and chain is selected
   useEffect(() => {
     const prepareSigner = async () => {
+      // Embedded (email/Google) wallets get their gasless signer at submit via
+      // setupChainAndWallet — wagmi's safeGetWalletClient can't build one for them
+      // and would log spurious "Failed to prepare wallet signer" errors.
+      if (hasEmbeddedWallet) {
+        setWalletSigner(null);
+        return;
+      }
       if (isConnected && address && chainIDValue) {
         try {
           // Check if we're on the correct chain
@@ -285,7 +292,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
     };
 
     prepareSigner();
-  }, [isConnected, address, chainIDValue, chain?.id]);
+  }, [isConnected, address, chainIDValue, chain?.id, hasEmbeddedWallet]);
 
   // Reset form when switching between create/edit modes or when modal opens
   useEffect(() => {
