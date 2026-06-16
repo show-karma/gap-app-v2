@@ -175,7 +175,7 @@ vi.mock("@/utilities/messages", () => ({
       },
       TEXT: {
         MIN: "Description is required",
-        MAX: "This update is too long. Please keep it under 15,000 characters.",
+        MAX: "This update is too long. Please keep it to 15,000 characters or fewer.",
       },
       SUCCESS: "Activity posted successfully!",
       ERROR: "Failed to post activity",

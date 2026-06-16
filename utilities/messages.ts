@@ -5,7 +5,7 @@ export const MESSAGES = {
       MAX: "Title must be less than 50 characters",
     },
     DETAILS_MAX:
-      "Your description, problem, solution and mission summary are too long combined. Please keep them under 15,000 characters in total.",
+      "Your description, problem, solution and mission summary are too long combined. Please keep them to 15,000 characters or fewer in total.",
     RECIPIENT: "Invalid address",
     TAGS: "Each category must be at least 3 characters",
     SOCIALS: {
@@ -77,7 +77,7 @@ export const MESSAGES = {
     },
     TEXT: {
       MIN: "Text must be at least 3 characters",
-      MAX: "This update is too long. Please keep it under 15,000 characters.",
+      MAX: "This update is too long. Please keep it to 15,000 characters or fewer.",
     },
     SUCCESS: "Update was successfully added to the project.",
     ERROR: "There was an error creating the update.",
