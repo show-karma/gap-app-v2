@@ -1,4 +1,5 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { useCallback, useMemo } from "react";
 import { getProjectUpdates } from "@/services/project-updates.service";
 import type { UpdatesFeedFilters } from "@/types/v2/project-profile.types";
 import type {
@@ -372,6 +373,14 @@ const sortByDateDescending = (milestones: UnifiedMilestone[]): UnifiedMilestone[
  * @param filters - Optional extra filters forwarded to the indexer
  * @returns Object containing unified milestones, loading state, error, and refetch function
  */
+/**
+ * Shared frozen empty array so the no-data branch returns a STABLE reference
+ * across renders. Returning a fresh `[]` each render makes every downstream
+ * memo/effect that depends on `milestones` re-run on every render (the request-
+ * storm amplifier in DEV-396).
+ */
+const EMPTY_MILESTONES: UnifiedMilestone[] = [];
+
 interface UseProjectUpdatesOptions {
   /**
    * Whether the request should attach a Privy bearer token. Defaults to
@@ -390,16 +399,30 @@ export function useProjectUpdates(
 ) {
   const { isAuthorized = true } = options;
   // Build a stable query key that includes all active filter values so that
-  // React Query invalidates the cache whenever any filter changes.
-  const queryKey = [
-    ...QUERY_KEYS.PROJECT.UPDATES(projectIdOrSlug),
-    milestoneStatus ?? null,
-    filters?.dateFrom ?? null,
-    filters?.dateTo ?? null,
-    filters?.hasAIEvaluation ?? null,
-    filters?.aiScoreMin ?? null,
-    filters?.aiScoreMax ?? null,
-  ] as const;
+  // React Query invalidates the cache whenever any filter changes. Memoized on
+  // the underlying primitives so its identity is stable across renders — the
+  // refetch callback below depends on it.
+  const queryKey = useMemo(
+    () =>
+      [
+        ...QUERY_KEYS.PROJECT.UPDATES(projectIdOrSlug),
+        milestoneStatus ?? null,
+        filters?.dateFrom ?? null,
+        filters?.dateTo ?? null,
+        filters?.hasAIEvaluation ?? null,
+        filters?.aiScoreMin ?? null,
+        filters?.aiScoreMax ?? null,
+      ] as const,
+    [
+      projectIdOrSlug,
+      milestoneStatus,
+      filters?.dateFrom,
+      filters?.dateTo,
+      filters?.hasAIEvaluation,
+      filters?.aiScoreMin,
+      filters?.aiScoreMax,
+    ]
+  );
 
   const {
     data,
@@ -416,21 +439,28 @@ export function useProjectUpdates(
     placeholderData: keepPreviousData,
   });
 
-  // Convert response to unified format (no longer needs project data)
-  const milestones = data
-    ? sortByDateDescending(assignGrantMilestoneOrder(convertToUnifiedMilestones(data)))
-    : [];
+  // Convert response to unified format (no longer needs project data). Memoized
+  // on `data` so the derived array keeps a stable identity across renders when
+  // the underlying query result hasn't changed — otherwise the per-render
+  // recompute churns every consumer's deps (DEV-396 request storm).
+  const milestones = useMemo(
+    () =>
+      data
+        ? sortByDateDescending(assignGrantMilestoneOrder(convertToUnifiedMilestones(data)))
+        : EMPTY_MILESTONES,
+    [data]
+  );
 
   // Filter pending milestones (not completed)
-  const pendingMilestones = milestones.filter((m) => !m.completed);
+  const pendingMilestones = useMemo(() => milestones.filter((m) => !m.completed), [milestones]);
 
   // Provide raw data for components that want to use it directly
   const rawData = data;
 
-  const refetch = async () => {
+  const refetch = useCallback(async () => {
     await queryClient.invalidateQueries({ queryKey });
     return originalRefetch();
-  };
+  }, [queryKey, originalRefetch]);
 
   return {
     milestones,
