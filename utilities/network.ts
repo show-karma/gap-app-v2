@@ -60,6 +60,16 @@ export const gapSupportedNetworks = appNetwork.filter(
 ) as [Chain, ...Chain[]];
 
 /**
+ * Network that new projects are created on.
+ *
+ * Project creation no longer exposes a network selector — every new project is
+ * created on this chain. Existing projects on other chains keep working
+ * everywhere else (editing, attestations, donations, etc.); `appNetwork` and
+ * `gapSupportedNetworks` are intentionally left untouched.
+ */
+export const PROJECT_CREATION_DEFAULT_CHAIN_ID = base.id;
+
+/**
  * Networks where projects can configure payout addresses for donations.
  * Includes all app networks (including mainnet) since donations don't require
  * GAP SDK/attestation support - only the batch donations contract deployment.
