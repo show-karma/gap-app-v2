@@ -191,7 +191,12 @@ describe("Project profile pages — dynamic imports", () => {
   });
 
   it("/project/[projectId]/(profile) (updates index) renders the loading skeleton", async () => {
-    await renderPageElement(() => import("@/app/project/[projectId]/(profile)/page"));
+    // The updates index is an async server component (server-fetches the feed),
+    // so it must be awaited like the other async pages rather than rendered as
+    // an element. The mocked data layer above keeps the server fetch offline.
+    await renderAsyncPage(() => import("@/app/project/[projectId]/(profile)/page"), {
+      params: Promise.resolve({ projectId: "p1" }),
+    });
     expect(screen.getByTestId("updates-content-skeleton")).toBeInTheDocument();
   });
 });

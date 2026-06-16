@@ -10,8 +10,9 @@ import { getProjectCachedData } from "@/utilities/queries/getProjectCachedData";
 // Upper bound on items rendered into the server HTML. The interactive client
 // feed loads the full list and replaces this on hydration; the cap just keeps
 // the initial HTML payload reasonable — the most recent items already carry the
-// indexable titles/descriptions crawlers need.
-export const SERVER_FEED_MAX_ITEMS = 50;
+// indexable titles/descriptions crawlers need. Module-local: only used below,
+// and an unused export trips the repo's knip quality gate.
+const SERVER_FEED_MAX_ITEMS = 50;
 
 /**
  * Server-only: builds a project's unified activity feed using the exact same
