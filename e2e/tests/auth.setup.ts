@@ -12,9 +12,9 @@ const STORAGE_STATE_PATH = path.join(__dirname, "..", ".auth", "user.json");
  * Only runs when QA_TEST_EMAIL is set (CI). Locally with E2E bypass,
  * auth is handled per-test via localStorage injection.
  */
-setup.setTimeout(60_000);
+setup.setTimeout(120_000);
 
-setup("authenticate via Privy", async ({ page }) => {
+setup("authenticate via Privy", async ({ page, browser }) => {
   const email = process.env.QA_TEST_EMAIL;
   const otp = process.env.QA_TEST_OTP;
 
@@ -24,6 +24,38 @@ setup("authenticate via Privy", async ({ page }) => {
     }
     // Local dev without test account — skip setup. Tests will use E2E bypass.
     return;
+  }
+
+  // Fast path: a previously saved storage state (restored from CI cache)
+  // may still hold a valid Privy session — the SDK refreshes privy:token
+  // from the refresh token on page load. Reusing it avoids sending an OTP
+  // email at all, which is what keeps us under Privy's per-address send
+  // rate limits (the dominant cause of flaky CI logins).
+  const fs = await import("node:fs");
+  if (fs.existsSync(STORAGE_STATE_PATH) && fs.statSync(STORAGE_STATE_PATH).size > 0) {
+    try {
+      const context = await browser.newContext({ storageState: STORAGE_STATE_PATH });
+      const probe = await context.newPage();
+      await probe.goto("/", { waitUntil: "domcontentloaded" });
+      const refreshed = await probe
+        .waitForFunction(() => localStorage.getItem("privy:token") !== null, {
+          timeout: 15_000,
+        })
+        .then(() => true)
+        .catch(() => false);
+      if (refreshed) {
+        // Re-save so the freshly refreshed token is what gets cached.
+        await probe.waitForTimeout(1000);
+        await context.storageState({ path: STORAGE_STATE_PATH });
+        await context.close();
+        console.log("Reused cached Privy session — skipped OTP login");
+        return;
+      }
+      await context.close();
+      console.log("Cached Privy session expired — falling back to OTP login");
+    } catch (err) {
+      console.log(`Cached session probe failed (${err}) — falling back to OTP login`);
+    }
   }
 
   // Navigate to the homepage to load the app and Privy SDK
@@ -54,11 +86,14 @@ setup("authenticate via Privy", async ({ page }) => {
     )
     .first();
 
-  // Race: either OTP input appears or we get a rate-limit error
+  // Race: either OTP input appears or we get a rate-limit error. 60s, not
+  // 30s — OTP email dispatch latency on Privy's side regularly exceeds 30s
+  // under load, and a premature timeout here both fails the job and burns
+  // another send against the per-address rate limit on the next attempt.
   const result = await Promise.race([
-    otpInput.waitFor({ state: "visible", timeout: 30000 }).then(() => "otp" as const),
+    otpInput.waitFor({ state: "visible", timeout: 60000 }).then(() => "otp" as const),
     rateLimitError
-      .waitFor({ state: "visible", timeout: 30000 })
+      .waitFor({ state: "visible", timeout: 60000 })
       .then(() => "rate-limited" as const),
   ]);
 
