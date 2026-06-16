@@ -252,12 +252,8 @@ export function ProjectDetailsSidebar({
 
   const allocationByUID = useMemo(() => {
     const map = new Map<string, string>();
-    if (milestoneAllocations) {
-      for (const alloc of milestoneAllocations) {
-        if (alloc.milestoneUID) {
-          map.set(alloc.milestoneUID, alloc.amount);
-        }
-      }
+    for (const alloc of milestoneAllocations ?? []) {
+      if (alloc.milestoneUID) map.set(alloc.milestoneUID, alloc.amount);
     }
     return map;
   }, [milestoneAllocations]);

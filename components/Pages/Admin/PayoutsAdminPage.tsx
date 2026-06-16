@@ -176,10 +176,8 @@ export default function PayoutsAdminPage() {
   // Create a map of grant UID to payout config for quick lookup
   const payoutConfigMap = useMemo(() => {
     const map: Record<string, PayoutGrantConfig> = {};
-    if (payoutConfigs) {
-      for (const config of payoutConfigs) {
-        map[config.grantUID] = config;
-      }
+    for (const config of payoutConfigs ?? []) {
+      map[config.grantUID] = config;
     }
     return map;
   }, [payoutConfigs]);

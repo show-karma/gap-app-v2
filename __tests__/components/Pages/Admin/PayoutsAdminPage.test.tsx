@@ -89,11 +89,7 @@ vi.mock("@/src/features/payout-disbursement/components/MilestoneSelectionStep", 
 }));
 
 vi.mock("@/src/features/payout-disbursement/types/payout-disbursement", () => ({
-  AggregatedDisbursementStatus: {
-    COMPLETED: "COMPLETED",
-    PARTIAL: "PARTIAL",
-    PENDING: "PENDING",
-  },
+  AggregatedDisbursementStatus: { COMPLETED: "COMPLETED", PARTIAL: "PARTIAL", PENDING: "PENDING" },
   PayoutDisbursementStatus: {
     DISBURSED: "DISBURSED",
     AWAITING_SIGNATURES: "AWAITING_SIGNATURES",
