@@ -9,6 +9,7 @@ import { formatEin, hostname, humanizeCase, truncate } from "../report-brief/tex
 import { ComplianceBreakdown } from "./ComplianceBreakdown";
 import { formatLocale } from "./candidate-card-text";
 import { RecentActivity } from "./RecentActivity";
+import { SocialPresence } from "./SocialPresence";
 
 interface CandidateCardProps {
   candidate: ResearchReportCandidate;
@@ -90,6 +91,8 @@ export function CandidateCard({ candidate, variant }: CandidateCardProps) {
         {candidate.recentMentions && candidate.recentMentions.length > 0 ? (
           <RecentActivity mentions={candidate.recentMentions} />
         ) : null}
+
+        <SocialPresence metrics={candidate.socialMetrics} />
 
         {candidate.reasoningSummary ? (
           <p className="text-sm leading-relaxed text-foreground">{candidate.reasoningSummary}</p>
