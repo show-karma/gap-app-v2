@@ -54,9 +54,12 @@ export interface SitemapKindMeta {
   changeFrequency: "daily" | "weekly" | "monthly";
 }
 
-// The per-kind children listed in the index, in order. `static` and
-// `communities` are separate Next sitemap routes (local data) and are added to
-// the index directly.
+// Every kind whose per-kind route still serves. `static` and `communities` are
+// separate Next sitemap routes (local data) and are added to the index
+// directly. The impacts/grants/milestones routes keep returning 200 because
+// Google already holds those child-sitemap URLs from past submissions — we must
+// not start 404ing them — but they are no longer advertised by the index (see
+// INDEXED_SITEMAP_KINDS).
 export const SITEMAP_KINDS: readonly SitemapKindMeta[] = [
   { kind: "projects", priority: 0.8, changeFrequency: "daily" },
   { kind: "impacts", priority: 0.7, changeFrequency: "weekly" },
@@ -64,6 +67,15 @@ export const SITEMAP_KINDS: readonly SitemapKindMeta[] = [
   { kind: "milestones", priority: 0.5, changeFrequency: "weekly" },
   { kind: "funding-programs", priority: 0.6, changeFrequency: "weekly" },
 ];
+
+// The subset the sitemap index actually advertises: only the high-value,
+// canonical kinds. The thin tab variants (impacts/grants/milestones) are
+// near-duplicates of the project root, are now noindexed, and would dilute
+// crawl budget if listed — so they are dropped from the index. Their per-kind
+// routes still serve (see SITEMAP_KINDS) so already-submitted URLs stay 200.
+export const INDEXED_SITEMAP_KINDS: readonly SitemapKindMeta[] = SITEMAP_KINDS.filter(
+  (meta) => meta.kind === "projects" || meta.kind === "funding-programs"
+);
 
 export interface SitemapCounts {
   projects: number;
@@ -206,7 +218,7 @@ export async function buildSitemapIndexBody(): Promise<string> {
     `${SITE_URL}/sitemaps/communities/sitemap.xml`,
   ];
 
-  for (const { kind } of SITEMAP_KINDS) {
+  for (const { kind } of INDEXED_SITEMAP_KINDS) {
     const total = countForKind(counts, kind);
     // A missing count (partial payload) lists the consolidated child rather
     // than dropping the kind — the child route derives completeness from the
