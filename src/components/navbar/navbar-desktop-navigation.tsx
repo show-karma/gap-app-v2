@@ -56,6 +56,42 @@ function NavDropdownTrigger({ children }: { children: React.ReactNode }) {
   );
 }
 
+function NavSegmentDropdowns() {
+  return (
+    <div className="flex items-center gap-1">
+      {/* For Projects Dropdown */}
+      <DropdownMenu>
+        <NavDropdownTrigger>For Projects</NavDropdownTrigger>
+        <DropdownMenuContent align="start" className="p-0">
+          <div className="min-w-[500px] p-4">
+            <ForProjectsContent variant="desktop" />
+          </div>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      {/* For Funders Dropdown */}
+      <DropdownMenu>
+        <NavDropdownTrigger>For Funders</NavDropdownTrigger>
+        <DropdownMenuContent align="start" className="p-0">
+          <div className="min-w-[500px] p-4">
+            <ForFundersContent variant="desktop" />
+          </div>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      {/* For Nonprofits Dropdown */}
+      <DropdownMenu>
+        <NavDropdownTrigger>For Nonprofits</NavDropdownTrigger>
+        <DropdownMenuContent align="start" className="p-0">
+          <div className="min-w-[400px] p-4">
+            <ForNonprofitsContent variant="desktop" />
+          </div>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
+  );
+}
+
 function ResourcesDropdown() {
   return (
     <DropdownMenu>
@@ -115,56 +151,18 @@ const socialMediaLinks = [
 ];
 
 export function NavbarDesktopNavigation() {
-  const { isLoggedIn, isRegistryAllowed } = useNavbarPermissions();
+  const { isLoggedIn } = useNavbarPermissions();
 
   return (
     <div className="hidden lg:flex items-center flex-1 lg:justify-between gap-8">
       <div className="flex flex-row items-center gap-3 flex-shrink-0">
         <Logo />
-        {!isLoggedIn ? (
-          <div className="flex items-center gap-1">
-            {/* For Projects Dropdown */}
-            <DropdownMenu>
-              <NavDropdownTrigger>For Projects</NavDropdownTrigger>
-              <DropdownMenuContent align="start" className="p-0">
-                <div className="min-w-[500px] p-4">
-                  <ForProjectsContent variant="desktop" />
-                </div>
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            {/* For Funders Dropdown */}
-            <DropdownMenu>
-              <NavDropdownTrigger>For Funders</NavDropdownTrigger>
-              <DropdownMenuContent align="start" className="p-0">
-                <div className="min-w-[500px] p-4">
-                  <ForFundersContent variant="desktop" />
-                </div>
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            {/* For Nonprofits Dropdown */}
-            <DropdownMenu>
-              <NavDropdownTrigger>For Nonprofits</NavDropdownTrigger>
-              <DropdownMenuContent align="start" className="p-0">
-                <div className="min-w-[400px] p-4">
-                  <ForNonprofitsContent variant="desktop" />
-                </div>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        ) : (
-          <div className="flex flex-row items-center ml-2 gap-2">
-            <Button variant="outline" size="sm" asChild>
-              <Link href={PAGES.DASHBOARD}>Dashboard</Link>
-            </Button>
-            {isRegistryAllowed && (
-              <Button variant="outline" size="sm" asChild>
-                <Link href={PAGES.REGISTRY.MANAGE_PROGRAMS}>Manage Programs</Link>
-              </Button>
-            )}
-          </div>
+        {isLoggedIn && (
+          <Button variant="outline" size="sm" asChild>
+            <Link href={PAGES.DASHBOARD}>Dashboard</Link>
+          </Button>
         )}
+        <NavSegmentDropdowns />
       </div>
 
       <div className="flex flex-1 justify-center flex-row items-center gap-3">
@@ -179,26 +177,12 @@ export function NavbarDesktopNavigation() {
         </DropdownMenu>
       </div>
 
-      {!isLoggedIn ? (
-        <div className="flex flex-row items-center gap-4">
-          <ResourcesDropdown />
-
-          {/* Auth Buttons */}
-          <NavbarAuthButtons />
-          <ThemeToggleButton />
-        </div>
-      ) : null}
-
-      {/* Right Side - Theme Toggle & User Profile (Only when logged in) */}
-      {isLoggedIn && (
-        <div className="hidden lg:flex items-center gap-3">
-          <div className="flex flex-row items-center gap-2">
-            <ResourcesDropdown />
-            <ThemeToggleButton />
-            <NavbarUserMenu />
-          </div>
-        </div>
-      )}
+      {/* Right Side - shared between logged-in and logged-out states */}
+      <div className="flex flex-row items-center gap-3">
+        <ResourcesDropdown />
+        <ThemeToggleButton />
+        {isLoggedIn ? <NavbarUserMenu /> : <NavbarAuthButtons />}
+      </div>
     </div>
   );
 }
