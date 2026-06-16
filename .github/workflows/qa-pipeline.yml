@@ -647,6 +647,31 @@ jobs:
         if: steps.shard-count.outputs.shard_count != '0'
         run: echo "$HOME/.npm-global/bin" >> "$GITHUB_PATH"
 
+      - name: Cache agent-browser Chromium
+        if: steps.shard-count.outputs.shard_count != '0'
+        id: ab-browser-cache
+        uses: actions/cache@v5
+        with:
+          path: ~/.cache/ms-playwright
+          key: agent-browser-chromium-${{ runner.os }}-${{ steps.weeknum.outputs.weeknum }}
+          restore-keys: |
+            agent-browser-chromium-${{ runner.os }}-
+
+      - name: Install agent-browser (browser driver for QA executor)
+        if: steps.shard-count.outputs.shard_count != '0'
+        # The qa-executor skill drives the app through `agent-browser`. Without
+        # it every browser scenario is BLOCKED — or hard-fails the shard when
+        # the agent produces no results file. Installed into the same
+        # ~/.npm-global prefix as Claude Code (already on PATH). Chromium is
+        # restored from the cache above; `--with-deps` only (re)installs the
+        # system libraries it needs.
+        run: |
+          npm config set prefix ~/.npm-global
+          if ! "$HOME/.npm-global/bin/agent-browser" --version >/dev/null 2>&1; then
+            npm install -g agent-browser
+          fi
+          "$HOME/.npm-global/bin/agent-browser" install --with-deps
+
       - name: Execute QA Plan (shard ${{ matrix.shard }})
         if: steps.shard-count.outputs.shard_count != '0'
         env:
@@ -1146,6 +1171,29 @@ jobs:
       - name: Add Claude Code to PATH
         if: steps.scope.outputs.scope_pages != ''
         run: echo "$HOME/.npm-global/bin" >> "$GITHUB_PATH"
+
+      - name: Cache agent-browser Chromium
+        if: steps.scope.outputs.scope_pages != ''
+        id: ab-browser-cache
+        uses: actions/cache@v5
+        with:
+          path: ~/.cache/ms-playwright
+          key: agent-browser-chromium-${{ runner.os }}-${{ steps.weeknum.outputs.weeknum }}
+          restore-keys: |
+            agent-browser-chromium-${{ runner.os }}-
+
+      - name: Install agent-browser (browser driver for dogfood)
+        if: steps.scope.outputs.scope_pages != ''
+        # The dogfood skill drives the app through `agent-browser`; without it
+        # every exploration step fails. Installed into the same ~/.npm-global
+        # prefix as Claude Code (already on PATH). Chromium is restored from the
+        # cache above; `--with-deps` only (re)installs the system libraries.
+        run: |
+          npm config set prefix ~/.npm-global
+          if ! "$HOME/.npm-global/bin/agent-browser" --version >/dev/null 2>&1; then
+            npm install -g agent-browser
+          fi
+          "$HOME/.npm-global/bin/agent-browser" install --with-deps
 
       - name: Run Dogfood Exploration (shard ${{ matrix.shard }})
         if: steps.scope.outputs.scope_pages != ''
