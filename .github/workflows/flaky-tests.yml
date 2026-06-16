@@ -38,7 +38,9 @@ jobs:
           NODE_ENV: test
           RUN_NUMBER: ${{ matrix.run }}
         run: |
-          pnpm run test -- --json --outputFile=test-results-${RUN_NUMBER}.json
+          # Direct vitest invocation: `pnpm run test -- <flags>` forwards the
+          # literal `--`, making vitest parse the flags as test-name filters.
+          pnpm exec vitest run --project unit --reporter=json --outputFile=test-results-${RUN_NUMBER}.json
 
       - name: Upload test results
         uses: actions/upload-artifact@v5
