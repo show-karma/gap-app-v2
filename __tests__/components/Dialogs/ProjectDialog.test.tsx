@@ -315,6 +315,7 @@ vi.mock("@/utilities/messages", () => ({
   MESSAGES: {
     PROJECT_FORM: {
       TITLE: { MIN: "Title too short", MAX: "Title too long" },
+      DETAILS_MAX: "Your details are too long combined. Keep them under 15,000 characters.",
       RECIPIENT: "Invalid recipient",
       SOCIALS: {
         TWITTER: "Invalid twitter handle",
