@@ -1494,14 +1494,6 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
             }}
             removeContact={(contact) => setContacts(contacts.filter((c) => c.id !== contact.id))}
           />
-          {!projectToUpdate ? (
-            <div className="flex w-full flex-col gap-2 border-t border-zinc-200 dark:border-zinc-700 pt-8">
-              <p className="text-sm text-zinc-600 dark:text-zinc-300">
-                Your project will be created on the Base network.
-              </p>
-              <p className="text-red-500">{errors.chainID?.message}</p>
-            </div>
-          ) : null}
         </div>
       ),
     },

@@ -407,8 +407,6 @@ jobs:
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v5
-        with:
-          version: 10
 
       - name: Setup Node.js
         uses: actions/setup-node@v5
@@ -553,8 +551,6 @@ jobs:
       - name: Setup pnpm
         if: steps.shard-count.outputs.shard_count != '0'
         uses: pnpm/action-setup@v5
-        with:
-          version: 10
 
       - name: Setup Node.js
         if: steps.shard-count.outputs.shard_count != '0'
@@ -860,8 +856,6 @@ jobs:
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v5
-        with:
-          version: 10
 
       - name: Setup Node.js
         uses: actions/setup-node@v5
@@ -1019,8 +1013,6 @@ jobs:
       - name: Setup pnpm
         if: steps.scope.outputs.scope_pages != ''
         uses: pnpm/action-setup@v5
-        with:
-          version: 10
 
       - name: Setup Node.js
         if: steps.scope.outputs.scope_pages != ''
