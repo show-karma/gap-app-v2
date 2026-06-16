@@ -66,9 +66,9 @@ interface CommunityIndicator {
 // payload, and for sponsored (gasless) submissions the resulting operation must fit
 // under the bundler's gas limit — cost scales ~linearly with length. 15k characters
 // keeps a single update comfortably within that limit.
-const PROJECT_UPDATE_MAX_LENGTH = 15000;
+export const PROJECT_UPDATE_MAX_LENGTH = 15000;
 
-const updateSchema = z.object({
+export const updateSchema = z.object({
   title: z
     .string()
     .min(3, { message: MESSAGES.PROJECT_UPDATE_FORM.TITLE.MIN })

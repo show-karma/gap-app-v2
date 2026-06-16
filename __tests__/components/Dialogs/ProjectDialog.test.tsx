@@ -315,6 +315,7 @@ vi.mock("@/utilities/messages", () => ({
   MESSAGES: {
     PROJECT_FORM: {
       TITLE: { MIN: "Title too short", MAX: "Title too long" },
+      DETAILS_MAX: "Your details are too long combined. Keep them under 15,000 characters.",
       RECIPIENT: "Invalid recipient",
       SOCIALS: {
         TWITTER: "Invalid twitter handle",
@@ -760,5 +761,49 @@ describe("ProjectDialog", () => {
       );
     });
     expect(screen.queryByText("Network is required")).not.toBeInTheDocument();
+  });
+});
+
+describe("projectSchema combined body length cap", () => {
+  const validBase = {
+    title: "Valid project",
+    chainID: 42161,
+    description: "d",
+    problem: "p",
+    solution: "s",
+    missionSummary: "m",
+  };
+
+  it("caps the combined limit at 15,000 characters", async () => {
+    const { PROJECT_DETAILS_MAX_LENGTH } = await import("@/components/Dialogs/ProjectDialog");
+    expect(PROJECT_DETAILS_MAX_LENGTH).toBe(15000);
+  });
+
+  it("accepts the four fields when their combined length is at the limit", async () => {
+    const { projectSchema, PROJECT_DETAILS_MAX_LENGTH } = await import(
+      "@/components/Dialogs/ProjectDialog"
+    );
+    const result = projectSchema.safeParse({
+      ...validBase,
+      // description fills the remaining budget after the 3 one-char fields.
+      description: "a".repeat(PROJECT_DETAILS_MAX_LENGTH - 3),
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects when the combined length exceeds the limit, flagging the longest field", async () => {
+    const { projectSchema, PROJECT_DETAILS_MAX_LENGTH } = await import(
+      "@/components/Dialogs/ProjectDialog"
+    );
+    const { MESSAGES } = await import("@/utilities/messages");
+    const result = projectSchema.safeParse({
+      ...validBase,
+      description: "a".repeat(PROJECT_DETAILS_MAX_LENGTH),
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const issue = result.error.issues.find((i) => i.path[0] === "description");
+      expect(issue?.message).toBe(MESSAGES.PROJECT_FORM.DETAILS_MAX);
+    }
   });
 });
