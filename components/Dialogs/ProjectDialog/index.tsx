@@ -52,20 +52,21 @@ import { useOwnerStore } from "@/store/owner";
 import type { Contact } from "@/types/project";
 import type { Project as ProjectResponse } from "@/types/v2/project";
 import { type CustomLink, isCustomLink } from "@/utilities/customLink";
+import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";
 import { validateGithubInput } from "@/utilities/github";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
-import { gapSupportedNetworks } from "@/utilities/network";
+import { PROJECT_CREATION_DEFAULT_CHAIN_ID } from "@/utilities/network";
 import { PAGES } from "@/utilities/pages";
 import { sanitizeObject } from "@/utilities/sanitize";
 import { getProjectById } from "@/utilities/sdk";
 import { updateProject } from "@/utilities/sdk/projects/editProject";
 import { SOCIALS } from "@/utilities/socials";
 import { cn } from "@/utilities/tailwind";
+import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { SimilarProjectsDialog } from "../SimilarProjectsDialog";
 import { ContactInfoSection } from "./ContactInfoSection";
-import { NetworkDropdown } from "./NetworkDropdown";
 
 const inputStyle = "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";
 const socialMediaInputStyle =
@@ -225,7 +226,6 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   const { chain } = useAccount();
   const { switchChainAsync } = useWallet();
   const [isLoading, setIsLoading] = useState(false);
-  const [isChangingNetwork, setIsChangingNetwork] = useState(false);
   const router = useRouter();
   const { gap } = useGap();
   const { openSimilarProjectsModal, isSimilarProjectsModalOpen } = useSimilarProjectsModalStore();
@@ -235,6 +235,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   const isConnected = wagmiIsConnected || authIsConnected || !!smartWalletAddress;
   const { startAttestation, showLoading, showSuccess, showError, dismiss, changeStepperStep } =
     useAttestationToast();
+  const [_walletSigner, setWalletSigner] = useState<any>(null);
   const [_faucetFunded, setFaucetFunded] = useState(false);
   // Flag to prevent form reset when reopening after an error
   const [shouldResetOnOpen, setShouldResetOnOpen] = useState(true);
@@ -244,30 +245,54 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       resolver: zodResolver(projectSchema),
       reValidateMode: "onChange",
       mode: "onChange",
-      defaultValues: dataToUpdate,
+      // New projects are always created on the default chain; existing projects
+      // keep their own chainID.
+      defaultValues: dataToUpdate ?? { chainID: PROJECT_CREATION_DEFAULT_CHAIN_ID },
     });
   const { errors, isValid } = formState;
 
-  // Switch an external wallet to the selected network when the user picks it.
-  // Embedded (email/Google) wallets are skipped: they switch chains at submit via
-  // setupChainAndWallet (→ getAttestationSigner / gasless), and useWallets() can
-  // also surface an unlinked injected wallet — running the wagmi switch here would
-  // prompt the wrong wallet or fail with a misleading connect error.
-  const handleNetworkChange = async (networkId: number) => {
-    if (!isConnected || !address || hasEmbeddedWallet || chain?.id === networkId) {
-      return;
-    }
+  // Watch the chainID value for the useEffect
+  const chainIDValue = watch("chainID");
 
-    setIsChangingNetwork(true);
-    try {
-      await switchChainAsync({ chainId: networkId });
-    } catch (error) {
-      showError("Failed to switch network. Please try again.");
-      throw error; // Re-throw to let NetworkDropdown handle it
-    } finally {
-      setIsChangingNetwork(false);
-    }
-  };
+  // Prepare wallet signer when wallet is connected and chain is selected
+  useEffect(() => {
+    const prepareSigner = async () => {
+      // Embedded (email/Google) wallets get their gasless signer at submit via
+      // setupChainAndWallet — wagmi's safeGetWalletClient can't build one for them
+      // and would log spurious "Failed to prepare wallet signer" errors.
+      if (hasEmbeddedWallet) {
+        setWalletSigner(null);
+        return;
+      }
+      if (isConnected && address && chainIDValue) {
+        try {
+          // Check if we're on the correct chain
+          if (chain?.id === chainIDValue) {
+            // Get wallet client for the current chain
+            const { walletClient, error } = await safeGetWalletClient(chainIDValue);
+
+            if (!error && walletClient) {
+              const signer = await walletClientToSigner(walletClient);
+              setWalletSigner(signer);
+            } else {
+              setWalletSigner(null);
+            }
+          } else {
+            // Chain mismatch, signer will be set after chain switch
+            setWalletSigner(null);
+          }
+        } catch (error) {
+          setWalletSigner(null);
+          // Track for debugging without user-facing notification
+          errorManager("Failed to prepare wallet signer", error, { chainIDValue }, {});
+        }
+      } else {
+        setWalletSigner(null);
+      }
+    };
+
+    prepareSigner();
+  }, [isConnected, address, chainIDValue, chain?.id, hasEmbeddedWallet]);
 
   // Reset form when switching between create/edit modes or when modal opens
   useEffect(() => {
@@ -316,8 +341,9 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         setLogoUploadProgress(0);
         setTempLogoKey(null);
       } else {
-        // Create mode - reset to empty form
+        // Create mode - reset to empty form (always on the default chain)
         reset({
+          chainID: PROJECT_CREATION_DEFAULT_CHAIN_ID,
           title: "",
           description: "",
           problem: "",
@@ -1477,33 +1503,10 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
           />
           {!projectToUpdate ? (
             <div className="flex w-full flex-col gap-2 border-t border-zinc-200 dark:border-zinc-700 pt-8">
-              <label htmlFor="chain-id-input" className={labelStyle}>
-                Choose a network to create your project
-              </label>
-              <NetworkDropdown
-                onSelectFunction={(networkId) => {
-                  setValue("chainID", networkId, {
-                    shouldValidate: true,
-                  });
-                  // Reset faucet funding status when network changes
-                  setFaucetFunded(false);
-                }}
-                onNetworkChange={handleNetworkChange}
-                isChangingNetwork={isChangingNetwork}
-                networks={gapSupportedNetworks}
-                previousValue={watch("chainID")}
-              />
+              <p className="text-sm text-zinc-600 dark:text-zinc-300">
+                Your project will be created on the Base network.
+              </p>
               <p className="text-red-500">{errors.chainID?.message}</p>
-
-              {/* Show network status */}
-              {isChangingNetwork && (
-                <div className="mt-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                  <p className="text-sm text-blue-800 dark:text-blue-200 font-medium flex items-center gap-2">
-                    <span className="h-4 w-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
-                    Switching to selected network...
-                  </p>
-                </div>
-              )}
             </div>
           ) : null}
         </div>
