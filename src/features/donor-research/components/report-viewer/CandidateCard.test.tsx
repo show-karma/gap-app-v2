@@ -215,7 +215,7 @@ describe("CandidateCard social presence", () => {
       />
     );
 
-    expect(screen.getByText("Social presence")).toBeInTheDocument();
+    expect(screen.getByText(/Social presence/)).toBeInTheDocument();
     expect(screen.getByText("LinkedIn")).toBeInTheDocument();
     // 68247 → "68.2K", rendered for both the channel row and the total.
     expect(screen.getAllByText("68.2K").length).toBeGreaterThan(0);
@@ -226,7 +226,7 @@ describe("CandidateCard social presence", () => {
   it("omits the social section when socialMetrics is null", () => {
     render(<CandidateCard candidate={buildCandidate({ socialMetrics: null })} variant="detail" />);
 
-    expect(screen.queryByText("Social presence")).not.toBeInTheDocument();
+    expect(screen.queryByText(/Social presence/)).not.toBeInTheDocument();
   });
 
   it("omits the social section when no channel is available", () => {
@@ -252,6 +252,6 @@ describe("CandidateCard social presence", () => {
       />
     );
 
-    expect(screen.queryByText("Social presence")).not.toBeInTheDocument();
+    expect(screen.queryByText(/Social presence/)).not.toBeInTheDocument();
   });
 });
