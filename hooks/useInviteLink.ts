@@ -130,9 +130,13 @@ export const useInviteLink = (
     isGenerating: generateMutation.isPending,
     isRevoking: revokeMutation.isPending,
 
-    // Error states
+    // Error states. The fetch query swallows non-403 errors (returns null), so
+    // surface the generate mutation's failure explicitly — that's the signal
+    // the dialog needs to show an error instead of spinning forever.
     error: query.error,
     isError: query.isError,
+    generateError: generateMutation.error,
+    isGenerateError: generateMutation.isError,
 
     // Actions
     generateCode: generateMutation.mutate,

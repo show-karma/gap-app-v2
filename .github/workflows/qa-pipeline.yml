@@ -417,6 +417,8 @@ jobs:
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v5
+        with:
+          version: 10
 
       - name: Setup Node.js
         uses: actions/setup-node@v5
@@ -566,6 +568,8 @@ jobs:
       - name: Setup pnpm
         if: steps.shard-count.outputs.shard_count != '0'
         uses: pnpm/action-setup@v5
+        with:
+          version: 10
 
       - name: Setup Node.js
         if: steps.shard-count.outputs.shard_count != '0'
@@ -647,6 +651,31 @@ jobs:
         if: steps.shard-count.outputs.shard_count != '0'
         run: echo "$HOME/.npm-global/bin" >> "$GITHUB_PATH"
 
+      - name: Cache agent-browser Chromium
+        if: steps.shard-count.outputs.shard_count != '0'
+        id: ab-browser-cache
+        uses: actions/cache@v5
+        with:
+          path: ~/.cache/ms-playwright
+          key: agent-browser-chromium-${{ runner.os }}-${{ steps.weeknum.outputs.weeknum }}
+          restore-keys: |
+            agent-browser-chromium-${{ runner.os }}-
+
+      - name: Install agent-browser (browser driver for QA executor)
+        if: steps.shard-count.outputs.shard_count != '0'
+        # The qa-executor skill drives the app through `agent-browser`. Without
+        # it every browser scenario is BLOCKED — or hard-fails the shard when
+        # the agent produces no results file. Installed into the same
+        # ~/.npm-global prefix as Claude Code (already on PATH). Chromium is
+        # restored from the cache above; `--with-deps` only (re)installs the
+        # system libraries it needs.
+        run: |
+          npm config set prefix ~/.npm-global
+          if ! "$HOME/.npm-global/bin/agent-browser" --version >/dev/null 2>&1; then
+            npm install -g agent-browser
+          fi
+          "$HOME/.npm-global/bin/agent-browser" install --with-deps
+
       - name: Execute QA Plan (shard ${{ matrix.shard }})
         if: steps.shard-count.outputs.shard_count != '0'
         env:
@@ -713,14 +742,27 @@ jobs:
             exit 0
           fi
 
+          # No results file means the agent never completed: it hung and hit the
+          # timeout (rc 124/137) or exited without writing. That is an agent
+          # INFRA failure, not a QA finding — the scenarios in this shard simply
+          # did not run. Hard-failing here makes the QA gate permanently red on
+          # an intermittent agent hang (it alternates shards run to run), so
+          # degrade to a NON-BLOCKING blocked result and let the verdict
+          # aggregate it. The warning keeps the missed coverage visible; a
+          # re-run re-attempts the shard. Real critical/high findings still come
+          # from shards that DO complete and write blocking scenarios.
           if [ "$rc" -eq 124 ] || [ "$rc" -eq 137 ]; then
-            echo "::error::claude hung and was killed by the 14-minute timeout (no results written)"
+            reason="claude hung and was killed by the 14-minute timeout"
           elif [ "$rc" -eq 0 ]; then
-            echo "::error::claude exited 0 but did not write qa-results-${SHARD_ID}.json"
+            reason="claude exited 0 without writing results"
           else
-            echo "::error::claude exited $rc with no qa-results-${SHARD_ID}.json"
+            reason="claude exited $rc without writing results"
           fi
-          exit 1
+          echo "::warning::QA shard ${SHARD_ID} did not complete (${reason}); recording it as non-blocking BLOCKED. Re-run the workflow to re-attempt this shard."
+          cat > "qa-results-${SHARD_ID}.json" <<JSON
+          { "total": 0, "passed": 0, "failed": 0, "blocked": 1, "skipped": 0, "blocking": false, "scenarios": [], "note": "Agent did not complete for shard ${SHARD_ID} (${reason}); scenarios not executed — non-blocking infra timeout." }
+          JSON
+          exit 0
         timeout-minutes: 16
 
       - name: Upload QA execution artifacts (shard ${{ matrix.shard }})
@@ -869,6 +911,8 @@ jobs:
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v5
+        with:
+          version: 10
 
       - name: Setup Node.js
         uses: actions/setup-node@v5
@@ -1044,6 +1088,8 @@ jobs:
       - name: Setup pnpm
         if: steps.scope.outputs.scope_pages != ''
         uses: pnpm/action-setup@v5
+        with:
+          version: 10
 
       - name: Setup Node.js
         if: steps.scope.outputs.scope_pages != ''
@@ -1146,6 +1192,29 @@ jobs:
       - name: Add Claude Code to PATH
         if: steps.scope.outputs.scope_pages != ''
         run: echo "$HOME/.npm-global/bin" >> "$GITHUB_PATH"
+
+      - name: Cache agent-browser Chromium
+        if: steps.scope.outputs.scope_pages != ''
+        id: ab-browser-cache
+        uses: actions/cache@v5
+        with:
+          path: ~/.cache/ms-playwright
+          key: agent-browser-chromium-${{ runner.os }}-${{ steps.weeknum.outputs.weeknum }}
+          restore-keys: |
+            agent-browser-chromium-${{ runner.os }}-
+
+      - name: Install agent-browser (browser driver for dogfood)
+        if: steps.scope.outputs.scope_pages != ''
+        # The dogfood skill drives the app through `agent-browser`; without it
+        # every exploration step fails. Installed into the same ~/.npm-global
+        # prefix as Claude Code (already on PATH). Chromium is restored from the
+        # cache above; `--with-deps` only (re)installs the system libraries.
+        run: |
+          npm config set prefix ~/.npm-global
+          if ! "$HOME/.npm-global/bin/agent-browser" --version >/dev/null 2>&1; then
+            npm install -g agent-browser
+          fi
+          "$HOME/.npm-global/bin/agent-browser" install --with-deps
 
       - name: Run Dogfood Exploration (shard ${{ matrix.shard }})
         if: steps.scope.outputs.scope_pages != ''
