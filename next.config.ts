@@ -130,6 +130,12 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
+      // Bare /community has no content of its own — the listing lives at /communities.
+      {
+        source: "/community",
+        destination: "/communities",
+        permanent: true,
+      },
       // Redirect all old /community/:communityId/admin routes to /community/:communityId/manage
       {
         source: "/community/:communityId/admin",
