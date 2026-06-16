@@ -318,10 +318,14 @@ export const MESSAGES = {
     CREATE: {
       SUCCESS: "Project created successfully!",
       ERROR: (title: string) => `There was an error creating ${title} project.`,
+      RETRYABLE_ERROR:
+        "We couldn't reach the network just now. Your details are saved — please try again in a moment.",
     },
     UPDATE: {
       SUCCESS: "Project updated successfully",
       ERROR: "There was an error updating project.",
+      RETRYABLE_ERROR:
+        "We couldn't reach the network just now. Your changes are saved — please try again in a moment.",
     },
     DELETE: {
       SUCCESS: "Project deleted successfully",
