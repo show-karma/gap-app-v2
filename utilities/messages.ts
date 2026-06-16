@@ -4,6 +4,8 @@ export const MESSAGES = {
       MIN: "Title must be at least 3 characters",
       MAX: "Title must be less than 50 characters",
     },
+    DETAILS_MAX:
+      "Your description, problem, solution and mission summary are too long combined. Please keep them under 15,000 characters in total.",
     RECIPIENT: "Invalid address",
     TAGS: "Each category must be at least 3 characters",
     SOCIALS: {
