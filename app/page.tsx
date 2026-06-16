@@ -1,11 +1,7 @@
 import type { Metadata } from "next";
-import { NewFeatureBanner } from "@/components/Pages/Home/NewFeatureBanner";
-import { SectionContainer } from "@/src/components/shared/section-container";
 import { Hero } from "@/src/features/home/components/hero";
 import { WorkflowSection } from "@/src/features/home/components/workflow-section";
-import { marketingLayoutTheme } from "@/src/helper/theme";
 import { customMetadata } from "@/utilities/meta";
-import { cn } from "@/utilities/tailwind";
 
 export const metadata: Metadata = {
   ...customMetadata({
@@ -29,11 +25,6 @@ export default function Index() {
   return (
     <main className="flex w-full flex-col flex-1 items-center bg-background overflow-x-hidden">
       <div className="flex w-full max-w-[1920px] flex-1 flex-col">
-        <div className={cn(marketingLayoutTheme.padding, "w-full pt-8")}>
-          <SectionContainer>
-            <NewFeatureBanner />
-          </SectionContainer>
-        </div>
         <Hero />
         <WorkflowSection />
       </div>
