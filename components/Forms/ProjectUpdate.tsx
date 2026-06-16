@@ -62,12 +62,21 @@ interface CommunityIndicator {
   communityName?: string;
 }
 
+// Cap the update body length. The whole body is serialized into the attestation
+// payload, and for sponsored (gasless) submissions the resulting operation must fit
+// under the bundler's gas limit — cost scales ~linearly with length. 15k characters
+// keeps a single update comfortably within that limit.
+const PROJECT_UPDATE_MAX_LENGTH = 15000;
+
 const updateSchema = z.object({
   title: z
     .string()
     .min(3, { message: MESSAGES.PROJECT_UPDATE_FORM.TITLE.MIN })
     .max(75, { message: MESSAGES.PROJECT_UPDATE_FORM.TITLE.MAX }),
-  text: z.string().min(3, { message: MESSAGES.PROJECT_UPDATE_FORM.TEXT }),
+  text: z
+    .string()
+    .min(3, { message: MESSAGES.PROJECT_UPDATE_FORM.TEXT.MIN })
+    .max(PROJECT_UPDATE_MAX_LENGTH, { message: MESSAGES.PROJECT_UPDATE_FORM.TEXT.MAX }),
   startDate: z.date().optional(),
   endDate: z.date().optional(),
   grants: z.array(z.string()).optional(),
@@ -202,7 +211,7 @@ const getFormErrorMessage = (errors: any, formValues: any) => {
   }
 
   if (errors.text?.message) {
-    errorMessages.push("Description is required");
+    errorMessages.push(errors.text.message);
   } else if (!formValues.text) {
     errorMessages.push("Description is required");
   }
@@ -841,6 +850,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
                 shouldTouch: true,
               })
             }
+            maxLength={PROJECT_UPDATE_MAX_LENGTH}
             placeholderText="Conducted user research and published a report, worked with our developers, added new features, etc."
           />
         </div>
