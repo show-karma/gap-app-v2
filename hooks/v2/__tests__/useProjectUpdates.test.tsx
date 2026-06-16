@@ -448,4 +448,53 @@ describe("useProjectUpdates", () => {
 
     expect(result.current.milestones).toHaveLength(0);
   });
+
+  // Regression: DEV-396 request storm. `milestones` is derived (convert + sort
+  // + order) and used to feed downstream memos/effects (e.g. useProjectProfile's
+  // aggregation). It MUST keep a stable identity across re-renders when the
+  // underlying query data hasn't changed, otherwise every consumer's deps churn
+  // on every render and amplify into a refetch loop.
+  describe("referential stability (DEV-396)", () => {
+    it("keeps the same `milestones` reference across re-renders when data is unchanged", async () => {
+      mockGetProjectUpdates.mockResolvedValue({
+        projectUpdates: [],
+        projectMilestones: [],
+        grantMilestones: [],
+        grantUpdates: [],
+      });
+
+      const { result, rerender } = renderHook(() => useProjectUpdates("test-project"), {
+        wrapper: createWrapper(queryClient),
+      });
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
+      });
+
+      const firstMilestones = result.current.milestones;
+      const firstPending = result.current.pendingMilestones;
+      const firstRefetch = result.current.refetch;
+
+      rerender();
+      rerender();
+
+      expect(result.current.milestones).toBe(firstMilestones);
+      expect(result.current.pendingMilestones).toBe(firstPending);
+      expect(result.current.refetch).toBe(firstRefetch);
+    });
+
+    it("returns a stable empty-array reference while loading", () => {
+      mockGetProjectUpdates.mockReturnValue(new Promise(() => {}));
+
+      const { result, rerender } = renderHook(() => useProjectUpdates("test-project"), {
+        wrapper: createWrapper(queryClient),
+      });
+
+      const firstMilestones = result.current.milestones;
+      rerender();
+
+      expect(result.current.milestones).toBe(firstMilestones);
+      expect(result.current.milestones).toHaveLength(0);
+    });
+  });
 });
