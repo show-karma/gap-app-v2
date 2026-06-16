@@ -20,13 +20,13 @@ export interface MockUser {
 }
 
 export interface EmbeddedWalletOptions {
-  /** Chain the embedded wallet reports before any switch. Privy embedded
-   *  wallets default to mainnet (chain 1) — the GAP-FRONTEND-1T9 root cause. */
+  /** Chain the embedded provider reports before any switch. Privy embedded
+   *  wallets default to mainnet (chain 1) — the GAP-FRONTEND-23C root cause. */
   initialChainId?: number;
-  /** How many `getEthereumProvider` reads still report the OLD chain after
-   *  `switchChain` resolves (models Privy's switch propagation lag).
-   *  0 = propagates immediately; Infinity = never propagates. */
-  propagateAfterReads?: number;
+  /** How many times `wallet_switchEthereumChain` throws before it succeeds.
+   *  0 = switches first try; Number.POSITIVE_INFINITY = provider can never switch
+   *  (stuck on chain 1), mirroring the failure mode. */
+  switchFailsTimes?: number;
 }
 
 export interface MockWallet {
@@ -58,39 +58,44 @@ export async function addressOf(signer: unknown): Promise<string> {
 
 export function createEmbeddedWallet(
   address = EMBEDDED_WALLET_ADDRESS,
-  { initialChainId = 1, propagateAfterReads = 0 }: EmbeddedWalletOptions = {}
+  { initialChainId = 1, switchFailsTimes = 0 }: EmbeddedWalletOptions = {}
 ): MockWallet {
-  let reportedChainId = initialChainId;
-  let targetChainId = initialChainId;
-  let readsUntilPropagation = propagateAfterReads;
+  // A single stable EIP-1193 provider instance (Privy returns the same instance),
+  // whose chain is mutated by `wallet_switchEthereumChain` — mirroring Privy's
+  // Embedded1193Provider, where `eth_chainId` returns `this.chainId` and only the
+  // provider-level switch updates it. The high-level `switchChain()` does NOT.
+  let providerChainId = initialChainId;
+  let failsLeft = switchFailsTimes;
+  const provider = {
+    // `__chainId` mirrors the live chain for the BrowserProvider mock's getNetwork().
+    get __chainId() {
+      return providerChainId;
+    },
+    request: vi
+      .fn()
+      .mockImplementation(
+        async ({ method, params }: { method: string; params?: Array<{ chainId?: string }> }) => {
+          if (method === "eth_chainId") return `0x${providerChainId.toString(16)}`;
+          if (method === "wallet_switchEthereumChain") {
+            if (failsLeft > 0) {
+              failsLeft -= 1;
+              throw new Error("wallet_switchEthereumChain failed");
+            }
+            providerChainId = Number(params?.[0]?.chainId);
+            return null;
+          }
+          return undefined;
+        }
+      ),
+  };
 
   return {
     address,
     walletClientType: "privy",
-    switchChain: vi.fn().mockImplementation(async (id: number) => {
-      targetChainId = id;
-      // When there is no propagation lag the switch is reflected immediately.
-      if (readsUntilPropagation <= 0) reportedChainId = id;
-    }),
-    getEthereumProvider: vi.fn().mockImplementation(async () => {
-      const chainId = reportedChainId;
-      // After enough reads the pending switch finally "propagates".
-      if (readsUntilPropagation > 0) {
-        readsUntilPropagation -= 1;
-        if (readsUntilPropagation <= 0) reportedChainId = targetChainId;
-      }
-      // `request({ method: "eth_chainId" })` reflects the chain this provider
-      // snapshot was on — the production switch helper polls this (not ethers'
-      // cached getNetwork) to confirm a switch propagated. `__chainId` is kept
-      // for the BrowserProvider mock's getNetwork().
-      return {
-        request: vi.fn().mockImplementation(async ({ method }: { method: string }) => {
-          if (method === "eth_chainId") return `0x${chainId.toString(16)}`;
-          return undefined;
-        }),
-        __chainId: chainId,
-      };
-    }),
+    // High-level switchChain is intentionally a no-op: the production code no
+    // longer relies on it (it only updates Privy's React state, not the provider).
+    switchChain: vi.fn(),
+    getEthereumProvider: vi.fn().mockResolvedValue(provider),
   };
 }
 

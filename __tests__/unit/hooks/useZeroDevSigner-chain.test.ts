@@ -162,12 +162,11 @@ describe("useZeroDevSigner — chain verification (GAP-FRONTEND-1T9 regression)"
     }));
   });
 
-  it("recovers from the switchChain propagation race by re-polling the chain (embedded-direct)", async () => {
-    // First getEthereumProvider read still reports chain 1; the second
-    // reflects the switch. The hook must re-poll and return a chain-999 signer.
-    setupEmailUser({ embeddedOpts: { initialChainId: 1, propagateAfterReads: 1 } });
+  it("recovers when the provider switch fails once, then succeeds (embedded-direct)", async () => {
+    // First wallet_switchEthereumChain throws (provider still initialising); the
+    // retry succeeds and the signer reports the target chain.
+    setupEmailUser({ embeddedOpts: { initialChainId: 1, switchFailsTimes: 1 } });
     (isChainSupportedForGasless as ReturnType<typeof vi.fn>).mockReturnValue(false);
-    const embeddedWallet = mockPrivyState.wallets[0];
 
     const { result } = renderHook(() => useZeroDevSigner());
 
@@ -177,18 +176,15 @@ describe("useZeroDevSigner — chain verification (GAP-FRONTEND-1T9 regression)"
     });
 
     expect(await chainIdOf(signer)).toBe(999);
-    // Polled twice: once stale, once after the switch propagated.
-    expect(embeddedWallet.switchChain).toHaveBeenCalledTimes(2);
-    expect(embeddedWallet.getEthereumProvider).toHaveBeenCalledTimes(2);
   });
 
-  it("throws an explicit, debuggable error when the embedded wallet never leaves chain 1", async () => {
-    // Wallet is permanently stuck on mainnet — the exact GAP-FRONTEND-1T9 state.
+  it("throws an explicit, debuggable error when the provider never switches off chain 1", async () => {
+    // wallet_switchEthereumChain always fails — the exact GAP-FRONTEND-23C state.
     setupEmailUser({
-      embeddedOpts: { initialChainId: 1, propagateAfterReads: Number.POSITIVE_INFINITY },
+      embeddedOpts: { initialChainId: 1, switchFailsTimes: Number.POSITIVE_INFINITY },
     });
     (isChainSupportedForGasless as ReturnType<typeof vi.fn>).mockReturnValue(false);
-    const embeddedWallet = mockPrivyState.wallets[0];
+    const provider = await mockPrivyState.wallets[0].getEthereumProvider();
 
     // Fake timers so the backoff between switch attempts doesn't add real wall
     // time; runAllTimersAsync drains the sequential setTimeout chain.
@@ -205,8 +201,12 @@ describe("useZeroDevSigner — chain verification (GAP-FRONTEND-1T9 regression)"
       await vi.runAllTimersAsync();
       await assertion;
 
-      // Retries the switch up to the attempt cap before giving up.
-      expect(embeddedWallet.switchChain).toHaveBeenCalledTimes(5);
+      // It tried the provider-level switch (not the inert high-level switchChain).
+      expect(provider.request).toHaveBeenCalledWith({
+        method: "wallet_switchEthereumChain",
+        params: [{ chainId: "0x3e7" }],
+      });
+      expect(mockPrivyState.wallets[0].switchChain).not.toHaveBeenCalled();
     } finally {
       vi.useRealTimers();
     }
@@ -215,7 +215,7 @@ describe("useZeroDevSigner — chain verification (GAP-FRONTEND-1T9 regression)"
   it("rejects a gasless signer reporting the wrong chain and recovers via the direct path", async () => {
     // Gasless produced a signer on chain 1 instead of the requested 10. The
     // guard must refuse it; the embedded-direct fallback then yields chain 10.
-    setupEmailUser({ embeddedOpts: { initialChainId: 1, propagateAfterReads: 0 } });
+    setupEmailUser({ embeddedOpts: { initialChainId: 1 } });
     (isChainSupportedForGasless as ReturnType<typeof vi.fn>).mockReturnValue(true);
     (createPrivySignerForGasless as ReturnType<typeof vi.fn>).mockResolvedValue("signer");
     (createGaslessClient as ReturnType<typeof vi.fn>).mockResolvedValue({ account: {} });
@@ -233,10 +233,11 @@ describe("useZeroDevSigner — chain verification (GAP-FRONTEND-1T9 regression)"
     expect(mockPrivyState.wallets[0].getEthereumProvider).toHaveBeenCalled();
   });
 
-  it("does not rebuild when the embedded wallet is already on the target chain", async () => {
-    setupEmailUser({ embeddedOpts: { initialChainId: 1, propagateAfterReads: 0 } });
+  it("switches the embedded provider to the target chain via wallet_switchEthereumChain", async () => {
+    setupEmailUser({ embeddedOpts: { initialChainId: 1 } });
     (isChainSupportedForGasless as ReturnType<typeof vi.fn>).mockReturnValue(false);
     const embeddedWallet = mockPrivyState.wallets[0];
+    const provider = await embeddedWallet.getEthereumProvider();
 
     const { result } = renderHook(() => useZeroDevSigner());
 
@@ -246,39 +247,19 @@ describe("useZeroDevSigner — chain verification (GAP-FRONTEND-1T9 regression)"
     });
 
     expect(await chainIdOf(signer)).toBe(999);
-    // Single build: no race, no rebuild.
-    expect(embeddedWallet.switchChain).toHaveBeenCalledTimes(1);
-    expect(embeddedWallet.getEthereumProvider).toHaveBeenCalledTimes(1);
-  });
-
-  it("keeps polling after switchChain rejects transiently, then returns the signer", async () => {
-    // switchChain can reject while the embedded wallet is still initialising —
-    // the helper must swallow that and retry rather than fail outright.
-    setupEmailUser({ embeddedOpts: { initialChainId: 1, propagateAfterReads: 0 } });
-    (isChainSupportedForGasless as ReturnType<typeof vi.fn>).mockReturnValue(false);
-    const embeddedWallet = mockPrivyState.wallets[0];
-    embeddedWallet.switchChain.mockRejectedValueOnce(new Error("wallet not ready"));
-
-    vi.useFakeTimers();
-    try {
-      const { result } = renderHook(() => useZeroDevSigner());
-
-      const promise = result.current.getAttestationSigner(10);
-      await vi.runAllTimersAsync();
-      const signer = await promise;
-
-      expect(await chainIdOf(signer)).toBe(10);
-      // First switch rejected, second succeeded.
-      expect(embeddedWallet.switchChain).toHaveBeenCalledTimes(2);
-    } finally {
-      vi.useRealTimers();
-    }
+    // Switched at the provider level, never via the inert high-level switchChain.
+    expect(provider.request).toHaveBeenCalledWith({
+      method: "wallet_switchEthereumChain",
+      params: [{ chainId: "0x3e7" }],
+    });
+    expect(embeddedWallet.switchChain).not.toHaveBeenCalled();
   });
 
   it("accepts a numeric eth_chainId result (non-hex provider)", async () => {
     // EIP-1193 returns hex, but a non-conforming provider may return a number;
-    // readProviderChainId must coerce it rather than reject the wallet.
-    setupEmailUser({ embeddedOpts: { initialChainId: 1, propagateAfterReads: 0 } });
+    // readProviderChainId must coerce it rather than reject the wallet. Provider
+    // already reports the target chain, so no switch is needed.
+    setupEmailUser({ embeddedOpts: { initialChainId: 1 } });
     (isChainSupportedForGasless as ReturnType<typeof vi.fn>).mockReturnValue(false);
     const embeddedWallet = mockPrivyState.wallets[0];
     embeddedWallet.getEthereumProvider = vi.fn().mockResolvedValue({
@@ -299,13 +280,13 @@ describe("useZeroDevSigner — chain verification (GAP-FRONTEND-1T9 regression)"
   it("does not fall back to a connected external wallet when the embedded path fails", async () => {
     // Email user with BOTH an embedded wallet and an unlinked injected wallet
     // (useWallets() surfaces browser-connected wallets that aren't linked). The
-    // embedded wallet is stuck on chain 1, so the embedded path throws — the hook
+    // embedded provider can never switch, so the embedded path throws — the hook
     // must surface that error, NOT silently sign with the external wallet (which
     // would use the wrong identity and prompt an unexpected popup).
     setupEmailUser({
       embedded: true,
       external: true,
-      embeddedOpts: { initialChainId: 1, propagateAfterReads: Number.POSITIVE_INFINITY },
+      embeddedOpts: { initialChainId: 1, switchFailsTimes: Number.POSITIVE_INFINITY },
     });
     (isChainSupportedForGasless as ReturnType<typeof vi.fn>).mockReturnValue(false);
     const externalWallet = mockPrivyState.wallets[1];
@@ -328,14 +309,14 @@ describe("useZeroDevSigner — chain verification (GAP-FRONTEND-1T9 regression)"
   });
 
   it("reports 'still on chain unknown' when the provider can't report its chain", async () => {
-    // The provider's eth_chainId request fails on every attempt → the chain can
-    // never be confirmed; the error must degrade to "unknown", not crash.
-    setupEmailUser({ embeddedOpts: { initialChainId: 1, propagateAfterReads: 0 } });
+    // The provider's requests fail on every attempt → the chain can never be
+    // confirmed; the error must degrade to "unknown", not crash.
+    setupEmailUser({ embeddedOpts: { initialChainId: 1 } });
     (isChainSupportedForGasless as ReturnType<typeof vi.fn>).mockReturnValue(false);
-    const embeddedWallet = mockPrivyState.wallets[0];
-    embeddedWallet.getEthereumProvider = vi.fn().mockResolvedValue({
-      request: vi.fn().mockRejectedValue(new Error("provider unavailable")),
-    });
+    const failingRequest = vi.fn().mockRejectedValue(new Error("provider unavailable"));
+    mockPrivyState.wallets[0].getEthereumProvider = vi
+      .fn()
+      .mockResolvedValue({ request: failingRequest });
 
     vi.useFakeTimers();
     try {
@@ -346,7 +327,7 @@ describe("useZeroDevSigner — chain verification (GAP-FRONTEND-1T9 regression)"
       await vi.runAllTimersAsync();
       await assertion;
 
-      expect(embeddedWallet.switchChain).toHaveBeenCalledTimes(5);
+      expect(failingRequest).toHaveBeenCalled();
     } finally {
       vi.useRealTimers();
     }

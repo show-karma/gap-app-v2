@@ -482,6 +482,8 @@ describe("useZeroDevSigner (real hook)", () => {
     it("should use embedded wallet directly (user pays gas)", async () => {
       setupEmailUser();
       (isChainSupportedForGasless as ReturnType<typeof vi.fn>).mockReturnValue(false);
+      const embeddedWallet = mockPrivyState.wallets[0];
+      const provider = await embeddedWallet.getEthereumProvider();
 
       const { result } = renderHook(() => useZeroDevSigner());
 
@@ -491,8 +493,12 @@ describe("useZeroDevSigner (real hook)", () => {
       });
 
       expect(await chainIdOf(signer)).toBe(999);
-      expect(mockPrivyState.wallets[0].switchChain).toHaveBeenCalledWith(999);
-      expect(mockPrivyState.wallets[0].getEthereumProvider).toHaveBeenCalled();
+      // Switches at the provider level, not via the inert high-level switchChain.
+      expect(provider.request).toHaveBeenCalledWith({
+        method: "wallet_switchEthereumChain",
+        params: [{ chainId: "0x3e7" }],
+      });
+      expect(embeddedWallet.switchChain).not.toHaveBeenCalled();
     });
   });
 
