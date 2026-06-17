@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { memo, useEffect, useRef } from "react";
 import { MessageResponse } from "@/src/components/ai-elements/message-response";
-import type { ChatMessage, ToolHistoryEvent } from "@/store/agentChat";
+import type { ChatMessage, LimitReason, ToolHistoryEvent } from "@/store/agentChat";
 import { cn } from "@/utilities/tailwind";
 import type { AskKarmaConfig } from "../types";
 import { AskKarmaInput } from "./ask-karma-input";
@@ -228,6 +228,8 @@ interface AskKarmaChatProps {
   messages: ChatMessage[];
   isStreaming: boolean;
   error: string | null;
+  limitReached?: { reason: LimitReason } | null;
+  onContinue?: () => void;
   onSend: (text: string) => void;
   onStop: () => void;
   onBack: () => void;
@@ -238,6 +240,8 @@ export function AskKarmaChat({
   messages,
   isStreaming,
   error,
+  limitReached,
+  onContinue,
   onSend,
   onStop,
   onBack,
@@ -363,6 +367,30 @@ export function AskKarmaChat({
             <AlertCircleIcon className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
             <p>{error}</p>
           </div>
+        )}
+
+        {limitReached && onContinue && !isStreaming && (
+          <output
+            className={cn(
+              "flex flex-col gap-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800",
+              "animate-in fade-in slide-in-from-bottom-1 duration-300",
+              "dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-200"
+            )}
+          >
+            <p>
+              I paused here to keep this request within its limit. Continue when you&apos;re ready.
+            </p>
+            <button
+              type="button"
+              onClick={onContinue}
+              className={cn(
+                "self-start rounded-md bg-[rgb(var(--color-primary))] px-3 py-1.5 text-sm font-medium text-white transition-colors",
+                "hover:bg-[rgb(var(--color-primary-dark))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-primary))] focus-visible:ring-offset-2"
+              )}
+            >
+              Continue
+            </button>
+          </output>
         )}
 
         <div ref={endRef} />

@@ -1,7 +1,14 @@
 "use client";
 
 import { SendIcon, SquareIcon } from "lucide-react";
-import { type FormEvent, type KeyboardEvent, useCallback, useState } from "react";
+import {
+  type FormEvent,
+  type KeyboardEvent,
+  useCallback,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import { cn } from "@/utilities/tailwind";
 
 interface AskKarmaInputProps {
@@ -11,9 +18,10 @@ interface AskKarmaInputProps {
   placeholder?: string;
 }
 
-// Hard cap on a single chat turn. Generous (~1k tokens of English) but
-// prevents pasted-document-sized prompts from being submitted accidentally.
-const CHAT_INPUT_MAX_LENGTH = 4000;
+// Hard cap on a single chat turn. Generous (~4k tokens of English) so long,
+// multi-line prompts work on the dedicated page, while still preventing
+// pasted-document-sized prompts from being submitted accidentally.
+const CHAT_INPUT_MAX_LENGTH = 16000;
 
 export function AskKarmaInput({
   onSubmit,
@@ -22,6 +30,18 @@ export function AskKarmaInput({
   placeholder = "Type your message...",
 }: AskKarmaInputProps) {
   const [value, setValue] = useState("");
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Auto-grow: match the textarea height to its content so multi-line prompts
+  // are fully visible, up to the max-height (then it scrolls). Runs on every
+  // value change — including the reset to "" after send, which collapses it
+  // back to one row.
+  useLayoutEffect(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight}px`;
+  }, [value]);
 
   const send = useCallback(() => {
     const trimmed = value.trim();
@@ -68,6 +88,7 @@ export function AskKarmaInput({
       )}
     >
       <textarea
+        ref={textareaRef}
         value={value}
         onChange={(event) => setValue(event.target.value)}
         onKeyDown={handleKeyDown}
@@ -76,7 +97,7 @@ export function AskKarmaInput({
         placeholder={placeholder}
         aria-label="Message Karma Assistant"
         className={cn(
-          "max-h-40 min-h-[24px] flex-1 resize-none bg-transparent text-sm",
+          "max-h-64 min-h-[24px] flex-1 resize-none overflow-y-auto bg-transparent text-sm",
           "text-zinc-900 placeholder:text-zinc-400 outline-none",
           "transition-colors duration-200",
           "dark:text-zinc-50 dark:placeholder:text-zinc-500"
