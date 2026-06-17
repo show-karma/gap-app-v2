@@ -41,27 +41,6 @@ describe("useAgentChatStore", () => {
     it("should have null agent context", () => {
       expect(useAgentChatStore.getState().agentContext).toBeNull();
     });
-
-    it("should have no limitReached", () => {
-      expect(useAgentChatStore.getState().limitReached).toBeNull();
-    });
-  });
-
-  describe("setLimitReached", () => {
-    it("should set the limit reason", () => {
-      act(() => {
-        useAgentChatStore.getState().setLimitReached({ reason: "budget" });
-      });
-      expect(useAgentChatStore.getState().limitReached).toEqual({ reason: "budget" });
-    });
-
-    it("should clear the limit when set to null", () => {
-      act(() => {
-        useAgentChatStore.getState().setLimitReached({ reason: "turns" });
-        useAgentChatStore.getState().setLimitReached(null);
-      });
-      expect(useAgentChatStore.getState().limitReached).toBeNull();
-    });
   });
 
   describe("setOpen", () => {
@@ -781,15 +760,6 @@ describe("useAgentChatStore", () => {
       });
 
       expect(useAgentChatStore.getState().error).toBeNull();
-    });
-
-    it("should also clear limitReached", () => {
-      act(() => {
-        useAgentChatStore.getState().setLimitReached({ reason: "budget" });
-        useAgentChatStore.getState().clearMessages();
-      });
-
-      expect(useAgentChatStore.getState().limitReached).toBeNull();
     });
 
     it("should not affect isOpen state", () => {
