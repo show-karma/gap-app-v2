@@ -7,6 +7,8 @@ import { sitemapIndexResponse } from "@/utilities/sitemap";
 // indexer is down. Force dynamic so the route is only ever rendered on demand;
 // the indexer fetch is still cached via the Data Cache (see fetchSitemapCounts).
 export const dynamic = "force-dynamic";
+// Headroom for the cold counts fetch so the index itself never 504s.
+export const maxDuration = 60;
 
 // Legacy alias of the index. robots.txt now advertises /sitemap_index.xml
 // instead (see that route for why); this URL keeps serving identical content

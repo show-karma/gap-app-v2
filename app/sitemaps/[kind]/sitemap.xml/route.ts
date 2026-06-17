@@ -10,6 +10,15 @@ import {
   type SitemapKind,
 } from "@/utilities/sitemap";
 
+// Render on demand only (never prerendered with a baked indexer response) and
+// give the cold build room to page the whole kind from the indexer. Without an
+// explicit cap a cold render runs against the platform default (~10s) and a
+// large kind like projects — already ~10s to assemble — 504s, which is exactly
+// what Search Console reports as "Couldn't fetch". The warmer keeps the Data
+// Cache hot so this full duration is only ever spent off the crawler path.
+export const dynamic = "force-dynamic";
+export const maxDuration = 60;
+
 // Consolidated per-kind child sitemap (/sitemaps/projects/sitemap.xml, …): the
 // kind's complete URL list in one file. One file per kind gives Google 7 child
 // fetches instead of 29 — every extra file is another fetch it can delay or
