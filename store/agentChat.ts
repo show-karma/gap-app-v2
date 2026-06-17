@@ -35,6 +35,12 @@ export interface ChatMessage {
   traceId?: string;
   /** User feedback rating: 1 = thumbs up, -1 = thumbs down */
   rating?: 1 | -1;
+  /**
+   * Locally-generated placeholder text (e.g. the working-limit fallback), not
+   * something the agent actually said. Excluded from the replayed
+   * conversation history so it never pollutes the agent's context.
+   */
+  synthetic?: boolean;
 }
 
 /**
@@ -117,7 +123,7 @@ interface AgentChatStore {
   setOpen: (open: boolean) => void;
   toggleOpen: () => void;
   addMessage: (message: ChatMessage) => void;
-  updateLastAssistantMessage: (content: string) => void;
+  updateLastAssistantMessage: (content: string, opts?: { synthetic?: boolean }) => void;
   finalizeLastAssistantMessage: () => void;
   updateLastAssistantToolResult: (toolResult: ToolResultData) => void;
   updateMessageToolResultStatus: (messageId: string, status: "approved" | "denied") => void;
@@ -172,12 +178,16 @@ export const useAgentChatStore = create<AgentChatStore>((set) => ({
       return { messages: [...state.messages, message] };
     }),
 
-  updateLastAssistantMessage: (content) =>
+  updateLastAssistantMessage: (content, opts) =>
     set((state) => {
       const messages = [...state.messages];
       const lastIdx = messages.length - 1;
       if (lastIdx >= 0 && messages[lastIdx].role === "assistant") {
-        messages[lastIdx] = { ...messages[lastIdx], content };
+        messages[lastIdx] = {
+          ...messages[lastIdx],
+          content,
+          ...(opts?.synthetic ? { synthetic: true } : {}),
+        };
       }
       return { messages };
     }),
