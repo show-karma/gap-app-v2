@@ -61,11 +61,25 @@ export interface ChatMention {
   parentSlug?: string;
 }
 
+/**
+ * Reason a run stopped at a working limit. `budget` = per-run cost ceiling;
+ * `turns` = per-run turn ceiling; `time` = per-run wall-clock timeout. All are
+ * graceful terminal states (not crashes) — the UI offers to continue rather
+ * than showing an error.
+ */
+export type LimitReason = "budget" | "turns" | "time";
+
 interface AgentChatStore {
   messages: ChatMessage[];
   isOpen: boolean;
   isStreaming: boolean;
   error: string | null;
+
+  /**
+   * Set when the last run stopped at a working limit. Drives the Continue
+   * affordance instead of the red error banner. Cleared on the next send.
+   */
+  limitReached: { reason: LimitReason } | null;
 
   /**
    * Buffered Langfuse trace ID. The backend emits `trace_started` over SSE
@@ -122,6 +136,7 @@ interface AgentChatStore {
   setRatingCommentBoxOpenForMessageId: (messageId: string | null) => void;
   setStreaming: (streaming: boolean) => void;
   setError: (error: string | null) => void;
+  setLimitReached: (limit: { reason: LimitReason } | null) => void;
   setAgentContext: (ctx: AgentChatStore["agentContext"]) => void;
   addMention: (mention: ChatMention) => void;
   removeMention: (id: string) => void;
@@ -134,6 +149,7 @@ export const useAgentChatStore = create<AgentChatStore>((set) => ({
   isOpen: false,
   isStreaming: false,
   error: null,
+  limitReached: null,
   agentContext: null,
   pendingMentions: [],
   pendingTraceId: null,
@@ -264,6 +280,7 @@ export const useAgentChatStore = create<AgentChatStore>((set) => ({
 
   setStreaming: (streaming) => set({ isStreaming: streaming }),
   setError: (error) => set({ error }),
+  setLimitReached: (limitReached) => set({ limitReached }),
   setAgentContext: (agentContext) => set({ agentContext }),
   addMention: (mention) =>
     set((state) =>
@@ -278,6 +295,7 @@ export const useAgentChatStore = create<AgentChatStore>((set) => ({
     set({
       messages: [],
       error: null,
+      limitReached: null,
       isStreaming: false,
       pendingTraceId: null,
       ratingCommentBoxOpenForMessageId: null,
