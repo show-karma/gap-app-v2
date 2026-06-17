@@ -161,13 +161,13 @@ class AgentStreamReportedError extends Error {}
 
 /**
  * Shown in the assistant bubble when a run hit its working limit without
- * producing any prose (e.g. it spent every turn calling tools). Gives the user
- * something to read alongside the Continue affordance instead of an empty
- * bubble. Kept free of jargon.
+ * producing any prose (e.g. it spent every turn calling tools) — so the bubble
+ * isn't empty. Kept to a plain status statement: it renders on every surface,
+ * but the "Continue" call-to-action only exists on the dedicated page, so the
+ * canned text must not promise an action a given surface can't offer. Seeded as
+ * `synthetic` so it is never replayed to the agent as a real assistant turn.
  */
-const LIMIT_FALLBACK_MESSAGE =
-  "I reached my working limit for this request before I could finish. " +
-  "Continue and I'll pick up where I left off.";
+const LIMIT_FALLBACK_MESSAGE = "I reached my working limit for this request before I could finish.";
 
 /** Directive sent when the user clicks Continue after a working-limit stop. */
 const CONTINUE_DIRECTIVE = "Please continue from where you left off.";
@@ -198,7 +198,7 @@ function buildConversationHistory(
   maxMessages: number = 12
 ): Array<{ role: string; content: string }> {
   return messages
-    .filter((msg) => msg.content && msg.content.trim().length > 0)
+    .filter((msg) => !msg.synthetic && msg.content && msg.content.trim().length > 0)
     .slice(-maxMessages)
     .map((msg) => ({ role: msg.role, content: msg.content }));
 }
@@ -437,7 +437,7 @@ export function useAgentStream() {
                   event.reason === "turns" || event.reason === "time" ? event.reason : "budget";
                 if (!streamingContentRef.current.trim()) {
                   streamingContentRef.current = LIMIT_FALLBACK_MESSAGE;
-                  store.updateLastAssistantMessage(LIMIT_FALLBACK_MESSAGE);
+                  store.updateLastAssistantMessage(LIMIT_FALLBACK_MESSAGE, { synthetic: true });
                 }
                 store.setLimitReached({ reason });
                 break;

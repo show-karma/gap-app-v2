@@ -387,6 +387,10 @@ describe("useAgentStream", () => {
       const body = JSON.parse((lastCall?.[1] as RequestInit).body as string);
       expect(Array.isArray(body.conversationHistory)).toBe(true);
       expect(body.conversationHistory.length).toBeGreaterThan(0);
+      // the synthetic working-limit fallback must NOT be replayed to the agent
+      expect(
+        body.conversationHistory.some((m: { content: string }) => /working limit/i.test(m.content))
+      ).toBe(false);
     });
 
     it("should set streaming to false after request completes", async () => {
