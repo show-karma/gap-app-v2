@@ -174,7 +174,6 @@ describe("useAgentStream", () => {
       isOpen: false,
       isStreaming: false,
       error: null,
-      limitReached: null,
       agentContext: null,
       pendingMentions: [],
       pendingTraceId: null,
@@ -286,111 +285,6 @@ describe("useAgentStream", () => {
       });
 
       expect(useAgentChatStore.getState().error).toBe("Rate limit exceeded, Try again later");
-    });
-
-    it("should set limitReached (not error) on a limit_reached event", async () => {
-      const sseText = formatSSE([
-        { type: "assistant", message: { content: [{ type: "text", text: "Partial findings" }] } },
-        { type: "limit_reached", reason: "budget", hadAssistantText: true },
-      ]);
-      mockFetch.mockResolvedValue(createStreamResponse(sseText));
-
-      const { result } = renderHook(() => useAgentStream(), { wrapper });
-
-      await act(async () => {
-        await result.current.sendMessage("Expensive question");
-      });
-
-      expect(useAgentChatStore.getState().limitReached).toEqual({ reason: "budget" });
-      expect(useAgentChatStore.getState().error).toBeNull();
-    });
-
-    it("should set limitReached with reason 'time' on a per-run timeout abort", async () => {
-      const sseText = formatSSE([{ type: "limit_reached", reason: "time" }]);
-      mockFetch.mockResolvedValue(createStreamResponse(sseText));
-
-      const { result } = renderHook(() => useAgentStream(), { wrapper });
-
-      await act(async () => {
-        await result.current.sendMessage("Long task");
-      });
-
-      expect(useAgentChatStore.getState().limitReached).toEqual({ reason: "time" });
-      expect(useAgentChatStore.getState().error).toBeNull();
-    });
-
-    it("should seed a fallback message when the limit was hit with no prose", async () => {
-      const sseText = formatSSE([
-        { type: "limit_reached", reason: "turns", hadAssistantText: false },
-      ]);
-      mockFetch.mockResolvedValue(createStreamResponse(sseText));
-
-      const { result } = renderHook(() => useAgentStream(), { wrapper });
-
-      await act(async () => {
-        await result.current.sendMessage("Tool-spree question");
-      });
-
-      const messages = useAgentChatStore.getState().messages;
-      const lastAssistant = messages.findLast((m) => m.role === "assistant");
-      expect(lastAssistant?.content).toMatch(/working limit/i);
-      expect(useAgentChatStore.getState().limitReached).toEqual({ reason: "turns" });
-    });
-
-    it("should keep streamed prose and not overwrite it with the fallback", async () => {
-      const sseText = formatSSE([
-        {
-          type: "stream_event",
-          event: {
-            type: "content_block_delta",
-            delta: { type: "text_delta", text: "Here is what I found" },
-          },
-        },
-        { type: "limit_reached", reason: "budget", hadAssistantText: true },
-      ]);
-      mockFetch.mockResolvedValue(createStreamResponse(sseText));
-
-      const { result } = renderHook(() => useAgentStream(), { wrapper });
-
-      await act(async () => {
-        await result.current.sendMessage("Question");
-      });
-
-      const lastAssistant = useAgentChatStore
-        .getState()
-        .messages.findLast((m) => m.role === "assistant");
-      expect(lastAssistant?.content).toBe("Here is what I found");
-    });
-
-    it("continueLastRun clears the limit and sends another request with history", async () => {
-      mockFetch.mockResolvedValue(
-        createStreamResponse(
-          formatSSE([{ type: "limit_reached", reason: "budget", hadAssistantText: false }])
-        )
-      );
-
-      const { result } = renderHook(() => useAgentStream(), { wrapper });
-
-      await act(async () => {
-        await result.current.sendMessage("First");
-      });
-      expect(useAgentChatStore.getState().limitReached).toEqual({ reason: "budget" });
-
-      mockFetch.mockResolvedValue(createStreamResponse(""));
-      await act(async () => {
-        await result.current.continueLastRun();
-      });
-
-      expect(useAgentChatStore.getState().limitReached).toBeNull();
-      // second fetch carries conversationHistory from the prior turn
-      const lastCall = mockFetch.mock.calls.at(-1);
-      const body = JSON.parse((lastCall?.[1] as RequestInit).body as string);
-      expect(Array.isArray(body.conversationHistory)).toBe(true);
-      expect(body.conversationHistory.length).toBeGreaterThan(0);
-      // the synthetic working-limit fallback must NOT be replayed to the agent
-      expect(
-        body.conversationHistory.some((m: { content: string }) => /working limit/i.test(m.content))
-      ).toBe(false);
     });
 
     it("should set streaming to false after request completes", async () => {
