@@ -1,33 +1,45 @@
 import type { Metadata } from "next";
+import { cache } from "react";
 import { PROJECT_NAME } from "@/constants/brand";
 import type { FundingProgram } from "@/types/whitelabel-entities";
 import { envVars } from "@/utilities/enviromentVars";
+import fetchData from "@/utilities/fetchData";
 import { cleanMarkdownForPlainText } from "@/utilities/markdown";
 import { DEFAULT_DESCRIPTION, SITE_URL, twitterMeta } from "@/utilities/meta";
 import { getWhitelabelContext } from "@/utilities/whitelabel-server";
 import ProgramDetailClient from "./ProgramDetailClient";
+
+// generateMetadata blocks on the indexer, so give a cold render headroom over
+// the platform default (~10s) — the same 504 class this PR hardens the sitemap
+// routes against. The fetch is light (one program) and cached, so this is a
+// ceiling, not a budget.
+export const maxDuration = 30;
 
 type Params = Promise<{
   communityId: string;
   programId: string;
 }>;
 
-// Server-side program fetch for metadata only. The endpoint is public (these
-// pages ship in the funding-programs sitemap), cached in the Data Cache so the
-// metadata render never blocks on a cold indexer. A failed fetch falls back to
-// generic copy — the canonical below does not depend on it.
-async function fetchProgram(programId: string): Promise<FundingProgram | null> {
+// Server-side program fetch for metadata only. Public endpoint (isAuthorized
+// false) — these pages ship in the funding-programs sitemap. Reuses fetchData
+// (base-URL resolution + error shaping) and React.cache, matching the sibling
+// apply/ route. A failed fetch falls back to generic copy — the canonical
+// below does not depend on it.
+const getProgramDetails = cache(async (programId: string): Promise<FundingProgram | null> => {
   try {
-    const res = await fetch(
-      `${envVars.NEXT_PUBLIC_GAP_INDEXER_URL}/v2/funding-program-configs/${programId}`,
-      { next: { revalidate: 3600 } }
+    const [data] = await fetchData<FundingProgram>(
+      `/v2/funding-program-configs/${encodeURIComponent(programId)}`,
+      "GET",
+      {},
+      {},
+      {},
+      false
     );
-    if (!res.ok) return null;
-    return (await res.json()) as FundingProgram;
+    return data;
   } catch {
     return null;
   }
-}
+});
 
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { communityId, programId } = await params;
@@ -41,7 +53,7 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
     ? `/programs/${programId}`
     : `/community/${communityId}/programs/${programId}`;
 
-  const program = await fetchProgram(programId);
+  const program = await getProgramDetails(programId);
   const programName = program?.metadata?.title || program?.name || "Funding Program";
   const description =
     cleanMarkdownForPlainText(

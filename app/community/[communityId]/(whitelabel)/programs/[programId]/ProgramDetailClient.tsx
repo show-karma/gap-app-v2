@@ -8,22 +8,7 @@ import { ProgramDetailsSidebar } from "@/features/programs/components/ProgramDet
 import { useProgram } from "@/features/programs/hooks/use-program";
 import { Link } from "@/src/components/navigation/Link";
 import { PermissionProvider } from "@/src/core/rbac/context/permission-context";
-
-function isProgramEnabled(program: {
-  applicationConfig: { isEnabled: boolean; formSchema?: unknown } | null;
-  metadata: { startsAt?: string; endsAt?: string };
-}): boolean {
-  const isEnabled = program.applicationConfig?.isEnabled ?? false;
-  const hasFormConfig = !!program.applicationConfig?.formSchema;
-  const isDeadlinePassed = program.metadata?.endsAt
-    ? new Date(program.metadata.endsAt) < new Date()
-    : false;
-  const now = new Date();
-  const startsAt = program.metadata?.startsAt ? new Date(program.metadata.startsAt) : null;
-  const endsAt = program.metadata?.endsAt ? new Date(program.metadata.endsAt) : null;
-  const isOpen = startsAt && endsAt ? now >= startsAt && now <= endsAt : true;
-  return hasFormConfig && isEnabled && isOpen && !isDeadlinePassed;
-}
+import { isProgramEnabled } from "@/utilities/funding-programs";
 
 function ProgramDetailContent() {
   const { communityId, programId } = useParams<{
