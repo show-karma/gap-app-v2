@@ -1,15 +1,9 @@
 "use client";
 
 import { SendIcon, SquareIcon } from "lucide-react";
-import {
-  type FormEvent,
-  type KeyboardEvent,
-  useCallback,
-  useLayoutEffect,
-  useRef,
-  useState,
-} from "react";
+import { type FormEvent, type KeyboardEvent, useCallback, useRef, useState } from "react";
 import { cn } from "@/utilities/tailwind";
+import { useAutoGrowTextarea } from "../hooks/use-auto-grow-textarea";
 
 interface AskKarmaInputProps {
   onSubmit: (text: string) => void;
@@ -32,16 +26,7 @@ export function AskKarmaInput({
   const [value, setValue] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Auto-grow: match the textarea height to its content so multi-line prompts
-  // are fully visible, up to the max-height (then it scrolls). Runs on every
-  // value change — including the reset to "" after send, which collapses it
-  // back to one row.
-  useLayoutEffect(() => {
-    const el = textareaRef.current;
-    if (!el) return;
-    el.style.height = "auto";
-    el.style.height = `${el.scrollHeight}px`;
-  }, [value]);
+  useAutoGrowTextarea(textareaRef, value);
 
   const send = useCallback(() => {
     const trimmed = value.trim();

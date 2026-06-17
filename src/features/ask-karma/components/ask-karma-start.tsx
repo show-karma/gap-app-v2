@@ -7,11 +7,11 @@ import {
   type MouseEvent as ReactMouseEvent,
   useCallback,
   useEffect,
-  useLayoutEffect,
   useRef,
   useState,
 } from "react";
 import { cn } from "@/utilities/tailwind";
+import { useAutoGrowTextarea } from "../hooks/use-auto-grow-textarea";
 import { usePrefersReducedMotion } from "../hooks/use-prefers-reduced-motion";
 import type { AskKarmaConfig } from "../types";
 import { FeaturedTopicCard } from "./featured-topic-card";
@@ -175,15 +175,9 @@ export function AskKarmaStart({ config, onSubmit }: AskKarmaStartProps) {
   const inputDisabled = phase !== "idle";
   const submitDisabled = phase !== "idle" || displayValue.trim().length === 0;
 
-  // Auto-grow the textarea to fit multi-line questions, up to its max-height
-  // (then it scrolls). Runs on every rendered-value change — including the
-  // typewriter animation and the reset back to a single row.
-  useLayoutEffect(() => {
-    const el = inputRef.current;
-    if (!el) return;
-    el.style.height = "auto";
-    el.style.height = `${el.scrollHeight}px`;
-  }, [displayValue]);
+  // Grows with the typewriter animation and the user's typing; collapses back
+  // on reset. `displayValue` is what's rendered across phases.
+  useAutoGrowTextarea(inputRef, displayValue);
 
   return (
     <div className="flex flex-col gap-10" data-animation-phase={phase}>
