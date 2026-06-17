@@ -8,6 +8,12 @@ import {
   type SitemapKind,
 } from "@/utilities/sitemap";
 
+// Render on demand and allow the cold indexer fetch the same headroom as the
+// consolidated route, so a slow chunk fetch never 504s the way the platform
+// default (~10s) would. See ../../sitemap.xml/route.ts.
+export const dynamic = "force-dynamic";
+export const maxDuration = 60;
+
 // LEGACY per-kind child sitemap chunk (1,000 URLs per file). The index now
 // lists one consolidated file per kind (/sitemaps/<kind>/sitemap.xml) and only
 // falls back to these chunked URLs for a kind past the per-file URL limit.
