@@ -12,11 +12,13 @@
  * - Store: useGrantAtlasStore → usePhilanthropyStore
  * - messages selector: useShallow + EMPTY_MESSAGES constant (Zustand v5 safety)
  * - No motion imports; no retry button on stream error (error card only)
- * - New chat: abort stream + reset() store, STAY on current URL
+ * - New chat: abort stream + reset() store, replace URL with a fresh session
+ *   id (conversations are persisted per URL id)
  * - INLINE STARTER_PROMPTS (do NOT use suggested-queries.tsx component)
  */
 
 import { Bookmark, Clock, Sparkles } from "lucide-react";
+import { useRouter } from "next/navigation";
 import pluralize from "pluralize";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
@@ -38,7 +40,9 @@ import {
   PromptInputTextarea,
   PromptInputTools,
 } from "@/src/components/ai-elements/prompt-input";
+import { NON_PROFITS_PAGES } from "@/utilities/pages";
 import { usePhilanthropySearch } from "../hooks/use-philanthropy-stream";
+import { savedTurnsToChatTurns } from "../lib/saved-conversation";
 import { FILINGS_STATS } from "../lib/stats";
 import { decideThreadSeed } from "../lib/thread-seed";
 import { searchHistoryService } from "../services/search-history.service";
@@ -129,6 +133,7 @@ export function ChatView({ searchId }: { searchId?: string }) {
   const reset = usePhilanthropyStore((s) => s.reset);
   const { search, abort } = usePhilanthropySearch();
   const { authenticated, login } = useAuth();
+  const router = useRouter();
 
   const [input, setInput] = useState("");
   const [trayOpen, setTrayOpen] = useState(false);
@@ -164,23 +169,36 @@ export function ChatView({ searchId }: { searchId?: string }) {
       reset();
     }
     usePhilanthropyStore.getState().setThreadId(searchId);
-    // Fast path: local session store
-    const session = useSearchSessionStore.getState().getSession(searchId);
+    const sessionStore = useSearchSessionStore.getState();
+    const session = sessionStore.getSession(searchId);
     const localQuery = session?.query?.trim();
-    if (localQuery) {
-      void search(localQuery, 1, { chat: true });
+    // Fast path: a session minted just now (landing page submit / new chat)
+    // runs its query immediately. `consumeFresh` is one-shot, so any later
+    // visit to the same URL takes the hydration path below instead of
+    // re-running the search.
+    if (sessionStore.consumeFresh(searchId)) {
+      if (localQuery) void search(localQuery, 1, { chat: true });
       return;
     }
-    // Fallback: fetch from server (shared link / cold load)
+    // Revisit / shared link: restore the saved conversation if the server
+    // has turns for it; otherwise fall back to re-running the query.
     void searchHistoryService.getById(searchId).match(
       (entry) => {
+        if (entry.turns.length > 0) {
+          useSearchSessionStore.getState().setSession(searchId, entry.query);
+          usePhilanthropyStore.getState().hydrateTurns(savedTurnsToChatTurns(entry.turns));
+          return;
+        }
         const remoteQuery = entry.query?.trim();
         if (!remoteQuery) return;
         useSearchSessionStore.getState().setSession(searchId, remoteQuery);
         void search(remoteQuery, 1, { chat: true });
       },
       () => {
-        /* 404 or error — render empty workbench, degrade gracefully */
+        // 404 (never persisted — e.g. anonymous search) or network error:
+        // re-run the locally cached query if we have one, else render the
+        // empty workbench and degrade gracefully.
+        if (localQuery) void search(localQuery, 1, { chat: true });
       }
     );
   }, [searchId, messages.length, search, abort, reset]);
@@ -203,15 +221,19 @@ export function ChatView({ searchId }: { searchId?: string }) {
     [search, isSearching]
   );
 
-  // New chat: abort active stream + reset chat store, STAY on current URL.
-  // Clear the session's seed query so the initial-query effect (re-armed by
-  // resetting the ref below) doesn't immediately re-run the original query.
+  // New chat: abort active stream + reset chat store, then move to a fresh
+  // session URL. Conversations are persisted under the URL id, so staying on
+  // the old URL would either resurrect the saved thread (the seeding effect
+  // hydrates it) or append unrelated turns to it — a new id gives the next
+  // conversation its own saved thread. `createSession("")` marks the new id
+  // fresh so the seeding effect renders an empty workbench without fetching.
   const onNewChat = useCallback(() => {
     abort();
     reset();
-    if (searchId) useSearchSessionStore.getState().clearSession(searchId);
     seededSearchIdRef.current = null;
-  }, [abort, reset, searchId]);
+    const newId = useSearchSessionStore.getState().createSession("");
+    router.replace(NON_PROFITS_PAGES.SEARCH(newId));
+  }, [abort, reset, router]);
 
   const showEmpty = messages.length === 0 && !isSearching;
   const lastTurn = messages[messages.length - 1];
