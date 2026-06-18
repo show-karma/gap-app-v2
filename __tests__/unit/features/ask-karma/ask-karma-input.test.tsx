@@ -86,8 +86,9 @@ describe("AskKarmaInput", () => {
   it("caps chat message length to prevent oversized prompts", () => {
     render(<AskKarmaInput onSubmit={vi.fn()} isStreaming={false} />);
     const textarea = screen.getByPlaceholderText("Type your message...");
-    // Value is intentional and asserted so it can't be lowered silently.
-    expect(textarea).toHaveAttribute("maxLength", "4000");
+    // Generous but bounded — guards against accidental document pastes.
+    // Value is intentional and asserted so it can't be changed silently.
+    expect(textarea).toHaveAttribute("maxLength", "16000");
   });
 
   it("ignores Enter while IME composition is active", async () => {
