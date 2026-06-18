@@ -39,6 +39,7 @@ pnpm lint:fix           # Biome lint + format
 - **Zustand resets**: When adding state properties, update `initialState` too — `reset()` spreads it and will miss new fields.
 - **Pluralization**: Any dynamic count rendered next to a noun MUST use the `pluralize` library (`pluralize("team", count)`). No manual ternaries, no hardcoded plural-only nouns. Strings like `"1 teams"`, `"0 apply"`, `"1 days left"` are bugs.
 - **Empty-state conditional rendering**: UI blocks tied to a count or array (e.g. "Closing this week — N apply before deadline") must be hidden entirely when the count is 0. Don't render "0 …" copy.
+- **URL-synced filter state**: Must use nuqs `useQueryState` (see `hooks/useProjectFilters.ts` / `hooks/useFundingProgramFilters.ts`). NEVER mirror component state into the URL with `router.push`/`router.replace` inside a `useEffect` — it dispatches App Router navigations that race and cancel in-flight `<Link>` clicks (issue #1547) and spams the history stack.
 - **Authorization is tri-state, not boolean**: Gate auth-sensitive UI through a tri-state hook that returns `{ isAuthorized, isLoading }` (e.g. `useProjectAuthorization`). Render a skeleton while `isLoading`, never the authorized controls or a denial. Specifically:
   - Never read `useOwnerStore.isOwner` without `isOwnerLoading`.
   - For authorization-resolved decisions, never use a query's `isLoading` when that query can be disabled — a disabled React Query v5 query reports `isLoading=false` while still undecided. Use `isPending`-aware composition (`isResolving`).

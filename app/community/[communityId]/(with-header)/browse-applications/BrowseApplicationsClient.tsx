@@ -2,10 +2,10 @@
 
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { ChevronDown, Lock, RefreshCw, Search, X } from "lucide-react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getProjectTitle } from "@/components/FundingPlatform/helper/getProjectTitle";
 import { useProgramsWithConfig } from "@/features/programs/hooks/use-programs-with-config";
+import { useBrowseApplicationFilters } from "@/hooks/useBrowseApplicationFilters";
 import { Link } from "@/src/components/navigation/Link";
 import type { Application, ApplicationStatus } from "@/types/whitelabel-entities";
 import fetchData from "@/utilities/fetchData";
@@ -300,42 +300,29 @@ function ProgramPillSelector({
 }
 
 export function BrowseApplicationsClient({ communityId }: BrowseApplicationsClientProps) {
-  const searchParams = useSearchParams();
-  const router = useRouter();
-  const pathname = usePathname();
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
   const { programs } = useProgramsWithConfig(communityId);
 
-  const [selectedProgramId, setSelectedProgramId] = useState<string>(
-    () => searchParams.get("programId") || ""
-  );
-  const [statusFilter, setStatusFilter] = useState<ApplicationStatus | "all">(() => {
-    const s = searchParams.get("status");
-    if (
-      s &&
-      ["pending", "under_review", "revision_requested", "approved", "rejected"].includes(s)
-    ) {
-      return s as ApplicationStatus;
-    }
-    return "all";
-  });
-  const [searchInput, setSearchInput] = useState(() => searchParams.get("search") || "");
+  // The query string is the single source of truth for these filters (see
+  // useBrowseApplicationFilters): nuqs writes through history.replaceState, so
+  // updating a filter never races or cancels a Link click (issue #1547).
+  const {
+    programId: selectedProgramId,
+    setProgramId: setSelectedProgramId,
+    status: statusFilter,
+    setStatus: setStatusFilter,
+    search: searchInput,
+    setSearch: setSearchInput,
+  } = useBrowseApplicationFilters();
   const [debouncedSearch, setDebouncedSearch] = useState(searchInput);
 
+  // Debounce only the value that drives the API query; the URL write is already
+  // throttled by nuqs and the input stays responsive via the optimistic value.
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(searchInput), 500);
     return () => clearTimeout(timer);
   }, [searchInput]);
-
-  useEffect(() => {
-    const params = new URLSearchParams();
-    if (selectedProgramId) params.set("programId", selectedProgramId);
-    if (statusFilter !== "all") params.set("status", statusFilter);
-    if (debouncedSearch) params.set("search", debouncedSearch);
-    const query = params.toString();
-    router.replace(`${pathname}${query ? `?${query}` : ""}`, { scroll: false });
-  }, [selectedProgramId, statusFilter, debouncedSearch, pathname, router]);
 
   const selectedProgram = programs.find((p) => p.programId === selectedProgramId);
   const hasPrivateApplicationsSetting =
