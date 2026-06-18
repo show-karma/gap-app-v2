@@ -57,6 +57,7 @@ import {
   useRemoveFromResearchTray,
   useResearchTray,
 } from "../hooks/use-research-tray";
+import { type EntityGroup, groupEntitiesByType } from "../lib/group-entities";
 import { FILINGS_STATS } from "../lib/stats";
 import { decideThreadSeed } from "../lib/thread-seed";
 import { searchHistoryService } from "../services/search-history.service";
@@ -253,16 +254,30 @@ const CompactEntityCard = memo(function CompactEntityCard({
   );
 });
 
-function EntityList({ entities, searchId }: { entities: RankedEntity[]; searchId?: string }) {
+// A single labeled group (e.g. "Foundations · Potential funders") with its own
+// show-more state so each section expands independently.
+const EntityGroupSection = memo(function EntityGroupSection({
+  group,
+  searchId,
+}: {
+  group: EntityGroup;
+  searchId?: string;
+}) {
   const [expanded, setExpanded] = useState(false);
-
-  if (entities.length === 0) return null;
-
-  const visible = expanded ? entities : entities.slice(0, INITIAL_VISIBLE_ENTITIES);
-  const remaining = entities.length - visible.length;
+  const Icon = ENTITY_ICON[group.type];
+  const count = group.entities.length;
+  const visible = expanded ? group.entities : group.entities.slice(0, INITIAL_VISIBLE_ENTITIES);
+  const remaining = count - visible.length;
 
   return (
-    <div className="mt-3 flex flex-col gap-2">
+    <section className="flex flex-col gap-2">
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+        <Icon className="size-3.5 text-zinc-500 dark:text-zinc-400" />
+        <h4 className="text-xs font-semibold uppercase tracking-wide text-zinc-700 dark:text-zinc-300">
+          {count} {pluralize(group.label, count)}
+        </h4>
+        <span className="text-xs text-zinc-400 dark:text-zinc-500">· {group.role}</span>
+      </div>
       {visible.map((e) => (
         <CompactEntityCard key={`${e.entityType}-${e.id}`} entity={e} searchId={searchId} />
       ))}
@@ -272,10 +287,24 @@ function EntityList({ entities, searchId }: { entities: RankedEntity[]; searchId
           onClick={() => setExpanded(true)}
           className="flex items-center justify-center gap-1.5 rounded-lg border border-dashed border-zinc-300 bg-white py-2 text-xs font-medium text-zinc-600 transition-colors hover:border-zinc-400 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:border-zinc-600 dark:hover:bg-zinc-800"
         >
-          Show all {entities.length} results
+          Show all {count} {pluralize(group.label.toLowerCase(), count)}
           <ChevronDown className="size-3" />
         </button>
       )}
+    </section>
+  );
+});
+
+function EntityList({ entities, searchId }: { entities: RankedEntity[]; searchId?: string }) {
+  const groups = useMemo(() => groupEntitiesByType(entities), [entities]);
+
+  if (groups.length === 0) return null;
+
+  return (
+    <div className="mt-3 flex flex-col gap-5">
+      {groups.map((group) => (
+        <EntityGroupSection key={group.type} group={group} searchId={searchId} />
+      ))}
     </div>
   );
 }
