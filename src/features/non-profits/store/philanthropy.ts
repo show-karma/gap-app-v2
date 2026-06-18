@@ -111,6 +111,12 @@ interface PhilanthropyStore {
   result: SearchResult | null;
   isSearching: boolean;
   error: string | null;
+  /**
+   * True when the backend rejected a persistence write for this conversation
+   * because it belongs to another account (HTTP 403). The composer is disabled
+   * and a read-only notice is shown so the user isn't typing into a void.
+   */
+  readOnly: boolean;
 
   // ── Chat actions (Phase 3 — included now to avoid store refactor) ──
   appendTurn: (turn: ChatTurn) => void;
@@ -126,6 +132,7 @@ interface PhilanthropyStore {
   setResult: (result: SearchResult | null) => void;
   setSearching: (searching: boolean) => void;
   setError: (error: string | null) => void;
+  setReadOnly: (readOnly: boolean) => void;
   reset: () => void;
 }
 
@@ -140,6 +147,7 @@ const initialState = {
   result: null as SearchResult | null,
   isSearching: false,
   error: null as string | null,
+  readOnly: false,
 } satisfies Omit<
   PhilanthropyStore,
   | "appendTurn"
@@ -152,6 +160,7 @@ const initialState = {
   | "setResult"
   | "setSearching"
   | "setError"
+  | "setReadOnly"
   | "reset"
 >;
 
@@ -185,5 +194,6 @@ export const usePhilanthropyStore = create<PhilanthropyStore>((set) => ({
   setResult: (result) => set({ result }),
   setSearching: (searching) => set({ isSearching: searching }),
   setError: (error) => set({ error }),
+  setReadOnly: (readOnly) => set({ readOnly }),
   reset: () => set({ ...initialState }),
 }));

@@ -17,7 +17,7 @@
  * - INLINE STARTER_PROMPTS (do NOT use suggested-queries.tsx component)
  */
 
-import { Bookmark, Clock, Sparkles } from "lucide-react";
+import { Bookmark, Clock, Lock, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import pluralize from "pluralize";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -130,6 +130,7 @@ export function ChatView({ searchId }: { searchId?: string }) {
     useShallow((s) => (s.messages.length === 0 ? EMPTY_MESSAGES : s.messages))
   );
   const isSearching = usePhilanthropyStore((s) => s.isSearching);
+  const readOnly = usePhilanthropyStore((s) => s.readOnly);
   const reset = usePhilanthropyStore((s) => s.reset);
   const { search, abort } = usePhilanthropySearch();
   const { authenticated, login } = useAuth();
@@ -206,11 +207,11 @@ export function ChatView({ searchId }: { searchId?: string }) {
   const onSubmit = useCallback(
     (msg: PromptInputMessage) => {
       const text = msg.text.trim();
-      if (!text || isSearching) return;
+      if (!text || isSearching || readOnly) return;
       setInput("");
       void search(text, 1, { chat: true });
     },
-    [search, isSearching]
+    [search, isSearching, readOnly]
   );
 
   const onStarterClick = useCallback(
@@ -344,36 +345,54 @@ export function ChatView({ searchId }: { searchId?: string }) {
         <ConversationScrollButton />
       </Conversation>
 
-      {/* Composer */}
+      {/* Composer — replaced by a read-only notice when this conversation
+          belongs to another account (persistence returned 403). */}
       <div className="border-t border-zinc-200 bg-white px-4 py-3 dark:border-zinc-800 dark:bg-zinc-950">
         <div className="mx-auto w-full max-w-3xl">
-          <PromptInput
-            onSubmit={onSubmit}
-            className="rounded-2xl border border-zinc-200 dark:border-zinc-800"
-          >
-            <PromptInputBody>
-              <PromptInputTextarea
-                placeholder={
-                  messages.length === 0
-                    ? "Ask the prospecting agent…"
-                    : "Ask a follow-up — e.g. narrow to Texas, draft outreach for top 3"
-                }
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-              />
-            </PromptInputBody>
-            <PromptInputFooter>
-              <PromptInputTools>
-                <span className="px-2 text-xs text-zinc-500 dark:text-zinc-400">
-                  Plain English · {FILINGS_STATS.composerFooterLabel}
-                </span>
-              </PromptInputTools>
-              <PromptInputSubmit
-                disabled={!input.trim() || isSearching}
-                status={isSearching ? "streaming" : undefined}
-              />
-            </PromptInputFooter>
-          </PromptInput>
+          {readOnly ? (
+            <div className="flex items-center gap-2 rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-600 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
+              <Lock className="size-4 shrink-0" />
+              <span>
+                This conversation belongs to another account and is read-only.{" "}
+                <button
+                  type="button"
+                  onClick={onNewChat}
+                  className="font-medium text-brand underline-offset-2 hover:underline"
+                >
+                  Start a new chat
+                </button>{" "}
+                to continue.
+              </span>
+            </div>
+          ) : (
+            <PromptInput
+              onSubmit={onSubmit}
+              className="rounded-2xl border border-zinc-200 dark:border-zinc-800"
+            >
+              <PromptInputBody>
+                <PromptInputTextarea
+                  placeholder={
+                    messages.length === 0
+                      ? "Ask the prospecting agent…"
+                      : "Ask a follow-up — e.g. narrow to Texas, draft outreach for top 3"
+                  }
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                />
+              </PromptInputBody>
+              <PromptInputFooter>
+                <PromptInputTools>
+                  <span className="px-2 text-xs text-zinc-500 dark:text-zinc-400">
+                    Plain English · {FILINGS_STATS.composerFooterLabel}
+                  </span>
+                </PromptInputTools>
+                <PromptInputSubmit
+                  disabled={!input.trim() || isSearching}
+                  status={isSearching ? "streaming" : undefined}
+                />
+              </PromptInputFooter>
+            </PromptInput>
+          )}
         </div>
       </div>
     </div>
