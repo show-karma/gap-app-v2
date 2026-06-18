@@ -4,7 +4,7 @@ import { Loader2, ShieldCheck } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
-import { useStaff } from "@/src/core/rbac/hooks/use-staff-bridge";
+import { usePermissionContext } from "@/src/core/rbac/context/permission-context";
 import { AccessCodeInput } from "@/src/features/applications/components/AccessCodeInput";
 import { AccessCodeModal } from "@/src/features/applications/components/AccessCodeModal";
 import { ApplicationForm } from "@/src/features/applications/components/ApplicationForm";
@@ -51,9 +51,12 @@ export function ApplicationFormClient({
     return path.startsWith(prefix) ? path.slice(prefix.length) || "/" : path;
   };
 
-  // Safe RBAC fallback: isStaff ?? false — PermissionProvider may not be mounted yet
-  const { isStaff, isLoading: rbacLoading } = useStaff();
-  const canBypassClosed = isStaff ?? false;
+  // Admins can submit after a program closes — mirrors the backend bypass
+  // (hasFundingProgramAdminAccess). The BE folds staff (SUPER_ADMIN) into
+  // isCommunityAdmin, so these two BE-resolved flags cover staff, community
+  // admins, and program reviewers with no client-side role logic.
+  const { isLoading: rbacLoading, isCommunityAdmin, isReviewer } = usePermissionContext();
+  const canBypassClosed = !rbacLoading && (isCommunityAdmin || isReviewer);
   const effectiveDisabled = isDisabled && !canBypassClosed;
 
   // Access code gating

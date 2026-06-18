@@ -10,6 +10,8 @@ const mocks = vi.hoisted(() => ({
   toastError: vi.fn(),
   searchParams: new URLSearchParams(),
   isStaff: false as boolean | null,
+  isCommunityAdmin: false,
+  isReviewer: false,
   rbacLoading: false,
   isWhitelabel: false,
   communitySlug: null as string | null,
@@ -32,8 +34,13 @@ vi.mock("next/navigation", () => ({
   useSearchParams: () => mocks.searchParams,
 }));
 
-vi.mock("@/src/core/rbac/hooks/use-staff-bridge", () => ({
-  useStaff: () => ({ isStaff: mocks.isStaff, isLoading: mocks.rbacLoading }),
+vi.mock("@/src/core/rbac/context/permission-context", () => ({
+  usePermissionContext: () => ({
+    isLoading: mocks.rbacLoading,
+    // BE folds staff (SUPER_ADMIN) into isCommunityAdmin
+    isCommunityAdmin: mocks.isCommunityAdmin || mocks.isStaff === true,
+    isReviewer: mocks.isReviewer,
+  }),
 }));
 
 vi.mock("@/utilities/whitelabel-context", () => ({
@@ -114,6 +121,8 @@ function resetMocks() {
   mocks.toastError.mockReset();
   mocks.searchParams = new URLSearchParams();
   mocks.isStaff = false;
+  mocks.isCommunityAdmin = false;
+  mocks.isReviewer = false;
   mocks.rbacLoading = false;
   mocks.isWhitelabel = false;
   mocks.communitySlug = null;
@@ -520,8 +529,36 @@ describe("ApplicationFormClient", () => {
       expect(screen.getByTestId("application-form")).toBeInTheDocument();
     });
 
-    it("should_not_show_admin_override_banner_for_non_staff_users_even_when_disabled", () => {
+    it("should_show_admin_override_banner_when_disabled_and_user_is_community_admin", () => {
+      mocks.isCommunityAdmin = true;
+
+      render(
+        <Wrapper>
+          <ApplicationFormClient {...openProps} isDisabled={true} />
+        </Wrapper>
+      );
+
+      expect(screen.getByText(/admin override/i)).toBeInTheDocument();
+      expect(screen.getByTestId("application-form")).toBeInTheDocument();
+    });
+
+    it("should_show_admin_override_banner_when_disabled_and_user_is_program_reviewer", () => {
+      mocks.isReviewer = true;
+
+      render(
+        <Wrapper>
+          <ApplicationFormClient {...openProps} isDisabled={true} />
+        </Wrapper>
+      );
+
+      expect(screen.getByText(/admin override/i)).toBeInTheDocument();
+      expect(screen.getByTestId("application-form")).toBeInTheDocument();
+    });
+
+    it("should_not_show_admin_override_banner_for_non_admin_users_even_when_disabled", () => {
       mocks.isStaff = false;
+      mocks.isCommunityAdmin = false;
+      mocks.isReviewer = false;
 
       render(
         <Wrapper>
