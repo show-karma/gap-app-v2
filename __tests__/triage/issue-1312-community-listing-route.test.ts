@@ -8,7 +8,7 @@ import { PAGES } from "@/utilities/pages";
  * lives at `/communities`. The fix declares a permanent redirect in next.config.ts
  * from `/community` to the community listing, so the bare path redirects at the edge
  * instead of dead-ending on a 404 (cleaner than shipping a client route that only
- * calls `permanentRedirect`).
+ * calls `permanentRedirect`). Verified live: prod 404 → preview 308 → /communities.
  */
 describe("issue #1312 — bare /community redirects to the community listing", () => {
   const configPath = path.resolve(__dirname, "..", "..", "next.config.ts");
