@@ -21,6 +21,7 @@ import { useTeamProfiles } from "@/hooks/useTeamProfiles";
 import { useWallet } from "@/hooks/useWallet";
 import { useProjectStore } from "@/store";
 import { useContributorProfileModalStore } from "@/store/modals/contributorProfile";
+import { compareAllWallets } from "@/utilities/auth/compare-all-wallets";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { gapSupportedNetworks, getChainIdByName } from "@/utilities/network";
@@ -70,7 +71,7 @@ type SchemaType = z.infer<typeof profileSchema>;
 export const ContributorProfileDialog: FC = () => {
   const project = useProjectStore((state) => state.project);
   const { chain } = useAccount();
-  const { address, isConnected, authenticated: isAuth, login } = useAuth();
+  const { address, isConnected, authenticated: isAuth, user, login } = useAuth();
   const { closeModal, isModalOpen: isOpen, isGlobal } = useContributorProfileModalStore();
 
   // Fetch contributor profile using React Query
@@ -79,11 +80,22 @@ export const ContributorProfileDialog: FC = () => {
   // Fetch team profiles using React Query
   const { refetch: refetchTeamProfiles } = useTeamProfiles(project);
 
-  const isProjectMember = !!project?.members.find(
-    (item: { address: string; role: string; joinedAt: string }) =>
-      item.address.toLowerCase() === address?.toLowerCase() ||
-      project?.owner?.toLowerCase() === address?.toLowerCase()
+  // Match against ALL the user's linked wallets so membership/ownership resolves
+  // regardless of which linked wallet is currently active. The owner check is
+  // separate from members.some() — an owner not listed in members (or an empty
+  // members array) must still resolve as a member here.
+  const isOwnerByLinkedWallet = !!(
+    user &&
+    project?.owner &&
+    compareAllWallets(user, project.owner)
   );
+  const isMemberByLinkedWallet = !!(
+    user &&
+    project?.members?.some((item: { address: string; role: string; joinedAt: string }) =>
+      compareAllWallets(user, item.address)
+    )
+  );
+  const isProjectMember = isOwnerByLinkedWallet || isMemberByLinkedWallet;
   const isEditing = isProjectMember || isGlobal;
   const searchParams = useSearchParams();
   const inviteCodeParam = searchParams?.get("invite-code");
@@ -199,7 +211,7 @@ export const ContributorProfileDialog: FC = () => {
           const refreshedProject = await refreshProject();
           const hasMember = refreshedProject?.members.find(
             (item: { address: string; role: string; joinedAt: string }) =>
-              item.address?.toLowerCase() === address?.toLowerCase()
+              item.address && user && compareAllWallets(user, item.address)
           );
           if (hasMember) {
             showSuccess("Congrats! You have joined the team successfully");
@@ -412,7 +424,7 @@ export const ContributorProfileDialog: FC = () => {
                         <p className="text-base text-red-400">{errors.farcaster?.message}</p>
                       </div>
                       <Button
-                        className="justify-center items-center flex text-center text-base w-full bg-black dark:bg-zinc-900 hover:bg-black hover:dark:bg-zinc-800 text-white dark:text-zinc-100"
+                        className="justify-center items-center flex text-center text-base w-full bg-zinc-950 dark:bg-zinc-900 hover:bg-zinc-950 hover:dark:bg-zinc-800 text-white dark:text-zinc-100"
                         type="submit"
                         disabled={isLoading || !isValid}
                         isLoading={isLoading}

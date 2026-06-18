@@ -26,6 +26,7 @@ function makeCandidate(
     activitySignalStatus: "no_signal",
     websiteLastUpdatedAt: null,
     socialLastPostAt: null,
+    socialMetrics: null,
     reasoningSummary: null,
     onePagerText: null,
     detailedText: null,
