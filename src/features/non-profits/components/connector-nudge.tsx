@@ -10,7 +10,6 @@
 
 import { ArrowUpRight, Sparkles, X } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Link } from "@/src/components/navigation/Link";
 import { NON_PROFITS_PAGES } from "@/utilities/pages";
 
 const DISMISS_KEY = "np-connector-nudge-dismissed";
@@ -73,21 +72,28 @@ export function ConnectorNudge() {
               <X className="size-4" />
             </button>
           </div>
-          <div className="mt-3 flex flex-wrap gap-2">
-            <Link
+          {/* Open the setup guides in a new tab so the user never loses the
+              conversation they're in the middle of. */}
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <a
               href={NON_PROFITS_PAGES.CONNECT_CLAUDE}
+              target="_blank"
+              rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-xs font-medium text-zinc-800 transition-colors hover:border-zinc-400 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:border-zinc-600 dark:hover:bg-zinc-800"
             >
               Add to Claude
               <ArrowUpRight className="size-3" />
-            </Link>
-            <Link
+            </a>
+            <a
               href={NON_PROFITS_PAGES.CONNECT_CHATGPT}
+              target="_blank"
+              rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-xs font-medium text-zinc-800 transition-colors hover:border-zinc-400 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:border-zinc-600 dark:hover:bg-zinc-800"
             >
               Add to ChatGPT
               <ArrowUpRight className="size-3" />
-            </Link>
+            </a>
+            <span className="text-xs text-zinc-400 dark:text-zinc-500">Opens in a new tab</span>
           </div>
         </div>
       </div>
