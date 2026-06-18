@@ -24,6 +24,7 @@ export const NON_PROFITS_API = {
   PHILANTHROPY: {
     QUERY: "/v2/philanthropy/agent-query",
     QUERY_STREAM: "/v2/philanthropy/agent-query/stream",
+    DEEP_RESEARCH: "/v2/philanthropy/deep-research-request",
     FEEDBACK: "/v2/agent/rating",
     FOUNDATIONS: {
       GET: (id: string) => `/v2/philanthropy/foundations/${id}`,

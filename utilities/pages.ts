@@ -247,6 +247,7 @@ const FIND_FUNDERS = "/nonprofits/find-funders";
 
 export const NON_PROFITS_PAGES = {
   HOME: FIND_FUNDERS,
+  DEEP_RESEARCH: "/nonprofits/find-funders-deep-research" as const,
   SEARCH: (id: string) => `${FIND_FUNDERS}/search/${id}`,
   FOUNDATION: (id: string, searchId?: string) =>
     `${FIND_FUNDERS}/foundations/${id}${searchId ? `?searchId=${searchId}` : ""}`,
