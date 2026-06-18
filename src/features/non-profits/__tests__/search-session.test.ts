@@ -124,6 +124,18 @@ describe("useSearchSessionStore", () => {
     expect(useSearchSessionStore.getState().consumeFresh("nonexistent")).toBe(false);
   });
 
+  it("keeps an empty-query session after consumeFresh, distinct from an unknown id", () => {
+    // A "New chat" mints an empty-query fresh session. After its one-shot fresh
+    // flag is consumed (e.g. a reload before searching), getSession must still
+    // return it — that's how ChatView tells "my own empty chat" (→ empty
+    // workbench) apart from an unknown/private URL (→ not-found state).
+    const id = useSearchSessionStore.getState().createSession("");
+    expect(useSearchSessionStore.getState().consumeFresh(id)).toBe(true);
+    expect(useSearchSessionStore.getState().getSession(id)).toBeDefined();
+    expect(useSearchSessionStore.getState().getSession(id)?.query).toBe("");
+    expect(useSearchSessionStore.getState().getSession("never-created")).toBeUndefined();
+  });
+
   it("setSession clears the fresh flag for an existing session", () => {
     const id = useSearchSessionStore.getState().createSession("first query");
     useSearchSessionStore.getState().setSession(id, "first query");

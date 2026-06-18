@@ -202,13 +202,15 @@ export function ChatView({ searchId }: { searchId?: string }) {
         void search(remoteQuery, 1, { chat: true });
       },
       () => {
-        // A local query means this is our own chat that simply isn't persisted
-        // yet (anonymous) — re-run it. Otherwise the server returned 404: the
-        // conversation is private to another account, deleted, or never
-        // existed → show a not-found state instead of a blank workbench.
+        // A local query means this is our own chat that isn't persisted yet
+        // (anonymous) — re-run it. A local session with no query is a freshly
+        // created chat the user hasn't searched in yet (e.g. "New chat" then a
+        // reload, where the one-shot `fresh` flag is already spent) — render the
+        // empty workbench. Only with NO local session at all is the URL
+        // genuinely private to another account, deleted, or nonexistent.
         if (localQuery) {
           void search(localQuery, 1, { chat: true });
-        } else {
+        } else if (!session) {
           usePhilanthropyStore.getState().setNotFound(true);
         }
       }
