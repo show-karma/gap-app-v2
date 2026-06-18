@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { ChatViewDynamic } from "@/src/features/non-profits/components/chat-view-dynamic";
+import { DeepResearchPromo } from "@/src/features/non-profits/components/deep-research-promo";
 import { customMetadata } from "@/utilities/meta";
 
 interface SearchPageParams {
@@ -29,8 +30,11 @@ export default async function SearchResultsPage({ params }: { params: Promise<Se
   const { id } = await params;
 
   return (
-    <main className="flex w-full flex-col">
-      <ChatViewDynamic searchId={id} />
+    <main className="flex w-full">
+      <div className="min-w-0 flex-1">
+        <ChatViewDynamic searchId={id} />
+      </div>
+      <DeepResearchPromo />
     </main>
   );
 }
