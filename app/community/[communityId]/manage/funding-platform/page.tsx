@@ -89,14 +89,11 @@ function FundingPlatformContent() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [togglingPrograms, setTogglingPrograms] = useState<Set<string>>(new Set());
 
-  // In whitelabel mode the apply links should stay on the current origin. Resolve it in an
-  // effect rather than reading `window.location.origin` inline during render to avoid the
-  // SSR window-access hazard (window is undefined on the server).
-  const [whitelabelOrigin, setWhitelabelOrigin] = useState<string | undefined>(undefined);
+  // Resolve the whitelabel origin in an effect, not inline during render, to avoid the SSR
+  // window-access hazard (window is undefined on the server); apply links stay on this origin.
+  const [whitelabelOrigin, setWhitelabelOrigin] = useState<string>();
   useEffect(() => {
-    if (isWhitelabel && typeof window !== "undefined") {
-      setWhitelabelOrigin(window.location.origin);
-    }
+    if (isWhitelabel && typeof window !== "undefined") setWhitelabelOrigin(window.location.origin);
   }, [isWhitelabel]);
 
   // Auto-open create modal when navigated with ?create=true
