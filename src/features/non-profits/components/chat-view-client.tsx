@@ -17,7 +17,7 @@
  * - INLINE STARTER_PROMPTS (do NOT use suggested-queries.tsx component)
  */
 
-import { Bookmark, Clock, Lock, SearchX, Sparkles } from "lucide-react";
+import { Bookmark, Clock, SearchX, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import pluralize from "pluralize";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -50,6 +50,7 @@ import { type ChatTurn, EMPTY_MESSAGES, usePhilanthropyStore } from "../store/ph
 import { useSearchSessionStore } from "../store/search-session";
 import { AttachmentsPanel } from "./attachments-panel";
 import { BookmarksDrawer } from "./bookmarks-drawer";
+import { ComposerLockNotice } from "./composer-lock-notice";
 import { ConnectorNudge } from "./connector-nudge";
 import { EntityList } from "./entity-list";
 import { NarrativeBlock } from "./narrative-block";
@@ -133,6 +134,7 @@ export function ChatView({ searchId }: { searchId?: string }) {
   const readOnly = usePhilanthropyStore((s) => s.readOnly);
   const notFound = usePhilanthropyStore((s) => s.notFound);
   const conversationFull = usePhilanthropyStore((s) => s.conversationFull);
+  const loginRequired = usePhilanthropyStore((s) => s.loginRequired);
   const reset = usePhilanthropyStore((s) => s.reset);
   const { search, abort } = usePhilanthropySearch();
   const { authenticated, login } = useAuth();
@@ -213,14 +215,22 @@ export function ChatView({ searchId }: { searchId?: string }) {
     );
   }, [searchId, messages.length, search, abort, reset]);
 
+  // The free-limit prompt is only set for logged-out users; once they sign in,
+  // restore the composer so they can continue.
+  useEffect(() => {
+    if (authenticated && loginRequired) {
+      usePhilanthropyStore.getState().setLoginRequired(false);
+    }
+  }, [authenticated, loginRequired]);
+
   const onSubmit = useCallback(
     (msg: PromptInputMessage) => {
       const text = msg.text.trim();
-      if (!text || isSearching || readOnly || conversationFull) return;
+      if (!text || isSearching || readOnly || conversationFull || loginRequired) return;
       setInput("");
       void search(text, 1, { chat: true });
     },
-    [search, isSearching, readOnly, conversationFull]
+    [search, isSearching, readOnly, conversationFull, loginRequired]
   );
 
   const onStarterClick = useCallback(
@@ -378,26 +388,16 @@ export function ChatView({ searchId }: { searchId?: string }) {
       </Conversation>
 
       {/* Composer — replaced by a notice when the conversation can't accept
-          more input: owned by another account (403) or full (409). */}
+          more input: owned by another account (403), full (409), or the
+          anonymous free limit was reached (401 → sign-in prompt). */}
       <div className="border-t border-zinc-200 bg-white px-4 py-3 dark:border-zinc-800 dark:bg-zinc-950">
         <div className="mx-auto w-full max-w-3xl">
-          {readOnly || conversationFull ? (
-            <div className="flex items-center gap-2 rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-600 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
-              <Lock className="size-4 shrink-0" />
-              <span>
-                {conversationFull
-                  ? "This conversation has reached its maximum length."
-                  : "This conversation belongs to another account and is read-only."}{" "}
-                <button
-                  type="button"
-                  onClick={onNewChat}
-                  className="font-medium text-brand underline-offset-2 hover:underline"
-                >
-                  Start a new chat
-                </button>{" "}
-                to continue.
-              </span>
-            </div>
+          {readOnly || conversationFull || loginRequired ? (
+            <ComposerLockNotice
+              reason={loginRequired ? "login" : conversationFull ? "full" : "readonly"}
+              onNewChat={onNewChat}
+              onSignIn={login}
+            />
           ) : (
             <PromptInput
               onSubmit={onSubmit}
