@@ -205,30 +205,23 @@ export function NavbarMobileMenu() {
                 </span>
               </button>
 
-              {!isLoggedIn && (
-                <>
-                  {/* For Projects Section */}
-                  <div className="border-b border-border py-3">
-                    <MenuSection title="For Projects" variant="mobile" />
-                    <ForProjectsContent variant="mobile" onClose={() => setMobileMenuOpen(false)} />
-                  </div>
+              {/* For Projects Section */}
+              <div className="border-b border-border py-3">
+                <MenuSection title="For Projects" variant="mobile" />
+                <ForProjectsContent variant="mobile" onClose={() => setMobileMenuOpen(false)} />
+              </div>
 
-                  {/* For Funders Section */}
-                  <div className="border-b border-border py-3">
-                    <MenuSection title="For Funders" variant="mobile" />
-                    <ForFundersContent variant="mobile" onClose={() => setMobileMenuOpen(false)} />
-                  </div>
+              {/* For Funders Section */}
+              <div className="border-b border-border py-3">
+                <MenuSection title="For Funders" variant="mobile" />
+                <ForFundersContent variant="mobile" onClose={() => setMobileMenuOpen(false)} />
+              </div>
 
-                  {/* For Nonprofits Section */}
-                  <div className="border-b border-border py-3">
-                    <MenuSection title="For Nonprofits" variant="mobile" />
-                    <ForNonprofitsContent
-                      variant="mobile"
-                      onClose={() => setMobileMenuOpen(false)}
-                    />
-                  </div>
-                </>
-              )}
+              {/* For Nonprofits Section */}
+              <div className="border-b border-border py-3">
+                <MenuSection title="For Nonprofits" variant="mobile" />
+                <ForNonprofitsContent variant="mobile" onClose={() => setMobileMenuOpen(false)} />
+              </div>
 
               {/* Explore Section */}
               <div className="border-b border-border py-5">

@@ -31,6 +31,7 @@ import {
   isChainSupportedForGasless,
 } from "@/utilities/gasless";
 import { appNetwork } from "@/utilities/network";
+import { wait } from "@/utilities/wait";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 
 /**
@@ -95,6 +96,90 @@ async function assertSignerOnChain(signer: Signer, expectedChainId: number): Pro
     throw chainMismatchError(expectedChainId, actualChainId);
   }
   return signer;
+}
+
+/** Minimal EIP-1193 provider surface the chain-switch helper relies on. */
+interface Eip1193Provider {
+  request: (args: { method: string; params?: unknown[] }) => Promise<unknown>;
+}
+
+/** Minimal shape of a Privy embedded wallet used by the chain-switch helper. */
+interface SwitchableWallet {
+  getEthereumProvider: () => Promise<Eip1193Provider>;
+}
+
+const CHAIN_SWITCH_MAX_ATTEMPTS = 5;
+const CHAIN_SWITCH_BASE_DELAY_MS = 250;
+
+// The gasless client is built against the provider's bundler RPC (e.g. ZeroDev).
+// That RPC can blip transiently — the exact trigger of GAP-FRONTEND-23C, where a
+// momentary RPC failure dropped an email user onto the pay-gas fallback. Retry
+// client creation with backoff so a transient hiccup keeps the user on gasless.
+const GASLESS_MAX_ATTEMPTS = 3;
+const GASLESS_RETRY_BASE_DELAY_MS = 300;
+
+/**
+ * Reads the chain a raw EIP-1193 provider reports via `eth_chainId`. Used
+ * instead of ethers' `getNetwork()` because a BrowserProvider caches the
+ * network it detects on first use — so a provider that was on chain 1 keeps
+ * reporting chain 1 even after the wallet switches. The raw request always
+ * reflects the wallet's live chain.
+ */
+async function readProviderChainId(provider: Eip1193Provider): Promise<number | undefined> {
+  try {
+    const raw = await provider.request({ method: "eth_chainId" });
+    const chainId = typeof raw === "string" ? Number.parseInt(raw, 16) : Number(raw);
+    return Number.isFinite(chainId) ? chainId : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * Switches a Privy embedded wallet's EIP-1193 provider to the target chain and
+ * returns that provider. Embedded (email/Google) wallets default to mainnet
+ * (chain 1), and the GAP SDK rejects a signer whose provider reports chain 1
+ * ("still on chain 1").
+ *
+ * Crucially this switches at the PROVIDER level (`wallet_switchEthereumChain`),
+ * NOT via the high-level `wallet.switchChain()`. In Privy's SDK the latter only
+ * updates internal React state — the provider instance we hold (and build the
+ * signer from) keeps its original chain, so `eth_chainId` never reflects the
+ * switch. `wallet_switchEthereumChain` updates this exact provider instance
+ * (its `chainId` + RPC client), which is what makes the signer report the
+ * target chain. We then confirm via `eth_chainId`, retrying with backoff.
+ */
+async function switchEmbeddedWalletChain(
+  wallet: SwitchableWallet,
+  targetChainId: number
+): Promise<Eip1193Provider> {
+  const provider = await wallet.getEthereumProvider();
+  const hexChainId = `0x${targetChainId.toString(16)}`;
+  let lastChainId = await readProviderChainId(provider);
+
+  for (
+    let attempt = 0;
+    attempt < CHAIN_SWITCH_MAX_ATTEMPTS && lastChainId !== targetChainId;
+    attempt += 1
+  ) {
+    try {
+      await provider.request({
+        method: "wallet_switchEthereumChain",
+        params: [{ chainId: hexChainId }],
+      });
+    } catch {
+      // Transient/initialising — confirm via eth_chainId and retry with backoff.
+    }
+    lastChainId = await readProviderChainId(provider);
+    if (lastChainId !== targetChainId && attempt < CHAIN_SWITCH_MAX_ATTEMPTS - 1) {
+      await wait(CHAIN_SWITCH_BASE_DELAY_MS * (attempt + 1));
+    }
+  }
+
+  if (lastChainId !== targetChainId) {
+    throw chainMismatchError(targetChainId, lastChainId);
+  }
+  return provider;
 }
 
 /**
@@ -205,37 +290,72 @@ export function useZeroDevSigner(): UseZeroDevSignerResult {
 
       // Case 1: Email/Google login with gasless support
       if (isEmailOrSocialLogin && embeddedWallet && isChainSupportedForGasless(targetChainId)) {
-        try {
-          await embeddedWallet.switchChain(targetChainId);
+        // Retry only the client-creation step (the transient bundler-RPC call).
+        // The chain assertion below is intentionally outside the loop: a
+        // wrong-chain gasless signer is deterministic (chain is fixed by config),
+        // so retrying it would only add latency before the inevitable fallback.
+        let client: Awaited<ReturnType<typeof createGaslessClient>> = null;
+        for (let attempt = 0; attempt < GASLESS_MAX_ATTEMPTS; attempt += 1) {
+          try {
+            // No embedded-wallet chain switch here on purpose: the gasless signer's
+            // provider is pinned to targetChainId by the provider's toEthersSigner,
+            // and the smart account runs on targetChainId regardless of the embedded
+            // EOA's current chain. Signing (secp256k1/personal/typed-data) is
+            // chain-agnostic, so requiring a switch would only add a failure mode
+            // (embedded wallets that can't switch) without any benefit.
+            const signer = await createPrivySignerForGasless(embeddedWallet, targetChainId);
 
-          // Create signer compatible with gasless providers
-          const signer = await createPrivySignerForGasless(embeddedWallet, targetChainId);
+            // Create gasless client (provider is selected automatically based on chain config)
+            client = await createGaslessClient(targetChainId, signer);
+            if (client) {
+              break;
+            }
 
-          // Create gasless client (provider is selected automatically based on chain config)
-          const client = await createGaslessClient(targetChainId, signer);
+            // No client returned — record a synthetic diagnostic so the final
+            // throw isn't "No wallet available" when gasless creation silently
+            // returned null.
+            lastError = new Error(
+              `Gasless client creation returned no client for chain ${targetChainId}`
+            );
+          } catch (error) {
+            // Don't retry or fall back for gasless provider errors - surface them.
+            if (error instanceof GaslessProviderError) {
+              console.error(`[Gasless] ${error.provider} provider failed:`, error);
+              throw error;
+            }
 
-          if (client) {
+            // Transient (e.g. bundler RPC) failure — log and retry with backoff.
+            console.warn(
+              `[Gasless] Client creation failed (attempt ${attempt + 1}/${GASLESS_MAX_ATTEMPTS}):`,
+              error
+            );
+            lastError = error;
+          }
+
+          if (attempt < GASLESS_MAX_ATTEMPTS - 1) {
+            await wait(GASLESS_RETRY_BASE_DELAY_MS * (attempt + 1));
+          }
+        }
+
+        if (client) {
+          try {
             // Convert to ethers.js signer for GAP SDK compatibility
             const ethersSigner = await getGaslessSigner(client, targetChainId);
             return await assertSignerOnChain(ethersSigner, targetChainId);
-          }
+          } catch (error) {
+            // Provider-specific failures are deliberate — surface them.
+            if (error instanceof GaslessProviderError) {
+              console.error(`[Gasless] ${error.provider} provider failed:`, error);
+              throw error;
+            }
 
-          // No client returned — record a synthetic diagnostic so the final
-          // throw isn't "No wallet available" when gasless creation silently
-          // returned null.
-          lastError = new Error(
-            `Gasless client creation returned no client for chain ${targetChainId}`
-          );
-        } catch (error) {
-          // Don't fall back for gasless provider errors - show the actual error
-          if (error instanceof GaslessProviderError) {
-            console.error(`[Gasless] ${error.provider} provider failed:`, error);
-            throw error;
+            // Wrong-chain gasless signer — fall through to the embedded-direct path.
+            console.warn(
+              "[Gasless] Signer validation failed, falling back to embedded wallet:",
+              error
+            );
+            lastError = error;
           }
-
-          // Log and fall back for other errors
-          console.warn("[Gasless] Client creation failed, falling back to embedded wallet:", error);
-          lastError = error;
         }
       }
 
@@ -243,26 +363,12 @@ export function useZeroDevSigner(): UseZeroDevSignerResult {
       // This handles: gasless fallback failures AND chains that don't support gasless
       if (isEmailOrSocialLogin && embeddedWallet) {
         try {
-          const buildEmbeddedSigner = async (): Promise<Signer> => {
-            await embeddedWallet.switchChain(targetChainId);
-            const provider = await embeddedWallet.getEthereumProvider();
-            return new BrowserProvider(provider).getSigner();
-          };
-
-          let signer = await buildEmbeddedSigner();
-          let signerChainId = await getSignerChainId(signer);
-          // Privy's switchChain can resolve before getEthereumProvider reports
-          // the new chain. Rebuild once to absorb that propagation race; the
-          // BrowserProvider is intentionally left un-pinned here so it reflects
-          // the wallet's real chain rather than masking a genuine mismatch.
-          if (signerChainId !== targetChainId) {
-            signer = await buildEmbeddedSigner();
-            signerChainId = await getSignerChainId(signer);
-          }
-          if (signerChainId !== targetChainId) {
-            throw chainMismatchError(targetChainId, signerChainId);
-          }
-          return signer;
+          // switchEmbeddedWalletChain only returns once the provider confirms
+          // it is on the target chain (polling eth_chainId with backoff), so the
+          // BrowserProvider built from it can't surface a stale "still on chain 1".
+          const provider = await switchEmbeddedWalletChain(embeddedWallet, targetChainId);
+          const signer = await new BrowserProvider(provider).getSigner();
+          return await assertSignerOnChain(signer, targetChainId);
         } catch (error) {
           console.warn("[Gasless] Embedded wallet error:", error);
           lastError = error;
@@ -274,7 +380,14 @@ export function useZeroDevSigner(): UseZeroDevSignerResult {
       // state desync (chain?.id can be undefined during startup, causing wagmi's
       // getWalletClient to fail). This follows the same pattern used in claim-funds.
       // Fallback: wagmi's getWalletClient for environments where Privy provider isn't available.
-      if (externalWallet) {
+      //
+      // An email/Google user with an embedded wallet must NEVER reach here, even if
+      // the embedded path above failed: useWallets() also lists browser-connected
+      // wallets that are NOT linked to the account (e.g. an injected MetaMask/Rabby),
+      // and signing an attestation with one would use the wrong identity and prompt
+      // an unexpected wallet popup. For those users we surface the embedded error
+      // below instead of silently falling back.
+      if (externalWallet && !(isEmailOrSocialLogin && embeddedWallet)) {
         try {
           await externalWallet.switchChain(targetChainId);
           const provider = await externalWallet.getEthereumProvider();

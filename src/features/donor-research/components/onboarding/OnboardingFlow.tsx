@@ -2,10 +2,12 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useDonorAdvisor, useOnboardAdvisor } from "@/hooks/useDonorAdvisor";
+import type { WizardStep } from "@/src/components/ui/WizardStepper";
+import { WizardStepper } from "@/src/components/ui/WizardStepper";
 import { PAGES } from "@/utilities/pages";
 import { DonorResearchLoading } from "../common/DonorResearchLoading";
 import { SampleReportPreview } from "./SampleReportPreview";
@@ -26,6 +28,12 @@ type OnboardingForm = z.infer<typeof OnboardingSchema>;
 
 type Step = "welcome" | "sample" | "form";
 
+const ONBOARDING_STEPS: ReadonlyArray<WizardStep<Step>> = [
+  { id: "welcome", label: "Welcome" },
+  { id: "sample", label: "Sample report" },
+  { id: "form", label: "Get started" },
+];
+
 const DEFAULT_TIMEZONE =
   typeof Intl !== "undefined" ? Intl.DateTimeFormat().resolvedOptions().timeZone : "UTC";
 
@@ -34,12 +42,26 @@ const DEFAULT_TIMEZONE =
  * already exists — re-entering the flow is harmless thanks to the
  * idempotent `findOrCreate` upsert on the backend, but routing to the
  * main page keeps the advisor's mental model coherent.
+ *
+ * Step identity, transitions, and validation outcomes are all made
+ * programmatically determinable (aria-current on the stepper, focus moved
+ * to the active step's heading on change, role="alert" on errors) so that
+ * assistive technology and automated QA can tell the steps apart — see
+ * issue #1587.
  */
 export function OnboardingFlow() {
   const router = useRouter();
   const advisorQuery = useDonorAdvisor();
   const onboard = useOnboardAdvisor();
   const [step, setStep] = useState<Step>("welcome");
+
+  // A single ref is shared across all three step headings because exactly one
+  // step <section> is mounted at a time, so only one heading ever binds it.
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  const headingBaseId = useId();
+  const welcomeHeadingId = `${headingBaseId}-welcome`;
+  const sampleHeadingId = `${headingBaseId}-sample`;
+  const formHeadingId = `${headingBaseId}-form`;
 
   const form = useForm<OnboardingForm>({
     resolver: zodResolver(OnboardingSchema),
@@ -54,7 +76,28 @@ export function OnboardingFlow() {
     if (advisorQuery.isSuccess && advisorQuery.data) {
       router.replace(PAGES.DONOR_RESEARCH.INDEX);
     }
+    // `router` is kept in the deps: the app-router instance is referentially
+    // stable so it never causes a re-run, and listing it satisfies the
+    // exhaustive-deps gate (react-doctor) rather than fighting it.
   }, [advisorQuery.isSuccess, advisorQuery.data, router]);
+
+  // Move focus to the active step's heading on every transition. This is the
+  // canonical wizard focus pattern (WCAG 2.4.3 Focus Order) and gives any
+  // assistive tech / automated QA an unambiguous "the step changed" signal.
+  // Keyed on the `step` primitive per the repo rule about primitive deps.
+  //
+  // The initial mount is skipped: focus must only move in response to a real
+  // step change, never be stolen on first page load — which otherwise fires
+  // inconsistently depending on whether the advisor query resolved from a warm
+  // React Query cache (staleTime 5 min) before the first commit.
+  const isInitialStep = useRef(true);
+  useEffect(() => {
+    if (isInitialStep.current) {
+      isInitialStep.current = false;
+      return;
+    }
+    headingRef.current?.focus({ preventScroll: false });
+  }, [step]);
 
   if (advisorQuery.isLoading) {
     return <DonorResearchLoading label="Checking your account…" />;
@@ -64,131 +107,211 @@ export function OnboardingFlow() {
     throw advisorQuery.error;
   }
 
-  const onSubmit = async (values: OnboardingForm) => {
-    await onboard.mutateAsync({
-      displayName: values.displayName,
-      orgName: values.orgName || null,
-      timezone: values.timezone,
-    });
-    router.replace(PAGES.DONOR_RESEARCH.INDEX);
+  const onSubmit = (values: OnboardingForm) => {
+    // `mutate` (not `mutateAsync`) keeps the redirect in the success callback
+    // so a server error never escapes as an unhandled rejection — failures
+    // surface through `onboard.isError` (the announced role="alert" below).
+    onboard.mutate(
+      {
+        displayName: values.displayName,
+        orgName: values.orgName || null,
+        timezone: values.timezone,
+      },
+      {
+        onSuccess: () => {
+          router.replace(PAGES.DONOR_RESEARCH.INDEX);
+        },
+      }
+    );
   };
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-12">
-      <ol className="mb-6 flex items-center gap-2 text-xs text-muted-foreground">
-        <li className={step === "welcome" ? "font-medium text-foreground" : ""}>1. Welcome</li>
-        <span aria-hidden>→</span>
-        <li className={step === "sample" ? "font-medium text-foreground" : ""}>2. Sample report</li>
-        <span aria-hidden>→</span>
-        <li className={step === "form" ? "font-medium text-foreground" : ""}>3. Get started</li>
-      </ol>
+      <WizardStepper
+        steps={ONBOARDING_STEPS}
+        current={step}
+        ariaLabel="Onboarding progress"
+        className="mb-6"
+      />
 
-      {step === "welcome" ? <WelcomeStep onContinue={() => setStep("sample")} /> : null}
+      {step === "welcome" ? (
+        <section aria-labelledby={welcomeHeadingId}>
+          <WelcomeStep
+            headingId={welcomeHeadingId}
+            headingRef={headingRef}
+            onContinue={() => setStep("sample")}
+          />
+        </section>
+      ) : null}
 
       {step === "sample" ? (
-        <SampleStep onBack={() => setStep("welcome")} onContinue={() => setStep("form")} />
+        <section aria-labelledby={sampleHeadingId}>
+          <SampleStep
+            headingId={sampleHeadingId}
+            headingRef={headingRef}
+            onBack={() => setStep("welcome")}
+            onContinue={() => setStep("form")}
+          />
+        </section>
       ) : null}
 
       {step === "form" ? (
-        <form
-          onSubmit={form.handleSubmit(onSubmit)}
-          className="rounded-xl border border-border bg-card p-6"
-        >
-          <h2 className="mb-2 text-xl font-semibold">Get started</h2>
-          <p className="mb-4 text-sm text-muted-foreground">
-            We use these to label the reports you share with donors and to display your daily limits
-            in your local time.
-          </p>
-          <div className="grid grid-cols-1 gap-4">
-            <Field
-              label="Display name"
-              hint="Shown in the header of the reports you share with donors."
-              error={form.formState.errors.displayName?.message}
+        <section aria-labelledby={formHeadingId}>
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="rounded-xl border border-border bg-card p-6"
+          >
+            <h2
+              id={formHeadingId}
+              ref={headingRef}
+              tabIndex={-1}
+              className="mb-2 text-xl font-semibold outline-none"
             >
-              <input
-                {...form.register("displayName")}
-                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-                placeholder="Avery Boutique"
-              />
-            </Field>
-            <Field
-              label="Organization (optional)"
-              hint="The firm or advisory practice you work with."
-              error={form.formState.errors.orgName?.message}
-            >
-              <input
-                {...form.register("orgName")}
-                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-                placeholder="Boutique Philanthropy LLC"
-              />
-            </Field>
-            <Field
-              label="Timezone"
-              hint="Used to display when your daily rate-limit counters reset."
-              error={form.formState.errors.timezone?.message}
-            >
-              <input
-                {...form.register("timezone")}
-                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm font-mono"
-                placeholder="America/Los_Angeles"
-              />
-            </Field>
-          </div>
-
-          {onboard.isError ? (
-            <p className="mt-3 text-sm text-red-600 dark:text-red-400">
-              {(onboard.error as Error)?.message || "Couldn't complete onboarding. Try again."}
+              Get started
+            </h2>
+            <p className="mb-4 text-sm text-muted-foreground">
+              We use these to label the reports you share with donors and to display your daily
+              limits in your local time.
             </p>
-          ) : null}
+            <div className="grid grid-cols-1 gap-4">
+              <Field
+                id="onboarding-display-name"
+                label="Display name"
+                hint="Shown in the header of the reports you share with donors."
+                error={form.formState.errors.displayName?.message}
+              >
+                {(field) => (
+                  <input
+                    {...form.register("displayName")}
+                    {...field}
+                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                    placeholder="Avery Boutique"
+                  />
+                )}
+              </Field>
+              <Field
+                id="onboarding-org-name"
+                label="Organization (optional)"
+                hint="The firm or advisory practice you work with."
+                error={form.formState.errors.orgName?.message}
+              >
+                {(field) => (
+                  <input
+                    {...form.register("orgName")}
+                    {...field}
+                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                    placeholder="Boutique Philanthropy LLC"
+                  />
+                )}
+              </Field>
+              <Field
+                id="onboarding-timezone"
+                label="Timezone"
+                hint="Used to display when your daily rate-limit counters reset."
+                error={form.formState.errors.timezone?.message}
+              >
+                {(field) => (
+                  <input
+                    {...form.register("timezone")}
+                    {...field}
+                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm font-mono"
+                    placeholder="America/Los_Angeles"
+                  />
+                )}
+              </Field>
+            </div>
 
-          <div className="mt-6 flex justify-between">
-            <button
-              type="button"
-              onClick={() => setStep("sample")}
-              className="rounded-md border border-border px-4 py-2 text-sm hover:bg-muted"
-              disabled={onboard.isPending}
-            >
-              Back
-            </button>
-            <button
-              type="submit"
-              disabled={onboard.isPending}
-              className="rounded-md border border-border bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-            >
-              {onboard.isPending ? "Setting up…" : "Continue"}
-            </button>
-          </div>
-        </form>
+            {onboard.isError ? (
+              <p role="alert" className="mt-3 text-sm text-red-600 dark:text-red-400">
+                {onboard.error?.message || "Couldn't complete onboarding. Try again."}
+              </p>
+            ) : null}
+
+            <div className="mt-6 flex justify-between">
+              <button
+                type="button"
+                onClick={() => setStep("sample")}
+                className="rounded-md border border-border px-4 py-2 text-sm hover:bg-muted"
+                disabled={onboard.isPending}
+              >
+                Back
+              </button>
+              <button
+                type="submit"
+                disabled={onboard.isPending}
+                className="rounded-md border border-border bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+              >
+                {onboard.isPending ? "Setting up…" : "Continue"}
+              </button>
+            </div>
+          </form>
+        </section>
       ) : null}
     </div>
   );
 }
 
+interface FieldChildProps {
+  id: string;
+  "aria-invalid": boolean;
+  "aria-describedby"?: string;
+}
+
 interface FieldProps {
+  id: string;
   label: string;
   hint?: string;
   error?: string;
-  children: React.ReactNode;
+  children: (props: FieldChildProps) => React.ReactNode;
 }
 
-function Field({ label, hint, error, children }: FieldProps) {
+function Field({ id, label, hint, error, children }: FieldProps) {
+  const hintId = hint ? `${id}-hint` : undefined;
+  const errorId = error ? `${id}-error` : undefined;
+  const describedBy = [hintId, errorId].filter(Boolean).join(" ") || undefined;
+
   // A `<label>` that wraps its control implicitly associates the visible
-  // text with the input, so the field is programmatically accessible.
+  // text with the input; `htmlFor` + `id` makes the association explicit so
+  // the field stays programmatically accessible. `aria-invalid` and
+  // `aria-describedby` wire the input to its error/hint so screen readers
+  // (and automated QA) observe validation state, and the error span is an
+  // `role="alert"` live region so it's announced on submit.
   return (
-    // biome-ignore lint/a11y/noLabelWithoutControl: children always contains the input; Biome can't infer this statically
-    <label className="flex flex-col gap-1.5 text-sm">
+    <label htmlFor={id} className="flex flex-col gap-1.5 text-sm">
       <span className="font-medium text-foreground">{label}</span>
-      {children}
-      {hint ? <span className="text-xs text-muted-foreground">{hint}</span> : null}
-      {error ? <span className="text-xs text-red-600 dark:text-red-400">{error}</span> : null}
+      {children({ id, "aria-invalid": Boolean(error), "aria-describedby": describedBy })}
+      {hint ? (
+        <span id={hintId} className="text-xs text-muted-foreground">
+          {hint}
+        </span>
+      ) : null}
+      {error ? (
+        <span id={errorId} role="alert" className="text-xs text-red-600 dark:text-red-400">
+          {error}
+        </span>
+      ) : null}
     </label>
   );
 }
 
-function WelcomeStep({ onContinue }: { onContinue: () => void }) {
+interface StepHeadingProps {
+  headingId: string;
+  headingRef: React.Ref<HTMLHeadingElement>;
+}
+
+function WelcomeStep({
+  headingId,
+  headingRef,
+  onContinue,
+}: StepHeadingProps & { onContinue: () => void }) {
   return (
     <div className="rounded-xl border border-border bg-card p-6">
-      <h2 className="mb-2 text-2xl font-semibold">
+      <h2
+        id={headingId}
+        ref={headingRef}
+        tabIndex={-1}
+        className="mb-2 text-2xl font-semibold outline-none"
+      >
         Defensible philanthropy research for your donor clients.
       </h2>
       <p className="mb-4 text-sm text-muted-foreground">
@@ -225,6 +348,7 @@ function WelcomeStep({ onContinue }: { onContinue: () => void }) {
       <button
         type="button"
         onClick={onContinue}
+        aria-label="Continue to sample report"
         className="rounded-md border border-border bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
       >
         Continue
@@ -233,10 +357,22 @@ function WelcomeStep({ onContinue }: { onContinue: () => void }) {
   );
 }
 
-function SampleStep({ onBack, onContinue }: { onBack: () => void; onContinue: () => void }) {
+function SampleStep({
+  headingId,
+  headingRef,
+  onBack,
+  onContinue,
+}: StepHeadingProps & { onBack: () => void; onContinue: () => void }) {
   return (
     <div className="rounded-xl border border-border bg-card p-6">
-      <h2 className="mb-2 text-xl font-semibold">What a report looks like</h2>
+      <h2
+        id={headingId}
+        ref={headingRef}
+        tabIndex={-1}
+        className="mb-2 text-xl font-semibold outline-none"
+      >
+        What a report looks like
+      </h2>
       <p className="mb-4 text-sm text-muted-foreground">
         A sample report for the criteria "Pacific Northwest climate nonprofits, $25K". Top 3
         recommendations have a one-pager; the full ranked list sits below with per-candidate score
@@ -254,6 +390,7 @@ function SampleStep({ onBack, onContinue }: { onBack: () => void; onContinue: ()
         <button
           type="button"
           onClick={onContinue}
+          aria-label="Continue to setup"
           className="rounded-md border border-border bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
         >
           Continue

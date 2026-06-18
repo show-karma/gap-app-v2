@@ -6,7 +6,7 @@
  * data sources into a single, cohesive interface.
  */
 
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { useProject } from "@/hooks/useProject";
 import { aggregateProjectProfileData } from "@/services/project-profile.service";
 import type { Project } from "@/types/v2/project";
@@ -106,10 +106,12 @@ export function useProjectProfile(
     [normalizedProject, grants, milestones, impacts]
   );
 
-  // Combined refetch function
-  const refetch = async () => {
+  // Combined refetch function. Memoized so its identity is stable across
+  // renders — consumers wire this into onClick/effects and an unstable identity
+  // would re-trigger them (DEV-396).
+  const refetch = useCallback(async () => {
     await Promise.all([refetchGrants(), refetchUpdates(), refetchImpacts()]);
-  };
+  }, [refetchGrants, refetchUpdates, refetchImpacts]);
 
   return {
     project: normalizedProject,

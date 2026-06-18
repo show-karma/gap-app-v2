@@ -51,10 +51,19 @@ function PrivyBridgeUpdater() {
 
   const userId = privy.user?.id;
   const walletCount = wallets.length;
+  // True once a Privy embedded wallet is live in useWallets() — lets the hook
+  // skip creating its own when Privy already provisioned one (the duplicate race).
+  const hasEmbeddedWallet = wallets.some((wallet) => wallet.walletClientType === "privy");
 
   // Create the single embedded wallet for new users. Replaces the SDK's
   // createOnLogin auto-creation, which double-fired and minted two wallets.
-  useEnsureEmbeddedWallet(privy.ready, privy.authenticated, privy.user, walletCount);
+  useEnsureEmbeddedWallet(
+    privy.ready,
+    privy.authenticated,
+    privy.user,
+    walletCount,
+    hasEmbeddedWallet
+  );
 
   useEffect(() => {
     const p = privyRef.current;

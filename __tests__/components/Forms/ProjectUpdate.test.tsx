@@ -4,8 +4,14 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { vi } from "vitest";
 import { ProjectUpdateForm } from "@/components/Forms/ProjectUpdate";
+import {
+  PROJECT_UPDATE_COUNTER_THRESHOLD,
+  PROJECT_UPDATE_MAX_LENGTH,
+  updateSchema,
+} from "@/components/Forms/ProjectUpdate.schema";
 import { useImpactAnswers } from "@/hooks/useImpactAnswers";
 import { useProjectUpdates } from "@/hooks/v2/useProjectUpdates";
+import { MESSAGES } from "@/utilities/messages";
 
 // --- Mocks ---
 
@@ -167,7 +173,10 @@ vi.mock("@/utilities/messages", () => ({
         MIN: "Title must be at least 3 characters",
         MAX: "Title must be at most 75 characters",
       },
-      TEXT: "Description is required",
+      TEXT: {
+        MIN: "Description is required",
+        MAX: "This update is too long. Please keep it to 15,000 characters or fewer.",
+      },
       SUCCESS: "Activity posted successfully!",
       ERROR: "Failed to post activity",
     },
@@ -602,5 +611,42 @@ describe("ProjectUpdateForm", () => {
 
       expect(screen.queryByText("Activity Name *")).not.toBeInTheDocument();
     });
+  });
+});
+
+describe("updateSchema body length cap", () => {
+  const validBase = {
+    title: "A valid update title",
+    outputs: [],
+    deliverables: [],
+  };
+
+  it("caps the limit at 15,000 characters", () => {
+    expect(PROJECT_UPDATE_MAX_LENGTH).toBe(15000);
+  });
+
+  it("surfaces the counter at 10,000 characters, below the cap", () => {
+    expect(PROJECT_UPDATE_COUNTER_THRESHOLD).toBe(10000);
+    expect(PROJECT_UPDATE_COUNTER_THRESHOLD).toBeLessThan(PROJECT_UPDATE_MAX_LENGTH);
+  });
+
+  it("accepts a body exactly at the limit", () => {
+    const result = updateSchema.safeParse({
+      ...validBase,
+      text: "a".repeat(PROJECT_UPDATE_MAX_LENGTH),
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects a body over the limit with the max-length message", () => {
+    const result = updateSchema.safeParse({
+      ...validBase,
+      text: "a".repeat(PROJECT_UPDATE_MAX_LENGTH + 1),
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const textIssue = result.error.issues.find((issue) => issue.path[0] === "text");
+      expect(textIssue?.message).toBe(MESSAGES.PROJECT_UPDATE_FORM.TEXT.MAX);
+    }
   });
 });

@@ -315,6 +315,7 @@ vi.mock("@/utilities/messages", () => ({
   MESSAGES: {
     PROJECT_FORM: {
       TITLE: { MIN: "Title too short", MAX: "Title too long" },
+      DETAILS_MAX: "Your details are too long combined. Keep them under 15,000 characters.",
       RECIPIENT: "Invalid recipient",
       SOCIALS: {
         TWITTER: "Invalid twitter handle",
@@ -347,11 +348,20 @@ vi.mock("@/utilities/indexer", () => ({
   },
 }));
 
+// Mutable holder so individual tests can flip the network-selector flag to
+// simulate production (hidden) vs staging (shown). Read via a getter below so
+// the live import binding reflects mutations made inside a test.
+const networkMockState = vi.hoisted(() => ({ showNetworkSelector: false }));
+
 vi.mock("@/utilities/network", () => ({
   gapSupportedNetworks: [
     { id: 10, name: "Optimism" },
     { id: 42161, name: "Arbitrum" },
   ],
+  PROJECT_CREATION_DEFAULT_CHAIN_ID: 8453,
+  get SHOW_PROJECT_CREATION_NETWORK_SELECTOR() {
+    return networkMockState.showNetworkSelector;
+  },
 }));
 
 vi.mock("@/utilities/pages", () => ({
@@ -470,14 +480,6 @@ vi.mock("@/components/Dialogs/ProjectDialog/ContactInfoSection", () => ({
   ),
 }));
 
-vi.mock("@/components/Dialogs/ProjectDialog/NetworkDropdown", () => ({
-  NetworkDropdown: ({ onSelectFunction }: any) => (
-    <button type="button" onClick={() => onSelectFunction(10)}>
-      Select Optimism
-    </button>
-  ),
-}));
-
 class mockProjectClass {
   attest = (...args: any[]) => mockProjectAttest(...args);
   uid = "0xproject-uid";
@@ -495,6 +497,9 @@ vi.mock("@show-karma/karma-gap-sdk", () => ({
 describe("ProjectDialog", () => {
   beforeEach(async () => {
     vi.clearAllMocks();
+
+    // Default to production behavior (no network selector) unless a test opts in.
+    networkMockState.showNetworkSelector = false;
 
     mockProjectAttest = vi.fn(
       () =>
@@ -551,11 +556,12 @@ describe("ProjectDialog", () => {
 
     await user.click(screen.getByRole("button", { name: /next/i }));
     await waitFor(() => {
-      expect(screen.getByText("Choose a network to create your project")).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /add contact/i })).toBeInTheDocument();
     });
 
+    // No network selection step — chainID defaults to Base. Adding a contact is
+    // the only remaining requirement to enable submission.
     await user.click(screen.getByRole("button", { name: /add contact/i }));
-    await user.click(screen.getByRole("button", { name: /select optimism/i }));
     await waitFor(() => {
       expect(screen.getByRole("button", { name: /create project/i })).not.toBeDisabled();
     });
@@ -644,7 +650,7 @@ describe("ProjectDialog", () => {
     expect(mockStartAttestation).not.toHaveBeenCalled();
   });
 
-  it('surfaces "Network is required" when submitting without selecting a network and does not attest', async () => {
+  it("defaults to the Base network without a selector and never surfaces a network error", async () => {
     const { ProjectDialog } = await import("@/components/Dialogs/ProjectDialog");
     const user = userEvent.setup();
 
@@ -659,7 +665,7 @@ describe("ProjectDialog", () => {
     await user.type(markdownEditors[2], "Solution");
     await user.type(markdownEditors[3], "Mission summary");
 
-    // Advance through steps 0 -> 1 -> 2 -> 3 (Contact info / network selection).
+    // Advance through steps 0 -> 1 -> 2 -> 3 (Contact info).
     await user.click(screen.getByRole("button", { name: /next/i }));
     await waitFor(() => {
       expect(screen.getByPlaceholderText("Your/organization handle")).toBeInTheDocument();
@@ -672,20 +678,88 @@ describe("ProjectDialog", () => {
 
     await user.click(screen.getByRole("button", { name: /next/i }));
     await waitFor(() => {
-      expect(screen.getByText("Choose a network to create your project")).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /add contact/i })).toBeInTheDocument();
     });
 
-    // Add a contact but intentionally DO NOT select a network, then submit.
+    // No network selector or network note is rendered — chainID is pre-set to Base.
+    expect(screen.queryByText("Choose a network to create your project")).not.toBeInTheDocument();
+    expect(screen.queryByText(/created on the Base network/i)).not.toBeInTheDocument();
+
+    // Add a contact and submit: validation passes with the default chain, so the
+    // "Network is required" error must never appear.
     await user.click(screen.getByRole("button", { name: /add contact/i }));
     submitForm();
 
-    // chainID is missing: the resolver must surface "Network is required" in the
-    // DOM (the exact Sentry GAP-FRONTEND-221/223/224 crash path). When the
-    // resolver throws instead, this text never renders.
-    expect(await screen.findByText("Network is required")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(mockStartAttestation).toHaveBeenCalledWith("Creating project...");
+    });
 
-    // No attestation should be attempted on validation failure.
-    expect(mockProjectAttest).not.toHaveBeenCalled();
-    expect(mockStartAttestation).not.toHaveBeenCalled();
+    // The critical contract: creation targets the Base default chain (8453),
+    // not the connected wallet chain (mocked to Optimism / 10 above).
+    await waitFor(() => {
+      expect(mockSetupChainAndWallet).toHaveBeenCalledWith(
+        expect.objectContaining({ targetChainId: 8453 })
+      );
+    });
+    expect(screen.queryByText("Network is required")).not.toBeInTheDocument();
+  });
+
+  it("shows the network selector on staging and creates on the chosen network", async () => {
+    // Staging keeps the network list so projects can be created on other chains.
+    networkMockState.showNetworkSelector = true;
+
+    const { ProjectDialog } = await import("@/components/Dialogs/ProjectDialog");
+    const user = userEvent.setup();
+
+    render(<ProjectDialog />);
+    await openDialog(user);
+
+    // Fill all step-0 required fields with valid values so navigation can proceed.
+    await user.type(screen.getByPlaceholderText('e.g. "My awesome project"'), "My awesome project");
+    const markdownEditors = screen.getAllByTestId("markdown-editor");
+    await user.type(markdownEditors[0], "Description");
+    await user.type(markdownEditors[1], "Problem");
+    await user.type(markdownEditors[2], "Solution");
+    await user.type(markdownEditors[3], "Mission summary");
+
+    // Advance through steps 0 -> 1 -> 2 -> 3 (Contact info).
+    await user.click(screen.getByRole("button", { name: /next/i }));
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText("Your/organization handle")).toBeInTheDocument();
+    });
+
+    await user.click(screen.getByRole("button", { name: /next/i }));
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText("Describe your business model")).toBeInTheDocument();
+    });
+
+    await user.click(screen.getByRole("button", { name: /next/i }));
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /add contact/i })).toBeInTheDocument();
+    });
+
+    // The network selector renders with the gap-supported networks.
+    const networkSelect = screen.getByLabelText("Network *");
+    expect(networkSelect).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "Optimism" })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "Arbitrum" })).toBeInTheDocument();
+
+    // Pick Arbitrum (42161) instead of the Base default.
+    await user.selectOptions(networkSelect, "42161");
+
+    await user.click(screen.getByRole("button", { name: /add contact/i }));
+    submitForm();
+
+    await waitFor(() => {
+      expect(mockStartAttestation).toHaveBeenCalledWith("Creating project...");
+    });
+
+    // Creation targets the selected chain (Arbitrum / 42161), not the Base default.
+    await waitFor(() => {
+      expect(mockSetupChainAndWallet).toHaveBeenCalledWith(
+        expect.objectContaining({ targetChainId: 42161 })
+      );
+    });
+    expect(screen.queryByText("Network is required")).not.toBeInTheDocument();
   });
 });

@@ -82,8 +82,8 @@
       "maxBytes": 60000
     },
     "__tests__/integration/features/grant-completion-revocation-flow.test.tsx": {
-      "lines": 1086,
-      "bytes": 35578,
+      "lines": 1111,
+      "bytes": 37214,
       "maxLines": 800,
       "maxBytes": 60000
     },

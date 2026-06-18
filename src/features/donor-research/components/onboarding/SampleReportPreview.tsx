@@ -10,7 +10,12 @@
  * marketing-shape content.
  */
 
+import type { SocialMetrics } from "@/types/donor-research";
 import { compositeBand } from "../report-brief/scoring";
+import { SocialPresence } from "../report-viewer/SocialPresence";
+
+/** Keeps the static sample's "X days ago" labels evergreen. */
+const daysAgo = (n: number): string => new Date(Date.now() - n * 86_400_000).toISOString();
 
 interface SampleCandidate {
   ein: string;
@@ -24,6 +29,7 @@ interface SampleCandidate {
   };
   verdict: "verified" | "partial" | "flagged";
   onePager: string;
+  social: SocialMetrics | null;
 }
 
 const TOP_THREE: SampleCandidate[] = [
@@ -35,6 +41,44 @@ const TOP_THREE: SampleCandidate[] = [
     verdict: "verified",
     onePager:
       "Cascade Watershed Council is a top pick for Pacific Northwest climate giving. Active program reporting in the last 30 days, verified IRS Pub 78 status, and a strong donor-match score against your climate criteria. A $25K gift would extend their streamside restoration partnership with three tribal nations.",
+    social: {
+      byChannel: [
+        {
+          channel: "linkedin",
+          available: true,
+          followers: 4200,
+          postsInWindow: 9,
+          lastPostAt: daysAgo(2),
+          avgLikes: 63,
+        },
+        {
+          channel: "instagram",
+          available: true,
+          followers: 12800,
+          postsInWindow: 14,
+          lastPostAt: daysAgo(1),
+          avgLikes: 540,
+        },
+        {
+          channel: "x",
+          available: true,
+          followers: 3100,
+          postsInWindow: 21,
+          lastPostAt: daysAgo(0),
+          avgLikes: 18,
+        },
+        {
+          channel: "facebook",
+          available: true,
+          followers: 9400,
+          postsInWindow: 7,
+          lastPostAt: daysAgo(3),
+          avgLikes: 112,
+        },
+      ],
+      lastPostAt: daysAgo(0),
+      totalFollowers: 29500,
+    },
   },
   {
     ein: "82-1410597",
@@ -44,6 +88,44 @@ const TOP_THREE: SampleCandidate[] = [
     verdict: "verified",
     onePager:
       "Salmon Recovery Alliance pairs strong policy work with measurable habitat outcomes. Recent posts highlight restored creek corridors and 2026 monitoring data. Compliance is fully verified; freshness is solid though slightly older than the leader.",
+    social: {
+      byChannel: [
+        {
+          channel: "facebook",
+          available: true,
+          followers: 8900,
+          postsInWindow: 6,
+          lastPostAt: daysAgo(9),
+          avgLikes: 96,
+        },
+        {
+          channel: "linkedin",
+          available: true,
+          followers: 1100,
+          postsInWindow: 4,
+          lastPostAt: daysAgo(12),
+          avgLikes: 22,
+        },
+        {
+          channel: "instagram",
+          available: false,
+          followers: null,
+          postsInWindow: 0,
+          lastPostAt: null,
+          avgLikes: null,
+        },
+        {
+          channel: "x",
+          available: false,
+          followers: null,
+          postsInWindow: 0,
+          lastPostAt: null,
+          avgLikes: null,
+        },
+      ],
+      lastPostAt: daysAgo(9),
+      totalFollowers: 10000,
+    },
   },
   {
     ein: "47-2810655",
@@ -53,6 +135,44 @@ const TOP_THREE: SampleCandidate[] = [
     verdict: "verified",
     onePager:
       "Sound Cities Climate Collaborative scores highest on alignment with the criteria's urban-resilience framing. Compliance is verified and the impact track record is strong, though their public reporting cadence is a notch behind the top two.",
+    social: {
+      byChannel: [
+        {
+          channel: "instagram",
+          available: true,
+          followers: 3300,
+          postsInWindow: 7,
+          lastPostAt: daysAgo(24),
+          avgLikes: 128,
+        },
+        {
+          channel: "x",
+          available: true,
+          followers: 940,
+          postsInWindow: 3,
+          lastPostAt: daysAgo(31),
+          avgLikes: 6,
+        },
+        {
+          channel: "linkedin",
+          available: false,
+          followers: null,
+          postsInWindow: 0,
+          lastPostAt: null,
+          avgLikes: null,
+        },
+        {
+          channel: "facebook",
+          available: false,
+          followers: null,
+          postsInWindow: 0,
+          lastPostAt: null,
+          avgLikes: null,
+        },
+      ],
+      lastPostAt: daysAgo(24),
+      totalFollowers: 4240,
+    },
   },
 ];
 
@@ -63,6 +183,7 @@ const SUPPORTING: SampleCandidate = {
   components: { freshness: 0.45, impactRecency: 0.6, donorMatch: 0.75, compliance: 0.6 },
   verdict: "partial",
   onePager: "",
+  social: null,
 };
 
 export function SampleReportPreview() {
@@ -121,6 +242,11 @@ function SampleCandidateCard({ candidate, variant }: SampleCardProps) {
       </header>
       {variant === "one-pager" && candidate.onePager ? (
         <p className="mt-2 rounded-md bg-muted/40 p-2 text-xs">{candidate.onePager}</p>
+      ) : null}
+      {candidate.social ? (
+        <div className="mt-3">
+          <SocialPresence metrics={candidate.social} />
+        </div>
       ) : null}
     </article>
   );

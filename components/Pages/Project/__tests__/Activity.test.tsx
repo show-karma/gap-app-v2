@@ -88,7 +88,7 @@ const setHooks = ({
   milestones = [] as UnifiedMilestone[],
   impacts = [] as UnifiedMilestone[],
 } = {}) => {
-  mockUseProjectAuthorization.mockReturnValue(authorized);
+  mockUseProjectAuthorization.mockReturnValue({ isAuthorized: authorized, isLoading: false });
   mockUseProjectUpdates.mockReturnValue({ milestones });
   mockUseProjectImpacts.mockReturnValue({ impacts });
 };

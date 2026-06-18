@@ -1,14 +1,15 @@
 "use client";
 
 import { SparklesIcon } from "@heroicons/react/24/outline";
-import { type FC, useMemo, useState } from "react";
+import { type FC, useMemo } from "react";
 import toast from "react-hot-toast";
 import { Button } from "@/components/Utilities/Button";
-import { fundingApplicationsAPI } from "@/services/fundingPlatformService";
+import { useRunAIEvaluation } from "@/hooks/useRunAIEvaluation";
+import { extractApiErrorMessage } from "@/utilities/errors";
 
 interface AIEvaluationButtonProps {
   referenceNumber: string;
-  onEvaluationComplete?: () => void;
+  onEvaluationComplete?: () => void | Promise<void>;
   disabled?: boolean;
   isInternal?: boolean;
 }
@@ -16,6 +17,11 @@ interface AIEvaluationButtonProps {
 /**
  * Button component for running AI evaluation on funding applications.
  * Supports both regular and internal evaluation modes.
+ *
+ * Pending state and parent refresh are driven by the `useRunAIEvaluation`
+ * mutation, so a successful run invalidates the funding-application/applications
+ * caches and propagates the new verdict to every consumer — not just the
+ * optional `onEvaluationComplete` callback.
  *
  * @param referenceNumber - The application reference number
  * @param onEvaluationComplete - Optional callback called after successful evaluation
@@ -28,7 +34,7 @@ const AIEvaluationButton: FC<AIEvaluationButtonProps> = ({
   disabled = false,
   isInternal = false,
 }) => {
-  const [isEvaluating, setIsEvaluating] = useState(false);
+  const mutation = useRunAIEvaluation({ isInternal, onSuccess: onEvaluationComplete });
 
   // Memoize button text and labels to avoid unnecessary re-renders
   const buttonText = useMemo(() => {
@@ -42,75 +48,36 @@ const AIEvaluationButton: FC<AIEvaluationButtonProps> = ({
   }, [isInternal]);
 
   const handleRunEvaluation = async () => {
-    if (disabled || isEvaluating) {
+    if (disabled || mutation.isPending) {
       return;
     }
 
-    setIsEvaluating(true);
-
     try {
-      const _result = isInternal
-        ? await fundingApplicationsAPI.runInternalAIEvaluation(referenceNumber)
-        : await fundingApplicationsAPI.runAIEvaluation(referenceNumber);
+      await mutation.mutateAsync(referenceNumber);
 
       toast.success(
         isInternal
           ? "Internal AI evaluation completed successfully!"
           : "AI evaluation completed successfully!"
       );
-
-      // Call the callback to refresh the application data
-      if (onEvaluationComplete) {
-        try {
-          await onEvaluationComplete();
-        } catch (refreshError) {
-          const errorPrefix = isInternal ? "internal " : "";
-          console.error(
-            `Failed to refresh application after ${errorPrefix}AI evaluation:`,
-            refreshError
-          );
-          toast.error(
-            "Evaluation completed but failed to refresh the display. Please reload the page."
-          );
-        }
-      }
     } catch (error) {
-      console.error("Failed to run AI evaluation:", error);
-
-      let errorMessage = "Failed to run AI evaluation";
-
-      // Check for AxiosError-like objects (with isAxiosError property)
-      if (error && typeof error === "object" && "isAxiosError" in error) {
-        const axiosError = error as {
-          response?: { data?: { message?: string } };
-          message?: string;
-        };
-        // If response exists, use response.data.message, otherwise use the error message
-        errorMessage = axiosError.response?.data?.message || axiosError.message || errorMessage;
-      } else if (error instanceof Error) {
-        errorMessage = error.message;
-      } else if (error && typeof error === "object" && "response" in error) {
-        const responseError = error as { response?: { data?: { message?: string } } };
-        errorMessage = responseError.response?.data?.message || errorMessage;
-      }
-
-      toast.error(errorMessage);
-    } finally {
-      setIsEvaluating(false);
+      toast.error(extractApiErrorMessage(error, "Failed to run AI evaluation"));
     }
   };
+
+  const isPending = mutation.isPending;
 
   return (
     <Button
       onClick={handleRunEvaluation}
       variant="secondary"
-      disabled={disabled || isEvaluating}
-      aria-label={isEvaluating ? buttonText.ariaLabelLoading : buttonText.ariaLabel}
-      aria-busy={isEvaluating}
-      className={`flex items-center space-x-2 px-3 py-2 text-sm ${isEvaluating ? "animate-pulse" : ""}`}
+      disabled={disabled || isPending}
+      aria-label={isPending ? buttonText.ariaLabelLoading : buttonText.ariaLabel}
+      aria-busy={isPending}
+      className={`flex items-center space-x-2 px-3 py-2 text-sm ${isPending ? "animate-pulse" : ""}`}
     >
-      <SparklesIcon className={`w-4 h-4 ${isEvaluating ? "animate-spin" : ""}`} />
-      <span>{isEvaluating ? buttonText.loading : buttonText.idle}</span>
+      <SparklesIcon className={`w-4 h-4 ${isPending ? "animate-spin" : ""}`} />
+      <span>{isPending ? buttonText.loading : buttonText.idle}</span>
     </Button>
   );
 };
