@@ -12,6 +12,7 @@
 import { ResultAsync } from "neverthrow";
 import { useCallback, useRef } from "react";
 import { z } from "zod";
+import { useAuth } from "@/hooks/useAuth";
 import { TokenManager } from "@/utilities/auth/token-manager";
 import { envVars } from "@/utilities/enviromentVars";
 import {
@@ -24,7 +25,7 @@ import { NON_PROFITS_API } from "../lib/api";
 import { buildConversationMessages, type ConversationMessage } from "../lib/conversation-messages";
 import type { AppError } from "../lib/errors";
 import { chatTurnToTurnPayload } from "../lib/saved-conversation";
-import { type ChatTurn, usePhilanthropyStore } from "../store/philanthropy";
+import { usePhilanthropyStore } from "../store/philanthropy";
 import { useSearchSessionStore } from "../store/search-session";
 import type {
   QueryIntent,
@@ -363,6 +364,7 @@ export function usePhilanthropySearch() {
   const abortRef = useRef<AbortController | null>(null);
   const addHistory = useAddSearchHistory();
   const appendTurn = useAppendSearchTurn();
+  const { authenticated } = useAuth();
 
   const search = useCallback(
     async (
@@ -577,9 +579,8 @@ export function usePhilanthropySearch() {
               const turnPayload = chatTurnToTurnPayload(completedTurn);
               const doneCount = state.messages.filter((t) => t.status === "done").length;
               // Surface persistence rejections that should stop further input:
-              // 403 → owned by another account (read-only); 409 → the
-              // conversation hit the server's turn cap. Both disable the
-              // composer instead of silently dropping the write.
+              // 403 → owned by another account (read-only); 409 → turn cap; 401
+              // → bad/expired token. Never silently drop the write.
               const handlePersistError = (err: unknown) => {
                 const e = err as AppError;
                 if (e?.type !== "ApiError") return;
@@ -587,6 +588,13 @@ export function usePhilanthropySearch() {
                   usePhilanthropyStore.getState().setReadOnly(true);
                 } else if (e.status === 409) {
                   usePhilanthropyStore.getState().setConversationFull(true);
+                } else if (e.status === 401) {
+                  // Drop the stale cached token so the next request fetches a
+                  // fresh one; prompt sign-in for logged-out users.
+                  TokenManager.clearCache();
+                  if (!authenticated) {
+                    usePhilanthropyStore.getState().setLoginRequired(true);
+                  }
                 }
               };
               if (doneCount === 1) {
@@ -640,6 +648,23 @@ export function usePhilanthropySearch() {
         },
         (appErr) => {
           if (appErr.type === "AbortError") return; // silently swallow
+          // 401 from the agent endpoint: an anonymous user hit the free limit
+          // (login_required), or an authenticated token expired. Drop the
+          // cached token; prompt sign-in for logged-out users. Either way the
+          // turn ends with a clear, non-scary message.
+          if (appErr.type === "ApiError" && appErr.status === 401) {
+            TokenManager.clearCache();
+            if (!authenticated) usePhilanthropyStore.getState().setLoginRequired(true);
+            const msg = authenticated
+              ? "Your session expired. Please try again."
+              : "Sign in to continue your search.";
+            if (isChat) {
+              usePhilanthropyStore.getState().updateLastTurn({ status: "error", error: msg });
+            } else {
+              usePhilanthropyStore.getState().setError(msg);
+            }
+            return;
+          }
           const msg =
             appErr.type === "NetworkError" ||
             appErr.type === "StreamError" ||
@@ -656,7 +681,7 @@ export function usePhilanthropySearch() {
 
       usePhilanthropyStore.getState().setSearching(false);
     },
-    [addHistory, appendTurn]
+    [addHistory, appendTurn, authenticated]
   );
 
   const abort = useCallback(() => {

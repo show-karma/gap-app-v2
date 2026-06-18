@@ -69,3 +69,24 @@ describe("usePhilanthropyStore conversationFull", () => {
     expect(usePhilanthropyStore.getState().conversationFull).toBe(false);
   });
 });
+
+describe("usePhilanthropyStore loginRequired", () => {
+  beforeEach(() => {
+    usePhilanthropyStore.getState().reset();
+  });
+
+  it("defaults to false", () => {
+    expect(usePhilanthropyStore.getState().loginRequired).toBe(false);
+  });
+
+  it("setLoginRequired flips the flag", () => {
+    usePhilanthropyStore.getState().setLoginRequired(true);
+    expect(usePhilanthropyStore.getState().loginRequired).toBe(true);
+  });
+
+  it("reset() clears the flag (e.g. on New chat)", () => {
+    usePhilanthropyStore.getState().setLoginRequired(true);
+    usePhilanthropyStore.getState().reset();
+    expect(usePhilanthropyStore.getState().loginRequired).toBe(false);
+  });
+});

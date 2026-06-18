@@ -129,6 +129,12 @@ interface PhilanthropyStore {
    * a new chat.
    */
   conversationFull: boolean;
+  /**
+   * True when an anonymous user hits the free interaction limit (the agent
+   * endpoint returns 401 `login_required`). The composer prompts sign-in; it
+   * is only ever set for logged-out users and clears once they authenticate.
+   */
+  loginRequired: boolean;
 
   // ── Chat actions (Phase 3 — included now to avoid store refactor) ──
   appendTurn: (turn: ChatTurn) => void;
@@ -147,6 +153,7 @@ interface PhilanthropyStore {
   setReadOnly: (readOnly: boolean) => void;
   setNotFound: (notFound: boolean) => void;
   setConversationFull: (conversationFull: boolean) => void;
+  setLoginRequired: (loginRequired: boolean) => void;
   reset: () => void;
 }
 
@@ -164,6 +171,7 @@ const initialState = {
   readOnly: false,
   notFound: false,
   conversationFull: false,
+  loginRequired: false,
 } satisfies Omit<
   PhilanthropyStore,
   | "appendTurn"
@@ -179,6 +187,7 @@ const initialState = {
   | "setReadOnly"
   | "setNotFound"
   | "setConversationFull"
+  | "setLoginRequired"
   | "reset"
 >;
 
@@ -215,5 +224,6 @@ export const usePhilanthropyStore = create<PhilanthropyStore>((set) => ({
   setReadOnly: (readOnly) => set({ readOnly }),
   setNotFound: (notFound) => set({ notFound }),
   setConversationFull: (conversationFull) => set({ conversationFull }),
+  setLoginRequired: (loginRequired) => set({ loginRequired }),
   reset: () => set({ ...initialState }),
 }));
