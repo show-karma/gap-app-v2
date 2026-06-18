@@ -43,7 +43,10 @@ export function DeepResearchForm() {
     defaultValues: { email: "", query: "" },
   });
 
-  const { mutate, isPending, isSuccess } = useDeepResearchRequest();
+  const { mutate, isPending, data } = useDeepResearchRequest();
+  // Gate the confirmation on the payload's `success` flag, not just transport
+  // success — a 200 with `{ success: false }` must not render a confirmation.
+  const isSubmitted = data?.success === true;
 
   const onSubmit: SubmitHandler<FormValues> = (values) => {
     mutate(values, {
@@ -53,7 +56,7 @@ export function DeepResearchForm() {
     });
   };
 
-  if (isSuccess) {
+  if (isSubmitted) {
     return (
       <div className="rounded-2xl border border-zinc-200 bg-white p-8 text-center dark:border-zinc-800 dark:bg-zinc-900">
         <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400">
