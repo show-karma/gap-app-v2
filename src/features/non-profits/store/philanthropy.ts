@@ -123,6 +123,12 @@ interface PhilanthropyStore {
    * is no local query to re-run. The workbench shows a not-found state.
    */
   notFound: boolean;
+  /**
+   * True when the conversation has reached the server's per-conversation turn
+   * cap (HTTP 409). The composer is disabled and the user is prompted to start
+   * a new chat.
+   */
+  conversationFull: boolean;
 
   // ── Chat actions (Phase 3 — included now to avoid store refactor) ──
   appendTurn: (turn: ChatTurn) => void;
@@ -140,6 +146,7 @@ interface PhilanthropyStore {
   setError: (error: string | null) => void;
   setReadOnly: (readOnly: boolean) => void;
   setNotFound: (notFound: boolean) => void;
+  setConversationFull: (conversationFull: boolean) => void;
   reset: () => void;
 }
 
@@ -156,6 +163,7 @@ const initialState = {
   error: null as string | null,
   readOnly: false,
   notFound: false,
+  conversationFull: false,
 } satisfies Omit<
   PhilanthropyStore,
   | "appendTurn"
@@ -170,6 +178,7 @@ const initialState = {
   | "setError"
   | "setReadOnly"
   | "setNotFound"
+  | "setConversationFull"
   | "reset"
 >;
 
@@ -205,5 +214,6 @@ export const usePhilanthropyStore = create<PhilanthropyStore>((set) => ({
   setError: (error) => set({ error }),
   setReadOnly: (readOnly) => set({ readOnly }),
   setNotFound: (notFound) => set({ notFound }),
+  setConversationFull: (conversationFull) => set({ conversationFull }),
   reset: () => set({ ...initialState }),
 }));

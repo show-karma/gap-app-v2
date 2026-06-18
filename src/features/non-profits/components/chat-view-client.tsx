@@ -132,6 +132,7 @@ export function ChatView({ searchId }: { searchId?: string }) {
   const isSearching = usePhilanthropyStore((s) => s.isSearching);
   const readOnly = usePhilanthropyStore((s) => s.readOnly);
   const notFound = usePhilanthropyStore((s) => s.notFound);
+  const conversationFull = usePhilanthropyStore((s) => s.conversationFull);
   const reset = usePhilanthropyStore((s) => s.reset);
   const { search, abort } = usePhilanthropySearch();
   const { authenticated, login } = useAuth();
@@ -215,11 +216,11 @@ export function ChatView({ searchId }: { searchId?: string }) {
   const onSubmit = useCallback(
     (msg: PromptInputMessage) => {
       const text = msg.text.trim();
-      if (!text || isSearching || readOnly) return;
+      if (!text || isSearching || readOnly || conversationFull) return;
       setInput("");
       void search(text, 1, { chat: true });
     },
-    [search, isSearching, readOnly]
+    [search, isSearching, readOnly, conversationFull]
   );
 
   const onStarterClick = useCallback(
@@ -376,15 +377,17 @@ export function ChatView({ searchId }: { searchId?: string }) {
         <ConversationScrollButton />
       </Conversation>
 
-      {/* Composer — replaced by a read-only notice when this conversation
-          belongs to another account (persistence returned 403). */}
+      {/* Composer — replaced by a notice when the conversation can't accept
+          more input: owned by another account (403) or full (409). */}
       <div className="border-t border-zinc-200 bg-white px-4 py-3 dark:border-zinc-800 dark:bg-zinc-950">
         <div className="mx-auto w-full max-w-3xl">
-          {readOnly ? (
+          {readOnly || conversationFull ? (
             <div className="flex items-center gap-2 rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-600 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
               <Lock className="size-4 shrink-0" />
               <span>
-                This conversation belongs to another account and is read-only.{" "}
+                {conversationFull
+                  ? "This conversation has reached its maximum length."
+                  : "This conversation belongs to another account and is read-only."}{" "}
                 <button
                   type="button"
                   onClick={onNewChat}

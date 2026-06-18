@@ -48,3 +48,24 @@ describe("usePhilanthropyStore notFound", () => {
     expect(usePhilanthropyStore.getState().notFound).toBe(false);
   });
 });
+
+describe("usePhilanthropyStore conversationFull", () => {
+  beforeEach(() => {
+    usePhilanthropyStore.getState().reset();
+  });
+
+  it("defaults to false", () => {
+    expect(usePhilanthropyStore.getState().conversationFull).toBe(false);
+  });
+
+  it("setConversationFull flips the flag", () => {
+    usePhilanthropyStore.getState().setConversationFull(true);
+    expect(usePhilanthropyStore.getState().conversationFull).toBe(true);
+  });
+
+  it("reset() clears the flag", () => {
+    usePhilanthropyStore.getState().setConversationFull(true);
+    usePhilanthropyStore.getState().reset();
+    expect(usePhilanthropyStore.getState().conversationFull).toBe(false);
+  });
+});

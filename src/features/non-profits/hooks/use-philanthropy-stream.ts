@@ -21,6 +21,7 @@ import {
   type SearchSortKey,
 } from "../lib/agentic-philanthropy";
 import { NON_PROFITS_API } from "../lib/api";
+import { buildConversationMessages, type ConversationMessage } from "../lib/conversation-messages";
 import type { AppError } from "../lib/errors";
 import { chatTurnToTurnPayload } from "../lib/saved-conversation";
 import { type ChatTurn, usePhilanthropyStore } from "../store/philanthropy";
@@ -150,17 +151,6 @@ interface StreamCallbacks {
   onNarrative: (text: string) => void;
   /** Called for every progress event emitted before final_answer. */
   onProgress: (event: StreamProgressEvent) => void;
-}
-
-/**
- * Conversation message for multi-turn chat history.
- *
- * The indexer accepts the full `messages` array so it can resolve follow-up
- * references ("narrow that to Texas") against prior assistant outputs.
- */
-interface ConversationMessage {
-  role: "user" | "assistant";
-  content: string;
 }
 
 export function streamPhilanthropyQuery(
@@ -367,29 +357,6 @@ export function streamPhilanthropyQuery(
       };
     }
   );
-}
-
-/**
- * Builds the conversation array sent to the indexer for a chat-mode turn.
- *
- * Includes all completed prior turns as alternating user/assistant messages,
- * then appends the new user query as the final message. Streaming and errored
- * turns are skipped — they'd give the indexer half-formed context.
- */
-function buildConversationMessages(
-  priorTurns: ReadonlyArray<ChatTurn>,
-  newUserQuery: string
-): ConversationMessage[] {
-  const completed = priorTurns.filter((t) => t.status === "done");
-  const history: ConversationMessage[] = [];
-  for (const turn of completed) {
-    history.push({ role: "user", content: turn.userQuery });
-    if (turn.narrative.trim()) {
-      history.push({ role: "assistant", content: turn.narrative });
-    }
-  }
-  history.push({ role: "user", content: newUserQuery });
-  return history;
 }
 
 export function usePhilanthropySearch() {
@@ -609,13 +576,17 @@ export function usePhilanthropySearch() {
             if (threadId && completedTurn?.status === "done") {
               const turnPayload = chatTurnToTurnPayload(completedTurn);
               const doneCount = state.messages.filter((t) => t.status === "done").length;
-              // A 403 means this conversation belongs to another account. Flip
-              // the thread to read-only so the composer is disabled and the user
-              // isn't silently typing into a chat that can't be saved.
+              // Surface persistence rejections that should stop further input:
+              // 403 → owned by another account (read-only); 409 → the
+              // conversation hit the server's turn cap. Both disable the
+              // composer instead of silently dropping the write.
               const handlePersistError = (err: unknown) => {
                 const e = err as AppError;
-                if (e?.type === "ApiError" && e.status === 403) {
+                if (e?.type !== "ApiError") return;
+                if (e.status === 403) {
                   usePhilanthropyStore.getState().setReadOnly(true);
+                } else if (e.status === 409) {
+                  usePhilanthropyStore.getState().setConversationFull(true);
                 }
               };
               if (doneCount === 1) {
