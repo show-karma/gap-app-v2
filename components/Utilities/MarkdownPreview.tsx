@@ -1,17 +1,22 @@
 "use client";
 
 import { useTheme } from "next-themes";
-import type { ComponentType } from "react";
+import type { ComponentType, CSSProperties } from "react";
 import { useEffect, useMemo, useState } from "react";
 import type { Components } from "streamdown";
 import styles from "@/styles/markdown.module.css";
 import { cn } from "@/utilities/tailwind";
 
 // Inline props type — avoids pulling @uiw/react-markdown-preview into the bundle
-// while keeping call-site compatibility for the props we actually use.
+// while keeping call-site compatibility for the props we actually use. The
+// interface is closed (no `[key: string]: unknown` index signature): every prop
+// a call site passes must be declared and consumed below, so a prop the
+// component does not read is a compile error instead of a silent no-op (#1278).
 interface MarkdownPreviewProps {
   source?: string;
   className?: string;
+  /** Inline style forwarded to the preview's outer wrapper. */
+  style?: CSSProperties;
   /**
    * "inline" strips Streamdown's table chrome (toolbar + card) for help text + submitted answers.
    * "excerpt" renders a static, non-interactive prose preview for clamped cards/links:
@@ -26,9 +31,6 @@ interface MarkdownPreviewProps {
   allowElement?: (element: any, index: number, parent: any) => boolean;
   // biome-ignore lint/suspicious/noExplicitAny: ComponentType<any> makes destructured params explicit-any, avoiding noImplicitAny errors at call sites
   components?: Record<string, ComponentType<any>>;
-  // biome-ignore lint/suspicious/noExplicitAny: no-op kept for call-site compatibility; explicit any avoids noImplicitAny on node param
-  rehypeRewrite?: (node: any, index?: number, parent?: any) => void;
-  [key: string]: unknown; // absorb remaining unused @uiw props without breaking call sites
 }
 
 type StreamdownType = typeof import("streamdown").Streamdown;
@@ -189,6 +191,7 @@ function completeMissingTableSeparators(source: string): string {
 export const MarkdownPreview = ({
   source,
   className,
+  style,
   variant,
   allowElement,
   components,
@@ -249,7 +252,7 @@ export const MarkdownPreview = ({
     const fallbackText =
       variant === "excerpt" ? truncateAtWordBoundary(source, EXCERPT_MAX_CHARS) : source;
     return (
-      <div className={cn("preview w-full max-w-full whitespace-pre-wrap", className)}>
+      <div className={cn("preview w-full max-w-full whitespace-pre-wrap", className)} style={style}>
         {fallbackText}
       </div>
     );
@@ -258,6 +261,7 @@ export const MarkdownPreview = ({
   return (
     <div
       className="preview w-full max-w-full text-foreground"
+      style={style}
       data-color-mode={resolvedTheme === "dark" ? "dark" : "light"}
     >
       <StreamdownComponent
