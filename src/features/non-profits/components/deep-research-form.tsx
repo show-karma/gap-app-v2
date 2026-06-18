@@ -108,7 +108,7 @@ export function DeepResearchForm() {
         <button
           type="submit"
           disabled={isPending}
-          className="inline-flex items-center justify-center gap-2 rounded-lg bg-brand px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-emphasis focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 disabled:opacity-60"
+          className="inline-flex items-center justify-center gap-2 rounded-lg !bg-brand px-5 py-3 text-sm font-semibold !text-white transition-colors hover:!bg-brand-emphasis focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 disabled:opacity-60"
         >
           {isPending ? (
             <>
