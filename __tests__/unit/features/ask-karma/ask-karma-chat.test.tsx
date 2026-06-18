@@ -374,6 +374,63 @@ describe("AskKarmaChat", () => {
     expect(alert).toHaveTextContent("Connection failed");
   });
 
+  it("renders a Continue affordance (not an error) when a working limit was reached", () => {
+    render(
+      <AskKarmaChat
+        config={config}
+        messages={[
+          buildMsg({ id: "a1", role: "assistant", content: "Partial findings", timestamp: 1 }),
+        ]}
+        isStreaming={false}
+        error={null}
+        limitReached={{ reason: "budget" }}
+        onContinue={vi.fn()}
+        onSend={vi.fn()}
+        onStop={vi.fn()}
+        onBack={vi.fn()}
+      />
+    );
+    expect(screen.getByRole("button", { name: /continue/i })).toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("invokes onContinue when the Continue button is clicked", async () => {
+    const user = userEvent.setup();
+    const onContinue = vi.fn();
+    render(
+      <AskKarmaChat
+        config={config}
+        messages={[]}
+        isStreaming={false}
+        error={null}
+        limitReached={{ reason: "turns" }}
+        onContinue={onContinue}
+        onSend={vi.fn()}
+        onStop={vi.fn()}
+        onBack={vi.fn()}
+      />
+    );
+    await user.click(screen.getByRole("button", { name: /continue/i }));
+    expect(onContinue).toHaveBeenCalledTimes(1);
+  });
+
+  it("hides the Continue affordance while streaming", () => {
+    render(
+      <AskKarmaChat
+        config={config}
+        messages={[]}
+        isStreaming={true}
+        error={null}
+        limitReached={{ reason: "budget" }}
+        onContinue={vi.fn()}
+        onSend={vi.fn()}
+        onStop={vi.fn()}
+        onBack={vi.fn()}
+      />
+    );
+    expect(screen.queryByRole("button", { name: /continue/i })).not.toBeInTheDocument();
+  });
+
   it("invokes onBack when the back button is clicked", async () => {
     const user = userEvent.setup();
     const onBack = vi.fn();

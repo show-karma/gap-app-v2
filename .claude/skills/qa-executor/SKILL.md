@@ -17,7 +17,7 @@ Execute the QA plan from Stage 1. You are a strict, rigid QA engineer. If expect
 | PR number | `$PR_NUMBER` env var |
 | Test email | `$QA_TEST_EMAIL` env var (Privy test account) |
 | Test OTP | `$QA_TEST_OTP` env var (fixed OTP from Privy dashboard) |
-| Shard | `$SHARD_ID` env var (optional: `public`, `auth`, or unset = all). When set, execute ONLY scenarios matching that shard (see "Sharded Execution"). |
+| Shard | `$SHARD_ID` env var (optional: `public`, `auth`, a split form like `public-1of2`/`auth-2of2`, or unset = all). When set, execute ONLY scenarios matching that shard (see "Sharded Execution"). |
 
 ## Setup
 
@@ -136,7 +136,11 @@ When `$SHARD_ID` is set, execute only the matching subset:
 |-------------|---------------|
 | `public` | P1, P2, P3, ... (all P-prefixed). **Skip Privy login entirely.** |
 | `auth` | A1, A2, A3, ... (all A-prefixed). Login first, then execute. |
+| `public-<k>of<n>` | Round-robin slice of the P-prefixed scenarios (see below). **Skip Privy login entirely.** |
+| `auth-<k>of<n>` | Round-robin slice of the A-prefixed scenarios (see below). Login first, then execute. |
 | (unset) | All scenarios — public first, then auth. |
+
+**Split-shard slicing (`<prefix>-<k>of<n>`):** order the prefix's scenarios by their number (P1, P2, P3, ...) and run only those at 1-based positions `k, k+n, k+2n, ...`. Example: with scenarios P1–P5, `public-1of2` runs P1, P3, P5 and `public-2of2` runs P2, P4. All other rules (login per prefix, empty-shard fast path, results file naming) apply unchanged — the results file is `qa-results-public-1of2.json` etc.
 
 Write the result file directly to its shard-suffixed name — see "Time Budget & Incremental Writes" and "Output" — so parallel shards never collide and partial results survive a kill signal:
 

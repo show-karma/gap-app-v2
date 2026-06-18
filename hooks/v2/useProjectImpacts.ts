@@ -1,7 +1,16 @@
 import { useQuery } from "@tanstack/react-query";
+import { useCallback, useMemo } from "react";
 import { getProjectImpacts, type ProjectImpact } from "@/services/project-impacts.service";
 import { queryClient } from "@/utilities/query-client";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
+
+/**
+ * Shared frozen empty array so the no-data branch returns a STABLE reference
+ * across renders (see DEV-396). A fresh `[]` each render would make every
+ * consumer's deps (e.g. `useProjectProfile`'s aggregation memo) re-run on
+ * every render.
+ */
+const EMPTY_IMPACTS: ProjectImpact[] = [];
 
 interface UseProjectImpactsOptions {
   /**
@@ -21,7 +30,9 @@ interface UseProjectImpactsOptions {
  */
 export function useProjectImpacts(projectIdOrSlug: string, options: UseProjectImpactsOptions = {}) {
   const { isAuthorized = true } = options;
-  const queryKey = QUERY_KEYS.PROJECT.IMPACTS(projectIdOrSlug);
+  // Memoize so the key identity is stable across renders (the refetch callback
+  // depends on it).
+  const queryKey = useMemo(() => QUERY_KEYS.PROJECT.IMPACTS(projectIdOrSlug), [projectIdOrSlug]);
 
   const {
     data,
@@ -35,12 +46,12 @@ export function useProjectImpacts(projectIdOrSlug: string, options: UseProjectIm
     staleTime: 5 * 60 * 1000,
   });
 
-  const impacts = data || [];
+  const impacts = data ?? EMPTY_IMPACTS;
 
-  const refetch = async () => {
+  const refetch = useCallback(async () => {
     await queryClient.invalidateQueries({ queryKey });
     return originalRefetch();
-  };
+  }, [queryKey, originalRefetch]);
 
   return {
     impacts,

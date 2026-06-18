@@ -10,7 +10,12 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { SubmitHandler } from "react-hook-form";
 import { Controller, useForm } from "react-hook-form";
 import { useAccount } from "wagmi";
-import { z } from "zod";
+import {
+  PROJECT_UPDATE_COUNTER_THRESHOLD,
+  PROJECT_UPDATE_MAX_LENGTH,
+  type UpdateType,
+  updateSchema,
+} from "@/components/Forms/ProjectUpdate.schema";
 import { Button } from "@/components/Utilities/Button";
 import { DatePicker } from "@/components/Utilities/DatePicker";
 import { InfoTooltip } from "@/components/Utilities/InfoTooltip";
@@ -62,38 +67,9 @@ interface CommunityIndicator {
   communityName?: string;
 }
 
-const updateSchema = z.object({
-  title: z
-    .string()
-    .min(3, { message: MESSAGES.PROJECT_UPDATE_FORM.TITLE.MIN })
-    .max(75, { message: MESSAGES.PROJECT_UPDATE_FORM.TITLE.MAX }),
-  text: z.string().min(3, { message: MESSAGES.PROJECT_UPDATE_FORM.TEXT }),
-  startDate: z.date().optional(),
-  endDate: z.date().optional(),
-  grants: z.array(z.string()).optional(),
-  outputs: z.array(
-    z.object({
-      outputId: z.string().min(1, "Output is required"),
-      value: z.union([z.number().min(0), z.string()]),
-      proof: z.string().optional(),
-      startDate: z.string().optional(),
-      endDate: z.string().optional(),
-    })
-  ),
-  deliverables: z.array(
-    z.object({
-      name: z.string().min(1, "Name is required"),
-      proof: z.string().min(1, "Proof is required"),
-      description: z.string().optional(),
-    })
-  ),
-});
-
 const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
 const inputStyle =
   "mt-2 w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100 dark:placeholder-zinc-300";
-
-type UpdateType = z.infer<typeof updateSchema>;
 
 interface ProjectUpdateFormProps {
   afterSubmit?: () => void;
@@ -202,7 +178,7 @@ const getFormErrorMessage = (errors: any, formValues: any) => {
   }
 
   if (errors.text?.message) {
-    errorMessages.push("Description is required");
+    errorMessages.push(errors.text.message);
   } else if (!formValues.text) {
     errorMessages.push("Description is required");
   }
@@ -841,6 +817,9 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
                 shouldTouch: true,
               })
             }
+            maxLength={PROJECT_UPDATE_MAX_LENGTH}
+            showCharacterCount
+            characterCountThreshold={PROJECT_UPDATE_COUNTER_THRESHOLD}
             placeholderText="Conducted user research and published a report, worked with our developers, added new features, etc."
           />
         </div>
