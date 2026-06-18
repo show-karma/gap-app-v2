@@ -12,6 +12,7 @@ export const NON_PROFITS_API = {
     LIST: "/v2/search-history",
     GET: (id: string) => `/v2/search-history/${id}`,
     CREATE: "/v2/search-history",
+    APPEND_TURN: (id: string) => `/v2/search-history/${id}/turns`,
     DELETE: (id: string) => `/v2/search-history/${id}`,
     CLEAR: "/v2/search-history",
   },

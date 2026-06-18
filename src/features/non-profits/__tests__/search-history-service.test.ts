@@ -48,6 +48,20 @@ const HISTORY_ENTRY = {
   createdAt: "2024-01-01T00:00:00Z",
 };
 
+const SAVED_TURN = {
+  id: "turn-1",
+  searchHistoryId: "sh-1",
+  turnIndex: 0,
+  userQuery: "Foundations in Ohio",
+  narrative: "Top funders…",
+  entities: [],
+  citations: [],
+  traceId: "trace-1",
+  createdAt: "2024-01-01T00:00:00Z",
+};
+
+const HISTORY_DETAIL = { ...HISTORY_ENTRY, turns: [SAVED_TURN] };
+
 describe("searchHistoryService", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
@@ -104,12 +118,59 @@ describe("searchHistoryService", () => {
       if (result.isOk()) {
         expect(result.value.id).toBe("sh-1");
       }
+      const body = JSON.parse((fetchMock.mock.calls[0][1] as RequestInit).body as string);
+      expect(body).toEqual({ query: "Foundations in Ohio" });
+    });
+
+    it("includes the conversation id in the body when supplied", async () => {
+      const fetchMock = vi.fn().mockResolvedValue(makeOkResponse(HISTORY_ENTRY));
+      vi.stubGlobal("fetch", fetchMock);
+
+      await searchHistoryService.create("Foundations in Ohio", "thread-1");
+
+      const body = JSON.parse((fetchMock.mock.calls[0][1] as RequestInit).body as string);
+      expect(body).toEqual({ query: "Foundations in Ohio", id: "thread-1" });
+    });
+  });
+
+  describe("anonymous (ownerless) responses", () => {
+    // Regression: ownerless chats return `userId: null`. The response schema
+    // must accept it — otherwise create/getById fail to parse, the create is
+    // treated as an error, and the first turn is never persisted while logged
+    // out (the append is chained off a successful create).
+    it("create accepts a null userId", async () => {
+      const fetchMock = vi
+        .fn()
+        .mockResolvedValue(makeOkResponse({ ...HISTORY_ENTRY, userId: null }, 201));
+      vi.stubGlobal("fetch", fetchMock);
+
+      const result = await searchHistoryService.create("anon query", "thread-anon");
+
+      expect(result.isOk()).toBe(true);
+      if (result.isOk()) {
+        expect(result.value.userId).toBeNull();
+      }
+    });
+
+    it("getById accepts a null userId with turns", async () => {
+      const fetchMock = vi
+        .fn()
+        .mockResolvedValue(makeOkResponse({ ...HISTORY_DETAIL, userId: null }));
+      vi.stubGlobal("fetch", fetchMock);
+
+      const result = await searchHistoryService.getById("thread-anon");
+
+      expect(result.isOk()).toBe(true);
+      if (result.isOk()) {
+        expect(result.value.userId).toBeNull();
+        expect(result.value.turns).toHaveLength(1);
+      }
     });
   });
 
   describe("getById", () => {
-    it("calls the GET endpoint for the given id", async () => {
-      const fetchMock = vi.fn().mockResolvedValue(makeOkResponse(HISTORY_ENTRY));
+    it("calls the GET endpoint for the given id and returns saved turns", async () => {
+      const fetchMock = vi.fn().mockResolvedValue(makeOkResponse(HISTORY_DETAIL));
       vi.stubGlobal("fetch", fetchMock);
 
       const result = await searchHistoryService.getById("sh-1");
@@ -117,6 +178,8 @@ describe("searchHistoryService", () => {
       expect(result.isOk()).toBe(true);
       if (result.isOk()) {
         expect(result.value.id).toBe("sh-1");
+        expect(result.value.turns).toHaveLength(1);
+        expect(result.value.turns[0].userQuery).toBe("Foundations in Ohio");
       }
       const calledUrl = fetchMock.mock.calls[0][0] as string;
       expect(calledUrl).toContain("/v2/search-history/sh-1");
@@ -131,6 +194,45 @@ describe("searchHistoryService", () => {
       if (result.isErr()) {
         expect(result.error.type).toBe("ApiError");
         expect((result.error as { type: string; status: number }).status).toBe(404);
+      }
+    });
+  });
+
+  describe("appendTurn", () => {
+    it("posts the turn snapshot to the turns endpoint", async () => {
+      const fetchMock = vi.fn().mockResolvedValue(makeOkResponse(SAVED_TURN));
+      vi.stubGlobal("fetch", fetchMock);
+
+      const result = await searchHistoryService.appendTurn("sh-1", {
+        id: "turn-1",
+        userQuery: "Foundations in Ohio",
+        narrative: "Top funders…",
+        entities: [],
+        citations: [],
+        traceId: "trace-1",
+      });
+
+      expect(result.isOk()).toBe(true);
+      const calledUrl = fetchMock.mock.calls[0][0] as string;
+      expect(calledUrl).toContain("/v2/search-history/sh-1/turns");
+      expect(fetchMock.mock.calls[0][1]).toMatchObject({ method: "POST" });
+    });
+
+    it("returns ApiError when unauthenticated", async () => {
+      vi.stubGlobal("fetch", vi.fn().mockResolvedValue(makeErrorResponse(401, "Unauthorized")));
+
+      const result = await searchHistoryService.appendTurn("sh-1", {
+        id: "turn-1",
+        userQuery: "q",
+        narrative: "",
+        entities: [],
+        citations: [],
+        traceId: null,
+      });
+
+      expect(result.isErr()).toBe(true);
+      if (result.isErr()) {
+        expect(result.error.type).toBe("ApiError");
       }
     });
   });
