@@ -1,0 +1,7 @@
+id: no-raw-confirm
+valid:
+  - "const onDelete = () => setDialogOpen(true);"
+  - "const C = () => <DeleteDialog onConfirm={remove} />;"
+invalid:
+  - "if (confirm('Are you sure?')) remove();"
+  - "if (window.confirm('Delete this?')) remove();"
