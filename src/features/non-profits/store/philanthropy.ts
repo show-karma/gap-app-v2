@@ -115,6 +115,8 @@ interface PhilanthropyStore {
   // ── Chat actions (Phase 3 — included now to avoid store refactor) ──
   appendTurn: (turn: ChatTurn) => void;
   updateLastTurn: (patch: Partial<ChatTurn>) => void;
+  /** Replace the thread with turns restored from a saved conversation. */
+  hydrateTurns: (turns: ReadonlyArray<ChatTurn>) => void;
   setThreadId: (id: string | null) => void;
 
   // ── Legacy actions ──
@@ -142,6 +144,7 @@ const initialState = {
   PhilanthropyStore,
   | "appendTurn"
   | "updateLastTurn"
+  | "hydrateTurns"
   | "setThreadId"
   | "setQuery"
   | "setNarrative"
@@ -171,6 +174,9 @@ export const usePhilanthropyStore = create<PhilanthropyStore>((set) => ({
       const updated = { ...last, ...patch };
       return { messages: [...s.messages.slice(0, -1), updated] };
     }),
+
+  // Restore a saved conversation in one shot (revisit / shared link).
+  hydrateTurns: (turns) => set({ messages: [...turns] }),
 
   setThreadId: (threadId) => set({ threadId }),
   setQuery: (query) => set({ query }),
