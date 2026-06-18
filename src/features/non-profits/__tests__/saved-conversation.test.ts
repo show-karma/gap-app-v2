@@ -109,16 +109,24 @@ describe("chatTurnToTurnPayload", () => {
 
   it("clamps oversized fields to the server bounds", () => {
     const entities = Array.from({ length: 600 }, (_, i) => makeEntity(`f-${i}`));
+    const citations = Array.from({ length: 2500 }, (_, i) => ({
+      entityId: `e-${i}`,
+      entityType: "foundation" as const,
+      filingYear: 2023,
+      fieldPath: `path.${i}`,
+    }));
     const payload = chatTurnToTurnPayload(
       makeChatTurn({
         userQuery: "q".repeat(5000),
         narrative: "n".repeat(50000),
         entities,
+        citations,
       })
     );
 
     expect(payload.userQuery).toHaveLength(4000);
     expect(payload.narrative).toHaveLength(40000);
     expect(payload.entities).toHaveLength(500);
+    expect(payload.citations).toHaveLength(2000);
   });
 });
