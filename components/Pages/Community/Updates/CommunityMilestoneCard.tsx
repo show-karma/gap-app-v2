@@ -10,6 +10,7 @@ import {
   getEffectiveMilestoneStatus,
   MILESTONE_STATUS_LABEL,
 } from "@/utilities/milestones/getEffectiveMilestoneStatus";
+import { normalizeMilestoneDueDateMs } from "@/utilities/milestones/milestoneDueDate";
 import { cn } from "@/utilities/tailwind";
 import { MilestoneCompletionInfo } from "./MilestoneCompletionInfo";
 import { STATUS_BADGE_CLASSES } from "./milestoneStatusStyles";
@@ -36,7 +37,10 @@ const CommunityMilestoneCardComponent: FC<CommunityMilestoneCardProps> = ({
   const projectTitle = milestone.project.details?.data?.title;
   const grantTitle = milestone.grant?.details?.data?.title || "Project Milestone";
 
-  const effectiveStatus = getEffectiveMilestoneStatus(milestone.status, milestone.details.dueDate);
+  // Single normalized due timestamp drives both the status pill and the "Due"
+  // line, so a corrupted/missing dueDate cannot disagree across the two.
+  const dueMs = normalizeMilestoneDueDateMs(milestone.details.dueDate);
+  const effectiveStatus = getEffectiveMilestoneStatus(milestone.status, dueMs);
 
   const header = (
     <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
@@ -78,10 +82,8 @@ const CommunityMilestoneCardComponent: FC<CommunityMilestoneCardProps> = ({
           {allocationAmount}
         </span>
       ) : null}
-      {!isCompleted && milestone.details.dueDate && (
-        <span className="text-sm text-gray-600 dark:text-gray-400">
-          Due {formatDate(milestone.details.dueDate)}
-        </span>
+      {!isCompleted && dueMs != null && (
+        <span className="text-sm text-gray-600 dark:text-gray-400">Due {formatDate(dueMs)}</span>
       )}
       {isCompleted && milestone.uid && milestone.details.completionReason ? (
         <MilestoneAIEvaluationBadge

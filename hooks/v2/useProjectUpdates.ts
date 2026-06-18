@@ -1,4 +1,5 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { useCallback, useMemo } from "react";
 import { getProjectUpdates } from "@/services/project-updates.service";
 import type { UpdatesFeedFilters } from "@/types/v2/project-profile.types";
 import type {
@@ -10,9 +11,25 @@ import type {
   UpdatesApiResponse,
 } from "@/types/v2/roadmap";
 import { assignGrantMilestoneOrder } from "@/utilities/milestones/assignGrantMilestoneOrder";
+import {
+  type MilestoneDueDateInput,
+  normalizeMilestoneDueDateMs,
+} from "@/utilities/milestones/milestoneDueDate";
 import { parseChainId } from "@/utilities/parseChainId";
 import { queryClient } from "@/utilities/query-client";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
+
+/**
+ * Resolve a raw milestone due date (ISO string, epoch seconds, or epoch ms)
+ * to UNIX seconds for the `UnifiedMilestone.endsAt` contract, or `undefined`
+ * when the value is missing or corrupted. Delegates to the canonical
+ * {@link normalizeMilestoneDueDateMs} so seconds-vs-ms disambiguation and the
+ * pre-2000 validity floor live in exactly one place.
+ */
+const resolveEndsAtSeconds = (raw: MilestoneDueDateInput): number | undefined => {
+  const ms = normalizeMilestoneDueDateMs(raw);
+  return ms == null ? undefined : Math.floor(ms / 1000);
+};
 
 /**
  * Converts API response to UnifiedMilestone format for backward compatibility
@@ -130,25 +147,12 @@ export const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMil
       0;
 
     // Extract dueDate with fallbacks - API may pass raw data with endsAt
-    let milestoneEndsAt: number | undefined;
-    if (milestone.dueDate) {
-      milestoneEndsAt = Math.floor(new Date(milestone.dueDate).getTime() / 1000);
-    } else if (milestoneAny.data?.endsAt) {
-      // Raw attestation data may have endsAt as Unix timestamp
-      const endsAt = Number(milestoneAny.data.endsAt);
-      if (!isNaN(endsAt) && endsAt > 0) {
-        // Check if seconds (10 digits) or milliseconds (13+ digits)
-        const digitCount = Math.floor(Math.log10(Math.abs(endsAt))) + 1;
-        milestoneEndsAt = digitCount <= 10 ? endsAt : Math.floor(endsAt / 1000);
-      }
-    } else if (milestoneAny.endsAt) {
-      // Direct endsAt field
-      const endsAt = Number(milestoneAny.endsAt);
-      if (!isNaN(endsAt) && endsAt > 0) {
-        const digitCount = Math.floor(Math.log10(Math.abs(endsAt))) + 1;
-        milestoneEndsAt = digitCount <= 10 ? endsAt : Math.floor(endsAt / 1000);
-      }
-    }
+    // (ISO string, epoch seconds, or epoch ms). The shared normalizer owns the
+    // seconds-vs-ms disambiguation and the pre-2000 validity floor.
+    const milestoneEndsAt =
+      resolveEndsAtSeconds(milestone.dueDate) ??
+      resolveEndsAtSeconds(milestoneAny.data?.endsAt) ??
+      resolveEndsAtSeconds(milestoneAny.endsAt);
 
     // Use grant info directly from API response
     const grantInfo = milestone.grant;
@@ -272,22 +276,12 @@ export const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMil
       "";
 
     // Extract endsAt with fallbacks - API may pass raw data with endsAt
-    let updateEndsAt: number | undefined;
-    if (updateAny.dueDate) {
-      updateEndsAt = Math.floor(new Date(updateAny.dueDate).getTime() / 1000);
-    } else if (updateAny.data?.endsAt) {
-      const endsAt = Number(updateAny.data.endsAt);
-      if (!isNaN(endsAt) && endsAt > 0) {
-        const digitCount = Math.floor(Math.log10(Math.abs(endsAt))) + 1;
-        updateEndsAt = digitCount <= 10 ? endsAt : Math.floor(endsAt / 1000);
-      }
-    } else if (updateAny.endsAt) {
-      const endsAt = Number(updateAny.endsAt);
-      if (!isNaN(endsAt) && endsAt > 0) {
-        const digitCount = Math.floor(Math.log10(Math.abs(endsAt))) + 1;
-        updateEndsAt = digitCount <= 10 ? endsAt : Math.floor(endsAt / 1000);
-      }
-    }
+    // (ISO string, epoch seconds, or epoch ms). Routed through the shared
+    // normalizer to keep seconds-vs-ms disambiguation in one place.
+    const updateEndsAt =
+      resolveEndsAtSeconds(updateAny.dueDate) ??
+      resolveEndsAtSeconds(updateAny.data?.endsAt) ??
+      resolveEndsAtSeconds(updateAny.endsAt);
 
     unified.push({
       uid: update.uid,
@@ -379,6 +373,14 @@ const sortByDateDescending = (milestones: UnifiedMilestone[]): UnifiedMilestone[
  * @param filters - Optional extra filters forwarded to the indexer
  * @returns Object containing unified milestones, loading state, error, and refetch function
  */
+/**
+ * Shared frozen empty array so the no-data branch returns a STABLE reference
+ * across renders. Returning a fresh `[]` each render makes every downstream
+ * memo/effect that depends on `milestones` re-run on every render (the request-
+ * storm amplifier in DEV-396).
+ */
+const EMPTY_MILESTONES: UnifiedMilestone[] = [];
+
 interface UseProjectUpdatesOptions {
   /**
    * Whether the request should attach a Privy bearer token. Defaults to
@@ -397,16 +399,30 @@ export function useProjectUpdates(
 ) {
   const { isAuthorized = true } = options;
   // Build a stable query key that includes all active filter values so that
-  // React Query invalidates the cache whenever any filter changes.
-  const queryKey = [
-    ...QUERY_KEYS.PROJECT.UPDATES(projectIdOrSlug),
-    milestoneStatus ?? null,
-    filters?.dateFrom ?? null,
-    filters?.dateTo ?? null,
-    filters?.hasAIEvaluation ?? null,
-    filters?.aiScoreMin ?? null,
-    filters?.aiScoreMax ?? null,
-  ] as const;
+  // React Query invalidates the cache whenever any filter changes. Memoized on
+  // the underlying primitives so its identity is stable across renders — the
+  // refetch callback below depends on it.
+  const queryKey = useMemo(
+    () =>
+      [
+        ...QUERY_KEYS.PROJECT.UPDATES(projectIdOrSlug),
+        milestoneStatus ?? null,
+        filters?.dateFrom ?? null,
+        filters?.dateTo ?? null,
+        filters?.hasAIEvaluation ?? null,
+        filters?.aiScoreMin ?? null,
+        filters?.aiScoreMax ?? null,
+      ] as const,
+    [
+      projectIdOrSlug,
+      milestoneStatus,
+      filters?.dateFrom,
+      filters?.dateTo,
+      filters?.hasAIEvaluation,
+      filters?.aiScoreMin,
+      filters?.aiScoreMax,
+    ]
+  );
 
   const {
     data,
@@ -423,21 +439,28 @@ export function useProjectUpdates(
     placeholderData: keepPreviousData,
   });
 
-  // Convert response to unified format (no longer needs project data)
-  const milestones = data
-    ? sortByDateDescending(assignGrantMilestoneOrder(convertToUnifiedMilestones(data)))
-    : [];
+  // Convert response to unified format (no longer needs project data). Memoized
+  // on `data` so the derived array keeps a stable identity across renders when
+  // the underlying query result hasn't changed — otherwise the per-render
+  // recompute churns every consumer's deps (DEV-396 request storm).
+  const milestones = useMemo(
+    () =>
+      data
+        ? sortByDateDescending(assignGrantMilestoneOrder(convertToUnifiedMilestones(data)))
+        : EMPTY_MILESTONES,
+    [data]
+  );
 
   // Filter pending milestones (not completed)
-  const pendingMilestones = milestones.filter((m) => !m.completed);
+  const pendingMilestones = useMemo(() => milestones.filter((m) => !m.completed), [milestones]);
 
   // Provide raw data for components that want to use it directly
   const rawData = data;
 
-  const refetch = async () => {
+  const refetch = useCallback(async () => {
     await queryClient.invalidateQueries({ queryKey });
     return originalRefetch();
-  };
+  }, [queryKey, originalRefetch]);
 
   return {
     milestones,

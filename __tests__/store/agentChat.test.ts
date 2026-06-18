@@ -15,6 +15,7 @@ describe("useAgentChatStore", () => {
         isOpen: false,
         isStreaming: false,
         error: null,
+        limitReached: null,
         agentContext: null,
       });
     });

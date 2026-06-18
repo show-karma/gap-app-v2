@@ -15,7 +15,7 @@ import { MESSAGES } from "@/utilities/messages";
 export const UpdatesPage: FC = () => {
   const project = useProjectStore((state) => state.project);
 
-  const isAuthorized = useProjectAuthorization();
+  const { isAuthorized } = useProjectAuthorization();
 
   const { setIsProgressModalOpen, setProgressModalScreen } = useProgressModalStore();
 

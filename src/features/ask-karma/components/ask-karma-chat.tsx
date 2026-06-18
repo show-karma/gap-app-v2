@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { memo, useEffect, useRef } from "react";
 import { MessageResponse } from "@/src/components/ai-elements/message-response";
-import type { ChatMessage, ToolHistoryEvent } from "@/store/agentChat";
+import type { ChatMessage, LimitReason, ToolHistoryEvent } from "@/store/agentChat";
 import { cn } from "@/utilities/tailwind";
 import type { AskKarmaConfig } from "../types";
 import { AskKarmaInput } from "./ask-karma-input";
@@ -40,9 +40,18 @@ function formatTime(timestamp: number): string {
 
 interface MessageBubbleProps {
   message: ChatMessage;
+  /**
+   * Whether this assistant message is still streaming. Completed messages render
+   * with `mode="static"` so Streamdown's streaming/animation wrappers can't
+   * suppress finished content from the accessibility tree (WCAG 4.1.2 / #1462).
+   */
+  isStreaming?: boolean;
 }
 
-const MessageBubble = memo(function MessageBubble({ message }: MessageBubbleProps) {
+const MessageBubble = memo(function MessageBubble({
+  message,
+  isStreaming = false,
+}: MessageBubbleProps) {
   const isUser = message.role === "user";
 
   return (
@@ -80,7 +89,9 @@ const MessageBubble = memo(function MessageBubble({ message }: MessageBubbleProp
           {isUser ? (
             <p className="whitespace-pre-wrap">{message.content}</p>
           ) : (
-            <MessageResponse>{message.content}</MessageResponse>
+            <MessageResponse mode={isStreaming ? "streaming" : "static"}>
+              {message.content}
+            </MessageResponse>
           )}
         </div>
         <time
@@ -217,6 +228,8 @@ interface AskKarmaChatProps {
   messages: ChatMessage[];
   isStreaming: boolean;
   error: string | null;
+  limitReached?: { reason: LimitReason } | null;
+  onContinue?: () => void;
   onSend: (text: string) => void;
   onStop: () => void;
   onBack: () => void;
@@ -227,6 +240,8 @@ export function AskKarmaChat({
   messages,
   isStreaming,
   error,
+  limitReached,
+  onContinue,
   onSend,
   onStop,
   onBack,
@@ -299,7 +314,12 @@ export function AskKarmaChat({
         </button>
       </header>
 
-      <div className="flex flex-1 flex-col gap-6 overflow-y-auto py-6">
+      <div
+        role="log"
+        aria-label="Conversation"
+        aria-live="polite"
+        className="flex flex-1 flex-col gap-6 overflow-y-auto py-6"
+      >
         {messages.length === 0 && !isStreaming && (
           <div
             className={cn(
@@ -314,14 +334,21 @@ export function AskKarmaChat({
           </div>
         )}
 
-        {messages.map((message) => {
+        {messages.map((message, index) => {
           // While the agent stream is warming up the assistant message
           // exists with `content: ""` — rendering MessageBubble at that
           // point produces a hollow rounded box stacked on top of the
           // thinking panel. Skip the empty placeholder; the thinking
           // panel below carries the visual.
           if (message.role === "assistant" && !message.content) return null;
-          return <MessageBubble key={message.id} message={message} />;
+          // Only the last assistant message is actively streaming; every
+          // earlier message is complete and must render statically so its
+          // content is queryable in the accessibility tree.
+          const messageStreaming =
+            isStreaming && message.role === "assistant" && index === messages.length - 1;
+          return (
+            <MessageBubble key={message.id} message={message} isStreaming={messageStreaming} />
+          );
         })}
 
         {showThinking && (
@@ -340,6 +367,30 @@ export function AskKarmaChat({
             <AlertCircleIcon className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
             <p>{error}</p>
           </div>
+        )}
+
+        {limitReached && onContinue && !isStreaming && (
+          <output
+            className={cn(
+              "flex flex-col gap-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800",
+              "animate-in fade-in slide-in-from-bottom-1 duration-300",
+              "dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-200"
+            )}
+          >
+            <p>
+              I paused here to keep this request within its limit. Continue when you&apos;re ready.
+            </p>
+            <button
+              type="button"
+              onClick={onContinue}
+              className={cn(
+                "self-start rounded-md bg-[rgb(var(--color-primary))] px-3 py-1.5 text-sm font-medium text-white transition-colors",
+                "hover:bg-[rgb(var(--color-primary-dark))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-primary))] focus-visible:ring-offset-2"
+              )}
+            >
+              Continue
+            </button>
+          </output>
         )}
 
         <div ref={endRef} />

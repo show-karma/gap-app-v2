@@ -163,7 +163,7 @@ describe("fetchSitemapKindPage", () => {
 });
 
 describe("buildSitemapIndexBody", () => {
-  it("lists one consolidated child per kind plus the local children", async () => {
+  it("advertises only the high-value canonical kinds plus the local children", async () => {
     const counts: SitemapCounts = {
       projects: 7678,
       impacts: 0,
@@ -181,13 +181,14 @@ describe("buildSitemapIndexBody", () => {
     expect(xml).toContain(`<loc>${SITE}/sitemaps/static/sitemap.xml</loc>`);
     expect(xml).toContain(`<loc>${SITE}/sitemaps/communities/sitemap.xml</loc>`);
     expect(xml).toContain(`<loc>${SITE}/sitemaps/projects/sitemap.xml</loc>`);
-    expect(xml).toContain(`<loc>${SITE}/sitemaps/impacts/sitemap.xml</loc>`);
-    expect(xml).toContain(`<loc>${SITE}/sitemaps/grants/sitemap.xml</loc>`);
-    expect(xml).toContain(`<loc>${SITE}/sitemaps/milestones/sitemap.xml</loc>`);
     expect(xml).toContain(`<loc>${SITE}/sitemaps/funding-programs/sitemap.xml</loc>`);
+    // The thin tab kinds are noindexed and no longer advertised by the index.
+    expect(xml).not.toContain(`<loc>${SITE}/sitemaps/impacts/sitemap.xml</loc>`);
+    expect(xml).not.toContain(`<loc>${SITE}/sitemaps/grants/sitemap.xml</loc>`);
+    expect(xml).not.toContain(`<loc>${SITE}/sitemaps/milestones/sitemap.xml</loc>`);
     expect(xml).not.toContain("/sitemap/1.xml");
-    // static + communities + one per kind = 7
-    expect((xml.match(/<sitemap>/g) ?? []).length).toBe(7);
+    // static + communities + projects + funding-programs = 4
+    expect((xml.match(/<sitemap>/g) ?? []).length).toBe(4);
   });
 
   it("falls back to chunked children for a kind past the per-file URL limit", async () => {
@@ -208,9 +209,10 @@ describe("buildSitemapIndexBody", () => {
     expect(xml).not.toContain(`<loc>${SITE}/sitemaps/projects/sitemap.xml</loc>`);
     expect(xml).toContain(`<loc>${SITE}/sitemaps/projects/sitemap/1.xml</loc>`);
     expect(xml).toContain(`<loc>${SITE}/sitemaps/projects/sitemap/46.xml</loc>`);
-    expect(xml).toContain(`<loc>${SITE}/sitemaps/grants/sitemap.xml</loc>`);
-    // static + communities + projects 46 chunks + 4 consolidated kinds = 52
-    expect((xml.match(/<sitemap>/g) ?? []).length).toBe(52);
+    expect(xml).toContain(`<loc>${SITE}/sitemaps/funding-programs/sitemap.xml</loc>`);
+    expect(xml).not.toContain(`<loc>${SITE}/sitemaps/grants/sitemap.xml</loc>`);
+    // static + communities + projects 46 chunks + funding-programs = 49
+    expect((xml.match(/<sitemap>/g) ?? []).length).toBe(49);
   });
 
   it("falls back to chunked children for a kind exactly at the per-file URL limit", async () => {
@@ -235,7 +237,7 @@ describe("buildSitemapIndexBody", () => {
     expect(xml).toContain(`<loc>${SITE}/sitemaps/projects/sitemap/1.xml</loc>`);
     expect(xml).toContain(`<loc>${SITE}/sitemaps/projects/sitemap/45.xml</loc>`);
     expect(xml).not.toContain(`<loc>${SITE}/sitemaps/projects/sitemap/46.xml</loc>`);
-    expect(xml).toContain(`<loc>${SITE}/sitemaps/grants/sitemap.xml</loc>`);
+    expect(xml).toContain(`<loc>${SITE}/sitemaps/funding-programs/sitemap.xml</loc>`);
   });
 
   it("throws when counts is unreachable so SWR keeps the last good index", async () => {
@@ -257,8 +259,9 @@ describe("buildSitemapIndexBody", () => {
     const xml = await buildSitemapIndexBody();
 
     expect(xml).toContain(`<loc>${SITE}/sitemaps/projects/sitemap.xml</loc>`);
-    expect(xml).toContain(`<loc>${SITE}/sitemaps/grants/sitemap.xml</loc>`);
-    expect((xml.match(/<sitemap>/g) ?? []).length).toBe(7);
+    expect(xml).toContain(`<loc>${SITE}/sitemaps/funding-programs/sitemap.xml</loc>`);
+    expect(xml).not.toContain(`<loc>${SITE}/sitemaps/grants/sitemap.xml</loc>`);
+    expect((xml.match(/<sitemap>/g) ?? []).length).toBe(4);
   });
 });
 

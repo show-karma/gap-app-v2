@@ -4,6 +4,8 @@ export const MESSAGES = {
       MIN: "Title must be at least 3 characters",
       MAX: "Title must be less than 50 characters",
     },
+    DETAILS_MAX:
+      "Your description, problem, solution and mission summary are too long combined. Please keep them to 15,000 characters or fewer in total.",
     RECIPIENT: "Invalid address",
     TAGS: "Each category must be at least 3 characters",
     SOCIALS: {
@@ -73,7 +75,10 @@ export const MESSAGES = {
       MIN: "Title must be at least 3 characters",
       MAX: "Title must be less than 50 characters",
     },
-    TEXT: "Text must be at least 3 characters",
+    TEXT: {
+      MIN: "Text must be at least 3 characters",
+      MAX: "This update is too long. Please keep it to 15,000 characters or fewer.",
+    },
     SUCCESS: "Update was successfully added to the project.",
     ERROR: "There was an error creating the update.",
     DELETE: {
@@ -318,10 +323,14 @@ export const MESSAGES = {
     CREATE: {
       SUCCESS: "Project created successfully!",
       ERROR: (title: string) => `There was an error creating ${title} project.`,
+      RETRYABLE_ERROR:
+        "We couldn't reach the network just now. Your details are saved — please try again in a moment.",
     },
     UPDATE: {
       SUCCESS: "Project updated successfully",
       ERROR: "There was an error updating project.",
+      RETRYABLE_ERROR:
+        "We couldn't reach the network just now. Your changes are saved — please try again in a moment.",
     },
     DELETE: {
       SUCCESS: "Project deleted successfully",
@@ -383,9 +392,11 @@ export const MESSAGES = {
   REGISTRY: {
     FORM: {
       NAME: {
+        REQUIRED: "Name is required",
         MIN: "Name must be at least 3 characters",
         MAX: "Name must be less than 50 characters",
       },
+      DESCRIPTION_REQUIRED: "Description is required",
       DESCRIPTION: "Description must be at least 3 characters",
       BUDGET: "You need to specify a budget",
       AMOUNT_DISTRIBUTED: "You need to specify an amount distributed to date",

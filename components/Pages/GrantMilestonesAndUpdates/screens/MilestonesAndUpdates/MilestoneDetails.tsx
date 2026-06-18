@@ -2,8 +2,7 @@
 
 import { type FC, useMemo } from "react";
 import { ActivityCard } from "@/components/Shared/ActivityCard";
-import { useIsCommunityAdmin } from "@/hooks/communities/useIsCommunityAdmin";
-import { useOwnerStore, useProjectStore } from "@/store";
+import { useProjectAuthorization } from "@/hooks/useProjectAuthorization";
 import { useGrantStore } from "@/store/grant";
 import type { GrantMilestone } from "@/types/v2/grant";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
@@ -117,11 +116,7 @@ export const MilestoneDetails: FC<MilestoneDetailsProps> = ({
   grantMilestoneOrder,
 }) => {
   const grant = useGrantStore((state) => state.grant);
-  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
-  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
-  const isContractOwner = useOwnerStore((state) => state.isOwner);
-  const { isCommunityAdmin } = useIsCommunityAdmin(grant?.communityUID);
-  const isAuthorized = isProjectOwner || isProjectAdmin || isContractOwner || isCommunityAdmin;
+  const { isAuthorized } = useProjectAuthorization(grant?.communityUID);
 
   const unifiedMilestone = useMemo(() => {
     const base = toUnifiedMilestone(milestone, grant);

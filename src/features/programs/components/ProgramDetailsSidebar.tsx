@@ -3,6 +3,7 @@
 import { ChevronRight } from "lucide-react";
 import { Link } from "@/src/components/navigation/Link";
 import type { FundingProgram } from "@/types/whitelabel-entities";
+import { useCanBypassClosedProgram } from "../hooks/use-can-bypass-closed-program";
 import { ProgramDetailsCard } from "./ProgramDetailsCard";
 
 interface ProgramDetailsSidebarProps {
@@ -33,6 +34,12 @@ export function ProgramDetailsSidebar({
   const hasFormConfig = !!program.applicationConfig?.formSchema;
   const isPrivate = program.applicationConfig?.formSchema?.settings?.privateApplications;
 
+  // Admins keep access to the apply form after a program closes (matches the
+  // backend bypass the submit endpoint enforces).
+  const { canBypass } = useCanBypassClosedProgram();
+  const canApply = isEnabled || canBypass;
+  const isAdminOverride = !isEnabled && canBypass;
+
   const programBudget = program.metadata?.programBudget;
   const fundingMin = program.metadata?.minGrantSize;
   const fundingMax = program.metadata?.maxGrantSize;
@@ -60,7 +67,7 @@ export function ProgramDetailsSidebar({
         {/* Apply Section */}
         <h2 className="mb-4 hidden text-3xl font-semibold text-muted-foreground md:block">Apply</h2>
         <div className="flex flex-row gap-2">
-          {isEnabled ? (
+          {canApply ? (
             <Link
               href={applyUrl}
               className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
@@ -83,6 +90,12 @@ export function ProgramDetailsSidebar({
             </Link>
           ) : null}
         </div>
+
+        {isAdminOverride ? (
+          <p className="mt-2 text-sm text-muted-foreground">
+            {getProgramDisabledReason(program)} — you can still submit as an admin.
+          </p>
+        ) : null}
 
         {hasSomeDetails ? <hr className="my-8 border-border" /> : null}
 

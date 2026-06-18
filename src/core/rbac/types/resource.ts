@@ -75,4 +75,10 @@ export interface PermissionsResponse {
    * Whether the user is a Program Creator (has created programs in the registry).
    */
   isProgramCreator: boolean;
+  /**
+   * Project role flags for the project in context (when projectId is provided),
+   * resolved across all linked wallets by the backend.
+   */
+  isProjectOwner?: boolean;
+  isProjectAdmin?: boolean;
 }

@@ -10,13 +10,13 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { Button } from "@/components/ui/button";
 import { useAttestationToast } from "@/hooks/useAttestationToast";
+import { useProjectAuthorization } from "@/hooks/useProjectAuthorization";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useTracksForProgram } from "@/hooks/useTracks";
 import { useWallet } from "@/hooks/useWallet";
 import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { getProjectGrants } from "@/services/project-grants.service";
-import { useOwnerStore, useProjectStore } from "@/store";
-import { useCommunityAdminStore } from "@/store/communityAdmin";
+import { useProjectStore } from "@/store";
 import { useGrantStore } from "@/store/grant";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
 import type { Grant } from "@/types/v2/grant";
@@ -37,13 +37,7 @@ const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
 export const GrantCompletion: FC = () => {
   const grant = useGrantStore((state) => state.grant);
   const project = useProjectStore((state) => state.project);
-  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
-  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
-  const isContractOwner = useOwnerStore((state) => state.isOwner);
-  const isOwnerLoading = useOwnerStore((state) => state.isOwnerLoading);
-  const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin);
-  const isAuthorizedWithoutContractOwner = isProjectOwner || isProjectAdmin || isCommunityAdmin;
-  const isAuthorized = isAuthorizedWithoutContractOwner || isContractOwner;
+  const { isAuthorized, isLoading: isAuthLoading } = useProjectAuthorization(grant?.communityUID);
 
   const [description, setDescription] = useState("");
   const [pitchDeckLink, setPitchDeckLink] = useState("");
@@ -339,7 +333,7 @@ export const GrantCompletion: FC = () => {
     });
   };
 
-  if (isOwnerLoading && !isAuthorizedWithoutContractOwner) {
+  if (isAuthLoading) {
     return (
       <div className="mt-9 flex flex-1">
         <div className="flex w-full max-w-3xl flex-col gap-6 rounded-md bg-gray-200 dark:bg-zinc-800 px-4 py-6 max-lg:max-w-full">
