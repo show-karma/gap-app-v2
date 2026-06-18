@@ -17,7 +17,7 @@
  * - INLINE STARTER_PROMPTS (do NOT use suggested-queries.tsx component)
  */
 
-import { Bookmark, Clock, Lock, Sparkles } from "lucide-react";
+import { Bookmark, Clock, Lock, SearchX, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import pluralize from "pluralize";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -131,6 +131,7 @@ export function ChatView({ searchId }: { searchId?: string }) {
   );
   const isSearching = usePhilanthropyStore((s) => s.isSearching);
   const readOnly = usePhilanthropyStore((s) => s.readOnly);
+  const notFound = usePhilanthropyStore((s) => s.notFound);
   const reset = usePhilanthropyStore((s) => s.reset);
   const { search, abort } = usePhilanthropySearch();
   const { authenticated, login } = useAuth();
@@ -170,6 +171,8 @@ export function ChatView({ searchId }: { searchId?: string }) {
       reset();
     }
     usePhilanthropyStore.getState().setThreadId(searchId);
+    // Clear any not-found state from a previously-viewed conversation.
+    usePhilanthropyStore.getState().setNotFound(false);
     const sessionStore = useSearchSessionStore.getState();
     const session = sessionStore.getSession(searchId);
     const localQuery = session?.query?.trim();
@@ -196,10 +199,15 @@ export function ChatView({ searchId }: { searchId?: string }) {
         void search(remoteQuery, 1, { chat: true });
       },
       () => {
-        // 404 (never persisted — e.g. anonymous search) or network error:
-        // re-run the locally cached query if we have one, else render the
-        // empty workbench and degrade gracefully.
-        if (localQuery) void search(localQuery, 1, { chat: true });
+        // A local query means this is our own chat that simply isn't persisted
+        // yet (anonymous) — re-run it. Otherwise the server returned 404: the
+        // conversation is private to another account, deleted, or never
+        // existed → show a not-found state instead of a blank workbench.
+        if (localQuery) {
+          void search(localQuery, 1, { chat: true });
+        } else {
+          usePhilanthropyStore.getState().setNotFound(true);
+        }
       }
     );
   }, [searchId, messages.length, search, abort, reset]);
@@ -242,6 +250,29 @@ export function ChatView({ searchId }: { searchId?: string }) {
     () => messages.some((m) => m.status === "done" && m.entities.length > 0),
     [messages]
   );
+
+  // Not-found state: the conversation URL is private to another account,
+  // deleted, or never existed (server 404 with no local query to re-run).
+  if (notFound) {
+    return (
+      <div className="flex h-[calc(100vh-4rem)] flex-col items-center justify-center px-4 text-center">
+        <SearchX className="size-10 text-zinc-400 dark:text-zinc-500" />
+        <h2 className="mt-4 text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+          Conversation not found
+        </h2>
+        <p className="mt-1 max-w-sm text-sm text-zinc-500 dark:text-zinc-400">
+          This conversation is private to another account, was deleted, or never existed.
+        </p>
+        <button
+          type="button"
+          onClick={onNewChat}
+          className="mt-5 rounded-lg !bg-brand px-4 py-2 text-sm font-medium !text-white transition-colors hover:!bg-brand-emphasis"
+        >
+          Start a new chat
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-[calc(100vh-4rem)] flex-col">

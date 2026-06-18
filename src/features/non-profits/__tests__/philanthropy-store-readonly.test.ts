@@ -27,3 +27,24 @@ describe("usePhilanthropyStore readOnly", () => {
     expect(usePhilanthropyStore.getState().readOnly).toBe(false);
   });
 });
+
+describe("usePhilanthropyStore notFound", () => {
+  beforeEach(() => {
+    usePhilanthropyStore.getState().reset();
+  });
+
+  it("defaults to false", () => {
+    expect(usePhilanthropyStore.getState().notFound).toBe(false);
+  });
+
+  it("setNotFound flips the flag", () => {
+    usePhilanthropyStore.getState().setNotFound(true);
+    expect(usePhilanthropyStore.getState().notFound).toBe(true);
+  });
+
+  it("reset() clears the flag", () => {
+    usePhilanthropyStore.getState().setNotFound(true);
+    usePhilanthropyStore.getState().reset();
+    expect(usePhilanthropyStore.getState().notFound).toBe(false);
+  });
+});
