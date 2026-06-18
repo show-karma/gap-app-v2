@@ -4,12 +4,12 @@ import { Loader2, ShieldCheck } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
-import { useStaff } from "@/src/core/rbac/hooks/use-staff-bridge";
 import { AccessCodeInput } from "@/src/features/applications/components/AccessCodeInput";
 import { AccessCodeModal } from "@/src/features/applications/components/AccessCodeModal";
 import { ApplicationForm } from "@/src/features/applications/components/ApplicationForm";
 import { useApplicationSubmit } from "@/src/features/applications/hooks/use-application-submit";
 import type { ApplicationFormData } from "@/src/features/applications/types";
+import { useCanBypassClosedProgram } from "@/src/features/programs/hooks/use-can-bypass-closed-program";
 import type { ApplicationQuestion, IFormSchema } from "@/types/whitelabel-entities";
 import fetchData from "@/utilities/fetchData";
 import { PAGES } from "@/utilities/pages";
@@ -51,9 +51,8 @@ export function ApplicationFormClient({
     return path.startsWith(prefix) ? path.slice(prefix.length) || "/" : path;
   };
 
-  // Safe RBAC fallback: isStaff ?? false — PermissionProvider may not be mounted yet
-  const { isStaff, isLoading: rbacLoading } = useStaff();
-  const canBypassClosed = isStaff ?? false;
+  // Admins (staff, community admins, program reviewers) can submit after a program closes.
+  const { canBypass: canBypassClosed, isLoading: rbacLoading } = useCanBypassClosedProgram();
   const effectiveDisabled = isDisabled && !canBypassClosed;
 
   // Access code gating
