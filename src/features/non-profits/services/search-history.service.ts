@@ -21,7 +21,9 @@ import { CitationSchema, RankedEntitySchema } from "../types/philanthropy";
 
 export const SearchHistoryEntrySchema = z.object({
   id: z.string(),
-  userId: z.string(),
+  // Nullable: an ownerless (logged-out) chat has `userId: null`; it becomes a
+  // wallet address once the chat is claimed on the first authenticated request.
+  userId: z.string().nullable(),
   query: z.string(),
   createdAt: z.string(),
 });
