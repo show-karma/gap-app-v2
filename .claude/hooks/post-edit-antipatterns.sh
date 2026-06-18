@@ -57,10 +57,21 @@ case "$FILE_PATH" in
       ISSUES="${ISSUES}\n- HARDCODED_ROUTES: Use PAGES constants from utilities/pages.ts."
     fi
 
-    # 5. useRouter/useParams in useEffect deps
-    ROUTER_IN_DEPS=$(grep -nE "useEffect\(.*\[.*router|useEffect\(.*\[.*params" "$FILE_PATH" 2>/dev/null || true)
+    # 5. useRouter/useParams in useEffect deps (single-line and multi-line arrays)
+    # Matches both inline deps (useEffect(..., [..., router])) and the closing
+    # line of a multi-line dependency array such as `}, [searchTerm, router]);`.
+    ROUTER_IN_DEPS=$(grep -nE "useEffect\(.*\[.*\b(router|params|searchParams|pathname)\b|^\s*\},\s*\[[^]]*\b(router|params|searchParams|pathname)\b" "$FILE_PATH" 2>/dev/null || true)
     if [ -n "$ROUTER_IN_DEPS" ]; then
-      ISSUES="${ISSUES}\n- ROUTER_IN_DEPS: Destructure router/params to primitives before useEffect deps."
+      ISSUES="${ISSUES}\n- ROUTER_IN_DEPS: Destructure router/params to primitives before useEffect deps, or use nuqs useQueryState for URL-synced state."
+    fi
+
+    # 5b. URL-synced state mirrored via router.push/replace inside an effect.
+    # Flags files that build a URLSearchParams AND call router.push/replace —
+    # the issue #1547 anti-pattern. Use nuqs useQueryState instead (see
+    # hooks/useProjectFilters.ts) so the URL is the source of truth.
+    if grep -qE "new URLSearchParams" "$FILE_PATH" 2>/dev/null &&
+      grep -qE "router\.(push|replace)\(" "$FILE_PATH" 2>/dev/null; then
+      ISSUES="${ISSUES}\n- URL_SYNC_EFFECT: Mirroring state to the URL with router.push/replace races and cancels Link navigations. Use nuqs useQueryState (hooks/useProjectFilters.ts)."
     fi
 
     # 6. Hardcoded colors
