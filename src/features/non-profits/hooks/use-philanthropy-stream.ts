@@ -600,8 +600,9 @@ export function usePhilanthropySearch() {
             // Persist the completed turn so revisiting the URL replays the
             // conversation instead of re-running the search. The first turn
             // creates the history entry under the thread/URL id; follow-ups
-            // append to it. Both calls fail silently for anonymous users
-            // (the endpoints require auth) — the local session still works.
+            // append to it. Anonymous and authenticated users both persist —
+            // the endpoints accept ownerless chats, and a chat is claimed on
+            // the first request that carries a JWT.
             const state = usePhilanthropyStore.getState();
             const threadId = state.threadId;
             const completedTurn = state.messages[state.messages.length - 1];
@@ -609,6 +610,8 @@ export function usePhilanthropySearch() {
               const turnPayload = chatTurnToTurnPayload(completedTurn);
               const doneCount = state.messages.filter((t) => t.status === "done").length;
               if (doneCount === 1) {
+                // Create the entry under the URL id, then append the first turn
+                // on success.
                 addHistory.mutate(
                   { query: normalizedQuery, id: threadId },
                   {
@@ -618,8 +621,8 @@ export function usePhilanthropySearch() {
                       appendTurn.mutate({ searchId: entry.id, turn: turnPayload });
                     },
                     onError: () => {
-                      // Anonymous/offline: keep the local session so the
-                      // page keeps working without server persistence.
+                      // Create failed (offline/server error): keep the local
+                      // session so the page keeps working without persistence.
                       useSearchSessionStore.getState().setSession(threadId, normalizedQuery);
                       options?.onSearchId?.(threadId);
                     },

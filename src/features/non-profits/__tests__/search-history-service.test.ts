@@ -133,6 +133,41 @@ describe("searchHistoryService", () => {
     });
   });
 
+  describe("anonymous (ownerless) responses", () => {
+    // Regression: ownerless chats return `userId: null`. The response schema
+    // must accept it — otherwise create/getById fail to parse, the create is
+    // treated as an error, and the first turn is never persisted while logged
+    // out (the append is chained off a successful create).
+    it("create accepts a null userId", async () => {
+      const fetchMock = vi
+        .fn()
+        .mockResolvedValue(makeOkResponse({ ...HISTORY_ENTRY, userId: null }, 201));
+      vi.stubGlobal("fetch", fetchMock);
+
+      const result = await searchHistoryService.create("anon query", "thread-anon");
+
+      expect(result.isOk()).toBe(true);
+      if (result.isOk()) {
+        expect(result.value.userId).toBeNull();
+      }
+    });
+
+    it("getById accepts a null userId with turns", async () => {
+      const fetchMock = vi
+        .fn()
+        .mockResolvedValue(makeOkResponse({ ...HISTORY_DETAIL, userId: null }));
+      vi.stubGlobal("fetch", fetchMock);
+
+      const result = await searchHistoryService.getById("thread-anon");
+
+      expect(result.isOk()).toBe(true);
+      if (result.isOk()) {
+        expect(result.value.userId).toBeNull();
+        expect(result.value.turns).toHaveLength(1);
+      }
+    });
+  });
+
   describe("getById", () => {
     it("calls the GET endpoint for the given id and returns saved turns", async () => {
       const fetchMock = vi.fn().mockResolvedValue(makeOkResponse(HISTORY_DETAIL));
