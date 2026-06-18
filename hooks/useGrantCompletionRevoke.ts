@@ -80,24 +80,19 @@ export const useGrantCompletionRevoke = ({ grant, project }: UseGrantCompletionR
 
       if (!isOnChainAuthorized) {
         // Use off-chain revocation for users without on-chain authorization
-        // No wallet connection needed for off-chain revocation
+        // No wallet connection needed for off-chain revocation. A failure now
+        // throws (handled by the outer catch), so we no longer refetch and
+        // report success after a rejected revoke.
         await performOffChainRevoke({
           uid: grant.completed.uid as `0x${string}`,
           chainID: chainID,
           checkIfExists: checkIfCompletionExists,
-          onSuccess: () => {
-            changeStepperStep("indexed");
-            dismiss();
-          },
-          onError: (error) => {
-            dismiss();
-            console.error("Off-chain revocation failed:", error);
-          },
           toastMessages: {
             success: MESSAGES.GRANT.MARK_AS_COMPLETE.UNDO.SUCCESS,
             loading: MESSAGES.GRANT.MARK_AS_COMPLETE.UNDO.LOADING,
           },
         });
+        changeStepperStep("indexed");
         await refetchGrants();
         await refreshGrant();
         return;
@@ -167,29 +162,23 @@ export const useGrantCompletionRevoke = ({ grant, project }: UseGrantCompletionR
 
         showLoading("On-chain revocation unavailable. Attempting off-chain revocation...");
 
-        const success = await performOffChainRevoke({
-          uid: grantInstance.completed.uid as `0x${string}`,
-          chainID: chainID,
-          checkIfExists: checkIfCompletionExists,
-          onSuccess: () => {
-            changeStepperStep("indexed");
-            dismiss();
-          },
-          onError: (error) => {
-            dismiss();
-            console.error("Fallback off-chain revocation failed:", error);
-          },
-          toastMessages: {
-            success: MESSAGES.GRANT.MARK_AS_COMPLETE.UNDO.SUCCESS,
-            loading: MESSAGES.GRANT.MARK_AS_COMPLETE.UNDO.LOADING,
-          },
-        });
-
-        if (success) {
+        try {
+          await performOffChainRevoke({
+            uid: grantInstance.completed.uid as `0x${string}`,
+            chainID: chainID,
+            checkIfExists: checkIfCompletionExists,
+            toastMessages: {
+              success: MESSAGES.GRANT.MARK_AS_COMPLETE.UNDO.SUCCESS,
+              loading: MESSAGES.GRANT.MARK_AS_COMPLETE.UNDO.LOADING,
+            },
+          });
+          // Only reached when the off-chain revoke was accepted.
+          changeStepperStep("indexed");
           await refetchGrants();
           await refreshGrant();
-        } else {
-          // Both methods failed - throw the original error
+        } catch {
+          // Both methods failed — surface the ORIGINAL on-chain error so its
+          // context isn't lost behind the off-chain fallback's message.
           throw onChainError;
         }
       }

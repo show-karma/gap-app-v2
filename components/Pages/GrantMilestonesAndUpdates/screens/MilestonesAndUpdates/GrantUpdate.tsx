@@ -172,18 +172,19 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({ title, description, index, d
           // Silently fallback to off-chain revoke
           setIsStepper(false); // Reset stepper since we're falling back
 
-          const success = await performOffChainRevoke({
-            uid: grantUpdateInstance.uid as `0x${string}`,
-            chainID: grantUpdateInstance.chainID,
-            checkIfExists: checkIfAttestationExists,
-            toastMessages: {
-              success: MESSAGES.GRANT.GRANT_UPDATE.UNDO.SUCCESS,
-              loading: MESSAGES.GRANT.GRANT_UPDATE.UNDO.LOADING,
-            },
-          });
-
-          if (!success) {
-            // Both methods failed - throw the original error to maintain expected behavior
+          try {
+            await performOffChainRevoke({
+              uid: grantUpdateInstance.uid as `0x${string}`,
+              chainID: grantUpdateInstance.chainID,
+              checkIfExists: checkIfAttestationExists,
+              toastMessages: {
+                success: MESSAGES.GRANT.GRANT_UPDATE.UNDO.SUCCESS,
+                loading: MESSAGES.GRANT.GRANT_UPDATE.UNDO.LOADING,
+              },
+            });
+          } catch {
+            // Both methods failed - throw the original on-chain error to
+            // preserve its context.
             throw onChainError;
           }
         }

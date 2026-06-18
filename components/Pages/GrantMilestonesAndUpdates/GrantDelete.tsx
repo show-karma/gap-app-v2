@@ -102,14 +102,12 @@ export const GrantDelete: FC<GrantDeleteProps> = ({ grant }) => {
           uid: grantUID as `0x${string}`,
           chainID: grantInstance.chainID,
           checkIfExists: checkIfAttestationExists,
-          onSuccess: () => {
-            changeStepperStep("indexed");
-          },
           toastMessages: {
             success: MESSAGES.GRANT.DELETE.SUCCESS,
             loading: MESSAGES.GRANT.DELETE.LOADING,
           },
         });
+        changeStepperStep("indexed");
       } else {
         try {
           const res = await grantInstance.revoke(walletSigner, changeStepperStep);
@@ -126,21 +124,20 @@ export const GrantDelete: FC<GrantDeleteProps> = ({ grant }) => {
           // Silently fallback to off-chain revoke
           setIsStepper(false); // Reset stepper since we're falling back
 
-          const success = await performOffChainRevoke({
-            uid: grantUID as `0x${string}`,
-            chainID: grantInstance.chainID,
-            checkIfExists: checkIfAttestationExists,
-            onSuccess: () => {
-              changeStepperStep("indexed");
-            },
-            toastMessages: {
-              success: MESSAGES.GRANT.DELETE.SUCCESS,
-              loading: MESSAGES.GRANT.DELETE.LOADING,
-            },
-          });
-
-          if (!success) {
-            // Both methods failed - throw the original error to maintain expected behavior
+          try {
+            await performOffChainRevoke({
+              uid: grantUID as `0x${string}`,
+              chainID: grantInstance.chainID,
+              checkIfExists: checkIfAttestationExists,
+              toastMessages: {
+                success: MESSAGES.GRANT.DELETE.SUCCESS,
+                loading: MESSAGES.GRANT.DELETE.LOADING,
+              },
+            });
+            changeStepperStep("indexed");
+          } catch {
+            // Both methods failed - throw the original on-chain error to
+            // preserve its context.
             throw onChainError;
           }
         }
