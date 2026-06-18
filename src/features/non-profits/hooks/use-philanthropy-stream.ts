@@ -609,6 +609,15 @@ export function usePhilanthropySearch() {
             if (threadId && completedTurn?.status === "done") {
               const turnPayload = chatTurnToTurnPayload(completedTurn);
               const doneCount = state.messages.filter((t) => t.status === "done").length;
+              // A 403 means this conversation belongs to another account. Flip
+              // the thread to read-only so the composer is disabled and the user
+              // isn't silently typing into a chat that can't be saved.
+              const handlePersistError = (err: unknown) => {
+                const e = err as AppError;
+                if (e?.type === "ApiError" && e.status === 403) {
+                  usePhilanthropyStore.getState().setReadOnly(true);
+                }
+              };
               if (doneCount === 1) {
                 // Create the entry under the URL id, then append the first turn
                 // on success.
@@ -618,18 +627,25 @@ export function usePhilanthropySearch() {
                     onSuccess: (entry) => {
                       useSearchSessionStore.getState().setSession(entry.id, normalizedQuery);
                       options?.onSearchId?.(entry.id);
-                      appendTurn.mutate({ searchId: entry.id, turn: turnPayload });
+                      appendTurn.mutate(
+                        { searchId: entry.id, turn: turnPayload },
+                        { onError: handlePersistError }
+                      );
                     },
-                    onError: () => {
-                      // Create failed (offline/server error): keep the local
-                      // session so the page keeps working without persistence.
+                    onError: (err) => {
+                      handlePersistError(err);
+                      // Otherwise (offline/server error): keep the local session
+                      // so the page keeps working without persistence.
                       useSearchSessionStore.getState().setSession(threadId, normalizedQuery);
                       options?.onSearchId?.(threadId);
                     },
                   }
                 );
               } else {
-                appendTurn.mutate({ searchId: threadId, turn: turnPayload });
+                appendTurn.mutate(
+                  { searchId: threadId, turn: turnPayload },
+                  { onError: handlePersistError }
+                );
               }
             }
             return;
