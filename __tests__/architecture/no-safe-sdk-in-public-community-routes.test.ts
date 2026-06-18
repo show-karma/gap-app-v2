@@ -16,6 +16,8 @@ import { describe, expect, it } from "vitest";
  * importing modules) and makes `utilities/safe.ts` import the SDK lazily. This test walks the
  * STATIC import graph of each public route entrypoint and fails if it ever reaches the Safe SDK
  * or the deleted barrel — turning the bug class into a permanent, executable boundary.
+ *
+ * Regression coverage for the /community/*\/updates crash cluster: #1273, #1276, #1303.
  */
 
 const REPO_ROOT = path.resolve(__dirname, "..", "..");
