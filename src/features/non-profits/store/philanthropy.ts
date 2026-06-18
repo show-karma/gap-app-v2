@@ -117,6 +117,12 @@ interface PhilanthropyStore {
    * and a read-only notice is shown so the user isn't typing into a void.
    */
   readOnly: boolean;
+  /**
+   * True when opening a conversation URL that the server won't return (HTTP
+   * 404 — private to another account, deleted, or never persisted) and there
+   * is no local query to re-run. The workbench shows a not-found state.
+   */
+  notFound: boolean;
 
   // ── Chat actions (Phase 3 — included now to avoid store refactor) ──
   appendTurn: (turn: ChatTurn) => void;
@@ -133,6 +139,7 @@ interface PhilanthropyStore {
   setSearching: (searching: boolean) => void;
   setError: (error: string | null) => void;
   setReadOnly: (readOnly: boolean) => void;
+  setNotFound: (notFound: boolean) => void;
   reset: () => void;
 }
 
@@ -148,6 +155,7 @@ const initialState = {
   isSearching: false,
   error: null as string | null,
   readOnly: false,
+  notFound: false,
 } satisfies Omit<
   PhilanthropyStore,
   | "appendTurn"
@@ -161,6 +169,7 @@ const initialState = {
   | "setSearching"
   | "setError"
   | "setReadOnly"
+  | "setNotFound"
   | "reset"
 >;
 
@@ -195,5 +204,6 @@ export const usePhilanthropyStore = create<PhilanthropyStore>((set) => ({
   setSearching: (searching) => set({ isSearching: searching }),
   setError: (error) => set({ error }),
   setReadOnly: (readOnly) => set({ readOnly }),
+  setNotFound: (notFound) => set({ notFound }),
   reset: () => set({ ...initialState }),
 }));
