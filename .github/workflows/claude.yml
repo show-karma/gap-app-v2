@@ -376,6 +376,17 @@ jobs:
             - Bug fixes without regression tests
             - Tests that test implementation details instead of behavior
 
+            ### 🟡 11. Structural Simplification (MEDIUM — advisory)
+            Look for "code judo" moves: restructurings that preserve behavior while making the change simpler. Only report a finding here if you can show the concrete simpler version in the Fix field — "this could be simpler" without showing how is not a finding. Diff-only applies doubly: never demand refactors of untouched code.
+            - A simpler reframing that would eliminate whole branches, modes, props, or helpers introduced by this diff
+            - Boolean/one-off flags bolted into code paths unrelated to their feature: model the variation as a variant or dedicated abstraction instead
+            - Feature-specific logic added into shared components, hooks, or utilities — keep shared code generic
+            - Thin wrapper components/hooks that only delegate, adding a layer without adding behavior or a meaningful boundary
+            - Generic "magic" abstractions built for a single call site: inline until a second consumer exists
+            - Refactor churn: moving code between files without reducing conceptual load
+            - 🟠 HIGH escalation (only these two): a file crossing 1000 lines as a result of this diff (extract subcomponents/hooks/modules), or a copy-pasted block of 10+ lines instead of extracting
+            - Cap: at most 5 structural findings per review, highest impact only. These are suggestions — never CRITICAL, and they must never drive REQUEST CHANGES on their own.
+
             ---
 
             ## Event-Specific Behavior

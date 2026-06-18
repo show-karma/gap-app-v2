@@ -386,22 +386,28 @@ describe("useZeroDevSigner (real hook)", () => {
         expect.objectContaining({ account: { address: EMBEDDED_WALLET_ADDRESS } }),
         10
       );
-      // Gasless path must NOT touch the embedded-direct provider.
-      expect(mockPrivyState.wallets[0].getEthereumProvider).not.toHaveBeenCalled();
+      // Gasless path must NOT build the embedded-direct BrowserProvider signer.
+      // (getEthereumProvider IS now called to confirm the chain switch first.)
+      expect(mockGetSigner).not.toHaveBeenCalled();
     });
 
-    it("should switch embedded wallet chain before creating gasless client", async () => {
+    it("does not switch the embedded wallet chain for the gasless path (signer is chain-pinned)", async () => {
       setupEmailUser();
       const embeddedWallet = mockPrivyState.wallets[0];
       enableGaslessOnChain(42161);
 
       const { result } = renderHook(() => useZeroDevSigner());
 
+      let signer: unknown;
       await act(async () => {
-        await result.current.getAttestationSigner(42161);
+        signer = await result.current.getAttestationSigner(42161);
       });
 
-      expect(embeddedWallet.switchChain).toHaveBeenCalledWith(42161);
+      expect(await chainIdOf(signer)).toBe(42161);
+      // The gasless smart account targets the chain regardless of the embedded
+      // EOA's current chain (its ethers provider is pinned by toEthersSigner), so
+      // the embedded wallet is never asked to switch.
+      expect(embeddedWallet.switchChain).not.toHaveBeenCalled();
     });
 
     it("should return gasless signer for Google OAuth user", async () => {
@@ -495,6 +501,8 @@ describe("useZeroDevSigner (real hook)", () => {
     it("should use embedded wallet directly (user pays gas)", async () => {
       setupEmailUser();
       (isChainSupportedForGasless as ReturnType<typeof vi.fn>).mockReturnValue(false);
+      const embeddedWallet = mockPrivyState.wallets[0];
+      const provider = await embeddedWallet.getEthereumProvider();
 
       const { result } = renderHook(() => useZeroDevSigner());
 
@@ -504,8 +512,12 @@ describe("useZeroDevSigner (real hook)", () => {
       });
 
       expect(await chainIdOf(signer)).toBe(999);
-      expect(mockPrivyState.wallets[0].switchChain).toHaveBeenCalledWith(999);
-      expect(mockPrivyState.wallets[0].getEthereumProvider).toHaveBeenCalled();
+      // Switches at the provider level, not via the inert high-level switchChain.
+      expect(provider.request).toHaveBeenCalledWith({
+        method: "wallet_switchEthereumChain",
+        params: [{ chainId: "0x3e7" }],
+      });
+      expect(embeddedWallet.switchChain).not.toHaveBeenCalled();
     });
   });
 
@@ -606,97 +618,6 @@ describe("useZeroDevSigner (real hook)", () => {
           "No wallet available for signing"
         );
       });
-    });
-  });
-
-  // =========================================================================
-  // Chain verification — GAP-FRONTEND-1T9 regression
-  // -------------------------------------------------------------------------
-  // "Network mainnet not supported." happened because an embedded wallet that
-  // was still on chain 1 (mainnet) after switchChain produced a signer the GAP
-  // SDK rejected. These tests assert the signer the hook returns is ALWAYS on
-  // the requested chain, and that a stuck wallet fails loudly instead.
-  // =========================================================================
-
-  describe("chain verification (GAP-FRONTEND-1T9 regression)", () => {
-    it("recovers from the switchChain propagation race by rebuilding once (embedded-direct)", async () => {
-      // First getEthereumProvider read still reports chain 1; the second
-      // reflects the switch. The hook must rebuild and return a chain-999 signer.
-      setupEmailUser({ embeddedOpts: { initialChainId: 1, propagateAfterReads: 1 } });
-      (isChainSupportedForGasless as ReturnType<typeof vi.fn>).mockReturnValue(false);
-      const embeddedWallet = mockPrivyState.wallets[0];
-
-      const { result } = renderHook(() => useZeroDevSigner());
-
-      let signer: unknown;
-      await act(async () => {
-        signer = await result.current.getAttestationSigner(999);
-      });
-
-      expect(await chainIdOf(signer)).toBe(999);
-      // Built twice: once stale, once after the switch propagated.
-      expect(embeddedWallet.switchChain).toHaveBeenCalledTimes(2);
-      expect(embeddedWallet.getEthereumProvider).toHaveBeenCalledTimes(2);
-    });
-
-    it("throws an explicit, debuggable error when the embedded wallet never leaves chain 1", async () => {
-      // Wallet is permanently stuck on mainnet — the exact GAP-FRONTEND-1T9 state.
-      setupEmailUser({
-        embeddedOpts: { initialChainId: 1, propagateAfterReads: Number.POSITIVE_INFINITY },
-      });
-      (isChainSupportedForGasless as ReturnType<typeof vi.fn>).mockReturnValue(false);
-      const embeddedWallet = mockPrivyState.wallets[0];
-
-      const { result } = renderHook(() => useZeroDevSigner());
-
-      await act(async () => {
-        const promise = result.current.getAttestationSigner(999);
-        // Surfaces the target + actual chain and tells the user to retry —
-        // it must NOT instruct an embedded user to "switch your network".
-        await expect(promise).rejects.toThrow(/chain 999.*still on chain 1.*try again/is);
-      });
-
-      // Exactly one rebuild attempt before giving up.
-      expect(embeddedWallet.switchChain).toHaveBeenCalledTimes(2);
-    });
-
-    it("rejects a gasless signer reporting the wrong chain and recovers via the direct path", async () => {
-      // Gasless produced a signer on chain 1 instead of the requested 10. The
-      // guard must refuse it; the embedded-direct fallback then yields chain 10.
-      setupEmailUser({ embeddedOpts: { initialChainId: 1, propagateAfterReads: 0 } });
-      (isChainSupportedForGasless as ReturnType<typeof vi.fn>).mockReturnValue(true);
-      (createPrivySignerForGasless as ReturnType<typeof vi.fn>).mockResolvedValue("signer");
-      (createGaslessClient as ReturnType<typeof vi.fn>).mockResolvedValue({ account: {} });
-      (getGaslessSigner as ReturnType<typeof vi.fn>).mockResolvedValue(signerOnChain(1));
-
-      const { result } = renderHook(() => useZeroDevSigner());
-
-      let signer: unknown;
-      await act(async () => {
-        signer = await result.current.getAttestationSigner(10);
-      });
-
-      expect(await chainIdOf(signer)).toBe(10);
-      // Fell through to the embedded-direct path after rejecting the bad signer.
-      expect(mockPrivyState.wallets[0].getEthereumProvider).toHaveBeenCalled();
-    });
-
-    it("does not rebuild when the embedded wallet is already on the target chain", async () => {
-      setupEmailUser({ embeddedOpts: { initialChainId: 1, propagateAfterReads: 0 } });
-      (isChainSupportedForGasless as ReturnType<typeof vi.fn>).mockReturnValue(false);
-      const embeddedWallet = mockPrivyState.wallets[0];
-
-      const { result } = renderHook(() => useZeroDevSigner());
-
-      let signer: unknown;
-      await act(async () => {
-        signer = await result.current.getAttestationSigner(999);
-      });
-
-      expect(await chainIdOf(signer)).toBe(999);
-      // Single build: no race, no rebuild.
-      expect(embeddedWallet.switchChain).toHaveBeenCalledTimes(1);
-      expect(embeddedWallet.getEthereumProvider).toHaveBeenCalledTimes(1);
     });
   });
 

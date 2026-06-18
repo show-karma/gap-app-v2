@@ -132,6 +132,8 @@ export const generateProjectImpactMetadata = (
       getRealDescriptionExcerpt(project) ||
       `Explore the impact and outcomes of ${projectTitle} on ${PROJECT_NAME}.`,
     canonicalPath: `/project/${projectId}/impact`,
+    // Thin near-duplicate of the project root; de-indexed to protect crawl budget.
+    robots: { index: false, follow: true },
   });
 };
 
@@ -209,6 +211,8 @@ export const generateGrantOverviewMetadata = (
     canonicalPath: grantUid
       ? PAGES.PROJECT.GRANT(projectId, grantUid)
       : PAGES.PROJECT.GRANTS(projectId),
+    // Thin near-duplicate of the project root; de-indexed to protect crawl budget.
+    robots: { index: false, follow: true },
   });
 };
 
@@ -227,6 +231,8 @@ export const generateGrantMilestonesMetadata = (
     canonicalPath: grantUid
       ? PAGES.PROJECT.MILESTONES_AND_UPDATES(projectId, grantUid)
       : PAGES.PROJECT.GRANTS(projectId),
+    // Thin near-duplicate of the project root; de-indexed to protect crawl budget.
+    robots: { index: false, follow: true },
   });
 };
 
@@ -245,6 +251,8 @@ export const generateGrantImpactCriteriaMetadata = (
     canonicalPath: grantUid
       ? PAGES.PROJECT.SCREENS.SELECTED_SCREEN(projectId, grantUid, "impact-criteria")
       : PAGES.PROJECT.GRANTS(projectId),
+    // Thin near-duplicate of the project root; de-indexed to protect crawl budget.
+    robots: { index: false, follow: true },
   });
 };
 

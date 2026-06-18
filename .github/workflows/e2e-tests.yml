@@ -17,9 +17,106 @@ env:
   NEXT_PUBLIC_GAP_INDEXER_URL: https://gapstagapi.karmahq.xyz
 
 jobs:
-  playwright:
+  # Build once, test in parallel shards. The Next.js build (~4 min) used to
+  # run inline before a single ~11-min Playwright pass; splitting them halves
+  # the wall-clock and lets shards start from a prebuilt standalone bundle.
+  build:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      # Reuse the bundle that build-main.yml already produced for this exact
+      # SHA (every push to main builds one). Hitting it turns this job into
+      # a ~1-min artifact relay; missing it (build-main cancelled/failed, or
+      # running on a non-main ref) falls back to building here.
+      - name: Fetch prebuilt bundle from build-main
+        id: prebuilt
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          RUN_ID=$(gh run list --workflow build-main.yml --status success --limit 20 \
+            --json databaseId,headSha \
+            --jq "[.[] | select(.headSha == \"$GITHUB_SHA\")][0].databaseId" || true)
+          if [ -n "$RUN_ID" ] && [ "$RUN_ID" != "null" ]; then
+            if gh run download "$RUN_ID" -n next-standalone-main; then
+              echo "Reusing bundle from build-main run $RUN_ID"
+              echo "hit=true" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            echo "Artifact download failed (likely expired) — building locally"
+          else
+            echo "No successful build-main run for $GITHUB_SHA — building locally"
+          fi
+          echo "hit=false" >> "$GITHUB_OUTPUT"
+
+      - name: Setup pnpm
+        if: steps.prebuilt.outputs.hit != 'true'
+        uses: pnpm/action-setup@v5
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        if: steps.prebuilt.outputs.hit != 'true'
+        uses: actions/setup-node@v5
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        if: steps.prebuilt.outputs.hit != 'true'
+        run: pnpm install --frozen-lockfile
+
+      - name: Cache Next.js build
+        if: steps.prebuilt.outputs.hit != 'true'
+        uses: actions/cache@v5
+        with:
+          path: |
+            .next/cache
+          key: ${{ runner.os }}-nextjs-${{ hashFiles('**/pnpm-lock.yaml') }}-${{ hashFiles('**/*.js', '**/*.jsx', '**/*.ts', '**/*.tsx', '!node_modules/**') }}
+          restore-keys: |
+            ${{ runner.os }}-nextjs-${{ hashFiles('**/pnpm-lock.yaml') }}-
+            ${{ runner.os }}-nextjs-
+
+      - name: Build application
+        if: steps.prebuilt.outputs.hit != 'true'
+        run: pnpm run build
+        env:
+          NODE_ENV: production
+
+      - name: Assemble standalone bundle
+        if: steps.prebuilt.outputs.hit != 'true'
+        # Standalone output is self-contained (server.js + traced
+        # node_modules) but doesn't auto-copy public/ or .next/static/.
+        run: |
+          cp -r public .next/standalone/
+          mkdir -p .next/standalone/.next
+          cp -r .next/static .next/standalone/.next/static
+
+      - name: Pack standalone bundle into tarball
+        if: steps.prebuilt.outputs.hit != 'true'
+        # Tarball sidesteps upload-artifact's per-file name validation
+        # (Turbopack emits chunks with `:` in the name) and is much smaller.
+        run: tar --zstd -cf next-build.tar.zst .next/standalone
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v5
+        with:
+          name: e2e-build
+          path: next-build.tar.zst
+          retention-days: 1
+          if-no-files-found: error
+
+  playwright:
+    needs: [build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
 
     steps:
       - name: Checkout code
@@ -39,26 +136,51 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Cache Next.js build
+      # Cache the downloaded browser binaries (~150MB Chromium) so each of the
+      # 4 shards doesn't re-download them. The apt system deps (--with-deps)
+      # can't be cached and must be installed every run, but `install-deps`
+      # alone is ~10-15s vs ~40-60s for a full browser download+install.
+      - name: Cache Playwright browsers
+        id: playwright-cache
         uses: actions/cache@v5
         with:
-          path: |
-            .next/cache
-          key: ${{ runner.os }}-nextjs-${{ hashFiles('**/pnpm-lock.yaml') }}-${{ hashFiles('**/*.js', '**/*.jsx', '**/*.ts', '**/*.tsx', '!node_modules/**') }}
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
           restore-keys: |
-            ${{ runner.os }}-nextjs-${{ hashFiles('**/pnpm-lock.yaml') }}-
-            ${{ runner.os }}-nextjs-
+            playwright-${{ runner.os }}-
 
-      - name: Build application
-        run: pnpm run build
-        env:
-          NODE_ENV: production
-
-      - name: Install Playwright browsers
+      - name: Install Playwright browsers (cache miss)
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: pnpm exec playwright install chromium --with-deps
 
-      - name: Run Playwright E2E tests
-        run: pnpm exec playwright test --config e2e/playwright.config.ts --project=chromium
+      - name: Install Playwright system deps (cache hit)
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: pnpm exec playwright install-deps chromium
+
+      - name: Download prebuilt bundle
+        uses: actions/download-artifact@v7
+        with:
+          name: e2e-build
+
+      - name: Unpack standalone bundle
+        run: tar --zstd -xf next-build.tar.zst
+
+      - name: Start local server
+        # Playwright's webServer config reuses any server already listening
+        # on :3000, so booting the standalone bundle here skips `pnpm start`.
+        run: |
+          node .next/standalone/server.js &
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:3000 >/dev/null && exit 0
+            sleep 1
+          done
+          echo "server failed to start" && exit 1
+        env:
+          HOSTNAME: 0.0.0.0
+          PORT: '3000'
+
+      - name: Run Playwright E2E tests (shard ${{ matrix.shard }}/4)
+        run: pnpm exec playwright test --config e2e/playwright.config.ts --project=chromium --shard=${{ matrix.shard }}/4
         continue-on-error: true
         env:
           CI: true
@@ -71,7 +193,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v5
         with:
-          name: playwright-report
+          name: playwright-report-shard-${{ matrix.shard }}
           path: e2e/playwright-report
           retention-days: 7
           if-no-files-found: ignore
@@ -80,7 +202,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v5
         with:
-          name: playwright-screenshots
+          name: playwright-screenshots-shard-${{ matrix.shard }}
           path: e2e/test-results
           retention-days: 7
           if-no-files-found: ignore

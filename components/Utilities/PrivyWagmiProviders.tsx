@@ -52,10 +52,19 @@ function PrivyBridgeUpdater() {
 
   const userId = privy.user?.id;
   const walletCount = wallets.length;
+  // True once a Privy embedded wallet is live in useWallets() — lets the hook
+  // skip creating its own when Privy already provisioned one (the duplicate race).
+  const hasEmbeddedWallet = wallets.some((wallet) => wallet.walletClientType === "privy");
 
   // Create the single embedded wallet for new users. Replaces the SDK's
   // createOnLogin auto-creation, which double-fired and minted two wallets.
-  useEnsureEmbeddedWallet(privy.ready, privy.authenticated, privy.user, walletCount);
+  useEnsureEmbeddedWallet(
+    privy.ready,
+    privy.authenticated,
+    privy.user,
+    walletCount,
+    hasEmbeddedWallet
+  );
 
   useEffect(() => {
     const p = privyRef.current;
@@ -131,6 +140,29 @@ function PrivyBridgeUpdater() {
 
     syncOuterConfig();
   }, [primaryWallet, primaryWalletAddress, chainId]);
+
+  // Withhold a foreign identity from the outer config. When the authenticated
+  // user has linked wallets but none are currently connected (e.g. only a stale
+  // foreign MetaMask is connected while the embedded wallet is still hydrating),
+  // selectPrimaryWallet returns undefined. The sync effect above early-returns in
+  // that case, which would otherwise leave useAccount() pinned to a previously
+  // synced wallet — including a foreign one synced pre-auth as wallets[0]. That
+  // is exactly the "leftover external wallet drives ownership/identity" failure
+  // from issue #1574, so disconnect the outer config until a LINKED wallet
+  // appears (the sync effect reconnects then).
+  useEffect(() => {
+    if (!privy.authenticated || primaryWallet || !syncedAddressRef.current) return;
+    const disconnectStaleOuter = async () => {
+      try {
+        const { minimalWagmiConfig } = await import("@/utilities/wagmi/privy-config");
+        await wagmiCoreDisconnect(minimalWagmiConfig);
+      } catch {
+        // Ignore disconnect errors
+      }
+      syncedAddressRef.current = undefined;
+    };
+    disconnectStaleOuter();
+  }, [privy.authenticated, primaryWallet]);
 
   // Reconcile Privy's persisted active wallet with the authenticated identity.
   // Privy persists the last active wallet in localStorage

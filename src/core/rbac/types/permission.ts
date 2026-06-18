@@ -10,6 +10,11 @@ export enum Permission {
   PROGRAM_VIEW_ANALYTICS = "program:view_analytics",
   PROGRAM_MANAGE_ADMINS = "program:manage_admins",
 
+  PROJECT_VIEW = "project:view",
+  PROJECT_EDIT = "project:edit",
+  PROJECT_MANAGE_LINKS = "project:manage_links",
+  PROJECT_MANAGE_MEMBERS = "project:manage_members",
+
   APPLICATION_VIEW_OWN = "application:view_own",
   APPLICATION_VIEW_ASSIGNED = "application:view_assigned",
   APPLICATION_VIEW_ALL = "application:view_all",
@@ -26,6 +31,7 @@ export enum Permission {
   MILESTONE_VIEW_ASSIGNED = "milestone:view_assigned",
   MILESTONE_VIEW_ALL = "milestone:view_all",
   MILESTONE_SUBMIT = "milestone:submit",
+  MILESTONE_EDIT = "milestone:edit",
   MILESTONE_REVIEW = "milestone:review",
   MILESTONE_APPROVE = "milestone:approve",
   MILESTONE_REJECT = "milestone:reject",

@@ -4,7 +4,7 @@ import * as Sentry from "@sentry/nextjs";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useCallback, useRef } from "react";
-import { type ChatMessage, useAgentChatStore } from "@/store/agentChat";
+import { type ChatMessage, type LimitReason, useAgentChatStore } from "@/store/agentChat";
 import { TokenManager } from "@/utilities/auth/token-manager";
 import { envVars } from "@/utilities/enviromentVars";
 import { PAGES } from "@/utilities/pages";
@@ -152,12 +152,53 @@ function toFriendlyError(status: number, rawMessage: unknown): string {
   }
 }
 
+/**
+ * Errors thrown from the `!response.ok` branch are already reported to Sentry
+ * at the throw site. Tagging them lets the stream's catch block skip a second
+ * capture while still showing the user-friendly message.
+ */
+class AgentStreamReportedError extends Error {}
+
+/**
+ * Shown in the assistant bubble when a run hit its working limit without
+ * producing any prose (e.g. it spent every turn calling tools) — so the bubble
+ * isn't empty. Kept to a plain status statement: it renders on every surface,
+ * but the "Continue" call-to-action only exists on the dedicated page, so the
+ * canned text must not promise an action a given surface can't offer. Seeded as
+ * `synthetic` so it is never replayed to the agent as a real assistant turn.
+ */
+const LIMIT_FALLBACK_MESSAGE = "I reached my working limit for this request before I could finish.";
+
+/** Directive sent when the user clicks Continue after a working-limit stop. */
+const CONTINUE_DIRECTIVE = "Please continue from where you left off.";
+
+/**
+ * True when an error represents the network connection failing — either the
+ * initial fetch never reaching the server, or (DEV-394) the SSE stream being
+ * severed mid-response by an upstream idle timeout. Browsers report these as a
+ * `TypeError` with engine-specific wording: Chrome "Failed to fetch" /
+ * "network error", Firefox "NetworkError when attempting to fetch resource.",
+ * Safari "Load failed". We map all of them to one friendly, retry-able message
+ * instead of leaking the raw string into the chat.
+ */
+function isConnectionDropError(err: unknown): boolean {
+  if (!(err instanceof TypeError)) return false;
+  const message = err.message.toLowerCase();
+  return (
+    message.includes("failed to fetch") ||
+    message.includes("network error") ||
+    message.includes("networkerror") ||
+    message.includes("load failed") ||
+    message.includes("network request failed")
+  );
+}
+
 function buildConversationHistory(
   messages: ChatMessage[],
   maxMessages: number = 12
 ): Array<{ role: string; content: string }> {
   return messages
-    .filter((msg) => msg.content && msg.content.trim().length > 0)
+    .filter((msg) => !msg.synthetic && msg.content && msg.content.trim().length > 0)
     .slice(-maxMessages)
     .map((msg) => ({ role: msg.role, content: msg.content }));
 }
@@ -198,6 +239,7 @@ export function useAgentStream() {
 
       store.setStreaming(true);
       store.setError(null);
+      store.setLimitReached(null);
       streamingContentRef.current = "";
       newSlugRef.current = null;
 
@@ -251,11 +293,11 @@ export function useAgentStream() {
             extra: { status: response.status, errorText, errorMsg },
           });
           if (response.status === 409) {
-            throw new Error(
+            throw new AgentStreamReportedError(
               "Please wait for your current request to complete before sending another."
             );
           }
-          throw new Error(errorMsg);
+          throw new AgentStreamReportedError(errorMsg);
         }
 
         const reader = response.body?.getReader();
@@ -376,11 +418,28 @@ export function useAgentStream() {
                 break;
               }
               case "result": {
-                // Query finished — handle errors or success
+                // Query finished — handle errors or success. Working-limit
+                // stops are reclassified by the backend into `limit_reached`,
+                // so anything is_error here is a genuine failure.
                 if (event.is_error) {
                   const errors = event.errors as string[] | undefined;
                   store.setError(errors?.join(", ") ?? "Agent query failed");
                 }
+                break;
+              }
+              case "limit_reached": {
+                // The run stopped at a working limit (max budget, max turns, or
+                // the per-run time limit). Not a crash — surface a status +
+                // Continue affordance, never the red error banner. If the run
+                // produced no prose (e.g. timed out mid tool/think), seed a
+                // deterministic line so the bubble isn't empty.
+                const reason: LimitReason =
+                  event.reason === "turns" || event.reason === "time" ? event.reason : "budget";
+                if (!streamingContentRef.current.trim()) {
+                  streamingContentRef.current = LIMIT_FALLBACK_MESSAGE;
+                  store.updateLastAssistantMessage(LIMIT_FALLBACK_MESSAGE, { synthetic: true });
+                }
+                store.setLimitReached({ reason });
                 break;
               }
             }
@@ -413,9 +472,20 @@ export function useAgentStream() {
           // User cancelled — not an error
           return;
         }
-        let msg = err instanceof Error ? err.message : "Failed to connect to agent";
-        if (err instanceof TypeError && msg === "Failed to fetch") {
-          msg = "Unable to reach the server. Please check your connection and try again.";
+        const rawMsg = err instanceof Error ? err.message : "Failed to connect to agent";
+        // A dropped connection (initial fetch OR mid-stream SSE break) gets the
+        // same friendly, retry-able message — never the raw browser string.
+        const msg = isConnectionDropError(err)
+          ? "Unable to reach the server. Please check your connection and try again."
+          : rawMsg;
+        // HTTP errors were already reported in the `!response.ok` branch.
+        // Capture everything else — mid-stream drops, malformed bodies — so
+        // these otherwise-invisible failures (DEV-394) surface in Sentry.
+        if (!(err instanceof AgentStreamReportedError)) {
+          Sentry.captureException(err instanceof Error ? err : new Error(rawMsg), {
+            tags: { feature: "ask-karma", phase: "agent-stream" },
+            extra: { rawMessage: rawMsg, displayedMessage: msg },
+          });
         }
         useAgentChatStore.getState().setError(msg);
       } finally {
@@ -445,5 +515,13 @@ export function useAgentStream() {
     abortRef.current?.abort();
   }, []);
 
-  return { sendMessage, sendConfirmation, abort };
+  // Resume a run that stopped at a working limit. The partial answer is
+  // already in conversationHistory (sendMessage rebuilds it from the store),
+  // so a fresh per-run budget continues from where it left off.
+  const continueLastRun = useCallback(async () => {
+    useAgentChatStore.getState().setLimitReached(null);
+    await sendMessage(CONTINUE_DIRECTIVE);
+  }, [sendMessage]);
+
+  return { sendMessage, sendConfirmation, abort, continueLastRun };
 }

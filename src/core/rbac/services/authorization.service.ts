@@ -22,6 +22,8 @@ interface AuthPermissionsApiResponse {
   isReviewer: boolean;
   isRegistryAdmin: boolean;
   isProgramCreator: boolean;
+  isProjectOwner?: boolean;
+  isProjectAdmin?: boolean;
 }
 
 export interface GetPermissionsParams {
@@ -29,6 +31,7 @@ export interface GetPermissionsParams {
   programId?: string;
   applicationId?: string;
   milestoneId?: string;
+  projectId?: string;
   chainId?: number;
 }
 
@@ -45,6 +48,8 @@ const DEFAULT_GUEST_PERMISSIONS: PermissionsResponse = {
   isReviewer: false,
   isRegistryAdmin: false,
   isProgramCreator: false,
+  isProjectOwner: false,
+  isProjectAdmin: false,
 };
 
 export const authorizationService = {
@@ -85,6 +90,8 @@ export const authorizationService = {
       isReviewer: response.isReviewer === true,
       isRegistryAdmin: response.isRegistryAdmin === true,
       isProgramCreator: response.isProgramCreator === true,
+      isProjectOwner: response.isProjectOwner === true,
+      isProjectAdmin: response.isProjectAdmin === true,
     };
   },
 };

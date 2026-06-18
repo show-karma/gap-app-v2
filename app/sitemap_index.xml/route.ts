@@ -4,6 +4,8 @@ import { sitemapIndexResponse } from "@/utilities/sitemap";
 // Never prerender at build time — render on demand only. The indexer fetch is
 // still cached via the Data Cache (see fetchSitemapCounts).
 export const dynamic = "force-dynamic";
+// Headroom for the cold counts fetch so the index itself never 504s.
+export const maxDuration = 60;
 
 // Fresh-URL copy of /sitemap-index.xml. Google pinned its parsed model of the
 // old URL to a degraded 5-child snapshot (May 2026) and successful re-reads

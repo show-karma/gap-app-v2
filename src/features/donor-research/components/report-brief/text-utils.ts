@@ -164,6 +164,18 @@ export function relativeDays(ms: number | null): string | null {
   return "over a year ago";
 }
 
+/**
+ * Compact follower/like counts: 68247 → "68.2K", 2000 → "2K",
+ * 1_300_000 → "1.3M". Trailing ".0" is dropped.
+ */
+export function formatCompactNumber(value: number | null): string {
+  if (value === null) return "—";
+  const trim = (n: number) => n.toFixed(1).replace(/\.0$/, "");
+  if (value >= 1_000_000) return `${trim(value / 1_000_000)}M`;
+  if (value >= 1_000) return `${trim(value / 1_000)}K`;
+  return String(value);
+}
+
 export function mostRecentMentionDate(
   mentions: readonly { publishedDate: string | null }[] | null
 ): number | null {

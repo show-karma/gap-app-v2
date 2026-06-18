@@ -201,4 +201,44 @@ describe("useZeroDevSigner — linked-wallet signing trust (issue #1574)", () =>
 
     expect(foreign.getEthereumProvider).not.toHaveBeenCalled();
   });
+
+  // Regression for the main↔branch merge: when the embedded path fails for an
+  // embedded-mode user who ALSO has a wallet LINKED to their account connected,
+  // signing must fall back to that linked wallet rather than dead-ending. The
+  // foreign-wallet invariant still holds because resolveSigningWallets only
+  // surfaces linked wallets as `externalWallet`.
+  it("email user + embedded present but failing + LINKED external: falls back to the linked wallet", async () => {
+    const LINKED_EXTERNAL = "0x5555555555555555555555555555555555555555";
+    const embedded = embeddedWallet();
+    // Force the embedded-direct path to fail.
+    embedded.getEthereumProvider = vi.fn().mockRejectedValue(new Error("embedded provider down"));
+    const linkedExternal = {
+      address: LINKED_EXTERNAL,
+      walletClientType: "metamask",
+      switchChain: vi.fn().mockResolvedValue(undefined),
+      getEthereumProvider: vi.fn().mockResolvedValue({ request: vi.fn() }),
+    };
+    mockPrivyState.user = {
+      linkedAccounts: [
+        { type: "email" },
+        { type: "wallet", address: EMBEDDED },
+        { type: "wallet", address: LINKED_EXTERNAL },
+      ],
+    };
+    mockPrivyState.wallets = [embedded, linkedExternal];
+
+    const { result } = renderHook(() => useZeroDevSigner());
+
+    // Identity stays the embedded wallet (its address is still linked + preferred).
+    expect(result.current.attestationAddress).toBe(EMBEDDED);
+
+    await act(async () => {
+      await result.current.getAttestationSigner(10);
+    });
+
+    // The embedded path was attempted first, then fell back to the LINKED external.
+    expect(embedded.getEthereumProvider).toHaveBeenCalled();
+    expect(linkedExternal.switchChain).toHaveBeenCalledWith(10);
+    expect(linkedExternal.getEthereumProvider).toHaveBeenCalled();
+  });
 });

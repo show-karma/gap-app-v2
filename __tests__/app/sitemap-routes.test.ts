@@ -98,7 +98,12 @@ describe("sitemap index route", () => {
     expect(res.headers.get("Content-Type")).toContain("application/xml");
     expect(body).toContain("<sitemapindex");
     expect(body).toContain(`<loc>${SITE}/sitemaps/projects/sitemap.xml</loc>`);
+    expect(body).toContain(`<loc>${SITE}/sitemaps/funding-programs/sitemap.xml</loc>`);
     expect(body).toContain(`<loc>${SITE}/sitemaps/static/sitemap.xml</loc>`);
+    // Thin tab kinds are noindexed and dropped from the advertised index.
+    expect(body).not.toContain(`<loc>${SITE}/sitemaps/impacts/sitemap.xml</loc>`);
+    expect(body).not.toContain(`<loc>${SITE}/sitemaps/grants/sitemap.xml</loc>`);
+    expect(body).not.toContain(`<loc>${SITE}/sitemaps/milestones/sitemap.xml</loc>`);
   });
 
   it("falls back to chunked children when a kind exceeds the per-file limit", async () => {
@@ -120,7 +125,7 @@ describe("sitemap index route", () => {
 
     expect(body).not.toContain(`<loc>${SITE}/sitemaps/projects/sitemap.xml</loc>`);
     expect(body).toContain(`<loc>${SITE}/sitemaps/projects/sitemap/46.xml</loc>`);
-    expect(body).toContain(`<loc>${SITE}/sitemaps/grants/sitemap.xml</loc>`);
+    expect(body).toContain(`<loc>${SITE}/sitemaps/funding-programs/sitemap.xml</loc>`);
   });
 
   it("serves the identical index at the fresh /sitemap_index.xml URL", async () => {
@@ -180,6 +185,25 @@ describe("consolidated per-kind sitemap route", () => {
     expect(body).toContain(`<loc>${SITE}/project/a</loc>`);
     expect(body).not.toContain("staging.karmahq.xyz");
   });
+
+  // The index no longer advertises these kinds, but Google already holds their
+  // child-sitemap URLs from past submissions — the routes must keep serving 200
+  // so those legacy URLs don't start 404ing.
+  it.each(["impacts", "grants", "milestones"])(
+    "still serves 200 for the de-advertised legacy kind %s",
+    async (kind) => {
+      stubKindFetch(["https://staging.karmahq.xyz/project/a"]);
+
+      const res = await kindGet(new Request(`${SITE}/sitemaps/${kind}/sitemap.xml`), {
+        params: Promise.resolve({ kind }),
+      });
+      const body = await res.text();
+
+      expect(res.status).toBe(200);
+      expect(res.headers.get("Content-Type")).toContain("application/xml");
+      expect(body).toContain(`<loc>${SITE}/project/a</loc>`);
+    }
+  );
 
   it("404s an unknown kind without calling the indexer", async () => {
     const fetchMock = vi.fn();

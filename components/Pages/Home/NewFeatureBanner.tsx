@@ -1,38 +1,33 @@
 import Link from "next/link";
-import { MegaphoneIcon } from "@/components/Icons/Megaphone";
 import { RightArrowIcon } from "@/components/Icons/RightArrow";
-import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { NON_PROFITS_PAGES } from "@/utilities/pages";
 
-const bannerLink = "https://www.notion.so/Job-Board-15b0525cb96480fd98a5c1f4f31ee792";
+const bannerLink = NON_PROFITS_PAGES.HOME;
 
 export function NewFeatureBanner() {
   return (
-    <div className="flex w-full">
-      <div className="flex w-full justify-between bg-[#bee1d8] border-l-[5px] border-[#1de9b6] rounded-l-lg p-4 gap-4 max-md:p-2 max-md:flex-col">
-        <div className="flex flex-row gap-4 items-center max-md:gap-2.5">
-          <MegaphoneIcon />
-          <div className="flex flex-row gap-1">
-            <p className="text-sm font-semibold text-[#080a0e] max-md:text-xs">
-              Are you a dev interested in working on challenging funding infrastructure?
-            </p>{" "}
-            <Link
-              href={bannerLink}
-              className="text-sm font-semibold text-blue-600 max-md:text-xs underline"
-            >
-              {`We're hiring!`}
-            </Link>
-          </div>
+    <div className="relative w-full">
+      <span
+        aria-hidden
+        className="pointer-events-none absolute -inset-0.5 animate-pulse rounded-2xl bg-gradient-to-r from-emerald-400/25 via-teal-300/15 to-emerald-400/25 blur-md [animation-duration:4s] motion-reduce:animate-none dark:from-emerald-500/15 dark:via-teal-400/10 dark:to-emerald-500/15"
+      />
+      <Link
+        href={bannerLink}
+        className="group relative flex w-full items-center justify-between gap-4 rounded-xl border border-zinc-200 bg-white px-5 py-4 shadow-sm transition hover:border-emerald-300 hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-emerald-700 max-md:flex-col max-md:items-start max-md:gap-3 max-md:px-4 max-md:py-3"
+      >
+        <div className="flex items-center gap-3">
+          <span className="shrink-0 bg-emerald-500 px-3 py-1 text-[11px] font-bold uppercase text-white [clip-path:polygon(0_0,100%_0,calc(100%-8px)_50%,100%_100%,0_100%)]">
+            New
+          </span>
+          <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 max-md:text-xs">
+            We just launched funder search for nonprofits
+          </p>
         </div>
-        <ExternalLink href={bannerLink}>
-          <button
-            type="button"
-            className="max-md:text-xs max-md:p-[8px_12px] bg-[#080a0e] rounded-[4px] text-[#1de9b6] flex items-center justify-center gap-[8px] p-[16px_24px] outline-none border-none font-semibold text-[14px] leading-[16px]"
-          >
-            View details
-            <RightArrowIcon />
-          </button>
-        </ExternalLink>
-      </div>
+        <span className="flex shrink-0 items-center gap-1.5 text-sm font-semibold text-emerald-600 underline underline-offset-4 dark:text-emerald-400 max-md:text-xs">
+          Try it now
+          <RightArrowIcon />
+        </span>
+      </Link>
     </div>
   );
 }
