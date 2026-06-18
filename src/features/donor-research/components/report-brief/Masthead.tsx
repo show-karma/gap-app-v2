@@ -43,7 +43,10 @@ export function Masthead({
   const issueNumber = `No. ${report.id.slice(0, 6).toUpperCase()}`;
 
   return (
-    <header className="mb-14 grid grid-cols-1 gap-8 sm:mb-20 sm:grid-cols-[1fr_auto] sm:gap-12">
+    <header
+      className="mb-14 grid grid-cols-1 gap-8 sm:mb-20 sm:grid-cols-[1fr_auto] sm:gap-12"
+      data-section="masthead"
+    >
       <div className="min-w-0">
         {isShared ? null : (
           <Link
