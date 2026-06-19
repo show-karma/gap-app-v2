@@ -148,6 +148,16 @@ export function ChatView({ searchId }: { searchId?: string }) {
   const { authenticated, login } = useAuth();
   const router = useRouter();
 
+  // `search`/`abort` identities churn — `search` depends on React Query mutations
+  // and `authenticated`. The seeding effect reads them through refs so a mere
+  // identity change can't re-run it. Without this, reset() during "New chat"
+  // re-fires seeding against the still-current (old) searchId — router.replace is
+  // async — and re-fetches the old conversation onto the new URL.
+  const searchRef = useRef(search);
+  searchRef.current = search;
+  const abortRef = useRef(abort);
+  abortRef.current = abort;
+
   const [input, setInput] = useState("");
   const [trayOpen, setTrayOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
@@ -182,7 +192,7 @@ export function ChatView({ searchId }: { searchId?: string }) {
     seededSearchIdRef.current = searchId;
     if (decision === "adopt-existing-thread") return;
     if (decision === "reset-then-seed") {
-      abort();
+      abortRef.current();
       reset();
     }
     usePhilanthropyStore.getState().setThreadId(searchId);
@@ -196,7 +206,7 @@ export function ChatView({ searchId }: { searchId?: string }) {
     // visit to the same URL takes the hydration path below instead of
     // re-running the search.
     if (sessionStore.consumeFresh(searchId)) {
-      if (localQuery) void search(localQuery, 1, { chat: true });
+      if (localQuery) void searchRef.current(localQuery, 1, { chat: true });
       return;
     }
     // Revisit / shared link: fetch the saved conversation and act on the result
@@ -226,7 +236,7 @@ export function ChatView({ searchId }: { searchId?: string }) {
           return;
         }
         case "reconstruct":
-          void search(action.query, 1, { chat: true });
+          void searchRef.current(action.query, 1, { chat: true });
           return;
         case "not-found":
           usePhilanthropyStore.getState().setNotFound(true);
@@ -256,14 +266,14 @@ export function ChatView({ searchId }: { searchId?: string }) {
           })
         )
     );
-    // Keyed on `searchId` only. `messages.length` must NOT be a dependency:
-    // "New chat" calls reset() (clearing messages) and then router.replace() to
-    // the new session, but the replace is async, so a messages.length trigger
-    // re-runs this effect while `searchId` is still the OLD id — re-seeding it
-    // and re-fetching the old conversation, which flashes empty then snaps back
-    // to the previous search. The count is still read fresh via getState above.
-    // `reseedKey` is the one allowed re-trigger: it fires only on sign-in (below).
-  }, [searchId, search, abort, reset, reseedKey]);
+    // Keyed on `searchId` + `reseedKey` ONLY. `messages.length`, `search`, and
+    // `abort` must NOT be dependencies: "New chat" calls reset() then an async
+    // router.replace(), so any of those changing (a cleared count, or a churned
+    // search/abort identity) re-runs this effect while `searchId` is still the
+    // OLD id — re-seeding it and re-fetching the old conversation onto the new
+    // URL. The count is read fresh via getState; search/abort via refs.
+    // `reseedKey` is the one allowed re-trigger: it fires only on sign-in.
+  }, [searchId, reset, reseedKey]);
 
   // Recover a blocked conversation after sign-in. Opening one while logged out
   // leaves it in one of two auth-recoverable states that used to stick until a

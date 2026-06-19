@@ -2,19 +2,18 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // Regression guard for the "New chat" bounce-back bug: from a loaded
-// conversation, clicking "New chat" flashed an empty page and then snapped back
-// to the previous search. Cause: the seeding effect depended on
-// `messages.length`, so reset() re-fired it while the URL (searchId) was still
-// the OLD id (router.replace is async) — re-fetching and re-hydrating the old
-// conversation. This test pins the invariant: after "New chat", the old
-// conversation must NOT be re-fetched via searchHistoryService.getById.
+// conversation, clicking "New chat" flashed an empty page and then re-fetched
+// the previous search onto the new URL. Two compounding causes: the seeding
+// effect depended on `messages.length` (reset() re-fired it) AND on the churning
+// `search`/`abort` identities (reset()'s re-render changed them) — both re-ran
+// the effect while the URL (searchId) was still the OLD id (router.replace is
+// async). This test pins the invariant: after "New chat", the old conversation
+// must NOT be re-fetched via searchHistoryService.getById.
 
 // vi.mock factories are hoisted above the module body, so the spies they close
 // over must be created via vi.hoisted (which runs first).
 const { replace, search, abort, getById } = vi.hoisted(() => ({
   replace: vi.fn(),
-  // Stable search/abort identities so the seeding effect doesn't re-run on their
-  // account (only `searchId` should drive it).
   search: vi.fn(),
   abort: vi.fn(),
   getById: vi.fn(() => ({ match: vi.fn() })),
@@ -29,7 +28,13 @@ vi.mock("@/hooks/useAuth", () => ({
 }));
 
 vi.mock("../hooks/use-philanthropy-stream", () => ({
-  usePhilanthropySearch: () => ({ search, abort }),
+  // Fresh `search`/`abort` identities each render, mirroring the real hook
+  // (search depends on React Query mutations + authenticated). The seeding
+  // effect must NOT re-run on this churn.
+  usePhilanthropySearch: () => ({
+    search: (...args: unknown[]) => search(...args),
+    abort: (...args: unknown[]) => abort(...args),
+  }),
 }));
 
 vi.mock("../services/search-history.service", () => ({
