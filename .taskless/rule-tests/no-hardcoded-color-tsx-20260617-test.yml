@@ -1,0 +1,7 @@
+id: no-hardcoded-color-tsx
+valid:
+  - "const C = () => <div className=\"bg-primary text-zinc-900\" />;"
+  - "const C = () => <div style={{ color: 'var(--brand)' }} />;"
+invalid:
+  - "const C = () => <div style={{ color: '#fff' }} />;"
+  - "const C = () => <div style={{ background: '#1a2b3c' }} />;"

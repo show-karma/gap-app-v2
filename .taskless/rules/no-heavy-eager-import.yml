@@ -1,0 +1,21 @@
+id: no-heavy-eager-import
+language: typescript
+severity: warning
+message: Heavy library imported eagerly — use dynamic() or lazy import().
+note: |
+  CLAUDE.md gap-app-v2: "Heavy libs — Must use dynamic() or lazy import(),
+  never top-level import of chart/editor/markdown libs." Top-level eager imports
+  of these heavy packages bloat the initial bundle.
+ignores:
+  - "**/__tests__/**"
+  - "**/*.test.ts"
+  - "**/*.test.tsx"
+  - "**/*.spec.ts"
+  - "**/*.spec.tsx"
+  - "scripts/**"
+rule:
+  kind: string
+  regex: '^["''](@uiw|@streamdown|recharts|chart\.js|react-chartjs|d3|mermaid|katex|react-pdf|@monaco-editor|monaco-editor|react-quill|draft-js|slate-react|react-markdown|@codemirror)'
+  inside:
+    kind: import_statement
+    stopBy: end

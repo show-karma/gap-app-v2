@@ -1,0 +1,18 @@
+id: no-barrel-export-tsx
+language: tsx
+severity: warning
+message: No barrel exports (export * from) — import directly from source files.
+note: |
+  TSX variant of `no-barrel-export`. ast-grep scopes a rule to a single
+  language, and `.tsx` files are parsed as `tsx`, not `typescript`. Barrel files
+  bloat bundles and break tree-shaking.
+ignores:
+  - "**/__tests__/**"
+  - "**/*.test.ts"
+  - "**/*.test.tsx"
+  - "**/*.spec.ts"
+  - "**/*.spec.tsx"
+  - "scripts/**"
+rule:
+  kind: export_statement
+  regex: '^export\s*\*\s*from'

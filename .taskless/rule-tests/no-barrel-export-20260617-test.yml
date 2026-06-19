@@ -1,0 +1,7 @@
+id: no-barrel-export
+valid:
+  - "export { foo } from './foo';"
+  - "import { bar } from './bar';"
+invalid:
+  - "export * from './foo';"
+  - "export * from '@/components/Thing';"

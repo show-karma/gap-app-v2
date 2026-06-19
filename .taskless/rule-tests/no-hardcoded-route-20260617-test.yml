@@ -1,0 +1,10 @@
+id: no-hardcoded-route
+valid:
+  - "router.push(PAGES.PROJECTS);"
+  - "window.open('https://example.com');"
+  - "const C = () => <a href={PAGES.PROJECTS}>x</a>;"
+  - "const C = () => <a href=\"https://x.com\">x</a>;"
+invalid:
+  - "router.push('/projects');"
+  - "router.replace('/communities/abc');"
+  - "const C = () => <a href=\"/projects\">x</a>;"

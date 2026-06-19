@@ -1,0 +1,7 @@
+id: no-barrel-export-tsx
+valid:
+  - "export { Foo } from './Foo';"
+  - "import { Bar } from './Bar';"
+invalid:
+  - "export * from './Foo';"
+  - "export * from '@/components/Thing';"
