@@ -9,7 +9,9 @@ import type { UnifiedMilestone } from "@/types/v2/roadmap";
 // only asserts the wiring: forwarding `isAuthorized`, tab counts/filtering over
 // a mixed fixture, and the empty path.
 
-const mockUseProjectAuthorization = vi.fn<() => boolean>(() => false);
+// useProjectAuthorization returns the tri-state object { isAuthorized, isLoading };
+// mock it directly and let setHooks() drive the resolved value.
+const mockUseProjectAuthorization = vi.fn(() => ({ isAuthorized: false, isLoading: false }));
 vi.mock("@/hooks/useProjectAuthorization", () => ({
   useProjectAuthorization: () => mockUseProjectAuthorization(),
 }));
