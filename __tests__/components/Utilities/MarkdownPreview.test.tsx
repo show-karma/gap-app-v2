@@ -210,6 +210,32 @@ describe("MarkdownPreview", () => {
     });
   });
 
+  describe("style forwarding (#1278)", () => {
+    // Regression: before the prop contract was closed, MarkdownPreview carried a
+    // `[key: string]: unknown` index signature and never read `style`, so call
+    // sites (chat bubbles, project cards) passing inline `style` had it silently
+    // dropped. `style` is now a declared, forwarded prop.
+    it("forwards style to the plain-text fallback wrapper", () => {
+      const { container } = render(
+        <MarkdownPreview source="hello" style={{ color: "rgb(255, 255, 255)" }} />
+      );
+      const wrapper = container.querySelector(".preview") as HTMLElement;
+      expect(wrapper).toBeInTheDocument();
+      expect(wrapper.style.color).toBe("rgb(255, 255, 255)");
+    });
+
+    it("forwards style to the rendered wrapper after streamdown loads", async () => {
+      const { container } = render(
+        <MarkdownPreview source="hello" style={{ backgroundColor: "transparent" }} />
+      );
+      await waitFor(() => {
+        const wrapper = container.querySelector('[data-color-mode="light"]') as HTMLElement;
+        expect(wrapper).toBeInTheDocument();
+        expect(wrapper.style.backgroundColor).toBe("transparent");
+      });
+    });
+  });
+
   describe("custom components", () => {
     it("applies default paragraph component with mb-2 class", async () => {
       render(<MarkdownPreview source="A paragraph" />);

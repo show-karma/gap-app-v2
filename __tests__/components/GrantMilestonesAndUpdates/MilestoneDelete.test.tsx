@@ -15,8 +15,10 @@
  * cache via refetchGrants, but not updating the Zustand grant store that the UI
  * renders from.
  *
- * Fix: Added refreshGrant() calls from useGrantStore to the onSuccess callbacks
- * for all deletion paths (off-chain, on-chain, and fallback).
+ * Fix: refreshGrant() from useGrantStore runs after a confirmed-successful
+ * revoke on all deletion paths (off-chain, on-chain, and fallback). Since the
+ * revoke primitive now throws on failure, success no longer routes through an
+ * onSuccess callback — the refresh runs directly after the resolved await.
  */
 
 import * as fs from "node:fs";
@@ -50,13 +52,13 @@ describe("MilestoneDelete", () => {
       expect(refreshGrantCalls).toBeGreaterThanOrEqual(3);
     });
 
-    it("should have refreshGrant in the first onSuccess callback (off-chain path)", () => {
-      // The off-chain path has onSuccess inside performOffChainRevoke call
+    it("should refresh the grant after the off-chain revoke resolves", () => {
+      // The off-chain path runs refreshGrant after the awaited revoke succeeds.
       const offChainSection = componentCode.substring(
         componentCode.indexOf("if (!isOnChainAuthorized)"),
         componentCode.indexOf("} else {", componentCode.indexOf("if (!isOnChainAuthorized)"))
       );
-      expect(offChainSection).toContain("onSuccess: async () => {");
+      expect(offChainSection).toContain("await performOffChainRevoke(");
       expect(offChainSection).toContain("await refreshGrant()");
     });
 
@@ -70,13 +72,14 @@ describe("MilestoneDelete", () => {
       expect(onChainSection).toContain("await refreshGrant()");
     });
 
-    it("should have refreshGrant in fallback onSuccess callback", () => {
-      // The fallback path is inside the catch block
+    it("should refresh the grant after the fallback off-chain revoke resolves", () => {
+      // The fallback path refreshes only after the awaited off-chain revoke
+      // succeeds (inside the inner try, before the original-error rethrow).
       const fallbackSection = componentCode.substring(
         componentCode.indexOf("} catch (onChainError"),
-        componentCode.indexOf("if (!success)")
+        componentCode.indexOf("throw onChainError")
       );
-      expect(fallbackSection).toContain("onSuccess: async () => {");
+      expect(fallbackSection).toContain("await performOffChainRevoke(");
       expect(fallbackSection).toContain("await refreshGrant()");
     });
   });
@@ -101,10 +104,10 @@ describe("MilestoneDelete", () => {
       expect(componentCode).toContain("refetchGrants");
     });
 
-    it("should use async onSuccess callbacks to properly await refreshGrant", () => {
-      // All onSuccess callbacks should be async to properly await refreshGrant
-      const asyncOnSuccessCount = (componentCode.match(/onSuccess: async \(\)/g) || []).length;
-      expect(asyncOnSuccessCount).toBeGreaterThanOrEqual(2);
+    it("should await refreshGrant after each successful revoke path", () => {
+      // refreshGrant is awaited on the off-chain, on-chain, and fallback paths.
+      const awaitedRefreshCount = (componentCode.match(/await refreshGrant\(\)/g) || []).length;
+      expect(awaitedRefreshCount).toBeGreaterThanOrEqual(3);
     });
   });
 });

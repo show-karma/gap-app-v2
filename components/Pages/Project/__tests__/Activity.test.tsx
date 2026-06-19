@@ -10,13 +10,10 @@ import type { UnifiedMilestone } from "@/types/v2/roadmap";
 // a mixed fixture, and the empty path.
 
 // useProjectAuthorization returns the tri-state object { isAuthorized, isLoading };
-// the underlying mock keeps returning a bare boolean so setHooks stays ergonomic.
-const mockUseProjectAuthorization = vi.fn<() => boolean>(() => false);
+// mock it directly and let setHooks() drive the resolved value.
+const mockUseProjectAuthorization = vi.fn(() => ({ isAuthorized: false, isLoading: false }));
 vi.mock("@/hooks/useProjectAuthorization", () => ({
-  useProjectAuthorization: () => ({
-    isAuthorized: mockUseProjectAuthorization(),
-    isLoading: false,
-  }),
+  useProjectAuthorization: () => mockUseProjectAuthorization(),
 }));
 
 const mockUseProjectUpdates = vi.fn();
@@ -93,7 +90,7 @@ const setHooks = ({
   milestones = [] as UnifiedMilestone[],
   impacts = [] as UnifiedMilestone[],
 } = {}) => {
-  mockUseProjectAuthorization.mockReturnValue(authorized);
+  mockUseProjectAuthorization.mockReturnValue({ isAuthorized: authorized, isLoading: false });
   mockUseProjectUpdates.mockReturnValue({ milestones });
   mockUseProjectImpacts.mockReturnValue({ impacts });
 };

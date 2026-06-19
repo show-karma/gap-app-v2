@@ -571,14 +571,9 @@ describe("Integration: Grant Completion Revocation Flow", () => {
         }
         return state;
       });
-      const mockPerformOffChainRevoke = vi.fn().mockImplementation(async (options: any) => {
-        // Simulate async operation
+      const mockPerformOffChainRevoke = vi.fn().mockImplementation(async () => {
+        // Simulate async operation; resolves to void on success (throw contract).
         await new Promise((resolve) => setTimeout(resolve, 10));
-        // Call onSuccess callback if provided
-        if (options?.onSuccess) {
-          options.onSuccess();
-        }
-        return true;
       });
       vi.mocked(useOffChainRevoke).mockReturnValue({
         performOffChainRevoke: mockPerformOffChainRevoke,
@@ -695,15 +690,9 @@ describe("Integration: Grant Completion Revocation Flow", () => {
       const onChainError = new Error("On-chain error");
       mockMulticallContract.multiRevoke.mockRejectedValue(onChainError);
 
-      // Setup: Off-chain succeeds
-      const mockPerformOffChainRevoke = vi.fn().mockImplementation(async (options: any) => {
-        // Simulate async operation
+      // Setup: Off-chain succeeds (resolves to void under the throw contract)
+      const mockPerformOffChainRevoke = vi.fn().mockImplementation(async () => {
         await new Promise((resolve) => setTimeout(resolve, 10));
-        // Call onSuccess callback if provided
-        if (options?.onSuccess) {
-          options.onSuccess();
-        }
-        return true;
       });
       vi.mocked(useOffChainRevoke).mockReturnValue({
         performOffChainRevoke: mockPerformOffChainRevoke,
@@ -790,8 +779,10 @@ describe("Integration: Grant Completion Revocation Flow", () => {
       const onChainError = new Error("On-chain error");
       mockMulticallContract.multiRevoke.mockRejectedValue(onChainError);
 
-      // Setup: Off-chain also fails
-      const mockPerformOffChainRevoke = vi.fn().mockResolvedValue(false);
+      // Setup: Off-chain also fails (throws under the throw-on-failure contract)
+      const mockPerformOffChainRevoke = vi
+        .fn()
+        .mockRejectedValue(Object.assign(new Error("Forbidden"), { surfaced: true }));
       vi.mocked(useOffChainRevoke).mockReturnValue({
         performOffChainRevoke: mockPerformOffChainRevoke,
       });

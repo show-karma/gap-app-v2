@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useCallback, useMemo } from "react";
+import { type ReactNode, Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useProjectAuthorization } from "@/hooks/useProjectAuthorization";
 import { useProjectProfile } from "@/hooks/v2/useProjectProfile";
 import {
@@ -16,6 +16,10 @@ import { ActivityFeedSkeleton } from "../Skeletons";
 
 interface UpdatesContentProps {
   className?: string;
+  /** Server-rendered read-only twin of the feed (ActivityFeedStatic), shown in
+   *  the initial HTML and until this client component mounts — then the
+   *  interactive feed replaces it. Lets crawlers see the real feed content. */
+  serverFeed?: ReactNode;
 }
 
 /**
@@ -31,12 +35,19 @@ function parseIntParam(value: string | null): number | undefined {
  * UpdatesContent displays the activity feed and filters for the Updates tab.
  * Filter state is synced with URL for shareable links.
  */
-export function UpdatesContent({ className }: UpdatesContentProps) {
+export function UpdatesContent({ className, serverFeed }: UpdatesContentProps) {
   const { projectId } = useParams();
   const { isAuthorized } = useProjectAuthorization();
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
+
+  // Keep the server-rendered feed twin in place through the client's first
+  // render so SSR and hydration match, then swap to the interactive feed after
+  // mount. Without this gate the server (serverFeed) and client (ActivityFeed)
+  // markup would differ on hydration and React would throw a mismatch.
+  const [hydrated, setHydrated] = useState(false);
+  useEffect(() => setHydrated(true), []);
 
   // Read filter and sort state from URL
   const activeFilters = useMemo(() => {
@@ -234,9 +245,13 @@ export function UpdatesContent({ className }: UpdatesContentProps) {
         onAIFilterChange={handleAIFilterChange}
       />
 
-      {/* Activity Feed with Suspense boundary */}
+      {/* Activity Feed with Suspense boundary. Before hydration we render the
+          server-rendered twin (serverFeed) so SSR and the client's first render
+          match; after mount the interactive feed takes over. */}
       <div className="mt-6">
-        {isLoading ? (
+        {!hydrated && serverFeed ? (
+          serverFeed
+        ) : isLoading ? (
           <ActivityFeedSkeleton itemCount={4} />
         ) : (
           <Suspense fallback={<ActivityFeedSkeleton itemCount={4} />}>

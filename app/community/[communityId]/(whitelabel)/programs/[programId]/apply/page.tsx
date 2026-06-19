@@ -5,6 +5,7 @@ import { cache } from "react";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import type { FundingProgram } from "@/services/fundingPlatformService";
 import { Link } from "@/src/components/navigation/Link";
+import { PermissionProvider } from "@/src/core/rbac/context/permission-context";
 import { transformFormSchemaToQuestions } from "@/src/features/applications/lib/form-utils";
 import fetchData from "@/utilities/fetchData";
 import { isProgramEnabled } from "@/utilities/funding-programs";
@@ -132,14 +133,16 @@ export default async function ApplicationApplyPage({ params }: PageProps) {
         {formSchema.description && <MarkdownPreview source={formSchema.description as string} />}
       </div>
 
-      <ApplicationFormClient
-        communityId={communityId}
-        programId={programId}
-        questions={questions}
-        formSchema={formSchema}
-        isDisabled={isDisabled}
-        programName={program.name}
-      />
+      <PermissionProvider resourceContext={{ communityId, programId }}>
+        <ApplicationFormClient
+          communityId={communityId}
+          programId={programId}
+          questions={questions}
+          formSchema={formSchema}
+          isDisabled={isDisabled}
+          programName={program.name}
+        />
+      </PermissionProvider>
     </div>
   );
 }

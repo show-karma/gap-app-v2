@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useProjectAuthorization } from "@/hooks/useProjectAuthorization";
 import { useProjectProfile } from "@/hooks/v2/useProjectProfile";
 import { useOwnerStore, useProjectStore } from "@/store";
 import type { ActivityFilterType } from "@/types/v2/project-profile.types";
@@ -22,24 +23,11 @@ vi.mock("@/store", () => ({
   useProjectStore: vi.fn(),
 }));
 
-// useProjectAuthorization composes auth + permission signals from Privy and
-// react-query. These tests drive authorization purely through the owner/admin
-// store flags above, so stub the async collaborators to their resolved,
-// not-authorized-by-this-path defaults and keep the store signals decisive.
-vi.mock("@/hooks/useAuth", () => ({
-  useAuth: () => ({ ready: true, authenticated: true }),
-}));
-
-vi.mock("@/hooks/useProjectPermissions", () => ({
-  useProjectPermissions: () => ({
-    isProjectOwner: false,
-    isProjectAdmin: false,
-    isResolving: false,
-  }),
-}));
-
-vi.mock("@/hooks/communities/useIsCommunityAdmin", () => ({
-  useIsCommunityAdmin: () => ({ isCommunityAdmin: false, isResolving: false }),
+// The component derives its single `isAuthorized` from useProjectAuthorization.
+// Mock it directly (default denied) and let mockStores() drive it from the
+// owner/admin flags — avoids wiring the full auth chain (useAuth/useRouter).
+vi.mock("@/hooks/useProjectAuthorization", () => ({
+  useProjectAuthorization: vi.fn(() => ({ isAuthorized: false, isLoading: false })),
 }));
 
 // Capture latest props passed to ActivityFilters so URL round-trip tests can
@@ -68,6 +56,10 @@ function mockStores({ isOwner = false, isProjectAdmin = false, isProjectOwner = 
   (useProjectStore as unknown as vi.Mock).mockImplementation((sel) =>
     sel({ isProjectAdmin, isProjectOwner })
   );
+  (useProjectAuthorization as vi.Mock).mockReturnValue({
+    isAuthorized: isOwner || isProjectAdmin || isProjectOwner,
+    isLoading: false,
+  });
 }
 
 function mockProjectProfile(overrides: Record<string, unknown> = {}) {

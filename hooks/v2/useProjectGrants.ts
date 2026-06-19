@@ -1,8 +1,15 @@
 import { useQuery } from "@tanstack/react-query";
+import { useCallback } from "react";
 import { getProjectGrants } from "@/services/project-grants.service";
 import type { Grant } from "@/types/v2/grant";
 import { queryClient } from "@/utilities/query-client";
 import { createProjectQueryPredicate, QUERY_KEYS } from "@/utilities/queryKeys";
+
+/**
+ * Shared frozen empty array so the no-data branch returns a STABLE reference
+ * across renders (see DEV-396).
+ */
+const EMPTY_GRANTS: Grant[] = [];
 
 interface UseProjectGrantsOptions {
   /**
@@ -38,9 +45,9 @@ export function useProjectGrants(projectIdOrSlug: string, options: UseProjectGra
     staleTime: 5 * 60 * 1000,
   });
 
-  const grants = data || [];
+  const grants = data ?? EMPTY_GRANTS;
 
-  const refetch = async () => {
+  const refetch = useCallback(async () => {
     // Use predicate-based invalidation to refresh all project-related queries
     // This automatically handles grants, updates, milestones, impacts, and details
     // in a single call, and is more maintainable as new query types are added
@@ -48,7 +55,7 @@ export function useProjectGrants(projectIdOrSlug: string, options: UseProjectGra
       predicate: createProjectQueryPredicate(projectIdOrSlug),
     });
     return originalRefetch();
-  };
+  }, [projectIdOrSlug, originalRefetch]);
 
   return {
     grants,

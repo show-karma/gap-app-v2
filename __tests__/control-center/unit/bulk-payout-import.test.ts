@@ -6,7 +6,7 @@ import {
   toErrorReport,
   validateFieldFormats,
 } from "@/components/Pages/Admin/ControlCenter/bulkPayoutImport";
-import type { PayoutGrantConfig } from "@/src/features/payout-disbursement";
+import type { PayoutGrantConfig } from "@/src/features/payout-disbursement/types/payout-disbursement";
 
 describe("bulkPayoutImport utilities", () => {
   it("extracts slug from project URL", () => {

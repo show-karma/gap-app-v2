@@ -130,6 +130,14 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
+      // Bare /community has no content of its own — the listing lives at /communities.
+      // Redirecting at the edge (vs. a page that calls permanentRedirect) keeps the bare
+      // path from 404'ing without shipping a route bundle. Closes #1312.
+      {
+        source: "/community",
+        destination: "/communities",
+        permanent: true,
+      },
       // Redirect all old /community/:communityId/admin routes to /community/:communityId/manage
       {
         source: "/community/:communityId/admin",

@@ -5,10 +5,11 @@ import {
   ShareIcon,
   TrashIcon,
 } from "@heroicons/react/24/outline";
+import { useMutation } from "@tanstack/react-query";
 import { Calendar } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useParams } from "next/navigation";
-import { type FC, useCallback, useState } from "react";
+import { type FC, useCallback } from "react";
 import toast from "react-hot-toast";
 import { DeleteDialog } from "@/components/DeleteDialog";
 import { MilestoneVerificationSection } from "@/components/Shared/MilestoneVerification";
@@ -20,9 +21,9 @@ import { useMilestoneActions } from "@/hooks/useMilestoneActions";
 import { useMilestoneImpactAnswers } from "@/hooks/useMilestoneImpactAnswers";
 import { useProjectUpdates } from "@/hooks/v2/useProjectUpdates";
 import { Link } from "@/src/components/navigation/Link";
-import { MilestoneLifecycleStatus } from "@/src/features/payout-disbursement";
 import { useGrantInvoiceRequired } from "@/src/features/payout-disbursement/hooks/use-payout-disbursement";
 import { getGrantInvoiceDownloadUrl } from "@/src/features/payout-disbursement/services/payout-disbursement.service";
+import { MilestoneLifecycleStatus } from "@/src/features/payout-disbursement/types/payout-disbursement";
 import { useProjectStore } from "@/store";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
 import { formatDate } from "@/utilities/formatDate";
@@ -142,18 +143,14 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
 }) => {
   const { isCompleting, handleCompleting, isEditing, handleEditing } = useMilestoneActions();
   const { multiGrantUndoCompletion } = useMilestone();
-  const [isUndoing, setIsUndoing] = useState(false);
   const { title, description, completed, type } = milestone;
 
-  // Wrapper for undo completion with loading state
-  const handleUndoCompletion = async () => {
-    setIsUndoing(true);
-    try {
-      await multiGrantUndoCompletion(milestone);
-    } finally {
-      setIsUndoing(false);
-    }
-  };
+  // Undo completion as a mutation: `multiGrantUndoCompletion` rejects on
+  // failure, so `mutateAsync` rethrows and DeleteDialog keeps the dialog open;
+  // `isPending` drives the dialog's loading state instead of local useState.
+  const undoMutation = useMutation({
+    mutationFn: () => multiGrantUndoCompletion(milestone),
+  });
   const project = useProjectStore((state) => state.project);
   const { projectId } = useParams();
   const { refetch } = useProjectUpdates(projectId as string);
@@ -472,8 +469,8 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
 
                 {/* Revoke Completion Button */}
                 <DeleteDialog
-                  deleteFunction={handleUndoCompletion}
-                  isLoading={isUndoing}
+                  deleteFunction={() => undoMutation.mutateAsync()}
+                  isLoading={undoMutation.isPending}
                   title={
                     <p className="font-normal">
                       Are you sure you want to revoke the completion of <b>{milestone.title}</b>?

@@ -18,7 +18,8 @@ import {
   ClipboardDocumentListIcon,
   PlusIcon,
 } from "@heroicons/react/24/solid";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useParams } from "next/navigation";
+import { useQueryState } from "nuqs";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { CreateProgramModal } from "@/components/FundingPlatform/CreateProgramModal";
@@ -33,6 +34,7 @@ import { LoadingOverlay } from "@/components/Utilities/LoadingOverlay";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { useFundingPrograms } from "@/hooks/useFundingPlatform";
+import { useFundingProgramFilters } from "@/hooks/useFundingProgramFilters";
 import { useReviewerPrograms } from "@/hooks/usePermissions";
 import { type FundingProgram, fundingPlatformService } from "@/services/fundingPlatformService";
 import { Link } from "@/src/components/navigation/Link";
@@ -46,8 +48,6 @@ import { useWhitelabel } from "@/utilities/whitelabel-context";
 
 function FundingPlatformContent() {
   const { communityId } = useParams() as { communityId: string };
-  const router = useRouter();
-  const searchParams = useSearchParams();
   const { isWhitelabel } = useWhitelabel();
 
   const isAdmin = useIsFundingPlatformAdmin();
@@ -86,21 +86,29 @@ function FundingPlatformContent() {
     return allPrograms.filter((program) => reviewerProgramIds.has(program.programId));
   }, [allPrograms, isAdmin, reviewerPrograms, communityId]);
 
-  const [showCreateModal, setShowCreateModal] = useState(false);
   const [togglingPrograms, setTogglingPrograms] = useState<Set<string>>(new Set());
 
-  // Auto-open create modal when navigated with ?create=true
-  const createParam = searchParams.get("create");
+  // Resolve the whitelabel origin in an effect, not inline during render, to avoid the SSR
+  // window-access hazard (window is undefined on the server); apply links stay on this origin.
+  const [whitelabelOrigin, setWhitelabelOrigin] = useState<string>();
   useEffect(() => {
-    if (createParam === "true" && isAdmin) {
-      setShowCreateModal(true);
-    }
-  }, [createParam, isAdmin]);
+    if (isWhitelabel && typeof window !== "undefined") setWhitelabelOrigin(window.location.origin);
+  }, [isWhitelabel]);
 
-  const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "");
-  const [enabledFilter, setEnabledFilter] = useState<"all" | "enabled" | "disabled">(
-    (searchParams.get("status") as "all" | "enabled" | "disabled") || "all"
-  );
+  // ?create=true auto-opens the create modal. The URL is the source of truth so
+  // closing the modal simply clears the param (nuqs replaceState — no router
+  // navigation that could race a Link click).
+  const [createParam, setCreateParam] = useQueryState("create");
+  const showCreateModal = createParam === "true" && isAdmin;
+  const openCreateModal = () => setCreateParam("true");
+  const closeCreateModal = () => setCreateParam(null);
+
+  const {
+    search: searchTerm,
+    setSearch,
+    status: enabledFilter,
+    setStatus,
+  } = useFundingProgramFilters();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   const handleToggleProgram = async (programId: string, currentEnabled: boolean) => {
@@ -182,25 +190,6 @@ function FundingPlatformContent() {
       return matchesSearch && matchesEnabled;
     });
   }, [programs, searchTerm, enabledFilter]);
-
-  useEffect(() => {
-    const params = new URLSearchParams();
-
-    if (searchTerm) {
-      params.set("search", searchTerm);
-    }
-
-    if (enabledFilter !== "all") {
-      params.set("status", enabledFilter);
-    }
-
-    const queryString = params.toString();
-    const newUrl = queryString
-      ? `${PAGES.MANAGE.FUNDING_PLATFORM.ROOT(communityId)}?${queryString}`
-      : PAGES.MANAGE.FUNDING_PLATFORM.ROOT(communityId);
-
-    router.push(newUrl, { scroll: false });
-  }, [searchTerm, enabledFilter, communityId, router]);
 
   // For non-admins, also wait for reviewer programs to load
   const isLoading = isLoadingPrograms || (!isAdmin && isLoadingReviewerPrograms);
@@ -372,7 +361,7 @@ function FundingPlatformContent() {
       {/* Create Program Button - Admin Only */}
       <AdminOnly>
         <div className="flex justify-end">
-          <Button onClick={() => setShowCreateModal(true)} className="inline-flex items-center">
+          <Button onClick={openCreateModal} className="inline-flex items-center">
             <PlusIcon className="w-4 h-4 mr-2" />
             Create New Program
           </Button>
@@ -390,7 +379,7 @@ function FundingPlatformContent() {
                 type="text"
                 placeholder="Search programs by name or description..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => setSearch(e.target.value)}
                 className="w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-zinc-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
@@ -416,12 +405,12 @@ function FundingPlatformContent() {
               )}
             >
               <div className="py-1" role="menu">
-                {["all", "enabled", "disabled"].map((status) => (
+                {(["all", "enabled", "disabled"] as const).map((status) => (
                   <button
                     key={status}
                     type="button"
                     onClick={() => {
-                      setEnabledFilter(status as typeof enabledFilter);
+                      setStatus(status);
                       setIsDropdownOpen(false);
                     }}
                     className={cn(
@@ -662,11 +651,7 @@ function FundingPlatformContent() {
                       {isAdmin ? "Settings" : "Config"}
                     </Link>
                     <Link
-                      href={getProgramApplyUrl(
-                        communityId,
-                        program.programId,
-                        isWhitelabel ? window.location.origin : undefined
-                      )}
+                      href={getProgramApplyUrl(communityId, program.programId, whitelabelOrigin)}
                       target="_blank"
                       rel="noopener noreferrer"
                       title="View public application form"
@@ -699,7 +684,7 @@ function FundingPlatformContent() {
           className="bg-gray-50 dark:bg-zinc-800 rounded-lg p-8"
           action={
             <AdminOnly>
-              <Button onClick={() => setShowCreateModal(true)} className="inline-flex items-center">
+              <Button onClick={openCreateModal} className="inline-flex items-center">
                 <PlusIcon className="w-4 h-4 mr-2" />
                 Create your first program
               </Button>
@@ -712,19 +697,7 @@ function FundingPlatformContent() {
       <AdminOnly>
         <CreateProgramModal
           isOpen={showCreateModal}
-          onClose={() => {
-            setShowCreateModal(false);
-            if (searchParams.get("create")) {
-              const params = new URLSearchParams(searchParams.toString());
-              params.delete("create");
-              const queryString = params.toString();
-              router.replace(
-                queryString
-                  ? `${PAGES.MANAGE.FUNDING_PLATFORM.ROOT(communityId)}?${queryString}`
-                  : PAGES.MANAGE.FUNDING_PLATFORM.ROOT(communityId)
-              );
-            }
-          }}
+          onClose={closeCreateModal}
           communityId={communityId}
           onSuccess={async () => {
             await refetch();

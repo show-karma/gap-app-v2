@@ -25,38 +25,29 @@ vi.mock("@/store", () => ({
   useProjectStore: vi.fn(),
 }));
 
-// useProjectAuthorization composes auth + permission signals from Privy and
-// react-query. These tests drive authorization purely through the owner/admin
-// store flags, so stub the async collaborators to their resolved,
-// not-authorized-by-this-path defaults and keep the store signals decisive.
-vi.mock("@/hooks/useAuth", () => ({
-  useAuth: () => ({ ready: true, authenticated: true }),
-}));
-
-vi.mock("@/hooks/useProjectPermissions", () => ({
-  useProjectPermissions: () => ({
-    isProjectOwner: false,
-    isProjectAdmin: false,
-    isResolving: false,
-  }),
-}));
-
-vi.mock("@/hooks/communities/useIsCommunityAdmin", () => ({
-  useIsCommunityAdmin: () => ({ isCommunityAdmin: false, isResolving: false }),
-}));
-
 // Mock next/navigation
 vi.mock("next/navigation", () => ({
   useSearchParams: vi.fn(),
   usePathname: vi.fn(() => "/"),
 }));
 
+// The component gates solely on `useProjectAuthorization().isAuthorized`. Mock
+// the hook directly so the test controls authorization without wiring the whole
+// auth chain (useAuth -> useRouter -> permissions/community).
+vi.mock("@/hooks/useProjectAuthorization", () => ({
+  useProjectAuthorization: vi.fn(() => ({ isAuthorized: false, isLoading: false })),
+}));
+
 import { useSearchParams } from "next/navigation";
+import { useProjectAuthorization } from "@/hooks/useProjectAuthorization";
 import { useOwnerStore, useProjectStore } from "@/store";
 
 const mockUseOwnerStore = useOwnerStore as vi.MockedFunction<typeof useOwnerStore>;
 const mockUseProjectStore = useProjectStore as vi.MockedFunction<typeof useProjectStore>;
 const mockUseSearchParams = useSearchParams as vi.MockedFunction<typeof useSearchParams>;
+const mockUseProjectAuthorization = useProjectAuthorization as vi.MockedFunction<
+  typeof useProjectAuthorization
+>;
 
 describe("ImpactContent", () => {
   beforeEach(() => {
@@ -70,6 +61,7 @@ describe("ImpactContent", () => {
       return selector ? selector(state as never) : state;
     });
     mockUseSearchParams.mockReturnValue(new URLSearchParams());
+    mockUseProjectAuthorization.mockReturnValue({ isAuthorized: false, isLoading: false });
   });
 
   describe("Rendering", () => {
@@ -100,10 +92,7 @@ describe("ImpactContent", () => {
 
   describe("Authorization", () => {
     it("should show AddImpactScreen when authorized and tab=add-impact", () => {
-      mockUseOwnerStore.mockImplementation((selector) => {
-        const state = { isOwner: true };
-        return selector ? selector(state as never) : state;
-      });
+      mockUseProjectAuthorization.mockReturnValue({ isAuthorized: true, isLoading: false });
       mockUseSearchParams.mockReturnValue(new URLSearchParams("tab=add-impact"));
 
       render(<ImpactContent />);
@@ -113,10 +102,7 @@ describe("ImpactContent", () => {
     });
 
     it("should show AddImpactScreen when project admin and tab=add-impact", () => {
-      mockUseProjectStore.mockImplementation((selector) => {
-        const state = { isProjectAdmin: true, isProjectOwner: false };
-        return selector ? selector(state as never) : state;
-      });
+      mockUseProjectAuthorization.mockReturnValue({ isAuthorized: true, isLoading: false });
       mockUseSearchParams.mockReturnValue(new URLSearchParams("tab=add-impact"));
 
       render(<ImpactContent />);
@@ -125,10 +111,7 @@ describe("ImpactContent", () => {
     });
 
     it("should show AddImpactScreen when project owner (not admin) and tab=add-impact", () => {
-      mockUseProjectStore.mockImplementation((selector) => {
-        const state = { isProjectAdmin: false, isProjectOwner: true };
-        return selector ? selector(state as never) : state;
-      });
+      mockUseProjectAuthorization.mockReturnValue({ isAuthorized: true, isLoading: false });
       mockUseSearchParams.mockReturnValue(new URLSearchParams("tab=add-impact"));
 
       render(<ImpactContent />);
@@ -146,10 +129,7 @@ describe("ImpactContent", () => {
     });
 
     it("should NOT show AddImpactScreen when authorized but tab is not add-impact", () => {
-      mockUseOwnerStore.mockImplementation((selector) => {
-        const state = { isOwner: true };
-        return selector ? selector(state as never) : state;
-      });
+      mockUseProjectAuthorization.mockReturnValue({ isAuthorized: true, isLoading: false });
       mockUseSearchParams.mockReturnValue(new URLSearchParams("tab=something-else"));
 
       render(<ImpactContent />);
