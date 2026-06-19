@@ -42,10 +42,11 @@ import {
 } from "@/src/components/ai-elements/prompt-input";
 import { NON_PROFITS_PAGES } from "@/utilities/pages";
 import { usePhilanthropySearch } from "../hooks/use-philanthropy-stream";
+import { decideRevisitAction, type RevisitAction } from "../lib/revisit-action";
 import { savedTurnsToChatTurns } from "../lib/saved-conversation";
 import { FILINGS_STATS } from "../lib/stats";
 import { decideThreadSeed } from "../lib/thread-seed";
-import { searchHistoryService } from "../services/search-history.service";
+import { type SearchHistoryDetail, searchHistoryService } from "../services/search-history.service";
 import { type ChatTurn, EMPTY_MESSAGES, usePhilanthropyStore } from "../store/philanthropy";
 import { useSearchSessionStore } from "../store/search-session";
 import { AttachmentsPanel } from "./attachments-panel";
@@ -187,41 +188,56 @@ export function ChatView({ searchId }: { searchId?: string }) {
       if (localQuery) void search(localQuery, 1, { chat: true });
       return;
     }
-    // Revisit / shared link: restore the saved conversation if the server has
-    // turns for it. An existing server entry with turns must be SHOWN, never
-    // re-run — re-running spends the user's quota and forks the saved chat.
-    void searchHistoryService.getById(searchId).match(
-      (entry) => {
-        if (entry.turns.length > 0) {
+    // Revisit / shared link: fetch the saved conversation and act on the result
+    // via the pure `decideRevisitAction` decision. An existing, fetchable
+    // conversation is always SHOWN — re-running is reserved for chats we cannot
+    // fetch (our own unpersisted chat, or an anonymous user who can't read
+    // history). See `lib/revisit-action.ts`.
+    const apply = (action: RevisitAction, entry?: SearchHistoryDetail) => {
+      switch (action.kind) {
+        case "hydrate":
+          if (!entry) return;
           useSearchSessionStore.getState().setSession(searchId, entry.query);
           usePhilanthropyStore.getState().hydrateTurns(savedTurnsToChatTurns(entry.turns));
           return;
+        case "render-empty": {
+          const { prefill } = action;
+          if (prefill) {
+            useSearchSessionStore.getState().setSession(searchId, prefill);
+            setInput((current) => current || prefill);
+          }
+          return;
         }
-        // The entry exists (getById succeeded) but has no renderable turns —
-        // they never persisted, or every saved turn failed validation. Do NOT
-        // re-run the agent here: the load worked, so re-running would overwrite
-        // a real conversation. Surface the original query in the composer so the
-        // user can choose to re-run it, and render the (empty) workbench.
-        const remoteQuery = entry.query?.trim();
-        if (remoteQuery) {
-          useSearchSessionStore.getState().setSession(searchId, remoteQuery);
-          setInput((current) => current || remoteQuery);
-        }
-      },
-      () => {
-        // getById FAILED (not a successful empty response). A local query means
-        // this is our own chat that isn't fetchable yet — anonymous users can't
-        // read history (the endpoint needs a wallet), so re-running the local
-        // query is the only way to reconstruct their conversation. A local
-        // session with no query is a freshly created chat not searched in yet
-        // (render the empty workbench). With NO local session at all the URL is
-        // genuinely private to another account, deleted, or nonexistent.
-        if (localQuery) {
-          void search(localQuery, 1, { chat: true });
-        } else if (!session) {
+        case "reconstruct":
+          void search(action.query, 1, { chat: true });
+          return;
+        case "not-found":
           usePhilanthropyStore.getState().setNotFound(true);
-        }
+          return;
       }
+    };
+    void searchHistoryService.getById(searchId).match(
+      (entry) =>
+        apply(
+          decideRevisitAction({
+            result: {
+              ok: true,
+              turnCount: entry.turns.length,
+              remoteQuery: entry.query?.trim() || null,
+            },
+            localQuery: localQuery ?? null,
+            hasSession: Boolean(session),
+          }),
+          entry
+        ),
+      (error) =>
+        apply(
+          decideRevisitAction({
+            result: { ok: false, error },
+            localQuery: localQuery ?? null,
+            hasSession: Boolean(session),
+          })
+        )
     );
   }, [searchId, messages.length, search, abort, reset]);
 
