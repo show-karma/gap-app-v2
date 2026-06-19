@@ -187,8 +187,9 @@ export function ChatView({ searchId }: { searchId?: string }) {
       if (localQuery) void search(localQuery, 1, { chat: true });
       return;
     }
-    // Revisit / shared link: restore the saved conversation if the server
-    // has turns for it; otherwise fall back to re-running the query.
+    // Revisit / shared link: restore the saved conversation if the server has
+    // turns for it. An existing server entry with turns must be SHOWN, never
+    // re-run — re-running spends the user's quota and forks the saved chat.
     void searchHistoryService.getById(searchId).match(
       (entry) => {
         if (entry.turns.length > 0) {
@@ -196,17 +197,24 @@ export function ChatView({ searchId }: { searchId?: string }) {
           usePhilanthropyStore.getState().hydrateTurns(savedTurnsToChatTurns(entry.turns));
           return;
         }
+        // The entry exists (getById succeeded) but has no renderable turns —
+        // they never persisted, or every saved turn failed validation. Do NOT
+        // re-run the agent here: the load worked, so re-running would overwrite
+        // a real conversation. Surface the original query in the composer so the
+        // user can choose to re-run it, and render the (empty) workbench.
         const remoteQuery = entry.query?.trim();
-        if (!remoteQuery) return;
-        useSearchSessionStore.getState().setSession(searchId, remoteQuery);
-        void search(remoteQuery, 1, { chat: true });
+        if (remoteQuery) {
+          useSearchSessionStore.getState().setSession(searchId, remoteQuery);
+          setInput((current) => current || remoteQuery);
+        }
       },
       () => {
-        // A local query means this is our own chat that isn't persisted yet
-        // (anonymous) — re-run it. A local session with no query is a freshly
-        // created chat the user hasn't searched in yet (e.g. "New chat" then a
-        // reload, where the one-shot `fresh` flag is already spent) — render the
-        // empty workbench. Only with NO local session at all is the URL
+        // getById FAILED (not a successful empty response). A local query means
+        // this is our own chat that isn't fetchable yet — anonymous users can't
+        // read history (the endpoint needs a wallet), so re-running the local
+        // query is the only way to reconstruct their conversation. A local
+        // session with no query is a freshly created chat not searched in yet
+        // (render the empty workbench). With NO local session at all the URL is
         // genuinely private to another account, deleted, or nonexistent.
         if (localQuery) {
           void search(localQuery, 1, { chat: true });
