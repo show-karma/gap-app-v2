@@ -64,7 +64,7 @@ const HISTORY_DETAIL = { ...HISTORY_ENTRY, turns: [SAVED_TURN] };
 
 describe("searchHistoryService", () => {
   beforeEach(() => {
-    vi.restoreAllMocks();
+    vi.clearAllMocks();
     vi.spyOn(TokenManager, "getToken").mockResolvedValue(null);
   });
 
@@ -194,6 +194,50 @@ describe("searchHistoryService", () => {
       if (result.isErr()) {
         expect(result.error.type).toBe("ApiError");
         expect((result.error as { type: string; status: number }).status).toBe(404);
+      }
+    });
+  });
+
+  describe("getById resilient turn parsing", () => {
+    // Regression: a single malformed turn must NOT reject the whole response.
+    // Otherwise getById fails to parse, the revisit hydrate is skipped, and the
+    // workbench falls through to re-running the agent instead of showing the
+    // saved conversation (reported user-feedback bug).
+    it("drops a malformed turn but keeps the valid ones", async () => {
+      const malformed = { id: "turn-bad", searchHistoryId: "sh-1" }; // missing required fields
+      const detail = { ...HISTORY_ENTRY, turns: [SAVED_TURN, malformed] };
+      vi.stubGlobal("fetch", vi.fn().mockResolvedValue(makeOkResponse(detail)));
+
+      const result = await searchHistoryService.getById("sh-1");
+
+      expect(result.isOk()).toBe(true);
+      if (result.isOk()) {
+        expect(result.value.turns).toHaveLength(1);
+        expect(result.value.turns[0].id).toBe("turn-1");
+      }
+    });
+
+    it("returns an empty turns list (not an error) when every turn is invalid", async () => {
+      const detail = { ...HISTORY_ENTRY, turns: [{ id: "x" }, { nope: true }] };
+      vi.stubGlobal("fetch", vi.fn().mockResolvedValue(makeOkResponse(detail)));
+
+      const result = await searchHistoryService.getById("sh-1");
+
+      expect(result.isOk()).toBe(true);
+      if (result.isOk()) {
+        expect(result.value.turns).toEqual([]);
+      }
+    });
+
+    it("tolerates a non-array turns field by collapsing to an empty list", async () => {
+      const detail = { ...HISTORY_ENTRY, turns: null };
+      vi.stubGlobal("fetch", vi.fn().mockResolvedValue(makeOkResponse(detail)));
+
+      const result = await searchHistoryService.getById("sh-1");
+
+      expect(result.isOk()).toBe(true);
+      if (result.isOk()) {
+        expect(result.value.turns).toEqual([]);
       }
     });
   });
