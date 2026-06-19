@@ -1,39 +1,46 @@
-import { render } from "@testing-library/react";
+import { render, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // Regression guard: opening a conversation that's private to your account while
 // logged OUT fails getById (403 → "Conversation not found"). After signing in,
 // the saved chat becomes readable, but the seeding effect keys on `searchId` and
-// previously didn't re-fetch — the user had to refresh. ChatView must re-seed on
-// the logged-out → in transition.
+// previously didn't re-fetch — the user had to refresh. ChatView must recover it.
+//
+// The recovery gates on the actual auth TOKEN (what apiFetch uses), not on
+// `authenticated` or a wallet address: Privy flips `authenticated` true before
+// the JWT is minted (and flickers during wagmi sync), and email/social logins
+// never expose a wallet address. So we must NOT re-fetch until a token exists.
 
-const { replace, search, abort, getById, authState } = vi.hoisted(() => ({
+const { replace, search, abort, getById, getToken, authState } = vi.hoisted(() => ({
   replace: vi.fn(),
   search: vi.fn(),
   abort: vi.fn(),
-  // Without a ready wallet (no token) → 403; with an address → an existing
-  // (empty-turn) entry that resolves to a non-not-found state. We assert the
-  // RE-FETCH, not the hydration.
+  // With a token the server returns an existing (empty-turn) entry that resolves
+  // to a non-not-found state; without one it 403s. We assert the RE-FETCH.
   getById: vi.fn((_id: string) => ({
     match: (
       ok: (entry: { turns: unknown[]; query: string }) => void,
       err: (e: { type: string; status: number; message: string }) => void
     ) => {
-      if (authState.address) ok({ turns: [], query: "climate funders" });
+      if (authState.token) ok({ turns: [], query: "climate funders" });
       else err({ type: "ApiError", status: 403, message: "forbidden" });
       return Promise.resolve();
     },
   })),
-  // Models the Privy hydration race: `authenticated` flips true before the
-  // wallet `address` (and thus the auth token) is populated.
-  authState: { value: false, address: undefined as string | undefined },
+  getToken: vi.fn(async () => authState.token),
+  // `value` = Privy `authenticated`; `token` = the JWT, which lags and can be
+  // absent while authenticated is already true (the flicker window).
+  authState: { value: false, token: null as string | null },
 }));
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ replace, push: vi.fn(), prefetch: vi.fn() }),
 }));
 vi.mock("@/hooks/useAuth", () => ({
-  useAuth: () => ({ authenticated: authState.value, address: authState.address, login: vi.fn() }),
+  useAuth: () => ({ authenticated: authState.value, login: vi.fn() }),
+}));
+vi.mock("@/utilities/auth/token-manager", () => ({
+  TokenManager: { getToken },
 }));
 vi.mock("../hooks/use-philanthropy-stream", () => ({
   usePhilanthropySearch: () => ({ search, abort }),
@@ -75,11 +82,11 @@ import { ChatView } from "../components/chat-view-client";
 import { usePhilanthropyStore } from "../store/philanthropy";
 import { useSearchSessionStore } from "../store/search-session";
 
-describe("ChatView — re-seeds a private conversation after sign-in", () => {
+describe("ChatView — recovers a private conversation after sign-in", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     authState.value = false;
-    authState.address = undefined;
+    authState.token = null;
     usePhilanthropyStore.getState().reset();
     useSearchSessionStore.setState({ sessions: {} });
   });
@@ -88,25 +95,35 @@ describe("ChatView — re-seeds a private conversation after sign-in", () => {
     usePhilanthropyStore.getState().reset();
   });
 
-  it("waits for the wallet address (not just authenticated) before re-fetching", () => {
+  it("does NOT re-fetch while authenticated but the token isn't ready yet", async () => {
     // Logged out: the private conversation 403s → "not found".
     const { rerender } = render(<ChatView searchId="B" />);
     expect(getById).toHaveBeenCalledTimes(1);
     expect(usePhilanthropyStore.getState().notFound).toBe(true);
 
-    // Privy flips `authenticated` true, but the address/token haven't hydrated
-    // yet. Re-fetching now would 401 again, so we must NOT re-seed here.
+    // Privy flips `authenticated` true during the flicker window, but the JWT
+    // isn't minted yet. Re-fetching now would 401 again — so we must not.
     authState.value = true;
     rerender(<ChatView searchId="B" />);
+
+    // Give the token poll a chance to (not) act.
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(getById).toHaveBeenCalledTimes(1);
+    expect(usePhilanthropyStore.getState().notFound).toBe(true);
+  });
+
+  it("re-fetches and clears not-found once a token is available", async () => {
+    const { rerender } = render(<ChatView searchId="B" />);
     expect(getById).toHaveBeenCalledTimes(1);
     expect(usePhilanthropyStore.getState().notFound).toBe(true);
 
-    // The wallet address becomes available — auth is truly ready.
-    authState.address = "0xabc";
+    // Auth settles: authenticated AND a usable token.
+    authState.value = true;
+    authState.token = "jwt-abc";
     rerender(<ChatView searchId="B" />);
 
-    // Now the conversation is re-fetched and not-found is cleared, no refresh.
-    expect(getById).toHaveBeenCalledTimes(2);
+    // The conversation is re-fetched and not-found cleared — no manual refresh.
+    await waitFor(() => expect(getById).toHaveBeenCalledTimes(2));
     expect(usePhilanthropyStore.getState().notFound).toBe(false);
   });
 });

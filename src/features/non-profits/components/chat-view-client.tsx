@@ -40,6 +40,7 @@ import {
   PromptInputTextarea,
   PromptInputTools,
 } from "@/src/components/ai-elements/prompt-input";
+import { TokenManager } from "@/utilities/auth/token-manager";
 import { NON_PROFITS_PAGES } from "@/utilities/pages";
 import { usePhilanthropySearch } from "../hooks/use-philanthropy-stream";
 import { decideRevisitAction, type RevisitAction } from "../lib/revisit-action";
@@ -138,7 +139,7 @@ export function ChatView({ searchId }: { searchId?: string }) {
   const loginRequired = usePhilanthropyStore((s) => s.loginRequired);
   const reset = usePhilanthropyStore((s) => s.reset);
   const { search, abort } = usePhilanthropySearch();
-  const { authenticated, address, login } = useAuth();
+  const { authenticated, login } = useAuth();
   const router = useRouter();
 
   const [input, setInput] = useState("");
@@ -264,30 +265,46 @@ export function ChatView({ searchId }: { searchId?: string }) {
     }
   }, [authenticated, loginRequired]);
 
-  // Re-seed once auth is READY. Opening a conversation that's private to your
-  // account while logged out fails getById (403 → "Conversation not found"); the
-  // saved chat only becomes readable once authenticated, but the seeding effect
-  // keys on `searchId` and wouldn't otherwise re-fetch — so the user had to
-  // refresh. We must wait for the wallet `address`, NOT just `authenticated`:
-  // Privy flips `authenticated` true before the address/token hydrate, so a
-  // refetch fired on `authenticated` alone still 401s and the not-found state
-  // sticks (see useAuth's AUTH-READY REFETCH BARRIER). When the address first
-  // becomes available, drop this instance's seed mark + not-found state and bump
-  // `reseedKey` to re-run the fetch with auth in place. Guarded so it never
-  // disturbs a conversation that's already loaded.
-  const prevAddressRef = useRef(address);
+  // Recover a private conversation after sign-in. Opening a chat that's private
+  // to your account while logged out fails getById (403 → "Conversation not
+  // found"); it only becomes readable once authenticated. But two Privy quirks
+  // make a naive `authenticated`-transition refetch unreliable, which is why the
+  // not-found state used to stick until a manual refresh:
+  //   1. `authenticated` flips true BEFORE the JWT is minted, and it flickers
+  //      for ~10-15s while Privy/wagmi sync — a one-shot transition latches on
+  //      the first (token-less) blip and never retries.
+  //   2. Some login methods (email/social) never expose a wallet address, so a
+  //      wallet-address signal never fires for them.
+  // So we gate on the actual token instead: while we're authenticated and this
+  // conversation is in the not-found state, poll TokenManager.getToken() (what
+  // apiFetch itself uses) until a real token exists, then re-seed exactly once.
+  // `authRecoveredRef` keys the one-shot to the searchId so a genuinely private
+  // (someone else's) chat can't loop.
+  const authRecoveredRef = useRef<string | null>(null);
   useEffect(() => {
-    const hadAddress = prevAddressRef.current;
-    prevAddressRef.current = address;
-    const authJustReady = authenticated && Boolean(address) && !hadAddress;
-    if (!authJustReady || !searchId) return;
-    const store = usePhilanthropyStore.getState();
-    const alreadyLoaded = store.threadId === searchId && store.messages.length > 0;
-    if (alreadyLoaded) return;
-    seededSearchIdRef.current = null;
-    store.setNotFound(false);
-    setReseedKey((k) => k + 1);
-  }, [authenticated, address, searchId]);
+    if (!authenticated || !searchId) return;
+    if (authRecoveredRef.current === searchId) return;
+    if (!usePhilanthropyStore.getState().notFound) return;
+    let cancelled = false;
+    (async () => {
+      for (let attempt = 0; attempt < 8 && !cancelled; attempt += 1) {
+        const token = await TokenManager.getToken();
+        if (cancelled) return;
+        if (token) {
+          if (authRecoveredRef.current === searchId) return;
+          authRecoveredRef.current = searchId;
+          seededSearchIdRef.current = null;
+          usePhilanthropyStore.getState().setNotFound(false);
+          setReseedKey((k) => k + 1);
+          return;
+        }
+        await new Promise((resolve) => setTimeout(resolve, 400));
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [authenticated, searchId]);
 
   const onSubmit = useCallback(
     (msg: PromptInputMessage) => {
