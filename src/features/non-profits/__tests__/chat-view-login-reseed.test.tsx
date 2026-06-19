@@ -11,26 +11,29 @@ const { replace, search, abort, getById, authState } = vi.hoisted(() => ({
   replace: vi.fn(),
   search: vi.fn(),
   abort: vi.fn(),
-  // Logged out → 403; logged in → an existing (empty-turn) entry that resolves
-  // to a non-not-found state. We assert the RE-FETCH, not the hydration.
+  // Without a ready wallet (no token) → 403; with an address → an existing
+  // (empty-turn) entry that resolves to a non-not-found state. We assert the
+  // RE-FETCH, not the hydration.
   getById: vi.fn((_id: string) => ({
     match: (
       ok: (entry: { turns: unknown[]; query: string }) => void,
       err: (e: { type: string; status: number; message: string }) => void
     ) => {
-      if (authState.value) ok({ turns: [], query: "climate funders" });
+      if (authState.address) ok({ turns: [], query: "climate funders" });
       else err({ type: "ApiError", status: 403, message: "forbidden" });
       return Promise.resolve();
     },
   })),
-  authState: { value: false },
+  // Models the Privy hydration race: `authenticated` flips true before the
+  // wallet `address` (and thus the auth token) is populated.
+  authState: { value: false, address: undefined as string | undefined },
 }));
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ replace, push: vi.fn(), prefetch: vi.fn() }),
 }));
 vi.mock("@/hooks/useAuth", () => ({
-  useAuth: () => ({ authenticated: authState.value, login: vi.fn() }),
+  useAuth: () => ({ authenticated: authState.value, address: authState.address, login: vi.fn() }),
 }));
 vi.mock("../hooks/use-philanthropy-stream", () => ({
   usePhilanthropySearch: () => ({ search, abort }),
@@ -76,6 +79,7 @@ describe("ChatView — re-seeds a private conversation after sign-in", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     authState.value = false;
+    authState.address = undefined;
     usePhilanthropyStore.getState().reset();
     useSearchSessionStore.setState({ sessions: {} });
   });
@@ -84,18 +88,24 @@ describe("ChatView — re-seeds a private conversation after sign-in", () => {
     usePhilanthropyStore.getState().reset();
   });
 
-  it("re-fetches and clears not-found when the user logs in", () => {
+  it("waits for the wallet address (not just authenticated) before re-fetching", () => {
     // Logged out: the private conversation 403s → "not found".
     const { rerender } = render(<ChatView searchId="B" />);
     expect(getById).toHaveBeenCalledTimes(1);
     expect(usePhilanthropyStore.getState().notFound).toBe(true);
 
-    // The user signs in.
+    // Privy flips `authenticated` true, but the address/token haven't hydrated
+    // yet. Re-fetching now would 401 again, so we must NOT re-seed here.
     authState.value = true;
     rerender(<ChatView searchId="B" />);
+    expect(getById).toHaveBeenCalledTimes(1);
+    expect(usePhilanthropyStore.getState().notFound).toBe(true);
 
-    // The conversation is re-fetched and the not-found state is cleared without
-    // a manual refresh.
+    // The wallet address becomes available — auth is truly ready.
+    authState.address = "0xabc";
+    rerender(<ChatView searchId="B" />);
+
+    // Now the conversation is re-fetched and not-found is cleared, no refresh.
     expect(getById).toHaveBeenCalledTimes(2);
     expect(usePhilanthropyStore.getState().notFound).toBe(false);
   });

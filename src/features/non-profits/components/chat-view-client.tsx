@@ -138,7 +138,7 @@ export function ChatView({ searchId }: { searchId?: string }) {
   const loginRequired = usePhilanthropyStore((s) => s.loginRequired);
   const reset = usePhilanthropyStore((s) => s.reset);
   const { search, abort } = usePhilanthropySearch();
-  const { authenticated, login } = useAuth();
+  const { authenticated, address, login } = useAuth();
   const router = useRouter();
 
   const [input, setInput] = useState("");
@@ -264,25 +264,30 @@ export function ChatView({ searchId }: { searchId?: string }) {
     }
   }, [authenticated, loginRequired]);
 
-  // Re-seed on sign-in. Opening a conversation that's private to your account
-  // while logged out fails getById (403 → "Conversation not found"); the saved
-  // chat only becomes readable once authenticated, but the seeding effect keys
-  // on `searchId` and wouldn't otherwise re-fetch — so the user had to refresh.
-  // On the logged-out→in transition, drop this instance's seed mark + not-found
-  // state and bump `reseedKey` to re-run the fetch. Guarded so it never disturbs
-  // a conversation that's already loaded (covers a Privy auth flip mid-chat).
-  const wasAuthenticatedRef = useRef(authenticated);
+  // Re-seed once auth is READY. Opening a conversation that's private to your
+  // account while logged out fails getById (403 → "Conversation not found"); the
+  // saved chat only becomes readable once authenticated, but the seeding effect
+  // keys on `searchId` and wouldn't otherwise re-fetch — so the user had to
+  // refresh. We must wait for the wallet `address`, NOT just `authenticated`:
+  // Privy flips `authenticated` true before the address/token hydrate, so a
+  // refetch fired on `authenticated` alone still 401s and the not-found state
+  // sticks (see useAuth's AUTH-READY REFETCH BARRIER). When the address first
+  // becomes available, drop this instance's seed mark + not-found state and bump
+  // `reseedKey` to re-run the fetch with auth in place. Guarded so it never
+  // disturbs a conversation that's already loaded.
+  const prevAddressRef = useRef(address);
   useEffect(() => {
-    const justSignedIn = authenticated && !wasAuthenticatedRef.current;
-    wasAuthenticatedRef.current = authenticated;
-    if (!justSignedIn || !searchId) return;
+    const hadAddress = prevAddressRef.current;
+    prevAddressRef.current = address;
+    const authJustReady = authenticated && Boolean(address) && !hadAddress;
+    if (!authJustReady || !searchId) return;
     const store = usePhilanthropyStore.getState();
     const alreadyLoaded = store.threadId === searchId && store.messages.length > 0;
     if (alreadyLoaded) return;
     seededSearchIdRef.current = null;
     store.setNotFound(false);
     setReseedKey((k) => k + 1);
-  }, [authenticated, searchId]);
+  }, [authenticated, address, searchId]);
 
   const onSubmit = useCallback(
     (msg: PromptInputMessage) => {
