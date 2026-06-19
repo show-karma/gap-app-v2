@@ -2,7 +2,7 @@ import { isAddress } from "viem";
 import type {
   PayoutConfigItem,
   SavePayoutConfigResponse,
-} from "@/src/features/payout-disbursement";
+} from "@/src/features/payout-disbursement/types/payout-disbursement";
 
 const AMOUNT_PATTERN = /^\d+(\.\d{1,18})?$/;
 

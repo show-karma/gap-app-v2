@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { PendingDisbursalBadge } from "@/components/Pages/Admin/ControlCenter/StatusBadges";
-import type { CommunityPayoutInvoiceInfo } from "@/src/features/payout-disbursement";
+import type { CommunityPayoutInvoiceInfo } from "@/src/features/payout-disbursement/types/payout-disbursement";
 import { MilestoneLifecycleStatus } from "@/src/features/payout-disbursement/types/payout-disbursement";
 
 /**

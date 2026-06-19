@@ -41,24 +41,36 @@ vi.mock("@/components/Utilities/DatePicker", async () => {
   };
 });
 
-vi.mock("@/src/features/payout-disbursement", async () => {
-  const actual = await vi.importActual("@/src/features/payout-disbursement");
-  return {
-    ...actual,
-    useToggleAgreement: vi.fn(() => ({
-      mutate: mockToggleMutate,
-      isPending: mockTogglePending,
-    })),
+vi.mock(
+  "@/src/features/payout-disbursement/hooks/use-payout-disbursement",
+  async (importOriginal) => ({
+    ...(await importOriginal<
+      typeof import("@/src/features/payout-disbursement/hooks/use-payout-disbursement")
+    >()),
+    useToggleAgreement: vi.fn(() => ({ mutate: mockToggleMutate, isPending: mockTogglePending })),
     useSaveMilestoneInvoices: vi.fn(() => ({
       mutate: mockSaveMutate,
       mutateAsync: mockSaveMutate,
       isPending: mockSavePending,
     })),
-    // Stub out the content components to avoid their data-fetching hooks
-    PayoutConfigurationContent: vi.fn(() => null),
-    PayoutHistoryContent: vi.fn(() => null),
-  };
-});
+    useDeleteDisbursementByMilestone: vi.fn(() => ({
+      mutate: vi.fn(),
+      mutateAsync: vi.fn(),
+      isPending: false,
+    })),
+  })
+);
+
+// Stub out the content components to avoid their data-fetching hooks
+vi.mock("@/src/features/payout-disbursement/components/PayoutConfigurationContent", () => ({
+  PayoutConfigurationContent: vi.fn(() => null),
+}));
+vi.mock("@/src/features/payout-disbursement/components/PayoutHistoryContent", () => ({
+  PayoutHistoryContent: vi.fn(() => null),
+}));
+vi.mock("@/src/features/payout-disbursement/components/RecordPaymentDialog", () => ({
+  RecordPaymentDialog: () => null,
+}));
 
 vi.mock("@/hooks/useCopyToClipboard", () => ({
   useCopyToClipboard: () => ["", vi.fn()],
@@ -93,7 +105,10 @@ import {
   ProjectDetailsSidebar,
   type ProjectDetailsSidebarGrant,
 } from "@/components/Pages/Admin/ControlCenter/ProjectDetailsSidebar";
-import { useSaveMilestoneInvoices, useToggleAgreement } from "@/src/features/payout-disbursement";
+import {
+  useSaveMilestoneInvoices,
+  useToggleAgreement,
+} from "@/src/features/payout-disbursement/hooks/use-payout-disbursement";
 import {
   type CommunityPayoutAgreementInfo,
   type CommunityPayoutInvoiceInfo,

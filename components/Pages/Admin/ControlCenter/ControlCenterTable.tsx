@@ -5,13 +5,14 @@ import { memo } from "react";
 import { KycStatusBadge } from "@/components/KycStatusIcon";
 import { Spinner } from "@/components/Utilities/Spinner";
 import TablePagination from "@/components/Utilities/TablePagination";
+import { TokenBreakdown } from "@/src/features/payout-disbursement/components/TokenBreakdown";
 import type {
   CommunityPayoutAgreementInfo,
   CommunityPayoutInvoiceInfo,
   CommunityPayoutsSorting,
   TokenTotal,
-} from "@/src/features/payout-disbursement";
-import { formatDisplayAmount, TokenBreakdown } from "@/src/features/payout-disbursement";
+} from "@/src/features/payout-disbursement/types/payout-disbursement";
+import { formatDisplayAmount } from "@/src/features/payout-disbursement/utils/format-token-amount";
 import type { KycStatusResponse } from "@/types/kyc";
 import { formatAddressForDisplay } from "@/utilities/donations/helpers";
 import { cn } from "@/utilities/tailwind";

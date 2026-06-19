@@ -4,7 +4,7 @@ import {
   MILESTONE_STATUS_CONFIG,
   MilestoneReviewStatus,
 } from "@/components/Pages/Admin/MilestonesReview/utils/milestone-review-status";
-import { MilestoneLifecycleStatus } from "@/src/features/payout-disbursement";
+import { MilestoneLifecycleStatus } from "@/src/features/payout-disbursement/types/payout-disbursement";
 import { getMilestoneStatusTooltip } from "@/utilities/milestones/getMilestoneStatusTooltip";
 
 const FORBIDDEN = ["Late", "Past due"];

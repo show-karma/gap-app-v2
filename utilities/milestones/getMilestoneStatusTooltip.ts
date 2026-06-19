@@ -1,4 +1,4 @@
-import { MilestoneLifecycleStatus } from "@/src/features/payout-disbursement";
+import { MilestoneLifecycleStatus } from "@/src/features/payout-disbursement/types/payout-disbursement";
 import { formatDate } from "@/utilities/formatDate";
 import { MILESTONE_STATUS_LABEL } from "@/utilities/milestones/getEffectiveMilestoneStatus";
 

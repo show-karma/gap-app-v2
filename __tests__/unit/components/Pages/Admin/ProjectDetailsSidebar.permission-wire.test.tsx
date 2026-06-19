@@ -34,13 +34,28 @@ vi.mock("@/hooks/useCopyToClipboard", () => ({
   useCopyToClipboard: () => [null, vi.fn()],
 }));
 
-vi.mock("@/src/features/payout-disbursement", () => ({
+vi.mock("@/src/features/payout-disbursement/types/payout-disbursement", () => ({
   PayoutDisbursementStatus: { AWAITING_SIGNATURES: "awaiting_signatures" },
   MilestoneLifecycleStatus: { PENDING: "pending", COMPLETED: "completed" },
+}));
+
+vi.mock("@/src/features/payout-disbursement/components/PayoutConfigurationContent", () => ({
   PayoutConfigurationContent: () => <div data-testid="config" />,
+}));
+
+vi.mock("@/src/features/payout-disbursement/components/PayoutHistoryContent", () => ({
   PayoutHistoryContent: () => <div data-testid="history" />,
+}));
+
+vi.mock("@/src/features/payout-disbursement/components/RecordPaymentDialog", () => ({
   RecordPaymentDialog: () => null,
+}));
+
+vi.mock("@/src/features/payout-disbursement/utils/format-token-amount", () => ({
   fromSmallestUnit: (v: string) => v,
+}));
+
+vi.mock("@/src/features/payout-disbursement/hooks/use-payout-disbursement", () => ({
   useToggleAgreement: () => ({ mutate: vi.fn(), mutateAsync: vi.fn(), isPending: false }),
   useSaveMilestoneInvoices: () => ({ mutate: vi.fn(), mutateAsync: vi.fn(), isPending: false }),
   useDeleteDisbursementByMilestone: () => ({

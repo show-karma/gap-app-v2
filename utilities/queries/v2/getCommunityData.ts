@@ -20,48 +20,30 @@ export const getCommunityDetails = cache(async (slug: string): Promise<Community
   }
 });
 
+/**
+ * Fetches aggregate stats for a community.
+ *
+ * Throws on transport failure or an empty/missing payload instead of fabricating an
+ * all-zero {@link CommunityStats}. The previous silent-zero contract made React Query
+ * cache a "successful" zero payload, so the consuming UI rendered a falsy 0 as "—" and
+ * the Retry path could never fire. Surfacing the failure lets the caller distinguish a
+ * genuine zero (rendered honestly) from a fetch error (rendered as an error + retry).
+ *
+ * Server-side callers (e.g. the OG-image route) MUST guard this with `.catch(...)` since
+ * it now rejects on failure.
+ */
 export const getCommunityStats = cache(async (slug: string): Promise<CommunityStats> => {
-  try {
-    const [data] = await fetchData(INDEXER.COMMUNITY.V2.STATS(slug));
+  const [data, error] = await fetchData(INDEXER.COMMUNITY.V2.STATS(slug));
 
-    if (data) {
-      return data as CommunityStats;
-    }
-
-    return {
-      totalProjects: 0,
-      totalGrants: 0,
-      totalMilestones: 0,
-      projectUpdates: 0,
-      projectUpdatesBreakdown: {
-        projectMilestones: 0,
-        projectCompletedMilestones: 0,
-        projectUpdates: 0,
-        grantMilestones: 0,
-        grantCompletedMilestones: 0,
-        grantUpdates: 0,
-      },
-      totalTransactions: 0,
-      averageCompletion: 0,
-    };
-  } catch (_error) {
-    return {
-      totalProjects: 0,
-      totalGrants: 0,
-      totalMilestones: 0,
-      projectUpdates: 0,
-      projectUpdatesBreakdown: {
-        projectMilestones: 0,
-        projectCompletedMilestones: 0,
-        projectUpdates: 0,
-        grantMilestones: 0,
-        grantCompletedMilestones: 0,
-        grantUpdates: 0,
-      },
-      totalTransactions: 0,
-      averageCompletion: 0,
-    };
+  if (error) {
+    throw new Error(`Failed to fetch community stats for "${slug}": ${error}`);
   }
+
+  if (!data) {
+    throw new Error(`Community stats for "${slug}" returned an empty response`);
+  }
+
+  return data as CommunityStats;
 });
 
 export const getCommunityProjects = async (
