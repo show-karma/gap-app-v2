@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePrivyBridge } from "@/contexts/privy-bridge-context";
+import { useDonorAdvisor } from "@/hooks/useDonorAdvisor";
 import { fetchSharedReport } from "@/services/donor-research.service";
 import type { DonorResearchReportStatus, ResearchReportDetail } from "@/types/donor-research";
 import { ReportBrief } from "../report-brief/ReportBrief";
@@ -54,6 +56,24 @@ export function SharedReportView({ token }: SharedReportViewProps) {
   const [payload, setPayload] = useState<ResearchReportDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // KTD14 advisor identity wiring (v1 best-effort).
+  //
+  // The shared-report payload omits `advisorId` (PII-redacted on the
+  // backend per KTD12), so we can't compare it directly to the Privy
+  // session. We use the inherited root Privy bridge to detect that a
+  // session exists, and the existing `useDonorAdvisor` hook to confirm
+  // the session is an onboarded advisor account. The indexer remains
+  // the source of truth: comments are stamped `is_advisor` at write
+  // time when the Privy JWT resolves to the report's advisor (see
+  // KTD14). The FE flag below only governs the IdentityBadge text and
+  // gates the IdentityCaptureDialog — the persisted advisor flag on
+  // each comment row is authoritative for the row badge.
+  const privy = usePrivyBridge();
+  const advisorQuery = useDonorAdvisor({
+    enabled: privy.ready && privy.authenticated,
+  });
+  const isAdvisorViewer = Boolean(privy.ready && privy.authenticated && advisorQuery.data);
 
   useEffect(() => {
     let cancelled = false;
@@ -157,10 +177,7 @@ export function SharedReportView({ token }: SharedReportViewProps) {
   return (
     <>
       <ReportBrief report={payload} isTerminal={isTerminal(payload)} variant="shared" />
-      {/* Comment overlay (U11). The donor-shared route is anonymous; the
-       *  advisor flag is wired up once the Privy session shape is
-       *  available on this route (deferred — defaults to false in v1). */}
-      <CommentOverlay token={token} isAdvisor={false} />
+      <CommentOverlay token={token} isAdvisor={isAdvisorViewer} />
     </>
   );
 }
