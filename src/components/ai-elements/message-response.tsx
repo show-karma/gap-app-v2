@@ -23,13 +23,18 @@ const lazyMermaid = () => import("@streamdown/mermaid").then((m) => m.mermaid);
 // literally. Matched by function name because the plugin isn't exported
 // separately; if a future @streamdown/cjk renames it, we fall back to the
 // default (no crash, just the old behavior).
+// Defensive: this runs at module eval, so a throw here would break ALL markdown
+// rendering. If a future @streamdown/cjk drops/renames the array, pass it
+// through untouched (degrades to the default behavior) instead of crashing.
 const cjkSingleTildeOff = {
   ...cjk,
-  remarkPluginsAfter: cjk.remarkPluginsAfter.map((plugin) =>
-    typeof plugin === "function" && plugin.name === "remarkGfmStrikethroughCjkFriendly"
-      ? [plugin, { singleTilde: false }]
-      : plugin
-  ),
+  remarkPluginsAfter: Array.isArray(cjk.remarkPluginsAfter)
+    ? cjk.remarkPluginsAfter.map((plugin) =>
+        typeof plugin === "function" && plugin.name === "remarkGfmStrikethroughCjkFriendly"
+          ? [plugin, { singleTilde: false }]
+          : plugin
+      )
+    : cjk.remarkPluginsAfter,
 };
 
 function useStreamdownPlugins() {
