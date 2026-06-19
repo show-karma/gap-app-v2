@@ -5,6 +5,7 @@ import { type FC, type ReactNode, useState } from "react";
 import toast from "react-hot-toast";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { isSurfacedError } from "@/utilities/errors";
 import { cn } from "@/utilities/tailwind";
 import { Button } from "./ui/button";
 
@@ -65,7 +66,11 @@ export const DeleteDialog: FC<DeleteDialogProps> = ({
       closeModal();
     } catch (error: unknown) {
       errorManager("Delete operation failed", error);
-      toast.error("Operation failed. Please try again.");
+      // The primitive that threw has already shown a specific toast for
+      // surfaced errors — don't stack a generic one on top.
+      if (!isSurfacedError(error)) {
+        toast.error("Operation failed. Please try again.");
+      }
     }
   };
 

@@ -111,21 +111,20 @@ export const DeleteMemberDialog: FC<DeleteMemberDialogProps> = ({ memberAddress 
         // Silently fallback to off-chain revoke
         setIsStepper(false); // Reset stepper since we're falling back
 
-        const success = await performOffChainRevoke({
-          uid: member.uid as `0x${string}`,
-          chainID: member.chainID,
-          checkIfExists: checkIfMemberRemoved,
-          onSuccess: () => {
-            closeModal();
-          },
-          toastMessages: {
-            success: "Member removed successfully",
-            loading: "Removing member...",
-          },
-        });
-
-        if (!success) {
-          // Both methods failed - throw the original error to maintain expected behavior
+        try {
+          await performOffChainRevoke({
+            uid: member.uid as `0x${string}`,
+            chainID: member.chainID,
+            checkIfExists: checkIfMemberRemoved,
+            toastMessages: {
+              success: "Member removed successfully",
+              loading: "Removing member...",
+            },
+          });
+          closeModal();
+        } catch {
+          // Both methods failed - throw the original on-chain error to
+          // preserve its context.
           throw onChainError;
         }
       }

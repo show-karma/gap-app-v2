@@ -18,20 +18,73 @@ export class RetryAbortedError extends Error {
 }
 
 /**
- * Type guard for AbortSignal-style cancellation errors. Matches both
- * `RetryAbortedError` (this module) and axios's own AbortError shape,
- * which both expose `name === "AbortError"`. Use this instead of
- * `instanceof RetryAbortedError` so callers don't have to know which
- * abort point fired.
+ * Type guard for AbortSignal-style cancellation/timeout errors. Matches:
+ * - `RetryAbortedError` (this module) and a native `AbortController.abort()`,
+ *   which expose `name === "AbortError"`;
+ * - a native `AbortSignal.timeout()` firing, which surfaces as a DOMException
+ *   with `name === "TimeoutError"`;
+ * - axios re-wrapping an external-signal abort, which becomes a `CanceledError`
+ *   (`name === "CanceledError"`, `code === "ERR_CANCELED"`) — this is what a
+ *   `AbortSignal.timeout()` passed into a fetchData/axios request actually
+ *   produces, so without it the internal request timeout would never be
+ *   recognised.
+ * Use this instead of `instanceof RetryAbortedError` so callers don't have to
+ * know which abort point fired.
  */
 export function isAbortError(error: unknown): boolean {
+  if (!error || typeof error !== "object") {
+    return false;
+  }
+  const { name, code } = error as { name?: unknown; code?: unknown };
+  return (
+    name === "AbortError" ||
+    name === "TimeoutError" ||
+    name === "CanceledError" ||
+    code === "ERR_CANCELED" ||
+    code === "ETIMEDOUT"
+  );
+}
+
+/**
+ * Thrown by {@link retryUntilConditionMet} when the polled condition never
+ * becomes true within the retry budget. Typed (rather than a bare `Error`) so
+ * callers can distinguish "condition exhausted" from arbitrary failures — e.g.
+ * the revoke flow maps this to an `IndexingTimeoutError` with an actionable
+ * "submitted but not yet indexed" message. The message is identical to the
+ * previous bare-`Error` text, so existing string-matching callers stay
+ * behaviour-compatible.
+ */
+export class RetryConditionNotMetError extends Error {
+  readonly name = "RetryConditionNotMetError";
+  constructor(
+    message = "Condition was not met after maximum retries. The operation may not have completed successfully."
+  ) {
+    super(message);
+  }
+}
+
+/**
+ * Type guard for {@link RetryConditionNotMetError}, usable across module
+ * boundaries without importing the class where only the shape matters.
+ */
+export function isRetryConditionNotMetError(error: unknown): error is RetryConditionNotMetError {
   return (
     !!error &&
     typeof error === "object" &&
     "name" in error &&
-    (error as { name?: unknown }).name === "AbortError"
+    (error as { name?: unknown }).name === "RetryConditionNotMetError"
   );
 }
+
+/**
+ * Polling budget for INTERACTIVE indexing waits — flows where the user is
+ * actively staring at a button/dialog and a multi-minute wait is a bug, not a
+ * feature. ~60s (30 retries × 2s). Use this instead of the
+ * {@link retryUntilConditionMet} defaults (≈5 minutes) for the undo-completion
+ * flow so an indexer lag surfaces an actionable timeout fast rather than
+ * appearing to hang.
+ */
+export const INTERACTIVE_INDEXING_POLL = { maxRetries: 30, delay: 2000 } as const;
 
 /**
  * Retries a function with exponential backoff
@@ -118,9 +171,7 @@ export const retryUntilConditionMet = async (
     retries -= 1;
     await abortableSleep(delay, signal);
   }
-  throw new Error(
-    "Condition was not met after maximum retries. The operation may not have completed successfully."
-  );
+  throw new RetryConditionNotMetError();
 };
 
 /**
