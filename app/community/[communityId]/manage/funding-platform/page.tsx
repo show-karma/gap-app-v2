@@ -20,7 +20,7 @@ import {
 } from "@heroicons/react/24/solid";
 import { useParams } from "next/navigation";
 import { useQueryState } from "nuqs";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { CreateProgramModal } from "@/components/FundingPlatform/CreateProgramModal";
 import { FundingPlatformStatsCard } from "@/components/FundingPlatform/Dashboard/card";
@@ -87,6 +87,13 @@ function FundingPlatformContent() {
   }, [allPrograms, isAdmin, reviewerPrograms, communityId]);
 
   const [togglingPrograms, setTogglingPrograms] = useState<Set<string>>(new Set());
+
+  // Resolve the whitelabel origin in an effect, not inline during render, to avoid the SSR
+  // window-access hazard (window is undefined on the server); apply links stay on this origin.
+  const [whitelabelOrigin, setWhitelabelOrigin] = useState<string>();
+  useEffect(() => {
+    if (isWhitelabel && typeof window !== "undefined") setWhitelabelOrigin(window.location.origin);
+  }, [isWhitelabel]);
 
   // ?create=true auto-opens the create modal. The URL is the source of truth so
   // closing the modal simply clears the param (nuqs replaceState — no router
@@ -644,11 +651,7 @@ function FundingPlatformContent() {
                       {isAdmin ? "Settings" : "Config"}
                     </Link>
                     <Link
-                      href={getProgramApplyUrl(
-                        communityId,
-                        program.programId,
-                        isWhitelabel ? window.location.origin : undefined
-                      )}
+                      href={getProgramApplyUrl(communityId, program.programId, whitelabelOrigin)}
                       target="_blank"
                       rel="noopener noreferrer"
                       title="View public application form"

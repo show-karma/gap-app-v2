@@ -18,7 +18,7 @@ import {
   PayoutDisbursementStatus,
   type PayoutGrantConfig,
   type TokenTotal,
-} from "@/src/features/payout-disbursement";
+} from "@/src/features/payout-disbursement/types/payout-disbursement";
 
 // ---- Community ----
 

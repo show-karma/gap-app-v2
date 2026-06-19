@@ -19,16 +19,10 @@ vi.mock("@/hooks/useKycStatus", () => ({
 }));
 
 const mockUseCommunityPayouts = vi.fn();
-vi.mock("@/src/features/payout-disbursement", async () => {
-  const actual = await vi.importActual<typeof import("@/src/features/payout-disbursement")>(
-    "@/src/features/payout-disbursement"
-  );
-  return {
-    ...actual,
-    useCommunityPayouts: (...args: unknown[]) => mockUseCommunityPayouts(...args),
-    usePayoutConfigsByCommunity: () => ({ data: [] }),
-  };
-});
+vi.mock("@/src/features/payout-disbursement/hooks/use-payout-disbursement", () => ({
+  useCommunityPayouts: (...args: unknown[]) => mockUseCommunityPayouts(...args),
+  usePayoutConfigsByCommunity: () => ({ data: [] }),
+}));
 
 function makePayoutPayload(resolvedProjectName: string | undefined, title: string) {
   return {

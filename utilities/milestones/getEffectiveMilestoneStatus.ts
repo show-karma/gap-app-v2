@@ -1,4 +1,4 @@
-import { MilestoneLifecycleStatus } from "@/src/features/payout-disbursement";
+import { MilestoneLifecycleStatus } from "@/src/features/payout-disbursement/types/payout-disbursement";
 import {
   type MilestoneDueDateInput,
   normalizeMilestoneDueDateMs,
