@@ -148,6 +148,8 @@ export function ChatView({ searchId }: { searchId?: string }) {
   // enough: navigating between two session URLs reuses the same instance
   // (same dynamic segment), so the ref must be keyed by session.
   const seededSearchIdRef = useRef<string | null>(null);
+  // Bumped to force the seeding effect to re-run after sign-in (see below).
+  const [reseedKey, setReseedKey] = useState(0);
 
   // Seed the thread for the session in the URL. The philanthropy store is
   // global and survives client-side navigation, so arriving here can mean:
@@ -251,7 +253,8 @@ export function ChatView({ searchId }: { searchId?: string }) {
     // re-runs this effect while `searchId` is still the OLD id — re-seeding it
     // and re-fetching the old conversation, which flashes empty then snaps back
     // to the previous search. The count is still read fresh via getState above.
-  }, [searchId, search, abort, reset]);
+    // `reseedKey` is the one allowed re-trigger: it fires only on sign-in (below).
+  }, [searchId, search, abort, reset, reseedKey]);
 
   // The free-limit prompt is only set for logged-out users; once they sign in,
   // restore the composer so they can continue.
@@ -260,6 +263,26 @@ export function ChatView({ searchId }: { searchId?: string }) {
       usePhilanthropyStore.getState().setLoginRequired(false);
     }
   }, [authenticated, loginRequired]);
+
+  // Re-seed on sign-in. Opening a conversation that's private to your account
+  // while logged out fails getById (403 → "Conversation not found"); the saved
+  // chat only becomes readable once authenticated, but the seeding effect keys
+  // on `searchId` and wouldn't otherwise re-fetch — so the user had to refresh.
+  // On the logged-out→in transition, drop this instance's seed mark + not-found
+  // state and bump `reseedKey` to re-run the fetch. Guarded so it never disturbs
+  // a conversation that's already loaded (covers a Privy auth flip mid-chat).
+  const wasAuthenticatedRef = useRef(authenticated);
+  useEffect(() => {
+    const justSignedIn = authenticated && !wasAuthenticatedRef.current;
+    wasAuthenticatedRef.current = authenticated;
+    if (!justSignedIn || !searchId) return;
+    const store = usePhilanthropyStore.getState();
+    const alreadyLoaded = store.threadId === searchId && store.messages.length > 0;
+    if (alreadyLoaded) return;
+    seededSearchIdRef.current = null;
+    store.setNotFound(false);
+    setReseedKey((k) => k + 1);
+  }, [authenticated, searchId]);
 
   const onSubmit = useCallback(
     (msg: PromptInputMessage) => {
