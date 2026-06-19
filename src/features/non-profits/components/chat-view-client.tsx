@@ -194,6 +194,12 @@ export function ChatView({ searchId }: { searchId?: string }) {
     // fetch (our own unpersisted chat, or an anonymous user who can't read
     // history). See `lib/revisit-action.ts`.
     const apply = (action: RevisitAction, entry?: SearchHistoryDetail) => {
+      // Stale-resolution guard: `getById` is async and uncancellable. If the
+      // session changed while it was in flight (e.g. "New chat" or switching
+      // history items), this instance has already re-seeded a different id —
+      // dropping the late result keeps it from hydrating the old conversation
+      // back into the current session.
+      if (seededSearchIdRef.current !== searchId) return;
       switch (action.kind) {
         case "hydrate":
           if (!entry) return;
@@ -239,7 +245,13 @@ export function ChatView({ searchId }: { searchId?: string }) {
           })
         )
     );
-  }, [searchId, messages.length, search, abort, reset]);
+    // Keyed on `searchId` only. `messages.length` must NOT be a dependency:
+    // "New chat" calls reset() (clearing messages) and then router.replace() to
+    // the new session, but the replace is async, so a messages.length trigger
+    // re-runs this effect while `searchId` is still the OLD id — re-seeding it
+    // and re-fetching the old conversation, which flashes empty then snaps back
+    // to the previous search. The count is still read fresh via getState above.
+  }, [searchId, search, abort, reset]);
 
   // The free-limit prompt is only set for logged-out users; once they sign in,
   // restore the composer so they can continue.
