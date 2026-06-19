@@ -1,32 +1,19 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
 import pluralize from "pluralize";
-import { v4 as uuidv4 } from "uuid";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
-import type { CommentAnchor } from "@/src/features/donor-research/components/anchor/types";
-import { useCommenterIdentity } from "@/hooks/useCommenterIdentity";
-import { useSharedReportComments } from "@/hooks/useSharedReportComments";
-import {
-  IdempotencyCollisionError,
-  IdentityRequiredError,
-  RateLimitedError,
-  type CreateCommentRequest,
-  type SharedReportCommentNode,
-} from "@/types/donor-research-comments";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import type { SharedReportCommentNode } from "@/types/donor-research-comments";
 
+import { AnchoredAffordances } from "./AnchoredAffordances";
 import { CommentComposer } from "./CommentComposer";
 import { CommentRow } from "./CommentRow";
 import { IdentityBadge } from "./IdentityBadge";
 import { IdentityCaptureDialog } from "./IdentityCaptureDialog";
+import { SelectionAffordance } from "./SelectionAffordance";
+import { useCommenting } from "./useCommenting";
 
 interface CommentOverlayProps {
   token: string;
@@ -40,162 +27,126 @@ function totalCount(tree: SharedReportCommentNode[]): number {
   let n = 0;
   const stack = [...tree];
   while (stack.length > 0) {
-    const node = stack.pop()!;
+    const node = stack.pop();
+    if (!node) break;
     n += 1;
     stack.push(...node.children);
   }
   return n;
 }
 
-function findNodeById(
-  tree: SharedReportCommentNode[],
-  id: string,
-): SharedReportCommentNode | null {
-  const stack = [...tree];
-  while (stack.length > 0) {
-    const node = stack.pop()!;
-    if (node.id === id) return node;
-    stack.push(...node.children);
-  }
-  return null;
-}
-
 /**
- * Comment sidebar: lists all root comments + their reply threads in
- * one Sheet on desktop / full-screen drawer on mobile. Drives the
- * composer (root + reply) and orchestrates the IdentityCaptureDialog
- * round-trip when the donor lacks a cookie.
+ * Comment overlay — sidebar listing all comment threads, pin badges
+ * floating next to anchored targets, text-range highlights, an orphan
+ * lane for anchors that no longer resolve in the live DOM, and the
+ * composer (root + reply).
  *
- * Q2 "Not me — switch" affordance lives in the IdentityBadge — clears
- * the cookies via the proxy clear-identity route and re-prompts on the
- * next post.
+ * Wires together {@link useCommenting} (state machine + mutations) and
+ * {@link AnchoredAffordances} (per-target pins / "+" buttons / highlight
+ * overlays). All anchor capture flows through {@link useCommenting} so
+ * the floating "Comment" affordance, the section "+" buttons, and the
+ * pin clicks all share one source of truth.
  *
- * aria-live="polite" region (per DL-007) announces new comments and
- * replies so screen readers don't miss arrivals after the initial
- * render.
+ * aria-live="polite" region announces new comment additions per
+ * DL-007 ("Comment added by X" / "Reply added by X").
  */
 export function CommentOverlay({
   token,
   reportRevoked = false,
   isAdvisor = false,
 }: CommentOverlayProps) {
-  const { query, tree, postComment } = useSharedReportComments(token, {
+  const commenting = useCommenting(token, {
     enabled: !reportRevoked,
+    isAdvisor,
   });
-  const identity = useCommenterIdentity(token, isAdvisor);
 
-  const [sheetOpen, setSheetOpen] = useState(false);
-  const [composerOpenFor, setComposerOpenFor] = useState<string | "root" | null>(
-    null,
-  );
-  const [rootAnchor, setRootAnchor] = useState<CommentAnchor | null>({
-    kind: "section",
-    sectionKey: "methodology",
-  });
-  const [identityModalMode, setIdentityModalMode] = useState<
-    "post" | "edit-name" | null
-  >(null);
-  const [pendingPost, setPendingPost] = useState<CreateCommentRequest | null>(
-    null,
-  );
-  const [composerError, setComposerError] = useState<string | null>(null);
+  const {
+    query,
+    tree,
+    identity,
+    isPosting,
+    composer,
+    composerError,
+    openRootComposer,
+    openReplyComposer,
+    closeComposer,
+    sheetOpen,
+    setSheetOpen,
+    activatePin,
+    counts,
+    selectionAffordance,
+    dismissSelectionAffordance,
+    submitComposer,
+    identityModalMode,
+    setIdentityModalMode,
+    retryPendingPost,
+    scrollTargetCommentId,
+    clearScrollTarget,
+    highlightRefreshKey,
+  } = commenting;
 
   const total = totalCount(tree);
 
-  const handleReplyClick = useCallback((parentId: string) => {
-    setComposerError(null);
-    setComposerOpenFor(parentId);
-  }, []);
-
-  const handleRootClick = useCallback(() => {
-    setComposerError(null);
-    setRootAnchor({ kind: "section", sectionKey: "methodology" });
-    setComposerOpenFor("root");
-  }, []);
-
-  const submitComment = useCallback(
-    async (request: CreateCommentRequest) => {
-      setComposerError(null);
-      try {
-        await postComment.mutateAsync({ request, idempotencyKey: uuidv4() });
-        setComposerOpenFor(null);
-      } catch (err) {
-        if (err instanceof IdentityRequiredError) {
-          setPendingPost(request);
-          setIdentityModalMode("post");
-          return;
-        }
-        if (err instanceof RateLimitedError) {
-          setComposerError(`Slow down — try again in ${err.retryAfter}s.`);
-          return;
-        }
-        if (err instanceof IdempotencyCollisionError) {
-          setComposerError("That key was already used — try again.");
-          return;
-        }
-        setComposerError("Something went wrong. Try again.");
-      }
-    },
-    [postComment],
-  );
-
-  const handleComposerSubmit = useCallback(
-    async (body: string) => {
-      if (composerOpenFor === null) return;
-      const parentId = composerOpenFor === "root" ? undefined : composerOpenFor;
-      const request: CreateCommentRequest = {
-        body,
-        displayName: identity.displayName ?? "",
-        ...(parentId ? { parentCommentId: parentId } : {}),
-        ...(parentId ? {} : rootAnchor ? { anchor: rootAnchor } : {}),
-      };
-      await submitComment(request);
-    },
-    [composerOpenFor, identity.displayName, rootAnchor, submitComment],
-  );
-
-  const handleIdentitySubmit = useCallback(
-    async (values: { displayName: string; email: string }) => {
-      if (identityModalMode === "edit-name") {
-        // Edit-name-only mode: the parent cookie carries email; the FE
-        // re-fires the same comment but with the updated name. v1
-        // simply closes — the donor's next comment uses the new name.
-        identity.refresh();
-        setIdentityModalMode(null);
-        return;
-      }
-      if (!pendingPost) {
-        setIdentityModalMode(null);
-        return;
-      }
-      const enriched: CreateCommentRequest = {
-        ...pendingPost,
-        displayName: values.displayName,
-        email: values.email,
-      };
-      await submitComment(enriched);
-      identity.refresh();
-      setIdentityModalMode(null);
-      setPendingPost(null);
-    },
-    [identity, identityModalMode, pendingPost, submitComment],
-  );
-
+  // Track previous total so we only fire the polite announcement on
+  // additions (not on initial render or removals).
+  const previousTotalRef = useRef(0);
+  const lastRoot = tree[0];
+  const lastReply = lastRoot?.children[lastRoot.children.length - 1];
   const announceText = useMemo(() => {
-    const last = tree[0];
+    if (typeof window === "undefined") return "";
+    if (total <= previousTotalRef.current) {
+      previousTotalRef.current = total;
+      return "";
+    }
+    previousTotalRef.current = total;
+    const last = lastReply ?? lastRoot;
     if (!last) return "";
-    return `${last.displayName} ${last.parentCommentId ? "replied" : "commented"}`;
-  }, [tree]);
+    const verb = last.parentCommentId ? "Reply added by" : "Comment added by";
+    return `${verb} ${last.displayName}`;
+  }, [total, lastRoot, lastReply]);
+
+  // Scroll the matching root row into view whenever a pin is activated.
+  const sheetBodyRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (!scrollTargetCommentId) return;
+    const id = scrollTargetCommentId;
+    const t = setTimeout(() => {
+      const container = sheetBodyRef.current;
+      if (!container) return;
+      const el = container.querySelector<HTMLElement>(`[data-comment-id="${id}"]`);
+      el?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      clearScrollTarget();
+    }, 50);
+    return () => clearTimeout(t);
+  }, [scrollTargetCommentId, clearScrollTarget]);
 
   if (reportRevoked) return null;
 
-  const activeReply =
-    composerOpenFor && composerOpenFor !== "root"
-      ? findNodeById(tree, composerOpenFor)
-      : null;
+  const composerHeader = composer.mode === "reply" ? composer.parent?.displayName : undefined;
+  const composerAnchor = composer.mode === "root" ? composer.anchor : undefined;
+
+  const orphanRoots = counts.orphanRoots;
 
   return (
     <>
+      <AnchoredAffordances
+        tree={tree}
+        countsByKey={counts.byKey}
+        highlightRefreshKey={highlightRefreshKey}
+        onPinActivate={activatePin}
+        onOpenRootComposer={openRootComposer}
+      />
+
+      {selectionAffordance && (
+        <SelectionAffordance
+          position={selectionAffordance.position}
+          onClick={() => {
+            openRootComposer(selectionAffordance.anchor);
+            dismissSelectionAffordance();
+          }}
+        />
+      )}
+
       <div className="fixed bottom-6 right-6 z-40 flex flex-col items-end gap-2">
         <IdentityBadge
           displayName={identity.displayName}
@@ -214,15 +165,15 @@ export function CommentOverlay({
               <SheetTitle>Comments</SheetTitle>
             </SheetHeader>
 
-            <div className="flex-1 overflow-y-auto pr-2">
+            <div ref={sheetBodyRef} className="flex-1 overflow-y-auto pr-2">
               {query.isLoading && (
-                <div className="space-y-3">
+                <div className="space-y-3" data-testid="comments-loading">
                   <div className="h-16 animate-pulse rounded bg-muted" />
                   <div className="h-12 animate-pulse rounded bg-muted" />
                 </div>
               )}
               {query.error && !query.isLoading && (
-                <p className="text-sm text-destructive">
+                <p className="text-sm text-destructive" role="alert">
                   Couldn’t load comments — retry coming up on next poll.
                 </p>
               )}
@@ -232,47 +183,71 @@ export function CommentOverlay({
               {tree.length > 0 && (
                 <div className="space-y-3">
                   {tree.map((node) => (
-                    <CommentRow
-                      key={node.id}
-                      node={node}
-                      depth={0}
-                      onReply={handleReplyClick}
-                    />
+                    <div key={node.id} data-comment-id={node.id}>
+                      <CommentRow node={node} depth={0} onReply={openReplyComposer} />
+                    </div>
                   ))}
                 </div>
               )}
+
+              {orphanRoots.length > 0 && (
+                <section className="mt-6 border-t border-border pt-3" aria-label="Orphan comments">
+                  <h3 className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    {pluralize("orphan comment", orphanRoots.length, true)}
+                  </h3>
+                  <p className="mb-3 text-xs text-muted-foreground">
+                    The highlighted text these comments referenced has changed; the original quotes
+                    are preserved below.
+                  </p>
+                  <div className="space-y-3">
+                    {orphanRoots.map((node) => (
+                      <div key={node.id} data-comment-id={node.id} data-orphan>
+                        {node.anchor && node.anchor.kind === "text_range" ? (
+                          <blockquote className="mb-1 border-l-2 border-amber-400 pl-2 text-xs italic text-muted-foreground">
+                            “{node.anchor.quote}”
+                          </blockquote>
+                        ) : null}
+                        <CommentRow node={node} depth={0} onReply={openReplyComposer} />
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
             </div>
 
-            {composerOpenFor !== null ? (
+            {composer.mode !== "closed" ? (
               <CommentComposer
-                parentDisplayName={activeReply?.displayName ?? undefined}
-                anchor={composerOpenFor === "root" ? rootAnchor : undefined}
+                parentDisplayName={composerHeader}
+                anchor={composerAnchor}
                 externalError={composerError}
-                isSubmitting={postComment.isPending}
-                onCancel={() => setComposerOpenFor(null)}
-                onSubmit={handleComposerSubmit}
+                isSubmitting={isPosting}
+                onCancel={closeComposer}
+                onSubmit={(body) => submitComposer(body)}
               />
-            ) : (
-              <Button variant="outline" onClick={handleRootClick}>
-                Add a comment
-              </Button>
-            )}
+            ) : null}
           </SheetContent>
         </Sheet>
       </div>
 
-      <div aria-live="polite" className="sr-only">
+      <div aria-live="polite" className="sr-only" data-testid="comment-announce">
         {announceText}
       </div>
 
       <IdentityCaptureDialog
         open={identityModalMode !== null}
         nameOnly={identityModalMode === "edit-name"}
-        isSubmitting={postComment.isPending}
+        isSubmitting={isPosting}
         onOpenChange={(open) => {
           if (!open) setIdentityModalMode(null);
         }}
-        onSubmit={handleIdentitySubmit}
+        onSubmit={async (values) => {
+          if (identityModalMode === "edit-name") {
+            identity.refresh();
+            setIdentityModalMode(null);
+            return;
+          }
+          await retryPendingPost(values);
+        }}
       />
     </>
   );

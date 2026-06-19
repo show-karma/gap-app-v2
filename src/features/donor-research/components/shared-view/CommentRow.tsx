@@ -1,7 +1,7 @@
 "use client";
 
-import { memo, useState } from "react";
 import pluralize from "pluralize";
+import { memo, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import type { SharedReportCommentNode } from "@/types/donor-research-comments";
@@ -69,9 +69,7 @@ const CommentRowComponent = ({ node, depth = 0, onReply }: CommentRowProps) => {
             </Badge>
           )}
           <span className="text-muted-foreground">{formatRelative(node.createdAt)}</span>
-          {node._optimistic && (
-            <span className="text-muted-foreground">Sending…</span>
-          )}
+          {node._optimistic && <span className="text-muted-foreground">Sending…</span>}
         </header>
         <div className="whitespace-pre-wrap text-sm leading-relaxed">
           {lines.map((line, idx) => (

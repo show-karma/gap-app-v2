@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
 import { cookies, headers as nextHeaders } from "next/headers";
+import { type NextRequest, NextResponse } from "next/server";
 
 import { envVars } from "@/utilities/enviromentVars";
 
@@ -67,11 +67,7 @@ async function buildForwardHeaders(token: string, contentType?: string): Promise
   return out;
 }
 
-function copySetCookies(
-  upstream: Response,
-  next: NextResponse,
-  isProd: boolean
-): void {
+function copySetCookies(upstream: Response, next: NextResponse, isProd: boolean): void {
   // Re-issue every Set-Cookie from the indexer on the FE origin with a
   // path scoped to the proxy. The indexer issues drsc_session
   // (HttpOnly) and drsc_name (HttpOnly=false). We preserve those
@@ -125,9 +121,7 @@ export async function GET(request: NextRequest, ctx: Params): Promise<NextRespon
       cache: "no-store",
     });
   } catch {
-    return applyNoStore(
-      NextResponse.json({ error: "indexer_unreachable" }, { status: 502 })
-    );
+    return applyNoStore(NextResponse.json({ error: "indexer_unreachable" }, { status: 502 }));
   }
 
   const body = await upstream.json().catch(() => ({}));
@@ -150,9 +144,7 @@ export async function POST(request: NextRequest, ctx: Params): Promise<NextRespo
       cache: "no-store",
     });
   } catch {
-    return applyNoStore(
-      NextResponse.json({ error: "indexer_unreachable" }, { status: 502 })
-    );
+    return applyNoStore(NextResponse.json({ error: "indexer_unreachable" }, { status: 502 }));
   }
 
   const body = await upstream.json().catch(() => ({}));

@@ -41,13 +41,8 @@ export interface CommenterIdentity {
  * flag is plumbed in from the parent (the SharedReportView knows
  * whether the Privy session matches the report's advisor_id).
  */
-export function useCommenterIdentity(
-  token: string,
-  isAdvisor: boolean,
-): CommenterIdentity {
-  const [displayName, setDisplayName] = useState<string | null>(() =>
-    readNameCookie(),
-  );
+export function useCommenterIdentity(token: string, isAdvisor: boolean): CommenterIdentity {
+  const [displayName, setDisplayName] = useState<string | null>(() => readNameCookie());
 
   const refresh = useCallback(() => {
     setDisplayName(readNameCookie());

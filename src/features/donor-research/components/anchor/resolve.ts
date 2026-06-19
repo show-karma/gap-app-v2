@@ -29,10 +29,7 @@ function normalizeWhitespace(text: string): string {
  *
  * Returns null on miss; the caller routes that to the orphan lane.
  */
-function buildRangeForQuote(
-  targetEl: Element,
-  anchor: TextRangeAnchor
-): Range | null {
+function buildRangeForQuote(targetEl: Element, anchor: TextRangeAnchor): Range | null {
   const normalized = normalizeWhitespace(targetEl.textContent ?? "");
   const search = anchor.prefix + anchor.quote + anchor.suffix;
   let startIdx = normalized.indexOf(search);
@@ -62,7 +59,8 @@ function buildRangeForQuote(
     // For each character in `original`, compute how it contributes to
     // the normalized form. We treat any run of whitespace as a single
     // space — same rule used in `normalizeWhitespace`.
-    let lastWasSpace = normalizedSoFar > 0 && normalizedNeighbourEndsWith(targetEl, walker, textNode) === " ";
+    let lastWasSpace =
+      normalizedSoFar > 0 && normalizedNeighbourEndsWith(targetEl, walker, textNode) === " ";
     for (let i = 0; i < original.length; i += 1) {
       const ch = original[i];
       const isWs = /\s/.test(ch);
@@ -104,18 +102,11 @@ function buildRangeForQuote(
 // Placeholder helper — the resolver walks left-to-right so we don't
 // actually need lookahead; declaring this keeps the contribution
 // algorithm readable without adding a runtime dep.
-function normalizedNeighbourEndsWith(
-  _targetEl: Element,
-  _walker: TreeWalker,
-  _node: Text
-): string {
+function normalizedNeighbourEndsWith(_targetEl: Element, _walker: TreeWalker, _node: Text): string {
   return "";
 }
 
-export function resolveAnchor(
-  anchor: CommentAnchor,
-  root: Element
-): ResolvedAnchor {
+export function resolveAnchor(anchor: CommentAnchor, root: Element): ResolvedAnchor {
   const target = findTargetElement(anchor, root);
   if (!target) return { kind: "orphan" };
 

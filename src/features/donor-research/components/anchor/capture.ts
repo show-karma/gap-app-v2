@@ -49,10 +49,7 @@ export function captureTextRangeAnchor(selection: Selection): CommentAnchor | nu
   const startAncestor = findAnchorAncestor(range.startContainer);
   const endAncestor = findAnchorAncestor(range.endContainer);
   if (!startAncestor || !endAncestor) return null;
-  if (
-    startAncestor.kind !== endAncestor.kind ||
-    startAncestor.id !== endAncestor.id
-  ) {
+  if (startAncestor.kind !== endAncestor.kind || startAncestor.id !== endAncestor.id) {
     return null;
   }
 
@@ -61,18 +58,14 @@ export function captureTextRangeAnchor(selection: Selection): CommentAnchor | nu
 
   const targetEl =
     startAncestor.kind === "candidate"
-      ? (
-          (range.startContainer instanceof Element
-            ? range.startContainer
-            : range.startContainer.parentElement
-          )?.closest(`[data-candidate-id="${startAncestor.id}"]`) ?? null
-        )
-      : (
-          (range.startContainer instanceof Element
-            ? range.startContainer
-            : range.startContainer.parentElement
-          )?.closest(`[data-section="${startAncestor.id}"]`) ?? null
-        );
+      ? ((range.startContainer instanceof Element
+          ? range.startContainer
+          : range.startContainer.parentElement
+        )?.closest(`[data-candidate-id="${startAncestor.id}"]`) ?? null)
+      : ((range.startContainer instanceof Element
+          ? range.startContainer
+          : range.startContainer.parentElement
+        )?.closest(`[data-section="${startAncestor.id}"]`) ?? null);
   if (!targetEl) return null;
 
   const targetText = normalizeWhitespace(targetEl.textContent ?? "");

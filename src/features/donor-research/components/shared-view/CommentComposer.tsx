@@ -41,7 +41,10 @@ export function CommentComposer({
   };
 
   return (
-    <form className="space-y-2 rounded-md border border-border bg-background p-3" onSubmit={handleSubmit}>
+    <form
+      className="space-y-2 rounded-md border border-border bg-background p-3"
+      onSubmit={handleSubmit}
+    >
       {isReply ? (
         <div className="text-xs text-muted-foreground">Replying to {parentDisplayName}</div>
       ) : anchor ? (

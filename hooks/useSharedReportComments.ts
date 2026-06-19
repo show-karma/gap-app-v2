@@ -1,9 +1,9 @@
 import {
+  type UseMutationResult,
+  type UseQueryResult,
   useMutation,
   useQuery,
   useQueryClient,
-  type UseMutationResult,
-  type UseQueryResult,
 } from "@tanstack/react-query";
 import { useMemo } from "react";
 
@@ -50,7 +50,7 @@ interface SharedReportCommentsHookResult {
  */
 export function useSharedReportComments(
   token: string,
-  opts: UseSharedReportCommentsOptions = {},
+  opts: UseSharedReportCommentsOptions = {}
 ): SharedReportCommentsHookResult {
   const queryClient = useQueryClient();
   const enabled = opts.enabled !== false;
@@ -80,7 +80,7 @@ export function useSharedReportComments(
     onMutate: async ({ request, idempotencyKey }) => {
       await queryClient.cancelQueries({ queryKey: sharedReportCommentsKey(token) });
       const snapshot = queryClient.getQueryData<SharedReportCommentsResponse>(
-        sharedReportCommentsKey(token),
+        sharedReportCommentsKey(token)
       );
       const optimistic: SharedReportComment = {
         id: `optimistic-${idempotencyKey}`,
@@ -103,7 +103,7 @@ export function useSharedReportComments(
             return { ...base, roots: [optimistic, ...base.roots] };
           }
           return { ...base, replies: [...base.replies, optimistic] };
-        },
+        }
       );
       return { snapshot };
     },

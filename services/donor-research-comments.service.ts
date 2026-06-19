@@ -1,11 +1,11 @@
 import {
   type CreateCommentRequest,
-  type SharedReportComment,
-  type SharedReportCommentNode,
-  type SharedReportCommentsResponse,
   IdempotencyCollisionError,
   IdentityRequiredError,
   RateLimitedError,
+  type SharedReportComment,
+  type SharedReportCommentNode,
+  type SharedReportCommentsResponse,
 } from "@/types/donor-research-comments";
 
 /**
@@ -24,7 +24,7 @@ function clearIdentityUrl(token: string): string {
 export async function listSharedReportComments(
   token: string,
   params: { cursor?: string; limit?: number } = {},
-  signal?: AbortSignal,
+  signal?: AbortSignal
 ): Promise<SharedReportCommentsResponse> {
   const qs = new URLSearchParams();
   if (params.cursor) qs.set("cursor", params.cursor);
@@ -44,7 +44,7 @@ export async function listSharedReportComments(
 export async function postSharedReportComment(
   token: string,
   body: CreateCommentRequest,
-  idempotencyKey: string,
+  idempotencyKey: string
 ): Promise<SharedReportComment> {
   const res = await fetch(proxyUrl(token), {
     method: "POST",
@@ -88,7 +88,7 @@ export async function clearCommenterIdentity(token: string): Promise<void> {
  */
 export function assembleCommentTree(
   roots: SharedReportComment[],
-  replies: SharedReportComment[],
+  replies: SharedReportComment[]
 ): SharedReportCommentNode[] {
   const byId = new Map<string, SharedReportCommentNode>();
   const rootNodes: SharedReportCommentNode[] = [];
