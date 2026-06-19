@@ -64,7 +64,7 @@ const HISTORY_DETAIL = { ...HISTORY_ENTRY, turns: [SAVED_TURN] };
 
 describe("searchHistoryService", () => {
   beforeEach(() => {
-    vi.restoreAllMocks();
+    vi.clearAllMocks();
     vi.spyOn(TokenManager, "getToken").mockResolvedValue(null);
   });
 
