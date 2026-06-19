@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { fetchSharedReport } from "@/services/donor-research.service";
 import type { DonorResearchReportStatus, ResearchReportDetail } from "@/types/donor-research";
 import { ReportBrief } from "../report-brief/ReportBrief";
+import { CommentOverlay } from "./CommentOverlay";
 
 interface SharedReportViewProps {
   token: string;
@@ -153,5 +154,13 @@ export function SharedReportView({ token }: SharedReportViewProps) {
     );
   }
 
-  return <ReportBrief report={payload} isTerminal={isTerminal(payload)} variant="shared" />;
+  return (
+    <>
+      <ReportBrief report={payload} isTerminal={isTerminal(payload)} variant="shared" />
+      {/* Comment overlay (U11). The donor-shared route is anonymous; the
+       *  advisor flag is wired up once the Privy session shape is
+       *  available on this route (deferred — defaults to false in v1). */}
+      <CommentOverlay token={token} isAdvisor={false} />
+    </>
+  );
 }
