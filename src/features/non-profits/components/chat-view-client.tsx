@@ -60,6 +60,12 @@ import { ProgressView } from "./progress-view";
 import { SearchFeedback } from "./search-feedback";
 import { SearchHistoryPanel } from "./search-history-panel";
 
+// Sign-in recovery polls for the auth JWT. The Privy↔wagmi sync can lag the
+// token by ~10-15s, so poll across a window that comfortably covers it rather
+// than giving up early and leaving the chat stuck until a manual refresh.
+const AUTH_RECOVERY_POLL_INTERVAL_MS = 400;
+const AUTH_RECOVERY_POLL_TIMEOUT_MS = 16_000;
+
 // ── Inline starter prompts (LOCKED decision — do NOT use suggested-queries.tsx) ──
 
 const STARTER_PROMPTS = [
@@ -279,7 +285,7 @@ export function ChatView({ searchId }: { searchId?: string }) {
     if (authRecoveredRef.current === searchId) return;
     let cancelled = false;
     let timer: ReturnType<typeof setTimeout> | undefined;
-    let attempts = 0;
+    const pollDeadline = Date.now() + AUTH_RECOVERY_POLL_TIMEOUT_MS;
     const recover = () => {
       if (authRecoveredRef.current === searchId) return;
       authRecoveredRef.current = searchId;
@@ -303,9 +309,8 @@ export function ChatView({ searchId }: { searchId?: string }) {
         if (cancelled) return;
         if (token) {
           recover();
-        } else if (attempts < 8) {
-          attempts += 1;
-          timer = setTimeout(tryRecover, 400);
+        } else if (Date.now() < pollDeadline) {
+          timer = setTimeout(tryRecover, AUTH_RECOVERY_POLL_INTERVAL_MS);
         }
       });
     };
