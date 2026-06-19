@@ -219,14 +219,12 @@ export const useUpdateActions = (update: UpdateType) => {
           uid: findUpdate?.uid as `0x${string}`,
           chainID: findUpdate.chainID,
           checkIfExists: checkIfAttestationExists,
-          onSuccess: async () => {
-            await refreshDataAfterDeletion();
-          },
           toastMessages: {
             success: deleteMessage,
             loading: `Deleting ${update.type.toLowerCase()}...`,
           },
         });
+        await refreshDataAfterDeletion();
       } else {
         try {
           const res = await findUpdate.revoke(walletSigner, changeStepperStep);
@@ -244,21 +242,20 @@ export const useUpdateActions = (update: UpdateType) => {
           // Silently fallback to off-chain revoke
           dismiss(); // Reset toast since we're falling back
 
-          const success = await performOffChainRevoke({
-            uid: findUpdate?.uid as `0x${string}`,
-            chainID: findUpdate.chainID,
-            checkIfExists: checkIfAttestationExists,
-            onSuccess: async () => {
-              await refreshDataAfterDeletion();
-            },
-            toastMessages: {
-              success: deleteMessage,
-              loading: `Deleting ${update.type.toLowerCase()}...`,
-            },
-          });
-
-          if (!success) {
-            // Both methods failed - throw the original error to maintain expected behavior
+          try {
+            await performOffChainRevoke({
+              uid: findUpdate?.uid as `0x${string}`,
+              chainID: findUpdate.chainID,
+              checkIfExists: checkIfAttestationExists,
+              toastMessages: {
+                success: deleteMessage,
+                loading: `Deleting ${update.type.toLowerCase()}...`,
+              },
+            });
+            await refreshDataAfterDeletion();
+          } catch {
+            // Both methods failed - throw the original on-chain error to
+            // preserve its context.
             throw onChainError;
           }
         }

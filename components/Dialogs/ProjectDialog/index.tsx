@@ -17,9 +17,15 @@ import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { type FC, Fragment, type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
-import { type Hex, isAddress, zeroHash } from "viem";
+import { type Hex, zeroHash } from "viem";
 import { useAccount } from "wagmi";
-import { z } from "zod";
+/* eslint-disable @next/next/no-img-element */
+import {
+  PROJECT_DETAILS_COUNTER_THRESHOLD,
+  PROJECT_DETAILS_MAX_LENGTH,
+  projectSchema,
+  type SchemaType,
+} from "@/components/Dialogs/ProjectDialog/schema";
 import {
   DiscordIcon,
   GithubIcon,
@@ -56,8 +62,13 @@ import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";
 import { validateGithubInput } from "@/utilities/github";
 import { INDEXER } from "@/utilities/indexer";
+import { isRetryableChainError } from "@/utilities/isRetryableChainError";
 import { MESSAGES } from "@/utilities/messages";
-import { gapSupportedNetworks } from "@/utilities/network";
+import {
+  gapSupportedNetworks,
+  PROJECT_CREATION_DEFAULT_CHAIN_ID,
+  SHOW_PROJECT_CREATION_NETWORK_SELECTOR,
+} from "@/utilities/network";
 import { PAGES } from "@/utilities/pages";
 import { sanitizeObject } from "@/utilities/sanitize";
 import { getProjectById } from "@/utilities/sdk";
@@ -67,67 +78,11 @@ import { cn } from "@/utilities/tailwind";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { SimilarProjectsDialog } from "../SimilarProjectsDialog";
 import { ContactInfoSection } from "./ContactInfoSection";
-import { NetworkDropdown } from "./NetworkDropdown";
 
 const inputStyle = "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";
 const socialMediaInputStyle =
   "bg-transparent border-0 flex flex-1 p-2 focus:outline-none outline-none focus-visible:outline-none dark:bg-zinc-900 dark:text-white text-sm rounded-md";
 const labelStyle = "text-slate-700 text-sm font-bold leading-tight dark:text-slate-200";
-
-const projectSchema = z.object({
-  title: z
-    .string()
-    .min(3, { message: MESSAGES.PROJECT_FORM.TITLE.MIN })
-    .max(50, { message: MESSAGES.PROJECT_FORM.TITLE.MAX }),
-  chainID: z.number({
-    error: "Network is required",
-  }),
-  locationOfImpact: z.string().optional(),
-  description: z.string().min(1, {
-    message: "Description is required",
-  }),
-  problem: z.string().min(1, {
-    message: "Problem is required",
-  }),
-  solution: z.string().min(1, {
-    message: "Solution is required",
-  }),
-  missionSummary: z.string().min(1, {
-    message: "Mission Summary is required",
-  }),
-  recipient: z
-    .string()
-    .optional()
-    .refine(
-      (input) => !input || input?.length === 0 || isAddress(input),
-      MESSAGES.PROJECT_FORM.RECIPIENT
-    ),
-  // tags: z.custom<string>(
-  //   (input) =>
-  //     (input as string).split(',').every((field) => field.trim().length >= 3),
-  //   MESSAGES.PROJECT_FORM.TAGS
-  // ),
-  twitter: z
-    .string()
-    .refine((value) => !value.includes("@"), {
-      message: MESSAGES.PROJECT_FORM.SOCIALS.TWITTER,
-    })
-    .optional(),
-  github: z.string().optional(),
-  discord: z.string().optional(),
-  website: z.string().optional(),
-  linkedin: z.string().optional(),
-  pitchDeck: z.string().optional(),
-  demoVideo: z.string().optional(),
-  farcaster: z.string().optional(),
-  profilePicture: z.string().optional(),
-  businessModel: z.string().optional(),
-  stageIn: z.string().optional(),
-  raisedMoney: z.string().optional(),
-  pathToTake: z.string().optional(),
-});
-
-type SchemaType = z.infer<typeof projectSchema>;
 
 type ProjectDialogProps = {
   buttonElement?: {
@@ -227,11 +182,10 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   const { chain } = useAccount();
   const { switchChainAsync } = useWallet();
   const [isLoading, setIsLoading] = useState(false);
-  const [isChangingNetwork, setIsChangingNetwork] = useState(false);
-  const { push, refresh } = useRouter();
+  const router = useRouter();
   const { gap } = useGap();
   const { openSimilarProjectsModal, isSimilarProjectsModalOpen } = useSimilarProjectsModalStore();
-  const { setupChainAndWallet, smartWalletAddress } = useSetupChainAndWallet();
+  const { setupChainAndWallet, smartWalletAddress, hasEmbeddedWallet } = useSetupChainAndWallet();
   // Resolve address: wagmi (external wallet) > useAuth (Privy wallets) > smartWalletAddress (embedded wallet for social login)
   const address = wagmiAddress || authAddress || (smartWalletAddress as `0x${string}` | undefined);
   const isConnected = wagmiIsConnected || authIsConnected || !!smartWalletAddress;
@@ -249,51 +203,25 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       resolver: zodResolver(projectSchema),
       reValidateMode: "onChange",
       mode: "onChange",
-      defaultValues: dataToUpdate,
+      // New projects are always created on the default chain; existing projects
+      // keep their own chainID.
+      defaultValues: dataToUpdate ?? { chainID: PROJECT_CREATION_DEFAULT_CHAIN_ID },
     });
   const { errors } = formState;
 
   // Watch the chainID value for the useEffect
   const chainIDValue = watch("chainID");
 
-  // Handle network change and chain switching
-  const handleNetworkChange = async (networkId: number) => {
-    if (!isConnected || !address) {
-      return;
-    }
-
-    setIsChangingNetwork(true);
-
-    try {
-      // If we're not on the selected network, switch to it
-      if (chain?.id !== networkId) {
-        await switchChainAsync({ chainId: networkId });
-        // Wait a bit for the chain switch to complete
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-      }
-
-      // Now get the wallet client for the new chain
-      const { walletClient, error } = await safeGetWalletClient(networkId);
-
-      if (!error && walletClient) {
-        const signer = await walletClientToSigner(walletClient);
-        setWalletSigner(signer);
-      } else {
-        setWalletSigner(null);
-        showError("Failed to connect to the selected network");
-      }
-    } catch (error) {
-      showError("Failed to switch network. Please try again.");
-      setWalletSigner(null);
-      throw error; // Re-throw to let NetworkDropdown handle it
-    } finally {
-      setIsChangingNetwork(false);
-    }
-  };
-
   // Prepare wallet signer when wallet is connected and chain is selected
   useEffect(() => {
     const prepareSigner = async () => {
+      // Embedded (email/Google) wallets get their gasless signer at submit via
+      // setupChainAndWallet — wagmi's safeGetWalletClient can't build one for them
+      // and would log spurious "Failed to prepare wallet signer" errors.
+      if (hasEmbeddedWallet) {
+        setWalletSigner(null);
+        return;
+      }
       if (isConnected && address && chainIDValue) {
         try {
           // Check if we're on the correct chain
@@ -322,7 +250,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
     };
 
     prepareSigner();
-  }, [isConnected, address, chainIDValue, chain?.id]);
+  }, [isConnected, address, chainIDValue, chain?.id, hasEmbeddedWallet]);
 
   // Reset form when switching between create/edit modes or when modal opens
   useEffect(() => {
@@ -371,8 +299,9 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         setLogoUploadProgress(0);
         setTempLogoKey(null);
       } else {
-        // Create mode - reset to empty form
+        // Create mode - reset to empty form (always on the default chain)
         reset({
+          chainID: PROJECT_CREATION_DEFAULT_CHAIN_ID,
           title: "",
           description: "",
           problem: "",
@@ -759,8 +688,8 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
           setTimeout(() => {
             dismiss();
             closeModal();
-            push(PAGES.PROJECT.SCREENS.NEW_GRANT(slug || project.uid));
-            refresh();
+            router.push(PAGES.PROJECT.SCREENS.NEW_GRANT(slug || project.uid));
+            router.refresh();
           }, 1500);
         }
       });
@@ -770,12 +699,18 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       setContacts([]);
       setCustomLinks([]);
     } catch (error) {
-      showError(MESSAGES.PROJECT.CREATE.ERROR(data.title));
+      // A transient chain-switch / bundler-RPC hiccup (GAP-FRONTEND-23C) is
+      // recoverable by retrying — tell the user that instead of a dead-end
+      // generic error. The form data is preserved either way.
+      const userMessage = isRetryableChainError(error)
+        ? MESSAGES.PROJECT.CREATE.RETRYABLE_ERROR
+        : MESSAGES.PROJECT.CREATE.ERROR(data.title);
+      showError(userMessage);
       errorManager(
         MESSAGES.PROJECT.CREATE.ERROR(data.title),
         error,
         { address, data },
-        { error: MESSAGES.PROJECT.CREATE.ERROR(data.title) }
+        { error: userMessage }
       );
       // Don't reset form on error - keep user's data and reopen modal
       setShouldResetOnOpen(false);
@@ -897,18 +832,21 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
             refreshProject();
           } else {
             const project = res.details?.slug || res.uid;
-            push(PAGES.PROJECT.OVERVIEW(project));
-            refresh();
+            router.push(PAGES.PROJECT.OVERVIEW(project));
+            router.refresh();
           }
         }, 1500);
       });
     } catch (error) {
-      showError(MESSAGES.PROJECT.UPDATE.ERROR);
+      const userMessage = isRetryableChainError(error)
+        ? MESSAGES.PROJECT.UPDATE.RETRYABLE_ERROR
+        : MESSAGES.PROJECT.UPDATE.ERROR;
+      showError(userMessage);
       errorManager(
         `Error updating project ${projectToUpdate?.details?.slug || projectToUpdate?.uid}`,
         error,
         { ...data, address },
-        { error: MESSAGES.PROJECT.UPDATE.ERROR }
+        { error: userMessage }
       );
       setShouldResetOnOpen(false);
       openModal();
@@ -1081,6 +1019,9 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                   shouldValidate: true,
                 });
               }}
+              maxLength={PROJECT_DETAILS_MAX_LENGTH}
+              showCharacterCount
+              characterCountThreshold={PROJECT_DETAILS_COUNTER_THRESHOLD}
             />
             <p className="text-red-500">{errors.description?.message}</p>
           </div>
@@ -1097,6 +1038,9 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                   shouldValidate: true,
                 });
               }}
+              maxLength={PROJECT_DETAILS_MAX_LENGTH}
+              showCharacterCount
+              characterCountThreshold={PROJECT_DETAILS_COUNTER_THRESHOLD}
             />
             <p className="text-red-500">{errors.problem?.message}</p>
           </div>
@@ -1112,6 +1056,9 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                   shouldValidate: true,
                 });
               }}
+              maxLength={PROJECT_DETAILS_MAX_LENGTH}
+              showCharacterCount
+              characterCountThreshold={PROJECT_DETAILS_COUNTER_THRESHOLD}
             />
             <p className="text-red-500">{errors.solution?.message}</p>
           </div>
@@ -1127,6 +1074,9 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                   shouldValidate: true,
                 });
               }}
+              maxLength={PROJECT_DETAILS_MAX_LENGTH}
+              showCharacterCount
+              characterCountThreshold={PROJECT_DETAILS_COUNTER_THRESHOLD}
             />
             <p className="text-red-500">{errors.missionSummary?.message}</p>
           </div>
@@ -1524,6 +1474,28 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       desc: "How can we contact you?",
       fields: (
         <div className="flex w-full min-w-[320px] flex-col gap-8">
+          {SHOW_PROJECT_CREATION_NETWORK_SELECTOR && !projectToUpdate && (
+            <div className="flex w-full flex-col gap-2">
+              <label htmlFor="network-select" className={labelStyle}>
+                Network *
+              </label>
+              <select
+                id="network-select"
+                className={inputStyle}
+                value={watch("chainID") ?? PROJECT_CREATION_DEFAULT_CHAIN_ID}
+                onChange={(e) => {
+                  setValue("chainID", +e.target.value, { shouldValidate: true });
+                }}
+              >
+                {gapSupportedNetworks.map((chain) => (
+                  <option key={chain.id} value={chain.id}>
+                    {chain.name}
+                  </option>
+                ))}
+              </select>
+              <p className="text-red-500">{errors.chainID?.message}</p>
+            </div>
+          )}
           <ContactInfoSection
             existingContacts={contacts}
             isEditing={!!projectToUpdate}
@@ -1533,37 +1505,6 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
             }}
             removeContact={(contact) => setContacts(contacts.filter((c) => c.id !== contact.id))}
           />
-          {!projectToUpdate ? (
-            <div className="flex w-full flex-col gap-2 border-t border-zinc-200 dark:border-zinc-700 pt-8">
-              <label htmlFor="chain-id-input" className={labelStyle}>
-                Choose a network to create your project
-              </label>
-              <NetworkDropdown
-                onSelectFunction={(networkId) => {
-                  setValue("chainID", networkId, {
-                    shouldValidate: true,
-                  });
-                  // Reset faucet funding status when network changes
-                  setFaucetFunded(false);
-                }}
-                onNetworkChange={handleNetworkChange}
-                isChangingNetwork={isChangingNetwork}
-                networks={gapSupportedNetworks}
-                previousValue={watch("chainID")}
-              />
-              <p className="text-red-500">{errors.chainID?.message}</p>
-
-              {/* Show network status */}
-              {isChangingNetwork && (
-                <div className="mt-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                  <p className="text-sm text-blue-800 dark:text-blue-200 font-medium flex items-center gap-2">
-                    <span className="h-4 w-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
-                    Switching to selected network…
-                  </p>
-                </div>
-              )}
-            </div>
-          ) : null}
         </div>
       ),
     },

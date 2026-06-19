@@ -1,167 +1,92 @@
-"use client";
+import type { Metadata } from "next";
+import { cache } from "react";
+import { PROJECT_NAME } from "@/constants/brand";
+import type { FundingProgram } from "@/types/whitelabel-entities";
+import { envVars } from "@/utilities/enviromentVars";
+import fetchData from "@/utilities/fetchData";
+import { cleanMarkdownForPlainText } from "@/utilities/markdown";
+import { DEFAULT_DESCRIPTION, SITE_URL, twitterMeta } from "@/utilities/meta";
+import { getWhitelabelContext } from "@/utilities/whitelabel-server";
+import ProgramDetailClient from "./ProgramDetailClient";
 
-import { AlertCircle, ArrowLeft, RefreshCw } from "lucide-react";
-import Image from "next/image";
-import { useParams } from "next/navigation";
-import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
-import { ProgramByline } from "@/features/programs/components/ProgramByline";
-import { ProgramDetailsSidebar } from "@/features/programs/components/ProgramDetailsSidebar";
-import { useProgram } from "@/features/programs/hooks/use-program";
-import { Link } from "@/src/components/navigation/Link";
-import { PermissionProvider } from "@/src/core/rbac/context/permission-context";
+// generateMetadata blocks on the indexer, so give a cold render headroom over
+// the platform default (~10s) — the same 504 class this PR hardens the sitemap
+// routes against. The fetch is light (one program) and cached, so this is a
+// ceiling, not a budget.
+export const maxDuration = 30;
 
-function isProgramEnabled(program: {
-  applicationConfig: { isEnabled: boolean; formSchema?: unknown } | null;
-  metadata: { startsAt?: string; endsAt?: string };
-}): boolean {
-  const isEnabled = program.applicationConfig?.isEnabled ?? false;
-  const hasFormConfig = !!program.applicationConfig?.formSchema;
-  const isDeadlinePassed = program.metadata?.endsAt
-    ? new Date(program.metadata.endsAt) < new Date()
-    : false;
-  const now = new Date();
-  const startsAt = program.metadata?.startsAt ? new Date(program.metadata.startsAt) : null;
-  const endsAt = program.metadata?.endsAt ? new Date(program.metadata.endsAt) : null;
-  const isOpen = startsAt && endsAt ? now >= startsAt && now <= endsAt : true;
-  return hasFormConfig && isEnabled && isOpen && !isDeadlinePassed;
-}
+type Params = Promise<{
+  communityId: string;
+  programId: string;
+}>;
 
-function ProgramDetailContent() {
-  const { communityId, programId } = useParams<{
-    communityId: string;
-    programId: string;
-  }>();
-
-  const { program, loading, error, refetch } = useProgram(programId);
-
-  // Loading state
-  if (loading) {
-    return (
-      <div className="flex flex-col gap-5">
-        <div className="mb-6 h-5 w-32 animate-pulse rounded bg-muted" />
-        <div className="flex flex-col gap-8 lg:flex-row">
-          <div className="flex-1 space-y-4">
-            <div className="h-10 w-3/4 animate-pulse rounded-lg bg-muted" />
-            <div className="h-5 w-1/2 animate-pulse rounded bg-muted" />
-            <div className="space-y-2">
-              <div className="h-4 w-full animate-pulse rounded bg-muted" />
-              <div className="h-4 w-full animate-pulse rounded bg-muted" />
-              <div className="h-4 w-2/3 animate-pulse rounded bg-muted" />
-            </div>
-          </div>
-          <div className="h-80 w-full animate-pulse rounded-xl bg-muted lg:w-96" />
-        </div>
-      </div>
+// Server-side program fetch for metadata only. Public endpoint (isAuthorized
+// false) — these pages ship in the funding-programs sitemap. Reuses fetchData
+// (base-URL resolution + error shaping) and React.cache, matching the sibling
+// apply/ route. A failed fetch falls back to generic copy — the canonical
+// below does not depend on it.
+const getProgramDetails = cache(async (programId: string): Promise<FundingProgram | null> => {
+  try {
+    const [data] = await fetchData<FundingProgram>(
+      `/v2/funding-program-configs/${encodeURIComponent(programId)}`,
+      "GET",
+      {},
+      {},
+      {},
+      false
     );
+    return data;
+  } catch {
+    return null;
   }
+});
 
-  // Error state
-  if (error) {
-    return (
-      <div className="mx-auto max-w-xl">
-        <div className="flex flex-col items-center gap-4 rounded-xl border border-border p-8 text-center">
-          <AlertCircle className="h-12 w-12 text-destructive" />
-          <h1 className="text-xl font-semibold">Failed to load program</h1>
-          <p className="text-sm text-muted-foreground">{error.message}</p>
-          <button
-            type="button"
-            onClick={() => refetch()}
-            className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-          >
-            <RefreshCw className="h-4 w-4" />
-            Try again
-          </button>
-        </div>
-      </div>
-    );
-  }
+export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
+  const { communityId, programId } = await params;
+  const { isWhitelabel, config: wlConfig } = await getWhitelabelContext();
 
-  // Empty state
-  if (!program) {
-    return (
-      <div className="mx-auto max-w-xl">
-        <div className="flex flex-col items-center gap-4 rounded-xl border border-border p-8 text-center">
-          <h1 className="text-xl font-semibold">Program not found</h1>
-          <p className="text-sm text-muted-foreground">
-            The program you are looking for does not exist or has been removed.
-          </p>
-          <Link
-            href={`/community/${communityId}/programs`}
-            className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-          >
-            Browse programs
-          </Link>
-        </div>
-      </div>
-    );
-  }
+  // Self-referential canonical. Without it the page inherits the community
+  // layout's canonical (/community/<id>), so Google treats every program as a
+  // duplicate of the community root and none of the funding-programs sitemap
+  // URLs get indexed as themselves.
+  const canonical = isWhitelabel
+    ? `/programs/${programId}`
+    : `/community/${communityId}/programs/${programId}`;
 
-  const isEnabled = isProgramEnabled(program);
-  const description = program.metadata?.description || "No description available";
+  const program = await getProgramDetails(programId);
+  const programName = program?.metadata?.title || program?.name || "Funding Program";
+  const description =
+    cleanMarkdownForPlainText(
+      program?.metadata?.shortDescription || program?.metadata?.description || "",
+      160
+    ) || DEFAULT_DESCRIPTION;
 
-  return (
-    <div className="flex flex-col gap-5">
-      {/* Back link */}
-      <Link
-        href={`/community/${communityId}/programs`}
-        className="mb-6 inline-flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        Back to programs
-      </Link>
+  const siteUrl = isWhitelabel && wlConfig ? `https://${wlConfig.domain}` : SITE_URL;
+  const ogImageBase = isWhitelabel && wlConfig ? `https://${wlConfig.domain}` : envVars.VERCEL_URL;
+  const ogImage = `${ogImageBase}/api/metadata/communities/${communityId}`;
 
-      <div className="flex flex-col gap-8 lg:flex-row">
-        {/* Main Content */}
-        <div className="flex-1">
-          {/* Banner Image */}
-          {program.metadata?.bannerImg ? (
-            <div className="mb-6 overflow-hidden rounded-xl">
-              <Image
-                src={program.metadata.bannerImg}
-                alt={`${program.metadata?.title || program.name} banner`}
-                width={1200}
-                height={192}
-                className="h-48 w-full object-cover"
-              />
-            </div>
-          ) : null}
-
-          {/* Title */}
-          <h1 className="mb-2 text-3xl font-bold text-foreground">
-            {program.metadata?.title || program.name}
-          </h1>
-
-          {/* Byline */}
-          {program.communitySlug ? (
-            <div className="mb-6">
-              <ProgramByline
-                tenantName={program.communitySlug}
-                tenantLogo={program.metadata?.logoImg}
-                socialLinks={program.metadata?.socialLinks}
-              />
-            </div>
-          ) : null}
-
-          {/* Description — rendered as markdown to preserve formatting */}
-          <MarkdownPreview source={description} />
-        </div>
-
-        {/* Sidebar */}
-        <ProgramDetailsSidebar program={program} communityId={communityId} isEnabled={isEnabled} />
-      </div>
-    </div>
-  );
+  return {
+    title: { absolute: `${programName} | ${PROJECT_NAME}` },
+    description,
+    alternates: { canonical },
+    twitter: {
+      card: "summary_large_image",
+      title: programName,
+      description,
+      creator: twitterMeta.creator,
+      site: twitterMeta.site,
+      images: [{ url: ogImage, alt: programName }],
+    },
+    openGraph: {
+      type: "website",
+      url: `${siteUrl}${canonical}`,
+      title: programName,
+      description,
+      images: [{ url: ogImage, alt: programName }],
+    },
+  };
 }
 
 export default function ProgramDetailPage() {
-  const { communityId, programId } = useParams<{
-    communityId: string;
-    programId: string;
-  }>();
-
-  return (
-    <PermissionProvider resourceContext={{ communityId, programId }}>
-      <ProgramDetailContent />
-    </PermissionProvider>
-  );
+  return <ProgramDetailClient />;
 }

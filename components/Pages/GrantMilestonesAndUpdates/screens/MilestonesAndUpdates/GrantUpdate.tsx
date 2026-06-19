@@ -4,9 +4,9 @@ import { useAccount } from "wagmi";
 import { DeleteDialog } from "@/components/DeleteDialog";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { errorManager } from "@/components/Utilities/errorManager";
-import { useIsCommunityAdmin } from "@/hooks/communities/useIsCommunityAdmin";
 import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useOffChainRevoke } from "@/hooks/useOffChainRevoke";
+import { useProjectAuthorization } from "@/hooks/useProjectAuthorization";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
 import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
@@ -172,18 +172,19 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({ title, description, index, d
           // Silently fallback to off-chain revoke
           setIsStepper(false); // Reset stepper since we're falling back
 
-          const success = await performOffChainRevoke({
-            uid: grantUpdateInstance.uid as `0x${string}`,
-            chainID: grantUpdateInstance.chainID,
-            checkIfExists: checkIfAttestationExists,
-            toastMessages: {
-              success: MESSAGES.GRANT.GRANT_UPDATE.UNDO.SUCCESS,
-              loading: MESSAGES.GRANT.GRANT_UPDATE.UNDO.LOADING,
-            },
-          });
-
-          if (!success) {
-            // Both methods failed - throw the original error to maintain expected behavior
+          try {
+            await performOffChainRevoke({
+              uid: grantUpdateInstance.uid as `0x${string}`,
+              chainID: grantUpdateInstance.chainID,
+              checkIfExists: checkIfAttestationExists,
+              toastMessages: {
+                success: MESSAGES.GRANT.GRANT_UPDATE.UNDO.SUCCESS,
+                loading: MESSAGES.GRANT.GRANT_UPDATE.UNDO.LOADING,
+              },
+            });
+          } catch {
+            // Both methods failed - throw the original on-chain error to
+            // preserve its context.
             throw onChainError;
           }
         }
@@ -202,10 +203,7 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({ title, description, index, d
     }
   };
 
-  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
-  const { isCommunityAdmin } = useIsCommunityAdmin(grant?.communityUID);
-
-  const isAuthorized = isProjectOwner || isProjectAdmin || isContractOwner || isCommunityAdmin;
+  const { isAuthorized } = useProjectAuthorization(grant?.communityUID);
 
   const isVerified: boolean = Array.isArray(update?.verified) && update.verified.length > 0;
 

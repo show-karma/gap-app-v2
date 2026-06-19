@@ -83,13 +83,14 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
 
   const selectedProject = useProjectStore((state) => state.project);
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
+  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const isOwner = useOwnerStore((state) => state.isOwner);
   const { address } = useAuth();
   // Lazy-fetch admin communities — React Query dedupes by queryKey.
   useAdminCommunities(address);
   const communities = useCommunitiesStore((s) => s.communities);
   const isCommunityAdminOfSome = communities.length !== 0;
-  const isAuthorized = isProjectAdmin || isOwner || isCommunityAdminOfSome;
+  const isAuthorized = isProjectOwner || isProjectAdmin || isOwner || isCommunityAdminOfSome;
 
   const isProgramApplication = formData.description.includes("I am applying to participate in the");
   // Initialize form data when editing a grant

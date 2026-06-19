@@ -2,6 +2,7 @@
 
 import { ArrowUpRight } from "lucide-react";
 import type { ResearchReportCandidate } from "@/types/donor-research";
+import { SocialPresence } from "../report-viewer/SocialPresence";
 import { ChapterMark } from "./ChapterMark";
 import { ComplianceStrip } from "./ComplianceStrip";
 import { FinancialsTable } from "./FinancialsTable";
@@ -102,6 +103,8 @@ export function LeadCandidate({ candidate }: LeadCandidateProps) {
           <FinancialsTable financials={candidate.financials} />
 
           {recent.length > 0 ? <LeadCoverage candidate={candidate} /> : null}
+
+          <SocialPresence metrics={candidate.socialMetrics} />
         </div>
 
         <aside className="min-w-0 lg:pl-8 lg:border-l lg:border-border/60">

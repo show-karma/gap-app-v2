@@ -1,147 +1,79 @@
 "use client";
 
-import { Listbox } from "@headlessui/react";
-import { ChevronUpDownIcon } from "@heroicons/react/24/outline";
-import * as Slider from "@radix-ui/react-slider";
 import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 import { Button } from "@/components/Utilities/Button";
+import { useCommunityCategories } from "@/hooks/communities/useCommunityCategories";
+import { useIsCommunityAdmin } from "@/hooks/communities/useIsCommunityAdmin";
+import { useProjectDiscovery } from "@/hooks/communities/useProjectDiscovery";
+import { useCommunityPrograms } from "@/hooks/usePrograms";
+import type { IndicatorDistribution } from "@/services/projectDiscovery";
 import { Link } from "@/src/components/navigation/Link";
-import fetchData from "@/utilities/fetchData";
-import formatCurrency from "@/utilities/formatCurrency";
-import { INDEXER } from "@/utilities/indexer";
+import type { FundingProgramResponse } from "@/src/features/funding-map/types/funding-program";
+import type { Category, ImpactIndicator } from "@/types/impactMeasurement";
+import { PAGES } from "@/utilities/pages";
+import { DiscoveryResults } from "./DiscoveryResults";
+import { FilterSelect } from "./FilterSelect";
+import { IndicatorSliders } from "./IndicatorSliders";
 
-interface Category {
-  id: string;
-  name: string;
-  outputs: Output[];
-  impact_segments: ImpactSegment[];
-}
+const UNTITLED_PROGRAM = "Untitled Program";
 
-interface Output {
-  id: string;
-  name: string;
-}
+const programLabel = (program: FundingProgramResponse | null): string =>
+  program?.metadata?.title || UNTITLED_PROGRAM;
 
-interface ImpactSegment {
-  id: string;
-  createdAt: string;
-  updatedAt: string;
-  name: string;
-  description: string;
-  type: string;
-  impact_indicators: ImpactIndicator[];
-}
-
-interface ImpactIndicator {
-  id: string;
-  name: string;
-  description: string;
-  unitOfMeasure: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface Program {
-  programId: string;
-  name: string;
-}
-
-interface ProjectResult {
-  project: {
-    grantId: string;
-    programId: string;
-    grantUID: string;
-    chainID: number;
-    grantTitle: string;
-    projectUID: string;
-    projectTitle: string;
-    projectSlug: string;
-    projectEndorsers: string[];
-  };
-  impactScore: number;
-  impact: {
-    impactIndicatorId: string;
-    indicatorName: string;
-    indicatorDescription: string;
-    indicatorUnitOfMeasure: string;
-    categoryId: string;
-    categoryName: string;
-    avgValue: number;
-    minValue: number;
-    maxValue: number;
-    lastValue: number;
-    lastTimestamp: string;
-  }[];
-}
-
-interface OutputDistribution {
-  [key: string]: number;
-}
+// Static empty-state help — hoisted so it isn't re-created on every render.
+const PROGRAMS_EMPTY_HELP = (
+  <p className="text-sm text-gray-600 dark:text-zinc-400">
+    No programs have been configured for this community yet.
+  </p>
+);
 
 export const ProjectDiscovery = () => {
   const params = useParams();
   const communityId = params.communityId as string;
 
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSearching, setIsSearching] = useState(false);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [programs, setPrograms] = useState<Program[]>([]);
+  const categoriesQuery = useCommunityCategories(communityId);
+  const programsQuery = useCommunityPrograms(communityId);
+  const { isCommunityAdmin } = useIsCommunityAdmin(communityId);
+  const discovery = useProjectDiscovery(communityId);
+
+  const categories = categoriesQuery.data ?? [];
+  const programs = programsQuery.data ?? [];
+
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
-  const [selectedProgram, setSelectedProgram] = useState<Program | null>(null);
+  const [selectedProgram, setSelectedProgram] = useState<FundingProgramResponse | null>(null);
   const [endorserInput, setEndorserInput] = useState<string>("");
   const [endorsers, setEndorsers] = useState<string[]>([]);
-  const [indicatorDistribution, setIndicatorDistribution] = useState<OutputDistribution>({});
-  const [projectResults, setProjectResults] = useState<ProjectResult[]>([]);
-  const [selectedCategoryIndicators, setSelectedCategoryIndicators] = useState<ImpactIndicator[]>(
-    []
-  );
+  const [indicatorDistribution, setIndicatorDistribution] = useState<IndicatorDistribution>({});
   const [activeCalculation, setActiveCalculation] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchInitialData = async () => {
-      setIsLoading(true);
-      try {
-        const [[categoriesRes, categoriesError], [programsRes, programsError]] = await Promise.all([
-          fetchData(INDEXER.COMMUNITY.CATEGORIES(communityId)),
-          fetchData(INDEXER.COMMUNITY.PROGRAMS(communityId)),
-        ]);
-        if (categoriesError) {
-          console.error("Error fetching categories:", categoriesError);
-        }
-        if (programsError) {
-          console.error("Error fetching programs:", programsError);
-        }
-        setCategories(categoriesRes);
-        setPrograms(programsRes);
-      } catch (error) {
-        console.error("Error fetching initial data:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchInitialData();
-  }, [communityId]);
-
-  useEffect(() => {
-    if (selectedCategory) {
-      // Deduplicate indicators by ID
-      const allIndicators = selectedCategory.impact_segments.flatMap(
-        (segment) => segment.impact_indicators
-      );
-      const uniqueIndicators = Array.from(
-        new Map(allIndicators.map((indicator) => [indicator.id, indicator])).values()
-      );
-      setSelectedCategoryIndicators(uniqueIndicators);
-
-      // Initialize output distribution evenly for unique indicators
-      const initialDistribution = uniqueIndicators.reduce((acc, indicator) => {
-        acc[indicator.id] = 1 / uniqueIndicators.length;
-        return acc;
-      }, {} as OutputDistribution);
-      setIndicatorDistribution(initialDistribution);
-    }
+  const selectedCategoryIndicators = useMemo<ImpactIndicator[]>(() => {
+    if (!selectedCategory) return [];
+    // Both impact_segments and impact_indicators are optional in the shared
+    // types (merged segments from the fetcher carry empty indicator arrays),
+    // so guard each level — flatMap alone does not tolerate undefined.
+    const allIndicators = (selectedCategory.impact_segments ?? []).flatMap(
+      (segment) => segment.impact_indicators ?? []
+    );
+    return Array.from(
+      new Map(allIndicators.map((indicator) => [indicator.id, indicator])).values()
+    );
   }, [selectedCategory]);
+
+  const handleCategoryChange = (category: Category | null) => {
+    setSelectedCategory(category);
+    const allIndicators = (category?.impact_segments ?? []).flatMap(
+      (segment) => segment.impact_indicators ?? []
+    );
+    const uniqueIndicators = Array.from(
+      new Map(allIndicators.map((indicator) => [indicator.id, indicator])).values()
+    );
+    const initialDistribution = uniqueIndicators.reduce((acc, indicator) => {
+      acc[indicator.id] = uniqueIndicators.length ? 1 / uniqueIndicators.length : 0;
+      return acc;
+    }, {} as IndicatorDistribution);
+    setIndicatorDistribution(initialDistribution);
+  };
 
   const handleEndorserAdd = () => {
     if (endorserInput && !endorsers.includes(endorserInput)) {
@@ -161,7 +93,7 @@ export const ProjectDiscovery = () => {
 
     newDistribution[indicatorId] = newValue;
 
-    // Distribute remaining value proportionally among other outputs
+    // Distribute remaining value proportionally among other indicators
     const totalOtherIndicators = otherIndicators.reduce(
       (sum, id) => sum + indicatorDistribution[id],
       0
@@ -176,41 +108,52 @@ export const ProjectDiscovery = () => {
     setIndicatorDistribution(newDistribution);
   };
 
-  const handleSearch = async () => {
-    if (!selectedCategory || !selectedProgram) return;
-
-    setIsSearching(true);
-    try {
-      const [response, error] = await fetchData(
-        INDEXER.COMMUNITY.PROJECT_DISCOVERY(communityId),
-        "POST",
-        {
-          programId: selectedProgram.programId,
-          categoryId: selectedCategory.id,
-          endorsers: endorsers,
-          indicatorDistribution,
-        }
-      );
-      if (error) {
-        console.error("Error fetching project discovery results:", error);
-      }
-      setProjectResults(response.data);
-    } catch (error) {
-      console.error("Error fetching project discovery results:", error);
-    } finally {
-      setIsSearching(false);
-    }
+  const handleSearch = () => {
+    if (!selectedCategory || !selectedProgram?.programId) return;
+    discovery.mutate({
+      programId: selectedProgram.programId,
+      categoryId: selectedCategory.id,
+      endorsers,
+      indicatorDistribution,
+    });
   };
 
   const handleScoreClick = (projectUID: string) => {
     setActiveCalculation(activeCalculation === projectUID ? null : projectUID);
   };
 
-  if (isLoading) {
+  const isFilterLoading = categoriesQuery.isLoading || programsQuery.isLoading;
+  const isFilterError = categoriesQuery.isError || programsQuery.isError;
+  const categoriesEmpty = !categoriesQuery.isError && categories.length === 0;
+  const programsEmpty = !programsQuery.isError && programs.length === 0;
+
+  const projectResults = discovery.data;
+
+  if (isFilterLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-        <p className="mt-4 text-gray-600 dark:text-zinc-400">Loading…</p>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
+        <p className="mt-4 text-gray-600 dark:text-zinc-400">Loading...</p>
+      </div>
+    );
+  }
+
+  if (isFilterError) {
+    const retry = () => {
+      if (categoriesQuery.isError) categoriesQuery.refetch();
+      if (programsQuery.isError) programsQuery.refetch();
+    };
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] gap-4 text-center">
+        <p className="text-lg font-medium text-gray-900 dark:text-zinc-100">
+          We couldn&apos;t load the discovery filters.
+        </p>
+        <p className="text-sm text-gray-600 dark:text-zinc-400">
+          Something went wrong while fetching categories and programs for this community.
+        </p>
+        <Button onClick={retry} className="px-6">
+          Retry
+        </Button>
       </div>
     );
   }
@@ -231,85 +174,49 @@ export const ProjectDiscovery = () => {
 
           <div className="flex justify-between gap-4">
             <div className="w-1/2">
-              <label
-                htmlFor="category-select"
-                className="block text-sm font-medium text-gray-700 dark:text-zinc-300"
-              >
-                Category
-              </label>
-              <Listbox value={selectedCategory} onChange={setSelectedCategory}>
-                <div className="relative mt-1">
-                  <Listbox.Button
-                    id="category-select"
-                    className="relative w-full cursor-default rounded-lg bg-white dark:bg-zinc-800 py-3 pl-4 pr-10 text-left border border-gray-200 dark:border-zinc-700 shadow-sm hover:border-primary/50 transition-colors focus:outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
-                  >
-                    <span className="block truncate text-gray-900 dark:text-zinc-100">
-                      {selectedCategory?.name || "Select Category"}
-                    </span>
-                    <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-                      <ChevronUpDownIcon className="h-5 w-5 text-gray-400" aria-hidden="true" />
-                    </span>
-                  </Listbox.Button>
-                  <Listbox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-lg bg-white dark:bg-zinc-800 py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none">
-                    {categories.map((category) => (
-                      <Listbox.Option
-                        key={category.id}
-                        value={category}
-                        className={({ active }) =>
-                          `relative cursor-pointer select-none py-3 pl-4 pr-9 ${
-                            active
-                              ? "bg-primary/5 text-primary"
-                              : "text-gray-900 dark:text-zinc-100"
-                          }`
-                        }
+              <FilterSelect
+                id="category-select"
+                label="Category"
+                items={categories}
+                value={selectedCategory}
+                onChange={handleCategoryChange}
+                getKey={(category) => category.id}
+                getLabel={(category) => category.name}
+                placeholder="Select Category"
+                isEmpty={categoriesEmpty}
+                emptyButtonLabel="No categories available"
+                emptyHelp={
+                  <>
+                    <p className="text-sm text-gray-600 dark:text-zinc-400">
+                      No impact categories have been configured for this community yet.
+                    </p>
+                    {isCommunityAdmin && (
+                      <Link
+                        href={PAGES.ADMIN.EDIT_CATEGORIES(communityId)}
+                        className="text-sm font-medium text-primary hover:underline"
                       >
-                        {category.name}
-                      </Listbox.Option>
-                    ))}
-                  </Listbox.Options>
-                </div>
-              </Listbox>
+                        Configure categories
+                      </Link>
+                    )}
+                  </>
+                }
+              />
             </div>
 
             <div className="w-1/2">
-              <label
-                htmlFor="program-select"
-                className="block text-sm font-medium text-gray-700 dark:text-zinc-300"
-              >
-                Program
-              </label>
-              <Listbox value={selectedProgram} onChange={setSelectedProgram}>
-                <div className="relative mt-1">
-                  <Listbox.Button
-                    id="program-select"
-                    className="relative w-full cursor-default rounded-lg bg-white dark:bg-zinc-800 py-3 pl-4 pr-10 text-left border border-gray-200 dark:border-zinc-700 shadow-sm hover:border-primary/50 transition-colors focus:outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
-                  >
-                    <span className="block truncate text-gray-900 dark:text-zinc-100">
-                      {selectedProgram?.name || "Select Program"}
-                    </span>
-                    <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-                      <ChevronUpDownIcon className="h-5 w-5 text-gray-400" aria-hidden="true" />
-                    </span>
-                  </Listbox.Button>
-                  <Listbox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-lg bg-white dark:bg-zinc-800 py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none">
-                    {programs.map((program) => (
-                      <Listbox.Option
-                        key={program.programId}
-                        value={program}
-                        className={({ active }) =>
-                          `relative cursor-pointer select-none py-3 pl-4 pr-9 ${
-                            active
-                              ? "bg-primary/5 text-primary"
-                              : "text-gray-900 dark:text-zinc-100"
-                          }`
-                        }
-                      >
-                        {program.name}
-                      </Listbox.Option>
-                    ))}
-                  </Listbox.Options>
-                </div>
-              </Listbox>
+              <FilterSelect
+                id="program-select"
+                label="Program"
+                items={programs}
+                value={selectedProgram}
+                onChange={setSelectedProgram}
+                getKey={(program) => program.programId ?? ""}
+                getLabel={(program) => programLabel(program)}
+                placeholder="Select Program"
+                isEmpty={programsEmpty}
+                emptyButtonLabel="No programs available"
+                emptyHelp={PROGRAMS_EMPTY_HELP}
+              />
             </div>
           </div>
 
@@ -359,57 +266,24 @@ export const ProjectDiscovery = () => {
           </div>
 
           {selectedCategoryIndicators.length > 0 && (
-            <div className="space-y-3 bg-white dark:bg-zinc-800 rounded-xl p-6 border border-gray-200 dark:border-zinc-700 shadow-sm">
-              <div className="space-y-1">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-zinc-100">
-                  Impact Distribution
-                </h3>
-                <p className="text-sm text-gray-600 dark:text-zinc-400">
-                  Adjust the sliders to set the weight for each indicators.
-                </p>
-              </div>
-              <div className="space-y-8">
-                {selectedCategoryIndicators.map((indicator) => (
-                  <div key={indicator.id} className="space-y-3">
-                    <div className="flex justify-between text-sm">
-                      <span className="font-medium text-gray-900 dark:text-zinc-100">
-                        {indicator.name}
-                      </span>
-                      <span className="font-medium text-primary">
-                        {Math.round(indicatorDistribution[indicator.id] * 100)}%
-                      </span>
-                    </div>
-                    <Slider.Root
-                      className="relative flex w-full touch-none select-none items-center py-2"
-                      value={[indicatorDistribution[indicator.id] * 100]}
-                      onValueChange={(values) =>
-                        handleIndicatorDistributionChange(indicator.id, values[0] / 100)
-                      }
-                      max={100}
-                      step={1}
-                    >
-                      <Slider.Track className="relative h-1.5 w-full grow overflow-hidden rounded-full">
-                        <Slider.Range className="absolute h-full" />
-                      </Slider.Track>
-                      <Slider.Thumb className="block h-4 w-4 rounded-full border border-primary/50 bg-white shadow-sm transition-transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-primary/20" />
-                    </Slider.Root>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <IndicatorSliders
+              indicators={selectedCategoryIndicators}
+              indicatorDistribution={indicatorDistribution}
+              onChange={handleIndicatorDistributionChange}
+            />
           )}
 
           <div className="flex justify-end">
             <Button
               onClick={handleSearch}
               className="w-3xl px-8 py-3 text-base font-medium relative"
-              disabled={!selectedCategory || !selectedProgram || isSearching}
+              disabled={!selectedCategory || !selectedProgram || discovery.isPending}
             >
-              {isSearching ? (
+              {discovery.isPending ? (
                 <>
                   <span className="opacity-0">Discover Projects</span>
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white" />
                   </div>
                 </>
               ) : (
@@ -422,108 +296,15 @@ export const ProjectDiscovery = () => {
 
       {/* Right Side - Results */}
       <div className="flex-grow">
-        {projectResults.length > 0 ? (
-          <div className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-zinc-100">
-                Discovery Results
-              </h3>
-              <span className="text-sm text-gray-600 dark:text-zinc-400">
-                {projectResults.length} projects found
-              </span>
-            </div>
-            <div className="grid grid-cols-1 gap-6">
-              {projectResults.map((result) => (
-                <div
-                  key={result.project.projectUID}
-                  className="rounded-xl flex flex-col gap-4 border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-6 shadow-sm hover:shadow-md transition-shadow relative"
-                >
-                  <div className="flex justify-between items-start gap-4">
-                    <div className="flex flex-col gap-2">
-                      <Link
-                        href={`/project/${result.project.projectSlug}`}
-                        className="text-2xl font-bold text-gray-900 dark:text-zinc-100 line-clamp-2"
-                      >
-                        {result.project.projectTitle}
-                      </Link>
-                      <div className="space-y-2">
-                        <Link
-                          href={`/project/${result.project.projectSlug}/funding/${result.project.grantUID}`}
-                          className="text-md text-gray-600 dark:text-zinc-400"
-                        >
-                          {result.project.grantTitle}
-                        </Link>
-                      </div>
-                    </div>
-                    <div className="flex flex-col items-end justify-center">
-                      <button
-                        type="button"
-                        onClick={() => handleScoreClick(result.project.projectUID)}
-                        className="text-2xl text-primary font-bold hover:opacity-80 transition-opacity underline decoration-dotted cursor-pointer"
-                        aria-label="Show impact score calculation"
-                      >
-                        {formatCurrency(result.impactScore)}
-                      </button>
-                      <span className="text-sm font-medium text-gray-600 dark:text-zinc-400">
-                        Impact Score
-                      </span>
-                    </div>
-                  </div>
-
-                  {activeCalculation === result.project.projectUID && (
-                    <div className="absolute right-0 top-16 z-10 w-80 bg-white dark:bg-zinc-800 rounded-lg shadow-lg border border-gray-200 dark:border-zinc-700 p-4">
-                      <div className="flex justify-between items-center mb-3">
-                        <h4 className="text-sm font-medium text-gray-700 dark:text-zinc-300">
-                          Impact Score Calculation
-                        </h4>
-                        <button
-                          type="button"
-                          onClick={() => setActiveCalculation(null)}
-                          className="text-gray-400 hover:text-gray-600 dark:text-zinc-500 dark:hover:text-zinc-300"
-                          aria-label="Close calculation"
-                        >
-                          ×
-                        </button>
-                      </div>
-                      <div className="space-y-2">
-                        {result.impact.map((impact) => (
-                          <div
-                            key={impact.impactIndicatorId}
-                            className="flex justify-between items-center text-sm"
-                          >
-                            <span className="text-gray-600 dark:text-zinc-400">
-                              {impact.indicatorName}
-                            </span>
-                            <div className="flex items-center gap-2">
-                              <span className="text-gray-500 dark:text-zinc-400">
-                                {formatCurrency(impact.avgValue)}
-                              </span>
-                              <span className="text-gray-400 dark:text-zinc-500">×</span>
-                              <span className="text-primary">
-                                {Math.round(indicatorDistribution[impact.impactIndicatorId] * 100)}%
-                              </span>
-                              <span className="text-gray-400 dark:text-zinc-500">=</span>
-                              <span className="font-medium text-gray-900 dark:text-zinc-100">
-                                {formatCurrency(
-                                  impact.avgValue * indicatorDistribution[impact.impactIndicatorId]
-                                )}
-                              </span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        ) : (
-          <div className="flex w-full flex-col items-start justify-center h-[400px] text-gray-500 pl-12 border-l border-l-zinc-400 ml-10">
-            <p className="text-lg">No projects discovered yet</p>
-            <p className="text-sm">Use the filters on the left to discover projects</p>
-          </div>
-        )}
+        <DiscoveryResults
+          isError={discovery.isError}
+          results={projectResults}
+          indicatorDistribution={indicatorDistribution}
+          activeCalculation={activeCalculation}
+          onRetry={handleSearch}
+          onScoreClick={handleScoreClick}
+          onCloseCalculation={() => setActiveCalculation(null)}
+        />
       </div>
     </div>
   );

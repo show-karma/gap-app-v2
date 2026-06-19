@@ -157,3 +157,17 @@ export function rewriteHeadingsToLevel(
     }
   };
 }
+
+/**
+ * Safely truncates a string to a maximum length without breaking in the middle of a word
+ * and cleans any markdown syntax
+ *
+ * @param text - The text to truncate and clean
+ * @param maxLength - Maximum length for the resulting string
+ * @returns Truncated and markdown-free text
+ */
+export function truncateAndCleanMarkdown(text: string, maxLength: number): string {
+  return cleanMarkdownForPlainText(text, maxLength);
+}
+
+export default { renderToHTML, renderToPlainText };

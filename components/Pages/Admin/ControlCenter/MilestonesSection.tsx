@@ -19,12 +19,12 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { getInvoiceDownloadUrl } from "@/src/features/payout-disbursement/services/payout-disbursement.service";
 import {
   type CommunityPayoutInvoiceInfo,
-  formatDisplayAmount,
-  getInvoiceDownloadUrl,
   MilestoneLifecycleStatus,
-} from "@/src/features/payout-disbursement";
+} from "@/src/features/payout-disbursement/types/payout-disbursement";
+import { formatDisplayAmount } from "@/src/features/payout-disbursement/utils/format-token-amount";
 import { formatAddressForDisplay } from "@/utilities/donations/helpers";
 import { formatDate } from "@/utilities/formatDate";
 import { formatMilestoneTitle } from "@/utilities/formatMilestoneTitle";
@@ -33,6 +33,7 @@ import {
   getEffectiveMilestoneStatus,
   MILESTONE_STATUS_LABEL,
 } from "@/utilities/milestones/getEffectiveMilestoneStatus";
+import { getMilestoneStatusTooltip } from "@/utilities/milestones/getMilestoneStatusTooltip";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 import { PaymentStatusDropdown } from "./PaymentStatusDropdown";
@@ -71,30 +72,6 @@ const milestoneStatusConfig: Record<
     textColor: "text-amber-600 dark:text-amber-400",
   },
 };
-
-function getMilestoneStatusTooltip(
-  effectiveStatus: MilestoneLifecycleStatus,
-  statusUpdatedAt: string | null,
-  dueDate: string | null
-): string {
-  const fmtDate = (iso: string) => formatDate(iso, "UTC");
-  switch (effectiveStatus) {
-    case MilestoneLifecycleStatus.COMPLETED:
-      return statusUpdatedAt ? `Completed on ${fmtDate(statusUpdatedAt)}` : "Completed";
-    case MilestoneLifecycleStatus.VERIFIED:
-      return statusUpdatedAt ? `Verified on ${fmtDate(statusUpdatedAt)}` : "Verified";
-    case MilestoneLifecycleStatus.PAST_DUE:
-      return dueDate ? `Due ${fmtDate(dueDate)}` : "Past due";
-    case MilestoneLifecycleStatus.PENDING: {
-      const parts: string[] = [];
-      if (statusUpdatedAt) parts.push(`Created ${fmtDate(statusUpdatedAt)}`);
-      if (dueDate) parts.push(`Due ${fmtDate(dueDate)}`);
-      return parts.length > 0 ? parts.join(" · ") : "Pending";
-    }
-    default:
-      return effectiveStatus;
-  }
-}
 
 // ─── Component ───────────────────────────────────────────────────────────────
 

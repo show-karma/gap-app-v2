@@ -87,7 +87,7 @@ export const MilestonesList = ({
   showAllTypes = false,
   totalItems,
 }: MilestonesListProps) => {
-  const isAuthorized = useProjectAuthorization();
+  const { isAuthorized } = useProjectAuthorization();
 
   // Extract unique grant UIDs for allocation lookup
   const grantUIDs = useMemo(() => {

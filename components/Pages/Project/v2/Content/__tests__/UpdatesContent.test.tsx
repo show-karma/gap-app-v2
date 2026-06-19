@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useProjectAuthorization } from "@/hooks/useProjectAuthorization";
 import { useProjectProfile } from "@/hooks/v2/useProjectProfile";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { UpdatesContent } from "../UpdatesContent";
@@ -19,6 +20,13 @@ vi.mock("@/hooks/v2/useProjectProfile", () => ({
 vi.mock("@/store", () => ({
   useOwnerStore: vi.fn(),
   useProjectStore: vi.fn(),
+}));
+
+// The component derives its single `isAuthorized` from useProjectAuthorization.
+// Mock it directly (default denied) and let mockStores() drive it from the
+// owner/admin flags — avoids wiring the full auth chain (useAuth/useRouter).
+vi.mock("@/hooks/useProjectAuthorization", () => ({
+  useProjectAuthorization: vi.fn(() => ({ isAuthorized: false, isLoading: false })),
 }));
 
 // Capture latest props passed to ActivityFilters so URL round-trip tests can
@@ -47,6 +55,10 @@ function mockStores({ isOwner = false, isProjectAdmin = false, isProjectOwner = 
   (useProjectStore as unknown as vi.Mock).mockImplementation((sel) =>
     sel({ isProjectAdmin, isProjectOwner })
   );
+  (useProjectAuthorization as vi.Mock).mockReturnValue({
+    isAuthorized: isOwner || isProjectAdmin || isProjectOwner,
+    isLoading: false,
+  });
 }
 
 function mockProjectProfile(overrides: Record<string, unknown> = {}) {

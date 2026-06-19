@@ -8,7 +8,10 @@ import { useCommunityPrograms } from "@/hooks/usePrograms";
 import type { Community } from "@/types/v2/community";
 import { getCommunityDetails } from "@/utilities/queries/v2/getCommunityData";
 
-export default function DonateProgramSelectPage() {
+// The donate checkout flow lives outside the (with-header) route group, so no
+// ancestor supplies a main landmark. The wrapper below (single landmark,
+// #1309) covers every branch of this multi-return client component.
+function DonateProgramSelectContent() {
   const params = useParams();
   const { push } = useRouter();
   const communityId = params.communityId as string;
@@ -220,5 +223,13 @@ export default function DonateProgramSelectPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function DonateProgramSelectPage() {
+  return (
+    <main className="flex w-full flex-col">
+      <DonateProgramSelectContent />
+    </main>
   );
 }

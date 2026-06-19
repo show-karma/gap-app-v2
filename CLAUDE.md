@@ -39,6 +39,14 @@ pnpm lint:fix           # Biome lint + format
 - **Zustand resets**: When adding state properties, update `initialState` too — `reset()` spreads it and will miss new fields.
 - **Pluralization**: Any dynamic count rendered next to a noun MUST use the `pluralize` library (`pluralize("team", count)`). No manual ternaries, no hardcoded plural-only nouns. Strings like `"1 teams"`, `"0 apply"`, `"1 days left"` are bugs.
 - **Empty-state conditional rendering**: UI blocks tied to a count or array (e.g. "Closing this week — N apply before deadline") must be hidden entirely when the count is 0. Don't render "0 …" copy.
+- **URL-synced filter state**: Must use nuqs `useQueryState` (see `hooks/useProjectFilters.ts` / `hooks/useFundingProgramFilters.ts`). NEVER mirror component state into the URL with `router.push`/`router.replace` inside a `useEffect` — it dispatches App Router navigations that race and cancel in-flight `<Link>` clicks (issue #1547) and spams the history stack.
+- **Authorization is tri-state, not boolean**: Gate auth-sensitive UI through a tri-state hook that returns `{ isAuthorized, isLoading }` (e.g. `useProjectAuthorization`). Render a skeleton while `isLoading`, never the authorized controls or a denial. Specifically:
+  - Never read `useOwnerStore.isOwner` without `isOwnerLoading`.
+  - For authorization-resolved decisions, never use a query's `isLoading` when that query can be disabled — a disabled React Query v5 query reports `isLoading=false` while still undecided. Use `isPending`-aware composition (`isResolving`).
+  - Never enable an admin-gated fetch from bare/optimistic store booleans — gate on *resolved* authorization (`isAuthorized && !isLoading`). Project-store permission flags are global and go stale across project navigations.
+  - Treat an expected admin denial (HTTP 403) as data (return `null`), not an error — don't log it to `console`/`errorManager`.
+  - Never pair a `useEffect` redirect with an `AccessDenied` render for the same condition — the redirect makes the denial unreachable. Render the denial as a terminal state.
+  - Never gate denial UI on wagmi `isConnected` — use Privy `ready`/`authenticated` (the two initialize independently at startup).
 
 ## Auth Gotchas
 
@@ -54,9 +62,9 @@ Cross-community pages: detect roles from data (`useReviewerPrograms()`, `useDash
 
 ## Testing Patterns
 
-Tests use Jest + RTL. Follow these established patterns (see `__tests__/` for examples):
+Tests use Vitest + RTL. Follow these established patterns (see `__tests__/` for examples):
 - Mock factories with override support: `createMockProgram(overrides)`
-- `jest.clearAllMocks()` in `beforeEach`, `queryClient.clear()` in `afterEach`
+- `vi.clearAllMocks()` in `beforeEach`, `queryClient.clear()` in `afterEach`
 - Wrap hooks in `QueryClientProvider` via `renderHook`
 - `waitFor(() => expect(...))` for async
 - Separate `describe` blocks for loading, success, empty, and error states

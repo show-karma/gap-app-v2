@@ -11,16 +11,17 @@ import {
   useState,
 } from "react";
 import { cn } from "@/utilities/tailwind";
+import { useAutoGrowTextarea } from "../hooks/use-auto-grow-textarea";
 import { usePrefersReducedMotion } from "../hooks/use-prefers-reduced-motion";
 import type { AskKarmaConfig } from "../types";
 import { ASK_KARMA_ANIMATION } from "./ask-karma-start.constants";
 import { FeaturedTopicCard } from "./featured-topic-card";
 import { FlyingChip, type FlyingChipRect } from "./flying-chip";
 
-// Hard cap on free-text input. Roughly matches a generous tweet length and
-// well below the LLM's prompt window — protects against accidental paste of
-// a huge document into the search bar.
-const INPUT_MAX_LENGTH = 500;
+// Hard cap on free-text input. Generous (~4k tokens of English) so long,
+// multi-line questions work on the dedicated page, while still protecting
+// against accidental paste of a huge document.
+const INPUT_MAX_LENGTH = 16000;
 
 interface AskKarmaStartProps {
   config: AskKarmaConfig;
@@ -54,7 +55,7 @@ export function AskKarmaStart({ config, onSubmit }: AskKarmaStartProps) {
     null
   );
   const [typedValue, setTypedValue] = useState("");
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const submitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const prefersReducedMotion = usePrefersReducedMotion();
 
@@ -107,7 +108,7 @@ export function AskKarmaStart({ config, onSubmit }: AskKarmaStartProps) {
   );
 
   const handleKeyDown = useCallback(
-    (event: KeyboardEvent<HTMLInputElement>) => {
+    (event: KeyboardEvent<HTMLTextAreaElement>) => {
       // CJK / IME users press Enter to confirm a composition candidate;
       // without this guard, that confirmation also submits the half-typed
       // message and breaks the input for those locales.
@@ -166,6 +167,10 @@ export function AskKarmaStart({ config, onSubmit }: AskKarmaStartProps) {
   const inputDisabled = phase !== "idle";
   const submitDisabled = phase !== "idle" || displayValue.trim().length === 0;
 
+  // Grows with the typewriter animation and the user's typing; collapses back
+  // on reset. `displayValue` is what's rendered across phases.
+  useAutoGrowTextarea(inputRef, displayValue);
+
   return (
     <div className="flex flex-col gap-10" data-animation-phase={phase}>
       <section
@@ -183,9 +188,9 @@ export function AskKarmaStart({ config, onSubmit }: AskKarmaStartProps) {
         className="animate-in fade-in slide-in-from-bottom-1 duration-500 relative"
         style={{ animationDelay: `${SECTION_BASE_DELAY.input}ms`, animationFillMode: "both" }}
       >
-        <input
+        <textarea
           ref={inputRef}
-          type="text"
+          rows={1}
           value={displayValue}
           onChange={(event) => {
             if (phase === "idle") setValue(event.target.value);
@@ -197,7 +202,8 @@ export function AskKarmaStart({ config, onSubmit }: AskKarmaStartProps) {
           aria-label="Ask Karma Assistant a question"
           data-testid="ask-karma-search-input"
           className={cn(
-            "w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 pr-12 text-sm",
+            "w-full resize-none overflow-y-auto rounded-xl border border-zinc-200 bg-white px-4 py-3 pr-12 text-sm",
+            "max-h-64 min-h-[48px] align-middle",
             "text-zinc-900 placeholder:text-zinc-400",
             "shadow-sm transition-all duration-200",
             "hover:border-zinc-300 hover:shadow-md",
@@ -214,7 +220,10 @@ export function AskKarmaStart({ config, onSubmit }: AskKarmaStartProps) {
           type="submit"
           aria-label="Ask the Karma Assistant"
           className={cn(
-            "absolute right-2 top-1/2 -translate-y-1/2",
+            // Anchored to the bottom-right so it stays put as the textarea
+            // grows to multiple lines (rather than floating to the vertical
+            // centre of the grown field).
+            "absolute bottom-2 right-2",
             "flex h-8 w-8 items-center justify-center rounded-full",
             "transition-all duration-200 ease-out",
             "hover:scale-110 active:scale-90",

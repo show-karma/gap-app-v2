@@ -34,6 +34,8 @@ interface MarkdownEditorProps {
   maxLength?: number;
   /** Show character count (default: false) */
   showCharacterCount?: boolean;
+  /** Only render the character count once length reaches this threshold (default: 0 = always when showCharacterCount) */
+  characterCountThreshold?: number;
   /** Enable preview toggle button (default: true) */
   enablePreviewToggle?: boolean;
   /** Override the label element's className. When omitted, a bold default is used. */
@@ -110,6 +112,7 @@ export const MarkdownEditor: FC<MarkdownEditorProps> = ({
   "aria-describedby": ariaDescribedBy,
   maxLength = DEFAULT_MAX_LENGTH,
   showCharacterCount = false,
+  characterCountThreshold = 0,
   enablePreviewToggle = true,
   labelClassName,
 }) => {
@@ -291,7 +294,7 @@ export const MarkdownEditor: FC<MarkdownEditorProps> = ({
         <div className="flex-1">
           {error && <p className="text-sm text-red-400 dark:text-red-400">{error}</p>}
         </div>
-        {showCharacterCount && (
+        {showCharacterCount && characterInfo.length >= characterCountThreshold && (
           <p
             className={cn(
               "text-xs text-right whitespace-nowrap",

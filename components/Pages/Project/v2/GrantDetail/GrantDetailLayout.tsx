@@ -8,12 +8,10 @@ import { GrantCompleteButton } from "@/components/Pages/GrantMilestonesAndUpdate
 import { GrantContext } from "@/components/Pages/GrantMilestonesAndUpdates/GrantContext";
 import { GrantDelete } from "@/components/Pages/GrantMilestonesAndUpdates/GrantDelete";
 import { GrantLinkExternalAddressButton } from "@/components/Pages/GrantMilestonesAndUpdates/GrantLinkExternalAddressButton";
-import { useIsCommunityAdmin } from "@/hooks/communities/useIsCommunityAdmin";
 import { useProject } from "@/hooks/useProject";
-import { useProjectPermissions } from "@/hooks/useProjectPermissions";
+import { useProjectAuthorization } from "@/hooks/useProjectAuthorization";
 import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
-import { useOwnerStore, useProjectStore } from "@/store";
-import { useCommunityAdminStore } from "@/store/communityAdmin";
+import { useProjectStore } from "@/store";
 import { useGrantStore } from "@/store/grant";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
@@ -46,16 +44,9 @@ export function GrantDetailLayout({ children }: GrantDetailLayoutProps) {
   const loading = useGrantStore((state) => state.loading);
   const setLoading = useGrantStore((state) => state.setLoading);
   const storedProject = useProjectStore((state) => state.project);
-  const { isProjectAdmin, isProjectOwner } = useProjectPermissions();
-  const isContractOwner = useOwnerStore((state) => state.isOwner);
-  const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin);
-  const setIsCommunityAdmin = useCommunityAdminStore((state) => state.setIsCommunityAdmin);
-  const isAuthorized = isProjectOwner || isProjectAdmin || isContractOwner || isCommunityAdmin;
-
-  // Check admin status
-  useIsCommunityAdmin(grant?.data?.communityUID, undefined, {
-    zustandSync: { setIsCommunityAdmin },
-  });
+  const { isAuthorized, isLoading: isAuthLoading } = useProjectAuthorization(
+    grant?.data?.communityUID
+  );
 
   // Fetch project if not in store
   const { project: fetchedProject, isLoading: isLoadingProject } = useProject(projectIdFromUrl);
@@ -140,7 +131,13 @@ export function GrantDetailLayout({ children }: GrantDetailLayoutProps) {
           <h2 className="text-xl font-semibold text-black dark:text-zinc-100">
             {grant?.details?.title}
           </h2>
-          {isAuthorized && grant && project ? (
+          {isAuthLoading ? (
+            <div
+              aria-hidden="true"
+              data-testid="grant-edit-skeleton"
+              className="animate-pulse h-9 w-9 bg-gray-200 dark:bg-zinc-800 rounded-md"
+            />
+          ) : isAuthorized && grant && project ? (
             <Link
               href={PAGES.PROJECT.SCREENS.SELECTED_SCREEN(
                 project.details?.slug || project?.uid || "",
@@ -153,7 +150,17 @@ export function GrantDetailLayout({ children }: GrantDetailLayoutProps) {
             </Link>
           ) : null}
         </div>
-        {isAuthorized && grant && project ? (
+        {isAuthLoading ? (
+          <div
+            aria-hidden="true"
+            data-testid="grant-actions-skeleton"
+            className="flex flex-row gap-2 items-center"
+          >
+            <div className="animate-pulse h-9 w-32 bg-gray-200 dark:bg-zinc-800 rounded-md" />
+            <div className="animate-pulse h-9 w-40 bg-gray-200 dark:bg-zinc-800 rounded-md" />
+            <div className="animate-pulse h-9 w-9 bg-gray-200 dark:bg-zinc-800 rounded-md" />
+          </div>
+        ) : isAuthorized && grant && project ? (
           <div className="flex flex-row gap-2 items-center">
             <GrantLinkExternalAddressButton grant={grant} />
             <GrantCompleteButton project={project} grant={grant} />

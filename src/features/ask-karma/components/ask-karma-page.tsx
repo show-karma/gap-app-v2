@@ -30,10 +30,11 @@ export function AskKarmaPage({ config, communityId }: AskKarmaPageProps) {
   const messages = useAgentChatStore((s) => s.messages);
   const isStreaming = useAgentChatStore((s) => s.isStreaming);
   const error = useAgentChatStore((s) => s.error);
+  const limitReached = useAgentChatStore((s) => s.limitReached);
   const clearMessages = useAgentChatStore((s) => s.clearMessages);
   const setAgentContext = useAgentChatStore((s) => s.setAgentContext);
 
-  const { sendMessage, abort } = useAgentStream();
+  const { sendMessage, abort, continueLastRun } = useAgentStream();
   const [view, setView] = useState<AskKarmaView>("start");
 
   // Tailor the start-screen prompts to the visitor (signed out vs. reviewer
@@ -165,6 +166,8 @@ export function AskKarmaPage({ config, communityId }: AskKarmaPageProps) {
             messages={messages}
             isStreaming={isStreaming}
             error={error}
+            limitReached={limitReached}
+            onContinue={continueLastRun}
             onSend={handleSubmit}
             onStop={abort}
             onBack={handleBack}

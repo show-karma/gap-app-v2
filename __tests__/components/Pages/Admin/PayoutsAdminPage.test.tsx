@@ -57,31 +57,45 @@ const mockUseCommunityPayouts = vi.fn();
 const mockUsePayoutConfigsByCommunity = vi.fn();
 const mockUseSavePayoutConfig = vi.fn();
 
-vi.mock("@/src/features/payout-disbursement", () => ({
+vi.mock("@/src/features/payout-disbursement/hooks/use-payout-disbursement", () => ({
   useCommunityPayouts: (...args: unknown[]) => mockUseCommunityPayouts(...args),
   usePayoutConfigsByCommunity: (...args: unknown[]) => mockUsePayoutConfigsByCommunity(...args),
   useSavePayoutConfig: (...args: unknown[]) => mockUseSavePayoutConfig(...args),
+}));
+
+vi.mock("@/src/features/payout-disbursement/components/CreateDisbursementModal", () => ({
   CreateDisbursementModal: ({ isOpen }: { isOpen: boolean }) =>
     isOpen ? <div data-testid="disbursement-modal">Disbursement Modal</div> : null,
+}));
+
+vi.mock("@/src/features/payout-disbursement/components/PayoutConfigurationModal", () => ({
   PayoutConfigurationModal: ({ isOpen }: { isOpen: boolean }) =>
     isOpen ? <div data-testid="config-modal">Config Modal</div> : null,
+}));
+
+vi.mock("@/src/features/payout-disbursement/components/PayoutHistoryDrawer", () => ({
   PayoutHistoryDrawer: ({ isOpen }: { isOpen: boolean }) =>
     isOpen ? <div data-testid="history-drawer">History Drawer</div> : null,
+}));
+
+vi.mock("@/src/features/payout-disbursement/components/TokenBreakdown", () => ({
   TokenBreakdown: ({ totalsByToken }: { totalsByToken: unknown[] }) => (
     <span data-testid="token-breakdown">{totalsByToken.length} tokens</span>
   ),
-  AggregatedDisbursementStatus: {
-    COMPLETED: "COMPLETED",
-    PARTIAL: "PARTIAL",
-    PENDING: "PENDING",
-  },
+}));
+
+vi.mock("@/src/features/payout-disbursement/components/MilestoneSelectionStep", () => ({
+  getPaidAllocationIds: vi.fn(() => []),
+}));
+
+vi.mock("@/src/features/payout-disbursement/types/payout-disbursement", () => ({
+  AggregatedDisbursementStatus: { COMPLETED: "COMPLETED", PARTIAL: "PARTIAL", PENDING: "PENDING" },
   PayoutDisbursementStatus: {
     DISBURSED: "DISBURSED",
     AWAITING_SIGNATURES: "AWAITING_SIGNATURES",
     FAILED: "FAILED",
     CANCELLED: "CANCELLED",
   },
-  getPaidAllocationIds: vi.fn(() => []),
 }));
 
 vi.mock("@/components/Pages/Communities/Impact/ProgramFilter", () => ({

@@ -415,10 +415,9 @@ describe("CreateProgramModal", () => {
       await user.click(submitButton);
 
       await waitFor(() => {
-        // AriaLiveError renders a duplicate in sr-only, so use getAllByText
-        expect(
-          screen.getAllByText(/program name must be at least 3 characters/i).length
-        ).toBeGreaterThan(0);
+        // Empty required field reports "is required", not the min-length message (issue #1506).
+        // AriaLiveError renders a duplicate in sr-only, so use getAllByText.
+        expect(screen.getAllByText(/program name is required/i).length).toBeGreaterThan(0);
       });
     });
 

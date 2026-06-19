@@ -114,10 +114,10 @@ describe("MilestoneInput Component", () => {
       fireEvent.click(addButton);
 
       expect(screen.getByLabelText(/title \*/i)).toBeInTheDocument();
-      // Description is a MarkdownEditor with isRequired=false, check for label text
-      expect(screen.getByText(/^description$/i)).toBeInTheDocument();
+      // Description is optional (issue #1179) — label is suffixed with "(Optional)"
+      expect(screen.getByText(/description \(optional\)/i)).toBeInTheDocument();
       // Due Date uses DatePicker with aria-label, check for label text instead
-      expect(screen.getByText(/due date \*/i)).toBeInTheDocument();
+      expect(screen.getByText(/due date/i)).toBeInTheDocument();
     });
 
     it("should render new optional fields", () => {
@@ -301,6 +301,22 @@ describe("MilestoneInput Component", () => {
 
       // MarkdownEditor doesn't have proper label association, just verify label exists
       expect(screen.getByText(/^completion criteria$/i)).toBeInTheDocument();
+    });
+  });
+
+  describe("Schema-derived required indicators (issue #1179)", () => {
+    it("renders no required marker for Description and markers for the four required sub-fields", () => {
+      render(<TestWrapper field={mockField} />);
+      fireEvent.click(screen.getByRole("button", { name: /add milestone/i }));
+
+      // Description is advertised as optional and carries no asterisk
+      expect(screen.getByText(/description \(optional\)/i)).toBeInTheDocument();
+      expect(screen.queryByText(/^description$/i)).not.toBeInTheDocument();
+
+      // The four schema-required sub-fields all carry a "*" marker in their label
+      expect(screen.getByLabelText(/title \*/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/funding requested \*/i)).toBeInTheDocument();
+      expect(screen.getByText(/due date/i).querySelector("span")).toHaveTextContent("*");
     });
   });
 

@@ -195,7 +195,10 @@ export function FilterToolbar({
             value={agreementFilter || "all"}
             onValueChange={(v) => onFilterChange("agreementStatus", v === "all" ? null : v)}
           >
-            <SelectTrigger className="w-[140px] bg-white dark:bg-zinc-900 h-8 text-xs text-gray-600 dark:text-zinc-400">
+            <SelectTrigger
+              aria-label="Filter by agreement status"
+              className="w-[140px] bg-white dark:bg-zinc-900 h-8 text-xs text-gray-600 dark:text-zinc-400"
+            >
               <SelectValue placeholder="Agreement" />
             </SelectTrigger>
             <SelectContent>
@@ -211,7 +214,10 @@ export function FilterToolbar({
               value={invoiceFilter || "all"}
               onValueChange={(v) => onFilterChange("invoiceStatus", v === "all" ? null : v)}
             >
-              <SelectTrigger className="w-[140px] bg-white dark:bg-zinc-900 h-8 text-xs text-gray-600 dark:text-zinc-400">
+              <SelectTrigger
+                aria-label="Filter by invoice status"
+                className="w-[140px] bg-white dark:bg-zinc-900 h-8 text-xs text-gray-600 dark:text-zinc-400"
+              >
                 <SelectValue placeholder="Invoices" />
               </SelectTrigger>
               <SelectContent>
@@ -228,7 +234,10 @@ export function FilterToolbar({
             value={disbursementFilter || "all"}
             onValueChange={(v) => onFilterChange("status", v === "all" ? null : v)}
           >
-            <SelectTrigger className="w-[140px] bg-white dark:bg-zinc-900 h-8 text-xs text-gray-600 dark:text-zinc-400">
+            <SelectTrigger
+              aria-label="Filter by status"
+              className="w-[140px] bg-white dark:bg-zinc-900 h-8 text-xs text-gray-600 dark:text-zinc-400"
+            >
               <SelectValue placeholder="Status" />
             </SelectTrigger>
             <SelectContent>
@@ -245,7 +254,10 @@ export function FilterToolbar({
               value={kycFilter || "all"}
               onValueChange={(v) => onFilterChange("kycStatus", v === "all" ? null : v)}
             >
-              <SelectTrigger className="w-[140px] bg-white dark:bg-zinc-900 h-8 text-xs text-gray-600 dark:text-zinc-400">
+              <SelectTrigger
+                aria-label="Filter by KYB status"
+                className="w-[140px] bg-white dark:bg-zinc-900 h-8 text-xs text-gray-600 dark:text-zinc-400"
+              >
                 <SelectValue placeholder="KYB" />
               </SelectTrigger>
               <SelectContent>
@@ -275,7 +287,10 @@ export function FilterToolbar({
         <div className="flex items-center gap-2 flex-shrink-0">
           <span className="text-xs text-gray-500 dark:text-zinc-400">Show</span>
           <Select value={itemsPerPage.toString()} onValueChange={onItemsPerPageChange}>
-            <SelectTrigger className="w-[60px] bg-white dark:bg-zinc-900 h-8 text-xs">
+            <SelectTrigger
+              aria-label="Rows per page"
+              className="w-[60px] bg-white dark:bg-zinc-900 h-8 text-xs"
+            >
               <SelectValue />
             </SelectTrigger>
             <SelectContent>

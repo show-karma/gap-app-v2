@@ -6,8 +6,10 @@ import type { AskKarmaConfig } from "@/src/features/ask-karma/types";
 import type { ChatMessage } from "@/store/agentChat";
 
 vi.mock("@/src/components/ai-elements/message-response", () => ({
-  MessageResponse: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="markdown">{children}</div>
+  MessageResponse: ({ children, mode }: { children: React.ReactNode; mode?: string }) => (
+    <div data-testid="markdown" data-mode={mode}>
+      {children}
+    </div>
   ),
 }));
 
@@ -293,6 +295,69 @@ describe("AskKarmaChat", () => {
     expect(screen.queryByTestId("ask-karma-tool-list")).not.toBeInTheDocument();
   });
 
+  it("exposes the message list as a live log region (#1462)", () => {
+    const messages: ChatMessage[] = [
+      buildMsg({ id: "u1", role: "user", content: "Question", timestamp: Date.now() }),
+      buildMsg({ id: "a1", role: "assistant", content: "Answer", timestamp: Date.now() }),
+    ];
+    render(
+      <AskKarmaChat
+        config={config}
+        messages={messages}
+        isStreaming={false}
+        error={null}
+        onSend={vi.fn()}
+        onStop={vi.fn()}
+        onBack={vi.fn()}
+      />
+    );
+    const log = screen.getByRole("log", { name: "Conversation" });
+    expect(log).toBeInTheDocument();
+    // Completed user + assistant content is queryable inside the log.
+    expect(log).toHaveTextContent("Question");
+    expect(log).toHaveTextContent("Answer");
+  });
+
+  it("renders completed assistant messages in static mode (#1462)", () => {
+    const messages: ChatMessage[] = [
+      buildMsg({ id: "a1", role: "assistant", content: "Completed answer", timestamp: Date.now() }),
+    ];
+    render(
+      <AskKarmaChat
+        config={config}
+        messages={messages}
+        isStreaming={false}
+        error={null}
+        onSend={vi.fn()}
+        onStop={vi.fn()}
+        onBack={vi.fn()}
+      />
+    );
+    expect(screen.getByTestId("markdown")).toHaveAttribute("data-mode", "static");
+  });
+
+  it("renders the actively streaming last assistant message in streaming mode", () => {
+    const messages: ChatMessage[] = [
+      buildMsg({ id: "a0", role: "assistant", content: "Earlier turn", timestamp: 1 }),
+      buildMsg({ id: "a1", role: "assistant", content: "Streaming now", timestamp: 2 }),
+    ];
+    render(
+      <AskKarmaChat
+        config={config}
+        messages={messages}
+        isStreaming={true}
+        error={null}
+        onSend={vi.fn()}
+        onStop={vi.fn()}
+        onBack={vi.fn()}
+      />
+    );
+    const bubbles = screen.getAllByTestId("markdown");
+    // Earlier completed turn is static; only the last one streams.
+    expect(bubbles[0]).toHaveAttribute("data-mode", "static");
+    expect(bubbles[bubbles.length - 1]).toHaveAttribute("data-mode", "streaming");
+  });
+
   it("renders error alert when error is present", () => {
     render(
       <AskKarmaChat
@@ -307,6 +372,63 @@ describe("AskKarmaChat", () => {
     );
     const alert = screen.getByRole("alert");
     expect(alert).toHaveTextContent("Connection failed");
+  });
+
+  it("renders a Continue affordance (not an error) when a working limit was reached", () => {
+    render(
+      <AskKarmaChat
+        config={config}
+        messages={[
+          buildMsg({ id: "a1", role: "assistant", content: "Partial findings", timestamp: 1 }),
+        ]}
+        isStreaming={false}
+        error={null}
+        limitReached={{ reason: "budget" }}
+        onContinue={vi.fn()}
+        onSend={vi.fn()}
+        onStop={vi.fn()}
+        onBack={vi.fn()}
+      />
+    );
+    expect(screen.getByRole("button", { name: /continue/i })).toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("invokes onContinue when the Continue button is clicked", async () => {
+    const user = userEvent.setup();
+    const onContinue = vi.fn();
+    render(
+      <AskKarmaChat
+        config={config}
+        messages={[]}
+        isStreaming={false}
+        error={null}
+        limitReached={{ reason: "turns" }}
+        onContinue={onContinue}
+        onSend={vi.fn()}
+        onStop={vi.fn()}
+        onBack={vi.fn()}
+      />
+    );
+    await user.click(screen.getByRole("button", { name: /continue/i }));
+    expect(onContinue).toHaveBeenCalledTimes(1);
+  });
+
+  it("hides the Continue affordance while streaming", () => {
+    render(
+      <AskKarmaChat
+        config={config}
+        messages={[]}
+        isStreaming={true}
+        error={null}
+        limitReached={{ reason: "budget" }}
+        onContinue={vi.fn()}
+        onSend={vi.fn()}
+        onStop={vi.fn()}
+        onBack={vi.fn()}
+      />
+    );
+    expect(screen.queryByRole("button", { name: /continue/i })).not.toBeInTheDocument();
   });
 
   it("invokes onBack when the back button is clicked", async () => {

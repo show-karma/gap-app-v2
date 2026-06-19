@@ -1,15 +1,14 @@
 "use client";
 import { CheckIcon } from "@heroicons/react/24/solid";
-import { useQuery } from "@tanstack/react-query";
 import { useParams, usePathname, useSearchParams } from "next/navigation";
 import type { ReactNode } from "react";
 import { useMemo } from "react";
 import { InfoTooltip } from "@/components/Utilities/InfoTooltip";
 import { Skeleton } from "@/components/Utilities/Skeleton";
 import { useImpactMeasurement } from "@/hooks/useImpactMeasurement";
+import { useCommunityStats } from "@/hooks/v2/useCommunityStats";
 import { useCommunityStore } from "@/store/community";
 import formatCurrency from "@/utilities/formatCurrency";
-import { getCommunityStats } from "@/utilities/queries/v2/getCommunityData";
 
 interface StatCardProps {
   title: string;
@@ -146,37 +145,37 @@ export const CommunityStatCards = () => {
   const searchParams = useSearchParams();
   const communityId = params.communityId as string;
   const programId = searchParams.get("programId");
-  const { totalProjects: filteredProjectsCount, isLoadingFilters } = useCommunityStore();
-  const { data, isLoading } = useQuery({
-    queryKey: ["community-stats", communityId],
-    queryFn: () => getCommunityStats(communityId),
-    enabled: !!communityId,
-  });
+  const { isLoadingFilters } = useCommunityStore();
+  const { stats: communityStats, isLoading } = useCommunityStats(communityId);
+  const totalProjectsCount = communityStats?.totalProjects;
 
   const stats = [
     {
       title: "Total Projects",
-      value: filteredProjectsCount,
-      displayValue: filteredProjectsCount ? formatCurrency(filteredProjectsCount) : "-",
+      value: totalProjectsCount,
+      displayValue:
+        totalProjectsCount || totalProjectsCount === 0 ? formatCurrency(totalProjectsCount) : "-",
       color: "#84ADFF",
-      showLoading: isLoadingFilters,
+      showLoading: false,
       tooltip: null,
     },
     {
       title: "Total Grants",
-      value: data?.totalGrants,
-      displayValue: data?.totalGrants ? formatCurrency(data.totalGrants) : "-",
+      value: communityStats?.totalGrants,
+      displayValue: communityStats?.totalGrants ? formatCurrency(communityStats.totalGrants) : "-",
       color: "#5FE9D0",
-      showLoading: isLoadingFilters,
+      showLoading: false,
       tooltip: null,
     },
     {
       title: "Project Updates",
-      value: data?.projectUpdates,
-      displayValue: data?.projectUpdates ? formatCurrency(data.projectUpdates) : "-",
+      value: communityStats?.projectUpdates,
+      displayValue: communityStats?.projectUpdates
+        ? formatCurrency(communityStats.projectUpdates)
+        : "-",
       color: "#FDB022",
-      showLoading: isLoadingFilters,
-      tooltip: data?.projectUpdatesBreakdown ? (
+      showLoading: false,
+      tooltip: communityStats?.projectUpdatesBreakdown ? (
         <div className="flex flex-col gap-1.5 p-1">
           <div className="font-semibold text-xs mb-1 border-b border-gray-200 dark:border-zinc-700 pb-1">
             Project Updates Breakdown
@@ -184,37 +183,37 @@ export const CommunityStatCards = () => {
           <div className="flex justify-between gap-3 text-xs">
             <span className="text-gray-600 dark:text-gray-400">Project Milestones</span>
             <span className="font-medium">
-              {formatCurrency(data.projectUpdatesBreakdown.projectMilestones)}
+              {formatCurrency(communityStats.projectUpdatesBreakdown.projectMilestones)}
             </span>
           </div>
           <div className="flex justify-between gap-3 text-xs">
             <span className="text-gray-600 dark:text-gray-400">Project Milestone Completions</span>
             <span className="font-medium">
-              {formatCurrency(data.projectUpdatesBreakdown.projectCompletedMilestones)}
+              {formatCurrency(communityStats.projectUpdatesBreakdown.projectCompletedMilestones)}
             </span>
           </div>
           <div className="flex justify-between gap-3 text-xs">
             <span className="text-gray-600 dark:text-gray-400">Project Updates</span>
             <span className="font-medium">
-              {formatCurrency(data.projectUpdatesBreakdown.projectUpdates)}
+              {formatCurrency(communityStats.projectUpdatesBreakdown.projectUpdates)}
             </span>
           </div>
           <div className="flex justify-between gap-3 text-xs">
             <span className="text-gray-600 dark:text-gray-400">Grant Milestones</span>
             <span className="font-medium">
-              {formatCurrency(data.projectUpdatesBreakdown.grantMilestones)}
+              {formatCurrency(communityStats.projectUpdatesBreakdown.grantMilestones)}
             </span>
           </div>
           <div className="flex justify-between gap-3 text-xs">
             <span className="text-gray-600 dark:text-gray-400">Grant Milestone Completions</span>
             <span className="font-medium">
-              {formatCurrency(data.projectUpdatesBreakdown.grantCompletedMilestones)}
+              {formatCurrency(communityStats.projectUpdatesBreakdown.grantCompletedMilestones)}
             </span>
           </div>
           <div className="flex justify-between gap-3 text-xs">
             <span className="text-gray-600 dark:text-gray-400">Grant Updates</span>
             <span className="font-medium">
-              {formatCurrency(data.projectUpdatesBreakdown.grantUpdates)}
+              {formatCurrency(communityStats.projectUpdatesBreakdown.grantUpdates)}
             </span>
           </div>
         </div>
@@ -228,11 +227,11 @@ export const CommunityStatCards = () => {
     [programId, stats]
   );
 
-  const breakdown = data?.projectUpdatesBreakdown;
+  const breakdown = communityStats?.projectUpdatesBreakdown;
   const completedMilestones = breakdown
     ? breakdown.projectCompletedMilestones + breakdown.grantCompletedMilestones
     : 0;
-  const totalMilestones = data?.totalMilestones ?? 0;
+  const totalMilestones = communityStats?.totalMilestones ?? 0;
 
   return (
     <>

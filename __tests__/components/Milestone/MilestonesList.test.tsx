@@ -32,6 +32,10 @@ vi.mock("@/store", () => ({
   useProjectStore: vi.fn((selector) => selector({ isProjectAdmin: false, isProjectOwner: false })),
 }));
 
+vi.mock("@/hooks/useProjectAuthorization", () => ({
+  useProjectAuthorization: () => ({ isAuthorized: false, isLoading: false }),
+}));
+
 // Mock ActivityCard component
 vi.mock("@/components/Shared/ActivityCard", () => ({
   ActivityCard: ({ activity }: any) => (

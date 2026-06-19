@@ -1,4 +1,9 @@
-import { RetryAbortedError, retryUntilConditionMet } from "@/utilities/retries";
+import {
+  isRetryConditionNotMetError,
+  RetryAbortedError,
+  RetryConditionNotMetError,
+  retryUntilConditionMet,
+} from "@/utilities/retries";
 
 describe("retryUntilConditionMet — AbortSignal", () => {
   beforeEach(() => {
@@ -72,5 +77,35 @@ describe("RetryAbortedError", () => {
   it("should_accept_custom_message", () => {
     const err = new RetryAbortedError("custom reason");
     expect(err.message).toBe("custom reason");
+  });
+});
+
+describe("RetryConditionNotMetError", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("is thrown (typed) when the condition never becomes true within the budget", async () => {
+    const condition = vi.fn().mockResolvedValue(false);
+
+    const promise = retryUntilConditionMet(condition, undefined, 2, 10);
+    const assertion = expect(promise).rejects.toBeInstanceOf(RetryConditionNotMetError);
+    await vi.runAllTimersAsync();
+    await assertion;
+  });
+
+  it("keeps the original behaviour-compatible exhaustion message", () => {
+    const err = new RetryConditionNotMetError();
+    expect(err.message).toContain("Condition was not met after maximum retries");
+  });
+
+  it("is matched by the isRetryConditionNotMetError guard", () => {
+    expect(isRetryConditionNotMetError(new RetryConditionNotMetError())).toBe(true);
+    expect(isRetryConditionNotMetError(new Error("nope"))).toBe(false);
+    expect(isRetryConditionNotMetError(new RetryAbortedError())).toBe(false);
   });
 });

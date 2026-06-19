@@ -23,26 +23,28 @@ import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAc
 import { useCommunityDetails } from "@/hooks/communities/useCommunityDetails";
 import { useAuth } from "@/hooks/useAuth";
 import { useKycBatchStatuses, useKycConfig } from "@/hooks/useKycStatus";
+import { CreateDisbursementModal } from "@/src/features/payout-disbursement/components/CreateDisbursementModal";
+import { PayoutConfigurationModal } from "@/src/features/payout-disbursement/components/PayoutConfigurationModal";
+import { PayoutHistoryDrawer } from "@/src/features/payout-disbursement/components/PayoutHistoryDrawer";
+import { TokenBreakdown } from "@/src/features/payout-disbursement/components/TokenBreakdown";
+import {
+  useCommunityPayouts,
+  usePayoutConfigsByCommunity,
+  useSavePayoutConfig,
+} from "@/src/features/payout-disbursement/hooks/use-payout-disbursement";
 import {
   AggregatedDisbursementStatus,
   type CommunityPayoutsOptions,
   type CommunityPayoutsSorting,
-  CreateDisbursementModal,
   type GrantDisbursementInfo,
-  getPaidAllocationIds,
   type PayoutConfigItem,
-  PayoutConfigurationModal,
+  type PayoutDisbursement,
   PayoutDisbursementStatus,
   type PayoutGrantConfig,
-  PayoutHistoryDrawer,
   type SavePayoutConfigRequest,
-  TokenBreakdown,
   type TokenTotal,
-  useCommunityPayouts,
-  usePayoutConfigsByCommunity,
-  useSavePayoutConfig,
-} from "@/src/features/payout-disbursement";
-import type { PayoutDisbursement } from "@/src/features/payout-disbursement/types/payout-disbursement";
+} from "@/src/features/payout-disbursement/types/payout-disbursement";
+import { getPaidAllocationIds } from "@/src/features/payout-disbursement/utils/allocation-selection";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
@@ -170,10 +172,8 @@ export default function PayoutsAdminPage() {
   // Create a map of grant UID to payout config for quick lookup
   const payoutConfigMap = useMemo(() => {
     const map: Record<string, PayoutGrantConfig> = {};
-    if (payoutConfigs) {
-      for (const config of payoutConfigs) {
-        map[config.grantUID] = config;
-      }
+    for (const config of payoutConfigs ?? []) {
+      map[config.grantUID] = config;
     }
     return map;
   }, [payoutConfigs]);

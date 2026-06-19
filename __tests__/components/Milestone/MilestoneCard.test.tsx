@@ -79,14 +79,12 @@ vi.mock("@/hooks/useMilestoneImpactAnswers", () => ({
 }));
 
 // Mock formatDate utility
-vi.mock("@/utilities/formatDate", () => ({
-  formatDate: vi.fn((timestamp: number) => {
-    return new Date(timestamp).toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
-  }),
+// Keep real exports (normalizeTimestamp backs milestoneDueDate's normalizer).
+vi.mock("@/utilities/formatDate", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/utilities/formatDate")>()),
+  formatDate: vi.fn((t: number) =>
+    new Date(t).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+  ),
 }));
 
 // Mock PAGES utility

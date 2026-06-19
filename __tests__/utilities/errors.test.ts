@@ -1,4 +1,72 @@
-import { EligibilityConflictError } from "@/utilities/errors";
+import type { AxiosError } from "axios";
+import {
+  EligibilityConflictError,
+  extractApiErrorMessage,
+  IndexingTimeoutError,
+  isSurfacedError,
+  markSurfaced,
+  OffChainRevokeError,
+} from "@/utilities/errors";
+
+describe("extractApiErrorMessage", () => {
+  const fallback = "Something went wrong";
+
+  it("returns the backend response.data.message for an axios error", () => {
+    const error = {
+      isAxiosError: true,
+      response: { data: { message: "Program is missing an AI config" } },
+      message: "Request failed with status code 400",
+    } as unknown as AxiosError<{ message?: string }>;
+
+    expect(extractApiErrorMessage(error, fallback)).toBe("Program is missing an AI config");
+  });
+
+  it("falls back to the axios message when there is no response body", () => {
+    const error = {
+      isAxiosError: true,
+      response: undefined,
+      message: "Network Error",
+    } as unknown as AxiosError<{ message?: string }>;
+
+    expect(extractApiErrorMessage(error, fallback)).toBe("Network Error");
+  });
+
+  it("falls back to the axios message when response.data has no message", () => {
+    const error = {
+      isAxiosError: true,
+      response: { data: {} },
+      message: "Request failed with status code 500",
+    } as unknown as AxiosError<{ message?: string }>;
+
+    expect(extractApiErrorMessage(error, fallback)).toBe("Request failed with status code 500");
+  });
+
+  it("returns the message of a plain Error", () => {
+    expect(extractApiErrorMessage(new Error("boom"), fallback)).toBe("boom");
+  });
+
+  it("returns the fallback for an Error with an empty message", () => {
+    expect(extractApiErrorMessage(new Error(""), fallback)).toBe(fallback);
+  });
+
+  it("returns the fallback for a string value", () => {
+    expect(extractApiErrorMessage("String error", fallback)).toBe(fallback);
+  });
+
+  it("returns the fallback for null", () => {
+    expect(extractApiErrorMessage(null, fallback)).toBe(fallback);
+  });
+
+  it("returns the fallback for undefined", () => {
+    expect(extractApiErrorMessage(undefined, fallback)).toBe(fallback);
+  });
+
+  it("returns the fallback for a non-axios plain object", () => {
+    expect(extractApiErrorMessage({ response: { data: { message: "ignored" } } }, fallback)).toBe(
+      fallback
+    );
+  });
+});
 
 describe("EligibilityConflictError", () => {
   it("has the correct name", () => {
@@ -53,5 +121,70 @@ describe("EligibilityConflictError", () => {
     expect(caught).toBeInstanceOf(Error);
     expect(caught).toBeInstanceOf(EligibilityConflictError);
     expect((caught as EligibilityConflictError).name).toBe("EligibilityConflictError");
+  });
+});
+
+describe("OffChainRevokeError", () => {
+  it("carries the code, status and context, and defaults surfaced to false", () => {
+    const error = new OffChainRevokeError("API_ERROR", "Forbidden", {
+      status: 403,
+      uid: "0xabc",
+      chainID: 10,
+    });
+    expect(error.name).toBe("OffChainRevokeError");
+    expect(error.code).toBe("API_ERROR");
+    expect(error.status).toBe(403);
+    expect(error.uid).toBe("0xabc");
+    expect(error.chainID).toBe(10);
+    expect(error.surfaced).toBe(false);
+    expect(error).toBeInstanceOf(Error);
+  });
+
+  it("respects an explicit surfaced flag", () => {
+    const error = new OffChainRevokeError("REQUEST_FAILED", "Network Error", { surfaced: true });
+    expect(error.surfaced).toBe(true);
+    expect(error.status).toBeUndefined();
+  });
+});
+
+describe("IndexingTimeoutError", () => {
+  it("defaults to an actionable refresh message and INDEXING_TIMEOUT code", () => {
+    const error = new IndexingTimeoutError();
+    expect(error.name).toBe("IndexingTimeoutError");
+    expect(error.code).toBe("INDEXING_TIMEOUT");
+    expect(error.message).toContain("indexed");
+    expect(error).toBeInstanceOf(Error);
+  });
+});
+
+describe("isSurfacedError", () => {
+  it("is true only for errors flagged surfaced=true", () => {
+    expect(isSurfacedError(new OffChainRevokeError("API_ERROR", "x", { surfaced: true }))).toBe(
+      true
+    );
+    expect(isSurfacedError(new IndexingTimeoutError("msg", { surfaced: true }))).toBe(true);
+    expect(isSurfacedError(new OffChainRevokeError("API_ERROR", "x"))).toBe(false);
+    expect(isSurfacedError(new Error("plain"))).toBe(false);
+    expect(isSurfacedError(null)).toBe(false);
+    expect(isSurfacedError(Object.assign(new Error("ad-hoc"), { surfaced: true }))).toBe(true);
+  });
+});
+
+describe("markSurfaced", () => {
+  it("flags object errors as surfaced and returns the same instance", () => {
+    const plain = new Error("plain");
+    expect(markSurfaced(plain)).toBe(plain);
+    expect(isSurfacedError(plain)).toBe(true);
+
+    const timeout = new IndexingTimeoutError();
+    expect(isSurfacedError(timeout)).toBe(false);
+    markSurfaced(timeout);
+    expect(isSurfacedError(timeout)).toBe(true);
+  });
+
+  it("is a no-op for non-object errors", () => {
+    expect(markSurfaced("string error")).toBe("string error");
+    expect(markSurfaced(null)).toBe(null);
+    expect(isSurfacedError("string error")).toBe(false);
   });
 });

@@ -1,5 +1,5 @@
 // Re-export from canonical location
 export {
-  getCommunityCategories,
+  getCommunityCategoriesOrThrow,
   getCommunityDetails,
 } from "@/utilities/queries/v2/getCommunityData";

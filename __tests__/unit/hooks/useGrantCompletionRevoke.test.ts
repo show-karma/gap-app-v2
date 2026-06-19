@@ -412,7 +412,7 @@ describe("useGrantCompletionRevoke", () => {
     });
 
     it("should use off-chain revocation when not authorized", async () => {
-      mockPerformOffChainRevoke.mockResolvedValue(true);
+      mockPerformOffChainRevoke.mockResolvedValue(undefined);
 
       const { result } = renderHook(() =>
         useGrantCompletionRevoke({ grant: mockGrant, project: mockProject })
@@ -422,29 +422,29 @@ describe("useGrantCompletionRevoke", () => {
         await result.current.revokeCompletion();
       });
 
-      // Off-chain path goes directly to performOffChainRevoke without chain setup
+      // Off-chain path goes directly to performOffChainRevoke without chain
+      // setup. The throw-on-failure contract removed the onSuccess/onError
+      // callbacks — refetch now runs after the await resolves.
       expect(mockPerformOffChainRevoke).toHaveBeenCalledWith({
         uid: "0xcompletion123",
         chainID: 42161,
         checkIfExists: mockCheckIfCompletionExists,
-        onSuccess: expect.any(Function),
-        onError: expect.any(Function),
         toastMessages: {
           success: MESSAGES.GRANT.MARK_AS_COMPLETE.UNDO.SUCCESS,
           loading: MESSAGES.GRANT.MARK_AS_COMPLETE.UNDO.LOADING,
         },
       });
+      expect(mockChangeStepperStep).toHaveBeenCalledWith("indexed");
+      expect(mockRefetchGrants).toHaveBeenCalled();
       expect(mockRefreshGrant).toHaveBeenCalled();
       // Chain setup should NOT be called for off-chain path
       expect(mockSetupChainAndWallet).not.toHaveBeenCalled();
     });
 
-    it("should handle off-chain revocation success callback", async () => {
-      let onSuccessCallback: (() => void) | undefined;
-      mockPerformOffChainRevoke.mockImplementation((options: any) => {
-        onSuccessCallback = options.onSuccess;
-        return Promise.resolve(true);
-      });
+    it("does NOT refetch or report success when the off-chain revoke rejects", async () => {
+      mockPerformOffChainRevoke.mockRejectedValue(
+        Object.assign(new Error("Forbidden"), { surfaced: true })
+      );
 
       const { result } = renderHook(() =>
         useGrantCompletionRevoke({ grant: mockGrant, project: mockProject })
@@ -454,42 +454,11 @@ describe("useGrantCompletionRevoke", () => {
         await result.current.revokeCompletion();
       });
 
-      await act(async () => {
-        onSuccessCallback?.();
-      });
-
-      expect(mockChangeStepperStep).toHaveBeenCalledWith("indexed");
-      expect(mockDismiss).toHaveBeenCalled();
-    });
-
-    it("should handle off-chain revocation error callback", async () => {
-      // Suppress expected console.error from error callback
-      const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-
-      const mockError = new Error("Off-chain error");
-      let onErrorCallback: ((error: any) => void) | undefined;
-      mockPerformOffChainRevoke.mockImplementation((options: any) => {
-        onErrorCallback = options.onError;
-        return Promise.resolve(false);
-      });
-
-      const { result } = renderHook(() =>
-        useGrantCompletionRevoke({ grant: mockGrant, project: mockProject })
-      );
-
-      await act(async () => {
-        await result.current.revokeCompletion();
-      });
-
-      await act(async () => {
-        onErrorCallback?.(mockError);
-      });
-
-      expect(mockDismiss).toHaveBeenCalled();
-      expect(consoleSpy).toHaveBeenCalledWith("Off-chain revocation failed:", mockError);
-
-      // Restore console.error
-      consoleSpy.mockRestore();
+      // A rejected revoke must not pretend to succeed.
+      expect(mockRefetchGrants).not.toHaveBeenCalled();
+      expect(mockRefreshGrant).not.toHaveBeenCalled();
+      expect(mockShowSuccess).not.toHaveBeenCalled();
+      expect(mockErrorManager).toHaveBeenCalled();
     });
   });
 
@@ -802,7 +771,7 @@ describe("useGrantCompletionRevoke", () => {
     it("should fallback to off-chain when on-chain fails", async () => {
       const onChainError = new Error("On-chain error");
       mockMulticallContract.multiRevoke.mockRejectedValue(onChainError);
-      mockPerformOffChainRevoke.mockResolvedValue(true);
+      mockPerformOffChainRevoke.mockResolvedValue(undefined);
 
       const { result } = renderHook(() =>
         useGrantCompletionRevoke({ grant: mockGrant, project: mockProject })
@@ -813,42 +782,27 @@ describe("useGrantCompletionRevoke", () => {
       });
 
       expect(mockDismiss).toHaveBeenCalled();
-      /**
-       * Note: Indirect toast() assertion
-       *
-       * The toast() call at line 190 of useGrantCompletionRevoke.ts is not directly verified here
-       * due to Jest mock setup timing issues. The toast mock is created in vi.mock() before the
-       * hook is imported, which can cause the mock reference to not be properly captured.
-       *
-       * Instead, we verify the toast call indirectly by:
-       * 1. Confirming that performOffChainRevoke is called (which only happens after the toast call)
-       * 2. Verifying the fallback path execution through mockPerformOffChainRevoke being called
-       * 3. Checking that mockDismiss() was called (which happens when falling back)
-       *
-       * The actual toast call is: toast("On-chain revocation unavailable. Attempting off-chain revocation...")
-       * See: hooks/useGrantCompletionRevoke.ts:190
-       *
-       * For direct toast verification, see integration tests in:
-       * __tests__/integration/features/grant-completion-revocation-flow.test.tsx
-       */
       expect(mockPerformOffChainRevoke).toHaveBeenCalledWith({
         uid: "0xcompletion123",
         chainID: 42161,
         checkIfExists: mockCheckIfCompletionExists,
-        onSuccess: expect.any(Function),
-        onError: expect.any(Function),
         toastMessages: {
           success: MESSAGES.GRANT.MARK_AS_COMPLETE.UNDO.SUCCESS,
           loading: MESSAGES.GRANT.MARK_AS_COMPLETE.UNDO.LOADING,
         },
       });
+      // Refetch moved inside the try, after the await — runs only on success.
+      expect(mockChangeStepperStep).toHaveBeenCalledWith("indexed");
+      expect(mockRefetchGrants).toHaveBeenCalled();
       expect(mockRefreshGrant).toHaveBeenCalled();
     });
 
-    it("should throw original error when fallback also fails", async () => {
+    it("should throw original on-chain error when fallback also fails", async () => {
       const onChainError = new Error("On-chain error");
       mockMulticallContract.multiRevoke.mockRejectedValue(onChainError);
-      mockPerformOffChainRevoke.mockResolvedValue(false);
+      mockPerformOffChainRevoke.mockRejectedValue(
+        Object.assign(new Error("Forbidden"), { surfaced: true })
+      );
 
       const { result } = renderHook(() =>
         useGrantCompletionRevoke({ grant: mockGrant, project: mockProject })
@@ -858,18 +812,17 @@ describe("useGrantCompletionRevoke", () => {
         await result.current.revokeCompletion();
       });
 
+      // The ORIGINAL on-chain error must surface, not the off-chain one.
       expect(mockShowError).toHaveBeenCalledWith("On-chain error");
       expect(mockErrorManager).toHaveBeenCalled();
     });
 
-    it("should handle fallback success callback", async () => {
+    it("does NOT refetch when the fallback off-chain revoke rejects", async () => {
       const onChainError = new Error("On-chain error");
       mockMulticallContract.multiRevoke.mockRejectedValue(onChainError);
-      let onSuccessCallback: (() => void) | undefined;
-      mockPerformOffChainRevoke.mockImplementation((options: any) => {
-        onSuccessCallback = options.onSuccess;
-        return Promise.resolve(true);
-      });
+      mockPerformOffChainRevoke.mockRejectedValue(
+        Object.assign(new Error("Forbidden"), { surfaced: true })
+      );
 
       const { result } = renderHook(() =>
         useGrantCompletionRevoke({ grant: mockGrant, project: mockProject })
@@ -879,12 +832,8 @@ describe("useGrantCompletionRevoke", () => {
         await result.current.revokeCompletion();
       });
 
-      await act(async () => {
-        onSuccessCallback?.();
-      });
-
-      expect(mockChangeStepperStep).toHaveBeenCalledWith("indexed");
-      expect(mockDismiss).toHaveBeenCalled();
+      expect(mockRefetchGrants).not.toHaveBeenCalled();
+      expect(mockRefreshGrant).not.toHaveBeenCalled();
     });
   });
 
@@ -993,7 +942,9 @@ describe("useGrantCompletionRevoke", () => {
 
     it("should reset stepper on error", async () => {
       mockMulticallContract.multiRevoke.mockRejectedValue(new Error("Error"));
-      mockPerformOffChainRevoke.mockResolvedValue(false);
+      mockPerformOffChainRevoke.mockRejectedValue(
+        Object.assign(new Error("Forbidden"), { surfaced: true })
+      );
 
       const { result } = renderHook(() =>
         useGrantCompletionRevoke({ grant: mockGrant, project: mockProject })

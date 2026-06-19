@@ -212,6 +212,34 @@ describe("MarkdownEditor", () => {
       const countElement = screen.getByText("100/100");
       expect(countElement).toHaveClass("text-red-500");
     });
+
+    it("should hide the counter below characterCountThreshold even when showCharacterCount is true", () => {
+      render(
+        <MarkdownEditor
+          value={"a".repeat(49)}
+          showCharacterCount
+          characterCountThreshold={50}
+          maxLength={100}
+          id="test-editor"
+        />
+      );
+
+      expect(screen.queryByText("49/100")).not.toBeInTheDocument();
+    });
+
+    it("should show the counter once length reaches characterCountThreshold", () => {
+      render(
+        <MarkdownEditor
+          value={"a".repeat(50)}
+          showCharacterCount
+          characterCountThreshold={50}
+          maxLength={100}
+          id="test-editor"
+        />
+      );
+
+      expect(screen.getByText("50/100")).toBeInTheDocument();
+    });
   });
 
   describe("Preview Mode Toggle", () => {

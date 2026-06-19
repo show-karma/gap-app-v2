@@ -135,6 +135,11 @@ export const ProjectNavigation = ({
           <Link
             key={tab.name}
             href={tab.href}
+            aria-label={
+              tab.name === "Funding" && grantsLength
+                ? `Funding (${formatCurrency(grantsLength)})`
+                : undefined
+            }
             className={cn(
               "whitespace-nowrap border-b-2 pb-2 text-base flex flex-row gap-2 items-center",
               isTabActive(tab.href)
@@ -148,7 +153,10 @@ export const ProjectNavigation = ({
               <ExclamationTriangleIcon className="w-4 h-4 text-yellow-500" />
             ) : null}
             {tab.name === "Funding" && grantsLength ? (
-              <p className="rounded-2xl bg-gray-200 px-2.5 py-[2px] text-center text-sm font-medium leading-tight text-slate-700 dark:bg-slate-700 dark:text-zinc-300">
+              <p
+                aria-hidden="true"
+                className="rounded-2xl bg-gray-200 px-2.5 py-[2px] text-center text-sm font-medium leading-tight text-slate-700 dark:bg-slate-700 dark:text-zinc-300"
+              >
                 {formatCurrency(grantsLength || 0)}
               </p>
             ) : null}

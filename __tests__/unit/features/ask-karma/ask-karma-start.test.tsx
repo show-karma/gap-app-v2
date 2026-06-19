@@ -158,7 +158,7 @@ describe("AskKarmaStart — direct input submissions", () => {
     // Hard cap surfaced via the HTML maxLength attribute so the browser
     // itself rejects keystrokes/pastes past the limit. Value is intentional
     // and tested so we notice if it changes silently.
-    expect(input).toHaveAttribute("maxLength", "500");
+    expect(input).toHaveAttribute("maxLength", "16000");
   });
 
   it("ignores Enter while IME composition is active", async () => {

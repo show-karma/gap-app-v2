@@ -4,11 +4,15 @@ import { TrashIcon } from "@heroicons/react/24/solid";
 import type { FC } from "react";
 import type { Control, FieldError, FieldErrorsImpl, FieldValues, Merge } from "react-hook-form";
 import { Controller, useFieldArray } from "react-hook-form";
+import { MILESTONE_FIELD_REQUIRED } from "@/components/FundingPlatform/ApplicationView/lib/repeatable-item-schemas";
 import { Button } from "@/components/Utilities/Button";
 import { DatePicker } from "@/components/Utilities/DatePicker";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import type { IFormField, IMilestoneData } from "@/types/funding-platform";
 import { cn } from "@/utilities/tailwind";
+
+/** Asterisk shown next to required sub-field labels, driven by the schema. */
+const RequiredMark: FC = () => <span className="text-red-500 ml-1">{" *"}</span>;
 
 interface MilestoneInputProps {
   field: IFormField;
@@ -97,11 +101,11 @@ export const MilestoneInput: FC<MilestoneInputProps> = ({
               <Controller
                 name={`${fieldKey}.${index}.title`}
                 control={control}
-                rules={{ required: "Title is required" }}
                 render={({ field: titleField, fieldState }) => (
                   <div>
                     <label htmlFor={`${fieldKey}-${index}-title`} className={labelStyle}>
-                      Title *
+                      Title
+                      {MILESTONE_FIELD_REQUIRED.title && <RequiredMark />}
                     </label>
                     <input
                       {...titleField}
@@ -127,13 +131,17 @@ export const MilestoneInput: FC<MilestoneInputProps> = ({
                 control={control}
                 render={({ field: descField, fieldState }) => (
                   <MarkdownEditor
-                    label="Description"
+                    label={
+                      MILESTONE_FIELD_REQUIRED.description
+                        ? "Description"
+                        : "Description (Optional)"
+                    }
                     placeholder="Describe what will be accomplished in this milestone"
                     value={descField.value || ""}
                     onChange={descField.onChange}
                     onBlur={descField.onBlur}
                     error={fieldState.error?.message}
-                    isRequired={false}
+                    isRequired={MILESTONE_FIELD_REQUIRED.description}
                     isDisabled={isLoading}
                     id={`${fieldKey}-${index}-description`}
                     height={200}
@@ -146,7 +154,6 @@ export const MilestoneInput: FC<MilestoneInputProps> = ({
               <Controller
                 name={`${fieldKey}.${index}.dueDate`}
                 control={control}
-                rules={{ required: "Due date is required" }}
                 render={({ field: dateField, fieldState }) => {
                   const dateValue = dateField.value
                     ? (() => {
@@ -160,7 +167,10 @@ export const MilestoneInput: FC<MilestoneInputProps> = ({
 
                   return (
                     <div>
-                      <span className={labelStyle}>Due Date *</span>
+                      <span className={labelStyle}>
+                        Due Date
+                        {MILESTONE_FIELD_REQUIRED.dueDate && <RequiredMark />}
+                      </span>
                       <DatePicker
                         selected={dateValue}
                         onSelect={(date) => {
@@ -187,11 +197,11 @@ export const MilestoneInput: FC<MilestoneInputProps> = ({
               <Controller
                 name={`${fieldKey}.${index}.fundingRequested`}
                 control={control}
-                rules={{ required: "Milestone funding requested is required" }}
                 render={({ field: fundingField, fieldState }) => (
                   <div>
                     <label htmlFor={`${fieldKey}-${index}-fundingRequested`} className={labelStyle}>
-                      Milestone funding requested *
+                      Milestone funding requested
+                      {MILESTONE_FIELD_REQUIRED.fundingRequested && <RequiredMark />}
                     </label>
                     <input
                       {...fundingField}
@@ -215,7 +225,6 @@ export const MilestoneInput: FC<MilestoneInputProps> = ({
               <Controller
                 name={`${fieldKey}.${index}.completionCriteria`}
                 control={control}
-                rules={{ required: "Completion criteria is required" }}
                 render={({ field: criteriaField, fieldState }) => (
                   <MarkdownEditor
                     label="Completion Criteria"
@@ -224,7 +233,7 @@ export const MilestoneInput: FC<MilestoneInputProps> = ({
                     onChange={criteriaField.onChange}
                     onBlur={criteriaField.onBlur}
                     error={fieldState.error?.message}
-                    isRequired
+                    isRequired={MILESTONE_FIELD_REQUIRED.completionCriteria}
                     isDisabled={isLoading}
                     id={`${fieldKey}-${index}-completionCriteria`}
                     height={150}

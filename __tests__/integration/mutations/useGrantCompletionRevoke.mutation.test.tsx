@@ -138,7 +138,8 @@ function createMockProject(overrides?: Partial<ProjectResponse>): ProjectRespons
 describe("useGrantCompletionRevoke (mutation integration)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockPerformOffChainRevoke.mockResolvedValue(true);
+    // Revoke primitive resolves to void on success (throws on failure).
+    mockPerformOffChainRevoke.mockResolvedValue(undefined);
   });
 
   it("starts in idle state", () => {

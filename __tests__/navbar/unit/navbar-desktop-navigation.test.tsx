@@ -481,7 +481,7 @@ describe("NavbarDesktopNavigation", () => {
       expect(resourcesButton).toBeInTheDocument();
     });
 
-    it("should render quick action buttons and Explore dropdown when logged in", () => {
+    it("should render Dashboard, segment dropdowns and Explore dropdown when logged in", () => {
       const authFixture = getAuthFixture("authenticated-basic");
       renderWithProviders(<NavbarDesktopNavigation />, {
         mockUseAuth: createMockUseAuth(authFixture.authState),
@@ -490,9 +490,12 @@ describe("NavbarDesktopNavigation", () => {
         mockUseContributorProfileModalStore: createMockUseContributorProfileModalStore(),
       });
 
-      // When logged in, For Projects/Funders dropdowns are replaced with direct action buttons
-      // and only Explore dropdown remains
+      // When logged in, the Dashboard button shows alongside the shared
+      // For Projects/Funders/Nonprofits dropdowns and the Explore dropdown.
       expect(screen.getByRole("link", { name: /dashboard/i })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /for projects/i })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /for funders/i })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /for nonprofits/i })).toBeInTheDocument();
       expect(screen.getByRole("button", { name: /explore/i })).toBeInTheDocument();
     });
   });

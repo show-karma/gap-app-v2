@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import { MilestoneDetails } from "@/components/Pages/GrantMilestonesAndUpdates/screens/MilestonesAndUpdates/MilestoneDetails";
-import { useIsCommunityAdmin } from "@/hooks/communities/useIsCommunityAdmin";
+import { useProjectAuthorization } from "@/hooks/useProjectAuthorization";
 
 vi.mock("@/components/Shared/ActivityCard", () => ({
   ActivityCard: ({ isAuthorized }: { isAuthorized?: boolean }) => (
@@ -9,29 +9,18 @@ vi.mock("@/components/Shared/ActivityCard", () => ({
   ),
 }));
 
-const mockIsOwner = vi.fn(() => false);
-const mockIsProjectOwner = vi.fn(() => false);
-const mockIsProjectAdmin = vi.fn(() => false);
-
-vi.mock("@/store", () => ({
-  useOwnerStore: vi.fn(() => mockIsOwner()),
-  useProjectStore: vi.fn((selector: any) => {
-    const source = selector.toString();
-    if (source.includes("isProjectOwner")) return mockIsProjectOwner();
-    if (source.includes("isProjectAdmin")) return mockIsProjectAdmin();
-    return undefined;
-  }),
-}));
-
 vi.mock("@/store/grant", () => ({
   useGrantStore: vi.fn((selector: any) => selector({ grant: { communityUID: "0xcommunity" } })),
 }));
 
-vi.mock("@/hooks/communities/useIsCommunityAdmin", () => ({
-  useIsCommunityAdmin: vi.fn(() => ({ isCommunityAdmin: false })),
+// Authorization is resolved by the tri-state hook (composition is unit-tested
+// in useProjectAuthorization.test.ts); here we verify MilestoneDetails forwards
+// the grant's communityUID and the resolved decision to ActivityCard.
+vi.mock("@/hooks/useProjectAuthorization", () => ({
+  useProjectAuthorization: vi.fn(() => ({ isAuthorized: false, isLoading: false })),
 }));
 
-const mockUseIsCommunityAdmin = vi.mocked(useIsCommunityAdmin);
+const mockUseProjectAuthorization = vi.mocked(useProjectAuthorization);
 
 const baseMilestone = {
   uid: "milestone-1",
@@ -46,37 +35,26 @@ const renderComponent = () => render(<MilestoneDetails milestone={baseMilestone}
 describe("MilestoneDetails gating", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockIsOwner.mockReturnValue(false);
-    mockIsProjectOwner.mockReturnValue(false);
-    mockIsProjectAdmin.mockReturnValue(false);
-    mockUseIsCommunityAdmin.mockReturnValue({ isCommunityAdmin: false } as any);
+    mockUseProjectAuthorization.mockReturnValue({ isAuthorized: false, isLoading: false });
   });
 
-  it("should_query_community_admin_with_the_grant_communityUID", () => {
+  it("should_resolve_authorization_with_the_grant_communityUID", () => {
     renderComponent();
 
-    expect(mockUseIsCommunityAdmin).toHaveBeenCalledWith("0xcommunity");
+    expect(mockUseProjectAuthorization).toHaveBeenCalledWith("0xcommunity");
   });
 
-  it("should_authorize_when_user_is_community_admin", () => {
-    mockUseIsCommunityAdmin.mockReturnValue({ isCommunityAdmin: true } as any);
+  it("should_authorize_when_the_hook_resolves_authorized", () => {
+    mockUseProjectAuthorization.mockReturnValue({ isAuthorized: true, isLoading: false });
 
     renderComponent();
 
     expect(screen.getByTestId("activity-card")).toHaveAttribute("data-is-authorized", "true");
   });
 
-  it("should_not_authorize_when_user_has_no_role", () => {
+  it("should_not_authorize_when_the_hook_resolves_denied", () => {
     renderComponent();
 
     expect(screen.getByTestId("activity-card")).toHaveAttribute("data-is-authorized", "false");
-  });
-
-  it("should_authorize_when_user_is_project_owner", () => {
-    mockIsProjectOwner.mockReturnValue(true);
-
-    renderComponent();
-
-    expect(screen.getByTestId("activity-card")).toHaveAttribute("data-is-authorized", "true");
   });
 });

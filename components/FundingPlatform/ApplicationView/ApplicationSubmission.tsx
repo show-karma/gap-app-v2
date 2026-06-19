@@ -8,6 +8,10 @@ import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { z } from "zod";
 import { buildRepeatableObjectSchema } from "@/components/FundingPlatform/ApplicationView/lib/repeatable-field-schema";
+import {
+  metricItemSchema,
+  milestoneItemSchema,
+} from "@/components/FundingPlatform/ApplicationView/lib/repeatable-item-schemas";
 import { KarmaProfileLinkInput } from "@/components/FundingPlatform/FormFields/KarmaProfileLinkInput";
 import { MetricInput } from "@/components/FundingPlatform/FormFields/MetricInput";
 import { MilestoneInput } from "@/components/FundingPlatform/FormFields/MilestoneInput";
@@ -283,42 +287,25 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
           fieldSchema = z.string();
           break;
         case "milestone": {
-          fieldSchema = buildRepeatableObjectSchema(
-            z.object({
-              title: z.string().min(1, "Milestone title is required"),
-              description: z.string().min(1, "Milestone description is required"),
-              dueDate: z.string().min(1, "Due date is required"),
-              fundingRequested: z.string().min(1, "Milestone funding requested is required"),
-              completionCriteria: z.string().min(1, "Completion criteria is required"),
-            }),
-            {
-              required: field.required,
-              label: field.label,
-              min: field.validation?.minMilestones,
-              max: field.validation?.maxMilestones,
-              minMessage: (n) => `Please add at least ${n} milestone(s)`,
-              maxMessage: (n) => `Maximum ${n} milestone(s) allowed`,
-            }
-          );
+          fieldSchema = buildRepeatableObjectSchema(milestoneItemSchema, {
+            required: field.required,
+            label: field.label,
+            min: field.validation?.minMilestones,
+            max: field.validation?.maxMilestones,
+            minMessage: (n) => `Please add at least ${n} milestone(s)`,
+            maxMessage: (n) => `Maximum ${n} milestone(s) allowed`,
+          });
           break;
         }
         case "metric": {
-          fieldSchema = buildRepeatableObjectSchema(
-            z.object({
-              metric: z.string().trim().min(1, "Metric is required"),
-              dataSource: z.string().trim().min(1, "Data source is required"),
-              howItsMeasured: z.string().trim().min(1, "How it's measured is required"),
-              target: z.string().trim().min(1, "Target is required"),
-            }),
-            {
-              required: field.required,
-              label: field.label,
-              min: field.validation?.minMetrics,
-              max: field.validation?.maxMetrics,
-              minMessage: (n) => `Please add at least ${n} ${pluralize("metric", n)}`,
-              maxMessage: (n) => `Maximum ${n} ${pluralize("metric", n)} allowed`,
-            }
-          );
+          fieldSchema = buildRepeatableObjectSchema(metricItemSchema, {
+            required: field.required,
+            label: field.label,
+            min: field.validation?.minMetrics,
+            max: field.validation?.maxMetrics,
+            minMessage: (n) => `Please add at least ${n} ${pluralize("metric", n)}`,
+            maxMessage: (n) => `Maximum ${n} ${pluralize("metric", n)} allowed`,
+          });
           break;
         }
         case "karma_profile_link": {

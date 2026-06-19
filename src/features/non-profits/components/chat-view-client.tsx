@@ -12,22 +12,13 @@
  * - Store: useGrantAtlasStore → usePhilanthropyStore
  * - messages selector: useShallow + EMPTY_MESSAGES constant (Zustand v5 safety)
  * - No motion imports; no retry button on stream error (error card only)
- * - New chat: abort stream + reset() store, STAY on current URL
+ * - New chat: abort stream + reset() store, replace URL with a fresh session
+ *   id (conversations are persisted per URL id)
  * - INLINE STARTER_PROMPTS (do NOT use suggested-queries.tsx component)
  */
 
-import {
-  Bookmark,
-  BookmarkCheck,
-  Building2,
-  ChevronDown,
-  Clock,
-  HandCoins,
-  Landmark,
-  MapPin,
-  Sparkles,
-} from "lucide-react";
-import Link from "next/link";
+import { Bookmark, Clock, SearchX, Sparkles } from "lucide-react";
+import { useRouter } from "next/navigation";
 import pluralize from "pluralize";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
@@ -49,94 +40,23 @@ import {
   PromptInputTextarea,
   PromptInputTools,
 } from "@/src/components/ai-elements/prompt-input";
-import formatCurrency from "@/utilities/formatCurrency";
 import { NON_PROFITS_PAGES } from "@/utilities/pages";
 import { usePhilanthropySearch } from "../hooks/use-philanthropy-stream";
-import {
-  useAddToResearchTray,
-  useRemoveFromResearchTray,
-  useResearchTray,
-} from "../hooks/use-research-tray";
+import { savedTurnsToChatTurns } from "../lib/saved-conversation";
 import { FILINGS_STATS } from "../lib/stats";
 import { decideThreadSeed } from "../lib/thread-seed";
 import { searchHistoryService } from "../services/search-history.service";
-import type { FieldRect, PageTransitionFields } from "../store/page-transition";
-import { usePageTransitionStore } from "../store/page-transition";
 import { type ChatTurn, EMPTY_MESSAGES, usePhilanthropyStore } from "../store/philanthropy";
 import { useSearchSessionStore } from "../store/search-session";
-import type { PhilanthropyEntityType, RankedEntity } from "../types/philanthropy";
 import { AttachmentsPanel } from "./attachments-panel";
 import { BookmarksDrawer } from "./bookmarks-drawer";
+import { ComposerLockNotice } from "./composer-lock-notice";
 import { ConnectorNudge } from "./connector-nudge";
+import { EntityList } from "./entity-list";
 import { NarrativeBlock } from "./narrative-block";
 import { ProgressView } from "./progress-view";
+import { SearchFeedback } from "./search-feedback";
 import { SearchHistoryPanel } from "./search-history-panel";
-
-// ── Entity presentation constants ──────────────────────────────────────────
-
-const ENTITY_ICON: Record<PhilanthropyEntityType, React.ElementType> = {
-  foundation: Landmark,
-  nonprofit: Building2,
-  grant: HandCoins,
-};
-
-const ENTITY_LABEL: Record<PhilanthropyEntityType, string> = {
-  foundation: "Foundation",
-  nonprofit: "Nonprofit",
-  grant: "Grant",
-};
-
-const ENTITY_BADGE_CLASS: Record<PhilanthropyEntityType, string> = {
-  foundation: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
-  nonprofit: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300",
-  grant: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300",
-};
-
-const INITIAL_VISIBLE_ENTITIES = 5;
-
-// ── BookmarkButton ──────────────────────────────────────────────────────────
-// Isolated component so it can call hooks without prop-drilling tray state.
-
-const BookmarkButton = memo(function BookmarkButton({ entity }: { entity: RankedEntity }) {
-  const { authenticated, login } = useAuth();
-  const { data: tray = [] } = useResearchTray();
-  const { mutate: addToTray, isPending: isAdding } = useAddToResearchTray();
-  const { mutate: removeFromTray, isPending: isRemoving } = useRemoveFromResearchTray();
-
-  const trayEntry = tray.find((e) => e.entityId === entity.id);
-  const isBookmarked = Boolean(trayEntry);
-
-  const toggle = useCallback(() => {
-    if (!authenticated) {
-      login();
-      return;
-    }
-    if (isBookmarked && trayEntry) {
-      removeFromTray(trayEntry.id);
-    } else {
-      addToTray(entity);
-    }
-  }, [authenticated, login, isBookmarked, trayEntry, removeFromTray, addToTray, entity]);
-
-  return (
-    <button
-      type="button"
-      onClick={(e) => {
-        e.preventDefault();
-        toggle();
-      }}
-      aria-label={isBookmarked ? "Remove from bookmarks" : "Add to bookmarks"}
-      disabled={isAdding || isRemoving}
-      className="shrink-0 rounded p-1 text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-brand dark:hover:bg-zinc-800 dark:hover:text-brand-subtle disabled:opacity-50"
-    >
-      {isBookmarked ? (
-        <BookmarkCheck className="size-3.5 text-brand" />
-      ) : (
-        <Bookmark className="size-3.5" />
-      )}
-    </button>
-  );
-});
 
 // ── Inline starter prompts (LOCKED decision — do NOT use suggested-queries.tsx) ──
 
@@ -146,138 +66,6 @@ const STARTER_PROMPTS = [
   "Family foundations that funded peers in climate justice last year",
   "Build a tiered prospect list for a $2M capital campaign",
 ] as const;
-
-// ── Helper functions ────────────────────────────────────────────────────────
-
-function getEntityHref(entity: RankedEntity, searchId?: string): string {
-  switch (entity.entityType) {
-    case "foundation":
-      return NON_PROFITS_PAGES.FOUNDATION(entity.id, searchId);
-    case "nonprofit":
-      return NON_PROFITS_PAGES.NONPROFIT(entity.id, searchId ? { searchId } : undefined);
-    case "grant":
-      return NON_PROFITS_PAGES.GRANT(entity.id, searchId);
-  }
-}
-
-// ── Sub-components ──────────────────────────────────────────────────────────
-
-const CompactEntityCard = memo(function CompactEntityCard({
-  entity,
-  searchId,
-}: {
-  entity: RankedEntity;
-  searchId?: string;
-}) {
-  const Icon = ENTITY_ICON[entity.entityType];
-  const href = getEntityHref(entity, searchId);
-  const cardRef = useRef<HTMLDivElement>(null);
-  const setTransition = usePageTransitionStore((s) => s.set);
-
-  const meta: string[] = [];
-  if (entity.totalAssets) meta.push(`$${formatCurrency(entity.totalAssets)} assets`);
-  if (entity.amount) meta.push(`$${formatCurrency(entity.amount)} grant`);
-  if (entity.location) meta.push(entity.location);
-
-  const handleLinkClick = useCallback(() => {
-    if (!cardRef.current) return;
-    const fieldEls = cardRef.current.querySelectorAll<HTMLElement>("[data-field]");
-    const collected: Partial<PageTransitionFields> & { name?: FieldRect } = {};
-    for (const el of fieldEls) {
-      const key = el.dataset.field as keyof PageTransitionFields | undefined;
-      if (!key) continue;
-      const rect = el.getBoundingClientRect();
-      const entry: FieldRect = {
-        text: el.textContent?.trim() ?? "",
-        x: rect.left,
-        y: rect.top,
-        width: rect.width,
-        height: rect.height,
-      };
-      collected[key] = entry;
-    }
-    if (collected.name) {
-      setTransition(entity.id, entity.entityType, collected as PageTransitionFields);
-    }
-  }, [entity.id, entity.entityType, setTransition]);
-
-  return (
-    <div
-      ref={cardRef}
-      className="group relative flex items-start gap-3 rounded-lg border border-zinc-200 bg-white p-3 transition-all hover:border-zinc-300 hover:bg-zinc-50 hover:shadow-sm dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-zinc-700 dark:hover:bg-zinc-800"
-    >
-      <Link href={href} className="contents" onClick={handleLinkClick}>
-        <div className="flex size-9 shrink-0 items-center justify-center rounded-md bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400">
-          <Icon className="size-4" />
-        </div>
-        <div className="min-w-0 flex-1">
-          <div className="flex items-start justify-between gap-2">
-            <p
-              data-field="name"
-              className="truncate text-sm font-medium text-zinc-900 group-hover:text-brand-emphasis dark:text-zinc-100"
-            >
-              {entity.name ?? "Unnamed"}
-            </p>
-            <span
-              data-field="badge"
-              className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${ENTITY_BADGE_CLASS[entity.entityType]}`}
-            >
-              {ENTITY_LABEL[entity.entityType]}
-            </span>
-          </div>
-          {entity.description && (
-            <p className="mt-0.5 line-clamp-2 text-xs text-zinc-500 dark:text-zinc-400">
-              {entity.description}
-            </p>
-          )}
-          {meta.length > 0 && (
-            <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-zinc-500 dark:text-zinc-400">
-              {meta.map((m, i) => (
-                <span key={`${entity.id}-meta-${i}`} className="inline-flex items-center gap-1">
-                  {i === meta.length - 1 && entity.location === m && (
-                    <>
-                      <MapPin className="size-3" />
-                      <span data-field="location">{m}</span>
-                    </>
-                  )}
-                  {!(i === meta.length - 1 && entity.location === m) && m}
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
-      </Link>
-      <BookmarkButton entity={entity} />
-    </div>
-  );
-});
-
-function EntityList({ entities, searchId }: { entities: RankedEntity[]; searchId?: string }) {
-  const [expanded, setExpanded] = useState(false);
-
-  if (entities.length === 0) return null;
-
-  const visible = expanded ? entities : entities.slice(0, INITIAL_VISIBLE_ENTITIES);
-  const remaining = entities.length - visible.length;
-
-  return (
-    <div className="mt-3 flex flex-col gap-2">
-      {visible.map((e) => (
-        <CompactEntityCard key={`${e.entityType}-${e.id}`} entity={e} searchId={searchId} />
-      ))}
-      {remaining > 0 && (
-        <button
-          type="button"
-          onClick={() => setExpanded(true)}
-          className="flex items-center justify-center gap-1.5 rounded-lg border border-dashed border-zinc-300 bg-white py-2 text-xs font-medium text-zinc-600 transition-colors hover:border-zinc-400 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:border-zinc-600 dark:hover:bg-zinc-800"
-        >
-          Show all {entities.length} results
-          <ChevronDown className="size-3" />
-        </button>
-      )}
-    </div>
-  );
-}
 
 const AssistantTurn = memo(function AssistantTurn({
   turn,
@@ -312,17 +100,15 @@ const AssistantTurn = memo(function AssistantTurn({
         )}
         {isStreaming && turn.progress && <ProgressView progress={turn.progress} />}
         {hasNarrative && (
-          <NarrativeBlock
-            narrative={turn.narrative}
-            entities={[...turn.entities]}
-            traceId={turn.traceId}
-            status={turn.status}
-          />
+          <NarrativeBlock narrative={turn.narrative} entities={[...turn.entities]} />
         )}
         {turn.entities.length > 0 && (
           <EntityList entities={[...turn.entities]} searchId={searchId} />
         )}
         {turn.attachments.length > 0 && <AttachmentsPanel attachments={[...turn.attachments]} />}
+        {turn.status === "done" && turn.traceId && (
+          <SearchFeedback key={turn.traceId} traceId={turn.traceId} />
+        )}
       </MessageContent>
     </Message>
   );
@@ -345,9 +131,14 @@ export function ChatView({ searchId }: { searchId?: string }) {
     useShallow((s) => (s.messages.length === 0 ? EMPTY_MESSAGES : s.messages))
   );
   const isSearching = usePhilanthropyStore((s) => s.isSearching);
+  const readOnly = usePhilanthropyStore((s) => s.readOnly);
+  const notFound = usePhilanthropyStore((s) => s.notFound);
+  const conversationFull = usePhilanthropyStore((s) => s.conversationFull);
+  const loginRequired = usePhilanthropyStore((s) => s.loginRequired);
   const reset = usePhilanthropyStore((s) => s.reset);
   const { search, abort } = usePhilanthropySearch();
   const { authenticated, login } = useAuth();
+  const router = useRouter();
 
   const [input, setInput] = useState("");
   const [trayOpen, setTrayOpen] = useState(false);
@@ -383,35 +174,65 @@ export function ChatView({ searchId }: { searchId?: string }) {
       reset();
     }
     usePhilanthropyStore.getState().setThreadId(searchId);
-    // Fast path: local session store
-    const session = useSearchSessionStore.getState().getSession(searchId);
+    // Clear any not-found state from a previously-viewed conversation.
+    usePhilanthropyStore.getState().setNotFound(false);
+    const sessionStore = useSearchSessionStore.getState();
+    const session = sessionStore.getSession(searchId);
     const localQuery = session?.query?.trim();
-    if (localQuery) {
-      void search(localQuery, 1, { chat: true });
+    // Fast path: a session minted just now (landing page submit / new chat)
+    // runs its query immediately. `consumeFresh` is one-shot, so any later
+    // visit to the same URL takes the hydration path below instead of
+    // re-running the search.
+    if (sessionStore.consumeFresh(searchId)) {
+      if (localQuery) void search(localQuery, 1, { chat: true });
       return;
     }
-    // Fallback: fetch from server (shared link / cold load)
+    // Revisit / shared link: restore the saved conversation if the server
+    // has turns for it; otherwise fall back to re-running the query.
     void searchHistoryService.getById(searchId).match(
       (entry) => {
+        if (entry.turns.length > 0) {
+          useSearchSessionStore.getState().setSession(searchId, entry.query);
+          usePhilanthropyStore.getState().hydrateTurns(savedTurnsToChatTurns(entry.turns));
+          return;
+        }
         const remoteQuery = entry.query?.trim();
         if (!remoteQuery) return;
         useSearchSessionStore.getState().setSession(searchId, remoteQuery);
         void search(remoteQuery, 1, { chat: true });
       },
       () => {
-        /* 404 or error — render empty workbench, degrade gracefully */
+        // A local query means this is our own chat that isn't persisted yet
+        // (anonymous) — re-run it. A local session with no query is a freshly
+        // created chat the user hasn't searched in yet (e.g. "New chat" then a
+        // reload, where the one-shot `fresh` flag is already spent) — render the
+        // empty workbench. Only with NO local session at all is the URL
+        // genuinely private to another account, deleted, or nonexistent.
+        if (localQuery) {
+          void search(localQuery, 1, { chat: true });
+        } else if (!session) {
+          usePhilanthropyStore.getState().setNotFound(true);
+        }
       }
     );
   }, [searchId, messages.length, search, abort, reset]);
 
+  // The free-limit prompt is only set for logged-out users; once they sign in,
+  // restore the composer so they can continue.
+  useEffect(() => {
+    if (authenticated && loginRequired) {
+      usePhilanthropyStore.getState().setLoginRequired(false);
+    }
+  }, [authenticated, loginRequired]);
+
   const onSubmit = useCallback(
     (msg: PromptInputMessage) => {
       const text = msg.text.trim();
-      if (!text || isSearching) return;
+      if (!text || isSearching || readOnly || conversationFull || loginRequired) return;
       setInput("");
       void search(text, 1, { chat: true });
     },
-    [search, isSearching]
+    [search, isSearching, readOnly, conversationFull, loginRequired]
   );
 
   const onStarterClick = useCallback(
@@ -422,15 +243,19 @@ export function ChatView({ searchId }: { searchId?: string }) {
     [search, isSearching]
   );
 
-  // New chat: abort active stream + reset chat store, STAY on current URL.
-  // Clear the session's seed query so the initial-query effect (re-armed by
-  // resetting the ref below) doesn't immediately re-run the original query.
+  // New chat: abort active stream + reset chat store, then move to a fresh
+  // session URL. Conversations are persisted under the URL id, so staying on
+  // the old URL would either resurrect the saved thread (the seeding effect
+  // hydrates it) or append unrelated turns to it — a new id gives the next
+  // conversation its own saved thread. `createSession("")` marks the new id
+  // fresh so the seeding effect renders an empty workbench without fetching.
   const onNewChat = useCallback(() => {
     abort();
     reset();
-    if (searchId) useSearchSessionStore.getState().clearSession(searchId);
     seededSearchIdRef.current = null;
-  }, [abort, reset, searchId]);
+    const newId = useSearchSessionStore.getState().createSession("");
+    router.replace(NON_PROFITS_PAGES.SEARCH(newId));
+  }, [abort, reset, router]);
 
   const showEmpty = messages.length === 0 && !isSearching;
   const lastTurn = messages[messages.length - 1];
@@ -438,6 +263,29 @@ export function ChatView({ searchId }: { searchId?: string }) {
     () => messages.some((m) => m.status === "done" && m.entities.length > 0),
     [messages]
   );
+
+  // Not-found state: the conversation URL is private to another account,
+  // deleted, or never existed (server 404 with no local query to re-run).
+  if (notFound) {
+    return (
+      <div className="flex h-[calc(100vh-4rem)] flex-col items-center justify-center px-4 text-center">
+        <SearchX className="size-10 text-zinc-400 dark:text-zinc-500" />
+        <h2 className="mt-4 text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+          Conversation not found
+        </h2>
+        <p className="mt-1 max-w-sm text-sm text-zinc-500 dark:text-zinc-400">
+          This conversation is private to another account, was deleted, or never existed.
+        </p>
+        <button
+          type="button"
+          onClick={onNewChat}
+          className="mt-5 rounded-lg !bg-brand px-4 py-2 text-sm font-medium !text-white transition-colors hover:!bg-brand-emphasis"
+        >
+          Start a new chat
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-[calc(100vh-4rem)] flex-col">
@@ -541,36 +389,46 @@ export function ChatView({ searchId }: { searchId?: string }) {
         <ConversationScrollButton />
       </Conversation>
 
-      {/* Composer */}
+      {/* Composer — replaced by a notice when the conversation can't accept
+          more input: owned by another account (403), full (409), or the
+          anonymous free limit was reached (401 → sign-in prompt). */}
       <div className="border-t border-zinc-200 bg-white px-4 py-3 dark:border-zinc-800 dark:bg-zinc-950">
         <div className="mx-auto w-full max-w-3xl">
-          <PromptInput
-            onSubmit={onSubmit}
-            className="rounded-2xl border border-zinc-200 dark:border-zinc-800"
-          >
-            <PromptInputBody>
-              <PromptInputTextarea
-                placeholder={
-                  messages.length === 0
-                    ? "Ask the prospecting agent…"
-                    : "Ask a follow-up — e.g. narrow to Texas, draft outreach for top 3"
-                }
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-              />
-            </PromptInputBody>
-            <PromptInputFooter>
-              <PromptInputTools>
-                <span className="px-2 text-xs text-zinc-500 dark:text-zinc-400">
-                  Plain English · {FILINGS_STATS.composerFooterLabel}
-                </span>
-              </PromptInputTools>
-              <PromptInputSubmit
-                disabled={!input.trim() || isSearching}
-                status={isSearching ? "streaming" : undefined}
-              />
-            </PromptInputFooter>
-          </PromptInput>
+          {readOnly || conversationFull || loginRequired ? (
+            <ComposerLockNotice
+              reason={loginRequired ? "login" : conversationFull ? "full" : "readonly"}
+              onNewChat={onNewChat}
+              onSignIn={login}
+            />
+          ) : (
+            <PromptInput
+              onSubmit={onSubmit}
+              className="rounded-2xl border border-zinc-200 dark:border-zinc-800"
+            >
+              <PromptInputBody>
+                <PromptInputTextarea
+                  placeholder={
+                    messages.length === 0
+                      ? "Ask the prospecting agent…"
+                      : "Ask a follow-up — e.g. narrow to Texas, draft outreach for top 3"
+                  }
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                />
+              </PromptInputBody>
+              <PromptInputFooter>
+                <PromptInputTools>
+                  <span className="px-2 text-xs text-zinc-500 dark:text-zinc-400">
+                    Plain English · {FILINGS_STATS.composerFooterLabel}
+                  </span>
+                </PromptInputTools>
+                <PromptInputSubmit
+                  disabled={!input.trim() || isSearching}
+                  status={isSearching ? "streaming" : undefined}
+                />
+              </PromptInputFooter>
+            </PromptInput>
+          )}
         </div>
       </div>
     </div>
