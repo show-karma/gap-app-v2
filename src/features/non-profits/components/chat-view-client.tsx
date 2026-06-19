@@ -149,7 +149,9 @@ export function ChatView({ searchId }: { searchId?: string }) {
   // enough: navigating between two session URLs reuses the same instance
   // (same dynamic segment), so the ref must be keyed by session.
   const seededSearchIdRef = useRef<string | null>(null);
-  // Bumped to force the seeding effect to re-run after sign-in (see below).
+  // Bumped to force the seeding effect (which lists `reseedKey` in its deps) to
+  // re-run after sign-in. Must be state, not a ref — a ref mutation wouldn't
+  // re-trigger the effect.
   const [reseedKey, setReseedKey] = useState(0);
 
   // Seed the thread for the session in the URL. The philanthropy store is
@@ -276,34 +278,41 @@ export function ChatView({ searchId }: { searchId?: string }) {
     if (!notFound && !loginRequired) return;
     if (authRecoveredRef.current === searchId) return;
     let cancelled = false;
-    (async () => {
-      for (let attempt = 0; attempt < 8 && !cancelled; attempt += 1) {
-        const token = await TokenManager.getToken();
-        if (cancelled) return;
-        if (!token) {
-          await new Promise((resolve) => setTimeout(resolve, 400));
-          continue;
-        }
-        if (authRecoveredRef.current === searchId) return;
-        authRecoveredRef.current = searchId;
-        const store = usePhilanthropyStore.getState();
-        // A readable conversation is already loaded — the block was only the
-        // composer lock from an anonymous "continue" attempt. Unlock and keep it.
-        if (store.messages.some((turn) => turn.status === "done")) {
-          store.setLoginRequired(false);
-          return;
-        }
-        // Nothing usable is loaded (private 403, or an anonymous-limit error
-        // turn): re-seed from a clean slate now that auth is in place. reset()
-        // also clears notFound/loginRequired.
-        store.reset();
-        seededSearchIdRef.current = null;
-        setReseedKey((k) => k + 1);
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let attempts = 0;
+    const recover = () => {
+      if (authRecoveredRef.current === searchId) return;
+      authRecoveredRef.current = searchId;
+      const store = usePhilanthropyStore.getState();
+      // A readable conversation is already loaded — the block was only the
+      // composer lock from an anonymous "continue" attempt. Unlock and keep it.
+      if (store.messages.some((turn) => turn.status === "done")) {
+        store.setLoginRequired(false);
         return;
       }
-    })();
+      // Nothing usable is loaded (private 403, or an anonymous-limit error
+      // turn): re-seed from a clean slate now that auth is in place. reset()
+      // also clears notFound/loginRequired.
+      store.reset();
+      seededSearchIdRef.current = null;
+      setReseedKey((k) => k + 1);
+    };
+    // Recursive scheduling (not a loop) so each retry is its own tick.
+    const tryRecover = () => {
+      void TokenManager.getToken().then((token) => {
+        if (cancelled) return;
+        if (token) {
+          recover();
+        } else if (attempts < 8) {
+          attempts += 1;
+          timer = setTimeout(tryRecover, 400);
+        }
+      });
+    };
+    tryRecover();
     return () => {
       cancelled = true;
+      if (timer) clearTimeout(timer);
     };
   }, [authenticated, searchId, notFound, loginRequired]);
 
