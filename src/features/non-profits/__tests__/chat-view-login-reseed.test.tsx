@@ -126,4 +126,32 @@ describe("ChatView — recovers a private conversation after sign-in", () => {
     await waitFor(() => expect(getById).toHaveBeenCalledTimes(2));
     expect(usePhilanthropyStore.getState().notFound).toBe(false);
   });
+
+  it("recovers a 'Sign in to continue' (loginRequired) chat once a token is available", async () => {
+    // Logged-out reconstruct hit the anonymous limit: an error turn + composer
+    // lock, nothing usable loaded.
+    const errorTurn = {
+      id: "t1",
+      userQuery: "climate funders",
+      narrative: "",
+      entities: [],
+      citations: [],
+      traceId: null,
+      pagination: null,
+      status: "error" as const,
+      error: "Sign in to continue your search.",
+      progress: null,
+      attachments: [],
+    };
+    authState.value = true;
+    authState.token = "jwt-abc";
+    usePhilanthropyStore.setState({ messages: [errorTurn], threadId: "B", loginRequired: true });
+
+    render(<ChatView searchId="B" />);
+
+    // Sign-in recovers it: the composer unlocks and the chat is re-seeded
+    // (fetched) instead of staying stuck on the error turn.
+    await waitFor(() => expect(usePhilanthropyStore.getState().loginRequired).toBe(false));
+    expect(getById).toHaveBeenCalled();
+  });
 });

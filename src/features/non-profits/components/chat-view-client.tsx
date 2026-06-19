@@ -257,54 +257,55 @@ export function ChatView({ searchId }: { searchId?: string }) {
     // `reseedKey` is the one allowed re-trigger: it fires only on sign-in (below).
   }, [searchId, search, abort, reset, reseedKey]);
 
-  // The free-limit prompt is only set for logged-out users; once they sign in,
-  // restore the composer so they can continue.
-  useEffect(() => {
-    if (authenticated && loginRequired) {
-      usePhilanthropyStore.getState().setLoginRequired(false);
-    }
-  }, [authenticated, loginRequired]);
-
-  // Recover a private conversation after sign-in. Opening a chat that's private
-  // to your account while logged out fails getById (403 → "Conversation not
-  // found"); it only becomes readable once authenticated. But two Privy quirks
-  // make a naive `authenticated`-transition refetch unreliable, which is why the
-  // not-found state used to stick until a manual refresh:
-  //   1. `authenticated` flips true BEFORE the JWT is minted, and it flickers
-  //      for ~10-15s while Privy/wagmi sync — a one-shot transition latches on
-  //      the first (token-less) blip and never retries.
-  //   2. Some login methods (email/social) never expose a wallet address, so a
-  //      wallet-address signal never fires for them.
-  // So we gate on the actual token instead: while we're authenticated and this
-  // conversation is in the not-found state, poll TokenManager.getToken() (what
-  // apiFetch itself uses) until a real token exists, then re-seed exactly once.
-  // `authRecoveredRef` keys the one-shot to the searchId so a genuinely private
-  // (someone else's) chat can't loop.
+  // Recover a blocked conversation after sign-in. Opening one while logged out
+  // leaves it in one of two auth-recoverable states that used to stick until a
+  // manual refresh:
+  //   - `notFound`: a chat private to your account 403s on getById.
+  //   - `loginRequired`: a chat the seeding effect tried to reconstruct hit the
+  //     agent's anonymous limit (401) → "Sign in to continue your search."
+  // Both become resolvable once authenticated, but a naive `authenticated`
+  // refetch is unreliable: Privy flips `authenticated` true BEFORE the JWT is
+  // minted and flickers for ~10-15s during the wagmi sync, and email/social
+  // logins never expose a wallet address. So we gate on the actual token —
+  // polling TokenManager.getToken() (exactly what apiFetch uses) until a real
+  // JWT exists — then recover exactly once. `authRecoveredRef` keys the one-shot
+  // to the searchId so a genuinely private (someone else's) chat can't loop.
   const authRecoveredRef = useRef<string | null>(null);
   useEffect(() => {
     if (!authenticated || !searchId) return;
+    if (!notFound && !loginRequired) return;
     if (authRecoveredRef.current === searchId) return;
-    if (!usePhilanthropyStore.getState().notFound) return;
     let cancelled = false;
     (async () => {
       for (let attempt = 0; attempt < 8 && !cancelled; attempt += 1) {
         const token = await TokenManager.getToken();
         if (cancelled) return;
-        if (token) {
-          if (authRecoveredRef.current === searchId) return;
-          authRecoveredRef.current = searchId;
-          seededSearchIdRef.current = null;
-          usePhilanthropyStore.getState().setNotFound(false);
-          setReseedKey((k) => k + 1);
+        if (!token) {
+          await new Promise((resolve) => setTimeout(resolve, 400));
+          continue;
+        }
+        if (authRecoveredRef.current === searchId) return;
+        authRecoveredRef.current = searchId;
+        const store = usePhilanthropyStore.getState();
+        // A readable conversation is already loaded — the block was only the
+        // composer lock from an anonymous "continue" attempt. Unlock and keep it.
+        if (store.messages.some((turn) => turn.status === "done")) {
+          store.setLoginRequired(false);
           return;
         }
-        await new Promise((resolve) => setTimeout(resolve, 400));
+        // Nothing usable is loaded (private 403, or an anonymous-limit error
+        // turn): re-seed from a clean slate now that auth is in place. reset()
+        // also clears notFound/loginRequired.
+        store.reset();
+        seededSearchIdRef.current = null;
+        setReseedKey((k) => k + 1);
+        return;
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [authenticated, searchId]);
+  }, [authenticated, searchId, notFound, loginRequired]);
 
   const onSubmit = useCallback(
     (msg: PromptInputMessage) => {
