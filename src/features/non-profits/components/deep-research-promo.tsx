@@ -20,8 +20,8 @@ export function DeepResearchPromo() {
           Want better results?
         </p>
         <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-          Let our team dig deep across millions of filings and build a funder shortlist tailored to
-          your mission.
+          Our AI agents can perform deep research, scour the internet, and find you exactly what you
+          need.
         </p>
         <a
           href={NON_PROFITS_PAGES.DEEP_RESEARCH}

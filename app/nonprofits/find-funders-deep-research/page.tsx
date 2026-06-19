@@ -18,8 +18,8 @@ export default function FindFundersDeepResearchPage() {
         </h1>
         <p className="mt-3 text-sm text-zinc-600 dark:text-zinc-400 sm:text-base">
           Want better results than a single search can give you? Tell us as much as you can about
-          what you&apos;re after and our team will dig deep across millions of filings to build a
-          tailored funder shortlist for you.
+          what you&apos;re after and our AI agents will dig deep across millions of filings and the
+          internet to build tailored answers for you.
         </p>
       </div>
       <DeepResearchForm />

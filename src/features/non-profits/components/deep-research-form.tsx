@@ -66,7 +66,7 @@ export function DeepResearchForm() {
           Request received
         </h2>
         <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-          Thanks — our team will review your deep research request and follow up by email.
+          Thanks, our agents will get to work and follow up with you by email.
         </p>
       </div>
     );
