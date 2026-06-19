@@ -12,13 +12,18 @@ import React from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   useAddSearchHistory,
+  useAppendSearchTurn,
   useClearSearchHistory,
   useDeleteSearchHistoryEntry,
   useSearchHistory,
   useSearchHistoryList,
 } from "../hooks/use-search-history";
 import type { AppError } from "../lib/errors";
-import type { SearchHistoryEntry } from "../services/search-history.service";
+import type {
+  SavedSearchTurn,
+  SearchHistoryDetail,
+  SearchHistoryEntry,
+} from "../services/search-history.service";
 import { searchHistoryService } from "../services/search-history.service";
 
 // ── Module mocks ──────────────────────────────────────────────────────────────
@@ -28,6 +33,7 @@ vi.mock("../services/search-history.service", () => ({
     list: vi.fn(),
     create: vi.fn(),
     getById: vi.fn(),
+    appendTurn: vi.fn(),
     deleteOne: vi.fn(),
     clearAll: vi.fn(),
   },
@@ -78,7 +84,9 @@ describe("useSearchHistory (getById)", () => {
   });
 
   it("fetches entry by id", async () => {
-    vi.mocked(searchHistoryService.getById).mockReturnValue(okAsync(ENTRY_1));
+    vi.mocked(searchHistoryService.getById).mockReturnValue(
+      okAsync({ ...ENTRY_1, turns: [] } satisfies SearchHistoryDetail)
+    );
 
     const { result } = renderHook(() => useSearchHistory("sh-1"), { wrapper });
 
@@ -171,7 +179,7 @@ describe("useAddSearchHistory", () => {
     const { result } = renderHook(() => useAddSearchHistory(), { wrapper });
 
     await act(async () => {
-      result.current.mutate("Foundations in Ohio");
+      result.current.mutate({ query: "Foundations in Ohio" });
     });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
@@ -181,6 +189,101 @@ describe("useAddSearchHistory", () => {
     const queries = cached?.map((e) => e.query.toLowerCase()) ?? [];
     const unique = [...new Set(queries)];
     expect(unique).toHaveLength(queries.length);
+  });
+
+  it("passes the conversation id through to the service", async () => {
+    vi.mocked(searchHistoryService.create).mockReturnValue(okAsync(ENTRY_1));
+
+    const { result } = renderHook(() => useAddSearchHistory(), { wrapper });
+
+    await act(async () => {
+      result.current.mutate({ query: "Foundations in Ohio", id: "thread-1" });
+    });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(searchHistoryService.create).toHaveBeenCalledWith("Foundations in Ohio", "thread-1");
+  });
+
+  it("leaves cached detail entries (non-list values) untouched", async () => {
+    const detail: SearchHistoryDetail = { ...ENTRY_1, turns: [] };
+    queryClient.setQueryData([...SEARCH_HISTORY_KEY, "sh-1"], detail);
+    vi.mocked(searchHistoryService.create).mockReturnValue(okAsync(ENTRY_2));
+
+    const { result } = renderHook(() => useAddSearchHistory(), { wrapper });
+
+    await act(async () => {
+      result.current.mutate({ query: "Youth literacy funders" });
+    });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(queryClient.getQueryData([...SEARCH_HISTORY_KEY, "sh-1"])).toEqual(detail);
+  });
+});
+
+describe("useAppendSearchTurn", () => {
+  beforeEach(() => {
+    queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    queryClient.clear();
+  });
+
+  it("appends the turn via the service", async () => {
+    const savedTurn: SavedSearchTurn = {
+      id: "turn-1",
+      searchHistoryId: "sh-1",
+      turnIndex: 0,
+      userQuery: "Foundations in Ohio",
+      narrative: "Top funders…",
+      entities: [],
+      citations: [],
+      traceId: null,
+      createdAt: "2024-01-01T00:00:00Z",
+    };
+    vi.mocked(searchHistoryService.appendTurn).mockReturnValue(okAsync(savedTurn));
+
+    const { result } = renderHook(() => useAppendSearchTurn(), { wrapper });
+
+    const payload = {
+      id: "turn-1",
+      userQuery: "Foundations in Ohio",
+      narrative: "Top funders…",
+      entities: [],
+      citations: [],
+      traceId: null,
+    };
+    await act(async () => {
+      result.current.mutate({ searchId: "sh-1", turn: payload });
+    });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(searchHistoryService.appendTurn).toHaveBeenCalledWith("sh-1", payload);
+  });
+
+  it("surfaces errors without throwing", async () => {
+    const appError: AppError = { type: "ApiError", status: 401, message: "Unauthorized" };
+    vi.mocked(searchHistoryService.appendTurn).mockReturnValue(errAsync(appError));
+
+    const { result } = renderHook(() => useAppendSearchTurn(), { wrapper });
+
+    await act(async () => {
+      result.current.mutate({
+        searchId: "sh-1",
+        turn: {
+          id: "turn-1",
+          userQuery: "q",
+          narrative: "",
+          entities: [],
+          citations: [],
+          traceId: null,
+        },
+      });
+    });
+
+    await waitFor(() => expect(result.current.isError).toBe(true));
+    expect(result.current.error).toEqual(appError);
   });
 });
 

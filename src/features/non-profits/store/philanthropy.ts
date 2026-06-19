@@ -111,10 +111,36 @@ interface PhilanthropyStore {
   result: SearchResult | null;
   isSearching: boolean;
   error: string | null;
+  /**
+   * True when the backend rejected a persistence write for this conversation
+   * because it belongs to another account (HTTP 403). The composer is disabled
+   * and a read-only notice is shown so the user isn't typing into a void.
+   */
+  readOnly: boolean;
+  /**
+   * True when opening a conversation URL that the server won't return (HTTP
+   * 404 — private to another account, deleted, or never persisted) and there
+   * is no local query to re-run. The workbench shows a not-found state.
+   */
+  notFound: boolean;
+  /**
+   * True when the conversation has reached the server's per-conversation turn
+   * cap (HTTP 409). The composer is disabled and the user is prompted to start
+   * a new chat.
+   */
+  conversationFull: boolean;
+  /**
+   * True when an anonymous user hits the free interaction limit (the agent
+   * endpoint returns 401 `login_required`). The composer prompts sign-in; it
+   * is only ever set for logged-out users and clears once they authenticate.
+   */
+  loginRequired: boolean;
 
   // ── Chat actions (Phase 3 — included now to avoid store refactor) ──
   appendTurn: (turn: ChatTurn) => void;
   updateLastTurn: (patch: Partial<ChatTurn>) => void;
+  /** Replace the thread with turns restored from a saved conversation. */
+  hydrateTurns: (turns: ReadonlyArray<ChatTurn>) => void;
   setThreadId: (id: string | null) => void;
 
   // ── Legacy actions ──
@@ -124,6 +150,10 @@ interface PhilanthropyStore {
   setResult: (result: SearchResult | null) => void;
   setSearching: (searching: boolean) => void;
   setError: (error: string | null) => void;
+  setReadOnly: (readOnly: boolean) => void;
+  setNotFound: (notFound: boolean) => void;
+  setConversationFull: (conversationFull: boolean) => void;
+  setLoginRequired: (loginRequired: boolean) => void;
   reset: () => void;
 }
 
@@ -138,10 +168,15 @@ const initialState = {
   result: null as SearchResult | null,
   isSearching: false,
   error: null as string | null,
+  readOnly: false,
+  notFound: false,
+  conversationFull: false,
+  loginRequired: false,
 } satisfies Omit<
   PhilanthropyStore,
   | "appendTurn"
   | "updateLastTurn"
+  | "hydrateTurns"
   | "setThreadId"
   | "setQuery"
   | "setNarrative"
@@ -149,6 +184,10 @@ const initialState = {
   | "setResult"
   | "setSearching"
   | "setError"
+  | "setReadOnly"
+  | "setNotFound"
+  | "setConversationFull"
+  | "setLoginRequired"
   | "reset"
 >;
 
@@ -172,6 +211,9 @@ export const usePhilanthropyStore = create<PhilanthropyStore>((set) => ({
       return { messages: [...s.messages.slice(0, -1), updated] };
     }),
 
+  // Restore a saved conversation in one shot (revisit / shared link).
+  hydrateTurns: (turns) => set({ messages: [...turns] }),
+
   setThreadId: (threadId) => set({ threadId }),
   setQuery: (query) => set({ query }),
   setNarrative: (narrative) => set({ narrative }),
@@ -179,5 +221,9 @@ export const usePhilanthropyStore = create<PhilanthropyStore>((set) => ({
   setResult: (result) => set({ result }),
   setSearching: (searching) => set({ isSearching: searching }),
   setError: (error) => set({ error }),
+  setReadOnly: (readOnly) => set({ readOnly }),
+  setNotFound: (notFound) => set({ notFound }),
+  setConversationFull: (conversationFull) => set({ conversationFull }),
+  setLoginRequired: (loginRequired) => set({ loginRequired }),
   reset: () => set({ ...initialState }),
 }));

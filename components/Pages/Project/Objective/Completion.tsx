@@ -151,18 +151,19 @@ export const ObjectiveCardComplete = ({
           // Silently fallback to off-chain revoke
           setIsStepper(false); // Reset stepper since we're falling back
 
-          const success = await performOffChainRevoke({
-            uid: objectiveInstance.completed?.uid as `0x${string}`,
-            chainID: objectiveInstance.chainID,
-            checkIfExists: checkIfAttestationExists,
-            toastMessages: {
-              success: MESSAGES.PROJECT_OBJECTIVE_FORM.COMPLETE.DELETE.SUCCESS,
-              loading: MESSAGES.PROJECT_OBJECTIVE_FORM.COMPLETE.DELETE.LOADING,
-            },
-          });
-
-          if (!success) {
-            // Both methods failed - throw the original error to maintain expected behavior
+          try {
+            await performOffChainRevoke({
+              uid: objectiveInstance.completed?.uid as `0x${string}`,
+              chainID: objectiveInstance.chainID,
+              checkIfExists: checkIfAttestationExists,
+              toastMessages: {
+                success: MESSAGES.PROJECT_OBJECTIVE_FORM.COMPLETE.DELETE.SUCCESS,
+                loading: MESSAGES.PROJECT_OBJECTIVE_FORM.COMPLETE.DELETE.LOADING,
+              },
+            });
+          } catch {
+            // Both methods failed - throw the original on-chain error to
+            // preserve its context.
             throw onChainError;
           }
         }

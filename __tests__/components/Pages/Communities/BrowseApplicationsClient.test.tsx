@@ -3,19 +3,55 @@ import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { BrowseApplicationsClient } from "@/app/community/[communityId]/(with-header)/browse-applications/BrowseApplicationsClient";
-import fetchData from "@/utilities/fetchData";
-
-const mockFetchData = vi.mocked(fetchData);
 
 // --- Mocks ---
 
-const mockRouterReplace = vi.fn();
-const mockRouterPush = vi.fn();
+// The component now uses nuqs `useQueryState` (via useBrowseApplicationFilters)
+// as the single source of truth for the programId/status/search filters — it no
+// longer calls router.replace. nuqs writes through history.replaceState in the
+// real app; here we stub it with a reactive store so we can assert the resulting
+// query string the same way the old router-based tests did.
+const { urlStore } = vi.hoisted(() => ({ urlStore: new Map<string, string>() }));
+
+/** Serialize the current nuqs-backed query state to a URL-style string. */
+function currentUrl(): string {
+  const params = new URLSearchParams();
+  for (const [key, value] of urlStore) params.set(key, value);
+  const query = params.toString();
+  return query ? `?${query}` : "";
+}
+
+vi.mock("nuqs", async () => {
+  const { useState } = await import("react");
+  return {
+    useQueryState: (
+      key: string,
+      options?: { defaultValue?: unknown; clearOnDefault?: boolean }
+    ) => {
+      const [value, setValue] = useState<unknown>(
+        () => urlStore.get(key) ?? options?.defaultValue ?? null
+      );
+      const set = (next: unknown) => {
+        const resolved =
+          typeof next === "function" ? (next as (p: unknown) => unknown)(value) : next;
+        const isDefault = options?.clearOnDefault && resolved === options?.defaultValue;
+        if (resolved == null || resolved === "" || isDefault) {
+          urlStore.delete(key);
+        } else {
+          urlStore.set(key, String(resolved));
+        }
+        setValue(resolved);
+        return Promise.resolve(new URLSearchParams());
+      };
+      return [value, set] as const;
+    },
+  };
+});
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({
-    push: mockRouterPush,
-    replace: mockRouterReplace,
+    push: vi.fn(),
+    replace: vi.fn(),
     prefetch: vi.fn(),
     back: vi.fn(),
     pathname: "/community/test-community/browse-applications",
@@ -134,16 +170,12 @@ async function clickStatusChip(user: ReturnType<typeof userEvent.setup>, label: 
   await user.click(chip);
 }
 
-function lastReplaceUrl(): string {
-  const calls = mockRouterReplace.mock.calls;
-  return calls[calls.length - 1][0] as string;
-}
-
 // --- Tests ---
 
 describe("BrowseApplicationsClient - URL sync on filter change", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    urlStore.clear();
   });
 
   it("updates the URL with programId when a program is selected", async () => {
@@ -154,11 +186,7 @@ describe("BrowseApplicationsClient - URL sync on filter change", () => {
 
     await selectProgram(user, "Test Grant Program");
 
-    // The component should call router.replace with the programId in the URL
-    expect(mockRouterReplace).toHaveBeenCalledWith(
-      expect.stringContaining("programId=program-abc"),
-      expect.anything()
-    );
+    await waitFor(() => expect(currentUrl()).toContain("programId=program-abc"));
   });
 
   it("updates the URL with status when status filter changes", async () => {
@@ -169,15 +197,9 @@ describe("BrowseApplicationsClient - URL sync on filter change", () => {
 
     // First select a program so the status filter is rendered
     await selectProgram(user, "Test Grant Program");
-
-    mockRouterReplace.mockClear();
-
     await clickStatusChip(user, "Approved");
 
-    expect(mockRouterReplace).toHaveBeenCalledWith(
-      expect.stringContaining("status=approved"),
-      expect.anything()
-    );
+    await waitFor(() => expect(currentUrl()).toContain("status=approved"));
   });
 
   it("updates the URL with search term when the user types in the search box", async () => {
@@ -189,18 +211,11 @@ describe("BrowseApplicationsClient - URL sync on filter change", () => {
     // First select a program so the search input is rendered
     await selectProgram(user, "Test Grant Program");
 
-    mockRouterReplace.mockClear();
-
     const searchInput = screen.getByLabelText("Search applications");
     await user.type(searchInput, "my project");
 
-    // The search term is debounced before being pushed to the URL.
-    await waitFor(() => {
-      expect(mockRouterReplace).toHaveBeenCalledWith(
-        expect.stringContaining("search="),
-        expect.anything()
-      );
-    });
+    await waitFor(() => expect(currentUrl()).toContain("search="));
+    expect(urlStore.get("search")).toBe("my project");
   });
 
   it("reflects combined filter state in the URL", async () => {
@@ -212,11 +227,11 @@ describe("BrowseApplicationsClient - URL sync on filter change", () => {
     await selectProgram(user, "Test Grant Program");
     await clickStatusChip(user, "Pending");
 
-    // The last call to replace should include both programId and status
-    expect(mockRouterReplace).toHaveBeenCalled();
-    const lastCall = lastReplaceUrl();
-    expect(lastCall).toContain("programId=program-abc");
-    expect(lastCall).toContain("status=pending");
+    await waitFor(() => {
+      const url = currentUrl();
+      expect(url).toContain("programId=program-abc");
+      expect(url).toContain("status=pending");
+    });
   });
 
   it("removes status param from URL when reset to 'all'", async () => {
@@ -228,11 +243,10 @@ describe("BrowseApplicationsClient - URL sync on filter change", () => {
     await selectProgram(user, "Test Grant Program");
 
     await clickStatusChip(user, "Approved");
-    await clickStatusChip(user, "All");
+    await waitFor(() => expect(currentUrl()).toContain("status=approved"));
 
-    expect(mockRouterReplace).toHaveBeenCalled();
-    const lastCall = lastReplaceUrl();
-    expect(lastCall).not.toContain("status=");
+    await clickStatusChip(user, "All");
+    await waitFor(() => expect(currentUrl()).not.toContain("status="));
   });
 
   it("keeps programId in the URL after a status filter is toggled off", async () => {
@@ -247,9 +261,10 @@ describe("BrowseApplicationsClient - URL sync on filter change", () => {
     await clickStatusChip(user, "Approved");
     await clickStatusChip(user, "All");
 
-    expect(mockRouterReplace).toHaveBeenCalled();
-    const lastCall = lastReplaceUrl();
-    expect(lastCall).toContain("programId=program-abc");
-    expect(lastCall).not.toContain("status=");
+    await waitFor(() => {
+      const url = currentUrl();
+      expect(url).toContain("programId=program-abc");
+      expect(url).not.toContain("status=");
+    });
   });
 });
