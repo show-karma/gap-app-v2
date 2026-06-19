@@ -71,4 +71,10 @@ Tests use Vitest + RTL. Follow these established patterns (see `__tests__/` for 
 
 ## Enforcement (automated — don't repeat in code review)
 
-Hooks auto-check on every file edit: Biome lint, `return null` in data components, missing `useMutation`, Radix without `"use client"`, hardcoded routes/colors, barrel exports, heavy imports. Pre-commit hook runs tests. CI bot comments anti-pattern violations on PRs.
+Enforcement is layered:
+
+- **Taskless rules** (`.taskless/rules/`, ast-grep) — syntactic guardrails, run at pre-commit (staged files) and CI (PR diff): Radix without `"use client"`, hardcoded routes/colors/URLs, raw `confirm()`, barrel exports, heavy eager imports. Tool-agnostic (any editor/agent), single source of truth.
+- **Claude edit hook** (`.claude/hooks/post-edit-antipatterns.sh`) — semantic/absence checks ast-grep can't express, on every agent edit: `return null` in data components, missing `useMutation`, `useRouter`/`useParams` in `useEffect` deps, raw `navigator.clipboard`.
+- **Biome** — lint/format. **Pre-commit** also runs tests. **CI bot** comments anti-pattern violations on PRs.
+
+Don't repeat any of the above in code review — it's automated.

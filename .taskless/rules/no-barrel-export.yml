@@ -1,0 +1,17 @@
+id: no-barrel-export
+language: typescript
+severity: warning
+message: No barrel exports (export * from) — import directly from source files.
+note: |
+  CLAUDE.md gap-app-v2: "No barrel exports — Import directly from source files,
+  not index.ts re-exports." Barrel files bloat bundles and break tree-shaking.
+ignores:
+  - "**/__tests__/**"
+  - "**/*.test.ts"
+  - "**/*.test.tsx"
+  - "**/*.spec.ts"
+  - "**/*.spec.tsx"
+  - "scripts/**"
+rule:
+  kind: export_statement
+  regex: '^export\s*\*\s*from'

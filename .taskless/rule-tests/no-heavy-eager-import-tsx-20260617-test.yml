@@ -1,0 +1,7 @@
+id: no-heavy-eager-import-tsx
+valid:
+  - "import { useState } from 'react';"
+  - "const Editor = dynamic(() => import('@monaco-editor/react'));"
+invalid:
+  - "import { LineChart } from 'recharts';"
+  - "import Markdown from 'react-markdown';"

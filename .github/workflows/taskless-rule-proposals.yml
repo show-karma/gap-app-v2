@@ -1,0 +1,141 @@
+# Weekly "rule miner": scans recent merged-PR review feedback for RECURRING
+# corrections and opens a NON-BLOCKING pull request proposing new Taskless rules.
+#
+# Design guarantees:
+#   - Suggest-only. It NEVER enforces or edits existing rules. A human reviews
+#     and merges the proposal PR like any other change.
+#   - Deduped. The model is given the current ruleset and must not re-propose it.
+#   - Routed. Only NEW, ast-grep-expressible, non-duplicate patterns survive.
+#   - Verified. Every drafted rule must pass `taskless rule verify` or it's dropped.
+#   - New rules land as `warning` only.
+#
+# Reuses the same secrets as claude.yml — no new secrets required:
+#   CLAUDE_CODE_OAUTH_TOKEN, APP_ID, APP_PRIVATE_KEY
+#
+# Tune: the cron cadence and the recurrence threshold (see prompt, "≥ 2 PRs").
+
+name: Taskless Rule Proposals
+
+on:
+  schedule:
+    - cron: '0 9 * * 1' # Mondays 09:00 UTC
+  workflow_dispatch:
+    inputs:
+      days:
+        description: 'Look back this many days of merged PRs'
+        default: '7'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: taskless-rule-proposals
+  cancel-in-progress: false
+
+jobs:
+  propose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Gather recent review feedback
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          DAYS="${{ github.event.inputs.days || '7' }}"
+          SINCE=$(date -u -d "-${DAYS} days" +%Y-%m-%d)
+          mkdir -p /tmp/tskl
+          echo "# Merged-PR review feedback since $SINCE" > /tmp/tskl/corpus.md
+          for pr in $(gh pr list --state merged --search "merged:>=$SINCE" --limit 100 --json number --jq '.[].number'); do
+            echo -e "\n\n## PR #$pr" >> /tmp/tskl/corpus.md
+            gh pr view "$pr" --json title --jq '"### " + .title' >> /tmp/tskl/corpus.md
+            gh api "repos/${{ github.repository }}/pulls/$pr/comments"  --jq '.[] | "- [inline] "  + .user.login + ": " + (.body|gsub("\n";" "))' >> /tmp/tskl/corpus.md 2>/dev/null || true
+            gh api "repos/${{ github.repository }}/pulls/$pr/reviews"   --jq '.[] | select(.body!="") | "- [review] " + .user.login + ": " + (.body|gsub("\n";" "))' >> /tmp/tskl/corpus.md 2>/dev/null || true
+            gh api "repos/${{ github.repository }}/issues/$pr/comments" --jq '.[] | "- [comment] " + .user.login + ": " + (.body|gsub("\n";" "))' >> /tmp/tskl/corpus.md 2>/dev/null || true
+          done
+          { echo "# Existing Taskless rules (DO NOT duplicate)"; for f in .taskless/rules/*.yml; do echo "## $(basename "$f")"; cat "$f"; echo; done; } > /tmp/tskl/existing-rules.md 2>/dev/null || true
+          echo "Corpus size:"; wc -l /tmp/tskl/corpus.md
+
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
+      - name: Propose rules with Claude
+        uses: anthropics/claude-code-action@beta
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          github_token: ${{ steps.app-token.outputs.token }}
+          model: claude-sonnet-4-6
+          max_turns: '40'
+          timeout_minutes: '30'
+          allowed_tools: |
+            Read,
+            Write,
+            Edit,
+            Glob,
+            Grep,
+            Bash(npx:*),
+            Bash(node:*),
+            Bash(git:*),
+            Bash(cat:*),
+            Bash(ls:*)
+          direct_prompt: |
+            You propose NEW Taskless ast-grep rules for this repo, mined from recent code-review
+            feedback. You SUGGEST; a human approves. Be conservative — silence is fine.
+
+            Inputs on disk:
+              - Recent merged-PR review feedback: /tmp/tskl/corpus.md
+              - Current ruleset (DO NOT duplicate any of these): /tmp/tskl/existing-rules.md
+              - Authoring recipes: run `npx @taskless/cli help route` and
+                `npx @taskless/cli help rule create --anonymous` and follow them.
+
+            Steps:
+            1. Read the corpus. Find CORRECTIONS that RECUR — the same convention raised in
+               review on at least 2 DISTINCT PRs. Ignore one-off nits and praise.
+            2. ROUTE each recurring correction: skip it if it's already covered by Biome/ESLint,
+               already in existing-rules.md, or is semantic/type-aware (ast-grep can't express it).
+               Keep only NEW patterns expressible as a simple ast-grep rule.
+            3. Author each survivor: `.taskless/rules/<id>.yml` (severity: warning) plus
+               `.taskless/rule-tests/<id>-test.yml` with >=2 valid and >=2 invalid cases.
+            4. Verify EACH: `npx -y @taskless/cli@0.9.0 rule verify <id> --json`. If it still
+               fails after a fix or two, DELETE its files and skip it.
+            5. Write /tmp/tskl/summary.md in neutral, factual terms: per proposed rule, the id,
+               what it catches, and the PR numbers that motivated it. If you propose NOTHING,
+               write exactly "NO_PROPOSALS".
+
+            Constraints: only WARNING severity; only touch `.taskless/rules/` and
+            `.taskless/rule-tests/`; do NOT edit existing rules, hooks, or anything else; do NOT
+            commit, push, or open PRs (a later CI step does that).
+
+      - name: Open proposal PR
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          if grep -q NO_PROPOSALS /tmp/tskl/summary.md 2>/dev/null; then
+            echo "Model proposed nothing this run."; exit 0
+          fi
+          if [ -z "$(git status --porcelain -- .taskless/)" ]; then
+            echo "No new rule files written; nothing to propose."; exit 0
+          fi
+          gh label create taskless-rule-proposal --color FBCA04 --description "Auto-proposed Taskless rule (needs human review)" --force >/dev/null 2>&1 || true
+          BRANCH="taskless/rule-proposals-$(date -u +%Y%m%d-%H%M)"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$BRANCH"
+          git add .taskless/rules .taskless/rule-tests
+          git commit -m "chore(taskless): propose rules from recent review feedback"
+          git push -u origin "$BRANCH"
+          gh pr create --base main --head "$BRANCH" \
+            --title "Taskless: proposed rules from recent review feedback" \
+            --body-file /tmp/tskl/summary.md \
+            --label taskless-rule-proposal
