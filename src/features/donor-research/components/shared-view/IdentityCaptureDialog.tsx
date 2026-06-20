@@ -16,12 +16,22 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-const FormSchema = z.object({
+const FullSchema = z.object({
   displayName: z.string().trim().min(1, "Enter your name").max(80),
   email: z.string().trim().email("Enter a valid email").max(254),
 });
 
-type FormValues = z.infer<typeof FormSchema>;
+// nameOnly mode hides the email field. The schema still types `email`
+// as a required string (so FormValues stays a single shape across both
+// modes), but skips the `.email()` validator so the hidden empty field
+// doesn't block submission — U10 ships display-name-only edits, email
+// edits are deferred.
+const NameOnlySchema = z.object({
+  displayName: z.string().trim().min(1, "Enter your name").max(80),
+  email: z.string(),
+});
+
+type FormValues = z.infer<typeof FullSchema>;
 
 interface IdentityCaptureDialogProps {
   /** Controls the dialog open state. Parent owns it so submit can close on success. */
@@ -55,7 +65,7 @@ export function IdentityCaptureDialog({
   isSubmitting = false,
 }: IdentityCaptureDialogProps) {
   const form = useForm<FormValues>({
-    resolver: zodResolver(FormSchema),
+    resolver: zodResolver(nameOnly ? NameOnlySchema : FullSchema),
     defaultValues: { displayName: "", email: "" },
   });
 
