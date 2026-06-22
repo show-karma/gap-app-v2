@@ -13,18 +13,24 @@ function isIgnored(message: string): boolean {
 }
 
 describe("sentryIgnoreErrors — chunk load errors", () => {
-  it("ignores the Turbopack 'Failed to load chunk' signature", () => {
+  // ChunkLoadError must NOT be in the ignore list. Sentry's `ignoreErrors`
+  // filters every event, including the manual `Sentry.captureException` the
+  // error boundaries fire on a non-recoverable second attempt. Suppressing the
+  // signature here would silently drop the genuinely-broken cases we want to
+  // see. Recovery is gated by the boundaries (see utilities/isChunkLoadError.ts),
+  // not here.
+  it("does not ignore the Turbopack 'Failed to load chunk' signature", () => {
     expect(
       isIgnored("Error: Failed to load chunk /_next/static/chunks/abc.js from module 12")
-    ).toBe(true);
+    ).toBe(false);
   });
 
-  it("ignores the webpack 'Loading chunk … failed' signature", () => {
-    expect(isIgnored("Loading chunk app-pages-internals failed")).toBe(true);
+  it("does not ignore the webpack 'Loading chunk … failed' signature", () => {
+    expect(isIgnored("Loading chunk app-pages-internals failed")).toBe(false);
   });
 
-  it("ignores the bare ChunkLoadError name", () => {
-    expect(isIgnored("ChunkLoadError")).toBe(true);
+  it("does not ignore the bare ChunkLoadError name", () => {
+    expect(isIgnored("ChunkLoadError")).toBe(false);
   });
 
   it("does not ignore unrelated runtime errors", () => {
