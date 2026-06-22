@@ -8,6 +8,20 @@ import { wait } from "@/utilities/wait";
 // the enum is type-only in the runtime ESM build — importing it as a value crashes SSR.
 const EMBEDDED_WALLET_ALREADY_EXISTS = "embedded_wallet_already_exists";
 
+// Privy throws the code on a separate `.code` property and the human-readable
+// "User already has an embedded wallet." in `.message` — never the code in the
+// message. Detect both: the structured code (authoritative) plus the message as
+// a fallback in case the shape changes across Privy versions.
+const ALREADY_EXISTS_MESSAGE_PATTERN = /already has an embedded wallet/i;
+
+const isEmbeddedWalletAlreadyExistsError = (error: unknown): boolean => {
+  if ((error as { code?: string } | null)?.code === EMBEDDED_WALLET_ALREADY_EXISTS) {
+    return true;
+  }
+  const message = error instanceof Error ? error.message : String(error);
+  return ALREADY_EXISTS_MESSAGE_PATTERN.test(message);
+};
+
 /**
  * Module-level guard, keyed by Privy user id, claimed before the async create so
  * concurrent effect runs (React Strict Mode, remount, rapid re-render) within a
@@ -43,9 +57,10 @@ const createEmbeddedWalletWithRetry = async (
       await createWallet();
       return;
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      // Another path already created the wallet — treat as success.
-      if (message.includes(EMBEDDED_WALLET_ALREADY_EXISTS)) return;
+      // Another path (notably Privy's own auto-provisioning) already created the
+      // wallet — this is idempotent success, not a transient failure. Short-circuit
+      // the retry loop and report nothing.
+      if (isEmbeddedWalletAlreadyExistsError(error)) return;
 
       if (attempt === MAX_CREATE_ATTEMPTS) {
         creationAttemptedUserIds.delete(userId);
