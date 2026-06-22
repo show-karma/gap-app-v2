@@ -13,12 +13,8 @@ const CONNECT_RETRY_DELAY_MS = 500;
  * that window. This is an expected startup race the user never sees, not a
  * genuine wallet failure, so it must not be reported to Sentry.
  */
-const isConnectorNotConnectedError = (error: unknown): boolean => {
-  if (error instanceof ConnectorNotConnectedError) {
-    return true;
-  }
-  return error instanceof Error && error.message.includes("Connector not connected");
-};
+const isConnectorNotConnectedError = (error: unknown): boolean =>
+  error instanceof ConnectorNotConnectedError;
 
 /**
  * Ensures the wagmi connector is connected, reconnecting and polling if needed.
