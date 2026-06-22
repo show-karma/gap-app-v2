@@ -60,6 +60,18 @@ const sentryInstrumentationErrors = [
 // See https://karma-crypto-inc.sentry.io/issues/7205405990
 const notFoundErrors = ["Project not found", "Community not found"];
 
+// Stale-deploy chunk failures. After a deploy, Vercel rotates the
+// content-hashed `/_next/static/*` filenames and purges the old ones; an
+// already-open client requesting a now-missing chunk throws `ChunkLoadError`
+// ("Failed to load chunk …" under Turbopack, "Loading chunk … failed" under
+// webpack). The error boundaries now auto-recover via a one-time hard reload
+// (see utilities/isChunkLoadError.ts), so the residual events are recovered,
+// environmental, and unactionable — filter them to keep the issue feed clean.
+// Non-recoverable cases (chunk genuinely unreachable) still surface because
+// the second attempt skips the reload and reports normally.
+// See https://karma-crypto-inc.sentry.io/issues/GAP-FRONTEND-1XX
+const chunkLoadErrors = ["ChunkLoadError", /Loading chunk [\w-]+ failed/i, /Failed to load chunk/i];
+
 // Anonymous-traffic errors. When a logged-out user lands on a public page
 // (e.g. /project/:projectId), some indexer routes (or SDK callers) still
 // hit auth-required paths without a bearer token and the backend replies
@@ -86,4 +98,5 @@ export const sentryIgnoreErrors = [
   ...notFoundErrors,
   ...streamingAbortErrors,
   ...anonymousAuthErrors,
+  ...chunkLoadErrors,
 ];
