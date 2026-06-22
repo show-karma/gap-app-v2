@@ -4,7 +4,11 @@
 
 import * as Sentry from "@sentry/nextjs";
 import { sentryIgnoreErrors } from "./utilities/sentry/ignoreErrors";
-import { isTransientHttpError, isTransientNetworkError } from "./utilities/sentry/transientErrors";
+import {
+  isTransientHttpError,
+  isTransientNetworkError,
+  isTransientWalletTimeoutError,
+} from "./utilities/sentry/transientErrors";
 import { isIndexedDbInternalError } from "./utilities/sentry/walletStorageErrors";
 
 Sentry.init({
@@ -22,6 +26,11 @@ Sentry.init({
     if (
       isTransientNetworkError(original) ||
       isTransientHttpError(original) ||
+      // ethers "could not coalesce error" / "Wallet timeout" surfaced by a
+      // transient wallet/bundler blip during attestation. Retried at the send
+      // layer; only the exhausted-retry failure reports (as a distinct wrapped
+      // error). See GAP-FRONTEND-1Y2 and ./utilities/sentry/transientErrors.ts
+      isTransientWalletTimeoutError(original) ||
       // Wallet SDKs (WalletConnect/Coinbase/base-account) leak an un-awaited
       // IndexedDB read rejection on startup when the browser's IDB store is
       // corrupted/unavailable. Environmental and not actionable from our code.

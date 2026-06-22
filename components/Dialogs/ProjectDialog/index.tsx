@@ -56,6 +56,7 @@ import { useSimilarProjectsModalStore } from "@/store/modals/similarProjects";
 import { useOwnerStore } from "@/store/owner";
 import type { Contact } from "@/types/project";
 import type { Project as ProjectResponse } from "@/types/v2/project";
+import { attestWithRetry } from "@/utilities/attestWithRetry";
 import { type CustomLink, isCustomLink } from "@/utilities/customLink";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";
@@ -642,7 +643,19 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
 
       // Use the gasless signer from setupChainAndWallet
       // Keep modal open while submitting so users don't lose context/data.
-      await project.attest(signer as any, changeStepperStep).then(async (res) => {
+      //
+      // Retry the send on a transient wallet/bundler timeout (GAP-FRONTEND-1Y2:
+      // ethers "could not coalesce error" / "Wallet timeout"). The idempotency
+      // guard checks whether the timed-out attempt already landed (the slug is
+      // deterministic and is the project's indexed identifier) so we never
+      // double-create on a recovered timeout.
+      const projectSlugIdentifier = slug || project.uid;
+      const { result: res } = await attestWithRetry({
+        send: () => project.attest(signer as any, changeStepperStep),
+        hasAlreadyLanded: () => checkSlugExists(projectSlugIdentifier),
+      });
+
+      {
         showLoading("Indexing project...");
         let retries = 1000;
         const txHash = res?.tx[0]?.hash;
@@ -652,7 +665,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         let fetchedProject: ProjectResponse | null = null;
 
         // First, poll using checkSlugExists to avoid 404 errors in Sentry
-        const projectIdentifier = slug || project.uid;
+        const projectIdentifier = projectSlugIdentifier;
         while (retries > 0) {
           // eslint-disable-next-line no-await-in-loop
           const exists = await checkSlugExists(projectIdentifier);
@@ -689,7 +702,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
             router.refresh();
           }, 1500);
         }
-      });
+      }
 
       reset();
       setStep(0);
