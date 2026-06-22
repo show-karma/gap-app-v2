@@ -1,5 +1,5 @@
 /**
- * Tests for ApplicationViewBoundary — the wrapper that marks the streamed
+ * Tests for NonTranslatableRegion — the wrapper that marks the streamed
  * application view subtree non-translatable.
  *
  * Scope note: GAP-FRONTEND-212 is a React 19 stream-resume ($RS) crash thrown at
@@ -13,14 +13,14 @@
  */
 
 import { render, screen } from "@testing-library/react";
-import { ApplicationViewBoundary } from "../ApplicationViewBoundary";
+import { NonTranslatableRegion } from "../NonTranslatableRegion";
 
-describe("ApplicationViewBoundary", () => {
+describe("NonTranslatableRegion", () => {
   it("renders children", () => {
     render(
-      <ApplicationViewBoundary>
+      <NonTranslatableRegion>
         <div>Application content</div>
-      </ApplicationViewBoundary>
+      </NonTranslatableRegion>
     );
 
     expect(screen.getByText("Application content")).toBeInTheDocument();
@@ -28,9 +28,9 @@ describe("ApplicationViewBoundary", () => {
 
   it('marks the subtree non-translatable with translate="no" and the notranslate class', () => {
     render(
-      <ApplicationViewBoundary>
+      <NonTranslatableRegion>
         <div>Application content</div>
-      </ApplicationViewBoundary>
+      </NonTranslatableRegion>
     );
 
     const region = screen.getByText("Application content").closest(".notranslate");

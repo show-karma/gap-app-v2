@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-interface ApplicationViewBoundaryProps {
+interface NonTranslatableRegionProps {
   children: ReactNode;
 }
 
@@ -25,13 +25,13 @@ interface ApplicationViewBoundaryProps {
  *
  * Residual occurrences from other external mutators (aggressive extensions) are
  * environmental and not actionable; they are filtered in
- * {@link file://./../../../../../../../utilities/sentry/ignoreErrors.ts}
+ * `utilities/sentry/ignoreErrors.ts`
  * alongside the existing "node to be removed is not a child of this node." entry.
  *
  * Genuine render-phase errors in this subtree are still handled by the
  * route-level `error.tsx` boundary, which Next.js wires up automatically.
  */
-export function ApplicationViewBoundary({ children }: ApplicationViewBoundaryProps) {
+export function NonTranslatableRegion({ children }: NonTranslatableRegionProps) {
   return (
     <div className="notranslate" translate="no">
       {children}
