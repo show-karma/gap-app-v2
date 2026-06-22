@@ -21,6 +21,19 @@ interface CommentOverlayProps {
   reportRevoked?: boolean;
   /** True when the viewer's Privy session matches the report's advisor. */
   isAdvisor?: boolean;
+  /**
+   * True when the viewer carries any Privy session (advisor-or-not).
+   * Used by the composer's identity gate: an authenticated viewer might
+   * still be loading the `isAdvisor` resolution, so we defer to the BE
+   * `requiresIdentity` round-trip instead of pre-opening the dialog.
+   */
+  isAuthenticated?: boolean;
+  /**
+   * True while the advisor-resolution query is in flight. When set, the
+   * composer waits on the BE rather than opening the dialog optimistically
+   * (race: user clicks submit before the /me query lands).
+   */
+  isAdvisorResolving?: boolean;
 }
 
 function totalCount(tree: SharedReportCommentNode[]): number {
@@ -54,10 +67,14 @@ export function CommentOverlay({
   token,
   reportRevoked = false,
   isAdvisor = false,
+  isAuthenticated = false,
+  isAdvisorResolving = false,
 }: CommentOverlayProps) {
   const commenting = useCommenting(token, {
     enabled: !reportRevoked,
     isAdvisor,
+    isAuthenticated,
+    isAdvisorResolving,
   });
 
   const {

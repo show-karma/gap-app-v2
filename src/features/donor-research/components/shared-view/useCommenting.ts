@@ -112,7 +112,12 @@ const SELECTION_DEBOUNCE_MS = 80;
  */
 export function useCommenting(
   token: string,
-  opts: { enabled?: boolean; isAdvisor?: boolean } = {}
+  opts: {
+    enabled?: boolean;
+    isAdvisor?: boolean;
+    isAuthenticated?: boolean;
+    isAdvisorResolving?: boolean;
+  } = {}
 ): UseCommentingResult {
   const enabled = opts.enabled !== false;
   const isAdvisor = opts.isAdvisor ?? false;
@@ -314,20 +319,37 @@ export function useCommenting(
               anchor: composer.anchor,
               ...(extraIdentity?.email ? { email: extraIdentity.email } : {}),
             };
-      // Gate the post on identity. Without a captured name (and not an
-      // advisor), the BE's schema validation rejects with a generic 400
-      // *before* the controller can return `requiresIdentity: true` —
-      // which used to surface as "Something went wrong" in the composer.
-      // Open the IdentityCaptureDialog first and stash the request so
-      // `retryPendingPost` can replay it with the captured values.
-      if (!extraIdentity && !identity.isAdvisor && !baseDisplayName) {
+      // Gate the post on identity for anonymous (not-Privy-authed)
+      // viewers only. Three reasons to skip the gate and go straight
+      // to the BE:
+      //   - identity.isAdvisor is already true → BE accepts the post
+      //   - opts.isAdvisorResolving is true → the /me query is mid-
+      //     flight; pre-opening the dialog would race with the answer
+      //   - opts.isAuthenticated is true (Privy session present) → the
+      //     viewer might be an advisor whose advisor query just hasn't
+      //     landed yet; let the BE be the source of truth. If they're
+      //     NOT actually the advisor for this report, the BE returns
+      //     `requiresIdentity: true` and `performPost` opens the dialog
+      //     via the IdentityRequiredError catch.
+      // Anonymous donors with no identity get the dialog immediately so
+      // they don't pay the round-trip.
+      const canDeferToBackend =
+        identity.isAdvisor || opts.isAdvisorResolving === true || opts.isAuthenticated === true;
+      if (!extraIdentity && !canDeferToBackend && !baseDisplayName) {
         setPendingPost(request);
         setIdentityModalMode("post");
         return;
       }
       await performPost(request);
     },
-    [composer, identity.displayName, identity.isAdvisor, performPost]
+    [
+      composer,
+      identity.displayName,
+      identity.isAdvisor,
+      opts.isAuthenticated,
+      opts.isAdvisorResolving,
+      performPost,
+    ]
   );
 
   const retryPendingPost = useCallback(

@@ -177,7 +177,12 @@ export function SharedReportView({ token }: SharedReportViewProps) {
   return (
     <>
       <ReportBrief report={payload} isTerminal={isTerminal(payload)} variant="shared" />
-      <CommentOverlay token={token} isAdvisor={isAdvisorViewer} />
+      <CommentOverlay
+        token={token}
+        isAdvisor={isAdvisorViewer}
+        isAuthenticated={Boolean(privy.ready && privy.authenticated)}
+        isAdvisorResolving={Boolean(privy.ready && privy.authenticated) && advisorQuery.isLoading}
+      />
     </>
   );
 }
