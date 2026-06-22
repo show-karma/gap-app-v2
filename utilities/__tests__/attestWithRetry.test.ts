@@ -11,6 +11,7 @@ import {
   ATTEST_SEND_MAX_ATTEMPTS,
   AttestRetryExhaustedError,
   attestWithRetry,
+  isAttestRetryExhaustedError,
 } from "@/utilities/attestWithRetry";
 import { isRetryableChainError } from "@/utilities/isRetryableChainError";
 import { isTransientWalletTimeoutError } from "@/utilities/sentry/transientErrors";
@@ -69,8 +70,9 @@ describe("attestWithRetry", () => {
     expect(result).toEqual({ tx: [{ hash: "0xdef" }], uids: ["0x2"] });
     expect(recoveredByIdempotencyGuard).toBe(false);
     expect(send).toHaveBeenCalledTimes(2);
-    // Guard checked exactly once — before the second (retry) attempt.
-    expect(hasAlreadyLanded).toHaveBeenCalledTimes(1);
+    // Guard was polled (default poll window) before the second attempt, since
+    // the timed-out attempt never showed as indexed.
+    expect(hasAlreadyLanded).toHaveBeenCalledTimes(4);
   });
 
   it("does NOT resend when the idempotency guard reports the attestation already landed", async () => {
@@ -87,6 +89,50 @@ describe("attestWithRetry", () => {
     // Critically: send is called only once — no double-create.
     expect(send).toHaveBeenCalledTimes(1);
     expect(hasAlreadyLanded).toHaveBeenCalledTimes(1);
+  });
+
+  it("POLLS the idempotency guard before resending and stops once the in-flight tx is indexed", async () => {
+    // The real hazard: the first send's userOp WAS broadcast but the client
+    // gave up waiting. The tx is still being indexed when we decide whether to
+    // resend. A single immediate guard check would miss it (the indexer lags)
+    // and we'd double-create. The guard must POLL on the indexing cadence so
+    // the landed tx is observed before any resend.
+    const send = vi.fn().mockRejectedValueOnce(makeCoalesceError());
+    // In-flight on the first two polls, then indexed on the third.
+    const hasAlreadyLanded = vi
+      .fn()
+      .mockResolvedValueOnce(false)
+      .mockResolvedValueOnce(false)
+      .mockResolvedValueOnce(true);
+
+    const { result, recoveredByIdempotencyGuard } = await runWithTimers(
+      attestWithRetry({ send, hasAlreadyLanded })
+    );
+
+    // No resend: the in-flight attempt was detected as landed.
+    expect(send).toHaveBeenCalledTimes(1);
+    // Guard was polled repeatedly (not a single immediate check).
+    expect(hasAlreadyLanded).toHaveBeenCalledTimes(3);
+    expect(recoveredByIdempotencyGuard).toBe(true);
+    expect(result).toBeNull();
+  });
+
+  it("only resends after the bounded guard poll window expires without the tx landing", async () => {
+    const send = vi
+      .fn()
+      .mockRejectedValueOnce(makeCoalesceError())
+      .mockResolvedValueOnce({ tx: [{ hash: "0xdef" }], uids: ["0x2"] });
+    // Never lands during the poll window → resend is the correct outcome.
+    const hasAlreadyLanded = vi.fn().mockResolvedValue(false);
+
+    const { result } = await runWithTimers(
+      attestWithRetry({ send, hasAlreadyLanded, guardPollAttempts: 3 })
+    );
+
+    expect(result).toEqual({ tx: [{ hash: "0xdef" }], uids: ["0x2"] });
+    // The full poll window was exhausted before resending.
+    expect(hasAlreadyLanded).toHaveBeenCalledTimes(3);
+    expect(send).toHaveBeenCalledTimes(2);
   });
 
   it("surfaces a non-retryable error immediately without retrying", async () => {
@@ -158,11 +204,26 @@ describe("AttestRetryExhaustedError telemetry routing", () => {
     expect(isRetryableChainError(error)).toBe(true);
   });
 
-  it("is reported to Sentry — does NOT match the transient-drop signature", () => {
-    // The raw cause IS transient noise...
+  it("is reported to Sentry via the structural exhausted-retry flag", () => {
+    // The raw cause IS transient noise that beforeSend would otherwise drop...
     expect(isTransientWalletTimeoutError(new Error("could not coalesce error"))).toBe(true);
-    // ...but the exhausted wrapper is actionable and must reach Sentry.
+    // ...but the exhausted wrapper carries a structural flag so Sentry routing
+    // reports it without depending on the message wording.
     const error = new AttestRetryExhaustedError(new Error("could not coalesce error"), 3);
-    expect(isTransientWalletTimeoutError(error)).toBe(false);
+    expect(isAttestRetryExhaustedError(error)).toBe(true);
+    expect(error.isExhaustedRetry).toBe(true);
+    // Plain transient errors are NOT flagged.
+    expect(isAttestRetryExhaustedError(new Error("could not coalesce error"))).toBe(false);
+    expect(isAttestRetryExhaustedError(null)).toBe(false);
+  });
+
+  it("preserves both the throw site and the cause stack", () => {
+    const cause = new Error("Wallet timeout");
+    const error = new AttestRetryExhaustedError(cause, 3);
+    // The wrapper's own stack is preserved (mentions this file/constructor)...
+    expect(error.stack).toContain("AttestRetryExhaustedError");
+    // ...and the cause stack is appended rather than overwriting it.
+    expect(error.stack).toContain("Caused by:");
+    expect(error.cause).toBe(cause);
   });
 });

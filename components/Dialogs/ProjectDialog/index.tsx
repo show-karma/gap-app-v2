@@ -650,58 +650,63 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       // deterministic and is the project's indexed identifier) so we never
       // double-create on a recovered timeout.
       const projectSlugIdentifier = slug || project.uid;
-      const { result: res } = await attestWithRetry({
+      const { result: res, recoveredByIdempotencyGuard } = await attestWithRetry({
         send: () => project.attest(signer as any, changeStepperStep),
         hasAlreadyLanded: () => checkSlugExists(projectSlugIdentifier),
       });
 
-      {
-        showLoading("Indexing project...");
-        let retries = 1000;
-        const txHash = res?.tx[0]?.hash;
-        if (txHash) {
-          await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, chainId), "POST", {});
-        }
-        let fetchedProject: ProjectResponse | null = null;
+      showLoading("Indexing project...");
 
-        // First, poll using checkSlugExists to avoid 404 errors in Sentry
-        const projectIdentifier = projectSlugIdentifier;
-        while (retries > 0) {
+      // When a timed-out attempt was detected as already landed, `res` is null
+      // and we skip the ATTESTATION_LISTENER kick (there's no fresh tx hash to
+      // push) — the listener has already ingested the attestation. Either way
+      // we fall through to the same slug poll, which resolves the indexed
+      // project regardless of which send actually landed it.
+      const txHash = recoveredByIdempotencyGuard ? undefined : res?.tx[0]?.hash;
+      if (txHash) {
+        await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, chainId), "POST", {});
+      }
+
+      let retries = 1000;
+      let fetchedProject: ProjectResponse | null = null;
+
+      // First, poll using checkSlugExists to avoid 404 errors in Sentry
+      const projectIdentifier = projectSlugIdentifier;
+      while (retries > 0) {
+        // eslint-disable-next-line no-await-in-loop
+        const exists = await checkSlugExists(projectIdentifier);
+        if (exists) {
+          // Project is indexed, now fetch the full details
           // eslint-disable-next-line no-await-in-loop
-          const exists = await checkSlugExists(projectIdentifier);
-          if (exists) {
-            // Project is indexed, now fetch the full details
-            // eslint-disable-next-line no-await-in-loop
-            fetchedProject = await getProject(projectIdentifier);
-            break;
-          }
-          retries -= 1;
-          // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-          await new Promise((resolve) => setTimeout(resolve, 1500));
+          fetchedProject = await getProject(projectIdentifier);
+          break;
+        }
+        retries -= 1;
+        // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+      }
+
+      if (fetchedProject?.uid && fetchedProject.uid !== zeroHash) {
+        const [, subscriptionError] = await fetchData(
+          INDEXER.SUBSCRIPTION.CREATE(fetchedProject.uid),
+          "POST",
+          { contacts },
+          {},
+          {},
+          true
+        );
+
+        if (subscriptionError) {
+          showError("Something went wrong with contact info save. Please try again later.");
         }
 
-        if (fetchedProject?.uid && fetchedProject.uid !== zeroHash) {
-          const [, subscriptionError] = await fetchData(
-            INDEXER.SUBSCRIPTION.CREATE(fetchedProject.uid),
-            "POST",
-            { contacts },
-            {},
-            {},
-            true
-          );
-
-          if (subscriptionError) {
-            showError("Something went wrong with contact info save. Please try again later.");
-          }
-
-          showSuccess(MESSAGES.PROJECT.CREATE.SUCCESS);
-          setTimeout(() => {
-            dismiss();
-            closeModal();
-            router.push(PAGES.PROJECT.SCREENS.NEW_GRANT(slug || project.uid));
-            router.refresh();
-          }, 1500);
-        }
+        showSuccess(MESSAGES.PROJECT.CREATE.SUCCESS);
+        setTimeout(() => {
+          dismiss();
+          closeModal();
+          router.push(PAGES.PROJECT.SCREENS.NEW_GRANT(slug || project.uid));
+          router.refresh();
+        }, 1500);
       }
 
       reset();
