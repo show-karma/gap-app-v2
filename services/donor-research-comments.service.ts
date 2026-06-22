@@ -7,6 +7,27 @@ import {
   type SharedReportCommentNode,
   type SharedReportCommentsResponse,
 } from "@/types/donor-research-comments";
+import { TokenManager } from "@/utilities/auth/token-manager";
+
+/**
+ * Returns a `{ Authorization: "Bearer <Privy JWT>" }` header when a
+ * Privy session is available, otherwise an empty object. Donors viewing
+ * the shared report anonymously have no Privy session — the proxy +
+ * indexer treat that as the anonymous path. The authenticated advisor
+ * viewing their own report carries the JWT so the indexer's
+ * `optionalAuthentication` + advisor branch can stamp `is_advisor=true`
+ * (KTD13 + KTD14).
+ */
+async function maybeAuthHeader(): Promise<Record<string, string>> {
+  try {
+    const token = await TokenManager.getToken();
+    if (token) return { Authorization: `Bearer ${token}` };
+  } catch {
+    // TokenManager throws when Privy isn't initialized yet — treat as
+    // anonymous rather than failing the comment post.
+  }
+  return {};
+}
 
 /**
  * Calls the Next.js API-route proxy on the FE origin. The proxy
@@ -30,9 +51,11 @@ export async function listSharedReportComments(
   if (params.cursor) qs.set("cursor", params.cursor);
   if (params.limit) qs.set("limit", String(params.limit));
   const url = `${proxyUrl(token)}${qs.toString() ? `?${qs.toString()}` : ""}`;
+  const auth = await maybeAuthHeader();
   const res = await fetch(url, {
     method: "GET",
     credentials: "same-origin",
+    headers: auth,
     signal,
   });
   if (!res.ok) {
@@ -46,12 +69,14 @@ export async function postSharedReportComment(
   body: CreateCommentRequest,
   idempotencyKey: string
 ): Promise<SharedReportComment> {
+  const auth = await maybeAuthHeader();
   const res = await fetch(proxyUrl(token), {
     method: "POST",
     credentials: "same-origin",
     headers: {
       "Content-Type": "application/json",
       "Idempotency-Key": idempotencyKey,
+      ...auth,
     },
     body: JSON.stringify(body),
   });

@@ -98,6 +98,23 @@ describe("GET /api/donor-research/shared/[token]/comments", () => {
     expect(res.status).toBe(200);
   });
 
+  it("forwards the Authorization header so the indexer can resolve the advisor branch", async () => {
+    headerStore.get.mockImplementation((k: string) => {
+      if (k === "authorization") return "Bearer privy-jwt-xyz";
+      return null;
+    });
+    cookieStore.get.mockReturnValue(undefined);
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValue(fetchResponse({ status: 200, body: { roots: [] } }));
+
+    await GET(makeRequest(), ctx());
+
+    const [, options] = fetchSpy.mock.calls[0];
+    const h = options?.headers as Record<string, string>;
+    expect(h["Authorization"]).toBe("Bearer privy-jwt-xyz");
+  });
+
   it("returns 502 when the indexer is unreachable", async () => {
     vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("ECONNREFUSED"));
     const res = await GET(makeRequest(), ctx());

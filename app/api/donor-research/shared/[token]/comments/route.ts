@@ -52,6 +52,7 @@ async function buildForwardHeaders(token: string, contentType?: string): Promise
   const ip = await extractClientIp();
   const cookieStore = await cookies();
   const sessionCookie = cookieStore.get(COOKIE_SESSION)?.value ?? "";
+  const h = await nextHeaders();
   const out: Record<string, string> = {
     Accept: "application/json",
   };
@@ -59,11 +60,17 @@ async function buildForwardHeaders(token: string, contentType?: string): Promise
   if (ip) out["x-forwarded-for"] = ip;
   if (sessionCookie) out["x-drsc-session"] = sessionCookie;
   // Pass-through standard Origin for the indexer's CSRF posture
-  const origin = (await nextHeaders()).get("origin");
+  const origin = h.get("origin");
   if (origin) out["Origin"] = origin;
   // Pass-through Idempotency-Key for write requests
-  const idem = (await nextHeaders()).get("idempotency-key");
+  const idem = h.get("idempotency-key");
   if (idem) out["Idempotency-Key"] = idem;
+  // Forward the Privy JWT (KTD13 / KTD14). The indexer's
+  // `optionalAuthentication` reads this header to resolve the advisor
+  // identity branch on writes. Anonymous donors never carry one and
+  // pass through unchanged.
+  const authz = h.get("authorization");
+  if (authz) out["Authorization"] = authz;
   return out;
 }
 
