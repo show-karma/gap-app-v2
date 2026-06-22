@@ -314,9 +314,20 @@ export function useCommenting(
               anchor: composer.anchor,
               ...(extraIdentity?.email ? { email: extraIdentity.email } : {}),
             };
+      // Gate the post on identity. Without a captured name (and not an
+      // advisor), the BE's schema validation rejects with a generic 400
+      // *before* the controller can return `requiresIdentity: true` —
+      // which used to surface as "Something went wrong" in the composer.
+      // Open the IdentityCaptureDialog first and stash the request so
+      // `retryPendingPost` can replay it with the captured values.
+      if (!extraIdentity && !identity.isAdvisor && !baseDisplayName) {
+        setPendingPost(request);
+        setIdentityModalMode("post");
+        return;
+      }
       await performPost(request);
     },
-    [composer, identity.displayName, performPost]
+    [composer, identity.displayName, identity.isAdvisor, performPost]
   );
 
   const retryPendingPost = useCallback(
