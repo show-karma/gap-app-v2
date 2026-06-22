@@ -8,11 +8,13 @@ import { wait } from "@/utilities/wait";
 // the enum is type-only in the runtime ESM build — importing it as a value crashes SSR.
 const EMBEDDED_WALLET_ALREADY_EXISTS = "embedded_wallet_already_exists";
 
-// Privy throws the code on a separate `.code` property and the human-readable
-// "User already has an embedded wallet." in `.message` — never the code in the
-// message. Detect both: the structured code (authoritative) plus the message as
-// a fallback in case the shape changes across Privy versions.
-const ALREADY_EXISTS_MESSAGE_PATTERN = /already has an embedded wallet/i;
+// Privy reports "already exists" in more than one shape across versions/builds:
+// the structured `.code` property (authoritative), the human-readable
+// "User already has an embedded wallet." in `.message` (what production throws),
+// and — in some builds/tests — the raw code string inside `.message`. Detect all
+// three so the idempotency guard never misses a benign already-exists race.
+const ALREADY_EXISTS_MESSAGE_PATTERN =
+  /already has an embedded wallet|embedded_wallet_already_exists/i;
 
 const isEmbeddedWalletAlreadyExistsError = (error: unknown): boolean => {
   if ((error as { code?: string } | null)?.code === EMBEDDED_WALLET_ALREADY_EXISTS) {
