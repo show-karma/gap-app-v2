@@ -24,6 +24,15 @@ const walletProviderErrors = [
   "Failed to connect to MetaMask",
 ];
 
+// wagmi throws `ConnectorNotConnectedError: Connector not connected.` when a
+// wallet client is requested before the connector finishes connecting. This is
+// the documented Privy↔wagmi startup race (Privy reports authenticated while
+// wagmi is still reconnecting). `safeGetWalletClient` now guards/reconnects and
+// no longer routes this through `errorManager`; this entry is defense-in-depth
+// for any other code path that surfaces it.
+// See https://karma-crypto-inc.sentry.io/issues/GAP-FRONTEND-244
+const connectorStartupRaceErrors = ["Connector not connected", "ConnectorNotConnectedError"];
+
 const browserExtensionErrors = [
   // Browser extensions disconnecting ports (Chrome extensions, wallet extensions)
   // See https://karma-crypto-inc.sentry.io/issues/GAP-FRONTEND-1BA
@@ -81,6 +90,7 @@ export const sentryIgnoreErrors = [
   ...unsupportedWalletErrors,
   ...walletConnectErrors,
   ...walletProviderErrors,
+  ...connectorStartupRaceErrors,
   ...browserExtensionErrors,
   ...sentryInstrumentationErrors,
   ...notFoundErrors,
