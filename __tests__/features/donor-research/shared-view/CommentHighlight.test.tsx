@@ -115,6 +115,20 @@ describe("CommentHighlight", () => {
     expect(container).toBeEmptyDOMElement();
   });
 
+  it("renders the active variant with data-active when isActive=true", () => {
+    vi.spyOn(resolveModule, "resolveAnchor").mockReturnValue({
+      kind: "range",
+      range: makeRangeMock([rect(0, 0, 50, 18)]),
+      element: document.createElement("div"),
+    });
+    const root = document.createElement("div");
+    const { container } = render(
+      <CommentHighlight anchor={textRangeAnchor} root={root} isActive />
+    );
+    const span = container.querySelector("[data-comment-highlight]");
+    expect(span?.getAttribute("data-active")).toBe("true");
+  });
+
   it("renders interactive <button> when onActivate is supplied", () => {
     vi.spyOn(resolveModule, "resolveAnchor").mockReturnValue({
       kind: "range",

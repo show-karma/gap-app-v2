@@ -12,6 +12,10 @@ interface CommentRowProps {
   node: SharedReportCommentNode;
   depth?: number;
   onReply: (parentId: string) => void;
+  /** Bidirectional focus: id of the row whose anchored highlight is currently emphasized. */
+  activeCommentId?: string | null;
+  /** Click on the row body sets this as the active comment (highlights its anchor in the report). */
+  onActivate?: (commentId: string) => void;
 }
 
 function formatRelative(iso: string): string {
@@ -39,8 +43,15 @@ function decodeEntities(body: string): string {
     .replace(/&#39;/g, "'");
 }
 
-const CommentRowComponent = ({ node, depth = 0, onReply }: CommentRowProps) => {
+const CommentRowComponent = ({
+  node,
+  depth = 0,
+  onReply,
+  activeCommentId,
+  onActivate,
+}: CommentRowProps) => {
   const [expanded, setExpanded] = useState(depth < MAX_VISUAL_DEPTH);
+  const isActive = activeCommentId === node.id;
   const indentLevel = Math.min(depth, MAX_VISUAL_DEPTH);
   const indentClasses =
     indentLevel === 0
@@ -59,8 +70,27 @@ const CommentRowComponent = ({ node, depth = 0, onReply }: CommentRowProps) => {
   const lines = decodedBody.split(/\n/);
 
   return (
-    <div className={`border-l border-border/50 ${indentClasses}`}>
-      <article className="rounded-md bg-background p-3">
+    <div
+      className={`border-l ${isActive ? "border-amber-500" : "border-border/50"} ${indentClasses}`}
+    >
+      <article
+        className={`rounded-md p-3 transition-colors ${
+          isActive ? "bg-amber-50 dark:bg-amber-900/20" : "bg-background"
+        } ${onActivate ? "cursor-pointer" : ""}`}
+        onClick={() => onActivate?.(node.id)}
+        onKeyDown={(e) => {
+          if (!onActivate) return;
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onActivate(node.id);
+          }
+        }}
+        role={onActivate ? "button" : undefined}
+        tabIndex={onActivate ? 0 : undefined}
+        aria-current={isActive ? "true" : undefined}
+        data-comment-row
+        data-active={isActive || undefined}
+      >
         <header className="mb-1 flex items-center gap-2 text-xs">
           <span className="font-medium">{node.displayName}</span>
           {node.isAdvisor && (
@@ -83,7 +113,13 @@ const CommentRowComponent = ({ node, depth = 0, onReply }: CommentRowProps) => {
           <button
             type="button"
             className="text-xs text-muted-foreground underline-offset-2 hover:underline focus-visible:outline-none focus-visible:underline"
-            onClick={() => onReply(node.id)}
+            onClick={(e) => {
+              // Don't bubble into the row's activate handler — the Reply
+              // button is its own affordance and shouldn't also flash
+              // the highlight.
+              e.stopPropagation();
+              onReply(node.id);
+            }}
           >
             Reply
           </button>
@@ -101,7 +137,14 @@ const CommentRowComponent = ({ node, depth = 0, onReply }: CommentRowProps) => {
       )}
 
       {visibleChildren.map((child) => (
-        <CommentRow key={child.id} node={child} depth={depth + 1} onReply={onReply} />
+        <CommentRow
+          key={child.id}
+          node={child}
+          depth={depth + 1}
+          onReply={onReply}
+          activeCommentId={activeCommentId}
+          onActivate={onActivate}
+        />
       ))}
     </div>
   );

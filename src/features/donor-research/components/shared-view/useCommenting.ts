@@ -92,6 +92,18 @@ export interface UseCommentingResult {
   scrollTargetCommentId: string | null;
   /** Clears the scroll target after the consumer has used it. */
   clearScrollTarget: () => void;
+  /**
+   * The comment row the donor is currently focused on. Bidirectional
+   * link between the sidebar and the report DOM: clicking a row sets
+   * this id so its anchored highlight gets emphasized in the report;
+   * clicking a highlight sets it so the matching sidebar row gets
+   * emphasized + scrolled into view.
+   */
+  activeCommentId: string | null;
+  /** Focus a comment + scroll its anchor into view in the report. */
+  activateComment: (commentId: string) => void;
+  /** Clear the focus indicator (called on sheet close or composer open). */
+  clearActiveComment: () => void;
   /** Refresh key for the highlight resolver — bumps on each successful poll. */
   highlightRefreshKey: number;
 }
@@ -133,6 +145,7 @@ export function useCommenting(
   const [identityModalMode, setIdentityModalMode] = useState<"post" | "edit-name" | null>(null);
   const [pendingPost, setPendingPost] = useState<CreateCommentRequest | null>(null);
   const [scrollTargetCommentId, setScrollTargetCommentId] = useState<string | null>(null);
+  const [activeCommentId, setActiveCommentId] = useState<string | null>(null);
   const [selectionAffordance, setSelectionAffordance] = useState<SelectionAffordance | null>(null);
   const [highlightRefreshKey, setHighlightRefreshKey] = useState(0);
 
@@ -265,13 +278,27 @@ export function useCommenting(
       const roots = counts.rootsByKey.get(targetKey) ?? [];
       const first = roots[0];
       setSheetOpen(true);
-      if (first) setScrollTargetCommentId(first.id);
+      if (first) {
+        setScrollTargetCommentId(first.id);
+        // Mark the row active so the source highlight in the report
+        // gets the focused emphasis simultaneously.
+        setActiveCommentId(first.id);
+      }
     },
     [counts.rootsByKey]
   );
 
   const clearScrollTarget = useCallback(() => {
     setScrollTargetCommentId(null);
+  }, []);
+
+  const activateComment = useCallback((commentId: string) => {
+    setActiveCommentId(commentId);
+    setScrollTargetCommentId(commentId);
+  }, []);
+
+  const clearActiveComment = useCallback(() => {
+    setActiveCommentId(null);
   }, []);
 
   const performPost = useCallback(
@@ -393,6 +420,9 @@ export function useCommenting(
     retryPendingPost,
     scrollTargetCommentId,
     clearScrollTarget,
+    activeCommentId,
+    activateComment,
+    clearActiveComment,
     highlightRefreshKey,
   };
 }

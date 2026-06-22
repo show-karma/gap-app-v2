@@ -19,6 +19,12 @@ interface CommentHighlightProps {
   refreshKey?: string | number;
   /** Click handler — when supplied the highlight is interactive. */
   onActivate?: () => void;
+  /**
+   * True when this highlight's source comment is the currently
+   * focused row in the sidebar. The highlight renders in a stronger
+   * color so the donor can see which highlight a row maps to.
+   */
+  isActive?: boolean;
 }
 
 interface HighlightRect {
@@ -56,7 +62,13 @@ function collectRects(resolved: ResolvedAnchor): HighlightRect[] {
  * payload). Section / candidate / orphan anchors render nothing — the
  * caller routes those to pins and the orphan lane respectively.
  */
-export function CommentHighlight({ anchor, root, refreshKey, onActivate }: CommentHighlightProps) {
+export function CommentHighlight({
+  anchor,
+  root,
+  refreshKey,
+  onActivate,
+  isActive = false,
+}: CommentHighlightProps) {
   const [rects, setRects] = useState<HighlightRect[]>([]);
 
   const isTextRange = anchor.kind === "text_range";
@@ -90,6 +102,14 @@ export function CommentHighlight({ anchor, root, refreshKey, onActivate }: Comme
         height: `${r.height}px`,
         pointerEvents: onActivate ? ("auto" as const) : ("none" as const),
       };
+      // Two visual states: idle (subtle yellow) vs active (stronger
+      // amber + ring). Active = this highlight's source comment row
+      // is currently focused in the sidebar, giving the donor a
+      // visual rope between the comment and the highlighted text.
+      const idleClass = "bg-amber-200/40 mix-blend-multiply dark:bg-amber-300/30";
+      const idleHover = "hover:bg-amber-200/60 dark:hover:bg-amber-300/45";
+      const activeClass =
+        "bg-amber-300/70 mix-blend-multiply ring-2 ring-amber-500 dark:bg-amber-300/55 dark:ring-amber-400";
       if (onActivate) {
         return (
           <button
@@ -98,8 +118,11 @@ export function CommentHighlight({ anchor, root, refreshKey, onActivate }: Comme
             onClick={onActivate}
             aria-label="View comment thread"
             data-comment-highlight
+            data-active={isActive || undefined}
             style={style}
-            className="rounded-sm bg-amber-200/40 mix-blend-multiply hover:bg-amber-200/60 dark:bg-amber-300/30 dark:hover:bg-amber-300/45"
+            className={`rounded-sm transition-colors ${
+              isActive ? activeClass : `${idleClass} ${idleHover}`
+            }`}
           />
         );
       }
@@ -108,12 +131,13 @@ export function CommentHighlight({ anchor, root, refreshKey, onActivate }: Comme
           key={idx}
           aria-hidden
           data-comment-highlight
+          data-active={isActive || undefined}
           style={style}
-          className="rounded-sm bg-amber-200/40 mix-blend-multiply dark:bg-amber-300/30"
+          className={`rounded-sm transition-colors ${isActive ? activeClass : idleClass}`}
         />
       );
     });
-  }, [rects, onActivate]);
+  }, [rects, onActivate, isActive]);
 
   if (!isTextRange || rects.length === 0) return null;
 

@@ -99,6 +99,9 @@ export function CommentOverlay({
     retryPendingPost,
     scrollTargetCommentId,
     clearScrollTarget,
+    activeCommentId,
+    activateComment,
+    clearActiveComment,
     highlightRefreshKey,
   } = commenting;
 
@@ -152,6 +155,8 @@ export function CommentOverlay({
         highlightRefreshKey={highlightRefreshKey}
         onPinActivate={activatePin}
         onOpenRootComposer={openRootComposer}
+        activeCommentId={activeCommentId}
+        onActivateComment={activateComment}
       />
 
       {selectionAffordance && (
@@ -171,7 +176,16 @@ export function CommentOverlay({
           onEditName={() => setIdentityModalMode("edit-name")}
           onSwitch={() => void identity.clearIdentity()}
         />
-        <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+        <Sheet
+          open={sheetOpen}
+          onOpenChange={(open) => {
+            setSheetOpen(open);
+            // Closing the sheet drops the focus indicator on the
+            // report's highlights so the donor doesn't see lingering
+            // emphasis after dismissing the comment surface.
+            if (!open) clearActiveComment();
+          }}
+        >
           <SheetTrigger asChild>
             <Button variant="default" className="shadow-lg">
               {total === 0 ? "Comments" : pluralize("comment", total, true)}
@@ -201,7 +215,13 @@ export function CommentOverlay({
                 <div className="space-y-3">
                   {tree.map((node) => (
                     <div key={node.id} data-comment-id={node.id}>
-                      <CommentRow node={node} depth={0} onReply={openReplyComposer} />
+                      <CommentRow
+                        node={node}
+                        depth={0}
+                        onReply={openReplyComposer}
+                        activeCommentId={activeCommentId}
+                        onActivate={activateComment}
+                      />
                     </div>
                   ))}
                 </div>
@@ -224,7 +244,13 @@ export function CommentOverlay({
                             “{node.anchor.quote}”
                           </blockquote>
                         ) : null}
-                        <CommentRow node={node} depth={0} onReply={openReplyComposer} />
+                        <CommentRow
+                          node={node}
+                          depth={0}
+                          onReply={openReplyComposer}
+                          activeCommentId={activeCommentId}
+                          onActivate={activateComment}
+                        />
                       </div>
                     ))}
                   </div>

@@ -25,6 +25,14 @@ interface AnchoredAffordancesProps {
   onPinActivate: (targetKey: string) => void;
   /** Open the root composer with the supplied anchor. */
   onOpenRootComposer: (anchor: CommentAnchor) => void;
+  /**
+   * Id of the comment row currently focused in the sidebar. The
+   * highlight whose node.id matches renders in the emphasized variant
+   * so the donor can trace a row to its highlighted text.
+   */
+  activeCommentId?: string | null;
+  /** Set the active comment when a highlight is clicked. */
+  onActivateComment?: (commentId: string) => void;
 }
 
 interface AnchorTarget {
@@ -102,6 +110,8 @@ export function AnchoredAffordances({
   highlightRefreshKey,
   onPinActivate,
   onOpenRootComposer,
+  activeCommentId,
+  onActivateComment,
 }: AnchoredAffordancesProps) {
   const [targets, setTargets] = useState<AnchorTarget[]>([]);
   const [root, setRoot] = useState<Element | null>(null);
@@ -180,10 +190,16 @@ export function AnchoredAffordances({
             anchor={anchor}
             root={root}
             refreshKey={highlightRefreshKey}
+            isActive={activeCommentId === node.id}
             onActivate={() => {
               const key =
                 anchor.kind === "text_range" ? `${anchor.targetKind}:${anchor.targetId}` : null;
               if (key) onPinActivate(key);
+              // Promote this specific comment to active so the
+              // corresponding sidebar row gets the focus indicator
+              // (the pin activate only knows the target, not which
+              // specific comment was clicked).
+              onActivateComment?.(node.id);
             }}
           />
         ) : null
