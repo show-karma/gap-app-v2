@@ -11,6 +11,13 @@ interface CommentComposerProps {
   parentDisplayName?: string;
   /** Pre-captured anchor for root composers; null for replies. */
   anchor?: CommentAnchor | null;
+  /**
+   * General (whole-report) comment mode. The wire anchor is still a
+   * valid section anchor (the backend requires a non-null anchor), but
+   * the descriptor reads "On the whole report" instead of the section
+   * name so the donor understands it isn't pinned to a specific block.
+   */
+  general?: boolean;
   /** When the parent surfaces a rate-limit / collision error from the mutation. */
   externalError?: string | null;
   /** True while the mutation is in flight — disables submit. */
@@ -24,6 +31,7 @@ interface CommentComposerProps {
 export function CommentComposer({
   parentDisplayName,
   anchor,
+  general = false,
   externalError,
   isSubmitting = false,
   onCancel,
@@ -47,6 +55,8 @@ export function CommentComposer({
     >
       {isReply ? (
         <div className="text-xs text-muted-foreground">Replying to {parentDisplayName}</div>
+      ) : general ? (
+        <div className="text-xs text-muted-foreground">On the whole report</div>
       ) : anchor ? (
         <div className="text-xs text-muted-foreground">
           {anchor.kind === "section"

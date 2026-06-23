@@ -1,7 +1,7 @@
 "use client";
 
 import pluralize from "pluralize";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -34,6 +34,13 @@ interface CommentOverlayProps {
    * (race: user clicks submit before the /me query lands).
    */
   isAdvisorResolving?: boolean;
+  /**
+   * The signed-in viewer's email (Privy email login), if any. When set,
+   * the identity-capture dialog pre-fills and locks the email field
+   * instead of asking for it. Null for anonymous viewers or wallet
+   * logins with no email.
+   */
+  viewerEmail?: string | null;
 }
 
 function totalCount(tree: SharedReportCommentNode[]): number {
@@ -69,6 +76,7 @@ export function CommentOverlay({
   isAdvisor = false,
   isAuthenticated = false,
   isAdvisorResolving = false,
+  viewerEmail = null,
 }: CommentOverlayProps) {
   const commenting = useCommenting(token, {
     enabled: !reportRevoked,
@@ -144,6 +152,15 @@ export function CommentOverlay({
 
   const composerHeader = composer.mode === "reply" ? composer.parent?.displayName : undefined;
   const composerAnchor = composer.mode === "root" ? composer.anchor : undefined;
+  const composerGeneral = composer.mode === "root" ? composer.general === true : false;
+  // Remount the always-on composer when its context changes so the body
+  // input resets between general / specific-anchor / reply modes.
+  const composerKey =
+    composer.mode === "reply"
+      ? `reply-${composer.parentCommentId}`
+      : composer.mode === "root"
+        ? `root-${composerAnchor ? JSON.stringify(composerAnchor) : "x"}`
+        : "general";
 
   const orphanRoots = counts.orphanRoots;
 
@@ -169,7 +186,7 @@ export function CommentOverlay({
         />
       )}
 
-      <div className="fixed bottom-6 right-6 z-40 flex flex-col items-end gap-2">
+      <div className="fixed bottom-24 right-6 z-40 flex flex-col items-end gap-2">
         <IdentityBadge
           displayName={identity.displayName}
           isAdvisor={identity.isAdvisor}
@@ -204,9 +221,27 @@ export function CommentOverlay({
                 </div>
               )}
               {query.error && !query.isLoading && (
-                <p className="text-sm text-destructive" role="alert">
-                  Couldn’t load comments — retry coming up on next poll.
-                </p>
+                <div
+                  className="flex flex-col items-start gap-2 rounded-md border border-border bg-muted/40 p-3"
+                  role="alert"
+                >
+                  <p className="text-sm font-medium text-foreground">
+                    We couldn’t load the comments
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Something went wrong on our end. Your connection is fine — we’ll keep trying, or
+                    you can retry now.
+                  </p>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => void query.refetch()}
+                    disabled={query.isFetching}
+                  >
+                    {query.isFetching ? "Retrying…" : "Try again"}
+                  </Button>
+                </div>
               )}
               {!query.isLoading && !query.error && tree.length === 0 && (
                 <p className="text-sm text-muted-foreground">Be the first to comment.</p>
@@ -258,16 +293,16 @@ export function CommentOverlay({
               )}
             </div>
 
-            {composer.mode !== "closed" ? (
-              <CommentComposer
-                parentDisplayName={composerHeader}
-                anchor={composerAnchor}
-                externalError={composerError}
-                isSubmitting={isPosting}
-                onCancel={closeComposer}
-                onSubmit={(body) => submitComposer(body)}
-              />
-            ) : null}
+            <CommentComposer
+              key={composerKey}
+              parentDisplayName={composerHeader}
+              anchor={composer.mode === "root" ? composerAnchor : undefined}
+              general={composer.mode === "closed" ? true : composerGeneral}
+              externalError={composerError}
+              isSubmitting={isPosting}
+              onCancel={closeComposer}
+              onSubmit={(body) => submitComposer(body)}
+            />
           </SheetContent>
         </Sheet>
       </div>
@@ -279,6 +314,7 @@ export function CommentOverlay({
       <IdentityCaptureDialog
         open={identityModalMode !== null}
         nameOnly={identityModalMode === "edit-name"}
+        lockedEmail={viewerEmail}
         isSubmitting={isPosting}
         onOpenChange={(open) => {
           if (!open) setIdentityModalMode(null);

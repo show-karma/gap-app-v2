@@ -43,6 +43,13 @@ interface IdentityCaptureDialogProps {
   nameOnly?: boolean;
   /** Pending submit flag from the upstream mutation. */
   isSubmitting?: boolean;
+  /**
+   * When the viewer is logged in with an email (Privy email login), pass
+   * it here. The email field is pre-filled and locked (read-only) since
+   * we already hold a verified address. Leave null/empty for anonymous
+   * viewers or wallet logins with no email — they get an editable field.
+   */
+  lockedEmail?: string | null;
 }
 
 /**
@@ -63,10 +70,12 @@ export function IdentityCaptureDialog({
   onSubmit,
   nameOnly = false,
   isSubmitting = false,
+  lockedEmail = null,
 }: IdentityCaptureDialogProps) {
+  const hasLockedEmail = Boolean(lockedEmail && lockedEmail.trim().length > 0);
   const form = useForm<FormValues>({
     resolver: zodResolver(nameOnly ? NameOnlySchema : FullSchema),
-    defaultValues: { displayName: "", email: "" },
+    defaultValues: { displayName: "", email: hasLockedEmail ? (lockedEmail as string) : "" },
   });
 
   const handleSubmit = form.handleSubmit(async (values) => {
@@ -112,8 +121,16 @@ export function IdentityCaptureDialog({
                 type="email"
                 autoComplete="email"
                 maxLength={254}
+                readOnly={hasLockedEmail}
+                aria-readonly={hasLockedEmail || undefined}
+                className={
+                  hasLockedEmail ? "cursor-not-allowed bg-muted text-muted-foreground" : undefined
+                }
                 {...form.register("email")}
               />
+              {hasLockedEmail && (
+                <p className="text-xs text-muted-foreground">From your signed-in account.</p>
+              )}
               {form.formState.errors.email && (
                 <p className="text-sm text-destructive">{form.formState.errors.email.message}</p>
               )}

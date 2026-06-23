@@ -74,6 +74,11 @@ export function SharedReportView({ token }: SharedReportViewProps) {
     enabled: privy.ready && privy.authenticated,
   });
   const isAdvisorViewer = Boolean(privy.ready && privy.authenticated && advisorQuery.data);
+  // Email from a Privy email login, if present. Used to pre-fill + lock
+  // the identity-capture email field. Wallet logins expose no email, so
+  // this stays null and the donor is asked for one.
+  const viewerEmail =
+    privy.ready && privy.authenticated ? (privy.user?.email?.address ?? null) : null;
 
   useEffect(() => {
     let cancelled = false;
@@ -182,6 +187,7 @@ export function SharedReportView({ token }: SharedReportViewProps) {
         isAdvisor={isAdvisorViewer}
         isAuthenticated={Boolean(privy.ready && privy.authenticated)}
         isAdvisorResolving={Boolean(privy.ready && privy.authenticated) && advisorQuery.isLoading}
+        viewerEmail={viewerEmail}
       />
     </>
   );

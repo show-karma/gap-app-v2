@@ -59,10 +59,16 @@ export interface UseCommentingResult {
   /** Imperative composer state, keyed by anchor or "root". */
   composer:
     | { mode: "closed" }
-    | { mode: "root"; anchor: CommentAnchor }
+    | { mode: "root"; anchor: CommentAnchor; general?: boolean }
     | { mode: "reply"; parentCommentId: string; parent: SharedReportCommentNode | null };
   /** Open a root composer for the supplied anchor. */
   openRootComposer: (anchor: CommentAnchor) => void;
+  /**
+   * Open a composer for a general (whole-report) comment. The backend
+   * requires a non-null anchor, so this anchors to the report masthead
+   * under the hood while presenting as a general comment in the UI.
+   */
+  openGeneralComposer: () => void;
   /** Open a reply composer for the supplied parent comment. */
   openReplyComposer: (parentCommentId: string) => void;
   /** Close any open composer. */
@@ -109,6 +115,14 @@ export interface UseCommentingResult {
 }
 
 const SELECTION_DEBOUNCE_MS = 80;
+
+/**
+ * Anchor used for general (whole-report) comments. The backend rejects
+ * root comments with a null anchor (422), so a general comment is
+ * anchored to the always-present masthead section while the composer
+ * presents it as a whole-report comment.
+ */
+const GENERAL_COMMENT_ANCHOR: CommentAnchor = { kind: "section", sectionKey: "masthead" };
 
 /**
  * Orchestration hook for the donor-shared report comment surface. Owns
@@ -247,6 +261,12 @@ export function useCommenting(
     setSheetOpen(true);
   }, []);
 
+  const openGeneralComposer = useCallback(() => {
+    setComposerError(null);
+    setComposer({ mode: "root", anchor: GENERAL_COMMENT_ANCHOR, general: true });
+    setSheetOpen(true);
+  }, []);
+
   const openReplyComposer = useCallback(
     (parentCommentId: string) => {
       setComposerError(null);
@@ -330,8 +350,12 @@ export function useCommenting(
 
   const submitComposer = useCallback(
     async (body: string, extraIdentity?: { displayName?: string; email?: string }) => {
-      if (composer.mode === "closed") return;
       const baseDisplayName = extraIdentity?.displayName ?? identity.displayName ?? "";
+      // The composer is always mounted at the bottom of the sheet; when
+      // no specific composer is open it defaults to a general
+      // (whole-report) comment anchored to the masthead so the backend's
+      // non-null-anchor rule is satisfied.
+      const rootAnchor = composer.mode === "root" ? composer.anchor : GENERAL_COMMENT_ANCHOR;
       const request: CreateCommentRequest =
         composer.mode === "reply"
           ? {
@@ -343,7 +367,7 @@ export function useCommenting(
           : {
               body,
               displayName: baseDisplayName,
-              anchor: composer.anchor,
+              anchor: rootAnchor,
               ...(extraIdentity?.email ? { email: extraIdentity.email } : {}),
             };
       // Gate the post on identity for anonymous (not-Privy-authed)
@@ -406,6 +430,7 @@ export function useCommenting(
     composerError,
     composer,
     openRootComposer,
+    openGeneralComposer,
     openReplyComposer,
     closeComposer,
     sheetOpen,
