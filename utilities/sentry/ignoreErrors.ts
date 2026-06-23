@@ -76,6 +76,24 @@ const notFoundErrors = ["Project not found", "Community not found"];
 // DEV-256.
 const anonymousAuthErrors = ["Authorization header is required"];
 
+// React 19 streaming/Suspense-resume reconciliation crash. React DOM's stream
+// runtime ($RS) reads `parentNode`/`removeChild` on a node it owns and finds
+// it `null` because an EXTERNAL DOM mutator removed it between commits — almost
+// always Google Translate / in-browser translate rewriting text nodes, or an
+// aggressive browser extension, on top of streamed SSR content. It is thrown
+// from the injected $RS <script> at global scope (`mechanism: onerror`), outside
+// React's render/commit phases, so an error boundary cannot catch it. We attack
+// the dominant trigger at the source by marking the affected subtrees
+// `translate="no"` so machine translation leaves React-owned nodes alone; the
+// residual (other external mutators) is environmental and not actionable, so we
+// filter it here. Sibling to the existing "node to be removed is not a child of
+// this node." entry below.
+// See https://karma-crypto-inc.sentry.io/issues/GAP-FRONTEND-212
+const reconciliationDomMutationErrors = [
+  /Cannot read properties of null \(reading '(parentNode|removeChild)'\)/,
+  /null is not an object \(evaluating '.*\.(parentNode|removeChild)/,
+];
+
 export const sentryIgnoreErrors = [
   // user rejected a confirmation in the wallet
   "rejected the request",
@@ -94,4 +112,5 @@ export const sentryIgnoreErrors = [
   ...notFoundErrors,
   ...streamingAbortErrors,
   ...anonymousAuthErrors,
+  ...reconciliationDomMutationErrors,
 ];
