@@ -106,6 +106,30 @@ export function isTransientNetworkError(error: unknown): boolean {
   return TRANSIENT_MESSAGE_FRAGMENTS.some((fragment) => message.includes(fragment));
 }
 
+// ethers v6 wraps a momentary wallet/bundler timeout into a "could not coalesce
+// error" with code UNKNOWN_ERROR whose nested payload is `{ "message": "Wallet
+// timeout" }`. During project creation we retry the send (see
+// utilities/attestWithRetry.ts), so a RECOVERED timeout never reaches Sentry —
+// but the raw signature can still leak through code paths that bypass
+// errorManager (an un-awaited rejection from an abandoned attempt, a third-party
+// SDK fetch). It's environmental and non-actionable, so drop it. Only the
+// exhausted-retry case reports, and it does so as a distinct wrapped error that
+// no longer matches this signature. See GAP-FRONTEND-1Y2.
+const TRANSIENT_WALLET_TIMEOUT_FRAGMENTS = ["could not coalesce", "wallet timeout"] as const;
+
+/**
+ * True when the error is a transient wallet/bundler timeout surfaced by ethers
+ * ("could not coalesce error" / "Wallet timeout"). These are retried at the
+ * send layer and are unactionable from a Sentry event; the exhausted-retry
+ * failure reports separately as a distinct wrapped error.
+ */
+export function isTransientWalletTimeoutError(error: unknown): boolean {
+  if (!error) return false;
+  const message = getErrorMessage(error).toLowerCase();
+  if (!message) return false;
+  return TRANSIENT_WALLET_TIMEOUT_FRAGMENTS.some((fragment) => message.includes(fragment));
+}
+
 /**
  * True when the error is a transient upstream HTTP failure (gateway timeout
  * / bad gateway / service unavailable / request timeout). Unlike
