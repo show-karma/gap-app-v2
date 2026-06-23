@@ -126,6 +126,20 @@ const nextConfig: NextConfig = {
         source: "/(.*)",
         headers: securityHeaders,
       },
+      {
+        // Content-hashed build assets are safe to cache forever: a new deploy
+        // emits new filenames, so a stale cache entry is never served for new
+        // code. This is Next's default for `/_next/static/*`; we declare it
+        // explicitly so the stale-deploy chunk recovery contract is documented
+        // and survives any future header changes.
+        source: "/_next/static/:path*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=31536000, immutable",
+          },
+        ],
+      },
     ];
   },
   async redirects() {
