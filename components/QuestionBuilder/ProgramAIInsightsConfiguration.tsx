@@ -113,7 +113,7 @@ export function ProgramAIInsightsConfiguration({
               rows={5}
               disabled={readOnly}
               maxLength={MAX_AI_INSIGHTS_LENGTH}
-              placeholder="e.g. Batch 1 records were imported retrospectively rather than captured live, so milestone and payout processing-time metrics may not be reliable for that round."
+              placeholder="e.g. Some of this program's records were entered in bulk after the fact, so timing-based metrics may be less reliable — mention this when reporting them."
               aria-invalid={!!errors.aiInsights}
               aria-describedby={errors.aiInsights ? "aiInsights-error" : undefined}
               className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 dark:bg-zinc-700 dark:text-white ${
