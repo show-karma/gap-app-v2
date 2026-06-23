@@ -55,8 +55,13 @@ export function ProgramAIInsightsConfiguration({
 
     const trimmed = data.aiInsights.trim();
     // Empty clears the field server-side (null), rather than storing "".
-    updateConfig({ aiInsights: trimmed.length > 0 ? trimmed : null });
-    reset({ aiInsights: trimmed });
+    // Reset (clearing the dirty state) only AFTER a successful save — on
+    // failure the hook surfaces a toast and the form stays dirty so the
+    // admin can retry without re-typing.
+    updateConfig(
+      { aiInsights: trimmed.length > 0 ? trimmed : null },
+      { onSuccess: () => reset({ aiInsights: trimmed }) }
+    );
   };
 
   const header = (

@@ -56,7 +56,10 @@ describe("ProgramAIInsightsConfiguration", () => {
     await user.click(screen.getByRole("button", { name: /save ai insights/i }));
 
     await waitFor(() =>
-      expect(mockUpdateConfig).toHaveBeenCalledWith({ aiInsights: "Disclose Batch 1 caveat" })
+      expect(mockUpdateConfig).toHaveBeenCalledWith(
+        { aiInsights: "Disclose Batch 1 caveat" },
+        expect.objectContaining({ onSuccess: expect.any(Function) })
+      )
     );
   });
 
@@ -70,7 +73,27 @@ describe("ProgramAIInsightsConfiguration", () => {
     await user.clear(textarea);
     await user.click(screen.getByRole("button", { name: /save ai insights/i }));
 
-    await waitFor(() => expect(mockUpdateConfig).toHaveBeenCalledWith({ aiInsights: null }));
+    await waitFor(() =>
+      expect(mockUpdateConfig).toHaveBeenCalledWith(
+        { aiInsights: null },
+        expect.objectContaining({ onSuccess: expect.any(Function) })
+      )
+    );
+  });
+
+  it("should_keep_form_editable_when_save_fails", async () => {
+    const user = userEvent.setup();
+    // updateConfig never invokes its onSuccess callback → simulates a failed
+    // save. The form must stay dirty so the admin can retry.
+    render(<ProgramAIInsightsConfiguration programId="785" />);
+
+    const textarea = screen.getByLabelText("Guidance for the AI assistant");
+    await user.type(textarea, "Retryable note");
+    const saveButton = screen.getByRole("button", { name: /save ai insights/i });
+    await user.click(saveButton);
+
+    expect(saveButton).toBeEnabled();
+    expect((textarea as HTMLTextAreaElement).value).toBe("Retryable note");
   });
 
   it("should_render_skeleton_while_loading", () => {
