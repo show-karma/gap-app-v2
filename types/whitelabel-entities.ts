@@ -167,6 +167,9 @@ export interface FundingProgramConfig {
   aiModel?: string;
   enableRealTimeEvaluation?: boolean;
   evaluationConfig?: Record<string, unknown>;
+  // Admin-authored guidance surfaced to the Karma AI agent for any response
+  // about this program (e.g. a data-quality caveat). null clears it.
+  aiInsights?: string | null;
   isEnabled: boolean;
   createdAt?: string | Date;
   updatedAt?: string | Date;
