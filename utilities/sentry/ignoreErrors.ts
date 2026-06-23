@@ -60,6 +60,14 @@ const sentryInstrumentationErrors = [
 // See https://karma-crypto-inc.sentry.io/issues/7205405990
 const notFoundErrors = ["Project not found", "Community not found"];
 
+// NOTE on stale-deploy chunk failures (ChunkLoadError): these are intentionally
+// NOT added to this list. Sentry's `ignoreErrors` filters every event — including
+// the manual `Sentry.captureException` the error boundaries call on a
+// non-recoverable second attempt — so suppressing the signature here would also
+// drop the genuinely-broken cases we want to see. Recovery is gated entirely by
+// the boundaries: the first attempt hard-reloads without capturing and the
+// second (recovery exhausted) reports normally. See utilities/isChunkLoadError.ts.
+
 // Anonymous-traffic errors. When a logged-out user lands on a public page
 // (e.g. /project/:projectId), some indexer routes (or SDK callers) still
 // hit auth-required paths without a bearer token and the backend replies
