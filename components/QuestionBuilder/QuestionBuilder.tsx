@@ -51,6 +51,7 @@ import { AIPromptConfiguration } from "./AIPromptConfiguration";
 import { FieldEditor } from "./FieldEditor";
 import { FieldTypeSelector, fieldTypes } from "./FieldTypeSelector";
 import { KycSettingsConfiguration } from "./KycSettingsConfiguration";
+import { ProgramAIInsightsConfiguration } from "./ProgramAIInsightsConfiguration";
 import { SettingsConfiguration } from "./SettingsConfiguration";
 
 const TAB_KEYS = [
@@ -928,6 +929,12 @@ export function QuestionBuilder({
               />
               {/* Save Button at bottom of AI Config tab */}
               {renderSaveButton()}
+              {/* AI Insights — admin steering surfaced to the Karma AI
+                  assistant. Self-contained: saves a top-level config field
+                  via its own mutation, independent of the form-schema save. */}
+              <div className="mt-8 pt-8 border-t border-gray-200 dark:border-gray-700">
+                <ProgramAIInsightsConfiguration programId={programId} readOnly={readOnly} />
+              </div>
             </div>
           </div>
         ) : activeTab === "reviewers" ? (
