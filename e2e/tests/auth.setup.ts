@@ -12,7 +12,11 @@ const STORAGE_STATE_PATH = path.join(__dirname, "..", ".auth", "user.json");
  * Only runs when QA_TEST_EMAIL is set (CI). Locally with E2E bypass,
  * auth is handled per-test via localStorage injection.
  */
-setup.setTimeout(120_000);
+// The OTP path can legitimately take ~60s (Privy email dispatch under load)
+// plus token minting and navigation, so 120s left almost no headroom and a
+// slightly slow login tripped the overall timeout. 180s covers a worst-case
+// OTP login; the cached-session fast path returns in a few seconds.
+setup.setTimeout(180_000);
 
 setup("authenticate via Privy", async ({ page, browser }) => {
   const email = process.env.QA_TEST_EMAIL;
