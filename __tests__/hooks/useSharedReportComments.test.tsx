@@ -136,7 +136,7 @@ describe("useSharedReportComments — optimistic mutations", () => {
     mockPost.mockImplementation(
       () =>
         new Promise((resolve) => {
-          setTimeout(() => resolve(created), 10);
+          setTimeout(() => resolve(created), 300);
         })
     );
 
@@ -194,7 +194,7 @@ describe("useSharedReportComments — optimistic mutations", () => {
     mockPost.mockImplementation(
       () =>
         new Promise((resolve) => {
-          setTimeout(() => resolve(makeReply("p1")), 10);
+          setTimeout(() => resolve(makeReply("p1")), 300);
         })
     );
     const { result } = renderHook(() => useSharedReportComments(TOKEN), { wrapper });

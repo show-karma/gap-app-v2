@@ -129,7 +129,7 @@ describe("CommentHighlight", () => {
     expect(span?.getAttribute("data-active")).toBe("true");
   });
 
-  it("renders interactive <button> when onActivate is supplied", () => {
+  it("renders an interactive marker <button> when onActivate is supplied", () => {
     vi.spyOn(resolveModule, "resolveAnchor").mockReturnValue({
       kind: "range",
       range: makeRangeMock([rect(0, 0, 50, 18)]),
@@ -140,7 +140,11 @@ describe("CommentHighlight", () => {
     const { container } = render(
       <CommentHighlight anchor={textRangeAnchor} root={root} onActivate={onActivate} />
     );
-    const btn = container.querySelector("button[data-comment-highlight]");
+    // The highlight bands stay non-interactive (pointer-events:none) so text
+    // is re-selectable; the clickable affordance is a separate marker button.
+    const band = container.querySelector("[data-comment-highlight]") as HTMLElement | null;
+    expect(band?.style.pointerEvents).toBe("none");
+    const btn = container.querySelector("button[data-comment-marker]");
     expect(btn).not.toBeNull();
     btn?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     expect(onActivate).toHaveBeenCalled();

@@ -25,10 +25,11 @@ function makeNode(overrides: Partial<SharedReportCommentNode> = {}): SharedRepor
 }
 
 describe("CommentRow", () => {
-  it("renders displayName, relative time, and body", () => {
+  it("renders displayName, absolute local timestamp, and body", () => {
     render(<CommentRow node={makeNode({ body: "Hello there" })} onReply={() => {}} />);
     expect(screen.getByText("Donor Dana")).toBeInTheDocument();
-    expect(screen.getByText("just now")).toBeInTheDocument();
+    // Timestamps are absolute local time suffixed with "(Local)" — not relative.
+    expect(screen.getByText(/\(Local\)$/)).toBeInTheDocument();
     expect(screen.getByText("Hello there")).toBeInTheDocument();
   });
 

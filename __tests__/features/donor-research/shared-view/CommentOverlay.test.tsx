@@ -140,7 +140,9 @@ describe("CommentOverlay", () => {
       })
     );
     render(<CommentOverlay token="tk" />);
-    expect(screen.getByRole("alert")).toHaveTextContent(/couldn’t load comments/i);
+    const alert = screen.getByRole("alert");
+    expect(alert).toHaveTextContent(/couldn.t load the comments/i);
+    expect(alert).toHaveTextContent(/try again/i);
   });
 
   it("renders 'Be the first to comment' and no '0 comments' literal in empty state", () => {
