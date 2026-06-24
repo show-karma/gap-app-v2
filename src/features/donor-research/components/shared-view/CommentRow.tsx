@@ -159,7 +159,7 @@ const CommentRowComponent = ({
             {formatCommentTimestamp(node.createdAt)}
           </time>
         </header>
-        <div className="whitespace-pre-wrap text-sm leading-relaxed">
+        <div className="overflow-hidden whitespace-pre-wrap break-words [overflow-wrap:anywhere] text-sm leading-relaxed">
           {lines.map((line, idx) => (
             <span key={idx}>
               {line}
