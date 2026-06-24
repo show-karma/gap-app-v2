@@ -37,28 +37,45 @@ setup("authenticate via Privy", async ({ page, browser }) => {
   // rate limits (the dominant cause of flaky CI logins).
   const fs = await import("node:fs");
   if (fs.existsSync(STORAGE_STATE_PATH) && fs.statSync(STORAGE_STATE_PATH).size > 0) {
-    try {
-      const context = await browser.newContext({ storageState: STORAGE_STATE_PATH });
-      const probe = await context.newPage();
-      await probe.goto("/", { waitUntil: "domcontentloaded" });
-      const refreshed = await probe
-        .waitForFunction(() => localStorage.getItem("privy:token") !== null, {
-          timeout: 15_000,
-        })
-        .then(() => true)
-        .catch(() => false);
-      if (refreshed) {
-        // Re-save so the freshly refreshed token is what gets cached.
-        await probe.waitForTimeout(1000);
-        await context.storageState({ path: STORAGE_STATE_PATH });
-        await context.close();
+    // Probe the cached session in a throwaway context, fully isolated and
+    // tightly bounded. Two hazards this guards against (both seen failing CI):
+    //   1. A slow probe.goto against staging must not consume the OTP
+    //      fallback's time budget — bound it to 20s.
+    //   2. A teardown protocol race (Target.disposeBrowserContext) must never
+    //      propagate; it previously bubbled up and left the fixture `page`
+    //      dead, so the OTP fallback's page.goto failed and the whole setup
+    //      timed out. The probe never touches the fixture `page`, and close
+    //      is best-effort.
+    const probeContext = await browser
+      .newContext({ storageState: STORAGE_STATE_PATH })
+      .catch(() => null);
+    if (probeContext) {
+      let reused = false;
+      try {
+        const probe = await probeContext.newPage();
+        await probe.goto("/", { waitUntil: "domcontentloaded", timeout: 20_000 });
+        const refreshed = await probe
+          .waitForFunction(() => localStorage.getItem("privy:token") !== null, {
+            timeout: 15_000,
+          })
+          .then(() => true)
+          .catch(() => false);
+        if (refreshed) {
+          // Re-save so the freshly refreshed token is what gets cached.
+          await probe.waitForTimeout(1000);
+          await probeContext.storageState({ path: STORAGE_STATE_PATH });
+          reused = true;
+        }
+      } catch (err) {
+        console.log(`Cached session probe failed (${err}) — falling back to OTP login`);
+      } finally {
+        await probeContext.close().catch(() => {});
+      }
+      if (reused) {
         console.log("Reused cached Privy session — skipped OTP login");
         return;
       }
-      await context.close();
       console.log("Cached Privy session expired — falling back to OTP login");
-    } catch (err) {
-      console.log(`Cached session probe failed (${err}) — falling back to OTP login`);
     }
   }
 
