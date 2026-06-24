@@ -16,6 +16,18 @@ import { defineConfig } from "vitest/config";
 const dirname =
   typeof __dirname !== "undefined" ? __dirname : path.dirname(fileURLToPath(import.meta.url));
 
+// The Storybook browser-test project is opt-in (set VITEST_STORYBOOK=true).
+// It is never invoked by CI or any package script — everything runs
+// `vitest --project unit` — yet defining it unconditionally makes vitest
+// evaluate `storybookTest()` on every run, which loads `.storybook/main.ts`
+// and resolves its `@storybook/nextjs` webpack5 builder. That builder isn't
+// installed (addon-vitest expects a Vite framework), so the preset load
+// throws ERR_MODULE_NOT_FOUND. It's a no-op warning on most runs but can be
+// fatal on a constrained CI worker, failing the unit shard that happened to
+// load it first. Gating the project off by default removes that coupling
+// without touching the unit suite or the Storybook dev/build commands.
+const ENABLE_STORYBOOK_PROJECT = process.env.VITEST_STORYBOOK === "true";
+
 // Shared tsconfig path aliases (mirrors tsconfig.json "paths")
 const tsconfigAliases = [
   { find: /^@\/features\/(.*)$/, replacement: `${dirname}/src/features/$1` },
@@ -92,21 +104,25 @@ export default defineConfig({
           ],
         },
       },
-      // Storybook test project
-      {
-        extends: true,
-        plugins: [storybookTest({ configDir: path.join(dirname, ".storybook") })],
-        test: {
-          name: "storybook",
-          browser: {
-            enabled: true,
-            headless: true,
-            provider: playwright({}),
-            instances: [{ browser: "chromium" }],
-          },
-          setupFiles: [".storybook/vitest.setup.ts"],
-        },
-      },
+      // Storybook test project (opt-in via VITEST_STORYBOOK=true — see note above)
+      ...(ENABLE_STORYBOOK_PROJECT
+        ? [
+            {
+              extends: true as const,
+              plugins: [storybookTest({ configDir: path.join(dirname, ".storybook") })],
+              test: {
+                name: "storybook",
+                browser: {
+                  enabled: true,
+                  headless: true,
+                  provider: playwright({}),
+                  instances: [{ browser: "chromium" }],
+                },
+                setupFiles: [".storybook/vitest.setup.ts"],
+              },
+            },
+          ]
+        : []),
     ],
   },
 });
