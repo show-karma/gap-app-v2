@@ -42,8 +42,8 @@ export function AlsoConsidered({ candidates, startRank, weights }: AlsoConsidere
         <p
           className={`${briefProse.className} mt-3 max-w-[58ch] text-[1rem] leading-[1.55] text-foreground/75`}
         >
-          Surfaced by the same model but ranked below the lead three. Tap any row to read the full
-          one-pager and compliance breakdown.
+          Surfaced by the same model but ranked below the top {startRank - 1}. Tap any row to read
+          the full one-pager and compliance breakdown.
         </p>
       </header>
 

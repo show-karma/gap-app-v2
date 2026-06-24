@@ -288,7 +288,10 @@ function PanelBody({ report, persistedWeights, onClose }: PanelBodyProps) {
           <div className="flex flex-col gap-2">
             <p className="text-sm font-medium text-foreground">Featured results</p>
             <p className="text-xs text-muted-foreground">
-              The top <span className="font-medium text-foreground">{draftTopCount}</span>{" "}
+              The top{" "}
+              <span className="font-medium text-foreground">
+                {draftTopCount} of {report.candidates.length}
+              </span>{" "}
               candidates are featured with an AI one-pager. Choose between {MIN_TOP_COUNT} and{" "}
               {MAX_TOP_COUNT}.
             </p>
