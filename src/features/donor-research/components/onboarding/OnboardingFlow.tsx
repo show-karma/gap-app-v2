@@ -16,6 +16,7 @@ const TIMEZONE_REGEX = /^[A-Za-z_/+\-0-9]{1,64}$/;
 
 const OnboardingSchema = z.object({
   displayName: z.string().min(1, "Display name is required").max(120),
+  email: z.string().min(1, "Email is required").email("Enter a valid email").max(254),
   orgName: z.string().max(200).optional(),
   timezone: z
     .string()
@@ -67,6 +68,7 @@ export function OnboardingFlow() {
     resolver: zodResolver(OnboardingSchema),
     defaultValues: {
       displayName: "",
+      email: "",
       orgName: "",
       timezone: DEFAULT_TIMEZONE,
     },
@@ -114,6 +116,7 @@ export function OnboardingFlow() {
     onboard.mutate(
       {
         displayName: values.displayName,
+        email: values.email,
         orgName: values.orgName || null,
         timezone: values.timezone,
       },
@@ -186,6 +189,23 @@ export function OnboardingFlow() {
                     {...field}
                     className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
                     placeholder="Avery Boutique"
+                  />
+                )}
+              </Field>
+              <Field
+                id="onboarding-email"
+                label="Email"
+                hint="Where we send notifications about your reports."
+                error={form.formState.errors.email?.message}
+              >
+                {(field) => (
+                  <input
+                    {...form.register("email")}
+                    {...field}
+                    type="email"
+                    autoComplete="email"
+                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                    placeholder="you@example.com"
                   />
                 )}
               </Field>

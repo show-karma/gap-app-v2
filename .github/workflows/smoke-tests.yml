@@ -49,6 +49,22 @@ jobs:
       - name: Install Playwright browsers
         run: pnpm exec playwright install chromium --with-deps
 
+      # Persist the Privy auth session (e2e/.auth/user.json) across runs.
+      # auth.setup.ts has a fast path that refreshes privy:token from a
+      # restored session instead of sending a new OTP email — sending OTPs
+      # is what trips Privy's per-address rate limit and is the dominant
+      # cause of flaky smoke logins. The rolling key + prefix restore-keys
+      # mean each run restores the most recently refreshed session and
+      # saves the freshly refreshed one, so an OTP is sent only when the
+      # cached refresh token has fully expired.
+      - name: Restore cached Privy auth session
+        uses: actions/cache@v4
+        with:
+          path: e2e/.auth/user.json
+          key: privy-auth-state-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            privy-auth-state-
+
       - name: Run smoke tests
         run: pnpm exec playwright test --config e2e/playwright.config.ts --project=setup --project=chromium e2e/tests/smoke/
         env:
