@@ -69,7 +69,24 @@ export function captureTextRangeAnchor(selection: Selection): CommentAnchor | nu
   if (!targetEl) return null;
 
   const targetText = normalizeWhitespace(targetEl.textContent ?? "");
-  const quoteIndex = targetText.indexOf(quote);
+  // Derive the quote's position from the actual selection boundary rather
+  // than a global first-match: when the same text appears more than once in
+  // the target block, indexOf(quote) would pick the wrong occurrence and the
+  // stored prefix/suffix (and later resolution) would drift to it. The
+  // normalized length of everything preceding the selection start gives the
+  // quote's offset (±1 for a whitespace boundary that normalization trims),
+  // so we search forward from there to snap to the selected occurrence.
+  const preRange = document.createRange();
+  preRange.selectNodeContents(targetEl);
+  try {
+    preRange.setEnd(range.startContainer, range.startOffset);
+  } catch {
+    // startContainer outside targetEl (shouldn't happen past the ancestor
+    // check) — fall through to a first-match search below.
+  }
+  const precedingLen = normalizeWhitespace(preRange.toString()).length;
+  let quoteIndex = targetText.indexOf(quote, Math.max(0, precedingLen - 1));
+  if (quoteIndex === -1) quoteIndex = targetText.indexOf(quote);
   if (quoteIndex === -1) return null;
 
   const prefix = targetText

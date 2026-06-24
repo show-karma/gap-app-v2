@@ -53,14 +53,19 @@ function buildRangeForQuote(targetEl: Element, anchor: TextRangeAnchor): Range |
   };
   let pendingStart = false;
   let pendingEnd = false;
+  // Whitespace-collapse state MUST persist across text-node boundaries:
+  // `normalizeWhitespace` collapses a run of whitespace that straddles two
+  // adjacent text nodes into a single space, so the walker has to remember
+  // whether the previous character (in the previous node) was whitespace.
+  // Resetting per node double-counts boundary whitespace and drifts the
+  // offsets, making valid quotes unresolvable.
+  let lastWasSpace = false;
   while (walker.nextNode()) {
     const textNode = walker.currentNode as Text;
     const original = textNode.data;
     // For each character in `original`, compute how it contributes to
     // the normalized form. We treat any run of whitespace as a single
     // space — same rule used in `normalizeWhitespace`.
-    let lastWasSpace =
-      normalizedSoFar > 0 && normalizedNeighbourEndsWith(targetEl, walker, textNode) === " ";
     for (let i = 0; i < original.length; i += 1) {
       const ch = original[i];
       const isWs = /\s/.test(ch);
@@ -97,13 +102,6 @@ function buildRangeForQuote(targetEl: Element, anchor: TextRangeAnchor): Range |
   void cursor;
   if (!range || !pendingEnd) return null;
   return range;
-}
-
-// Placeholder helper — the resolver walks left-to-right so we don't
-// actually need lookahead; declaring this keeps the contribution
-// algorithm readable without adding a runtime dep.
-function normalizedNeighbourEndsWith(_targetEl: Element, _walker: TreeWalker, _node: Text): string {
-  return "";
 }
 
 export function resolveAnchor(anchor: CommentAnchor, root: Element): ResolvedAnchor {

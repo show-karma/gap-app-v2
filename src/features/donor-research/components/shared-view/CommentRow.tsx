@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { SharedReportCommentNode } from "@/types/donor-research-comments";
 import { formatDate } from "@/utilities/formatDate";
+import { cn } from "@/utilities/tailwind";
 
 const MAX_VISUAL_DEPTH = 4;
 
@@ -117,15 +118,22 @@ const CommentRowComponent = ({
 
   return (
     <div
-      className={`border-l ${isActive ? "border-amber-500" : "border-border/50"} ${indentClasses}`}
+      className={cn("border-l", isActive ? "border-amber-500" : "border-border/50", indentClasses)}
     >
       <article
-        className={`rounded-md p-3 transition-colors ${articleBackgroundClass(node, isActive)} ${
-          node._optimistic ? "opacity-70" : ""
-        } ${onActivate ? "cursor-pointer" : ""}`}
+        className={cn(
+          "rounded-md p-3 transition-colors",
+          articleBackgroundClass(node, isActive),
+          node._optimistic && "opacity-70",
+          onActivate && "cursor-pointer"
+        )}
         onClick={() => onActivate?.(node.id)}
         onKeyDown={(e) => {
           if (!onActivate) return;
+          // Only activate when the keypress originated on the row itself.
+          // Without this guard, pressing Enter while the nested Reply
+          // button is focused bubbles up here and double-fires onActivate.
+          if (e.target !== e.currentTarget) return;
           if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
             onActivate(node.id);
