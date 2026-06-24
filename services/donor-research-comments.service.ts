@@ -89,8 +89,10 @@ export async function postSharedReportComment(
     throw new IdempotencyCollisionError();
   }
   if (res.status === 429) {
-    const retryAfterHeader = res.headers.get("Retry-After");
-    throw new RateLimitedError(retryAfterHeader ? Number(retryAfterHeader) : 60);
+    // Guard against a missing / non-numeric Retry-After (e.g. an HTTP-date
+    // form or absent header) so we never surface "try again in NaNs".
+    const parsed = Number(res.headers.get("Retry-After"));
+    throw new RateLimitedError(Number.isFinite(parsed) && parsed > 0 ? parsed : 60);
   }
   if (!res.ok) {
     throw new Error(`postSharedReportComment failed: ${res.status}`);
@@ -99,10 +101,13 @@ export async function postSharedReportComment(
 }
 
 export async function clearCommenterIdentity(token: string): Promise<void> {
-  await fetch(clearIdentityUrl(token), {
+  const res = await fetch(clearIdentityUrl(token), {
     method: "POST",
     credentials: "same-origin",
   });
+  if (!res.ok) {
+    throw new Error(`clearCommenterIdentity failed: ${res.status}`);
+  }
 }
 
 /**

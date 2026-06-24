@@ -49,8 +49,17 @@ export function useCommenterIdentity(token: string, isAdvisor: boolean): Comment
   }, []);
 
   const clearIdentity = useCallback(async () => {
-    await clearCommenterIdentity(token);
-    setDisplayName(null);
+    // Best-effort: callers fire this without awaiting (`void clearIdentity()`),
+    // so swallow a server-side failure to avoid an unhandled rejection. The
+    // local display name is cleared regardless so "Not me — switch" is
+    // immediate; the next post re-establishes identity server-side.
+    try {
+      await clearCommenterIdentity(token);
+    } catch {
+      // ignore — local clear below still gives the user the switch affordance
+    } finally {
+      setDisplayName(null);
+    }
   }, [token]);
 
   // Re-read on mount so server-rendered pages pick up an existing cookie.

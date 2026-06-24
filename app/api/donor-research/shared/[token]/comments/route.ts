@@ -37,6 +37,10 @@ const COOKIE_NAME = "drsc_name";
 const FE_COOKIE_PATH = "/api/donor-research/shared/";
 const FE_NAME_COOKIE_PATH = "/";
 
+// Bound the server-to-server proxy call so a hung indexer can't pin the
+// Next.js route worker indefinitely — abort and surface a 502 instead.
+const UPSTREAM_TIMEOUT_MS = 15_000;
+
 const NO_STORE = {
   "Cache-Control": "no-store, no-cache, must-revalidate",
   Pragma: "no-cache",
@@ -92,7 +96,16 @@ function copySetCookies(upstream: Response, next: NextResponse, isProd: boolean)
     const idx = pair.indexOf("=");
     if (idx === -1) continue;
     const name = pair.slice(0, idx);
-    const value = decodeURIComponent(pair.slice(idx + 1));
+    const rawValue = pair.slice(idx + 1);
+    // Guard decoding: a malformed percent-sequence from upstream would
+    // otherwise throw and 500 the whole proxy response. Fall back to the
+    // raw value (re-encoded on set) rather than failing the request.
+    let value: string;
+    try {
+      value = decodeURIComponent(rawValue);
+    } catch {
+      value = rawValue;
+    }
     if (name === COOKIE_SESSION) {
       next.cookies.set(COOKIE_SESSION, value, {
         httpOnly: true,
@@ -133,6 +146,7 @@ export async function GET(request: NextRequest, ctx: Params): Promise<NextRespon
       method: "GET",
       headers: forwardHeaders,
       cache: "no-store",
+      signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
     });
   } catch {
     return applyNoStore(NextResponse.json({ error: "indexer_unreachable" }, { status: 502 }));
@@ -156,6 +170,7 @@ export async function POST(request: NextRequest, ctx: Params): Promise<NextRespo
       headers: forwardHeaders,
       body: rawBody,
       cache: "no-store",
+      signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
     });
   } catch {
     return applyNoStore(NextResponse.json({ error: "indexer_unreachable" }, { status: 502 }));
