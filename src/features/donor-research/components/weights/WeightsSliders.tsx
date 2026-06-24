@@ -78,12 +78,12 @@ export function WeightsSliders({ value, onChange, disabled = false }: WeightsSli
         })}
       </div>
 
-      <p role="status" aria-live="polite" className="sr-only">
+      <output aria-live="polite" className="sr-only">
         {DIMENSIONS.map(({ key, label }) => `${label} ${basisPointsToPercent(value[key])}`).join(
           ", "
         )}
         .
-      </p>
+      </output>
     </div>
   );
 }

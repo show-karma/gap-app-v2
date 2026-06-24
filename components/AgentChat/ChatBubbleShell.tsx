@@ -211,7 +211,11 @@ export function ChatBubbleShell({
                                       // Raw navigator.clipboard here — this component is reused in
                                       // the widget bundle, which forbids Next.js-coupled imports
                                       // (useCopyToClipboard → errorManager → @sentry/nextjs).
-                                      navigator.clipboard.writeText(msg.content).catch(() => {});
+                                      navigator.clipboard.writeText(msg.content).catch(() => {
+                                        // SUPPRESSED: clipboard copy is best-effort; failures are
+                                        // non-actionable and the widget bundle forbids the Sentry
+                                        // error helper.
+                                      });
                                     }}
                                     title="Copy"
                                   >
