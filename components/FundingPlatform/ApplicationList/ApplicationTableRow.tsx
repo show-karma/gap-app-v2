@@ -10,6 +10,7 @@ import type { ProgramReviewer } from "@/services/program-reviewers.service";
 import type { FundingApplicationStatusV2, IFundingApplication } from "@/types/funding-platform";
 import type { KycStatusResponse } from "@/types/kyc";
 import { formatDate } from "@/utilities/formatDate";
+import { PAGES } from "@/utilities/pages";
 import { formatAIScore } from "../helper/getAIScore";
 import { formatInternalAIScore } from "../helper/getInternalAIScore";
 import { AIEvaluationModal, type EvaluationType } from "./AIEvaluationModal";
@@ -101,9 +102,14 @@ const ApplicationTableRowComponent: FC<ApplicationTableRowProps> = ({
           // Open in new tab for application details
           if (onApplicationSelect) {
             e.preventDefault();
-            const currentPath = window.location.pathname;
-            const newPath = `${currentPath}/${application.referenceNumber}`;
-            window.open(newPath, "_blank");
+            const newPath = communityUID
+              ? PAGES.MANAGE.FUNDING_PLATFORM.APPLICATION_DETAIL(
+                  communityUID,
+                  programId,
+                  application.referenceNumber
+                )
+              : `${window.location.pathname.replace(/\/[^/]+$/, "")}/${application.referenceNumber}`;
+            window.open(newPath, "_blank", "noopener,noreferrer");
             onApplicationSelect(application);
           }
         }}
