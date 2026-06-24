@@ -191,6 +191,7 @@ describe("OnboardingFlow — form submission", () => {
     await advanceToForm(user);
 
     await user.type(screen.getByLabelText(/display name/i), "Avery Boutique");
+    await user.type(screen.getByLabelText(/email/i), "avery@example.com");
     await user.click(screen.getByRole("button", { name: /^continue$/i }));
 
     await waitFor(() => {
@@ -211,6 +212,7 @@ describe("OnboardingFlow — form submission", () => {
     await advanceToForm(user);
 
     await user.type(screen.getByLabelText(/display name/i), "Avery Boutique");
+    await user.type(screen.getByLabelText(/email/i), "avery@example.com");
     await user.click(screen.getByRole("button", { name: /^continue$/i }));
 
     const alert = await screen.findByText(/boom from server/i);

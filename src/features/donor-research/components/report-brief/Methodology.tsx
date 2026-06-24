@@ -24,7 +24,10 @@ export function Methodology({
   geographyDiagnostic,
 }: MethodologyProps) {
   return (
-    <section className="mt-8 border-t border-border/70 pt-10">
+    <section
+      className="mt-8 border-t border-border/70 pt-10"
+      data-section="methodology"
+    >
       <details className="group">
         <summary className="flex cursor-pointer list-none items-baseline justify-between gap-4">
           <div className="min-w-0">

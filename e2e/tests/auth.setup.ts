@@ -12,7 +12,11 @@ const STORAGE_STATE_PATH = path.join(__dirname, "..", ".auth", "user.json");
  * Only runs when QA_TEST_EMAIL is set (CI). Locally with E2E bypass,
  * auth is handled per-test via localStorage injection.
  */
-setup.setTimeout(120_000);
+// The OTP path can legitimately take ~60s (Privy email dispatch under load)
+// plus token minting and navigation, so 120s left almost no headroom and a
+// slightly slow login tripped the overall timeout. 180s covers a worst-case
+// OTP login; the cached-session fast path returns in a few seconds.
+setup.setTimeout(180_000);
 
 setup("authenticate via Privy", async ({ page, browser }) => {
   const email = process.env.QA_TEST_EMAIL;
@@ -33,28 +37,45 @@ setup("authenticate via Privy", async ({ page, browser }) => {
   // rate limits (the dominant cause of flaky CI logins).
   const fs = await import("node:fs");
   if (fs.existsSync(STORAGE_STATE_PATH) && fs.statSync(STORAGE_STATE_PATH).size > 0) {
-    try {
-      const context = await browser.newContext({ storageState: STORAGE_STATE_PATH });
-      const probe = await context.newPage();
-      await probe.goto("/", { waitUntil: "domcontentloaded" });
-      const refreshed = await probe
-        .waitForFunction(() => localStorage.getItem("privy:token") !== null, {
-          timeout: 15_000,
-        })
-        .then(() => true)
-        .catch(() => false);
-      if (refreshed) {
-        // Re-save so the freshly refreshed token is what gets cached.
-        await probe.waitForTimeout(1000);
-        await context.storageState({ path: STORAGE_STATE_PATH });
-        await context.close();
+    // Probe the cached session in a throwaway context, fully isolated and
+    // tightly bounded. Two hazards this guards against (both seen failing CI):
+    //   1. A slow probe.goto against staging must not consume the OTP
+    //      fallback's time budget — bound it to 20s.
+    //   2. A teardown protocol race (Target.disposeBrowserContext) must never
+    //      propagate; it previously bubbled up and left the fixture `page`
+    //      dead, so the OTP fallback's page.goto failed and the whole setup
+    //      timed out. The probe never touches the fixture `page`, and close
+    //      is best-effort.
+    const probeContext = await browser
+      .newContext({ storageState: STORAGE_STATE_PATH })
+      .catch(() => null);
+    if (probeContext) {
+      let reused = false;
+      try {
+        const probe = await probeContext.newPage();
+        await probe.goto("/", { waitUntil: "domcontentloaded", timeout: 20_000 });
+        const refreshed = await probe
+          .waitForFunction(() => localStorage.getItem("privy:token") !== null, {
+            timeout: 15_000,
+          })
+          .then(() => true)
+          .catch(() => false);
+        if (refreshed) {
+          // Re-save so the freshly refreshed token is what gets cached.
+          await probe.waitForTimeout(1000);
+          await probeContext.storageState({ path: STORAGE_STATE_PATH });
+          reused = true;
+        }
+      } catch (err) {
+        console.log(`Cached session probe failed (${err}) — falling back to OTP login`);
+      } finally {
+        await probeContext.close().catch(() => {});
+      }
+      if (reused) {
         console.log("Reused cached Privy session — skipped OTP login");
         return;
       }
-      await context.close();
       console.log("Cached Privy session expired — falling back to OTP login");
-    } catch (err) {
-      console.log(`Cached session probe failed (${err}) — falling back to OTP login`);
     }
   }
 
@@ -104,27 +125,27 @@ setup("authenticate via Privy", async ({ page, browser }) => {
     );
   }
 
-  // Privy may use multiple single-digit inputs or a single input for OTP
-  const otpInputs = privyModal.locator(
-    'input[aria-label*="code" i], input[autocomplete="one-time-code"], input[type="tel"], input[inputmode="numeric"]'
-  );
-  const inputCount = await otpInputs.count();
+  // Privy renders the OTP as six segmented single-digit boxes that advance on
+  // each keystroke. locator.fill() sets the value programmatically and does
+  // NOT fire the per-digit keydown/input handlers Privy listens to, so the
+  // boxes stayed empty and auth never completed (the boxes are blank in the
+  // failure screenshot). Type the code as real keypresses instead: focus the
+  // first box and let page.keyboard.type follow Privy's auto-advance, which
+  // distributes the digits across the boxes. This also works for the
+  // single-field variant (all digits land in the one input).
+  await otpInput.click();
+  await page.keyboard.type(otp, { delay: 60 });
 
-  if (inputCount > 1) {
-    for (let i = 0; i < otp.length && i < inputCount; i++) {
-      await otpInputs.nth(i).fill(otp[i]);
-    }
-  } else {
-    await otpInput.fill(otp);
-  }
-
-  // Wait for authentication to complete — privy:token should appear in localStorage
+  // Wait for authentication to complete — privy:token should appear in
+  // localStorage. Give it more room than before: token minting after the
+  // final digit can lag a few seconds on staging, and a premature failure
+  // here wastes the OTP we just spent against the per-address rate limit.
   await page.waitForFunction(
     () => {
       const token = localStorage.getItem("privy:token");
       return token !== null;
     },
-    { timeout: 30000 }
+    { timeout: 45000 }
   );
 
   // Wait for auth state to propagate

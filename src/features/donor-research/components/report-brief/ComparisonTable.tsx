@@ -69,7 +69,7 @@ export function ComparisonTable({ candidates }: ComparisonTableProps) {
   if (candidates.length < 2) return null;
 
   return (
-    <section className="mb-20 sm:mb-24">
+    <section className="mb-20 sm:mb-24" data-section="comparison">
       <header className="mb-6 sm:mb-8">
         <p
           className={`${briefDisplay.className} text-[10px] font-medium uppercase tracking-[0.32em] text-muted-foreground`}

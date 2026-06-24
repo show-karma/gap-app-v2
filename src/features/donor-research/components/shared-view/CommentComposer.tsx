@@ -1,0 +1,106 @@
+"use client";
+
+import { useRef, useState } from "react";
+
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import type { CommentAnchor } from "@/src/features/donor-research/components/anchor/types";
+
+interface CommentComposerProps {
+  /** When set, the composer is in reply mode. Visible parent context. */
+  parentDisplayName?: string;
+  /** Pre-captured anchor for root composers; null for replies. */
+  anchor?: CommentAnchor | null;
+  /**
+   * General (whole-report) comment mode. The wire anchor is still a
+   * valid section anchor (the backend requires a non-null anchor), but
+   * the descriptor reads "On the whole report" instead of the section
+   * name so the donor understands it isn't pinned to a specific block.
+   */
+  general?: boolean;
+  /** When the parent surfaces a rate-limit / collision error from the mutation. */
+  externalError?: string | null;
+  /** True while the mutation is in flight — disables submit. */
+  isSubmitting?: boolean;
+  /** Cancel handler — closes the composer. */
+  onCancel: () => void;
+  /** Submit handler — body string. */
+  onSubmit: (body: string) => Promise<void> | void;
+}
+
+export function CommentComposer({
+  parentDisplayName,
+  anchor,
+  general = false,
+  externalError,
+  isSubmitting = false,
+  onCancel,
+  onSubmit,
+}: CommentComposerProps) {
+  const [body, setBody] = useState("");
+  const trimmed = body.trim();
+  const isReply = Boolean(parentDisplayName);
+  // Guard against rapid double/triple-clicks: the isSubmitting prop only
+  // disables the button after a render, so several clicks can fire before
+  // it propagates — each minting a fresh idempotency key → duplicate
+  // comments. This ref blocks re-entry synchronously.
+  const inFlightRef = useRef(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!trimmed || inFlightRef.current) return;
+    inFlightRef.current = true;
+    try {
+      await onSubmit(trimmed);
+      setBody("");
+    } finally {
+      inFlightRef.current = false;
+    }
+  };
+
+  return (
+    <form
+      className="space-y-2 rounded-md border border-border bg-background p-3"
+      onSubmit={handleSubmit}
+    >
+      {isReply ? (
+        <div className="text-xs text-muted-foreground">Replying to {parentDisplayName}</div>
+      ) : general ? (
+        <div className="text-xs text-muted-foreground">On the whole report</div>
+      ) : anchor ? (
+        <div className="text-xs text-muted-foreground">
+          {anchor.kind === "section"
+            ? `On ${anchor.sectionKey}`
+            : anchor.kind === "candidate"
+              ? "On this candidate"
+              : `On "${anchor.quote.slice(0, 80)}${anchor.quote.length > 80 ? "…" : ""}"`}
+        </div>
+      ) : null}
+
+      <Textarea
+        value={body}
+        onChange={(e) => setBody(e.target.value)}
+        placeholder={isReply ? "Write a reply…" : "Add a comment…"}
+        maxLength={5000}
+        rows={3}
+        className="text-sm"
+        autoFocus
+      />
+
+      {externalError && (
+        <p className="text-sm text-destructive" role="alert">
+          {externalError}
+        </p>
+      )}
+
+      <div className="flex items-center justify-end gap-2">
+        <Button type="button" variant="ghost" size="sm" onClick={onCancel} disabled={isSubmitting}>
+          Cancel
+        </Button>
+        <Button type="submit" size="sm" disabled={!trimmed || isSubmitting}>
+          {isSubmitting ? "Posting…" : isReply ? "Reply" : "Comment"}
+        </Button>
+      </div>
+    </form>
+  );
+}
