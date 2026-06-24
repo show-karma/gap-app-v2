@@ -116,7 +116,12 @@ export default defineConfig({
                   enabled: true,
                   headless: true,
                   provider: playwright({}),
-                  instances: [{ browser: "chromium" }],
+                  // `as const` keeps the literal type — inside the conditional
+                  // spread below the contextual narrowing from defineConfig is
+                  // lost, so without this "chromium" widens to `string` and no
+                  // longer satisfies BrowserInstanceOption (breaks `next build`
+                  // type-checking, which Vercel enforces).
+                  instances: [{ browser: "chromium" as const }],
                 },
                 setupFiles: [".storybook/vitest.setup.ts"],
               },
