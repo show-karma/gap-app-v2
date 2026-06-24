@@ -159,7 +159,7 @@ describe("useSharedReportComments — optimistic mutations", () => {
     await waitFor(() => expect(result.current.postComment.isPending).toBe(false));
   });
 
-  it("rolls back the snapshot when the mutation fails", async () => {
+  it("keeps the failed optimistic comment (flagged for retry) instead of rolling back", async () => {
     const existing = makeRoot({ id: "existing" });
     mockList.mockResolvedValue({
       roots: [existing],
@@ -180,8 +180,19 @@ describe("useSharedReportComments — optimistic mutations", () => {
         // expected
       }
     });
-    // After failure + rollback only the pre-existing comment remains.
-    expect(result.current.tree.map((n) => n.id)).toEqual(["existing"]);
+    // On failure we deliberately do NOT roll back: vanishing the row would
+    // throw away the donor's text. The optimistic row stays in place, its
+    // pending state cleared and `_failed` set, so the UI can surface a Retry
+    // affordance. Invalidation (which would wipe it) only runs on success.
+    await waitFor(() => {
+      const failed = result.current.tree.find((n) => n._failed);
+      expect(failed).toBeDefined();
+    });
+    const failedRow = result.current.tree.find((n) => n._failed);
+    expect(failedRow?.id).toContain("optimistic-key-2");
+    expect(failedRow?._optimistic).toBe(false);
+    // The pre-existing comment is untouched.
+    expect(result.current.tree.some((n) => n.id === "existing")).toBe(true);
   });
 
   it("appends a reply under its parent on optimistic add", async () => {
