@@ -158,7 +158,10 @@ export function AnchoredAffordances({
       {targets.map((t) => {
         const count = countsByKey.get(t.key) ?? 0;
         return createPortal(
-          <>
+          // Single top-right cluster so the pin + "+" sit together above the
+          // section's chapter-mark label (which is tucked at the top-right)
+          // instead of stacking down onto it.
+          <div className="absolute right-2 top-2 z-10 flex items-center gap-1">
             {count > 0 && (
               <CommentPin
                 count={count}
@@ -177,7 +180,7 @@ export function AnchoredAffordances({
                 )
               }
             />
-          </>,
+          </div>,
           t.element,
           `affordance-${t.key}`
         );

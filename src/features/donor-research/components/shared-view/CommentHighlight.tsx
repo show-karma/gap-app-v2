@@ -93,42 +93,32 @@ export function CommentHighlight({
   }, [anchor, root, refreshKey, isTextRange]);
 
   const elements = useMemo(() => {
-    return rects.map((r, idx) => {
+    // Two visual states: idle (subtle yellow) vs active (stronger
+    // amber + ring). Active = this highlight's source comment row
+    // is currently focused in the sidebar, giving the donor a
+    // visual rope between the comment and the highlighted text.
+    const idleClass = "bg-amber-200/40 mix-blend-multiply dark:bg-amber-300/30";
+    const activeClass =
+      "bg-amber-300/70 mix-blend-multiply ring-2 ring-amber-500 dark:bg-amber-300/55 dark:ring-amber-400";
+
+    // The highlight bands themselves are ALWAYS pointer-events: none so
+    // they never intercept a mouse-down/drag — the donor must be able to
+    // re-select previously-commented text to comment on (or overlap) it
+    // again. The "view comment thread" interaction lives on a separate
+    // marker badge rendered at the end of the range (see below), which
+    // sits beside the text rather than on top of it.
+    return rects.map((r) => {
       const style = {
         position: "absolute" as const,
         top: `${r.top}px`,
         left: `${r.left}px`,
         width: `${r.width}px`,
         height: `${r.height}px`,
-        pointerEvents: onActivate ? ("auto" as const) : ("none" as const),
+        pointerEvents: "none" as const,
       };
-      // Two visual states: idle (subtle yellow) vs active (stronger
-      // amber + ring). Active = this highlight's source comment row
-      // is currently focused in the sidebar, giving the donor a
-      // visual rope between the comment and the highlighted text.
-      const idleClass = "bg-amber-200/40 mix-blend-multiply dark:bg-amber-300/30";
-      const idleHover = "hover:bg-amber-200/60 dark:hover:bg-amber-300/45";
-      const activeClass =
-        "bg-amber-300/70 mix-blend-multiply ring-2 ring-amber-500 dark:bg-amber-300/55 dark:ring-amber-400";
-      if (onActivate) {
-        return (
-          <button
-            key={idx}
-            type="button"
-            onClick={onActivate}
-            aria-label="View comment thread"
-            data-comment-highlight
-            data-active={isActive || undefined}
-            style={style}
-            className={`rounded-sm transition-colors ${
-              isActive ? activeClass : `${idleClass} ${idleHover}`
-            }`}
-          />
-        );
-      }
       return (
         <span
-          key={idx}
+          key={`${r.top}:${r.left}:${r.width}:${r.height}`}
           aria-hidden
           data-comment-highlight
           data-active={isActive || undefined}
@@ -137,9 +127,50 @@ export function CommentHighlight({
         />
       );
     });
+  }, [rects, isActive]);
+
+  // A small clickable marker pinned to the end of the last highlight
+  // rect. It does NOT cover the selectable text, so text remains
+  // re-selectable, while still offering a click-to-open-thread target
+  // and preserving the bidirectional highlight↔row focus emphasis.
+  const marker = useMemo(() => {
+    if (!onActivate) return null;
+    const last = rects[rects.length - 1];
+    if (!last) return null;
+    const markerActiveClass =
+      "bg-amber-500 text-white ring-2 ring-amber-300 dark:bg-amber-400 dark:ring-amber-500";
+    const markerIdleClass =
+      "bg-amber-300/80 text-amber-900 hover:bg-amber-400 dark:bg-amber-400/70 dark:text-amber-950 dark:hover:bg-amber-400";
+    return (
+      <button
+        type="button"
+        onClick={onActivate}
+        aria-label="View comment thread"
+        data-comment-marker
+        data-active={isActive || undefined}
+        style={{
+          position: "absolute",
+          top: `${last.top + last.height / 2 - 7}px`,
+          left: `${last.left + last.width + 2}px`,
+          width: "14px",
+          height: "14px",
+          pointerEvents: "auto",
+        }}
+        className={`z-20 inline-flex items-center justify-center rounded-full text-[9px] font-bold leading-none shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 ${
+          isActive ? markerActiveClass : markerIdleClass
+        }`}
+      >
+        <span aria-hidden>≡</span>
+      </button>
+    );
   }, [rects, onActivate, isActive]);
 
   if (!isTextRange || rects.length === 0) return null;
 
-  return <>{elements}</>;
+  return (
+    <>
+      {elements}
+      {marker}
+    </>
+  );
 }

@@ -20,7 +20,10 @@ export interface SharedReportCommentsResponse {
 /** Tree node used by the FE renderer — built client-side from flat lists. */
 export interface SharedReportCommentNode extends SharedReportComment {
   children: SharedReportCommentNode[];
+  /** True while the optimistic POST is in flight (renders a "Sending…" state). */
   _optimistic?: boolean;
+  /** True when the optimistic POST failed — the row stays visible in a failed state. */
+  _failed?: boolean;
 }
 
 export interface CreateCommentRequest {

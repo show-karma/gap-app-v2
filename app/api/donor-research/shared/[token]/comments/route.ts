@@ -28,7 +28,14 @@ import { envVars } from "@/utilities/enviromentVars";
 
 const COOKIE_SESSION = "drsc_session";
 const COOKIE_NAME = "drsc_name";
+// drsc_session is HttpOnly and only needs to reach the proxy, so it stays
+// scoped to the proxy path. drsc_name is the JS-readable "Commenting as X"
+// cookie the SHARED PAGE (/nonprofit-research/shared/...) reads via
+// document.cookie — it must live at root path "/" or the page can't see it
+// (the proxy path is not a prefix of the page path), which would force the
+// identity dialog on every comment.
 const FE_COOKIE_PATH = "/api/donor-research/shared/";
+const FE_NAME_COOKIE_PATH = "/";
 
 const NO_STORE = {
   "Cache-Control": "no-store, no-cache, must-revalidate",
@@ -99,7 +106,7 @@ function copySetCookies(upstream: Response, next: NextResponse, isProd: boolean)
         httpOnly: false,
         sameSite: "lax",
         secure: isProd,
-        path: FE_COOKIE_PATH,
+        path: FE_NAME_COOKIE_PATH,
         maxAge: 7 * 24 * 60 * 60,
       });
     }

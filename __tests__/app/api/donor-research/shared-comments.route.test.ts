@@ -140,7 +140,12 @@ describe("GET /api/donor-research/shared/[token]/comments", () => {
     expect(sessionSegment).toContain("drsc_session=abc123");
     expect(sessionSegment).toContain("Path=/api/donor-research/shared/");
     expect(nameSegment).toContain("drsc_name=Dana");
-    expect(nameSegment).toContain("Path=/api/donor-research/shared/");
+    // drsc_name is JS-readable and scoped to root "/" so the shared page
+    // (/nonprofit-research/shared/...) can read it via document.cookie.
+    // It must NOT be scoped to the proxy path (that would hide it from the
+    // page and force the identity dialog on every comment).
+    expect(nameSegment).toMatch(/Path=\/(;|$)/);
+    expect(nameSegment).not.toContain("Path=/api/donor-research/shared/");
     // drsc_session must remain HttpOnly; drsc_name must NOT be HttpOnly.
     expect(sessionSegment.toLowerCase()).toContain("httponly");
     expect(nameSegment.toLowerCase()).not.toContain("httponly");

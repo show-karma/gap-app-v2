@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -77,6 +78,18 @@ export function IdentityCaptureDialog({
     resolver: zodResolver(nameOnly ? NameOnlySchema : FullSchema),
     defaultValues: { displayName: "", email: hasLockedEmail ? (lockedEmail as string) : "" },
   });
+
+  // The dialog is persistently mounted, so useForm's defaultValues are
+  // captured before the Privy session (and thus lockedEmail) resolves —
+  // leaving the field locked-but-empty, which dead-ends on the email
+  // validator. Re-apply the locked email whenever it resolves or the
+  // dialog (re)opens.
+  const { setValue } = form;
+  useEffect(() => {
+    if (open && hasLockedEmail) {
+      setValue("email", lockedEmail as string, { shouldValidate: false });
+    }
+  }, [open, hasLockedEmail, lockedEmail, setValue]);
 
   const handleSubmit = form.handleSubmit(async (values) => {
     await onSubmit(values);

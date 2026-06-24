@@ -54,6 +54,8 @@ export interface UseCommentingResult {
   identity: ReturnType<typeof useCommenterIdentity>;
   /** True while the post mutation is in flight. */
   isPosting: boolean;
+  /** Re-post a comment whose optimistic POST failed. */
+  retryFailed: (commentId: string) => void;
   /** Latest mutation error, captured for the composer to surface. */
   composerError: string | null;
   /** Imperative composer state, keyed by anchor or "root". */
@@ -148,7 +150,7 @@ export function useCommenting(
   const enabled = opts.enabled !== false;
   const isAdvisor = opts.isAdvisor ?? false;
 
-  const { query, tree, postComment } = useSharedReportComments(token, { enabled });
+  const { query, tree, postComment, retryFailed } = useSharedReportComments(token, { enabled });
   const identity = useCommenterIdentity(token, isAdvisor);
 
   const [composer, setComposer] = useState<UseCommentingResult["composer"]>({
@@ -427,6 +429,7 @@ export function useCommenting(
     tree,
     identity,
     isPosting: postComment.isPending,
+    retryFailed,
     composerError,
     composer,
     openRootComposer,

@@ -40,6 +40,11 @@ export function Masthead({
   const isShared = variant === "shared";
   const issuedAt = report.fastCompletedAt ?? report.completedAt ?? report.createdAt;
   const issuedLabel = formatIssueDate(issuedAt);
+  const updatedAt = report.completedAt ?? report.fastCompletedAt ?? report.createdAt;
+  // Only surface "Updated" when a later completion (e.g. deep enrichment) moved the
+  // date past the issue date — otherwise the same day would render twice.
+  const updatedLabel = formatIssueDate(updatedAt);
+  const showUpdated = updatedLabel !== "—" && updatedLabel !== issuedLabel;
   const issueNumber = `No. ${report.id.slice(0, 6).toUpperCase()}`;
 
   return (
@@ -66,6 +71,12 @@ export function Masthead({
           <span className="tabular-nums">{issueNumber}</span>
           <Bullet />
           <span className="text-brand-emphasis dark:text-brand-subtle">Issued {issuedLabel}</span>
+          {showUpdated ? (
+            <>
+              <Bullet />
+              <span>Updated {updatedLabel}</span>
+            </>
+          ) : null}
         </div>
 
         <h1

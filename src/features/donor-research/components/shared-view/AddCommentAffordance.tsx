@@ -21,7 +21,7 @@ const AddCommentAffordanceComponent = ({ onClick, ariaLabel }: AddCommentAfforda
     onClick={onClick}
     aria-label={ariaLabel}
     data-add-comment
-    className="absolute right-2 top-12 z-10 inline-flex h-7 w-7 items-center justify-center rounded-full border border-border bg-background/90 text-muted-foreground shadow-sm backdrop-blur transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+    className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-border bg-background/90 text-muted-foreground shadow-sm backdrop-blur transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
   >
     <PlusIcon className="h-3.5 w-3.5" aria-hidden />
   </button>

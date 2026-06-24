@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -40,12 +40,22 @@ export function CommentComposer({
   const [body, setBody] = useState("");
   const trimmed = body.trim();
   const isReply = Boolean(parentDisplayName);
+  // Guard against rapid double/triple-clicks: the isSubmitting prop only
+  // disables the button after a render, so several clicks can fire before
+  // it propagates — each minting a fresh idempotency key → duplicate
+  // comments. This ref blocks re-entry synchronously.
+  const inFlightRef = useRef(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!trimmed) return;
-    await onSubmit(trimmed);
-    setBody("");
+    if (!trimmed || inFlightRef.current) return;
+    inFlightRef.current = true;
+    try {
+      await onSubmit(trimmed);
+      setBody("");
+    } finally {
+      inFlightRef.current = false;
+    }
   };
 
   return (

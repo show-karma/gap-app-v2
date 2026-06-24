@@ -5,7 +5,8 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
+import { v4 as uuidv4 } from "uuid";
 
 import {
   assembleCommentTree,
@@ -36,6 +37,8 @@ interface SharedReportCommentsHookResult {
     Error,
     { request: CreateCommentRequest; idempotencyKey: string }
   >;
+  /** Re-post a comment whose optimistic POST failed (removes the failed row, re-submits). */
+  retryFailed: (commentId: string) => void;
 }
 
 /**
@@ -82,14 +85,19 @@ export function useSharedReportComments(
       const snapshot = queryClient.getQueryData<SharedReportCommentsResponse>(
         sharedReportCommentsKey(token)
       );
-      const optimistic: SharedReportComment = {
-        id: `optimistic-${idempotencyKey}`,
+      const optimisticId = `optimistic-${idempotencyKey}`;
+      // `_optimistic` drives the row's "Sending…" pending indicator. The flag
+      // is spread into the tree node by `assembleCommentTree`, so the row
+      // renders a clear in-flight state until the POST settles.
+      const optimistic: SharedReportComment & { _optimistic?: boolean; _failed?: boolean } = {
+        id: optimisticId,
         parentCommentId: request.parentCommentId ?? null,
         isAdvisor: false,
         displayName: request.displayName,
         anchor: request.anchor ?? null,
         body: request.body,
         createdAt: new Date().toISOString(),
+        _optimistic: true,
       };
       queryClient.setQueryData<SharedReportCommentsResponse>(
         sharedReportCommentsKey(token),
@@ -105,18 +113,67 @@ export function useSharedReportComments(
           return { ...base, replies: [...base.replies, optimistic] };
         }
       );
-      return { snapshot };
+      return { snapshot, optimisticId };
     },
     onError: (_err, _vars, ctx) => {
-      const snapshot = (ctx as { snapshot?: SharedReportCommentsResponse } | undefined)?.snapshot;
-      if (snapshot) {
-        queryClient.setQueryData(sharedReportCommentsKey(token), snapshot);
-      }
+      // Keep the optimistic row visible in a FAILED state instead of rolling
+      // back (which looked like the comment was added then deleted) so the
+      // donor can retry. We do NOT invalidate on error (that refetch would
+      // immediately wipe this row) — invalidation happens in onSuccess only.
+      const optimisticId = (ctx as { optimisticId?: string } | undefined)?.optimisticId;
+      if (!optimisticId) return;
+      const markFailed = <T extends SharedReportComment>(comment: T): T =>
+        comment.id === optimisticId ? { ...comment, _optimistic: false, _failed: true } : comment;
+      queryClient.setQueryData<SharedReportCommentsResponse>(
+        sharedReportCommentsKey(token),
+        (current) => {
+          if (!current) return current;
+          return {
+            ...current,
+            roots: current.roots.map(markFailed),
+            replies: current.replies.map(markFailed),
+          };
+        }
+      );
     },
-    onSettled: () => {
+    onSuccess: () => {
+      // Reconcile with the server only on success — the optimistic row is
+      // replaced by the real one. (Failed rows are preserved by skipping
+      // invalidation on error.)
       void queryClient.invalidateQueries({ queryKey: sharedReportCommentsKey(token) });
     },
   });
 
-  return { query, tree, postComment };
+  // Re-post a failed comment: drop the failed row from the cache, then submit
+  // again with a fresh idempotency key.
+  const retryFailed = useCallback(
+    (commentId: string) => {
+      const current = queryClient.getQueryData<SharedReportCommentsResponse>(
+        sharedReportCommentsKey(token)
+      );
+      const failed = current
+        ? [...current.roots, ...current.replies].find((c) => c.id === commentId)
+        : undefined;
+      if (!failed) return;
+      queryClient.setQueryData<SharedReportCommentsResponse>(sharedReportCommentsKey(token), (c) =>
+        c
+          ? {
+              ...c,
+              roots: c.roots.filter((x) => x.id !== commentId),
+              replies: c.replies.filter((x) => x.id !== commentId),
+            }
+          : c
+      );
+      const request: CreateCommentRequest = {
+        body: failed.body,
+        displayName: failed.displayName,
+        ...(failed.anchor ? { anchor: failed.anchor } : {}),
+        ...(failed.parentCommentId ? { parentCommentId: failed.parentCommentId } : {}),
+      };
+      postComment.mutate({ request, idempotencyKey: uuidv4() });
+    },
+    [queryClient, token, postComment]
+  );
+
+  return { query, tree, postComment, retryFailed };
 }

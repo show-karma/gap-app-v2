@@ -90,6 +90,7 @@ export function CommentOverlay({
     tree,
     identity,
     isPosting,
+    retryFailed,
     composer,
     composerError,
     openRootComposer,
@@ -147,6 +148,58 @@ export function CommentOverlay({
     }, 50);
     return () => clearTimeout(t);
   }, [scrollTargetCommentId, clearScrollTarget]);
+
+  // Chat-style: keep the newest comment in view. Scroll the sheet body to
+  // the bottom when the sheet opens and whenever a new comment arrives —
+  // unless a pin/highlight is currently steering the scroll to a specific
+  // row (read via ref so clearing that target doesn't re-trigger us).
+  const scrollTargetRef = useRef(scrollTargetCommentId);
+  scrollTargetRef.current = scrollTargetCommentId;
+  useEffect(() => {
+    if (!sheetOpen || scrollTargetRef.current || total === 0) return;
+    const scrollToEnd = () => {
+      const container = sheetBodyRef.current;
+      if (container) container.scrollTop = container.scrollHeight;
+    };
+    // Fire twice: once promptly (new comment while already open) and once
+    // after the sheet's slide-in + Radix focus settle, which otherwise
+    // resets the scroll position to the top on first open.
+    const t1 = setTimeout(scrollToEnd, 80);
+    const t2 = setTimeout(scrollToEnd, 400);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
+  }, [sheetOpen, total]);
+
+  // While the comments drawer is open, hide the global "Karma Assistant"
+  // floating chat button. Its very high z-index (9999) otherwise keeps it
+  // floating on top of the Sheet, which looks broken. We toggle the chat
+  // button's fixed-positioned container's visibility and restore the prior
+  // value on close / unmount.
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    const chatButton = document.querySelector<HTMLElement>('button[aria-label="Open chat"]');
+    if (!chatButton) return;
+    // Prefer the nearest fixed-positioned ancestor (the chat widget's
+    // floating container); fall back to the button itself.
+    let target: HTMLElement = chatButton;
+    let node: HTMLElement | null = chatButton;
+    while (node) {
+      if (typeof window !== "undefined" && window.getComputedStyle(node).position === "fixed") {
+        target = node;
+        break;
+      }
+      node = node.parentElement;
+    }
+
+    if (!sheetOpen) return;
+    const previousVisibility = target.style.visibility;
+    target.style.visibility = "hidden";
+    return () => {
+      target.style.visibility = previousVisibility;
+    };
+  }, [sheetOpen]);
 
   if (reportRevoked) return null;
 
@@ -248,12 +301,16 @@ export function CommentOverlay({
               )}
               {tree.length > 0 && (
                 <div className="space-y-3">
-                  {tree.map((node) => (
+                  {/* Roots arrive newest-first; render oldest-first so the
+                      newest sits at the bottom (chat-style). Replies within
+                      a thread are already oldest→newest. */}
+                  {[...tree].reverse().map((node) => (
                     <div key={node.id} data-comment-id={node.id}>
                       <CommentRow
                         node={node}
                         depth={0}
                         onReply={openReplyComposer}
+                        onRetry={retryFailed}
                         activeCommentId={activeCommentId}
                         onActivate={activateComment}
                       />
