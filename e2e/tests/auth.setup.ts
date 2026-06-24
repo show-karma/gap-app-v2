@@ -108,27 +108,27 @@ setup("authenticate via Privy", async ({ page, browser }) => {
     );
   }
 
-  // Privy may use multiple single-digit inputs or a single input for OTP
-  const otpInputs = privyModal.locator(
-    'input[aria-label*="code" i], input[autocomplete="one-time-code"], input[type="tel"], input[inputmode="numeric"]'
-  );
-  const inputCount = await otpInputs.count();
+  // Privy renders the OTP as six segmented single-digit boxes that advance on
+  // each keystroke. locator.fill() sets the value programmatically and does
+  // NOT fire the per-digit keydown/input handlers Privy listens to, so the
+  // boxes stayed empty and auth never completed (the boxes are blank in the
+  // failure screenshot). Type the code as real keypresses instead: focus the
+  // first box and let page.keyboard.type follow Privy's auto-advance, which
+  // distributes the digits across the boxes. This also works for the
+  // single-field variant (all digits land in the one input).
+  await otpInput.click();
+  await page.keyboard.type(otp, { delay: 60 });
 
-  if (inputCount > 1) {
-    for (let i = 0; i < otp.length && i < inputCount; i++) {
-      await otpInputs.nth(i).fill(otp[i]);
-    }
-  } else {
-    await otpInput.fill(otp);
-  }
-
-  // Wait for authentication to complete — privy:token should appear in localStorage
+  // Wait for authentication to complete — privy:token should appear in
+  // localStorage. Give it more room than before: token minting after the
+  // final digit can lag a few seconds on staging, and a premature failure
+  // here wastes the OTP we just spent against the per-address rate limit.
   await page.waitForFunction(
     () => {
       const token = localStorage.getItem("privy:token");
       return token !== null;
     },
-    { timeout: 30000 }
+    { timeout: 45000 }
   );
 
   // Wait for auth state to propagate
