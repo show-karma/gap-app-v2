@@ -1,11 +1,14 @@
 "use client";
 
-import type { ResearchReportCandidate } from "@/types/donor-research";
+import type { CompositeWeights, ResearchReportCandidate } from "@/types/donor-research";
 import { briefDisplay } from "./fonts";
+import { onlinePresenceScore, socialPresenceScore } from "./scoring";
 import { formatLocale, humanizeCase, mostRecentMentionDate, relativeDays } from "./text-utils";
 
 interface ComparisonTableProps {
   candidates: readonly ResearchReportCandidate[];
+  /** Persisted report weights; when present a "Social presence" row is shown. */
+  weights?: CompositeWeights | null;
 }
 
 interface MetricRow {
@@ -15,49 +18,62 @@ interface MetricRow {
   emphasis?: boolean;
 }
 
-const METRICS: readonly MetricRow[] = [
-  {
-    key: "composite",
-    label: "Composite",
-    value: (c) => `${Math.round(c.composite * 100)}`,
-    emphasis: true,
-  },
-  {
-    key: "missionMatch",
-    label: "Mission match",
-    value: (c) => `${Math.round(c.components.donorMatch * 100)}`,
-  },
-  {
-    key: "freshness",
-    label: "Online presence",
-    value: (c) => `${Math.round(c.components.freshness * 100)}`,
-  },
-  {
-    key: "impactRecency",
-    label: "IRS 990 recency",
-    value: (c) => `${Math.round(c.components.impactRecency * 100)}`,
-  },
-  {
-    key: "compliance",
-    label: "Compliance",
-    value: (c) => describeCompliance(c),
-  },
-  {
-    key: "lastMention",
-    label: "Last public mention",
-    value: (c) => relativeDays(mostRecentMentionDate(c.recentMentions)) ?? "—",
-  },
-  {
-    key: "stateRegistration",
-    label: "State registration",
-    value: (c) => describeStateRegistration(c.stateRegistrationStatus),
-  },
-  {
-    key: "location",
-    label: "Location",
-    value: (c) => formatLocale(c.organizationCity, c.organizationState) ?? "—",
-  },
-];
+function buildMetrics(weights: CompositeWeights | null): readonly MetricRow[] {
+  return [
+    {
+      key: "composite",
+      label: "Composite",
+      value: (c) => `${Math.round(c.composite * 100)}`,
+      emphasis: true,
+    },
+    {
+      key: "missionMatch",
+      label: "Mission match",
+      value: (c) => `${Math.round(c.components.donorMatch * 100)}`,
+    },
+    {
+      key: "onlinePresence",
+      label: "Online presence",
+      value: (c) => `${Math.round(onlinePresenceScore(c) * 100)}`,
+    },
+    // Social presence is a DEV-418 five-dimension axis; legacy reports bundle
+    // it into online presence, so the row only appears when weights exist.
+    ...(weights
+      ? [
+          {
+            key: "socialPresence",
+            label: "Social presence",
+            value: (c: ResearchReportCandidate) => `${Math.round(socialPresenceScore(c) * 100)}`,
+          },
+        ]
+      : []),
+    {
+      key: "impactRecency",
+      label: "IRS 990 recency",
+      value: (c) => `${Math.round(c.components.impactRecency * 100)}`,
+    },
+    {
+      key: "compliance",
+      label: "Compliance",
+      value: (c) => describeCompliance(c),
+    },
+    {
+      key: "lastMention",
+      label: "Last public mention",
+      value: (c) => relativeDays(mostRecentMentionDate(c.recentMentions)) ?? "—",
+    },
+    {
+      key: "stateRegistration",
+      label: "State registration",
+      value: (c) => describeStateRegistration(c.stateRegistrationStatus),
+    },
+    {
+      key: "location",
+      label: "Location",
+      value: (c) => formatLocale(c.organizationCity, c.organizationState) ?? "—",
+    },
+  ];
+}
 
 /**
  * At-a-glance comparison of the surfaced candidates. Renders as a
@@ -65,8 +81,10 @@ const METRICS: readonly MetricRow[] = [
  * advisor can keep "composite" in view while scanning across columns
  * on a phone.
  */
-export function ComparisonTable({ candidates }: ComparisonTableProps) {
+export function ComparisonTable({ candidates, weights = null }: ComparisonTableProps) {
   if (candidates.length < 2) return null;
+
+  const metrics = buildMetrics(weights);
 
   return (
     <section className="mb-20 sm:mb-24">
@@ -106,7 +124,7 @@ export function ComparisonTable({ candidates }: ComparisonTableProps) {
             </tr>
           </thead>
           <tbody>
-            {METRICS.map((metric) => (
+            {metrics.map((metric) => (
               <tr key={metric.key} className="border-b border-border/50">
                 <th
                   scope="row"

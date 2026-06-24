@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowUpRight } from "lucide-react";
-import type { ResearchReportCandidate } from "@/types/donor-research";
+import type { CompositeWeights, ResearchReportCandidate } from "@/types/donor-research";
 import { SocialPresence } from "../report-viewer/SocialPresence";
 import { ChapterMark } from "./ChapterMark";
 import { ComplianceStrip } from "./ComplianceStrip";
@@ -24,6 +24,8 @@ interface RunnerUpCandidateProps {
   number: string;
   /** Editorial label sitting at the right edge of the chapter rule. */
   label: string;
+  /** Persisted report weights for the score breakdown; `null` = legacy. */
+  weights: CompositeWeights | null;
 }
 
 /**
@@ -33,7 +35,7 @@ interface RunnerUpCandidateProps {
  * tabular figure hanging off the identity block rather than a
  * standalone hero.
  */
-export function RunnerUpCandidate({ candidate, number, label }: RunnerUpCandidateProps) {
+export function RunnerUpCandidate({ candidate, number, label, weights }: RunnerUpCandidateProps) {
   const isDisqualified = candidate.complianceVerdict === "disqualified";
   const name = humanizeCase(
     candidate.organizationName ??
@@ -131,7 +133,7 @@ export function RunnerUpCandidate({ candidate, number, label }: RunnerUpCandidat
             {band}
           </p>
 
-          <ScoreBreakdownTable candidate={candidate} />
+          <ScoreBreakdownTable candidate={candidate} weights={weights} />
 
           <ComplianceStrip candidate={candidate} />
 

@@ -188,6 +188,21 @@ export interface SocialMetrics {
   totalFollowers: number | null;
 }
 
+/**
+ * Composite-ranking weights as basis points (DEV-418). Each dimension is an
+ * integer 0–10000 and the five sum to exactly 10000. Mirrors the persisted
+ * backend shape; `ResearchReportDetail.weights` is `null` on legacy reports
+ * (created before DEV-418), which the UI reads as "hide the weights panel and
+ * render the four-row methodology".
+ */
+export interface CompositeWeights {
+  onlinePresence: number;
+  socialPresence: number;
+  impactRecency: number;
+  donorMatch: number;
+  compliance: number;
+}
+
 export interface ResearchReportCandidate {
   id: string;
   fundingOrganizationId: string;
@@ -198,13 +213,34 @@ export interface ResearchReportCandidate {
   organizationWebsiteUrl: string | null;
   ein: string | null;
   composite: number;
+  /**
+   * Per-dimension component scores, each in `[0, 1]`. DEV-418 split the
+   * legacy `freshness` (website + social bundled) into website-only
+   * `onlinePresence` and SociaVault-fed `socialPresence`. New reports carry
+   * `onlinePresence` + `socialPresence` and omit `freshness`; legacy reports
+   * carry `freshness` and omit the two split fields. Branch on the report's
+   * `weights` (null => legacy) to know which shape to expect.
+   */
   components: {
-    freshness: number;
+    freshness?: number;
+    onlinePresence?: number;
+    socialPresence?: number;
     impactRecency: number;
     donorMatch: number;
     compliance: number;
   };
-  topThreeFlag: boolean;
+  /**
+   * True for the candidates in the featured set — the top `report.topCount`
+   * candidates, which receive the AI one-pager (DEV-418). Renamed from
+   * `topThreeFlag` now that the featured-set size is advisor-configurable.
+   */
+  featuredFlag: boolean;
+  /**
+   * Advisor-forced display position (DEV-418 manual reorder), 1-based.
+   * `null` when ordering derives from the composite score. A weights
+   * re-rank resets this to `null` (one source of truth at a time).
+   */
+  manualPosition: number | null;
   complianceVerdict: ComplianceVerdictKind;
   disqualificationReasons: ComplianceDisqualificationReason[];
   complianceChecks: ComplianceCheck[];
@@ -259,6 +295,19 @@ export interface ResearchReportDetail {
   fastCompletedAt: string | null;
   completedAt: string | null;
   geographyDiagnostic: GeographyDiagnostic | null;
+  /**
+   * Advisor-configured composite-ranking weights (DEV-418), basis points
+   * summing to 10000. `null` marks a legacy report scored with the fixed
+   * four-dimension weights — the frontend hides the weights panel and
+   * renders the legacy methodology when this is absent.
+   */
+  weights: CompositeWeights | null;
+  /**
+   * Size of the featured set that receives an AI one-pager (DEV-418),
+   * advisor-configurable 1–25. `null` marks a report from before this shipped
+   * — the frontend treats it as the original default of 3.
+   */
+  topCount: number | null;
   candidates: ResearchReportCandidate[];
 }
 

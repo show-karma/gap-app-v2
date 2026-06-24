@@ -1,14 +1,20 @@
 "use client";
 
 import { ChevronDown } from "lucide-react";
-import type { GeographyDiagnostic } from "@/types/donor-research";
+import type { CompositeWeights, GeographyDiagnostic } from "@/types/donor-research";
 import { briefDisplay, briefProse } from "./fonts";
-import { COMPONENT_WEIGHTS } from "./scoring";
+import { methodologyWeightRows } from "./scoring";
 
 interface MethodologyProps {
   candidatesCount: number;
   surfacedCount: number;
   geographyDiagnostic: GeographyDiagnostic | null;
+  /**
+   * The report's persisted composite weights (basis points). `null` marks a
+   * legacy four-dimension report — the colophon then renders the legacy
+   * four rows and the fixed-weight wording.
+   */
+  weights: CompositeWeights | null;
 }
 
 /**
@@ -22,7 +28,9 @@ export function Methodology({
   candidatesCount,
   surfacedCount,
   geographyDiagnostic,
+  weights,
 }: MethodologyProps) {
+  const weightRows = methodologyWeightRows(weights);
   return (
     <section className="mt-8 border-t border-border/70 pt-10">
       <details className="group">
@@ -62,19 +70,16 @@ export function Methodology({
           </ColophonBlock>
 
           <ColophonBlock label="Scoring">
-            <p>The composite is a fixed weighted sum, in this order of priority:</p>
+            <p>
+              {weights
+                ? "The composite is a weighted sum of these dimensions, at the weights set for this report:"
+                : "The composite is a fixed weighted sum, in this order of priority:"}
+            </p>
             <ul className="mt-3 flex flex-col gap-1 tabular-nums text-foreground/85">
-              {[
-                ["Online presence", COMPONENT_WEIGHTS.freshness],
-                ["IRS 990 recency", COMPONENT_WEIGHTS.impactRecency],
-                ["Mission match", COMPONENT_WEIGHTS.donorMatch],
-                ["Compliance", COMPONENT_WEIGHTS.compliance],
-              ].map(([label, weight]) => (
-                <li key={String(label)} className="flex items-baseline justify-between gap-3">
-                  <span>{label}</span>
-                  <span className="text-muted-foreground">
-                    {Math.round((weight as number) * 100)}%
-                  </span>
+              {weightRows.map((row) => (
+                <li key={row.label} className="flex items-baseline justify-between gap-3">
+                  <span>{row.label}</span>
+                  <span className="text-muted-foreground">{row.percent}%</span>
                 </li>
               ))}
             </ul>

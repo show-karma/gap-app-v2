@@ -840,3 +840,14 @@ article.report-article tbody tr:hover td {
     padding: 0;
   }
 }
+
+/* Hide the floating Karma Assistant button and panel while a modal
+ * Radix Dialog/Sheet is open. Radix modals lock body scroll via
+ * react-remove-scroll-bar, which sets `data-scroll-locked` on
+ * <body> for the duration of the lock. Hiding here keeps the
+ * assistant's z-[9999] from sitting on top of (and obscuring) the
+ * drawer's controls — e.g. the donor-research "Adjust ranking" sheet. */
+body[data-scroll-locked] .karma-assistant-fab,
+body[data-scroll-locked] .karma-assistant-panel {
+  display: none !important;
+}

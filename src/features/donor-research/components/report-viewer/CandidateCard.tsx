@@ -2,9 +2,14 @@
 
 import { ArrowUpRight, ChevronDown } from "lucide-react";
 import { useState } from "react";
-import type { ResearchReportCandidate } from "@/types/donor-research";
+import type { CompositeWeights, ResearchReportCandidate } from "@/types/donor-research";
 import { FinancialsTable } from "../report-brief/FinancialsTable";
-import { COMPONENT_WEIGHTS, compositeBand } from "../report-brief/scoring";
+import {
+  compositeBand,
+  onlinePresenceScore,
+  resolvedWeightsDecimals,
+  socialPresenceScore,
+} from "../report-brief/scoring";
 import { formatEin, hostname, humanizeCase, truncate } from "../report-brief/text-utils";
 import { ComplianceBreakdown } from "./ComplianceBreakdown";
 import { formatLocale } from "./candidate-card-text";
@@ -14,6 +19,12 @@ import { SocialPresence } from "./SocialPresence";
 interface CandidateCardProps {
   candidate: ResearchReportCandidate;
   variant: "one-pager" | "detail";
+  /**
+   * The report's persisted weights (basis points). `null` (default) renders
+   * the legacy four-dimension breakdown; present renders five dimensions
+   * including social presence, at the advisor's chosen weights.
+   */
+  weights?: CompositeWeights | null;
 }
 
 /**
@@ -37,7 +48,7 @@ interface CandidateCardProps {
  *
  * Disqualified candidates render with a muted treatment + clear label.
  */
-export function CandidateCard({ candidate, variant }: CandidateCardProps) {
+export function CandidateCard({ candidate, variant, weights = null }: CandidateCardProps) {
   const [expanded, setExpanded] = useState(false);
   const isDisqualified = candidate.complianceVerdict === "disqualified";
   // IRS 990 data is shouted in all caps; normalize so the card doesn't
@@ -51,7 +62,7 @@ export function CandidateCard({ candidate, variant }: CandidateCardProps) {
     label: compositeBand(candidate.composite, isDisqualified),
     tone: bandTone(candidate.composite, isDisqualified),
   };
-  const matchReasons = isDisqualified ? [] : buildMatchReasons(candidate);
+  const matchReasons = isDisqualified ? [] : buildMatchReasons(candidate, weights);
   const description = candidate.organizationDescription
     ? humanizeCase(candidate.organizationDescription.trim(), "sentence")
     : null;
@@ -215,9 +226,10 @@ function CandidateHeader({
 type ReasonTone = "good" | "neutral" | "weak";
 
 interface MatchReason {
-  key: "donorMatch" | "impact" | "freshness" | "compliance";
-  componentKey: "donorMatch" | "impactRecency" | "freshness" | "compliance";
+  key: "donorMatch" | "impact" | "onlinePresence" | "socialPresence" | "compliance";
   label: string;
+  /** Component score in `[0, 1]`, already resolved across legacy/new shapes. */
+  score: number;
   /** One-line explanation surfaced on hover via title attribute. */
   help: string;
   weight: number;
@@ -247,7 +259,6 @@ interface ScoreBreakdownVizProps {
  * "what added up to your number" rather than "weighted breakdown."
  */
 function ScoreBreakdownViz({ candidate, reasons }: ScoreBreakdownVizProps) {
-  const { components } = candidate;
   const compositePct = Math.round(candidate.composite * 100);
 
   return (
@@ -266,8 +277,7 @@ function ScoreBreakdownViz({ candidate, reasons }: ScoreBreakdownVizProps) {
 
       <ul className="flex flex-col gap-3">
         {reasons.map((reason) => {
-          const score = components[reason.componentKey];
-          const scorePct = Math.round(score * 100);
+          const scorePct = Math.round(reason.score * 100);
           return (
             <li key={reason.key} className="flex flex-col gap-1">
               <div className="flex items-baseline justify-between gap-3 text-xs">
@@ -330,8 +340,7 @@ function ScoreBreakdownViz({ candidate, reasons }: ScoreBreakdownVizProps) {
           aria-label={`Composite ${compositePct} of 100, summed from each component's weighted contribution.`}
         >
           {reasons.map((reason) => {
-            const score = components[reason.componentKey];
-            const contribution = score * reason.weight * 100;
+            const contribution = reason.score * reason.weight * 100;
             return (
               <div
                 key={`contrib-${reason.key}`}
@@ -347,55 +356,91 @@ function ScoreBreakdownViz({ candidate, reasons }: ScoreBreakdownVizProps) {
   );
 }
 
-function buildMatchReasons(candidate: ResearchReportCandidate): MatchReason[] {
+function buildMatchReasons(
+  candidate: ResearchReportCandidate,
+  weights: CompositeWeights | null
+): MatchReason[] {
   const { components } = candidate;
-  return [
+  const w = resolvedWeightsDecimals(weights);
+  const online = onlinePresenceScore(candidate);
+
+  const reasons: MatchReason[] = [
     {
       key: "donorMatch",
-      componentKey: "donorMatch",
       label: "Match to your criteria",
+      score: components.donorMatch,
       help: "How closely the nonprofit's mission and location match your donor's stated cause, geography, and amount range.",
-      weight: COMPONENT_WEIGHTS.donorMatch,
+      weight: w.donorMatch,
       tone: toneFor(components.donorMatch),
       text: phraseDonorMatch(components.donorMatch),
     },
     {
       key: "impact",
-      componentKey: "impactRecency",
       label: "IRS 990 recency",
+      score: components.impactRecency,
       help: "How recent the nonprofit's latest indexed IRS 990 filing is. This is a proxy for whether the organization is still operating.",
-      weight: COMPONENT_WEIGHTS.impactRecency,
+      weight: w.impactRecency,
       tone: toneFor(components.impactRecency),
       text: phraseImpact(components.impactRecency, candidate.complianceChecks),
     },
     {
-      key: "freshness",
-      componentKey: "freshness",
+      key: "onlinePresence",
       label: "Online presence",
+      score: online,
       help: "Whether the nonprofit has recently published content or appeared in news coverage. Based on a web search disambiguated against IRS facts (EIN, name, locale).",
-      weight: COMPONENT_WEIGHTS.freshness,
-      tone: toneFor(components.freshness),
-      text: phraseFreshness(
-        components.freshness,
-        candidate.activitySignalStatus,
-        candidate.recentMentions
-      ),
-    },
-    {
-      key: "compliance",
-      componentKey: "compliance",
-      label: "Compliance",
-      help: "Whether the nonprofit passes the IRS Pub 78 active-501(c)(3) check, has a recent 990 on file, and (for California orgs) is current on the state charity registry.",
-      weight: COMPONENT_WEIGHTS.compliance,
-      tone: toneFor(components.compliance),
-      text: phraseCompliance(
-        components.compliance,
-        candidate.complianceVerdict,
-        candidate.complianceChecks,
-        candidate.stateRegistrationStatus
-      ),
+      weight: w.onlinePresence,
+      tone: toneFor(online),
+      text: phraseFreshness(online, candidate.activitySignalStatus, candidate.recentMentions),
     },
   ];
+
+  // Social presence is a DEV-418 five-dimension axis. Legacy reports bundle
+  // it into online presence, so the row only appears for weighted reports.
+  if (weights) {
+    const social = socialPresenceScore(candidate);
+    reasons.push({
+      key: "socialPresence",
+      label: "Social presence",
+      score: social,
+      help: "Recent posting activity across the nonprofit's linked social channels (LinkedIn, Facebook, Instagram, X), aggregated into a single signal.",
+      weight: weights.socialPresence / 10000,
+      tone: toneFor(social),
+      text: phraseSocial(social, candidate.socialMetrics),
+    });
+  }
+
+  reasons.push({
+    key: "compliance",
+    label: "Compliance",
+    score: components.compliance,
+    help: "Whether the nonprofit passes the IRS Pub 78 active-501(c)(3) check, has a recent 990 on file, and (for California orgs) is current on the state charity registry.",
+    weight: w.compliance,
+    tone: toneFor(components.compliance),
+    text: phraseCompliance(
+      components.compliance,
+      candidate.complianceVerdict,
+      candidate.complianceChecks,
+      candidate.stateRegistrationStatus
+    ),
+  });
+
+  return reasons;
+}
+
+/** Plain-language read of the aggregated social-activity signal. */
+function phraseSocial(
+  score: number,
+  socialMetrics: ResearchReportCandidate["socialMetrics"]
+): string {
+  const channels = socialMetrics?.byChannel.filter((c) => c.available) ?? [];
+  if (channels.length === 0) {
+    return "No linked social channels with recent activity were found for this nonprofit.";
+  }
+  const channelCount = channels.length;
+  const noun = channelCount === 1 ? "channel" : "channels";
+  if (score >= 0.65) return `Active across ${channelCount} social ${noun} with recent posts.`;
+  if (score >= 0.35) return `Some recent social activity across ${channelCount} ${noun}.`;
+  return `Light social activity across ${channelCount} ${noun}; most posts are older.`;
 }
 
 function phraseCompliance(
