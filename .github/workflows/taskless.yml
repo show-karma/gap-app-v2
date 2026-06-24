@@ -1,0 +1,38 @@
+name: Taskless
+
+# Deterministic code guardrails (ast-grep rules in .taskless/rules).
+# Diff-scan only: a PR fails ONLY if files it changes contain error-severity
+# findings. Pre-existing debt in untouched files never blocks CI.
+# To also gate the whole codebase on main, add a `push: { branches: [main] }`
+# trigger with a `taskless check` (no file args) step — but note the current
+# backlog would make that red until burned down.
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Taskless CLI requires Node >=22.22; this job is standalone and does not
+      # build the app, so it can use a newer Node than the rest of CI.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Taskless check (changed files only)
+        run: |
+          git fetch origin "${{ github.base_ref }}" --depth=1
+          FILES=$(git diff --name-only "origin/${{ github.base_ref }}...HEAD")
+          if [ -z "$FILES" ]; then
+            echo "No changed files; nothing to check."
+            exit 0
+          fi
+          npx -y @taskless/cli@0.9.0 check $FILES

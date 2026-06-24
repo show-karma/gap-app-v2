@@ -3,8 +3,13 @@
 // https://docs.sentry.io/platforms/javascript/guides/nextjs/
 
 import * as Sentry from "@sentry/nextjs";
+import { isAttestRetryExhaustedError } from "./utilities/attestWithRetry";
 import { sentryIgnoreErrors } from "./utilities/sentry/ignoreErrors";
-import { isTransientHttpError, isTransientNetworkError } from "./utilities/sentry/transientErrors";
+import {
+  isTransientHttpError,
+  isTransientNetworkError,
+  isTransientWalletTimeoutError,
+} from "./utilities/sentry/transientErrors";
 import { isIndexedDbInternalError } from "./utilities/sentry/walletStorageErrors";
 
 Sentry.init({
@@ -19,9 +24,23 @@ Sentry.init({
   // DEV-271 / GAP-FRONTEND-1R1.
   beforeSend(event, hint) {
     const original = hint?.originalException;
+    // The exhausted-retry wrapper is actionable and MUST report, even though
+    // its `.cause` is a transient wallet timeout that would otherwise be
+    // dropped below. Key off the structural flag, not message wording. See
+    // GAP-FRONTEND-1Y2 and ./utilities/attestWithRetry.ts
+    if (isAttestRetryExhaustedError(original)) {
+      return event;
+    }
     if (
       isTransientNetworkError(original) ||
       isTransientHttpError(original) ||
+      // ethers "could not coalesce error" / "Wallet timeout" surfaced by a
+      // transient wallet/bundler blip during attestation. Retried at the send
+      // layer, so a recovered timeout never reaches here; this drops the raw
+      // signature that leaks through paths bypassing the retry (an un-awaited
+      // rejection from an abandoned attempt, a third-party SDK fetch). See
+      // GAP-FRONTEND-1Y2 and ./utilities/sentry/transientErrors.ts
+      isTransientWalletTimeoutError(original) ||
       // Wallet SDKs (WalletConnect/Coinbase/base-account) leak an un-awaited
       // IndexedDB read rejection on startup when the browser's IDB store is
       // corrupted/unavailable. Environmental and not actionable from our code.

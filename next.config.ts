@@ -126,10 +126,32 @@ const nextConfig: NextConfig = {
         source: "/(.*)",
         headers: securityHeaders,
       },
+      {
+        // Content-hashed build assets are safe to cache forever: a new deploy
+        // emits new filenames, so a stale cache entry is never served for new
+        // code. This is Next's default for `/_next/static/*`; we declare it
+        // explicitly so the stale-deploy chunk recovery contract is documented
+        // and survives any future header changes.
+        source: "/_next/static/:path*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=31536000, immutable",
+          },
+        ],
+      },
     ];
   },
   async redirects() {
     return [
+      // Bare /community has no content of its own — the listing lives at /communities.
+      // Redirecting at the edge (vs. a page that calls permanentRedirect) keeps the bare
+      // path from 404'ing without shipping a route bundle. Closes #1312.
+      {
+        source: "/community",
+        destination: "/communities",
+        permanent: true,
+      },
       // Redirect all old /community/:communityId/admin routes to /community/:communityId/manage
       {
         source: "/community/:communityId/admin",

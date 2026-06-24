@@ -57,7 +57,11 @@ export function LeadCandidate({ candidate, weights, hasMore }: LeadCandidateProp
   const mostRecentLabel = relativeDays(mostRecentMs);
 
   return (
-    <section className="mb-24 sm:mb-32">
+    <section
+      className="mb-24 sm:mb-32"
+      data-section="lead-candidate"
+      data-candidate-id={candidate.id}
+    >
       <ChapterMark number="01" label="Lead" tone="lead" />
 
       <div className="mt-8 grid grid-cols-1 gap-x-12 gap-y-10 lg:mt-10 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">

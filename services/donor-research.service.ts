@@ -53,6 +53,8 @@ export const fetchCurrentAdvisor = async (): Promise<DonorAdvisor | null> => {
 
 export interface OnboardAdvisorRequest {
   displayName: string;
+  /** Advisor contact email — where report notifications are sent. */
+  email?: string;
   orgName?: string | null;
   timezone: string;
 }

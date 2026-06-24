@@ -1,5 +1,5 @@
 import type { GrantMilestoneWithCompletion } from "@/services/milestones";
-import { MilestoneLifecycleStatus } from "@/src/features/payout-disbursement";
+import { MilestoneLifecycleStatus } from "@/src/features/payout-disbursement/types/payout-disbursement";
 import { MILESTONE_STATUS_LABEL } from "@/utilities/milestones/getEffectiveMilestoneStatus";
 
 export enum MilestoneReviewStatus {

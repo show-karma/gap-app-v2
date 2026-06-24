@@ -10,6 +10,10 @@ import { Skeleton } from "@/components/Utilities/Skeleton";
 import { Button } from "@/components/ui/button";
 import { useCommunityDetails } from "@/hooks/communities/useCommunityDetails";
 import { useKycBatchStatusesPublic, useKycConfig } from "@/hooks/useKycStatus";
+import {
+  useCommunityPayoutsPublic,
+  usePayoutConfigsByCommunityPublic,
+} from "@/src/features/payout-disbursement/hooks/use-payout-disbursement";
 import type {
   AggregatedDisbursementStatus,
   CommunityPayoutAgreementInfo,
@@ -19,11 +23,7 @@ import type {
   PayoutDisbursement,
   PayoutGrantConfig,
   TokenTotal,
-} from "@/src/features/payout-disbursement";
-import {
-  useCommunityPayoutsPublic,
-  usePayoutConfigsByCommunityPublic,
-} from "@/src/features/payout-disbursement/hooks/use-payout-disbursement";
+} from "@/src/features/payout-disbursement/types/payout-disbursement";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 import { PublicProjectDetailsModal } from "./PublicProjectDetailsModal";

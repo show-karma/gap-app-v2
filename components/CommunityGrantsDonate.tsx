@@ -1,5 +1,7 @@
 "use client";
+import { HandHeart } from "lucide-react";
 import { useParams } from "next/navigation";
+import pluralize from "pluralize";
 import { useMemo } from "react";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { AutoSizer, Grid } from "react-virtualized";
@@ -11,6 +13,7 @@ import { Link } from "@/src/components/navigation/Link";
 import { useDonationCart } from "@/store";
 import type { CommunityProjects } from "@/types/v2/community";
 import { projectToGrant } from "@/utilities/adapters/v2/projectToGrant";
+import { PAGES } from "@/utilities/pages";
 import { GrantCard } from "./GrantCard";
 import { CardListSkeleton } from "./Pages/Communities/Loading";
 
@@ -123,6 +126,25 @@ export const CommunityGrantsDonate = ({ initialProjects }: CommunityGrantsDonate
               <CardListSkeleton />
             </div>
           ) : null}
+          {!isLoading && !isFetchingNextPage && projects.length === 0 ? (
+            <div className="flex w-full flex-col items-center justify-center gap-4 rounded-xl border border-dashed border-gray-300 dark:border-zinc-700 px-6 py-16 text-center">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 dark:bg-zinc-800">
+                <HandHeart className="h-6 w-6 text-gray-400 dark:text-zinc-500" aria-hidden />
+              </div>
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-zinc-100">
+                No projects are accepting donations in this program yet.
+              </h2>
+              <p className="max-w-md text-sm text-gray-600 dark:text-zinc-400">
+                Check back soon, or explore other projects in this community.
+              </p>
+              <Link
+                href={PAGES.COMMUNITY.PROJECTS(communityId)}
+                className="mt-2 inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+              >
+                Browse community projects
+              </Link>
+            </div>
+          ) : null}
         </div>
       </section>
 
@@ -137,7 +159,7 @@ export const CommunityGrantsDonate = ({ initialProjects }: CommunityGrantsDonate
               <ShoppingCartIconCustom className="text-white" width="21" height="21" />
             </div>
             <span className="font-semibold whitespace-nowrap">
-              Checkout ({items.length} {items.length === 1 ? "item" : "items"})
+              Checkout ({pluralize("item", items.length, true)})
             </span>
           </Link>
         </div>

@@ -1,3 +1,4 @@
+import axios from "axios";
 import { createAuthenticatedApiClient } from "@/utilities/auth/api-client";
 import { TokenManager } from "@/utilities/auth/token-manager";
 import { envVars } from "@/utilities/enviromentVars";
@@ -197,8 +198,20 @@ const api = createAuthenticatedApiClient();
 
 export const aiAgentClient = {
   async getMyOrgs(): Promise<AIAgentMyOrg[]> {
-    const { data } = await api.get<{ orgs: AIAgentMyOrg[] }>(AI_AGENT_INDEXER.MY_ORGS);
-    return data.orgs;
+    // The backend returns 200 + [] for a user with no orgs (see hermes
+    // member read controller). Some deployments where the hermes route is
+    // absent answer 404 instead — for a per-user list resource that means
+    // "no orgs", not a user-facing failure, so treat it as an empty list.
+    // Any other status still surfaces through humanizeApiError.
+    try {
+      const { data } = await api.get<{ orgs: AIAgentMyOrg[] }>(AI_AGENT_INDEXER.MY_ORGS);
+      return data.orgs;
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response?.status === 404) {
+        return [];
+      }
+      throw error;
+    }
   },
 
   async getOrg(slug: string): Promise<AIAgentOrgResponse> {

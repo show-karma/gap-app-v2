@@ -13,6 +13,15 @@ import { persist } from "zustand/middleware";
 interface SearchSession {
   id: string;
   query: string;
+  /**
+   * True while the session was created locally (landing page / new chat) but
+   * its first search hasn't been kicked off yet. ChatView consumes the flag
+   * exactly once: a fresh session runs the query immediately; a non-fresh
+   * session is a revisit and is hydrated from the saved conversation instead
+   * of re-running the search. Pre-existing persisted sessions lack the flag
+   * and are treated as revisits.
+   */
+  fresh?: boolean;
 }
 
 interface SearchSessionStore {
@@ -21,6 +30,8 @@ interface SearchSessionStore {
   createSession: (query: string) => string;
   setSession: (id: string, query: string) => void;
   getSession: (id: string) => SearchSession | undefined;
+  /** Returns whether the session was fresh, clearing the flag (one-shot). */
+  consumeFresh: (id: string) => boolean;
   clearSession: (id: string) => void;
   setCurrentId: (id: string | null) => void;
 }
@@ -52,7 +63,7 @@ export const useSearchSessionStore = create<SearchSessionStore>()(
             : sessions;
 
         set({
-          sessions: { ...trimmed, [id]: { id, query } },
+          sessions: { ...trimmed, [id]: { id, query, fresh: true } },
           currentId: id,
         });
         return id;
@@ -73,6 +84,16 @@ export const useSearchSessionStore = create<SearchSessionStore>()(
       },
 
       getSession: (id: string) => get().sessions[id],
+
+      consumeFresh: (id: string) => {
+        const { sessions } = get();
+        const session = sessions[id];
+        if (!session?.fresh) return false;
+        set({
+          sessions: { ...sessions, [id]: { id, query: session.query } },
+        });
+        return true;
+      },
 
       clearSession: (id: string) => {
         const { sessions, currentId } = get();
