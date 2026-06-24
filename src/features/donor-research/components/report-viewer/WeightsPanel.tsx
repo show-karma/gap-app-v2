@@ -19,7 +19,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical, Minus, Plus, SlidersHorizontal } from "lucide-react";
 import pluralize from "pluralize";
-import { useEffect, useMemo, useState } from "react";
+import { memo, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -495,7 +495,7 @@ interface SortableCandidateRowProps {
   featured: boolean;
 }
 
-function SortableCandidateRow({
+const SortableCandidateRow = memo(function SortableCandidateRow({
   id,
   position,
   name,
@@ -542,4 +542,4 @@ function SortableCandidateRow({
       </span>
     </li>
   );
-}
+});
