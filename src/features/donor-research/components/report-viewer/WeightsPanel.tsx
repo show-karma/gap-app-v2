@@ -102,7 +102,7 @@ export function WeightsPanel({ report }: WeightsPanelProps) {
         </Button>
       </SheetTrigger>
       <SheetContent
-        side="right"
+        side="left"
         className="flex w-full flex-col gap-0 overflow-y-auto sm:max-w-md"
         // Radix listens for Escape at the document level, so a child
         // stopPropagation can't reach it. When a reorder grip has focus, prevent
