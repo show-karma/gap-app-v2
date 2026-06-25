@@ -81,9 +81,14 @@ describe("CriteriaForm weights", () => {
     fireEvent.blur(inputs[3]);
     fireEvent.click(screen.getByRole("button", { name: /start report/i }));
     await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
-    const weights = onSubmit.mock.calls[0][0].weights;
-    expect(weights.onlinePresence).toBe(4000);
-    expect(weights.donorMatch).toBe(1000);
-    expect(Object.values(weights).reduce((a: number, b) => a + (b as number), 0)).toBe(10000);
+    // Only the two edited factors changed; the untouched three are intact and
+    // the five total 100% (4000+1000+2500+1000+1500 = 10000).
+    expect(onSubmit.mock.calls[0][0].weights).toEqual({
+      onlinePresence: 4000,
+      socialPresence: 1000,
+      impactRecency: 2500,
+      donorMatch: 1000,
+      compliance: 1500,
+    });
   });
 });

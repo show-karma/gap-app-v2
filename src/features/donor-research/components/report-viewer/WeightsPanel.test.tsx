@@ -165,12 +165,15 @@ describe("WeightsPanel", () => {
 
     await waitFor(() => expect(mockUpdate).toHaveBeenCalledTimes(1));
     expect(mockUpdate.mock.calls[0][0]).toBe("report-1");
-    // Both edits are committed verbatim; the total is 10000.
-    const committed = mockUpdate.mock.calls[0][1].weights as CompositeWeights;
-    expect(committed.onlinePresence).toBe(4000);
-    expect(committed.donorMatch).toBe(1000);
-    const total = Object.values(committed).reduce((acc: number, b) => acc + (b as number), 0);
-    expect(total).toBe(10000);
+    // Both edits committed verbatim; the untouched three are intact and the
+    // five total 100% (4000+1000+2500+1000+1500 = 10000).
+    expect(mockUpdate.mock.calls[0][1].weights).toEqual({
+      onlinePresence: 4000,
+      socialPresence: 1000,
+      impactRecency: 2500,
+      donorMatch: 1000,
+      compliance: 1500,
+    });
     expect(mockUpdate.mock.calls[0][1].topCount).toBeUndefined();
   });
 
