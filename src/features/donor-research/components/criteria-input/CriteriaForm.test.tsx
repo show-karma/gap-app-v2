@@ -64,17 +64,26 @@ describe("CriteriaForm weights", () => {
     expect(onSubmit.mock.calls[0][0].weights).toEqual(DEFAULT_WEIGHTS_BASIS_POINTS);
   });
 
-  it("redistributes on edit and submits weights that still total 100%", async () => {
+  it("sets only the edited factor and gates submit on a 100% total", async () => {
     const onSubmit = vi.fn();
     render(withQueryClient(<Harness onSubmit={onSubmit} />));
-    const onlineInput = within(weightsFieldset()).getAllByRole("spinbutton")[0];
-    fireEvent.change(onlineInput, { target: { value: "40" } });
-    fireEvent.blur(onlineInput);
+    const inputs = within(weightsFieldset()).getAllByRole("spinbutton");
 
+    // Raise Online presence 25→40: nothing is redistributed, so the five now
+    // total 115% and the form can't be submitted.
+    fireEvent.change(inputs[0], { target: { value: "40" } });
+    fireEvent.blur(inputs[0]);
+    fireEvent.click(screen.getByRole("button", { name: /start report/i }));
+    expect(onSubmit).not.toHaveBeenCalled();
+
+    // Drop Mission match 25→10 to bring the total back to 100%, then submit.
+    fireEvent.change(inputs[3], { target: { value: "10" } });
+    fireEvent.blur(inputs[3]);
     fireEvent.click(screen.getByRole("button", { name: /start report/i }));
     await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
     const weights = onSubmit.mock.calls[0][0].weights;
     expect(weights.onlinePresence).toBe(4000);
+    expect(weights.donorMatch).toBe(1000);
     expect(Object.values(weights).reduce((a: number, b) => a + (b as number), 0)).toBe(10000);
   });
 });
