@@ -993,6 +993,20 @@ jobs:
           CI: 'true'
         run: pnpm exec playwright test --config=e2e/playwright.config.ts --project=setup
 
+      # When the Privy login hangs, the screenshots + Playwright trace are the
+      # only way to see where. The setup project retains a trace on failure;
+      # surface it (and the HTML report) as an artifact for diagnosis.
+      - name: Upload auth setup trace on failure
+        if: failure()
+        uses: actions/upload-artifact@v5
+        with:
+          name: dogfood-auth-prep-trace
+          path: |
+            e2e/test-results/
+            e2e/playwright-report/
+          retention-days: 3
+          if-no-files-found: ignore
+
       - name: Verify storage state was saved
         run: |
           if [ ! -s e2e/.auth/user.json ]; then

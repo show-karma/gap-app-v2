@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowUpRight } from "lucide-react";
-import type { ResearchReportCandidate } from "@/types/donor-research";
+import type { CompositeWeights, ResearchReportCandidate } from "@/types/donor-research";
 import { SocialPresence } from "../report-viewer/SocialPresence";
 import { ChapterMark } from "./ChapterMark";
 import { ComplianceStrip } from "./ComplianceStrip";
@@ -20,6 +20,14 @@ import {
 
 interface LeadCandidateProps {
   candidate: ResearchReportCandidate;
+  /** Persisted report weights for the score breakdown; `null` = legacy. */
+  weights: CompositeWeights | null;
+  /**
+   * Whether the brief has any other candidates below the lead (runner-ups or
+   * "also considered"). Drives the "Read on for the runners-up…" line so it
+   * isn't shown on a single-candidate report (QA finding).
+   */
+  hasMore: boolean;
 }
 
 /**
@@ -29,7 +37,7 @@ interface LeadCandidateProps {
  * brand-coloured type on the page — everything else relies on
  * scale and weight for hierarchy.
  */
-export function LeadCandidate({ candidate }: LeadCandidateProps) {
+export function LeadCandidate({ candidate, weights, hasMore }: LeadCandidateProps) {
   const isDisqualified = candidate.complianceVerdict === "disqualified";
   const name = humanizeCase(
     candidate.organizationName ??
@@ -114,7 +122,7 @@ export function LeadCandidate({ candidate }: LeadCandidateProps) {
         <aside className="min-w-0 lg:pl-8 lg:border-l lg:border-border/60">
           <CompositeHero composite100={composite100} band={band} disqualified={isDisqualified} />
 
-          <ScoreBreakdownTable candidate={candidate} />
+          <ScoreBreakdownTable candidate={candidate} weights={weights} />
 
           <ComplianceStrip candidate={candidate} />
 
@@ -133,7 +141,7 @@ export function LeadCandidate({ candidate }: LeadCandidateProps) {
         </aside>
       </div>
 
-      <LeadJustification candidate={candidate} />
+      <LeadJustification candidate={candidate} hasMore={hasMore} />
     </section>
   );
 }
@@ -291,7 +299,13 @@ function LeadCoverage({ candidate }: LeadCoverageProps) {
   );
 }
 
-function LeadJustification({ candidate }: LeadCandidateProps) {
+function LeadJustification({
+  candidate,
+  hasMore,
+}: {
+  candidate: ResearchReportCandidate;
+  hasMore: boolean;
+}) {
   return (
     <div className="mt-12 border-t border-border/60 pt-6">
       <p
@@ -303,8 +317,8 @@ function LeadJustification({ candidate }: LeadCandidateProps) {
         className={`${briefProse.className} mt-2 max-w-[72ch] text-[1rem] leading-[1.55] text-foreground/80`}
       >
         This recommendation leads the pool on{" "}
-        <span className="text-foreground">{leadJustification(candidate)}</span> Read on for the
-        runners-up and the full comparison.
+        <span className="text-foreground">{leadJustification(candidate)}</span>
+        {hasMore ? " Read on for the runners-up and the full comparison." : null}
       </p>
     </div>
   );

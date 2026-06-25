@@ -1,0 +1,88 @@
+{
+  "_comment": "Single authoritative parity fixture (DEV-418 U5). The frontend recompute() and the backend scoreOne()/rankByWeights() must produce these exact composites and ordering for the same inputs. If the math changes, update this fixture and re-run BOTH the frontend scoring.test.ts and the backend composite-ranking.service parity case.",
+  "candidates": [
+    {
+      "id": "c1",
+      "ein": "100",
+      "fundingOrganizationId": "orgA",
+      "components": {
+        "onlinePresence": 0.8,
+        "socialPresence": 0.5,
+        "impactRecency": 0.6,
+        "donorMatch": 0.7,
+        "compliance": 1.0
+      }
+    },
+    {
+      "id": "c2",
+      "ein": "200",
+      "fundingOrganizationId": "orgB",
+      "components": {
+        "onlinePresence": 0.4,
+        "socialPresence": 0.9,
+        "impactRecency": 0.8,
+        "donorMatch": 0.5,
+        "compliance": 0.6
+      }
+    },
+    {
+      "id": "c3",
+      "ein": null,
+      "fundingOrganizationId": "orgC",
+      "components": {
+        "onlinePresence": 0.9,
+        "socialPresence": 0.1,
+        "impactRecency": 0.3,
+        "donorMatch": 0.9,
+        "compliance": 0.3
+      }
+    },
+    {
+      "id": "c4",
+      "ein": "300",
+      "fundingOrganizationId": "orgD",
+      "components": {
+        "onlinePresence": 0.2,
+        "socialPresence": 0.2,
+        "impactRecency": 0.9,
+        "donorMatch": 0.9,
+        "compliance": 1.0
+      }
+    },
+    {
+      "id": "c5",
+      "ein": "050",
+      "fundingOrganizationId": "orgE",
+      "components": {
+        "onlinePresence": 0.5,
+        "socialPresence": 0.5,
+        "impactRecency": 0.5,
+        "donorMatch": 0.5,
+        "compliance": 0.5
+      }
+    }
+  ],
+  "defaultWeights": {
+    "onlinePresence": 2500,
+    "socialPresence": 1000,
+    "impactRecency": 2500,
+    "donorMatch": 2500,
+    "compliance": 1500
+  },
+  "expectedDefault": {
+    "order": ["c1", "c4", "c2", "c3", "c5"],
+    "composites": { "c1": 0.725, "c2": 0.605, "c3": 0.58, "c4": 0.67, "c5": 0.5 },
+    "topThree": ["c1", "c4", "c2"]
+  },
+  "complianceOnlyWeights": {
+    "onlinePresence": 0,
+    "socialPresence": 0,
+    "impactRecency": 0,
+    "donorMatch": 0,
+    "compliance": 10000
+  },
+  "expectedComplianceOnly": {
+    "order": ["c1", "c4", "c2", "c5", "c3"],
+    "topThree": ["c1", "c4", "c2"]
+  }
+}
