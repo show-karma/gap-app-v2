@@ -69,6 +69,6 @@ describe("CriteriaForm weights", () => {
     const weights = onSubmit.mock.calls[0][0].weights;
     const sum = Object.values(weights).reduce((a: number, b) => a + (b as number), 0);
     expect(sum).toBe(10000);
-    expect(weights.onlinePresence).toBe(DEFAULT_WEIGHTS_BASIS_POINTS.onlinePresence + 1);
+    expect(weights.onlinePresence).toBe(DEFAULT_WEIGHTS_BASIS_POINTS.onlinePresence + 100);
   });
 });

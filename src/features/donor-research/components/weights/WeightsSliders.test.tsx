@@ -38,7 +38,8 @@ describe("WeightsSliders", () => {
 
     expect(onChange).toHaveBeenCalledTimes(1);
     const next = onChange.mock.calls[0][0] as CompositeWeights;
-    expect(next.onlinePresence).toBe(DEFAULT_WEIGHTS_BASIS_POINTS.onlinePresence + 1);
+    // Slider step is 100 bp (1%) for keyboard usability — one ArrowRight = +1%.
+    expect(next.onlinePresence).toBe(DEFAULT_WEIGHTS_BASIS_POINTS.onlinePresence + 100);
     expect(sum(next)).toBe(WEIGHTS_TOTAL_BASIS_POINTS);
   });
 

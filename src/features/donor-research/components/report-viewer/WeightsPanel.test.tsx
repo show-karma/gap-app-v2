@@ -155,7 +155,7 @@ describe("WeightsPanel", () => {
     expect(mockUpdate.mock.calls[0][0]).toBe("report-1");
     // Config endpoint receives only the changed field: { weights }.
     expect(mockUpdate.mock.calls[0][1].weights.onlinePresence).toBe(
-      DEFAULT_WEIGHTS.onlinePresence + 1
+      DEFAULT_WEIGHTS.onlinePresence + 100
     );
     expect(mockUpdate.mock.calls[0][1].topCount).toBeUndefined();
   });

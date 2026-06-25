@@ -1,3 +1,4 @@
+import pluralize from "pluralize";
 import type { CompositeWeights, ResearchReportCandidate } from "@/types/donor-research";
 import {
   onlinePresenceScore,
@@ -72,7 +73,7 @@ export function buildMatchReasons(
       label: "Social presence",
       score: social,
       help: "Recent posting activity across the nonprofit's linked social channels (LinkedIn, Facebook, Instagram, X), aggregated into a single signal.",
-      weight: weights.socialPresence / 10000,
+      weight: w.socialPresence,
       tone: toneFor(social),
       text: phraseSocial(social, candidate.socialMetrics),
     });
@@ -112,10 +113,11 @@ function phraseSocial(
     return "No linked social channels with recent activity were found for this nonprofit.";
   }
   const channelCount = channels.length;
-  const noun = channelCount === 1 ? "channel" : "channels";
-  if (score >= 0.65) return `Active across ${channelCount} social ${noun} with recent posts.`;
-  if (score >= 0.35) return `Some recent social activity across ${channelCount} ${noun}.`;
-  return `Light social activity across ${channelCount} ${noun}; most posts are older.`;
+  const channelNoun = pluralize("channel", channelCount);
+  if (score >= 0.65)
+    return `Active across ${channelCount} social ${channelNoun} with recent posts.`;
+  if (score >= 0.35) return `Some recent social activity across ${channelCount} ${channelNoun}.`;
+  return `Light social activity across ${channelCount} ${channelNoun}; most posts are older.`;
 }
 
 function phraseCompliance(

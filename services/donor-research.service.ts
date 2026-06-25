@@ -305,9 +305,10 @@ export const fetchSharedReport = async (token: string): Promise<ResearchReportDe
   }
   return {
     ...data,
-    // Defensive: a share payload from before DEV-418 has no `weights` key,
-    // which the brief reads as a legacy four-dimension report.
+    // Defensive: a share payload from before DEV-418 has no `weights`/`topCount`
+    // keys, which the brief reads as a legacy four-dimension report (default 3).
     weights: data.weights ?? null,
+    topCount: data.topCount ?? null,
     advisorId: "",
     donorHandleId: "",
     donorHandleLabel: null,

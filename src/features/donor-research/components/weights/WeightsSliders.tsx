@@ -69,7 +69,7 @@ export function WeightsSliders({ value, onChange, disabled = false }: WeightsSli
                 value={[value[key]]}
                 min={0}
                 max={WEIGHTS_TOTAL_BASIS_POINTS}
-                step={1}
+                step={100}
                 disabled={disabled}
                 onValueChange={([next]) => handleChange(key, next)}
               />
