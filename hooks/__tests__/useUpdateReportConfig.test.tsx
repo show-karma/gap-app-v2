@@ -171,7 +171,11 @@ describe("useUpdateReportConfig", () => {
 
   it("optimistically re-ranks the cached report before the server responds", async () => {
     let resolve!: (value: ResearchReportDetail) => void;
-    mockUpdate.mockReturnValue(new Promise<ResearchReportDetail>((r) => (resolve = r)));
+    mockUpdate.mockReturnValue(
+      new Promise<ResearchReportDetail>((r) => {
+        resolve = r;
+      })
+    );
 
     const { result } = renderHook(() => useUpdateReportConfig(), { wrapper });
     result.current.mutate({ reportId: REPORT_ID, weights: ONLINE_ONLY });
@@ -195,7 +199,11 @@ describe("useUpdateReportConfig", () => {
 
   it("sends only { topCount } and re-flags the featured set for a topCount-only change", async () => {
     let resolve!: (value: ResearchReportDetail) => void;
-    mockUpdate.mockReturnValue(new Promise<ResearchReportDetail>((r) => (resolve = r)));
+    mockUpdate.mockReturnValue(
+      new Promise<ResearchReportDetail>((r) => {
+        resolve = r;
+      })
+    );
 
     const { result } = renderHook(() => useUpdateReportConfig(), { wrapper });
     result.current.mutate({ reportId: REPORT_ID, topCount: 1 });
@@ -251,7 +259,11 @@ describe("useReorderReport", () => {
 
   it("optimistically applies the manual order and 1-based positions", async () => {
     let resolve!: (value: ResearchReportDetail) => void;
-    mockReorder.mockReturnValue(new Promise<ResearchReportDetail>((r) => (resolve = r)));
+    mockReorder.mockReturnValue(
+      new Promise<ResearchReportDetail>((r) => {
+        resolve = r;
+      })
+    );
 
     const order = ["c5", "c3", "c1", "c2", "c4"];
     const { result } = renderHook(() => useReorderReport(), { wrapper });
