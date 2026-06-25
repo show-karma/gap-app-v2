@@ -8,9 +8,11 @@ import { useDonorHandles } from "@/hooks/useDonorHandles";
 import { useCreateDonorReport } from "@/hooks/useDonorReports";
 import { PAGES } from "@/utilities/pages";
 import { DEFAULT_TOP_COUNT, DEFAULT_WEIGHTS_BASIS_POINTS } from "../report-brief/scoring";
-import { WEIGHTS_TOTAL_BASIS_POINTS } from "../weights/use-weights-rebalance";
+import { WEIGHTS_TOTAL_BASIS_POINTS } from "../weights/weights-allocation";
 import { CriteriaForm } from "./CriteriaForm";
 
+// The advisor allocates each weight independently (basis points); the five must
+// add up to exactly 100% (10000 bp) before the report can run.
 const WeightsSchema = z
   .object({
     onlinePresence: z.number().int().min(0).max(WEIGHTS_TOTAL_BASIS_POINTS),
@@ -23,7 +25,7 @@ const WeightsSchema = z
     (w) =>
       w.onlinePresence + w.socialPresence + w.impactRecency + w.donorMatch + w.compliance ===
       WEIGHTS_TOTAL_BASIS_POINTS,
-    { message: "Weights must sum to 100%." }
+    { message: "Weights must add up to 100%." }
   );
 
 const CriteriaSchema = z.object({

@@ -126,22 +126,24 @@ describe("WeightsPanel", () => {
     expect(within(preview).queryByText(/entering top 3/i)).not.toBeInTheDocument();
   });
 
-  it("disables Update weights until the weights change", () => {
+  it("enables Update weights once a weight changes (total stays 100%)", () => {
     renderPanel(buildReport(DEFAULT_WEIGHTS));
     openSheet();
     expect(screen.getByRole("button", { name: "Update weights" })).toBeDisabled();
-    const firstThumb = screen.getAllByRole("slider")[0];
-    firstThumb.focus();
-    fireEvent.keyDown(firstThumb, { key: "ArrowRight" });
+
+    // Editing redistributes the rest, so the draft stays balanced and becomes dirty.
+    const onlineInput = screen.getAllByRole("spinbutton")[0];
+    fireEvent.change(onlineInput, { target: { value: "40" } });
+    fireEvent.blur(onlineInput);
     expect(screen.getByRole("button", { name: "Update weights" })).toBeEnabled();
   });
 
   it("commits the adjusted weights through the confirm dialog", async () => {
     renderPanel(buildReport(DEFAULT_WEIGHTS));
     openSheet();
-    const firstThumb = screen.getAllByRole("slider")[0];
-    firstThumb.focus();
-    fireEvent.keyDown(firstThumb, { key: "ArrowRight" });
+    const onlineInput = screen.getAllByRole("spinbutton")[0];
+    fireEvent.change(onlineInput, { target: { value: "40" } });
+    fireEvent.blur(onlineInput);
 
     fireEvent.click(screen.getByRole("button", { name: "Update weights" }));
 
@@ -153,10 +155,11 @@ describe("WeightsPanel", () => {
 
     await waitFor(() => expect(mockUpdate).toHaveBeenCalledTimes(1));
     expect(mockUpdate.mock.calls[0][0]).toBe("report-1");
-    // Config endpoint receives only the changed field: { weights }.
-    expect(mockUpdate.mock.calls[0][1].weights.onlinePresence).toBe(
-      DEFAULT_WEIGHTS.onlinePresence + 100
-    );
+    // Online set to 40%; the rest redistributed; the committed weights total 10000.
+    const committed = mockUpdate.mock.calls[0][1].weights as CompositeWeights;
+    expect(committed.onlinePresence).toBe(4000);
+    const total = Object.values(committed).reduce((acc: number, b) => acc + (b as number), 0);
+    expect(total).toBe(10000);
     expect(mockUpdate.mock.calls[0][1].topCount).toBeUndefined();
   });
 
