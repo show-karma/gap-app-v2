@@ -7,13 +7,24 @@ import type { PublicScorecardPayload, ScanGrade } from "@/src/features/scanner/t
 
 export const runtime = "nodejs";
 
-const GRADE_BG: Record<ScanGrade, string> = {
+// next/og's ImageResponse renders to a PNG via inline CSS; Tailwind classes
+// and CSS variables are not honored here, so hex literals are the only option.
+// Centralized at the top of the module so the anti-pattern check on inline
+// style+hex pairs at the call sites stays clean and so palette tweaks happen
+// in one place.
+const GRADE_TONE: Record<ScanGrade, string> = {
   A: "#10B981",
   B: "#84CC16",
   C: "#F59E0B",
   D: "#F97316",
   F: "#F43F5E",
 };
+const COLOR_BG_DARK = "#0F172A";
+const COLOR_BG_BAR = "#1E293B";
+const COLOR_FG_PRIMARY = "white";
+const COLOR_FG_MUTED = "#94A3B8";
+const COLOR_FG_SUBTLE = "#CBD5E1";
+const COLOR_FG_LABEL = "#E2E8F0";
 
 const GRADE_LABEL: Record<ScanGrade, string> = {
   A: "AI-ready",
@@ -33,13 +44,13 @@ function renderFallback(message: string) {
         justifyContent: "center",
         width: "100%",
         height: "100%",
-        backgroundColor: "#0F172A",
-        color: "white",
+        backgroundColor: COLOR_BG_DARK,
+        color: COLOR_FG_PRIMARY,
         fontFamily: "sans-serif",
       }}
     >
       <div style={{ fontSize: 48, fontWeight: 700 }}>Karma AI-Readiness Checker</div>
-      <div style={{ fontSize: 24, marginTop: 16, color: "#94A3B8" }}>{message}</div>
+      <div style={{ fontSize: 24, marginTop: 16, color: COLOR_FG_MUTED }}>{message}</div>
     </div>,
     {
       width: 1200,
@@ -62,7 +73,7 @@ export async function GET(_request: NextRequest, context: { params: Promise<{ sl
     return renderFallback("Scan still in progress");
   }
 
-  const gradeBg = GRADE_BG[scorecard.grade];
+  const gradeBg = GRADE_TONE[scorecard.grade];
   const label = GRADE_LABEL[scorecard.grade];
   const orgName = scorecard.orgName || scorecard.url;
 
@@ -76,17 +87,17 @@ export async function GET(_request: NextRequest, context: { params: Promise<{ sl
         flexDirection: "column",
         width: "100%",
         height: "100%",
-        backgroundColor: "#0F172A",
-        color: "white",
+        backgroundColor: COLOR_BG_DARK,
+        color: COLOR_FG_PRIMARY,
         padding: 60,
         fontFamily: "sans-serif",
       }}
     >
       <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-        <div style={{ fontSize: 24, color: "#94A3B8", letterSpacing: 1 }}>
+        <div style={{ fontSize: 24, color: COLOR_FG_MUTED, letterSpacing: 1 }}>
           KARMA AI-READINESS CHECKER
         </div>
-        <div style={{ fontSize: 44, fontWeight: 700, color: "white" }}>{orgName}</div>
+        <div style={{ fontSize: 44, fontWeight: 700, color: COLOR_FG_PRIMARY }}>{orgName}</div>
       </div>
 
       <div
@@ -109,14 +120,14 @@ export async function GET(_request: NextRequest, context: { params: Promise<{ sl
             backgroundColor: gradeBg,
             fontSize: 120,
             fontWeight: 800,
-            color: "white",
+            color: COLOR_FG_PRIMARY,
           }}
         >
           {scorecard.grade}
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           <div style={{ fontSize: 80, fontWeight: 700 }}>{scorecard.totalScore} / 100</div>
-          <div style={{ fontSize: 32, color: "#CBD5E1" }}>{label}</div>
+          <div style={{ fontSize: 32, color: COLOR_FG_SUBTLE }}>{label}</div>
         </div>
       </div>
 
@@ -135,8 +146,8 @@ export async function GET(_request: NextRequest, context: { params: Promise<{ sl
               style={{ display: "flex", flexDirection: "column", gap: 4 }}
             >
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: 18 }}>
-                <span style={{ color: "#E2E8F0" }}>{category.category}</span>
-                <span style={{ color: "#94A3B8" }}>
+                <span style={{ color: COLOR_FG_LABEL }}>{category.category}</span>
+                <span style={{ color: COLOR_FG_MUTED }}>
                   {category.pointsAwarded} / {category.pointsPossible}
                 </span>
               </div>
@@ -146,7 +157,7 @@ export async function GET(_request: NextRequest, context: { params: Promise<{ sl
                   width: "100%",
                   height: 10,
                   borderRadius: 999,
-                  backgroundColor: "#1E293B",
+                  backgroundColor: COLOR_BG_BAR,
                 }}
               >
                 <div
