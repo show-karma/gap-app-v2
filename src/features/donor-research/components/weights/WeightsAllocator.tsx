@@ -67,8 +67,13 @@ export function WeightsAllocator({
   };
 
   const commitInput = (dim: WeightDimension, text: string) => {
-    const parsed = Number(text);
-    apply(dim, Number.isFinite(parsed) ? parsed : weightPercent(value, dim));
+    const trimmed = text.trim();
+    if (trimmed === "") return; // cleared → keep the current value, don't zero it
+    const parsed = Number(trimmed);
+    // Ignore non-numeric input and no-op re-entries, so a focus/blur that didn't
+    // change anything never redistributes (or snaps a non-whole-percent weight).
+    if (!Number.isFinite(parsed) || Math.round(parsed) === weightPercent(value, dim)) return;
+    apply(dim, parsed);
   };
 
   const reset = () => {

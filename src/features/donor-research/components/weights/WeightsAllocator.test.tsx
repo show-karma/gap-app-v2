@@ -33,6 +33,15 @@ describe("WeightsAllocator", () => {
     expect(total(next)).toBe(10000);
   });
 
+  it("keeps the current value when the field is cleared (does not commit 0%)", () => {
+    const onChange = vi.fn();
+    render(<WeightsAllocator value={BALANCED} onChange={onChange} resetValue={BALANCED} />);
+    const onlineInput = screen.getAllByRole("spinbutton")[0];
+    fireEvent.change(onlineInput, { target: { value: "" } });
+    fireEvent.blur(onlineInput);
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
   it("freezes a locked factor when another one changes", () => {
     const onChange = vi.fn();
     render(<WeightsAllocator value={BALANCED} onChange={onChange} resetValue={BALANCED} />);
