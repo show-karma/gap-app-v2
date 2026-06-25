@@ -182,6 +182,13 @@ export const PAGES = {
   WORK: (slug: string) => `/ai-teams/${slug}/work`,
   SKILLS: (slug: string) => `/ai-teams/${slug}/skills`,
   ASK_KARMA: `/ask-karma`,
+  SCANNER: {
+    ROOT: `/scanner`,
+    SCAN_DETAIL: (id: string) => `/scanner/scans/${id}`,
+    PUBLIC_SCORECARD: (slug: string) => `/s/${slug}`,
+    API_KEYS_SETTINGS: `/settings/api-keys/scanner`,
+    OG_IMAGE: (slug: string) => `/api/scanner/og/${slug}`,
+  },
 };
 
 /**
