@@ -29,11 +29,15 @@ const STORAGE_STATE_PATH = path.join(__dirname, "..", ".auth", "user.json");
  */
 async function probeCachedSession(browser: Browser, baseURL: string | undefined): Promise<boolean> {
   // --no-sandbox keeps the probe browser working under root CI containers;
-  // GitHub runners ignore it harmlessly.
-  const probeBrowser = await browser
-    .browserType()
-    .launch({ args: ["--no-sandbox"] })
-    .catch(() => null);
+  // GitHub runners ignore it harmlessly. launch() has no built-in timeout, so
+  // race it against one — a wedged launch must not consume the OTP budget.
+  const probeBrowser = await Promise.race([
+    browser
+      .browserType()
+      .launch({ args: ["--no-sandbox"] })
+      .catch(() => null),
+    new Promise<null>((resolve) => setTimeout(() => resolve(null), 20_000)),
+  ]);
   if (!probeBrowser) return false;
 
   try {
