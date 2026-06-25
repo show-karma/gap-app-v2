@@ -69,7 +69,16 @@ setup("authenticate via Privy", async ({ page, browser }) => {
       } catch (err) {
         console.log(`Cached session probe failed (${err}) — falling back to OTP login`);
       } finally {
-        await probeContext.close().catch(() => {});
+        // close() can hang on a Chromium CDP disposeBrowserContext teardown
+        // race (seen in CI). `.catch()` only swallows a rejection, not a hang —
+        // an awaited hang here consumes the whole 180s budget and starves the
+        // OTP fallback (its page.goto then fails "browser has been closed").
+        // Bound it so the throwaway probe context can never block the fallback;
+        // a dangling probe context is harmless and Playwright reaps it at end.
+        await Promise.race([
+          probeContext.close().catch(() => {}),
+          new Promise((resolve) => setTimeout(resolve, 5_000)),
+        ]);
       }
       if (reused) {
         console.log("Reused cached Privy session — skipped OTP login");
