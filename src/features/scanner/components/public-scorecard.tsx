@@ -45,7 +45,13 @@ export function PublicScorecard({ slug, initialData }: PublicScorecardProps) {
   }
 
   if (!scorecard) {
-    return null;
+    // Idle state (e.g. slug missing). Per gap-app-v2/CLAUDE.md, every data
+    // component renders loading, empty, AND error — never returns null.
+    return (
+      <div className="flex flex-col gap-2 rounded-2xl border border-zinc-200 bg-zinc-50 p-6 text-sm text-zinc-600 dark:border-zinc-800 dark:bg-zinc-900/40 dark:text-zinc-400">
+        No scorecard available for this URL yet.
+      </div>
+    );
   }
 
   return (
