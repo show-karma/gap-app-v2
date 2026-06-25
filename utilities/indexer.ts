@@ -800,6 +800,8 @@ export const INDEXER = {
     HANDLES: "/v2/donor-research/handles",
     REPORTS: "/v2/donor-research/reports",
     REPORT_BY_ID: (reportId: string) => `/v2/donor-research/reports/${reportId}`,
+    REPORT_CONFIG: (reportId: string) => `/v2/donor-research/reports/${reportId}/config`,
+    REPORT_REORDER: (reportId: string) => `/v2/donor-research/reports/${reportId}/reorder`,
     REPORT_STREAM: (reportId: string) => `/v2/donor-research/reports/${reportId}/stream`,
     SHARE_TOKEN: (reportId: string) => `/v2/donor-research/reports/${reportId}/share-token`,
     SHARED: (token: string) => `/v2/donor-research/shared/${token}`,
