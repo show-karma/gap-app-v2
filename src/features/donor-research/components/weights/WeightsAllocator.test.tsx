@@ -11,15 +11,15 @@ function total(w: CompositeWeights): number {
 }
 
 describe("WeightsAllocator", () => {
-  it("renders a lock, slider, and percentage input per factor", () => {
+  it("renders a slider and percentage input per factor", () => {
     render(<WeightsAllocator value={BALANCED} onChange={() => {}} resetValue={BALANCED} />);
     expect(screen.getAllByRole("slider")).toHaveLength(5);
     expect(screen.getAllByRole("spinbutton")).toHaveLength(5);
-    // All unlocked initially → five "Lock …" toggles.
-    expect(screen.getAllByRole("button", { name: /^lock /i })).toHaveLength(5);
+    // No lock toggles any more — only the Reset control.
+    expect(screen.queryByRole("button", { name: /lock/i })).not.toBeInTheDocument();
   });
 
-  it("redistributes across the other factors when a percentage is typed", () => {
+  it("sets only the typed factor, leaving the others untouched", () => {
     const onChange = vi.fn();
     render(<WeightsAllocator value={BALANCED} onChange={onChange} resetValue={BALANCED} />);
     const onlineInput = screen.getAllByRole("spinbutton")[0];
@@ -29,8 +29,26 @@ describe("WeightsAllocator", () => {
     expect(onChange).toHaveBeenCalledTimes(1);
     const next = onChange.mock.calls[0][0] as CompositeWeights;
     expect(next.onlinePresence).toBe(4000);
-    expect(next.socialPresence).toBeLessThan(BALANCED.socialPresence);
-    expect(total(next)).toBe(10000);
+    // Nothing is redistributed — the other four are unchanged and the total
+    // moves (the advisor reconciles it back to 100% by hand).
+    expect(next.socialPresence).toBe(BALANCED.socialPresence);
+    expect(next.impactRecency).toBe(BALANCED.impactRecency);
+    expect(next.donorMatch).toBe(BALANCED.donorMatch);
+    expect(next.compliance).toBe(BALANCED.compliance);
+    expect(total(next)).toBe(10000 - BALANCED.onlinePresence + 4000);
+  });
+
+  it("shows the running total and flags it when off 100%", () => {
+    const offBalance: CompositeWeights = { ...BALANCED, onlinePresence: 4000 };
+    const { rerender } = render(
+      <WeightsAllocator value={BALANCED} onChange={() => {}} resetValue={BALANCED} />
+    );
+    expect(screen.getByText("100%")).toBeInTheDocument();
+    expect(screen.queryByText(/must add up to 100%/i)).not.toBeInTheDocument();
+
+    rerender(<WeightsAllocator value={offBalance} onChange={() => {}} resetValue={BALANCED} />);
+    expect(screen.getByText(`${total(offBalance) / 100}%`)).toBeInTheDocument();
+    expect(screen.getByText(/must add up to 100%/i)).toBeInTheDocument();
   });
 
   it("keeps the current value when the field is cleared (does not commit 0%)", () => {
@@ -40,28 +58,6 @@ describe("WeightsAllocator", () => {
     fireEvent.change(onlineInput, { target: { value: "" } });
     fireEvent.blur(onlineInput);
     expect(onChange).not.toHaveBeenCalled();
-  });
-
-  it("freezes a locked factor when another one changes", () => {
-    const onChange = vi.fn();
-    render(<WeightsAllocator value={BALANCED} onChange={onChange} resetValue={BALANCED} />);
-    fireEvent.click(screen.getByRole("button", { name: "Lock Compliance" }));
-    const onlineInput = screen.getAllByRole("spinbutton")[0];
-    fireEvent.change(onlineInput, { target: { value: "40" } });
-    fireEvent.blur(onlineInput);
-
-    const next = onChange.mock.calls[0][0] as CompositeWeights;
-    expect(next.compliance).toBe(1500); // frozen
-    expect(next.onlinePresence).toBe(4000);
-    expect(total(next)).toBe(10000);
-  });
-
-  it("disables the slider and input of a locked factor", () => {
-    render(<WeightsAllocator value={BALANCED} onChange={() => {}} resetValue={BALANCED} />);
-    fireEvent.click(screen.getByRole("button", { name: "Lock Social presence" }));
-    // Social is the second factor.
-    expect(screen.getAllByRole("spinbutton")[1]).toBeDisabled();
-    expect(screen.getByRole("button", { name: "Unlock Social presence" })).toBeInTheDocument();
   });
 
   it("resets to the reset value", () => {
@@ -83,6 +79,6 @@ describe("WeightsAllocator", () => {
       <WeightsAllocator value={BALANCED} onChange={() => {}} resetValue={BALANCED} disabled />
     );
     screen.getAllByRole("spinbutton").forEach((input) => expect(input).toBeDisabled());
-    screen.getAllByRole("button", { name: /lock|reset/i }).forEach((b) => expect(b).toBeDisabled());
+    expect(screen.getByRole("button", { name: /reset/i })).toBeDisabled();
   });
 });
