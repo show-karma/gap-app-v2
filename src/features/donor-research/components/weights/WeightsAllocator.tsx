@@ -118,8 +118,8 @@ export function WeightsAllocator({
                       if (event.key === "Enter") event.currentTarget.blur();
                     }}
                     className={cn(
-                      "w-10 rounded border-0 bg-transparent p-0 text-right text-sm tabular-nums text-foreground",
-                      "hover:bg-muted/60 focus:outline-none focus-visible:ring-1 focus-visible:ring-ring",
+                      "w-12 rounded border-0 bg-muted px-1.5 py-0.5 text-right text-sm tabular-nums text-foreground",
+                      "hover:bg-muted focus:bg-muted focus:outline-none focus-visible:outline-none focus-visible:ring-0",
                       "disabled:opacity-60",
                       "[appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                     )}
@@ -135,6 +135,9 @@ export function WeightsAllocator({
                 max={100}
                 step={1}
                 disabled={disabled}
+                // Uniform light track (no filled range) with a white, blue-ringed thumb.
+                rangeClassName="bg-transparent"
+                thumbClassName="h-4 w-4 border-2 border-blue-500 bg-white shadow"
                 onValueChange={([next]) => {
                   setEditing(null);
                   apply(key, next);
@@ -149,16 +152,12 @@ export function WeightsAllocator({
         <span
           aria-live="polite"
           className={cn(
-            "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium",
+            "inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium",
             isBalanced
               ? "bg-green-50 text-green-700 dark:bg-green-950/40 dark:text-green-400"
               : "bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-400"
           )}
         >
-          <span
-            aria-hidden
-            className={cn("h-1.5 w-1.5 rounded-full", isBalanced ? "bg-green-500" : "bg-red-500")}
-          />
           Total {formattedTotal}%
         </span>
         <button
