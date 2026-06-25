@@ -48,8 +48,15 @@ async function probeCachedSession(browser: Browser, baseURL: string | undefined)
     const probe = await probeContext.newPage();
     // Bound the probe goto so a slow staging response can't eat the OTP budget.
     await probe.goto("/", { waitUntil: "domcontentloaded", timeout: 20_000 });
+    // NOTE: waitForFunction is (pageFunction, arg, options) — the timeout MUST
+    // be the THIRD argument. Passing { timeout } as the second arg makes
+    // Playwright treat it as `arg` (ignored by the function) and the timeout
+    // silently defaults to 0 = wait forever, hanging the whole setup when the
+    // cached token is expired. Pass undefined for `arg` so options land right.
     const refreshed = await probe
-      .waitForFunction(() => localStorage.getItem("privy:token") !== null, { timeout: 15_000 })
+      .waitForFunction(() => localStorage.getItem("privy:token") !== null, undefined, {
+        timeout: 15_000,
+      })
       .then(() => true)
       .catch(() => false);
     if (!refreshed) return false;
@@ -192,11 +199,14 @@ setup("authenticate via Privy", async ({ page, browser }, testInfo) => {
   // localStorage. Give it more room than before: token minting after the
   // final digit can lag a few seconds on staging, and a premature failure
   // here wastes the OTP we just spent against the per-address rate limit.
+  // (pageFunction, arg, options) — timeout MUST be the third argument; passing
+  // it as the second makes Playwright ignore it (defaults to 0 = no timeout).
   await page.waitForFunction(
     () => {
       const token = localStorage.getItem("privy:token");
       return token !== null;
     },
+    undefined,
     { timeout: 45000 }
   );
 
