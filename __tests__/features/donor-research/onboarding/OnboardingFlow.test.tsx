@@ -318,18 +318,21 @@ describe("OnboardingFlow — email pre-fill from session", () => {
   it("does not clobber an email the advisor has already typed", async () => {
     const user = userEvent.setup();
     // Session resolves with no email at first.
-    renderFlow();
+    const { rerender } = renderFlow();
     await advanceToForm(user);
 
     await user.type(screen.getByLabelText(/email/i), "typed@example.com");
 
-    // Session resolves an email afterwards; a re-render must not overwrite it.
+    // Session resolves an email afterwards. Drive the re-render explicitly so
+    // the regression coverage doesn't depend on an incidental re-render from a
+    // later form interaction — the prefill effect must re-run and still leave
+    // the advisor's typed value untouched.
     mockPrivyValue = {
       ready: true,
       authenticated: true,
       user: { email: { address: "session@example.com" } },
     };
-    await user.type(screen.getByLabelText(/display name/i), "Avery");
+    rerender(<OnboardingFlow />);
 
     expect(screen.getByLabelText(/email/i)).toHaveValue("typed@example.com");
   });
