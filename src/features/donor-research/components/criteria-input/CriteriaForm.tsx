@@ -2,7 +2,9 @@
 
 import type { UseFormReturn } from "react-hook-form";
 import type { DonorHandle } from "@/types/donor-research";
-import { WeightsSliders } from "../weights/WeightsSliders";
+import { DEFAULT_WEIGHTS_BASIS_POINTS } from "../report-brief/scoring";
+import { WeightsAllocator } from "../weights/WeightsAllocator";
+import { isValidWeights } from "../weights/weights-allocation";
 import type { CriteriaFormValues } from "./CriteriaInputPanel";
 import { DonorHandlePicker } from "./DonorHandlePicker";
 
@@ -29,6 +31,8 @@ export function CriteriaForm({
 }: CriteriaFormProps) {
   const { register, handleSubmit, watch, setValue, formState } = form;
   const errors = formState.errors;
+  const weights = watch("weights");
+  const weightsBalanced = isValidWeights(weights);
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
@@ -103,12 +107,13 @@ export function CriteriaForm({
       <fieldset className="flex flex-col gap-3 rounded-md border border-border bg-muted/10 px-3 py-3">
         <legend className="px-1 text-sm font-medium">Scoring weights</legend>
         <p className="text-xs text-muted-foreground">
-          Tune how much each criterion counts toward the composite. The five always sum to 100%; you
-          can adjust them again after the report renders.
+          Set how much each criterion counts toward the composite. You can adjust this again after
+          the report renders.
         </p>
-        <WeightsSliders
-          value={watch("weights")}
+        <WeightsAllocator
+          value={weights}
           onChange={(next) => setValue("weights", next, { shouldValidate: true })}
+          resetValue={DEFAULT_WEIGHTS_BASIS_POINTS}
           disabled={submitting}
         />
         {errors.weights ? (
@@ -147,7 +152,8 @@ export function CriteriaForm({
 
       <button
         type="submit"
-        disabled={submitting}
+        disabled={submitting || !weightsBalanced}
+        title={weightsBalanced ? undefined : "Scoring weights must add up to 100%"}
         className="self-start rounded-md border border-border bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
       >
         {submitting ? "Starting…" : "Start report"}

@@ -36,8 +36,8 @@ import { useReorderReport, useUpdateReportConfig } from "@/hooks/useUpdateReport
 import type { CompositeWeights, ResearchReportDetail } from "@/types/donor-research";
 import { DEFAULT_TOP_COUNT } from "../report-brief/scoring";
 import { humanizeCase } from "../report-brief/text-utils";
-import { WEIGHT_DIMENSIONS } from "../weights/use-weights-rebalance";
-import { WeightsSliders } from "../weights/WeightsSliders";
+import { WeightsAllocator } from "../weights/WeightsAllocator";
+import { isValidWeights, weightsEqual } from "../weights/weights-allocation";
 import { CommitWeightsDialog } from "./CommitWeightsDialog";
 import { type LiveRanking, useLiveRankedCandidates } from "./use-live-ranked-candidates";
 
@@ -46,10 +46,6 @@ const MAX_TOP_COUNT = 25;
 
 interface WeightsPanelProps {
   report: ResearchReportDetail;
-}
-
-function weightsEqual(a: CompositeWeights, b: CompositeWeights): boolean {
-  return WEIGHT_DIMENSIONS.every((d) => a[d] === b[d]);
 }
 
 function candidateName(name: string | null): string {
@@ -71,8 +67,9 @@ function featuredOnePagerCopy(enteringCount: number, lead: string): string {
  * Advisor-only ranking-control panel (DEV-418 U8). Opens as a right-side sheet
  * so it never disturbs the editorial brief's layout, with three tabs:
  *
- *  - **Weights** — five sum-to-100 sliders with an in-browser live preview of
- *    the resulting ranking and featured-set flip badges.
+ *  - **Weights** — five independent slider + number-input allocators that must
+ *    total 100% before committing, with an in-browser live preview of the
+ *    resulting ranking and featured-set flip badges.
  *  - **Configs** — a stepper for the featured-set size (`topCount`, 1–25): how
  *    many top candidates receive the AI one-pager.
  *  - **Reorder** — drag candidates into an explicit order (`manualPosition`).
@@ -153,6 +150,8 @@ function PanelBody({ report, persistedWeights, onClose }: PanelBodyProps) {
   const persistedOrder = useMemo(() => report.candidates.map((c) => c.id), [report.candidates]);
   const persistedTopCount = report.topCount ?? DEFAULT_TOP_COUNT;
 
+  // Free allocation: the advisor edits each weight independently and must bring
+  // the total back to 100% before committing (isValidWeights gates the button).
   const [draftWeights, setDraftWeights] = useState<CompositeWeights>(persistedWeights);
   const [draftTopCount, setDraftTopCount] = useState<number>(persistedTopCount);
   const [draftOrder, setDraftOrder] = useState<string[]>(persistedOrder);
@@ -170,6 +169,7 @@ function PanelBody({ report, persistedWeights, onClose }: PanelBodyProps) {
   );
 
   const weightsDirty = !weightsEqual(draftWeights, persistedWeights);
+  const weightsBalanced = isValidWeights(draftWeights);
   const topCountDirty = draftTopCount !== persistedTopCount;
   const orderDirty = draftOrder.some((id, i) => id !== persistedOrder[i]);
 
@@ -265,21 +265,17 @@ function PanelBody({ report, persistedWeights, onClose }: PanelBodyProps) {
         </TabsList>
 
         <TabsContent value="weights" className="mt-4 flex flex-col gap-5">
-          <WeightsSliders value={draftWeights} onChange={setDraftWeights} disabled={isPending} />
+          <WeightsAllocator
+            value={draftWeights}
+            onChange={setDraftWeights}
+            resetValue={persistedWeights}
+            disabled={isPending}
+          />
           <LivePreviewList live={weightsLive} />
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center justify-end gap-3">
             <Button
               type="button"
-              variant="ghost"
-              size="sm"
-              disabled={!weightsDirty || isPending}
-              onClick={() => setDraftWeights(persistedWeights)}
-            >
-              Reset
-            </Button>
-            <Button
-              type="button"
-              disabled={!weightsDirty || isPending}
+              disabled={!weightsDirty || !weightsBalanced || isPending}
               onClick={() => setConfirm("weights")}
             >
               Update weights
