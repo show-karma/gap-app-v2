@@ -38,17 +38,25 @@ describe("WeightsAllocator", () => {
     expect(total(next)).toBe(10000 - BALANCED.onlinePresence + 4000);
   });
 
-  it("shows the running total and flags it when off 100%", () => {
+  it("shows the running total in the pill and tracks it live", () => {
     const offBalance: CompositeWeights = { ...BALANCED, onlinePresence: 4000 };
     const { rerender } = render(
       <WeightsAllocator value={BALANCED} onChange={() => {}} resetValue={BALANCED} />
     );
-    expect(screen.getByText("100%")).toBeInTheDocument();
-    expect(screen.queryByText(/must add up to 100%/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/Total\s+100%/)).toBeInTheDocument();
 
     rerender(<WeightsAllocator value={offBalance} onChange={() => {}} resetValue={BALANCED} />);
-    expect(screen.getByText(`${total(offBalance) / 100}%`)).toBeInTheDocument();
-    expect(screen.getByText(/must add up to 100%/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(new RegExp(`Total\\s+${total(offBalance) / 100}%`))
+    ).toBeInTheDocument();
+  });
+
+  it("does not round a near-100% total up to a balanced-looking 100%", () => {
+    // 9,999 bp — the save gate rejects it, so the pill must not read "100%".
+    const almost: CompositeWeights = { ...BALANCED, onlinePresence: BALANCED.onlinePresence - 1 };
+    render(<WeightsAllocator value={almost} onChange={() => {}} resetValue={BALANCED} />);
+    expect(screen.getByText(/Total\s+99\.99%/)).toBeInTheDocument();
+    expect(screen.queryByText(/Total\s+100%/)).not.toBeInTheDocument();
   });
 
   it("keeps the current value when the field is cleared (does not commit 0%)", () => {

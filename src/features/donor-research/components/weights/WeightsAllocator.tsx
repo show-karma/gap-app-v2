@@ -37,12 +37,12 @@ interface WeightsAllocatorProps {
 /**
  * Five independent weight sliders with a running total (DEV-418 U6).
  *
- * Each factor has a slider and an editable percentage that set ONLY that
- * factor — nothing is redistributed, so a small ±2% nudge never skids the other
- * four around. The advisor reconciles the total to 100% themselves; the Total
- * row at the bottom tracks it live and the commit button stays disabled until
- * it lands on 100%. The number input handles the fiddly last-few-percent that a
- * drag can overshoot.
+ * Each factor has a full-width slider and an editable percentage on the right
+ * that set ONLY that factor — nothing is redistributed, so a small ±2% nudge
+ * never skids the other four around. The advisor reconciles the total to 100%
+ * themselves; the Total pill at the bottom tracks it live (green at 100%, red
+ * otherwise) and the commit button stays disabled until it balances. The number
+ * input handles the fiddly last-few-percent that a drag can overshoot.
  */
 export function WeightsAllocator({
   value,
@@ -73,28 +73,33 @@ export function WeightsAllocator({
     onChange(resetValue);
   };
 
-  const totalPercent = Math.round(weightsTotal(value) / 100);
-  const isBalanced = weightsTotal(value) === WEIGHTS_TOTAL_BASIS_POINTS;
+  // Mirror the exact basis-point gate in the display: rounding here would let
+  // 9,999 bp read as a balanced-looking "100%" while the save gate still
+  // rejects it. Whole percents stay integers; anything odd shows its real value.
+  const totalBasisPoints = weightsTotal(value);
+  const isBalanced = totalBasisPoints === WEIGHTS_TOTAL_BASIS_POINTS;
+  const totalPercent = totalBasisPoints / 100;
+  const formattedTotal = Number.isInteger(totalPercent)
+    ? String(totalPercent)
+    : totalPercent.toFixed(2).replace(/\.?0+$/, "");
 
   return (
-    <div className="flex flex-col gap-4">
-      <p className="text-xs text-muted-foreground">
-        Set how much each criterion counts toward the composite. Drag a slider or type an exact
-        percentage on the right — the five must add up to 100% before you can apply them.
-      </p>
-
-      <div className="flex flex-col gap-3.5">
+    <div className="flex flex-col gap-5">
+      <div className="flex flex-col gap-5">
         {DIMENSIONS.map(({ key, label }) => {
           const labelId = `weight-${key}`;
           const percent = weightPercent(value, key);
           const inputValue = editing && editing.dim === key ? editing.text : String(percent);
           return (
-            <div key={key} className="flex flex-col gap-1.5">
+            <div key={key} className="flex flex-col gap-2">
               <div className="flex items-center justify-between gap-3 text-sm">
-                <span id={labelId} className="text-foreground/85">
+                <span id={labelId} className="text-foreground">
                   {label}
                 </span>
-                <div className="flex items-center gap-1">
+                {/* Editable percentage, styled to read like the plain value on
+                    the right while staying a real number input (hover/focus
+                    reveal it's editable). */}
+                <div className="flex items-center text-foreground tabular-nums">
                   <input
                     type="number"
                     inputMode="numeric"
@@ -112,9 +117,14 @@ export function WeightsAllocator({
                     onKeyDown={(event) => {
                       if (event.key === "Enter") event.currentTarget.blur();
                     }}
-                    className="w-14 rounded-md border border-border bg-background px-2 py-1 text-right text-sm tabular-nums focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60"
+                    className={cn(
+                      "w-10 rounded border-0 bg-transparent p-0 text-right text-sm tabular-nums text-foreground",
+                      "hover:bg-muted/60 focus:outline-none focus-visible:ring-1 focus-visible:ring-ring",
+                      "disabled:opacity-60",
+                      "[appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                    )}
                   />
-                  <span className="text-sm text-muted-foreground">%</span>
+                  <span>%</span>
                 </div>
               </div>
               <Slider
@@ -135,22 +145,22 @@ export function WeightsAllocator({
         })}
       </div>
 
-      <div className="flex items-center justify-between border-t border-border pt-3">
-        <div className="flex items-baseline gap-2">
-          <span className="text-sm font-medium text-foreground">Total</span>
-          <output
-            aria-live="polite"
-            className={cn(
-              "text-sm font-semibold tabular-nums",
-              isBalanced ? "text-foreground" : "text-red-600 dark:text-red-400"
-            )}
-          >
-            {totalPercent}%
-          </output>
-          {!isBalanced ? (
-            <span className="text-xs text-muted-foreground">must add up to 100%</span>
-          ) : null}
-        </div>
+      <div className="flex items-center justify-between rounded-md bg-muted/50 px-3 py-2.5">
+        <span
+          aria-live="polite"
+          className={cn(
+            "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium",
+            isBalanced
+              ? "bg-green-50 text-green-700 dark:bg-green-950/40 dark:text-green-400"
+              : "bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-400"
+          )}
+        >
+          <span
+            aria-hidden
+            className={cn("h-1.5 w-1.5 rounded-full", isBalanced ? "bg-green-500" : "bg-red-500")}
+          />
+          Total {formattedTotal}%
+        </span>
         <button
           type="button"
           onClick={reset}
