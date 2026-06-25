@@ -19,7 +19,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical, Minus, Plus, SlidersHorizontal } from "lucide-react";
 import pluralize from "pluralize";
-import { memo, useEffect, useMemo, useState } from "react";
+import { memo, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -83,6 +83,20 @@ function featuredOnePagerCopy(enteringCount: number, lead: string): string {
  */
 export function WeightsPanel({ report }: WeightsPanelProps) {
   const [open, setOpen] = useState(false);
+  // Reset the panel's drafts whenever the server-confirmed report changes (e.g.
+  // after a commit refetch) by remounting PanelBody via this key — the
+  // React-idiomatic alternative to syncing props into state with effects.
+  const syncKey = useMemo(
+    () =>
+      JSON.stringify({
+        weights: report.weights,
+        topCount: report.topCount,
+        order: report.candidates.map(
+          (c) => `${c.id}:${c.featuredFlag ? 1 : 0}:${c.manualPosition ?? ""}`
+        ),
+      }),
+    [report]
+  );
   const persistedWeights = report.weights;
 
   if (!persistedWeights) return null;
@@ -116,6 +130,7 @@ export function WeightsPanel({ report }: WeightsPanelProps) {
         }}
       >
         <PanelBody
+          key={syncKey}
           report={report}
           persistedWeights={persistedWeights}
           onClose={() => setOpen(false)}
@@ -142,18 +157,6 @@ function PanelBody({ report, persistedWeights, onClose }: PanelBodyProps) {
   const [draftTopCount, setDraftTopCount] = useState<number>(persistedTopCount);
   const [draftOrder, setDraftOrder] = useState<string[]>(persistedOrder);
   const [confirm, setConfirm] = useState<null | "weights" | "config" | "reorder">(null);
-
-  // Re-sync drafts whenever the server-confirmed report changes (e.g. after a
-  // commit invalidation), so the panel never shows stale local state.
-  useEffect(() => {
-    setDraftWeights(persistedWeights);
-  }, [persistedWeights]);
-  useEffect(() => {
-    setDraftTopCount(persistedTopCount);
-  }, [persistedTopCount]);
-  useEffect(() => {
-    setDraftOrder(persistedOrder);
-  }, [persistedOrder]);
 
   // Each tab previews only its own change: the Weights tab re-ranks under the
   // draft weights at the persisted featured size; the Configs tab moves the
