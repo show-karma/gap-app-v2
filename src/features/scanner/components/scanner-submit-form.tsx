@@ -9,7 +9,6 @@ import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/useAuth";
 import { PAGES } from "@/utilities/pages";
 import { useSubmitScan } from "../hooks/use-submit-scan";
-import { SCANNER_RATE_LIMIT_CODES } from "../types";
 import { RateLimitModal } from "./rate-limit-modal";
 
 interface RateLimitState {
@@ -30,16 +29,18 @@ export function ScannerSubmitForm() {
       router.push(PAGES.SCANNER.PUBLIC_SCORECARD(response.slug));
     },
     onError: (error) => {
+      // fetchData collapses the structured {error:{code,...}} body down to a
+      // plain axios message string, so we cannot reliably read the backend
+      // code here. Branch on status + identity instead: 429 on an unauthed
+      // session is the anonymous cap; 429 on an authed session is the
+      // logged-in cap (the only two 429 paths POST /scans returns).
       if (error.status === 429) {
-        const code = parseRateLimitCode(error.message);
-        if (code === SCANNER_RATE_LIMIT_CODES.anonymous) {
+        if (!authenticated) {
           setRateLimit({ mode: "login_required" });
-          return;
-        }
-        if (code === SCANNER_RATE_LIMIT_CODES.loggedIn) {
+        } else {
           setRateLimit({ mode: "contact_for_more" });
-          return;
         }
+        return;
       }
       toast.error(error.message || "Could not start the scan. Please try again.");
     },
@@ -113,13 +114,4 @@ export function ScannerSubmitForm() {
       />
     </>
   );
-}
-
-function parseRateLimitCode(messageJson: string): string | null {
-  try {
-    const parsed = JSON.parse(messageJson) as { error?: { code?: string } };
-    return parsed.error?.code ?? null;
-  } catch {
-    return null;
-  }
 }

@@ -45,16 +45,35 @@ interface UseRevokeOptions {
 
 export function useRevokeScannerKey(options: UseRevokeOptions = {}) {
   const queryClient = useQueryClient();
-  return useMutation<void, Error & { status?: number }, string>({
+  return useMutation<
+    void,
+    Error & { status?: number },
+    string,
+    { previous: ScannerApiKey[] | undefined }
+  >({
     mutationFn: revokeScannerApiKey,
-    onSuccess: (_, keyId) => {
-      // Optimistic removal so the key disappears before the refetch lands.
+    onMutate: async (keyId) => {
+      // Optimistically remove the key from the cache before the server
+      // responds so the UI updates immediately. Snapshot the prior cache so
+      // onError can roll back if the request fails.
+      await queryClient.cancelQueries({ queryKey: QUERY_KEY });
+      const previous = queryClient.getQueryData<ScannerApiKey[]>(QUERY_KEY);
       queryClient.setQueryData<ScannerApiKey[]>(QUERY_KEY, (prev) =>
         prev ? prev.filter((key) => key.id !== keyId) : prev
       );
-      queryClient.invalidateQueries({ queryKey: QUERY_KEY });
+      return { previous };
+    },
+    onError: (error, _keyId, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(QUERY_KEY, context.previous);
+      }
+      options.onError?.(error);
+    },
+    onSuccess: () => {
       options.onSuccess?.();
     },
-    onError: options.onError,
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEY });
+    },
   });
 }
