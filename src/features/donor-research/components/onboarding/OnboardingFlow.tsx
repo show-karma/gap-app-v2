@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useId, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { usePrivyBridge } from "@/contexts/privy-bridge-context";
 import { useDonorAdvisor, useOnboardAdvisor } from "@/hooks/useDonorAdvisor";
 import type { WizardStep } from "@/src/components/ui/WizardStepper";
 import { WizardStepper } from "@/src/components/ui/WizardStepper";
@@ -39,6 +40,18 @@ const DEFAULT_TIMEZONE =
   typeof Intl !== "undefined" ? Intl.DateTimeFormat().resolvedOptions().timeZone : "UTC";
 
 /**
+ * Email from the active Privy session, if one is available. A direct email
+ * login exposes `email.address`; a Google OAuth login exposes `google.email`.
+ * Wallet-only logins expose neither, so this returns `undefined` and the
+ * advisor is asked to type one. Mirrors the navbar's `getUserEmail` resolver.
+ */
+function getLoggedInEmail(
+  user: { email?: { address: string }; google?: { email: string } } | null | undefined
+): string | undefined {
+  return user?.email?.address || user?.google?.email || undefined;
+}
+
+/**
  * 3-screen onboarding (U12). Skips to the index when an advisor row
  * already exists — re-entering the flow is harmless thanks to the
  * idempotent `findOrCreate` upsert on the backend, but routing to the
@@ -54,7 +67,14 @@ export function OnboardingFlow() {
   const router = useRouter();
   const advisorQuery = useDonorAdvisor();
   const onboard = useOnboardAdvisor();
+  const privy = usePrivyBridge();
   const [step, setStep] = useState<Step>("welcome");
+
+  // Email from the logged-in Privy session (email or Google login), used to
+  // pre-fill the Email field below. Only trusted once Privy has resolved an
+  // authenticated session.
+  const loggedInEmail =
+    privy.ready && privy.authenticated ? getLoggedInEmail(privy.user) : undefined;
 
   // A single ref is shared across all three step headings because exactly one
   // step <section> is mounted at a time, so only one heading ever binds it.
@@ -73,6 +93,18 @@ export function OnboardingFlow() {
       timezone: DEFAULT_TIMEZONE,
     },
   });
+
+  // Pre-fill the Email field with the logged-in user's email once Privy
+  // resolves it. The session can resolve after the first render (the Privy
+  // SDK is deferred), so this runs as an effect rather than a default value.
+  // Guarded on the field's dirty state so a value the advisor has already
+  // typed is never clobbered when the session resolves late.
+  useEffect(() => {
+    if (!loggedInEmail) return;
+    if (form.getFieldState("email").isDirty) return;
+    if (form.getValues("email")) return;
+    form.setValue("email", loggedInEmail);
+  }, [loggedInEmail, form]);
 
   useEffect(() => {
     if (advisorQuery.isSuccess && advisorQuery.data) {
