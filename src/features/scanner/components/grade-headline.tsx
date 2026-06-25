@@ -36,9 +36,8 @@ export function GradeHeadline({ grade, totalScore, orgName }: GradeHeadlineProps
     <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
       <div
         className={`flex h-16 w-16 items-center justify-center rounded-2xl text-4xl font-bold ring-4 ${GRADE_TONE[grade]}`}
-        role="img"
-        aria-label={`Grade ${grade}`}
       >
+        <span className="sr-only">Grade </span>
         {grade}
       </div>
       <div className="flex flex-col">

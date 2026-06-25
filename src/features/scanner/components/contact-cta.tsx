@@ -108,6 +108,7 @@ export function ContactCta({
                 value={message}
                 onChange={(event) => setMessage(event.target.value)}
                 disabled={isPending}
+                aria-label="What do you need?"
                 className="min-h-[100px] rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
               />
             </div>

@@ -43,15 +43,18 @@ export function CategoryBar({ score }: CategoryBarProps) {
         </span>
         <span className="text-xs text-zinc-500 dark:text-zinc-400">{pointsLabel}</span>
       </div>
-      <div
-        className={`h-2 w-full rounded-full ${tone.bg}`}
-        role="progressbar"
-        aria-valuemin={0}
-        aria-valuemax={score.pointsPossible}
-        aria-valuenow={score.pointsAwarded}
-        aria-label={`${score.category}: ${pointsLabel}`}
-      >
-        <div className={`h-full rounded-full ${tone.bar}`} style={{ width: `${widthPct}%` }} />
+      <div className={`relative h-2 w-full overflow-hidden rounded-full ${tone.bg}`}>
+        <progress
+          className="absolute inset-0 h-full w-full appearance-none opacity-0"
+          value={score.pointsAwarded}
+          max={score.pointsPossible}
+          aria-label={`${score.category}: ${pointsLabel}`}
+        />
+        <div
+          className={`h-full rounded-full ${tone.bar}`}
+          style={{ width: `${widthPct}%` }}
+          aria-hidden
+        />
       </div>
       {score.summary ? (
         <p className="text-xs text-zinc-600 dark:text-zinc-400">{score.summary}</p>
