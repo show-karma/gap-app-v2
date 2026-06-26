@@ -2,6 +2,7 @@
 
 import { ArrowUpRight } from "lucide-react";
 import type { CompositeWeights, ResearchReportCandidate } from "@/types/donor-research";
+import { CandidateDiligenceActions } from "../diligence/CandidateDiligenceActions";
 import { SocialPresence } from "../report-viewer/SocialPresence";
 import { ChapterMark } from "./ChapterMark";
 import { ComplianceStrip } from "./ComplianceStrip";
@@ -28,6 +29,10 @@ interface LeadCandidateProps {
    * isn't shown on a single-candidate report (QA finding).
    */
   hasMore: boolean;
+  /** Report id — required to mount the advisor diligence actions. */
+  reportId?: string;
+  /** Advisor-only: gates the Ask Questions / Connect footer. */
+  showDiligenceActions?: boolean;
 }
 
 /**
@@ -37,7 +42,13 @@ interface LeadCandidateProps {
  * brand-coloured type on the page — everything else relies on
  * scale and weight for hierarchy.
  */
-export function LeadCandidate({ candidate, weights, hasMore }: LeadCandidateProps) {
+export function LeadCandidate({
+  candidate,
+  weights,
+  hasMore,
+  reportId,
+  showDiligenceActions = false,
+}: LeadCandidateProps) {
   const isDisqualified = candidate.complianceVerdict === "disqualified";
   const name = humanizeCase(
     candidate.organizationName ??
@@ -142,6 +153,10 @@ export function LeadCandidate({ candidate, weights, hasMore }: LeadCandidateProp
       </div>
 
       <LeadJustification candidate={candidate} hasMore={hasMore} />
+
+      {showDiligenceActions && reportId ? (
+        <CandidateDiligenceActions reportId={reportId} candidateId={candidate.id} />
+      ) : null}
     </section>
   );
 }
