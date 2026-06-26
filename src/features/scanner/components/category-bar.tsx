@@ -20,8 +20,8 @@ export function CategoryBar({ score }: CategoryBarProps) {
     return null;
   }
   const band = bandForScore(score);
-  const label = categoryLabel(score.category);
-  const subtitle = score.summary ?? categorySubtitle(score.category);
+  const label = categoryLabel(score);
+  const subtitle = score.summary ?? categorySubtitle(score);
   const widthPct =
     score.pointsPossible === 0
       ? 0
