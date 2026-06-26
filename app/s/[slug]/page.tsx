@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { MembersAreaCta } from "@/src/features/scanner/components/members-area-cta";
 import { PublicScorecard } from "@/src/features/scanner/components/public-scorecard";
+import { ScannerViewTracker } from "@/src/features/scanner/components/scanner-view-tracker";
 import { getPublicScorecardBySlug } from "@/src/features/scanner/services/scanner.service";
 import type { PublicScorecardPayload } from "@/src/features/scanner/types";
 import { PAGES } from "@/utilities/pages";
@@ -55,6 +56,14 @@ export default async function PublicScorecardPage({ params }: PageProps) {
 
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-col gap-12 px-6 py-12 sm:py-16">
+      <ScannerViewTracker
+        variant="public"
+        scanId={initial?.scanId ?? null}
+        slug={slug}
+        grade={initial?.grade ?? null}
+        totalScore={initial?.totalScore ?? null}
+        orgName={initial?.orgName ?? null}
+      />
       <PublicScorecard slug={slug} initialData={initial ?? undefined} />
 
       <aside className="flex flex-col gap-3 border-t border-zinc-200 pt-8 dark:border-zinc-800">

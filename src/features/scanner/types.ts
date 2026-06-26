@@ -69,9 +69,11 @@ export interface PublicScorecardPayload {
 }
 
 export interface DetailScorecardPayload extends PublicScorecardPayload {
-  readonly topFixes: readonly ScanFix[];
-  readonly evidence: readonly CheckEvidence[];
-  readonly walkthroughNotes: string | null;
+  readonly viewerIsOwner: boolean;
+  readonly topFixes?: readonly ScanFix[];
+  readonly evidence?: readonly CheckEvidence[];
+  readonly walkthroughNotes?: string | null;
+  readonly targetUrl?: string;
 }
 
 export interface SubmitScanRequest {

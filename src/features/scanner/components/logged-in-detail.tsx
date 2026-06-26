@@ -6,6 +6,7 @@ import { ContactCta } from "./contact-cta";
 import { EvidenceList } from "./evidence-list";
 import { GradeHeadline } from "./grade-headline";
 import { ScanProgressIndicator } from "./scan-progress-indicator";
+import { ScannerViewTracker } from "./scanner-view-tracker";
 import { TopFixesList } from "./top-fixes-list";
 
 interface LoggedInDetailProps {
@@ -49,9 +50,20 @@ export function LoggedInDetail({ scanId, userEmail }: LoggedInDetailProps) {
   }
 
   const categoryScores = data.categoryScores ?? [];
+  const topFixes = data.topFixes ?? [];
+  const evidence = data.evidence ?? [];
 
   return (
     <div className="flex flex-col gap-6">
+      <ScannerViewTracker
+        variant="detail"
+        scanId={data.scanId}
+        slug={data.slug}
+        grade={data.grade}
+        totalScore={data.totalScore}
+        orgName={data.orgName ?? null}
+        viewerIsOwner={data.viewerIsOwner}
+      />
       <article className="flex flex-col gap-6 rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
         <header className="flex items-start justify-between gap-3">
           <GradeHeadline
@@ -71,9 +83,9 @@ export function LoggedInDetail({ scanId, userEmail }: LoggedInDetailProps) {
         ) : null}
       </article>
 
-      <TopFixesList fixes={data.topFixes} />
+      <TopFixesList fixes={topFixes} />
 
-      {data.topFixes.length > 0 ? (
+      {topFixes.length > 0 ? (
         <ContactCta
           sourceTag="fix-help"
           headline="Need help with these fixes?"
@@ -94,7 +106,7 @@ export function LoggedInDetail({ scanId, userEmail }: LoggedInDetailProps) {
         </section>
       ) : null}
 
-      <EvidenceList evidence={data.evidence} />
+      <EvidenceList evidence={evidence} />
     </div>
   );
 }
