@@ -65,6 +65,18 @@ export const GRADE_TAGLINE: Record<string, { tag: string; tone: ScoreBand }> = {
   F: { tag: "At risk", tone: "critical" },
 };
 
+// Reader-friendly label per grade, single source of truth for both the
+// in-app GradeHeadline component and the OG image route. Kept here so
+// edits land in one place; ScanGrade is the closed union and these
+// labels are part of the public rubric vocabulary.
+export const GRADE_LABEL: Record<string, string> = {
+  A: "AI-ready",
+  B: "Mostly ready",
+  C: "Partially ready",
+  D: "Significant gaps",
+  F: "Not AI-ready",
+};
+
 // Map a band to brand-aware Tailwind classes. Brand teal lives in the
 // "strong" slot; warm amber for "ok"; orange-amber for "weak"; rose for
 // critical / no-EIN gate fired. Reserve the teal accent for the gauge fill

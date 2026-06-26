@@ -1,4 +1,5 @@
 import type { ScanGrade } from "../types";
+import { GRADE_LABEL } from "../utils/labels";
 
 const GRADE_TONE: Record<ScanGrade, string> = {
   A: "bg-emerald-500 text-emerald-50 ring-emerald-300",
@@ -6,14 +7,6 @@ const GRADE_TONE: Record<ScanGrade, string> = {
   C: "bg-amber-500 text-amber-50 ring-amber-300",
   D: "bg-orange-500 text-orange-50 ring-orange-300",
   F: "bg-rose-500 text-rose-50 ring-rose-300",
-};
-
-const GRADE_LABEL: Record<ScanGrade, string> = {
-  A: "AI-ready",
-  B: "Mostly ready",
-  C: "Partially ready",
-  D: "Significant gaps",
-  F: "Not AI-ready",
 };
 
 interface GradeHeadlineProps {

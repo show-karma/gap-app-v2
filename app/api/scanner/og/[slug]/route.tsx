@@ -3,7 +3,7 @@
 import { ImageResponse } from "next/og";
 import type { NextRequest } from "next/server";
 import { envVars } from "@/utilities/enviromentVars";
-import { categoryLabel } from "@/src/features/scanner/utils/labels";
+import { categoryLabel, GRADE_LABEL } from "@/src/features/scanner/utils/labels";
 import type { PublicScorecardPayload, ScanGrade } from "@/src/features/scanner/types";
 
 // next/og renders via wasm in the edge runtime. nodejs runtime silently
@@ -41,14 +41,6 @@ const COLOR_FG_PRIMARY = "white";
 const COLOR_FG_MUTED = "#94A3B8";
 const COLOR_FG_SUBTLE = "#CBD5E1";
 const COLOR_FG_LABEL = "#E2E8F0";
-
-const GRADE_LABEL: Record<ScanGrade, string> = {
-  A: "AI-ready",
-  B: "Mostly ready",
-  C: "Partially ready",
-  D: "Significant gaps",
-  F: "Not AI-ready",
-};
 
 // Satori (next/og's renderer) requires display:flex on EVERY div that
 // has multiple children. Even single-text divs render more predictably
