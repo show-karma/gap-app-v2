@@ -19,9 +19,13 @@ export interface CategoryScore {
   readonly pointsPossible: number;
   readonly normalizedScore: number;
   readonly pending: boolean;
-  // R12 wants a 1-line summary per category. Backend does not yet emit it;
-  // the FE renders the category name as a label until it lands.
+  // Per-category summary generated server-side from the underlying
+  // CheckResults (gates fired > all pass > miss list).
   readonly summary?: string | null;
+  // Display label + subtitle from the rubric category metadata.
+  // Sourced from the BE so the FE never duplicates the vocabulary.
+  readonly label?: string;
+  readonly subtitle?: string;
 }
 
 export interface ScanFix {
@@ -41,10 +45,9 @@ export interface CheckEvidence {
 }
 
 // Wire shape matches gap-indexer's PublicScorecardResponseSchema in
-// app/modules/v2/api/scanner/v1/dto/scanner/scorecard.response.ts. The
-// R12 fields that backend doesn't emit yet (orgName, url, status,
-// rubricVersion, scan timestamps) are listed as optional so the UI can
-// render them when the backend ships them.
+// app/modules/v2/api/scanner/v1/dto/scanner/scorecard.response.ts.
+// The slug endpoint (/api/scanner/v1/s/:slug) always returns a fully
+// scored scorecard — required fields are required.
 export interface PublicScorecardPayload {
   readonly scanId: string;
   readonly slug: string;
@@ -58,22 +61,53 @@ export interface PublicScorecardPayload {
     readonly pendingCheckIds: readonly string[];
     readonly notAttemptedCheckIds: readonly string[];
   };
-  // Optional R12 fields (not yet emitted by backend; see TODO above).
-  readonly orgName?: string | null;
-  readonly url?: string;
-  readonly status?: ScanStatus;
+  // R12 fields the public scorecard endpoint always emits.
+  readonly orgName: string | null;
+  readonly url: string;
+  readonly status: ScanStatus;
+  readonly rubricVersion: string;
+  readonly startedAt: string;
+  readonly finishedAtConfig: string | null;
+  readonly finishedAtComplete: string | null;
+}
+
+// Wire shape matches gap-indexer's ScanResponseSchema in
+// app/modules/v2/api/scanner/v1/dto/scanner/scan.response.ts.
+// The scan-id endpoint (/api/scanner/v1/scans/:id) returns three
+// nested tiers: envelope (always present), scorecard (when scored),
+// detail (authenticated callers only). Scorecard and detail fields
+// are optional here because the BE emits envelope-only for queued
+// scans, anonymous callers, and unpublished scorecards. Components
+// must guard before reading them.
+export interface DetailScorecardPayload {
+  readonly scanId: string;
+  readonly slug: string;
+  readonly targetUrl: string;
+  readonly status: ScanStatus;
+  readonly viewerIsOwner: boolean;
+  // Scorecard tier — present when the scan has been scored and the
+  // scorecard is still published. Absent in envelope-only responses.
+  readonly totalScore?: number | null;
+  readonly grade?: ScanGrade | null;
   readonly rubricVersion?: string;
+  readonly categoryScores?: readonly CategoryScore[];
+  readonly summary?: string | null;
+  readonly ogImageUrl?: string | null;
+  readonly orgName?: string | null;
+  readonly unknowns?: PublicScorecardPayload["unknowns"];
+  readonly url?: string;
   readonly startedAt?: string;
   readonly finishedAtConfig?: string | null;
   readonly finishedAtComplete?: string | null;
-}
-
-export interface DetailScorecardPayload extends PublicScorecardPayload {
-  readonly viewerIsOwner: boolean;
+  // Detail tier — authenticated callers only.
   readonly topFixes?: readonly ScanFix[];
   readonly evidence?: readonly CheckEvidence[];
   readonly walkthroughNotes?: string | null;
-  readonly targetUrl?: string;
+  readonly cta?: {
+    readonly sourceTag: "fix-help";
+    readonly scanId: string;
+    readonly contactUrl: string;
+  };
 }
 
 export interface SubmitScanRequest {

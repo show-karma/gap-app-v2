@@ -157,7 +157,7 @@ export async function GET(_request: NextRequest, context: { params: Promise<{ sl
             <div key={category.category} style={col({ gap: 4 })}>
               <div style={row({ justifyContent: "space-between", fontSize: 18 })}>
                 <div style={textRow({ color: COLOR_FG_LABEL })}>
-                  {categoryLabel(category.category)}
+                  {categoryLabel(category)}
                 </div>
                 <div style={textRow({ color: COLOR_FG_MUTED })}>
                   {`${category.pointsAwarded} / ${category.pointsPossible}`}

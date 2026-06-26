@@ -1,39 +1,31 @@
-// Backend category ids (agent_access, machine_readability, ...) are routed
-// through this map to the display label and the one-line summary the brain-
-// storm's R12 promised but the backend doesn't yet emit. When the backend
-// starts shipping summaries, swap in scorecard.summary?? CATEGORY_SUBTITLE[id].
+// Backend category ids (agent_access, machine_readability, ...) carry
+// their display label and subtitle on the scorecard payload now
+// (rubric category metadata flows through summarizeCategoryScores).
+// The local FALLBACK_LABEL map is a degradation path for older
+// scorecards still in flight that don't yet have the BE-provided
+// label / subtitle, and so components can always render a readable
+// name even before the API response loads.
 
 import type { CategoryScore } from "../types";
 
-export const CATEGORY_DISPLAY: Record<string, { label: string; subtitle: string }> = {
-  agent_access: {
-    label: "Agent access",
-    subtitle: "Can a machine reach the content at all",
-  },
-  machine_readability: {
-    label: "Machine readability",
-    subtitle: "Can it extract clean, structured facts",
-  },
-  trust_verification: {
-    label: "Trust and verification",
-    subtitle: "Can a donor advisor confirm legitimacy",
-  },
-  donation_readiness: {
-    label: "Donation readiness",
-    subtitle: "Can an agent actually give, including via DAF",
-  },
-  liveness: {
-    label: "Liveness",
-    subtitle: "Is the org demonstrably active",
-  },
+const FALLBACK_LABEL: Record<string, string> = {
+  agent_access: "Agent access",
+  machine_readability: "Machine readability",
+  trust_verification: "Trust and verification",
+  donation_readiness: "Donation readiness",
+  liveness: "Liveness",
 };
 
-export function categoryLabel(id: string): string {
-  return CATEGORY_DISPLAY[id]?.label ?? id.replace(/_/g, " ");
+export function categoryLabel(score: CategoryScore | string): string {
+  if (typeof score === "string") {
+    return FALLBACK_LABEL[score] ?? score.replace(/_/g, " ");
+  }
+  return score.label ?? FALLBACK_LABEL[score.category] ?? score.category.replace(/_/g, " ");
 }
 
-export function categorySubtitle(id: string): string | null {
-  return CATEGORY_DISPLAY[id]?.subtitle ?? null;
+export function categorySubtitle(score: CategoryScore | string): string | null {
+  if (typeof score === "string") return null;
+  return score.subtitle ?? null;
 }
 
 export type ScoreBand = "strong" | "ok" | "weak" | "critical";
