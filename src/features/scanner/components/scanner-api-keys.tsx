@@ -1,7 +1,7 @@
 "use client";
 
 import { Check, Copy, KeyRound, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { useReducer } from "react";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,19 +22,76 @@ import {
 } from "../hooks/use-my-scanner-keys";
 import type { ScannerApiKey } from "../types";
 
+// Five related ScannerApiKeys ui states (showCreateModal, revokeTarget,
+// justCreatedKey, newKeyName, copied) were five useState calls — React
+// Doctor flagged it as "many related useState" because a single logical
+// update (close the create modal) was triggering several re-renders. A
+// reducer with a small action set collapses the render storm and makes
+// the modal lifecycle explicit.
+interface ScannerKeysUiState {
+  readonly showCreateModal: boolean;
+  readonly revokeTarget: ScannerApiKey | null;
+  readonly justCreatedKey: string | null;
+  readonly newKeyName: string;
+  readonly copied: boolean;
+}
+
+type ScannerKeysUiAction =
+  | { readonly type: "open_create_modal" }
+  | { readonly type: "close_create_modal" }
+  | { readonly type: "set_new_key_name"; readonly name: string }
+  | { readonly type: "key_issued"; readonly key: string }
+  | { readonly type: "open_revoke_confirm"; readonly target: ScannerApiKey }
+  | { readonly type: "close_revoke_confirm" }
+  | { readonly type: "mark_copied" }
+  | { readonly type: "clear_copied" };
+
+const SCANNER_KEYS_UI_INITIAL: ScannerKeysUiState = {
+  showCreateModal: false,
+  revokeTarget: null,
+  justCreatedKey: null,
+  newKeyName: "",
+  copied: false,
+};
+
+function scannerKeysUiReducer(
+  state: ScannerKeysUiState,
+  action: ScannerKeysUiAction
+): ScannerKeysUiState {
+  switch (action.type) {
+    case "open_create_modal":
+      return { ...state, showCreateModal: true };
+    case "close_create_modal":
+      return {
+        ...state,
+        showCreateModal: false,
+        justCreatedKey: null,
+        newKeyName: "",
+        copied: false,
+      };
+    case "set_new_key_name":
+      return { ...state, newKeyName: action.name };
+    case "key_issued":
+      return { ...state, justCreatedKey: action.key, newKeyName: "" };
+    case "open_revoke_confirm":
+      return { ...state, revokeTarget: action.target };
+    case "close_revoke_confirm":
+      return { ...state, revokeTarget: null };
+    case "mark_copied":
+      return { ...state, copied: true };
+    case "clear_copied":
+      return { ...state, copied: false };
+  }
+}
+
 export function ScannerApiKeys() {
   const { data, isLoading, isError, refetch } = useMyScannerKeys();
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [revokeTarget, setRevokeTarget] = useState<ScannerApiKey | null>(null);
-  const [justCreatedKey, setJustCreatedKey] = useState<string | null>(null);
-  const [newKeyName, setNewKeyName] = useState("");
+  const [ui, dispatch] = useReducer(scannerKeysUiReducer, SCANNER_KEYS_UI_INITIAL);
   const [, copyToClipboard] = useCopyToClipboard();
-  const [copied, setCopied] = useState(false);
 
   const { mutate: issue, isPending: isIssuing } = useIssueScannerKey({
     onSuccess: (issued) => {
-      setJustCreatedKey(issued.key);
-      setNewKeyName("");
+      dispatch({ type: "key_issued", key: issued.key });
       toast.success("Key generated. Save it now, you will not see it again.");
     },
     onError: () => {
@@ -44,7 +101,7 @@ export function ScannerApiKeys() {
 
   const { mutate: revoke, isPending: isRevoking } = useRevokeScannerKey({
     onSuccess: () => {
-      setRevokeTarget(null);
+      dispatch({ type: "close_revoke_confirm" });
       toast.success("Key revoked.");
     },
     onError: () => {
@@ -54,28 +111,26 @@ export function ScannerApiKeys() {
 
   function handleCreate(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!newKeyName.trim()) {
+    if (!ui.newKeyName.trim()) {
       return;
     }
-    issue({ name: newKeyName.trim() });
+    issue({ name: ui.newKeyName.trim() });
   }
 
   function handleCopy() {
-    if (!justCreatedKey) {
+    if (!ui.justCreatedKey) {
       return;
     }
-    copyToClipboard(justCreatedKey);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    copyToClipboard(ui.justCreatedKey);
+    dispatch({ type: "mark_copied" });
+    setTimeout(() => dispatch({ type: "clear_copied" }), 2000);
   }
 
   function closeCreateModal() {
     if (isIssuing) {
       return;
     }
-    setShowCreateModal(false);
-    setJustCreatedKey(null);
-    setNewKeyName("");
+    dispatch({ type: "close_create_modal" });
   }
 
   if (isLoading) {
@@ -116,7 +171,7 @@ export function ScannerApiKeys() {
             scopes.
           </p>
         </div>
-        <Button type="button" onClick={() => setShowCreateModal(true)}>
+        <Button type="button" onClick={() => dispatch({ type: "open_create_modal" })}>
           Generate key
         </Button>
       </div>
@@ -147,7 +202,7 @@ export function ScannerApiKeys() {
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={() => setRevokeTarget(key)}
+                onClick={() => dispatch({ type: "open_revoke_confirm", target: key })}
                 aria-label={`Revoke ${key.name}`}
               >
                 <Trash2 className="h-4 w-4" aria-hidden />
@@ -159,11 +214,11 @@ export function ScannerApiKeys() {
       )}
 
       <Dialog
-        open={showCreateModal}
+        open={ui.showCreateModal}
         onOpenChange={(open) => (!open ? closeCreateModal() : undefined)}
       >
         <DialogContent className="max-w-md">
-          {justCreatedKey ? (
+          {ui.justCreatedKey ? (
             <>
               <DialogHeader>
                 <DialogTitle>Save your new API key</DialogTitle>
@@ -174,10 +229,10 @@ export function ScannerApiKeys() {
               </DialogHeader>
               <div className="flex items-center gap-2">
                 <code className="flex-1 overflow-x-auto rounded-md bg-zinc-100 p-3 font-mono text-sm dark:bg-zinc-800">
-                  {justCreatedKey}
+                  {ui.justCreatedKey}
                 </code>
                 <Button type="button" variant="outline" onClick={handleCopy} aria-label="Copy key">
-                  {copied ? (
+                  {ui.copied ? (
                     <Check className="h-4 w-4 text-emerald-600" aria-hidden />
                   ) : (
                     <Copy className="h-4 w-4" aria-hidden />
@@ -205,8 +260,10 @@ export function ScannerApiKeys() {
                   <Input
                     id="key-name"
                     required
-                    value={newKeyName}
-                    onChange={(event) => setNewKeyName(event.target.value)}
+                    value={ui.newKeyName}
+                    onChange={(event) =>
+                      dispatch({ type: "set_new_key_name", name: event.target.value })
+                    }
                     disabled={isIssuing}
                     placeholder="My donor advisor tool"
                   />
@@ -220,7 +277,7 @@ export function ScannerApiKeys() {
                   >
                     Cancel
                   </Button>
-                  <Button type="submit" disabled={isIssuing || !newKeyName.trim()}>
+                  <Button type="submit" disabled={isIssuing || !ui.newKeyName.trim()}>
                     {isIssuing ? "Generating..." : "Generate"}
                   </Button>
                 </DialogFooter>
@@ -231,22 +288,24 @@ export function ScannerApiKeys() {
       </Dialog>
 
       <Dialog
-        open={revokeTarget !== null}
-        onOpenChange={(open) => (!open && !isRevoking ? setRevokeTarget(null) : undefined)}
+        open={ui.revokeTarget !== null}
+        onOpenChange={(open) =>
+          !open && !isRevoking ? dispatch({ type: "close_revoke_confirm" }) : undefined
+        }
       >
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Revoke this API key?</DialogTitle>
             <DialogDescription>
-              Any application or MCP client using <strong>{revokeTarget?.name}</strong> will stop
-              working immediately. This cannot be undone.
+              Any application or MCP client using <strong>{ui.revokeTarget?.name}</strong> will
+              stop working immediately. This cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button
               type="button"
               variant="outline"
-              onClick={() => setRevokeTarget(null)}
+              onClick={() => dispatch({ type: "close_revoke_confirm" })}
               disabled={isRevoking}
             >
               Cancel
@@ -254,8 +313,8 @@ export function ScannerApiKeys() {
             <Button
               type="button"
               variant="destructive"
-              disabled={isRevoking || !revokeTarget}
-              onClick={() => revokeTarget && revoke(revokeTarget.id)}
+              disabled={isRevoking || !ui.revokeTarget}
+              onClick={() => ui.revokeTarget && revoke(ui.revokeTarget.id)}
             >
               {isRevoking ? "Revoking..." : "Revoke key"}
             </Button>
