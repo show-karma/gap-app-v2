@@ -1,4 +1,5 @@
 import type {
+  CompositeWeights,
   DonorAdvisor,
   DonorHandle,
   DonorHandleList,
@@ -52,6 +53,8 @@ export const fetchCurrentAdvisor = async (): Promise<DonorAdvisor | null> => {
 
 export interface OnboardAdvisorRequest {
   displayName: string;
+  /** Advisor contact email — where report notifications are sent. */
+  email?: string;
   orgName?: string | null;
   timezone: string;
 }
@@ -168,6 +171,16 @@ export interface CreateReportRequest {
   amountMin?: number | null;
   amountMax?: number | null;
   poolLimit?: number;
+  /**
+   * Composite-ranking weights as basis points summing to 10000 (DEV-418).
+   * Omit to let the backend apply the shipped five-dimension defaults.
+   */
+  weights?: CompositeWeights;
+  /**
+   * Featured-set size that receives an AI one-pager (DEV-418), 1–25. Omit to
+   * use the backend default of 3.
+   */
+  topCount?: number;
 }
 
 export const createResearchReport = async (
@@ -180,6 +193,58 @@ export const createResearchReport = async (
   );
   if (error || !data) {
     throw new Error(error || "Failed to start research report");
+  }
+  return data;
+};
+
+/**
+ * Advisor-configurable report settings sent to `PUT /reports/:id/config`
+ * (DEV-418). Supply at least one field; send only what changed.
+ */
+export interface UpdateReportConfigRequest {
+  weights?: CompositeWeights;
+  /** Size of the featured set that receives an AI one-pager, 1–25. */
+  topCount?: number;
+}
+
+/**
+ * Commit new composite weights and/or a new featured-set size (DEV-418). The
+ * backend re-ranks under the new config, flips `featuredFlag`, regenerates
+ * one-pagers only for candidates entering the featured set (nulls those
+ * leaving), and returns the full re-read report. Send only the changed fields.
+ */
+export const updateReportConfig = async (
+  reportId: string,
+  body: UpdateReportConfigRequest
+): Promise<ResearchReportDetail> => {
+  const [data, error] = await fetchData<ResearchReportDetail>(
+    INDEXER.DONOR_RESEARCH.REPORT_CONFIG(reportId),
+    "PUT",
+    body
+  );
+  if (error || !data) {
+    throw new Error(error || "Failed to update report config");
+  }
+  return data;
+};
+
+/**
+ * Force a manual best-first ordering of the report's candidates (DEV-418
+ * manual reorder). `orderedCandidateIds` must list every surfaced candidate
+ * exactly once. The backend sets `manualPosition`, flips `featuredFlag` to
+ * the manual featured set, and regenerates one-pagers for entrants.
+ */
+export const reorderReportCandidates = async (
+  reportId: string,
+  orderedCandidateIds: string[]
+): Promise<ResearchReportDetail> => {
+  const [data, error] = await fetchData<ResearchReportDetail>(
+    INDEXER.DONOR_RESEARCH.REPORT_REORDER(reportId),
+    "PUT",
+    { orderedCandidateIds }
+  );
+  if (error || !data) {
+    throw new Error(error || "Failed to reorder report candidates");
   }
   return data;
 };
@@ -240,6 +305,10 @@ export const fetchSharedReport = async (token: string): Promise<ResearchReportDe
   }
   return {
     ...data,
+    // Defensive: a share payload from before DEV-418 has no `weights`/`topCount`
+    // keys, which the brief reads as a legacy four-dimension report (default 3).
+    weights: data.weights ?? null,
+    topCount: data.topCount ?? null,
     advisorId: "",
     donorHandleId: "",
     donorHandleLabel: null,

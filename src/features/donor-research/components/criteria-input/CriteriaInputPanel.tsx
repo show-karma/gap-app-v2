@@ -7,7 +7,26 @@ import { z } from "zod";
 import { useDonorHandles } from "@/hooks/useDonorHandles";
 import { useCreateDonorReport } from "@/hooks/useDonorReports";
 import { PAGES } from "@/utilities/pages";
+import { DEFAULT_TOP_COUNT, DEFAULT_WEIGHTS_BASIS_POINTS } from "../report-brief/scoring";
+import { WEIGHTS_TOTAL_BASIS_POINTS } from "../weights/weights-allocation";
 import { CriteriaForm } from "./CriteriaForm";
+
+// The advisor allocates each weight independently (basis points); the five must
+// add up to exactly 100% (10000 bp) before the report can run.
+const WeightsSchema = z
+  .object({
+    onlinePresence: z.number().int().min(0).max(WEIGHTS_TOTAL_BASIS_POINTS),
+    socialPresence: z.number().int().min(0).max(WEIGHTS_TOTAL_BASIS_POINTS),
+    impactRecency: z.number().int().min(0).max(WEIGHTS_TOTAL_BASIS_POINTS),
+    donorMatch: z.number().int().min(0).max(WEIGHTS_TOTAL_BASIS_POINTS),
+    compliance: z.number().int().min(0).max(WEIGHTS_TOTAL_BASIS_POINTS),
+  })
+  .refine(
+    (w) =>
+      w.onlinePresence + w.socialPresence + w.impactRecency + w.donorMatch + w.compliance ===
+      WEIGHTS_TOTAL_BASIS_POINTS,
+    { message: "Weights must add up to 100%." }
+  );
 
 const CriteriaSchema = z.object({
   donorHandleId: z.string().min(1, "Pick or create a donor handle"),
@@ -16,6 +35,8 @@ const CriteriaSchema = z.object({
   geography: z.string().max(500).optional(),
   amountMin: z.number().nonnegative().optional(),
   amountMax: z.number().nonnegative().optional(),
+  weights: WeightsSchema,
+  topCount: z.number().int().min(1).max(25),
 });
 
 export type CriteriaFormValues = z.infer<typeof CriteriaSchema>;
@@ -38,6 +59,8 @@ export function CriteriaInputPanel() {
       criteriaText: "",
       cause: "",
       geography: "",
+      weights: DEFAULT_WEIGHTS_BASIS_POINTS,
+      topCount: DEFAULT_TOP_COUNT,
     },
   });
 
@@ -49,6 +72,8 @@ export function CriteriaInputPanel() {
       geography: values.geography || null,
       amountMin: values.amountMin ?? null,
       amountMax: values.amountMax ?? null,
+      weights: values.weights,
+      topCount: values.topCount,
     });
     router.push(PAGES.DONOR_RESEARCH.REPORT(result.reportId));
   };

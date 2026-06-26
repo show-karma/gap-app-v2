@@ -6,6 +6,7 @@ import { DisqualificationSummary } from "../report-viewer/DisqualificationSummar
 import { FailedReportBanner } from "../report-viewer/FailedReportBanner";
 import { GeographyWarning } from "../report-viewer/GeographyWarning";
 import { ProgressTimeline } from "../report-viewer/ProgressTimeline";
+import { WeightsPanel } from "../report-viewer/WeightsPanel";
 import { AlsoConsidered } from "./AlsoConsidered";
 import { ComparisonTable } from "./ComparisonTable";
 import { briefDisplay, briefProse } from "./fonts";
@@ -46,8 +47,9 @@ export function ReportBrief({
   stream = null,
 }: ReportBriefProps) {
   const candidates = report.candidates ?? [];
-  const topThree = candidates.filter((c) => c.topThreeFlag);
-  const remaining = candidates.filter((c) => !c.topThreeFlag);
+  const featured = candidates.filter((c) => c.featuredFlag);
+  const remaining = candidates.filter((c) => !c.featuredFlag);
+  const weights = report.weights ?? null;
   // Diligence + intro actions are advisor-only — the donor shared view must
   // never surface them (they'd reveal that diligence is in flight).
   const showDiligenceActions = variant !== "shared";
@@ -61,7 +63,7 @@ export function ReportBrief({
         <Masthead
           report={report}
           candidatesCount={candidates.length}
-          surfacedCount={topThree.length}
+          surfacedCount={featured.length}
           isTerminal={isTerminal}
           variant={variant}
         />
@@ -86,23 +88,25 @@ export function ReportBrief({
 
         {isTerminal ? <GeographyWarning diagnostic={report.geographyDiagnostic} /> : null}
 
-        {isTerminal && topThree.length === 0 && candidates.length > 0 ? (
+        {isTerminal && featured.length === 0 && candidates.length > 0 ? (
           <div className="mb-12">
             <DisqualificationSummary candidates={candidates} />
           </div>
         ) : null}
 
-        {topThree[0] ? (
+        {featured[0] ? (
           <div className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 motion-safe:duration-700 motion-safe:delay-100">
             <LeadCandidate
-              candidate={topThree[0]}
+              candidate={featured[0]}
+              weights={weights}
+              hasMore={candidates.length > 1}
               reportId={report.id}
               showDiligenceActions={showDiligenceActions}
             />
           </div>
         ) : null}
 
-        {topThree.slice(1).map((candidate, i) => {
+        {featured.slice(1).map((candidate, i) => {
           const number = String(i + 2).padStart(2, "0");
           const label = labelForRank(i + 2);
           return (
@@ -115,6 +119,7 @@ export function ReportBrief({
                 candidate={candidate}
                 number={number}
                 label={label}
+                weights={weights}
                 reportId={report.id}
                 showDiligenceActions={showDiligenceActions}
               />
@@ -122,12 +127,13 @@ export function ReportBrief({
           );
         })}
 
-        {topThree.length >= 2 ? <ComparisonTable candidates={topThree} /> : null}
+        {featured.length >= 2 ? <ComparisonTable candidates={featured} weights={weights} /> : null}
 
         {remaining.length > 0 ? (
           <AlsoConsidered
             candidates={remaining}
-            startRank={topThree.length + 1}
+            startRank={featured.length + 1}
+            weights={weights}
             reportId={report.id}
             showDiligenceActions={showDiligenceActions}
           />
@@ -136,11 +142,16 @@ export function ReportBrief({
         {(isTerminal || candidates.length > 0) && report.status !== "failed" ? (
           <Methodology
             candidatesCount={candidates.length}
-            surfacedCount={topThree.length}
+            surfacedCount={featured.length}
             geographyDiagnostic={report.geographyDiagnostic}
+            weights={weights}
           />
         ) : null}
       </div>
+
+      {variant === "advisor" && isTerminal && weights && candidates.length > 0 ? (
+        <WeightsPanel report={report} />
+      ) : null}
     </div>
   );
 }

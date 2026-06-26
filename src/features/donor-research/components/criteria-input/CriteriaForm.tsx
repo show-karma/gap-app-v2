@@ -2,6 +2,9 @@
 
 import type { UseFormReturn } from "react-hook-form";
 import type { DonorHandle } from "@/types/donor-research";
+import { DEFAULT_WEIGHTS_BASIS_POINTS } from "../report-brief/scoring";
+import { WeightsAllocator } from "../weights/WeightsAllocator";
+import { isValidWeights } from "../weights/weights-allocation";
 import type { CriteriaFormValues } from "./CriteriaInputPanel";
 import { DonorHandlePicker } from "./DonorHandlePicker";
 
@@ -28,6 +31,8 @@ export function CriteriaForm({
 }: CriteriaFormProps) {
   const { register, handleSubmit, watch, setValue, formState } = form;
   const errors = formState.errors;
+  const weights = watch("weights");
+  const weightsBalanced = isValidWeights(weights);
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
@@ -99,6 +104,47 @@ export function CriteriaForm({
         </label>
       </div>
 
+      <fieldset className="flex flex-col gap-3 rounded-md border border-border bg-muted/10 px-3 py-3">
+        <legend className="px-1 text-sm font-medium">Scoring weights</legend>
+        <p className="text-xs text-muted-foreground">
+          Set how much each criterion counts toward the composite. You can adjust this again after
+          the report renders.
+        </p>
+        <WeightsAllocator
+          value={weights}
+          onChange={(next) => setValue("weights", next, { shouldValidate: true })}
+          resetValue={DEFAULT_WEIGHTS_BASIS_POINTS}
+          disabled={submitting}
+        />
+        {errors.weights ? (
+          <span className="text-xs text-red-600 dark:text-red-400">
+            {errors.weights.message as string}
+          </span>
+        ) : null}
+      </fieldset>
+
+      <label className="flex flex-col gap-1.5 text-sm">
+        <span className="font-medium">Featured results</span>
+        <span className="text-xs text-muted-foreground">
+          How many top candidates get a full AI one-pager (1–25). You can change this after the
+          report renders.
+        </span>
+        <input
+          {...register("topCount", {
+            setValueAs: (v) => (v === "" || v === null || v === undefined ? undefined : Number(v)),
+          })}
+          type="number"
+          min={1}
+          max={25}
+          className="w-24 rounded-md border border-border bg-background px-3 py-2 text-sm"
+        />
+        {errors.topCount ? (
+          <span className="text-xs text-red-600 dark:text-red-400">
+            {errors.topCount.message as string}
+          </span>
+        ) : null}
+      </label>
+
       <div className="rounded-md border border-border bg-muted/20 px-3 py-2.5 text-sm text-muted-foreground">
         Returns ranked recommendations with compliance verification and public-data freshness in
         about ten minutes.
@@ -106,7 +152,8 @@ export function CriteriaForm({
 
       <button
         type="submit"
-        disabled={submitting}
+        disabled={submitting || !weightsBalanced}
+        title={weightsBalanced ? undefined : "Scoring weights must add up to 100%"}
         className="self-start rounded-md border border-border bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
       >
         {submitting ? "Starting…" : "Start report"}

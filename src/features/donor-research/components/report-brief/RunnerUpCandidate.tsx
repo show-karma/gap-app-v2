@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowUpRight } from "lucide-react";
-import type { ResearchReportCandidate } from "@/types/donor-research";
+import type { CompositeWeights, ResearchReportCandidate } from "@/types/donor-research";
 import { CandidateDiligenceActions } from "../diligence/CandidateDiligenceActions";
 import { SocialPresence } from "../report-viewer/SocialPresence";
 import { ChapterMark } from "./ChapterMark";
@@ -25,6 +25,8 @@ interface RunnerUpCandidateProps {
   number: string;
   /** Editorial label sitting at the right edge of the chapter rule. */
   label: string;
+  /** Persisted report weights for the score breakdown; `null` = legacy. */
+  weights: CompositeWeights | null;
   /** Report id — required to mount the advisor diligence actions. */
   reportId?: string;
   /** Advisor-only: gates the Ask Questions / Connect footer. */
@@ -42,6 +44,7 @@ export function RunnerUpCandidate({
   candidate,
   number,
   label,
+  weights,
   reportId,
   showDiligenceActions = false,
 }: RunnerUpCandidateProps) {
@@ -62,7 +65,7 @@ export function RunnerUpCandidate({
   const lastMention = relativeDays(mostRecentMentionDate(mentions));
 
   return (
-    <section className="mb-20 sm:mb-24">
+    <section className="mb-20 sm:mb-24" data-section="runners-up" data-candidate-id={candidate.id}>
       <ChapterMark number={number} label={label} tone="runner-up" />
 
       <div className="mt-8 grid grid-cols-1 gap-x-12 gap-y-8 lg:grid-cols-[minmax(0,8fr)_minmax(0,4fr)]">
@@ -142,7 +145,7 @@ export function RunnerUpCandidate({
             {band}
           </p>
 
-          <ScoreBreakdownTable candidate={candidate} />
+          <ScoreBreakdownTable candidate={candidate} weights={weights} />
 
           <ComplianceStrip candidate={candidate} />
 

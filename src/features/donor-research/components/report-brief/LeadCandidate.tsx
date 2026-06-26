@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowUpRight } from "lucide-react";
-import type { ResearchReportCandidate } from "@/types/donor-research";
+import type { CompositeWeights, ResearchReportCandidate } from "@/types/donor-research";
 import { CandidateDiligenceActions } from "../diligence/CandidateDiligenceActions";
 import { SocialPresence } from "../report-viewer/SocialPresence";
 import { ChapterMark } from "./ChapterMark";
@@ -21,6 +21,14 @@ import {
 
 interface LeadCandidateProps {
   candidate: ResearchReportCandidate;
+  /** Persisted report weights for the score breakdown; `null` = legacy. */
+  weights: CompositeWeights | null;
+  /**
+   * Whether the brief has any other candidates below the lead (runner-ups or
+   * "also considered"). Drives the "Read on for the runners-up…" line so it
+   * isn't shown on a single-candidate report (QA finding).
+   */
+  hasMore: boolean;
   /** Report id — required to mount the advisor diligence actions. */
   reportId?: string;
   /** Advisor-only: gates the Ask Questions / Connect footer. */
@@ -36,6 +44,8 @@ interface LeadCandidateProps {
  */
 export function LeadCandidate({
   candidate,
+  weights,
+  hasMore,
   reportId,
   showDiligenceActions = false,
 }: LeadCandidateProps) {
@@ -58,7 +68,11 @@ export function LeadCandidate({
   const mostRecentLabel = relativeDays(mostRecentMs);
 
   return (
-    <section className="mb-24 sm:mb-32">
+    <section
+      className="mb-24 sm:mb-32"
+      data-section="lead-candidate"
+      data-candidate-id={candidate.id}
+    >
       <ChapterMark number="01" label="Lead" tone="lead" />
 
       <div className="mt-8 grid grid-cols-1 gap-x-12 gap-y-10 lg:mt-10 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
@@ -119,7 +133,7 @@ export function LeadCandidate({
         <aside className="min-w-0 lg:pl-8 lg:border-l lg:border-border/60">
           <CompositeHero composite100={composite100} band={band} disqualified={isDisqualified} />
 
-          <ScoreBreakdownTable candidate={candidate} />
+          <ScoreBreakdownTable candidate={candidate} weights={weights} />
 
           <ComplianceStrip candidate={candidate} />
 
@@ -138,7 +152,7 @@ export function LeadCandidate({
         </aside>
       </div>
 
-      <LeadJustification candidate={candidate} />
+      <LeadJustification candidate={candidate} hasMore={hasMore} />
 
       {showDiligenceActions && reportId ? (
         <CandidateDiligenceActions reportId={reportId} candidateId={candidate.id} />
@@ -300,7 +314,13 @@ function LeadCoverage({ candidate }: LeadCoverageProps) {
   );
 }
 
-function LeadJustification({ candidate }: LeadCandidateProps) {
+function LeadJustification({
+  candidate,
+  hasMore,
+}: {
+  candidate: ResearchReportCandidate;
+  hasMore: boolean;
+}) {
   return (
     <div className="mt-12 border-t border-border/60 pt-6">
       <p
@@ -312,8 +332,8 @@ function LeadJustification({ candidate }: LeadCandidateProps) {
         className={`${briefProse.className} mt-2 max-w-[72ch] text-[1rem] leading-[1.55] text-foreground/80`}
       >
         This recommendation leads the pool on{" "}
-        <span className="text-foreground">{leadJustification(candidate)}</span> Read on for the
-        runners-up and the full comparison.
+        <span className="text-foreground">{leadJustification(candidate)}</span>
+        {hasMore ? " Read on for the runners-up and the full comparison." : null}
       </p>
     </div>
   );

@@ -2,7 +2,7 @@
 
 import { ChevronDown } from "lucide-react";
 import { useState } from "react";
-import type { ResearchReportCandidate } from "@/types/donor-research";
+import type { CompositeWeights, ResearchReportCandidate } from "@/types/donor-research";
 import { CandidateCard } from "../report-viewer/CandidateCard";
 import { briefDisplay, briefProse } from "./fonts";
 import { formatLocale, humanizeCase } from "./text-utils";
@@ -11,6 +11,8 @@ interface AlsoConsideredProps {
   candidates: readonly ResearchReportCandidate[];
   /** Starting rank for the first item — usually 4 if top-3 above. */
   startRank: number;
+  /** Persisted report weights for each card's breakdown; `null` = legacy. */
+  weights: CompositeWeights | null;
   /** Report id — required to mount the advisor diligence actions. */
   reportId?: string;
   /** Advisor-only: gates the Ask Questions / Connect footer per candidate. */
@@ -26,6 +28,7 @@ interface AlsoConsideredProps {
 export function AlsoConsidered({
   candidates,
   startRank,
+  weights,
   reportId,
   showDiligenceActions = false,
 }: AlsoConsideredProps) {
@@ -34,7 +37,7 @@ export function AlsoConsidered({
   if (candidates.length === 0) return null;
 
   return (
-    <section className="mb-20 sm:mb-24">
+    <section className="mb-20 sm:mb-24" data-section="also-considered">
       <header className="mb-6 sm:mb-8">
         <p
           className={`${briefDisplay.className} text-[10px] font-medium uppercase tracking-[0.32em] text-muted-foreground`}
@@ -49,8 +52,8 @@ export function AlsoConsidered({
         <p
           className={`${briefProse.className} mt-3 max-w-[58ch] text-[1rem] leading-[1.55] text-foreground/75`}
         >
-          Surfaced by the same model but ranked below the lead three. Tap any row to read the full
-          one-pager and compliance breakdown.
+          Surfaced by the same model but ranked below the top {startRank - 1}. Tap any row to read
+          the full one-pager and compliance breakdown.
         </p>
       </header>
 
@@ -120,6 +123,7 @@ export function AlsoConsidered({
                   <CandidateCard
                     candidate={candidate}
                     variant="detail"
+                    weights={weights}
                     reportId={reportId}
                     showDiligenceActions={showDiligenceActions}
                   />

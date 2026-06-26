@@ -222,7 +222,10 @@ interface SampleCardProps {
 function SampleCandidateCard({ candidate, variant }: SampleCardProps) {
   const band = compositeBand(candidate.composite, false);
   return (
-    <article className="rounded-lg border border-border bg-card p-3">
+    // min-w-0 lets the card shrink inside the grid (grid items default to
+    // min-width:auto, which otherwise forces the wide social table to
+    // overflow the narrow lg:grid-cols-3 columns).
+    <article className="min-w-0 rounded-lg border border-border bg-card p-3">
       <header className="mb-2 flex items-start justify-between gap-2">
         <div className="min-w-0">
           <h4 className="truncate text-sm font-semibold">{candidate.name}</h4>
@@ -244,7 +247,7 @@ function SampleCandidateCard({ candidate, variant }: SampleCardProps) {
         <p className="mt-2 rounded-md bg-muted/40 p-2 text-xs">{candidate.onePager}</p>
       ) : null}
       {candidate.social ? (
-        <div className="mt-3">
+        <div className="mt-3 overflow-x-auto">
           <SocialPresence metrics={candidate.social} />
         </div>
       ) : null}
