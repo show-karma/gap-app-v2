@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import { MembersAreaCta } from "@/src/features/scanner/components/members-area-cta";
 import { PublicScorecard } from "@/src/features/scanner/components/public-scorecard";
 import { getPublicScorecardBySlug } from "@/src/features/scanner/services/scanner.service";
 import type { PublicScorecardPayload } from "@/src/features/scanner/types";
@@ -68,21 +68,7 @@ export default async function PublicScorecardPage({ params }: PageProps) {
           Log in to view the prioritized fix list, donate-flow walkthrough notes, and the full
           rubric breakdown for this scan.
         </p>
-        <div className="flex flex-wrap gap-3 pt-1">
-          <Link
-            href={`${PAGES.SCANNER.ROOT}?return=${encodeURIComponent(PAGES.SCANNER.PUBLIC_SCORECARD(slug))}`}
-            className="inline-flex items-center gap-1 rounded-full bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-700 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
-          >
-            Log in
-            <span aria-hidden>→</span>
-          </Link>
-          <Link
-            href={PAGES.SCANNER.ROOT}
-            className="inline-flex items-center gap-1 rounded-full border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-900"
-          >
-            Scan another site
-          </Link>
-        </div>
+        <MembersAreaCta scanId={initial?.scanId ?? slug} />
       </aside>
     </main>
   );
