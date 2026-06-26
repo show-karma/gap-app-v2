@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
@@ -69,16 +69,18 @@ export function ConnectDialog({
     defaultValues: { email: "" },
   });
 
-  // Reset to the first step whenever the dialog (re)opens.
-  useEffect(() => {
-    if (open) {
+  // Reset back to the first step on close, so the next open starts fresh
+  // (handled in the close path rather than a state-syncing effect).
+  const handleOpenChange = (next: boolean) => {
+    if (!next) {
       setStep("confirm");
       setEmailPrompt(null);
       reset({ email: "" });
     }
-  }, [open, reset]);
+    onOpenChange(next);
+  };
 
-  const close = () => onOpenChange(false);
+  const close = () => handleOpenChange(false);
 
   const sendIntro = (onEmailRequired: (message: string) => void) => {
     requestIntro.mutate(
@@ -128,7 +130,7 @@ export function ConnectDialog({
   const isSubmittingEmail = updateAdvisorEmail.isPending || requestIntro.isPending;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent>
         {step === "confirm" ? (
           <>

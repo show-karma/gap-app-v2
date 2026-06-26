@@ -9,6 +9,7 @@ import type {
   SubmitDiligenceResponseRequest,
   SubmitDiligenceResponseResult,
 } from "@/types/diligence";
+import { DILIGENCE_ENDPOINTS } from "@/utilities/diligenceEndpoints";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
@@ -35,9 +36,7 @@ import { INDEXER } from "@/utilities/indexer";
  * a 404.
  */
 export const getDiligenceTemplate = async (): Promise<DiligenceTemplate> => {
-  const [data, error] = await fetchData<DiligenceTemplate>(
-    INDEXER.DONOR_RESEARCH.DILIGENCE_TEMPLATE
-  );
+  const [data, error] = await fetchData<DiligenceTemplate>(DILIGENCE_ENDPOINTS.TEMPLATE);
   if (error || !data) {
     throw new Error(error || "Failed to load diligence template");
   }
@@ -52,7 +51,7 @@ export const saveDiligenceTemplate = async (
   body: SaveDiligenceTemplateRequest
 ): Promise<DiligenceTemplate> => {
   const [data, error] = await fetchData<DiligenceTemplate>(
-    INDEXER.DONOR_RESEARCH.DILIGENCE_TEMPLATE,
+    DILIGENCE_ENDPOINTS.TEMPLATE,
     "PUT",
     body
   );
@@ -75,7 +74,7 @@ export const getCandidateDiligence = async (
   candidateId: string
 ): Promise<CandidateDiligenceView> => {
   const [data, error] = await fetchData<CandidateDiligenceView>(
-    INDEXER.DONOR_RESEARCH.CANDIDATE_DILIGENCE(reportId, candidateId)
+    DILIGENCE_ENDPOINTS.CANDIDATE(reportId, candidateId)
   );
   if (error || !data) {
     throw new Error(error || "Failed to load candidate diligence");
@@ -94,7 +93,7 @@ export const askQuestions = async (
   candidateId: string
 ): Promise<AskQuestionsResponse> => {
   const [data, error] = await fetchData<AskQuestionsResponse>(
-    INDEXER.DONOR_RESEARCH.DILIGENCE_REQUESTS(reportId, candidateId),
+    DILIGENCE_ENDPOINTS.REQUESTS(reportId, candidateId),
     "POST"
   );
   if (error || !data) {
@@ -122,7 +121,7 @@ export const requestIntro = async (
   candidateId: string
 ): Promise<RequestIntroResult> => {
   const [data, error, , status] = await fetchData<IntroQueuedResponse>(
-    INDEXER.DONOR_RESEARCH.INTRO_REQUESTS(reportId, candidateId),
+    DILIGENCE_ENDPOINTS.INTRO_REQUESTS(reportId, candidateId),
     "POST"
   );
   if (status === 422) {
@@ -184,7 +183,7 @@ export const fetchDiligenceResponseContext = async (
   token: string
 ): Promise<DiligenceResponseContext | null> => {
   const [data, error, , status] = await fetchData<DiligenceResponseContext>(
-    INDEXER.DONOR_RESEARCH.DILIGENCE_RESPONSE(token),
+    DILIGENCE_ENDPOINTS.RESPONSE(token),
     "GET",
     {},
     {},
@@ -214,7 +213,7 @@ export const submitDiligenceResponse = async (
   body: SubmitDiligenceResponseRequest
 ): Promise<SubmitDiligenceResponseResult> => {
   const [data, error, , status] = await fetchData<SubmitDiligenceResponseResult>(
-    INDEXER.DONOR_RESEARCH.DILIGENCE_RESPONSE(token),
+    DILIGENCE_ENDPOINTS.RESPONSE(token),
     "POST",
     body,
     {},

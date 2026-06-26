@@ -13,7 +13,11 @@ import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
 import { useSubmitDiligenceResponse } from "@/hooks/useDiligence";
 import type { DiligenceSubmitError } from "@/services/diligence.service";
-import { DILIGENCE_RESPONSE_LIMITS, type DiligenceQuestion } from "@/types/diligence";
+import {
+  DILIGENCE_RESPONSE_LIMITS,
+  type DiligenceAnswerInput,
+  type DiligenceQuestion,
+} from "@/types/diligence";
 
 interface DiligenceResponseFormProps {
   token: string;
@@ -73,9 +77,12 @@ export function DiligenceResponseForm({ token, questions }: DiligenceResponseFor
   });
 
   const onSubmit = handleSubmit((values) => {
-    const answers = values.answers
-      .map((answer) => ({ questionId: answer.questionId, text: answer.text.trim() }))
-      .filter((answer) => answer.text.length > 0);
+    // Trim + drop blanks in a single pass (only non-empty answers are sent).
+    const answers = values.answers.reduce<DiligenceAnswerInput[]>((acc, answer) => {
+      const text = answer.text.trim();
+      if (text.length > 0) acc.push({ questionId: answer.questionId, text });
+      return acc;
+    }, []);
 
     if (answers.length === 0) {
       toast.error("Please answer at least one question before submitting.");
