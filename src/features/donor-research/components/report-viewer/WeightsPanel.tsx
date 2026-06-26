@@ -147,13 +147,20 @@ function PanelBody({ report, persistedWeights, onClose }: PanelBodyProps) {
 
   const persistedOrder = useMemo(() => report.candidates.map((c) => c.id), [report.candidates]);
   const persistedTopCount = report.topCount ?? DEFAULT_TOP_COUNT;
+  // A report that already carries a manual order seeds the draft with it, so a
+  // later config-only save can re-send (and preserve) it instead of silently
+  // dropping it — a config commit clears manual ordering server-side.
+  const persistedDraftOrder = useMemo(
+    () => (report.candidates.some((c) => c.manualPosition != null) ? persistedOrder : null),
+    [report.candidates, persistedOrder]
+  );
 
   // One shared draft across all three tabs.
   const [draftWeights, setDraftWeights] = useState<CompositeWeights>(persistedWeights);
   const [draftTopCount, setDraftTopCount] = useState<number>(persistedTopCount);
   // null = follow the weight ranking; a value = an explicit manual order that
   // wins over the ranking and is left untouched by later weight changes.
-  const [draftOrder, setDraftOrder] = useState<string[] | null>(null);
+  const [draftOrder, setDraftOrder] = useState<string[] | null>(persistedDraftOrder);
   const [confirmOpen, setConfirmOpen] = useState(false);
 
   const candidatesById = useMemo(
@@ -204,7 +211,8 @@ function PanelBody({ report, persistedWeights, onClose }: PanelBodyProps) {
   const weightsBalanced = isValidWeights(draftWeights);
   const topCountDirty = draftTopCount !== persistedTopCount;
   const orderDirty = draftOrder !== null && draftOrder.some((id, i) => id !== persistedOrder[i]);
-  const anyDirty = weightsDirty || topCountDirty || orderDirty;
+  const configDirty = weightsDirty || topCountDirty;
+  const anyDirty = configDirty || orderDirty;
 
   const isPending = updateConfig.isPending || reorder.isPending;
 
@@ -227,7 +235,7 @@ function PanelBody({ report, persistedWeights, onClose }: PanelBodyProps) {
   const resetAll = () => {
     setDraftWeights(persistedWeights);
     setDraftTopCount(persistedTopCount);
-    setDraftOrder(null);
+    setDraftOrder(persistedDraftOrder);
   };
 
   // One Save commits every dirty slice. Config goes first because it re-ranks
@@ -235,14 +243,16 @@ function PanelBody({ report, persistedWeights, onClose }: PanelBodyProps) {
   // advisor's manual order wins.
   const commitAll = async () => {
     try {
-      if (weightsDirty || topCountDirty) {
+      if (configDirty) {
         await updateConfig.mutateAsync({
           reportId: report.id,
           ...(weightsDirty ? { weights: draftWeights } : {}),
           ...(topCountDirty ? { topCount: draftTopCount } : {}),
         });
       }
-      if (orderDirty && draftOrder) {
+      // Re-send the manual order whenever it exists and either it changed or a
+      // config save just cleared it server-side — so it's never silently lost.
+      if (draftOrder && (orderDirty || configDirty)) {
         await reorder.mutateAsync({ reportId: report.id, orderedCandidateIds: draftOrder });
       }
       toast.success("Ranking updated.");

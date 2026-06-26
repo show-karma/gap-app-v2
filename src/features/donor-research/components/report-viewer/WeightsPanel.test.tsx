@@ -204,6 +204,32 @@ describe("WeightsPanel", () => {
     expect(mockReorder).not.toHaveBeenCalled();
   });
 
+  it("re-sends an existing manual order when only the config changes", async () => {
+    const report = buildReport(DEFAULT_WEIGHTS);
+    // The report already carries a manual order (manualPosition set on each row).
+    report.candidates = report.candidates.map((c, i) => ({ ...c, manualPosition: i + 1 }));
+    renderPanel(report);
+    openSheet();
+
+    // Change only the featured count — a config save clears manual order
+    // server-side, so the panel must re-send it to preserve it.
+    const configTab = screen.getByRole("tab", { name: /configs/i });
+    configTab.focus();
+    fireEvent.click(configTab);
+    fireEvent.click(await screen.findByRole("button", { name: /more featured results/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+
+    const dialog = await screen.findByText("Update report ranking?");
+    const dialogEl = dialog.closest('[role="dialog"]') as HTMLElement;
+    fireEvent.click(within(dialogEl).getByRole("button", { name: "Save changes" }));
+
+    await waitFor(() => expect(mockUpdate).toHaveBeenCalledTimes(1));
+    expect(mockUpdate.mock.calls[0][1].topCount).toBe(4);
+    // The existing order is preserved by re-sending it through reorder.
+    await waitFor(() => expect(mockReorder).toHaveBeenCalledTimes(1));
+    expect(mockReorder.mock.calls[0][1]).toEqual(["c1", "c2", "c3", "c4"]);
+  });
+
   it("keeps the sheet open when Escape is pressed on a reorder grip", async () => {
     renderPanel(buildReport(DEFAULT_WEIGHTS));
     openSheet();
