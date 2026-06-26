@@ -117,11 +117,17 @@ export function ScannerApiKeys() {
     issue({ name: ui.newKeyName.trim() });
   }
 
-  function handleCopy() {
+  async function handleCopy() {
     if (!ui.justCreatedKey) {
       return;
     }
-    copyToClipboard(ui.justCreatedKey);
+    // copyToClipboard resolves to false when the browser blocks clipboard
+    // access (insecure context, permission denied). Mark copied only on
+    // success so the user doesn't see a false "Copied" confirmation.
+    const ok = await copyToClipboard(ui.justCreatedKey);
+    if (!ok) {
+      return;
+    }
     dispatch({ type: "mark_copied" });
     setTimeout(() => dispatch({ type: "clear_copied" }), 2000);
   }

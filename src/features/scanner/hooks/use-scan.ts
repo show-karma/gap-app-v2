@@ -20,6 +20,10 @@ export function useScan(scanId: string | null) {
     },
     enabled: Boolean(scanId),
     refetchInterval: (query) => {
+      // Stop the 4s poll once the scan is terminal OR the request errored.
+      // Without the error guard a permanently failing endpoint (404, 5xx,
+      // permission denied) would re-fire every interval forever.
+      if (query.state.error) return false;
       const status = query.state.data?.status;
       return status === "complete" || status === "failed" ? false : POLL_INTERVAL_MS;
     },

@@ -77,7 +77,7 @@ export default async function PublicScorecardPage({ params }: PageProps) {
           Log in to view the prioritized fix list, donate-flow walkthrough notes, and the full
           rubric breakdown for this scan.
         </p>
-        <MembersAreaCta scanId={initial?.scanId ?? slug} />
+        <MembersAreaCta slug={slug} scanId={initial?.scanId ?? null} />
       </aside>
     </main>
   );

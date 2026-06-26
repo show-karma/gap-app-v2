@@ -2,19 +2,43 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { setPostLoginRedirect, useAuth } from "@/hooks/useAuth";
 import { PAGES } from "@/utilities/pages";
+import { getPublicScorecardBySlug } from "../services/scanner.service";
 
 interface MembersAreaCtaProps {
-  readonly scanId: string;
+  readonly slug: string;
+  // Server-rendered scanId if the SSR scorecard fetch succeeded. When
+  // null, the client recovers the scanId before routing — never falls
+  // back to the slug, which would corrupt the detail-page URL.
+  readonly scanId: string | null;
 }
 
-export function MembersAreaCta({ scanId }: MembersAreaCtaProps) {
+export function MembersAreaCta({ slug, scanId: initialScanId }: MembersAreaCtaProps) {
   const router = useRouter();
   const { ready, authenticated, login } = useAuth();
-  const detailHref = PAGES.SCANNER.SCAN_DETAIL(scanId);
+  const [scanId, setScanId] = useState<string | null>(initialScanId);
+
+  useEffect(() => {
+    if (initialScanId) return;
+    let cancelled = false;
+    getPublicScorecardBySlug(slug)
+      .then((s) => {
+        if (!cancelled) setScanId(s.scanId);
+      })
+      .catch(() => {
+        // SUPPRESSED: scorecard may legitimately be missing (unpublished,
+        // 404). UI degrades to disabled button below.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [slug, initialScanId]);
 
   function handleLogin() {
+    if (!scanId) return;
+    const detailHref = PAGES.SCANNER.SCAN_DETAIL(scanId);
     if (authenticated) {
       router.push(detailHref);
       return;
@@ -30,7 +54,7 @@ export function MembersAreaCta({ scanId }: MembersAreaCtaProps) {
       <button
         type="button"
         onClick={handleLogin}
-        disabled={!ready}
+        disabled={!ready || !scanId}
         className="inline-flex items-center gap-1 rounded-full bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
       >
         {authenticated ? "Open full report" : "Log in to see the report"}

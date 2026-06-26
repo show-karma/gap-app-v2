@@ -13,6 +13,12 @@ interface CategoryBarProps {
 }
 
 export function CategoryBar({ score }: CategoryBarProps) {
+  // Categories with no scoreable checks (e.g. a brand-new rubric tier
+  // before any checks are wired) would otherwise render "0 of 0 points"
+  // which reads as a failure. Hide them entirely.
+  if (score.pointsPossible === 0 && !score.pending) {
+    return null;
+  }
   const band = bandForScore(score);
   const label = categoryLabel(score.category);
   const subtitle = score.summary ?? categorySubtitle(score.category);
