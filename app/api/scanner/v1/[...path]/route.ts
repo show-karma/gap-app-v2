@@ -69,8 +69,25 @@ async function proxy(
   context: { params: Promise<{ path: string[] }> }
 ): Promise<Response> {
   const { path } = await context.params;
-  const targetPath = `/api/scanner/v1/${(path ?? []).map(encodeURIComponent).join("/")}`;
+  const segments = path ?? [];
+  // Reject path segments that could let new URL() normalize the request
+  // out of the /api/scanner/v1/ prefix (e.g. "..", encoded slashes).
+  // encodeURIComponent below would catch most of these, but layered
+  // defense keeps the surface small: any segment that does not look
+  // like a normal URL path token is dropped at the door.
+  for (const seg of segments) {
+    if (!seg || seg === "." || seg === ".." || seg.includes("/") || seg.includes("\\")) {
+      return new Response("Bad Request", { status: 400 });
+    }
+  }
+  const targetPath = `/api/scanner/v1/${segments.map(encodeURIComponent).join("/")}`;
   const targetUrl = new URL(`${BACKEND_BASE}${targetPath}`);
+  // Defense-in-depth: refuse the request if the constructed URL is not
+  // under the scanner prefix. Catches any future bypass that slips
+  // through the segment check above.
+  if (!targetUrl.pathname.startsWith("/api/scanner/v1/")) {
+    return new Response("Bad Request", { status: 400 });
+  }
   // Preserve query string verbatim.
   req.nextUrl.searchParams.forEach((value, key) => {
     targetUrl.searchParams.append(key, value);
