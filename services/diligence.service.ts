@@ -11,7 +11,7 @@ import type {
 } from "@/types/diligence";
 import { DILIGENCE_ENDPOINTS } from "@/utilities/diligenceEndpoints";
 import fetchData from "@/utilities/fetchData";
-import { INDEXER } from "@/utilities/indexer";
+import { fetchCurrentAdvisor, onboardAdvisor } from "./donor-research.service";
 
 /**
  * Nonprofit-diligence + advisor-intro API client (DEV-428).
@@ -141,18 +141,25 @@ export const requestIntro = async (
  * Persists the advisor's reply-to email, then the caller re-POSTs the intro.
  * Used only by the Connect → 422 `requiredFields:["email"]` recovery branch.
  *
- * ⚠️ UNVERIFIED CONTRACT — the integration guide (§3.4 step 2) says the email
- * is saved through "the same endpoint onboarding uses", but the onboarding
- * `POST /me` body carries no email field, and the DEV-427 backend is not
- * present in this checkout to confirm the real shape. This calls
- * `PUT /v2/donor-research/me` with `{ email }` as the best-effort shape and
- * MUST be re-pointed once the endpoint is confirmed with backend (DEV-427).
+ * The backend stores the email through the onboarding endpoint
+ * (`POST /v2/donor-research/me`): `AdvisorOnboardingBodySchema` carries an
+ * optional `email` that the write service writes to the advisor's contributor
+ * profile — exactly the source the reply-to resolver reads. The POST is
+ * idempotent on the advisor row, so we re-send the advisor's existing
+ * `displayName`/`orgName`/`timezone` unchanged and only add the new email.
+ * (There is no `PUT /me`; the prior shape 404'd.)
  */
 export const updateAdvisorEmail = async (email: string): Promise<void> => {
-  const [, error] = await fetchData(INDEXER.DONOR_RESEARCH.ME, "PUT", { email });
-  if (error) {
-    throw new Error(error || "Failed to save your email");
+  const advisor = await fetchCurrentAdvisor();
+  if (!advisor) {
+    throw new Error("Finish setting up your advisor profile before adding an email.");
   }
+  await onboardAdvisor({
+    displayName: advisor.displayName,
+    orgName: advisor.orgName ?? null,
+    timezone: advisor.timezone,
+    email,
+  });
 };
 
 // -- Public nonprofit response surface (unauthenticated) ---------------------

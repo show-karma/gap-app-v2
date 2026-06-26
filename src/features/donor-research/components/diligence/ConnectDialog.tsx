@@ -109,7 +109,7 @@ export function ConnectDialog({
   };
 
   const handleEmailSubmit = handleSubmit((values) => {
-    // UNVERIFIED: advisor email endpoint pending DEV-427 confirmation.
+    // Persists the email via POST /me (onboarding), then re-attempts the intro.
     updateAdvisorEmail.mutate(
       { email: values.email },
       {
