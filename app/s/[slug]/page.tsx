@@ -22,7 +22,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const scorecard = await loadScorecard(slug);
   const title = scorecard?.orgName
     ? `${scorecard.orgName} | AI-Readiness Scorecard`
-    : "AI-Readiness Scorecard";
+    : "AI-Readiness Scorecard | Karma";
   const description = scorecard?.grade
     ? `Grade ${scorecard.grade} (${scorecard.totalScore}/100) on the Karma AI-Readiness Checker.`
     : "Karma AI-Readiness Checker scorecard.";
@@ -52,25 +52,38 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 export default async function PublicScorecardPage({ params }: PageProps) {
   const slug = (await params).slug;
   const initial = await loadScorecard(slug);
+
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-12">
+    <main className="mx-auto flex w-full max-w-2xl flex-col gap-12 px-6 py-12 sm:py-16">
       <PublicScorecard slug={slug} initialData={initial ?? undefined} />
 
-      <section className="flex flex-col items-start gap-2 rounded-2xl border border-zinc-200 bg-zinc-50 p-5 dark:border-zinc-800 dark:bg-zinc-900/40">
-        <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
-          See the top 3 fixes and per-check evidence
+      <aside className="flex flex-col gap-3 border-t border-zinc-200 pt-8 dark:border-zinc-800">
+        <span className="font-mono text-[11px] uppercase tracking-wider text-zinc-500">
+          Members area
+        </span>
+        <h2 className="font-display text-2xl tracking-tight text-zinc-900 dark:text-zinc-50">
+          See the top fixes and per-check evidence
         </h2>
         <p className="text-sm text-zinc-600 dark:text-zinc-400">
           Log in to view the prioritized fix list, donate-flow walkthrough notes, and the full
           rubric breakdown for this scan.
         </p>
-        <Link
-          href={`${PAGES.SCANNER.ROOT}?return=${encodeURIComponent(PAGES.SCANNER.PUBLIC_SCORECARD(slug))}`}
-          className="text-sm font-medium text-primary-600 underline-offset-2 hover:underline dark:text-primary-400"
-        >
-          Log in to see the full report
-        </Link>
-      </section>
+        <div className="flex flex-wrap gap-3 pt-1">
+          <Link
+            href={`${PAGES.SCANNER.ROOT}?return=${encodeURIComponent(PAGES.SCANNER.PUBLIC_SCORECARD(slug))}`}
+            className="inline-flex items-center gap-1 rounded-full bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-700 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
+          >
+            Log in
+            <span aria-hidden>→</span>
+          </Link>
+          <Link
+            href={PAGES.SCANNER.ROOT}
+            className="inline-flex items-center gap-1 rounded-full border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-900"
+          >
+            Scan another site
+          </Link>
+        </div>
+      </aside>
     </main>
   );
 }

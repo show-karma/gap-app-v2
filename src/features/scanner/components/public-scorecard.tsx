@@ -3,8 +3,8 @@
 import { useScorecardBySlug } from "../hooks/use-scorecard-by-slug";
 import type { PublicScorecardPayload } from "../types";
 import { CategoryBar } from "./category-bar";
-import { GradeHeadline } from "./grade-headline";
 import { ScanProgressIndicator } from "./scan-progress-indicator";
+import { ScoreHero } from "./score-hero";
 
 interface PublicScorecardProps {
   readonly slug: string;
@@ -17,11 +17,13 @@ export function PublicScorecard({ slug, initialData }: PublicScorecardProps) {
 
   if (isLoading && !scorecard) {
     return (
-      <output className="flex animate-pulse flex-col gap-4 p-6" aria-label="Loading scorecard">
-        <div className="h-16 w-1/2 rounded-2xl bg-zinc-200 dark:bg-zinc-800" />
-        <div className="h-2 w-full rounded-full bg-zinc-200 dark:bg-zinc-800" />
-        <div className="h-2 w-full rounded-full bg-zinc-200 dark:bg-zinc-800" />
-        <div className="h-2 w-full rounded-full bg-zinc-200 dark:bg-zinc-800" />
+      <output className="flex animate-pulse flex-col gap-8 py-8" aria-label="Loading scorecard">
+        <div className="h-32 w-3/4 rounded-2xl bg-zinc-100 dark:bg-zinc-900" />
+        <div className="flex flex-col gap-6">
+          <div className="h-2 w-full rounded-full bg-zinc-100 dark:bg-zinc-900" />
+          <div className="h-2 w-full rounded-full bg-zinc-100 dark:bg-zinc-900" />
+          <div className="h-2 w-full rounded-full bg-zinc-100 dark:bg-zinc-900" />
+        </div>
       </output>
     );
   }
@@ -45,49 +47,46 @@ export function PublicScorecard({ slug, initialData }: PublicScorecardProps) {
   }
 
   if (!scorecard) {
-    // Idle state (e.g. slug missing). Per gap-app-v2/CLAUDE.md, every data
-    // component renders loading, empty, AND error — never returns null.
     return (
-      <div className="flex flex-col gap-2 rounded-2xl border border-zinc-200 bg-zinc-50 p-6 text-sm text-zinc-600 dark:border-zinc-800 dark:bg-zinc-900/40 dark:text-zinc-400">
+      <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-6 text-sm text-zinc-600 dark:border-zinc-800 dark:bg-zinc-900/40 dark:text-zinc-400">
         No scorecard available for this URL yet.
       </div>
     );
   }
 
+  const categoryScores = scorecard.categoryScores ?? [];
+
   return (
-    <article className="flex flex-col gap-6 rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-      <header className="flex flex-col gap-3">
-        <div className="flex items-start justify-between gap-3">
-          <GradeHeadline
-            grade={scorecard.grade}
-            totalScore={scorecard.totalScore}
-            orgName={scorecard.orgName}
-          />
+    <article className="flex flex-col gap-12 py-2">
+      <ScoreHero
+        totalScore={scorecard.totalScore}
+        grade={scorecard.grade}
+        orgName={scorecard.orgName ?? null}
+        url={scorecard.url ?? null}
+        scannedAt={scorecard.finishedAtComplete ?? null}
+      />
+
+      {scorecard.status && scorecard.status !== "complete" ? (
+        <div className="flex">
           <ScanProgressIndicator status={scorecard.status} />
         </div>
-        <p className="text-sm text-zinc-600 dark:text-zinc-400">{scorecard.url}</p>
-      </header>
+      ) : null}
 
-      {scorecard.categories.length > 0 ? (
-        <section className="flex flex-col gap-3">
-          {scorecard.categories.map((category) => (
+      {categoryScores.length > 0 ? (
+        <section className="flex flex-col gap-6" aria-label="Category scores">
+          {categoryScores.map((category) => (
             <CategoryBar key={category.category} score={category} />
           ))}
         </section>
       ) : null}
 
-      <footer className="flex flex-col gap-1 text-xs text-zinc-500 dark:text-zinc-400">
-        <span>Rubric version {scorecard.rubricVersion}</span>
-        {scorecard.finishedAtComplete ? (
-          <span>
-            Scanned on{" "}
-            {new Date(scorecard.finishedAtComplete).toLocaleString(undefined, {
-              dateStyle: "medium",
-              timeStyle: "short",
-            })}
-          </span>
-        ) : null}
-      </footer>
+      {scorecard.rubricVersion ? (
+        <footer className="flex items-baseline gap-3 border-t border-zinc-200 pt-4 font-mono text-[11px] uppercase tracking-wider text-zinc-400 dark:border-zinc-800 dark:text-zinc-500">
+          <span>Rubric {scorecard.rubricVersion}</span>
+          <span aria-hidden>&middot;</span>
+          <span>Karma AI-Readiness Checker</span>
+        </footer>
+      ) : null}
     </article>
   );
 }

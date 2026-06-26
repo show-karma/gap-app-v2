@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Spectral } from "next/font/google";
+import { JetBrains_Mono, Spectral } from "next/font/google";
 import localFont from "next/font/local";
 import { defaultMetadata } from "@/utilities/meta";
 
@@ -20,6 +20,16 @@ const displayFont = Spectral({
   weight: ["500", "600"],
   style: ["normal", "italic"],
   variable: "--font-display",
+  display: "swap",
+});
+
+// Measurement font for the AI-Readiness Scanner (gauge numerics, per-check
+// evidence, score/100 fractions). Inter remains the body font; mono is
+// reserved for values that should read as instrument output, not prose.
+const monoFont = JetBrains_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500", "700"],
+  variable: "--font-mono",
   display: "swap",
 });
 import "@/styles/globals.css";
@@ -125,7 +135,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html
       lang="en"
-      className={`h-full ${inter.variable} ${displayFont.variable}`}
+      className={`h-full ${inter.variable} ${displayFont.variable} ${monoFont.variable}`}
       suppressHydrationWarning
       style={themeStyle}
     >

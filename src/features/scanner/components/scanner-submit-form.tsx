@@ -3,8 +3,6 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/useAuth";
 import { PAGES } from "@/utilities/pages";
@@ -72,12 +70,18 @@ export function ScannerSubmitForm() {
 
   return (
     <>
-      <form onSubmit={handleSubmit} className="flex flex-col gap-3 sm:flex-row sm:items-start">
-        <div className="flex flex-1 flex-col gap-1">
-          <Label htmlFor="scanner-url" className="sr-only">
-            Nonprofit URL
-          </Label>
-          <Input
+      <form onSubmit={handleSubmit} className="flex flex-col gap-2">
+        <Label htmlFor="scanner-url" className="sr-only">
+          Nonprofit URL
+        </Label>
+        <div className="group relative flex items-center gap-3 border-b border-zinc-300 pb-3 transition-colors focus-within:border-zinc-900 dark:border-zinc-700 dark:focus-within:border-zinc-100">
+          <span
+            className="font-mono text-[11px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500"
+            aria-hidden
+          >
+            URL
+          </span>
+          <input
             id="scanner-url"
             type="url"
             inputMode="url"
@@ -87,20 +91,26 @@ export function ScannerSubmitForm() {
             disabled={disabled}
             aria-invalid={urlError ? "true" : undefined}
             aria-describedby={urlError ? "scanner-url-error" : undefined}
+            className="flex-1 bg-transparent font-mono text-base text-zinc-900 placeholder:text-zinc-400 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 dark:text-zinc-100 dark:placeholder:text-zinc-600"
           />
-          {urlError ? (
-            <p
-              id="scanner-url-error"
-              role="alert"
-              className="text-sm text-rose-600 dark:text-rose-400"
-            >
-              {urlError}
-            </p>
-          ) : null}
+          <button
+            type="submit"
+            disabled={disabled}
+            className="inline-flex items-center gap-1 rounded-full bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
+          >
+            {isPending ? "Scanning" : "Scan"}
+            <span aria-hidden>{isPending ? "..." : "→"}</span>
+          </button>
         </div>
-        <Button type="submit" disabled={disabled} className="sm:self-stretch">
-          {isPending ? "Starting..." : "Scan"}
-        </Button>
+        {urlError ? (
+          <p
+            id="scanner-url-error"
+            role="alert"
+            className="text-sm text-rose-600 dark:text-rose-400"
+          >
+            {urlError}
+          </p>
+        ) : null}
       </form>
 
       <RateLimitModal
