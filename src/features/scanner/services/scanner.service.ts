@@ -1,3 +1,4 @@
+import { envVars } from "@/utilities/enviromentVars";
 import fetchData from "@/utilities/fetchData";
 import type {
   ContactRequest,
@@ -12,14 +13,23 @@ import type {
 
 // All scanner endpoints live under /api/scanner/v1.
 // Identity is resolved server-side from Privy session cookie or Karma API key.
-// Calls route through the same-origin Next.js proxy at
-// app/api/scanner/v1/[...path]/route.ts (empty baseUrl below) so the browser
+//
+// Browser callers route through the same-origin Next.js proxy at
+// app/api/scanner/v1/[...path]/route.ts (empty baseUrl) so the browser
 // forwards the Privy session cookie to the BE — a cross-origin call to
 // the gap-indexer port would drop the cookie and the BE would respond 401.
-// The proxy preserves Authorization headers too, so keyed callers work.
+//
+// Server callers (Next.js server components, route handlers, OG image
+// generation) bypass the proxy and hit the absolute backend URL because
+// axios in Node rejects a relative URL with ERR_INVALID_URL; the empty
+// baseUrl silently produced null SSR scorecards before. There is no
+// cookie to forward in the SSR context anyway (the scorecard endpoint
+// is public).
 // See gap-indexer/app/modules/v2/api/scanner/v1/openapi-extension.ts for the spec.
 const SCANNER_BASE = "/api/scanner/v1";
-const PROXY = "";
+const SCANNER_PROXY = typeof window === "undefined"
+  ? envVars.NEXT_PUBLIC_GAP_INDEXER_URL.replace(/\/$/, "")
+  : "";
 
 export async function submitScan(payload: SubmitScanRequest): Promise<SubmitScanResponse> {
   const [data, error, , status] = await fetchData<SubmitScanResponse>(
@@ -30,7 +40,7 @@ export async function submitScan(payload: SubmitScanRequest): Promise<SubmitScan
     {},
     false,
     false,
-    PROXY
+    SCANNER_PROXY
   );
   if (error || data === null) {
     throw Object.assign(new Error(error ?? "Request failed"), { status });
@@ -47,7 +57,7 @@ export async function getScanById(scanId: string): Promise<DetailScorecardPayloa
     {},
     false,
     false,
-    PROXY
+    SCANNER_PROXY
   );
   if (error || data === null) {
     throw Object.assign(new Error(error ?? "Request failed"), { status });
@@ -64,7 +74,7 @@ export async function getPublicScorecardBySlug(slug: string): Promise<PublicScor
     {},
     false,
     false,
-    PROXY
+    SCANNER_PROXY
   );
   if (error || data === null) {
     throw Object.assign(new Error(error ?? "Request failed"), { status });
@@ -81,7 +91,7 @@ export async function refreshScan(scanId: string): Promise<SubmitScanResponse> {
     {},
     false,
     false,
-    PROXY
+    SCANNER_PROXY
   );
   if (error || data === null) {
     throw Object.assign(new Error(error ?? "Request failed"), { status });
@@ -98,7 +108,7 @@ export async function submitContactRequest(payload: ContactRequest): Promise<{ i
     {},
     false,
     false,
-    PROXY
+    SCANNER_PROXY
   );
   if (error || data === null) {
     throw Object.assign(new Error(error ?? "Request failed"), { status });
@@ -115,7 +125,7 @@ export async function listScannerApiKeys(): Promise<ScannerApiKey[]> {
     {},
     false,
     false,
-    PROXY
+    SCANNER_PROXY
   );
   if (error || data === null) {
     throw Object.assign(new Error(error ?? "Request failed"), { status });
@@ -134,7 +144,7 @@ export async function issueScannerApiKey(
     {},
     false,
     false,
-    PROXY
+    SCANNER_PROXY
   );
   if (error || data === null) {
     throw Object.assign(new Error(error ?? "Request failed"), { status });
@@ -151,7 +161,7 @@ export async function revokeScannerApiKey(keyId: string): Promise<void> {
     {},
     false,
     false,
-    PROXY
+    SCANNER_PROXY
   );
   if (error) {
     throw Object.assign(new Error(error), { status });

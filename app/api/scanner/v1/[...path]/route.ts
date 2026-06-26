@@ -22,6 +22,13 @@ const BACKEND_BASE = envVars.NEXT_PUBLIC_GAP_INDEXER_URL.replace(/\/$/, "");
 // transparently decompresses upstream gzip/br bodies — forwarding the
 // upstream encoding header on the decompressed body triggers
 // ERR_CONTENT_DECODING_FAILED in the browser.
+//
+// x-forwarded-*, x-real-ip, forwarded, true-client-ip, cf-connecting-ip
+// are stripped from the browser-supplied request and re-derived from
+// the inbound socket peer. The proxy sits at the public edge of the
+// FE app; a browser can put any value in those headers when posting
+// to /api/scanner/v1/scans, and forwarding the value verbatim would
+// let an attacker spoof the anonymous-rate-limit key in gap-indexer.
 const HOP_BY_HOP = new Set([
   "connection",
   "keep-alive",
@@ -36,20 +43,48 @@ const HOP_BY_HOP = new Set([
   "content-encoding",
 ]);
 
+const CALLER_SUPPLIED_FORWARDING_HEADERS = [
+  "x-forwarded-for",
+  "x-forwarded-host",
+  "x-forwarded-proto",
+  "x-forwarded-port",
+  "x-real-ip",
+  "forwarded",
+  "true-client-ip",
+  "cf-connecting-ip",
+  "fastly-client-ip",
+];
+
+// Pick the leftmost public address from a trusted x-forwarded-for chain.
+// Used only when Next.js is itself behind a known platform proxy
+// (Vercel sets x-vercel-forwarded-for + x-forwarded-for); in plain
+// localhost dev, both are absent and the chain is empty.
+function trustedClientIp(req: NextRequest): string | null {
+  // Vercel's platform header is set by their edge and not exposed to
+  // user agents — trust it when present.
+  const vercel = req.headers.get("x-vercel-forwarded-for");
+  if (vercel) {
+    const first = vercel.split(",")[0]?.trim();
+    if (first) return first;
+  }
+  return null;
+}
+
 function buildForwardHeaders(req: NextRequest): Headers {
   const headers = new Headers();
   req.headers.forEach((value, key) => {
-    if (!HOP_BY_HOP.has(key.toLowerCase())) {
-      headers.set(key, value);
-    }
+    const k = key.toLowerCase();
+    if (HOP_BY_HOP.has(k)) return;
+    if (CALLER_SUPPLIED_FORWARDING_HEADERS.includes(k)) return;
+    headers.set(key, value);
   });
-  // X-Forwarded-* let the BE see the original caller for rate-limit keys.
-  const forwardedFor = req.headers.get("x-forwarded-for");
-  const clientIp = req.headers.get("x-real-ip");
-  if (forwardedFor) {
-    headers.set("x-forwarded-for", forwardedFor);
-  } else if (clientIp) {
-    headers.set("x-forwarded-for", clientIp);
+  // Only set X-Forwarded-For from a header we trust the platform set.
+  // In local dev nothing is set, and gap-indexer falls back to
+  // request.ip (its own socket peer). Either way, browser-supplied
+  // values never reach the BE rate-limit key.
+  const trusted = trustedClientIp(req);
+  if (trusted) {
+    headers.set("x-forwarded-for", trusted);
   }
   return headers;
 }
