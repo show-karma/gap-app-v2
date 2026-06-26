@@ -63,6 +63,9 @@ export function ConnectDialog({
     formState: { errors },
   } = useForm<EmailFormValues>({
     resolver: zodResolver(emailSchema),
+    // Validate as the advisor types so the "invalid email" message renders
+    // immediately (and clears once valid) rather than only on submit.
+    mode: "onChange",
     defaultValues: { email: "" },
   });
 
