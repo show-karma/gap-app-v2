@@ -75,7 +75,8 @@ export async function GET(_request: NextRequest, context: { params: Promise<{ sl
 
   const gradeBg = GRADE_TONE[scorecard.grade];
   const label = GRADE_LABEL[scorecard.grade];
-  const orgName = scorecard.orgName || scorecard.url;
+  const orgName = scorecard.orgName || scorecard.url || `Scan ${scorecard.slug}`;
+  const categories = scorecard.categoryScores ?? [];
 
   // OG image MUST stay public-tier per R12: grade + categories + org name only.
   // Never include top-3 fixes, evidence, or walkthrough notes in the rendered
@@ -132,7 +133,7 @@ export async function GET(_request: NextRequest, context: { params: Promise<{ sl
       </div>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 40 }}>
-        {scorecard.categories.slice(0, 5).map((category) => {
+        {categories.slice(0, 5).map((category) => {
           const pct =
             category.pointsPossible === 0
               ? 0

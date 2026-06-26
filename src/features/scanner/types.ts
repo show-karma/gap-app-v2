@@ -17,7 +17,11 @@ export interface CategoryScore {
   readonly category: string;
   readonly pointsAwarded: number;
   readonly pointsPossible: number;
-  readonly summary: string;
+  readonly normalizedScore: number;
+  readonly pending: boolean;
+  // R12 wants a 1-line summary per category. Backend does not yet emit it;
+  // the FE renders the category name as a label until it lands.
+  readonly summary?: string | null;
 }
 
 export interface ScanFix {
@@ -36,19 +40,32 @@ export interface CheckEvidence {
   readonly details?: Record<string, unknown>;
 }
 
+// Wire shape matches gap-indexer's PublicScorecardResponseSchema in
+// app/modules/v2/api/scanner/v1/dto/scanner/scorecard.response.ts. The
+// R12 fields that backend doesn't emit yet (orgName, url, status,
+// rubricVersion, scan timestamps) are listed as optional so the UI can
+// render them when the backend ships them.
 export interface PublicScorecardPayload {
   readonly scanId: string;
   readonly slug: string;
-  readonly orgName: string | null;
-  readonly url: string;
-  readonly status: ScanStatus;
-  readonly grade: ScanGrade | null;
   readonly totalScore: number | null;
-  readonly categories: readonly CategoryScore[];
-  readonly rubricVersion: string;
-  readonly startedAt: string;
-  readonly finishedAtConfig: string | null;
-  readonly finishedAtComplete: string | null;
+  readonly grade: ScanGrade | null;
+  readonly categoryScores: readonly CategoryScore[];
+  readonly summary: string | null;
+  readonly ogImageUrl: string | null;
+  readonly unknowns: {
+    readonly errorCheckIds: readonly string[];
+    readonly pendingCheckIds: readonly string[];
+    readonly notAttemptedCheckIds: readonly string[];
+  };
+  // Optional R12 fields (not yet emitted by backend; see TODO above).
+  readonly orgName?: string | null;
+  readonly url?: string;
+  readonly status?: ScanStatus;
+  readonly rubricVersion?: string;
+  readonly startedAt?: string;
+  readonly finishedAtConfig?: string | null;
+  readonly finishedAtComplete?: string | null;
 }
 
 export interface DetailScorecardPayload extends PublicScorecardPayload {
