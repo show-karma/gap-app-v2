@@ -31,7 +31,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Spinner } from "@/components/ui/spinner";
 import { useReorderReport, useUpdateReportConfig } from "@/hooks/useUpdateReportConfig";
 import type { CompositeWeights, ResearchReportDetail } from "@/types/donor-research";
 import { DEFAULT_TOP_COUNT } from "../report-brief/scoring";
@@ -64,20 +64,20 @@ function featuredOnePagerCopy(enteringCount: number, lead: string): string {
 }
 
 /**
- * Advisor-only ranking-control panel (DEV-418 U8). Opens as a right-side sheet
- * with three tabs that all share one draft state and one Save:
+ * Advisor-only ranking-control panel (DEV-418 U8). Opens as a right-side sheet —
+ * a single view (no tabs) with one shared draft and one Save:
  *
- *  - **Weights** — five independent slider + number-input allocators (total 100%).
- *  - **Configs** — a stepper for the featured-set size (`topCount`, 1–25).
- *  - **Reorder** — drag rows into an explicit order (`manualPosition`).
+ *  - Five independent weight allocators (total 100%).
+ *  - A stepper for the featured-set size (`topCount`, 1–25).
+ *  - A live ranking list that re-ranks under the draft weights, marks the top
+ *    `topCount` featured, and is draggable for an explicit `manualPosition` order.
  *
- * A single live ranking list sits below the tabs, shared by all three: it
- * re-ranks under the draft weights, marks the top `topCount` as featured, and is
- * draggable. A manual drag locks the display order (it wins over the weight
- * ranking and isn't disturbed by later weight changes). One **Save changes**
+ * Ordering: a weight change re-ranks the list (dropping any manual order); a
+ * manual drag overrides until the weights change again. One **Save changes**
  * commits every dirty slice together — weights/topCount via the config endpoint,
- * then the manual order via reorder so it lands last. Rendered as the trigger
- * button only; mounted next to the share control in the masthead.
+ * then the manual order via reorder so it lands last (and an existing manual
+ * order is re-sent across config-only saves so it isn't cleared). Rendered as the
+ * trigger button only; mounted next to the share control in the masthead.
  */
 export function WeightsPanel({ report }: WeightsPanelProps) {
   const [open, setOpen] = useState(false);
@@ -256,11 +256,17 @@ function PanelBody({ report, persistedWeights, onClose }: PanelBodyProps) {
         await reorder.mutateAsync({ reportId: report.id, orderedCandidateIds: draftOrder });
       }
       toast.success("Ranking updated.");
-      setConfirmOpen(false);
       onClose();
     } catch (error) {
       toast.error((error as Error).message || "Couldn't update the ranking.");
     }
+  };
+
+  // Close the confirm modal immediately and run the request in the background so
+  // the Save button in the drawer (not the modal) shows the spinner/disabled.
+  const confirmAndSave = () => {
+    setConfirmOpen(false);
+    void commitAll();
   };
 
   const confirmDescription = featuredOnePagerCopy(
@@ -273,56 +279,51 @@ function PanelBody({ report, persistedWeights, onClose }: PanelBodyProps) {
       <SheetHeader className="text-left">
         <SheetTitle>Adjust ranking</SheetTitle>
         <SheetDescription>
-          Tune the composite weights, how many results are featured, or drag a manual order. Every
-          change previews in the list below and applies together when you save.
+          Weight the composite, set how many results are featured, and drag the list for a manual
+          order — all in one place. Changes preview live and apply together when you save.
         </SheetDescription>
       </SheetHeader>
 
-      <Tabs defaultValue="weights" className="mt-4 flex flex-col">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="weights">Weights</TabsTrigger>
-          <TabsTrigger value="config">Configs</TabsTrigger>
-          <TabsTrigger value="reorder">Reorder</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="weights" className="mt-4">
+      <div className="mt-5 flex flex-col gap-6">
+        <section className="flex flex-col gap-3">
+          <h3 className="text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
+            Composite weights
+          </h3>
           <WeightsAllocator
             value={draftWeights}
-            onChange={setDraftWeights}
+            onChange={(next) => {
+              setDraftWeights(next);
+              // A weight change re-ranks the list, so drop any manual order.
+              setDraftOrder(null);
+            }}
             resetValue={persistedWeights}
             disabled={isPending}
           />
-        </TabsContent>
+        </section>
 
-        <TabsContent value="config" className="mt-4 flex flex-col gap-2">
-          <p className="text-sm font-medium text-foreground">Featured results</p>
+        <section className="flex flex-col gap-2">
+          <h3 className="text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
+            Featured results
+          </h3>
           <p className="text-xs text-muted-foreground">
             The top{" "}
             <span className="font-medium text-foreground">
               {draftTopCount} of {report.candidates.length}
             </span>{" "}
-            candidates are featured with an AI one-pager. Choose between {MIN_TOP_COUNT} and{" "}
-            {MAX_TOP_COUNT}.
+            get an AI one-pager. Choose between {MIN_TOP_COUNT} and {MAX_TOP_COUNT}.
           </p>
           <TopCountStepper value={draftTopCount} onChange={setDraftTopCount} disabled={isPending} />
-        </TabsContent>
+        </section>
 
-        <TabsContent value="reorder" className="mt-4">
-          <p className="text-xs text-muted-foreground">
-            Drag the rows in the list below into the order you want donors to see. A manual order
-            sticks even if you change the weights, and the top {draftTopCount} stay featured.
-          </p>
-        </TabsContent>
-      </Tabs>
+        <RankingList
+          rows={rows}
+          sensors={sensors}
+          onDragEnd={handleDragEnd}
+          manual={draftOrder !== null}
+        />
+      </div>
 
-      <RankingList
-        rows={rows}
-        sensors={sensors}
-        onDragEnd={handleDragEnd}
-        manual={draftOrder !== null}
-      />
-
-      <div className="mt-5 flex items-center justify-between gap-3">
+      <div className="mt-6 flex items-center justify-between gap-3">
         <Button
           type="button"
           variant="ghost"
@@ -337,7 +338,14 @@ function PanelBody({ report, persistedWeights, onClose }: PanelBodyProps) {
           disabled={!anyDirty || !weightsBalanced || isPending}
           onClick={() => setConfirmOpen(true)}
         >
-          Save changes
+          {isPending ? (
+            <>
+              <Spinner />
+              Saving…
+            </>
+          ) : (
+            "Save changes"
+          )}
         </Button>
       </div>
 
@@ -348,7 +356,7 @@ function PanelBody({ report, persistedWeights, onClose }: PanelBodyProps) {
         description={confirmDescription}
         confirmLabel="Save changes"
         isPending={isPending}
-        onConfirm={commitAll}
+        onConfirm={confirmAndSave}
       />
     </>
   );
@@ -420,7 +428,7 @@ function RankingList({
   return (
     <section aria-label="Live ranking preview" className="mt-5 flex flex-col gap-2">
       <h3 className="text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
-        {manual ? "Manual order (drag to change)" : "Live preview (drag to set a manual order)"}
+        {manual ? "Manual order — drag to change" : "Ranking — drag to set a manual order"}
       </h3>
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
         <SortableContext items={items} strategy={verticalListSortingStrategy}>
