@@ -16,7 +16,7 @@ interface MembersAreaCtaProps {
 }
 
 export function MembersAreaCta({ slug, scanId: initialScanId }: MembersAreaCtaProps) {
-  const router = useRouter();
+  const { push } = useRouter();
   const { ready, authenticated, login } = useAuth();
   const [scanId, setScanId] = useState<string | null>(initialScanId);
 
@@ -40,7 +40,7 @@ export function MembersAreaCta({ slug, scanId: initialScanId }: MembersAreaCtaPr
     if (!scanId) return;
     const detailHref = PAGES.SCANNER.SCAN_DETAIL(scanId);
     if (authenticated) {
-      router.push(detailHref);
+      push(detailHref);
       return;
     }
     // Persist the return target across the Privy modal handoff so the
