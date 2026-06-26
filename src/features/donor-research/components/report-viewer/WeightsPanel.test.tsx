@@ -126,24 +126,34 @@ describe("WeightsPanel", () => {
     expect(within(preview).queryByText(/entering top 3/i)).not.toBeInTheDocument();
   });
 
-  it("enables Update weights once a weight changes (total stays 100%)", () => {
+  it("enables Update weights only once the edited weights total 100%", () => {
     renderPanel(buildReport(DEFAULT_WEIGHTS));
     openSheet();
     expect(screen.getByRole("button", { name: "Update weights" })).toBeDisabled();
 
-    // Editing redistributes the rest, so the draft stays balanced and becomes dirty.
-    const onlineInput = screen.getAllByRole("spinbutton")[0];
-    fireEvent.change(onlineInput, { target: { value: "40" } });
-    fireEvent.blur(onlineInput);
+    // Raising one factor unbalances the set (115%): nothing is redistributed, so
+    // the commit stays disabled until the advisor reconciles the total.
+    const inputs = screen.getAllByRole("spinbutton");
+    fireEvent.change(inputs[0], { target: { value: "40" } });
+    fireEvent.blur(inputs[0]);
+    expect(screen.getByRole("button", { name: "Update weights" })).toBeDisabled();
+
+    // Dropping Mission match 25→10 brings the total back to 100% and enables it.
+    fireEvent.change(inputs[3], { target: { value: "10" } });
+    fireEvent.blur(inputs[3]);
     expect(screen.getByRole("button", { name: "Update weights" })).toBeEnabled();
   });
 
   it("commits the adjusted weights through the confirm dialog", async () => {
     renderPanel(buildReport(DEFAULT_WEIGHTS));
     openSheet();
-    const onlineInput = screen.getAllByRole("spinbutton")[0];
-    fireEvent.change(onlineInput, { target: { value: "40" } });
-    fireEvent.blur(onlineInput);
+    const inputs = screen.getAllByRole("spinbutton");
+    // Raise Online presence to 40% and rebalance Mission match to 10% so the
+    // five total 100% again (no redistribution happens automatically).
+    fireEvent.change(inputs[0], { target: { value: "40" } });
+    fireEvent.blur(inputs[0]);
+    fireEvent.change(inputs[3], { target: { value: "10" } });
+    fireEvent.blur(inputs[3]);
 
     fireEvent.click(screen.getByRole("button", { name: "Update weights" }));
 
@@ -155,11 +165,15 @@ describe("WeightsPanel", () => {
 
     await waitFor(() => expect(mockUpdate).toHaveBeenCalledTimes(1));
     expect(mockUpdate.mock.calls[0][0]).toBe("report-1");
-    // Online set to 40%; the rest redistributed; the committed weights total 10000.
-    const committed = mockUpdate.mock.calls[0][1].weights as CompositeWeights;
-    expect(committed.onlinePresence).toBe(4000);
-    const total = Object.values(committed).reduce((acc: number, b) => acc + (b as number), 0);
-    expect(total).toBe(10000);
+    // Both edits committed verbatim; the untouched three are intact and the
+    // five total 100% (4000+1000+2500+1000+1500 = 10000).
+    expect(mockUpdate.mock.calls[0][1].weights).toEqual({
+      onlinePresence: 4000,
+      socialPresence: 1000,
+      impactRecency: 2500,
+      donorMatch: 1000,
+      compliance: 1500,
+    });
     expect(mockUpdate.mock.calls[0][1].topCount).toBeUndefined();
   });
 
