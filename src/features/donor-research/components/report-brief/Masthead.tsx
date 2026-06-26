@@ -7,6 +7,7 @@ import type { ResearchReportDetail } from "@/types/donor-research";
 import { PAGES } from "@/utilities/pages";
 import { StatusBadge } from "../report-list/StatusBadge";
 import { ShareTokenControls } from "../report-viewer/ShareTokenControls";
+import { WeightsPanel } from "../report-viewer/WeightsPanel";
 import { briefDisplay, briefProse } from "./fonts";
 
 interface MastheadProps {
@@ -107,7 +108,8 @@ export function Masthead({
       </div>
 
       {isTerminal && !isShared ? (
-        <div className="sm:justify-self-end">
+        <div className="flex flex-wrap items-start justify-end gap-2 sm:justify-self-end">
+          {report.weights && report.candidates.length > 0 ? <WeightsPanel report={report} /> : null}
           <ShareTokenControls
             reportId={report.id}
             hasShareToken={report.hasShareToken}

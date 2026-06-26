@@ -39,7 +39,7 @@ import { humanizeCase } from "../report-brief/text-utils";
 import { WeightsAllocator } from "../weights/WeightsAllocator";
 import { isValidWeights, weightsEqual } from "../weights/weights-allocation";
 import { CommitWeightsDialog } from "./CommitWeightsDialog";
-import { type LiveRanking, useLiveRankedCandidates } from "./use-live-ranked-candidates";
+import { useLiveRankedCandidates } from "./use-live-ranked-candidates";
 
 const MIN_TOP_COUNT = 1;
 const MAX_TOP_COUNT = 25;
@@ -65,18 +65,19 @@ function featuredOnePagerCopy(enteringCount: number, lead: string): string {
 
 /**
  * Advisor-only ranking-control panel (DEV-418 U8). Opens as a right-side sheet
- * so it never disturbs the editorial brief's layout, with three tabs:
+ * with three tabs that all share one draft state and one Save:
  *
- *  - **Weights** — five independent slider + number-input allocators that must
- *    total 100% before committing, with an in-browser live preview of the
- *    resulting ranking and featured-set flip badges.
- *  - **Configs** — a stepper for the featured-set size (`topCount`, 1–25): how
- *    many top candidates receive the AI one-pager.
- *  - **Reorder** — drag candidates into an explicit order (`manualPosition`).
+ *  - **Weights** — five independent slider + number-input allocators (total 100%).
+ *  - **Configs** — a stepper for the featured-set size (`topCount`, 1–25).
+ *  - **Reorder** — drag rows into an explicit order (`manualPosition`).
  *
- * Committing any tab re-ranks server-side; the brief reshuffles from the
- * server-confirmed report. Rendered only on five-dimension reports
- * (`report.weights`).
+ * A single live ranking list sits below the tabs, shared by all three: it
+ * re-ranks under the draft weights, marks the top `topCount` as featured, and is
+ * draggable. A manual drag locks the display order (it wins over the weight
+ * ranking and isn't disturbed by later weight changes). One **Save changes**
+ * commits every dirty slice together — weights/topCount via the config endpoint,
+ * then the manual order via reorder so it lands last. Rendered as the trigger
+ * button only; mounted next to the share control in the masthead.
  */
 export function WeightsPanel({ report }: WeightsPanelProps) {
   const [open, setOpen] = useState(false);
@@ -101,19 +102,16 @@ export function WeightsPanel({ report }: WeightsPanelProps) {
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button
+        <button
           type="button"
-          variant="outline"
-          // Pinned bottom-LEFT so it never collides with the bottom-right
-          // support/chat widget on small screens (QA finding D-DOG).
-          className="fixed bottom-6 left-6 z-40 shadow-lg sm:bottom-8 sm:left-8"
+          className="inline-flex items-center gap-2 rounded-md border border-border px-3 py-2 text-sm font-medium text-foreground hover:bg-muted"
         >
-          <SlidersHorizontal aria-hidden className="mr-2 h-4 w-4" />
+          <SlidersHorizontal aria-hidden className="h-4 w-4" />
           Adjust ranking
-        </Button>
+        </button>
       </SheetTrigger>
       <SheetContent
-        side="left"
+        side="right"
         className="flex w-full flex-col gap-0 overflow-y-auto sm:max-w-md"
         // Radix listens for Escape at the document level, so a child
         // stopPropagation can't reach it. When a reorder grip has focus, prevent
@@ -149,34 +147,72 @@ function PanelBody({ report, persistedWeights, onClose }: PanelBodyProps) {
 
   const persistedOrder = useMemo(() => report.candidates.map((c) => c.id), [report.candidates]);
   const persistedTopCount = report.topCount ?? DEFAULT_TOP_COUNT;
+  // A report that already carries a manual order seeds the draft with it, so a
+  // later config-only save can re-send (and preserve) it instead of silently
+  // dropping it — a config commit clears manual ordering server-side.
+  const persistedDraftOrder = useMemo(
+    () => (report.candidates.some((c) => c.manualPosition != null) ? persistedOrder : null),
+    [report.candidates, persistedOrder]
+  );
 
-  // Free allocation: the advisor edits each weight independently and must bring
-  // the total back to 100% before committing (isValidWeights gates the button).
+  // One shared draft across all three tabs.
   const [draftWeights, setDraftWeights] = useState<CompositeWeights>(persistedWeights);
   const [draftTopCount, setDraftTopCount] = useState<number>(persistedTopCount);
-  const [draftOrder, setDraftOrder] = useState<string[]>(persistedOrder);
-  const [confirm, setConfirm] = useState<null | "weights" | "config" | "reorder">(null);
-
-  // Each tab previews only its own change: the Weights tab re-ranks under the
-  // draft weights at the persisted featured size; the Configs tab moves the
-  // featured cutoff at the persisted weights.
-  const weightsLive = useLiveRankedCandidates(report.candidates, draftWeights, persistedTopCount);
-  const configLive = useLiveRankedCandidates(report.candidates, persistedWeights, draftTopCount);
+  // null = follow the weight ranking; a value = an explicit manual order that
+  // wins over the ranking and is left untouched by later weight changes.
+  const [draftOrder, setDraftOrder] = useState<string[] | null>(persistedDraftOrder);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const candidatesById = useMemo(
     () => new Map(report.candidates.map((c) => [c.id, c])),
     [report.candidates]
   );
 
+  // Scores + the weight-ranked order under the draft weights/topCount.
+  const live = useLiveRankedCandidates(report.candidates, draftWeights, draftTopCount);
+  const scoreOrder = useMemo(() => live.ranked.map((e) => e.candidate.id), [live.ranked]);
+  const compositeById = useMemo(
+    () => new Map(live.ranked.map((e) => [e.candidate.id, e.composite])),
+    [live.ranked]
+  );
+
+  // The display order is the manual order if one was set, else the weight rank.
+  const orderIds = draftOrder ?? scoreOrder;
+  const wasFeatured = useMemo(
+    () => new Set(report.candidates.filter((c) => c.featuredFlag).map((c) => c.id)),
+    [report.candidates]
+  );
+
+  const rows = useMemo(
+    () =>
+      orderIds.map((id, index): RankingRow => {
+        const candidate = candidatesById.get(id);
+        const featured = index < draftTopCount;
+        const flip: RankingRow["flip"] = featured
+          ? wasFeatured.has(id)
+            ? null
+            : "entered"
+          : wasFeatured.has(id)
+            ? "left"
+            : null;
+        return {
+          id,
+          name: candidateName(candidate?.organizationName ?? null),
+          composite: Math.round((compositeById.get(id) ?? candidate?.composite ?? 0) * 100),
+          featured,
+          flip,
+        };
+      }),
+    [orderIds, draftTopCount, wasFeatured, candidatesById, compositeById]
+  );
+  const enteringCount = rows.filter((r) => r.flip === "entered").length;
+
   const weightsDirty = !weightsEqual(draftWeights, persistedWeights);
   const weightsBalanced = isValidWeights(draftWeights);
   const topCountDirty = draftTopCount !== persistedTopCount;
-  const orderDirty = draftOrder.some((id, i) => id !== persistedOrder[i]);
-
-  const reorderFlips = useMemo(() => {
-    const wasFeatured = new Set(report.candidates.filter((c) => c.featuredFlag).map((c) => c.id));
-    return draftOrder.filter((id, i) => i < persistedTopCount && !wasFeatured.has(id)).length;
-  }, [draftOrder, report.candidates, persistedTopCount]);
+  const orderDirty = draftOrder !== null && draftOrder.some((id, i) => id !== persistedOrder[i]);
+  const configDirty = weightsDirty || topCountDirty;
+  const anyDirty = configDirty || orderDirty;
 
   const isPending = updateConfig.isPending || reorder.isPending;
 
@@ -188,217 +224,131 @@ function PanelBody({ report, persistedWeights, onClose }: PanelBodyProps) {
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
-    setDraftOrder((order) => {
-      const from = order.indexOf(String(active.id));
-      const to = order.indexOf(String(over.id));
-      return from === -1 || to === -1 ? order : arrayMove(order, from, to);
+    setDraftOrder((prev) => {
+      const base = prev ?? scoreOrder;
+      const from = base.indexOf(String(active.id));
+      const to = base.indexOf(String(over.id));
+      return from === -1 || to === -1 ? base : arrayMove(base, from, to);
     });
   };
 
-  const commitWeights = () => {
-    updateConfig.mutate(
-      { reportId: report.id, weights: draftWeights },
-      {
-        onSuccess: () => {
-          toast.success("Ranking updated.");
-          setConfirm(null);
-          onClose();
-        },
-        onError: (error) => toast.error(error.message || "Couldn't update the ranking."),
-      }
-    );
+  const resetAll = () => {
+    setDraftWeights(persistedWeights);
+    setDraftTopCount(persistedTopCount);
+    setDraftOrder(persistedDraftOrder);
   };
 
-  const commitConfig = () => {
-    updateConfig.mutate(
-      { reportId: report.id, topCount: draftTopCount },
-      {
-        onSuccess: () => {
-          toast.success("Featured set updated.");
-          setConfirm(null);
-          onClose();
-        },
-        onError: (error) => toast.error(error.message || "Couldn't update the featured set."),
+  // One Save commits every dirty slice. Config goes first because it re-ranks
+  // and clears any manual order server-side; reorder then lands last so the
+  // advisor's manual order wins.
+  const commitAll = async () => {
+    try {
+      if (configDirty) {
+        await updateConfig.mutateAsync({
+          reportId: report.id,
+          ...(weightsDirty ? { weights: draftWeights } : {}),
+          ...(topCountDirty ? { topCount: draftTopCount } : {}),
+        });
       }
-    );
+      // Re-send the manual order whenever it exists and either it changed or a
+      // config save just cleared it server-side — so it's never silently lost.
+      if (draftOrder && (orderDirty || configDirty)) {
+        await reorder.mutateAsync({ reportId: report.id, orderedCandidateIds: draftOrder });
+      }
+      toast.success("Ranking updated.");
+      setConfirmOpen(false);
+      onClose();
+    } catch (error) {
+      toast.error((error as Error).message || "Couldn't update the ranking.");
+    }
   };
 
-  const commitReorder = () => {
-    reorder.mutate(
-      { reportId: report.id, orderedCandidateIds: draftOrder },
-      {
-        onSuccess: () => {
-          toast.success("Order saved.");
-          setConfirm(null);
-          onClose();
-        },
-        onError: (error) => toast.error(error.message || "Couldn't save the order."),
-      }
-    );
-  };
-
-  const weightsDescription = featuredOnePagerCopy(
-    weightsLive.flippedCount,
-    "This re-ranks every candidate under the new weights."
+  const confirmDescription = featuredOnePagerCopy(
+    enteringCount,
+    "This re-ranks every candidate under your changes."
   );
-  const configDescription = featuredOnePagerCopy(
-    configLive.flippedCount,
-    `This sets the featured set to the top ${draftTopCount}.`
-  );
-  const reorderDescription = featuredOnePagerCopy(reorderFlips, "This forces your manual order.");
 
   return (
     <>
       <SheetHeader className="text-left">
         <SheetTitle>Adjust ranking</SheetTitle>
         <SheetDescription>
-          Tune the composite weights, how many results are featured, or set a manual order. Changes
-          preview here and only apply when you commit.
+          Tune the composite weights, how many results are featured, or drag a manual order. Every
+          change previews in the list below and applies together when you save.
         </SheetDescription>
       </SheetHeader>
 
-      <Tabs defaultValue="weights" className="mt-4 flex flex-1 flex-col">
+      <Tabs defaultValue="weights" className="mt-4 flex flex-col">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="weights">Weights</TabsTrigger>
           <TabsTrigger value="config">Configs</TabsTrigger>
           <TabsTrigger value="reorder">Reorder</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="weights" className="mt-4 flex flex-col gap-5">
+        <TabsContent value="weights" className="mt-4">
           <WeightsAllocator
             value={draftWeights}
             onChange={setDraftWeights}
             resetValue={persistedWeights}
             disabled={isPending}
           />
-          <LivePreviewList live={weightsLive} />
-          <div className="flex items-center justify-end gap-3">
-            <Button
-              type="button"
-              disabled={!weightsDirty || !weightsBalanced || isPending}
-              onClick={() => setConfirm("weights")}
-            >
-              Update weights
-            </Button>
-          </div>
         </TabsContent>
 
-        <TabsContent value="config" className="mt-4 flex flex-col gap-5">
-          <div className="flex flex-col gap-2">
-            <p className="text-sm font-medium text-foreground">Featured results</p>
-            <p className="text-xs text-muted-foreground">
-              The top{" "}
-              <span className="font-medium text-foreground">
-                {draftTopCount} of {report.candidates.length}
-              </span>{" "}
-              candidates are featured with an AI one-pager. Choose between {MIN_TOP_COUNT} and{" "}
-              {MAX_TOP_COUNT}.
-            </p>
-            <TopCountStepper
-              value={draftTopCount}
-              onChange={setDraftTopCount}
-              disabled={isPending}
-            />
-          </div>
-          <LivePreviewList live={configLive} />
-          <div className="flex items-center justify-between gap-3">
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              disabled={!topCountDirty || isPending}
-              onClick={() => setDraftTopCount(persistedTopCount)}
-            >
-              Reset
-            </Button>
-            <Button
-              type="button"
-              disabled={!topCountDirty || isPending}
-              onClick={() => setConfirm("config")}
-            >
-              Update results
-            </Button>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="reorder" className="mt-4 flex flex-col gap-5">
+        <TabsContent value="config" className="mt-4 flex flex-col gap-2">
+          <p className="text-sm font-medium text-foreground">Featured results</p>
           <p className="text-xs text-muted-foreground">
-            Drag candidates into the order you want donors to see. The top {persistedTopCount}{" "}
-            become the featured one-pagers. Changing weights later resets a manual order.
+            The top{" "}
+            <span className="font-medium text-foreground">
+              {draftTopCount} of {report.candidates.length}
+            </span>{" "}
+            candidates are featured with an AI one-pager. Choose between {MIN_TOP_COUNT} and{" "}
+            {MAX_TOP_COUNT}.
           </p>
+          <TopCountStepper value={draftTopCount} onChange={setDraftTopCount} disabled={isPending} />
+        </TabsContent>
 
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
-          >
-            <SortableContext items={draftOrder} strategy={verticalListSortingStrategy}>
-              <ol className="flex flex-col gap-1.5">
-                {draftOrder.map((id, index) => {
-                  const candidate = candidatesById.get(id);
-                  if (!candidate) return null;
-                  return (
-                    <SortableCandidateRow
-                      key={id}
-                      id={id}
-                      position={index + 1}
-                      name={candidateName(candidate.organizationName)}
-                      composite={Math.round(candidate.composite * 100)}
-                      featured={index < persistedTopCount}
-                    />
-                  );
-                })}
-              </ol>
-            </SortableContext>
-          </DndContext>
-
-          <div className="flex items-center justify-between gap-3">
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              disabled={!orderDirty || isPending}
-              onClick={() => setDraftOrder(persistedOrder)}
-            >
-              Reset
-            </Button>
-            <Button
-              type="button"
-              disabled={!orderDirty || isPending}
-              onClick={() => setConfirm("reorder")}
-            >
-              Update order
-            </Button>
-          </div>
+        <TabsContent value="reorder" className="mt-4">
+          <p className="text-xs text-muted-foreground">
+            Drag the rows in the list below into the order you want donors to see. A manual order
+            sticks even if you change the weights, and the top {draftTopCount} stay featured.
+          </p>
         </TabsContent>
       </Tabs>
 
+      <RankingList
+        rows={rows}
+        sensors={sensors}
+        onDragEnd={handleDragEnd}
+        manual={draftOrder !== null}
+      />
+
+      <div className="mt-5 flex items-center justify-between gap-3">
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          disabled={!anyDirty || isPending}
+          onClick={resetAll}
+        >
+          Reset
+        </Button>
+        <Button
+          type="button"
+          disabled={!anyDirty || !weightsBalanced || isPending}
+          onClick={() => setConfirmOpen(true)}
+        >
+          Save changes
+        </Button>
+      </div>
+
       <CommitWeightsDialog
-        open={confirm === "weights"}
-        onOpenChange={(next) => setConfirm(next ? "weights" : null)}
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
         title="Update report ranking?"
-        description={weightsDescription}
-        confirmLabel="Update weights"
-        isPending={updateConfig.isPending}
-        onConfirm={commitWeights}
-      />
-      <CommitWeightsDialog
-        open={confirm === "config"}
-        onOpenChange={(next) => setConfirm(next ? "config" : null)}
-        title="Update featured results?"
-        description={configDescription}
-        confirmLabel="Update results"
-        isPending={updateConfig.isPending}
-        onConfirm={commitConfig}
-      />
-      <CommitWeightsDialog
-        open={confirm === "reorder"}
-        onOpenChange={(next) => setConfirm(next ? "reorder" : null)}
-        title="Save manual order?"
-        description={reorderDescription}
-        confirmLabel="Update order"
-        isPending={reorder.isPending}
-        onConfirm={commitReorder}
+        description={confirmDescription}
+        confirmLabel="Save changes"
+        isPending={isPending}
+        onConfirm={commitAll}
       />
     </>
   );
@@ -447,54 +397,42 @@ function TopCountStepper({
   );
 }
 
-function LivePreviewList({ live }: { live: LiveRanking }) {
-  return (
-    <section aria-label="Live ranking preview" className="flex flex-col gap-2">
-      <h3 className="text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
-        Live preview
-      </h3>
-      <ol className="flex flex-col gap-1.5">
-        {live.ranked.map((entry, index) => {
-          const id = entry.candidate.id;
-          const flip = live.entering.has(id) ? "entered" : live.leaving.has(id) ? "left" : null;
-          return (
-            <li
-              key={id}
-              data-flipped={flip ?? undefined}
-              className={`flex items-center gap-2 rounded-md border px-2.5 py-1.5 text-sm ${
-                flip ? "border-brand-400/60 bg-brand-50/40 dark:bg-brand-950/20" : "border-border"
-              }`}
-            >
-              <span className="w-5 shrink-0 tabular-nums text-muted-foreground">{index + 1}</span>
-              <span className="min-w-0 flex-1 truncate">
-                {candidateName(entry.candidate.organizationName)}
-              </span>
-              {flip === "entered" ? (
-                <Badge variant="default" className="shrink-0 text-[10px]">
-                  Entering featured
-                </Badge>
-              ) : flip === "left" ? (
-                <Badge variant="secondary" className="shrink-0 text-[10px]">
-                  Leaving featured
-                </Badge>
-              ) : null}
-              <span className="w-9 shrink-0 text-right tabular-nums text-muted-foreground">
-                {Math.round(entry.composite * 100)}
-              </span>
-            </li>
-          );
-        })}
-      </ol>
-    </section>
-  );
-}
-
-interface SortableCandidateRowProps {
+interface RankingRow {
   id: string;
-  position: number;
   name: string;
   composite: number;
   featured: boolean;
+  flip: "entered" | "left" | null;
+}
+
+function RankingList({
+  rows,
+  sensors,
+  onDragEnd,
+  manual,
+}: {
+  rows: RankingRow[];
+  sensors: ReturnType<typeof useSensors>;
+  onDragEnd: (event: DragEndEvent) => void;
+  manual: boolean;
+}) {
+  const items = useMemo(() => rows.map((r) => r.id), [rows]);
+  return (
+    <section aria-label="Live ranking preview" className="mt-5 flex flex-col gap-2">
+      <h3 className="text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
+        {manual ? "Manual order (drag to change)" : "Live preview (drag to set a manual order)"}
+      </h3>
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+        <SortableContext items={items} strategy={verticalListSortingStrategy}>
+          <ol className="flex flex-col gap-1.5">
+            {rows.map((row, index) => (
+              <SortableCandidateRow key={row.id} position={index + 1} {...row} />
+            ))}
+          </ol>
+        </SortableContext>
+      </DndContext>
+    </section>
+  );
 }
 
 const SortableCandidateRow = memo(function SortableCandidateRow({
@@ -503,7 +441,8 @@ const SortableCandidateRow = memo(function SortableCandidateRow({
   name,
   composite,
   featured,
-}: SortableCandidateRowProps) {
+  flip,
+}: RankingRow & { position: number }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id,
   });
@@ -534,7 +473,15 @@ const SortableCandidateRow = memo(function SortableCandidateRow({
       </button>
       <span className="w-5 shrink-0 tabular-nums text-muted-foreground">{position}</span>
       <span className="min-w-0 flex-1 truncate">{name}</span>
-      {featured ? (
+      {flip === "entered" ? (
+        <Badge variant="default" className="shrink-0 text-[10px]">
+          Entering featured
+        </Badge>
+      ) : flip === "left" ? (
+        <Badge variant="secondary" className="shrink-0 text-[10px]">
+          Leaving featured
+        </Badge>
+      ) : featured ? (
         <Badge variant="secondary" className="shrink-0 text-[10px]">
           Featured
         </Badge>
