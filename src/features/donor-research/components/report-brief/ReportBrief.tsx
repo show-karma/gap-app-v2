@@ -6,7 +6,6 @@ import { DisqualificationSummary } from "../report-viewer/DisqualificationSummar
 import { FailedReportBanner } from "../report-viewer/FailedReportBanner";
 import { GeographyWarning } from "../report-viewer/GeographyWarning";
 import { ProgressTimeline } from "../report-viewer/ProgressTimeline";
-import { WeightsPanel } from "../report-viewer/WeightsPanel";
 import { AlsoConsidered } from "./AlsoConsidered";
 import { ComparisonTable } from "./ComparisonTable";
 import { briefDisplay, briefProse } from "./fonts";
@@ -139,10 +138,6 @@ export function ReportBrief({
           />
         ) : null}
       </div>
-
-      {variant === "advisor" && isTerminal && weights && candidates.length > 0 ? (
-        <WeightsPanel report={report} />
-      ) : null}
     </div>
   );
 }
