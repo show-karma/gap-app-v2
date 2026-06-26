@@ -11,6 +11,10 @@ interface AlsoConsideredProps {
   candidates: readonly ResearchReportCandidate[];
   /** Starting rank for the first item — usually 4 if top-3 above. */
   startRank: number;
+  /** Report id — required to mount the advisor diligence actions. */
+  reportId?: string;
+  /** Advisor-only: gates the Ask Questions / Connect footer per candidate. */
+  showDiligenceActions?: boolean;
 }
 
 /**
@@ -19,7 +23,12 @@ interface AlsoConsideredProps {
  * Click to expand the row into the full CandidateCard. Keeps the
  * brief scannable without hiding the underlying transparency.
  */
-export function AlsoConsidered({ candidates, startRank }: AlsoConsideredProps) {
+export function AlsoConsidered({
+  candidates,
+  startRank,
+  reportId,
+  showDiligenceActions = false,
+}: AlsoConsideredProps) {
   const [expanded, setExpanded] = useState<string | null>(null);
 
   if (candidates.length === 0) return null;
@@ -108,7 +117,12 @@ export function AlsoConsidered({ candidates, startRank }: AlsoConsideredProps) {
 
               {isOpen ? (
                 <div id={`also-${candidate.id}`} className="border-t border-border/50 px-1 py-4">
-                  <CandidateCard candidate={candidate} variant="detail" />
+                  <CandidateCard
+                    candidate={candidate}
+                    variant="detail"
+                    reportId={reportId}
+                    showDiligenceActions={showDiligenceActions}
+                  />
                 </div>
               ) : null}
             </li>

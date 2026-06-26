@@ -803,5 +803,16 @@ export const INDEXER = {
     REPORT_STREAM: (reportId: string) => `/v2/donor-research/reports/${reportId}/stream`,
     SHARE_TOKEN: (reportId: string) => `/v2/donor-research/reports/${reportId}/share-token`,
     SHARED: (token: string) => `/v2/donor-research/shared/${token}`,
+    // -- Nonprofit diligence + advisor intros (DEV-428) ----------------
+    // Advisor (authed):
+    DILIGENCE_TEMPLATE: "/v2/donor-research/me/diligence-template",
+    CANDIDATE_DILIGENCE: (reportId: string, candidateId: string) =>
+      `/v2/donor-research/reports/${reportId}/candidates/${candidateId}/diligence`,
+    DILIGENCE_REQUESTS: (reportId: string, candidateId: string) =>
+      `/v2/donor-research/reports/${reportId}/candidates/${candidateId}/diligence-requests`,
+    INTRO_REQUESTS: (reportId: string, candidateId: string) =>
+      `/v2/donor-research/reports/${reportId}/candidates/${candidateId}/intro-requests`,
+    // Public (token = capability, no auth):
+    DILIGENCE_RESPONSE: (token: string) => `/v2/donor-research/diligence-response/${token}`,
   },
 };

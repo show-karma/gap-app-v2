@@ -2,6 +2,7 @@
 
 import { ArrowUpRight } from "lucide-react";
 import type { ResearchReportCandidate } from "@/types/donor-research";
+import { CandidateDiligenceActions } from "../diligence/CandidateDiligenceActions";
 import { SocialPresence } from "../report-viewer/SocialPresence";
 import { ChapterMark } from "./ChapterMark";
 import { ComplianceStrip } from "./ComplianceStrip";
@@ -20,6 +21,10 @@ import {
 
 interface LeadCandidateProps {
   candidate: ResearchReportCandidate;
+  /** Report id — required to mount the advisor diligence actions. */
+  reportId?: string;
+  /** Advisor-only: gates the Ask Questions / Connect footer. */
+  showDiligenceActions?: boolean;
 }
 
 /**
@@ -29,7 +34,11 @@ interface LeadCandidateProps {
  * brand-coloured type on the page — everything else relies on
  * scale and weight for hierarchy.
  */
-export function LeadCandidate({ candidate }: LeadCandidateProps) {
+export function LeadCandidate({
+  candidate,
+  reportId,
+  showDiligenceActions = false,
+}: LeadCandidateProps) {
   const isDisqualified = candidate.complianceVerdict === "disqualified";
   const name = humanizeCase(
     candidate.organizationName ??
@@ -130,6 +139,10 @@ export function LeadCandidate({ candidate }: LeadCandidateProps) {
       </div>
 
       <LeadJustification candidate={candidate} />
+
+      {showDiligenceActions && reportId ? (
+        <CandidateDiligenceActions reportId={reportId} candidateId={candidate.id} />
+      ) : null}
     </section>
   );
 }

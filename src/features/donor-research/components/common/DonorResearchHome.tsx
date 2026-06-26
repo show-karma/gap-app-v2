@@ -69,6 +69,12 @@ export function DonorResearchHome() {
         <div className="flex items-center gap-3">
           <RateLimitCounter advisor={advisor} />
           <Link
+            href={PAGES.DONOR_RESEARCH.DILIGENCE_TEMPLATE}
+            className="text-xs font-medium text-muted-foreground underline underline-offset-4 decoration-border hover:text-foreground hover:decoration-current"
+          >
+            Diligence questions
+          </Link>
+          <Link
             href={PAGES.DONOR_RESEARCH.INDEX}
             className="text-xs font-medium text-muted-foreground underline underline-offset-4 decoration-border hover:text-foreground hover:decoration-current"
           >

@@ -48,6 +48,9 @@ export function ReportBrief({
   const candidates = report.candidates ?? [];
   const topThree = candidates.filter((c) => c.topThreeFlag);
   const remaining = candidates.filter((c) => !c.topThreeFlag);
+  // Diligence + intro actions are advisor-only — the donor shared view must
+  // never surface them (they'd reveal that diligence is in flight).
+  const showDiligenceActions = variant !== "shared";
 
   return (
     <div
@@ -91,7 +94,11 @@ export function ReportBrief({
 
         {topThree[0] ? (
           <div className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 motion-safe:duration-700 motion-safe:delay-100">
-            <LeadCandidate candidate={topThree[0]} />
+            <LeadCandidate
+              candidate={topThree[0]}
+              reportId={report.id}
+              showDiligenceActions={showDiligenceActions}
+            />
           </div>
         ) : null}
 
@@ -104,7 +111,13 @@ export function ReportBrief({
               className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 motion-safe:duration-700"
               style={{ animationDelay: `${200 + i * 100}ms` }}
             >
-              <RunnerUpCandidate candidate={candidate} number={number} label={label} />
+              <RunnerUpCandidate
+                candidate={candidate}
+                number={number}
+                label={label}
+                reportId={report.id}
+                showDiligenceActions={showDiligenceActions}
+              />
             </div>
           );
         })}
@@ -112,7 +125,12 @@ export function ReportBrief({
         {topThree.length >= 2 ? <ComparisonTable candidates={topThree} /> : null}
 
         {remaining.length > 0 ? (
-          <AlsoConsidered candidates={remaining} startRank={topThree.length + 1} />
+          <AlsoConsidered
+            candidates={remaining}
+            startRank={topThree.length + 1}
+            reportId={report.id}
+            showDiligenceActions={showDiligenceActions}
+          />
         ) : null}
 
         {(isTerminal || candidates.length > 0) && report.status !== "failed" ? (

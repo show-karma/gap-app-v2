@@ -2,6 +2,7 @@
 
 import { ArrowUpRight } from "lucide-react";
 import type { ResearchReportCandidate } from "@/types/donor-research";
+import { CandidateDiligenceActions } from "../diligence/CandidateDiligenceActions";
 import { SocialPresence } from "../report-viewer/SocialPresence";
 import { ChapterMark } from "./ChapterMark";
 import { ComplianceStrip } from "./ComplianceStrip";
@@ -24,6 +25,10 @@ interface RunnerUpCandidateProps {
   number: string;
   /** Editorial label sitting at the right edge of the chapter rule. */
   label: string;
+  /** Report id — required to mount the advisor diligence actions. */
+  reportId?: string;
+  /** Advisor-only: gates the Ask Questions / Connect footer. */
+  showDiligenceActions?: boolean;
 }
 
 /**
@@ -33,7 +38,13 @@ interface RunnerUpCandidateProps {
  * tabular figure hanging off the identity block rather than a
  * standalone hero.
  */
-export function RunnerUpCandidate({ candidate, number, label }: RunnerUpCandidateProps) {
+export function RunnerUpCandidate({
+  candidate,
+  number,
+  label,
+  reportId,
+  showDiligenceActions = false,
+}: RunnerUpCandidateProps) {
   const isDisqualified = candidate.complianceVerdict === "disqualified";
   const name = humanizeCase(
     candidate.organizationName ??
@@ -149,6 +160,10 @@ export function RunnerUpCandidate({ candidate, number, label }: RunnerUpCandidat
           ) : null}
         </aside>
       </div>
+
+      {showDiligenceActions && reportId ? (
+        <CandidateDiligenceActions reportId={reportId} candidateId={candidate.id} />
+      ) : null}
     </section>
   );
 }
