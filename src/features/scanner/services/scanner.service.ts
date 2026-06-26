@@ -11,10 +11,15 @@ import type {
 } from "../types";
 
 // All scanner endpoints live under /api/scanner/v1.
-// Identity is resolved server-side from Privy session cookie or Karma API key,
-// and the response shape varies by identity tier (public vs detail).
+// Identity is resolved server-side from Privy session cookie or Karma API key.
+// Calls route through the same-origin Next.js proxy at
+// app/api/scanner/v1/[...path]/route.ts (empty baseUrl below) so the browser
+// forwards the Privy session cookie to the BE — a cross-origin call to
+// the gap-indexer port would drop the cookie and the BE would respond 401.
+// The proxy preserves Authorization headers too, so keyed callers work.
 // See gap-indexer/app/modules/v2/api/scanner/v1/openapi-extension.ts for the spec.
 const SCANNER_BASE = "/api/scanner/v1";
+const PROXY = "";
 
 export async function submitScan(payload: SubmitScanRequest): Promise<SubmitScanResponse> {
   const [data, error, , status] = await fetchData<SubmitScanResponse>(
@@ -23,7 +28,9 @@ export async function submitScan(payload: SubmitScanRequest): Promise<SubmitScan
     payload,
     {},
     {},
-    true
+    false,
+    false,
+    PROXY
   );
   if (error || data === null) {
     throw Object.assign(new Error(error ?? "Request failed"), { status });
@@ -38,7 +45,9 @@ export async function getScanById(scanId: string): Promise<DetailScorecardPayloa
     {},
     {},
     {},
-    true
+    false,
+    false,
+    PROXY
   );
   if (error || data === null) {
     throw Object.assign(new Error(error ?? "Request failed"), { status });
@@ -53,7 +62,9 @@ export async function getPublicScorecardBySlug(slug: string): Promise<PublicScor
     {},
     {},
     {},
-    false
+    false,
+    false,
+    PROXY
   );
   if (error || data === null) {
     throw Object.assign(new Error(error ?? "Request failed"), { status });
@@ -68,7 +79,9 @@ export async function refreshScan(scanId: string): Promise<SubmitScanResponse> {
     {},
     {},
     {},
-    true
+    false,
+    false,
+    PROXY
   );
   if (error || data === null) {
     throw Object.assign(new Error(error ?? "Request failed"), { status });
@@ -83,7 +96,9 @@ export async function submitContactRequest(payload: ContactRequest): Promise<{ i
     payload,
     {},
     {},
-    false
+    false,
+    false,
+    PROXY
   );
   if (error || data === null) {
     throw Object.assign(new Error(error ?? "Request failed"), { status });
@@ -98,7 +113,9 @@ export async function listScannerApiKeys(): Promise<ScannerApiKey[]> {
     {},
     {},
     {},
-    true
+    false,
+    false,
+    PROXY
   );
   if (error || data === null) {
     throw Object.assign(new Error(error ?? "Request failed"), { status });
@@ -115,7 +132,9 @@ export async function issueScannerApiKey(
     payload,
     {},
     {},
-    true
+    false,
+    false,
+    PROXY
   );
   if (error || data === null) {
     throw Object.assign(new Error(error ?? "Request failed"), { status });
@@ -130,7 +149,9 @@ export async function revokeScannerApiKey(keyId: string): Promise<void> {
     {},
     {},
     {},
-    true
+    false,
+    false,
+    PROXY
   );
   if (error) {
     throw Object.assign(new Error(error), { status });
