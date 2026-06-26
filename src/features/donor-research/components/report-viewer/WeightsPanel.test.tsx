@@ -183,12 +183,8 @@ describe("WeightsPanel", () => {
   it("saves a featured-count-only change as { topCount } via the shared Save", async () => {
     renderPanel(buildReport(DEFAULT_WEIGHTS));
     openSheet();
-    // Switch to the Configs tab (Radix Tabs activate on focus in jsdom).
-    const configTab = screen.getByRole("tab", { name: /configs/i });
-    configTab.focus();
-    fireEvent.click(configTab);
 
-    // Bump the featured count via the stepper, then save everything at once.
+    // Bump the featured count via the stepper (single view, no tabs), then save.
     fireEvent.click(await screen.findByRole("button", { name: /more featured results/i }));
     fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
 
@@ -213,9 +209,6 @@ describe("WeightsPanel", () => {
 
     // Change only the featured count — a config save clears manual order
     // server-side, so the panel must re-send it to preserve it.
-    const configTab = screen.getByRole("tab", { name: /configs/i });
-    configTab.focus();
-    fireEvent.click(configTab);
     fireEvent.click(await screen.findByRole("button", { name: /more featured results/i }));
     fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
 
@@ -230,35 +223,58 @@ describe("WeightsPanel", () => {
     expect(mockReorder.mock.calls[0][1]).toEqual(["c1", "c2", "c3", "c4"]);
   });
 
+  it("drops the manual order when weights change so the list re-ranks", async () => {
+    const report = buildReport(DEFAULT_WEIGHTS);
+    report.candidates = report.candidates.map((c, i) => ({ ...c, manualPosition: i + 1 }));
+    renderPanel(report);
+    openSheet();
+
+    // Editing weights re-ranks the list and clears the manual override, so the
+    // saved config re-ranks by weight and the old order is NOT re-sent.
+    const inputs = screen.getAllByRole("spinbutton");
+    fireEvent.change(inputs[0], { target: { value: "40" } });
+    fireEvent.blur(inputs[0]);
+    fireEvent.change(inputs[3], { target: { value: "10" } });
+    fireEvent.blur(inputs[3]);
+
+    fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+    const dialog = await screen.findByText("Update report ranking?");
+    const dialogEl = dialog.closest('[role="dialog"]') as HTMLElement;
+    fireEvent.click(within(dialogEl).getByRole("button", { name: "Save changes" }));
+
+    await waitFor(() => expect(mockUpdate).toHaveBeenCalledTimes(1));
+    expect(mockUpdate.mock.calls[0][1].weights).toEqual({
+      onlinePresence: 4000,
+      socialPresence: 1000,
+      impactRecency: 2500,
+      donorMatch: 1000,
+      compliance: 1500,
+    });
+    expect(mockReorder).not.toHaveBeenCalled();
+  });
+
   it("keeps the sheet open when Escape is pressed on a reorder grip", async () => {
     renderPanel(buildReport(DEFAULT_WEIGHTS));
     openSheet();
-    // Radix Tabs activate on focus (automatic mode); fireEvent.click alone
-    // doesn't move focus in jsdom, so focus the trigger to switch tabs.
-    const reorderTab = screen.getByRole("tab", { name: /reorder/i });
-    reorderTab.focus();
-    fireEvent.click(reorderTab);
-
+    // The ranking list is always visible now (single view), so grips are present.
     const grip = (await screen.findAllByRole("button", { name: /drag .* to reorder/i }))[0];
     grip.focus();
     fireEvent.keyDown(grip, { key: "Escape" });
 
     // The panel must stay open — Escape on a grip cancels a drag, not the sheet.
-    expect(screen.getByRole("tab", { name: /reorder/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Adjust ranking" })).toBeInTheDocument();
   });
 
   it("still closes the sheet when Escape is pressed off the reorder grips", async () => {
     renderPanel(buildReport(DEFAULT_WEIGHTS));
     openSheet();
-    expect(screen.getByRole("tab", { name: /weights/i })).toBeInTheDocument();
+    expect(screen.getAllByRole("slider")).toHaveLength(5);
 
     // Focus the first slider (not a grip), then press Escape — normal dismiss.
     const slider = screen.getAllByRole("slider")[0];
     slider.focus();
     fireEvent.keyDown(slider, { key: "Escape" });
 
-    await waitFor(() =>
-      expect(screen.queryByRole("tab", { name: /weights/i })).not.toBeInTheDocument()
-    );
+    await waitFor(() => expect(screen.queryAllByRole("slider")).toHaveLength(0));
   });
 });
