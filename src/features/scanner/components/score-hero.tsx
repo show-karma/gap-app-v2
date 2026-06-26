@@ -15,7 +15,10 @@ interface ScoreHeroProps {
 // Animates 0 -> totalScore in ~700ms using ease-out-quint, then quiet.
 // Honors prefers-reduced-motion by snapping to the final value.
 function useAnimatedScore(target: number | null): number {
-  const [value, setValue] = useState(target ?? 0);
+  // Start at 0 so the count-up always animates forward. Seeding with
+  // target made the first paint already show the final number, so when
+  // the RAF loop started it visibly counted back down to 0 and up.
+  const [value, setValue] = useState(0);
   useEffect(() => {
     if (target === null) {
       setValue(0);
@@ -44,6 +47,14 @@ function useAnimatedScore(target: number | null): number {
     return () => cancelAnimationFrame(raf);
   }, [target]);
   return value;
+}
+
+// Renders a date deterministically across SSR/CSR. toLocaleString varies
+// by server vs client locale and triggers a hydration mismatch.
+function formatScanDate(iso: string): string {
+  const d = new Date(iso);
+  const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  return `${MONTHS[d.getUTCMonth()]} ${d.getUTCDate()}, ${d.getUTCFullYear()}`;
 }
 
 export function ScoreHero({ totalScore, grade, orgName, url, scannedAt }: ScoreHeroProps) {
@@ -78,12 +89,7 @@ export function ScoreHero({ totalScore, grade, orgName, url, scannedAt }: ScoreH
           ) : null}
           {scannedAt ? (
             <span className="font-mono text-xs text-zinc-400 dark:text-zinc-500">
-              scanned{" "}
-              {new Date(scannedAt).toLocaleString(undefined, {
-                month: "short",
-                day: "numeric",
-                year: "numeric",
-              })}
+              scanned {formatScanDate(scannedAt)}
             </span>
           ) : null}
         </div>
