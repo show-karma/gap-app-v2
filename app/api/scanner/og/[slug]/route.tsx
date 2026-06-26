@@ -2,16 +2,32 @@
 
 import { ImageResponse } from "next/og";
 import type { NextRequest } from "next/server";
-import { getPublicScorecardBySlug } from "@/src/features/scanner/services/scanner.service";
+import { envVars } from "@/utilities/enviromentVars";
+import { categoryLabel } from "@/src/features/scanner/utils/labels";
 import type { PublicScorecardPayload, ScanGrade } from "@/src/features/scanner/types";
 
-export const runtime = "nodejs";
+// next/og renders via wasm in the edge runtime. nodejs runtime silently
+// fails with empty responses under turbopack dev when sharp is not
+// installed; edge is the canonical (and only well-supported) target.
+export const runtime = "edge";
+
+// Fetch the scorecard directly with fetch() rather than going through the
+// shared axios-based fetchData. The app's fetchData has heavy dependencies
+// (axios interceptors, error manager, toast) that fail silently inside
+// the edge route handler. Plain fetch keeps this route hermetic.
+async function fetchScorecard(slug: string): Promise<PublicScorecardPayload | null> {
+  try {
+    const url = `${envVars.NEXT_PUBLIC_GAP_INDEXER_URL.replace(/\/$/, "")}/api/scanner/v1/s/${encodeURIComponent(slug)}`;
+    const res = await fetch(url, { cache: "no-store" });
+    if (!res.ok) return null;
+    return (await res.json()) as PublicScorecardPayload;
+  } catch {
+    return null;
+  }
+}
 
 // next/og's ImageResponse renders to a PNG via inline CSS; Tailwind classes
-// and CSS variables are not honored here, so hex literals are the only option.
-// Centralized at the top of the module so the anti-pattern check on inline
-// style+hex pairs at the call sites stays clean and so palette tweaks happen
-// in one place.
+// and CSS variables are not honored. Hex literals are the only option.
 const GRADE_TONE: Record<ScanGrade, string> = {
   A: "#10B981",
   B: "#84CC16",
@@ -34,23 +50,37 @@ const GRADE_LABEL: Record<ScanGrade, string> = {
   F: "Not AI-ready",
 };
 
+// Satori (next/og's renderer) requires display:flex on EVERY div that
+// has multiple children. Even single-text divs render more predictably
+// with display:flex set, so this is the project-wide convention.
+function row(style: React.CSSProperties = {}): React.CSSProperties {
+  return { display: "flex", flexDirection: "row", ...style };
+}
+function col(style: React.CSSProperties = {}): React.CSSProperties {
+  return { display: "flex", flexDirection: "column", ...style };
+}
+function textRow(style: React.CSSProperties = {}): React.CSSProperties {
+  return { display: "flex", ...style };
+}
+
 function renderFallback(message: string) {
   return new ImageResponse(
     <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
+      style={col({
         alignItems: "center",
         justifyContent: "center",
         width: "100%",
         height: "100%",
         backgroundColor: COLOR_BG_DARK,
         color: COLOR_FG_PRIMARY,
-        fontFamily: "sans-serif",
-      }}
+      })}
     >
-      <div style={{ fontSize: 48, fontWeight: 700 }}>Karma AI-Readiness Checker</div>
-      <div style={{ fontSize: 24, marginTop: 16, color: COLOR_FG_MUTED }}>{message}</div>
+      <div style={textRow({ fontSize: 48, fontWeight: 700 })}>
+        Karma AI-Readiness Checker
+      </div>
+      <div style={textRow({ fontSize: 24, marginTop: 16, color: COLOR_FG_MUTED })}>
+        {message}
+      </div>
     </div>,
     {
       width: 1200,
@@ -62,13 +92,10 @@ function renderFallback(message: string) {
 
 export async function GET(_request: NextRequest, context: { params: Promise<{ slug: string }> }) {
   const slug = (await context.params).slug;
-  let scorecard: PublicScorecardPayload;
-  try {
-    scorecard = await getPublicScorecardBySlug(slug);
-  } catch {
+  const scorecard = await fetchScorecard(slug);
+  if (!scorecard) {
     return renderFallback("Scorecard not available");
   }
-
   if (!scorecard.grade || scorecard.totalScore === null) {
     return renderFallback("Scan still in progress");
   }
@@ -78,41 +105,30 @@ export async function GET(_request: NextRequest, context: { params: Promise<{ sl
   const orgName = scorecard.orgName || scorecard.url || `Scan ${scorecard.slug}`;
   const categories = scorecard.categoryScores ?? [];
 
-  // OG image MUST stay public-tier per R12: grade + categories + org name only.
-  // Never include top-3 fixes, evidence, or walkthrough notes in the rendered
-  // image, even if the calling service is logged in.
+  // OG image MUST stay public-tier per R12: grade + categories + org name
+  // only. No top-3 fixes, evidence, or walkthrough notes here.
   return new ImageResponse(
     <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
+      style={col({
         width: "100%",
         height: "100%",
         backgroundColor: COLOR_BG_DARK,
         color: COLOR_FG_PRIMARY,
         padding: 60,
-        fontFamily: "sans-serif",
-      }}
+      })}
     >
-      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-        <div style={{ fontSize: 24, color: COLOR_FG_MUTED, letterSpacing: 1 }}>
+      <div style={col({ gap: 16 })}>
+        <div style={textRow({ fontSize: 24, color: COLOR_FG_MUTED, letterSpacing: 1 })}>
           KARMA AI-READINESS CHECKER
         </div>
-        <div style={{ fontSize: 44, fontWeight: 700, color: COLOR_FG_PRIMARY }}>{orgName}</div>
+        <div style={textRow({ fontSize: 44, fontWeight: 700, color: COLOR_FG_PRIMARY })}>
+          {orgName}
+        </div>
       </div>
 
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "row",
-          alignItems: "center",
-          gap: 32,
-          marginTop: 40,
-        }}
-      >
+      <div style={row({ alignItems: "center", gap: 32, marginTop: 40 })}>
         <div
-          style={{
-            display: "flex",
+          style={row({
             alignItems: "center",
             justifyContent: "center",
             width: 180,
@@ -122,17 +138,21 @@ export async function GET(_request: NextRequest, context: { params: Promise<{ sl
             fontSize: 120,
             fontWeight: 800,
             color: COLOR_FG_PRIMARY,
-          }}
+          })}
         >
           {scorecard.grade}
         </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          <div style={{ fontSize: 80, fontWeight: 700 }}>{scorecard.totalScore} / 100</div>
-          <div style={{ fontSize: 32, color: COLOR_FG_SUBTLE }}>{label}</div>
+        <div style={col({ gap: 8 })}>
+          <div style={textRow({ fontSize: 80, fontWeight: 700 })}>
+            {`${scorecard.totalScore} / 100`}
+          </div>
+          <div style={textRow({ fontSize: 32, color: COLOR_FG_SUBTLE })}>
+            {label}
+          </div>
         </div>
       </div>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 40 }}>
+      <div style={col({ gap: 12, marginTop: 40 })}>
         {categories.slice(0, 5).map((category) => {
           const pct =
             category.pointsPossible === 0
@@ -142,33 +162,30 @@ export async function GET(_request: NextRequest, context: { params: Promise<{ sl
                   Math.min(100, (category.pointsAwarded / category.pointsPossible) * 100)
                 );
           return (
-            <div
-              key={category.category}
-              style={{ display: "flex", flexDirection: "column", gap: 4 }}
-            >
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 18 }}>
-                <span style={{ color: COLOR_FG_LABEL }}>{category.category}</span>
-                <span style={{ color: COLOR_FG_MUTED }}>
-                  {category.pointsAwarded} / {category.pointsPossible}
-                </span>
+            <div key={category.category} style={col({ gap: 4 })}>
+              <div style={row({ justifyContent: "space-between", fontSize: 18 })}>
+                <div style={textRow({ color: COLOR_FG_LABEL })}>
+                  {categoryLabel(category.category)}
+                </div>
+                <div style={textRow({ color: COLOR_FG_MUTED })}>
+                  {`${category.pointsAwarded} / ${category.pointsPossible}`}
+                </div>
               </div>
               <div
-                style={{
-                  display: "flex",
+                style={row({
                   width: "100%",
                   height: 10,
                   borderRadius: 999,
                   backgroundColor: COLOR_BG_BAR,
-                }}
+                })}
               >
                 <div
-                  style={{
-                    display: "flex",
+                  style={row({
                     width: `${pct}%`,
                     height: "100%",
                     borderRadius: 999,
                     backgroundColor: gradeBg,
-                  }}
+                  })}
                 />
               </div>
             </div>
