@@ -1,7 +1,7 @@
 /**
  * Homepage Navigation Flow Integration Tests
  * Tests the funder-focused home page navigation: hero CTAs and the
- * two-row "How Karma works" section CTAs.
+ * two-row "Why Karma" section CTAs.
  */
 
 import HomePage from "@/app/page";
@@ -34,7 +34,7 @@ describe("Homepage Navigation Flows", () => {
     });
   });
 
-  describe("How Karma works rows", () => {
+  describe("Why Karma rows", () => {
     it("should render both product rows", async () => {
       renderWithProviders(await HomePage());
 

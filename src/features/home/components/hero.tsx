@@ -69,7 +69,7 @@ export function Hero() {
               )}
             >
               Karma is the funding platform foundation officers and donor advisors run from ChatGPT,
-              Claude, or any agent they already use. Or right here in the browser. Discover
+              Claude, or any agent they already use, or right here in the browser. Discover
               projects, approve funding, pull grantee updates, and generate reports.
             </p>
           </div>

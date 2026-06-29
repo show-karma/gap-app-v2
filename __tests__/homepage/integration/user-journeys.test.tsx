@@ -1,41 +1,24 @@
 /**
  * Homepage User Journeys Integration Tests
  * Tests complete visitor flows through the funder-focused home page:
- * hero + two-row "How Karma works" section (Nonprofit Research + Foundations).
+ * hero + two-row "Why Karma" section (Nonprofit Research + Foundations).
  */
 
 import HomePage from "@/app/page";
 import { mockAuthState } from "../setup";
-import { renderWithProviders, screen, waitFor } from "../utils/test-helpers";
+import { createMockAuth, renderWithProviders, screen, waitFor } from "../utils/test-helpers";
 import "@testing-library/jest-dom";
 
 const HERO_SR_TEXT = /Fund nonprofits, projects, and initiatives with AI agents/i;
 
-const AUTHENTICATED_AUTH_STATE = {
-  ready: true,
+const AUTHENTICATED_AUTH_STATE = createMockAuth({
   authenticated: true,
   isConnected: true,
   address: "0x1234567890abcdef1234567890abcdef12345678",
   user: { id: "did:privy:test-user", linkedAccounts: [] },
-  authenticate: vi.fn(),
-  login: vi.fn(),
-  logout: vi.fn(),
-  disconnect: vi.fn(),
-  getAccessToken: vi.fn().mockResolvedValue("mock-token"),
-};
+});
 
-const UNAUTHENTICATED_AUTH_STATE = {
-  ready: true,
-  authenticated: false,
-  isConnected: false,
-  address: undefined as string | undefined,
-  user: null as unknown,
-  authenticate: vi.fn(),
-  login: vi.fn(),
-  logout: vi.fn(),
-  disconnect: vi.fn(),
-  getAccessToken: vi.fn().mockResolvedValue("mock-token"),
-};
+const UNAUTHENTICATED_AUTH_STATE = createMockAuth();
 
 describe("Homepage User Journeys", () => {
   beforeEach(() => {

@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   ...customMetadata({
     title: "Karma | Agentic funding software for foundations and donor advisors",
     description:
-      "The funding platform foundation officers and donor advisors run from ChatGPT, Claude, or any AI agent. Fund nonprofits, projects, and initiatives, follow grantee updates, and generate reports.",
+      "The funding platform foundation officers and donor advisors run from ChatGPT, Claude, or any AI agent. Fund nonprofits, follow updates, generate reports.",
     path: "/",
   }),
   title: {

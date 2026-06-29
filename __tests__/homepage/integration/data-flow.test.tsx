@@ -1,7 +1,7 @@
 /**
  * Homepage Data Flow Integration Tests
  * Tests content and data display on the funder-focused home page:
- * hero + a two-row "How Karma works" section (Nonprofit Research + Foundations).
+ * hero + a two-row "Why Karma" section (Nonprofit Research + Foundations).
  *
  * Target: 10 tests
  * - Page Structure (5)
@@ -51,7 +51,7 @@ describe("Homepage Data Flow", () => {
 
     it("should render at least two sections", async () => {
       const { container } = renderWithProviders(await HomePage());
-      // Hero + How Karma works section, minimum two sections.
+      // Hero + Why Karma section, minimum two sections.
       const sections = container.querySelectorAll("section");
       expect(sections.length).toBeGreaterThanOrEqual(2);
     });
