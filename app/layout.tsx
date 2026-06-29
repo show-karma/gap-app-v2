@@ -2,17 +2,14 @@ import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import { defaultMetadata } from "@/utilities/meta";
 
+// Single self-hosted Inter variable font (next/font/local), same as the rest
+// of the app. Both the body (--font-inter) and the marketing display face
+// (--font-display) resolve to it, so the woff2 is loaded and processed once;
+// --font-display is aliased to --font-inter on <html> below.
 const inter = localFont({
   src: "../public/fonts/Inter/Inter.woff2",
   variable: "--font-inter",
   display: "optional",
-  weight: "100 900",
-});
-
-const displayFont = localFont({
-  src: "../public/fonts/Inter/Inter.woff2",
-  variable: "--font-display",
-  display: "swap",
   weight: "100 900",
 });
 import "@/styles/globals.css";
@@ -110,15 +107,17 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     : null;
   const primaryToken = tenantPrimaryToken ?? configPrimaryToken;
 
-  const themeStyle =
-    isWhitelabel && primaryToken
-      ? ({ "--primary": primaryToken } as React.CSSProperties)
-      : undefined;
+  // Alias the display family to the single Inter instance, and fold in the
+  // tenant primary override when present.
+  const themeStyle = {
+    "--font-display": "var(--font-inter)",
+    ...(isWhitelabel && primaryToken ? { "--primary": primaryToken } : {}),
+  } as React.CSSProperties;
 
   return (
     <html
       lang="en"
-      className={`h-full ${inter.variable} ${displayFont.variable}`}
+      className={`h-full ${inter.variable}`}
       suppressHydrationWarning
       style={themeStyle}
     >
