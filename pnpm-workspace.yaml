@@ -1,0 +1,32 @@
+# pnpm v10+ ignores dependency build/install scripts by default.
+# This is the explicit per-package allowlist (replaces interactive
+# `pnpm approve-builds`). true = run its install script, false = skip.
+# Each entry below was decided by reading the package's actual
+# install/postinstall script, not by inferring from the package name.
+allowBuilds:
+  # Fetch a platform binary at install time — REQUIRED, no binary otherwise.
+  '@sentry/cli': true # downloads the sentry-cli binary (sourcemap upload)
+  esbuild: true # install.js downloads/links the platform binary
+
+  # Native addons: load a shipped prebuild if present, else compile.
+  # `true` is the safe/conservative choice (guarantees a working binary).
+  '@parcel/watcher': true # scripts/build-from-source.js (prebuild fallback)
+  bufferutil: true # node-gyp-build
+  classic-level: true # node-gyp-build
+  keccak: true # node-gyp-build || exit 0
+  secp256k1: true # node-gyp-build || exit 0
+  sharp: true # install/check.js — uses prebuilt libvips, builds only if missing
+  utf-8-validate: true # node-gyp-build
+
+  # No build needed: advisory/cosmetic postinstalls (print-only, no file
+  # writes, no codegen). Skipping them is safe and silences the warning.
+  '@reown/appkit': false # scripts/appkit-version-check.js — "outdated" notice
+  '@vercel/speed-insights': false # reads .env/next.config, prints warnings only
+  core-js-pure: false # sponsor message (wrapped in try/catch)
+  es5-ext: false # sponsor message (|| exit 0)
+  protobufjs: false # scripts/postinstall — version-scheme WARN to stderr only
+  # msw postinstall is a no-op unless package.json defines `msw.workerDirectory`
+  # (it would then run `msw init`). gap-app-v2 sets neither that field nor a
+  # committed mockServiceWorker.js, so there is nothing to build. If you later
+  # add `msw.workerDirectory`, flip this to true.
+  msw: false
