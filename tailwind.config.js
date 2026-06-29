@@ -38,11 +38,11 @@ module.exports = {
         '"Segoe UI Emoji"',
         '"Segoe UI Symbol"',
       ],
-      // Display face for marketing H1/H2. Resolves to the same Inter as the
-      // body (via --font-display → --font-inter), so the fallback stack is
-      // sans-serif to stay inside the same family category on a load failure.
+      // Display face for marketing H1/H2. Resolves to the same self-hosted
+      // Inter as the body, so the fallback stack is sans-serif to stay inside
+      // the same family category on a load failure.
       display: [
-        "var(--font-display)",
+        "var(--font-inter)",
         "-apple-system",
         "BlinkMacSystemFont",
         '"Segoe UI"',

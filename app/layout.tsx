@@ -3,9 +3,8 @@ import localFont from "next/font/local";
 import { defaultMetadata } from "@/utilities/meta";
 
 // Single self-hosted Inter variable font (next/font/local), same as the rest
-// of the app. Both the body (--font-inter) and the marketing display face
-// (--font-display) resolve to it, so the woff2 is loaded and processed once;
-// --font-display is aliased to --font-inter on <html> below.
+// of the app. The woff2 is loaded and processed once; the tailwind `display`
+// family points straight at --font-inter, so the marketing H1/H2 share it.
 const inter = localFont({
   src: "../public/fonts/Inter/Inter.woff2",
   variable: "--font-inter",
@@ -107,12 +106,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     : null;
   const primaryToken = tenantPrimaryToken ?? configPrimaryToken;
 
-  // Alias the display family to the single Inter instance, and fold in the
-  // tenant primary override when present.
-  const themeStyle = {
-    "--font-display": "var(--font-inter)",
-    ...(isWhitelabel && primaryToken ? { "--primary": primaryToken } : {}),
-  } as React.CSSProperties;
+  const themeStyle =
+    isWhitelabel && primaryToken
+      ? ({ "--primary": primaryToken } as React.CSSProperties)
+      : undefined;
 
   return (
     <html

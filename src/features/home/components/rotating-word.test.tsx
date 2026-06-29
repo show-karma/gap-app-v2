@@ -9,8 +9,8 @@ vi.mock("motion/react", () => ({
   useReducedMotion: () => reduceMotionMock(),
 }));
 
-// The visible word is the only one at full opacity; the spacer is `invisible`
-// and the rest are `opacity-0`.
+// Every word is stacked in the grid; the visible one is the only one at full
+// opacity, the rest sit at opacity-0.
 const activeWord = (container: HTMLElement) =>
   container.querySelector(".opacity-100")?.textContent ?? null;
 
@@ -25,12 +25,13 @@ describe("RotatingWord", () => {
     vi.useRealTimers();
   });
 
-  it("renders every word so the slot reserves the widest width", () => {
+  it("stacks every word once so the slot reserves the widest rendered width", () => {
     render(<RotatingWord words={["nonprofits", "projects", "initiatives"]} />);
+    // Each word is rendered exactly once (no measuring spacer); the grid sizes
+    // the cell to the widest of them.
     expect(screen.getByText("nonprofits")).toBeInTheDocument();
     expect(screen.getByText("projects")).toBeInTheDocument();
-    // "initiatives" is the longest, so it appears twice: the spacer + the overlay.
-    expect(screen.getAllByText("initiatives").length).toBe(2);
+    expect(screen.getByText("initiatives")).toBeInTheDocument();
   });
 
   it("is hidden from assistive technology", () => {

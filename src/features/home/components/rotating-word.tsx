@@ -1,7 +1,7 @@
 "use client";
 
 import { useReducedMotion } from "motion/react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { cn } from "@/utilities/tailwind";
 
 interface RotatingWordProps {
@@ -13,16 +13,19 @@ interface RotatingWordProps {
 /**
  * Rotates through `words` in a fixed-width slot.
  *
- * Layout: an invisible copy of the longest word sits in normal flow to reserve
- * the slot's exact rendered width (so the rest of the H1 never reflows) and to
- * establish the baseline. The visible words overlay it absolutely, pinned to
- * the bottom edge — same font + line-height as the spacer, so their text
- * baseline lines up with the surrounding sentence — and centered, so the slack
- * for shorter words splits evenly instead of opening one ragged gap.
+ * Layout: `inline-grid` stacks every word in the same cell (col/row 1), so the
+ * slot resolves to the widest *rendered* word — character count is not a width
+ * proxy in a proportional font, and `className` (e.g. `italic`) lives on the
+ * container so every stacked word shares the metrics that set that width. Only
+ * the active word is opaque; the rest stay in place at `opacity-0`, so the
+ * surrounding H1 never reflows mid-cycle. `align-baseline` keeps the grid on the
+ * sentence baseline; `justify-items-center` splits the slack for shorter words
+ * evenly instead of opening one ragged gap.
  *
  * Accessibility: the element is aria-hidden (visual decoration) and honors
- * prefers-reduced-motion by holding on the first word. Callers must provide the
- * full canonical sentence in a sibling `sr-only` span for screen readers / SEO.
+ * prefers-reduced-motion by holding on the first word with no transition.
+ * Callers must provide the full canonical sentence in a sibling `sr-only` span
+ * for screen readers / SEO.
  */
 export function RotatingWord({ words, intervalMs = 2400, className }: RotatingWordProps) {
   const [index, setIndex] = useState(0);
@@ -36,22 +39,21 @@ export function RotatingWord({ words, intervalMs = 2400, className }: RotatingWo
     return () => window.clearInterval(id);
   }, [reduceMotion, words.length, intervalMs]);
 
-  const longest = useMemo(
-    () => words.reduce((max, word) => (word.length > max.length ? word : max), ""),
-    [words]
-  );
-
   return (
-    <span aria-hidden className="relative inline-block align-baseline whitespace-nowrap">
-      <span className="invisible">{longest}</span>
+    <span
+      aria-hidden
+      className={cn(
+        "relative inline-grid justify-items-center align-baseline whitespace-nowrap",
+        className
+      )}
+    >
       {words.map((word, i) => (
         <span
           key={word}
           className={cn(
-            "absolute inset-x-0 bottom-0 text-center",
+            "col-start-1 row-start-1",
             !reduceMotion && "transition-opacity duration-500 ease-out",
-            i === index ? "opacity-100" : "opacity-0 pointer-events-none",
-            className
+            i === index ? "opacity-100" : "opacity-0 pointer-events-none"
           )}
         >
           {word}
