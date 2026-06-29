@@ -79,4 +79,18 @@ describe("RotatingWord", () => {
     });
     expect(activeWord(container)).toBe("only");
   });
+
+  it("keeps a word visible when the list shrinks below the current index", () => {
+    const { container, rerender } = render(
+      <RotatingWord words={["one", "two", "three"]} intervalMs={1000} />
+    );
+    act(() => {
+      vi.advanceTimersByTime(2000); // index → 2 ("three")
+    });
+    expect(activeWord(container)).toBe("three");
+
+    rerender(<RotatingWord words={["one"]} intervalMs={1000} />);
+    // index (2) is now out of range; the clamp keeps the remaining word shown.
+    expect(activeWord(container)).toBe("one");
+  });
 });

@@ -39,6 +39,10 @@ export function RotatingWord({ words, intervalMs = 2400, className }: RotatingWo
     return () => window.clearInterval(id);
   }, [reduceMotion, words.length, intervalMs]);
 
+  // Clamp into range so a shrunk `words` list (e.g. n → 1 while index > 0)
+  // can't leave every word hidden until the next tick.
+  const activeIndex = words.length > 0 ? index % words.length : 0;
+
   return (
     <span
       aria-hidden
@@ -53,7 +57,7 @@ export function RotatingWord({ words, intervalMs = 2400, className }: RotatingWo
           className={cn(
             "col-start-1 row-start-1",
             !reduceMotion && "transition-opacity duration-500 ease-out",
-            i === index ? "opacity-100" : "opacity-0 pointer-events-none"
+            i === activeIndex ? "opacity-100" : "opacity-0 pointer-events-none"
           )}
         >
           {word}
