@@ -1,3 +1,10 @@
+# Single-package repo (not a monorepo). `packages` is required so that
+# pnpm 9.x — which Vercel still uses by default — accepts this file at all;
+# without it pnpm 9 errors "packages field missing or empty". pnpm 10/11
+# treat a single "." root as a no-op.
+packages:
+  - '.'
+
 # pnpm v10+ ignores dependency build/install scripts by default.
 # This is the explicit per-package allowlist (replaces interactive
 # `pnpm approve-builds`). true = run its install script, false = skip.
