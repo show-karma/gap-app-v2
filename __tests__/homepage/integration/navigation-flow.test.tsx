@@ -25,12 +25,12 @@ describe("Homepage Navigation Flows", () => {
       expect(rel.includes("noopener") || rel.includes("noreferrer")).toBe(true);
     });
 
-    it("should render the See how Karma works secondary CTA anchoring to #how-it-works", async () => {
+    it("should render the Why funders pick Karma secondary CTA anchoring to #why-karma", async () => {
       renderWithProviders(await HomePage());
 
-      const anchorLinks = screen.getAllByRole("link", { name: /See how Karma works/i });
+      const anchorLinks = screen.getAllByRole("link", { name: /Why funders pick Karma/i });
       expect(anchorLinks.length).toBeGreaterThanOrEqual(1);
-      expect(anchorLinks[0]).toHaveAttribute("href", "#how-it-works");
+      expect(anchorLinks[0]).toHaveAttribute("href", "#why-karma");
     });
   });
 

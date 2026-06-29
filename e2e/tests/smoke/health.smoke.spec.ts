@@ -12,10 +12,14 @@ test.describe("Smoke Tests — Health", () => {
     await page.goto("/", GOTO_OPTIONS);
     await waitForPageReady(page);
 
-    // The hero heading should be visible — its accessible name comes from
-    // the sr-only span (the rotating-word variant is aria-hidden)
+    // Accessible name comes from the sr-only canonical sentence; the
+    // rotating-word variant alongside it is aria-hidden.
     await expect(
-      page.getByRole("heading", { name: /karma helps funders fund and track/i }).first()
+      page
+        .getByRole("heading", {
+          name: /fund nonprofits, projects, and initiatives with ai agents/i,
+        })
+        .first()
     ).toBeVisible();
 
     // The workflow section should be present on the homepage

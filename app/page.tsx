@@ -5,15 +5,13 @@ import { customMetadata } from "@/utilities/meta";
 
 export const metadata: Metadata = {
   ...customMetadata({
-    title:
-      "Karma | Helping funders fund and track organizations, projects, and nonprofits worth backing",
+    title: "Karma | Agentic funding software for foundations and donor advisors",
     description:
-      "Karma helps funders fund and track the organizations, projects, and nonprofits worth backing, from one-off nonprofit research to full grant programs.",
+      "The funding platform foundation officers and donor advisors run from ChatGPT, Claude, or any AI agent. Fund nonprofits, projects, and initiatives, follow grantee updates, and generate reports.",
     path: "/",
   }),
   title: {
-    absolute:
-      "Karma | Helping funders fund and track organizations, projects, and nonprofits worth backing",
+    absolute: "Karma | Agentic funding software for foundations and donor advisors",
   },
 };
 

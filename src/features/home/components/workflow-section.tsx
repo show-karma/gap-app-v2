@@ -182,7 +182,7 @@ function ProductRowBlock({ row, reverse }: { row: ProductRow; reverse: boolean }
 
 export function WorkflowSection() {
   return (
-    <section id="how-it-works" className="flex flex-col items-center w-full">
+    <section id="why-karma" className="flex flex-col items-center w-full">
       {/* Editorial section header: kicker rule + label sit immediately above
           the H2 in a single left-aligned column. No 2-column grid (the
           asymmetric kicker felt orphaned from the headline). Top padding
@@ -195,7 +195,7 @@ export function WorkflowSection() {
               <div className="flex items-center gap-3">
                 <span aria-hidden className="h-px w-8 bg-foreground/40" />
                 <span className="text-[11px] font-medium tracking-[0.18em] uppercase text-muted-foreground">
-                  How Karma works
+                  Why Karma
                 </span>
               </div>
               <h2
@@ -205,11 +205,13 @@ export function WorkflowSection() {
                   "leading-[105%] tracking-[-0.02em]"
                 )}
               >
-                One platform for two motions.
+                Find the organizations worth funding.
               </h2>
               <p className="text-muted-foreground text-base md:text-lg leading-[160%]">
-                Nonprofit Research for one-off gifts. Funding platform for running grant programs.
-                Same data, same standards, different surfaces.
+                Karma indexes nonprofit projects and updates from across philanthropy, plus the
+                progress grantees post directly. This rich source of live nonprofit data lets donor
+                advisors recommend the right organization to clients, and foundations run end-to-end
+                grant programs. Fund on better data.
               </p>
             </div>
           </ScrollReveal>
