@@ -31,11 +31,17 @@ const EMPTY_STRUCTURED: PersonaStructured = {
   advocacyStance: { value: null, source: null },
 };
 
-/** Maps a chip field to the PUT input shape (drops source on a cleared chip). */
+const CHIP_KEYS = [
+  "orgMaturity",
+  "geoRadius",
+  "faithStance",
+  "giftSizeBand",
+  "advocacyStance",
+] as const;
+
+/** Maps a set chip (value present) to its PUT shape, defaulting the source. */
 function toChipInput(field: PersonaStructuredField<string>) {
-  return field.value === null
-    ? { value: null }
-    : { value: field.value, source: field.source ?? ("manual" as const) };
+  return { value: field.value, source: field.source ?? ("manual" as const) };
 }
 
 function toastError(err: unknown) {
@@ -168,6 +174,17 @@ export function PersonaEditor({ handleId, onDirtyChange, onSkip, onSaved }: Pers
   };
 
   const onSave = () => {
+    // Send only the chips that carry a value. The backend's PUT schema validates
+    // each `structured.*.value` against the chip enum and REJECTS null, so an
+    // unset chip must be omitted (omit = preserve) — sending it as `{ value: null }`
+    // 400s the whole save, and a fresh persona has five unset chips. (Clearing a
+    // previously-set chip therefore needs backend support for null-to-clear.)
+    const structuredInput: NonNullable<UpdateDonorPersonaInput["structured"]> = {};
+    for (const key of CHIP_KEYS) {
+      const field = structured[key];
+      if (field.value !== null) structuredInput[key] = toChipInput(field);
+    }
+
     const input: UpdateDonorPersonaInput = {
       sourceText: sourceText.length ? sourceText : null,
       narrative,
@@ -178,13 +195,7 @@ export function PersonaEditor({ handleId, onDirtyChange, onSkip, onSaved }: Pers
       amountMax,
       cause,
       geography,
-      structured: {
-        orgMaturity: toChipInput(structured.orgMaturity),
-        geoRadius: toChipInput(structured.geoRadius),
-        faithStance: toChipInput(structured.faithStance),
-        giftSizeBand: toChipInput(structured.giftSizeBand),
-        advocacyStance: toChipInput(structured.advocacyStance),
-      },
+      ...(Object.keys(structuredInput).length > 0 ? { structured: structuredInput } : {}),
     };
     update.mutate(input, {
       onSuccess: (saved) => {

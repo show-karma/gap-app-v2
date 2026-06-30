@@ -182,19 +182,57 @@ describe("PersonaEditor refine → edit → save round-trip", () => {
       geography: string | null;
     };
     expect(input.sourceText).toBe("Donor funds local education");
-    expect(Object.keys(input.structured)).toEqual([
-      "orgMaturity",
-      "geoRadius",
-      "faithStance",
-      "giftSizeBand",
-      "advocacyStance",
-    ]);
+    // Only the chips the refine actually filled are sent. makeRefinementResult
+    // sets orgMaturity + geoRadius and leaves the other three null; the unset
+    // chips must be OMITTED (the backend's PUT rejects a null chip value).
+    expect(Object.keys(input.structured)).toEqual(["orgMaturity", "geoRadius"]);
+    expect(input.structured.faithStance).toBeUndefined();
+    expect(input.structured.giftSizeBand).toBeUndefined();
+    expect(input.structured.advocacyStance).toBeUndefined();
     // The refine-extracted scalars must ride along into the PUT so they persist.
     expect(input.amountMin).toBe(5000);
     expect(input.amountMax).toBe(20000);
     expect(input.cause).toBe("education");
     expect(input.geography).toBe("Greater Boston");
     await waitFor(() => expect(toast.success).toHaveBeenCalledWith("Persona saved"));
+  });
+});
+
+describe("PersonaEditor save omits unset chips (S-001 regression)", () => {
+  it("sends no `structured` key when saving a persona with all chips unset", async () => {
+    const user = userEvent.setup();
+    const { updateMutate } = setup({ persona: null });
+    updateMutate.mockImplementation((_input: unknown, opts: { onSuccess: (p: unknown) => void }) =>
+      opts.onSuccess(makeDonorPersona())
+    );
+    renderWithProviders(<PersonaEditor handleId="h1" />);
+
+    // Typing source makes the editor dirty without touching any chip.
+    await user.type(screen.getByLabelText("Persona source"), "Donor notes with no chips set");
+    await user.click(saveButton());
+
+    expect(updateMutate).toHaveBeenCalledTimes(1);
+    const input = updateMutate.mock.calls[0][0] as { structured?: Record<string, unknown> };
+    // No null chips in the body — the backend's PUT 400s on `{ value: null }`.
+    expect(input.structured).toBeUndefined();
+  });
+
+  it("sends only the chips that were set, omitting the rest", async () => {
+    const user = userEvent.setup();
+    const { updateMutate } = setup({
+      persona: makeDonorPersona({ narrative: null, structured: emptyPersonaStructured() }),
+    });
+    updateMutate.mockImplementation((_input: unknown, opts: { onSuccess: (p: unknown) => void }) =>
+      opts.onSuccess(makeDonorPersona())
+    );
+    renderWithProviders(<PersonaEditor handleId="h1" />);
+
+    await user.click(screen.getByText("edit-chip")); // sets orgMaturity → mixed
+    await user.click(saveButton());
+
+    const input = updateMutate.mock.calls[0][0] as { structured: Record<string, unknown> };
+    expect(Object.keys(input.structured)).toEqual(["orgMaturity"]);
+    expect(input.structured.orgMaturity).toEqual({ value: "mixed", source: "manual" });
   });
 });
 
