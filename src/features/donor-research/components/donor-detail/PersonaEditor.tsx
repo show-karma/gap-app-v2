@@ -86,6 +86,12 @@ export function PersonaEditor({ handleId, onDirtyChange, onSkip, onSaved }: Pers
   const [isDirty, setIsDirty] = useState(false);
   const [announcement, setAnnouncement] = useState("");
   const [justRefined, setJustRefined] = useState(false);
+  // Refine-extracted scalars. Not edited here — carried through so they persist
+  // on save and then prefill the report form (amounts/cause/geography).
+  const [amountMin, setAmountMin] = useState<number | null>(null);
+  const [amountMax, setAmountMax] = useState<number | null>(null);
+  const [cause, setCause] = useState<string | null>(null);
+  const [geography, setGeography] = useState<string | null>(null);
 
   // Read isDirty inside the hydration effect without making it a dependency
   // (we hydrate on data changes, not on every keystroke flipping dirty).
@@ -96,6 +102,10 @@ export function PersonaEditor({ handleId, onDirtyChange, onSkip, onSaved }: Pers
     setSourceText(persona?.sourceText ?? "");
     setNarrative(persona?.narrative ?? null);
     setStructured(persona?.structured ?? EMPTY_STRUCTURED);
+    setAmountMin(persona?.amountMin ?? null);
+    setAmountMax(persona?.amountMax ?? null);
+    setCause(persona?.cause ?? null);
+    setGeography(persona?.geography ?? null);
   }, []);
 
   const personaData = personaQuery.data;
@@ -130,6 +140,10 @@ export function PersonaEditor({ handleId, onDirtyChange, onSkip, onSaved }: Pers
         setNarrative(result.narrative);
         setStructured(result.structured);
         setExtractedValues(result.structured);
+        setAmountMin(result.amountMin ?? null);
+        setAmountMax(result.amountMax ?? null);
+        setCause(result.cause ?? null);
+        setGeography(result.geography ?? null);
         setIsDirty(true);
         setAnnouncement("Persona narrative updated");
         setJustRefined(true);
@@ -157,6 +171,13 @@ export function PersonaEditor({ handleId, onDirtyChange, onSkip, onSaved }: Pers
     const input: UpdateDonorPersonaInput = {
       sourceText: sourceText.length ? sourceText : null,
       narrative,
+      // Persist the refine-extracted scalars so they survive the save and
+      // prefill the report form (this was the missing link: refine returned
+      // them but the PUT dropped them, so the GET came back null).
+      amountMin,
+      amountMax,
+      cause,
+      geography,
       structured: {
         orgMaturity: toChipInput(structured.orgMaturity),
         geoRadius: toChipInput(structured.geoRadius),

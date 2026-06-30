@@ -206,6 +206,14 @@ export interface UpdateDonorPersonaInput {
   sourceText?: string | null;
   narrative?: string | null;
   structured?: Partial<Record<keyof PersonaStructured, PersonaChipInput>>;
+  /**
+   * Refine-extracted scalars carried through so they persist (and then prefill
+   * the report form). `null` clears the value; omit to preserve.
+   */
+  amountMin?: number | null;
+  amountMax?: number | null;
+  cause?: string | null;
+  geography?: string | null;
 }
 
 /**
@@ -221,6 +229,10 @@ export const buildPersonaPutBody = (input: UpdateDonorPersonaInput): Record<stri
   const body: Record<string, unknown> = {};
   if (input.sourceText !== undefined) body.sourceText = input.sourceText;
   if (input.narrative !== undefined) body.narrative = input.narrative;
+  if (input.amountMin !== undefined) body.amountMin = input.amountMin;
+  if (input.amountMax !== undefined) body.amountMax = input.amountMax;
+  if (input.cause !== undefined) body.cause = input.cause;
+  if (input.geography !== undefined) body.geography = input.geography;
   if (input.structured) {
     const structured: Record<string, unknown> = {};
     for (const [key, chip] of Object.entries(input.structured)) {

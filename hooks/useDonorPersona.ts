@@ -77,6 +77,10 @@ function projectPersona(
     ...base,
     sourceText: input.sourceText !== undefined ? input.sourceText : base.sourceText,
     narrative: input.narrative !== undefined ? input.narrative : base.narrative,
+    amountMin: input.amountMin !== undefined ? input.amountMin : base.amountMin,
+    amountMax: input.amountMax !== undefined ? input.amountMax : base.amountMax,
+    cause: input.cause !== undefined ? input.cause : base.cause,
+    geography: input.geography !== undefined ? input.geography : base.geography,
     structured: structured as PersonaStructured,
     updatedAt: new Date().toISOString(),
   };

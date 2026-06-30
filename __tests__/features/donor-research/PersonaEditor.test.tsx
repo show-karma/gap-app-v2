@@ -176,6 +176,10 @@ describe("PersonaEditor refine → edit → save round-trip", () => {
     const input = updateMutate.mock.calls[0][0] as {
       sourceText: string | null;
       structured: Record<string, unknown>;
+      amountMin: number | null;
+      amountMax: number | null;
+      cause: string | null;
+      geography: string | null;
     };
     expect(input.sourceText).toBe("Donor funds local education");
     expect(Object.keys(input.structured)).toEqual([
@@ -185,6 +189,11 @@ describe("PersonaEditor refine → edit → save round-trip", () => {
       "giftSizeBand",
       "advocacyStance",
     ]);
+    // The refine-extracted scalars must ride along into the PUT so they persist.
+    expect(input.amountMin).toBe(5000);
+    expect(input.amountMax).toBe(20000);
+    expect(input.cause).toBe("education");
+    expect(input.geography).toBe("Greater Boston");
     await waitFor(() => expect(toast.success).toHaveBeenCalledWith("Persona saved"));
   });
 });

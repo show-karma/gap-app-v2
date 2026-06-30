@@ -446,4 +446,13 @@ export interface DonorPersona {
 export interface RefinementResult {
   narrative: string | null;
   structured: PersonaStructured;
+  /**
+   * Explicit values extracted from the source. The editor carries these into
+   * the persona PUT so they persist (and then prefill the report form). `null`
+   * when the source names none. Optional for back-compat with older responses.
+   */
+  amountMin?: number | null;
+  amountMax?: number | null;
+  cause?: string | null;
+  geography?: string | null;
 }

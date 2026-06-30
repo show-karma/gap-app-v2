@@ -52,4 +52,28 @@ describe("buildPersonaPutBody", () => {
     });
     expect(Object.keys(body.structured as object)).toEqual(["giftSizeBand"]);
   });
+
+  it("carries the refine-extracted scalars (amounts / cause / geography)", () => {
+    expect(
+      buildPersonaPutBody({
+        amountMin: 5000,
+        amountMax: 20000,
+        cause: "climate",
+        geography: "Pacific Northwest",
+      })
+    ).toEqual({
+      amountMin: 5000,
+      amountMax: 20000,
+      cause: "climate",
+      geography: "Pacific Northwest",
+    });
+  });
+
+  it("sends explicit null to clear an extracted scalar, and omits when undefined", () => {
+    expect(buildPersonaPutBody({ amountMin: null, cause: null })).toEqual({
+      amountMin: null,
+      cause: null,
+    });
+    expect(buildPersonaPutBody({ amountMax: 20000 })).not.toHaveProperty("geography");
+  });
 });

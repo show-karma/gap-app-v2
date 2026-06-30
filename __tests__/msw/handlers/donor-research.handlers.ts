@@ -76,6 +76,10 @@ export function makeRefinementResult(overrides?: Partial<RefinementResult>): Ref
       giftSizeBand: { value: null, source: null },
       advocacyStance: { value: null, source: null },
     },
+    amountMin: 5000,
+    amountMax: 20000,
+    cause: "education",
+    geography: "Greater Boston",
     ...overrides,
   };
 }
@@ -84,6 +88,10 @@ interface PersonaPutBody {
   sourceText?: string | null;
   narrative?: string | null;
   structured?: Partial<Record<keyof PersonaStructured, { value: string | null; source?: string }>>;
+  amountMin?: number | null;
+  amountMax?: number | null;
+  cause?: string | null;
+  geography?: string | null;
 }
 
 /** Applies a PUT body to a base persona the way the backend would echo it. */
@@ -102,6 +110,10 @@ function applyPersonaPut(base: DonorPersona, body: PersonaPutBody): DonorPersona
     ...base,
     sourceText: body.sourceText !== undefined ? body.sourceText : base.sourceText,
     narrative: body.narrative !== undefined ? body.narrative : base.narrative,
+    amountMin: body.amountMin !== undefined ? body.amountMin : base.amountMin,
+    amountMax: body.amountMax !== undefined ? body.amountMax : base.amountMax,
+    cause: body.cause !== undefined ? body.cause : base.cause,
+    geography: body.geography !== undefined ? body.geography : base.geography,
     structured,
     updatedAt: "2026-06-29T12:00:00.000Z",
   };
