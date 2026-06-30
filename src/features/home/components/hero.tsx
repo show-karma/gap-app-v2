@@ -13,7 +13,7 @@ import { PAGES } from "@/utilities/pages";
 import { SOCIALS } from "@/utilities/socials";
 import { cn } from "@/utilities/tailwind";
 
-const ROTATING_TARGETS = ["organizations", "projects", "nonprofits"];
+const ROTATING_TARGETS = ["nonprofits", "projects", "initiatives"];
 
 export function Hero() {
   const communityItems = chosenCommunities(true).map((community) => ({
@@ -39,14 +39,11 @@ export function Hero() {
           <div className="flex items-center gap-3">
             <span aria-hidden className="h-px w-8 bg-foreground/40" />
             <span className="text-[11px] font-medium tracking-[0.18em] uppercase text-muted-foreground">
-              Funding software
+              Agentic funding software · for foundations and donor advisors
             </span>
           </div>
         </ScrollReveal>
 
-        {/* H1 + subhead form one tight editorial cluster. The rotating
-            word is decorative (aria-hidden); the sr-only span carries
-            the canonical sentence for screen readers and SEO. */}
         <ScrollReveal variant="fade-up" delay={100} duration={800}>
           <div className="flex flex-col gap-5 md:gap-6">
             <h1
@@ -58,15 +55,10 @@ export function Hero() {
               )}
             >
               <span className="sr-only">
-                Karma helps funders fund and track organizations, projects, and nonprofits worth
-                backing
+                Fund nonprofits, projects, and initiatives with AI agents.
               </span>
               <span aria-hidden>
-                Karma helps funders fund and track{" "}
-                <span className="italic">
-                  <RotatingWord words={ROTATING_TARGETS} />
-                </span>{" "}
-                worth backing
+                Fund <RotatingWord words={ROTATING_TARGETS} className="italic" /> with AI agents.
               </span>
             </h1>
             <p
@@ -76,8 +68,9 @@ export function Hero() {
                 "max-w-[680px]"
               )}
             >
-              Discover credible organizations, evaluate fit, and track outcomes, from one-off donor
-              research to full grant programs.
+              Karma is the funding platform foundation officers and donor advisors run from ChatGPT,
+              Claude, or any agent they already use, or right here in the browser. Discover
+              projects, approve funding, pull grantee updates, and generate reports.
             </p>
           </div>
         </ScrollReveal>
@@ -93,14 +86,14 @@ export function Hero() {
               </Link>
             </Button>
             <Link
-              href="#how-it-works"
+              href="#why-karma"
               className={cn(
                 "inline-flex items-center gap-1.5 text-sm font-medium",
                 "text-foreground hover:text-foreground/80 transition-colors",
                 "group"
               )}
             >
-              See how Karma works
+              Why funders pick Karma
               <ArrowDown
                 className="h-3.5 w-3.5 transition-transform duration-200 group-hover:translate-y-0.5"
                 aria-hidden

@@ -1,18 +1,29 @@
 /**
  * Homepage User Journeys Integration Tests
  * Tests complete visitor flows through the funder-focused home page:
- * hero + two-row "How Karma works" section (Nonprofit Research + Foundations).
+ * hero + two-row "Why Karma" section (Nonprofit Research + Foundations).
  */
 
 import HomePage from "@/app/page";
-import { renderWithProviders, screen, waitFor } from "../utils/test-helpers";
+import { mockAuthState } from "../setup";
+import { createMockAuth, renderWithProviders, screen, waitFor } from "../utils/test-helpers";
 import "@testing-library/jest-dom";
 
-const HERO_SR_TEXT = /Karma helps funders fund and track organizations, projects, and nonprofits/i;
+const HERO_SR_TEXT = /Fund nonprofits, projects, and initiatives with AI agents/i;
+
+const AUTHENTICATED_AUTH_STATE = createMockAuth({
+  authenticated: true,
+  isConnected: true,
+  address: "0x1234567890abcdef1234567890abcdef12345678",
+  user: { id: "did:privy:test-user", linkedAccounts: [] },
+});
+
+const UNAUTHENTICATED_AUTH_STATE = createMockAuth();
 
 describe("Homepage User Journeys", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockAuthState.current = UNAUTHENTICATED_AUTH_STATE;
   });
 
   describe("First-Time Visitor", () => {
@@ -24,7 +35,7 @@ describe("Homepage User Journeys", () => {
     it("should see two primary CTAs above the fold", async () => {
       renderWithProviders(await HomePage());
       expect(screen.getAllByText(/Schedule a demo/i).length).toBeGreaterThanOrEqual(1);
-      expect(screen.getAllByText(/See how Karma works/i).length).toBeGreaterThanOrEqual(1);
+      expect(screen.getAllByText(/Why funders pick Karma/i).length).toBeGreaterThanOrEqual(1);
     });
 
     it("should see the trust strip with funding programs kicker", async () => {
@@ -32,10 +43,10 @@ describe("Homepage User Journeys", () => {
       expect(screen.getByText(/Funding programs running on Karma/i)).toBeInTheDocument();
     });
 
-    it("should see the 'How Karma works' section heading", async () => {
+    it("should see the dual-product section heading", async () => {
       renderWithProviders(await HomePage());
       await waitFor(() => {
-        expect(screen.getByText(/One platform for two motions\./i)).toBeInTheDocument();
+        expect(screen.getByText(/Find the organizations worth funding\./i)).toBeInTheDocument();
       });
     });
 
@@ -47,6 +58,36 @@ describe("Homepage User Journeys", () => {
         ).toBeInTheDocument();
       });
       expect(screen.getByText(/AI-powered software for grant programs/i)).toBeInTheDocument();
+    });
+  });
+
+  describe("Returning authenticated visitor", () => {
+    // Goal regression: the homepage must render in the logged-in state. A
+    // prior session-restart left tabs with stale chunk refs and surfaced as
+    // "Something went wrong" — code-level: the page must render the canonical
+    // sentence and both product rows regardless of auth state, so a future
+    // change that quietly couples Hero/Workflow to auth would fail this.
+    it("should render the hero canonical sentence when authenticated", async () => {
+      renderWithProviders(await HomePage(), { mockUseAuth: AUTHENTICATED_AUTH_STATE });
+      expect(screen.getByText(HERO_SR_TEXT)).toBeInTheDocument();
+    });
+
+    it("should render both product rows when authenticated", async () => {
+      renderWithProviders(await HomePage(), { mockUseAuth: AUTHENTICATED_AUTH_STATE });
+      await waitFor(() => {
+        expect(
+          screen.getByText(/Generate a donor-ready research brief in 10 minutes/i)
+        ).toBeInTheDocument();
+      });
+      expect(screen.getByText(/AI-powered software for grant programs/i)).toBeInTheDocument();
+    });
+
+    it("should not surface the root error boundary when authenticated", async () => {
+      const { container } = renderWithProviders(await HomePage(), {
+        mockUseAuth: AUTHENTICATED_AUTH_STATE,
+      });
+      expect(container).not.toHaveTextContent(/Something went wrong/i);
+      expect(container).not.toHaveTextContent(/We encountered an error/i);
     });
   });
 
