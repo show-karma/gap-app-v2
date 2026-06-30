@@ -425,6 +425,13 @@ export interface DonorPersona {
    * source names no clear single cause.
    */
   cause?: string | null;
+  /**
+   * Place string extracted from the source (e.g. "Pacific Northwest"), used to
+   * prefill the report form's Geography field — NOT the coarse `geoRadius`
+   * enum. Optional: present only once the backend emits it (gap-indexer#2117).
+   * `null` when the source names no clear location.
+   */
+  geography?: string | null;
   refinedAt: string | null;
   createdAt: string;
   updatedAt: string;

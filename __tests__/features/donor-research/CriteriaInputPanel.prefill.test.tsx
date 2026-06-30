@@ -68,9 +68,9 @@ describe("CriteriaInputPanel persona prefill", () => {
 
     await user.selectOptions(screen.getByLabelText("Donor handle"), "h1");
 
-    // geoRadius "local" → resolver "metro". Amounts are NOT derived from the
-    // gift size band (lossy), so they stay empty.
-    await waitFor(() => expect(screen.getByLabelText(/Geography/)).toHaveValue("metro"));
+    // Geography is the persona's extracted place string (not the geoRadius
+    // enum). Amounts are NOT derived from the gift size band, so they stay empty.
+    await waitFor(() => expect(screen.getByLabelText(/Geography/)).toHaveValue("Greater Boston"));
     expect(screen.getByLabelText(/Amount min/)).toHaveValue(null);
     expect(screen.getByLabelText(/Amount max/)).toHaveValue(null);
     // criteriaText, geography, weights.

@@ -58,6 +58,7 @@ export function makeDonorPersona(overrides?: Partial<DonorPersona>): DonorPerson
       donorMatch: 3000,
       compliance: 1000,
     },
+    geography: "Greater Boston",
     refinedAt: "2026-06-20T10:00:00.000Z",
     createdAt: "2026-06-15T10:00:00.000Z",
     updatedAt: "2026-06-20T10:00:00.000Z",

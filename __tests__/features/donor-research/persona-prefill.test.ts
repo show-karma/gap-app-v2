@@ -25,39 +25,32 @@ describe("buildPersonaPrefill", () => {
     expect(buildPersonaPrefill(persona)).toBeNull();
   });
 
-  it("is non-null when only a structured chip is set (no text)", () => {
+  it("is non-null when only a structured chip is set (no text, no extracted scalars)", () => {
     const persona = makeDonorPersona({
       sourceText: null,
       narrative: null,
+      geography: null,
       structured: {
         ...emptyPersonaStructured(),
         geoRadius: { value: "national", source: "manual" },
       },
     });
-    const prefill = buildPersonaPrefill(persona);
-    expect(prefill).not.toBeNull();
-    expect(prefill?.geography).toBe("national");
+    expect(buildPersonaPrefill(persona)).not.toBeNull();
   });
 
-  it("maps geoRadius to the resolver enum (local→metro, regional→regional, national→national)", () => {
-    const make = (value: "local" | "regional" | "national" | null) =>
-      buildPersonaPrefill(
-        makeDonorPersona({
-          structured: { ...emptyPersonaStructured(), geoRadius: { value, source: "extracted" } },
-        })
-      )?.geography;
-
-    expect(make("local")).toBe("metro");
-    expect(make("regional")).toBe("regional");
-    expect(make("national")).toBe("national");
+  it("prefills geography from the persona's extracted place string", () => {
+    expect(
+      buildPersonaPrefill(makeDonorPersona({ geography: "Pacific Northwest" }))?.geography
+    ).toBe("Pacific Northwest");
   });
 
-  it("leaves geography undefined when geoRadius is null", () => {
+  it("does NOT derive geography from the coarse geoRadius enum", () => {
     const prefill = buildPersonaPrefill(
       makeDonorPersona({
+        geography: null,
         structured: {
           ...emptyPersonaStructured(),
-          giftSizeBand: { value: "mid", source: "manual" },
+          geoRadius: { value: "regional", source: "extracted" },
         },
       })
     );

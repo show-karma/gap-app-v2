@@ -3,43 +3,28 @@
  * no React, no IO — so it is trivially unit-testable.
  *
  * Key contract notes:
- *  - `geography` uses the backend resolver's enum vocabulary
- *    (`city|metro|regional|state|national`), NOT the raw persona `geoRadius`.
- *    Persona never carries a city name, so `local → "metro"`.
+ *  - `geography` is the backend's extracted place string (e.g. "Pacific
+ *    Northwest"), NOT the coarse `geoRadius` enum. The radius enum carries no
+ *    place names, so feeding it into the free-text Geography field surfaced a
+ *    raw token like "regional" — we no longer derive geography from it.
  *  - `weights` is `persona.computedWeights` verbatim — the backend is the
  *    single source of truth for the nudge math. No client computation.
  */
 
-import type { CompositeWeights, DonorPersona, GeoRadius } from "@/types/donor-research";
-
-/** Radius vocabulary understood by the backend `LLMGeographyResolver`. */
-export type ResolverGeography = "city" | "metro" | "regional" | "state" | "national";
+import type { CompositeWeights, DonorPersona } from "@/types/donor-research";
 
 export interface PersonaPrefill {
   /** Seeds the criteria text with the persona narrative verbatim. Absent when no narrative. */
   criteriaTextAppendix?: string;
   /** Topical cause / focus area extracted by the backend. */
   cause?: string;
-  geography?: ResolverGeography;
+  /** Real place string extracted by the backend (NOT the coarse geoRadius enum). */
+  geography?: string;
   /** Real USD amounts extracted by the backend (NOT derived from the band). */
   amountMin?: number;
   amountMax?: number;
   /** The recomputed nudge weights, consumed verbatim. */
   weights: CompositeWeights;
-}
-
-function geographyFromRadius(radius: GeoRadius | null): ResolverGeography | undefined {
-  switch (radius) {
-    // Persona carries no specific city name, so "local" resolves to metro.
-    case "local":
-      return "metro";
-    case "regional":
-      return "regional";
-    case "national":
-      return "national";
-    default:
-      return undefined;
-  }
 }
 
 /**
@@ -71,8 +56,10 @@ export function buildPersonaPrefill(persona: DonorPersona | null): PersonaPrefil
   // emits it.
   if (persona.cause) prefill.cause = persona.cause;
 
-  const geography = geographyFromRadius(s.geoRadius.value);
-  if (geography) prefill.geography = geography;
+  // Geography is the backend's extracted place string (when the source names
+  // one); never derived from the coarse geoRadius enum. Dormant until
+  // gap-indexer#2117 emits it.
+  if (persona.geography) prefill.geography = persona.geography;
 
   // Amounts come from the backend's EXPLICIT extracted figures, never from the
   // coarse `giftSizeBand` enum (mapping a 3-bucket band to dollars implies a
