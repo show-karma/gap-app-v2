@@ -7,6 +7,7 @@ import { WeightsAllocator } from "../weights/WeightsAllocator";
 import { isValidWeights } from "../weights/weights-allocation";
 import type { CriteriaFormValues } from "./CriteriaInputPanel";
 import { DonorHandlePicker } from "./DonorHandlePicker";
+import { type PersonaPrefillField, PrefilledFromPersonaBadge } from "./PrefilledFromPersonaBadge";
 
 interface CriteriaFormProps {
   form: UseFormReturn<CriteriaFormValues>;
@@ -14,6 +15,13 @@ interface CriteriaFormProps {
   handles: DonorHandle[];
   handlesLoading: boolean;
   submitting: boolean;
+  /** Fields seeded from the selected handle's persona (U8) — each gets a badge. */
+  prefilledFields?: Set<PersonaPrefillField>;
+  /**
+   * Routes a handle change through the parent so it can gate on a dirty form
+   * (discard-confirm). Falls back to a plain field set when absent.
+   */
+  onRequestHandleChange?: (handleId: string) => void;
 }
 
 /**
@@ -28,11 +36,20 @@ export function CriteriaForm({
   handles,
   handlesLoading,
   submitting,
+  prefilledFields,
+  onRequestHandleChange,
 }: CriteriaFormProps) {
-  const { register, handleSubmit, watch, setValue, formState } = form;
+  const { register, handleSubmit, watch, setValue, formState, control } = form;
   const errors = formState.errors;
   const weights = watch("weights");
   const weightsBalanced = isValidWeights(weights);
+
+  const badge = (name: PersonaPrefillField) =>
+    prefilledFields?.has(name) ? <PrefilledFromPersonaBadge control={control} name={name} /> : null;
+
+  const onHandleChange =
+    onRequestHandleChange ??
+    ((handleId: string) => setValue("donorHandleId", handleId, { shouldValidate: true }));
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
@@ -40,12 +57,14 @@ export function CriteriaForm({
         handles={handles}
         loading={handlesLoading}
         value={watch("donorHandleId")}
-        onChange={(handleId) => setValue("donorHandleId", handleId, { shouldValidate: true })}
+        onChange={onHandleChange}
         error={errors.donorHandleId?.message}
       />
 
       <label className="flex flex-col gap-1.5 text-sm">
-        <span className="font-medium">Criteria</span>
+        <span className="flex items-center gap-2 font-medium">
+          Criteria {badge("criteriaText")}
+        </span>
         <textarea
           {...register("criteriaText")}
           rows={4}
@@ -69,7 +88,9 @@ export function CriteriaForm({
           />
         </label>
         <label className="flex flex-col gap-1.5 text-sm">
-          <span className="font-medium">Geography (optional)</span>
+          <span className="flex items-center gap-2 font-medium">
+            Geography (optional) {badge("geography")}
+          </span>
           <input
             {...register("geography")}
             className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
@@ -77,7 +98,9 @@ export function CriteriaForm({
           />
         </label>
         <label className="flex flex-col gap-1.5 text-sm">
-          <span className="font-medium">Amount min ($, optional)</span>
+          <span className="flex items-center gap-2 font-medium">
+            Amount min ($, optional) {badge("amountMin")}
+          </span>
           <input
             {...register("amountMin", {
               setValueAs: (v) =>
@@ -90,7 +113,9 @@ export function CriteriaForm({
           />
         </label>
         <label className="flex flex-col gap-1.5 text-sm">
-          <span className="font-medium">Amount max ($, optional)</span>
+          <span className="flex items-center gap-2 font-medium">
+            Amount max ($, optional) {badge("amountMax")}
+          </span>
           <input
             {...register("amountMax", {
               setValueAs: (v) =>
@@ -105,7 +130,9 @@ export function CriteriaForm({
       </div>
 
       <fieldset className="flex flex-col gap-3 rounded-md border border-border bg-muted/10 px-3 py-3">
-        <legend className="px-1 text-sm font-medium">Scoring weights</legend>
+        <legend className="flex items-center gap-2 px-1 text-sm font-medium">
+          Scoring weights {badge("weights")}
+        </legend>
         <p className="text-xs text-muted-foreground">
           Set how much each criterion counts toward the composite. You can adjust this again after
           the report renders.

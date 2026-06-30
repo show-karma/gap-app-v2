@@ -51,6 +51,9 @@ export const PAGES = {
     INDEX: `/nonprofit-research`,
     ONBOARDING: `/nonprofit-research/onboarding`,
     REPORT: (reportId: string) => `/nonprofit-research/${reportId}`,
+    // Per-handle detail page: private notes + the persona editor (DEV-431).
+    // Opened in a new tab from the handle picker to preserve report-create form state.
+    DONOR_DETAIL: (handleId: string) => `/nonprofit-research/donors/${handleId}`,
     SHARED: (token: string) => `/nonprofit-research/shared/${token}`,
     // Advisor's one-per-advisor diligence question template editor (DEV-428).
     DILIGENCE_TEMPLATE: `/nonprofit-research/diligence-template`,

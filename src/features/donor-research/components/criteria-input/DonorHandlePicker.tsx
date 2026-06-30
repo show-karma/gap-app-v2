@@ -1,8 +1,10 @@
 "use client";
 
+import { Settings } from "lucide-react";
 import { useState } from "react";
 import { useCreateDonorHandle } from "@/hooks/useDonorHandles";
 import type { DonorHandle } from "@/types/donor-research";
+import { PAGES } from "@/utilities/pages";
 
 interface DonorHandlePickerProps {
   handles: DonorHandle[];
@@ -105,33 +107,71 @@ export function DonorHandlePicker({
           </div>
         </div>
       ) : (
-        <div className="flex gap-2">
-          <select
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-            aria-label="Donor handle"
-            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-          >
-            <option value="" disabled>
-              Select a donor handle…
-            </option>
-            {handles.map((handle) => (
-              <option key={handle.id} value={handle.id}>
-                {handle.opaqueLabel}
-              </option>
-            ))}
-          </select>
-          <button
-            type="button"
-            onClick={() => setCreating(true)}
-            className="whitespace-nowrap rounded-md border border-border px-3 py-2 text-sm hover:bg-muted"
-          >
-            + New handle
-          </button>
-        </div>
+        <ExistingHandlesRow
+          handles={handles}
+          value={value}
+          onChange={onChange}
+          onCreate={() => setCreating(true)}
+        />
       )}
 
       {error ? <span className="text-xs text-red-600 dark:text-red-400">{error}</span> : null}
+    </div>
+  );
+}
+
+interface ExistingHandlesRowProps {
+  handles: DonorHandle[];
+  value: string;
+  onChange: (handleId: string) => void;
+  onCreate: () => void;
+}
+
+/**
+ * The populated-state row: a native handle `<select>`, a "+ New handle"
+ * shortcut, and (when a handle is selected) a "Manage" link that opens the
+ * donor detail page in a new tab so the in-progress report form is preserved.
+ */
+function ExistingHandlesRow({ handles, value, onChange, onCreate }: ExistingHandlesRowProps) {
+  const selectedLabel =
+    handles.find((handle) => handle.id === value)?.opaqueLabel ?? "Untitled donor handle";
+
+  return (
+    <div className="flex gap-2">
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        aria-label="Donor handle"
+        className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+      >
+        <option value="" disabled>
+          Select a donor handle…
+        </option>
+        {handles.map((handle) => (
+          <option key={handle.id} value={handle.id}>
+            {handle.opaqueLabel}
+          </option>
+        ))}
+      </select>
+      <button
+        type="button"
+        onClick={onCreate}
+        className="whitespace-nowrap rounded-md border border-border px-3 py-2 text-sm hover:bg-muted"
+      >
+        + New handle
+      </button>
+      {value ? (
+        <a
+          href={PAGES.DONOR_RESEARCH.DONOR_DETAIL(value)}
+          target="_blank"
+          rel="noopener"
+          aria-label={`Manage donor handle ${selectedLabel}`}
+          title="Manage donor handle"
+          className="inline-flex items-center justify-center rounded-md border border-border px-3 py-2 text-sm hover:bg-muted"
+        >
+          <Settings className="h-4 w-4" aria-hidden="true" />
+        </a>
+      ) : null}
     </div>
   );
 }
