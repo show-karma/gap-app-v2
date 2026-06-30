@@ -11,7 +11,11 @@ import { useDonorHandles } from "@/hooks/useDonorHandles";
 import { useDonorPersona } from "@/hooks/useDonorPersona";
 import { useCreateDonorReport } from "@/hooks/useDonorReports";
 import { CriteriaInputPanel } from "@/src/features/donor-research/components/criteria-input/CriteriaInputPanel";
-import { makeDonorHandle, makeDonorPersona } from "../../msw/handlers/donor-research.handlers";
+import {
+  emptyPersonaStructured,
+  makeDonorHandle,
+  makeDonorPersona,
+} from "../../msw/handlers/donor-research.handlers";
 import { renderWithProviders } from "../../utils/render";
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
@@ -74,6 +78,46 @@ describe("CriteriaInputPanel persona prefill", () => {
     expect(screen.getByLabelText(/Amount max/)).toHaveValue(250000);
     // criteriaText, geography, amountMin, amountMax, weights.
     expect(badges()).toHaveLength(5);
+  });
+
+  it("clears a stale amount when switching to a persona with an open-ended gift band", async () => {
+    const user = userEvent.setup();
+    const bounded = makeDonorPersona({
+      narrative: null,
+      structured: {
+        ...emptyPersonaStructured(),
+        geoRadius: { value: "local", source: "extracted" },
+        giftSizeBand: { value: "small_high_leverage", source: "extracted" },
+      },
+    });
+    const openEnded = makeDonorPersona({
+      narrative: null,
+      structured: {
+        ...emptyPersonaStructured(),
+        geoRadius: { value: "national", source: "extracted" },
+        giftSizeBand: { value: "large_institutional", source: "extracted" },
+      },
+    });
+    mockUseDonorPersona.mockImplementation(
+      (handleId?: string | null) =>
+        ({
+          data: handleId === "h2" ? openEnded : bounded,
+          isLoading: false,
+          isError: false,
+        }) as unknown as ReturnType<typeof useDonorPersona>
+    );
+
+    renderWithProviders(<CriteriaInputPanel />);
+
+    // Donor 1: bounded band → amountMax 50000.
+    await user.selectOptions(screen.getByLabelText("Donor handle"), "h1");
+    await waitFor(() => expect(screen.getByLabelText(/Amount max/)).toHaveValue(50000));
+
+    // Switch to Donor 2: large_institutional → open-ended max. The stale
+    // 50000 must clear, otherwise we submit an invalid 250000–50000 range.
+    await user.selectOptions(screen.getByLabelText("Donor handle"), "h2");
+    await waitFor(() => expect(screen.getByLabelText(/Amount min/)).toHaveValue(250000));
+    expect(screen.getByLabelText(/Amount max/)).toHaveValue(null);
   });
 
   it("dismisses only the edited field's badge", async () => {

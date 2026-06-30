@@ -1,6 +1,6 @@
 "use client";
 
-import type { UseFormReturn } from "react-hook-form";
+import { type Control, Controller, type UseFormReturn } from "react-hook-form";
 import type { DonorHandle } from "@/types/donor-research";
 import { DEFAULT_WEIGHTS_BASIS_POINTS } from "../report-brief/scoring";
 import { WeightsAllocator } from "../weights/WeightsAllocator";
@@ -8,6 +8,48 @@ import { isValidWeights } from "../weights/weights-allocation";
 import type { CriteriaFormValues } from "./CriteriaInputPanel";
 import { DonorHandlePicker } from "./DonorHandlePicker";
 import { type PersonaPrefillField, PrefilledFromPersonaBadge } from "./PrefilledFromPersonaBadge";
+
+/**
+ * Controlled optional-number input. Value-driven (not `register`) so a
+ * `form.reset()` that clears the field to `undefined` reliably empties the
+ * DOM — an uncontrolled number input keeps its stale value on reset, which
+ * left an old amount behind when switching to a persona with an open-ended
+ * gift band.
+ */
+function AmountInput({
+  control,
+  name,
+  id,
+  placeholder,
+}: {
+  control: Control<CriteriaFormValues>;
+  name: "amountMin" | "amountMax";
+  id: string;
+  placeholder: string;
+}) {
+  return (
+    <Controller
+      control={control}
+      name={name}
+      render={({ field }) => (
+        <input
+          id={id}
+          type="number"
+          min={0}
+          name={field.name}
+          ref={field.ref}
+          onBlur={field.onBlur}
+          value={field.value ?? ""}
+          onChange={(e) =>
+            field.onChange(e.target.value === "" ? undefined : Number(e.target.value))
+          }
+          className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+          placeholder={placeholder}
+        />
+      )}
+    />
+  );
+}
 
 interface CriteriaFormProps {
   form: UseFormReturn<CriteriaFormValues>;
@@ -97,36 +139,28 @@ export function CriteriaForm({
             placeholder="California, Pacific Northwest, NYC metro…"
           />
         </label>
-        <label className="flex flex-col gap-1.5 text-sm">
-          <span className="flex items-center gap-2 font-medium">
+        <div className="flex flex-col gap-1.5 text-sm">
+          <label htmlFor="criteria-amount-min" className="flex items-center gap-2 font-medium">
             Amount min ($, optional) {badge("amountMin")}
-          </span>
-          <input
-            {...register("amountMin", {
-              setValueAs: (v) =>
-                v === "" || v === null || v === undefined ? undefined : Number(v),
-            })}
-            type="number"
-            min={0}
-            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+          </label>
+          <AmountInput
+            control={control}
+            name="amountMin"
+            id="criteria-amount-min"
             placeholder="5000"
           />
-        </label>
-        <label className="flex flex-col gap-1.5 text-sm">
-          <span className="flex items-center gap-2 font-medium">
+        </div>
+        <div className="flex flex-col gap-1.5 text-sm">
+          <label htmlFor="criteria-amount-max" className="flex items-center gap-2 font-medium">
             Amount max ($, optional) {badge("amountMax")}
-          </span>
-          <input
-            {...register("amountMax", {
-              setValueAs: (v) =>
-                v === "" || v === null || v === undefined ? undefined : Number(v),
-            })}
-            type="number"
-            min={0}
-            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+          </label>
+          <AmountInput
+            control={control}
+            name="amountMax"
+            id="criteria-amount-max"
             placeholder="25000"
           />
-        </label>
+        </div>
       </div>
 
       <fieldset className="flex flex-col gap-3 rounded-md border border-border bg-muted/10 px-3 py-3">
