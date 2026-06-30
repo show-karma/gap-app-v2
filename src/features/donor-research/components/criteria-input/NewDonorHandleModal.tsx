@@ -203,7 +203,18 @@ export function NewDonorHandleModal({
           </DialogFooter>
         </DialogContent>
       ) : activeHandle ? (
-        <DialogContent className="flex max-h-[85vh] flex-col gap-0 p-0 sm:max-w-2xl">
+        <DialogContent
+          className="flex max-h-[85vh] flex-col gap-0 p-0 sm:max-w-2xl"
+          // The persona editor hosts portaled widgets (the Radix Select chips)
+          // and is a multi-field form with unsaved work. Radix can misclassify a
+          // pointerdown on a portaled/in-content element as an "outside"
+          // interaction, which fires the dirty-close guard on every mouse click
+          // (QA: the editor became mouse-unusable, keyboard-only). Disable
+          // close-on-outside-interaction entirely — the X button and Escape
+          // still route through requestClose() and prompt to discard.
+          onPointerDownOutside={(event) => event.preventDefault()}
+          onInteractOutside={(event) => event.preventDefault()}
+        >
           <DialogHeader className="border-b border-border px-6 py-4 pr-12 text-left">
             {isEditing ? (
               <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
