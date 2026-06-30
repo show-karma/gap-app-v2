@@ -1,7 +1,7 @@
 /**
  * Homepage Data Flow Integration Tests
  * Tests content and data display on the funder-focused home page:
- * hero + a two-row "How Karma works" section (Nonprofit Research + Foundations).
+ * hero + a two-row "Why Karma" section (Nonprofit Research + Foundations).
  *
  * Target: 10 tests
  * - Page Structure (5)
@@ -20,7 +20,7 @@ vi.mock("@/utilities/chosenCommunities", async () => {
   };
 });
 
-const HERO_SR_TEXT = /Karma helps funders fund and track organizations, projects, and nonprofits/i;
+const HERO_SR_TEXT = /Fund nonprofits, projects, and initiatives with AI agents/i;
 
 describe("Homepage Data Flow", () => {
   beforeEach(() => {
@@ -51,7 +51,7 @@ describe("Homepage Data Flow", () => {
 
     it("should render at least two sections", async () => {
       const { container } = renderWithProviders(await HomePage());
-      // Hero + How Karma works section, minimum two sections.
+      // Hero + Why Karma section, minimum two sections.
       const sections = container.querySelectorAll("section");
       expect(sections.length).toBeGreaterThanOrEqual(2);
     });
@@ -61,7 +61,7 @@ describe("Homepage Data Flow", () => {
     it("should display the funder-centric hero subtext", async () => {
       renderWithProviders(await HomePage());
       expect(
-        screen.getByText(/discover credible organizations, evaluate fit, and track outcomes/i)
+        screen.getByText(/foundation officers and donor advisors run from chatgpt, claude/i)
       ).toBeInTheDocument();
     });
 
@@ -70,10 +70,10 @@ describe("Homepage Data Flow", () => {
       expect(screen.getByText(/Funding programs running on Karma/i)).toBeInTheDocument();
     });
 
-    it("should render the 'How Karma works' section header", async () => {
+    it("should render the dual-product section header", async () => {
       renderWithProviders(await HomePage());
       await waitFor(() => {
-        expect(screen.getByText(/One platform for two motions\./i)).toBeInTheDocument();
+        expect(screen.getByText(/Find the organizations worth funding\./i)).toBeInTheDocument();
       });
     });
 
