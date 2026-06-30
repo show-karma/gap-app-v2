@@ -1,33 +1,30 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/hooks/useAuth";
+import { setPostLoginRedirect, useAuth } from "@/hooks/useAuth";
 import { LoggedInDetail } from "@/src/features/scanner/components/logged-in-detail";
 import { PAGES } from "@/utilities/pages";
 
 export default function ScanDetailPage() {
-  // useParams returns proxies; per gap-app-v2/CLAUDE.md, never use these
-  // directly in useEffect deps. Destructure to a primitive first.
+  // useParams returns proxies; per gap-app-v2/CLAUDE.md, destructure to a
+  // primitive before using the value in any effect dependency.
   const params = useParams<{ id: string }>();
   const scanId = params?.id ?? null;
   const router = useRouter();
   const { authenticated, ready, login, user } = useAuth();
-  const email = user?.email?.address ?? undefined;
-
-  // Auth tri-state per CLAUDE.md: render skeleton while not ready, never
-  // render the authorized UI or a denial mid-resolution.
-  useEffect(() => {
-    if (ready && !authenticated && scanId) {
-      // Stash return path before kicking the login modal so we land back here.
-      // login() handles the redirect once Privy completes.
-    }
-  }, [ready, authenticated, scanId]);
+  const userEmail = user?.email?.address ?? undefined;
 
   const showLogin = ready && !authenticated;
 
-  const userEmail = useMemo(() => email, [email]);
+  // Stash this report's URL before kicking the Privy modal so the user
+  // lands back here once login completes, instead of on the app default.
+  function handleLogin() {
+    if (scanId) {
+      setPostLoginRedirect(PAGES.SCANNER.SCAN_DETAIL(scanId));
+    }
+    login();
+  }
 
   if (!scanId) {
     return (
@@ -65,7 +62,7 @@ export default function ScanDetailPage() {
           The detailed report includes top fixes, per-check evidence, and the donate-flow
           walkthrough notes for this scan.
         </p>
-        <Button type="button" onClick={() => login()}>
+        <Button type="button" onClick={handleLogin}>
           Log in
         </Button>
       </main>

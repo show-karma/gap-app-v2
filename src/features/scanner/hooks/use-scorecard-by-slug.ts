@@ -17,6 +17,12 @@ export function useScorecardBySlug(slug: string | null) {
     },
     enabled: Boolean(slug),
     refetchInterval: (query) => {
+      // Stop the 4s poll once the request errors. Without this guard a
+      // permanently failing slug endpoint (404 unpublished, 5xx) has no
+      // successful `data`, so `status` stays undefined and the public —
+      // and most-trafficked — scorecard page would re-hit the backend
+      // every 4s forever from every open tab. Mirrors use-scan.ts.
+      if (query.state.status === "error") return false;
       const status = query.state.data?.status;
       return status === "complete" || status === "failed" ? false : POLL_INTERVAL_MS;
     },

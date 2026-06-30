@@ -21,7 +21,15 @@ export function MembersAreaCta({ slug, scanId: initialScanId }: MembersAreaCtaPr
   const [scanId, setScanId] = useState<string | null>(initialScanId);
 
   useEffect(() => {
-    if (initialScanId) return;
+    // Re-sync local state on every slug/SSR change. Without this the CTA
+    // keeps the previous scan's id when the component is reused across
+    // /s/[slug] transitions under a shared layout, routing to the wrong
+    // detail page.
+    if (initialScanId) {
+      setScanId(initialScanId);
+      return;
+    }
+    setScanId(null);
     let cancelled = false;
     getPublicScorecardBySlug(slug)
       .then((s) => {
