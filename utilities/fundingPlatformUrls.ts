@@ -169,6 +169,29 @@ export function getApplicationDetailUrl(
   return `${domain}/applications/${referenceNumber}`;
 }
 
+export type GranteeRedirect = { kind: "application" | "dashboard"; url: string };
+
+/**
+ * Resolve where to send a denied grantee, pairing the destination with its kind
+ * so the CTA label and href share a single source of truth: a single resolvable
+ * application links to that application; anything else falls back to the dashboard.
+ */
+export function buildGranteeRedirect(params: {
+  communityId?: string;
+  referenceNumber?: string;
+  applicationCount: number;
+  whitelabelOrigin?: string;
+}): GranteeRedirect {
+  const { communityId, referenceNumber, applicationCount, whitelabelOrigin } = params;
+  if (applicationCount === 1 && referenceNumber && communityId) {
+    return {
+      kind: "application",
+      url: getApplicationDetailUrl(communityId, referenceNumber, whitelabelOrigin),
+    };
+  }
+  return { kind: "dashboard", url: PAGES.DASHBOARD };
+}
+
 /**
  * Generate the program details page URL
  *

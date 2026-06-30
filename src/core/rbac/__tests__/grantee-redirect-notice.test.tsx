@@ -14,8 +14,7 @@ describe("GranteeRedirectNotice", () => {
   it("renders the applicant message and a single-application CTA", () => {
     render(
       <GranteeRedirectNotice
-        redirectUrl="/community/optimism/applications/REF-1"
-        applicationCount={1}
+        redirect={{ kind: "application", url: "/community/optimism/applications/REF-1" }}
       />
     );
 
@@ -24,8 +23,8 @@ describe("GranteeRedirectNotice", () => {
     expect(link).toHaveAttribute("href", "/community/optimism/applications/REF-1");
   });
 
-  it("points multiple-application users at the dashboard", () => {
-    render(<GranteeRedirectNotice redirectUrl="/dashboard" applicationCount={3} />);
+  it("points dashboard-bound users at the dashboard", () => {
+    render(<GranteeRedirectNotice redirect={{ kind: "dashboard", url: "/dashboard" }} />);
 
     const link = screen.getByRole("link", { name: /go to your dashboard/i });
     expect(link).toHaveAttribute("href", "/dashboard");
@@ -34,8 +33,7 @@ describe("GranteeRedirectNotice", () => {
   it("renders an absolute whitelabel URL as a plain anchor for a full navigation", () => {
     render(
       <GranteeRedirectNotice
-        redirectUrl="https://grants.optimism.io/applications/REF-9"
-        applicationCount={1}
+        redirect={{ kind: "application", url: "https://grants.optimism.io/applications/REF-9" }}
       />
     );
 

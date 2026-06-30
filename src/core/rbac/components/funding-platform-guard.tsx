@@ -5,8 +5,7 @@ import { type ReactNode, useState } from "react";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { useFundingApplicationByProjectUID } from "@/hooks/useFundingApplicationByProjectUID";
 import { layoutTheme } from "@/src/helper/theme";
-import { getApplicationDetailUrl } from "@/utilities/fundingPlatformUrls";
-import { PAGES } from "@/utilities/pages";
+import { buildGranteeRedirect } from "@/utilities/fundingPlatformUrls";
 import { useWhitelabel } from "@/utilities/whitelabel-context";
 import { usePermissionContext } from "../context/permission-context";
 import { useGranteeApplicationAccess } from "../hooks/use-grantee-application-access";
@@ -63,14 +62,17 @@ function ProjectOwnerRedirect() {
     return <GuardSpinner />;
   }
 
+  // Ownership is already confirmed via RBAC, so an unresolved or errored
+  // application lookup still routes to the dashboard (a valid grantee
+  // destination) rather than the generic denial.
   const referenceNumber = application?.referenceNumber;
-  const redirectUrl =
-    referenceNumber && communityId
-      ? getApplicationDetailUrl(communityId, referenceNumber, whitelabelOrigin)
-      : PAGES.DASHBOARD;
-  return (
-    <GranteeRedirectNotice redirectUrl={redirectUrl} applicationCount={referenceNumber ? 1 : 0} />
-  );
+  const redirect = buildGranteeRedirect({
+    communityId,
+    referenceNumber,
+    applicationCount: referenceNumber ? 1 : 0,
+    whitelabelOrigin,
+  });
+  return <GranteeRedirectNotice redirect={redirect} />;
 }
 
 // Applicant fallback for pages without a project in context (program list,
@@ -91,12 +93,7 @@ function ApplicantRedirect() {
     return <GuardSpinner />;
   }
   if (grantee.isGrantee && !grantee.isError) {
-    return (
-      <GranteeRedirectNotice
-        redirectUrl={grantee.redirectUrl}
-        applicationCount={grantee.applicationCount}
-      />
-    );
+    return <GranteeRedirectNotice redirect={grantee.redirect} />;
   }
   return <GenericDenied />;
 }
