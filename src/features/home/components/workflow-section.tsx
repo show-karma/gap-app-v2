@@ -34,7 +34,7 @@ const ROWS: ProductRow[] = [
     features: [
       "Composite scoring with mission match, online presence, and IRS 990 recency",
       "IRS Pub 78, latest 990, and state registries verified up front",
-      "Deep mode: 3-day diligence with outreach. Fast mode ships a shortlist in 10.",
+      "Deep mode: 3-day diligence with outreach. Fast mode ships a shortlist in 10 minutes.",
     ],
     visual: {
       kind: "single",
