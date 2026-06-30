@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { useForm } from "react-hook-form";
 import { describe, expect, it, vi } from "vitest";
@@ -43,14 +43,20 @@ function Harness({ onSubmit }: { onSubmit: (values: CriteriaFormValues) => void 
   );
 }
 
+// Scope to the weights fieldset — the form has other number inputs (amounts, topCount).
+function weightsFieldset(): HTMLElement {
+  return screen.getByText("Scoring weights").closest("fieldset") as HTMLElement;
+}
+
 describe("CriteriaForm weights", () => {
-  it("renders five scoring-weight sliders pre-filled with the defaults", () => {
+  it("renders a slider and a percentage input per factor", () => {
     render(withQueryClient(<Harness onSubmit={() => {}} />));
-    expect(screen.getByText("Scoring weights")).toBeInTheDocument();
-    expect(screen.getAllByRole("slider")).toHaveLength(5);
+    const fieldset = weightsFieldset();
+    expect(within(fieldset).getAllByRole("slider")).toHaveLength(5);
+    expect(within(fieldset).getAllByRole("spinbutton")).toHaveLength(5);
   });
 
-  it("submits the default weights when the sliders are untouched", async () => {
+  it("submits the default weights when untouched", async () => {
     const onSubmit = vi.fn();
     render(withQueryClient(<Harness onSubmit={onSubmit} />));
     fireEvent.click(screen.getByRole("button", { name: /start report/i }));
@@ -58,17 +64,31 @@ describe("CriteriaForm weights", () => {
     expect(onSubmit.mock.calls[0][0].weights).toEqual(DEFAULT_WEIGHTS_BASIS_POINTS);
   });
 
-  it("submits adjusted weights that still sum to 10000 after a slider nudge", async () => {
+  it("sets only the edited factor and gates submit on a 100% total", async () => {
     const onSubmit = vi.fn();
     render(withQueryClient(<Harness onSubmit={onSubmit} />));
-    const firstThumb = screen.getAllByRole("slider")[0];
-    firstThumb.focus();
-    fireEvent.keyDown(firstThumb, { key: "ArrowRight" });
+    const inputs = within(weightsFieldset()).getAllByRole("spinbutton");
+
+    // Raise Online presence 25→40: nothing is redistributed, so the five now
+    // total 115% and the form can't be submitted.
+    fireEvent.change(inputs[0], { target: { value: "40" } });
+    fireEvent.blur(inputs[0]);
+    fireEvent.click(screen.getByRole("button", { name: /start report/i }));
+    expect(onSubmit).not.toHaveBeenCalled();
+
+    // Drop Mission match 25→10 to bring the total back to 100%, then submit.
+    fireEvent.change(inputs[3], { target: { value: "10" } });
+    fireEvent.blur(inputs[3]);
     fireEvent.click(screen.getByRole("button", { name: /start report/i }));
     await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
-    const weights = onSubmit.mock.calls[0][0].weights;
-    const sum = Object.values(weights).reduce((a: number, b) => a + (b as number), 0);
-    expect(sum).toBe(10000);
-    expect(weights.onlinePresence).toBe(DEFAULT_WEIGHTS_BASIS_POINTS.onlinePresence + 100);
+    // Only the two edited factors changed; the untouched three are intact and
+    // the five total 100% (4000+1000+2500+1000+1500 = 10000).
+    expect(onSubmit.mock.calls[0][0].weights).toEqual({
+      onlinePresence: 4000,
+      socialPresence: 1000,
+      impactRecency: 2500,
+      donorMatch: 1000,
+      compliance: 1500,
+    });
   });
 });

@@ -3,6 +3,9 @@ import { JetBrains_Mono, Spectral } from "next/font/google";
 import localFont from "next/font/local";
 import { defaultMetadata } from "@/utilities/meta";
 
+// Single self-hosted Inter variable font (next/font/local), same as the rest
+// of the app. The woff2 is loaded and processed once; the tailwind `display`
+// family points straight at --font-inter, so the marketing H1/H2 share it.
 const inter = localFont({
   src: "../public/fonts/Inter/Inter.woff2",
   variable: "--font-inter",
