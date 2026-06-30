@@ -4,6 +4,7 @@ import { claimsHandlers } from "./claims.handlers";
 import { commentHandlers } from "./comments.handlers";
 import { communityHandlers } from "./communities.handlers";
 import { donationHandlers } from "./donations.handlers";
+import { donorResearchHandlers } from "./donor-research.handlers";
 import { payoutHandlers } from "./payouts.handlers";
 import { programHandlers } from "./programs.handlers";
 import { projectHandlers } from "./projects.handlers";
@@ -21,6 +22,7 @@ export function defaultHandlers() {
     ...claimsHandlers(),
     ...commentHandlers(),
     ...donationHandlers(),
+    ...donorResearchHandlers(),
   ];
 }
 
@@ -34,4 +36,5 @@ export {
   claimsHandlers,
   commentHandlers,
   donationHandlers,
+  donorResearchHandlers,
 };
