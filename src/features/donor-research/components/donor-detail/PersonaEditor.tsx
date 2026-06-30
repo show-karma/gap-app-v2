@@ -48,6 +48,12 @@ function toastError(err: unknown) {
 
 interface PersonaEditorProps {
   handleId: string;
+  /**
+   * Notified whenever the editor's unsaved-edits flag flips. Lets a host
+   * surface (e.g. the creation Sheet) guard against accidental dismissal
+   * mid-edit. Optional — the standalone detail page doesn't need it.
+   */
+  onDirtyChange?: (isDirty: boolean) => void;
 }
 
 /**
@@ -60,7 +66,7 @@ interface PersonaEditorProps {
  * never clobbered. A refine writes its result into local state (chips →
  * `extracted`) and marks dirty so Save is enabled even with no manual edit.
  */
-export function PersonaEditor({ handleId }: PersonaEditorProps) {
+export function PersonaEditor({ handleId, onDirtyChange }: PersonaEditorProps) {
   const personaQuery = useDonorPersona(handleId);
   const refine = useRefineDonorPersona(handleId);
   const update = useUpdateDonorPersona(handleId);
@@ -91,6 +97,12 @@ export function PersonaEditor({ handleId }: PersonaEditorProps) {
     if (isDirtyRef.current) return; // never clobber in-progress edits
     hydrate(personaData);
   }, [personaData, personaLoading, hydrate]);
+
+  // Surface dirty transitions to an optional host (creation Sheet) so it can
+  // confirm before discarding mid-edit.
+  useEffect(() => {
+    onDirtyChange?.(isDirty);
+  }, [isDirty, onDirtyChange]);
 
   // Fade the "Refined just now" indicator after a few seconds.
   useEffect(() => {

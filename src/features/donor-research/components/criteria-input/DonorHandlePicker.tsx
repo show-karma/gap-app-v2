@@ -1,8 +1,6 @@
 "use client";
 
 import { Settings } from "lucide-react";
-import { useState } from "react";
-import { useCreateDonorHandle } from "@/hooks/useDonorHandles";
 import type { DonorHandle } from "@/types/donor-research";
 import { PAGES } from "@/utilities/pages";
 
@@ -11,17 +9,22 @@ interface DonorHandlePickerProps {
   loading: boolean;
   value: string;
   onChange: (handleId: string) => void;
+  /**
+   * Opens the create flow (the persona-creation Sheet, owned by the parent).
+   * Both the first-run CTA and the "+ New handle" shortcut delegate here so
+   * creation lives in one place and the new handle can be auto-selected.
+   */
+  onRequestCreate: () => void;
   error?: string;
 }
 
 /**
  * Combobox-style picker (U13a). Renders the existing donor handles as a
- * select, with an inline "create new handle" form below for the
- * advisor's first run when no handles exist yet.
+ * select; creation is delegated to the parent's Sheet via `onRequestCreate`.
  *
  * Three states honored:
  *  - loading: skeleton
- *  - empty: explicit "create your first handle" CTA
+ *  - empty: explicit "create your first handle" CTA → opens the Sheet
  *  - error: surfaced inline via the parent's `error` prop
  */
 export function DonorHandlePicker({
@@ -29,13 +32,9 @@ export function DonorHandlePicker({
   loading,
   value,
   onChange,
+  onRequestCreate,
   error,
 }: DonorHandlePickerProps) {
-  const createHandle = useCreateDonorHandle();
-  const [creating, setCreating] = useState(false);
-  const [newLabel, setNewLabel] = useState("");
-  const [createError, setCreateError] = useState<string | null>(null);
-
   const empty = !loading && handles.length === 0;
 
   return (
@@ -47,71 +46,25 @@ export function DonorHandlePicker({
 
       {loading ? (
         <div className="h-9 w-full animate-pulse rounded-md bg-muted" />
-      ) : empty && !creating ? (
+      ) : empty ? (
         <div className="rounded-md border border-dashed border-border p-4 text-center">
           <p className="mb-2 text-sm text-muted-foreground">
             No donor handles yet. Create one to scope your research.
           </p>
           <button
             type="button"
-            onClick={() => setCreating(true)}
+            onClick={onRequestCreate}
             className="rounded-md border border-border bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground"
           >
             Create your first handle
           </button>
-        </div>
-      ) : creating ? (
-        <div className="flex flex-col gap-2 rounded-md border border-border p-3">
-          <input
-            value={newLabel}
-            onChange={(e) => setNewLabel(e.target.value)}
-            placeholder="e.g. Smith Family Q3"
-            aria-label="New donor handle label"
-            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-          />
-          {createError ? (
-            <span className="text-xs text-red-600 dark:text-red-400">{createError}</span>
-          ) : null}
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={async () => {
-                try {
-                  setCreateError(null);
-                  const handle = await createHandle.mutateAsync({
-                    opaqueLabel: newLabel.trim(),
-                  });
-                  onChange(handle.id);
-                  setCreating(false);
-                  setNewLabel("");
-                } catch (err) {
-                  setCreateError((err as Error)?.message || "Couldn't create handle");
-                }
-              }}
-              disabled={!newLabel.trim() || createHandle.isPending}
-              className="rounded-md border border-border bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground disabled:opacity-50"
-            >
-              {createHandle.isPending ? "Creating…" : "Create"}
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setCreating(false);
-                setNewLabel("");
-                setCreateError(null);
-              }}
-              className="rounded-md border border-border px-3 py-1.5 text-sm hover:bg-muted"
-            >
-              Cancel
-            </button>
-          </div>
         </div>
       ) : (
         <ExistingHandlesRow
           handles={handles}
           value={value}
           onChange={onChange}
-          onCreate={() => setCreating(true)}
+          onCreate={onRequestCreate}
         />
       )}
 

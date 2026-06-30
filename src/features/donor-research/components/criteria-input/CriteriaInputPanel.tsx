@@ -21,6 +21,7 @@ import { buildPersonaPrefill, type PersonaPrefill } from "../../utils/persona-pr
 import { DEFAULT_TOP_COUNT, DEFAULT_WEIGHTS_BASIS_POINTS } from "../report-brief/scoring";
 import { WEIGHTS_TOTAL_BASIS_POINTS } from "../weights/weights-allocation";
 import { CriteriaForm } from "./CriteriaForm";
+import { NewDonorHandleModal } from "./NewDonorHandleModal";
 import type { PersonaPrefillField } from "./PrefilledFromPersonaBadge";
 
 // The advisor allocates each weight independently (basis points); the five must
@@ -106,6 +107,7 @@ export function CriteriaInputPanel() {
   const personaQuery = useDonorPersona(selectedHandleId || null);
   const [prefilledFields, setPrefilledFields] = useState<Set<PersonaPrefillField>>(new Set());
   const [pendingHandleId, setPendingHandleId] = useState<string | null>(null);
+  const [createOpen, setCreateOpen] = useState(false);
 
   // Apply the selected handle's persona prefill once it resolves — but only
   // while the form is clean, so in-progress edits are never clobbered. A 404
@@ -133,6 +135,13 @@ export function CriteriaInputPanel() {
       setPendingHandleId(handleId);
       return;
     }
+    form.setValue("donorHandleId", handleId, { shouldDirty: false, shouldValidate: true });
+  };
+
+  // A freshly-created handle is always selected (it has no persona to clobber),
+  // so the advisor lands on it when the Sheet closes. Selecting it also lets the
+  // prefill effect seed the form from the persona once they save one.
+  const onHandleCreated = (handleId: string) => {
     form.setValue("donorHandleId", handleId, { shouldDirty: false, shouldValidate: true });
   };
 
@@ -180,6 +189,7 @@ export function CriteriaInputPanel() {
         submitting={createReport.isPending}
         prefilledFields={prefilledFields}
         onRequestHandleChange={requestHandleChange}
+        onRequestCreate={() => setCreateOpen(true)}
       />
 
       {createReport.isError ? (
@@ -220,6 +230,12 @@ export function CriteriaInputPanel() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <NewDonorHandleModal
+        open={createOpen}
+        onOpenChange={setCreateOpen}
+        onCreated={onHandleCreated}
+      />
     </div>
   );
 }
