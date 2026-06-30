@@ -236,7 +236,7 @@ export const buildPersonaPutBody = (input: UpdateDonorPersonaInput): Record<stri
 };
 
 /** Persona rate-limit channels (PRD §1). */
-export type PersonaRateLimitChannel = "persona_refine" | "persona_write";
+type PersonaRateLimitChannel = "persona_refine" | "persona_write";
 
 const PERSONA_RATE_LIMIT_MESSAGES: Record<PersonaRateLimitChannel, string> = {
   persona_refine: "You've hit the refine limit (20/hour). Try again shortly.",

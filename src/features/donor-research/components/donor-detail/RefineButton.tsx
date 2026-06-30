@@ -1,7 +1,7 @@
 "use client";
 
 /** Minimum non-whitespace source length before refine is allowed. */
-export const MIN_REFINE_LENGTH = 10;
+const MIN_REFINE_LENGTH = 10;
 
 interface RefineButtonProps {
   sourceText: string;

@@ -17,47 +17,44 @@ import type {
   PersonaStructured,
 } from "@/types/donor-research";
 
-export const ORG_MATURITY_VALUES: readonly OrgMaturity[] = ["upcoming", "established", "mixed"];
-export const GEO_RADIUS_VALUES: readonly GeoRadius[] = ["local", "regional", "national"];
-export const FAITH_STANCE_VALUES: readonly FaithStance[] = ["secular", "faith_based", "agnostic"];
-export const GIFT_SIZE_BAND_VALUES: readonly GiftSizeBand[] = [
+const ORG_MATURITY_VALUES: readonly OrgMaturity[] = ["upcoming", "established", "mixed"];
+const GEO_RADIUS_VALUES: readonly GeoRadius[] = ["local", "regional", "national"];
+const FAITH_STANCE_VALUES: readonly FaithStance[] = ["secular", "faith_based", "agnostic"];
+const GIFT_SIZE_BAND_VALUES: readonly GiftSizeBand[] = [
   "small_high_leverage",
   "mid",
   "large_institutional",
 ];
-export const ADVOCACY_STANCE_VALUES: readonly AdvocacyStance[] = [
-  "funds_advocacy",
-  "avoids_advocacy",
-];
+const ADVOCACY_STANCE_VALUES: readonly AdvocacyStance[] = ["funds_advocacy", "avoids_advocacy"];
 
 /** Label shown for a chip with no value (`value: null`). */
 export const PERSONA_NULL_LABEL = "Not specified";
 
-export const ORG_MATURITY_LABELS: Record<OrgMaturity, string> = {
+const ORG_MATURITY_LABELS: Record<OrgMaturity, string> = {
   upcoming: "Upcoming / emerging",
   established: "Established",
   mixed: "Mixed",
 };
 
-export const GEO_RADIUS_LABELS: Record<GeoRadius, string> = {
+const GEO_RADIUS_LABELS: Record<GeoRadius, string> = {
   local: "Local",
   regional: "Regional",
   national: "National",
 };
 
-export const FAITH_STANCE_LABELS: Record<FaithStance, string> = {
+const FAITH_STANCE_LABELS: Record<FaithStance, string> = {
   secular: "Secular",
   faith_based: "Faith-based",
   agnostic: "No preference",
 };
 
-export const GIFT_SIZE_BAND_LABELS: Record<GiftSizeBand, string> = {
+const GIFT_SIZE_BAND_LABELS: Record<GiftSizeBand, string> = {
   small_high_leverage: "Small / high-leverage",
   mid: "Mid-size",
   large_institutional: "Large / institutional",
 };
 
-export const ADVOCACY_STANCE_LABELS: Record<AdvocacyStance, string> = {
+const ADVOCACY_STANCE_LABELS: Record<AdvocacyStance, string> = {
   funds_advocacy: "Funds advocacy",
   avoids_advocacy: "Avoids advocacy",
 };
