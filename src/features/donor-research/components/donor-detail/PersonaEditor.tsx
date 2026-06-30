@@ -44,12 +44,13 @@ function toChipInput(field: PersonaStructuredField<string>) {
   return { value: field.value, source: field.source ?? ("manual" as const) };
 }
 
-function toastError(err: unknown) {
-  if (err instanceof DonorPersonaRateLimitError) {
-    toast.error(err.message);
-    return;
-  }
-  toast.error(err instanceof Error ? err.message : "Something went wrong. Try again.");
+/**
+ * Surfaces a persona mutation error. A rate-limit error carries a curated,
+ * actionable message; everything else shows a friendly, context-specific
+ * fallback rather than leaking a raw backend validation string to the user.
+ */
+function toastError(err: unknown, fallback: string) {
+  toast.error(err instanceof DonorPersonaRateLimitError ? err.message : fallback);
 }
 
 interface PersonaEditorProps {
@@ -143,6 +144,22 @@ export function PersonaEditor({ handleId, onDirtyChange, onSkip, onSaved }: Pers
   const onRefine = () => {
     refine.mutate(sourceText, {
       onSuccess: (result) => {
+        // A refine that extracts nothing (no narrative, no chips, no scalars)
+        // must not clobber whatever the editor already shows — leave the
+        // existing state untouched and tell the user to add more detail.
+        const extractedNothing =
+          !result.narrative &&
+          result.amountMin == null &&
+          result.amountMax == null &&
+          !result.cause &&
+          !result.geography &&
+          Object.values(result.structured).every((chip) => chip.value === null);
+        if (extractedNothing) {
+          toast.error(
+            "Refine couldn't pull anything from these notes. Add more detail and try again."
+          );
+          return;
+        }
         setNarrative(result.narrative);
         setStructured(result.structured);
         setExtractedValues(result.structured);
@@ -154,7 +171,7 @@ export function PersonaEditor({ handleId, onDirtyChange, onSkip, onSaved }: Pers
         setAnnouncement("Persona narrative updated");
         setJustRefined(true);
       },
-      onError: toastError,
+      onError: (err) => toastError(err, "Couldn't refine the persona. Try again."),
     });
   };
 
@@ -206,7 +223,7 @@ export function PersonaEditor({ handleId, onDirtyChange, onSkip, onSaved }: Pers
       },
       // Rollback is handled by the mutation hook; isDirty stays true so the
       // Save button remains an actionable retry.
-      onError: toastError,
+      onError: (err) => toastError(err, "Couldn't save the persona. Try again."),
     });
   };
 

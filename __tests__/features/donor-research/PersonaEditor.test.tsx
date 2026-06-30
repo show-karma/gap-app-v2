@@ -236,6 +236,55 @@ describe("PersonaEditor save omits unset chips (S-001 regression)", () => {
   });
 });
 
+describe("PersonaEditor error & empty-refine feedback (S-003)", () => {
+  it("warns and leaves the editor untouched when refine extracts nothing", async () => {
+    const user = userEvent.setup();
+    const { refineMutate } = setup({ persona: makeDonorPersona() });
+    refineMutate.mockImplementation((_src: string, opts: { onSuccess: (r: unknown) => void }) =>
+      opts.onSuccess(
+        makeRefinementResult({
+          narrative: null,
+          structured: emptyPersonaStructured(),
+          amountMin: null,
+          amountMax: null,
+          cause: null,
+          geography: null,
+        })
+      )
+    );
+    renderWithProviders(<PersonaEditor handleId="h1" />);
+
+    // The existing narrative shows before refine.
+    expect(screen.getByText(/An established local funder/i)).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /^refine$/i }));
+
+    expect(toast.error).toHaveBeenCalledWith(expect.stringMatching(/couldn't pull anything/i));
+    // The empty result must NOT clobber the existing narrative or announce success.
+    expect(screen.getByText(/An established local funder/i)).toBeInTheDocument();
+    expect(screen.queryByText("Persona narrative updated")).not.toBeInTheDocument();
+  });
+
+  it("shows a friendly message (not the raw backend error) when save fails", async () => {
+    const user = userEvent.setup();
+    const { updateMutate } = setup({
+      persona: makeDonorPersona({ narrative: null, structured: emptyPersonaStructured() }),
+    });
+    updateMutate.mockImplementation((_input: unknown, opts: { onError: (e: unknown) => void }) =>
+      opts.onError(
+        new Error("body.structured.orgMaturity.value should be equal to one of the allowed values")
+      )
+    );
+    renderWithProviders(<PersonaEditor handleId="h1" />);
+
+    await user.click(screen.getByText("edit-chip")); // dirty → enable Save
+    await user.click(saveButton());
+
+    expect(toast.error).toHaveBeenCalledWith("Couldn't save the persona. Try again.");
+    expect(toast.error).not.toHaveBeenCalledWith(expect.stringMatching(/allowed values/i));
+  });
+});
+
 describe("PersonaEditor save callback", () => {
   it("calls onSaved after a successful save (so the host modal can close)", async () => {
     const user = userEvent.setup();
