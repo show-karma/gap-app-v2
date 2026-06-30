@@ -30,11 +30,11 @@ const ROWS: ProductRow[] = [
   {
     audience: "For donor advisors",
     headline: "Generate a donor-ready research brief in 10 minutes",
-    body: "Donor advisors use Karma to build a ranked shortlist for any cause, geography, or grant size. Every brief ships with a composite score, the inputs that produced it, and the receipts attached, so you save hours of diligence and hand donors a recommendation they can act on with confidence.",
+    body: "Donor advisors use Karma to build a ranked shortlist for any cause, geography, or grant size. Every brief ships with a composite score, the inputs that produced it, and source documents linked, so you save hours of diligence and hand donors a recommendation they can act on with confidence.",
     features: [
       "Composite scoring with mission match, online presence, and IRS 990 recency",
       "IRS Pub 78, latest 990, and state registries verified up front",
-      "Fast mode: 10-minute shortlist. Deep mode: 3-day diligence with outreach",
+      "Deep mode: 3-day diligence with outreach. Fast mode ships a shortlist in 10.",
     ],
     visual: {
       kind: "single",
@@ -53,13 +53,13 @@ const ROWS: ProductRow[] = [
   },
   {
     audience: "For grant programs and foundations",
-    headline: "AI-powered software for grant programs",
-    body: "For foundations and ecosystems running grants, hackathons, and RFPs, Karma adds intake forms, AI-scored application evaluation, milestone-gated disbursement, and board-ready portfolio reporting.",
+    headline: "Cut application review time by 70% and pay on proof of work",
+    body: "Run grants, hackathons, and RFPs end to end. Intake, AI-assisted evaluation with risk flags, milestone-gated payouts, board-ready impact reports.",
     features: [
       "AI evaluation cuts review time by 70%, with risk flags on every applicant",
       "Milestone-based payouts, gated on proof of work",
       "Portfolio impact reports aligned with the Common Impact Data Standard",
-      "Bring your own AI: run your program from ChatGPT, Claude, or MCP",
+      "Bring your own AI: run your program from ChatGPT, Claude, or any agents",
     ],
     visual: { kind: "layered-foundation" },
     caption: "Application evaluation feeding the live project registry.",
