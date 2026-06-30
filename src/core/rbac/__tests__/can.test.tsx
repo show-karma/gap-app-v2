@@ -20,6 +20,8 @@ const mockContextValue: PermissionContextValue = {
   isReviewer: false,
   isRegistryAdmin: false,
   isProgramCreator: false,
+  isProjectOwner: false,
+  isProjectAdmin: false,
   can: () => false,
   canAny: () => false,
   canAll: () => false,

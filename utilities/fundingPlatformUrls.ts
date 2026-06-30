@@ -145,6 +145,31 @@ export function getBrowseApplicationsUrl(
 }
 
 /**
+ * Generate the applicant-facing application detail URL.
+ *
+ * This is the same route that serves both the public and the private (owner)
+ * view — `ApplicationPageClient` resolves the viewer role client-side, so an
+ * authenticated grantee lands on their private view. The route is keyed by
+ * `referenceNumber`, not the application's internal id.
+ *
+ * @param communityId - The community slug
+ * @param referenceNumber - The application's reference number
+ * @param whitelabelOrigin - Current origin when running in whitelabel mode
+ * @returns The full URL to the application detail page
+ */
+export function getApplicationDetailUrl(
+  communityId: string,
+  referenceNumber: string,
+  whitelabelOrigin?: string
+): string {
+  if (usesSameOriginLinks(whitelabelOrigin)) {
+    return PAGES.COMMUNITY.APPLICATION_DETAIL(communityId, referenceNumber);
+  }
+  const domain = getDomainForCommunity(communityId, whitelabelOrigin);
+  return `${domain}/applications/${referenceNumber}`;
+}
+
+/**
  * Generate the program details page URL
  *
  * @param communityId - The community slug
