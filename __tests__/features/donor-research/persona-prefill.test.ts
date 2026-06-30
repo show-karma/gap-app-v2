@@ -98,6 +98,14 @@ describe("buildPersonaPrefill", () => {
     expect(prefill?.criteriaTextAppendix).toBe("Loves local schools.");
   });
 
+  it("prefills the cause from the persona's extracted focus area", () => {
+    expect(buildPersonaPrefill(makeDonorPersona({ cause: "climate" }))?.cause).toBe("climate");
+  });
+
+  it("leaves cause unset when the persona names none", () => {
+    expect(buildPersonaPrefill(makeDonorPersona({ cause: null }))?.cause).toBeUndefined();
+  });
+
   it("passes computedWeights through verbatim (no client compute)", () => {
     const persona = makeDonorPersona();
     const prefill = buildPersonaPrefill(persona);

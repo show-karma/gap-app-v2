@@ -418,6 +418,13 @@ export interface DonorPersona {
    */
   amountMin?: number | null;
   amountMax?: number | null;
+  /**
+   * Topical cause / focus area extracted from the source (e.g. "climate",
+   * "education"), used to prefill the report form's Cause field. Optional:
+   * present only once the backend emits it (gap-indexer#2117). `null` when the
+   * source names no clear single cause.
+   */
+  cause?: string | null;
   refinedAt: string | null;
   createdAt: string;
   updatedAt: string;

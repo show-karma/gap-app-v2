@@ -77,6 +77,18 @@ describe("CriteriaInputPanel persona prefill", () => {
     expect(badges()).toHaveLength(3);
   });
 
+  it("prefills the Cause field when the persona carries a focus area", async () => {
+    mockUseDonorPersona.mockReturnValue(
+      personaResult({ data: makeDonorPersona({ cause: "climate" }) })
+    );
+    const user = userEvent.setup();
+    renderWithProviders(<CriteriaInputPanel />);
+
+    await user.selectOptions(screen.getByLabelText("Donor handle"), "h1");
+
+    await waitFor(() => expect(screen.getByLabelText(/Cause/)).toHaveValue("climate"));
+  });
+
   it("prefills amount min/max when the persona carries explicit figures", async () => {
     mockUseDonorPersona.mockReturnValue(
       personaResult({ data: makeDonorPersona({ amountMin: 5000, amountMax: 20000 }) })

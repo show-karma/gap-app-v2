@@ -6,6 +6,7 @@ import type { CriteriaFormValues } from "./CriteriaInputPanel";
 /** Report-create fields that the persona prefill can seed. */
 export type PersonaPrefillField =
   | "criteriaText"
+  | "cause"
   | "geography"
   | "amountMin"
   | "amountMax"

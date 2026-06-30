@@ -130,7 +130,9 @@ export function CriteriaForm({
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <label className="flex flex-col gap-1.5 text-sm">
-          <span className="font-medium">Cause (optional)</span>
+          <span className="flex items-center gap-2 font-medium">
+            Cause (optional) {badge("cause")}
+          </span>
           <input
             {...register("cause")}
             className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"

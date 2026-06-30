@@ -62,7 +62,7 @@ function buildCriteriaDefaults(
   return {
     donorHandleId: handleId,
     criteriaText: prefill?.criteriaTextAppendix ? prefill.criteriaTextAppendix.trimStart() : "",
-    cause: "",
+    cause: prefill?.cause ?? "",
     geography: prefill?.geography ?? "",
     // Amounts come from the persona's explicit extracted figures (when present).
     amountMin: prefill?.amountMin,
@@ -77,6 +77,7 @@ function prefilledFieldsOf(prefill: PersonaPrefill | null): Set<PersonaPrefillFi
   const fields = new Set<PersonaPrefillField>();
   if (!prefill) return fields;
   if (prefill.criteriaTextAppendix) fields.add("criteriaText");
+  if (prefill.cause) fields.add("cause");
   if (prefill.geography) fields.add("geography");
   if (prefill.amountMin !== undefined) fields.add("amountMin");
   if (prefill.amountMax !== undefined) fields.add("amountMax");

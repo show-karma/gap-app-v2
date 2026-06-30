@@ -18,6 +18,8 @@ export type ResolverGeography = "city" | "metro" | "regional" | "state" | "natio
 export interface PersonaPrefill {
   /** Seeds the criteria text with the persona narrative verbatim. Absent when no narrative. */
   criteriaTextAppendix?: string;
+  /** Topical cause / focus area extracted by the backend. */
+  cause?: string;
   geography?: ResolverGeography;
   /** Real USD amounts extracted by the backend (NOT derived from the band). */
   amountMin?: number;
@@ -63,6 +65,11 @@ export function buildPersonaPrefill(persona: DonorPersona | null): PersonaPrefil
   if (persona.narrative) {
     prefill.criteriaTextAppendix = persona.narrative;
   }
+
+  // Topical cause is taken from the backend's extracted value (when the source
+  // names a clear one); never inferred client-side. Dormant until gap-indexer
+  // emits it.
+  if (persona.cause) prefill.cause = persona.cause;
 
   const geography = geographyFromRadius(s.geoRadius.value);
   if (geography) prefill.geography = geography;
