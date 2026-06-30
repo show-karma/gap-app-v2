@@ -11,9 +11,6 @@ const noGrantee = {
 
 const h = vi.hoisted(() => ({
   perm: undefined as unknown,
-  application: undefined as { referenceNumber?: string } | undefined,
-  isLoadingApplication: false,
-  fundingArg: undefined as unknown,
   grantee: undefined as unknown,
   granteeArgs: undefined as unknown,
 }));
@@ -27,18 +24,7 @@ vi.mock("@/utilities/whitelabel-context", () => ({
 }));
 
 vi.mock("next/navigation", () => ({
-  useParams: () => ({
-    communityId: "test-community",
-    programId: "prog-1",
-    projectId: "project-uid-1",
-  }),
-}));
-
-vi.mock("@/hooks/useFundingApplicationByProjectUID", () => ({
-  useFundingApplicationByProjectUID: (projectUID: string) => {
-    h.fundingArg = projectUID;
-    return { application: h.application, isLoading: h.isLoadingApplication };
-  },
+  useParams: () => ({ communityId: "test-community", programId: "prog-1" }),
 }));
 
 vi.mock("../hooks/use-grantee-application-access", () => ({
@@ -55,18 +41,12 @@ vi.mock("../components/grantee-redirect-notice", () => ({
 }));
 
 const setPermission = (
-  over: Partial<{
-    isLoading: boolean;
-    hasRole: boolean;
-    isReviewer: boolean;
-    isProjectOwner: boolean;
-  }>
+  over: Partial<{ isLoading: boolean; hasRole: boolean; isReviewer: boolean }>
 ) => {
-  const { isLoading = false, hasRole = false, isReviewer = false, isProjectOwner = false } = over;
+  const { isLoading = false, hasRole = false, isReviewer = false } = over;
   h.perm = {
     isLoading,
     isReviewer,
-    isProjectOwner,
     hasRoleOrHigher: () => hasRole,
   };
 };
@@ -80,20 +60,17 @@ const renderGuard = () =>
 
 describe("FundingPlatformGuard", () => {
   beforeEach(() => {
-    h.application = undefined;
-    h.isLoadingApplication = false;
-    h.fundingArg = undefined;
     h.grantee = noGrantee;
     h.granteeArgs = undefined;
   });
 
-  it("renders children for an authorized reviewer and runs no grantee lookups", () => {
+  it("renders children for an authorized reviewer and runs no grantee lookup", () => {
     setPermission({ hasRole: true });
     renderGuard();
 
     expect(screen.getByTestId("children")).toBeInTheDocument();
-    expect(h.fundingArg).toBeUndefined(); // project lookup never mounted
-    expect(h.granteeArgs).toBeUndefined(); // applicant fallback never mounted
+    // The applicant lookup never mounts for authorized users.
+    expect(h.granteeArgs).toBeUndefined();
   });
 
   it("shows a spinner while permissions are loading", () => {
@@ -105,106 +82,70 @@ describe("FundingPlatformGuard", () => {
     expect(container.querySelector(".animate-spin")).toBeTruthy();
   });
 
-  describe("project owner (precise path)", () => {
-    it("shows a spinner while the owner's application is still resolving (no denial flash)", () => {
-      setPermission({ isProjectOwner: true });
-      h.isLoadingApplication = true;
-      const { container } = renderGuard();
+  it("scopes the applicant lookup to the route's community and program", () => {
+    setPermission({});
+    renderGuard();
 
-      expect(screen.queryByText("Access Denied")).not.toBeInTheDocument();
-      expect(screen.queryByTestId("grantee-notice")).not.toBeInTheDocument();
-      expect(container.querySelector(".animate-spin")).toBeTruthy();
-    });
-
-    it("redirects a denied project owner to their resolved application", () => {
-      setPermission({ isProjectOwner: true });
-      h.application = { referenceNumber: "REF-1" };
-      renderGuard();
-
-      const notice = screen.getByTestId("grantee-notice");
-      expect(notice).toHaveAttribute("data-url", "/community/test-community/applications/REF-1");
-      expect(notice).toHaveAttribute("data-kind", "application");
-      // Scoped to the route's project; applicant fallback never mounted.
-      expect(h.fundingArg).toBe("project-uid-1");
-      expect(h.granteeArgs).toBeUndefined();
-    });
-
-    it("falls back to the dashboard when the owner's application can't be resolved", () => {
-      setPermission({ isProjectOwner: true });
-      h.application = undefined;
-      renderGuard();
-
-      const notice = screen.getByTestId("grantee-notice");
-      expect(notice).toHaveAttribute("data-url", "/dashboard");
-      expect(notice).toHaveAttribute("data-kind", "dashboard");
+    expect(h.granteeArgs).toMatchObject({
+      enabled: true,
+      communityId: "test-community",
+      programId: "prog-1",
     });
   });
 
-  describe("applicant fallback (no project ownership)", () => {
-    it("enables the fallback lookup and disables the project lookup for a denied non-owner", () => {
-      setPermission({ isProjectOwner: false });
-      renderGuard();
+  it("shows a spinner while the applicant lookup is still resolving (no denial flash)", () => {
+    setPermission({});
+    h.grantee = { ...noGrantee, isResolving: true };
+    const { container } = renderGuard();
 
-      expect(h.fundingArg).toBeUndefined(); // project lookup never mounted
-      expect(h.granteeArgs).toMatchObject({
-        enabled: true,
-        communityId: "test-community",
-        programId: "prog-1",
-      });
-    });
+    expect(screen.queryByText("Access Denied")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("grantee-notice")).not.toBeInTheDocument();
+    expect(container.querySelector(".animate-spin")).toBeTruthy();
+  });
 
-    it("shows a spinner while the fallback lookup is still resolving", () => {
-      setPermission({ isProjectOwner: false });
-      h.grantee = { ...noGrantee, isResolving: true };
-      const { container } = renderGuard();
+  it("redirects a denied applicant to their application", () => {
+    setPermission({});
+    h.grantee = {
+      ...noGrantee,
+      isGrantee: true,
+      redirect: { kind: "application", url: "/community/test-community/applications/REF-9" },
+    };
+    renderGuard();
 
-      expect(screen.queryByText("Access Denied")).not.toBeInTheDocument();
-      expect(container.querySelector(".animate-spin")).toBeTruthy();
-    });
+    const notice = screen.getByTestId("grantee-notice");
+    expect(notice).toHaveAttribute("data-url", "/community/test-community/applications/REF-9");
+    expect(notice).toHaveAttribute("data-kind", "application");
+    expect(screen.queryByText("Access Denied")).not.toBeInTheDocument();
+  });
 
-    it("redirects a program/community applicant to their application", () => {
-      setPermission({ isProjectOwner: false });
-      h.grantee = {
-        ...noGrantee,
-        isGrantee: true,
-        redirect: { kind: "application", url: "/community/test-community/applications/REF-9" },
-      };
-      renderGuard();
+  it("sends a multi-application applicant to the dashboard", () => {
+    setPermission({});
+    h.grantee = {
+      ...noGrantee,
+      isGrantee: true,
+      redirect: { kind: "dashboard", url: "/dashboard" },
+    };
+    renderGuard();
 
-      const notice = screen.getByTestId("grantee-notice");
-      expect(notice).toHaveAttribute("data-url", "/community/test-community/applications/REF-9");
-      expect(notice).toHaveAttribute("data-kind", "application");
-    });
+    const notice = screen.getByTestId("grantee-notice");
+    expect(notice).toHaveAttribute("data-url", "/dashboard");
+    expect(notice).toHaveAttribute("data-kind", "dashboard");
+  });
 
-    it("sends a multi-application applicant to the dashboard", () => {
-      setPermission({ isProjectOwner: false });
-      h.grantee = {
-        ...noGrantee,
-        isGrantee: true,
-        redirect: { kind: "dashboard", url: "/dashboard" },
-      };
-      renderGuard();
+  it("shows the generic denial when the user is not an applicant", () => {
+    setPermission({});
+    renderGuard();
 
-      const notice = screen.getByTestId("grantee-notice");
-      expect(notice).toHaveAttribute("data-url", "/dashboard");
-      expect(notice).toHaveAttribute("data-kind", "dashboard");
-    });
+    expect(screen.getByText("Access Denied")).toBeInTheDocument();
+    expect(screen.queryByTestId("grantee-notice")).not.toBeInTheDocument();
+  });
 
-    it("shows the generic denial when the user is neither owner nor applicant", () => {
-      setPermission({ isProjectOwner: false });
-      renderGuard();
+  it("falls back to the generic denial when the applicant lookup errored", () => {
+    setPermission({});
+    h.grantee = { ...noGrantee, isGrantee: true, isError: true };
+    renderGuard();
 
-      expect(screen.getByText("Access Denied")).toBeInTheDocument();
-      expect(screen.queryByTestId("grantee-notice")).not.toBeInTheDocument();
-    });
-
-    it("falls back to the generic denial when the fallback lookup errored", () => {
-      setPermission({ isProjectOwner: false });
-      h.grantee = { ...noGrantee, isGrantee: true, isError: true };
-      renderGuard();
-
-      expect(screen.getByText("Access Denied")).toBeInTheDocument();
-      expect(screen.queryByTestId("grantee-notice")).not.toBeInTheDocument();
-    });
+    expect(screen.getByText("Access Denied")).toBeInTheDocument();
+    expect(screen.queryByTestId("grantee-notice")).not.toBeInTheDocument();
   });
 });
