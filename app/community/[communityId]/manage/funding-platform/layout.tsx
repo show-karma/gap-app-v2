@@ -9,9 +9,6 @@ export default function FundingPlatformLayout({ children }: { children: React.Re
   const programId = params.programId as string | undefined;
   const applicationId = params.applicationId as string | undefined;
   const milestoneId = params.milestoneId as string | undefined;
-  // Present on the milestones review route; lets the backend resolve
-  // project-ownership (isProjectOwner) for that project.
-  const projectId = params.projectId as string | undefined;
 
   return (
     <PermissionProvider
@@ -20,7 +17,6 @@ export default function FundingPlatformLayout({ children }: { children: React.Re
         programId,
         applicationId,
         milestoneId,
-        projectId,
       }}
     >
       {children}

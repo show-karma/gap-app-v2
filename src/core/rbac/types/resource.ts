@@ -43,17 +43,6 @@ export interface PermissionContextValue {
    * Program creators can manage their own programs in the funding map.
    */
   isProgramCreator: boolean;
-  /**
-   * Whether the user owns the project in context (when projectId is provided),
-   * resolved across all linked wallets by the backend. Reflects on-chain Karma
-   * project ownership — i.e. the grantee responsible for the project.
-   */
-  isProjectOwner: boolean;
-  /**
-   * Whether the user is an on-chain admin of the project in context
-   * (when projectId is provided). Distinct from owner.
-   */
-  isProjectAdmin: boolean;
   can: (permission: Permission) => boolean;
   canAny: (permissions: Permission[]) => boolean;
   canAll: (permissions: Permission[]) => boolean;
