@@ -61,7 +61,7 @@ describe("Homepage Data Flow", () => {
     it("should display the funder-centric hero subtext", async () => {
       renderWithProviders(await HomePage());
       expect(
-        screen.getByText(/foundation officers and donor advisors run from chatgpt, claude/i)
+        screen.getByText(/foundation officers and donor advisors run karma from chatgpt, claude/i)
       ).toBeInTheDocument();
     });
 
@@ -89,7 +89,9 @@ describe("Homepage Data Flow", () => {
     it("should render the Foundations row with its product pitch", async () => {
       renderWithProviders(await HomePage());
       await waitFor(() => {
-        expect(screen.getByText(/AI-powered software for grant programs/i)).toBeInTheDocument();
+        expect(
+          screen.getByText(/Cut application review time by 70% and pay on proof of work/i)
+        ).toBeInTheDocument();
       });
     });
   });
