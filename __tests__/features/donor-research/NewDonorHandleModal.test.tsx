@@ -90,7 +90,23 @@ describe("NewDonorHandleModal", () => {
 
     expect(mutateAsync).toHaveBeenCalledWith({ opaqueLabel: "Smith Family Q3" });
     expect(onCreated).toHaveBeenCalledWith("h-new");
-    expect(screen.getByText("Persona · optional")).toBeInTheDocument();
+    expect(screen.getByText("Step 2 of 2 · Persona")).toBeInTheDocument();
+  });
+
+  it("opens straight into the persona editor when editing an existing handle", async () => {
+    renderWithProviders(
+      <NewDonorHandleModal
+        open
+        onOpenChange={vi.fn()}
+        onCreated={vi.fn()}
+        editHandle={NEW_HANDLE}
+      />
+    );
+
+    // No name step — goes directly to the (edit-mode) persona editor.
+    expect(screen.queryByLabelText("New donor handle name")).not.toBeInTheDocument();
+    expect(await screen.findByText("Edit persona")).toBeInTheDocument();
+    expect(screen.getByText("Edit Smith Family Q3's persona")).toBeInTheDocument();
   });
 
   it("closes without a prompt when the persona is untouched", async () => {

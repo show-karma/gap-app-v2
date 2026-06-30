@@ -15,8 +15,8 @@ import type { DonorHandle } from "@/types/donor-research";
 import { HandleNotesSection } from "../donor-detail/HandleNotesSection";
 
 // Keep the persona editor (narrative pane, refine, structured chips) out of the
-// research page's initial bundle — it only loads if the advisor opts into the
-// optional persona step.
+// research page's initial bundle — it only loads when the advisor reaches the
+// persona step.
 const PersonaEditor = dynamic(
   () => import("../donor-detail/PersonaEditor").then((m) => m.PersonaEditor),
   {
@@ -37,48 +37,65 @@ interface NewDonorHandleModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   /**
-   * Fired as soon as the handle is created. The parent selects it in the
-   * criteria picker so the advisor lands on the new handle whether or not they
-   * go on to fill in the (optional) persona.
+   * Fired as soon as a handle is created. The parent selects it in the criteria
+   * picker so the advisor lands on the new handle. Not called when editing an
+   * existing handle.
    */
   onCreated: (handleId: string) => void;
+  /**
+   * When provided (and `open`), the modal opens straight into the persona
+   * editor for this existing handle, pre-filled — the "edit persona" path from
+   * the picker's gear. Omitted for the create flow.
+   */
+  editHandle?: DonorHandle | null;
 }
 
 /**
- * Donor-handle creation flow, presented as a compact centered modal on the
- * research page.
+ * Donor-handle creation + persona editing in one compact centered modal.
  *
- *  - Step 1 — Name: a single field. The advisor can "Just create handle" and
- *    stop there, or "Create & add persona" to continue.
- *  - Step 2 — Persona (optional): the persona editor + private notes in a
- *    roomy-but-bounded modal, keyed to the freshly-created handle. Closing it
- *    is fine — the handle is already saved and selected.
+ *  - Create: Step 1 names the handle ("Just create handle" or "Create & add
+ *    persona"); Step 2 is the persona editor + private notes.
+ *  - Edit: opens directly on the persona editor for an existing handle,
+ *    pre-filled from its saved persona.
  *
- * Dismissal is only guarded while the persona has unsaved edits, so typed work
- * isn't lost by an accidental close.
+ * In both modes the AI narrative is generated (read-only); the source text,
+ * structured chips, and notes are hand-editable. Dismissal is guarded only
+ * while the persona has unsaved edits.
  */
-export function NewDonorHandleModal({ open, onOpenChange, onCreated }: NewDonorHandleModalProps) {
+export function NewDonorHandleModal({
+  open,
+  onOpenChange,
+  onCreated,
+  editHandle,
+}: NewDonorHandleModalProps) {
   const createHandle = useCreateDonorHandle();
 
   const [step, setStep] = useState<1 | 2>(1);
+  const [isEditing, setIsEditing] = useState(false);
   const [label, setLabel] = useState("");
   const [createError, setCreateError] = useState<string | null>(null);
-  const [createdHandle, setCreatedHandle] = useState<DonorHandle | null>(null);
+  const [activeHandle, setActiveHandle] = useState<DonorHandle | null>(null);
   const [personaDirty, setPersonaDirty] = useState(false);
   const [confirmDiscard, setConfirmDiscard] = useState(false);
 
-  // Reset the flow each time the modal opens so a reopened modal never shows a
-  // stale step or a previous handle's editor.
+  // Initialise the flow each time the modal opens: straight to the persona
+  // editor when editing, or the name step when creating.
   useEffect(() => {
-    if (open) {
+    if (!open) return;
+    setLabel("");
+    setCreateError(null);
+    setPersonaDirty(false);
+    setConfirmDiscard(false);
+    if (editHandle) {
+      setIsEditing(true);
+      setActiveHandle(editHandle);
+      setStep(2);
+    } else {
+      setIsEditing(false);
+      setActiveHandle(null);
       setStep(1);
-      setLabel("");
-      setCreateError(null);
-      setCreatedHandle(null);
-      setPersonaDirty(false);
-      setConfirmDiscard(false);
     }
-  }, [open]);
+  }, [open, editHandle]);
 
   const labelInputRef = useRef<HTMLInputElement>(null);
 
@@ -86,14 +103,13 @@ export function NewDonorHandleModal({ open, onOpenChange, onCreated }: NewDonorH
 
   const trimmedLabel = label.trim();
 
-  // Creates the handle, then either advances to the optional persona step or
-  // closes outright.
+  // Creates the handle, then either advances to the persona step or closes.
   const createAndContinue = async (advance: boolean) => {
     if (!trimmedLabel || createHandle.isPending) return;
     try {
       setCreateError(null);
       const handle = await createHandle.mutateAsync({ opaqueLabel: trimmedLabel });
-      setCreatedHandle(handle);
+      setActiveHandle(handle);
       onCreated(handle.id);
       if (advance) {
         setStep(2);
@@ -126,7 +142,7 @@ export function NewDonorHandleModal({ open, onOpenChange, onCreated }: NewDonorH
 
   return (
     <Dialog open={open} onOpenChange={requestClose}>
-      {step === 1 ? (
+      {step === 1 && !isEditing ? (
         <DialogContent
           className="sm:max-w-md"
           onOpenAutoFocus={(event) => {
@@ -138,7 +154,7 @@ export function NewDonorHandleModal({ open, onOpenChange, onCreated }: NewDonorH
             <DialogTitle>New donor handle</DialogTitle>
             <DialogDescription>
               Name the anonymous label you'll use to track research for this donor. You can add a
-              persona next — it's optional.
+              persona next.
             </DialogDescription>
           </DialogHeader>
 
@@ -186,32 +202,44 @@ export function NewDonorHandleModal({ open, onOpenChange, onCreated }: NewDonorH
             </button>
           </DialogFooter>
         </DialogContent>
-      ) : createdHandle ? (
+      ) : activeHandle ? (
         <DialogContent className="flex max-h-[85vh] flex-col gap-0 p-0 sm:max-w-2xl">
           <DialogHeader className="border-b border-border px-6 py-4 pr-12 text-left">
-            <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              Persona · optional
-            </span>
-            <DialogTitle>Set up {createdHandle.opaqueLabel}'s persona</DialogTitle>
+            {isEditing ? (
+              <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                Edit persona
+              </span>
+            ) : (
+              <div className="flex items-center gap-2">
+                <span className="flex items-center gap-1" aria-hidden>
+                  <span className="h-1.5 w-1.5 rounded-full bg-primary/50" />
+                  <span className="h-1.5 w-6 rounded-full bg-primary" />
+                </span>
+                <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  Step 2 of 2 · Persona
+                </span>
+              </div>
+            )}
+            <DialogTitle>
+              {isEditing
+                ? `Edit ${activeHandle.opaqueLabel}'s persona`
+                : `Set up ${activeHandle.opaqueLabel}'s persona`}
+            </DialogTitle>
             <DialogDescription>
-              Add what you know about this donor, refine it into a persona, and save — or close and
-              do this later from the handle's page.
+              Add what you know about this donor and refine it into a persona. The AI narrative is
+              generated for you; the source, structured profile, and notes are yours to edit.
             </DialogDescription>
           </DialogHeader>
 
           <div className="flex-1 overflow-y-auto px-6 py-5">
             <div className="flex flex-col gap-8">
-              <HandleNotesSection handle={createdHandle} />
-              <section className="flex flex-col gap-2">
-                <h2 className="text-base font-semibold">
-                  Persona source — refined and used by research
-                </h2>
-                <PersonaEditor
-                  key={createdHandle.id}
-                  handleId={createdHandle.id}
-                  onDirtyChange={onPersonaDirtyChange}
-                />
-              </section>
+              <HandleNotesSection handle={activeHandle} />
+              <PersonaEditor
+                key={activeHandle.id}
+                handleId={activeHandle.id}
+                onDirtyChange={onPersonaDirtyChange}
+                onSkip={isEditing ? undefined : () => onOpenChange(false)}
+              />
             </div>
           </div>
         </DialogContent>
@@ -227,9 +255,8 @@ export function NewDonorHandleModal({ open, onOpenChange, onCreated }: NewDonorH
           <DialogHeader>
             <DialogTitle>Discard persona changes?</DialogTitle>
             <DialogDescription>
-              {createdHandle?.opaqueLabel ? `"${createdHandle.opaqueLabel}"` : "This handle"} is
-              already saved and selected for your report. Your unsaved persona edits will be lost —
-              you can finish the persona later from the handle's page.
+              Your unsaved changes to {activeHandle?.opaqueLabel ?? "this handle"}'s persona will be
+              lost. You can edit it again anytime from the donor handle picker.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

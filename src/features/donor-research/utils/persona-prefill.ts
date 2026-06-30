@@ -10,32 +10,21 @@
  *    single source of truth for the nudge math. No client computation.
  */
 
-import type {
-  CompositeWeights,
-  DonorPersona,
-  GeoRadius,
-  GiftSizeBand,
-} from "@/types/donor-research";
+import type { CompositeWeights, DonorPersona, GeoRadius } from "@/types/donor-research";
 
 /** Radius vocabulary understood by the backend `LLMGeographyResolver`. */
 export type ResolverGeography = "city" | "metro" | "regional" | "state" | "national";
 
 export interface PersonaPrefill {
-  /** Criteria-text addition (leading separator included). Absent when no narrative. */
+  /** Seeds the criteria text with the persona narrative verbatim. Absent when no narrative. */
   criteriaTextAppendix?: string;
   geography?: ResolverGeography;
+  /** Real USD amounts extracted by the backend (NOT derived from the band). */
   amountMin?: number;
-  /** `null` for an open-ended upper bound (large/institutional). */
-  amountMax?: number | null;
+  amountMax?: number;
   /** The recomputed nudge weights, consumed verbatim. */
   weights: CompositeWeights;
 }
-
-const GIFT_SIZE_AMOUNTS: Record<GiftSizeBand, { min: number; max: number | null }> = {
-  small_high_leverage: { min: 10000, max: 50000 },
-  mid: { min: 50000, max: 250000 },
-  large_institutional: { min: 250000, max: null },
-};
 
 function geographyFromRadius(radius: GeoRadius | null): ResolverGeography | undefined {
   switch (radius) {
@@ -72,17 +61,19 @@ export function buildPersonaPrefill(persona: DonorPersona | null): PersonaPrefil
   const prefill: PersonaPrefill = { weights: persona.computedWeights };
 
   if (persona.narrative) {
-    prefill.criteriaTextAppendix = `\n\n[From donor persona]\n${persona.narrative}`;
+    prefill.criteriaTextAppendix = persona.narrative;
   }
 
   const geography = geographyFromRadius(s.geoRadius.value);
   if (geography) prefill.geography = geography;
 
-  const band = s.giftSizeBand.value;
-  if (band) {
-    prefill.amountMin = GIFT_SIZE_AMOUNTS[band].min;
-    prefill.amountMax = GIFT_SIZE_AMOUNTS[band].max;
-  }
+  // Amounts come from the backend's EXPLICIT extracted figures, never from the
+  // coarse `giftSizeBand` enum (mapping a 3-bucket band to dollars implies a
+  // precision the persona never had). Until gap-indexer#2117 ships these,
+  // they're absent → amounts stay empty. `amountMax: null` (open-ended) is
+  // treated as "no upper bound" → left unset so the field stays empty.
+  if (typeof persona.amountMin === "number") prefill.amountMin = persona.amountMin;
+  if (typeof persona.amountMax === "number") prefill.amountMax = persona.amountMax;
 
   return prefill;
 }

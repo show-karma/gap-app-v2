@@ -11,11 +11,7 @@ import { useDonorHandles } from "@/hooks/useDonorHandles";
 import { useDonorPersona } from "@/hooks/useDonorPersona";
 import { useCreateDonorReport } from "@/hooks/useDonorReports";
 import { CriteriaInputPanel } from "@/src/features/donor-research/components/criteria-input/CriteriaInputPanel";
-import {
-  emptyPersonaStructured,
-  makeDonorHandle,
-  makeDonorPersona,
-} from "../../msw/handlers/donor-research.handlers";
+import { makeDonorHandle, makeDonorPersona } from "../../msw/handlers/donor-research.handlers";
 import { renderWithProviders } from "../../utils/render";
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
@@ -72,73 +68,49 @@ describe("CriteriaInputPanel persona prefill", () => {
 
     await user.selectOptions(screen.getByLabelText("Donor handle"), "h1");
 
-    // geoRadius "local" → resolver "metro"; giftSizeBand "mid" → 50000/250000.
+    // geoRadius "local" → resolver "metro". Amounts are NOT derived from the
+    // gift size band (lossy), so they stay empty.
     await waitFor(() => expect(screen.getByLabelText(/Geography/)).toHaveValue("metro"));
-    expect(screen.getByLabelText(/Amount min/)).toHaveValue(50000);
-    expect(screen.getByLabelText(/Amount max/)).toHaveValue(250000);
-    // criteriaText, geography, amountMin, amountMax, weights.
-    expect(badges()).toHaveLength(5);
+    expect(screen.getByLabelText(/Amount min/)).toHaveValue(null);
+    expect(screen.getByLabelText(/Amount max/)).toHaveValue(null);
+    // criteriaText, geography, weights.
+    expect(badges()).toHaveLength(3);
   });
 
-  it("clears a stale amount when switching to a persona with an open-ended gift band", async () => {
-    const user = userEvent.setup();
-    const bounded = makeDonorPersona({
-      narrative: null,
-      structured: {
-        ...emptyPersonaStructured(),
-        geoRadius: { value: "local", source: "extracted" },
-        giftSizeBand: { value: "small_high_leverage", source: "extracted" },
-      },
-    });
-    const openEnded = makeDonorPersona({
-      narrative: null,
-      structured: {
-        ...emptyPersonaStructured(),
-        geoRadius: { value: "national", source: "extracted" },
-        giftSizeBand: { value: "large_institutional", source: "extracted" },
-      },
-    });
-    mockUseDonorPersona.mockImplementation(
-      (handleId?: string | null) =>
-        ({
-          data: handleId === "h2" ? openEnded : bounded,
-          isLoading: false,
-          isError: false,
-        }) as unknown as ReturnType<typeof useDonorPersona>
+  it("prefills amount min/max when the persona carries explicit figures", async () => {
+    mockUseDonorPersona.mockReturnValue(
+      personaResult({ data: makeDonorPersona({ amountMin: 5000, amountMax: 20000 }) })
     );
-
+    const user = userEvent.setup();
     renderWithProviders(<CriteriaInputPanel />);
 
-    // Donor 1: bounded band → amountMax 50000.
     await user.selectOptions(screen.getByLabelText("Donor handle"), "h1");
-    await waitFor(() => expect(screen.getByLabelText(/Amount max/)).toHaveValue(50000));
 
-    // Switch to Donor 2: large_institutional → open-ended max. The stale
-    // 50000 must clear, otherwise we submit an invalid 250000–50000 range.
-    await user.selectOptions(screen.getByLabelText("Donor handle"), "h2");
-    await waitFor(() => expect(screen.getByLabelText(/Amount min/)).toHaveValue(250000));
-    expect(screen.getByLabelText(/Amount max/)).toHaveValue(null);
+    await waitFor(() => expect(screen.getByLabelText(/Amount min/)).toHaveValue(5000));
+    expect(screen.getByLabelText(/Amount max/)).toHaveValue(20000);
+    // criteriaText, geography, amountMin, amountMax, weights.
+    expect(badges()).toHaveLength(5);
   });
 
   it("dismisses only the edited field's badge", async () => {
     const user = userEvent.setup();
     renderWithProviders(<CriteriaInputPanel />);
     await user.selectOptions(screen.getByLabelText("Donor handle"), "h1");
-    await waitFor(() => expect(badges()).toHaveLength(5));
+    await waitFor(() => expect(badges()).toHaveLength(3));
 
     const geography = screen.getByLabelText(/Geography/);
     await user.clear(geography);
     await user.type(geography, "California");
 
-    // The geography badge drops; the other four remain.
-    await waitFor(() => expect(badges()).toHaveLength(4));
+    // The geography badge drops; criteriaText + weights remain.
+    await waitFor(() => expect(badges()).toHaveLength(2));
   });
 
   it("prompts a discard confirmation when changing handle while dirty", async () => {
     const user = userEvent.setup();
     renderWithProviders(<CriteriaInputPanel />);
     await user.selectOptions(screen.getByLabelText("Donor handle"), "h1");
-    await waitFor(() => expect(badges()).toHaveLength(5));
+    await waitFor(() => expect(badges()).toHaveLength(3));
 
     // Make the form dirty, then switch handle.
     await user.type(screen.getByLabelText(/Geography/), "X");

@@ -2,7 +2,6 @@
 
 import { Settings } from "lucide-react";
 import type { DonorHandle } from "@/types/donor-research";
-import { PAGES } from "@/utilities/pages";
 
 interface DonorHandlePickerProps {
   handles: DonorHandle[];
@@ -10,11 +9,13 @@ interface DonorHandlePickerProps {
   value: string;
   onChange: (handleId: string) => void;
   /**
-   * Opens the create flow (the persona-creation Sheet, owned by the parent).
+   * Opens the create flow (the persona-creation modal, owned by the parent).
    * Both the first-run CTA and the "+ New handle" shortcut delegate here so
    * creation lives in one place and the new handle can be auto-selected.
    */
   onRequestCreate: () => void;
+  /** Opens the persona modal pre-filled to edit the selected handle (gear). */
+  onRequestEdit: (handleId: string) => void;
   error?: string;
 }
 
@@ -33,6 +34,7 @@ export function DonorHandlePicker({
   value,
   onChange,
   onRequestCreate,
+  onRequestEdit,
   error,
 }: DonorHandlePickerProps) {
   const empty = !loading && handles.length === 0;
@@ -65,6 +67,7 @@ export function DonorHandlePicker({
           value={value}
           onChange={onChange}
           onCreate={onRequestCreate}
+          onEdit={onRequestEdit}
         />
       )}
 
@@ -78,14 +81,21 @@ interface ExistingHandlesRowProps {
   value: string;
   onChange: (handleId: string) => void;
   onCreate: () => void;
+  onEdit: (handleId: string) => void;
 }
 
 /**
  * The populated-state row: a native handle `<select>`, a "+ New handle"
- * shortcut, and (when a handle is selected) a "Manage" link that opens the
- * donor detail page in a new tab so the in-progress report form is preserved.
+ * shortcut, and (when a handle is selected) a gear that opens the persona
+ * modal pre-filled to edit that handle, without leaving the report form.
  */
-function ExistingHandlesRow({ handles, value, onChange, onCreate }: ExistingHandlesRowProps) {
+function ExistingHandlesRow({
+  handles,
+  value,
+  onChange,
+  onCreate,
+  onEdit,
+}: ExistingHandlesRowProps) {
   const selectedLabel =
     handles.find((handle) => handle.id === value)?.opaqueLabel ?? "Untitled donor handle";
 
@@ -114,16 +124,15 @@ function ExistingHandlesRow({ handles, value, onChange, onCreate }: ExistingHand
         + New handle
       </button>
       {value ? (
-        <a
-          href={PAGES.DONOR_RESEARCH.DONOR_DETAIL(value)}
-          target="_blank"
-          rel="noopener"
-          aria-label={`Manage donor handle ${selectedLabel}`}
-          title="Manage donor handle"
+        <button
+          type="button"
+          onClick={() => onEdit(value)}
+          aria-label={`Edit persona for ${selectedLabel}`}
+          title="Edit persona"
           className="inline-flex items-center justify-center rounded-md border border-border px-3 py-2 text-sm hover:bg-muted"
         >
           <Settings className="h-4 w-4" aria-hidden="true" />
-        </a>
+        </button>
       ) : null}
     </div>
   );

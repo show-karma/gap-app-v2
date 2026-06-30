@@ -64,8 +64,9 @@ function buildCriteriaDefaults(
     criteriaText: prefill?.criteriaTextAppendix ? prefill.criteriaTextAppendix.trimStart() : "",
     cause: "",
     geography: prefill?.geography ?? "",
+    // Amounts come from the persona's explicit extracted figures (when present).
     amountMin: prefill?.amountMin,
-    amountMax: prefill?.amountMax ?? undefined,
+    amountMax: prefill?.amountMax,
     weights: prefill?.weights ?? DEFAULT_WEIGHTS_BASIS_POINTS,
     topCount: DEFAULT_TOP_COUNT,
   };
@@ -78,7 +79,7 @@ function prefilledFieldsOf(prefill: PersonaPrefill | null): Set<PersonaPrefillFi
   if (prefill.criteriaTextAppendix) fields.add("criteriaText");
   if (prefill.geography) fields.add("geography");
   if (prefill.amountMin !== undefined) fields.add("amountMin");
-  if (prefill.amountMax !== undefined && prefill.amountMax !== null) fields.add("amountMax");
+  if (prefill.amountMax !== undefined) fields.add("amountMax");
   // computedWeights is always present on a persona, so weights are always seeded.
   fields.add("weights");
   return fields;
@@ -108,6 +109,7 @@ export function CriteriaInputPanel() {
   const [prefilledFields, setPrefilledFields] = useState<Set<PersonaPrefillField>>(new Set());
   const [pendingHandleId, setPendingHandleId] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
+  const [editHandleId, setEditHandleId] = useState<string | null>(null);
 
   // Apply the selected handle's persona prefill once it resolves — but only
   // while the form is clean, so in-progress edits are never clobbered. A 404
@@ -144,6 +146,10 @@ export function CriteriaInputPanel() {
   const onHandleCreated = (handleId: string) => {
     form.setValue("donorHandleId", handleId, { shouldDirty: false, shouldValidate: true });
   };
+
+  // The gear edits the selected handle's persona in the same modal, pre-filled.
+  const editHandle = handlesQuery.data?.items.find((handle) => handle.id === editHandleId) ?? null;
+  const personaModalOpen = createOpen || editHandleId !== null;
 
   const confirmDiscard = () => {
     if (pendingHandleId === null) return;
@@ -190,6 +196,7 @@ export function CriteriaInputPanel() {
         prefilledFields={prefilledFields}
         onRequestHandleChange={requestHandleChange}
         onRequestCreate={() => setCreateOpen(true)}
+        onRequestEdit={(handleId) => setEditHandleId(handleId)}
       />
 
       {createReport.isError ? (
@@ -232,8 +239,13 @@ export function CriteriaInputPanel() {
       </Dialog>
 
       <NewDonorHandleModal
-        open={createOpen}
-        onOpenChange={setCreateOpen}
+        open={personaModalOpen}
+        editHandle={editHandle}
+        onOpenChange={(next) => {
+          if (next) return;
+          setCreateOpen(false);
+          setEditHandleId(null);
+        }}
         onCreated={onHandleCreated}
       />
     </div>

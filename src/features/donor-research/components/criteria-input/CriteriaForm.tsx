@@ -64,8 +64,10 @@ interface CriteriaFormProps {
    * (discard-confirm). Falls back to a plain field set when absent.
    */
   onRequestHandleChange?: (handleId: string) => void;
-  /** Opens the parent-owned persona-creation Sheet. */
+  /** Opens the parent-owned persona-creation modal. */
   onRequestCreate?: () => void;
+  /** Opens the persona modal pre-filled to edit the given handle (gear). */
+  onRequestEdit?: (handleId: string) => void;
 }
 
 /**
@@ -83,6 +85,7 @@ export function CriteriaForm({
   prefilledFields,
   onRequestHandleChange,
   onRequestCreate,
+  onRequestEdit,
 }: CriteriaFormProps) {
   const { register, handleSubmit, watch, setValue, formState, control } = form;
   const errors = formState.errors;
@@ -104,6 +107,7 @@ export function CriteriaForm({
         value={watch("donorHandleId")}
         onChange={onHandleChange}
         onRequestCreate={onRequestCreate ?? (() => {})}
+        onRequestEdit={onRequestEdit ?? (() => {})}
         error={errors.donorHandleId?.message}
       />
 

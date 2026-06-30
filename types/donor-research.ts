@@ -410,6 +410,14 @@ export interface DonorPersona {
   narrative: string | null;
   structured: PersonaStructured;
   computedWeights: PersonaComputedWeights;
+  /**
+   * Explicit gift amounts (USD) extracted from the source by Refine, used to
+   * prefill the report form accurately — NOT derived from `giftSizeBand`.
+   * Optional: present only once the backend emits them (gap-indexer#2117).
+   * `amountMax: null` means an open-ended upper bound.
+   */
+  amountMin?: number | null;
+  amountMax?: number | null;
   refinedAt: string | null;
   createdAt: string;
   updatedAt: string;

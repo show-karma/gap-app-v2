@@ -1,7 +1,7 @@
 /**
  * U8 — buildPersonaPrefill pure-logic tests. Covers the null/empty guards, the
- * resolver-enum geography mapping (NOT raw persona enums), amount bands, and
- * verbatim computedWeights.
+ * resolver-enum geography mapping (NOT raw persona enums), the deliberate
+ * absence of amount derivation, and verbatim computedWeights.
  */
 
 import { describe, expect, it } from "vitest";
@@ -64,27 +64,38 @@ describe("buildPersonaPrefill", () => {
     expect(prefill?.geography).toBeUndefined();
   });
 
-  it("maps gift size bands to amount ranges", () => {
-    const amounts = (band: "small_high_leverage" | "mid" | "large_institutional") => {
-      const p = buildPersonaPrefill(
+  it("prefills amount min/max from the persona's explicit extracted figures", () => {
+    const prefill = buildPersonaPrefill(makeDonorPersona({ amountMin: 5000, amountMax: 20000 }));
+    expect(prefill?.amountMin).toBe(5000);
+    expect(prefill?.amountMax).toBe(20000);
+  });
+
+  it("does NOT derive amounts from the gift size band (band alone seeds nothing)", () => {
+    for (const band of ["small_high_leverage", "mid", "large_institutional"] as const) {
+      const prefill = buildPersonaPrefill(
         makeDonorPersona({
+          amountMin: undefined,
+          amountMax: undefined,
           structured: {
             ...emptyPersonaStructured(),
             giftSizeBand: { value: band, source: "manual" },
           },
         })
       );
-      return [p?.amountMin, p?.amountMax];
-    };
-
-    expect(amounts("small_high_leverage")).toEqual([10000, 50000]);
-    expect(amounts("mid")).toEqual([50000, 250000]);
-    expect(amounts("large_institutional")).toEqual([250000, null]);
+      expect(prefill?.amountMin).toBeUndefined();
+      expect(prefill?.amountMax).toBeUndefined();
+    }
   });
 
-  it("appends the narrative to the criteria text with a separator", () => {
+  it("leaves amountMax unset for an open-ended (null) upper bound", () => {
+    const prefill = buildPersonaPrefill(makeDonorPersona({ amountMin: 250000, amountMax: null }));
+    expect(prefill?.amountMin).toBe(250000);
+    expect(prefill?.amountMax).toBeUndefined();
+  });
+
+  it("seeds the criteria text with the narrative verbatim (no marker label)", () => {
     const prefill = buildPersonaPrefill(makeDonorPersona({ narrative: "Loves local schools." }));
-    expect(prefill?.criteriaTextAppendix).toBe("\n\n[From donor persona]\nLoves local schools.");
+    expect(prefill?.criteriaTextAppendix).toBe("Loves local schools.");
   });
 
   it("passes computedWeights through verbatim (no client compute)", () => {

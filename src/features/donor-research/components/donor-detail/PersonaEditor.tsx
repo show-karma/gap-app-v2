@@ -54,6 +54,12 @@ interface PersonaEditorProps {
    * mid-edit. Optional — the standalone detail page doesn't need it.
    */
   onDirtyChange?: (isDirty: boolean) => void;
+  /**
+   * When provided, renders a secondary "Skip for now" action beside Save (used
+   * by the creation modal, where the persona step is optional). Omitted on the
+   * standalone detail page.
+   */
+  onSkip?: () => void;
 }
 
 /**
@@ -66,7 +72,7 @@ interface PersonaEditorProps {
  * never clobbered. A refine writes its result into local state (chips →
  * `extracted`) and marks dirty so Save is enabled even with no manual edit.
  */
-export function PersonaEditor({ handleId, onDirtyChange }: PersonaEditorProps) {
+export function PersonaEditor({ handleId, onDirtyChange, onSkip }: PersonaEditorProps) {
   const personaQuery = useDonorPersona(handleId);
   const refine = useRefineDonorPersona(handleId);
   const update = useUpdateDonorPersona(handleId);
@@ -244,13 +250,24 @@ export function PersonaEditor({ handleId, onDirtyChange }: PersonaEditorProps) {
         <PersonaStructuredChips structured={structured} onChange={onChipChange} />
       </div>
 
-      {/* Save — sticky to the viewport bottom on narrow screens. */}
-      <div className="sticky bottom-0 z-10 -mx-4 border-t border-border bg-card px-4 py-3 sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:p-0">
+      {/* Save — sticky to the viewport bottom on narrow screens. An optional
+          "Skip for now" sits beside it when the host (creation modal) treats
+          the persona step as optional. */}
+      <div className="sticky bottom-0 z-10 -mx-4 flex flex-col gap-2 border-t border-border bg-card px-4 py-3 sm:static sm:mx-0 sm:flex-row sm:justify-end sm:border-0 sm:bg-transparent sm:p-0">
+        {onSkip ? (
+          <button
+            type="button"
+            onClick={onSkip}
+            className="order-2 rounded-md border border-border px-4 py-2 text-sm font-medium hover:bg-muted sm:order-1"
+          >
+            Skip for now
+          </button>
+        ) : null}
         <button
           type="button"
           onClick={onSave}
           disabled={!isDirty || update.isPending}
-          className="w-full rounded-md border border-border bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50 sm:w-auto"
+          className="order-1 w-full rounded-md border border-border bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50 sm:order-2 sm:w-auto"
         >
           {update.isPending ? "Saving persona…" : "Save persona"}
         </button>
