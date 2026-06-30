@@ -239,7 +239,7 @@ export function CommentOverlay({
         />
       )}
 
-      <div className="fixed bottom-24 left-6 z-40 flex flex-col items-start gap-2">
+      <div className="fixed bottom-24 right-6 z-40 flex flex-col items-end gap-2">
         <IdentityBadge
           displayName={identity.displayName}
           isAdvisor={identity.isAdvisor}
@@ -261,7 +261,7 @@ export function CommentOverlay({
               {total === 0 ? "Comments" : pluralize("comment", total, true)}
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="flex w-full flex-col gap-4 sm:max-w-md">
+          <SheetContent side="right" className="flex w-full flex-col gap-4 sm:max-w-md">
             <SheetHeader>
               <SheetTitle>Comments</SheetTitle>
             </SheetHeader>

@@ -2,6 +2,7 @@
 
 import { ArrowUpRight } from "lucide-react";
 import type { CompositeWeights, ResearchReportCandidate } from "@/types/donor-research";
+import { CandidateDiligenceActions } from "../diligence/CandidateDiligenceActions";
 import { SocialPresence } from "../report-viewer/SocialPresence";
 import { ChapterMark } from "./ChapterMark";
 import { ComplianceStrip } from "./ComplianceStrip";
@@ -26,6 +27,10 @@ interface RunnerUpCandidateProps {
   label: string;
   /** Persisted report weights for the score breakdown; `null` = legacy. */
   weights: CompositeWeights | null;
+  /** Report id — required to mount the advisor diligence actions. */
+  reportId?: string;
+  /** Advisor-only: gates the Ask Questions / Connect footer. */
+  showDiligenceActions?: boolean;
 }
 
 /**
@@ -35,7 +40,14 @@ interface RunnerUpCandidateProps {
  * tabular figure hanging off the identity block rather than a
  * standalone hero.
  */
-export function RunnerUpCandidate({ candidate, number, label, weights }: RunnerUpCandidateProps) {
+export function RunnerUpCandidate({
+  candidate,
+  number,
+  label,
+  weights,
+  reportId,
+  showDiligenceActions = false,
+}: RunnerUpCandidateProps) {
   const isDisqualified = candidate.complianceVerdict === "disqualified";
   const name = humanizeCase(
     candidate.organizationName ??
@@ -151,6 +163,10 @@ export function RunnerUpCandidate({ candidate, number, label, weights }: RunnerU
           ) : null}
         </aside>
       </div>
+
+      {showDiligenceActions && reportId ? (
+        <CandidateDiligenceActions reportId={reportId} candidateId={candidate.id} />
+      ) : null}
     </section>
   );
 }

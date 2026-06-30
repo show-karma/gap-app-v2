@@ -6,7 +6,6 @@ import { DisqualificationSummary } from "../report-viewer/DisqualificationSummar
 import { FailedReportBanner } from "../report-viewer/FailedReportBanner";
 import { GeographyWarning } from "../report-viewer/GeographyWarning";
 import { ProgressTimeline } from "../report-viewer/ProgressTimeline";
-import { WeightsPanel } from "../report-viewer/WeightsPanel";
 import { AlsoConsidered } from "./AlsoConsidered";
 import { ComparisonTable } from "./ComparisonTable";
 import { briefDisplay, briefProse } from "./fonts";
@@ -50,6 +49,9 @@ export function ReportBrief({
   const featured = candidates.filter((c) => c.featuredFlag);
   const remaining = candidates.filter((c) => !c.featuredFlag);
   const weights = report.weights ?? null;
+  // Diligence + intro actions are advisor-only — the donor shared view must
+  // never surface them (they'd reveal that diligence is in flight).
+  const showDiligenceActions = variant !== "shared";
 
   return (
     <div
@@ -97,6 +99,8 @@ export function ReportBrief({
               candidate={featured[0]}
               weights={weights}
               hasMore={candidates.length > 1}
+              reportId={report.id}
+              showDiligenceActions={showDiligenceActions}
             />
           </div>
         ) : null}
@@ -115,6 +119,8 @@ export function ReportBrief({
                 number={number}
                 label={label}
                 weights={weights}
+                reportId={report.id}
+                showDiligenceActions={showDiligenceActions}
               />
             </div>
           );
@@ -127,6 +133,8 @@ export function ReportBrief({
             candidates={remaining}
             startRank={featured.length + 1}
             weights={weights}
+            reportId={report.id}
+            showDiligenceActions={showDiligenceActions}
           />
         ) : null}
 
@@ -139,10 +147,6 @@ export function ReportBrief({
           />
         ) : null}
       </div>
-
-      {variant === "advisor" && isTerminal && weights && candidates.length > 0 ? (
-        <WeightsPanel report={report} />
-      ) : null}
     </div>
   );
 }

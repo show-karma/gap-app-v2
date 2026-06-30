@@ -1,5 +1,6 @@
 "use client";
 
+import { ClipboardList } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useDonorAdvisor } from "@/hooks/useDonorAdvisor";
@@ -68,6 +69,13 @@ export function DonorResearchHome() {
         </div>
         <div className="flex items-center gap-3">
           <RateLimitCounter advisor={advisor} />
+          <Link
+            href={PAGES.DONOR_RESEARCH.DILIGENCE_TEMPLATE}
+            className="inline-flex items-center gap-1.5 rounded-md border border-primary/30 bg-primary/5 px-3 py-1.5 text-xs font-semibold text-primary shadow-sm transition-colors hover:border-primary/50 hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+          >
+            <ClipboardList className="h-3.5 w-3.5" aria-hidden="true" />
+            Diligence questions
+          </Link>
           <Link
             href={PAGES.DONOR_RESEARCH.INDEX}
             className="text-xs font-medium text-muted-foreground underline underline-offset-4 decoration-border hover:text-foreground hover:decoration-current"

@@ -126,92 +126,155 @@ describe("WeightsPanel", () => {
     expect(within(preview).queryByText(/entering top 3/i)).not.toBeInTheDocument();
   });
 
-  it("disables Update weights until the weights change", () => {
+  it("enables Save changes only once the edited weights total 100%", () => {
     renderPanel(buildReport(DEFAULT_WEIGHTS));
     openSheet();
-    expect(screen.getByRole("button", { name: "Update weights" })).toBeDisabled();
-    const firstThumb = screen.getAllByRole("slider")[0];
-    firstThumb.focus();
-    fireEvent.keyDown(firstThumb, { key: "ArrowRight" });
-    expect(screen.getByRole("button", { name: "Update weights" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Save changes" })).toBeDisabled();
+
+    // Raising one factor unbalances the set (115%): nothing is redistributed, so
+    // the single Save stays disabled until the advisor reconciles the total.
+    const inputs = screen.getAllByRole("spinbutton");
+    fireEvent.change(inputs[0], { target: { value: "40" } });
+    fireEvent.blur(inputs[0]);
+    expect(screen.getByRole("button", { name: "Save changes" })).toBeDisabled();
+
+    // Dropping Mission match 25→10 brings the total back to 100% and enables it.
+    fireEvent.change(inputs[3], { target: { value: "10" } });
+    fireEvent.blur(inputs[3]);
+    expect(screen.getByRole("button", { name: "Save changes" })).toBeEnabled();
   });
 
-  it("commits the adjusted weights through the confirm dialog", async () => {
+  it("commits the adjusted weights through the single confirm dialog", async () => {
     renderPanel(buildReport(DEFAULT_WEIGHTS));
     openSheet();
-    const firstThumb = screen.getAllByRole("slider")[0];
-    firstThumb.focus();
-    fireEvent.keyDown(firstThumb, { key: "ArrowRight" });
+    const inputs = screen.getAllByRole("spinbutton");
+    // Raise Online presence to 40% and rebalance Mission match to 10% so the
+    // five total 100% again (no redistribution happens automatically).
+    fireEvent.change(inputs[0], { target: { value: "40" } });
+    fireEvent.blur(inputs[0]);
+    fireEvent.change(inputs[3], { target: { value: "10" } });
+    fireEvent.blur(inputs[3]);
 
-    fireEvent.click(screen.getByRole("button", { name: "Update weights" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
 
     const dialog = await screen.findByText("Update report ranking?");
     const dialogEl = dialog.closest('[role="dialog"]') as HTMLElement;
+    // Equal component scores → no reorder, so no one-pagers flip.
     expect(dialogEl).toHaveTextContent(/no one-pagers will regenerate/i);
 
-    fireEvent.click(within(dialogEl).getByRole("button", { name: "Update weights" }));
+    fireEvent.click(within(dialogEl).getByRole("button", { name: "Save changes" }));
 
     await waitFor(() => expect(mockUpdate).toHaveBeenCalledTimes(1));
     expect(mockUpdate.mock.calls[0][0]).toBe("report-1");
-    // Config endpoint receives only the changed field: { weights }.
-    expect(mockUpdate.mock.calls[0][1].weights.onlinePresence).toBe(
-      DEFAULT_WEIGHTS.onlinePresence + 100
-    );
+    // Both edits committed verbatim; the untouched three are intact and the
+    // five total 100% (4000+1000+2500+1000+1500 = 10000).
+    expect(mockUpdate.mock.calls[0][1].weights).toEqual({
+      onlinePresence: 4000,
+      socialPresence: 1000,
+      impactRecency: 2500,
+      donorMatch: 1000,
+      compliance: 1500,
+    });
+    // Only the dirty slice is sent — topCount unchanged, and no manual reorder.
     expect(mockUpdate.mock.calls[0][1].topCount).toBeUndefined();
+    expect(mockReorder).not.toHaveBeenCalled();
   });
 
-  it("commits a new featured-set size from the Configs tab as { topCount }", async () => {
+  it("saves a featured-count-only change as { topCount } via the shared Save", async () => {
     renderPanel(buildReport(DEFAULT_WEIGHTS));
     openSheet();
-    // Switch to the Configs tab (Radix Tabs activate on focus in jsdom).
-    const configTab = screen.getByRole("tab", { name: /configs/i });
-    configTab.focus();
-    fireEvent.click(configTab);
 
-    // Bump the featured count via the stepper, then commit.
+    // Bump the featured count via the stepper (single view, no tabs), then save.
     fireEvent.click(await screen.findByRole("button", { name: /more featured results/i }));
-    fireEvent.click(screen.getByRole("button", { name: "Update results" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
 
-    const dialog = await screen.findByText("Update featured results?");
+    const dialog = await screen.findByText("Update report ranking?");
     const dialogEl = dialog.closest('[role="dialog"]') as HTMLElement;
-    fireEvent.click(within(dialogEl).getByRole("button", { name: "Update results" }));
+    fireEvent.click(within(dialogEl).getByRole("button", { name: "Save changes" }));
 
     await waitFor(() => expect(mockUpdate).toHaveBeenCalledTimes(1));
     expect(mockUpdate.mock.calls[0][0]).toBe("report-1");
-    // Only the changed field is sent: { topCount }, no weights.
+    // Only the changed field is sent: { topCount }, no weights, no reorder.
     expect(mockUpdate.mock.calls[0][1].topCount).toBe(4);
     expect(mockUpdate.mock.calls[0][1].weights).toBeUndefined();
+    expect(mockReorder).not.toHaveBeenCalled();
+  });
+
+  it("re-sends an existing manual order when only the config changes", async () => {
+    const report = buildReport(DEFAULT_WEIGHTS);
+    // The report already carries a manual order (manualPosition set on each row).
+    report.candidates = report.candidates.map((c, i) => ({ ...c, manualPosition: i + 1 }));
+    renderPanel(report);
+    openSheet();
+
+    // Change only the featured count — a config save clears manual order
+    // server-side, so the panel must re-send it to preserve it.
+    fireEvent.click(await screen.findByRole("button", { name: /more featured results/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+
+    const dialog = await screen.findByText("Update report ranking?");
+    const dialogEl = dialog.closest('[role="dialog"]') as HTMLElement;
+    fireEvent.click(within(dialogEl).getByRole("button", { name: "Save changes" }));
+
+    await waitFor(() => expect(mockUpdate).toHaveBeenCalledTimes(1));
+    expect(mockUpdate.mock.calls[0][1].topCount).toBe(4);
+    // The existing order is preserved by re-sending it through reorder.
+    await waitFor(() => expect(mockReorder).toHaveBeenCalledTimes(1));
+    expect(mockReorder.mock.calls[0][1]).toEqual(["c1", "c2", "c3", "c4"]);
+  });
+
+  it("drops the manual order when weights change so the list re-ranks", async () => {
+    const report = buildReport(DEFAULT_WEIGHTS);
+    report.candidates = report.candidates.map((c, i) => ({ ...c, manualPosition: i + 1 }));
+    renderPanel(report);
+    openSheet();
+
+    // Editing weights re-ranks the list and clears the manual override, so the
+    // saved config re-ranks by weight and the old order is NOT re-sent.
+    const inputs = screen.getAllByRole("spinbutton");
+    fireEvent.change(inputs[0], { target: { value: "40" } });
+    fireEvent.blur(inputs[0]);
+    fireEvent.change(inputs[3], { target: { value: "10" } });
+    fireEvent.blur(inputs[3]);
+
+    fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+    const dialog = await screen.findByText("Update report ranking?");
+    const dialogEl = dialog.closest('[role="dialog"]') as HTMLElement;
+    fireEvent.click(within(dialogEl).getByRole("button", { name: "Save changes" }));
+
+    await waitFor(() => expect(mockUpdate).toHaveBeenCalledTimes(1));
+    expect(mockUpdate.mock.calls[0][1].weights).toEqual({
+      onlinePresence: 4000,
+      socialPresence: 1000,
+      impactRecency: 2500,
+      donorMatch: 1000,
+      compliance: 1500,
+    });
+    expect(mockReorder).not.toHaveBeenCalled();
   });
 
   it("keeps the sheet open when Escape is pressed on a reorder grip", async () => {
     renderPanel(buildReport(DEFAULT_WEIGHTS));
     openSheet();
-    // Radix Tabs activate on focus (automatic mode); fireEvent.click alone
-    // doesn't move focus in jsdom, so focus the trigger to switch tabs.
-    const reorderTab = screen.getByRole("tab", { name: /reorder/i });
-    reorderTab.focus();
-    fireEvent.click(reorderTab);
-
+    // The ranking list is always visible now (single view), so grips are present.
     const grip = (await screen.findAllByRole("button", { name: /drag .* to reorder/i }))[0];
     grip.focus();
     fireEvent.keyDown(grip, { key: "Escape" });
 
     // The panel must stay open — Escape on a grip cancels a drag, not the sheet.
-    expect(screen.getByRole("tab", { name: /reorder/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Adjust ranking" })).toBeInTheDocument();
   });
 
   it("still closes the sheet when Escape is pressed off the reorder grips", async () => {
     renderPanel(buildReport(DEFAULT_WEIGHTS));
     openSheet();
-    expect(screen.getByRole("tab", { name: /weights/i })).toBeInTheDocument();
+    expect(screen.getAllByRole("slider")).toHaveLength(5);
 
     // Focus the first slider (not a grip), then press Escape — normal dismiss.
     const slider = screen.getAllByRole("slider")[0];
     slider.focus();
     fireEvent.keyDown(slider, { key: "Escape" });
 
-    await waitFor(() =>
-      expect(screen.queryByRole("tab", { name: /weights/i })).not.toBeInTheDocument()
-    );
+    await waitFor(() => expect(screen.queryAllByRole("slider")).toHaveLength(0));
   });
 });
