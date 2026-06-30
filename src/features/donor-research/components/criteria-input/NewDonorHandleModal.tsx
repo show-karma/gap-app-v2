@@ -239,6 +239,7 @@ export function NewDonorHandleModal({
                 handleId={activeHandle.id}
                 onDirtyChange={onPersonaDirtyChange}
                 onSkip={isEditing ? undefined : () => onOpenChange(false)}
+                onSaved={() => onOpenChange(false)}
               />
             </div>
           </div>

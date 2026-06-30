@@ -60,6 +60,8 @@ interface PersonaEditorProps {
    * standalone detail page.
    */
   onSkip?: () => void;
+  /** Called after a successful save — lets the host modal close itself. */
+  onSaved?: () => void;
 }
 
 /**
@@ -72,7 +74,7 @@ interface PersonaEditorProps {
  * never clobbered. A refine writes its result into local state (chips →
  * `extracted`) and marks dirty so Save is enabled even with no manual edit.
  */
-export function PersonaEditor({ handleId, onDirtyChange, onSkip }: PersonaEditorProps) {
+export function PersonaEditor({ handleId, onDirtyChange, onSkip, onSaved }: PersonaEditorProps) {
   const personaQuery = useDonorPersona(handleId);
   const refine = useRefineDonorPersona(handleId);
   const update = useUpdateDonorPersona(handleId);
@@ -168,6 +170,7 @@ export function PersonaEditor({ handleId, onDirtyChange, onSkip }: PersonaEditor
         hydrate(saved);
         setIsDirty(false);
         toast.success("Persona saved");
+        onSaved?.();
       },
       // Rollback is handled by the mutation hook; isDirty stays true so the
       // Save button remains an actionable retry.

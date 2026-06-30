@@ -189,6 +189,25 @@ describe("PersonaEditor refine → edit → save round-trip", () => {
   });
 });
 
+describe("PersonaEditor save callback", () => {
+  it("calls onSaved after a successful save (so the host modal can close)", async () => {
+    const user = userEvent.setup();
+    const { updateMutate } = setup({
+      persona: makeDonorPersona({ narrative: null, structured: emptyPersonaStructured() }),
+    });
+    updateMutate.mockImplementation((_input: unknown, opts: { onSuccess: (p: unknown) => void }) =>
+      opts.onSuccess(makeDonorPersona())
+    );
+    const onSaved = vi.fn();
+    renderWithProviders(<PersonaEditor handleId="h1" onSaved={onSaved} />);
+
+    await user.click(screen.getByText("edit-chip")); // make dirty → enable Save
+    await user.click(saveButton());
+
+    await waitFor(() => expect(onSaved).toHaveBeenCalledTimes(1));
+  });
+});
+
 describe("PersonaEditor mobile sticky save", () => {
   it("wraps Save in a viewport-sticky container", () => {
     setup({ persona: null });
