@@ -17,6 +17,7 @@ const ACCESS_DENIED_MESSAGES_URL = (s: string) =>
 interface AccessDeniedMessages {
   unauthenticatedMessage: string | null;
   forbiddenMessage: string | null;
+  applicantMessage: string | null;
 }
 
 /**
@@ -35,7 +36,7 @@ export const useAccessDeniedMessages = (
     queryKey: ["access-denied-messages", slugOrUid ?? ""],
     queryFn: async () => {
       if (!slugOrUid) {
-        return { unauthenticatedMessage: null, forbiddenMessage: null };
+        return { unauthenticatedMessage: null, forbiddenMessage: null, applicantMessage: null };
       }
       const [data, error] = await fetchData(
         ACCESS_DENIED_MESSAGES_URL(slugOrUid),
@@ -46,11 +47,12 @@ export const useAccessDeniedMessages = (
         false // public — no auth header
       );
       if (error || !data) {
-        return { unauthenticatedMessage: null, forbiddenMessage: null };
+        return { unauthenticatedMessage: null, forbiddenMessage: null, applicantMessage: null };
       }
       return {
         unauthenticatedMessage: data.unauthenticatedMessage ?? null,
         forbiddenMessage: data.forbiddenMessage ?? null,
+        applicantMessage: data.applicantMessage ?? null,
       };
     },
     enabled,

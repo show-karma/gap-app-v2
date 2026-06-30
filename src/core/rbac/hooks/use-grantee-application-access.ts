@@ -37,10 +37,11 @@ export function useGranteeApplicationAccess({
   programId,
   whitelabelOrigin,
 }: UseGranteeApplicationAccessParams): GranteeApplicationAccess {
-  // The endpoint is per-authenticated-user; key on the wallet so an account
-  // switch doesn't serve the previous user's applications from cache.
-  const { address } = useAuth();
-  const isEnabled = enabled && !!communityId && !!address;
+  // The endpoint authenticates via the session token, so gate on `authenticated`
+  // (not the wallet address, which can resolve a beat later). The wallet still
+  // keys the cache so an account switch doesn't serve the previous user's data.
+  const { address, authenticated } = useAuth();
+  const isEnabled = enabled && !!communityId && authenticated;
 
   const query = useQuery({
     queryKey: QUERY_KEYS.APPLICATIONS.GRANTEE_ACCESS(address, communityId, programId),
