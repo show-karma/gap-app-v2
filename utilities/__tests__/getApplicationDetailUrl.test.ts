@@ -1,4 +1,16 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+
+// getApplicationDetailUrl consults NEXT_PUBLIC_FUNDING_PLATFORM_EXTERNAL_LINKS
+// before the hostname check, so pin it off to keep the same-origin assertion
+// deterministic regardless of the ambient CI/test env.
+vi.mock("@/utilities/enviromentVars", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/utilities/enviromentVars")>();
+  return {
+    ...actual,
+    envVars: { ...actual.envVars, NEXT_PUBLIC_FUNDING_PLATFORM_EXTERNAL_LINKS: "false" },
+  };
+});
+
 import { getApplicationDetailUrl } from "@/utilities/fundingPlatformUrls";
 
 describe("getApplicationDetailUrl", () => {
