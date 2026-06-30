@@ -39,7 +39,7 @@ export function Hero() {
           <div className="flex items-center gap-3">
             <span aria-hidden className="h-px w-8 bg-foreground/40" />
             <span className="text-[11px] font-medium tracking-[0.18em] uppercase text-muted-foreground">
-              Agentic funding software · for foundations and donor advisors
+              Agentic funding software
             </span>
           </div>
         </ScrollReveal>
@@ -68,9 +68,9 @@ export function Hero() {
                 "max-w-[680px]"
               )}
             >
-              Karma is the funding platform foundation officers and donor advisors run from ChatGPT,
-              Claude, or any agent they already use, or right here in the browser. Discover
-              projects, approve funding, pull grantee updates, and generate reports.
+              Foundation officers and donor advisors run Karma from ChatGPT, Claude, or any agent
+              they already use. Or right here in the browser. Discover projects, approve funding,
+              pull grantee updates, generate reports.
             </p>
           </div>
         </ScrollReveal>

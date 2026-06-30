@@ -41,7 +41,9 @@ describe("Homepage Navigation Flows", () => {
       expect(
         screen.getByText(/Generate a donor-ready research brief in 10 minutes/i)
       ).toBeInTheDocument();
-      expect(screen.getByText(/AI-powered software for grant programs/i)).toBeInTheDocument();
+      expect(
+        screen.getByText(/Cut application review time by 70% and pay on proof of work/i)
+      ).toBeInTheDocument();
     });
 
     it("should route the Nonprofit Research row CTA to /donor-advisors", async () => {

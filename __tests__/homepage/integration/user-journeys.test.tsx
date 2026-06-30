@@ -57,7 +57,9 @@ describe("Homepage User Journeys", () => {
           screen.getByText(/Generate a donor-ready research brief in 10 minutes/i)
         ).toBeInTheDocument();
       });
-      expect(screen.getByText(/AI-powered software for grant programs/i)).toBeInTheDocument();
+      expect(
+        screen.getByText(/Cut application review time by 70% and pay on proof of work/i)
+      ).toBeInTheDocument();
     });
   });
 
@@ -79,7 +81,9 @@ describe("Homepage User Journeys", () => {
           screen.getByText(/Generate a donor-ready research brief in 10 minutes/i)
         ).toBeInTheDocument();
       });
-      expect(screen.getByText(/AI-powered software for grant programs/i)).toBeInTheDocument();
+      expect(
+        screen.getByText(/Cut application review time by 70% and pay on proof of work/i)
+      ).toBeInTheDocument();
     });
 
     it("should not surface the root error boundary when authenticated", async () => {
