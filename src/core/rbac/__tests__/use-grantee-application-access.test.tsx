@@ -6,8 +6,10 @@ import { useGranteeApplicationAccess } from "../hooks/use-grantee-application-ac
 
 vi.mock("@/services/funding-applications", () => ({ fetchUserApplications: vi.fn() }));
 
-const auth = vi.hoisted(() => ({ address: "0xabc" as string | undefined }));
-vi.mock("@/hooks/useAuth", () => ({ useAuth: () => ({ address: auth.address }) }));
+const auth = vi.hoisted(() => ({ address: "0xabc" as string | undefined, authenticated: true }));
+vi.mock("@/hooks/useAuth", () => ({
+  useAuth: () => ({ address: auth.address, authenticated: auth.authenticated }),
+}));
 
 import { fetchUserApplications } from "@/services/funding-applications";
 
@@ -32,6 +34,7 @@ describe("useGranteeApplicationAccess", () => {
 
   beforeEach(() => {
     auth.address = "0xabc";
+    auth.authenticated = true;
     queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     vi.clearAllMocks();
   });
@@ -134,8 +137,8 @@ describe("useGranteeApplicationAccess", () => {
     expect(mockFetchUserApplications).not.toHaveBeenCalled();
   });
 
-  it("does not fetch when there is no authenticated wallet", () => {
-    auth.address = undefined;
+  it("does not fetch when the user is not authenticated", () => {
+    auth.authenticated = false;
 
     const { result } = renderHook(
       () => useGranteeApplicationAccess({ enabled: true, communityId: COMMUNITY }),
@@ -144,6 +147,21 @@ describe("useGranteeApplicationAccess", () => {
 
     expect(result.current.isResolving).toBe(false);
     expect(mockFetchUserApplications).not.toHaveBeenCalled();
+  });
+
+  it("still fetches when authenticated but the wallet address hasn't resolved yet", async () => {
+    auth.address = undefined;
+    mockFetchUserApplications.mockResolvedValue(makeResponse([makeApp("REF-1")], 1));
+
+    const { result } = renderHook(
+      () => useGranteeApplicationAccess({ enabled: true, communityId: COMMUNITY }),
+      { wrapper }
+    );
+
+    await waitFor(() => expect(result.current.isResolving).toBe(false));
+
+    expect(mockFetchUserApplications).toHaveBeenCalled();
+    expect(result.current.isGrantee).toBe(true);
   });
 
   it("surfaces a transient lookup failure as isError (not a false grantee)", async () => {
