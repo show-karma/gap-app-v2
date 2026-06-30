@@ -6,6 +6,7 @@ const h = vi.hoisted(() => ({
   grantee: undefined as unknown,
   granteeArgs: undefined as unknown,
   accessDeniedProps: undefined as Record<string, unknown> | undefined,
+  isGuestDueToError: false,
 }));
 
 vi.mock("next/navigation", () => ({
@@ -18,6 +19,10 @@ vi.mock("@/utilities/whitelabel-context", () => ({
 
 vi.mock("@/hooks/useAccessDeniedMessages", () => ({
   useAccessDeniedMessages: () => ({ data: { applicantMessage: null } }),
+}));
+
+vi.mock("@/src/core/rbac/context/permission-context", () => ({
+  usePermissionContext: () => ({ isGuestDueToError: h.isGuestDueToError }),
 }));
 
 vi.mock("@/src/core/rbac/hooks/use-grantee-application-access", () => ({
@@ -57,9 +62,11 @@ const renderView = () =>
 
 describe("ManageDeniedView", () => {
   beforeEach(() => {
+    vi.clearAllMocks();
     h.grantee = noGrantee;
     h.granteeArgs = undefined;
     h.accessDeniedProps = undefined;
+    h.isGuestDueToError = false;
   });
 
   it("scopes the applicant lookup to the route's community and program", () => {
@@ -113,5 +120,14 @@ describe("ManageDeniedView", () => {
     h.grantee = { ...noGrantee, isGrantee: true, isError: true };
     renderView();
     expect(screen.queryByTestId("applicant-cta")).not.toBeInTheDocument();
+  });
+
+  it("disables the lookup on a transient permission failure (undetermined, not denied)", () => {
+    h.isGuestDueToError = true;
+    renderView();
+    // Plain denial, and the lookup is disabled so we don't redirect an
+    // undetermined user.
+    expect(screen.getByTestId("access-denied")).toBeInTheDocument();
+    expect((h.granteeArgs as { enabled: boolean }).enabled).toBe(false);
   });
 });

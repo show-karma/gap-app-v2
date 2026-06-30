@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useAccessDeniedMessages } from "@/hooks/useAccessDeniedMessages";
 import { AccessDenied } from "@/src/components/ui/AccessDenied";
 import { manageLayoutDenial } from "@/src/components/ui/access-denied-presets";
+import { usePermissionContext } from "@/src/core/rbac/context/permission-context";
 import { useGranteeApplicationAccess } from "@/src/core/rbac/hooks/use-grantee-application-access";
 import {
   ACCESS_DENIED_DEFAULT_MESSAGES,
@@ -41,8 +42,13 @@ export function ManageDeniedView({ communityId, communityName }: ManageDeniedVie
   );
   const whitelabelOrigin = isWhitelabel ? clientOrigin : undefined;
 
+  // A failed permission lookup also lands here (roles default to guest). Treat
+  // that as "undetermined", not a real denial — skip the applicant lookup so a
+  // transient failure can't redirect a user who was never actually denied.
+  const { isGuestDueToError } = usePermissionContext();
+
   const grantee = useGranteeApplicationAccess({
-    enabled: true,
+    enabled: !isGuestDueToError,
     communityId,
     programId,
     whitelabelOrigin,
