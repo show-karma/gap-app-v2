@@ -42,7 +42,12 @@ export function ContactCta({
   const [orgName, setOrgName] = useState(defaultOrgName);
   const [message, setMessage] = useState(defaultMessage);
 
-  const { mutate: submit, isPending } = useContact({
+  const {
+    mutate: submit,
+    isPending,
+    isError,
+    reset,
+  } = useContact({
     onSuccess: () => {
       toast.success("Thanks. We will respond within one business day.");
       setIsOpen(false);
@@ -51,6 +56,13 @@ export function ContactCta({
       toast.error("Could not send the request. Please try again or email support directly.");
     },
   });
+
+  function handleOpenChange(open: boolean) {
+    // Clear any prior error/success state so a stale message doesn't show
+    // when the dialog is reopened.
+    if (open) reset();
+    setIsOpen(open);
+  }
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -68,11 +80,11 @@ export function ContactCta({
     <div className="flex flex-col gap-3 rounded-2xl border border-zinc-200 bg-zinc-50 p-5 dark:border-zinc-800 dark:bg-zinc-900/40">
       <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">{headline}</h3>
       <p className="text-sm text-zinc-600 dark:text-zinc-400">{subline}</p>
-      <Button type="button" onClick={() => setIsOpen(true)} className="self-start">
+      <Button type="button" onClick={() => handleOpenChange(true)} className="self-start">
         {buttonLabel}
       </Button>
 
-      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <Dialog open={isOpen} onOpenChange={handleOpenChange}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>{headline}</DialogTitle>
@@ -112,11 +124,16 @@ export function ContactCta({
                 className="min-h-[100px] rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
               />
             </div>
+            {isError ? (
+              <p role="alert" className="text-sm text-rose-600 dark:text-rose-400">
+                Could not send the request. Please try again, or email support directly.
+              </p>
+            ) : null}
             <DialogFooter>
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => setIsOpen(false)}
+                onClick={() => handleOpenChange(false)}
                 disabled={isPending}
               >
                 Cancel

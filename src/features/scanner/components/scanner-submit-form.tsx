@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/useAuth";
@@ -20,13 +20,19 @@ export function ScannerSubmitForm() {
   const [url, setUrl] = useState("");
   const [urlError, setUrlError] = useState<string | null>(null);
   const [rateLimit, setRateLimit] = useState<RateLimitState | null>(null);
+  // Synchronous in-flight guard: `isPending` only flips on the next render, so
+  // two clicks dispatched in the same tick both pass the `disabled` check and
+  // fire duplicate POSTs. This ref blocks the second call immediately.
+  const submittingRef = useRef(false);
 
   const { mutate, isPending } = useSubmitScan({
     onSuccess: (response) => {
+      submittingRef.current = false;
       toast.success("Scan started");
       router.push(PAGES.SCANNER.PUBLIC_SCORECARD(response.slug));
     },
     onError: (error) => {
+      submittingRef.current = false;
       // fetchData collapses the structured {error:{code,...}} body down to a
       // plain axios message string, so we cannot reliably read the backend
       // code here. Branch on status + identity instead: 429 on an unauthed
@@ -63,6 +69,8 @@ export function ScannerSubmitForm() {
       setUrlError("URL must use http:// or https://");
       return;
     }
+    if (submittingRef.current) return;
+    submittingRef.current = true;
     mutate({ url: parsed.toString() });
   }
 
@@ -70,7 +78,9 @@ export function ScannerSubmitForm() {
 
   return (
     <>
-      <form onSubmit={handleSubmit} className="flex flex-col gap-2">
+      {/* noValidate: run our own validation so the custom inline messages
+          below show instead of the browser's native type=url tooltip. */}
+      <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-2">
         <Label htmlFor="scanner-url" className="sr-only">
           Nonprofit URL
         </Label>
@@ -91,12 +101,12 @@ export function ScannerSubmitForm() {
             disabled={disabled}
             aria-invalid={urlError ? "true" : undefined}
             aria-describedby={urlError ? "scanner-url-error" : undefined}
-            className="flex-1 bg-transparent font-mono text-base text-zinc-900 placeholder:text-zinc-400 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 dark:text-zinc-100 dark:placeholder:text-zinc-600"
+            className="min-w-0 flex-1 bg-transparent font-mono text-base text-zinc-900 placeholder:text-zinc-400 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 dark:text-zinc-100 dark:placeholder:text-zinc-600"
           />
           <button
             type="submit"
             disabled={disabled}
-            className="inline-flex items-center gap-1 rounded-full bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
+            className="inline-flex shrink-0 items-center gap-1 rounded-full bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
           >
             {isPending ? "Scanning" : "Scan"}
             <span aria-hidden>{isPending ? "..." : "→"}</span>
