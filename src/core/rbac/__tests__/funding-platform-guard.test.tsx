@@ -6,8 +6,7 @@ const noGrantee = {
   isResolving: false,
   isGrantee: false,
   isError: false,
-  redirectUrl: "/dashboard",
-  applicationCount: 0,
+  redirect: { kind: "dashboard", url: "/dashboard" },
 };
 
 const h = vi.hoisted(() => ({
@@ -50,13 +49,9 @@ vi.mock("../hooks/use-grantee-application-access", () => ({
 }));
 
 vi.mock("../components/grantee-redirect-notice", () => ({
-  GranteeRedirectNotice: ({
-    redirectUrl,
-    applicationCount,
-  }: {
-    redirectUrl: string;
-    applicationCount: number;
-  }) => <div data-testid="grantee-notice" data-url={redirectUrl} data-count={applicationCount} />,
+  GranteeRedirectNotice: ({ redirect }: { redirect: { kind: string; url: string } }) => (
+    <div data-testid="grantee-notice" data-url={redirect.url} data-kind={redirect.kind} />
+  ),
 }));
 
 const setPermission = (
@@ -128,7 +123,7 @@ describe("FundingPlatformGuard", () => {
 
       const notice = screen.getByTestId("grantee-notice");
       expect(notice).toHaveAttribute("data-url", "/community/test-community/applications/REF-1");
-      expect(notice).toHaveAttribute("data-count", "1");
+      expect(notice).toHaveAttribute("data-kind", "application");
       // Scoped to the route's project; applicant fallback never mounted.
       expect(h.fundingArg).toBe("project-uid-1");
       expect(h.granteeArgs).toBeUndefined();
@@ -141,7 +136,7 @@ describe("FundingPlatformGuard", () => {
 
       const notice = screen.getByTestId("grantee-notice");
       expect(notice).toHaveAttribute("data-url", "/dashboard");
-      expect(notice).toHaveAttribute("data-count", "0");
+      expect(notice).toHaveAttribute("data-kind", "dashboard");
     });
   });
 
@@ -172,24 +167,27 @@ describe("FundingPlatformGuard", () => {
       h.grantee = {
         ...noGrantee,
         isGrantee: true,
-        redirectUrl: "/community/test-community/applications/REF-9",
-        applicationCount: 1,
+        redirect: { kind: "application", url: "/community/test-community/applications/REF-9" },
       };
       renderGuard();
 
       const notice = screen.getByTestId("grantee-notice");
       expect(notice).toHaveAttribute("data-url", "/community/test-community/applications/REF-9");
-      expect(notice).toHaveAttribute("data-count", "1");
+      expect(notice).toHaveAttribute("data-kind", "application");
     });
 
     it("sends a multi-application applicant to the dashboard", () => {
       setPermission({ isProjectOwner: false });
-      h.grantee = { ...noGrantee, isGrantee: true, redirectUrl: "/dashboard", applicationCount: 4 };
+      h.grantee = {
+        ...noGrantee,
+        isGrantee: true,
+        redirect: { kind: "dashboard", url: "/dashboard" },
+      };
       renderGuard();
 
       const notice = screen.getByTestId("grantee-notice");
       expect(notice).toHaveAttribute("data-url", "/dashboard");
-      expect(notice).toHaveAttribute("data-count", "4");
+      expect(notice).toHaveAttribute("data-kind", "dashboard");
     });
 
     it("shows the generic denial when the user is neither owner nor applicant", () => {

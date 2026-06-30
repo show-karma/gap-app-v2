@@ -1,10 +1,10 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import type { UserApplicationsResponse } from "@/src/features/user-applications/types";
-import fetchData from "@/utilities/fetchData";
-import { getApplicationDetailUrl } from "@/utilities/fundingPlatformUrls";
-import { PAGES } from "@/utilities/pages";
+import { useAuth } from "@/hooks/useAuth";
+import { fetchUserApplications } from "@/services/funding-applications";
+import { buildGranteeRedirect, type GranteeRedirect } from "@/utilities/fundingPlatformUrls";
+import { QUERY_KEYS } from "@/utilities/queryKeys";
 
 interface UseGranteeApplicationAccessParams {
   /** Only fire the lookup when the caller has already established the user is denied. */
@@ -21,8 +21,7 @@ interface GranteeApplicationAccess {
   isResolving: boolean;
   isGrantee: boolean;
   isError: boolean;
-  redirectUrl: string;
-  applicationCount: number;
+  redirect: GranteeRedirect;
 }
 
 /**
@@ -38,16 +37,18 @@ export function useGranteeApplicationAccess({
   programId,
   whitelabelOrigin,
 }: UseGranteeApplicationAccessParams): GranteeApplicationAccess {
-  const isEnabled = enabled && !!communityId;
+  // The endpoint is per-authenticated-user; key on the wallet so an account
+  // switch doesn't serve the previous user's applications from cache.
+  const { address } = useAuth();
+  const isEnabled = enabled && !!communityId && !!address;
 
-  const query = useQuery<UserApplicationsResponse>({
-    queryKey: ["grantee-application-access", communityId, programId],
-    queryFn: async () => {
-      const programParam = programId ? `&programId=${programId}` : "";
-      const url = `/v2/funding-applications/user/my-applications?page=1&limit=1&communitySlug=${communityId}${programParam}`;
-      const [res, err] = await fetchData<UserApplicationsResponse>(url, "GET");
-      if (err) throw new Error(err);
-      return res as UserApplicationsResponse;
+  const query = useQuery({
+    queryKey: QUERY_KEYS.APPLICATIONS.GRANTEE_ACCESS(address, communityId, programId),
+    queryFn: () => {
+      // isEnabled already gates the query on a defined communityId; this guard
+      // just narrows the type without a cast.
+      if (!communityId) throw new Error("communityId is required");
+      return fetchUserApplications({ communitySlug: communityId, programId, page: 1, limit: 1 });
     },
     enabled: isEnabled,
     staleTime: 1000 * 60 * 2,
@@ -61,19 +62,16 @@ export function useGranteeApplicationAccess({
   const applications = query.data?.applications ?? [];
   // Use the server total, not applications.length (the page is limited to 1).
   const applicationCount = query.data?.pagination?.total ?? applications.length;
-  const isGrantee = applicationCount > 0;
-  const firstReference = applications[0]?.referenceNumber;
-
-  const redirectUrl =
-    applicationCount === 1 && firstReference && communityId
-      ? getApplicationDetailUrl(communityId, firstReference, whitelabelOrigin)
-      : PAGES.DASHBOARD;
 
   return {
     isResolving,
-    isGrantee,
+    isGrantee: applicationCount > 0,
     isError: query.isError,
-    redirectUrl,
-    applicationCount,
+    redirect: buildGranteeRedirect({
+      communityId,
+      referenceNumber: applications[0]?.referenceNumber,
+      applicationCount,
+      whitelabelOrigin,
+    }),
   };
 }
