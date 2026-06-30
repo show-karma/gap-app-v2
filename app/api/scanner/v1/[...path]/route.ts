@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/nextjs";
 import type { NextRequest } from "next/server";
 import { envVars } from "@/utilities/enviromentVars";
 
@@ -16,6 +17,11 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const BACKEND_BASE = envVars.NEXT_PUBLIC_GAP_INDEXER_URL.replace(/\/$/, "");
+
+// Upstream timeout for the proxied call. Generous enough for the slowest
+// scanner endpoints, short enough that a stuck connection surfaces as a
+// 504 instead of pinning the route.
+const UPSTREAM_TIMEOUT_MS = 30_000;
 
 // Hop-by-hop headers that must not be forwarded blindly (per RFC 7230 §6.1).
 // content-encoding/content-length are stripped because Node's fetch()
@@ -138,13 +144,32 @@ async function proxy(
     if (body.byteLength > 0) init.body = body;
   }
 
-  const upstream = await fetch(targetUrl.toString(), init);
-  const body = await upstream.arrayBuffer();
-  return new Response(body, {
-    status: upstream.status,
-    statusText: upstream.statusText,
-    headers: buildForwardResponseHeaders(upstream),
-  });
+  // Bound the upstream call so a hung gap-indexer doesn't pin the Node
+  // route until the platform's own (much longer) timeout fires. On abort
+  // or transport failure, return a controlled gateway error and report it
+  // server-side rather than letting it bubble as an opaque 500.
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), UPSTREAM_TIMEOUT_MS);
+  try {
+    const upstream = await fetch(targetUrl.toString(), { ...init, signal: controller.signal });
+    const body = await upstream.arrayBuffer();
+    return new Response(body, {
+      status: upstream.status,
+      statusText: upstream.statusText,
+      headers: buildForwardResponseHeaders(upstream),
+    });
+  } catch (error) {
+    const aborted = error instanceof Error && error.name === "AbortError";
+    Sentry.captureException(error, {
+      tags: { route: "/api/scanner/v1/[...path]", method: req.method },
+      extra: { targetPath },
+    });
+    return new Response(aborted ? "Gateway Timeout" : "Bad Gateway", {
+      status: aborted ? 504 : 502,
+    });
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 export const GET = proxy;

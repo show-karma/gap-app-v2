@@ -12,16 +12,17 @@ test.describe("Smoke Tests — Health", () => {
     await page.goto("/", GOTO_OPTIONS);
     await waitForPageReady(page);
 
-    // The hero heading should be visible — its accessible name comes from
-    // the sr-only span (the rotating-word variant is aria-hidden)
-    await expect(
-      page.getByRole("heading", { name: /karma helps funders fund and track/i }).first()
-    ).toBeVisible();
+    // Smoke = liveness, not copy correctness. Assert the hero H1 and the
+    // workflow H2 render with content, without pinning the exact marketing
+    // copy: the homepage integration tests cover the wording, and BASE_URL
+    // here is staging, which lags a copy change until it deploys. Structural
+    // checks stay green across hero revisions (matches T35-03..08 below).
+    const heroHeading = page.locator("h1").first();
+    await expect(heroHeading).toBeVisible();
+    await expect(heroHeading).not.toBeEmpty();
 
-    // The workflow section should be present on the homepage
-    await expect(
-      page.getByRole("heading", { name: /one platform for two motions/i })
-    ).toBeVisible();
+    // The workflow section renders its own H2 below the hero.
+    await expect(page.getByRole("heading", { level: 2 }).first()).toBeVisible();
 
     assertNoJsErrors(jsErrors);
   });

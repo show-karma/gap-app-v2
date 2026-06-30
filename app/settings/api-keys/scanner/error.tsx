@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect } from "react";
+import { errorManager } from "@/components/Utilities/errorManager";
 import { Button } from "@/components/ui/button";
 
 interface ScannerApiKeysErrorProps {
@@ -7,7 +9,10 @@ interface ScannerApiKeysErrorProps {
   readonly reset: () => void;
 }
 
-export default function ScannerApiKeysError({ reset }: ScannerApiKeysErrorProps) {
+export default function ScannerApiKeysError({ error, reset }: ScannerApiKeysErrorProps) {
+  useEffect(() => {
+    errorManager("Failed to load scanner API keys", error);
+  }, [error]);
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-col items-start gap-4 px-4 py-16">
       <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">

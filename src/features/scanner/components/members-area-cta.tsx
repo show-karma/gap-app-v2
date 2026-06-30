@@ -18,14 +18,20 @@ interface MembersAreaCtaProps {
 export function MembersAreaCta({ slug, scanId: initialScanId }: MembersAreaCtaProps) {
   const { push } = useRouter();
   const { ready, authenticated, login } = useAuth();
-  const [scanId, setScanId] = useState<string | null>(initialScanId);
+  // Tag the fetched id with the slug it belongs to. The effective scanId is
+  // derived, so a slug change instantly invalidates a stale fetch result
+  // (fetched.slug !== slug -> null) without a reset setState. This both
+  // fixes routing to a previous scan across /s/[slug] transitions and keeps
+  // the effect to a single setState (no cascading redraw).
+  const [fetched, setFetched] = useState<{ slug: string; scanId: string } | null>(null);
+  const scanId = initialScanId ?? (fetched?.slug === slug ? fetched.scanId : null);
 
   useEffect(() => {
     if (initialScanId) return;
     let cancelled = false;
     getPublicScorecardBySlug(slug)
       .then((s) => {
-        if (!cancelled) setScanId(s.scanId);
+        if (!cancelled) setFetched({ slug, scanId: s.scanId });
       })
       .catch(() => {
         // SUPPRESSED: scorecard may legitimately be missing (unpublished,

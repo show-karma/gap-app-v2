@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect } from "react";
+import { errorManager } from "@/components/Utilities/errorManager";
 import { Button } from "@/components/ui/button";
 import { PAGES } from "@/utilities/pages";
 
@@ -9,7 +11,10 @@ interface ScorecardErrorProps {
   readonly reset: () => void;
 }
 
-export default function ScorecardError({ reset }: ScorecardErrorProps) {
+export default function ScorecardError({ error, reset }: ScorecardErrorProps) {
+  useEffect(() => {
+    errorManager("Failed to load public scorecard", error);
+  }, [error]);
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-col items-start gap-4 px-4 py-16">
       <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">
