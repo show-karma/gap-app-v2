@@ -24,7 +24,7 @@ interface ChipRowProps {
   descriptor: PersonaChipDescriptor;
   field: PersonaStructuredField<string>;
   disabled?: boolean;
-  onChange: (value: string | null) => void;
+  onChange: (key: keyof PersonaStructured, value: string | null) => void;
 }
 
 const ChipRow = memo(function ChipRow({ descriptor, field, disabled, onChange }: ChipRowProps) {
@@ -39,7 +39,7 @@ const ChipRow = memo(function ChipRow({ descriptor, field, disabled, onChange }:
       </span>
       <Select
         value={field.value ?? NULL_VALUE}
-        onValueChange={(next) => onChange(next === NULL_VALUE ? null : next)}
+        onValueChange={(next) => onChange(descriptor.key, next === NULL_VALUE ? null : next)}
         disabled={disabled}
       >
         <SelectTrigger aria-labelledby={labelId} className="w-full">
@@ -83,7 +83,7 @@ export function PersonaStructuredChips({
           descriptor={descriptor}
           field={structured[descriptor.key]}
           disabled={disabled}
-          onChange={(value) => onChange(descriptor.key, value)}
+          onChange={onChange}
         />
       ))}
     </div>

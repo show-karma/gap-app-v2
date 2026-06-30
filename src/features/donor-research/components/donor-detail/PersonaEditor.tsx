@@ -118,13 +118,14 @@ export function PersonaEditor({ handleId }: PersonaEditorProps) {
     });
   };
 
-  const onChipChange = (key: keyof PersonaStructured, value: string | null) => {
+  // Stable identity so the memoized chip rows aren't redrawn every render.
+  const onChipChange = useCallback((key: keyof PersonaStructured, value: string | null) => {
     setStructured((prev) => ({
       ...prev,
       [key]: { value, source: value === null ? null : "manual" },
     }));
     setIsDirty(true);
-  };
+  }, []);
 
   const onResetToExtraction = () => {
     if (!extractedValues) return;
