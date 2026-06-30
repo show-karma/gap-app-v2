@@ -241,21 +241,32 @@ export function WorkflowSection() {
         );
       })}
 
-      {/* Quiet closing moment. Single sentence + arrow link gives end-of-
-          page visitors a final pull without competing with the per-row
-          CTAs above. Routes to the general partner form so visitors who
-          don't fit either bucket get the right intake. */}
+      {/* Quiet closing moment. Confident headline + one-line subhead +
+          arrow link. Stays understated relative to the per-row CTAs above
+          but reinforces the audience and the demo length so the final pull
+          feels specific. Routes to the general partner form so visitors
+          who don't fit either bucket get the right intake. */}
       <ScrollReveal variant="fade-up" className="w-full">
         <div className={cn(marketingLayoutTheme.padding, "w-full py-14 md:py-20")}>
-          <SectionContainer className="flex flex-col items-center text-center gap-1">
-            <p className="text-sm md:text-base text-muted-foreground">Not sure which path fits?</p>
+          <SectionContainer className="flex flex-col items-center text-center gap-3">
+            <h3
+              className={cn(
+                "font-display font-medium text-foreground",
+                "text-[24px] md:text-[28px] leading-[110%] tracking-[-0.015em]"
+              )}
+            >
+              See Karma on your stack.
+            </h3>
+            <p className="text-sm md:text-base text-muted-foreground max-w-[520px]">
+              Foundations and donor advisors: book a 30-minute walkthrough with the team.
+            </p>
             <a
               href={SOCIALS.PARTNER_FORM}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-foreground hover:text-foreground/80 transition-colors font-medium text-base md:text-lg group"
+              className="inline-flex items-center gap-1.5 mt-2 text-foreground hover:text-foreground/80 transition-colors font-medium text-base md:text-lg group"
             >
-              Talk to our team
+              Schedule a demo
               <span
                 aria-hidden
                 className="transition-transform duration-200 group-hover:translate-x-1"
