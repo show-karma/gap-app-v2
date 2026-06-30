@@ -68,7 +68,7 @@ export function ContactCta({
     event.preventDefault();
     const payload: ContactRequest = {
       sourceTag,
-      email,
+      contactEmail: email,
       orgName: orgName || undefined,
       message,
       scanId,
