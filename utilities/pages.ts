@@ -52,6 +52,9 @@ export const PAGES = {
     ONBOARDING: `/nonprofit-research/onboarding`,
     REPORT: (reportId: string) => `/nonprofit-research/${reportId}`,
     SHARED: (token: string) => `/nonprofit-research/shared/${token}`,
+    // Staff-only admin overview (DEV-467).
+    ADMIN: `/admin/nonprofit-research`,
+    ADMIN_REPORT: (reportId: string) => `/admin/nonprofit-research/${reportId}`,
   },
   EVALUATE: `/evaluate`,
   // REVIEWER routes now point to MANAGE (unified RBAC-based routes)

@@ -100,6 +100,48 @@ export interface ResearchReportList {
   offset: number;
 }
 
+// -- Staff admin overview (DEV-467) ------------------------------------
+
+/** A report link under a donor in the admin overview. */
+export interface AdminAdvisorReportSummary {
+  id: string;
+  mode: DonorResearchReportMode;
+  status: DonorResearchReportStatus;
+  createdAt: string;
+  hasShareToken: boolean;
+}
+
+/** A donor (handle) an advisor researches, with its report links. */
+export interface AdminAdvisorDonor {
+  handleId: string;
+  opaqueLabel: string;
+  reportCount: number;
+  reports: AdminAdvisorReportSummary[];
+}
+
+/** An advisor row: identity (email from the contributor profile) + donors. */
+export interface AdminAdvisor {
+  id: string;
+  walletAddress: string;
+  email: string | null;
+  name: string | null;
+  displayName: string;
+  orgName: string | null;
+  timezone: string;
+  rateLimitTier: DonorResearchRateLimitTier;
+  createdAt: string;
+  donorCount: number;
+  reportCount: number;
+  donors: AdminAdvisorDonor[];
+}
+
+export interface AdminAdvisorsList {
+  items: AdminAdvisor[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
 export type ComplianceDisqualificationReason =
   | "pub78_revoked"
   | "ca_ag_suspended"
