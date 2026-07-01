@@ -47,6 +47,7 @@ const mockFontLoader = () => ({
 vi.mock("next/font/google", () => ({
   Spectral: mockFontLoader,
   Bricolage_Grotesque: mockFontLoader,
+  JetBrains_Mono: mockFontLoader,
 }));
 
 vi.mock("next/font/local", () => ({
