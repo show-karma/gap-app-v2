@@ -1,4 +1,5 @@
 import type {
+  AdminAdvisorsList,
   DonorAdvisor,
   DonorHandle,
   DonorHandleList,
@@ -157,8 +158,113 @@ export const getResearchReport = async (reportId: string): Promise<ResearchRepor
   if (error || !data) {
     throw new Error(error || "Failed to load research report");
   }
+  return withMockSocialMetrics(data);
+};
+
+// -- Staff admin overview (DEV-467) ------------------------------------
+
+export interface ListAdvisorsOptions {
+  page?: number;
+  limit?: number;
+}
+
+/**
+ * Staff-only: lists every donor-research advisor with their donors and
+ * report links. Gated server-side by the staff allowlist; the FE also gates
+ * the route on `isStaff`. A non-staff caller gets a 403 that surfaces as a
+ * thrown error here.
+ */
+export const listAdvisors = async (
+  options: ListAdvisorsOptions = {}
+): Promise<AdminAdvisorsList> => {
+  const params: Record<string, number> = {};
+  if (options.page !== undefined) params.page = options.page;
+  if (options.limit !== undefined) params.limit = options.limit;
+  const [data, error] = await fetchData<AdminAdvisorsList>(
+    INDEXER.DONOR_RESEARCH.ADMIN_ADVISORS,
+    "GET",
+    {},
+    params
+  );
+  if (error || !data) {
+    throw new Error(error || "Failed to load advisors");
+  }
   return data;
 };
+
+/**
+ * Staff-only: reads any advisor's report with the same shape the advisor
+ * sees, so the admin view renders the identical brief. Applies the same
+ * illustrative social-metrics fill as {@link getResearchReport} for parity.
+ */
+export const getAdminReport = async (reportId: string): Promise<ResearchReportDetail> => {
+  const [data, error] = await fetchData<ResearchReportDetail>(
+    INDEXER.DONOR_RESEARCH.ADMIN_REPORT_BY_ID(reportId)
+  );
+  if (error || !data) {
+    throw new Error(error || "Failed to load report");
+  }
+  return withMockSocialMetrics(data);
+};
+
+// TEMP(DEV-385): the backend social signal isn't producing data yet, so
+// fill illustrative social metrics on any candidate that lacks them.
+// Remove once real socialMetrics flow from the report response.
+const mockDaysAgo = (n: number): string => new Date(Date.now() - n * 86_400_000).toISOString();
+function withMockSocialMetrics(report: ResearchReportDetail): ResearchReportDetail {
+  return {
+    ...report,
+    candidates: report.candidates.map((candidate, i) =>
+      candidate.socialMetrics
+        ? candidate
+        : {
+            ...candidate,
+            socialMetrics: {
+              byChannel: [
+                {
+                  channel: "linkedin",
+                  available: true,
+                  followers: 4200 + i * 800,
+                  postsInWindow: 9,
+                  lastPostAt: mockDaysAgo(2),
+                  avgLikes: 63,
+                  profileUrl: "https://www.linkedin.com/company/climate-solutions",
+                },
+                {
+                  channel: "facebook",
+                  available: true,
+                  followers: 9400 + i * 600,
+                  postsInWindow: 7,
+                  lastPostAt: mockDaysAgo(3),
+                  avgLikes: 112,
+                  profileUrl: "https://www.facebook.com/climatesolutions",
+                },
+                {
+                  channel: "instagram",
+                  available: true,
+                  followers: 12800 + i * 1200,
+                  postsInWindow: 14,
+                  lastPostAt: mockDaysAgo(1),
+                  avgLikes: 540,
+                  profileUrl: "https://www.instagram.com/climatesolutionsnw",
+                },
+                {
+                  channel: "x",
+                  available: true,
+                  followers: 3100 + i * 300,
+                  postsInWindow: 21,
+                  lastPostAt: mockDaysAgo(0),
+                  avgLikes: 18,
+                  profileUrl: "https://x.com/climatesolution",
+                },
+              ],
+              lastPostAt: mockDaysAgo(0),
+              totalFollowers: 29500 + i * 2900,
+            },
+          }
+    ),
+  };
+}
 
 export interface CreateReportRequest {
   donorHandleId: string;
