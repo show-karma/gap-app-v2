@@ -3,6 +3,7 @@
 import { useScorecardBySlug } from "../hooks/use-scorecard-by-slug";
 import type { PublicScorecardPayload } from "../types";
 import { CategoryBar } from "./category-bar";
+import { MembersAreaCta } from "./members-area-cta";
 import { ScanProgressIndicator } from "./scan-progress-indicator";
 import { ScoreHero } from "./score-hero";
 
@@ -87,6 +88,23 @@ export function PublicScorecard({ slug, initialData }: PublicScorecardProps) {
           <span>Karma AI-Readiness Checker</span>
         </footer>
       ) : null}
+
+      {/* Members-area upsell lives inside the success branch so it never
+          renders over a failed/loading/absent scorecard (an "Open full
+          report" CTA on a "could not load" page is misleading). */}
+      <aside className="flex flex-col gap-3 border-t border-zinc-200 pt-8 dark:border-zinc-800">
+        <span className="font-mono text-[11px] uppercase tracking-wider text-zinc-500">
+          Members area
+        </span>
+        <h2 className="font-display text-2xl tracking-tight text-zinc-900 dark:text-zinc-50">
+          See the top fixes and per-check evidence
+        </h2>
+        <p className="text-sm text-zinc-600 dark:text-zinc-400">
+          Log in to view the prioritized fix list, donate-flow walkthrough notes, and the full
+          rubric breakdown for this scan.
+        </p>
+        <MembersAreaCta slug={slug} scanId={scorecard.scanId ?? null} />
+      </aside>
     </article>
   );
 }
