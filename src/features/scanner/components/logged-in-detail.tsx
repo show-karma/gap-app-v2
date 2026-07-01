@@ -5,6 +5,7 @@ import { CategoryBar } from "./category-bar";
 import { ContactCta } from "./contact-cta";
 import { EvidenceList } from "./evidence-list";
 import { GradeHeadline } from "./grade-headline";
+import { ReportGenerating } from "./report-generating";
 import { ScanProgressIndicator } from "./scan-progress-indicator";
 import { ScannerViewTracker } from "./scanner-view-tracker";
 import { TopFixesList } from "./top-fixes-list";
@@ -15,38 +16,36 @@ interface LoggedInDetailProps {
 }
 
 export function LoggedInDetail({ scanId, userEmail }: LoggedInDetailProps) {
-  const { data, isLoading, isError, refetch } = useScan(scanId);
+  const { data, isError, refetch } = useScan(scanId);
 
-  if (isLoading) {
-    return (
-      <output
-        className="flex animate-pulse flex-col gap-4 rounded-3xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900"
-        aria-label="Loading scan detail"
-        aria-busy="true"
-      >
-        <div className="h-16 w-1/2 rounded-2xl bg-zinc-200 dark:bg-zinc-800" />
-        <div className="h-2 w-full rounded-full bg-zinc-200 dark:bg-zinc-800" />
-        <div className="h-2 w-full rounded-full bg-zinc-200 dark:bg-zinc-800" />
-      </output>
-    );
+  // No envelope yet. A just-created scan can 404 briefly before its record is
+  // queryable; the query stays pending (retrying) through that window, so we
+  // show the generating view rather than an error until retries are exhausted.
+  if (!data) {
+    if (isError) {
+      return (
+        <div className="flex flex-col gap-3 rounded-2xl border border-rose-200 bg-rose-50 p-6 text-rose-900 dark:border-rose-900/40 dark:bg-rose-950/40 dark:text-rose-100">
+          <h2 className="text-lg font-semibold">We could not load this scan</h2>
+          <p className="text-sm">
+            You may not have access to this scan, or it may have been deleted.
+          </p>
+          <button
+            type="button"
+            className="self-start rounded-md border border-rose-300 px-3 py-1 text-sm font-medium hover:bg-rose-100 dark:border-rose-700 dark:hover:bg-rose-900/60"
+            onClick={() => refetch()}
+          >
+            Try again
+          </button>
+        </div>
+      );
+    }
+    return <ReportGenerating />;
   }
 
-  if (isError || !data) {
-    return (
-      <div className="flex flex-col gap-3 rounded-2xl border border-rose-200 bg-rose-50 p-6 text-rose-900 dark:border-rose-900/40 dark:bg-rose-950/40 dark:text-rose-100">
-        <h2 className="text-lg font-semibold">We could not load this scan</h2>
-        <p className="text-sm">
-          You may not have access to this scan, or it may have been deleted.
-        </p>
-        <button
-          type="button"
-          className="self-start rounded-md border border-rose-300 px-3 py-1 text-sm font-medium hover:bg-rose-100 dark:border-rose-700 dark:hover:bg-rose-900/60"
-          onClick={() => refetch()}
-        >
-          Try again
-        </button>
-      </div>
-    );
+  // Envelope exists but the scan is still running — keep the progress view
+  // until it reaches a terminal status.
+  if (data.status && data.status !== "complete" && data.status !== "failed") {
+    return <ReportGenerating orgName={data.orgName ?? null} />;
   }
 
   const categoryScores = data.categoryScores ?? [];
