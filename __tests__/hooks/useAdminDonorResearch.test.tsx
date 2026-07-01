@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const listAdvisorsMock = vi.fn();
 const getAdminReportMock = vi.fn();
 
-vi.mock("@/services/donor-research.service", () => ({
+vi.mock("@/services/donor-research-admin.service", () => ({
   listAdvisors: (...args: unknown[]) => listAdvisorsMock(...args),
   getAdminReport: (...args: unknown[]) => getAdminReportMock(...args),
 }));

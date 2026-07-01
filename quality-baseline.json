@@ -454,8 +454,8 @@
       "maxBytes": 40000
     },
     "utilities/indexer.ts": {
-      "lines": 809,
-      "bytes": 39734,
+      "lines": 826,
+      "bytes": 40536,
       "maxLines": 600,
       "maxBytes": 40000
     },
@@ -469,7 +469,7 @@
   "reactDoctor": {
     "score": 0,
     "errors": 63,
-    "warnings": 3256,
+    "warnings": 3281,
     "byCategory": {
       "Accessibility": 279,
       "Architecture": 1179,

@@ -1,5 +1,4 @@
 import type {
-  AdminAdvisorsList,
   CompositeWeights,
   DonorAdvisor,
   DonorHandle,
@@ -357,60 +356,13 @@ export const getResearchReport = async (reportId: string): Promise<ResearchRepor
   return withMockSocialMetrics(data);
 };
 
-// -- Staff admin overview (DEV-467) ------------------------------------
-
-export interface ListAdvisorsOptions {
-  page?: number;
-  limit?: number;
-  /** Case-insensitive search across wallet, name, org, handle label, and email. */
-  search?: string;
-}
-
-/**
- * Staff-only: lists every donor-research advisor with their donors and
- * report links. Gated server-side by the staff allowlist; the FE also gates
- * the route on `isStaff`. A non-staff caller gets a 403 that surfaces as a
- * thrown error here.
- */
-export const listAdvisors = async (
-  options: ListAdvisorsOptions = {}
-): Promise<AdminAdvisorsList> => {
-  const params: Record<string, number | string> = {};
-  if (options.page !== undefined) params.page = options.page;
-  if (options.limit !== undefined) params.limit = options.limit;
-  if (options.search) params.search = options.search;
-  const [data, error] = await fetchData<AdminAdvisorsList>(
-    INDEXER.DONOR_RESEARCH.ADMIN_ADVISORS,
-    "GET",
-    {},
-    params
-  );
-  if (error || !data) {
-    throw new Error(error || "Failed to load advisors");
-  }
-  return data;
-};
-
-/**
- * Staff-only: reads any advisor's report with the same shape the advisor
- * sees, so the admin view renders the identical brief. Applies the same
- * illustrative social-metrics fill as {@link getResearchReport} for parity.
- */
-export const getAdminReport = async (reportId: string): Promise<ResearchReportDetail> => {
-  const [data, error] = await fetchData<ResearchReportDetail>(
-    INDEXER.DONOR_RESEARCH.ADMIN_REPORT_BY_ID(reportId)
-  );
-  if (error || !data) {
-    throw new Error(error || "Failed to load report");
-  }
-  return withMockSocialMetrics(data);
-};
-
 // TEMP(DEV-385): the backend social signal isn't producing data yet, so
 // fill illustrative social metrics on any candidate that lacks them.
 // Remove once real socialMetrics flow from the report response.
+// Exported so the staff admin report reader (donor-research-admin.service)
+// renders the same illustrative metrics as the advisor view.
 const mockDaysAgo = (n: number): string => new Date(Date.now() - n * 86_400_000).toISOString();
-function withMockSocialMetrics(report: ResearchReportDetail): ResearchReportDetail {
+export function withMockSocialMetrics(report: ResearchReportDetail): ResearchReportDetail {
   return {
     ...report,
     candidates: report.candidates.map((candidate, i) =>

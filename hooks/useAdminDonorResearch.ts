@@ -5,7 +5,7 @@ import {
   getAdminReport,
   type ListAdvisorsOptions,
   listAdvisors,
-} from "@/services/donor-research.service";
+} from "@/services/donor-research-admin.service";
 import type { AdminAdvisorsList, ResearchReportDetail } from "@/types/donor-research";
 
 export const adminAdvisorsQueryKey = (options: ListAdvisorsOptions = {}) =>

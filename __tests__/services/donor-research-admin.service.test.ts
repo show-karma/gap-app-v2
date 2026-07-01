@@ -7,7 +7,7 @@ vi.mock("@/utilities/fetchData", () => ({
   default: (...args: unknown[]) => fetchDataMock(...args),
 }));
 
-import { getAdminReport, listAdvisors } from "@/services/donor-research.service";
+import { getAdminReport, listAdvisors } from "@/services/donor-research-admin.service";
 
 describe("donor-research admin service", () => {
   beforeEach(() => {
