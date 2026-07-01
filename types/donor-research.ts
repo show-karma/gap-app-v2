@@ -135,9 +135,20 @@ export interface AdminAdvisor {
   donors: AdminAdvisorDonor[];
 }
 
+/** Global aggregates for the admin overview stat cards. */
+export interface AdminAdvisorStats {
+  advisors: number;
+  betaAdvisors: number;
+  donors: number;
+  reports: number;
+  completedReports: number;
+  sharedReports: number;
+}
+
 export interface AdminAdvisorsList {
   items: AdminAdvisor[];
   total: number;
+  stats: AdminAdvisorStats;
   page: number;
   limit: number;
 }

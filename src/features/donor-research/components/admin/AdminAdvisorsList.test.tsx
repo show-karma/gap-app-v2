@@ -1,6 +1,6 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type { AdminAdvisor } from "@/types/donor-research";
+import type { AdminAdvisor, AdminAdvisorStats } from "@/types/donor-research";
 
 const useAdminAdvisorsMock = vi.fn();
 // Mutable so a test can drive the "q" (search) query-state value.
@@ -23,6 +23,15 @@ vi.mock("@/src/components/navigation/Link", () => ({
 }));
 
 import { AdminAdvisorsList } from "./AdminAdvisorsList";
+
+const STATS: AdminAdvisorStats = {
+  advisors: 3,
+  betaAdvisors: 1,
+  donors: 5,
+  reports: 8,
+  completedReports: 6,
+  sharedReports: 2,
+};
 
 function buildAdvisor(overrides: Partial<AdminAdvisor> = {}): AdminAdvisor {
   return {
@@ -57,27 +66,26 @@ function buildAdvisor(overrides: Partial<AdminAdvisor> = {}): AdminAdvisor {
   };
 }
 
+function withData(items: AdminAdvisor[]) {
+  return {
+    isLoading: false,
+    isError: false,
+    data: { items, total: items.length, stats: STATS, page: 1, limit: 20 },
+  };
+}
+
 describe("AdminAdvisorsList", () => {
   afterEach(() => {
     useAdminAdvisorsMock.mockReset();
     mockSearchValue = "";
   });
 
-  it("renders a skeleton while loading", () => {
+  it("renders the heading and search box", () => {
     useAdminAdvisorsMock.mockReturnValue({ isLoading: true, isError: false });
 
     render(<AdminAdvisorsList />);
 
-    expect(
-      screen.getByRole("heading", { name: /nonprofit research — advisors/i })
-    ).toBeInTheDocument();
-  });
-
-  it("renders a search box", () => {
-    useAdminAdvisorsMock.mockReturnValue({ isLoading: true, isError: false });
-
-    render(<AdminAdvisorsList />);
-
+    expect(screen.getByRole("heading", { name: /donor advisors/i })).toBeInTheDocument();
     expect(screen.getByRole("searchbox", { name: /search advisors/i })).toBeInTheDocument();
   });
 
@@ -90,17 +98,13 @@ describe("AdminAdvisorsList", () => {
     expect(useAdminAdvisorsMock).toHaveBeenCalledWith(expect.objectContaining({ search: "smith" }));
   });
 
-  it("shows a search-specific empty state when nothing matches", () => {
-    mockSearchValue = "zzz";
-    useAdminAdvisorsMock.mockReturnValue({
-      isLoading: false,
-      isError: false,
-      data: { items: [], total: 0, page: 1, limit: 20 },
-    });
+  it("renders global stat cards", () => {
+    useAdminAdvisorsMock.mockReturnValue(withData([buildAdvisor()]));
 
     render(<AdminAdvisorsList />);
 
-    expect(screen.getByText(/no advisors match/i)).toBeInTheDocument();
+    expect(screen.getByText("Reports generated")).toBeInTheDocument();
+    expect(screen.getByText("1 in beta")).toBeInTheDocument();
   });
 
   it("renders a retry affordance on error", () => {
@@ -115,39 +119,34 @@ describe("AdminAdvisorsList", () => {
     expect(screen.getByRole("button", { name: /try again/i })).toBeInTheDocument();
   });
 
-  it("renders an empty state when there are no advisors", () => {
-    useAdminAdvisorsMock.mockReturnValue({
-      isLoading: false,
-      isError: false,
-      data: { items: [], total: 0, page: 1, limit: 20 },
-    });
+  it("shows the empty state when nothing matches", () => {
+    useAdminAdvisorsMock.mockReturnValue(withData([]));
 
     render(<AdminAdvisorsList />);
 
-    expect(screen.getByText(/no advisors have onboarded yet/i)).toBeInTheDocument();
+    expect(screen.getByText(/no advisors match your search/i)).toBeInTheDocument();
   });
 
-  it("renders advisors with their email and a report link", () => {
-    useAdminAdvisorsMock.mockReturnValue({
-      isLoading: false,
-      isError: false,
-      data: { items: [buildAdvisor()], total: 1, page: 1, limit: 20 },
-    });
+  it("shows the advisor email collapsed and reveals donors + report link on expand", () => {
+    useAdminAdvisorsMock.mockReturnValue(withData([buildAdvisor()]));
 
     render(<AdminAdvisorsList />);
 
+    // Collapsed: header shows the email; donor/report are hidden.
     expect(screen.getByText("avery@example.com")).toBeInTheDocument();
+    expect(screen.queryByText("Smith Family")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /avery/i }));
+
     expect(screen.getByText("Smith Family")).toBeInTheDocument();
-    const link = screen.getByRole("link");
-    expect(link).toHaveAttribute("href", "/admin/nonprofit-research/r1");
+    expect(screen.getByRole("link", { name: /view/i })).toHaveAttribute(
+      "href",
+      "/admin/nonprofit-research/r1"
+    );
   });
 
   it("shows a fallback when an advisor has no email", () => {
-    useAdminAdvisorsMock.mockReturnValue({
-      isLoading: false,
-      isError: false,
-      data: { items: [buildAdvisor({ email: null })], total: 1, page: 1, limit: 20 },
-    });
+    useAdminAdvisorsMock.mockReturnValue(withData([buildAdvisor({ email: null })]));
 
     render(<AdminAdvisorsList />);
 
