@@ -3,14 +3,16 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import type { AdminAdvisor } from "@/types/donor-research";
 
 const useAdminAdvisorsMock = vi.fn();
+// Mutable so a test can drive the "q" (search) query-state value.
+let mockSearchValue = "";
 
 vi.mock("@/hooks/useAdminDonorResearch", () => ({
   useAdminAdvisors: (options: unknown) => useAdminAdvisorsMock(options),
 }));
 
-// nuqs needs a Next adapter at runtime; stub to a fixed page for the unit test.
+// Stub nuqs per key: "q" → the search string, anything else (page) → 1.
 vi.mock("nuqs", () => ({
-  useQueryState: () => [1, vi.fn()],
+  useQueryState: (key: string) => (key === "q" ? [mockSearchValue, vi.fn()] : [1, vi.fn()]),
 }));
 
 // Link needs router context; render a plain anchor.
@@ -58,6 +60,7 @@ function buildAdvisor(overrides: Partial<AdminAdvisor> = {}): AdminAdvisor {
 describe("AdminAdvisorsList", () => {
   afterEach(() => {
     useAdminAdvisorsMock.mockReset();
+    mockSearchValue = "";
   });
 
   it("renders a skeleton while loading", () => {
@@ -68,6 +71,36 @@ describe("AdminAdvisorsList", () => {
     expect(
       screen.getByRole("heading", { name: /nonprofit research — advisors/i })
     ).toBeInTheDocument();
+  });
+
+  it("renders a search box", () => {
+    useAdminAdvisorsMock.mockReturnValue({ isLoading: true, isError: false });
+
+    render(<AdminAdvisorsList />);
+
+    expect(screen.getByRole("searchbox", { name: /search advisors/i })).toBeInTheDocument();
+  });
+
+  it("passes the search term to the query", () => {
+    mockSearchValue = "smith";
+    useAdminAdvisorsMock.mockReturnValue({ isLoading: true, isError: false });
+
+    render(<AdminAdvisorsList />);
+
+    expect(useAdminAdvisorsMock).toHaveBeenCalledWith(expect.objectContaining({ search: "smith" }));
+  });
+
+  it("shows a search-specific empty state when nothing matches", () => {
+    mockSearchValue = "zzz";
+    useAdminAdvisorsMock.mockReturnValue({
+      isLoading: false,
+      isError: false,
+      data: { items: [], total: 0, page: 1, limit: 20 },
+    });
+
+    render(<AdminAdvisorsList />);
+
+    expect(screen.getByText(/no advisors match/i)).toBeInTheDocument();
   });
 
   it("renders a retry affordance on error", () => {
