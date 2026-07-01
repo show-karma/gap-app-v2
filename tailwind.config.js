@@ -51,6 +51,19 @@ module.exports = {
         "Arial",
         "sans-serif",
       ],
+      // Measurement / instrument font (JetBrains Mono). Used by the AI-
+      // Readiness Scanner for numeric scores, per-check evidence, and
+      // anywhere a value should read as instrument output rather than prose.
+      mono: [
+        "var(--font-mono)",
+        "ui-monospace",
+        "SFMono-Regular",
+        '"SF Mono"',
+        "Menlo",
+        "Consolas",
+        '"Liberation Mono"',
+        "monospace",
+      ],
     },
     fontSize: {
       xs: "0.75rem",
