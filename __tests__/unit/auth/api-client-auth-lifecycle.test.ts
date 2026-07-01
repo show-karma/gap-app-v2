@@ -59,7 +59,9 @@ describe("API client auth lifecycle", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    client = createAuthenticatedApiClient("http://localhost:4000", 5000);
+    // Transient retry is covered in api-client-retry.test.ts; disable it here so
+    // these auth-lifecycle assertions exercise the 401 path in isolation.
+    client = createAuthenticatedApiClient("http://localhost:4000", 5000, { retries: 0 });
   });
 
   afterEach(() => {
