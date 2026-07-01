@@ -110,17 +110,19 @@ function AdvisorCard({ advisor }: { advisor: AdminAdvisor }) {
     <Card>
       <CardHeader className="flex flex-col gap-1 border-b border-border">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <span className="text-base font-semibold text-foreground">
+          <span className="min-w-0 break-words text-base font-semibold text-foreground">
             {advisor.name || advisor.displayName}
           </span>
-          <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+          <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
             {advisor.rateLimitTier}
           </span>
         </div>
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
-          <span>{advisor.email || "No email on file"}</span>
-          {advisor.orgName ? <span>· {advisor.orgName}</span> : null}
-          <span className="font-mono text-xs" title={advisor.walletAddress}>
+          <span className="min-w-0 break-words">{advisor.email || "No email on file"}</span>
+          {advisor.orgName ? (
+            <span className="min-w-0 break-words">· {advisor.orgName}</span>
+          ) : null}
+          <span className="shrink-0 font-mono text-xs" title={advisor.walletAddress}>
             · {truncateAddress(advisor.walletAddress)}
           </span>
         </div>
@@ -136,7 +138,9 @@ function AdvisorCard({ advisor }: { advisor: AdminAdvisor }) {
           <ul className="flex flex-col gap-3">
             {advisor.donors.map((donor) => (
               <li key={donor.handleId}>
-                <p className="text-sm font-medium text-foreground">{donor.opaqueLabel}</p>
+                <p className="break-words text-sm font-medium text-foreground">
+                  {donor.opaqueLabel}
+                </p>
                 {donor.reports.length === 0 ? (
                   <p className="mt-1 text-xs text-muted-foreground">No reports yet.</p>
                 ) : (
