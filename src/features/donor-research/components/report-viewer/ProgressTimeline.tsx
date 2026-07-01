@@ -44,12 +44,12 @@ const STAGE_ORDER: Array<{
   {
     name: "ranking_complete",
     label: "Composite ranking",
-    caption: "Combining the four weighted scores into a single composite.",
+    caption: "Combining the weighted scores into a single composite.",
   },
   {
     name: "report_finalized",
     label: "Report finalized",
-    caption: "Synthesizing one-pager prose and assembling the top three.",
+    caption: "Synthesizing one-pager prose and assembling the featured set.",
   },
 ];
 

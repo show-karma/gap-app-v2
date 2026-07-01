@@ -15,7 +15,7 @@ describe("useAccessDeniedMessages", () => {
 
   it("hits the public endpoint without auth", async () => {
     mockFetchData.mockResolvedValue([
-      { unauthenticatedMessage: "hi", forbiddenMessage: "bye" },
+      { unauthenticatedMessage: "hi", forbiddenMessage: "bye", applicantMessage: "app" },
       null,
     ]);
 
@@ -34,6 +34,7 @@ describe("useAccessDeniedMessages", () => {
     expect(result.current.data).toEqual({
       unauthenticatedMessage: "hi",
       forbiddenMessage: "bye",
+      applicantMessage: "app",
     });
   });
 
@@ -47,6 +48,7 @@ describe("useAccessDeniedMessages", () => {
     expect(result.current.data).toEqual({
       unauthenticatedMessage: null,
       forbiddenMessage: null,
+      applicantMessage: null,
     });
   });
 
@@ -59,6 +61,7 @@ describe("useAccessDeniedMessages", () => {
     expect(result.current.data).toEqual({
       unauthenticatedMessage: null,
       forbiddenMessage: null,
+      applicantMessage: null,
     });
   });
 

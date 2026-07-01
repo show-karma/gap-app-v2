@@ -55,6 +55,11 @@ export const PAGES = {
     // Staff-only admin overview (DEV-467).
     ADMIN: `/admin/nonprofit-research`,
     ADMIN_REPORT: (reportId: string) => `/admin/nonprofit-research/${reportId}`,
+    // Advisor's one-per-advisor diligence question template editor (DEV-428).
+    DILIGENCE_TEMPLATE: `/nonprofit-research/diligence-template`,
+    // Public nonprofit response page — the secure email link opens this.
+    // The token in the path is the capability; no login required.
+    DILIGENCE_RESPONSE: (token: string) => `/nonprofit-research/diligence/${token}`,
   },
   EVALUATE: `/evaluate`,
   // REVIEWER routes now point to MANAGE (unified RBAC-based routes)

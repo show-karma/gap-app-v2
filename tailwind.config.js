@@ -38,17 +38,18 @@ module.exports = {
         '"Segoe UI Emoji"',
         '"Segoe UI Symbol"',
       ],
-      // Editorial display face (Spectral). Use only on marketing H1/H2
-      // and intentional editorial moments — never for body text. Serif
-      // fallbacks so a font-load failure stays inside the same family
-      // category.
+      // Display face for marketing H1/H2. Resolves to the same self-hosted
+      // Inter as the body, so the fallback stack is sans-serif to stay inside
+      // the same family category on a load failure.
       display: [
-        "var(--font-display)",
-        "Georgia",
-        '"Iowan Old Style"',
-        "Baskerville",
-        '"Times New Roman"',
-        "serif",
+        "var(--font-inter)",
+        "-apple-system",
+        "BlinkMacSystemFont",
+        '"Segoe UI"',
+        "Roboto",
+        '"Helvetica Neue"',
+        "Arial",
+        "sans-serif",
       ],
     },
     fontSize: {
