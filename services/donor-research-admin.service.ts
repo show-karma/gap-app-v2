@@ -1,7 +1,6 @@
 import type { AdminAdvisorsList, ResearchReportDetail } from "@/types/donor-research";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
-import { withMockSocialMetrics } from "./donor-research.service";
 
 /**
  * Staff-only donor-research admin API client (DEV-467). Kept separate from the
@@ -42,8 +41,7 @@ export const listAdvisors = async (
 
 /**
  * Reads any advisor's report with the same shape the advisor sees, so the
- * admin view renders the identical brief. Applies the same illustrative
- * social-metrics fill as `getResearchReport` for parity.
+ * admin view renders the identical brief.
  */
 export const getAdminReport = async (reportId: string): Promise<ResearchReportDetail> => {
   const [data, error] = await fetchData<ResearchReportDetail>(
@@ -52,5 +50,5 @@ export const getAdminReport = async (reportId: string): Promise<ResearchReportDe
   if (error || !data) {
     throw new Error(error || "Failed to load report");
   }
-  return withMockSocialMetrics(data);
+  return data;
 };

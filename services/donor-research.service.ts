@@ -353,69 +353,8 @@ export const getResearchReport = async (reportId: string): Promise<ResearchRepor
   if (error || !data) {
     throw new Error(error || "Failed to load research report");
   }
-  return withMockSocialMetrics(data);
+  return data;
 };
-
-// TEMP(DEV-385): the backend social signal isn't producing data yet, so
-// fill illustrative social metrics on any candidate that lacks them.
-// Remove once real socialMetrics flow from the report response.
-// Exported so the staff admin report reader (donor-research-admin.service)
-// renders the same illustrative metrics as the advisor view.
-const mockDaysAgo = (n: number): string => new Date(Date.now() - n * 86_400_000).toISOString();
-export function withMockSocialMetrics(report: ResearchReportDetail): ResearchReportDetail {
-  return {
-    ...report,
-    candidates: report.candidates.map((candidate, i) =>
-      candidate.socialMetrics
-        ? candidate
-        : {
-            ...candidate,
-            socialMetrics: {
-              byChannel: [
-                {
-                  channel: "linkedin",
-                  available: true,
-                  followers: 4200 + i * 800,
-                  postsInWindow: 9,
-                  lastPostAt: mockDaysAgo(2),
-                  avgLikes: 63,
-                  profileUrl: "https://www.linkedin.com/company/climate-solutions",
-                },
-                {
-                  channel: "facebook",
-                  available: true,
-                  followers: 9400 + i * 600,
-                  postsInWindow: 7,
-                  lastPostAt: mockDaysAgo(3),
-                  avgLikes: 112,
-                  profileUrl: "https://www.facebook.com/climatesolutions",
-                },
-                {
-                  channel: "instagram",
-                  available: true,
-                  followers: 12800 + i * 1200,
-                  postsInWindow: 14,
-                  lastPostAt: mockDaysAgo(1),
-                  avgLikes: 540,
-                  profileUrl: "https://www.instagram.com/climatesolutionsnw",
-                },
-                {
-                  channel: "x",
-                  available: true,
-                  followers: 3100 + i * 300,
-                  postsInWindow: 21,
-                  lastPostAt: mockDaysAgo(0),
-                  avgLikes: 18,
-                  profileUrl: "https://x.com/climatesolution",
-                },
-              ],
-              lastPostAt: mockDaysAgo(0),
-              totalFollowers: 29500 + i * 2900,
-            },
-          }
-    ),
-  };
-}
 
 export interface CreateReportRequest {
   donorHandleId: string;

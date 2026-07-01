@@ -49,12 +49,12 @@ describe("donor-research admin service", () => {
       expect(fetchDataMock.mock.calls[0][0]).toBe("/v2/admin/donor-research/reports/r1");
     });
 
-    it("fills illustrative social metrics for parity with the advisor view", async () => {
+    it("returns the report untouched (no fabricated social metrics)", async () => {
       fetchDataMock.mockResolvedValue([reportWithBareCandidate(), null]);
 
       const report = await getAdminReport("r1");
 
-      expect(report.candidates[0].socialMetrics).not.toBeNull();
+      expect(report.candidates[0].socialMetrics).toBeNull();
     });
 
     it("throws when the report cannot be loaded", async () => {
