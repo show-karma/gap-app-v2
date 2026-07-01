@@ -25,6 +25,19 @@ function truncateAddress(address: string): string {
   return address.length > 12 ? `${address.slice(0, 6)}…${address.slice(-4)}` : address;
 }
 
+// Zero-valued counts are omitted rather than rendered as "0 donors" copy.
+function advisorMeta(advisor: AdminAdvisor): string {
+  const parts: string[] = [];
+  if (advisor.donorCount > 0) {
+    parts.push(`${advisor.donorCount} ${pluralize("donor", advisor.donorCount)}`);
+  }
+  if (advisor.reportCount > 0) {
+    parts.push(`${advisor.reportCount} ${pluralize("report", advisor.reportCount)}`);
+  }
+  parts.push(`joined ${formatDate(advisor.createdAt)}`);
+  return parts.join(" · ");
+}
+
 export function AdminAdvisorsList() {
   const [page, setPage] = useQueryState("page", {
     defaultValue: 1,
@@ -153,10 +166,7 @@ function AdvisorCard({ advisor }: { advisor: AdminAdvisor }) {
             · {truncateAddress(advisor.walletAddress)}
           </span>
         </div>
-        <div className="text-xs text-muted-foreground">
-          {advisor.donorCount} {pluralize("donor", advisor.donorCount)} · {advisor.reportCount}{" "}
-          {pluralize("report", advisor.reportCount)} · joined {formatDate(advisor.createdAt)}
-        </div>
+        <div className="text-xs text-muted-foreground">{advisorMeta(advisor)}</div>
       </CardHeader>
       <CardContent className="pt-4">
         {advisor.donors.length === 0 ? (
