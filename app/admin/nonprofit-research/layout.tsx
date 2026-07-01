@@ -4,14 +4,26 @@ import { Spinner } from "@/components/Utilities/Spinner";
 import { useAuth } from "@/hooks/useAuth";
 import { AccessDenied } from "@/src/components/ui/AccessDenied";
 import { staffDenial } from "@/src/components/ui/access-denied-presets";
+import { PermissionProvider } from "@/src/core/rbac/context/permission-context";
 import { useStaff } from "@/src/core/rbac/hooks/use-staff-bridge";
 import { PAGES } from "@/utilities/pages";
 
 // Staff-only gate for the nonprofit-research admin overview (DEV-467).
+// `useStaff` reads the RBAC PermissionContext, which is not mounted globally
+// (the root `PermissionsProvider` is headless), so this layout mounts
+// `PermissionProvider` and gates in a child that consumes the context.
+export default function AdminNonprofitResearchLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <PermissionProvider>
+      <StaffGate>{children}</StaffGate>
+    </PermissionProvider>
+  );
+}
+
 // Gate on Privy `ready`/`authenticated` (never wagmi `isConnected` — the
 // Privy/Wagmi startup race). Denial is a terminal render, not a useEffect
 // redirect, and staff status is only trusted once resolved (`!isLoading`).
-export default function AdminNonprofitResearchLayout({ children }: { children: React.ReactNode }) {
+function StaffGate({ children }: { children: React.ReactNode }) {
   const { ready, authenticated } = useAuth();
   const { isStaff, isLoading } = useStaff();
 
