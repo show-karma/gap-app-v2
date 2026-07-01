@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, RefreshCw } from "lucide-react";
+import { AlertTriangle, RefreshCw, Search } from "lucide-react";
 import { useQueryState } from "nuqs";
 import pluralize from "pluralize";
 import TablePagination from "@/components/Utilities/TablePagination";
@@ -35,11 +35,25 @@ export function AdminAdvisorsList() {
     },
     serialize: (value) => String(value),
   });
+  const [q, setQ] = useQueryState("q", {
+    defaultValue: "",
+    clearOnDefault: true,
+    throttleMs: 300,
+  });
 
+  const search = q.trim();
   const { data, isLoading, isError, refetch, isFetching } = useAdminAdvisors({
     page,
     limit: PAGE_SIZE,
+    search: search || undefined,
   });
+
+  // Reset to the first page whenever the query changes so results aren't
+  // hidden on a page that no longer exists for the narrowed set.
+  const onSearchChange = (value: string) => {
+    setPage(1);
+    setQ(value);
+  };
 
   return (
     <div className="mx-auto w-full max-w-5xl px-4 py-8">
@@ -49,6 +63,17 @@ export function AdminAdvisorsList() {
           Every donor advisor, their donors, and the reports they have generated. Open a report to
           see exactly what the advisor sees.
         </p>
+        <div className="relative mt-4 max-w-md">
+          <Search className="-translate-y-1/2 absolute top-1/2 left-3 h-4 w-4 text-muted-foreground" />
+          <input
+            type="search"
+            value={q}
+            onChange={(e) => onSearchChange(e.target.value)}
+            placeholder="Search by wallet, email, name, org, or donor…"
+            aria-label="Search advisors"
+            className="w-full rounded-lg border border-border bg-background py-2 pr-3 pl-9 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+          />
+        </div>
       </header>
 
       {isLoading ? <AdvisorsSkeleton /> : null}
@@ -75,7 +100,9 @@ export function AdminAdvisorsList() {
       {!isLoading && !isError && data ? (
         data.items.length === 0 ? (
           <div className="rounded-xl border border-dashed border-border p-10 text-center">
-            <p className="text-sm text-muted-foreground">No advisors have onboarded yet.</p>
+            <p className="text-sm text-muted-foreground">
+              {search ? `No advisors match “${search}”.` : "No advisors have onboarded yet."}
+            </p>
           </div>
         ) : (
           <>

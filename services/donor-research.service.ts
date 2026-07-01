@@ -166,6 +166,8 @@ export const getResearchReport = async (reportId: string): Promise<ResearchRepor
 export interface ListAdvisorsOptions {
   page?: number;
   limit?: number;
+  /** Case-insensitive search across wallet, name, org, handle label, and email. */
+  search?: string;
 }
 
 /**
@@ -177,9 +179,10 @@ export interface ListAdvisorsOptions {
 export const listAdvisors = async (
   options: ListAdvisorsOptions = {}
 ): Promise<AdminAdvisorsList> => {
-  const params: Record<string, number> = {};
+  const params: Record<string, number | string> = {};
   if (options.page !== undefined) params.page = options.page;
   if (options.limit !== undefined) params.limit = options.limit;
+  if (options.search) params.search = options.search;
   const [data, error] = await fetchData<AdminAdvisorsList>(
     INDEXER.DONOR_RESEARCH.ADMIN_ADVISORS,
     "GET",
