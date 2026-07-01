@@ -3,6 +3,7 @@ import {
   isAxiosAbortError,
   isTransientHttpError,
   isTransientNetworkError,
+  isTransientWalletTimeoutError,
 } from "../transientErrors";
 
 describe("isTransientNetworkError", () => {
@@ -78,6 +79,42 @@ describe("isTransientHttpError", () => {
     );
     expect(isTransientHttpError(null)).toBe(false);
     expect(isTransientHttpError(undefined)).toBe(false);
+  });
+});
+
+describe("isTransientWalletTimeoutError", () => {
+  it("detects the ethers 'could not coalesce error' wrapping a Wallet timeout", () => {
+    const err = new Error(
+      'could not coalesce error (error={ "message": "Wallet timeout" }, payload={ "method": "eth_sendTransaction" }, code=UNKNOWN_ERROR, version=6.11.0)'
+    );
+    expect(isTransientWalletTimeoutError(err)).toBe(true);
+  });
+
+  it("detects a bare 'Wallet timeout' message", () => {
+    expect(isTransientWalletTimeoutError(new Error("Wallet timeout"))).toBe(true);
+    expect(isTransientWalletTimeoutError({ message: "wallet timeout" })).toBe(true);
+  });
+
+  it("matches case-insensitively", () => {
+    expect(isTransientWalletTimeoutError(new Error("Could Not Coalesce Error"))).toBe(true);
+  });
+
+  it("does NOT match unrelated errors", () => {
+    expect(isTransientWalletTimeoutError(new Error("Validation failed"))).toBe(false);
+    expect(isTransientWalletTimeoutError(new Error("Request failed with status code 500"))).toBe(
+      false
+    );
+    expect(isTransientWalletTimeoutError(null)).toBe(false);
+    expect(isTransientWalletTimeoutError(undefined)).toBe(false);
+    expect(isTransientWalletTimeoutError(new Error(""))).toBe(false);
+  });
+
+  it("does NOT match the exhausted-retry wrapper (so it still reports to Sentry)", () => {
+    // Worded as "wallet/bundler timeout", which must not contain "wallet timeout".
+    const exhausted = new Error(
+      "Project attestation failed after 3 attempts due to a persistent wallet/bundler timeout. Please try again in a moment."
+    );
+    expect(isTransientWalletTimeoutError(exhausted)).toBe(false);
   });
 });
 

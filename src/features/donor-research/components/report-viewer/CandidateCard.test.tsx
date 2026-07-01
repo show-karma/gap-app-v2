@@ -28,7 +28,8 @@ function buildCandidate(overrides: Partial<ResearchReportCandidate> = {}): Resea
       donorMatch: 0.8,
       compliance: 1,
     },
-    topThreeFlag: true,
+    featuredFlag: true,
+    manualPosition: null,
     complianceVerdict: "verified",
     disqualificationReasons: [],
     complianceChecks: [

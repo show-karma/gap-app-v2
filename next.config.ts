@@ -121,12 +121,29 @@ const nextConfig: NextConfig = {
     ],
   },
   async headers() {
-    return [
+    const headerRules = [
       {
         source: "/(.*)",
         headers: securityHeaders,
       },
     ];
+    // Content-hashed build assets are safe to cache forever: a new deploy emits
+    // new filenames, so a stale cache entry is never served for new code. This
+    // ONLY holds in production. In dev, Turbopack reuses stable chunk
+    // filenames, so an immutable cache pins stale code in the browser and edits
+    // never appear without a hard refresh — so we apply it in production only.
+    if (process.env.NODE_ENV === "production") {
+      headerRules.push({
+        source: "/_next/static/:path*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=31536000, immutable",
+          },
+        ],
+      });
+    }
+    return headerRules;
   },
   async redirects() {
     return [

@@ -52,6 +52,10 @@ export default defineConfig({
       testMatch: /auth\.setup\.ts/,
       // Never retry auth setup — retries compound Privy rate limits
       retries: 0,
+      // Setup never retries, so the global "on-first-retry" trace would never
+      // be captured here. Retain a trace on failure so a hung login can be
+      // diagnosed from the timeline (uploaded as an artifact by the CI job).
+      use: { trace: "retain-on-failure" },
     },
 
     {

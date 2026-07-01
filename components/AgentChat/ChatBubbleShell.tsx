@@ -95,7 +95,7 @@ export function ChatBubbleShell({
       <button
         type="button"
         onClick={onToggle}
-        className="fixed bottom-6 right-6 z-[9999] h-12 w-12 rounded-full bg-brand-blue text-white shadow-lg hover:bg-brand-blue/90 hover:scale-105 active:scale-95 transition-all duration-200 flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+        className="karma-assistant-fab fixed bottom-6 right-6 z-[9999] h-12 w-12 rounded-full bg-brand-blue text-white shadow-lg hover:bg-brand-blue/90 hover:scale-105 active:scale-95 transition-all duration-200 flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         aria-label={isOpen ? "Close chat" : "Open chat"}
       >
         <div className="relative h-6 w-6">
@@ -118,7 +118,7 @@ export function ChatBubbleShell({
         aria-label="Chat assistant"
         aria-hidden={!isOpen}
         inert={!isOpen ? true : undefined}
-        className={`fixed bottom-20 right-6 z-[9999] w-[min(380px,calc(100vw-2rem))] h-[min(600px,calc(100vh-120px))] flex flex-col rounded-xl border border-border bg-card text-card-foreground shadow-lg transition-all duration-300 ease-out overflow-hidden ${
+        className={`karma-assistant-panel fixed bottom-20 right-6 z-[9999] w-[min(380px,calc(100vw-2rem))] h-[min(600px,calc(100vh-120px))] flex flex-col rounded-xl border border-border bg-card text-card-foreground shadow-lg transition-all duration-300 ease-out overflow-hidden ${
           isOpen
             ? "translate-y-0 opacity-100 scale-100"
             : "pointer-events-none translate-y-4 opacity-0 scale-[0.97]"
@@ -211,7 +211,11 @@ export function ChatBubbleShell({
                                       // Raw navigator.clipboard here — this component is reused in
                                       // the widget bundle, which forbids Next.js-coupled imports
                                       // (useCopyToClipboard → errorManager → @sentry/nextjs).
-                                      navigator.clipboard.writeText(msg.content).catch(() => {});
+                                      navigator.clipboard.writeText(msg.content).catch(() => {
+                                        // SUPPRESSED: clipboard copy is best-effort; failures are
+                                        // non-actionable and the widget bundle forbids the Sentry
+                                        // error helper.
+                                      });
                                     }}
                                     title="Copy"
                                   >

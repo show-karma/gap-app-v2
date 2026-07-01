@@ -1,26 +1,15 @@
 import type { Metadata, Viewport } from "next";
-import { Spectral } from "next/font/google";
 import localFont from "next/font/local";
 import { defaultMetadata } from "@/utilities/meta";
 
+// Single self-hosted Inter variable font (next/font/local), same as the rest
+// of the app. The woff2 is loaded and processed once; the tailwind `display`
+// family points straight at --font-inter, so the marketing H1/H2 share it.
 const inter = localFont({
   src: "../public/fonts/Inter/Inter.woff2",
   variable: "--font-inter",
   display: "optional",
   weight: "100 900",
-});
-
-// Editorial display face for marketing H1 and section H2. Spectral
-// (Production Type) is a literary serif with real italic cuts — the
-// rotating word in the hero becomes proper cursive instead of slanted
-// sans. Paired with Inter as body, it carries the "modern, opinionated,
-// trustworthy with warmth" direction without going corporate.
-const displayFont = Spectral({
-  subsets: ["latin"],
-  weight: ["500", "600"],
-  style: ["normal", "italic"],
-  variable: "--font-display",
-  display: "swap",
 });
 import "@/styles/globals.css";
 import "@/styles/index.scss";
@@ -30,6 +19,7 @@ import { ThemeProvider } from "next-themes";
 import { DeferredLayoutComponents } from "@/components/DeferredLayoutComponents";
 import { OrganizationJsonLd } from "@/components/Seo/OrganizationJsonLd";
 import { SpeakableJsonLd } from "@/components/Seo/SpeakableJsonLd";
+import { ChunkReloadResetter } from "@/components/Utilities/ChunkReloadResetter";
 import { PermissionsProvider } from "@/components/Utilities/PermissionsProvider";
 import PrivyProviderWrapper from "@/components/Utilities/PrivyProviderWrapper";
 import { TenantStoreInitializer } from "@/components/Utilities/TenantStoreInitializer";
@@ -124,7 +114,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html
       lang="en"
-      className={`h-full ${inter.variable} ${displayFont.variable}`}
+      className={`h-full ${inter.variable}`}
       suppressHydrationWarning
       style={themeStyle}
     >
@@ -152,6 +142,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               {isWhitelabel && tenantConfig && (
                 <TenantStoreInitializer tenant={tenantConfig}>{null}</TenantStoreInitializer>
               )}
+              <ChunkReloadResetter />
               <PermissionsProvider />
               <DeferredLayoutComponents toasterConfig={toasterConfig} />
               <div className="min-h-screen flex flex-col justify-between h-full text-gray-700 bg-white dark:bg-black dark:text-white">

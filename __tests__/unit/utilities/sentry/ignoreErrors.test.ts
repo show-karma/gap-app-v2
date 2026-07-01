@@ -23,4 +23,17 @@ describe("sentryIgnoreErrors", () => {
   it("suppresses anonymous Authorization header errors (DEV-256)", () => {
     expect(matches("Authorization header is required")).toBe(true);
   });
+
+  it("suppresses React 19 streaming reconciliation parentNode/removeChild null crashes (GAP-FRONTEND-212)", () => {
+    expect(matches("TypeError: Cannot read properties of null (reading 'parentNode')")).toBe(true);
+    expect(matches("Cannot read properties of null (reading 'removeChild')")).toBe(true);
+    // Safari/WebKit phrasing of the same fault
+    expect(matches("null is not an object (evaluating 'a.parentNode')")).toBe(true);
+    expect(matches("null is not an object (evaluating 'node.removeChild')")).toBe(true);
+  });
+
+  it("does not over-match unrelated null property reads", () => {
+    expect(matches("Cannot read properties of null (reading 'length')")).toBe(false);
+    expect(matches("Cannot read properties of null (reading 'address')")).toBe(false);
+  });
 });

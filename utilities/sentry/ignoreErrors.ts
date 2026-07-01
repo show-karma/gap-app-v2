@@ -24,6 +24,15 @@ const walletProviderErrors = [
   "Failed to connect to MetaMask",
 ];
 
+// wagmi throws `ConnectorNotConnectedError: Connector not connected.` when a
+// wallet client is requested before the connector finishes connecting. This is
+// the documented Privy↔wagmi startup race (Privy reports authenticated while
+// wagmi is still reconnecting). `safeGetWalletClient` now guards/reconnects and
+// no longer routes this through `errorManager`; this entry is defense-in-depth
+// for any other code path that surfaces it.
+// See https://karma-crypto-inc.sentry.io/issues/GAP-FRONTEND-244
+const connectorStartupRaceErrors = ["Connector not connected", "ConnectorNotConnectedError"];
+
 const browserExtensionErrors = [
   // Browser extensions disconnecting ports (Chrome extensions, wallet extensions)
   // See https://karma-crypto-inc.sentry.io/issues/GAP-FRONTEND-1BA
@@ -60,6 +69,14 @@ const sentryInstrumentationErrors = [
 // See https://karma-crypto-inc.sentry.io/issues/7205405990
 const notFoundErrors = ["Project not found", "Community not found"];
 
+// NOTE on stale-deploy chunk failures (ChunkLoadError): these are intentionally
+// NOT added to this list. Sentry's `ignoreErrors` filters every event — including
+// the manual `Sentry.captureException` the error boundaries call on a
+// non-recoverable second attempt — so suppressing the signature here would also
+// drop the genuinely-broken cases we want to see. Recovery is gated entirely by
+// the boundaries: the first attempt hard-reloads without capturing and the
+// second (recovery exhausted) reports normally. See utilities/isChunkLoadError.ts.
+
 // Anonymous-traffic errors. When a logged-out user lands on a public page
 // (e.g. /project/:projectId), some indexer routes (or SDK callers) still
 // hit auth-required paths without a bearer token and the backend replies
@@ -67,6 +84,24 @@ const notFoundErrors = ["Project not found", "Community not found"];
 // it just happened on a path that doesn't support anonymous access. See
 // DEV-256.
 const anonymousAuthErrors = ["Authorization header is required"];
+
+// React 19 streaming/Suspense-resume reconciliation crash. React DOM's stream
+// runtime ($RS) reads `parentNode`/`removeChild` on a node it owns and finds
+// it `null` because an EXTERNAL DOM mutator removed it between commits — almost
+// always Google Translate / in-browser translate rewriting text nodes, or an
+// aggressive browser extension, on top of streamed SSR content. It is thrown
+// from the injected $RS <script> at global scope (`mechanism: onerror`), outside
+// React's render/commit phases, so an error boundary cannot catch it. We attack
+// the dominant trigger at the source by marking the affected subtrees
+// `translate="no"` so machine translation leaves React-owned nodes alone; the
+// residual (other external mutators) is environmental and not actionable, so we
+// filter it here. Sibling to the existing "node to be removed is not a child of
+// this node." entry below.
+// See https://karma-crypto-inc.sentry.io/issues/GAP-FRONTEND-212
+const reconciliationDomMutationErrors = [
+  /Cannot read properties of null \(reading '(parentNode|removeChild)'\)/,
+  /null is not an object \(evaluating '.*\.(parentNode|removeChild)/,
+];
 
 export const sentryIgnoreErrors = [
   // user rejected a confirmation in the wallet
@@ -81,9 +116,11 @@ export const sentryIgnoreErrors = [
   ...unsupportedWalletErrors,
   ...walletConnectErrors,
   ...walletProviderErrors,
+  ...connectorStartupRaceErrors,
   ...browserExtensionErrors,
   ...sentryInstrumentationErrors,
   ...notFoundErrors,
   ...streamingAbortErrors,
   ...anonymousAuthErrors,
+  ...reconciliationDomMutationErrors,
 ];

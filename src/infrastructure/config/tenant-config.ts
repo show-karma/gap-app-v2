@@ -316,13 +316,13 @@ const tenantNavigation: Record<TenantId, TenantNavigation> = {
                 isExternal: true,
               },
               {
-                label: "Batch 2 - Pods Track",
-                href: "https://app.filpgf.io/projects?programId=1039",
+                label: "Batch 3",
+                href: "https://app.filpgf.io/programs/1479/",
                 isExternal: true,
               },
               {
-                label: "Batch 3 - Apply Now",
-                href: "https://app.filpgf.io/programs/1479/",
+                label: "Pods Track",
+                href: "https://app.filpgf.io/projects?programId=1039",
                 isExternal: true,
               },
             ],
@@ -341,7 +341,7 @@ const tenantNavigation: Record<TenantId, TenantNavigation> = {
                 isExternal: true,
               },
               {
-                label: "Batch 2 - Pods Track",
+                label: "Pods Track",
                 href: "https://app.filpgf.io/browse-applications?programId=1039",
                 isExternal: true,
               },

@@ -2,6 +2,13 @@
 
 import pluralize from "pluralize";
 import { memo, useMemo, useState } from "react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useDonorHandles } from "@/hooks/useDonorHandles";
 import { useDonorReports } from "@/hooks/useDonorReports";
 import { Link } from "@/src/components/navigation/Link";
@@ -161,22 +168,22 @@ interface DonorFilterSelectProps {
 function DonorFilterSelect({ handles, value, onChange }: DonorFilterSelectProps) {
   const disabled = handles.length === 0;
   return (
-    <label className="flex items-center gap-2 text-xs text-muted-foreground">
+    <div className="flex items-center gap-2 text-xs text-muted-foreground">
       <span className="font-medium uppercase tracking-[0.14em]">Donor</span>
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        disabled={disabled}
-        className="max-w-[14rem] truncate rounded-md border border-border bg-card px-2 py-1 text-xs text-foreground hover:border-foreground/30 focus:outline-none focus:ring-2 focus:ring-brand/40 disabled:cursor-not-allowed disabled:opacity-60"
-      >
-        <option value={ALL_DONORS}>All donors</option>
-        {handles.map((h) => (
-          <option key={h.id} value={h.id}>
-            {h.opaqueLabel}
-          </option>
-        ))}
-      </select>
-    </label>
+      <Select value={value} onValueChange={onChange} disabled={disabled}>
+        <SelectTrigger aria-label="Filter reports by donor" className="h-8 max-w-[14rem] text-xs">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value={ALL_DONORS}>All donors</SelectItem>
+          {handles.map((h) => (
+            <SelectItem key={h.id} value={h.id}>
+              {h.opaqueLabel}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
   );
 }
 

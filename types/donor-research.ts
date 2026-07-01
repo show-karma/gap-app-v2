@@ -230,6 +230,21 @@ export interface SocialMetrics {
   totalFollowers: number | null;
 }
 
+/**
+ * Composite-ranking weights as basis points (DEV-418). Each dimension is an
+ * integer 0–10000 and the five sum to exactly 10000. Mirrors the persisted
+ * backend shape; `ResearchReportDetail.weights` is `null` on legacy reports
+ * (created before DEV-418), which the UI reads as "hide the weights panel and
+ * render the four-row methodology".
+ */
+export interface CompositeWeights {
+  onlinePresence: number;
+  socialPresence: number;
+  impactRecency: number;
+  donorMatch: number;
+  compliance: number;
+}
+
 export interface ResearchReportCandidate {
   id: string;
   fundingOrganizationId: string;
@@ -240,13 +255,34 @@ export interface ResearchReportCandidate {
   organizationWebsiteUrl: string | null;
   ein: string | null;
   composite: number;
+  /**
+   * Per-dimension component scores, each in `[0, 1]`. DEV-418 split the
+   * legacy `freshness` (website + social bundled) into website-only
+   * `onlinePresence` and SociaVault-fed `socialPresence`. New reports carry
+   * `onlinePresence` + `socialPresence` and omit `freshness`; legacy reports
+   * carry `freshness` and omit the two split fields. Branch on the report's
+   * `weights` (null => legacy) to know which shape to expect.
+   */
   components: {
-    freshness: number;
+    freshness?: number;
+    onlinePresence?: number;
+    socialPresence?: number;
     impactRecency: number;
     donorMatch: number;
     compliance: number;
   };
-  topThreeFlag: boolean;
+  /**
+   * True for the candidates in the featured set — the top `report.topCount`
+   * candidates, which receive the AI one-pager (DEV-418). Renamed from
+   * `topThreeFlag` now that the featured-set size is advisor-configurable.
+   */
+  featuredFlag: boolean;
+  /**
+   * Advisor-forced display position (DEV-418 manual reorder), 1-based.
+   * `null` when ordering derives from the composite score. A weights
+   * re-rank resets this to `null` (one source of truth at a time).
+   */
+  manualPosition: number | null;
   complianceVerdict: ComplianceVerdictKind;
   disqualificationReasons: ComplianceDisqualificationReason[];
   complianceChecks: ComplianceCheck[];
@@ -301,6 +337,19 @@ export interface ResearchReportDetail {
   fastCompletedAt: string | null;
   completedAt: string | null;
   geographyDiagnostic: GeographyDiagnostic | null;
+  /**
+   * Advisor-configured composite-ranking weights (DEV-418), basis points
+   * summing to 10000. `null` marks a legacy report scored with the fixed
+   * four-dimension weights — the frontend hides the weights panel and
+   * renders the legacy methodology when this is absent.
+   */
+  weights: CompositeWeights | null;
+  /**
+   * Size of the featured set that receives an AI one-pager (DEV-418),
+   * advisor-configurable 1–25. `null` marks a report from before this shipped
+   * — the frontend treats it as the original default of 3.
+   */
+  topCount: number | null;
   candidates: ResearchReportCandidate[];
 }
 
@@ -351,4 +400,101 @@ export interface FastReportEvent {
     | "report_failed";
   reportId: string;
   data: Record<string, unknown>;
+}
+
+// -- Donor persona (DEV-431) -------------------------------------------
+//
+// A 1:1 record per donor handle: a free-text source the advisor writes,
+// an LLM-refined narrative, and five structured enum chips — each chip
+// carrying provenance (LLM-`extracted` vs advisor-`manual`). The persona
+// is a *default* that prefills the report-create form; it is never written
+// back to by the form, and editing it never alters existing reports.
+
+/** Per-chip origin: set by the refine LLM, set by the advisor, or absent. */
+export type PersonaProvenance = "extracted" | "manual";
+
+export type OrgMaturity = "upcoming" | "established" | "mixed";
+export type GeoRadius = "local" | "regional" | "national";
+export type FaithStance = "secular" | "faith_based" | "agnostic";
+export type GiftSizeBand = "small_high_leverage" | "mid" | "large_institutional";
+export type AdvocacyStance = "funds_advocacy" | "avoids_advocacy";
+
+/**
+ * One structured chip: an enum value plus where it came from. Invariant
+ * (enforced server-side): `value: null` ⇒ `source: null` — a chip with no
+ * value never carries provenance.
+ */
+export interface PersonaStructuredField<T extends string> {
+  value: T | null;
+  source: PersonaProvenance | null;
+}
+
+export interface PersonaStructured {
+  orgMaturity: PersonaStructuredField<OrgMaturity>;
+  geoRadius: PersonaStructuredField<GeoRadius>;
+  faithStance: PersonaStructuredField<FaithStance>;
+  giftSizeBand: PersonaStructuredField<GiftSizeBand>;
+  advocacyStance: PersonaStructuredField<AdvocacyStance>;
+}
+
+/**
+ * The five scoring weights the backend recomputes server-side on every GET
+ * from `structured` (the "nudge"). Same five dimensions as
+ * {@link CompositeWeights} (basis points, integers summing to 10000). The
+ * frontend consumes these verbatim and never mirrors the nudge math.
+ */
+export type PersonaComputedWeights = CompositeWeights;
+
+export interface DonorPersona {
+  id: string;
+  donorHandleId: string;
+  sourceText: string | null;
+  narrative: string | null;
+  structured: PersonaStructured;
+  computedWeights: PersonaComputedWeights;
+  /**
+   * Explicit gift amounts (USD) extracted from the source by Refine, used to
+   * prefill the report form accurately — NOT derived from `giftSizeBand`.
+   * Optional: present only once the backend emits them (gap-indexer#2117).
+   * `amountMax: null` means an open-ended upper bound.
+   */
+  amountMin?: number | null;
+  amountMax?: number | null;
+  /**
+   * Topical cause / focus area extracted from the source (e.g. "climate",
+   * "education"), used to prefill the report form's Cause field. Optional:
+   * present only once the backend emits it (gap-indexer#2117). `null` when the
+   * source names no clear single cause.
+   */
+  cause?: string | null;
+  /**
+   * Place string extracted from the source (e.g. "Pacific Northwest"), used to
+   * prefill the report form's Geography field — NOT the coarse `geoRadius`
+   * enum. Optional: present only once the backend emits it (gap-indexer#2117).
+   * `null` when the source names no clear location.
+   */
+  geography?: string | null;
+  refinedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * Result of `POST …/persona/refine`. The refine call does NOT persist, so
+ * the shape carries no `id`, timestamps, or `computedWeights`. Each chip's
+ * `source` is `"extracted"` or `null` — never `"manual"`. Refinement never
+ * fabricates: an uncertain field comes back `{ value: null, source: null }`.
+ */
+export interface RefinementResult {
+  narrative: string | null;
+  structured: PersonaStructured;
+  /**
+   * Explicit values extracted from the source. The editor carries these into
+   * the persona PUT so they persist (and then prefill the report form). `null`
+   * when the source names none. Optional for back-compat with older responses.
+   */
+  amountMin?: number | null;
+  amountMax?: number | null;
+  cause?: string | null;
+  geography?: string | null;
 }

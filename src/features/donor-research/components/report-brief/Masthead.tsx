@@ -7,6 +7,7 @@ import type { ResearchReportDetail } from "@/types/donor-research";
 import { PAGES } from "@/utilities/pages";
 import { StatusBadge } from "../report-list/StatusBadge";
 import { ShareTokenControls } from "../report-viewer/ShareTokenControls";
+import { WeightsPanel } from "../report-viewer/WeightsPanel";
 import { briefDisplay, briefProse } from "./fonts";
 
 interface MastheadProps {
@@ -40,10 +41,18 @@ export function Masthead({
   const isShared = variant === "shared";
   const issuedAt = report.fastCompletedAt ?? report.completedAt ?? report.createdAt;
   const issuedLabel = formatIssueDate(issuedAt);
+  const updatedAt = report.completedAt ?? report.fastCompletedAt ?? report.createdAt;
+  // Only surface "Updated" when a later completion (e.g. deep enrichment) moved the
+  // date past the issue date — otherwise the same day would render twice.
+  const updatedLabel = formatIssueDate(updatedAt);
+  const showUpdated = updatedLabel !== "—" && updatedLabel !== issuedLabel;
   const issueNumber = `No. ${report.id.slice(0, 6).toUpperCase()}`;
 
   return (
-    <header className="mb-14 grid grid-cols-1 gap-8 sm:mb-20 sm:grid-cols-[1fr_auto] sm:gap-12">
+    <header
+      className="mb-14 grid grid-cols-1 gap-8 sm:mb-20 sm:grid-cols-[1fr_auto] sm:gap-12"
+      data-section="masthead"
+    >
       <div className="min-w-0">
         {isShared ? null : (
           <Link
@@ -63,6 +72,12 @@ export function Masthead({
           <span className="tabular-nums">{issueNumber}</span>
           <Bullet />
           <span className="text-brand-emphasis dark:text-brand-subtle">Issued {issuedLabel}</span>
+          {showUpdated ? (
+            <>
+              <Bullet />
+              <span>Updated {updatedLabel}</span>
+            </>
+          ) : null}
         </div>
 
         <h1
@@ -93,7 +108,8 @@ export function Masthead({
       </div>
 
       {isTerminal && !isShared ? (
-        <div className="sm:justify-self-end">
+        <div className="flex flex-wrap items-start justify-end gap-2 sm:justify-self-end">
+          {report.weights && report.candidates.length > 0 ? <WeightsPanel report={report} /> : null}
           <ShareTokenControls
             reportId={report.id}
             hasShareToken={report.hasShareToken}
