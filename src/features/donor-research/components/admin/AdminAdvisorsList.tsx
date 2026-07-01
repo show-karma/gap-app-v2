@@ -3,6 +3,7 @@
 import { AlertTriangle, RefreshCw, Search } from "lucide-react";
 import { useQueryState } from "nuqs";
 import pluralize from "pluralize";
+import { memo } from "react";
 import TablePagination from "@/components/Utilities/TablePagination";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -145,7 +146,7 @@ export function AdminAdvisorsList() {
   );
 }
 
-function AdvisorCard({ advisor }: { advisor: AdminAdvisor }) {
+const AdvisorCard = memo(function AdvisorCard({ advisor }: { advisor: AdminAdvisor }) {
   return (
     <Card>
       <CardHeader className="flex flex-col gap-1 border-b border-border">
@@ -196,9 +197,9 @@ function AdvisorCard({ advisor }: { advisor: AdminAdvisor }) {
       </CardContent>
     </Card>
   );
-}
+});
 
-function ReportLink({ report }: { report: AdminAdvisorReportSummary }) {
+const ReportLink = memo(function ReportLink({ report }: { report: AdminAdvisorReportSummary }) {
   return (
     <Link
       href={PAGES.DONOR_RESEARCH.ADMIN_REPORT(report.id)}
@@ -214,7 +215,7 @@ function ReportLink({ report }: { report: AdminAdvisorReportSummary }) {
       ) : null}
     </Link>
   );
-}
+});
 
 function AdvisorsSkeleton() {
   return (
