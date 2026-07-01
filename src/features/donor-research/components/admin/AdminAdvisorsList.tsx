@@ -6,6 +6,7 @@ import pluralize from "pluralize";
 import { memo, useMemo, useState } from "react";
 import TablePagination from "@/components/Utilities/TablePagination";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useDebounce } from "@/hooks/use-debounce";
 import { useAdminAdvisors } from "@/hooks/useAdminDonorResearch";
 import { Link } from "@/src/components/navigation/Link";
 import type {
@@ -83,18 +84,23 @@ export function AdminAdvisorsList() {
   const [sort, setSort] = useState<SortKey>("recent");
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
 
-  const search = q.trim();
+  // Debounce the value that drives the query key: nuqs `throttleMs` only rate-limits
+  // the URL write, so `q` still changes on every keystroke and would refetch each time.
+  const search = useDebounce(q.trim(), 300);
   const { data, isLoading, isError, refetch, isFetching } = useAdminAdvisors({
     page,
     limit: PAGE_SIZE,
     search: search || undefined,
   });
 
-  // Filter + sort are applied to the loaded page (server handles search +
-  // pagination). At beta scale advisors fit on one page, so this matches the
-  // single-view design; revisit if the population outgrows a page.
+  // The server owns search + pagination; client-side filter/sort only make
+  // sense when the whole result set is on one page. Across multiple pages they
+  // would operate on a 20-row slice and desync the count + pager, so they're
+  // only applied (and shown) while everything fits on a single page.
+  const singlePage = (data?.total ?? 0) <= PAGE_SIZE;
   const visible = useMemo(() => {
     const items = data?.items ?? [];
+    if (!singlePage) return items;
     const filtered =
       filter === "shared"
         ? items.filter((a) => a.donors.some((d) => d.reports.some((r) => r.hasShareToken)))
@@ -104,7 +110,7 @@ export function AdminAdvisorsList() {
       sorted.sort((a, b) => (a.name || a.displayName).localeCompare(b.name || b.displayName));
     if (sort === "reports") sorted.sort((a, b) => b.reportCount - a.reportCount);
     return sorted;
-  }, [data?.items, filter, sort]);
+  }, [data?.items, filter, sort, singlePage]);
 
   const allExpanded = visible.length > 0 && visible.every((a) => expanded[a.id]);
   const toggleAll = () => {
@@ -145,32 +151,36 @@ export function AdminAdvisorsList() {
             className="h-11 w-full rounded-xl border border-border bg-background pr-3 pl-10 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
           />
         </div>
-        <div className="inline-flex gap-1 rounded-xl bg-muted p-1">
-          {(["all", "shared"] as const).map((key) => (
-            <button
-              type="button"
-              key={key}
-              onClick={() => setFilter(key)}
-              className={`h-9 rounded-lg px-4 text-sm font-medium capitalize transition-colors ${
-                filter === key
-                  ? "bg-background text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
+        {singlePage ? (
+          <>
+            <div className="inline-flex gap-1 rounded-xl bg-muted p-1">
+              {(["all", "shared"] as const).map((key) => (
+                <button
+                  type="button"
+                  key={key}
+                  onClick={() => setFilter(key)}
+                  className={`h-9 rounded-lg px-4 text-sm font-medium capitalize transition-colors ${
+                    filter === key
+                      ? "bg-background text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {key}
+                </button>
+              ))}
+            </div>
+            <select
+              value={sort}
+              onChange={(e) => setSort(e.target.value as SortKey)}
+              aria-label="Sort advisors"
+              className="h-11 rounded-xl border border-border bg-background px-3 text-sm font-medium text-foreground focus:border-primary focus:outline-none"
             >
-              {key}
-            </button>
-          ))}
-        </div>
-        <select
-          value={sort}
-          onChange={(e) => setSort(e.target.value as SortKey)}
-          aria-label="Sort advisors"
-          className="h-11 rounded-xl border border-border bg-background px-3 text-sm font-medium text-foreground focus:border-primary focus:outline-none"
-        >
-          <option value="recent">Recently joined</option>
-          <option value="name">Name (A–Z)</option>
-          <option value="reports">Most reports</option>
-        </select>
+              <option value="recent">Recently joined</option>
+              <option value="name">Name (A–Z)</option>
+              <option value="reports">Most reports</option>
+            </select>
+          </>
+        ) : null}
       </div>
 
       {isLoading ? <AdvisorsSkeleton /> : null}
