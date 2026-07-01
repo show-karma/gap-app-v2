@@ -145,6 +145,54 @@ export function getBrowseApplicationsUrl(
 }
 
 /**
+ * Generate the applicant-facing application detail URL.
+ *
+ * This is the same route that serves both the public and the private (owner)
+ * view — `ApplicationPageClient` resolves the viewer role client-side, so an
+ * authenticated grantee lands on their private view. The route is keyed by
+ * `referenceNumber`, not the application's internal id.
+ *
+ * @param communityId - The community slug
+ * @param referenceNumber - The application's reference number
+ * @param whitelabelOrigin - Current origin when running in whitelabel mode
+ * @returns The full URL to the application detail page
+ */
+export function getApplicationDetailUrl(
+  communityId: string,
+  referenceNumber: string,
+  whitelabelOrigin?: string
+): string {
+  if (usesSameOriginLinks(whitelabelOrigin)) {
+    return PAGES.COMMUNITY.APPLICATION_DETAIL(communityId, referenceNumber);
+  }
+  const domain = getDomainForCommunity(communityId, whitelabelOrigin);
+  return `${domain}/applications/${referenceNumber}`;
+}
+
+export type GranteeRedirect = { kind: "application" | "dashboard"; url: string };
+
+/**
+ * Resolve where to send a denied grantee, pairing the destination with its kind
+ * so the CTA label and href share a single source of truth: a single resolvable
+ * application links to that application; anything else falls back to the dashboard.
+ */
+export function buildGranteeRedirect(params: {
+  communityId?: string;
+  referenceNumber?: string;
+  applicationCount: number;
+  whitelabelOrigin?: string;
+}): GranteeRedirect {
+  const { communityId, referenceNumber, applicationCount, whitelabelOrigin } = params;
+  if (applicationCount === 1 && referenceNumber && communityId) {
+    return {
+      kind: "application",
+      url: getApplicationDetailUrl(communityId, referenceNumber, whitelabelOrigin),
+    };
+  }
+  return { kind: "dashboard", url: PAGES.DASHBOARD };
+}
+
+/**
  * Generate the program details page URL
  *
  * @param communityId - The community slug

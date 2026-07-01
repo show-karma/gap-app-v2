@@ -165,8 +165,19 @@ export const INDEXER = {
         `/v2/funding-applications/${referenceNumber}/versions/timeline`,
       REVIEWERS: (applicationId: string) => `/v2/funding-applications/${applicationId}/reviewers`,
       ACCESS: (referenceNumber: string) => `/v2/funding-applications/${referenceNumber}/access`,
-      MY_APPLICATIONS: (communitySlug: string) =>
-        `/v2/funding-applications/user/my-applications?communitySlug=${communitySlug}`,
+      MY_APPLICATIONS: (params: {
+        communitySlug: string;
+        programId?: string;
+        page?: number;
+        limit?: number;
+      }) => {
+        const qs = new URLSearchParams();
+        qs.set("communitySlug", params.communitySlug);
+        if (params.programId) qs.set("programId", params.programId);
+        if (params.page !== undefined) qs.set("page", String(params.page));
+        if (params.limit !== undefined) qs.set("limit", String(params.limit));
+        return `/v2/funding-applications/user/my-applications?${qs.toString()}`;
+      },
       INVOICE_CONFIG: (referenceNumber: string) =>
         `/v2/funding-applications/${referenceNumber}/invoice-config`,
       MILESTONE_EVALUATION: (referenceNumber: string, milestoneTitle: string) =>

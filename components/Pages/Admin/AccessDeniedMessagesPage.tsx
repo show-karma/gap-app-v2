@@ -39,7 +39,10 @@ interface ScenarioMeta {
   scenario: AccessDeniedScenario;
   title: string;
   description: string;
-  fieldKey: "accessDeniedUnauthenticatedMessage" | "accessDeniedForbiddenMessage";
+  fieldKey:
+    | "accessDeniedUnauthenticatedMessage"
+    | "accessDeniedForbiddenMessage"
+    | "accessDeniedApplicantMessage";
 }
 
 const SCENARIOS: ReadonlyArray<ScenarioMeta> = [
@@ -56,6 +59,13 @@ const SCENARIOS: ReadonlyArray<ScenarioMeta> = [
     description:
       "Shown to authenticated visitors who don't have a role that satisfies the page's requirement.",
     fieldKey: "accessDeniedForbiddenMessage",
+  },
+  {
+    scenario: "applicant",
+    title: "When the denied user is an applicant",
+    description:
+      "Shown alongside the denial to a signed-in applicant, next to a link to view their own application.",
+    fieldKey: "accessDeniedApplicantMessage",
   },
 ];
 
@@ -103,6 +113,7 @@ export function AccessDeniedMessagesPage({ community }: AccessDeniedMessagesPage
       initial={{
         unauthenticated: config?.accessDeniedUnauthenticatedMessage ?? null,
         forbidden: config?.accessDeniedForbiddenMessage ?? null,
+        applicant: config?.accessDeniedApplicantMessage ?? null,
       }}
     />
   );
@@ -111,6 +122,7 @@ export function AccessDeniedMessagesPage({ community }: AccessDeniedMessagesPage
 interface InitialValues {
   unauthenticated: string | null;
   forbidden: string | null;
+  applicant: string | null;
 }
 
 function AccessDeniedMessagesPageContent({
@@ -127,8 +139,10 @@ function AccessDeniedMessagesPageContent({
   // can edit-in-place instead of starting from a blank textarea.
   const baselineUnauth = initial.unauthenticated ?? ACCESS_DENIED_DEFAULT_MESSAGES.unauthenticated;
   const baselineForbidden = initial.forbidden ?? ACCESS_DENIED_DEFAULT_MESSAGES.forbidden;
+  const baselineApplicant = initial.applicant ?? ACCESS_DENIED_DEFAULT_MESSAGES.applicant;
   const [unauth, setUnauth] = useState<string>(baselineUnauth);
   const [forbidden, setForbidden] = useState<string>(baselineForbidden);
+  const [applicant, setApplicant] = useState<string>(baselineApplicant);
 
   const unauthValidation = useMemo(
     () => validateAccessDeniedTemplate(unauth, "unauthenticated"),
@@ -138,12 +152,34 @@ function AccessDeniedMessagesPageContent({
     () => validateAccessDeniedTemplate(forbidden, "forbidden"),
     [forbidden]
   );
+  const applicantValidation = useMemo(
+    () => validateAccessDeniedTemplate(applicant, "applicant"),
+    [applicant]
+  );
 
   const unauthError = formatValidationError(unauthValidation, unauth.length);
   const forbiddenError = formatValidationError(forbiddenValidation, forbidden.length);
-  const hasError = Boolean(unauthError) || Boolean(forbiddenError);
+  const applicantError = formatValidationError(applicantValidation, applicant.length);
+  const hasError = Boolean(unauthError) || Boolean(forbiddenError) || Boolean(applicantError);
 
-  const isDirty = unauth !== baselineUnauth || forbidden !== baselineForbidden;
+  const isDirty =
+    unauth !== baselineUnauth || forbidden !== baselineForbidden || applicant !== baselineApplicant;
+
+  const valueByScenario: Record<AccessDeniedScenario, string> = {
+    unauthenticated: unauth,
+    forbidden,
+    applicant,
+  };
+  const setterByScenario: Record<AccessDeniedScenario, (next: string) => void> = {
+    unauthenticated: setUnauth,
+    forbidden: setForbidden,
+    applicant: setApplicant,
+  };
+  const errorByScenario: Record<AccessDeniedScenario, string | null> = {
+    unauthenticated: unauthError,
+    forbidden: forbiddenError,
+    applicant: applicantError,
+  };
 
   const handleSave = () => {
     if (hasError) return;
@@ -162,6 +198,7 @@ function AccessDeniedMessagesPageContent({
         config: {
           accessDeniedUnauthenticatedMessage: normalize(unauth, "unauthenticated"),
           accessDeniedForbiddenMessage: normalize(forbidden, "forbidden"),
+          accessDeniedApplicantMessage: normalize(applicant, "applicant"),
         },
       },
       {
@@ -174,6 +211,7 @@ function AccessDeniedMessagesPageContent({
   const handleReset = () => {
     setUnauth(baselineUnauth);
     setForbidden(baselineForbidden);
+    setApplicant(baselineApplicant);
   };
 
   return (
@@ -189,23 +227,17 @@ function AccessDeniedMessagesPageContent({
 
       <TokenReferencePanel />
 
-      {SCENARIOS.map((meta) => {
-        const isUnauth = meta.scenario === "unauthenticated";
-        const value = isUnauth ? unauth : forbidden;
-        const setValue = isUnauth ? setUnauth : setForbidden;
-        const validationError = isUnauth ? unauthError : forbiddenError;
-        return (
-          <MessageEditorSection
-            key={meta.scenario}
-            meta={meta}
-            communityName={community.details?.name ?? ""}
-            communitySlug={communitySlug}
-            value={value}
-            onChange={setValue}
-            errorMessage={validationError}
-          />
-        );
-      })}
+      {SCENARIOS.map((meta) => (
+        <MessageEditorSection
+          key={meta.scenario}
+          meta={meta}
+          communityName={community.details?.name ?? ""}
+          communitySlug={communitySlug}
+          value={valueByScenario[meta.scenario]}
+          onChange={setterByScenario[meta.scenario]}
+          errorMessage={errorByScenario[meta.scenario]}
+        />
+      ))}
 
       <div className="mt-6 flex justify-end gap-2">
         {isDirty && !isSaving ? (
