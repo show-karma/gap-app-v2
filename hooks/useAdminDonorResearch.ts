@@ -8,10 +8,10 @@ import {
 } from "@/services/donor-research-admin.service";
 import type { AdminAdvisorsList, ResearchReportDetail } from "@/types/donor-research";
 
-export const adminAdvisorsQueryKey = (options: ListAdvisorsOptions = {}) =>
+const adminAdvisorsQueryKey = (options: ListAdvisorsOptions = {}) =>
   ["donor-research", "admin", "advisors", options] as const;
 
-export const adminReportQueryKey = (reportId: string) =>
+const adminReportQueryKey = (reportId: string) =>
   ["donor-research", "admin", "report", reportId] as const;
 
 /** Staff-only: paginated list of advisors with their donors + report links. */
