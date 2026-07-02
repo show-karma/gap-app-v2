@@ -20,6 +20,7 @@ import { useLoadPrivy } from "@/contexts/privy-bridge-context";
 import { setPostLoginRedirect, useAuth } from "@/hooks/useAuth";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { PAGES } from "@/utilities/pages";
+import { usePreDataTimeout } from "../hooks/use-pre-data-timeout";
 import { useScorecardBySlug } from "../hooks/use-scorecard-by-slug";
 import type { CategoryScore, PublicScorecardPayload } from "../types";
 import { hostnameOf, titleFromUrl } from "../utils/site";
@@ -256,6 +257,7 @@ export function PublicScorecard({ slug, initialData }: PublicScorecardProps) {
   const [loginQueued, setLoginQueued] = useState(false);
   const [, copyToClipboard] = useCopyToClipboard();
   const scorecard = data ?? initialData ?? null;
+  const gaveUp = usePreDataTimeout(!scorecard && !isError);
 
   useEffect(() => {
     if (!loginQueued || !ready) return;
@@ -268,7 +270,7 @@ export function PublicScorecard({ slug, initialData }: PublicScorecardProps) {
   // "generating" rather than "not found". Only once retries are exhausted does
   // `isError` flip and we surface the genuine unpublished / wrong-URL error.
   if (!scorecard) {
-    if (isError) {
+    if (isError || gaveUp) {
       return (
         <ErrorState
           title="We couldn't load this scorecard"

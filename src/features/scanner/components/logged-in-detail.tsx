@@ -19,9 +19,10 @@ import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { PAGES } from "@/utilities/pages";
+import { usePreDataTimeout } from "../hooks/use-pre-data-timeout";
 import { useScan } from "../hooks/use-scan";
 import { useSubmitScan } from "../hooks/use-submit-scan";
-import type { DetailScorecardPayload, ScanGrade } from "../types";
+import type { CategoryScore, DetailScorecardPayload, ScanGrade } from "../types";
 import { BAND_FG, GRADE_LABEL, gradeBand } from "../utils/labels";
 import { titleFromUrl } from "../utils/site";
 import { CategoryBar } from "./category-bar";
@@ -216,6 +217,30 @@ function ReportHeader(props: ReportHeaderProps) {
   );
 }
 
+function EvidencePanel({
+  categoryScores,
+  evidence,
+}: {
+  readonly categoryScores: readonly CategoryScore[];
+  readonly evidence: Parameters<typeof EvidenceList>[0]["evidence"];
+}) {
+  return (
+    <div className="flex flex-col gap-6">
+      {categoryScores.length > 0 ? (
+        <section
+          className="rounded-2xl border border-border bg-card px-6 py-2"
+          aria-label="Category scores"
+        >
+          {categoryScores.map((category, i) => (
+            <CategoryBar key={category.category} score={category} index={i} />
+          ))}
+        </section>
+      ) : null}
+      <EvidenceList evidence={evidence} />
+    </div>
+  );
+}
+
 function WalkthroughPanel({ notes }: { readonly notes: string | null }) {
   if (!notes) {
     return (
@@ -246,6 +271,7 @@ function WalkthroughPanel({ notes }: { readonly notes: string | null }) {
 
 export function LoggedInDetail({ scanId, userEmail }: LoggedInDetailProps) {
   const { data, isError, refetch } = useScan(scanId);
+  const gaveUp = usePreDataTimeout(!data && !isError);
   const { push } = useRouter();
   const [tab, setTab] = useState<ReportTab>("path");
   const [copied, setCopied] = useState(false);
@@ -262,7 +288,7 @@ export function LoggedInDetail({ scanId, userEmail }: LoggedInDetailProps) {
   // queryable; the query stays pending (retrying) through that window, so we
   // show the generating view rather than an error until retries are exhausted.
   if (!data) {
-    if (isError) {
+    if (isError || gaveUp) {
       return (
         <ErrorState
           title="We couldn't load this scan"
@@ -358,19 +384,7 @@ export function LoggedInDetail({ scanId, userEmail }: LoggedInDetailProps) {
       ) : null}
 
       {tab === "evidence" ? (
-        <div className="flex flex-col gap-6">
-          {categoryScores.length > 0 ? (
-            <section
-              className="rounded-2xl border border-border bg-card px-6 py-2"
-              aria-label="Category scores"
-            >
-              {categoryScores.map((category, i) => (
-                <CategoryBar key={category.category} score={category} index={i} />
-              ))}
-            </section>
-          ) : null}
-          <EvidenceList evidence={evidence} />
-        </div>
+        <EvidencePanel categoryScores={categoryScores} evidence={evidence} />
       ) : null}
 
       {tab === "flow" ? <WalkthroughPanel notes={data.walkthroughNotes ?? null} /> : null}

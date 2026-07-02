@@ -3,10 +3,7 @@ import fetchData from "@/utilities/fetchData";
 import type {
   ContactRequest,
   DetailScorecardPayload,
-  IssuedScannerApiKey,
-  IssueScannerApiKeyRequest,
   PublicScorecardPayload,
-  ScannerApiKey,
   SubmitScanRequest,
   SubmitScanResponse,
 } from "../types";
@@ -113,83 +110,4 @@ export async function submitContactRequest(payload: ContactRequest): Promise<{ i
     throw Object.assign(new Error(error ?? "Request failed"), { status });
   }
   return data;
-}
-
-// The backend returns key records with a `keyHint` field and wraps the
-// list/create responses in envelopes (`{ apiKeys }` and `{ apiKey, key }`).
-// Map them to the FE `ScannerApiKey` model here at the service boundary so
-// the components stay on the internal shape (`prefix`, flat array).
-interface BackendApiKeyRecord {
-  readonly id: string;
-  readonly name: string;
-  readonly keyHint: string;
-  readonly scopes: readonly string[];
-  readonly quotaOverride: number | null;
-  readonly createdAt: string;
-  readonly lastUsedAt: string | null;
-  readonly revokedAt: string | null;
-}
-
-function toScannerApiKey(record: BackendApiKeyRecord): ScannerApiKey {
-  return {
-    id: record.id,
-    prefix: record.keyHint,
-    name: record.name,
-    scopes: record.scopes,
-    createdAt: record.createdAt,
-    lastUsedAt: record.lastUsedAt,
-    revokedAt: record.revokedAt,
-  };
-}
-
-export async function listScannerApiKeys(): Promise<ScannerApiKey[]> {
-  const [data, error, , status] = await fetchData<{ apiKeys: BackendApiKeyRecord[] }>(
-    `${SCANNER_BASE}/me/api-keys`,
-    "GET",
-    {},
-    {},
-    {},
-    false,
-    false,
-    SCANNER_PROXY
-  );
-  if (error || data === null) {
-    throw Object.assign(new Error(error ?? "Request failed"), { status });
-  }
-  return (data.apiKeys ?? []).map(toScannerApiKey);
-}
-
-export async function issueScannerApiKey(
-  payload: IssueScannerApiKeyRequest
-): Promise<IssuedScannerApiKey> {
-  const [data, error, , status] = await fetchData<{ apiKey: BackendApiKeyRecord; key: string }>(
-    `${SCANNER_BASE}/me/api-keys`,
-    "POST",
-    payload,
-    {},
-    {},
-    false,
-    false,
-    SCANNER_PROXY
-  );
-  if (error || data === null) {
-    throw Object.assign(new Error(error ?? "Request failed"), { status });
-  }
-  return { key: data.key, record: toScannerApiKey(data.apiKey) };
-}
-
-export async function revokeScannerApiKey(keyId: string): Promise<void> {
-  const [, error, , status] = await fetchData<void>(
-    `${SCANNER_BASE}/me/api-keys/${keyId}`,
-    "DELETE",
-    {},
-    {},
-    {},
-    false,
-    false,
-    SCANNER_PROXY
-  );
-  if (error) {
-    throw Object.assign(new Error(error), { status });
-  }
 }
