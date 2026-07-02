@@ -58,7 +58,7 @@ function normalizeUrl(raw: string): { ok: true; value: string } | { ok: false; e
 const EXAMPLE_DOMAINS = ["waterkeeper.org", "givedirectly.org", "khanacademy.org", "watsi.org"];
 
 export function ScannerSubmitForm({ showExamples = false }: ScannerSubmitFormProps) {
-  const router = useRouter();
+  const { push } = useRouter();
   const { authenticated, ready, login } = useAuth();
   const [url, setUrl] = useState("");
   const [urlError, setUrlError] = useState<string | null>(null);
@@ -72,7 +72,7 @@ export function ScannerSubmitForm({ showExamples = false }: ScannerSubmitFormPro
     onSuccess: (response) => {
       submittingRef.current = false;
       toast.success("Scan started");
-      router.push(PAGES.SCANNER.PUBLIC_SCORECARD(response.slug));
+      push(PAGES.SCANNER.PUBLIC_SCORECARD(response.slug));
     },
     onError: (error) => {
       submittingRef.current = false;
@@ -130,6 +130,7 @@ export function ScannerSubmitForm({ showExamples = false }: ScannerSubmitFormPro
           </Label>
           <input
             id="scanner-url"
+            aria-label="Nonprofit website URL"
             type="url"
             inputMode="url"
             placeholder="yournonprofit.org"

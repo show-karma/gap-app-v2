@@ -44,13 +44,13 @@ export function RateLimitModal({ state, isAuthenticated, onClose, onLogin }: Rat
       <DialogContent className="max-w-[430px] gap-0 overflow-hidden p-0">
         {/* branded persona header */}
         <div className="flex items-center gap-3 border-b border-border bg-brand-faint px-6 py-5 dark:bg-brand/10">
-          <DialogTitle className="text-[19px] font-bold tracking-tight text-foreground">
+          <DialogTitle className="text-[19px] font-semibold tracking-tight text-foreground">
             {loginRequired ? "Scan limit reached" : "You've used your free scans"}
           </DialogTitle>
         </div>
 
         {/* body */}
-        <div className="flex flex-col gap-4 px-6 py-6">
+        <div className="flex flex-col gap-4 p-6">
           <QuotaPips used={loginRequired ? 1 : 3} cap={loginRequired ? 1 : 3} />
 
           {loginRequired ? (

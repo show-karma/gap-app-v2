@@ -13,14 +13,14 @@ import {
   Shield,
   Wrench,
 } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLoadPrivy } from "@/contexts/privy-bridge-context";
 import { setPostLoginRedirect, useAuth } from "@/hooks/useAuth";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { PAGES } from "@/utilities/pages";
-import { usePreDataTimeout } from "../hooks/use-pre-data-timeout";
 import { useScorecardBySlug } from "../hooks/use-scorecard-by-slug";
 import type { CategoryScore, PublicScorecardPayload } from "../types";
 import { hostnameOf, titleFromUrl } from "../utils/site";
@@ -66,12 +66,12 @@ function SiteFavicon({
   }
   return (
     <span className="flex h-[46px] w-[46px] shrink-0 items-center justify-center overflow-hidden rounded-xl border border-border bg-card">
-      {/* biome-ignore lint/performance/noImgElement: 16–64px external favicon; next/image would require allowlisting google.com and buys nothing here */}
-      <img
+      <Image
         src={`${FAVICON_SERVICE}?domain=${encodeURIComponent(hostname)}&sz=64`}
         alt=""
         width={28}
         height={28}
+        unoptimized
         className="h-7 w-7 object-contain"
         onError={() => setBroken(true)}
       />
@@ -116,7 +116,7 @@ function CategoryBreakdownCard({ scores }: { readonly scores: readonly CategoryS
       aria-label="Category breakdown"
     >
       <div className="flex items-center justify-between py-4">
-        <h2 className="text-[17px] font-bold text-foreground">Category breakdown</h2>
+        <h2 className="text-[17px] font-semibold text-foreground">Category breakdown</h2>
         {rawPossible > 0 ? (
           <span className="text-[12.5px] text-muted-foreground">
             {rawAwarded}/{rawPossible} raw · normalized to 100
@@ -163,7 +163,7 @@ function MembersUpsell({
           </span>
         </div>
         <div>
-          <h2 className="max-w-[440px] text-[22px] font-bold tracking-tight text-foreground">
+          <h2 className="max-w-[440px] text-[22px] font-semibold tracking-tight text-foreground">
             {scorecard.totalScore != null && scorecard.totalScore < 100
               ? "You can reach 100. Here's exactly how."
               : "See the full report."}
@@ -237,7 +237,7 @@ function FixTeaser({
             className={`h-3.5 w-3.5 ${authenticated ? "text-brand-emphasis" : ""}`}
             aria-hidden
           />
-          {authenticated ? "Fixes hidden — See the full report" : "Sign in to unlock the fixes"}
+          {authenticated ? "Fixes hidden: see the full report" : "Sign in to unlock the fixes"}
           <ArrowRight className="h-3.5 w-3.5" aria-hidden />
         </button>
       </div>
@@ -252,25 +252,25 @@ export function PublicScorecard({ slug, initialData }: PublicScorecardProps) {
   const loadPrivy = useLoadPrivy();
   const [copied, setCopied] = useState(false);
   // A login click that landed before the deferred Privy SDK finished loading.
-  // The bridge's pre-load `login` is a silent no-op, so we queue the intent,
-  // kick the SDK load, and fire the real login once `ready` flips true.
-  const [loginQueued, setLoginQueued] = useState(false);
+  // The bridge's pre-load `login` is a silent no-op, so we queue the intent in
+  // a ref (it is never read during render), kick the SDK load, and fire the
+  // real login once `ready` flips true.
+  const queuedLoginRef = useRef(false);
   const [, copyToClipboard] = useCopyToClipboard();
   const scorecard = data ?? initialData ?? null;
-  const gaveUp = usePreDataTimeout(!scorecard && !isError);
 
   useEffect(() => {
-    if (!loginQueued || !ready) return;
-    setLoginQueued(false);
+    if (!ready || !queuedLoginRef.current) return;
+    queuedLoginRef.current = false;
     if (!authenticated) login();
-  }, [loginQueued, ready, authenticated, login]);
+  }, [ready, authenticated, login]);
 
   // No payload yet. While the query is still retrying the pre-scored 404
   // window it stays pending (not `isError`), so a just-submitted scan reads as
   // "generating" rather than "not found". Only once retries are exhausted does
   // `isError` flip and we surface the genuine unpublished / wrong-URL error.
   if (!scorecard) {
-    if (isError || gaveUp) {
+    if (isError) {
       return (
         <ErrorState
           title="We couldn't load this scorecard"
@@ -315,7 +315,7 @@ export function PublicScorecard({ slug, initialData }: PublicScorecardProps) {
     if (!ready) {
       // SDK still deferred — request it and queue the login for when it lands.
       loadPrivy();
-      setLoginQueued(true);
+      queuedLoginRef.current = true;
       return;
     }
     login();
@@ -341,7 +341,7 @@ export function PublicScorecard({ slug, initialData }: PublicScorecardProps) {
         <div className="flex flex-wrap items-center gap-3.5">
           <SiteFavicon hostname={hostnameOf(url)} fallback={favicon} />
           <div className="min-w-[200px] flex-1">
-            <h1 className="text-[22px] font-bold tracking-tight text-foreground">
+            <h1 className="text-[22px] font-semibold tracking-tight text-foreground">
               {org ?? titleFromUrl(url)}
             </h1>
             {url ? (

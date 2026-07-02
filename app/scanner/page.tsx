@@ -52,7 +52,7 @@ export default function ScannerPage() {
             className="mt-[18px] max-w-[620px] text-[clamp(1rem,2vw,1.2rem)] leading-relaxed text-foreground-alt"
           >
             Paste your URL. We send a polite AI agent through your site the way a donor's assistant
-            would — and grade whether it can{" "}
+            would, and grade whether it can{" "}
             <strong className="font-semibold text-foreground">
               reach, understand, trust, and transact
             </strong>
@@ -73,7 +73,7 @@ export default function ScannerPage() {
           <span className="text-[13px] font-semibold uppercase tracking-[0.08em] text-brand-emphasis">
             What it measures
           </span>
-          <h2 className="mb-3 mt-2.5 text-[clamp(1.6rem,3vw,2.1rem)] font-bold tracking-tight text-foreground">
+          <h2 className="mb-3 mt-2.5 text-[clamp(1.6rem,3vw,2.1rem)] font-semibold tracking-tight text-foreground">
             Five categories, one journey
           </h2>
           <p className="mx-auto max-w-[560px] text-[15.5px] leading-relaxed text-muted-foreground">
@@ -94,7 +94,7 @@ export default function ScannerPage() {
                 <div className="flex h-[42px] w-[42px] items-center justify-center rounded-xl bg-secondary text-brand-emphasis transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:-translate-y-0.5 group-hover:scale-105">
                   <Icon className="h-[21px] w-[21px]" aria-hidden />
                 </div>
-                <h3 className="text-base font-bold text-foreground">{step.title}</h3>
+                <h3 className="text-base font-semibold text-foreground">{step.title}</h3>
                 <p className="text-sm leading-relaxed text-muted-foreground">{step.body}</p>
               </Reveal>
             );

@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { useRef } from "react";
 import { getPublicScorecardBySlug } from "../services/scanner.service";
 import type { PublicScorecardPayload } from "../types";
 
@@ -12,9 +13,12 @@ const POLL_INTERVAL_MS = 4_000;
 // show a progress view) rather than surfacing a not-found error. After
 // MAX_PENDING_ATTEMPTS the slug is judged genuinely missing/unpublished, so we
 // stop — a bad or revoked link can't poll the backend forever from every tab.
+const GIVE_UP_MS = 45_000;
 const MAX_PENDING_ATTEMPTS = 10; // ~40s at 4s — the fresh-scan 404 race lasts seconds, so a genuinely missing id errors quickly
 
 export function useScorecardBySlug(slug: string | null) {
+  // Wall-clock anchor for the pre-data give-up (see use-scan).
+  const mountedAtRef = useRef(Date.now());
   return useQuery<PublicScorecardPayload, Error & { status?: number }>({
     queryKey: ["scanner", "scorecard", slug],
     queryFn: () => {
@@ -26,7 +30,10 @@ export function useScorecardBySlug(slug: string | null) {
     enabled: Boolean(slug),
     // Retry the pre-scored 404 window at the poll cadence. A scored scorecard
     // resolves on the first attempt, so shared links stay instant.
-    retry: (failureCount) => failureCount < MAX_PENDING_ATTEMPTS,
+    retry: (failureCount) => {
+      if (Date.now() - mountedAtRef.current > GIVE_UP_MS) return false;
+      return failureCount < MAX_PENDING_ATTEMPTS;
+    },
     retryDelay: POLL_INTERVAL_MS,
     // Once we have data, keep refreshing in place through the non-terminal
     // statuses (config_complete → running_agent) until the scan is terminal.

@@ -122,12 +122,12 @@ export function ScannerBeforeAfter() {
         <span className="text-[13px] font-semibold uppercase tracking-[0.08em] text-brand-emphasis">
           The score moves
         </span>
-        <h2 className="mb-3 mt-2.5 text-[clamp(1.6rem,3vw,2.1rem)] font-bold tracking-tight text-foreground">
+        <h2 className="mb-3 mt-2.5 text-[clamp(1.6rem,3vw,2.1rem)] font-semibold tracking-tight text-foreground">
           From a D to an A in one re-scan
         </h2>
         <p className="mx-auto max-w-[560px] text-[15.5px] leading-relaxed text-muted-foreground">
           Every fix in your report shows the points at stake. Clear them, re-scan, and the grade
-          follows — here's what that path looks like.
+          follows. Here's what that path looks like.
         </p>
       </Reveal>
 
@@ -173,7 +173,7 @@ export function ScannerBeforeAfter() {
       </div>
 
       <p className="mt-[26px] text-center text-[12.5px] text-muted-foreground">
-        Illustrative example — your fix list and points come from your own scan.
+        Illustrative example: your fix list and points come from your own scan.
       </p>
     </section>
   );

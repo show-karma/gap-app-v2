@@ -48,7 +48,7 @@ function NodeText({
       <div className="mb-1 text-[11px] font-bold uppercase tracking-[0.07em] text-brand-emphasis">
         {verb}
       </div>
-      <h3 className="mb-1.5 text-base font-bold tracking-tight text-foreground">{name}</h3>
+      <h3 className="mb-1.5 text-base font-semibold tracking-tight text-foreground">{name}</h3>
       <p className="text-[13px] leading-relaxed text-muted-foreground">{question}</p>
     </>
   );

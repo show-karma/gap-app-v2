@@ -19,7 +19,6 @@ import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { PAGES } from "@/utilities/pages";
-import { usePreDataTimeout } from "../hooks/use-pre-data-timeout";
 import { useScan } from "../hooks/use-scan";
 import { useSubmitScan } from "../hooks/use-submit-scan";
 import type { CategoryScore, DetailScorecardPayload, ScanGrade } from "../types";
@@ -163,7 +162,7 @@ function ReportHeader(props: ReportHeaderProps) {
       <ScoreGauge score={props.totalScore} grade={props.grade} size={78} />
       <div className="min-w-0 flex-1 sm:min-w-[220px]">
         <div className="mb-1 flex flex-wrap items-center gap-2.5">
-          <h1 className="text-[19px] font-bold tracking-tight text-foreground">{props.org}</h1>
+          <h1 className="text-[19px] font-semibold tracking-tight text-foreground">{props.org}</h1>
           {props.grade ? <GradeBadge grade={props.grade} size={24} /> : null}
           {props.gradeLabel ? (
             <span
@@ -255,14 +254,14 @@ function WalkthroughPanel({ notes }: { readonly notes: string | null }) {
         <span className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-brand text-brand-950">
           <Bot className="h-[18px] w-[18px]" aria-hidden />
         </span>
-        <h2 className="text-lg font-bold tracking-tight text-foreground">
+        <h2 className="text-lg font-semibold tracking-tight text-foreground">
           Donate-flow walkthrough
         </h2>
       </div>
       <p className="whitespace-pre-line text-sm leading-relaxed text-foreground-alt">{notes}</p>
       <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
         <Shield className="h-3.5 w-3.5 shrink-0" aria-hidden />
-        The agent stops at the payment boundary every time — it never enters card details or submits
+        The agent stops at the payment boundary every time. It never enters card details or submits
         a payment.
       </p>
     </section>
@@ -271,7 +270,6 @@ function WalkthroughPanel({ notes }: { readonly notes: string | null }) {
 
 export function LoggedInDetail({ scanId, userEmail }: LoggedInDetailProps) {
   const { data, isError, refetch } = useScan(scanId);
-  const gaveUp = usePreDataTimeout(!data && !isError);
   const { push } = useRouter();
   const [tab, setTab] = useState<ReportTab>("path");
   const [copied, setCopied] = useState(false);
@@ -288,7 +286,7 @@ export function LoggedInDetail({ scanId, userEmail }: LoggedInDetailProps) {
   // queryable; the query stays pending (retrying) through that window, so we
   // show the generating view rather than an error until retries are exhausted.
   if (!data) {
-    if (isError || gaveUp) {
+    if (isError) {
       return (
         <ErrorState
           title="We couldn't load this scan"
@@ -393,7 +391,7 @@ export function LoggedInDetail({ scanId, userEmail }: LoggedInDetailProps) {
         <ContactCta
           sourceTag="fix-help"
           headline="Want help closing these gaps?"
-          subline="Our team can implement the fixes and re-scan to verify — or wire the scanner into your own tools."
+          subline="Our team can implement the fixes and re-scan to verify, or wire the scanner into your own tools."
           defaultEmail={userEmail}
           defaultOrgName={data.orgName ?? undefined}
           scanId={data.scanId}

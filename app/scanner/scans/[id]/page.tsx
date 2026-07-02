@@ -12,7 +12,7 @@ export default function ScanDetailPage() {
   // primitive before using the value in any effect dependency.
   const params = useParams<{ id: string }>();
   const scanId = params?.id ?? null;
-  const router = useRouter();
+  const { push } = useRouter();
   const { authenticated, ready, login, user } = useAuth();
   const userEmail = user?.email?.address ?? undefined;
 
@@ -31,7 +31,7 @@ export default function ScanDetailPage() {
     return (
       <main className="mx-auto flex w-full max-w-3xl flex-col gap-3 px-4 py-16">
         <h1 className="text-2xl font-semibold">Scan not found</h1>
-        <Button type="button" onClick={() => router.push(PAGES.SCANNER.ROOT)}>
+        <Button type="button" onClick={() => push(PAGES.SCANNER.ROOT)}>
           Back to scanner
         </Button>
       </main>
@@ -60,7 +60,7 @@ export default function ScanDetailPage() {
           <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-brand/15 text-brand-emphasis">
             <Lock className="h-6 w-6" aria-hidden />
           </div>
-          <h1 className="mb-2 text-xl font-bold tracking-tight text-foreground">
+          <h1 className="mb-2 text-xl font-semibold tracking-tight text-foreground">
             Sign in to see the full report
           </h1>
           <p className="mb-5 text-[14.5px] leading-relaxed text-muted-foreground">

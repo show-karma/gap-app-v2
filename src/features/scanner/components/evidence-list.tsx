@@ -78,7 +78,7 @@ export function EvidenceList({ evidence }: EvidenceListProps) {
   }
   return (
     <section className="flex flex-col gap-4">
-      <h2 className="text-xl font-bold tracking-tight text-foreground">
+      <h2 className="text-xl font-semibold tracking-tight text-foreground">
         Evidence{" "}
         <span className="text-base font-normal text-muted-foreground">
           · {evidence.length} {pluralize("check", evidence.length)}

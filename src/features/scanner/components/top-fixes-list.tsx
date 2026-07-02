@@ -35,11 +35,11 @@ export function TopFixesList({ fixes, startScore }: TopFixesListProps) {
       <div>
         <div className="mb-1.5 flex items-center gap-2">
           <Zap className="h-5 w-5 text-brand-emphasis" aria-hidden />
-          <h2 className="text-xl font-bold tracking-tight text-foreground">Path to 100</h2>
+          <h2 className="text-xl font-semibold tracking-tight text-foreground">Path to 100</h2>
         </div>
         <p className="max-w-xl text-sm leading-relaxed text-muted-foreground">
           {fixes.length} {pluralize("fix", fixes.length)}, +{total} {pluralize("point", total)}.
-          Each rung shows your score after that fix — ordered by impact, so start at the top.
+          Each rung shows your score after that fix, ordered by impact, so start at the top.
         </p>
       </div>
 

@@ -81,9 +81,9 @@ export function ReportGenerating({ orgName, url, status }: ReportGeneratingProps
         />
       </div>
 
-      <h1 className="mb-1.5 text-2xl font-bold tracking-tight text-foreground">{heading}</h1>
+      <h1 className="mb-1.5 text-2xl font-semibold tracking-tight text-foreground">{heading}</h1>
       <p className="mb-8 text-sm text-muted-foreground">
-        Reach &rarr; Understand &rarr; Trust &rarr; Transact. Usually about 40 seconds — the page
+        Reach &rarr; Understand &rarr; Trust &rarr; Transact. Usually about 40 seconds; the page
         updates on its own.
       </p>
 

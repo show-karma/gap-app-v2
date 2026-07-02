@@ -1,6 +1,25 @@
 "use client";
 
-import { type ElementType, useEffect, useRef, useState } from "react";
+import { type ElementType, useEffect, useRef, useState, useSyncExternalStore } from "react";
+
+const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)";
+
+function subscribeReducedMotion(onChange: () => void): () => void {
+  const media = window.matchMedia(REDUCED_MOTION_QUERY);
+  media.addEventListener("change", onChange);
+  return () => media.removeEventListener("change", onChange);
+}
+
+// SSR-safe reduced-motion preference: the server snapshot animates (false) and
+// useSyncExternalStore reconciles to the real value on the client without a
+// hydration mismatch or an initialize-state-in-effect pattern.
+function usePrefersReducedMotion(): boolean {
+  return useSyncExternalStore(
+    subscribeReducedMotion,
+    () => window.matchMedia(REDUCED_MOTION_QUERY).matches,
+    () => false
+  );
+}
 
 interface RevealProps {
   readonly children: React.ReactNode;
@@ -19,22 +38,18 @@ interface RevealProps {
 // DOM throughout, so the transform is purely visual.
 export function Reveal({ children, delay = 0, className = "", as: Tag = "div" }: RevealProps) {
   const ref = useRef<HTMLElement>(null);
-  const [shown, setShown] = useState(false);
-  const [instant, setInstant] = useState(false);
+  const [entered, setEntered] = useState(false);
+  const instant = usePrefersReducedMotion();
 
   useEffect(() => {
-    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
-      setInstant(true);
-      setShown(true);
-      return;
-    }
+    if (instant) return;
     const el = ref.current;
     if (!el) return;
     const observer = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
           if (entry.isIntersecting) {
-            setShown(true);
+            setEntered(true);
             observer.disconnect();
           }
         }
@@ -45,7 +60,9 @@ export function Reveal({ children, delay = 0, className = "", as: Tag = "div" }:
     );
     observer.observe(el);
     return () => observer.disconnect();
-  }, []);
+  }, [instant]);
+
+  const shown = entered || instant;
 
   return (
     <Tag
