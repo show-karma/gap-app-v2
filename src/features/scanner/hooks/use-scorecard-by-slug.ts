@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useRef } from "react";
+import { useCallback, useRef } from "react";
 import { getPublicScorecardBySlug } from "../services/scanner.service";
 import type { PublicScorecardPayload } from "../types";
 
@@ -19,7 +19,7 @@ const MAX_PENDING_ATTEMPTS = 10; // ~40s at 4s — the fresh-scan 404 race lasts
 export function useScorecardBySlug(slug: string | null) {
   // Wall-clock anchor for the pre-data give-up (see use-scan).
   const mountedAtRef = useRef(Date.now());
-  return useQuery<PublicScorecardPayload, Error & { status?: number }>({
+  const query = useQuery<PublicScorecardPayload, Error & { status?: number }>({
     queryKey: ["scanner", "scorecard", slug],
     queryFn: () => {
       if (!slug) {
@@ -43,4 +43,14 @@ export function useScorecardBySlug(slug: string | null) {
       return status === "complete" || status === "failed" ? false : POLL_INTERVAL_MS;
     },
   });
+
+  const { refetch: queryRefetch } = query;
+  // A manual retry opens a fresh give-up window — without this, once the
+  // wall-clock cap trips the retry button could never re-enter the retry loop.
+  const refetch = useCallback(() => {
+    mountedAtRef.current = Date.now();
+    return queryRefetch();
+  }, [queryRefetch]);
+
+  return { ...query, refetch };
 }
