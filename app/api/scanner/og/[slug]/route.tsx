@@ -2,9 +2,9 @@
 
 import { ImageResponse } from "next/og";
 import type { NextRequest } from "next/server";
-import { envVars } from "@/utilities/enviromentVars";
-import { categoryLabel, GRADE_LABEL } from "@/src/features/scanner/utils/labels";
 import type { PublicScorecardPayload, ScanGrade } from "@/src/features/scanner/types";
+import { categoryLabel, GRADE_LABEL } from "@/src/features/scanner/utils/labels";
+import { envVars } from "@/utilities/enviromentVars";
 
 // next/og renders via wasm in the edge runtime. nodejs runtime silently
 // fails with empty responses under turbopack dev when sharp is not
@@ -27,20 +27,33 @@ async function fetchScorecard(slug: string): Promise<PublicScorecardPayload | nu
 }
 
 // next/og's ImageResponse renders to a PNG via inline CSS; Tailwind classes
-// and CSS variables are not honored. Hex literals are the only option.
+// and CSS variables are not honored, so these hex literals mirror the
+// design-system tokens the in-app scorecard uses: the grade chip carries
+// severity (A/B brand teal, C burnt amber warning-700, D/F destructive red),
+// bars are always the brand accent, and the neutrals follow the KDS dark
+// palette (pure-black background, pure-gray text ramp).
 const GRADE_TONE: Record<ScanGrade, string> = {
-  A: "#10B981",
-  B: "#84CC16",
-  C: "#F59E0B",
-  D: "#F97316",
-  F: "#F43F5E",
+  A: "#2ed1a8", // brand-500
+  B: "#2ed1a8", // brand-500
+  C: "#b45309", // warning-700
+  D: "#dc2828", // destructive — hsl(0 72% 51%)
+  F: "#dc2828", // destructive — hsl(0 72% 51%)
 };
-const COLOR_BG_DARK = "#0F172A";
-const COLOR_BG_BAR = "#1E293B";
+// Chip ink: A/B read with the dark brand ink (as in-app), warm bands on white.
+const GRADE_INK: Record<ScanGrade, string> = {
+  A: "#061d18", // brand-950
+  B: "#061d18", // brand-950
+  C: "white",
+  D: "white",
+  F: "white",
+};
+const COLOR_BRAND = "#2ed1a8"; // brand-500
+const COLOR_BG_DARK = "#000000";
+const COLOR_BG_BAR = "#292929"; // KDS dark border — hsl(0 0% 16%)
 const COLOR_FG_PRIMARY = "white";
-const COLOR_FG_MUTED = "#94A3B8";
-const COLOR_FG_SUBTLE = "#CBD5E1";
-const COLOR_FG_LABEL = "#E2E8F0";
+const COLOR_FG_MUTED = "#a3a3a3";
+const COLOR_FG_SUBTLE = "#d4d4d4";
+const COLOR_FG_LABEL = "#e5e5e5";
 
 // Satori (next/og's renderer) requires display:flex on EVERY div that
 // has multiple children. Even single-text divs render more predictably
@@ -67,12 +80,8 @@ function renderFallback(message: string) {
         color: COLOR_FG_PRIMARY,
       })}
     >
-      <div style={textRow({ fontSize: 48, fontWeight: 700 })}>
-        Karma AI-Readiness Checker
-      </div>
-      <div style={textRow({ fontSize: 24, marginTop: 16, color: COLOR_FG_MUTED })}>
-        {message}
-      </div>
+      <div style={textRow({ fontSize: 48, fontWeight: 700 })}>Karma AI-Readiness Checker</div>
+      <div style={textRow({ fontSize: 24, marginTop: 16, color: COLOR_FG_MUTED })}>{message}</div>
     </div>,
     {
       width: 1200,
@@ -129,7 +138,7 @@ export async function GET(_request: NextRequest, context: { params: Promise<{ sl
             backgroundColor: gradeBg,
             fontSize: 120,
             fontWeight: 800,
-            color: COLOR_FG_PRIMARY,
+            color: GRADE_INK[scorecard.grade],
           })}
         >
           {scorecard.grade}
@@ -138,9 +147,7 @@ export async function GET(_request: NextRequest, context: { params: Promise<{ sl
           <div style={textRow({ fontSize: 80, fontWeight: 700 })}>
             {`${scorecard.totalScore} / 100`}
           </div>
-          <div style={textRow({ fontSize: 32, color: COLOR_FG_SUBTLE })}>
-            {label}
-          </div>
+          <div style={textRow({ fontSize: 32, color: COLOR_FG_SUBTLE })}>{label}</div>
         </div>
       </div>
 
@@ -156,9 +163,7 @@ export async function GET(_request: NextRequest, context: { params: Promise<{ sl
           return (
             <div key={category.category} style={col({ gap: 4 })}>
               <div style={row({ justifyContent: "space-between", fontSize: 18 })}>
-                <div style={textRow({ color: COLOR_FG_LABEL })}>
-                  {categoryLabel(category)}
-                </div>
+                <div style={textRow({ color: COLOR_FG_LABEL })}>{categoryLabel(category)}</div>
                 <div style={textRow({ color: COLOR_FG_MUTED })}>
                   {`${category.pointsAwarded} / ${category.pointsPossible}`}
                 </div>
@@ -176,7 +181,7 @@ export async function GET(_request: NextRequest, context: { params: Promise<{ sl
                     width: `${pct}%`,
                     height: "100%",
                     borderRadius: 999,
-                    backgroundColor: gradeBg,
+                    backgroundColor: COLOR_BRAND,
                   })}
                 />
               </div>

@@ -159,7 +159,7 @@ interface ReportHeaderProps {
 function ReportHeader(props: ReportHeaderProps) {
   return (
     <div className="flex flex-wrap items-center gap-x-5 gap-y-4 rounded-2xl border border-border bg-card p-5">
-      <ScoreGauge score={props.totalScore} grade={props.grade} size={78} />
+      <ScoreGauge score={props.totalScore} size={78} />
       <div className="min-w-0 flex-1 sm:min-w-[220px]">
         <div className="mb-1 flex flex-wrap items-center gap-2.5">
           <h1 className="text-[19px] font-bold tracking-tight text-foreground">{props.org}</h1>

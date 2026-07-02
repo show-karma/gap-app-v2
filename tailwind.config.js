@@ -353,12 +353,13 @@ module.exports = {
     // Semantic band tokens the scanner composes dynamically (via BAND_* maps in
     // src/features/scanner/utils/labels.ts). Because these class strings live in
     // one util file and are applied by lookup, the content scanner can miss
-    // them; safelist keeps the scorecard bars/gauge coloured on the app's own
-    // warning amber + destructive red rather than raw palette.
-    "bg-warning-500",
-    "stroke-warning-500",
+    // them; safelist keeps the grade chip / percentage text coloured on the
+    // app's own warning amber + destructive red rather than raw palette.
+    "bg-warning-700",
+    "text-warning-700",
     "bg-destructive",
-    "stroke-destructive",
+    "text-destructive",
+    "text-brand-emphasis",
     {
       pattern:
         /^(bg-(?:slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-(?:50|100|200|300|400|500|600|700|800|900|950))$/,

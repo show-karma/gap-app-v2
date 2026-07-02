@@ -79,11 +79,13 @@ export const GRADE_BLURB: Record<string, string> = {
   F: "An agent can't complete the journey. Critical checks are failing.",
 };
 
-// Map a band to the product's semantic color tokens (never raw Tailwind
-// palette). This mirrors the design's three-tier scale: brand teal for
-// "strong", the app's amber `warning` for "ok", and `destructive` red for the
-// failing bands ("weak" / "critical"). Reserve the teal accent for the gauge
-// fill and pass states so it stays meaningful when it appears.
+// Colour vocabulary for the scorecard, per the Karma Design System: brand
+// teal is the singular signature colour, so gauges and progress fills are
+// always the brand accent on a neutral track — bar length carries the score.
+// Severity is expressed only in small elements: the percentage / grade-label
+// text (BAND_FG) and the grade chip fill (BAND_BG). "ok" uses the design
+// system's burnt amber (warning-700, #b45309) — never the bright orange — and
+// both failing bands share the `destructive` red token.
 export const BAND_FG: Record<ScoreBand, string> = {
   strong: "text-brand-emphasis",
   ok: "text-warning-700",
@@ -91,27 +93,17 @@ export const BAND_FG: Record<ScoreBand, string> = {
   critical: "text-destructive",
 };
 
+// Grade-chip fills — the only severity-coloured surface bigger than text.
 export const BAND_BG: Record<ScoreBand, string> = {
   strong: "bg-brand",
-  ok: "bg-warning-500",
+  ok: "bg-warning-700",
   weak: "bg-destructive",
   critical: "bg-destructive",
 };
 
-export const BAND_TRACK: Record<ScoreBand, string> = {
-  strong: "bg-brand-faint",
-  ok: "bg-warning-50",
-  weak: "bg-destructive-subtle",
-  critical: "bg-destructive-subtle",
-};
-
-// SVG stroke variant of the band palette — used by the radial ScoreGauge ticks.
-export const BAND_STROKE: Record<ScoreBand, string> = {
-  strong: "stroke-brand",
-  ok: "stroke-warning-500",
-  weak: "stroke-destructive",
-  critical: "stroke-destructive",
-};
+// Progress bars: brand accent fill on a neutral track, regardless of band.
+export const BAR_FILL = "bg-brand";
+export const BAR_TRACK = "bg-secondary";
 
 // Grade -> score band, so the grade badge / gauge share one color vocabulary
 // with the category bars. Mirrors GRADE_TAGLINE's tones (A/B strong, C ok,

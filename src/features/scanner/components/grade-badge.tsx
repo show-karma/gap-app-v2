@@ -6,9 +6,10 @@ interface GradeBadgeProps {
   readonly size?: number;
 }
 
-// The rounded-rect grade letter — the report/scorecard centrepiece. Coloured
-// by the shared grade band (A/B brand, C amber, D orange, F rose). A/B use the
-// dark brand ink; the warmer bands read on white.
+// The rounded-rect grade letter — the report/scorecard centrepiece, and the
+// only severity-coloured surface bigger than text. Coloured by the shared
+// grade band (A/B brand teal, C the system's burnt amber, D/F destructive
+// red). A/B use the dark brand ink; the warmer bands read on white.
 export function GradeBadge({ grade, size = 128 }: GradeBadgeProps) {
   const band = gradeBand(grade);
   const ink = band === "strong" ? "text-brand-950" : "text-white";

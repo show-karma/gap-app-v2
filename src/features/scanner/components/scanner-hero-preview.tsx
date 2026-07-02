@@ -14,7 +14,7 @@ import {
   Wrench,
 } from "lucide-react";
 import { Safari } from "@/components/ui/safari";
-import { BAND_BG, BAND_FG } from "../utils/labels";
+import { BAND_FG, BAR_FILL, BAR_TRACK } from "../utils/labels";
 import { ScoreGauge } from "./score-gauge";
 
 // A static "here's the payoff" teaser shown under the entry hero — a finished
@@ -119,7 +119,7 @@ export function ScannerHeroPreview() {
             {/* body: gauge + bars, fills remaining height */}
             <div className="flex flex-1 flex-wrap items-center gap-8">
               <div className="flex items-center gap-4">
-                <ScoreGauge score={SAMPLE.score} grade="C" size={140} />
+                <ScoreGauge score={SAMPLE.score} size={140} />
                 <div>
                   <div className="text-[26px] font-bold leading-none tracking-tight text-foreground">
                     C
@@ -145,9 +145,9 @@ export function ScannerHeroPreview() {
                           {bar.pct}%
                         </span>
                       </div>
-                      <div className="h-1.5 overflow-hidden rounded-full bg-secondary">
+                      <div className={`h-1.5 overflow-hidden rounded-full ${BAR_TRACK}`}>
                         <div
-                          className={`h-full rounded-full ${BAND_BG[bar.band]}`}
+                          className={`h-full rounded-full ${BAR_FILL}`}
                           style={{ width: `${bar.pct}%` }}
                         />
                       </div>
