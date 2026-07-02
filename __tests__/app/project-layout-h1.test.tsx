@@ -1,7 +1,7 @@
 /**
  * @jest-environment jsdom
  */
-import { render, screen } from "@testing-library/react";
+import { render } from "@testing-library/react";
 
 vi.mock("@tanstack/react-query", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@tanstack/react-query")>();
@@ -21,6 +21,11 @@ vi.mock("@/components/Pages/Project/ProjectShareDialogMount", () => ({
 vi.mock("@/components/Utilities/E2EStoreExposer", () => ({
   E2EStoreExposer: () => null,
 }));
+
+// The JSON-LD components render inert <script> tags; stub them so this test
+// focuses on the single <h1> heading signal.
+vi.mock("@/components/Seo/ProjectJsonLd", () => ({ ProjectJsonLd: () => null }));
+vi.mock("@/components/Seo/BreadcrumbJsonLd", () => ({ BreadcrumbJsonLd: () => null }));
 
 vi.mock("@/utilities/queries/getProjectCachedData", () => ({
   getProjectCachedData: vi.fn(),
@@ -51,7 +56,7 @@ const mockGetProjectCachedData = getProjectCachedData as vi.MockedFunction<
   typeof getProjectCachedData
 >;
 
-function createMockProject(overrides: Partial<Project> = {}): Project {
+function createMockProject(overrides: Partial<Project["details"]> = {}): Project {
   return {
     uid: "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef" as `0x${string}`,
     chainID: 10,
@@ -59,16 +64,15 @@ function createMockProject(overrides: Partial<Project> = {}): Project {
     details: {
       title: "Test Project Title",
       slug: "test-project",
-      logoUrl: "https://example.com/logo.png",
+      ...overrides,
     },
     members: [],
     pointers: [],
     createdAt: "2024-01-01",
-    ...overrides,
   } as Project;
 }
 
-describe("Project Layout - Server Prefetch + HydrationBoundary", () => {
+describe("Project Layout - server-rendered single h1", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     process.env.NEXT_PUBLIC_E2E_AUTH_BYPASS = "false";
@@ -87,35 +91,27 @@ describe("Project Layout - Server Prefetch + HydrationBoundary", () => {
     return render(element as React.ReactElement);
   }
 
-  it("renders children inside HydrationBoundary", async () => {
+  it("renders exactly one sr-only h1 with the project title", async () => {
     mockGetProjectCachedData.mockResolvedValue(createMockProject());
-    await renderLayout();
+    const { container } = await renderLayout();
 
-    const boundary = screen.getByTestId("hydration-boundary");
-    const children = screen.getByTestId("children");
-    expect(boundary).toContainElement(children);
+    const h1s = container.querySelectorAll("h1");
+    expect(h1s).toHaveLength(1);
+    expect(h1s[0]).toHaveTextContent("Test Project Title");
+    expect(h1s[0]).toHaveClass("sr-only");
   });
 
-  it("does not render ssr-lcp-shell (removed in favor of HydrationBoundary)", async () => {
-    mockGetProjectCachedData.mockResolvedValue(createMockProject());
-    await renderLayout();
+  it("omits the h1 when the project has no title", async () => {
+    mockGetProjectCachedData.mockResolvedValue(createMockProject({ title: "" }));
+    const { container } = await renderLayout();
 
-    expect(document.getElementById("ssr-lcp-shell")).toBeNull();
+    expect(container.querySelectorAll("h1")).toHaveLength(0);
   });
 
-  it("renders children even when project data fails to load", async () => {
+  it("omits the h1 when project data fails to load", async () => {
     mockGetProjectCachedData.mockRejectedValue(new Error("Not found"));
-    await renderLayout();
+    const { container } = await renderLayout();
 
-    expect(screen.getByTestId("children")).toBeInTheDocument();
-  });
-
-  it("skips prefetch during E2E tests", async () => {
-    process.env.NEXT_PUBLIC_E2E_AUTH_BYPASS = "true";
-    mockGetProjectCachedData.mockResolvedValue(createMockProject());
-    await renderLayout();
-
-    // prefetchQuery should not be called since E2E bypass is set
-    expect(screen.getByTestId("children")).toBeInTheDocument();
+    expect(container.querySelectorAll("h1")).toHaveLength(0);
   });
 });
