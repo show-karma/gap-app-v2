@@ -184,7 +184,7 @@ export function ScannerApiKeys() {
       </div>
 
       {keys.length === 0 ? (
-        <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-border bg-secondary/40 px-6 py-12 text-center">
+        <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-border bg-secondary px-6 py-12 text-center">
           <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand/15 text-brand-emphasis">
             <KeyRound className="h-6 w-6" aria-hidden />
           </span>

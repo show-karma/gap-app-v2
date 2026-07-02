@@ -96,10 +96,7 @@ export function ScannerHeroPreview() {
         .scanner-float { animation: scannerChipFloat 5s ease-in-out infinite; will-change: transform; }
         @media (prefers-reduced-motion: reduce) { .scanner-float { animation: none; } }
       `}</style>
-      <div
-        className="relative w-full rounded-xl shadow-[0_40px_80px_-24px_rgba(0,0,0,0.35)]"
-        style={{ aspectRatio: "1203 / 753" }}
-      >
+      <div className="relative w-full rounded-xl shadow-2xl" style={{ aspectRatio: "1203 / 753" }}>
         <Safari
           url="karmahq.xyz/s/waterkeeper-alliance"
           className="absolute inset-0 h-full w-full"

@@ -21,7 +21,7 @@ import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { PAGES } from "@/utilities/pages";
 import { useScan } from "../hooks/use-scan";
 import { useSubmitScan } from "../hooks/use-submit-scan";
-import { GRADE_LABEL, gradeBand } from "../utils/labels";
+import { BAND_FG, GRADE_LABEL, gradeBand } from "../utils/labels";
 import { titleFromUrl } from "../utils/site";
 import { CategoryBar } from "./category-bar";
 import { ContactCta } from "./contact-cta";
@@ -39,14 +39,6 @@ interface LoggedInDetailProps {
 }
 
 type ReportTab = "path" | "evidence" | "flow";
-
-// A/B read on the brand ink, C amber, D/F rose — same spine as the gauge.
-const LABEL_TONE: Record<string, string> = {
-  strong: "text-brand-emphasis",
-  ok: "text-amber-700",
-  weak: "text-orange-700",
-  critical: "text-rose-600",
-};
 
 function fmtScannedAt(iso?: string | null): string | null {
   if (!iso) return null;
@@ -113,7 +105,7 @@ export function LoggedInDetail({ scanId, userEmail }: LoggedInDetailProps) {
   const org = data.orgName ?? titleFromUrl(url);
   const urlDisplay = url?.replace(/^https?:\/\//, "").replace(/\/$/, "") ?? null;
   const gradeLabel = grade ? GRADE_LABEL[grade] : null;
-  const labelTone = grade ? LABEL_TONE[gradeBand(grade)] : "text-muted-foreground";
+  const labelTone = grade ? BAND_FG[gradeBand(grade)] : "text-muted-foreground";
   const scannedAt = fmtScannedAt(data.finishedAtComplete ?? null);
   const duration = scanDuration(data.startedAt, data.finishedAtComplete);
   const fixPoints = topFixes.reduce((sum, fix) => sum + (fix.pointsAtStake ?? 0), 0);
@@ -222,7 +214,9 @@ export function LoggedInDetail({ scanId, userEmail }: LoggedInDetailProps) {
       </div>
 
       {/* tab strip */}
-      <div className="sticky top-16 z-20 flex gap-1 overflow-x-auto rounded-xl border border-border bg-card/95 p-1 backdrop-blur [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      {/* bg-card is solid on purpose: the hsl-var tokens don't support /opacity
+          modifiers in this config, so a translucent+blur treatment would no-op. */}
+      <div className="sticky top-16 z-20 flex gap-1 overflow-x-auto rounded-xl border border-border bg-card p-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {TABS.map((entry) => {
           const Icon = entry.icon;
           const active = tab === entry.id;
@@ -298,7 +292,7 @@ export function LoggedInDetail({ scanId, userEmail }: LoggedInDetailProps) {
             </p>
           </section>
         ) : (
-          <div className="rounded-2xl border border-dashed border-border bg-secondary/40 px-6 py-12 text-center text-sm text-muted-foreground">
+          <div className="rounded-2xl border border-dashed border-border bg-secondary px-6 py-12 text-center text-sm text-muted-foreground">
             No donate-flow walkthrough was captured for this scan.
           </div>
         )
