@@ -17,8 +17,12 @@ const GIVE_UP_MS = 45_000;
 const MAX_PENDING_ATTEMPTS = 10; // ~40s at 4s — the fresh-scan 404 race lasts seconds, so a genuinely missing id errors quickly
 
 export function useScorecardBySlug(slug: string | null) {
-  // Wall-clock anchor for the pre-data give-up (see use-scan).
-  const mountedAtRef = useRef(Date.now());
+  // Wall-clock anchor for the pre-data give-up (see use-scan), keyed by slug
+  // so a different scorecard opens a fresh window.
+  const anchorRef = useRef({ key: slug, at: Date.now() });
+  if (anchorRef.current.key !== slug) {
+    anchorRef.current = { key: slug, at: Date.now() };
+  }
   const query = useQuery<PublicScorecardPayload, Error & { status?: number }>({
     queryKey: ["scanner", "scorecard", slug],
     queryFn: () => {
@@ -31,7 +35,7 @@ export function useScorecardBySlug(slug: string | null) {
     // Retry the pre-scored 404 window at the poll cadence. A scored scorecard
     // resolves on the first attempt, so shared links stay instant.
     retry: (failureCount) => {
-      if (Date.now() - mountedAtRef.current > GIVE_UP_MS) return false;
+      if (Date.now() - anchorRef.current.at > GIVE_UP_MS) return false;
       return failureCount < MAX_PENDING_ATTEMPTS;
     },
     retryDelay: POLL_INTERVAL_MS,
@@ -48,7 +52,7 @@ export function useScorecardBySlug(slug: string | null) {
   // A manual retry opens a fresh give-up window — without this, once the
   // wall-clock cap trips the retry button could never re-enter the retry loop.
   const refetch = useCallback(() => {
-    mountedAtRef.current = Date.now();
+    anchorRef.current = { ...anchorRef.current, at: Date.now() };
     return queryRefetch();
   }, [queryRefetch]);
 

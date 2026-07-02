@@ -95,7 +95,11 @@ function AnimatedBar({
         className="absolute inset-0 h-full w-full appearance-none opacity-0"
         value={score.pointsAwarded}
         max={score.pointsPossible || 1}
-        aria-label={`${label}: ${score.pointsAwarded} of ${score.pointsPossible} points`}
+        aria-label={
+          score.pointsPossible > 0
+            ? `${label}: ${score.pointsAwarded} of ${score.pointsPossible} points`
+            : `${label}: pending`
+        }
       />
       <div
         className={`h-full rounded-full ${BAND_BG[band]} transition-[width] duration-[900ms] ease-out`}

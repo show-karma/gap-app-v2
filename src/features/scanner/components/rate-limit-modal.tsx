@@ -1,7 +1,8 @@
 "use client";
 
+import pluralize from "pluralize";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { ContactCta } from "./contact-cta";
 
 interface RateLimitModalState {
@@ -29,7 +30,7 @@ function QuotaPips({ used, cap }: { readonly used: number; readonly cap: number 
         ))}
       </div>
       <span className="text-[13px] font-semibold text-muted-foreground">
-        {used} / {cap} free {cap === 1 ? "scan" : "scans"} used
+        {used} / {cap} free {pluralize("scan", cap)} used
       </span>
     </div>
   );
@@ -55,20 +56,24 @@ export function RateLimitModal({ state, isAuthenticated, onClose, onLogin }: Rat
 
           {loginRequired ? (
             <>
-              <p className="text-[14.5px] leading-relaxed text-foreground-alt">
+              <DialogDescription className="text-[14.5px] leading-relaxed text-foreground-alt">
                 We rate-limit anonymous scans so the crawler stays a good citizen of the sites it
                 visits. Sign in to scan up to three nonprofit URLs.
-              </p>
-              <Button type="button" size="lg" onClick={onLogin}>
+              </DialogDescription>
+              <Button
+                type="button"
+                size="lg"
+                onClick={isAuthenticated ? () => window.location.reload() : onLogin}
+              >
                 {isAuthenticated ? "Reload" : "Sign in to keep scanning"}
               </Button>
             </>
           ) : (
             <>
-              <p className="text-[14.5px] leading-relaxed text-foreground-alt">
+              <DialogDescription className="text-[14.5px] leading-relaxed text-foreground-alt">
                 Logged-in users get three free nonprofit scans. Contact us for higher-volume access
                 and we'll set you up with an API key.
-              </p>
+              </DialogDescription>
               <ContactCta
                 sourceTag="more-scans"
                 headline="Need more scans?"

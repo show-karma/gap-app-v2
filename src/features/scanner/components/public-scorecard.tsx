@@ -201,14 +201,19 @@ const TEASER_ROWS = ["row-1", "row-2", "row-3"];
 // Blurred placeholder fixes with an auth-aware unlock/open cue on top.
 function FixTeaser({
   authenticated,
+  ready,
   disabled,
   onOpenReport,
 }: {
   readonly authenticated: boolean;
+  readonly ready: boolean;
   readonly disabled: boolean;
   readonly onOpenReport: () => void;
 }) {
-  const Icon = authenticated ? FileText : Lock;
+  // Until auth resolves, use the neutral label so an already-signed-in user
+  // never flashes "Sign in to unlock".
+  const promptSignIn = ready && !authenticated;
+  const Icon = promptSignIn ? Lock : FileText;
   return (
     <div className="relative">
       <div className="pointer-events-none select-none space-y-2 opacity-60 blur-[5px]" aria-hidden>
@@ -234,10 +239,10 @@ function FixTeaser({
           className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-4 py-2 text-[13.5px] font-semibold text-foreground shadow-sm transition-colors hover:border-brand-subtle hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-60"
         >
           <Icon
-            className={`h-3.5 w-3.5 ${authenticated ? "text-brand-emphasis" : ""}`}
+            className={`h-3.5 w-3.5 ${promptSignIn ? "" : "text-brand-emphasis"}`}
             aria-hidden
           />
-          {authenticated ? "Fixes hidden: see the full report" : "Sign in to unlock the fixes"}
+          {promptSignIn ? "Sign in to unlock the fixes" : "Fixes hidden: see the full report"}
           <ArrowRight className="h-3.5 w-3.5" aria-hidden />
         </button>
       </div>
@@ -374,7 +379,12 @@ export function PublicScorecard({ slug, initialData }: PublicScorecardProps) {
 
       <MembersUpsell slug={slug} scorecard={scorecard} />
 
-      <FixTeaser authenticated={authenticated} disabled={!scanId} onOpenReport={openReport} />
+      <FixTeaser
+        authenticated={authenticated}
+        ready={ready}
+        disabled={!scanId}
+        onOpenReport={openReport}
+      />
 
       <p className="mt-4 flex items-center justify-center gap-1.5 text-center text-[12.5px] text-muted-foreground">
         <Shield className="h-3.5 w-3.5" aria-hidden />

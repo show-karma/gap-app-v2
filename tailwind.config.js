@@ -196,11 +196,11 @@ module.exports = {
           black: "#18181B",
         },
         warning: {
-          // DEFAULT is the app's semantic amber (--color-warning, #f5a623), so
-          // `bg-warning` / `stroke-warning` match the rest of the product.
-          DEFAULT: "#f5a623",
+          // DEFAULT/500 follow the runtime --color-warning variable (rgb
+          // triplet, #f5a623 by default) so tenant themes stay in sync.
+          DEFAULT: "rgb(var(--color-warning))",
           50: "#fffbeb",
-          500: "#f5a623",
+          500: "rgb(var(--color-warning))",
           700: "#b45309",
           // Dark amber for legible ink on a bright warning-500 surface (e.g.
           // the scanner's grade-C chip).

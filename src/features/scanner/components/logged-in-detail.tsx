@@ -94,7 +94,7 @@ function ReportTabStrip({
           >
             <Icon className="h-4 w-4" aria-hidden />
             {entry.label}
-            {entry.count != null ? (
+            {entry.count ? (
               <span
                 className={`rounded-full px-1.5 text-[11px] font-bold tabular-nums ${
                   isActive
@@ -190,7 +190,8 @@ function ReportHeader(props: ReportHeaderProps) {
               {props.fixCount}
             </div>
             <div className="mt-1 text-[11.5px] text-muted-foreground">
-              {pluralize("fix", props.fixCount)} · +{props.fixPoints} pts
+              {pluralize("fix", props.fixCount)} · +{props.fixPoints}{" "}
+              {pluralize("pt", props.fixPoints)}
             </div>
           </div>
         ) : null}

@@ -16,8 +16,12 @@ const MAX_PENDING_ATTEMPTS = 10; // ~40s at 4s — the fresh-scan 404 race lasts
 
 export function useScan(scanId: string | null) {
   // Wall-clock anchor for the pre-data give-up: attempt-count caps alone
-  // stretch with slow upstream requests.
-  const mountedAtRef = useRef(Date.now());
+  // stretch with slow upstream requests. Keyed by scanId so navigating to a
+  // different scan opens a fresh window instead of inheriting a spent one.
+  const anchorRef = useRef({ key: scanId, at: Date.now() });
+  if (anchorRef.current.key !== scanId) {
+    anchorRef.current = { key: scanId, at: Date.now() };
+  }
   const query = useQuery<DetailScorecardPayload, Error & { status?: number }>({
     queryKey: ["scanner", "scan", scanId],
     queryFn: () => {
@@ -33,7 +37,7 @@ export function useScan(scanId: string | null) {
     // wall clock (attempt counts stretch with upstream latency).
     retry: (failureCount, error) => {
       if (error.status === 401 || error.status === 403) return false;
-      if (Date.now() - mountedAtRef.current > GIVE_UP_MS) return false;
+      if (Date.now() - anchorRef.current.at > GIVE_UP_MS) return false;
       return failureCount < MAX_PENDING_ATTEMPTS;
     },
     retryDelay: POLL_INTERVAL_MS,
@@ -51,7 +55,7 @@ export function useScan(scanId: string | null) {
   // A manual retry opens a fresh give-up window — without this, once the
   // wall-clock cap trips the retry button could never re-enter the retry loop.
   const refetch = useCallback(() => {
-    mountedAtRef.current = Date.now();
+    anchorRef.current = { ...anchorRef.current, at: Date.now() };
     return queryRefetch();
   }, [queryRefetch]);
 
