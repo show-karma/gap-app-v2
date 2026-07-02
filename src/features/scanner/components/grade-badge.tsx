@@ -22,7 +22,10 @@ export function GradeBadge({ grade, size = 128 }: GradeBadgeProps) {
   const band = gradeBand(grade);
   const ink = GRADE_INK[band];
   return (
-    <div className="relative shrink-0" style={{ width: size, height: size }}>
+    <div
+      className="relative shrink-0 animate-scale-in motion-reduce:animate-none"
+      style={{ width: size, height: size }}
+    >
       <div
         className={`absolute inset-0 ${BAND_BG[band]} shadow-lg`}
         style={{ borderRadius: size * 0.22 }}

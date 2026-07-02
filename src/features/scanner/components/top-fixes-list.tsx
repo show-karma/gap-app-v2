@@ -4,6 +4,7 @@ import { ChevronDown, Wrench, Zap } from "lucide-react";
 import pluralize from "pluralize";
 import { useState } from "react";
 import type { ScanFix } from "../types";
+import { Reveal } from "./reveal";
 
 interface TopFixesListProps {
   readonly fixes: readonly ScanFix[];
@@ -52,14 +53,15 @@ export function TopFixesList({ fixes, startScore }: TopFixesListProps) {
       </div>
 
       {rungs.map((rung, i) => (
-        <LadderRung
-          key={rung.fix.checkId}
-          fix={rung.fix}
-          to={rung.to}
-          last={i === rungs.length - 1}
-          open={openId === rung.fix.checkId}
-          onToggle={() => setOpenId(openId === rung.fix.checkId ? null : rung.fix.checkId)}
-        />
+        <Reveal key={rung.fix.checkId} delay={i * 70}>
+          <LadderRung
+            fix={rung.fix}
+            to={rung.to}
+            last={i === rungs.length - 1}
+            open={openId === rung.fix.checkId}
+            onToggle={() => setOpenId(openId === rung.fix.checkId ? null : rung.fix.checkId)}
+          />
+        </Reveal>
       ))}
     </section>
   );
@@ -99,7 +101,7 @@ function LadderRung({
           type="button"
           onClick={onToggle}
           aria-expanded={open}
-          className="flex w-full items-center gap-3 px-4 py-3.5 text-left"
+          className="flex w-full items-center gap-3 px-4 py-3.5 text-left transition-colors hover:bg-secondary/50"
         >
           <span className="flex-1 text-[15px] font-semibold leading-tight text-foreground">
             {fix.title}
@@ -108,22 +110,30 @@ function LadderRung({
             +{fix.pointsAtStake} {pluralize("pt", fix.pointsAtStake)}
           </span>
           <ChevronDown
-            className={`h-[17px] w-[17px] shrink-0 text-muted-foreground transition-transform ${
+            className={`h-[17px] w-[17px] shrink-0 text-muted-foreground transition-transform duration-300 ${
               open ? "rotate-180" : ""
             }`}
             aria-hidden
           />
         </button>
-        {open ? (
-          <div className="px-4 pb-4">
-            <div className="rounded-lg bg-secondary p-3.5">
-              <div className="mb-1.5 flex items-center gap-1.5 text-[11.5px] font-bold uppercase tracking-[0.05em] text-brand-emphasis">
-                <Wrench className="h-3 w-3" aria-hidden /> How to fix
+        {/* grid-rows 0fr→1fr gives a smooth height transition without measuring;
+            the content stays mounted so it animates both ways. */}
+        <div
+          className={`grid transition-[grid-template-rows] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none ${
+            open ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
+          }`}
+        >
+          <div className="min-h-0 overflow-hidden">
+            <div className="px-4 pb-4">
+              <div className="rounded-lg bg-secondary p-3.5">
+                <div className="mb-1.5 flex items-center gap-1.5 text-[11.5px] font-bold uppercase tracking-[0.05em] text-brand-emphasis">
+                  <Wrench className="h-3 w-3" aria-hidden /> How to fix
+                </div>
+                <p className="text-sm leading-relaxed text-foreground">{fix.howToFix}</p>
               </div>
-              <p className="text-sm leading-relaxed text-foreground">{fix.howToFix}</p>
             </div>
           </div>
-        ) : null}
+        </div>
       </div>
     </div>
   );

@@ -1,5 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 import { categoryMeta } from "../utils/category-meta";
+import { Reveal } from "./reveal";
 
 // Positions mirror the design: medallions weave up and down along a dashed
 // path across a 1000×400 track. `x` is a percentage, `top` is px on the track.
@@ -18,7 +19,7 @@ const PATH =
 function Medallion({ icon: Icon, step, size }: { icon: LucideIcon; step: number; size: number }) {
   return (
     <div
-      className="relative mx-auto grid place-items-center rounded-full border border-border bg-card shadow-md"
+      className="relative mx-auto grid place-items-center rounded-full border border-border bg-card shadow-md transition-[transform,box-shadow] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:-translate-y-1 group-hover:shadow-lg"
       style={{ width: size, height: size }}
     >
       <span className="absolute -right-1.5 -top-1.5 flex h-[22px] w-[22px] items-center justify-center rounded-full bg-brand text-[11px] font-bold text-brand-950 shadow">
@@ -82,13 +83,15 @@ export function ScannerJourney() {
           return (
             <div
               key={node.key}
-              className="absolute -ml-[88px] w-[176px] text-center"
+              className="group absolute -ml-[88px] w-[176px] text-center"
               style={{ left: `${node.x}%`, top: node.top }}
             >
-              <div className="mb-4">
-                <Medallion icon={icon} step={i + 1} size={78} />
-              </div>
-              <NodeText verb={verb} name={node.name} question={question} />
+              <Reveal delay={i * 90}>
+                <div className="mb-4">
+                  <Medallion icon={icon} step={i + 1} size={78} />
+                </div>
+                <NodeText verb={verb} name={node.name} question={question} />
+              </Reveal>
             </div>
           );
         })}
@@ -99,12 +102,17 @@ export function ScannerJourney() {
         {NODES.map((node, i) => {
           const { verb, icon, question } = categoryMeta(node.key);
           return (
-            <li key={node.key} className="flex items-start gap-4 py-3">
+            <Reveal
+              as="li"
+              key={node.key}
+              delay={i * 70}
+              className="group flex items-start gap-4 py-3"
+            >
               <Medallion icon={icon} step={i + 1} size={60} />
               <div>
                 <NodeText verb={verb} name={node.name} question={question} />
               </div>
-            </li>
+            </Reveal>
           );
         })}
       </ol>

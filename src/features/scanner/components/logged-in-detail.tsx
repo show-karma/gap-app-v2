@@ -364,8 +364,8 @@ export function LoggedInDetail({ scanId, userEmail }: LoggedInDetailProps) {
               className="rounded-2xl border border-border bg-card px-6 py-2"
               aria-label="Category scores"
             >
-              {categoryScores.map((category) => (
-                <CategoryBar key={category.category} score={category} />
+              {categoryScores.map((category, i) => (
+                <CategoryBar key={category.category} score={category} index={i} />
               ))}
             </section>
           ) : null}

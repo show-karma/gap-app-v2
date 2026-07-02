@@ -1,6 +1,7 @@
 import { ArrowRight, CheckCircle2, Wrench } from "lucide-react";
 import pluralize from "pluralize";
 import { BAND_BG, BAND_FG, BAR_TRACK, bandForScore } from "../utils/labels";
+import { Reveal } from "./reveal";
 import { ScoreGauge } from "./score-gauge";
 
 // "The score moves" — proof that clearing the fix list moves the grade.
@@ -72,7 +73,7 @@ function SnapshotCard({
 }) {
   return (
     <div
-      className={`rounded-3xl border bg-card p-6 text-center ${
+      className={`rounded-3xl border bg-card p-6 text-center transition-[transform,box-shadow] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-1 hover:shadow-xl motion-reduce:transition-none motion-reduce:hover:translate-y-0 ${
         highlight ? "border-brand-subtle shadow-lg" : "border-border shadow-sm"
       }`}
     >
@@ -117,7 +118,7 @@ function SnapshotCard({
 export function ScannerBeforeAfter() {
   return (
     <section className="mx-auto w-full max-w-[1120px] px-6 pb-24 pt-12">
-      <div className="mb-10 text-center">
+      <Reveal className="mb-10 text-center">
         <span className="text-[13px] font-semibold uppercase tracking-[0.08em] text-brand-emphasis">
           The score moves
         </span>
@@ -128,13 +129,15 @@ export function ScannerBeforeAfter() {
           Every fix in your report shows the points at stake. Clear them, re-scan, and the grade
           follows — here's what that path looks like.
         </p>
-      </div>
+      </Reveal>
 
       <div className="mx-auto grid max-w-[480px] grid-cols-1 items-center gap-6 lg:max-w-none lg:grid-cols-[1fr_300px_1fr]">
-        <SnapshotCard label="First scan" snapshot={BEFORE} />
+        <Reveal>
+          <SnapshotCard label="First scan" snapshot={BEFORE} />
+        </Reveal>
 
         {/* the bridge: the fixes that were applied between scans */}
-        <div className="flex flex-col gap-2">
+        <Reveal delay={140} className="flex flex-col gap-2">
           <div className="mb-1.5 text-center">
             <span className="inline-flex items-center gap-1.5 rounded-full bg-brand/[0.13] px-3.5 py-1.5 text-[13px] font-bold text-brand-emphasis">
               <Wrench className="h-3.5 w-3.5" aria-hidden />
@@ -162,9 +165,11 @@ export function ScannerBeforeAfter() {
           <div className="mt-1 text-center text-border-4">
             <ArrowRight className="mx-auto h-5 w-5 rotate-90 lg:rotate-0" aria-hidden />
           </div>
-        </div>
+        </Reveal>
 
-        <SnapshotCard label="Re-scan · verified" snapshot={AFTER} highlight />
+        <Reveal delay={240}>
+          <SnapshotCard label="Re-scan · verified" snapshot={AFTER} highlight />
+        </Reveal>
       </div>
 
       <p className="mt-[26px] text-center text-[12.5px] text-muted-foreground">

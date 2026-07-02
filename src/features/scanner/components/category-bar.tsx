@@ -14,9 +14,12 @@ import {
 
 interface CategoryBarProps {
   readonly score: CategoryScore;
+  // Position in the breakdown list, used to stagger the entrance so rows
+  // cascade in rather than appearing all at once. Defaults to 0 (no delay).
+  readonly index?: number;
 }
 
-export function CategoryBar({ score }: CategoryBarProps) {
+export function CategoryBar({ score, index = 0 }: CategoryBarProps) {
   // Categories with no scoreable checks (e.g. a brand-new rubric tier before
   // any checks are wired) would otherwise render "0 of 0 points", which reads
   // as a failure. Hide them entirely.
@@ -34,7 +37,10 @@ export function CategoryBar({ score }: CategoryBarProps) {
       : Math.max(0, Math.min(100, (score.pointsAwarded / score.pointsPossible) * 100));
 
   return (
-    <div className="flex flex-col gap-2 border-b border-border py-3.5 last:border-b-0">
+    <div
+      className="flex animate-fade-in-up flex-col gap-2 border-b border-border py-3.5 last:border-b-0 motion-reduce:animate-none"
+      style={{ animationDelay: `${index * 70}ms` }}
+    >
       <div className="flex items-center gap-3">
         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-secondary text-muted-foreground">
           <Icon className="h-[17px] w-[17px]" aria-hidden />

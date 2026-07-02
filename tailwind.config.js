@@ -148,6 +148,11 @@ module.exports = {
           "0%": { opacity: "0", transform: "scale(0.96)" },
           "100%": { opacity: "1", transform: "scale(1)" },
         },
+        shake: {
+          "0%, 100%": { transform: "translateX(0)" },
+          "20%, 60%": { transform: "translateX(-4px)" },
+          "40%, 80%": { transform: "translateX(4px)" },
+        },
       },
       animation: {
         marquee: "marquee 30s linear infinite",
@@ -160,6 +165,7 @@ module.exports = {
         "fade-in-up": "fade-in-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) both",
         "fade-in": "fade-in 0.4s ease-out both",
         "scale-in": "scale-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both",
+        shake: "shake 0.4s ease-in-out",
       },
       colors: {
         brand: {

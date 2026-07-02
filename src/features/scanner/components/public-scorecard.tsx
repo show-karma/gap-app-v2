@@ -122,8 +122,8 @@ function CategoryBreakdownCard({ scores }: { readonly scores: readonly CategoryS
           </span>
         ) : null}
       </div>
-      {scores.map((category) => (
-        <CategoryBar key={category.category} score={category} />
+      {scores.map((category, i) => (
+        <CategoryBar key={category.category} score={category} index={i} />
       ))}
     </section>
   );

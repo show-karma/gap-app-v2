@@ -161,7 +161,7 @@ export function ScannerSubmitForm({ showExamples = false }: ScannerSubmitFormPro
           <p
             id="scanner-url-help"
             role="alert"
-            className="mt-2.5 flex items-center gap-1.5 px-0.5 text-[13.5px] text-destructive"
+            className="mt-2.5 flex animate-shake items-center gap-1.5 px-0.5 text-[13.5px] text-destructive motion-reduce:animate-none"
           >
             <AlertTriangle className="h-3.5 w-3.5 shrink-0" aria-hidden />
             {urlError}
@@ -189,7 +189,7 @@ export function ScannerSubmitForm({ showExamples = false }: ScannerSubmitFormPro
                   setUrl(`https://${domain}`);
                   setUrlError(null);
                 }}
-                className="rounded-full border border-border bg-secondary px-2.5 py-1 font-mono text-[13px] text-foreground-alt transition-colors hover:border-brand-subtle"
+                className="rounded-full border border-border bg-secondary px-2.5 py-1 font-mono text-[13px] text-foreground-alt transition-all duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-0.5 hover:border-brand-subtle hover:bg-brand-faint active:scale-95 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
               >
                 {domain}
               </button>

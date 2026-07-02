@@ -1,5 +1,6 @@
 import { MousePointerClick, Scan, Shield, Wrench } from "lucide-react";
 import type { Metadata } from "next";
+import { Reveal } from "@/src/features/scanner/components/reveal";
 import { ScannerBeforeAfter } from "@/src/features/scanner/components/scanner-before-after";
 import { ScannerHeroPreview } from "@/src/features/scanner/components/scanner-hero-preview";
 import { ScannerJourney } from "@/src/features/scanner/components/scanner-journey";
@@ -39,27 +40,36 @@ export default function ScannerPage() {
           aria-hidden
         />
         <div className="relative mx-auto flex w-full max-w-[1120px] flex-col items-center px-6 py-16 text-center sm:py-24">
-          <h1 className="max-w-[820px] text-[clamp(2.2rem,5vw,3.4rem)] font-bold leading-[1.04] tracking-tight text-foreground">
+          <Reveal
+            as="h1"
+            className="max-w-[820px] text-[clamp(2.2rem,5vw,3.4rem)] font-bold leading-[1.04] tracking-tight text-foreground"
+          >
             Is your site ready for AI donors?
-          </h1>
-          <p className="mt-[18px] max-w-[620px] text-[clamp(1rem,2vw,1.2rem)] leading-relaxed text-foreground-alt">
+          </Reveal>
+          <Reveal
+            as="p"
+            delay={90}
+            className="mt-[18px] max-w-[620px] text-[clamp(1rem,2vw,1.2rem)] leading-relaxed text-foreground-alt"
+          >
             Paste your URL. We send a polite AI agent through your site the way a donor's assistant
             would — and grade whether it can{" "}
             <strong className="font-semibold text-foreground">
               reach, understand, trust, and transact
             </strong>
             .
-          </p>
-          <div className="mt-8 flex w-full justify-center">
+          </Reveal>
+          <Reveal delay={180} className="mt-8 flex w-full justify-center">
             <ScannerSubmitForm showExamples />
-          </div>
-          <ScannerHeroPreview />
+          </Reveal>
+          <Reveal delay={260} className="w-full">
+            <ScannerHeroPreview />
+          </Reveal>
         </div>
       </section>
 
       {/* what it measures */}
       <section className="mx-auto w-full max-w-[1080px] px-6 pb-10 pt-16">
-        <div className="mb-12 text-center">
+        <Reveal className="mb-12 text-center">
           <span className="text-[13px] font-semibold uppercase tracking-[0.08em] text-brand-emphasis">
             What it measures
           </span>
@@ -70,23 +80,23 @@ export default function ScannerPage() {
             A grade from A to F, a per-category breakdown, and a prioritized fix list ranked by
             impact.
           </p>
-        </div>
+        </Reveal>
         <ScannerJourney />
       </section>
 
       {/* how it works */}
       <section className="mx-auto w-full max-w-[1080px] px-6 pb-10 pt-6">
         <div className="grid grid-cols-1 gap-7 rounded-2xl border border-border bg-card p-8 shadow-sm sm:grid-cols-3">
-          {HOW_IT_WORKS.map((step) => {
+          {HOW_IT_WORKS.map((step, i) => {
             const Icon = step.icon;
             return (
-              <div key={step.title} className="flex flex-col gap-2.5">
-                <div className="flex h-[42px] w-[42px] items-center justify-center rounded-xl bg-secondary text-brand-emphasis">
+              <Reveal key={step.title} delay={i * 110} className="group flex flex-col gap-2.5">
+                <div className="flex h-[42px] w-[42px] items-center justify-center rounded-xl bg-secondary text-brand-emphasis transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:-translate-y-0.5 group-hover:scale-105">
                   <Icon className="h-[21px] w-[21px]" aria-hidden />
                 </div>
                 <h3 className="text-base font-bold text-foreground">{step.title}</h3>
                 <p className="text-sm leading-relaxed text-muted-foreground">{step.body}</p>
-              </div>
+              </Reveal>
             );
           })}
         </div>
