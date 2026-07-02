@@ -28,7 +28,7 @@ export function categorySubtitle(score: CategoryScore | string): string | null {
   return score.subtitle ?? null;
 }
 
-export type ScoreBand = "strong" | "ok" | "weak" | "critical";
+type ScoreBand = "strong" | "ok" | "weak" | "critical";
 
 export function bandForScore(
   score: Pick<CategoryScore, "pointsAwarded" | "pointsPossible">
@@ -49,7 +49,7 @@ export function bandForScore(
   return "weak";
 }
 
-export const GRADE_TAGLINE: Record<string, { tag: string; tone: ScoreBand }> = {
+const GRADE_TAGLINE: Record<string, { tag: string; tone: ScoreBand }> = {
   A: { tag: "Excellent", tone: "strong" },
   B: { tag: "Competitive", tone: "strong" },
   C: { tag: "Improving", tone: "ok" },

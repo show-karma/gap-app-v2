@@ -15,7 +15,7 @@ const HEIGHT_PCT = (SCREEN_HEIGHT / SAFARI_HEIGHT) * 100;
 
 type SafariMode = "default" | "simple";
 
-export interface SafariProps extends HTMLAttributes<HTMLDivElement> {
+interface SafariProps extends HTMLAttributes<HTMLDivElement> {
   url?: string;
   imageSrc?: string;
   videoSrc?: string;
