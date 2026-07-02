@@ -20,7 +20,7 @@ import { setPostLoginRedirect, useAuth } from "@/hooks/useAuth";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { PAGES } from "@/utilities/pages";
 import { useScorecardBySlug } from "../hooks/use-scorecard-by-slug";
-import type { PublicScorecardPayload } from "../types";
+import type { CategoryScore, PublicScorecardPayload } from "../types";
 import { hostnameOf, titleFromUrl } from "../utils/site";
 import { CategoryBar } from "./category-bar";
 import { ErrorState } from "./error-state";
@@ -77,6 +77,172 @@ function SiteFavicon({
   );
 }
 
+// Top row: back link on the left, scanned-at meta on the right.
+function ScorecardTopBar({
+  finishedAt,
+  duration,
+}: {
+  readonly finishedAt: string | null;
+  readonly duration: string | null;
+}) {
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-3">
+      <Link
+        href={PAGES.SCANNER.ROOT}
+        className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+      >
+        <ArrowLeft className="h-4 w-4" aria-hidden />
+        Back to scanner
+      </Link>
+      {finishedAt ? (
+        <span className="inline-flex items-center gap-1.5 text-[12.5px] text-muted-foreground">
+          <Clock className="h-3 w-3" aria-hidden />
+          Scanned {fmtDate(finishedAt)}
+          {duration ? ` · ${duration}` : ""}
+        </span>
+      ) : null}
+    </div>
+  );
+}
+
+function CategoryBreakdownCard({ scores }: { readonly scores: readonly CategoryScore[] }) {
+  const rawAwarded = scores.reduce((s, c) => s + c.pointsAwarded, 0);
+  const rawPossible = scores.reduce((s, c) => s + c.pointsPossible, 0);
+  return (
+    <section
+      className="rounded-2xl border border-border bg-card px-6 pb-4 pt-2"
+      aria-label="Category breakdown"
+    >
+      <div className="flex items-center justify-between py-4">
+        <h2 className="text-[17px] font-bold text-foreground">Category breakdown</h2>
+        {rawPossible > 0 ? (
+          <span className="text-[12.5px] text-muted-foreground">
+            {rawAwarded}/{rawPossible} raw · normalized to 100
+          </span>
+        ) : null}
+      </div>
+      {scores.map((category) => (
+        <CategoryBar key={category.category} score={category} />
+      ))}
+    </section>
+  );
+}
+
+const UPSELL_FEATURES = [
+  { icon: Wrench, title: "Prioritized fixes", sub: "Ranked by impact" },
+  { icon: FileText, title: "25 checks of evidence", sub: "Pass / partial / fail" },
+  {
+    icon: MousePointerClick,
+    title: "Donate-flow walkthrough",
+    sub: "The agent's play-by-play",
+  },
+] as const;
+
+function MembersUpsell({
+  slug,
+  scorecard,
+}: {
+  readonly slug: string;
+  readonly scorecard: PublicScorecardPayload;
+}) {
+  return (
+    <div className="relative overflow-hidden rounded-3xl border border-border bg-card">
+      <div
+        className="absolute inset-0 bg-gradient-to-br from-brand/10 to-transparent"
+        aria-hidden
+      />
+      <div className="relative flex flex-col gap-5 p-7">
+        <div className="flex items-center gap-2">
+          <span className="flex h-[30px] w-[30px] items-center justify-center rounded-lg bg-brand text-brand-950">
+            <Lock className="h-[15px] w-[15px]" aria-hidden />
+          </span>
+          <span className="text-xs font-bold uppercase tracking-[0.06em] text-brand-emphasis">
+            Members area
+          </span>
+        </div>
+        <div>
+          <h2 className="max-w-[440px] text-[22px] font-bold tracking-tight text-foreground">
+            {scorecard.totalScore != null && scorecard.totalScore < 100
+              ? "You can reach 100. Here's exactly how."
+              : "See the full report."}
+          </h2>
+          <p className="mt-2 max-w-[480px] text-[15px] leading-relaxed text-foreground-alt">
+            Sign in free to unlock your prioritized fixes, the raw evidence behind all 25 checks,
+            and the full donate-flow walkthrough.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-x-6 gap-y-3">
+          {UPSELL_FEATURES.map((feat) => {
+            const Icon = feat.icon;
+            return (
+              <div key={feat.title} className="flex items-start gap-2.5">
+                <Icon
+                  className="mt-0.5 h-[18px] w-[18px] shrink-0 text-brand-emphasis"
+                  aria-hidden
+                />
+                <div>
+                  <div className="text-sm font-semibold text-foreground">{feat.title}</div>
+                  <div className="text-[12.5px] text-muted-foreground">{feat.sub}</div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        <MembersAreaCta slug={slug} initialData={scorecard} />
+      </div>
+    </div>
+  );
+}
+
+const TEASER_ROWS = ["row-1", "row-2", "row-3"];
+
+// Blurred placeholder fixes with an auth-aware unlock/open cue on top.
+function FixTeaser({
+  authenticated,
+  disabled,
+  onOpenReport,
+}: {
+  readonly authenticated: boolean;
+  readonly disabled: boolean;
+  readonly onOpenReport: () => void;
+}) {
+  const Icon = authenticated ? FileText : Lock;
+  return (
+    <div className="relative">
+      <div className="pointer-events-none select-none space-y-2 opacity-60 blur-[5px]" aria-hidden>
+        {TEASER_ROWS.map((row) => (
+          <div
+            key={row}
+            className="flex items-center gap-3 rounded-lg border border-border bg-card p-3.5"
+          >
+            <div className="h-7 w-7 rounded-lg bg-secondary" />
+            <div className="flex-1">
+              <div className="mb-1.5 h-3 w-3/5 rounded bg-secondary" />
+              <div className="h-2.5 w-4/5 rounded bg-secondary" />
+            </div>
+            <div className="h-5 w-12 rounded-full bg-secondary" />
+          </div>
+        ))}
+      </div>
+      <div className="absolute inset-0 grid place-items-center">
+        <button
+          type="button"
+          onClick={onOpenReport}
+          disabled={disabled}
+          className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-4 py-2 text-[13.5px] font-semibold text-foreground shadow-sm transition-colors hover:border-brand-subtle hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          <Icon
+            className={`h-3.5 w-3.5 ${authenticated ? "text-brand-emphasis" : ""}`}
+            aria-hidden
+          />
+          {authenticated ? "Fixes hidden — See the full report" : "Sign in to unlock the fixes"}
+          <ArrowRight className="h-3.5 w-3.5" aria-hidden />
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export function PublicScorecard({ slug, initialData }: PublicScorecardProps) {
   const { data, isError, refetch } = useScorecardBySlug(slug);
   const { push } = useRouter();
@@ -120,11 +286,6 @@ export function PublicScorecard({ slug, initialData }: PublicScorecardProps) {
     .replace(/^https?:\/\//, "")
     .charAt(0)
     .toUpperCase();
-  const hostname = hostnameOf(url);
-  const title = org ?? titleFromUrl(url);
-  const rawAwarded = categoryScores.reduce((s, c) => s + c.pointsAwarded, 0);
-  const rawPossible = categoryScores.reduce((s, c) => s + c.pointsPossible, 0);
-  const duration = scanDuration(scorecard.startedAt, scorecard.finishedAtComplete);
   const scanId = scorecard.scanId ?? null;
 
   // Same open-the-report path as MembersAreaCta: an authed viewer goes straight
@@ -150,30 +311,19 @@ export function PublicScorecard({ slug, initialData }: PublicScorecardProps) {
 
   return (
     <article className="mx-auto flex max-w-[760px] flex-col gap-4">
-      {/* top bar: back link + scanned meta on one row */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <Link
-          href={PAGES.SCANNER.ROOT}
-          className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-        >
-          <ArrowLeft className="h-4 w-4" aria-hidden />
-          Back to scanner
-        </Link>
-        {scorecard.finishedAtComplete ? (
-          <span className="inline-flex items-center gap-1.5 text-[12.5px] text-muted-foreground">
-            <Clock className="h-3 w-3" aria-hidden />
-            Scanned {fmtDate(scorecard.finishedAtComplete)}
-            {duration ? ` · ${duration}` : ""}
-          </span>
-        ) : null}
-      </div>
+      <ScorecardTopBar
+        finishedAt={scorecard.finishedAtComplete ?? null}
+        duration={scanDuration(scorecard.startedAt, scorecard.finishedAtComplete)}
+      />
 
       {/* hero card: org header + score */}
       <div className="rounded-3xl border border-border bg-card p-7">
         <div className="flex flex-wrap items-center gap-3.5">
-          <SiteFavicon hostname={hostname} fallback={favicon} />
+          <SiteFavicon hostname={hostnameOf(url)} fallback={favicon} />
           <div className="min-w-[200px] flex-1">
-            <h1 className="text-[22px] font-bold tracking-tight text-foreground">{title}</h1>
+            <h1 className="text-[22px] font-bold tracking-tight text-foreground">
+              {org ?? titleFromUrl(url)}
+            </h1>
             {url ? (
               <a
                 href={url}
@@ -200,118 +350,11 @@ export function PublicScorecard({ slug, initialData }: PublicScorecardProps) {
         <ScoreHero totalScore={scorecard.totalScore} grade={scorecard.grade} />
       </div>
 
-      {/* category breakdown card */}
-      {categoryScores.length > 0 ? (
-        <section
-          className="rounded-2xl border border-border bg-card px-6 pb-4 pt-2"
-          aria-label="Category breakdown"
-        >
-          <div className="flex items-center justify-between py-4">
-            <h2 className="text-[17px] font-bold text-foreground">Category breakdown</h2>
-            {rawPossible > 0 ? (
-              <span className="text-[12.5px] text-muted-foreground">
-                {rawAwarded}/{rawPossible} raw · normalized to 100
-              </span>
-            ) : null}
-          </div>
-          {categoryScores.map((category) => (
-            <CategoryBar key={category.category} score={category} />
-          ))}
-        </section>
-      ) : null}
+      {categoryScores.length > 0 ? <CategoryBreakdownCard scores={categoryScores} /> : null}
 
-      {/* members-area upsell */}
-      <div className="relative overflow-hidden rounded-3xl border border-border bg-card">
-        <div
-          className="absolute inset-0 bg-gradient-to-br from-brand/10 to-transparent"
-          aria-hidden
-        />
-        <div className="relative flex flex-col gap-5 p-7">
-          <div className="flex items-center gap-2">
-            <span className="flex h-[30px] w-[30px] items-center justify-center rounded-lg bg-brand text-brand-950">
-              <Lock className="h-[15px] w-[15px]" aria-hidden />
-            </span>
-            <span className="text-xs font-bold uppercase tracking-[0.06em] text-brand-emphasis">
-              Members area
-            </span>
-          </div>
-          <div>
-            <h2 className="max-w-[440px] text-[22px] font-bold tracking-tight text-foreground">
-              {scorecard.totalScore != null && scorecard.totalScore < 100
-                ? "You can reach 100. Here's exactly how."
-                : "See the full report."}
-            </h2>
-            <p className="mt-2 max-w-[480px] text-[15px] leading-relaxed text-foreground-alt">
-              Sign in free to unlock your prioritized fixes, the raw evidence behind all 25 checks,
-              and the full donate-flow walkthrough.
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-x-6 gap-y-3">
-            {[
-              { icon: Wrench, title: "Prioritized fixes", sub: "Ranked by impact" },
-              { icon: FileText, title: "25 checks of evidence", sub: "Pass / partial / fail" },
-              {
-                icon: MousePointerClick,
-                title: "Donate-flow walkthrough",
-                sub: "The agent's play-by-play",
-              },
-            ].map((feat) => {
-              const Icon = feat.icon;
-              return (
-                <div key={feat.title} className="flex items-start gap-2.5">
-                  <Icon
-                    className="mt-0.5 h-[18px] w-[18px] shrink-0 text-brand-emphasis"
-                    aria-hidden
-                  />
-                  <div>
-                    <div className="text-sm font-semibold text-foreground">{feat.title}</div>
-                    <div className="text-[12.5px] text-muted-foreground">{feat.sub}</div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-          <MembersAreaCta slug={slug} initialData={scorecard} />
-        </div>
-      </div>
+      <MembersUpsell slug={slug} scorecard={scorecard} />
 
-      {/* blurred fix teaser behind an unlock cue */}
-      <div className="relative">
-        <div
-          className="pointer-events-none select-none space-y-2 opacity-60 blur-[5px]"
-          aria-hidden
-        >
-          {[0, 1, 2].map((i) => (
-            <div
-              key={i}
-              className="flex items-center gap-3 rounded-lg border border-border bg-card p-3.5"
-            >
-              <div className="h-7 w-7 rounded-lg bg-secondary" />
-              <div className="flex-1">
-                <div className="mb-1.5 h-3 w-3/5 rounded bg-secondary" />
-                <div className="h-2.5 w-4/5 rounded bg-secondary" />
-              </div>
-              <div className="h-5 w-12 rounded-full bg-secondary" />
-            </div>
-          ))}
-        </div>
-        <div className="absolute inset-0 grid place-items-center">
-          <button
-            type="button"
-            onClick={openReport}
-            disabled={!scanId}
-            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-4 py-2 text-[13.5px] font-semibold text-foreground shadow-sm transition-colors hover:border-brand-subtle hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {authenticated ? (
-              <FileText className="h-3.5 w-3.5 text-brand-emphasis" aria-hidden />
-            ) : (
-              <Lock className="h-3.5 w-3.5" aria-hidden />
-            )}
-            {authenticated ? "Fixes hidden — See the full report" : "Sign in to unlock the fixes"}
-            <ArrowRight className="h-3.5 w-3.5" aria-hidden />
-          </button>
-        </div>
-      </div>
+      <FixTeaser authenticated={authenticated} disabled={!scanId} onOpenReport={openReport} />
 
       <p className="mt-4 flex items-center justify-center gap-1.5 text-center text-[12.5px] text-muted-foreground">
         <Shield className="h-3.5 w-3.5" aria-hidden />

@@ -68,9 +68,9 @@ export function ScoreGauge({ score, grade, size = 184 }: ScoreGaugeProps) {
           const ang = (i / TICKS) * 2 * Math.PI - Math.PI / 2;
           const on = i < filled;
           return (
-            // biome-ignore lint/suspicious/noArrayIndexKey: fixed count of positional ticks
+            // Each tick's angle is unique and stable, so it doubles as the key.
             <line
-              key={i}
+              key={ang}
               x1={CENTER + Math.cos(ang) * INNER}
               y1={CENTER + Math.sin(ang) * INNER}
               x2={CENTER + Math.cos(ang) * OUTER}

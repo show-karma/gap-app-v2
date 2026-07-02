@@ -46,7 +46,3 @@ export function categoryMeta(categoryId: string): CategoryMeta {
   if (categoryId === "trust") return META.trust_verification;
   return FALLBACK;
 }
-
-// The four donor-agent verbs, in order — used by the entry page's "what it
-// measures" spine and the generating checklist.
-export const VERB_SPINE = ["Reach", "Understand", "Trust", "Transact"] as const;

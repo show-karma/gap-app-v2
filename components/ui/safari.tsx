@@ -76,6 +76,7 @@ export function Safari({
             borderRadius: "0 0 11px 11px",
           }}
         >
+          {/* biome-ignore lint/performance/noImgElement: vendored magicui primitive; accepts arbitrary user-supplied src, so next/image's domain allowlist doesn't fit */}
           <img src={imageSrc} alt="" className="block size-full object-cover object-top" />
         </div>
       )}
