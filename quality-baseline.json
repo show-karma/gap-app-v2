@@ -1,7 +1,7 @@
 {
   "$schema": "./scripts/quality-baseline.schema.json",
-  "generatedAt": "2026-06-30T19:05:25.270Z",
-  "generatedFromCommit": "c9b70b1ff3b91b4cdccea0101b653e8e4391efb0",
+  "generatedAt": "2026-07-01T18:47:57.000Z",
+  "generatedFromCommit": "7c549547248dc82e247c183b60553f1caf9ebe31",
   "coverage": {
     "lines": 0,
     "statements": 0,
@@ -9,14 +9,14 @@
     "branches": 0
   },
   "duplication": {
-    "percent": 1.26,
+    "percent": 1.24,
     "fragments": 74
   },
   "violations": {
-    "biome": 1245,
+    "biome": 1246,
     "knipUnusedFiles": 208,
-    "knipUnusedExports": 411,
-    "knipUnusedTypes": 357,
+    "knipUnusedExports": 417,
+    "knipUnusedTypes": 360,
     "knipUnusedDeps": 19,
     "knipDuplicates": 33
   },
@@ -448,8 +448,8 @@
       "maxBytes": 40000
     },
     "utilities/indexer.ts": {
-      "lines": 809,
-      "bytes": 39648,
+      "lines": 826,
+      "bytes": 40536,
       "maxLines": 600,
       "maxBytes": 40000
     },
@@ -463,17 +463,17 @@
   "reactDoctor": {
     "score": 0,
     "errors": 63,
-    "warnings": 3263,
+    "warnings": 3294,
     "byCategory": {
-      "Architecture": 1167,
-      "Accessibility": 284,
+      "Architecture": 1172,
+      "Accessibility": 287,
       "Correctness": 392,
       "Next.js": 142,
+      "TanStack Query": 38,
+      "State & Effects": 684,
+      "Performance": 619,
       "Server": 10,
-      "State & Effects": 667,
-      "Performance": 614,
-      "TanStack Query": 36,
-      "Bundle Size": 11,
+      "Bundle Size": 10,
       "Security": 3
     }
   }

@@ -3,6 +3,7 @@
 import { ArrowUpRight, ChevronDown } from "lucide-react";
 import { useState } from "react";
 import type { CompositeWeights, ResearchReportCandidate } from "@/types/donor-research";
+import { CandidateDiligenceActions } from "../diligence/CandidateDiligenceActions";
 import { FinancialsTable } from "../report-brief/FinancialsTable";
 import { compositeBand } from "../report-brief/scoring";
 import { formatEin, hostname, humanizeCase, truncate } from "../report-brief/text-utils";
@@ -21,6 +22,10 @@ interface CandidateCardProps {
    * including social presence, at the advisor's chosen weights.
    */
   weights?: CompositeWeights | null;
+  /** Report id — required to mount the advisor diligence actions. */
+  reportId?: string;
+  /** Advisor-only: gates the Ask Questions / Connect footer. */
+  showDiligenceActions?: boolean;
 }
 
 /**
@@ -44,7 +49,13 @@ interface CandidateCardProps {
  *
  * Disqualified candidates render with a muted treatment + clear label.
  */
-export function CandidateCard({ candidate, variant, weights = null }: CandidateCardProps) {
+export function CandidateCard({
+  candidate,
+  variant,
+  weights = null,
+  reportId,
+  showDiligenceActions = false,
+}: CandidateCardProps) {
   const [expanded, setExpanded] = useState(false);
   const isDisqualified = candidate.complianceVerdict === "disqualified";
   // IRS 990 data is shouted in all caps; normalize so the card doesn't
@@ -144,9 +155,32 @@ export function CandidateCard({ candidate, variant, weights = null }: CandidateC
             )}
           </details>
         ) : null}
+
+        <CandidateDiligenceFooter
+          reportId={reportId}
+          candidateId={candidate.id}
+          show={showDiligenceActions}
+        />
       </div>
     </article>
   );
+}
+
+interface CandidateDiligenceFooterProps {
+  reportId: string | undefined;
+  candidateId: string;
+  show: boolean;
+}
+
+/**
+ * Advisor-only diligence footer. Extracted so the conditional stays out of the
+ * already-dense {@link CandidateCard} body. Renders nothing on the donor shared
+ * view (where `show` is false / `reportId` is absent).
+ */
+function CandidateDiligenceFooter({ reportId, candidateId, show }: CandidateDiligenceFooterProps) {
+  return show && reportId ? (
+    <CandidateDiligenceActions reportId={reportId} candidateId={candidateId} />
+  ) : null;
 }
 
 interface CandidateHeaderProps {

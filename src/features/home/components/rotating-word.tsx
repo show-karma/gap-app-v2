@@ -1,7 +1,7 @@
 "use client";
 
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { useEffect, useMemo, useState } from "react";
+import { useReducedMotion } from "motion/react";
+import { useEffect, useState } from "react";
 import { cn } from "@/utilities/tailwind";
 
 interface RotatingWordProps {
@@ -11,60 +11,58 @@ interface RotatingWordProps {
 }
 
 /**
- * Rotates through a list of words in a slot whose width is locked to the
- * longest word's exact rendered width (via an invisible same-typeface
- * spacer, not the loose ch unit). The active word is pinned to the right
- * edge so the gap collapses to the left and "worth backing" never moves.
+ * Rotates through `words` in a fixed-width slot.
  *
- * Accessibility: the rotating element is aria-hidden because it is visual
- * decoration. Callers must provide a complete sentence (covering every
- * variant) in a sibling `sr-only` span so screen readers and SEO get the
- * canonical text.
+ * Layout: `inline-grid` stacks every word in the same cell (col/row 1), so the
+ * slot resolves to the widest *rendered* word — character count is not a width
+ * proxy in a proportional font, and `className` (e.g. `italic`) lives on the
+ * container so every stacked word shares the metrics that set that width. Only
+ * the active word is opaque; the rest stay in place at `opacity-0`, so the
+ * surrounding H1 never reflows mid-cycle. `align-baseline` keeps the grid on the
+ * sentence baseline; `justify-items-center` splits the slack for shorter words
+ * evenly instead of opening one ragged gap.
+ *
+ * Accessibility: the element is aria-hidden (visual decoration) and honors
+ * prefers-reduced-motion by holding on the first word with no transition.
+ * Callers must provide the full canonical sentence in a sibling `sr-only` span
+ * for screen readers / SEO.
  */
 export function RotatingWord({ words, intervalMs = 2400, className }: RotatingWordProps) {
-  const [idx, setIdx] = useState(0);
+  const [index, setIndex] = useState(0);
   const reduceMotion = useReducedMotion();
 
   useEffect(() => {
-    if (words.length < 2) return;
-    const id = window.setInterval(() => setIdx((i) => (i + 1) % words.length), intervalMs);
+    if (reduceMotion || words.length <= 1) return;
+    const id = window.setInterval(() => {
+      setIndex((i) => (i + 1) % words.length);
+    }, intervalMs);
     return () => window.clearInterval(id);
-  }, [words.length, intervalMs]);
+  }, [reduceMotion, words.length, intervalMs]);
 
-  // The widest word in the list; rendered invisibly to reserve exact width.
-  const longest = useMemo(
-    () => words.reduce((max, w) => (w.length > max.length ? w : max), ""),
-    [words]
-  );
-
-  const current = words[idx] ?? "";
-  const transition = reduceMotion
-    ? { duration: 0 }
-    : { type: "spring" as const, stiffness: 260, damping: 28, mass: 0.6 };
+  // Clamp into range so a shrunk `words` list (e.g. n → 1 while index > 0)
+  // can't leave every word hidden until the next tick.
+  const activeIndex = words.length > 0 ? index % words.length : 0;
 
   return (
-    <span aria-hidden className="relative inline-block align-baseline whitespace-nowrap">
-      {/* Spacer: invisible copy of the longest word. Sets the slot's exact
-          rendered width and establishes the baseline. The active word
-          overlays it; the slot itself never resizes. */}
-      <span aria-hidden className="invisible">
-        {longest}
-      </span>
-      {/* Active word pinned to the right edge so the gap collapses to the
-          left side only. bottom-0 aligns its baseline with the spacer's
-          baseline since both share font, size, and line-height. */}
-      <AnimatePresence mode="wait" initial={false}>
-        <motion.span
-          key={current}
-          initial={reduceMotion ? { opacity: 1, y: 0 } : { y: "0.2em", opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          exit={reduceMotion ? { opacity: 1, y: 0 } : { y: "-0.2em", opacity: 0 }}
-          transition={transition}
-          className={cn("absolute right-0 bottom-0 whitespace-nowrap", className)}
+    <span
+      aria-hidden
+      className={cn(
+        "relative inline-grid justify-items-center align-baseline whitespace-nowrap",
+        className
+      )}
+    >
+      {words.map((word, i) => (
+        <span
+          key={word}
+          className={cn(
+            "col-start-1 row-start-1",
+            !reduceMotion && "transition-opacity duration-500 ease-out",
+            i === activeIndex ? "opacity-100" : "opacity-0 pointer-events-none"
+          )}
         >
-          {current}
-        </motion.span>
-      </AnimatePresence>
+          {word}
+        </span>
+      ))}
     </span>
   );
 }
