@@ -12,7 +12,7 @@ const POLL_INTERVAL_MS = 4_000;
 // show a progress view) rather than surfacing a not-found error. After
 // MAX_PENDING_ATTEMPTS the slug is judged genuinely missing/unpublished, so we
 // stop — a bad or revoked link can't poll the backend forever from every tab.
-const MAX_PENDING_ATTEMPTS = 30; // ~2 min at 4s
+const MAX_PENDING_ATTEMPTS = 10; // ~40s at 4s — the fresh-scan 404 race lasts seconds, so a genuinely missing id errors quickly
 
 export function useScorecardBySlug(slug: string | null) {
   return useQuery<PublicScorecardPayload, Error & { status?: number }>({

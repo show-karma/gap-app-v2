@@ -10,7 +10,7 @@ const POLL_INTERVAL_MS = 4_000;
 // detail view can show a progress state) instead of hard-failing into a
 // "could not load" error. Give up after MAX_PENDING_ATTEMPTS so a genuinely
 // missing scan or a permission denial doesn't poll forever.
-const MAX_PENDING_ATTEMPTS = 30; // ~2 min at 4s
+const MAX_PENDING_ATTEMPTS = 10; // ~40s at 4s — the fresh-scan 404 race lasts seconds, so a genuinely missing id errors quickly
 
 export function useScan(scanId: string | null) {
   return useQuery<DetailScorecardPayload, Error & { status?: number }>({
