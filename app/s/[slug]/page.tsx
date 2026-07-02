@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { MembersAreaCta } from "@/src/features/scanner/components/members-area-cta";
 import { PublicScorecard } from "@/src/features/scanner/components/public-scorecard";
 import { ScannerViewTracker } from "@/src/features/scanner/components/scanner-view-tracker";
 import { getPublicScorecardBySlug } from "@/src/features/scanner/services/scanner.service";
@@ -55,7 +54,7 @@ export default async function PublicScorecardPage({ params }: PageProps) {
   const initial = await loadScorecard(slug);
 
   return (
-    <main className="mx-auto flex w-full max-w-2xl flex-col gap-12 px-6 py-12 sm:py-16">
+    <main className="mx-auto flex w-full max-w-3xl flex-col gap-12 px-6 py-12 sm:py-16">
       <ScannerViewTracker
         variant="public"
         scanId={initial?.scanId ?? null}
@@ -64,21 +63,9 @@ export default async function PublicScorecardPage({ params }: PageProps) {
         totalScore={initial?.totalScore ?? null}
         orgName={initial?.orgName ?? null}
       />
+      {/* Members-area CTA now lives inside PublicScorecard's success branch
+          so it is not shown over a failed/absent scorecard. */}
       <PublicScorecard slug={slug} initialData={initial ?? undefined} />
-
-      <aside className="flex flex-col gap-3 border-t border-zinc-200 pt-8 dark:border-zinc-800">
-        <span className="font-mono text-[11px] uppercase tracking-wider text-zinc-500">
-          Members area
-        </span>
-        <h2 className="font-display text-2xl tracking-tight text-zinc-900 dark:text-zinc-50">
-          See the top fixes and per-check evidence
-        </h2>
-        <p className="text-sm text-zinc-600 dark:text-zinc-400">
-          Log in to view the prioritized fix list, donate-flow walkthrough notes, and the full
-          rubric breakdown for this scan.
-        </p>
-        <MembersAreaCta slug={slug} scanId={initial?.scanId ?? null} />
-      </aside>
     </main>
   );
 }

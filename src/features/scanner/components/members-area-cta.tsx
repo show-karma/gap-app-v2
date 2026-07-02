@@ -2,73 +2,67 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
 import { setPostLoginRedirect, useAuth } from "@/hooks/useAuth";
 import { PAGES } from "@/utilities/pages";
-import { getPublicScorecardBySlug } from "../services/scanner.service";
+import { useScorecardBySlug } from "../hooks/use-scorecard-by-slug";
+import type { PublicScorecardPayload } from "../types";
 
 interface MembersAreaCtaProps {
   readonly slug: string;
-  // Server-rendered scanId if the SSR scorecard fetch succeeded. When
-  // null, the client recovers the scanId before routing — never falls
-  // back to the slug, which would corrupt the detail-page URL.
-  readonly scanId: string | null;
+  // SSR scorecard when the server fetch succeeded (null while the scan is still
+  // generating). Used as a fallback so an already-complete scan renders the
+  // enabled CTA on first paint; otherwise we recover state from the live
+  // polling query, which shares React Query's cache with <PublicScorecard>.
+  readonly initialData?: PublicScorecardPayload;
 }
 
-export function MembersAreaCta({ slug, scanId: initialScanId }: MembersAreaCtaProps) {
+export function MembersAreaCta({ slug, initialData }: MembersAreaCtaProps) {
   const { push } = useRouter();
   const { ready, authenticated, login } = useAuth();
-  // Tag the fetched id with the slug it belongs to. The effective scanId is
-  // derived, so a slug change instantly invalidates a stale fetch result
-  // (fetched.slug !== slug -> null) without a reset setState. This both
-  // fixes routing to a previous scan across /s/[slug] transitions and keeps
-  // the effect to a single setState (no cascading redraw).
-  const [fetched, setFetched] = useState<{ slug: string; scanId: string } | null>(null);
-  const scanId = initialScanId ?? (fetched?.slug === slug ? fetched.scanId : null);
+  const { data } = useScorecardBySlug(slug);
+  const scorecard = data ?? initialData ?? null;
+  const scanId = scorecard?.scanId ?? null;
+  // The detail report only exists once scoring is done, so gate on that — NOT
+  // on scanId presence. The slug endpoint returns a scanId in its in-progress
+  // envelopes too, which used to enable the button before the report existed.
+  const isComplete = scorecard?.status === "complete";
 
-  useEffect(() => {
-    if (initialScanId) return;
-    let cancelled = false;
-    getPublicScorecardBySlug(slug)
-      .then((s) => {
-        if (!cancelled) setFetched({ slug, scanId: s.scanId });
-      })
-      .catch(() => {
-        // SUPPRESSED: scorecard may legitimately be missing (unpublished,
-        // 404). UI degrades to disabled button below.
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [slug, initialScanId]);
-
-  function handleLogin() {
+  function openReport() {
     if (!scanId) return;
     const detailHref = PAGES.SCANNER.SCAN_DETAIL(scanId);
     if (authenticated) {
       push(detailHref);
       return;
     }
-    // Persist the return target across the Privy modal handoff so the
-    // user lands on the detailed report once login completes.
+    // Persist the return target across the Privy modal handoff so the user
+    // lands on the detailed report once login completes.
     setPostLoginRedirect(detailHref);
     login();
   }
 
   return (
-    <div className="flex flex-wrap gap-3 pt-1">
-      <button
-        type="button"
-        onClick={handleLogin}
-        disabled={!ready || !scanId}
-        className="inline-flex items-center gap-1 rounded-full bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
-      >
-        {authenticated ? "Open full report" : "Log in to see the report"}
-        <span aria-hidden>→</span>
-      </button>
+    <div className="flex flex-wrap items-center gap-3 pt-1">
+      {isComplete ? (
+        <button
+          type="button"
+          onClick={openReport}
+          disabled={!ready || !scanId}
+          className="inline-flex items-center gap-1 rounded-full bg-brand px-4 py-2 text-sm font-semibold text-brand-950 shadow-primary-button transition-colors hover:bg-brand-subtle disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {authenticated ? "Open full report" : "Log in to see the report"}
+          <span aria-hidden>→</span>
+        </button>
+      ) : (
+        // Report isn't ready yet — don't offer to open a report that doesn't
+        // exist. A muted status stands in for the button until scoring lands.
+        <span className="inline-flex items-center gap-2 rounded-full bg-secondary px-4 py-2 text-sm font-medium text-muted-foreground">
+          <span className="h-2 w-2 animate-pulse rounded-full bg-brand" aria-hidden />
+          Full report unlocks when the scan finishes
+        </span>
+      )}
       <Link
         href={PAGES.SCANNER.ROOT}
-        className="inline-flex items-center gap-1 rounded-full border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-900"
+        className="inline-flex items-center gap-1 rounded-full border border-border bg-background px-4 py-2 text-sm font-medium text-foreground shadow-outline-button transition-colors hover:bg-secondary"
       >
         Scan another site
       </Link>

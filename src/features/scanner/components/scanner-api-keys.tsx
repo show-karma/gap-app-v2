@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Copy, KeyRound, Trash2 } from "lucide-react";
+import { Check, Copy, KeyRound, Plus, Trash2 } from "lucide-react";
 import { useReducer } from "react";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,7 @@ import {
   useRevokeScannerKey,
 } from "../hooks/use-my-scanner-keys";
 import type { ScannerApiKey } from "../types";
+import { ErrorState } from "./error-state";
 
 // Five related ScannerApiKeys ui states (showCreateModal, revokeTarget,
 // justCreatedKey, newKeyName, copied) were five useState calls — React
@@ -142,80 +143,101 @@ export function ScannerApiKeys() {
   if (isLoading) {
     return (
       <div
-        className="flex animate-pulse flex-col gap-3 rounded-2xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900"
+        className="flex animate-pulse flex-col gap-3 rounded-2xl border border-border bg-card p-6"
         aria-busy="true"
       >
-        <div className="h-5 w-1/3 rounded bg-zinc-200 dark:bg-zinc-800" />
-        <div className="h-5 w-2/3 rounded bg-zinc-200 dark:bg-zinc-800" />
+        <div className="h-5 w-1/3 rounded bg-secondary" />
+        <div className="h-5 w-2/3 rounded bg-secondary" />
       </div>
     );
   }
 
   if (isError) {
     return (
-      <div className="flex flex-col gap-3 rounded-2xl border border-rose-200 bg-rose-50 p-6 dark:border-rose-900/40 dark:bg-rose-950/40">
-        <p className="text-sm text-rose-900 dark:text-rose-100">Could not load your API keys.</p>
-        <Button type="button" variant="outline" onClick={() => refetch()}>
-          Try again
-        </Button>
-      </div>
+      <ErrorState
+        title="Could not load your API keys"
+        message="Something went wrong fetching your scanner keys. Please try again."
+        onRetry={() => refetch()}
+        icon={KeyRound}
+      />
     );
   }
 
   const keys = data ?? [];
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex items-start justify-between gap-3">
+    <div className="flex flex-col gap-5">
+      <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex flex-col gap-1">
-          <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-            Scanner API keys
-          </h2>
-          <p className="text-sm text-zinc-600 dark:text-zinc-400">
-            Use these keys to call the Scanner REST API or to install the Karma Scanner MCP server
-            in Claude Desktop, ChatGPT, or Cursor. Each key carries scanner:read and scanner:write
-            scopes.
+          <h2 className="text-lg font-bold tracking-tight text-foreground">Scanner API keys</h2>
+          <p className="max-w-xl text-sm leading-relaxed text-muted-foreground">
+            Call the Scanner REST API or install the Karma Scanner MCP server in Claude Desktop,
+            ChatGPT, or Cursor. Each key carries{" "}
+            <code className="font-mono text-xs">scanner:read</code> and{" "}
+            <code className="font-mono text-xs">scanner:write</code> scopes.
           </p>
         </div>
         <Button type="button" onClick={() => dispatch({ type: "open_create_modal" })}>
+          <Plus className="h-4 w-4" aria-hidden />
           Generate key
         </Button>
       </div>
 
       {keys.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-zinc-300 bg-zinc-50 p-6 text-sm text-zinc-600 dark:border-zinc-700 dark:bg-zinc-900/40 dark:text-zinc-400">
-          You have not generated any API keys yet. Generate one to call the scanner via REST or MCP.
+        <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-border bg-secondary/40 px-6 py-12 text-center">
+          <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand/15 text-brand-emphasis">
+            <KeyRound className="h-6 w-6" aria-hidden />
+          </span>
+          <p className="text-sm text-muted-foreground">
+            No API keys yet. Generate one to call the scanner via REST or MCP.
+          </p>
         </div>
       ) : (
-        <ul className="flex flex-col gap-2">
-          {keys.map((key) => (
-            <li
-              key={key.id}
-              className="flex items-center justify-between gap-3 rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900"
-            >
-              <div className="flex items-center gap-3">
-                <KeyRound className="h-5 w-5 text-zinc-500" aria-hidden />
-                <div className="flex flex-col">
-                  <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                    {key.name}
-                  </span>
-                  <span className="font-mono text-xs text-zinc-500 dark:text-zinc-400">
-                    karma_scanner_...{key.prefix}
-                  </span>
-                </div>
-              </div>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => dispatch({ type: "open_revoke_confirm", target: key })}
-                aria-label={`Revoke ${key.name}`}
+        <ul className="flex flex-col gap-2.5">
+          {keys.map((key) => {
+            const revoked = key.revokedAt !== null;
+            return (
+              <li
+                key={key.id}
+                className={`flex items-center justify-between gap-3 rounded-2xl border border-border bg-card p-4 ${
+                  revoked ? "opacity-60" : ""
+                }`}
               >
-                <Trash2 className="h-4 w-4" aria-hidden />
-                <span className="sr-only sm:not-sr-only sm:ml-1">Revoke</span>
-              </Button>
-            </li>
-          ))}
+                <div className="flex min-w-0 items-center gap-3">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-secondary text-brand-emphasis">
+                    <KeyRound className="h-5 w-5" aria-hidden />
+                  </span>
+                  <div className="flex min-w-0 flex-col">
+                    <div className="flex items-center gap-2">
+                      <span className="truncate text-sm font-semibold text-foreground">
+                        {key.name}
+                      </span>
+                      {revoked ? (
+                        <span className="rounded-full bg-secondary px-2 py-px text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                          Revoked
+                        </span>
+                      ) : null}
+                    </div>
+                    <span className="truncate font-mono text-xs text-muted-foreground">
+                      karma_scanner_…{key.prefix}
+                    </span>
+                  </div>
+                </div>
+                {revoked ? null : (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => dispatch({ type: "open_revoke_confirm", target: key })}
+                    aria-label={`Revoke ${key.name}`}
+                  >
+                    <Trash2 className="h-4 w-4" aria-hidden />
+                    <span className="sr-only sm:not-sr-only sm:ml-1">Revoke</span>
+                  </Button>
+                )}
+              </li>
+            );
+          })}
         </ul>
       )}
 
@@ -229,17 +251,17 @@ export function ScannerApiKeys() {
               <DialogHeader>
                 <DialogTitle>Save your new API key</DialogTitle>
                 <DialogDescription>
-                  This is the only time you will see the full key. Copy it now and store it
-                  somewhere safe.
+                  This is the only time you'll see the full key. Copy it now and store it somewhere
+                  safe.
                 </DialogDescription>
               </DialogHeader>
               <div className="flex items-center gap-2">
-                <code className="flex-1 overflow-x-auto rounded-md bg-zinc-100 p-3 font-mono text-sm dark:bg-zinc-800">
+                <code className="flex-1 overflow-x-auto rounded-md bg-secondary p-3 font-mono text-sm text-foreground">
                   {ui.justCreatedKey}
                 </code>
                 <Button type="button" variant="outline" onClick={handleCopy} aria-label="Copy key">
                   {ui.copied ? (
-                    <Check className="h-4 w-4 text-emerald-600" aria-hidden />
+                    <Check className="h-4 w-4 text-brand-emphasis" aria-hidden />
                   ) : (
                     <Copy className="h-4 w-4" aria-hidden />
                   )}
@@ -284,7 +306,7 @@ export function ScannerApiKeys() {
                     Cancel
                   </Button>
                   <Button type="submit" disabled={isIssuing || !ui.newKeyName.trim()}>
-                    {isIssuing ? "Generating..." : "Generate"}
+                    {isIssuing ? "Generating…" : "Generate"}
                   </Button>
                 </DialogFooter>
               </form>
@@ -303,8 +325,8 @@ export function ScannerApiKeys() {
           <DialogHeader>
             <DialogTitle>Revoke this API key?</DialogTitle>
             <DialogDescription>
-              Any application or MCP client using <strong>{ui.revokeTarget?.name}</strong> will
-              stop working immediately. This cannot be undone.
+              Any application or MCP client using <strong>{ui.revokeTarget?.name}</strong> will stop
+              working immediately. This cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -322,7 +344,7 @@ export function ScannerApiKeys() {
               disabled={isRevoking || !ui.revokeTarget}
               onClick={() => ui.revokeTarget && revoke(ui.revokeTarget.id)}
             >
-              {isRevoking ? "Revoking..." : "Revoke key"}
+              {isRevoking ? "Revoking…" : "Revoke key"}
             </Button>
           </DialogFooter>
         </DialogContent>

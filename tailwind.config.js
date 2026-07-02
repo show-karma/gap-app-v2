@@ -189,7 +189,11 @@ module.exports = {
           black: "#18181B",
         },
         warning: {
+          // DEFAULT is the app's semantic amber (--color-warning, #f5a623), so
+          // `bg-warning` / `stroke-warning` match the rest of the product.
+          DEFAULT: "#f5a623",
           50: "#fffbeb",
+          500: "#f5a623",
           700: "#b45309",
         },
         slack: {
@@ -345,6 +349,15 @@ module.exports = {
     },
   },
   safelist: [
+    // Semantic band tokens the scanner composes dynamically (via BAND_* maps in
+    // src/features/scanner/utils/labels.ts). Because these class strings live in
+    // one util file and are applied by lookup, the content scanner can miss
+    // them; safelist keeps the scorecard bars/gauge coloured on the app's own
+    // warning amber + destructive red rather than raw palette.
+    "bg-warning-500",
+    "stroke-warning-500",
+    "bg-destructive",
+    "stroke-destructive",
     {
       pattern:
         /^(bg-(?:slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-(?:50|100|200|300|400|500|600|700|800|900|950))$/,

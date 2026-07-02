@@ -127,7 +127,9 @@ export type ContactSourceTag = "fix-help" | "more-scans" | "api-key-request" | "
 
 export interface ContactRequest {
   readonly sourceTag: ContactSourceTag;
-  readonly email: string;
+  // Wire field is `contactEmail` — the backend ContactRequestSchema requires
+  // exactly this key (a plain `email` is rejected with a 400 validation error).
+  readonly contactEmail: string;
   readonly orgName?: string;
   readonly message: string;
   readonly scanId?: string;
