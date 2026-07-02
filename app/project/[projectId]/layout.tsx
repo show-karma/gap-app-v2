@@ -3,6 +3,7 @@ export const revalidate = 60;
 
 import { dehydrate, HydrationBoundary, QueryClient } from "@tanstack/react-query";
 import type { Metadata } from "next";
+import { unstable_rethrow } from "next/navigation";
 import { ProjectShareDialogMount } from "@/components/Pages/Project/ProjectShareDialogMount";
 import { BreadcrumbJsonLd } from "@/components/Seo/BreadcrumbJsonLd";
 import { ProjectJsonLd } from "@/components/Seo/ProjectJsonLd";
@@ -123,7 +124,11 @@ export default async function RootLayout(props: {
   if (!isE2E) {
     try {
       projectInfo = await getProjectCachedData(projectId);
-    } catch {
+    } catch (error) {
+      // Re-throw Next.js control-flow errors (notFound()/redirect(), which work
+      // by throwing) so a bare catch can't swallow them; only a genuine
+      // transient fetch failure falls through to render the shell.
+      unstable_rethrow(error);
       // SUPPRESSED: transient project fetch failure — client hooks refetch.
     }
   }

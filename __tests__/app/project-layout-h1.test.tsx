@@ -41,6 +41,7 @@ vi.mock("@/utilities/metadata/projectMetadata", () => ({
 
 vi.mock("next/navigation", () => ({
   notFound: vi.fn(),
+  unstable_rethrow: vi.fn(),
   redirect: vi.fn(),
   usePathname: vi.fn(() => "/"),
   useRouter: vi.fn(() => ({ push: vi.fn(), replace: vi.fn() })),
