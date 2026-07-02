@@ -196,6 +196,9 @@ module.exports = {
           50: "#fffbeb",
           500: "#f5a623",
           700: "#b45309",
+          // Dark amber for legible ink on a bright warning-500 surface (e.g.
+          // the scanner's grade-C chip).
+          900: "#78350f",
         },
         slack: {
           aubergine: "#4A154B",
@@ -353,13 +356,19 @@ module.exports = {
     // Semantic band tokens the scanner composes dynamically (via BAND_* maps in
     // src/features/scanner/utils/labels.ts). Because these class strings live in
     // one util file and are applied by lookup, the content scanner can miss
-    // them; safelist keeps the grade chip / percentage text coloured on the
-    // app's own warning amber + destructive red rather than raw palette.
-    "bg-warning-700",
-    "text-warning-700",
-    "bg-destructive",
-    "text-destructive",
+    // them; safelist keeps the gauge ticks, bar fills, and percentage / label
+    // text coloured on the app's own brand teal + warning amber + destructive
+    // red rather than raw palette. Every band has fill (bg-/stroke-) + text.
+    "bg-brand",
+    "stroke-brand",
     "text-brand-emphasis",
+    "bg-warning-500",
+    "stroke-warning-500",
+    "text-warning-700",
+    "text-warning-900",
+    "bg-destructive",
+    "stroke-destructive",
+    "text-destructive",
     {
       pattern:
         /^(bg-(?:slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-(?:50|100|200|300|400|500|600|700|800|900|950))$/,

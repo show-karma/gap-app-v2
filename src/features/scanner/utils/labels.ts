@@ -80,12 +80,13 @@ export const GRADE_BLURB: Record<string, string> = {
 };
 
 // Colour vocabulary for the scorecard, drawn only from the Karma Design
-// System tokens (never raw Tailwind palette). Every element in a row shares
-// one band hue so the dial, the bar fill, and the percentage text always
-// agree: brand teal for "strong", the system's burnt amber (warning-700,
-// #b45309 — never the bright warning-500 orange) for "ok", and the
-// `destructive` red token for both failing bands. The neutral track keeps the
-// unfilled portion of a bar readable behind any fill colour.
+// System's semantic tokens (never raw Tailwind palette). Each band is a
+// three-tier traffic light: brand teal ("strong"), the app's warning amber
+// ("ok"), and the `destructive` red token (both failing bands). Fills and text
+// share the band's hue so every element in a row agrees; the amber band uses
+// the bright warning-500 for fills and the darker warning-700 for text so
+// small labels stay AA-legible. The neutral track keeps the unfilled portion
+// of a bar readable behind any fill colour.
 export const BAND_FG: Record<ScoreBand, string> = {
   strong: "text-brand-emphasis",
   ok: "text-warning-700",
@@ -96,7 +97,7 @@ export const BAND_FG: Record<ScoreBand, string> = {
 // Solid fills — grade chip and progress-bar fills.
 export const BAND_BG: Record<ScoreBand, string> = {
   strong: "bg-brand",
-  ok: "bg-warning-700",
+  ok: "bg-warning-500",
   weak: "bg-destructive",
   critical: "bg-destructive",
 };
@@ -104,7 +105,7 @@ export const BAND_BG: Record<ScoreBand, string> = {
 // SVG stroke variant of the band palette — used by the radial ScoreGauge ticks.
 export const BAND_STROKE: Record<ScoreBand, string> = {
   strong: "stroke-brand",
-  ok: "stroke-warning-700",
+  ok: "stroke-warning-500",
   weak: "stroke-destructive",
   critical: "stroke-destructive",
 };

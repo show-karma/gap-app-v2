@@ -8,11 +8,19 @@ interface GradeBadgeProps {
 
 // The rounded-rect grade letter — the report/scorecard centrepiece, and the
 // only severity-coloured surface bigger than text. Coloured by the shared
-// grade band (A/B brand teal, C the system's burnt amber, D/F destructive
-// red). A/B use the dark brand ink; the warmer bands read on white.
+// grade band (A/B brand teal, C the app's warning amber, D/F destructive
+// red). The bright teal and amber chips take dark same-hue ink; the red
+// failing chips take white.
+const GRADE_INK: Record<ReturnType<typeof gradeBand>, string> = {
+  strong: "text-brand-950",
+  ok: "text-warning-900",
+  weak: "text-white",
+  critical: "text-white",
+};
+
 export function GradeBadge({ grade, size = 128 }: GradeBadgeProps) {
   const band = gradeBand(grade);
-  const ink = band === "strong" ? "text-brand-950" : "text-white";
+  const ink = GRADE_INK[band];
   return (
     <div className="relative shrink-0" style={{ width: size, height: size }}>
       <div

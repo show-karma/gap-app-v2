@@ -28,26 +28,37 @@ async function fetchScorecard(slug: string): Promise<PublicScorecardPayload | nu
 
 // next/og's ImageResponse renders to a PNG via inline CSS; Tailwind classes
 // and CSS variables are not honored, so these hex literals mirror the
-// design-system tokens the in-app scorecard uses: the grade chip carries
-// severity (A/B brand teal, C burnt amber warning-700, D/F destructive red),
-// bars are always the brand accent, and the neutrals follow the KDS dark
-// palette (pure-black background, pure-gray text ramp).
+// design-system tokens the in-app scorecard uses. Every element in a row
+// shares one band hue: brand teal (strong), burnt amber warning-700 (ok),
+// destructive red (weak/critical). Neutrals follow the KDS dark palette
+// (pure-black background, pure-gray text ramp).
+const TONE_STRONG = "#2ed1a8"; // brand-500
+const TONE_OK = "#f5a623"; // warning-500
+const TONE_FAIL = "#dc2828"; // destructive — hsl(0 72% 51%)
 const GRADE_TONE: Record<ScanGrade, string> = {
-  A: "#2ed1a8", // brand-500
-  B: "#2ed1a8", // brand-500
-  C: "#b45309", // warning-700
-  D: "#dc2828", // destructive — hsl(0 72% 51%)
-  F: "#dc2828", // destructive — hsl(0 72% 51%)
+  A: TONE_STRONG,
+  B: TONE_STRONG,
+  C: TONE_OK,
+  D: TONE_FAIL,
+  F: TONE_FAIL,
 };
-// Chip ink: A/B read with the dark brand ink (as in-app), warm bands on white.
+// Chip ink: the bright teal and amber chips take dark same-hue ink (as
+// in-app); the red failing chips take white.
 const GRADE_INK: Record<ScanGrade, string> = {
   A: "#061d18", // brand-950
   B: "#061d18", // brand-950
-  C: "white",
+  C: "#78350f", // warning-900
   D: "white",
   F: "white",
 };
-const COLOR_BRAND = "#2ed1a8"; // brand-500
+// Per-category bar colour from its 0-100 percentage — mirrors bandForScore:
+// a zero-point category reads as failing, not merely weak.
+function toneForPct(pct: number): string {
+  if (pct <= 0) return TONE_FAIL;
+  if (pct >= 80) return TONE_STRONG;
+  if (pct >= 50) return TONE_OK;
+  return TONE_FAIL;
+}
 const COLOR_BG_DARK = "#000000";
 const COLOR_BG_BAR = "#292929"; // KDS dark border — hsl(0 0% 16%)
 const COLOR_FG_PRIMARY = "white";
@@ -181,7 +192,7 @@ export async function GET(_request: NextRequest, context: { params: Promise<{ sl
                     width: `${pct}%`,
                     height: "100%",
                     borderRadius: 999,
-                    backgroundColor: COLOR_BRAND,
+                    backgroundColor: toneForPct(pct),
                   })}
                 />
               </div>
