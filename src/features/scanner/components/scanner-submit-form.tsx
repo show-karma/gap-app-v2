@@ -29,7 +29,11 @@ function normalizeUrl(raw: string): { ok: true; value: string } | { ok: false; e
   if (!trimmed) {
     return { ok: false, error: "Enter a nonprofit's website to scan." };
   }
-  const withProtocol = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+  // Only default to https:// when the input has no scheme of its own —
+  // otherwise ftp://x.com becomes https://ftp://x.com and dodges the protocol
+  // check below with a misleading "not a valid website" error.
+  const hasScheme = /^[a-z][a-z0-9+.-]*:\/\//i.test(trimmed);
+  const withProtocol = hasScheme ? trimmed : `https://${trimmed}`;
   let parsed: URL;
   try {
     parsed = new URL(withProtocol);

@@ -1,6 +1,6 @@
 import { ArrowRight, CheckCircle2, Wrench } from "lucide-react";
 import pluralize from "pluralize";
-import { BAND_FG, BAR_FILL, BAR_TRACK, bandForScore } from "../utils/labels";
+import { BAND_BG, BAND_FG, BAR_TRACK, bandForScore } from "../utils/labels";
 import { ScoreGauge } from "./score-gauge";
 
 // "The score moves" — proof that clearing the fix list moves the grade.
@@ -101,7 +101,7 @@ function SnapshotCard({
               </div>
               <div className={`h-[5px] overflow-hidden rounded-full ${BAR_TRACK}`}>
                 <div
-                  className={`h-full rounded-full ${BAR_FILL}`}
+                  className={`h-full rounded-full ${BAND_BG[band]}`}
                   style={{ width: `${cat.pct}%` }}
                 />
               </div>

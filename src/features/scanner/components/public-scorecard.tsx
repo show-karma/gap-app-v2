@@ -15,7 +15,8 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useLoadPrivy } from "@/contexts/privy-bridge-context";
 import { setPostLoginRedirect, useAuth } from "@/hooks/useAuth";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { PAGES } from "@/utilities/pages";
@@ -246,10 +247,21 @@ function FixTeaser({
 export function PublicScorecard({ slug, initialData }: PublicScorecardProps) {
   const { data, isError, refetch } = useScorecardBySlug(slug);
   const { push } = useRouter();
-  const { authenticated, login } = useAuth();
+  const { ready, authenticated, login } = useAuth();
+  const loadPrivy = useLoadPrivy();
   const [copied, setCopied] = useState(false);
+  // A login click that landed before the deferred Privy SDK finished loading.
+  // The bridge's pre-load `login` is a silent no-op, so we queue the intent,
+  // kick the SDK load, and fire the real login once `ready` flips true.
+  const [loginQueued, setLoginQueued] = useState(false);
   const [, copyToClipboard] = useCopyToClipboard();
   const scorecard = data ?? initialData ?? null;
+
+  useEffect(() => {
+    if (!loginQueued || !ready) return;
+    setLoginQueued(false);
+    if (!authenticated) login();
+  }, [loginQueued, ready, authenticated, login]);
 
   // No payload yet. While the query is still retrying the pre-scored 404
   // window it stays pending (not `isError`), so a just-submitted scan reads as
@@ -298,6 +310,12 @@ export function PublicScorecard({ slug, initialData }: PublicScorecardProps) {
       return;
     }
     setPostLoginRedirect(detailHref);
+    if (!ready) {
+      // SDK still deferred — request it and queue the login for when it lands.
+      loadPrivy();
+      setLoginQueued(true);
+      return;
+    }
     login();
   }
 

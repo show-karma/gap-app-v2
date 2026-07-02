@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 import type { CategoryScore } from "../types";
 import { categoryMeta } from "../utils/category-meta";
 import {
+  BAND_BG,
   BAND_FG,
-  BAR_FILL,
   BAR_TRACK,
   bandForScore,
   categoryLabel,
@@ -57,7 +57,7 @@ export function CategoryBar({ score }: CategoryBarProps) {
         </span>
       </div>
 
-      <AnimatedBar targetPct={targetPct} score={score} label={label} />
+      <AnimatedBar targetPct={targetPct} band={band} score={score} label={label} />
 
       {subtitle ? (
         <p className="pl-12 text-[13.5px] leading-relaxed text-muted-foreground">{subtitle}</p>
@@ -68,10 +68,12 @@ export function CategoryBar({ score }: CategoryBarProps) {
 
 function AnimatedBar({
   targetPct,
+  band,
   score,
   label,
 }: {
   readonly targetPct: number;
+  readonly band: ReturnType<typeof bandForScore>;
   readonly score: CategoryScore;
   readonly label: string;
 }) {
@@ -90,7 +92,7 @@ function AnimatedBar({
         aria-label={`${label}: ${score.pointsAwarded} of ${score.pointsPossible} points`}
       />
       <div
-        className={`h-full rounded-full ${BAR_FILL} transition-[width] duration-[900ms] ease-out`}
+        className={`h-full rounded-full ${BAND_BG[band]} transition-[width] duration-[900ms] ease-out`}
         style={{ width: `${width}%` }}
         aria-hidden
       />

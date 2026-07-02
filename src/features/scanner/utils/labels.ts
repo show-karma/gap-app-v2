@@ -79,13 +79,13 @@ export const GRADE_BLURB: Record<string, string> = {
   F: "An agent can't complete the journey. Critical checks are failing.",
 };
 
-// Colour vocabulary for the scorecard, per the Karma Design System: brand
-// teal is the singular signature colour, so gauges and progress fills are
-// always the brand accent on a neutral track — bar length carries the score.
-// Severity is expressed only in small elements: the percentage / grade-label
-// text (BAND_FG) and the grade chip fill (BAND_BG). "ok" uses the design
-// system's burnt amber (warning-700, #b45309) — never the bright orange — and
-// both failing bands share the `destructive` red token.
+// Colour vocabulary for the scorecard, drawn only from the Karma Design
+// System tokens (never raw Tailwind palette). Every element in a row shares
+// one band hue so the dial, the bar fill, and the percentage text always
+// agree: brand teal for "strong", the system's burnt amber (warning-700,
+// #b45309 — never the bright warning-500 orange) for "ok", and the
+// `destructive` red token for both failing bands. The neutral track keeps the
+// unfilled portion of a bar readable behind any fill colour.
 export const BAND_FG: Record<ScoreBand, string> = {
   strong: "text-brand-emphasis",
   ok: "text-warning-700",
@@ -93,7 +93,7 @@ export const BAND_FG: Record<ScoreBand, string> = {
   critical: "text-destructive",
 };
 
-// Grade-chip fills — the only severity-coloured surface bigger than text.
+// Solid fills — grade chip and progress-bar fills.
 export const BAND_BG: Record<ScoreBand, string> = {
   strong: "bg-brand",
   ok: "bg-warning-700",
@@ -101,9 +101,27 @@ export const BAND_BG: Record<ScoreBand, string> = {
   critical: "bg-destructive",
 };
 
-// Progress bars: brand accent fill on a neutral track, regardless of band.
-export const BAR_FILL = "bg-brand";
+// SVG stroke variant of the band palette — used by the radial ScoreGauge ticks.
+export const BAND_STROKE: Record<ScoreBand, string> = {
+  strong: "stroke-brand",
+  ok: "stroke-warning-700",
+  weak: "stroke-destructive",
+  critical: "stroke-destructive",
+};
+
+// Neutral track behind every progress bar, regardless of band.
 export const BAR_TRACK = "bg-secondary";
+
+// Score band from the 0-100 total alone, so the gauge still colours correctly
+// in the brief window where a score exists but the BE grade letter hasn't
+// landed. Thresholds mirror the grade cutoffs (A/B strong, C ok, D weak, F
+// critical).
+export function bandForRawScore(score: number): ScoreBand {
+  if (score >= 80) return "strong";
+  if (score >= 70) return "ok";
+  if (score >= 55) return "weak";
+  return "critical";
+}
 
 // Grade -> score band, so the grade badge / gauge share one color vocabulary
 // with the category bars. Mirrors GRADE_TAGLINE's tones (A/B strong, C ok,

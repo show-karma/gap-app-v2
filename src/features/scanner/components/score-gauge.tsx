@@ -1,9 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import type { ScanGrade } from "../types";
+import { BAND_STROKE, bandForRawScore, gradeBand } from "../utils/labels";
 
 interface ScoreGaugeProps {
   readonly score: number;
+  readonly grade?: ScanGrade | null;
   readonly size?: number;
 }
 
@@ -12,11 +15,13 @@ const CENTER = 100;
 const INNER = 74;
 const OUTER = 92;
 
-// A radial tick dial: 64 hairline ticks around a circle, filled up to the score.
-// Always the brand accent — severity lives in the grade chip and label text,
-// not the dial. Animates the fill + the centre number from 0 in ~1.1s (snaps
-// under prefers-reduced-motion).
-export function ScoreGauge({ score, size = 184 }: ScoreGaugeProps) {
+// A radial tick dial: 64 hairline ticks around a circle, filled up to the
+// score. Ticks take the score band's hue so the dial agrees with the grade
+// chip and the category bars. Falls back to the raw-score band in the brief
+// window before the BE grade letter lands. Animates the fill + the centre
+// number from 0 in ~1.1s (snaps under prefers-reduced-motion).
+export function ScoreGauge({ score, grade = null, size = 184 }: ScoreGaugeProps) {
+  const band = grade ? gradeBand(grade) : bandForRawScore(score);
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
@@ -65,7 +70,7 @@ export function ScoreGauge({ score, size = 184 }: ScoreGaugeProps) {
               y2={CENTER + Math.sin(ang) * OUTER}
               strokeWidth={2.6}
               strokeLinecap="round"
-              className={on ? "stroke-brand" : "stroke-border opacity-60"}
+              className={on ? BAND_STROKE[band] : "stroke-border opacity-60"}
             />
           );
         })}

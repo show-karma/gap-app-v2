@@ -65,7 +65,7 @@ export function ScoreHero({ totalScore, grade, orgName, url, scannedAt, compact 
       ) : null}
 
       <div className="flex flex-wrap items-center gap-x-8 gap-y-4">
-        <ScoreGauge score={totalScore ?? 0} size={gaugeSize} />
+        <ScoreGauge score={totalScore ?? 0} grade={grade} size={gaugeSize} />
         <div className="min-w-[220px] flex-1">
           {grade ? (
             <>

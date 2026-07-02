@@ -22,7 +22,13 @@ export function useScan(scanId: string | null) {
       return getScanById(scanId);
     },
     enabled: Boolean(scanId),
-    retry: (failureCount) => failureCount < MAX_PENDING_ATTEMPTS,
+    // 401/403 are terminal — the viewer won't gain access by waiting, so fail
+    // straight into the error state instead of ~2 minutes of fake "generating"
+    // progress. Only the fresh-scan 404 window keeps retrying.
+    retry: (failureCount, error) => {
+      if (error.status === 401 || error.status === 403) return false;
+      return failureCount < MAX_PENDING_ATTEMPTS;
+    },
     retryDelay: POLL_INTERVAL_MS,
     // Once we have the envelope, keep polling in place so the donate-flow
     // walkthrough (Phase C agent tier) refreshes once it lands. Stop on a
