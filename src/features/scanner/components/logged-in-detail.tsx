@@ -331,9 +331,12 @@ export function LoggedInDetail({ scanId, userEmail }: LoggedInDetailProps) {
       push(PAGES.SCANNER.PUBLIC_SCORECARD(response.slug));
     },
     onError: (error) => {
-      // 429 is the logged-in credit cap — retrying will never succeed, so
-      // surface the contact modal instead of a "please try again" toast.
-      if (error.status === 429) {
+      // Credit cap — retrying will never succeed, so surface the contact modal
+      // instead of a "please try again" toast. The refresh endpoint returns 403
+      // for an exhausted lifetime cap (the submit endpoint uses 429 for the same
+      // condition); any logged-in user may regen any site, so a 403 here is only
+      // ever the cap, never an ownership denial. Handle both.
+      if (error.status === 429 || error.status === 403) {
         setRescanLimited(true);
         return;
       }
