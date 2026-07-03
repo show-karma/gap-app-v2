@@ -46,6 +46,10 @@ interface LoggedInDetailProps {
 
 type ReportTab = "path" | "evidence" | "flow";
 
+// Lockout window that absorbs rapid double-clicks on Re-scan (including a
+// fast-error re-enable) without blocking a deliberate retry a moment later.
+const RESCAN_LOCKOUT_MS = 1500;
+
 function fmtScannedAt(iso?: string | null): string | null {
   if (!iso) return null;
   const d = new Date(iso);
@@ -311,22 +315,22 @@ export function LoggedInDetail({ scanId, userEmail }: LoggedInDetailProps) {
   const [copied, setCopied] = useState(false);
   const [, copyToClipboard] = useCopyToClipboard();
   const [rescanLimited, setRescanLimited] = useState(false);
-  // Synchronous in-flight guard: `isPending` only flips on the next render, so
-  // two clicks in the same tick both pass the disabled check and fire duplicate
-  // regen requests. This ref blocks the second call immediately (mirrors the
-  // entry form's submittingRef).
-  const rescanningRef = useRef(false);
+  // Duplicate-regen guard. `isPending` disables the button during flight, but it
+  // only flips on the next render AND resets the instant the mutation settles —
+  // so a rapid double-click whose first request errors quickly (e.g. a fast 403)
+  // could re-open the button and fire a second POST before the user's second
+  // click lands. A short time-based lockout closes both the pre-render window and
+  // that fast-settle race, while still allowing a deliberate retry a moment later.
+  const lastRescanAtRef = useRef(0);
   // Re-scan regenerates this site's shared report: it spends one of the
   // viewer's lifetime credits and the fresh scan becomes the new latest.
   const { mutate: regenerate, isPending: isRescanning } = useRefreshScan({
     onSuccess: (response) => {
-      rescanningRef.current = false;
       toast.success("Re-scan started");
       markFreshScanSubmit(response.slug);
       push(PAGES.SCANNER.PUBLIC_SCORECARD(response.slug));
     },
     onError: (error) => {
-      rescanningRef.current = false;
       // 429 is the logged-in credit cap — retrying will never succeed, so
       // surface the contact modal instead of a "please try again" toast.
       if (error.status === 429) {
@@ -387,8 +391,10 @@ export function LoggedInDetail({ scanId, userEmail }: LoggedInDetailProps) {
   }
 
   function handleRescan() {
-    if (rescanningRef.current || isRescanning) return;
-    rescanningRef.current = true;
+    if (isRescanning) return;
+    const now = performance.now();
+    if (now - lastRescanAtRef.current < RESCAN_LOCKOUT_MS) return;
+    lastRescanAtRef.current = now;
     regenerate(scanId);
   }
 
