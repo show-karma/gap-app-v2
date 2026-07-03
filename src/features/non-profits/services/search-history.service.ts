@@ -42,8 +42,27 @@ export const SavedSearchTurnSchema = z.object({
 });
 export type SavedSearchTurn = z.infer<typeof SavedSearchTurnSchema>;
 
+/**
+ * Saved turns, parsed resiliently: each turn is validated on its own and any
+ * that fail are dropped, rather than rejecting the whole conversation. A single
+ * malformed turn (e.g. an entity/citation shape the indexer changed) must NOT
+ * discard the entire saved history — otherwise revisiting the URL fails to
+ * hydrate and the workbench falls through to re-running the agent instead of
+ * showing what was saved. A non-array `turns` (null/undefined) collapses to an
+ * empty list for the same reason.
+ */
+const ResilientSavedTurnsSchema = z
+  .array(z.unknown())
+  .catch([])
+  .transform((items) =>
+    items.flatMap((item) => {
+      const parsed = SavedSearchTurnSchema.safeParse(item);
+      return parsed.success ? [parsed.data] : [];
+    })
+  );
+
 export const SearchHistoryDetailSchema = SearchHistoryEntrySchema.extend({
-  turns: z.array(SavedSearchTurnSchema),
+  turns: ResilientSavedTurnsSchema,
 });
 export type SearchHistoryDetail = z.infer<typeof SearchHistoryDetailSchema>;
 

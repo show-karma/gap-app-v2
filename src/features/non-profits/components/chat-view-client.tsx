@@ -40,12 +40,14 @@ import {
   PromptInputTextarea,
   PromptInputTools,
 } from "@/src/components/ai-elements/prompt-input";
+import { TokenManager } from "@/utilities/auth/token-manager";
 import { NON_PROFITS_PAGES } from "@/utilities/pages";
 import { usePhilanthropySearch } from "../hooks/use-philanthropy-stream";
+import { decideRevisitAction, type RevisitAction } from "../lib/revisit-action";
 import { savedTurnsToChatTurns } from "../lib/saved-conversation";
 import { FILINGS_STATS } from "../lib/stats";
 import { decideThreadSeed } from "../lib/thread-seed";
-import { searchHistoryService } from "../services/search-history.service";
+import { type SearchHistoryDetail, searchHistoryService } from "../services/search-history.service";
 import { type ChatTurn, EMPTY_MESSAGES, usePhilanthropyStore } from "../store/philanthropy";
 import { useSearchSessionStore } from "../store/search-session";
 import { AttachmentsPanel } from "./attachments-panel";
@@ -57,6 +59,12 @@ import { NarrativeBlock } from "./narrative-block";
 import { ProgressView } from "./progress-view";
 import { SearchFeedback } from "./search-feedback";
 import { SearchHistoryPanel } from "./search-history-panel";
+
+// Sign-in recovery polls for the auth JWT. The Privy↔wagmi sync can lag the
+// token by ~10-15s, so poll across a window that comfortably covers it rather
+// than giving up early and leaving the chat stuck until a manual refresh.
+const AUTH_RECOVERY_POLL_INTERVAL_MS = 400;
+const AUTH_RECOVERY_POLL_TIMEOUT_MS = 16_000;
 
 // ── Inline starter prompts (LOCKED decision — do NOT use suggested-queries.tsx) ──
 
@@ -140,6 +148,16 @@ export function ChatView({ searchId }: { searchId?: string }) {
   const { authenticated, login } = useAuth();
   const router = useRouter();
 
+  // `search`/`abort` identities churn — `search` depends on React Query mutations
+  // and `authenticated`. The seeding effect reads them through refs so a mere
+  // identity change can't re-run it. Without this, reset() during "New chat"
+  // re-fires seeding against the still-current (old) searchId — router.replace is
+  // async — and re-fetches the old conversation onto the new URL.
+  const searchRef = useRef(search);
+  searchRef.current = search;
+  const abortRef = useRef(abort);
+  abortRef.current = abort;
+
   const [input, setInput] = useState("");
   const [trayOpen, setTrayOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
@@ -147,6 +165,10 @@ export function ChatView({ searchId }: { searchId?: string }) {
   // enough: navigating between two session URLs reuses the same instance
   // (same dynamic segment), so the ref must be keyed by session.
   const seededSearchIdRef = useRef<string | null>(null);
+  // Bumped to force the seeding effect (which lists `reseedKey` in its deps) to
+  // re-run after sign-in. Must be state, not a ref — a ref mutation wouldn't
+  // re-trigger the effect.
+  const [reseedKey, setReseedKey] = useState(0);
 
   // Seed the thread for the session in the URL. The philanthropy store is
   // global and survives client-side navigation, so arriving here can mean:
@@ -170,7 +192,7 @@ export function ChatView({ searchId }: { searchId?: string }) {
     seededSearchIdRef.current = searchId;
     if (decision === "adopt-existing-thread") return;
     if (decision === "reset-then-seed") {
-      abort();
+      abortRef.current();
       reset();
     }
     usePhilanthropyStore.getState().setThreadId(searchId);
@@ -184,46 +206,130 @@ export function ChatView({ searchId }: { searchId?: string }) {
     // visit to the same URL takes the hydration path below instead of
     // re-running the search.
     if (sessionStore.consumeFresh(searchId)) {
-      if (localQuery) void search(localQuery, 1, { chat: true });
+      if (localQuery) void searchRef.current(localQuery, 1, { chat: true });
       return;
     }
-    // Revisit / shared link: restore the saved conversation if the server
-    // has turns for it; otherwise fall back to re-running the query.
-    void searchHistoryService.getById(searchId).match(
-      (entry) => {
-        if (entry.turns.length > 0) {
+    // Revisit / shared link: fetch the saved conversation and act on the result
+    // via the pure `decideRevisitAction` decision. An existing, fetchable
+    // conversation is always SHOWN — re-running is reserved for chats we cannot
+    // fetch (our own unpersisted chat, or an anonymous user who can't read
+    // history). See `lib/revisit-action.ts`.
+    const apply = (action: RevisitAction, entry?: SearchHistoryDetail) => {
+      // Stale-resolution guard: `getById` is async and uncancellable. If the
+      // session changed while it was in flight (e.g. "New chat" or switching
+      // history items), this instance has already re-seeded a different id —
+      // dropping the late result keeps it from hydrating the old conversation
+      // back into the current session.
+      if (seededSearchIdRef.current !== searchId) return;
+      switch (action.kind) {
+        case "hydrate":
+          if (!entry) return;
           useSearchSessionStore.getState().setSession(searchId, entry.query);
           usePhilanthropyStore.getState().hydrateTurns(savedTurnsToChatTurns(entry.turns));
           return;
+        case "render-empty": {
+          const { prefill } = action;
+          if (prefill) {
+            useSearchSessionStore.getState().setSession(searchId, prefill);
+            setInput((current) => current || prefill);
+          }
+          return;
         }
-        const remoteQuery = entry.query?.trim();
-        if (!remoteQuery) return;
-        useSearchSessionStore.getState().setSession(searchId, remoteQuery);
-        void search(remoteQuery, 1, { chat: true });
-      },
-      () => {
-        // A local query means this is our own chat that isn't persisted yet
-        // (anonymous) — re-run it. A local session with no query is a freshly
-        // created chat the user hasn't searched in yet (e.g. "New chat" then a
-        // reload, where the one-shot `fresh` flag is already spent) — render the
-        // empty workbench. Only with NO local session at all is the URL
-        // genuinely private to another account, deleted, or nonexistent.
-        if (localQuery) {
-          void search(localQuery, 1, { chat: true });
-        } else if (!session) {
+        case "reconstruct":
+          void searchRef.current(action.query, 1, { chat: true });
+          return;
+        case "not-found":
           usePhilanthropyStore.getState().setNotFound(true);
-        }
+          return;
       }
+    };
+    void searchHistoryService.getById(searchId).match(
+      (entry) =>
+        apply(
+          decideRevisitAction({
+            result: {
+              ok: true,
+              turnCount: entry.turns.length,
+              remoteQuery: entry.query?.trim() || null,
+            },
+            localQuery: localQuery ?? null,
+            hasSession: Boolean(session),
+          }),
+          entry
+        ),
+      (error) =>
+        apply(
+          decideRevisitAction({
+            result: { ok: false, error },
+            localQuery: localQuery ?? null,
+            hasSession: Boolean(session),
+          })
+        )
     );
-  }, [searchId, messages.length, search, abort, reset]);
+    // Keyed on `searchId` + `reseedKey` ONLY. `messages.length`, `search`, and
+    // `abort` must NOT be dependencies: "New chat" calls reset() then an async
+    // router.replace(), so any of those changing (a cleared count, or a churned
+    // search/abort identity) re-runs this effect while `searchId` is still the
+    // OLD id — re-seeding it and re-fetching the old conversation onto the new
+    // URL. The count is read fresh via getState; search/abort via refs.
+    // `reseedKey` is the one allowed re-trigger: it fires only on sign-in.
+  }, [searchId, reset, reseedKey]);
 
-  // The free-limit prompt is only set for logged-out users; once they sign in,
-  // restore the composer so they can continue.
+  // Recover a blocked conversation after sign-in. Opening one while logged out
+  // leaves it in one of two auth-recoverable states that used to stick until a
+  // manual refresh:
+  //   - `notFound`: a chat private to your account 403s on getById.
+  //   - `loginRequired`: a chat the seeding effect tried to reconstruct hit the
+  //     agent's anonymous limit (401) → "Sign in to continue your search."
+  // Both become resolvable once authenticated, but a naive `authenticated`
+  // refetch is unreliable: Privy flips `authenticated` true BEFORE the JWT is
+  // minted and flickers for ~10-15s during the wagmi sync, and email/social
+  // logins never expose a wallet address. So we gate on the actual token —
+  // polling TokenManager.getToken() (exactly what apiFetch uses) until a real
+  // JWT exists — then recover exactly once. `authRecoveredRef` keys the one-shot
+  // to the searchId so a genuinely private (someone else's) chat can't loop.
+  const authRecoveredRef = useRef<string | null>(null);
   useEffect(() => {
-    if (authenticated && loginRequired) {
-      usePhilanthropyStore.getState().setLoginRequired(false);
-    }
-  }, [authenticated, loginRequired]);
+    if (!authenticated || !searchId) return;
+    if (!notFound && !loginRequired) return;
+    if (authRecoveredRef.current === searchId) return;
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const pollDeadline = Date.now() + AUTH_RECOVERY_POLL_TIMEOUT_MS;
+    const recover = () => {
+      if (authRecoveredRef.current === searchId) return;
+      authRecoveredRef.current = searchId;
+      const store = usePhilanthropyStore.getState();
+      // A readable conversation is already loaded — the block was only the
+      // composer lock from an anonymous "continue" attempt. Unlock and keep it.
+      if (store.messages.some((turn) => turn.status === "done")) {
+        store.setLoginRequired(false);
+        return;
+      }
+      // Nothing usable is loaded (private 403, or an anonymous-limit error
+      // turn): re-seed from a clean slate now that auth is in place. reset()
+      // also clears notFound/loginRequired.
+      store.reset();
+      seededSearchIdRef.current = null;
+      setReseedKey((k) => k + 1);
+    };
+    // Recursive scheduling (not a loop) so each retry is its own tick.
+    const tryRecover = () => {
+      void TokenManager.getToken().then((token) => {
+        if (cancelled) return;
+        if (token) {
+          recover();
+        } else if (Date.now() < pollDeadline) {
+          timer = setTimeout(tryRecover, AUTH_RECOVERY_POLL_INTERVAL_MS);
+        }
+      });
+    };
+    tryRecover();
+    return () => {
+      cancelled = true;
+      if (timer) clearTimeout(timer);
+    };
+  }, [authenticated, searchId, notFound, loginRequired]);
 
   const onSubmit = useCallback(
     (msg: PromptInputMessage) => {

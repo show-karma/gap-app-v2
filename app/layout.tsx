@@ -1,8 +1,11 @@
 import type { Metadata, Viewport } from "next";
-import { Spectral } from "next/font/google";
+import { JetBrains_Mono, Spectral } from "next/font/google";
 import localFont from "next/font/local";
 import { defaultMetadata } from "@/utilities/meta";
 
+// Single self-hosted Inter variable font (next/font/local), same as the rest
+// of the app. The woff2 is loaded and processed once; the tailwind `display`
+// family points straight at --font-inter, so the marketing H1/H2 share it.
 const inter = localFont({
   src: "../public/fonts/Inter/Inter.woff2",
   variable: "--font-inter",
@@ -22,6 +25,16 @@ const displayFont = Spectral({
   variable: "--font-display",
   display: "swap",
 });
+
+// Measurement font for the AI-Readiness Scanner (gauge numerics, per-check
+// evidence, score/100 fractions). Inter remains the body font; mono is
+// reserved for values that should read as instrument output, not prose.
+const monoFont = JetBrains_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500", "700"],
+  variable: "--font-mono",
+  display: "swap",
+});
 import "@/styles/globals.css";
 import "@/styles/index.scss";
 import "@/components/Utilities/DynamicStars/styles.css";
@@ -30,6 +43,7 @@ import { ThemeProvider } from "next-themes";
 import { DeferredLayoutComponents } from "@/components/DeferredLayoutComponents";
 import { OrganizationJsonLd } from "@/components/Seo/OrganizationJsonLd";
 import { SpeakableJsonLd } from "@/components/Seo/SpeakableJsonLd";
+import { ChunkReloadResetter } from "@/components/Utilities/ChunkReloadResetter";
 import { PermissionsProvider } from "@/components/Utilities/PermissionsProvider";
 import PrivyProviderWrapper from "@/components/Utilities/PrivyProviderWrapper";
 import { TenantStoreInitializer } from "@/components/Utilities/TenantStoreInitializer";
@@ -124,7 +138,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html
       lang="en"
-      className={`h-full ${inter.variable} ${displayFont.variable}`}
+      className={`h-full ${inter.variable} ${displayFont.variable} ${monoFont.variable}`}
       suppressHydrationWarning
       style={themeStyle}
     >
@@ -152,6 +166,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               {isWhitelabel && tenantConfig && (
                 <TenantStoreInitializer tenant={tenantConfig}>{null}</TenantStoreInitializer>
               )}
+              <ChunkReloadResetter />
               <PermissionsProvider />
               <DeferredLayoutComponents toasterConfig={toasterConfig} />
               <div className="min-h-screen flex flex-col justify-between h-full text-gray-700 bg-white dark:bg-black dark:text-white">

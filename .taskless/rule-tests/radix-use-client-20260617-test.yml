@@ -1,0 +1,7 @@
+id: radix-use-client
+valid:
+  - "\"use client\";\nimport * as Dialog from '@radix-ui/react-dialog';"
+  - "import { useState } from 'react';"
+invalid:
+  - "import * as Dialog from '@radix-ui/react-dialog';"
+  - "import { Root } from '@radix-ui/react-tooltip';\nexport const X = () => null;"

@@ -1,0 +1,18 @@
+id: no-hardcoded-color
+language: typescript
+severity: warning
+message: No hardcoded colors — use Tailwind theme classes, CSS variables, or tenant theme tokens.
+note: |
+  CLAUDE.md Pre-PR checklist: "No hardcoded colors — use Tailwind theme classes,
+  CSS variables, or tenant theme tokens." Hex color literals are not configurable
+  and bypass the design system / tenant theming.
+ignores:
+  - "**/__tests__/**"
+  - "**/*.test.ts"
+  - "**/*.test.tsx"
+  - "**/*.spec.ts"
+  - "**/*.spec.tsx"
+  - "scripts/**"
+rule:
+  kind: string
+  regex: '#[0-9a-fA-F]{3,8}'

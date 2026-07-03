@@ -1,3 +1,4 @@
+"use client";
 import { AutoSizer, Grid } from "react-virtualized";
 import { Skeleton } from "@/components/Utilities/Skeleton";
 

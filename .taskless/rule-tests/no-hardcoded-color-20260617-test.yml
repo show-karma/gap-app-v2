@@ -1,0 +1,7 @@
+id: no-hardcoded-color
+valid:
+  - "const cls = 'bg-primary text-zinc-900';"
+  - "const v = 'var(--brand-color)';"
+invalid:
+  - "const c = '#fff';"
+  - "const c = '#1a2b3c';"

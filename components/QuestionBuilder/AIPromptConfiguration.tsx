@@ -13,6 +13,7 @@ import type { FormSchema } from "@/types/question-builder";
 import { TabContent } from "../Utilities/Tabs/TabContent";
 import { Tabs } from "../Utilities/Tabs/Tabs";
 import { TabTrigger } from "../Utilities/Tabs/TabTrigger";
+import { ProgramAIInsightsConfiguration } from "./ProgramAIInsightsConfiguration";
 
 const DEFAULT_AI_MODEL = "gpt-4o";
 
@@ -316,6 +317,8 @@ export function AIPromptConfiguration({
           )}
         </div>
       </div>
+
+      {programId && <ProgramAIInsightsConfiguration programId={programId} readOnly={readOnly} />}
     </div>
   );
 }

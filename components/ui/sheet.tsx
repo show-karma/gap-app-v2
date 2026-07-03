@@ -9,6 +9,8 @@ import { cn } from "@/utilities/tailwind";
 
 const Sheet = SheetPrimitive.Root;
 
+const SheetTrigger = SheetPrimitive.Trigger;
+
 const SheetPortal = SheetPrimitive.Portal;
 
 const SheetOverlay = React.forwardRef<
@@ -103,4 +105,4 @@ const SheetDescription = React.forwardRef<
 ));
 SheetDescription.displayName = SheetPrimitive.Description.displayName;
 
-export { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription };
+export { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle, SheetDescription };

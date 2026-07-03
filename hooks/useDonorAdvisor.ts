@@ -10,6 +10,11 @@ import type { DonorAdvisor, DonorResearchCountersSnapshot } from "@/types/donor-
 const donorAdvisorQueryKey = ["donor-research", "advisor", "me"] as const;
 const donorCountersQueryKey = ["donor-research", "advisor", "counters"] as const;
 
+interface UseDonorAdvisorOptions {
+  /** Skip the query when authentication is not yet ready / unauthenticated. */
+  enabled?: boolean;
+}
+
 /**
  * Loads the current advisor row.
  *
@@ -17,12 +22,17 @@ const donorCountersQueryKey = ["donor-research", "advisor", "counters"] as const
  * advisor hasn't onboarded yet — callers should branch on that explicit
  * null and route to the onboarding flow rather than treating it as an
  * error.
+ *
+ * The optional `enabled` flag lets unauthenticated callers (e.g., the
+ * donor-share route) skip the request entirely instead of provoking a
+ * 401 just to detect advisor identity.
  */
-export function useDonorAdvisor() {
+export function useDonorAdvisor(opts: UseDonorAdvisorOptions = {}) {
   return useQuery<DonorAdvisor | null>({
     queryKey: donorAdvisorQueryKey,
     queryFn: fetchCurrentAdvisor,
     staleTime: 5 * 60_000, // advisor row rarely changes
+    enabled: opts.enabled !== false,
   });
 }
 

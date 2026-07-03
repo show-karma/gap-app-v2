@@ -1,0 +1,18 @@
+id: no-hardcoded-color-tsx
+language: tsx
+severity: warning
+message: No hardcoded colors — use Tailwind theme classes, CSS variables, or tenant theme tokens.
+note: |
+  TSX (React component) variant of `no-hardcoded-color`. ast-grep scopes a rule
+  to a single language, and `.tsx` files are parsed as `tsx`, not `typescript`.
+  Hex color literals bypass the design system / tenant theming.
+ignores:
+  - "**/__tests__/**"
+  - "**/*.test.ts"
+  - "**/*.test.tsx"
+  - "**/*.spec.ts"
+  - "**/*.spec.tsx"
+  - "scripts/**"
+rule:
+  kind: string
+  regex: '#[0-9a-fA-F]{3,8}'

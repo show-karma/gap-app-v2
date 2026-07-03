@@ -165,8 +165,19 @@ export const INDEXER = {
         `/v2/funding-applications/${referenceNumber}/versions/timeline`,
       REVIEWERS: (applicationId: string) => `/v2/funding-applications/${applicationId}/reviewers`,
       ACCESS: (referenceNumber: string) => `/v2/funding-applications/${referenceNumber}/access`,
-      MY_APPLICATIONS: (communitySlug: string) =>
-        `/v2/funding-applications/user/my-applications?communitySlug=${communitySlug}`,
+      MY_APPLICATIONS: (params: {
+        communitySlug: string;
+        programId?: string;
+        page?: number;
+        limit?: number;
+      }) => {
+        const qs = new URLSearchParams();
+        qs.set("communitySlug", params.communitySlug);
+        if (params.programId) qs.set("programId", params.programId);
+        if (params.page !== undefined) qs.set("page", String(params.page));
+        if (params.limit !== undefined) qs.set("limit", String(params.limit));
+        return `/v2/funding-applications/user/my-applications?${qs.toString()}`;
+      },
       INVOICE_CONFIG: (referenceNumber: string) =>
         `/v2/funding-applications/${referenceNumber}/invoice-config`,
       MILESTONE_EVALUATION: (referenceNumber: string, milestoneTitle: string) =>
@@ -798,10 +809,18 @@ export const INDEXER = {
     ME: "/v2/donor-research/me",
     ME_COUNTERS: "/v2/donor-research/me/counters",
     HANDLES: "/v2/donor-research/handles",
+    HANDLE_BY_ID: (handleId: string) => `/v2/donor-research/handles/${handleId}`,
+    PERSONA: (handleId: string) => `/v2/donor-research/handles/${handleId}/persona`,
+    PERSONA_REFINE: (handleId: string) => `/v2/donor-research/handles/${handleId}/persona/refine`,
     REPORTS: "/v2/donor-research/reports",
     REPORT_BY_ID: (reportId: string) => `/v2/donor-research/reports/${reportId}`,
+    REPORT_CONFIG: (reportId: string) => `/v2/donor-research/reports/${reportId}/config`,
+    REPORT_REORDER: (reportId: string) => `/v2/donor-research/reports/${reportId}/reorder`,
     REPORT_STREAM: (reportId: string) => `/v2/donor-research/reports/${reportId}/stream`,
     SHARE_TOKEN: (reportId: string) => `/v2/donor-research/reports/${reportId}/share-token`,
     SHARED: (token: string) => `/v2/donor-research/shared/${token}`,
+    // Staff-only admin overview (DEV-467).
+    ADMIN_ADVISORS: "/v2/admin/donor-research/advisors",
+    ADMIN_REPORT_BY_ID: (reportId: string) => `/v2/admin/donor-research/reports/${reportId}`,
   },
 };

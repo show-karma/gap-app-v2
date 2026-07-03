@@ -569,7 +569,7 @@ describe("Reviewer Status Change Functionality", () => {
       });
     });
 
-    it("should show error toast when status change fails", async () => {
+    it("keeps the inline form open and shows no success toast when status change fails", async () => {
       mockUpdateStatusAsync.mockRejectedValue(new Error("API Error"));
 
       const user = userEvent.setup();
@@ -581,9 +581,14 @@ describe("Reviewer Status Change Functionality", () => {
       // Click confirm
       await user.click(screen.getByTestId("confirm-btn"));
 
+      // The failed mutation is swallowed by the confirm handler so the form stays
+      // open to retry; the error toast is owned by the mutation's onError (see
+      // application-status.mutation.test.tsx).
       await waitFor(() => {
-        expect(toast.error).toHaveBeenCalledWith("API Error");
+        expect(mockUpdateStatusAsync).toHaveBeenCalled();
       });
+      expect(toast.success).not.toHaveBeenCalled();
+      expect(screen.getByTestId("status-change-inline")).toBeInTheDocument();
     });
   });
 

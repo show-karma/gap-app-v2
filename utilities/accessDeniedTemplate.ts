@@ -23,7 +23,7 @@ interface AccessDeniedTemplateVars {
 
 const TOKEN_RE = /\{\{\s*([A-Za-z0-9_]+)\s*\}\}/g;
 
-export type AccessDeniedScenario = "unauthenticated" | "forbidden";
+export type AccessDeniedScenario = "unauthenticated" | "forbidden" | "applicant";
 
 /**
  * Closed vocabulary per scenario. Mirrors
@@ -34,6 +34,7 @@ export type AccessDeniedScenario = "unauthenticated" | "forbidden";
 export const ACCESS_DENIED_TEMPLATE_VARIABLES = {
   unauthenticated: ["communityName", "communitySlug", "appUrl", "requiredRoles"],
   forbidden: ["communityName", "communitySlug", "appUrl", "requiredRoles", "currentRoles"],
+  applicant: ["communityName"],
 } as const satisfies Record<AccessDeniedScenario, readonly string[]>;
 
 /**
@@ -50,6 +51,8 @@ export const ACCESS_DENIED_DEFAULT_MESSAGES: Record<AccessDeniedScenario, string
     "**Sign in to continue**\n\nThis area is reserved for folks with the right access. Pop in and we'll take it from there.",
   forbidden:
     "**You're almost there**\n\nYou're signed in, but this page needs a role your account doesn't have yet. Reach out to a {{communityName}} admin and they can get you set up.",
+  applicant:
+    "**Looking for your application?**\n\nYou applied to {{communityName}} — view your application and track its status from your own page.",
 };
 
 interface AccessDeniedTemplateValidationResult {

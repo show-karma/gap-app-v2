@@ -1,9 +1,11 @@
-import type { ResearchReportCandidate } from "@/types/donor-research";
+import type { CompositeWeights, ResearchReportCandidate } from "@/types/donor-research";
 import { briefDisplay } from "./fonts";
 import { componentRows } from "./scoring";
 
 interface ScoreBreakdownTableProps {
   candidate: ResearchReportCandidate;
+  /** Persisted report weights; `null` renders the legacy four-row breakdown. */
+  weights: CompositeWeights | null;
 }
 
 /**
@@ -12,8 +14,8 @@ interface ScoreBreakdownTableProps {
  * is explained in place rather than only in the comparison table. Each row
  * is score (0–100) × weight = contribution, summing to the composite.
  */
-export function ScoreBreakdownTable({ candidate }: ScoreBreakdownTableProps) {
-  const rows = componentRows(candidate);
+export function ScoreBreakdownTable({ candidate, weights }: ScoreBreakdownTableProps) {
+  const rows = componentRows(candidate, weights);
   const composite100 = Math.round(candidate.composite * 100);
 
   return (

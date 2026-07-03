@@ -52,6 +52,14 @@ export const PAGES = {
     ONBOARDING: `/nonprofit-research/onboarding`,
     REPORT: (reportId: string) => `/nonprofit-research/${reportId}`,
     SHARED: (token: string) => `/nonprofit-research/shared/${token}`,
+    // Staff-only admin overview (DEV-467).
+    ADMIN: `/admin/nonprofit-research`,
+    ADMIN_REPORT: (reportId: string) => `/admin/nonprofit-research/${reportId}`,
+    // Advisor's one-per-advisor diligence question template editor (DEV-428).
+    DILIGENCE_TEMPLATE: `/nonprofit-research/diligence-template`,
+    // Public nonprofit response page — the secure email link opens this.
+    // The token in the path is the capability; no login required.
+    DILIGENCE_RESPONSE: (token: string) => `/nonprofit-research/diligence/${token}`,
   },
   EVALUATE: `/evaluate`,
   // REVIEWER routes now point to MANAGE (unified RBAC-based routes)
@@ -182,6 +190,12 @@ export const PAGES = {
   WORK: (slug: string) => `/ai-teams/${slug}/work`,
   SKILLS: (slug: string) => `/ai-teams/${slug}/skills`,
   ASK_KARMA: `/ask-karma`,
+  SCANNER: {
+    ROOT: `/scanner`,
+    SCAN_DETAIL: (id: string) => `/scanner/scans/${id}`,
+    PUBLIC_SCORECARD: (slug: string) => `/s/${slug}`,
+    OG_IMAGE: (slug: string) => `/api/scanner/og/${slug}`,
+  },
 };
 
 /**
