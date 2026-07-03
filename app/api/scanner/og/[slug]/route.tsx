@@ -17,7 +17,7 @@ export const runtime = "edge";
 // the edge route handler. Plain fetch keeps this route hermetic.
 async function fetchScorecard(slug: string): Promise<PublicScorecardPayload | null> {
   try {
-    const url = `${envVars.NEXT_PUBLIC_GAP_INDEXER_URL.replace(/\/$/, "")}/api/scanner/v1/s/${encodeURIComponent(slug)}`;
+    const url = `${envVars.NEXT_PUBLIC_GAP_INDEXER_URL.replace(/\/$/, "")}/v2/nonprofits/ai-readiness/reports/${encodeURIComponent(slug)}`;
     const res = await fetch(url, { cache: "no-store" });
     if (!res.ok) return null;
     return (await res.json()) as PublicScorecardPayload;

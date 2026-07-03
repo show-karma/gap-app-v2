@@ -3,7 +3,9 @@
 import {
   ArrowLeft,
   Bot,
+  CircleCheck,
   Clock,
+  FileQuestion,
   FileText,
   MousePointerClick,
   RefreshCw,
@@ -17,11 +19,12 @@ import pluralize from "pluralize";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/useAuth";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { PAGES } from "@/utilities/pages";
+import { useRefreshScan } from "../hooks/use-refresh-scan";
 import { useScan } from "../hooks/use-scan";
 import { markFreshScanSubmit } from "../hooks/use-scorecard-by-slug";
-import { useSubmitScan } from "../hooks/use-submit-scan";
 import type { CategoryScore, DetailScorecardPayload, ScanGrade } from "../types";
 import { BAND_FG, GRADE_LABEL, gradeBand } from "../utils/labels";
 import { titleFromUrl } from "../utils/site";
@@ -134,7 +137,7 @@ function deriveReport(data: DetailScorecardPayload) {
     labelTone: grade ? BAND_FG[gradeBand(grade)] : "text-muted-foreground",
     scannedAt: fmtScannedAt(data.finishedAtComplete ?? null),
     duration: scanDuration(data.startedAt, data.finishedAtComplete),
-    fixPoints: topFixes.reduce((sum, fix) => sum + (fix.pointsAtStake ?? 0), 0),
+    fixPoints: Math.round(topFixes.reduce((sum, fix) => sum + (fix.pointsAtStake ?? 0), 0)),
   };
 }
 
@@ -219,6 +222,27 @@ function ReportHeader(props: ReportHeaderProps) {
   );
 }
 
+// Terminal empty state for a report tab whose section has no data to show —
+// used instead of rendering a blank panel (the detail tier can be absent when
+// the backend withholds it, e.g. an in-progress or unavailable scorecard).
+function ReportSectionEmpty({
+  icon: Icon,
+  title,
+  body,
+}: {
+  readonly icon: typeof FileText;
+  readonly title: string;
+  readonly body: string;
+}) {
+  return (
+    <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-border bg-secondary px-6 py-12 text-center">
+      <Icon className="h-6 w-6 text-muted-foreground" aria-hidden />
+      <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+      <p className="max-w-sm text-sm leading-relaxed text-muted-foreground">{body}</p>
+    </div>
+  );
+}
+
 function EvidencePanel({
   categoryScores,
   evidence,
@@ -238,7 +262,15 @@ function EvidencePanel({
           ))}
         </section>
       ) : null}
-      <EvidenceList evidence={evidence} />
+      {evidence.length > 0 ? (
+        <EvidenceList evidence={evidence} />
+      ) : (
+        <ReportSectionEmpty
+          icon={FileQuestion}
+          title="Per-check evidence unavailable"
+          body="We couldn't load the per-check evidence for this report. Try re-scanning, or contact us if this keeps happening."
+        />
+      )}
     </div>
   );
 }
@@ -274,22 +306,30 @@ function WalkthroughPanel({ notes }: { readonly notes: string | null }) {
 export function LoggedInDetail({ scanId, userEmail }: LoggedInDetailProps) {
   const { data, isError, refetch } = useScan(scanId);
   const { push } = useRouter();
+  const { login } = useAuth();
   const [tab, setTab] = useState<ReportTab>("path");
   const [copied, setCopied] = useState(false);
   const [, copyToClipboard] = useCopyToClipboard();
   const [rescanLimited, setRescanLimited] = useState(false);
-  const { mutate: resubmit, isPending: isRescanning } = useSubmitScan({
+  // Re-scan regenerates this site's shared report: it spends one of the
+  // viewer's lifetime credits and the fresh scan becomes the new latest.
+  const { mutate: regenerate, isPending: isRescanning } = useRefreshScan({
     onSuccess: (response) => {
       toast.success("Re-scan started");
       markFreshScanSubmit(response.slug);
       push(PAGES.SCANNER.PUBLIC_SCORECARD(response.slug));
     },
     onError: (error) => {
-      // The report is auth-gated, so a 429 here is the logged-in scan cap —
-      // retrying will never succeed. Surface the contact modal instead of a
-      // "please try again" toast.
+      // 429 is the logged-in credit cap — retrying will never succeed, so
+      // surface the contact modal instead of a "please try again" toast.
       if (error.status === 429) {
         setRescanLimited(true);
+        return;
+      }
+      // 401 means the session lapsed since this auth-gated page loaded —
+      // prompt a fresh login rather than a dead-end error.
+      if (error.status === 401) {
+        login();
         return;
       }
       toast.error("Couldn't start a re-scan. Please try again.");
@@ -325,7 +365,7 @@ export function LoggedInDetail({ scanId, userEmail }: LoggedInDetailProps) {
   }
 
   const report = deriveReport(data);
-  const { categoryScores, topFixes, evidence, url } = report;
+  const { categoryScores, topFixes, evidence } = report;
 
   function handleShare() {
     if (typeof window === "undefined") return;
@@ -340,8 +380,8 @@ export function LoggedInDetail({ scanId, userEmail }: LoggedInDetailProps) {
   }
 
   function handleRescan() {
-    if (!url || isRescanning) return;
-    resubmit({ url });
+    if (isRescanning) return;
+    regenerate(scanId);
   }
 
   const TABS: readonly TabEntry[] = [
@@ -384,7 +424,7 @@ export function LoggedInDetail({ scanId, userEmail }: LoggedInDetailProps) {
         copied={copied}
         onShare={handleShare}
         isRescanning={isRescanning}
-        canRescan={Boolean(url) && !isRescanning}
+        canRescan={!isRescanning}
         onRescan={handleRescan}
       />
 
@@ -392,7 +432,24 @@ export function LoggedInDetail({ scanId, userEmail }: LoggedInDetailProps) {
 
       {/* tab panels */}
       {tab === "path" ? (
-        <TopFixesList fixes={topFixes} startScore={data.totalScore ?? null} />
+        topFixes.length > 0 ? (
+          <TopFixesList fixes={topFixes} startScore={data.totalScore ?? null} />
+        ) : evidence.length > 0 ? (
+          // Detail tier is present (evidence loaded) but there are no fixes —
+          // the site is already at/near a perfect score.
+          <ReportSectionEmpty
+            icon={CircleCheck}
+            title="Nothing to fix"
+            body={`This site already scores ${report.totalScore}/100 — there are no prioritized fixes to show.`}
+          />
+        ) : (
+          // No evidence either: the backend didn't return the detail tier.
+          <ReportSectionEmpty
+            icon={FileQuestion}
+            title="Detailed fixes unavailable"
+            body="We couldn't load the prioritized fixes for this report. Try re-scanning, or contact us if this keeps happening."
+          />
+        )
       ) : null}
 
       {tab === "evidence" ? (
