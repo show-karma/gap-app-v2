@@ -199,7 +199,13 @@ export const useFaucetRequest = (requestId: string | null) => {
     },
     enabled: !!requestId,
     refetchInterval: (query) => {
-      const status = query.state.data?.status;
+      // Stop polling once the request no longer exists (getRequest resolved to
+      // null/undefined) — otherwise a missing request would poll forever.
+      const data = query.state.data;
+      if (!data) {
+        return false;
+      }
+      const { status } = data;
       if (status === "CLAIMED" || status === "FAILED" || status === "EXPIRED") {
         return false;
       }

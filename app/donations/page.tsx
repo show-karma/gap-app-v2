@@ -90,14 +90,16 @@ export default function DonationsPage() {
             {pluralize("donation", donations.length)}
           </span>
         </div>
-        <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 dark:bg-zinc-800 rounded-md">
-          <span className="text-sm font-medium text-gray-900 dark:text-zinc-100">
-            {completedCount}
-          </span>
-          <span className="text-sm text-gray-500 dark:text-zinc-400">
-            completed {pluralize("donation", completedCount)}
-          </span>
-        </div>
+        {completedCount > 0 && (
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 dark:bg-zinc-800 rounded-md">
+            <span className="text-sm font-medium text-gray-900 dark:text-zinc-100">
+              {completedCount}
+            </span>
+            <span className="text-sm text-gray-500 dark:text-zinc-400">
+              completed {pluralize("donation", completedCount)}
+            </span>
+          </div>
+        )}
       </div>
 
       <DonationHistoryList donations={donations} />
