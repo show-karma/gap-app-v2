@@ -73,10 +73,15 @@ export function ScannerSubmitForm({ showExamples = false }: ScannerSubmitFormPro
   const { mutate, isPending } = useSubmitScan({
     onSuccess: (response) => {
       submittingRef.current = false;
-      toast.success("Scan started");
-      // Let the scorecard page know this slug was just created, so its
-      // pre-scored 404 window polls patiently instead of failing fast.
-      markFreshScanSubmit(response.slug);
+      if (response.created) {
+        toast.success("Scan started");
+        // Let the scorecard page know this slug was just created, so its
+        // pre-scored 404 window polls patiently instead of failing fast.
+        markFreshScanSubmit(response.slug);
+      } else {
+        // A report already existed — viewing it is free (no credit spent).
+        toast.success("Generating report for this website");
+      }
       push(PAGES.SCANNER.PUBLIC_SCORECARD(response.slug));
     },
     onError: (error) => {

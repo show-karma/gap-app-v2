@@ -38,8 +38,9 @@ export function TopFixesList({ fixes, startScore }: TopFixesListProps) {
           <h2 className="text-xl font-semibold tracking-tight text-foreground">Path to 100</h2>
         </div>
         <p className="max-w-xl text-sm leading-relaxed text-muted-foreground">
-          {fixes.length} {pluralize("fix", fixes.length)}, +{total} {pluralize("point", total)}.
-          Each rung shows your score after that fix, ordered by impact, so start at the top.
+          {fixes.length} {pluralize("fix", fixes.length)}, +{Math.round(total)}{" "}
+          {pluralize("point", Math.round(total))}. Each rung shows your score after that fix,
+          ordered by impact, so start at the top.
         </p>
       </div>
 
@@ -47,7 +48,7 @@ export function TopFixesList({ fixes, startScore }: TopFixesListProps) {
       <div className="relative pl-[66px]">
         <div className="absolute -bottom-3.5 left-[27px] top-8 w-0.5 bg-border" aria-hidden />
         <div className="absolute left-0 top-0 grid h-[34px] w-[54px] place-items-center rounded-[10px] bg-foreground text-[14.5px] font-bold tabular-nums text-background">
-          {startScore ?? 0}
+          {Math.round(startScore ?? 0)}
         </div>
         <p className="pt-1.5 text-[13px] text-muted-foreground">Today's score</p>
       </div>
@@ -90,7 +91,7 @@ function LadderRung({
           to >= 100 ? "bg-brand text-brand-950" : "border border-border bg-card text-foreground"
         }`}
       >
-        {to}
+        {Math.round(to)}
       </div>
       <div
         className={`overflow-hidden rounded-lg border bg-card transition-colors ${
@@ -107,7 +108,7 @@ function LadderRung({
             {fix.title}
           </span>
           <span className="shrink-0 rounded-full bg-brand/15 px-2 py-0.5 text-xs font-semibold text-brand-emphasis">
-            +{fix.pointsAtStake} {pluralize("pt", fix.pointsAtStake)}
+            +{Math.round(fix.pointsAtStake)} {pluralize("pt", Math.round(fix.pointsAtStake))}
           </span>
           <ChevronDown
             className={`h-[17px] w-[17px] shrink-0 text-muted-foreground transition-transform duration-300 ${
