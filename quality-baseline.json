@@ -1,7 +1,7 @@
 {
   "$schema": "./scripts/quality-baseline.schema.json",
-  "generatedAt": "2026-06-19T02:01:15.352Z",
-  "generatedFromCommit": "0731f513fb28a66610ce23513b255426f7bbab02",
+  "generatedAt": "2026-07-03T13:17:53.588Z",
+  "generatedFromCommit": "995f4f43a17f193567b187319f0a44c6d1f3df4c",
   "coverage": {
     "lines": 71.75,
     "statements": 70.5,
@@ -9,14 +9,14 @@
     "branches": 62.75
   },
   "duplication": {
-    "percent": 1.1,
+    "percent": 1.04,
     "fragments": 61
   },
   "violations": {
-    "biome": 155,
+    "biome": 175,
     "knipUnusedFiles": 4,
-    "knipUnusedExports": 16,
-    "knipUnusedTypes": 13,
+    "knipUnusedExports": 29,
+    "knipUnusedTypes": 25,
     "knipUnusedDeps": 1,
     "knipDuplicates": 0
   },
@@ -178,8 +178,8 @@
       "maxBytes": 40000
     },
     "components/Dialogs/ProjectDialog/index.tsx": {
-      "lines": 1717,
-      "bytes": 65067,
+      "lines": 1735,
+      "bytes": 66050,
       "maxLines": 600,
       "maxBytes": 40000
     },
@@ -448,8 +448,8 @@
       "maxBytes": 40000
     },
     "utilities/indexer.ts": {
-      "lines": 807,
-      "bytes": 39466,
+      "lines": 826,
+      "bytes": 40536,
       "maxLines": 600,
       "maxBytes": 40000
     },
@@ -461,19 +461,19 @@
     }
   },
   "reactDoctor": {
-    "score": 29,
+    "score": 28,
     "errors": 0,
-    "warnings": 2057,
+    "warnings": 2129,
     "byCategory": {
-      "Architecture": 675,
-      "Accessibility": 157,
-      "Correctness": 183,
-      "Next.js": 88,
-      "State & Effects": 597,
-      "Performance": 302,
-      "Server": 7,
-      "TanStack Query": 34,
-      "Bundle Size": 11,
+      "Accessibility": 161,
+      "Architecture": 682,
+      "Correctness": 187,
+      "Server": 10,
+      "Performance": 321,
+      "Next.js": 90,
+      "State & Effects": 628,
+      "TanStack Query": 37,
+      "Bundle Size": 10,
       "Security": 3
     }
   }
