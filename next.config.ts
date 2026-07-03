@@ -147,12 +147,12 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
-      // The AI-readiness checker moved from /scanner to a discoverable
-      // marketing URL. Exact-match only, so the detail report at
-      // /scanner/scans/:id is untouched.
+      // The AI-readiness checker moved from /scanner to /nonprofits/is-ai-ready.
+      // The wildcard covers both the landing page and the /scans/:id report so
+      // old links (including v1.7.74 shares) keep working.
       {
-        source: "/scanner",
-        destination: "/nonprofits/is-ai-ready",
+        source: "/scanner/:path*",
+        destination: "/nonprofits/is-ai-ready/:path*",
         permanent: true,
       },
       // Bare /community has no content of its own — the listing lives at /communities.
