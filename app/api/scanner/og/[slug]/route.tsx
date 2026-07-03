@@ -91,7 +91,7 @@ function renderFallback(message: string) {
         color: COLOR_FG_PRIMARY,
       })}
     >
-      <div style={textRow({ fontSize: 48, fontWeight: 700 })}>Karma AI-Readiness Checker</div>
+      <div style={textRow({ fontSize: 48, fontWeight: 700 })}>Karma - Is AI Ready</div>
       <div style={textRow({ fontSize: 24, marginTop: 16, color: COLOR_FG_MUTED })}>{message}</div>
     </div>,
     {
@@ -131,7 +131,7 @@ export async function GET(_request: NextRequest, context: { params: Promise<{ sl
     >
       <div style={col({ gap: 16 })}>
         <div style={textRow({ fontSize: 24, color: COLOR_FG_MUTED, letterSpacing: 1 })}>
-          KARMA AI-READINESS CHECKER
+          KARMA - IS AI READY
         </div>
         <div style={textRow({ fontSize: 44, fontWeight: 700, color: COLOR_FG_PRIMARY })}>
           {orgName}
