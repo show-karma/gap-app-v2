@@ -202,11 +202,13 @@ const TEASER_ROWS = ["row-1", "row-2", "row-3"];
 function FixTeaser({
   authenticated,
   ready,
+  opening,
   disabled,
   onOpenReport,
 }: {
   readonly authenticated: boolean;
   readonly ready: boolean;
+  readonly opening: boolean;
   readonly disabled: boolean;
   readonly onOpenReport: () => void;
 }) {
@@ -214,6 +216,11 @@ function FixTeaser({
   // never flashes "Sign in to unlock".
   const promptSignIn = ready && !authenticated;
   const Icon = promptSignIn ? Lock : FileText;
+  const label = opening
+    ? "Opening sign-in…"
+    : promptSignIn
+      ? "Sign in to unlock the fixes"
+      : "Fixes hidden: see the full report";
   return (
     <div className="relative">
       <div className="pointer-events-none select-none space-y-2 opacity-60 blur-[5px]" aria-hidden>
@@ -242,7 +249,7 @@ function FixTeaser({
             className={`h-3.5 w-3.5 ${promptSignIn ? "" : "text-brand-emphasis"}`}
             aria-hidden
           />
-          {promptSignIn ? "Sign in to unlock the fixes" : "Fixes hidden: see the full report"}
+          {label}
           <ArrowRight className="h-3.5 w-3.5" aria-hidden />
         </button>
       </div>
@@ -261,14 +268,30 @@ export function PublicScorecard({ slug, initialData }: PublicScorecardProps) {
   // a ref (it is never read during render), kick the SDK load, and fire the
   // real login once `ready` flips true.
   const queuedLoginRef = useRef(false);
+  // Visible feedback for the queued path: the CTA shows an "opening" state
+  // between the click and the SDK-loaded login() call so it never reads as a
+  // silent no-op on slow loads.
+  const [openingLogin, setOpeningLogin] = useState(false);
   const [, copyToClipboard] = useCopyToClipboard();
   const scorecard = data ?? initialData ?? null;
 
   useEffect(() => {
     if (!ready || !queuedLoginRef.current) return;
     queuedLoginRef.current = false;
+    setOpeningLogin(false);
     if (!authenticated) login();
   }, [ready, authenticated, login]);
+
+  // Safety valve: if the SDK never arrives (blocked script, offline), stop
+  // showing the opening state after 10s so the CTA stays usable.
+  useEffect(() => {
+    if (!openingLogin) return;
+    const timer = setTimeout(() => {
+      queuedLoginRef.current = false;
+      setOpeningLogin(false);
+    }, 10_000);
+    return () => clearTimeout(timer);
+  }, [openingLogin]);
 
   // No payload yet. While the query is still retrying the pre-scored 404
   // window it stays pending (not `isError`), so a just-submitted scan reads as
@@ -318,9 +341,11 @@ export function PublicScorecard({ slug, initialData }: PublicScorecardProps) {
     }
     setPostLoginRedirect(detailHref);
     if (!ready) {
-      // SDK still deferred — request it and queue the login for when it lands.
+      // SDK still deferred — request it, queue the login for when it lands,
+      // and show progress on the CTA meanwhile.
       loadPrivy();
       queuedLoginRef.current = true;
+      setOpeningLogin(true);
       return;
     }
     login();
@@ -382,7 +407,8 @@ export function PublicScorecard({ slug, initialData }: PublicScorecardProps) {
       <FixTeaser
         authenticated={authenticated}
         ready={ready}
-        disabled={!scanId}
+        opening={openingLogin}
+        disabled={!scanId || openingLogin}
         onOpenReport={openReport}
       />
 

@@ -29,6 +29,7 @@ import { ContactCta } from "./contact-cta";
 import { ErrorState } from "./error-state";
 import { EvidenceList } from "./evidence-list";
 import { GradeBadge } from "./grade-badge";
+import { RateLimitModal } from "./rate-limit-modal";
 import { ReportGenerating } from "./report-generating";
 import { ScannerViewTracker } from "./scanner-view-tracker";
 import { ScoreGauge } from "./score-gauge";
@@ -275,12 +276,22 @@ export function LoggedInDetail({ scanId, userEmail }: LoggedInDetailProps) {
   const [tab, setTab] = useState<ReportTab>("path");
   const [copied, setCopied] = useState(false);
   const [, copyToClipboard] = useCopyToClipboard();
+  const [rescanLimited, setRescanLimited] = useState(false);
   const { mutate: resubmit, isPending: isRescanning } = useSubmitScan({
     onSuccess: (response) => {
       toast.success("Re-scan started");
       push(PAGES.SCANNER.PUBLIC_SCORECARD(response.slug));
     },
-    onError: () => toast.error("Couldn't start a re-scan. Please try again."),
+    onError: (error) => {
+      // The report is auth-gated, so a 429 here is the logged-in scan cap —
+      // retrying will never succeed. Surface the contact modal instead of a
+      // "please try again" toast.
+      if (error.status === 429) {
+        setRescanLimited(true);
+        return;
+      }
+      toast.error("Couldn't start a re-scan. Please try again.");
+    },
   });
 
   // No envelope yet. A just-created scan can 404 briefly before its record is
@@ -399,6 +410,13 @@ export function LoggedInDetail({ scanId, userEmail }: LoggedInDetailProps) {
           buttonLabel="Contact us"
         />
       ) : null}
+
+      <RateLimitModal
+        state={rescanLimited ? { mode: "contact_for_more" } : null}
+        isAuthenticated
+        onClose={() => setRescanLimited(false)}
+        onLogin={() => setRescanLimited(false)}
+      />
     </div>
   );
 }
