@@ -147,6 +147,14 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
+      // The AI-readiness checker moved from /scanner to a discoverable
+      // marketing URL. Exact-match only, so the detail report at
+      // /scanner/scans/:id is untouched.
+      {
+        source: "/scanner",
+        destination: "/nonprofits/is-ai-ready",
+        permanent: true,
+      },
       // Bare /community has no content of its own — the listing lives at /communities.
       // Redirecting at the edge (vs. a page that calls permanentRedirect) keeps the bare
       // path from 404'ing without shipping a route bundle. Closes #1312.
