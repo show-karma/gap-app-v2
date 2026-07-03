@@ -21,6 +21,7 @@ import { TableStatusActionButtons } from "./TableStatusActionButtons";
 interface ApplicationTableRowProps {
   programId: string;
   communityUID?: string;
+  communityId?: string;
   application: IFundingApplication;
   showAIScoreColumn: boolean;
   showInternalAIScoreColumn: boolean;
@@ -54,6 +55,7 @@ interface ApplicationTableRowProps {
 const ApplicationTableRowComponent: FC<ApplicationTableRowProps> = ({
   programId,
   communityUID,
+  communityId,
   application,
   showAIScoreColumn,
   showInternalAIScoreColumn,
@@ -102,13 +104,17 @@ const ApplicationTableRowComponent: FC<ApplicationTableRowProps> = ({
           // Open in new tab for application details
           if (onApplicationSelect) {
             e.preventDefault();
-            const newPath = communityUID
+            // Prefer the slug route param the user navigated with so the detail
+            // URL matches the current path; fall back to the community UID, then
+            // to appending the reference number onto the current applications path.
+            const communitySegment = communityId || communityUID;
+            const newPath = communitySegment
               ? PAGES.MANAGE.FUNDING_PLATFORM.APPLICATION_DETAIL(
-                  communityUID,
+                  communitySegment,
                   programId,
                   application.referenceNumber
                 )
-              : `${window.location.pathname.replace(/\/[^/]+$/, "")}/${application.referenceNumber}`;
+              : `${window.location.pathname.replace(/\/+$/, "")}/${application.referenceNumber}`;
             window.open(newPath, "_blank", "noopener,noreferrer");
             onApplicationSelect(application);
           }

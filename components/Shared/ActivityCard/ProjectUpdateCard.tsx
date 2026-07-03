@@ -1,6 +1,7 @@
 import type { IProjectUpdate } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import type { FC } from "react";
+import { type FC, useMemo } from "react";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { useUpdateActions } from "@/hooks/useUpdateActions";
 import { useProjectStore } from "@/store";
 import type { ProjectUpdate } from "@/types/v2/roadmap";
@@ -24,20 +25,37 @@ const withHttpProtocol = (value: string) =>
 
 export const ProjectUpdateCard: FC<ProjectUpdateCardProps> = ({ update, index, isAuthorized }) => {
   const project = useProjectStore((state) => state.project);
-  const updateForActions = {
-    type: "ProjectUpdate",
-    uid: update.uid,
-    chainID: project?.chainID,
-    refUID: project?.uid,
-    attester: update.recipient,
-    recipient: update.recipient,
-    createdAt: update.createdAt || "",
-    data: {
-      type: "ProjectUpdate",
-      title: update.title,
-      text: update.description,
-    },
-  } as unknown as IProjectUpdate;
+  const [, copyToClipboard] = useCopyToClipboard();
+  // Stub attestation shaped for useUpdateActions. The hook only reads
+  // type/uid/chainID off this object before re-fetching the real SDK instance
+  // via gapClient, so a structural cast is required (the full IProjectUpdate
+  // class shape cannot be assembled here).
+  const updateForActions = useMemo(
+    () =>
+      ({
+        type: "ProjectUpdate",
+        uid: update.uid,
+        chainID: project?.chainID,
+        refUID: project?.uid,
+        attester: update.recipient,
+        recipient: update.recipient,
+        createdAt: update.createdAt || "",
+        data: {
+          type: "ProjectUpdate",
+          title: update.title,
+          text: update.description,
+        },
+      }) as unknown as IProjectUpdate,
+    [
+      update.uid,
+      update.recipient,
+      update.createdAt,
+      update.title,
+      update.description,
+      project?.chainID,
+      project?.uid,
+    ]
+  );
   const { isDeletingUpdate, isEditDialogOpen, deleteUpdate, handleEdit, closeEditDialog } =
     useUpdateActions(updateForActions);
 
@@ -49,7 +67,7 @@ export const ProjectUpdateCard: FC<ProjectUpdateCardProps> = ({ update, index, i
     const url = `${window.location.origin}${PAGES.PROJECT.UPDATES(
       project?.details?.slug || project?.uid || ""
     )}`;
-    navigator.clipboard.writeText(url);
+    void copyToClipboard(url, "Update link copied to clipboard");
   };
 
   // V2 API structure
