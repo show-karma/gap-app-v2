@@ -57,7 +57,7 @@ describe("PublicScorecard", () => {
     render(<PublicScorecard slug="slug-1" />);
 
     expect(screen.getByText(/generating your report/i)).toBeInTheDocument();
-    expect(screen.queryByText(/could not load this scorecard/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/couldn'?t load this scorecard/i)).not.toBeInTheDocument();
   });
 
   it("keeps showing the generating state for a non-terminal scored payload", () => {
@@ -69,14 +69,14 @@ describe("PublicScorecard", () => {
     // Non-terminal -> generating view (scoped to org), and NOT the finished
     // scorecard footer.
     expect(screen.getByText(/scoring givedirectly/i)).toBeInTheDocument();
-    expect(screen.queryByText(/Karma AI-Readiness Checker/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/crawler is polite/i)).not.toBeInTheDocument();
   });
 
   it("surfaces the error only once the query has given up with no data", () => {
     mockHook.mockReturnValue(hookState({ data: undefined, isError: true }));
     render(<PublicScorecard slug="slug-1" />);
 
-    expect(screen.getByText(/could not load this scorecard/i)).toBeInTheDocument();
+    expect(screen.getByText(/couldn'?t load this scorecard/i)).toBeInTheDocument();
     expect(screen.queryByText(/generating your report/i)).not.toBeInTheDocument();
   });
 
@@ -84,9 +84,9 @@ describe("PublicScorecard", () => {
     mockHook.mockReturnValue(hookState({ data: completeScorecard, isError: false }));
     render(<PublicScorecard slug="slug-1" />);
 
-    // Footer only renders on the finished scorecard article.
-    expect(screen.getByText(/Karma AI-Readiness Checker/i)).toBeInTheDocument();
+    // The crawler footer line only renders on the finished scorecard article.
+    expect(screen.getByText(/crawler is polite/i)).toBeInTheDocument();
     expect(screen.queryByText(/generating your report/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/could not load this scorecard/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/couldn'?t load this scorecard/i)).not.toBeInTheDocument();
   });
 });

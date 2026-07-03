@@ -47,7 +47,7 @@ export function MembersAreaCta({ slug, initialData }: MembersAreaCtaProps) {
           type="button"
           onClick={openReport}
           disabled={!ready || !scanId}
-          className="inline-flex items-center gap-1 rounded-full bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
+          className="inline-flex items-center gap-1 rounded-full bg-brand px-4 py-2 text-sm font-semibold text-brand-950 shadow-primary-button transition-colors hover:bg-brand-subtle disabled:cursor-not-allowed disabled:opacity-50"
         >
           {authenticated ? "Open full report" : "Log in to see the report"}
           <span aria-hidden>→</span>
@@ -55,14 +55,14 @@ export function MembersAreaCta({ slug, initialData }: MembersAreaCtaProps) {
       ) : (
         // Report isn't ready yet — don't offer to open a report that doesn't
         // exist. A muted status stands in for the button until scoring lands.
-        <span className="inline-flex items-center gap-2 rounded-full bg-zinc-100 px-4 py-2 text-sm font-medium text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
-          <span className="h-2 w-2 animate-pulse rounded-full bg-blue-500" aria-hidden />
+        <span className="inline-flex items-center gap-2 rounded-full bg-secondary px-4 py-2 text-sm font-medium text-muted-foreground">
+          <span className="h-2 w-2 animate-pulse rounded-full bg-brand" aria-hidden />
           Full report unlocks when the scan finishes
         </span>
       )}
       <Link
         href={PAGES.SCANNER.ROOT}
-        className="inline-flex items-center gap-1 rounded-full border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-900"
+        className="inline-flex items-center gap-1 rounded-full border border-border bg-background px-4 py-2 text-sm font-medium text-foreground shadow-outline-button transition-colors hover:bg-secondary"
       >
         Scan another site
       </Link>
