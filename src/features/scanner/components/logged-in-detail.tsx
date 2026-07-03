@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { PAGES } from "@/utilities/pages";
 import { useScan } from "../hooks/use-scan";
+import { markFreshScanSubmit } from "../hooks/use-scorecard-by-slug";
 import { useSubmitScan } from "../hooks/use-submit-scan";
 import type { CategoryScore, DetailScorecardPayload, ScanGrade } from "../types";
 import { BAND_FG, GRADE_LABEL, gradeBand } from "../utils/labels";
@@ -280,6 +281,7 @@ export function LoggedInDetail({ scanId, userEmail }: LoggedInDetailProps) {
   const { mutate: resubmit, isPending: isRescanning } = useSubmitScan({
     onSuccess: (response) => {
       toast.success("Re-scan started");
+      markFreshScanSubmit(response.slug);
       push(PAGES.SCANNER.PUBLIC_SCORECARD(response.slug));
     },
     onError: (error) => {

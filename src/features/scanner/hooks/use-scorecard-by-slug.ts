@@ -14,7 +14,34 @@ const POLL_INTERVAL_MS = 4_000;
 // MAX_PENDING_ATTEMPTS the slug is judged genuinely missing/unpublished, so we
 // stop — a bad or revoked link can't poll the backend forever from every tab.
 const GIVE_UP_MS = 45_000;
-const MAX_PENDING_ATTEMPTS = 10; // ~40s at 4s — the fresh-scan 404 race lasts seconds, so a genuinely missing id errors quickly
+const MAX_PENDING_ATTEMPTS = 10; // just-submitted scans: cover the full scoring window
+const COLD_MAX_ATTEMPTS = 2; // stale/mistyped share links: fail fast, no fake progress
+// Freshness markers let the retry loop tell "I just submitted this scan" (the
+// slug legitimately 404s until scoring lands, keep polling) apart from "I
+// followed a stale share link" (error out quickly).
+const FRESH_TTL_MS = 3 * 60_000;
+
+function freshKey(slug: string): string {
+  return `scanner:fresh-scan:${slug}`;
+}
+
+// Called by the submit flow right before redirecting to /s/[slug].
+export function markFreshScanSubmit(slug: string): void {
+  try {
+    sessionStorage.setItem(freshKey(slug), String(Date.now()));
+  } catch {
+    // Storage unavailable (private browsing) — the cold window still applies.
+  }
+}
+
+function isFreshScanSubmit(slug: string): boolean {
+  try {
+    const at = Number(sessionStorage.getItem(freshKey(slug)));
+    return Number.isFinite(at) && at > 0 && Date.now() - at < FRESH_TTL_MS;
+  } catch {
+    return false;
+  }
+}
 
 export function useScorecardBySlug(slug: string | null) {
   // Wall-clock anchor for the pre-data give-up (see use-scan), keyed by slug
@@ -33,10 +60,13 @@ export function useScorecardBySlug(slug: string | null) {
     },
     enabled: Boolean(slug),
     // Retry the pre-scored 404 window at the poll cadence. A scored scorecard
-    // resolves on the first attempt, so shared links stay instant.
+    // resolves on the first attempt, so shared links stay instant. Only a
+    // freshly submitted scan earns the long window; a cold visit to a missing
+    // slug errors after a couple of attempts instead of faking progress.
     retry: (failureCount) => {
       if (Date.now() - anchorRef.current.at > GIVE_UP_MS) return false;
-      return failureCount < MAX_PENDING_ATTEMPTS;
+      const cap = slug && isFreshScanSubmit(slug) ? MAX_PENDING_ATTEMPTS : COLD_MAX_ATTEMPTS;
+      return failureCount < cap;
     },
     retryDelay: POLL_INTERVAL_MS,
     // Once we have data, keep refreshing in place through the non-terminal

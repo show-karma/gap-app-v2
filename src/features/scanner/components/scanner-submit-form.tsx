@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/useAuth";
 import { PAGES } from "@/utilities/pages";
+import { markFreshScanSubmit } from "../hooks/use-scorecard-by-slug";
 import { useSubmitScan } from "../hooks/use-submit-scan";
 import { RateLimitModal } from "./rate-limit-modal";
 
@@ -72,6 +73,9 @@ export function ScannerSubmitForm({ showExamples = false }: ScannerSubmitFormPro
     onSuccess: (response) => {
       submittingRef.current = false;
       toast.success("Scan started");
+      // Let the scorecard page know this slug was just created, so its
+      // pre-scored 404 window polls patiently instead of failing fast.
+      markFreshScanSubmit(response.slug);
       push(PAGES.SCANNER.PUBLIC_SCORECARD(response.slug));
     },
     onError: (error) => {
