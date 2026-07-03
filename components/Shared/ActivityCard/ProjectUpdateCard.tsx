@@ -209,14 +209,17 @@ export const ProjectUpdateCard: FC<ProjectUpdateCardProps> = ({ update, index, i
         date={update.createdAt || ""}
         attester={update.recipient}
         actions={
-          isAuthorized ? (
+          // Sharing the public update link is available to every viewer; edit
+          // and delete stay gated behind authorization. ActivityMenu renders
+          // only the actions it is given, so a public visitor sees just Share.
+          canShare || isAuthorized ? (
             <ActivityMenu
               onShare={canShare ? handleShare : undefined}
-              onEdit={canEdit ? handleEdit : undefined}
-              onDelete={canDelete ? deleteUpdate : undefined}
+              onEdit={isAuthorized && canEdit ? handleEdit : undefined}
+              onDelete={isAuthorized && canDelete ? deleteUpdate : undefined}
               canShare={canShare}
-              canEdit={canEdit}
-              canDelete={canDelete}
+              canEdit={isAuthorized && canEdit}
+              canDelete={isAuthorized && canDelete}
               isDeleting={isDeletingUpdate}
               activityType="ProjectUpdate"
               deleteTitle={
