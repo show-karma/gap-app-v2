@@ -31,8 +31,11 @@ export function useScan(scanId: string | null) {
       return getScanById(scanId);
     },
     enabled: Boolean(scanId),
-    // 401/403 are terminal — the viewer won't gain access by waiting, so fail
-    // straight into the error state instead of fake "generating" progress.
+    // 401/403 are terminal — an expired or missing session won't fix itself
+    // by polling, so fail straight into the error state instead of fake
+    // "generating" progress. Note there is deliberately NO per-user ownership
+    // check on the detail tier: any authenticated viewer may open any scan's
+    // report (login works as lead capture, not as an ACL — see PR #1698).
     // Everything else retries through the fresh-scan 404 window, capped by
     // wall clock (attempt counts stretch with upstream latency).
     retry: (failureCount, error) => {
