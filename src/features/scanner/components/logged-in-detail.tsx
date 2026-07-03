@@ -16,7 +16,7 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import pluralize from "pluralize";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -311,15 +311,22 @@ export function LoggedInDetail({ scanId, userEmail }: LoggedInDetailProps) {
   const [copied, setCopied] = useState(false);
   const [, copyToClipboard] = useCopyToClipboard();
   const [rescanLimited, setRescanLimited] = useState(false);
+  // Synchronous in-flight guard: `isPending` only flips on the next render, so
+  // two clicks in the same tick both pass the disabled check and fire duplicate
+  // regen requests. This ref blocks the second call immediately (mirrors the
+  // entry form's submittingRef).
+  const rescanningRef = useRef(false);
   // Re-scan regenerates this site's shared report: it spends one of the
   // viewer's lifetime credits and the fresh scan becomes the new latest.
   const { mutate: regenerate, isPending: isRescanning } = useRefreshScan({
     onSuccess: (response) => {
+      rescanningRef.current = false;
       toast.success("Re-scan started");
       markFreshScanSubmit(response.slug);
       push(PAGES.SCANNER.PUBLIC_SCORECARD(response.slug));
     },
     onError: (error) => {
+      rescanningRef.current = false;
       // 429 is the logged-in credit cap — retrying will never succeed, so
       // surface the contact modal instead of a "please try again" toast.
       if (error.status === 429) {
@@ -380,7 +387,8 @@ export function LoggedInDetail({ scanId, userEmail }: LoggedInDetailProps) {
   }
 
   function handleRescan() {
-    if (isRescanning) return;
+    if (rescanningRef.current || isRescanning) return;
+    rescanningRef.current = true;
     regenerate(scanId);
   }
 

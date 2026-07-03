@@ -116,7 +116,11 @@ describe("scanner.service wire contract", () => {
       message: "help",
     };
     await submitContactRequest(payload);
-    expect(callOf()).toMatchObject({ endpoint: `${BASE}/contact`, method: "POST" });
+    expect(callOf()).toMatchObject({
+      endpoint: `${BASE}/contact`,
+      method: "POST",
+      isAuthorized: false,
+    });
   });
 
   describe("findOrCreateScan (view-first)", () => {
