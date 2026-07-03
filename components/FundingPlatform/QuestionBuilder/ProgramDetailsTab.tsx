@@ -100,7 +100,8 @@ export function ProgramDetailsTab({
         setProgram(programData as GrantProgram | null);
       }
     } catch {
-      // Non-critical: silently ignore refetch failures
+      // SUPPRESSED: best-effort refetch after a successful save; the stored data
+      // is already updated and the stale view self-heals on the next load.
     }
   }, [programId, effectiveChainId]);
 
@@ -153,9 +154,10 @@ export function ProgramDetailsTab({
     formState: { errors },
   } = form;
 
-  // Wait for the admin-aware config too, so the form never renders (and can't
-  // be saved) with the email fields still missing from the stripped list data.
-  if (isLoadingProgram || isLoadingConfig) {
+  // Editors must wait for the admin-aware config so the form never renders (and
+  // can't be saved) with the email fields still missing from the stripped list
+  // data. Read-only viewers can't save, so don't gate their view on it.
+  if (isLoadingProgram || (isLoadingConfig && !readOnly)) {
     return (
       <div className="flex items-center justify-center py-8">
         <Spinner />
@@ -163,9 +165,10 @@ export function ProgramDetailsTab({
     );
   }
 
-  // A failed config load means the admin/finance emails never arrived, so block
-  // editing rather than let a Save wipe them — surface a retry instead.
-  if (programError || configError) {
+  // A failed config load means the admin/finance emails never arrived. For
+  // editors, block editing behind a retry rather than let a Save wipe them;
+  // read-only viewers still get the program details from the list data.
+  if (programError || (configError && !readOnly)) {
     return (
       <div className="flex flex-col items-center justify-center py-8">
         <p className="text-sm text-destructive mb-4">

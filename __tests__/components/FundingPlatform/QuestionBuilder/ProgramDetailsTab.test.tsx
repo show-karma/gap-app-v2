@@ -990,6 +990,22 @@ describe("ProgramDetailsTab", () => {
       // Form must not be editable when we can't confirm the stored emails.
       expect(screen.queryByLabelText(/program name/i)).not.toBeInTheDocument();
     });
+
+    it("should still show read-only details when the config fails to load for a read-only viewer", async () => {
+      vi.mocked(fundingPlatformService.programs.getProgramConfiguration).mockRejectedValue(
+        new Error("boom")
+      );
+
+      renderWithProviders(
+        <ProgramDetailsTab programId={mockProgramId} chainId={mockChainId} readOnly />
+      );
+
+      // Read-only viewers can't save, so a config failure must not hide the view.
+      await waitFor(() => {
+        expect(screen.getByLabelText(/program name/i)).toBeInTheDocument();
+      });
+      expect(screen.queryByRole("button", { name: /retry/i })).not.toBeInTheDocument();
+    });
   });
 
   describe("Date Handling", () => {
