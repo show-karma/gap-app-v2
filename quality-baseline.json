@@ -1,7 +1,7 @@
 {
   "$schema": "./scripts/quality-baseline.schema.json",
-  "generatedAt": "2026-07-03T13:27:41.042Z",
-  "generatedFromCommit": "4e6ccd433128982fb64d35eff57867350d7dc13a",
+  "generatedAt": "2026-07-03T14:19:20.983Z",
+  "generatedFromCommit": "1729c23ce1d228fd487d7d2035d19fd2c1c72db0",
   "coverage": {
     "lines": 71.75,
     "statements": 70.5,
@@ -203,7 +203,7 @@
     },
     "components/FundingPlatform/ApplicationView/ApplicationContent.tsx": {
       "lines": 733,
-      "bytes": 29509,
+      "bytes": 29511,
       "maxLines": 600,
       "maxBytes": 40000
     },
@@ -465,12 +465,12 @@
     "errors": 0,
     "warnings": 2129,
     "byCategory": {
-      "Architecture": 682,
       "Accessibility": 161,
+      "Architecture": 682,
       "Correctness": 187,
-      "Next.js": 90,
-      "State & Effects": 628,
       "Performance": 321,
+      "State & Effects": 628,
+      "Next.js": 90,
       "Server": 10,
       "TanStack Query": 37,
       "Bundle Size": 10,

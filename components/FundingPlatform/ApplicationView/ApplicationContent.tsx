@@ -8,7 +8,7 @@ import {
   ExclamationTriangleIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
-import { type FC, type JSX, useEffect, useMemo, useState } from "react";
+import { type FC, type ReactNode, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { KarmaProjectLink } from "@/components/FundingPlatform/shared/KarmaProjectLink";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
@@ -218,7 +218,7 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
     return null;
   };
 
-  const renderFieldValue = (value: unknown, fieldKey?: string): JSX.Element => {
+  const renderFieldValue = (value: unknown, fieldKey?: string): ReactNode => {
     if (Array.isArray(value)) {
       // Check if it's an array of milestones
       const isMilestoneArray =
@@ -377,7 +377,7 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
     );
   };
 
-  const renderApplicationData = (): JSX.Element => {
+  const renderApplicationData = (): ReactNode => {
     const dataToRender = application.applicationData;
 
     if (!dataToRender || Object.keys(dataToRender).length === 0) {

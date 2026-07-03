@@ -1,6 +1,6 @@
 "use client";
 
-import type { FC, JSX } from "react";
+import type { FC, ReactNode } from "react";
 import { useMemo } from "react";
 import { KarmaProjectLink } from "@/components/FundingPlatform/shared/KarmaProjectLink";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
@@ -46,7 +46,7 @@ export const ApplicationDataView: FC<ApplicationDataViewProps> = ({
     [application.milestoneStatuses]
   );
 
-  const renderFieldValue = (value: unknown, fieldKey?: string): JSX.Element => {
+  const renderFieldValue = (value: unknown, fieldKey?: string): ReactNode => {
     if (Array.isArray(value)) {
       // Check if it's an array of milestones
       const isMilestoneArray =

@@ -1,6 +1,6 @@
 "use client";
 
-import type { FC, JSX } from "react";
+import type { FC, ReactNode } from "react";
 import { useMemo } from "react";
 import { KarmaProjectLink } from "@/components/FundingPlatform/shared/KarmaProjectLink";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
@@ -44,7 +44,7 @@ export const PostApprovalDataView: FC<PostApprovalDataViewProps> = ({ applicatio
     [postApprovalFormSchema]
   );
 
-  const renderFieldValue = (value: unknown, fieldKey?: string): JSX.Element => {
+  const renderFieldValue = (value: unknown, fieldKey?: string): ReactNode => {
     if (Array.isArray(value)) {
       // Check if it's an array of objects with title (like milestones)
       const isObjectArray = value.length > 0 && typeof value[0] === "object" && "title" in value[0];
