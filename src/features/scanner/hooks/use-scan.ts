@@ -6,13 +6,13 @@ import { getScanById } from "../services/scanner.service";
 import type { DetailScorecardPayload } from "../types";
 
 const POLL_INTERVAL_MS = 4_000;
-// A freshly-created scan can 404 for a moment before the record is queryable.
-// Retry that window at the poll cadence (which keeps the query pending so the
-// detail view can show a progress state) instead of hard-failing into a
-// "could not load" error. Give up after MAX_PENDING_ATTEMPTS so a genuinely
-// missing scan or a permission denial doesn't poll forever.
+// Nothing arrives at the detail report freshly created — submission redirects
+// to the public scorecard, and report links only render once a scan record
+// exists — so a 404 here is a stale or mistyped link. A couple of retries
+// absorb transient blips; beyond that, fail fast into the error state instead
+// of showing fabricated generating progress.
 const GIVE_UP_MS = 45_000;
-const MAX_PENDING_ATTEMPTS = 10; // ~40s at 4s — the fresh-scan 404 race lasts seconds, so a genuinely missing id errors quickly
+const MAX_PENDING_ATTEMPTS = 2;
 
 export function useScan(scanId: string | null) {
   // Wall-clock anchor for the pre-data give-up: attempt-count caps alone
