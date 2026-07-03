@@ -1,7 +1,7 @@
 {
   "$schema": "./scripts/quality-baseline.schema.json",
-  "generatedAt": "2026-07-03T13:17:53.588Z",
-  "generatedFromCommit": "995f4f43a17f193567b187319f0a44c6d1f3df4c",
+  "generatedAt": "2026-07-03T13:27:41.042Z",
+  "generatedFromCommit": "4e6ccd433128982fb64d35eff57867350d7dc13a",
   "coverage": {
     "lines": 71.75,
     "statements": 70.5,
@@ -13,7 +13,7 @@
     "fragments": 61
   },
   "violations": {
-    "biome": 175,
+    "biome": 174,
     "knipUnusedFiles": 4,
     "knipUnusedExports": 29,
     "knipUnusedTypes": 25,
@@ -465,13 +465,13 @@
     "errors": 0,
     "warnings": 2129,
     "byCategory": {
-      "Accessibility": 161,
       "Architecture": 682,
+      "Accessibility": 161,
       "Correctness": 187,
-      "Server": 10,
-      "Performance": 321,
       "Next.js": 90,
       "State & Effects": 628,
+      "Performance": 321,
+      "Server": 10,
       "TanStack Query": 37,
       "Bundle Size": 10,
       "Security": 3
