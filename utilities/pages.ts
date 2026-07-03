@@ -191,8 +191,8 @@ export const PAGES = {
   SKILLS: (slug: string) => `/ai-teams/${slug}/skills`,
   ASK_KARMA: `/ask-karma`,
   SCANNER: {
-    ROOT: `/scanner`,
-    SCAN_DETAIL: (id: string) => `/scanner/scans/${id}`,
+    ROOT: `/nonprofits/is-ai-ready`,
+    SCAN_DETAIL: (id: string) => `/nonprofits/is-ai-ready/scans/${id}`,
     PUBLIC_SCORECARD: (slug: string) => `/s/${slug}`,
     OG_IMAGE: (slug: string) => `/api/scanner/og/${slug}`,
   },

@@ -5,12 +5,14 @@ import { ScannerBeforeAfter } from "@/src/features/scanner/components/scanner-be
 import { ScannerHeroPreview } from "@/src/features/scanner/components/scanner-hero-preview";
 import { ScannerJourney } from "@/src/features/scanner/components/scanner-journey";
 import { ScannerSubmitForm } from "@/src/features/scanner/components/scanner-submit-form";
+import { customMetadata } from "@/utilities/meta";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = customMetadata({
   title: "AI-Readiness Checker | Karma",
   description:
     "Grade any nonprofit website on whether AI agents acting for donors can reach, understand, trust, and transact with it.",
-};
+  path: "/nonprofits/is-ai-ready",
+});
 
 const HOW_IT_WORKS = [
   {
