@@ -1,15 +1,15 @@
 export default function ScannerLoading() {
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-col gap-8 px-4 py-12 sm:py-16">
+    <main className="mx-auto flex w-full max-w-[1120px] flex-col items-center px-6 py-20">
       <output
-        className="flex animate-pulse flex-col gap-4"
+        className="flex w-full max-w-[820px] animate-pulse flex-col items-center gap-4"
         aria-label="Loading scanner"
         aria-busy="true"
       >
-        <div className="h-10 w-3/4 rounded-md bg-zinc-200 dark:bg-zinc-800" />
-        <div className="h-4 w-full rounded-md bg-zinc-200 dark:bg-zinc-800" />
-        <div className="h-4 w-5/6 rounded-md bg-zinc-200 dark:bg-zinc-800" />
-        <div className="mt-4 h-32 w-full rounded-3xl bg-zinc-200 dark:bg-zinc-800" />
+        <div className="h-12 w-3/4 rounded-lg bg-secondary" />
+        <div className="h-4 w-2/3 rounded bg-secondary" />
+        <div className="mt-4 h-[60px] w-full max-w-[620px] rounded-xl bg-secondary" />
+        <div className="mt-8 h-56 w-full max-w-[720px] rounded-2xl bg-secondary" />
       </output>
     </main>
   );

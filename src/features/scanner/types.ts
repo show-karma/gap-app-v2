@@ -135,26 +135,6 @@ export interface ContactRequest {
   readonly scanId?: string;
 }
 
-export interface ScannerApiKey {
-  readonly id: string;
-  readonly prefix: string;
-  readonly name: string;
-  readonly scopes: readonly string[];
-  readonly createdAt: string;
-  readonly lastUsedAt: string | null;
-  readonly revokedAt: string | null;
-}
-
-export interface IssueScannerApiKeyRequest {
-  readonly name: string;
-  readonly scopes?: readonly string[];
-}
-
-export interface IssuedScannerApiKey {
-  readonly key: string;
-  readonly record: ScannerApiKey;
-}
-
 export interface ScannerApiError {
   readonly code: string;
   readonly message: string;

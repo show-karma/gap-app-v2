@@ -77,9 +77,9 @@ export function ContactCta({
   }
 
   return (
-    <div className="flex flex-col gap-3 rounded-2xl border border-zinc-200 bg-zinc-50 p-5 dark:border-zinc-800 dark:bg-zinc-900/40">
-      <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">{headline}</h3>
-      <p className="text-sm text-zinc-600 dark:text-zinc-400">{subline}</p>
+    <div className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-5">
+      <h3 className="text-base font-semibold text-foreground">{headline}</h3>
+      <p className="text-sm text-muted-foreground">{subline}</p>
       <Button type="button" onClick={() => handleOpenChange(true)} className="self-start">
         {buttonLabel}
       </Button>
@@ -121,11 +121,11 @@ export function ContactCta({
                 onChange={(event) => setMessage(event.target.value)}
                 disabled={isPending}
                 aria-label="What do you need?"
-                className="min-h-[100px] rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
+                className="min-h-[100px] rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
               />
             </div>
             {isError ? (
-              <p role="alert" className="text-sm text-rose-600 dark:text-rose-400">
+              <p role="alert" className="text-sm text-destructive">
                 Could not send the request. Please try again, or email support directly.
               </p>
             ) : null}

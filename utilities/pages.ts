@@ -194,7 +194,6 @@ export const PAGES = {
     ROOT: `/scanner`,
     SCAN_DETAIL: (id: string) => `/scanner/scans/${id}`,
     PUBLIC_SCORECARD: (slug: string) => `/s/${slug}`,
-    API_KEYS_SETTINGS: `/settings/api-keys/scanner`,
     OG_IMAGE: (slug: string) => `/api/scanner/og/${slug}`,
   },
 };
