@@ -52,8 +52,8 @@
       "maxBytes": 60000
     },
     "__tests__/components/FundingPlatform/QuestionBuilder/ProgramDetailsTab.test.tsx": {
-      "lines": 921,
-      "bytes": 31385,
+      "lines": 1060,
+      "bytes": 37111,
       "maxLines": 800,
       "maxBytes": 60000
     },
