@@ -31,9 +31,27 @@ vi.mock("@/src/features/program-registry/services/program-registry.service", () 
       title: formData.name,
       description: formData.description,
       shortDescription: formData.shortDescription,
+      adminEmails: formData.adminEmails,
+      financeEmails: formData.financeEmails,
     })),
   },
 }));
+
+// The form pulls admin/finance emails from the admin-aware single-config
+// endpoint via useProgramConfig -> getProgramConfiguration. Mock the service
+// method (not the hook) so the real React Query timing is preserved.
+vi.mock("@/services/fundingPlatformService", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/services/fundingPlatformService")>();
+  const getProgramConfiguration = vi.fn().mockResolvedValue(null);
+  return {
+    ...actual,
+    fundingProgramsAPI: { ...actual.fundingProgramsAPI, getProgramConfiguration },
+    fundingPlatformService: {
+      ...actual.fundingPlatformService,
+      programs: { ...actual.fundingPlatformService.programs, getProgramConfiguration },
+    },
+  };
+});
 
 vi.mock("@/utilities/fetchData", () => ({
   __esModule: true,
@@ -201,6 +219,7 @@ vi.mock("@/components/Utilities/DateTimePicker", () => ({
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { useAuth } from "@/hooks/useAuth";
+import { fundingPlatformService } from "@/services/fundingPlatformService";
 import fetchData from "@/utilities/fetchData";
 
 // Test data
@@ -293,6 +312,9 @@ describe("ProgramDetailsTab", () => {
 
     vi.mocked(ProgramRegistryService.extractProgramId).mockReturnValue(mockProgramDbId);
     vi.mocked(ProgramRegistryService.updateProgram).mockResolvedValue(undefined);
+
+    // Default: no separate config data — form sources emails from `program`.
+    vi.mocked(fundingPlatformService.programs.getProgramConfiguration).mockResolvedValue(null);
 
     vi.mocked(fetchData).mockImplementation(async (url: string) => {
       if (url.includes("find")) {
@@ -866,6 +888,107 @@ describe("ProgramDetailsTab", () => {
         },
         { timeout: 3000 }
       );
+    });
+  });
+
+  describe("Admin/Finance emails from admin-aware config (DEV-499)", () => {
+    // The community-list endpoint that hydrates `program` strips admin/finance
+    // email PII, so the form base arrives without them.
+    const strippedProgram: GrantProgram = {
+      ...mockProgram,
+      metadata: {
+        ...mockProgram.metadata!,
+        adminEmails: undefined,
+        financeEmails: undefined,
+      },
+    };
+
+    // The single-config endpoint (useProgramConfig) returns them to staff/admins.
+    const adminEmails = ["sejal@protocol.ai", "brynn@fil.org"];
+    const financeEmails = ["andreas@autonomousprojects.co", "brynn@fil.org"];
+    const configWithEmails = {
+      ...mockProgram,
+      metadata: {
+        ...mockProgram.metadata!,
+        adminEmails,
+        financeEmails,
+      },
+    };
+
+    beforeEach(() => {
+      vi.mocked(fetchData).mockImplementation(async (url: string) => {
+        if (url.includes("find")) {
+          return [strippedProgram, null];
+        }
+        return [null, null];
+      });
+      vi.mocked(fundingPlatformService.programs.getProgramConfiguration).mockResolvedValue(
+        configWithEmails as Awaited<
+          ReturnType<typeof fundingPlatformService.programs.getProgramConfiguration>
+        >
+      );
+    });
+
+    it("should populate email inputs from the config when the list-sourced program has them stripped", async () => {
+      renderWithProviders(<ProgramDetailsTab programId={mockProgramId} chainId={mockChainId} />);
+
+      await waitFor(() => {
+        expect(screen.getByLabelText(/program name/i)).toBeInTheDocument();
+      });
+
+      const adminTags = screen.getAllByTestId("email-tag-admin").map((el) => el.textContent);
+      expect(adminTags).toEqual(expect.arrayContaining(adminEmails));
+
+      const financeTags = screen.getAllByTestId("email-tag-finance").map((el) => el.textContent);
+      expect(financeTags).toEqual(expect.arrayContaining(financeEmails));
+    });
+
+    it("should preserve existing emails on save instead of overwriting them with an empty array", async () => {
+      const user = userEvent.setup();
+      renderWithProviders(<ProgramDetailsTab programId={mockProgramId} chainId={mockChainId} />);
+
+      await waitFor(() => {
+        expect(screen.getByLabelText(/program name/i)).toBeInTheDocument();
+      });
+
+      const nameInput = screen.getByLabelText(/program name/i);
+      await user.type(nameInput, " Updated");
+
+      await user.click(screen.getByRole("button", { name: /save changes/i }));
+
+      await waitFor(() => {
+        expect(ProgramRegistryService.updateProgram).toHaveBeenCalledWith(
+          mockProgramId,
+          expect.objectContaining({ adminEmails, financeEmails })
+        );
+      });
+    });
+
+    it("should keep showing the loading spinner while the config is still loading", async () => {
+      // Never-resolving config keeps useProgramConfig in its loading state.
+      vi.mocked(fundingPlatformService.programs.getProgramConfiguration).mockReturnValue(
+        new Promise(() => {})
+      );
+
+      renderWithProviders(<ProgramDetailsTab programId={mockProgramId} chainId={mockChainId} />);
+
+      expect(await screen.findByRole("status")).toBeInTheDocument();
+      expect(screen.queryByLabelText(/program name/i)).not.toBeInTheDocument();
+    });
+
+    it("should block the form with a retry when the config fails to load", async () => {
+      vi.mocked(fundingPlatformService.programs.getProgramConfiguration).mockRejectedValue(
+        new Error("boom")
+      );
+
+      renderWithProviders(<ProgramDetailsTab programId={mockProgramId} chainId={mockChainId} />);
+
+      await waitFor(() => {
+        expect(screen.getByText(/failed to load program configuration/i)).toBeInTheDocument();
+      });
+      expect(screen.getByRole("button", { name: /retry/i })).toBeInTheDocument();
+      // Form must not be editable when we can't confirm the stored emails.
+      expect(screen.queryByLabelText(/program name/i)).not.toBeInTheDocument();
     });
   });
 
