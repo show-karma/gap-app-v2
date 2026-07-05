@@ -103,7 +103,7 @@ export default async function fetchData<T = any>(
     if (!err.response) {
       error = err;
     } else {
-      error = err.response.data.message || err.message;
+      error = err.response.data?.message || err.message || "Request failed";
       status = err.response.status;
     }
     return [null, error, null, status];

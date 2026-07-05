@@ -41,7 +41,7 @@ export function computeProgramView(program: FundingProgram): ProgramComputed {
   else if (program.metadata?.status === "inactive") status = "closed";
 
   const daysLeft = endsAt
-    ? Math.max(0, Math.round((endsAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)))
+    ? Math.max(0, Math.ceil((endsAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)))
     : null;
 
   let urgency: Urgency = "open";

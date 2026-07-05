@@ -1,5 +1,6 @@
 import { type FC, useState } from "react";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { useProjectStore } from "@/store";
 import type { ProjectUpdate } from "@/types/v2/roadmap";
 import { PAGES } from "@/utilities/pages";
@@ -20,6 +21,7 @@ interface ProjectUpdateCardProps {
 export const ProjectUpdateCard: FC<ProjectUpdateCardProps> = ({ update, index, isAuthorized }) => {
   const project = useProjectStore((state) => state.project);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [, copyToClipboard] = useCopyToClipboard();
 
   const canEdit = true;
   const canDelete = true;
@@ -29,7 +31,7 @@ export const ProjectUpdateCard: FC<ProjectUpdateCardProps> = ({ update, index, i
     const url = `${window.location.origin}${PAGES.PROJECT.UPDATES(
       project?.details?.slug || project?.uid || ""
     )}`;
-    navigator.clipboard.writeText(url);
+    copyToClipboard(url);
   };
 
   const handleEdit = () => {
