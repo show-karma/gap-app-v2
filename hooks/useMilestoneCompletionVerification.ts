@@ -211,8 +211,14 @@ export const useMilestoneCompletionVerification = ({
       queryKey: QUERY_KEYS.MILESTONES.PROJECT_GRANT_MILESTONES(projectId, programId),
     });
 
+    // Invalidate by prefix: the report queries are keyed by the community SLUG
+    // from the URL, not the on-chain communityUID we have here, so appending
+    // communityUID would never match and the invalidation would be a no-op.
     await queryClient.invalidateQueries({
-      queryKey: ["reportMilestones", communityUID],
+      queryKey: ["reportMilestones"],
+    });
+    await queryClient.invalidateQueries({
+      queryKey: ["pendingVerificationMilestones"],
     });
 
     // Let consumers refresh cross-cutting feeds (e.g. the Reviewer Inbox) now

@@ -77,7 +77,12 @@ function formatGrantSize(min: string | undefined, max: string | undefined): stri
 
 function normalizeUrl(url: string | undefined): string | null {
   if (!url) return null;
-  return url.includes("http") ? url : `https://${url}`;
+  const trimmed = url.trim();
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  // Reject any other explicit scheme (javascript:, data:, mailto:, ...) —
+  // this value lands in an href, so a substring check is not enough
+  if (/^[a-z][a-z0-9+.-]*:/i.test(trimmed)) return null;
+  return `https://${trimmed}`;
 }
 
 function getApplyUrl(

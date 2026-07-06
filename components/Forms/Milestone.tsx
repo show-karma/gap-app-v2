@@ -54,7 +54,9 @@ const milestoneSchema = z.object({
       },
       {
         message: "Start date must be before the end date",
-        path: ["dates", "startsAt"],
+        // Relative to the `dates` object this refine is attached to; a
+        // ["dates", "startsAt"] path would resolve to dates.dates.startsAt
+        path: ["startsAt"],
       }
     ),
 });
@@ -74,9 +76,6 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
   grant: { uid, chainID, milestones },
   afterSubmit,
 }) => {
-  const form = useForm<z.infer<typeof milestoneSchema>>({
-    resolver: zodResolver(milestoneSchema),
-  });
   const isOwner = useOwnerStore((state) => state.isOwner);
   const [recipient, setRecipient] = useState("");
 
@@ -230,7 +229,7 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
         <div className="flex w-full flex-row justify-between gap-4">
           <Controller
             name="priority"
-            control={form.control}
+            control={control}
             render={({ field, formState, fieldState }) => (
               <div className="flex w-full flex-col gap-2">
                 <div className={labelStyle}>Milestone priority (optional)</div>
@@ -289,7 +288,7 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
                     </Popover.Panel>
                   </Popover>
                 </div>
-                <p className="text-base text-red-400">{formState.errors.dates?.endsAt?.message}</p>
+                <p className="text-base text-red-400">{formState.errors.priority?.message}</p>
               </div>
             )}
           />
@@ -299,7 +298,7 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
         <div className="flex w-full flex-row justify-between gap-4">
           <Controller
             name="dates.startsAt"
-            control={form.control}
+            control={control}
             render={({ field, formState }) => (
               <div className="flex w-full flex-col gap-2">
                 <div className={labelStyle}>Start date (optional)</div>
@@ -336,7 +335,7 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
         <div className="flex w-full flex-row justify-between gap-4">
           <Controller
             name="dates.endsAt"
-            control={form.control}
+            control={control}
             render={({ field, formState }) => (
               <div className="flex w-full flex-col gap-2">
                 <div className={labelStyle}>End date *</div>

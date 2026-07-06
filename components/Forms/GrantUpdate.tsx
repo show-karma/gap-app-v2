@@ -46,6 +46,8 @@ const updateSchema = z.object({
     .or(z.literal("")),
   completionPercentage: z.string().refine(
     (value) => {
+      // Number("") === 0, so an empty string would slip through as 0%
+      if (value === "") return false;
       const num = Number(value);
       return !Number.isNaN(num) && num >= 0 && num <= 100;
     },
