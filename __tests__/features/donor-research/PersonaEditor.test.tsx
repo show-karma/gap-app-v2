@@ -258,6 +258,12 @@ describe("PersonaEditor refine → accept → save round-trip", () => {
     await user.click(screen.getByRole("button", { name: /^refine$/i }));
 
     expect(onDirtyChange).toHaveBeenLastCalledWith(true);
+
+    // Rejecting restores the pre-refine dirty state: the editor was clean, so
+    // no phantom dirty flag lingers to enable a no-op Save or trip the guard.
+    await user.click(screen.getByRole("button", { name: /^reject$/i }));
+
+    expect(onDirtyChange).toHaveBeenLastCalledWith(false);
   });
 
   it("saves hand-tweaks made to the suggestion before Accept", async () => {

@@ -17,6 +17,7 @@ import type {
   PersonaStructuredField,
   RefinementResult,
 } from "@/types/donor-research";
+import { cn } from "@/utilities/tailwind";
 import { PersonaStructuredChips } from "./PersonaStructuredChips";
 import { RefineButton } from "./RefineButton";
 
@@ -101,8 +102,10 @@ export function PersonaEditor({ handleId, onDirtyChange, onSkip, onSaved }: Pers
   const [hasNarrative, setHasNarrative] = useState(false);
   const [recommendation, setRecommendation] = useState<RefinementResult | null>(null);
   // What the field held before Refine wrote the suggestion into it — restored
-  // verbatim on Reject.
-  const [preRefineText, setPreRefineText] = useState("");
+  // verbatim on Reject, along with the dirty flag from that moment (so
+  // rejecting on an otherwise-clean editor doesn't leave a phantom dirty state
+  // that enables a no-op Save and trips the host's discard guard).
+  const [preRefine, setPreRefine] = useState({ text: "", wasDirty: false });
   const [structured, setStructured] = useState<PersonaStructured>(EMPTY_STRUCTURED);
   const [extractedValues, setExtractedValues] = useState<PersonaStructured | null>(null);
   const [isDirty, setIsDirty] = useState(false);
@@ -171,7 +174,7 @@ export function PersonaEditor({ handleId, onDirtyChange, onSkip, onSaved }: Pers
         }
         // Write the suggestion straight into the field (kept editable) and
         // remember what it replaced so Reject can restore it.
-        setPreRefineText(personaText);
+        setPreRefine({ text: personaText, wasDirty: isDirty });
         if (result.narrative) setPersonaText(result.narrative);
         setRecommendation(result);
         // Mark dirty while the suggestion is pending: it blocks the hydration
@@ -201,7 +204,8 @@ export function PersonaEditor({ handleId, onDirtyChange, onSkip, onSaved }: Pers
   };
 
   const onRejectRecommendation = () => {
-    setPersonaText(preRefineText);
+    setPersonaText(preRefine.text);
+    setIsDirty(preRefine.wasDirty);
     setRecommendation(null);
     setAnnouncement("Recommendation discarded — your original text was restored");
   };
@@ -305,9 +309,14 @@ export function PersonaEditor({ handleId, onDirtyChange, onSkip, onSaved }: Pers
             maxLength={MAX_SOURCE_LENGTH}
             rows={8}
             placeholder="What do you know about this donor?"
-            className={`block max-h-[60vh] w-full overflow-y-auto rounded-md border border-border bg-background px-3 py-2 text-sm focus:border-border focus:outline-none focus:ring-0 ${
+            className={cn(
+              // The forms-plugin ring is suppressed on pointer focus (design
+              // request), but keyboard focus keeps a visible indicator.
+              "block max-h-[60vh] w-full overflow-y-auto rounded-md border border-border bg-background px-3 py-2 text-sm",
+              "focus:border-border focus:outline-none focus:ring-0",
+              "focus-visible:ring-1 focus-visible:ring-ring",
               isReviewing ? "resize-none pb-14" : "resize-y"
-            }`}
+            )}
           />
           {/* While a suggestion sits in the field, the decision bar floats
               INSIDE the input, anchored to its bottom edge (the textarea gets
