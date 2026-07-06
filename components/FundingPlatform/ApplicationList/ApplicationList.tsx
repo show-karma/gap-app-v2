@@ -14,6 +14,7 @@ const EMPTY_KYC_MAP = new Map<string, KycStatusResponse | null>();
 
 interface IApplicationListComponentProps extends IApplicationListProps {
   communityUID?: string;
+  communityId?: string;
   applications: IFundingApplication[];
   isLoading?: boolean;
   onStatusChange?: (
@@ -57,6 +58,7 @@ interface IApplicationListComponentProps extends IApplicationListProps {
 const ApplicationListComponent: FC<IApplicationListComponentProps> = ({
   programId,
   communityUID,
+  communityId,
   applications,
   isLoading = false,
   onApplicationSelect,
@@ -170,6 +172,7 @@ const ApplicationListComponent: FC<IApplicationListComponentProps> = ({
           <ApplicationTable
             programId={programId}
             communityUID={communityUID}
+            communityId={communityId}
             applications={paginatedApplications}
             sortBy={sortBy}
             sortOrder={sortOrder}

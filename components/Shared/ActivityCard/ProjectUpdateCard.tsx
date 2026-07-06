@@ -1,5 +1,8 @@
-import { type FC, useState } from "react";
+import type { IProjectUpdate } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { type FC, useMemo } from "react";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
+import { useUpdateActions } from "@/hooks/useUpdateActions";
 import { useProjectStore } from "@/store";
 import type { ProjectUpdate } from "@/types/v2/roadmap";
 import { PAGES } from "@/utilities/pages";
@@ -17,9 +20,44 @@ interface ProjectUpdateCardProps {
   isAuthorized: boolean;
 }
 
+const withHttpProtocol = (value: string) =>
+  /^https?:\/\//i.test(value) ? value : `https://${value}`;
+
 export const ProjectUpdateCard: FC<ProjectUpdateCardProps> = ({ update, index, isAuthorized }) => {
   const project = useProjectStore((state) => state.project);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [, copyToClipboard] = useCopyToClipboard();
+  // Stub attestation shaped for useUpdateActions. The hook only reads
+  // type/uid/chainID off this object before re-fetching the real SDK instance
+  // via gapClient, so a structural cast is required (the full IProjectUpdate
+  // class shape cannot be assembled here).
+  const updateForActions = useMemo(
+    () =>
+      ({
+        type: "ProjectUpdate",
+        uid: update.uid,
+        chainID: project?.chainID,
+        refUID: project?.uid,
+        attester: update.recipient,
+        recipient: update.recipient,
+        createdAt: update.createdAt || "",
+        data: {
+          type: "ProjectUpdate",
+          title: update.title,
+          text: update.description,
+        },
+      }) as unknown as IProjectUpdate,
+    [
+      update.uid,
+      update.recipient,
+      update.createdAt,
+      update.title,
+      update.description,
+      project?.chainID,
+      project?.uid,
+    ]
+  );
+  const { isDeletingUpdate, isEditDialogOpen, deleteUpdate, handleEdit, closeEditDialog } =
+    useUpdateActions(updateForActions);
 
   const canEdit = true;
   const canDelete = true;
@@ -29,19 +67,7 @@ export const ProjectUpdateCard: FC<ProjectUpdateCardProps> = ({ update, index, i
     const url = `${window.location.origin}${PAGES.PROJECT.UPDATES(
       project?.details?.slug || project?.uid || ""
     )}`;
-    navigator.clipboard.writeText(url);
-  };
-
-  const handleEdit = () => {
-    setIsEditDialogOpen(true);
-  };
-
-  const closeEditDialog = () => {
-    setIsEditDialogOpen(false);
-  };
-
-  const handleDelete = async () => {
-    // TODO: Implement delete functionality
+    void copyToClipboard(url, "Update link copied to clipboard");
   };
 
   // V2 API structure
@@ -113,11 +139,7 @@ export const ProjectUpdateCard: FC<ProjectUpdateCardProps> = ({ update, index, i
                               {deliverable.proof && (
                                 <div className="flex items-center">
                                   <ExternalLink
-                                    href={
-                                      deliverable.proof.includes("http")
-                                        ? deliverable.proof
-                                        : `https://${deliverable.proof}`
-                                    }
+                                    href={withHttpProtocol(deliverable.proof)}
                                     className="inline-flex items-center gap-1.5 text-sm text-blue-600 dark:text-blue-400 hover:underline font-medium"
                                     aria-label={`View proof for ${deliverable.name}`}
                                     tabIndex={0}
@@ -187,15 +209,18 @@ export const ProjectUpdateCard: FC<ProjectUpdateCardProps> = ({ update, index, i
         date={update.createdAt || ""}
         attester={update.recipient}
         actions={
-          isAuthorized ? (
+          // Sharing the public update link is available to every viewer; edit
+          // and delete stay gated behind authorization. ActivityMenu renders
+          // only the actions it is given, so a public visitor sees just Share.
+          canShare || isAuthorized ? (
             <ActivityMenu
               onShare={canShare ? handleShare : undefined}
-              onEdit={canEdit ? handleEdit : undefined}
-              onDelete={canDelete ? handleDelete : undefined}
+              onEdit={isAuthorized && canEdit ? handleEdit : undefined}
+              onDelete={isAuthorized && canDelete ? deleteUpdate : undefined}
               canShare={canShare}
-              canEdit={canEdit}
-              canDelete={canDelete}
-              isDeleting={false}
+              canEdit={isAuthorized && canEdit}
+              canDelete={isAuthorized && canDelete}
+              isDeleting={isDeletingUpdate}
               activityType="ProjectUpdate"
               deleteTitle={
                 <p className="font-normal">

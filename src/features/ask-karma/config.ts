@@ -1,4 +1,5 @@
 import { isKnownTenant, type KnownTenantId } from "@/src/infrastructure/types/tenant";
+import { PAGES } from "@/utilities/pages";
 import type { AskKarmaConfig, AskKarmaPersona } from "./types";
 
 const DEFAULT_CONFIG: AskKarmaConfig = {
@@ -43,9 +44,8 @@ const DEFAULT_CONFIG: AskKarmaConfig = {
       title: "Open Funding Rounds",
       description: "Browse active programs accepting applications",
       links: [
-        // TODO(ask-karma): replace placeholder hrefs with real destinations
-        { label: "View open rounds", href: "/funding-opportunities" },
-        { label: "How applications work", href: "/" },
+        { label: "View open rounds", href: PAGES.REGISTRY.ROOT },
+        { label: "How applications work", href: "/knowledge/grant-lifecycle" },
       ],
     },
     {
@@ -58,10 +58,9 @@ const DEFAULT_CONFIG: AskKarmaConfig = {
       icon: "settings",
       title: "Project Management",
       links: [
-        // TODO(ask-karma): replace placeholder hrefs with real destinations
-        { label: "Submit a milestone update", href: "/my-projects" },
-        { label: "Update project profile", href: "/my-projects" },
-        { label: "FAQs", href: "/" },
+        { label: "Submit a milestone update", href: PAGES.MY_PROJECTS },
+        { label: "Update project profile", href: PAGES.MY_PROJECTS },
+        { label: "FAQs", href: "/knowledge/project-updates-and-reputation" },
       ],
     },
   ],
