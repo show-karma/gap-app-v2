@@ -373,10 +373,16 @@ describe("PersonaEditor error & empty-refine feedback (S-003)", () => {
 
     await user.click(screen.getByRole("button", { name: /^refine$/i }));
 
-    expect(toast.error).toHaveBeenCalledWith(expect.stringMatching(/couldn't pull anything/i));
+    // The feedback is a PERSISTENT inline notice (a toast alone auto-dismisses
+    // and leaves the button looking like a silent no-op).
+    expect(screen.getByText(/add more detail and try again/i)).toBeInTheDocument();
     // The empty result must NOT open a review card or touch the field.
     expect(acceptButton()).not.toBeInTheDocument();
     expect(screen.getByLabelText("Persona source")).toHaveValue(NARRATIVE);
+
+    // Typing clears the notice.
+    await user.type(screen.getByLabelText("Persona source"), " more detail");
+    expect(screen.queryByText(/add more detail and try again/i)).not.toBeInTheDocument();
   });
 
   it("shows a friendly message (not the raw backend error) when save fails", async () => {

@@ -110,6 +110,11 @@ export function PersonaEditor({ handleId, onDirtyChange, onSkip, onSaved }: Pers
   const [extractedValues, setExtractedValues] = useState<PersonaStructured | null>(null);
   const [isDirty, setIsDirty] = useState(false);
   const [announcement, setAnnouncement] = useState("");
+  // Persistent inline feedback for a refine that extracted nothing. A toast
+  // alone proved too transient here — it auto-dismisses in seconds and the
+  // button then looks like a silent no-op. Cleared on typing or the next
+  // refine attempt.
+  const [refineNotice, setRefineNotice] = useState<string | null>(null);
   // Refine-extracted scalars. Not edited here — carried through so they persist
   // on save and then prefill the report form (amounts/cause/geography).
   const [amountMin, setAmountMin] = useState<number | null>(null);
@@ -151,9 +156,11 @@ export function PersonaEditor({ handleId, onDirtyChange, onSkip, onSaved }: Pers
   const onPersonaTextChange = (value: string) => {
     setPersonaText(value);
     setIsDirty(true);
+    setRefineNotice(null);
   };
 
   const onRefine = () => {
+    setRefineNotice(null);
     refine.mutate(personaText, {
       onSuccess: (result) => {
         // A refine that extracts nothing (no narrative, no chips, no scalars)
@@ -167,9 +174,10 @@ export function PersonaEditor({ handleId, onDirtyChange, onSkip, onSaved }: Pers
           !result.geography &&
           Object.values(result.structured).every((chip) => chip.value === null);
         if (extractedNothing) {
-          toast.error(
+          setRefineNotice(
             "Refine couldn't pull anything from these notes. Add more detail and try again."
           );
+          setAnnouncement("Refine couldn't pull anything from these notes");
           return;
         }
         // Write the suggestion straight into the field (kept editable) and
@@ -351,16 +359,21 @@ export function PersonaEditor({ handleId, onDirtyChange, onSkip, onSaved }: Pers
         </div>
         {/* Char counter (left) and Refine (right) share one row under the input. */}
         {isReviewing ? null : (
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-xs text-muted-foreground">
-              {personaText.length} / {MAX_SOURCE_LENGTH}
-            </span>
-            <RefineButton
-              sourceText={personaText}
-              isRefining={refine.isPending}
-              onRefine={onRefine}
-            />
-          </div>
+          <>
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs text-muted-foreground">
+                {personaText.length} / {MAX_SOURCE_LENGTH}
+              </span>
+              <RefineButton
+                sourceText={personaText}
+                isRefining={refine.isPending}
+                onRefine={onRefine}
+              />
+            </div>
+            {refineNotice ? (
+              <p className="text-xs text-red-600 dark:text-red-400">{refineNotice}</p>
+            ) : null}
+          </>
         )}
       </div>
 
