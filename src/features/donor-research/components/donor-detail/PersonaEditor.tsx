@@ -174,6 +174,10 @@ export function PersonaEditor({ handleId, onDirtyChange, onSkip, onSaved }: Pers
         setPreRefineText(personaText);
         if (result.narrative) setPersonaText(result.narrative);
         setRecommendation(result);
+        // Mark dirty while the suggestion is pending: it blocks the hydration
+        // effect from clobbering the in-field suggestion on a background
+        // refetch, and arms the host's discard guard against dismissal.
+        setIsDirty(true);
         setAnnouncement("Recommended persona written to the input — accept or reject below");
       },
       onError: (err) => toastError(err, "Couldn't refine the persona. Try again."),

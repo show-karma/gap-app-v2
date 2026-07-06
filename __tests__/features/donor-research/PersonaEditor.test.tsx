@@ -243,6 +243,23 @@ describe("PersonaEditor refine → accept → save round-trip", () => {
     expect(updateMutate).not.toHaveBeenCalled();
   });
 
+  it("marks the editor dirty while a suggestion is pending (guards refetch clobber + host dismissal)", async () => {
+    const user = userEvent.setup();
+    const { refineMutate } = setup({ persona: makeDonorPersona() });
+    refineMutate.mockImplementation((_src: string, opts: { onSuccess: (r: unknown) => void }) =>
+      opts.onSuccess(makeRefinementResult())
+    );
+    const onDirtyChange = vi.fn();
+    renderWithProviders(<PersonaEditor handleId="h1" onDirtyChange={onDirtyChange} />);
+
+    // Refine without typing first — the suggestion alone must flip dirty so a
+    // background refetch can't clobber the in-field suggestion and the host
+    // modal guards against accidental dismissal mid-review.
+    await user.click(screen.getByRole("button", { name: /^refine$/i }));
+
+    expect(onDirtyChange).toHaveBeenLastCalledWith(true);
+  });
+
   it("saves hand-tweaks made to the suggestion before Accept", async () => {
     const user = userEvent.setup();
     const { refineMutate, updateMutate } = setup({ persona: null });
