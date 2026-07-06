@@ -204,14 +204,13 @@ const nextConfig: NextConfig = {
         destination: "/community/:communityId/funding-opportunities",
         permanent: true,
       },
-      // Redirect old project update routes
+      // Redirect the legacy singular /update route to the project root. The
+      // plural /project/:projectId/updates path is a real profile tab (renders
+      // ProjectRoadmap, mirrors /about and /funding) and must NOT be redirected
+      // — a stale redirect here made the Updates tab and shared update links
+      // bounce back to the project root.
       {
         source: "/project/:projectId/update",
-        destination: "/project/:projectId",
-        permanent: true,
-      },
-      {
-        source: "/project/:projectId/updates",
         destination: "/project/:projectId",
         permanent: true,
       },
