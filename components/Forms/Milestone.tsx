@@ -31,7 +31,10 @@ import { PAGES } from "@/utilities/pages";
 import { sanitizeObject } from "@/utilities/sanitize";
 import { errorManager } from "../Utilities/errorManager";
 
-const milestoneSchema = z.object({
+// Exported as a test seam so the refine's error-path fix (dates.startsAt, not
+// dates.dates.startsAt) can be locked with a direct schema test instead of a
+// brittle full-form render.
+export const milestoneSchema = z.object({
   title: z
     .string()
     .min(3, { message: MESSAGES.MILESTONES.FORM.TITLE.MIN })

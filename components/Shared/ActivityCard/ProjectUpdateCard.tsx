@@ -18,6 +18,16 @@ interface ProjectUpdateCardProps {
   isAuthorized: boolean;
 }
 
+function normalizeProofUrl(url: string | undefined): string | null {
+  if (!url) return null;
+  const trimmed = url.trim();
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  // Reject any other explicit scheme (javascript:, data:, mailto:, ...) —
+  // this value lands in an href, so a substring check is not enough
+  if (/^[a-z][a-z0-9+.-]*:/i.test(trimmed)) return null;
+  return `https://${trimmed}`;
+}
+
 export const ProjectUpdateCard: FC<ProjectUpdateCardProps> = ({ update, index, isAuthorized }) => {
   const project = useProjectStore((state) => state.project);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -97,55 +107,55 @@ export const ProjectUpdateCard: FC<ProjectUpdateCardProps> = ({ update, index, i
                   <p className="text-sm font-bold text-foreground">Deliverables</p>
                   <div className="w-full">
                     <div className="grid grid-cols-1 gap-4">
-                      {deliverables.map((deliverable, idx) => (
-                        <div
-                          key={idx}
-                          className="flex flex-col p-4 bg-secondary border rounded-lg shadow-sm hover:shadow-md transition-all duration-200"
-                        >
-                          <div className="flex flex-col gap-1">
-                            <div className="flex items-center gap-2">
-                              <h4 className="text-lg font-semibold text-foreground">
-                                {deliverable.name}
-                              </h4>
-                            </div>
-                            <div className="flex flex-col gap-4">
-                              <p className="text-sm text-muted-foreground mb-3">
-                                {deliverable.description}
-                              </p>
-                              {deliverable.proof && (
-                                <div className="flex items-center">
-                                  <ExternalLink
-                                    href={
-                                      deliverable.proof.includes("http")
-                                        ? deliverable.proof
-                                        : `https://${deliverable.proof}`
-                                    }
-                                    className="inline-flex items-center gap-1.5 text-sm text-blue-600 dark:text-blue-400 hover:underline font-medium"
-                                    aria-label={`View proof for ${deliverable.name}`}
-                                    tabIndex={0}
-                                  >
-                                    <svg
-                                      xmlns="http://www.w3.org/2000/svg"
-                                      className="h-4 w-4"
-                                      fill="none"
-                                      viewBox="0 0 24 24"
-                                      stroke="currentColor"
+                      {deliverables.map((deliverable, idx) => {
+                        const proofHref = normalizeProofUrl(deliverable.proof);
+
+                        return (
+                          <div
+                            key={idx}
+                            className="flex flex-col p-4 bg-secondary border rounded-lg shadow-sm hover:shadow-md transition-all duration-200"
+                          >
+                            <div className="flex flex-col gap-1">
+                              <div className="flex items-center gap-2">
+                                <h4 className="text-lg font-semibold text-foreground">
+                                  {deliverable.name}
+                                </h4>
+                              </div>
+                              <div className="flex flex-col gap-4">
+                                <p className="text-sm text-muted-foreground mb-3">
+                                  {deliverable.description}
+                                </p>
+                                {proofHref && (
+                                  <div className="flex items-center">
+                                    <ExternalLink
+                                      href={proofHref}
+                                      className="inline-flex items-center gap-1.5 text-sm text-blue-600 dark:text-blue-400 hover:underline font-medium"
+                                      aria-label={`View proof for ${deliverable.name}`}
+                                      tabIndex={0}
                                     >
-                                      <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                                      />
-                                    </svg>
-                                    View Proof
-                                  </ExternalLink>
-                                </div>
-                              )}
+                                      <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        className="h-4 w-4"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                      >
+                                        <path
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                          strokeWidth={2}
+                                          d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                                        />
+                                      </svg>
+                                      View Proof
+                                    </ExternalLink>
+                                  </div>
+                                )}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
                 </div>
