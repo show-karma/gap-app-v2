@@ -8,24 +8,22 @@ import { useRewards } from "../state/rewards-context";
 import { formatUsd } from "../utils/format";
 
 /**
- * Clicks in the first few hundred ms after mount are ignored so the second
- * click of a double-click on the grant-confirm button (which lands where the
- * dismiss button mounts) cannot instantly close the celebration.
+ * Clicks in the first few hundred ms after the overlay appears are ignored so
+ * the second click of a double-click on the grant-confirm button (which lands
+ * where the dismiss button mounts) cannot instantly close the celebration.
+ * The gate is a wall-clock comparison, not a timer flag, so dismissal can never
+ * get stuck if a timer callback is dropped — after DISMISS_LOCK_MS any click works.
  */
 const DISMISS_LOCK_MS = 400;
 
 export function CelebrationOverlay() {
   const { state, dismissCelebration } = useRewards();
   const celebration = state.celebration;
-  const canDismissRef = useRef(false);
+  const shownAtRef = useRef(0);
 
   useEffect(() => {
     if (!celebration) return;
-    canDismissRef.current = false;
-    const unlock = setTimeout(() => {
-      canDismissRef.current = true;
-    }, DISMISS_LOCK_MS);
-    return () => clearTimeout(unlock);
+    shownAtRef.current = Date.now();
   }, [celebration]);
 
   useEffect(() => {
@@ -56,7 +54,7 @@ export function CelebrationOverlay() {
   }, [celebration]);
 
   const handleDismiss = () => {
-    if (canDismissRef.current) dismissCelebration();
+    if (Date.now() - shownAtRef.current >= DISMISS_LOCK_MS) dismissCelebration();
   };
 
   return (

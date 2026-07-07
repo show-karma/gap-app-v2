@@ -277,7 +277,10 @@ export const INITIAL_STATE: RewardsState = {
   longestStreak: 7,
   grantedThisMonth: false,
   idleDays: 47,
-  causesSupported: ["education", "health", "food", "arts"],
+  // Three causes to date. The Cause Explorer badge needs five, so it stays
+  // locked until the donor branches into genuinely new areas over several
+  // grants — a single grant can never trip it.
+  causesSupported: ["education", "health", "food"],
   quests: INITIAL_QUESTS,
   badges: INITIAL_BADGES,
   updates: INITIAL_UPDATES,

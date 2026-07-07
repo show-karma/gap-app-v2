@@ -218,7 +218,7 @@ function RecapStories({ onClose }: { onClose: () => void }) {
                   <p className="font-mono text-lg font-bold">{formatNumber(state.xp)}</p>
                 </div>
                 <div>
-                  <p className="text-white/70">Streak</p>
+                  <p className="text-white/70">Longest streak</p>
                   <p className="font-mono text-lg font-bold">
                     {state.longestStreak} {pluralize("mo", state.longestStreak)}
                   </p>
