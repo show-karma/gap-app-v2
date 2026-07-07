@@ -108,6 +108,27 @@ describe("ConnectDialog", () => {
     expect(onOpenChange).toHaveBeenCalledWith(false);
   });
 
+  it("shows a couldn't-reach toast (not success) when the queued 202 reports blocked", () => {
+    mockPreviewLoaded();
+    mockIntroMutate.mockImplementation((_vars, opts) =>
+      opts.onSuccess?.({
+        kind: "queued",
+        data: { introRequestId: "i1", coarseStatus: "blocked" },
+      })
+    );
+    const onOpenChange = vi.fn();
+
+    renderDialog({ onOpenChange });
+
+    fireEvent.click(screen.getByRole("button", { name: "Send intro" }));
+
+    expect(toastSuccess).not.toHaveBeenCalled();
+    expect(toastError).toHaveBeenCalledWith(
+      "We couldn't find a contact for this nonprofit, so nothing was sent."
+    );
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+
   it("sends the edited body when the advisor changed the text", () => {
     mockPreviewLoaded();
     mockIntroMutate.mockImplementation((_vars, opts) =>

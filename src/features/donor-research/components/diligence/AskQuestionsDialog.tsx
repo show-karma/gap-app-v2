@@ -26,6 +26,7 @@ import { DILIGENCE_TEMPLATE_LIMITS } from "@/types/diligence";
 import { PAGES } from "@/utilities/pages";
 import { OutreachEmailPreview } from "./OutreachEmailPreview";
 import { getOutreachBodyIssue } from "./outreach-body";
+import { NO_CONTACT_FOUND_MESSAGE } from "./outreach-messages";
 import { makeQuestionId } from "./question-id";
 
 interface AskQuestionsDialogProps {
@@ -132,8 +133,16 @@ function AskQuestionsBody({
     askQuestions.mutate(
       { reportId, candidateId, ...(isEdited ? { body: body.trim() } : {}) },
       {
-        onSuccess: () => {
-          toast.success("Questions sent");
+        onSuccess: (result) => {
+          // A 202 can still end `blocked` (no contact could be resolved for
+          // the nonprofit) — nothing was or will be emailed, so a success
+          // toast would contradict the "Couldn't reach" badge the card is
+          // about to show.
+          if (result.coarseStatus === "blocked") {
+            toast.error(NO_CONTACT_FOUND_MESSAGE);
+          } else {
+            toast.success("Questions sent");
+          }
           onClose();
         },
         onError: () => {
