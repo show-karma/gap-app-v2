@@ -1,5 +1,6 @@
 "use client";
 
+import { Plus, X } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import toast from "react-hot-toast";
@@ -13,10 +14,18 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useAskQuestions, useDiligenceTemplate, useOutreachPreview } from "@/hooks/useDiligence";
-import type { CandidateDiligenceView } from "@/types/diligence";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  useAskQuestions,
+  useDiligenceTemplate,
+  useOutreachPreview,
+  useSaveDiligenceTemplate,
+} from "@/hooks/useDiligence";
+import type { CandidateDiligenceView, DiligenceQuestion } from "@/types/diligence";
+import { DILIGENCE_TEMPLATE_LIMITS } from "@/types/diligence";
 import { PAGES } from "@/utilities/pages";
 import { getOutreachBodyIssue, OutreachEmailPreview } from "./OutreachEmailPreview";
+import { makeQuestionId } from "./question-id";
 
 interface AskQuestionsDialogProps {
   reportId: string;
@@ -155,18 +164,7 @@ function AskQuestionsBody({
             </Button>
           </div>
         ) : isTemplateEmpty ? (
-          <div className="flex flex-col gap-2 rounded-md border border-border bg-muted/30 p-3">
-            <p className="text-sm text-muted-foreground">
-              You haven't added any diligence questions yet. Add questions to your template before
-              you can send them.
-            </p>
-            <Link
-              href={PAGES.DONOR_RESEARCH.DILIGENCE_TEMPLATE}
-              className="text-sm font-medium text-brand-emphasis underline-offset-2 hover:underline dark:text-brand-subtle"
-            >
-              Edit your question template
-            </Link>
-          </div>
+          <InlineQuestionSetup />
         ) : (
           <OutreachEmailPreview
             preview={preview}
@@ -196,5 +194,127 @@ function AskQuestionsBody({
         </Button>
       </DialogFooter>
     </>
+  );
+}
+
+const { MAX_QUESTIONS, QUESTION_TEXT_MAX } = DILIGENCE_TEMPLATE_LIMITS;
+
+/**
+ * First-run question capture inside the dialog: lets the advisor write their
+ * diligence questions right here instead of detouring to the template page
+ * (which stays available via the link below). Saving goes through the normal
+ * template save, and the seeded cache flips the dialog straight into the email
+ * preview — blank rows are dropped, so only real questions persist.
+ */
+function InlineQuestionSetup() {
+  const save = useSaveDiligenceTemplate();
+  const [rows, setRows] = useState<DiligenceQuestion[]>(() => [{ id: makeQuestionId(), text: "" }]);
+
+  const filled = rows.filter((row) => row.text.trim().length > 0);
+  const hasTooLong = rows.some((row) => row.text.trim().length > QUESTION_TEXT_MAX);
+  const canSave = filled.length > 0 && !hasTooLong && !save.isPending;
+
+  const updateRow = (id: string, text: string) => {
+    setRows((prev) => prev.map((row) => (row.id === id ? { ...row, text } : row)));
+  };
+
+  const removeRow = (id: string) => {
+    setRows((prev) => prev.filter((row) => row.id !== id));
+  };
+
+  const addRow = () => {
+    setRows((prev) =>
+      prev.length >= MAX_QUESTIONS ? prev : [...prev, { id: makeQuestionId(), text: "" }]
+    );
+  };
+
+  const handleSave = () => {
+    save.mutate(
+      { questions: filled.map((row) => ({ id: row.id, text: row.text.trim() })) },
+      {
+        onSuccess: () => {
+          toast.success("Questions saved to your template");
+        },
+        onError: () => {
+          toast.error("Couldn't save your questions. Please try again.");
+        },
+      }
+    );
+  };
+
+  return (
+    <div className="flex flex-col gap-3 rounded-md border border-border bg-muted/30 p-3">
+      <p className="text-sm text-muted-foreground">
+        You haven't added any diligence questions yet. Write them here — they're saved to your
+        question template and dropped into the email.
+      </p>
+
+      <div className="flex flex-col gap-2">
+        {rows.map((row, index) => {
+          const tooLong = row.text.trim().length > QUESTION_TEXT_MAX;
+          return (
+            <div key={row.id} className="flex flex-col gap-1">
+              <div className="flex items-start gap-2">
+                <Textarea
+                  aria-label={`Question ${index + 1}`}
+                  placeholder="e.g. What is your annual operating budget?"
+                  value={row.text}
+                  onChange={(event) => updateRow(row.id, event.target.value)}
+                  disabled={save.isPending}
+                  className="min-h-[40px]"
+                  rows={1}
+                />
+                {rows.length > 1 ? (
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="ghost"
+                    aria-label={`Remove question ${index + 1}`}
+                    onClick={() => removeRow(row.id)}
+                    disabled={save.isPending}
+                  >
+                    <X className="size-4" aria-hidden />
+                  </Button>
+                ) : null}
+              </div>
+              {tooLong ? (
+                <p className="text-sm text-destructive">
+                  Use {QUESTION_TEXT_MAX.toLocaleString("en-US")} characters or fewer.
+                </p>
+              ) : null}
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2">
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          onClick={addRow}
+          disabled={save.isPending || rows.length >= MAX_QUESTIONS}
+        >
+          <Plus className="size-4" aria-hidden />
+          Add another question
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          onClick={handleSave}
+          disabled={!canSave}
+          isLoading={save.isPending}
+        >
+          Save questions
+        </Button>
+      </div>
+
+      <Link
+        href={PAGES.DONOR_RESEARCH.DILIGENCE_TEMPLATE}
+        className="text-sm font-medium text-brand-emphasis underline-offset-2 hover:underline dark:text-brand-subtle"
+      >
+        Edit your question template
+      </Link>
+    </div>
   );
 }

@@ -35,6 +35,7 @@ vi.mock("@/hooks/useDiligence", () => ({
     refetch: vi.fn(),
   }),
   useAskQuestions: () => ({ mutate: vi.fn(), isPending: false }),
+  useSaveDiligenceTemplate: () => ({ mutate: vi.fn(), isPending: false }),
   useRequestIntro: () => ({ mutate: vi.fn(), isPending: false }),
   useUpdateAdvisorEmail: () => ({ mutate: vi.fn(), isPending: false }),
 }));

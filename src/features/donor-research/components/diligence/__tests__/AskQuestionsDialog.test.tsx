@@ -6,6 +6,7 @@ import type { CandidateDiligenceView, DiligenceTemplate, OutreachPreview } from 
 import { OUTREACH_BODY_LIMITS } from "@/types/diligence";
 
 const mockAskMutate = vi.fn();
+const mockSaveTemplateMutate = vi.fn();
 const mockUseDiligenceTemplate = vi.fn();
 const mockUseOutreachPreview = vi.fn();
 const toastSuccess = vi.fn();
@@ -30,6 +31,7 @@ vi.mock("@/hooks/useDiligence", () => ({
   useDiligenceTemplate: () => mockUseDiligenceTemplate(),
   useOutreachPreview: (...args: unknown[]) => mockUseOutreachPreview(...args),
   useAskQuestions: () => ({ mutate: mockAskMutate, isPending: false }),
+  useSaveDiligenceTemplate: () => ({ mutate: mockSaveTemplateMutate, isPending: false }),
 }));
 
 import { AskQuestionsDialog } from "../AskQuestionsDialog";
@@ -97,15 +99,18 @@ afterEach(() => {
 });
 
 describe("AskQuestionsDialog", () => {
-  it("guards on an empty template, links to the editor, and disables send", () => {
+  it("guards on an empty template with the inline editor, keeps the page link, and disables send", () => {
     const template: DiligenceTemplate = { questions: [], updatedAt: null };
     mockUseDiligenceTemplate.mockReturnValue({ data: template, isLoading: false, isError: false });
     mockPreviewLoaded();
 
     renderDialog();
 
+    expect(screen.getByLabelText("Question 1")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Edit your question template" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Send questions" })).toBeDisabled();
+    // No question typed yet → nothing to save.
+    expect(screen.getByRole("button", { name: "Save questions" })).toBeDisabled();
     // The preview fetch is disabled while the template is empty.
     expect(mockUseOutreachPreview).toHaveBeenCalledWith(
       "report-1",
@@ -113,6 +118,37 @@ describe("AskQuestionsDialog", () => {
       "diligence",
       false
     );
+  });
+
+  it("saves inline questions to the template, dropping blank rows", () => {
+    const template: DiligenceTemplate = { questions: [], updatedAt: null };
+    mockUseDiligenceTemplate.mockReturnValue({ data: template, isLoading: false, isError: false });
+    mockPreviewLoaded();
+    mockSaveTemplateMutate.mockImplementation((_vars, opts) => opts.onSuccess?.());
+
+    renderDialog();
+
+    fireEvent.change(screen.getByLabelText("Question 1"), {
+      target: { value: "  What is your annual operating budget?  " },
+    });
+    // A second, blank row must not be saved.
+    fireEvent.click(screen.getByRole("button", { name: "Add another question" }));
+    expect(screen.getByLabelText("Question 2")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Save questions" }));
+
+    expect(mockSaveTemplateMutate).toHaveBeenCalledWith(
+      {
+        questions: [
+          expect.objectContaining({
+            id: expect.any(String),
+            text: "What is your annual operating budget?",
+          }),
+        ],
+      },
+      expect.any(Object)
+    );
+    expect(toastSuccess).toHaveBeenCalledWith("Questions saved to your template");
   });
 
   it("shows the full email (To, locked subject, editable body, fixed footer)", () => {
