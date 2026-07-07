@@ -1,0 +1,109 @@
+"use client";
+
+import { BadgeCheck, BookOpenCheck } from "lucide-react";
+import React, { useMemo } from "react";
+import { questsCompletedByRead } from "../state/quest-logic";
+import { useRewards } from "../state/rewards-context";
+import type { ImpactUpdate, Quest } from "../types";
+
+const UpdateCard = React.memo(function UpdateCard({
+  update,
+  onRead,
+  pendingQuests,
+}: {
+  update: ImpactUpdate;
+  onRead: (id: string) => void;
+  /** Quests the next read completes — their XP is credited on top of the update's own */
+  pendingQuests: Quest[];
+}) {
+  const pendingBonus = pendingQuests.reduce((sum, quest) => sum + quest.xp, 0);
+  return (
+    <li className="rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="flex items-start gap-3">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-zinc-100 text-xl dark:bg-zinc-800">
+          {update.orgEmoji}
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="text-sm font-bold text-zinc-900 dark:text-white">
+              {update.orgName}
+            </span>
+            {update.verified && (
+              <span className="inline-flex items-center gap-0.5 rounded-full bg-sky-100 px-2 py-0.5 text-[10px] font-bold text-sky-700 dark:bg-sky-500/15 dark:text-sky-400">
+                <BadgeCheck className="h-3 w-3" aria-hidden="true" />
+                Verified on Karma
+              </span>
+            )}
+            <span className="text-xs text-zinc-400 dark:text-zinc-500">{update.postedAgo}</span>
+          </div>
+          <p className="mt-1 text-sm font-semibold text-zinc-800 dark:text-zinc-200">
+            {update.title}
+          </p>
+          <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">{update.detail}</p>
+          <div className="mt-3">
+            {update.read ? (
+              <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                <BookOpenCheck className="h-4 w-4" aria-hidden="true" />
+                Read · +{update.xpAwarded ?? update.xp} IP earned
+              </span>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={() => onRead(update.id)}
+                  className="rounded-xl bg-zinc-900 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-zinc-700 active:scale-95 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
+                >
+                  Mark as read · +{update.xp + pendingBonus} IP
+                </button>
+                {pendingQuests.map((quest) => (
+                  <p
+                    key={quest.id}
+                    className="mt-1.5 text-xs font-medium text-violet-600 dark:text-violet-400"
+                  >
+                    Completes quest "{quest.title}" · +{quest.xp} IP included
+                  </p>
+                ))}
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    </li>
+  );
+});
+
+export function ImpactFeed() {
+  const { state, readUpdate } = useRewards();
+  const pendingQuests = useMemo(() => questsCompletedByRead(state.quests), [state.quests]);
+
+  return (
+    <section
+      aria-label="Impact feed"
+      className="rounded-3xl border border-zinc-200 bg-zinc-50 p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950"
+    >
+      <h2 className="text-lg font-semibold text-zinc-900 dark:text-white">Your impact feed</h2>
+      <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+        Milestone updates from your grantees, verified through Karma's accountability protocol.
+      </p>
+      {state.updates.length === 0 ? (
+        <div className="mt-4 rounded-2xl border border-dashed border-zinc-300 bg-white p-6 text-center dark:border-zinc-700 dark:bg-zinc-900">
+          <p className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">No updates yet</p>
+          <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+            Make a grant and your grantees' verified milestones will show up here.
+          </p>
+        </div>
+      ) : (
+        <ul className="mt-4 flex flex-col gap-3">
+          {state.updates.map((update) => (
+            <UpdateCard
+              key={update.id}
+              update={update}
+              onRead={readUpdate}
+              pendingQuests={pendingQuests}
+            />
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}

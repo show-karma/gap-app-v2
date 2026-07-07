@@ -177,11 +177,8 @@ export function useApplicationDetailView({
       } else {
         toast.success(`Application status updated to ${selectedStatus}`);
       }
-    } catch (error) {
-      // Keep the form open so the user can retry.
-      const errorMessage =
-        error instanceof Error ? error.message : "Failed to update application status";
-      toast.error(errorMessage);
+    } catch {
+      // The status mutation's onError owns the failure toast; keep the form open to retry.
     }
   };
 
