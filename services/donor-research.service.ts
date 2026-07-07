@@ -3,7 +3,11 @@ import type {
   DonorAdvisor,
   DonorHandle,
   DonorHandleList,
+  DonorPersona,
   DonorResearchCountersSnapshot,
+  PersonaProvenance,
+  PersonaStructured,
+  RefinementResult,
   ReportCreateResponse,
   ResearchReportDetail,
   ResearchReportList,
@@ -122,6 +126,191 @@ export const createDonorHandle = async (body: CreateHandleRequest): Promise<Dono
   const [data, error] = await fetchData<DonorHandle>(INDEXER.DONOR_RESEARCH.HANDLES, "POST", body);
   if (error || !data) {
     throw new Error(error || "Failed to create donor handle");
+  }
+  return data;
+};
+
+/** Fetches a single donor handle. Powers the donor-detail page (U7). */
+export const getDonorHandle = async (handleId: string): Promise<DonorHandle> => {
+  const [data, error] = await fetchData<DonorHandle>(INDEXER.DONOR_RESEARCH.HANDLE_BY_ID(handleId));
+  if (error || !data) {
+    throw new Error(error || "Failed to load donor handle");
+  }
+  return data;
+};
+
+export interface UpdateHandleRequest {
+  opaqueLabel?: string;
+  /** Private advisor notes — NOT the persona source. `null` clears them. */
+  notes?: string | null;
+}
+
+/**
+ * Patches a donor handle (used by the detail page's private "Notes"
+ * section). Only the provided keys are sent; omitted keys preserve.
+ */
+export const updateDonorHandle = async (
+  handleId: string,
+  body: UpdateHandleRequest
+): Promise<DonorHandle> => {
+  const [data, error] = await fetchData<DonorHandle>(
+    INDEXER.DONOR_RESEARCH.HANDLE_BY_ID(handleId),
+    "PATCH",
+    body
+  );
+  if (error || !data) {
+    throw new Error(error || "Failed to update donor handle");
+  }
+  return data;
+};
+
+// -- Persona -----------------------------------------------------------
+
+/**
+ * Fetches the persona for a donor handle.
+ *
+ * Returns `null` on 404 — a handle with no persona yet is the normal empty
+ * state, not an error (mirrors {@link fetchCurrentAdvisor}). Any other
+ * failure throws so React Query can surface an error state.
+ */
+export const getDonorPersona = async (handleId: string): Promise<DonorPersona | null> => {
+  const [data, error, , status] = await fetchData<DonorPersona>(
+    INDEXER.DONOR_RESEARCH.PERSONA(handleId)
+  );
+  if (status === 404) {
+    return null;
+  }
+  if (error || !data) {
+    throw new Error(error || "Failed to load donor persona");
+  }
+  return data;
+};
+
+/** One chip in an {@link UpdateDonorPersonaInput}. */
+export interface PersonaChipInput {
+  value: string | null;
+  /**
+   * Provenance. MUST be absent when `value` is `null` (a cleared chip cannot
+   * carry a source — the backend 400s otherwise); the serializer enforces
+   * this. Defaults to `"manual"` when a value is present without one.
+   */
+  source?: PersonaProvenance;
+}
+
+/**
+ * PUT body for {@link updateDonorPersona}. Every top-level key is optional:
+ * an omitted key preserves the persisted value; an explicit `null` clears it.
+ * Within `structured`, an omitted chip key preserves that chip.
+ */
+export interface UpdateDonorPersonaInput {
+  sourceText?: string | null;
+  narrative?: string | null;
+  structured?: Partial<Record<keyof PersonaStructured, PersonaChipInput>>;
+  /**
+   * Refine-extracted scalars carried through so they persist (and then prefill
+   * the report form). `null` clears the value; omit to preserve.
+   */
+  amountMin?: number | null;
+  amountMax?: number | null;
+  cause?: string | null;
+  geography?: string | null;
+}
+
+/**
+ * Builds the PUT request body, enforcing the wire contract:
+ * - only keys present on `input` are included (omit = preserve);
+ * - a cleared chip (`value: null`) is sent as `{ value: null }` WITHOUT a
+ *   `source` (coherence — the backend rejects a null value carrying a source);
+ * - a set chip is sent as `{ value, source }`, defaulting `source` to `manual`.
+ *
+ * Exported for direct unit testing of the serializer.
+ */
+export const buildPersonaPutBody = (input: UpdateDonorPersonaInput): Record<string, unknown> => {
+  const body: Record<string, unknown> = {};
+  if (input.sourceText !== undefined) body.sourceText = input.sourceText;
+  if (input.narrative !== undefined) body.narrative = input.narrative;
+  if (input.amountMin !== undefined) body.amountMin = input.amountMin;
+  if (input.amountMax !== undefined) body.amountMax = input.amountMax;
+  if (input.cause !== undefined) body.cause = input.cause;
+  if (input.geography !== undefined) body.geography = input.geography;
+  if (input.structured) {
+    const structured: Record<string, unknown> = {};
+    for (const [key, chip] of Object.entries(input.structured)) {
+      if (!chip) continue;
+      structured[key] =
+        chip.value === null
+          ? { value: null }
+          : { value: chip.value, source: chip.source ?? "manual" };
+    }
+    body.structured = structured;
+  }
+  return body;
+};
+
+/** Persona rate-limit channels (PRD §1). */
+type PersonaRateLimitChannel = "persona_refine" | "persona_write";
+
+const PERSONA_RATE_LIMIT_MESSAGES: Record<PersonaRateLimitChannel, string> = {
+  persona_refine: "You've hit the refine limit (20/hour). Try again shortly.",
+  persona_write: "You've hit the save limit (60/hour). Try again shortly.",
+};
+
+/**
+ * Thrown on a 429 from a persona write/refine. Carries the channel so the UI
+ * can show an actionable, channel-specific message and leave editor state
+ * untouched. `retryAfter` (seconds to the next hour boundary) is surfaced
+ * when the backend provides it.
+ */
+export class DonorPersonaRateLimitError extends Error {
+  readonly status = 429 as const;
+  constructor(
+    readonly channel: PersonaRateLimitChannel,
+    readonly retryAfter?: number,
+    message?: string
+  ) {
+    super(message || PERSONA_RATE_LIMIT_MESSAGES[channel]);
+    this.name = "DonorPersonaRateLimitError";
+  }
+}
+
+/** Upserts the persona. Returns the saved persona (incl. recomputed weights). */
+export const updateDonorPersona = async (
+  handleId: string,
+  input: UpdateDonorPersonaInput
+): Promise<DonorPersona> => {
+  const [data, error, , status] = await fetchData<DonorPersona>(
+    INDEXER.DONOR_RESEARCH.PERSONA(handleId),
+    "PUT",
+    buildPersonaPutBody(input)
+  );
+  if (status === 429) {
+    throw new DonorPersonaRateLimitError("persona_write");
+  }
+  if (error || !data) {
+    throw new Error(error || "Failed to save donor persona");
+  }
+  return data;
+};
+
+/**
+ * Runs the LLM refinement over `sourceText`. Does NOT persist — the caller
+ * reviews the returned narrative + chips and commits via
+ * {@link updateDonorPersona}.
+ */
+export const refineDonorPersona = async (
+  handleId: string,
+  sourceText: string
+): Promise<RefinementResult> => {
+  const [data, error, , status] = await fetchData<RefinementResult>(
+    INDEXER.DONOR_RESEARCH.PERSONA_REFINE(handleId),
+    "POST",
+    { sourceText }
+  );
+  if (status === 429) {
+    throw new DonorPersonaRateLimitError("persona_refine");
+  }
+  if (error || !data) {
+    throw new Error(error || "Failed to refine donor persona");
   }
   return data;
 };

@@ -1,6 +1,6 @@
 "use client";
 import { DocumentTextIcon } from "@heroicons/react/24/solid";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { Button } from "@/components/ui/button";
@@ -28,7 +28,12 @@ export function ProgramDetailsTab({
   readOnly = false,
   initialProgram,
 }: ProgramDetailsTabProps) {
-  const { data: programConfig } = useProgramConfig(programId);
+  const {
+    data: programConfig,
+    isLoading: isLoadingConfig,
+    error: configError,
+    refetch: refetchConfig,
+  } = useProgramConfig(programId);
   const effectiveChainId = chainId ?? programConfig?.chainID;
 
   const [isLoadingProgram, setIsLoadingProgram] = useState(!initialProgram);
@@ -95,9 +100,29 @@ export function ProgramDetailsTab({
         setProgram(programData as GrantProgram | null);
       }
     } catch {
-      // Non-critical: silently ignore refetch failures
+      // SUPPRESSED: best-effort refetch after a successful save; the stored data
+      // is already updated and the stale view self-heals on the next load.
     }
   }, [programId, effectiveChainId]);
+
+  // `program`/`initialProgram` is hydrated from the community-list endpoint,
+  // which strips admin/finance email PII for every caller. `useProgramConfig`
+  // hits the single-program endpoint that returns those fields to authenticated
+  // admins/staff — overlay them so the inputs populate and a Save can't
+  // overwrite the stored emails with an empty array.
+  const formProgram = useMemo<GrantProgram | null>(() => {
+    if (!program) return null;
+    const configMetadata = programConfig?.metadata;
+    if (!configMetadata || !program.metadata) return program;
+    return {
+      ...program,
+      metadata: {
+        ...program.metadata,
+        adminEmails: configMetadata.adminEmails ?? program.metadata.adminEmails,
+        financeEmails: configMetadata.financeEmails ?? program.metadata.financeEmails,
+      },
+    };
+  }, [program, programConfig]);
 
   const programIdToUpdate = programId || ProgramRegistryService.extractProgramId(program!);
 
@@ -113,7 +138,7 @@ export function ProgramDetailsTab({
   } = useAdminProgramForm({
     mode: "update",
     programId: programIdToUpdate || programId,
-    existingProgram: program,
+    existingProgram: formProgram,
     readOnly,
     onSuccess: () => {
       refetchProgramData();
@@ -129,7 +154,10 @@ export function ProgramDetailsTab({
     formState: { errors },
   } = form;
 
-  if (isLoadingProgram) {
+  // Editors must wait for the admin-aware config so the form never renders (and
+  // can't be saved) with the email fields still missing from the stripped list
+  // data. Read-only viewers can't save, so don't gate their view on it.
+  if (isLoadingProgram || (isLoadingConfig && !readOnly)) {
     return (
       <div className="flex items-center justify-center py-8">
         <Spinner />
@@ -137,11 +165,22 @@ export function ProgramDetailsTab({
     );
   }
 
-  if (programError) {
+  // A failed config load means the admin/finance emails never arrived. For
+  // editors, block editing behind a retry rather than let a Save wipe them;
+  // read-only viewers still get the program details from the list data.
+  if (programError || (configError && !readOnly)) {
     return (
       <div className="flex flex-col items-center justify-center py-8">
-        <p className="text-sm text-destructive mb-4">{programError}</p>
-        <Button variant="secondary" onClick={fetchProgram}>
+        <p className="text-sm text-destructive mb-4">
+          {programError ?? "Failed to load program configuration"}
+        </p>
+        <Button
+          variant="secondary"
+          onClick={() => {
+            if (programError) fetchProgram();
+            if (configError) refetchConfig();
+          }}
+        >
           Retry
         </Button>
       </div>
