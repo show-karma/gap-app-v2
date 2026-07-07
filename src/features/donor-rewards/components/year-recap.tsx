@@ -28,7 +28,13 @@ interface Slide {
 // removes it from the top layer. A plain <dialog open> renders in normal flow
 // and opens off-screen once the page has been scrolled.
 const openAsModal = (node: HTMLDialogElement | null) => {
-  if (node && !node.open) node.showModal();
+  if (node && !node.open) {
+    node.showModal();
+    // showModal moves focus to the dialog's first focusable control — the
+    // close button — where Enter would immediately close the deck. Hand it
+    // to the slide advance button so keyboard users can walk the slides.
+    node.querySelector<HTMLButtonElement>("[data-slide-advance]")?.focus();
+  }
 };
 
 // When a slide remounts, focus has fallen back to the body/dialog; claim it
@@ -299,6 +305,7 @@ function RecapStories({ onClose }: { onClose: () => void }) {
       <m.button
         key={slide.id}
         ref={refocusSlide}
+        data-slide-advance
         type="button"
         onClick={goNext}
         initial={{ opacity: 0, x: 40 }}
