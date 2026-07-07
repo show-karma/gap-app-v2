@@ -1,8 +1,9 @@
 /* eslint-disable @next/next/no-img-element */
 
 import { Dialog, Transition } from "@headlessui/react";
-import { type FC, Fragment } from "react";
+import { type FC, Fragment, useEffect } from "react";
 import EthereumAddressToProfileName from "@/components/EthereumAddressToProfileName";
+import { useENS } from "@/store/ens";
 import { useSimilarProjectsModalStore } from "@/store/modals/similarProjects";
 import type { Project as ProjectResponse } from "@/types/v2/project";
 import { PAGES } from "@/utilities/pages";
@@ -20,6 +21,15 @@ export const SimilarProjectsDialog: FC<SimilarProjectsProps> = ({
 }) => {
   const { isSimilarProjectsModalOpen: isOpen, closeSimilarProjectsModal: closeModal } =
     useSimilarProjectsModalStore();
+  const populateEns = useENS((state) => state.populateEns);
+
+  // Batch ENS resolution for all owners once instead of one lookup per row.
+  useEffect(() => {
+    const owners = Array.from(
+      new Set(similarProjects.flatMap((project) => (project.owner ? [project.owner] : [])))
+    );
+    if (owners.length) populateEns(owners);
+  }, [similarProjects, populateEns]);
 
   return (
     <Transition appear show={isOpen} as={Fragment}>

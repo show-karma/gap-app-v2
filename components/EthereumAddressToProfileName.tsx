@@ -26,10 +26,10 @@ interface Props {
  * 1. ContributorProfile.name (on-chain attestation)
  * 2. Privy name (from public user profiles endpoint)
  * 3. ENS name
- * 4. Privy email — ONLY when the address is the logged-in user's own wallet.
- *    Never exposed as a public label for other people (email is PII); this
- *    tier only exists so an email/OAuth user never sees their own meaningless
- *    embedded-wallet address.
+ * 4. Self identity (email / OAuth / social display name) — ONLY when the
+ *    address is the logged-in user's own wallet. Never exposed as a public
+ *    label for other people (PII); this tier only exists so a social/email/
+ *    OAuth user never sees their own meaningless embedded-wallet address.
  * 5. Truncated address (0xabcd...1234)
  *
  * When showProfilePicture is true, renders a 24×24 avatar to the left.
@@ -77,16 +77,30 @@ const EthereumAddressToProfileName: React.FC<Props> = ({
   const privyProfile = lowerCasedAddress ? profiles[lowerCasedAddress] : undefined;
   const ensEntry = lowerCasedAddress ? ensData[lowerCasedAddress as `0x${string}`] : undefined;
 
-  // Only surface an email when the address is the viewer's own wallet. Emails
-  // for other people are PII and must never become a public display label.
+  // Only surface a personal identity when the address is the viewer's own
+  // wallet. These fields are PII and must never become a public label for
+  // other people; this only spares a self user their meaningless 0x address.
   const isSelf = useMemo(() => {
     if (!lowerCasedAddress) return false;
     return wallets.some((wallet) => wallet.address?.toLowerCase() === lowerCasedAddress);
   }, [wallets, lowerCasedAddress]);
 
-  const selfEmail = isSelf ? user?.email?.address || user?.google?.email : undefined;
+  // Cover every provider Privy may have authenticated the self user with, not
+  // just email/Google (e.g. a Farcaster/Twitter-only login has no email).
+  const selfIdentity =
+    isSelf && user
+      ? user.email?.address ||
+        user.google?.email ||
+        user.farcaster?.displayName ||
+        user.farcaster?.username ||
+        user.twitter?.name ||
+        user.twitter?.username ||
+        user.discord?.username ||
+        user.apple?.email ||
+        undefined
+      : undefined;
 
-  // Compute display name: contributor → privy.name → ens.name → (self) email → truncated address
+  // Compute display name: contributor → privy.name → ens.name → (self) identity → truncated address
   const displayName = useMemo(() => {
     if (!isValidAddress) return address ?? "";
 
@@ -96,7 +110,7 @@ const EthereumAddressToProfileName: React.FC<Props> = ({
 
     if (ensEntry?.name) return ensEntry.name;
 
-    if (selfEmail) return selfEmail;
+    if (selfIdentity) return selfIdentity;
 
     return addressToDisplay;
   }, [
@@ -105,7 +119,7 @@ const EthereumAddressToProfileName: React.FC<Props> = ({
     contributorProfile,
     privyProfile,
     ensEntry,
-    selfEmail,
+    selfIdentity,
     addressToDisplay,
   ]);
 
