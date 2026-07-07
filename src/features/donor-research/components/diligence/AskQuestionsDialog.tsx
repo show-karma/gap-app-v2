@@ -105,14 +105,22 @@ function AskQuestionsBody({
     !isTemplateError &&
     (templateQuery.data?.questions.length ?? 0) === 0;
 
-  const previewQuery = useOutreachPreview(reportId, candidateId, "diligence", !isTemplateEmpty);
+  // Enable the preview only once we KNOW questions exist (frozen request or
+  // loaded template) — never speculatively while the template is loading, so
+  // first-run empty-template users don't fire a preview they'll never see.
+  const shouldLoadPreview =
+    hasFrozenRequest ||
+    (!isTemplateLoading && !isTemplateError && (templateQuery.data?.questions.length ?? 0) > 0);
+  const previewQuery = useOutreachPreview(reportId, candidateId, "diligence", shouldLoadPreview);
   const preview = previewQuery.data;
 
   // null = untouched; the textarea always shows the draft once one exists so
-  // edits survive a background preview refetch.
+  // edits survive a background preview refetch. Edited-ness compares TRIMMED
+  // text — a whitespace-only tweak still sends the backend default.
   const [draft, setDraft] = useState<string | null>(null);
   const body = draft ?? preview?.bodyText ?? "";
-  const isEdited = draft !== null && preview !== undefined && draft !== preview.bodyText;
+  const isEdited =
+    draft !== null && preview !== undefined && body.trim() !== preview.bodyText.trim();
 
   const canSend =
     view.actions.canAskQuestions &&

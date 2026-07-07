@@ -158,7 +158,7 @@ export function LeadCandidate({
         <CandidateDiligenceActions
           reportId={reportId}
           candidateId={candidate.id}
-          candidateName={candidate.organizationName}
+          candidateName={name}
         />
       ) : null}
     </section>

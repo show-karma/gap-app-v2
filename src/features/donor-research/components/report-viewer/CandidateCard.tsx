@@ -159,7 +159,7 @@ export function CandidateCard({
         <CandidateDiligenceFooter
           reportId={reportId}
           candidateId={candidate.id}
-          candidateName={candidate.organizationName}
+          candidateName={name}
           show={showDiligenceActions}
         />
       </div>

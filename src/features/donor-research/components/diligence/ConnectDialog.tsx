@@ -106,9 +106,12 @@ function ConnectBody({
 
   // null = untouched. Lives here (not in the preview block) so an edited body
   // survives the switch to the email-capture step and the automatic retry.
+  // Edited-ness compares TRIMMED text — a whitespace-only tweak still sends
+  // the backend default.
   const [draft, setDraft] = useState<string | null>(null);
   const body = draft ?? preview?.bodyText ?? "";
-  const isEdited = draft !== null && preview !== undefined && draft !== preview.bodyText;
+  const isEdited =
+    draft !== null && preview !== undefined && body.trim() !== preview.bodyText.trim();
 
   const canSend = canConnect && preview !== undefined && getOutreachBodyIssue(body) === null;
 

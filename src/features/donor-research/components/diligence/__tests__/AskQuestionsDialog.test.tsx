@@ -214,6 +214,23 @@ describe("AskQuestionsDialog", () => {
     );
   });
 
+  it("treats a whitespace-only tweak as unedited (trimmed comparison)", () => {
+    mockTemplateWithQuestions();
+    mockPreviewLoaded();
+
+    renderDialog();
+
+    fireEvent.change(screen.getByLabelText("Email body"), {
+      target: { value: `${DEFAULT_BODY}\n\n   ` },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Send questions" }));
+
+    expect(mockAskMutate).toHaveBeenCalledWith(
+      { reportId: "report-1", candidateId: "candidate-1" },
+      expect.any(Object)
+    );
+  });
+
   it("treats a body edited back to the default as unedited", () => {
     mockTemplateWithQuestions();
     mockPreviewLoaded();
