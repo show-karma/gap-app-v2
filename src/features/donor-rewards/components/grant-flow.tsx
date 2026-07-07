@@ -225,8 +225,14 @@ export function GrantFlow({ open, onClose }: GrantFlowProps) {
                     />
                   </span>
                 </label>
+              </div>
+            )}
 
-                <div className="mt-5 rounded-2xl bg-violet-50 p-4 text-sm dark:bg-violet-950/40">
+            {/* The earn summary lives in the fixed footer with the CTA so it is
+                readable at the moment of confirming, at any viewport height. */}
+            {selectedOrg && (
+              <div className="border-t border-zinc-200 px-6 pb-5 pt-3 dark:border-zinc-800">
+                <div className="rounded-2xl bg-violet-50 p-4 text-sm dark:bg-violet-950/40">
                   <p className="font-semibold text-violet-800 dark:text-violet-300">
                     You will earn
                   </p>
@@ -244,16 +250,11 @@ export function GrantFlow({ open, onClose }: GrantFlowProps) {
                     )}
                   </ul>
                 </div>
-              </div>
-            )}
-
-            {selectedOrg && (
-              <div className="border-t border-zinc-200 px-6 pb-5 pt-3 dark:border-zinc-800">
                 <button
                   type="button"
                   onClick={handleConfirm}
                   disabled={amount === null}
-                  className="w-full rounded-2xl bg-emerald-600 py-4 text-base font-bold text-white shadow-lg transition hover:bg-emerald-700 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
+                  className="mt-3 w-full rounded-2xl bg-emerald-600 py-4 text-base font-bold text-white shadow-lg transition hover:bg-emerald-700 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   Grant {amount !== null ? formatUsd(amount) : ""}
                   {recurring ? " monthly" : ""} to {selectedOrg.name}
