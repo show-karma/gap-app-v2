@@ -16,6 +16,11 @@ import type { IFormSchema } from "@/types/funding-platform";
 // Module mocks
 // ---------------------------------------------------------------------------
 
+// Mock the shared identity component (render address directly; resolution tested separately)
+vi.mock("@/components/EthereumAddressToProfileName", () => ({
+  default: ({ address }: { address?: string }) => <span>{address}</span>,
+}));
+
 // Mock MarkdownEditor to a simple textarea
 vi.mock("@/components/Utilities/MarkdownEditor", () => ({
   MarkdownEditor: ({
@@ -273,9 +278,8 @@ describe("ApplicationSubmission - Grant application flow", () => {
     it("shows connected wallet address", () => {
       renderApplication();
 
-      expect(
-        screen.getByText(/Submitting as: 0x1234567890123456789012345678901234567890/)
-      ).toBeInTheDocument();
+      expect(screen.getByText(/Submitting as:/)).toBeInTheDocument();
+      expect(screen.getByText("0x1234567890123456789012345678901234567890")).toBeInTheDocument();
     });
 
     it("renders select fields with options", () => {

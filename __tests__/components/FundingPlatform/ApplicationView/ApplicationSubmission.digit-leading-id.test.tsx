@@ -26,6 +26,11 @@ vi.mock("wagmi", () => ({
   }),
 }));
 
+// Mock the shared identity component (uses React Query; tested separately)
+vi.mock("@/components/EthereumAddressToProfileName", () => ({
+  default: ({ address }: { address?: string }) => <span>{address}</span>,
+}));
+
 vi.mock("react-hot-toast", () => ({
   __esModule: true,
   default: {
