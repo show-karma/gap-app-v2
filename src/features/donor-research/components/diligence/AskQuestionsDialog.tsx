@@ -26,6 +26,7 @@ import { DILIGENCE_TEMPLATE_LIMITS } from "@/types/diligence";
 import { PAGES } from "@/utilities/pages";
 import { OutreachEmailPreview } from "./OutreachEmailPreview";
 import { getOutreachBodyIssue } from "./outreach-body";
+import { NO_CONTACT_FOUND_MESSAGE } from "./outreach-messages";
 import { makeQuestionId } from "./question-id";
 
 interface AskQuestionsDialogProps {
@@ -138,7 +139,7 @@ function AskQuestionsBody({
           // toast would contradict the "Couldn't reach" badge the card is
           // about to show.
           if (result.coarseStatus === "blocked") {
-            toast.error("We couldn't find a contact for this nonprofit, so nothing was sent.");
+            toast.error(NO_CONTACT_FOUND_MESSAGE);
           } else {
             toast.success("Questions sent");
           }

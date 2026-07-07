@@ -19,6 +19,7 @@ import { Label } from "@/components/ui/label";
 import { useOutreachPreview, useRequestIntro, useUpdateAdvisorEmail } from "@/hooks/useDiligence";
 import { OutreachEmailPreview } from "./OutreachEmailPreview";
 import { getOutreachBodyIssue } from "./outreach-body";
+import { NO_CONTACT_FOUND_MESSAGE } from "./outreach-messages";
 
 interface ConnectDialogProps {
   reportId: string;
@@ -140,7 +141,7 @@ function ConnectBody({
             if (result.data.coarseStatus === "intro_sent") {
               toast.success("Intro sent");
             } else {
-              toast.error("We couldn't find a contact for this nonprofit, so nothing was sent.");
+              toast.error(NO_CONTACT_FOUND_MESSAGE);
             }
             onClose();
           } else {
