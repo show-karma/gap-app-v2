@@ -1,9 +1,10 @@
 "use client";
 
+import type JSConfetti from "js-confetti";
 import { Flame, Sparkles, TrendingUp } from "lucide-react";
 import { AnimatePresence, m } from "motion/react";
 import pluralize from "pluralize";
-import { useEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
 import { useRewards } from "../state/rewards-context";
 import { formatUsd } from "../utils/format";
 
@@ -20,8 +21,12 @@ export function CelebrationOverlay() {
   const { state, dismissCelebration } = useRewards();
   const celebration = state.celebration;
   const shownAtRef = useRef(0);
+  const confettiRef = useRef<JSConfetti | null>(null);
 
-  useEffect(() => {
+  // Layout effect so the timestamp is set before the browser can deliver the
+  // second click of a double-click — a plain effect leaves the ref at 0 for
+  // the first paint, letting that click through the 400ms gate.
+  useLayoutEffect(() => {
     if (!celebration) return;
     shownAtRef.current = Date.now();
   }, [celebration]);
@@ -39,11 +44,13 @@ export function CelebrationOverlay() {
     if (!celebration) return;
     let cancelled = false;
     import("js-confetti")
-      .then(({ default: JSConfetti }) => {
+      .then(({ default: JSConfettiCtor }) => {
         if (cancelled) return;
-        const confetti = new JSConfetti();
-        confetti.addConfetti({ emojis: ["🎉", "💚", "✨", "🌱"], confettiNumber: 60 });
-        confetti.addConfetti({ confettiNumber: 120 });
+        // One instance for the component's lifetime — each construction
+        // appends its own canvas to document.body and never removes it.
+        confettiRef.current ??= new JSConfettiCtor();
+        confettiRef.current.addConfetti({ emojis: ["🎉", "💚", "✨", "🌱"], confettiNumber: 60 });
+        confettiRef.current.addConfetti({ confettiNumber: 120 });
       })
       .catch(() => {
         // SUPPRESSED: confetti is decorative; the celebration screen renders fully without it

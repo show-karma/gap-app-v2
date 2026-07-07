@@ -85,16 +85,25 @@ export function ImpactFeed() {
       <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
         Milestone updates from your grantees, verified through Karma's accountability protocol.
       </p>
-      <ul className="mt-4 flex flex-col gap-3">
-        {state.updates.map((update) => (
-          <UpdateCard
-            key={update.id}
-            update={update}
-            onRead={readUpdate}
-            pendingQuests={pendingQuests}
-          />
-        ))}
-      </ul>
+      {state.updates.length === 0 ? (
+        <div className="mt-4 rounded-2xl border border-dashed border-zinc-300 bg-white p-6 text-center dark:border-zinc-700 dark:bg-zinc-900">
+          <p className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">No updates yet</p>
+          <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+            Make a grant and your grantees' verified milestones will show up here.
+          </p>
+        </div>
+      ) : (
+        <ul className="mt-4 flex flex-col gap-3">
+          {state.updates.map((update) => (
+            <UpdateCard
+              key={update.id}
+              update={update}
+              onRead={readUpdate}
+              pendingQuests={pendingQuests}
+            />
+          ))}
+        </ul>
+      )}
     </section>
   );
 }
