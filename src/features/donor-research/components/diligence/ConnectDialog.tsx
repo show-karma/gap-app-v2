@@ -17,7 +17,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useOutreachPreview, useRequestIntro, useUpdateAdvisorEmail } from "@/hooks/useDiligence";
-import { getOutreachBodyIssue, OutreachEmailPreview } from "./OutreachEmailPreview";
+import { OutreachEmailPreview } from "./OutreachEmailPreview";
+import { getOutreachBodyIssue } from "./outreach-body";
 
 interface ConnectDialogProps {
   reportId: string;

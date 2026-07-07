@@ -8,20 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import type { OutreachPreview } from "@/types/diligence";
 import { OUTREACH_BODY_LIMITS } from "@/types/diligence";
-
-/**
- * Why the edited body is invalid for sending, mirroring the backend's
- * `OutreachActionBodySchema` (trimmed, 1..10,000 chars). `null` means the body
- * is sendable.
- */
-export type OutreachBodyIssue = "empty" | "over_limit" | null;
-
-export function getOutreachBodyIssue(body: string): OutreachBodyIssue {
-  const trimmedLength = body.trim().length;
-  if (trimmedLength === 0) return "empty";
-  if (trimmedLength > OUTREACH_BODY_LIMITS.MAX_CHARS) return "over_limit";
-  return null;
-}
+import { getOutreachBodyIssue } from "./outreach-body";
 
 interface OutreachEmailPreviewProps {
   preview: OutreachPreview | undefined;

@@ -24,7 +24,8 @@ import {
 import type { CandidateDiligenceView, DiligenceQuestion } from "@/types/diligence";
 import { DILIGENCE_TEMPLATE_LIMITS } from "@/types/diligence";
 import { PAGES } from "@/utilities/pages";
-import { getOutreachBodyIssue, OutreachEmailPreview } from "./OutreachEmailPreview";
+import { OutreachEmailPreview } from "./OutreachEmailPreview";
+import { getOutreachBodyIssue } from "./outreach-body";
 import { makeQuestionId } from "./question-id";
 
 interface AskQuestionsDialogProps {
