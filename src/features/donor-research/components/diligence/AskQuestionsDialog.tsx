@@ -132,8 +132,16 @@ function AskQuestionsBody({
     askQuestions.mutate(
       { reportId, candidateId, ...(isEdited ? { body: body.trim() } : {}) },
       {
-        onSuccess: () => {
-          toast.success("Questions sent");
+        onSuccess: (result) => {
+          // A 202 can still end `blocked` (no contact could be resolved for
+          // the nonprofit) — nothing was or will be emailed, so a success
+          // toast would contradict the "Couldn't reach" badge the card is
+          // about to show.
+          if (result.coarseStatus === "blocked") {
+            toast.error("We couldn't find a contact for this nonprofit, so nothing was sent.");
+          } else {
+            toast.success("Questions sent");
+          }
           onClose();
         },
         onError: () => {

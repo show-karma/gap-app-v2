@@ -64,13 +64,18 @@ export const CandidateDiligenceActions = memo(function CandidateDiligenceActions
 
   const view = diligenceQuery.data;
   const { actions, coarseStatus, request, latestAnswers, intro } = view;
-  const introLabel = intro ? introStateLabel(intro.sentAt) : null;
+  const introQueued = intro !== null && intro.sentAt === null;
+  // Only the delivered state gets a detail line (it carries the relative
+  // time); the queued state is fully expressed by the badge.
+  const introLabel = intro?.sentAt ? introSentLabel(intro.sentAt) : null;
 
   return (
     <div className="mt-6 flex flex-col gap-4 border-t border-border/60 pt-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2">
-          {coarseStatus === "not_requested" ? null : <DiligenceStatusBadge status={coarseStatus} />}
+          {coarseStatus === "not_requested" ? null : (
+            <DiligenceStatusBadge status={coarseStatus} introQueued={introQueued} />
+          )}
           {introLabel ? <span className="text-xs text-muted-foreground">{introLabel}</span> : null}
         </div>
 
@@ -119,10 +124,7 @@ export const CandidateDiligenceActions = memo(function CandidateDiligenceActions
   );
 });
 
-function introStateLabel(sentAt: string | null): string {
-  if (!sentAt) {
-    return "Intro queued";
-  }
+function introSentLabel(sentAt: string): string {
   const ms = Date.parse(sentAt);
   if (Number.isNaN(ms)) {
     return "Intro sent";

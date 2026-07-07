@@ -133,7 +133,15 @@ function ConnectBody({
       {
         onSuccess: (result) => {
           if (result.kind === "queued") {
-            toast.success("Intro sent");
+            // A queued intro always reports `intro_sent` (an active intro
+            // outranks everything in the coarse status); anything else on a
+            // 202 means the intro was immediately blocked — e.g. no contact
+            // could be resolved — and no email will go out.
+            if (result.data.coarseStatus === "intro_sent") {
+              toast.success("Intro sent");
+            } else {
+              toast.error("We couldn't find a contact for this nonprofit, so nothing was sent.");
+            }
             onClose();
           } else {
             onEmailRequired(result.message);

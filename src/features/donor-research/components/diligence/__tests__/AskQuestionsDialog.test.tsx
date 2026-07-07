@@ -168,7 +168,9 @@ describe("AskQuestionsDialog", () => {
   it("POSTs WITHOUT a body when the advisor didn't edit", () => {
     mockTemplateWithQuestions();
     mockPreviewLoaded();
-    mockAskMutate.mockImplementation((_vars, opts) => opts.onSuccess?.());
+    mockAskMutate.mockImplementation((_vars, opts) =>
+      opts.onSuccess?.({ requestId: "req-1", coarseStatus: "in_progress" })
+    );
     const onOpenChange = vi.fn();
 
     render(
@@ -192,10 +194,40 @@ describe("AskQuestionsDialog", () => {
     expect(onOpenChange).toHaveBeenCalledWith(false);
   });
 
+  it("shows a couldn't-reach toast (not success) when the 202 reports blocked", () => {
+    mockTemplateWithQuestions();
+    mockPreviewLoaded();
+    mockAskMutate.mockImplementation((_vars, opts) =>
+      opts.onSuccess?.({ requestId: "req-1", coarseStatus: "blocked" })
+    );
+    const onOpenChange = vi.fn();
+
+    render(
+      <AskQuestionsDialog
+        reportId="report-1"
+        candidateId="candidate-1"
+        open
+        onOpenChange={onOpenChange}
+        view={buildView()}
+        candidateName="Hope Shelter"
+      />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Send questions" }));
+
+    expect(toastSuccess).not.toHaveBeenCalled();
+    expect(toastError).toHaveBeenCalledWith(
+      "We couldn't find a contact for this nonprofit, so nothing was sent."
+    );
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+
   it("POSTs WITH the edited body when the advisor changed the text", () => {
     mockTemplateWithQuestions();
     mockPreviewLoaded();
-    mockAskMutate.mockImplementation((_vars, opts) => opts.onSuccess?.());
+    mockAskMutate.mockImplementation((_vars, opts) =>
+      opts.onSuccess?.({ requestId: "req-1", coarseStatus: "in_progress" })
+    );
 
     renderDialog();
 
