@@ -7,6 +7,7 @@ import { Controller, type SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { z } from "zod";
+import EthereumAddressToProfileName from "@/components/EthereumAddressToProfileName";
 import { buildRepeatableObjectSchema } from "@/components/FundingPlatform/ApplicationView/lib/repeatable-field-schema";
 import {
   metricItemSchema,
@@ -971,7 +972,9 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
       </form>
 
       {/* Connected Wallet Info */}
-      <div className="text-xs text-gray-500 dark:text-gray-400">Submitting as: {address}</div>
+      <div className="text-xs text-gray-500 dark:text-gray-400">
+        Submitting as: <EthereumAddressToProfileName address={address} />
+      </div>
     </div>
   );
 };

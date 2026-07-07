@@ -4,6 +4,7 @@ import { Dialog, Transition } from "@headlessui/react";
 import { XMarkIcon } from "@heroicons/react/24/solid";
 import { type FC, Fragment, useEffect, useMemo, useState } from "react";
 import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
+import EthereumAddressToProfileName from "@/components/EthereumAddressToProfileName";
 import { useGrant } from "@/components/Pages/GrantMilestonesAndUpdates/GrantContext";
 import { TabContent, Tabs, TabTrigger } from "@/components/Utilities/Tabs";
 import { useENS } from "@/store/ens";
@@ -25,7 +26,6 @@ interface VerificationsItemProps {
 }
 
 const VerificationItem = ({ verification }: VerificationsItemProps) => {
-  const { ensData } = useENS();
   const populateEns = useENS((state) => state.populateEns);
 
   useEffect(() => {
@@ -40,7 +40,7 @@ const VerificationItem = ({ verification }: VerificationsItemProps) => {
           className="h-8 w-8 min-h-8 min-w-8 rounded-full"
         />
         <p className="text-sm font-bold text-brand-darkblue font-body dark:text-zinc-200">
-          {ensData[verification.attester as `0x${string}`]?.name || verification.attester}
+          <EthereumAddressToProfileName address={verification.attester} />
           <span className="ml-1 font-normal font-body text-brand-gray dark:text-zinc-300">
             reviewed on {formatDate(verification.createdAt)}
           </span>

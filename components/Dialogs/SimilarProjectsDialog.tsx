@@ -2,6 +2,7 @@
 
 import { Dialog, Transition } from "@headlessui/react";
 import { type FC, Fragment } from "react";
+import EthereumAddressToProfileName from "@/components/EthereumAddressToProfileName";
 import { useSimilarProjectsModalStore } from "@/store/modals/similarProjects";
 import type { Project as ProjectResponse } from "@/types/v2/project";
 import { PAGES } from "@/utilities/pages";
@@ -77,7 +78,7 @@ export const SimilarProjectsDialog: FC<SimilarProjectsProps> = ({
                             </ExternalLink>
                           </td>
                           <td className="border border-gray-300 dark:border-zinc-600 px-4 py-2">
-                            {project.owner}
+                            <EthereumAddressToProfileName address={project.owner} />
                           </td>
                         </tr>
                       ))}

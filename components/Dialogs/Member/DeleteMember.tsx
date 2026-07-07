@@ -4,6 +4,7 @@ import * as Tooltip from "@radix-ui/react-tooltip";
 import dynamic from "next/dynamic";
 import { type FC, Fragment, useState } from "react";
 import { useAccount } from "wagmi";
+import EthereumAddressToProfileName from "@/components/EthereumAddressToProfileName";
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useAttestationToast } from "@/hooks/useAttestationToast";
@@ -213,7 +214,8 @@ export const DeleteMemberDialog: FC<DeleteMemberDialogProps> = ({ memberAddress 
                       as="h3"
                       className="text-xl font-medium leading-6 text-gray-900 dark:text-zinc-100"
                     >
-                      Are you sure you want to remove {memberAddress} from the project?
+                      Are you sure you want to remove{" "}
+                      <EthereumAddressToProfileName address={memberAddress} /> from the project?
                     </Dialog.Title>
                     <div className="flex flex-row gap-4 mt-10 justify-end">
                       <Button
