@@ -48,6 +48,17 @@ function RecapStories({ onClose }: { onClose: () => void }) {
   const [slideIndex, setSlideIndex] = useState(0);
   const level = levelForXp(state.xp);
 
+  // A non-modal <dialog open> does not close on Escape on its own, so wire it
+  // up explicitly. onClose unmounts this component, which resets slideIndex —
+  // reopening always restarts at slide 1 regardless of how it was closed.
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [onClose]);
+
   const slides = useMemo<Slide[]>(() => {
     const causeChips = state.causesSupported.map((causeId) => CAUSES[causeId]);
     const totalGrants = 14 + state.grants.length;

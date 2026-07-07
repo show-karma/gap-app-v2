@@ -60,14 +60,21 @@ const OrgOption = React.memo(function OrgOption({
 export function GrantFlow({ open, onClose }: GrantFlowProps) {
   const { state, makeGrant } = useRewards();
   const [selectedOrg, setSelectedOrg] = useState<Nonprofit | null>(null);
-  const [amount, setAmount] = useState<number>(500);
+  const [amount, setAmount] = useState<number | null>(null);
   const [recurring, setRecurring] = useState(false);
 
   const handleClose = () => {
     onClose();
     setSelectedOrg(null);
-    setAmount(500);
+    setAmount(null);
     setRecurring(false);
+  };
+
+  // Selecting an org seeds the amount from that org's own presets, so the
+  // confirm CTA can never show a value that isn't one of the visible chips.
+  const handleSelectOrg = (org: Nonprofit) => {
+    setSelectedOrg(org);
+    setAmount(org.suggestedAmounts[org.suggestedAmounts.length - 1]);
   };
 
   useEffect(() => {
@@ -80,7 +87,7 @@ export function GrantFlow({ open, onClose }: GrantFlowProps) {
   });
 
   const handleConfirm = () => {
-    if (!selectedOrg) return;
+    if (!selectedOrg || amount === null) return;
     makeGrant(selectedOrg.id, amount, recurring);
     handleClose();
   };
@@ -138,7 +145,7 @@ export function GrantFlow({ open, onClose }: GrantFlowProps) {
                 </p>
                 <ul className="mt-4 flex flex-col gap-3">
                   {NONPROFITS.map((org) => (
-                    <OrgOption key={org.id} org={org} onSelect={setSelectedOrg} />
+                    <OrgOption key={org.id} org={org} onSelect={handleSelectOrg} />
                   ))}
                 </ul>
               </>
@@ -222,9 +229,10 @@ export function GrantFlow({ open, onClose }: GrantFlowProps) {
                   <button
                     type="button"
                     onClick={handleConfirm}
-                    className="w-full rounded-2xl bg-emerald-600 py-4 text-base font-bold text-white shadow-lg transition hover:bg-emerald-700 active:scale-[0.98]"
+                    disabled={amount === null}
+                    className="w-full rounded-2xl bg-emerald-600 py-4 text-base font-bold text-white shadow-lg transition hover:bg-emerald-700 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    Grant {formatUsd(amount)}
+                    Grant {amount !== null ? formatUsd(amount) : ""}
                     {recurring ? " monthly" : ""} to {selectedOrg.name}
                   </button>
                   <p className="mt-2 text-center text-xs text-zinc-400 dark:text-zinc-500">
