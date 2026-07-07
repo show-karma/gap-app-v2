@@ -13,6 +13,8 @@ import { DiligenceStatusBadge } from "./DiligenceStatusBadge";
 interface CandidateDiligenceActionsProps {
   reportId: string;
   candidateId: string;
+  /** Nonprofit display name for the outreach previews' To row. */
+  candidateName?: string | null;
 }
 
 /**
@@ -28,6 +30,7 @@ interface CandidateDiligenceActionsProps {
 export const CandidateDiligenceActions = memo(function CandidateDiligenceActions({
   reportId,
   candidateId,
+  candidateName,
 }: CandidateDiligenceActionsProps) {
   const [askOpen, setAskOpen] = useState(false);
   const [connectOpen, setConnectOpen] = useState(false);
@@ -102,6 +105,7 @@ export const CandidateDiligenceActions = memo(function CandidateDiligenceActions
         open={askOpen}
         onOpenChange={setAskOpen}
         view={view}
+        candidateName={candidateName}
       />
       <ConnectDialog
         reportId={reportId}
@@ -109,6 +113,7 @@ export const CandidateDiligenceActions = memo(function CandidateDiligenceActions
         open={connectOpen}
         onOpenChange={setConnectOpen}
         canConnect={actions.canConnect}
+        candidateName={candidateName}
       />
     </div>
   );

@@ -16,7 +16,9 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useRequestIntro, useUpdateAdvisorEmail } from "@/hooks/useDiligence";
+import { useOutreachPreview, useRequestIntro, useUpdateAdvisorEmail } from "@/hooks/useDiligence";
+import { OutreachEmailPreview } from "./OutreachEmailPreview";
+import { getOutreachBodyIssue } from "./outreach-body";
 
 interface ConnectDialogProps {
   reportId: string;
@@ -25,6 +27,8 @@ interface ConnectDialogProps {
   onOpenChange: (open: boolean) => void;
   /** Drives the confirm button (from `view.actions.canConnect`). */
   canConnect: boolean;
+  /** Nonprofit display name for the preview's To row (null → row hidden). */
+  candidateName?: string | null;
 }
 
 const emailSchema = z.object({
@@ -39,9 +43,14 @@ type Step = "confirm" | "email";
  * Confirms a NAMED intro that reveals the advisor's identity (and any prior
  * Q&A) to the nonprofit.
  *
+ * Before sending, the advisor sees the ENTIRE intro email (DEV-500) and may
+ * edit the body; an untouched body POSTs without `body` so the backend
+ * composes its own default.
+ *
  * If the advisor has no resolvable reply-to email the backend answers
  * `email_required` instead of queuing — we switch to an email-capture step,
- * persist the address, then re-attempt the original intro automatically.
+ * persist the address, then re-attempt the original intro automatically,
+ * preserving any edited body across the capture step.
  */
 export function ConnectDialog({
   reportId,
@@ -49,17 +58,66 @@ export function ConnectDialog({
   open,
   onOpenChange,
   canConnect,
+  candidateName,
 }: ConnectDialogProps) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-xl">
+        {/* The portal only mounts children when open, so the preview fetch in
+            ConnectBody runs lazily, and closing resets the step, the email
+            form, and the edited-body draft via unmount. */}
+        {open ? (
+          <ConnectBody
+            reportId={reportId}
+            candidateId={candidateId}
+            canConnect={canConnect}
+            candidateName={candidateName ?? null}
+            onClose={() => onOpenChange(false)}
+          />
+        ) : null}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+interface ConnectBodyProps {
+  reportId: string;
+  candidateId: string;
+  canConnect: boolean;
+  candidateName: string | null;
+  onClose: () => void;
+}
+
+function ConnectBody({
+  reportId,
+  candidateId,
+  canConnect,
+  candidateName,
+  onClose,
+}: ConnectBodyProps) {
   const [step, setStep] = useState<Step>("confirm");
   const [emailPrompt, setEmailPrompt] = useState<string | null>(null);
 
   const requestIntro = useRequestIntro();
   const updateAdvisorEmail = useUpdateAdvisorEmail();
 
+  const previewQuery = useOutreachPreview(reportId, candidateId, "intro");
+  const preview = previewQuery.data;
+
+  // null = untouched. Lives here (not in the preview block) so an edited body
+  // survives the switch to the email-capture step and the automatic retry.
+  // Edited-ness compares TRIMMED text — a whitespace-only tweak still sends
+  // the backend default.
+  const [draft, setDraft] = useState<string | null>(null);
+  const body = draft ?? preview?.bodyText ?? "";
+  const isEdited =
+    draft !== null && preview !== undefined && body.trim() !== preview.bodyText.trim();
+
+  const canSend = canConnect && preview !== undefined && getOutreachBodyIssue(body) === null;
+
   const {
     register,
     handleSubmit,
-    reset,
     formState: { errors },
   } = useForm<EmailFormValues>({
     resolver: zodResolver(emailSchema),
@@ -69,27 +127,14 @@ export function ConnectDialog({
     defaultValues: { email: "" },
   });
 
-  // Reset back to the first step on close, so the next open starts fresh
-  // (handled in the close path rather than a state-syncing effect).
-  const handleOpenChange = (next: boolean) => {
-    if (!next) {
-      setStep("confirm");
-      setEmailPrompt(null);
-      reset({ email: "" });
-    }
-    onOpenChange(next);
-  };
-
-  const close = () => handleOpenChange(false);
-
   const sendIntro = (onEmailRequired: (message: string) => void) => {
     requestIntro.mutate(
-      { reportId, candidateId },
+      { reportId, candidateId, ...(isEdited ? { body: body.trim() } : {}) },
       {
         onSuccess: (result) => {
           if (result.kind === "queued") {
             toast.success("Intro sent");
-            close();
+            onClose();
           } else {
             onEmailRequired(result.message);
           }
@@ -114,7 +159,8 @@ export function ConnectDialog({
       { email: values.email },
       {
         onSuccess: () => {
-          // Re-attempt the original intro now that a reply-to exists.
+          // Re-attempt the original intro (edited body included) now that a
+          // reply-to exists.
           sendIntro((message) => {
             setEmailPrompt(message);
             toast.error(message);
@@ -129,69 +175,79 @@ export function ConnectDialog({
 
   const isSubmittingEmail = updateAdvisorEmail.isPending || requestIntro.isPending;
 
+  if (step === "confirm") {
+    return (
+      <>
+        <DialogHeader>
+          <DialogTitle>Send a named intro</DialogTitle>
+          <DialogDescription>
+            Connecting reveals your identity to this nonprofit, along with any answers they've
+            already shared. Karma sends them the email below on your behalf — review it and edit if
+            needed before sending.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="py-1">
+          <OutreachEmailPreview
+            preview={preview}
+            isLoading={previewQuery.isLoading}
+            isError={previewQuery.isError}
+            onRetry={() => previewQuery.refetch()}
+            toName={candidateName}
+            body={body}
+            onBodyChange={setDraft}
+            idPrefix="connect"
+          />
+        </div>
+
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            onClick={handleConfirm}
+            disabled={!canSend || requestIntro.isPending}
+            isLoading={requestIntro.isPending}
+          >
+            Send intro
+          </Button>
+        </DialogFooter>
+      </>
+    );
+  }
+
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent>
-        {step === "confirm" ? (
-          <>
-            <DialogHeader>
-              <DialogTitle>Send a named intro</DialogTitle>
-              <DialogDescription>
-                Connecting reveals your identity to this nonprofit, along with any answers they've
-                already shared. Karma sends them a warm intro on your behalf.
-              </DialogDescription>
-            </DialogHeader>
+    <form onSubmit={handleEmailSubmit}>
+      <DialogHeader>
+        <DialogTitle>Add your email</DialogTitle>
+        <DialogDescription>
+          {emailPrompt ?? "Add an email so we can send the named intro."} We use your email as the
+          reply-to for the intro.
+        </DialogDescription>
+      </DialogHeader>
 
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={close}>
-                Cancel
-              </Button>
-              <Button
-                type="button"
-                onClick={handleConfirm}
-                disabled={!canConnect || requestIntro.isPending}
-                isLoading={requestIntro.isPending}
-              >
-                Send intro
-              </Button>
-            </DialogFooter>
-          </>
-        ) : (
-          <form onSubmit={handleEmailSubmit}>
-            <DialogHeader>
-              <DialogTitle>Add your email</DialogTitle>
-              <DialogDescription>
-                {emailPrompt ?? "Add an email so we can send the named intro."} We use your email as
-                the reply-to for the intro.
-              </DialogDescription>
-            </DialogHeader>
+      <div className="flex flex-col gap-2 py-2">
+        <Label htmlFor="advisor-email">Email address</Label>
+        <Input
+          id="advisor-email"
+          type="email"
+          autoComplete="email"
+          placeholder="you@example.org"
+          aria-invalid={errors.email ? "true" : undefined}
+          {...register("email")}
+        />
+        {errors.email ? <p className="text-sm text-destructive">{errors.email.message}</p> : null}
+      </div>
 
-            <div className="flex flex-col gap-2 py-2">
-              <Label htmlFor="advisor-email">Email address</Label>
-              <Input
-                id="advisor-email"
-                type="email"
-                autoComplete="email"
-                placeholder="you@example.org"
-                aria-invalid={errors.email ? "true" : undefined}
-                {...register("email")}
-              />
-              {errors.email ? (
-                <p className="text-sm text-destructive">{errors.email.message}</p>
-              ) : null}
-            </div>
-
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={close}>
-                Cancel
-              </Button>
-              <Button type="submit" disabled={isSubmittingEmail} isLoading={isSubmittingEmail}>
-                Save and send intro
-              </Button>
-            </DialogFooter>
-          </form>
-        )}
-      </DialogContent>
-    </Dialog>
+      <DialogFooter>
+        <Button type="button" variant="outline" onClick={onClose}>
+          Cancel
+        </Button>
+        <Button type="submit" disabled={isSubmittingEmail} isLoading={isSubmittingEmail}>
+          Save and send intro
+        </Button>
+      </DialogFooter>
+    </form>
   );
 }

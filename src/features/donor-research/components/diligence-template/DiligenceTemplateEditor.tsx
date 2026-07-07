@@ -37,23 +37,9 @@ import { Link } from "@/src/components/navigation/Link";
 import { DonorResearchLoading } from "@/src/features/donor-research/components/common/DonorResearchLoading";
 import { DILIGENCE_TEMPLATE_LIMITS, type DiligenceQuestion } from "@/types/diligence";
 import { PAGES } from "@/utilities/pages";
+import { makeQuestionId } from "../diligence/question-id";
 
 const { MAX_QUESTIONS, QUESTION_TEXT_MAX } = DILIGENCE_TEMPLATE_LIMITS;
-
-/**
- * Collision-free stable id for a *newly added* row only. Existing rows keep the
- * server-issued id untouched, so collected answers stay keyed correctly across
- * edits. We never use the array index as the id, and avoid Math.random/Date.now
- * patterns flagged by the anti-pattern rules.
- */
-let fallbackIdCounter = 0;
-function makeQuestionId(): string {
-  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
-    return crypto.randomUUID();
-  }
-  fallbackIdCounter += 1;
-  return `dq-${fallbackIdCounter.toString(36)}`;
-}
 
 interface RowError {
   message: string;
