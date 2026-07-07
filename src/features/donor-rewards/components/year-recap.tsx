@@ -22,6 +22,27 @@ interface Slide {
 }
 
 export function YearRecap({ open, onClose }: YearRecapProps) {
+  return (
+    <AnimatePresence>
+      {open && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-[70] flex items-center justify-center bg-black/80 p-4"
+        >
+          <RecapStories onClose={onClose} />
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
+
+/**
+ * Mounted only while the recap is open, so slide state starts fresh on every
+ * open without effect-based resets.
+ */
+function RecapStories({ onClose }: { onClose: () => void }) {
   const { state } = useRewards();
   const [slideIndex, setSlideIndex] = useState(0);
   const level = levelForXp(state.xp);
@@ -204,84 +225,69 @@ export function YearRecap({ open, onClose }: YearRecapProps) {
   }, [state, level.name]);
 
   useEffect(() => {
-    if (!open) {
-      setSlideIndex(0);
-      return;
-    }
     if (slideIndex >= slides.length - 1) return;
     const timer = setTimeout(() => setSlideIndex((index) => index + 1), SLIDE_DURATION_MS);
     return () => clearTimeout(timer);
-  }, [open, slideIndex, slides.length]);
+  }, [slideIndex, slides.length]);
 
   const goNext = () => {
-    if (slideIndex < slides.length - 1) {
-      setSlideIndex(slideIndex + 1);
-    } else {
+    if (slideIndex >= slides.length - 1) {
       onClose();
+      return;
     }
+    setSlideIndex((index) => Math.min(index + 1, slides.length - 1));
   };
 
   const slide = slides[slideIndex];
 
   return (
-    <AnimatePresence>
-      {open && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[70] flex items-center justify-center bg-black/80 p-4"
-        >
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-label="Year in giving recap"
-            className="relative h-[640px] w-full max-w-sm overflow-hidden rounded-3xl shadow-2xl"
-          >
-            <div className="absolute left-3 right-3 top-3 z-10 flex gap-1.5">
-              {slides.map((item, index) => (
-                <div key={item.id} className="h-1 flex-1 overflow-hidden rounded-full bg-white/30">
-                  <motion.div
-                    className="h-full bg-white"
-                    initial={{ width: index < slideIndex ? "100%" : "0%" }}
-                    animate={{ width: index <= slideIndex ? "100%" : "0%" }}
-                    transition={
-                      index === slideIndex
-                        ? { duration: SLIDE_DURATION_MS / 1000, ease: "linear" }
-                        : { duration: 0 }
-                    }
-                  />
-                </div>
-              ))}
-            </div>
-
-            <button
-              type="button"
-              onClick={onClose}
-              aria-label="Close recap"
-              className="absolute right-3 top-7 z-10 rounded-full bg-white/20 p-2 text-white backdrop-blur-sm transition hover:bg-white/30"
-            >
-              <X className="h-5 w-5" aria-hidden="true" />
-            </button>
-
-            <AnimatePresence mode="wait">
-              <motion.button
-                key={slide.id}
-                type="button"
-                onClick={goNext}
-                initial={{ opacity: 0, x: 40 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -40 }}
-                transition={{ duration: 0.3 }}
-                className={`flex h-full w-full cursor-pointer flex-col items-center justify-center p-8 text-center text-white ${slide.background}`}
-              >
-                {slide.content}
-                <span className="absolute bottom-5 text-xs text-white/50">Tap to continue</span>
-              </motion.button>
-            </AnimatePresence>
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Year in giving recap"
+      className="relative h-[640px] max-h-[85vh] w-full max-w-sm overflow-hidden rounded-3xl shadow-2xl"
+    >
+      <div className="absolute left-3 right-3 top-3 z-10 flex gap-1.5">
+        {slides.map((item, index) => (
+          <div key={item.id} className="h-1 flex-1 overflow-hidden rounded-full bg-white/30">
+            <motion.div
+              className="h-full bg-white"
+              initial={{ width: index < slideIndex ? "100%" : "0%" }}
+              animate={{ width: index <= slideIndex ? "100%" : "0%" }}
+              transition={
+                index === slideIndex
+                  ? { duration: SLIDE_DURATION_MS / 1000, ease: "linear" }
+                  : { duration: 0 }
+              }
+            />
           </div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+        ))}
+      </div>
+
+      <button
+        type="button"
+        onClick={onClose}
+        aria-label="Close recap"
+        className="absolute right-3 top-7 z-10 rounded-full bg-white/20 p-2 text-white backdrop-blur-sm transition hover:bg-white/30"
+      >
+        <X className="h-5 w-5" aria-hidden="true" />
+      </button>
+
+      <AnimatePresence mode="wait">
+        <motion.button
+          key={slide.id}
+          type="button"
+          onClick={goNext}
+          initial={{ opacity: 0, x: 40 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: -40 }}
+          transition={{ duration: 0.3 }}
+          className={`flex h-full w-full cursor-pointer flex-col items-center justify-center p-8 text-center text-white ${slide.background}`}
+        >
+          {slide.content}
+          <span className="absolute bottom-5 text-xs text-white/50">Tap to continue</span>
+        </motion.button>
+      </AnimatePresence>
+    </div>
   );
 }
