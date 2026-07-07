@@ -105,6 +105,17 @@ export function GrantFlow({ open, onClose }: GrantFlowProps) {
   const questsToComplete = selectedOrg
     ? questsCompletedByGrant(state.quests, { cause: selectedOrg.cause, recurring })
     : [];
+  const totalIp =
+    XP_PER_GRANT +
+    (isNewCause ? XP_NEW_CAUSE_BONUS : 0) +
+    (recurring ? XP_RECURRING_BONUS : 0) +
+    questsToComplete.reduce((sum, quest) => sum + quest.xp, 0);
+  const earnParts = [
+    `+${XP_PER_GRANT} grant`,
+    ...(isNewCause ? [`+${XP_NEW_CAUSE_BONUS} new cause`] : []),
+    ...(recurring ? [`+${XP_RECURRING_BONUS} recurring bonus`] : []),
+    ...questsToComplete.map((quest) => `+${quest.xp} quest: ${quest.title}`),
+  ];
 
   return (
     <AnimatePresence>
@@ -114,6 +125,7 @@ export function GrantFlow({ open, onClose }: GrantFlowProps) {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-0 backdrop-blur-sm sm:items-center sm:p-6"
+          onClick={handleClose}
         >
           <m.div
             role="dialog"
@@ -124,6 +136,7 @@ export function GrantFlow({ open, onClose }: GrantFlowProps) {
             exit={{ opacity: 0, scale: 0.98 }}
             transition={{ duration: 0.15 }}
             className="flex max-h-[90vh] w-full max-w-lg flex-col rounded-t-3xl bg-zinc-50 shadow-2xl sm:rounded-3xl dark:bg-zinc-900"
+            onClick={(event) => event.stopPropagation()}
           >
             <div className="flex items-center justify-between px-6 pt-6">
               {selectedOrg ? (
@@ -165,8 +178,8 @@ export function GrantFlow({ open, onClose }: GrantFlowProps) {
                 </ul>
               </div>
             ) : (
-              <div className="mt-4 min-h-0 flex-1 overflow-y-auto px-6 pb-4">
-                <div className="flex items-center gap-3 rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-800">
+              <div className="mt-3 min-h-0 flex-1 overflow-y-auto px-6 pb-3">
+                <div className="flex items-center gap-3 rounded-2xl border border-zinc-200 bg-white p-3 dark:border-zinc-700 dark:bg-zinc-800">
                   <span className="text-3xl">{selectedOrg.emoji}</span>
                   <div>
                     <p className="font-bold text-zinc-900 dark:text-white">{selectedOrg.name}</p>
@@ -176,7 +189,7 @@ export function GrantFlow({ open, onClose }: GrantFlowProps) {
                   </div>
                 </div>
 
-                <p className="mt-5 text-sm font-semibold text-zinc-700 dark:text-zinc-300">
+                <p className="mt-4 text-sm font-semibold text-zinc-700 dark:text-zinc-300">
                   Grant amount
                 </p>
                 <div className="mt-2 grid grid-cols-3 gap-2">
@@ -185,7 +198,7 @@ export function GrantFlow({ open, onClose }: GrantFlowProps) {
                       key={suggested}
                       type="button"
                       onClick={() => setAmount(suggested)}
-                      className={`rounded-2xl border-2 py-3 font-mono text-lg font-bold transition active:scale-95 ${
+                      className={`rounded-2xl border-2 py-2.5 font-mono text-lg font-bold transition active:scale-95 ${
                         amount === suggested
                           ? "border-emerald-500 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300"
                           : "border-zinc-200 bg-white text-zinc-700 hover:border-zinc-300 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
@@ -196,7 +209,7 @@ export function GrantFlow({ open, onClose }: GrantFlowProps) {
                   ))}
                 </div>
 
-                <label className="mt-5 flex cursor-pointer items-center justify-between rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-800">
+                <label className="mt-4 flex cursor-pointer items-center justify-between rounded-2xl border border-zinc-200 bg-white p-3 dark:border-zinc-700 dark:bg-zinc-800">
                   <span>
                     <span className="block font-semibold text-zinc-900 dark:text-white">
                       Make it monthly
@@ -229,32 +242,27 @@ export function GrantFlow({ open, onClose }: GrantFlowProps) {
             )}
 
             {/* The earn summary lives in the fixed footer with the CTA so it is
-                readable at the moment of confirming, at any viewport height. */}
+                readable at the moment of confirming. It stays compact — one
+                total plus a single wrapped breakdown line — so the footer
+                never grows tall enough to clip the scrollable body's controls
+                on short viewports. */}
             {selectedOrg && (
-              <div className="border-t border-zinc-200 px-6 pb-5 pt-3 dark:border-zinc-800">
-                <div className="rounded-2xl bg-violet-50 p-4 text-sm dark:bg-violet-950/40">
-                  <p className="font-semibold text-violet-800 dark:text-violet-300">
-                    You will earn
+              <div className="border-t border-zinc-200 px-6 pb-4 pt-2.5 dark:border-zinc-800">
+                <div className="rounded-2xl bg-violet-50 px-4 py-3 dark:bg-violet-950/40">
+                  <p className="text-sm font-semibold text-violet-800 dark:text-violet-300">
+                    You will earn <span className="font-mono">+{totalIp} IP</span>
                   </p>
-                  <ul className="mt-1 space-y-0.5 text-violet-700 dark:text-violet-400">
-                    <li>+{XP_PER_GRANT} IP for this grant</li>
-                    {isNewCause && <li>+{XP_NEW_CAUSE_BONUS} IP for supporting a new cause</li>}
-                    {recurring && <li>+{XP_RECURRING_BONUS} IP recurring bonus</li>}
-                    {questsToComplete.map((quest) => (
-                      <li key={quest.id}>
-                        ✅ Completes quest "{quest.title}" · +{quest.xp} IP
-                      </li>
-                    ))}
-                    {!state.grantedThisMonth && (
-                      <li>🔥 Streak extends to month {state.streakMonths + 1}</li>
-                    )}
-                  </ul>
+                  <p className="mt-0.5 text-xs text-violet-700 dark:text-violet-400">
+                    {earnParts.join(" · ")}
+                    {!state.grantedThisMonth &&
+                      ` · 🔥 streak extends to month ${state.streakMonths + 1}`}
+                  </p>
                 </div>
                 <button
                   type="button"
                   onClick={handleConfirm}
                   disabled={amount === null}
-                  className="mt-3 w-full rounded-2xl bg-emerald-600 py-4 text-base font-bold text-white shadow-lg transition hover:bg-emerald-700 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
+                  className="mt-2.5 w-full rounded-2xl bg-emerald-600 py-3.5 text-base font-bold text-white shadow-lg transition hover:bg-emerald-700 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   Grant {amount !== null ? formatUsd(amount) : ""}
                   {recurring ? " monthly" : ""} to {selectedOrg.name}
