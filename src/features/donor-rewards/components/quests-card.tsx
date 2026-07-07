@@ -1,7 +1,7 @@
 "use client";
 
 import { CheckCircle2, Circle } from "lucide-react";
-import { motion } from "motion/react";
+import { m } from "motion/react";
 import pluralize from "pluralize";
 import React from "react";
 import { useRewards } from "../state/rewards-context";
@@ -19,14 +19,14 @@ const QuestRow = React.memo(function QuestRow({ quest }: { quest: Quest }) {
       }`}
     >
       {done ? (
-        <motion.span
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
+        <m.span
+          initial={{ scale: 0.5, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
           transition={{ type: "spring", stiffness: 300, damping: 15 }}
           className="text-emerald-500"
         >
           <CheckCircle2 className="h-7 w-7" aria-hidden="true" />
-        </motion.span>
+        </m.span>
       ) : (
         <span className="text-zinc-300 dark:text-zinc-600">
           <Circle className="h-7 w-7" aria-hidden="true" />
@@ -82,7 +82,7 @@ export function QuestsCard() {
       className="rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
     >
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-bold text-zinc-900 dark:text-white">July quests</h2>
+        <h2 className="text-lg font-semibold text-zinc-900 dark:text-white">July quests</h2>
         {remaining > 0 ? (
           <span className="rounded-full bg-violet-100 px-3 py-1 text-xs font-bold text-violet-700 dark:bg-violet-500/15 dark:text-violet-400">
             {remaining} {pluralize("quest", remaining)} left

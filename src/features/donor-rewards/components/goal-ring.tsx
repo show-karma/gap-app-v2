@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "motion/react";
+import { m } from "motion/react";
 import { useRewards } from "../state/rewards-context";
 import { formatUsd } from "../utils/format";
 
@@ -34,7 +34,7 @@ export function GoalRing() {
               strokeWidth="14"
               className="stroke-zinc-100 dark:stroke-zinc-800"
             />
-            <motion.circle
+            <m.circle
               cx="72"
               cy="72"
               r={RADIUS}

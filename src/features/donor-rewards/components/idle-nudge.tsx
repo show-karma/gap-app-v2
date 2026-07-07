@@ -1,7 +1,7 @@
 "use client";
 
 import { Zap } from "lucide-react";
-import { motion } from "motion/react";
+import { m } from "motion/react";
 import pluralize from "pluralize";
 import { useRewards } from "../state/rewards-context";
 import { formatUsd } from "../utils/format";
@@ -49,13 +49,13 @@ export function IdleNudge({ onOpenGrantFlow }: IdleNudgeProps) {
     >
       <div>
         <div className="flex items-center gap-2">
-          <motion.div
+          <m.div
             animate={{ y: [0, -3, 0] }}
             transition={{ repeat: Number.POSITIVE_INFINITY, duration: 2 }}
             className="rounded-xl bg-amber-100 p-2 text-amber-600 dark:bg-amber-500/15 dark:text-amber-400"
           >
             <Zap className="h-5 w-5" fill="currentColor" aria-hidden="true" />
-          </motion.div>
+          </m.div>
           <h2 className="text-sm font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-400">
             Money resting
           </h2>

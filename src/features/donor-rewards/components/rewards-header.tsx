@@ -1,9 +1,10 @@
 "use client";
 
 import { Sparkles, Wallet } from "lucide-react";
-import { motion } from "motion/react";
-import { levelForXp, nextLevelForXp, useRewards } from "../state/rewards-context";
+import { m } from "motion/react";
+import { useRewards } from "../state/rewards-context";
 import { formatNumber, formatUsd } from "../utils/format";
+import { levelForXp, nextLevelForXp } from "../utils/levels";
 
 interface RewardsHeaderProps {
   onOpenGrantFlow: () => void;
@@ -27,7 +28,7 @@ export function RewardsHeader({ onOpenGrantFlow, onOpenRecap }: RewardsHeaderPro
           </div>
           <div>
             <p className="text-sm font-medium text-emerald-100">Good morning, Maya</p>
-            <h1 className="text-2xl font-bold sm:text-3xl">Your Giving Journey</h1>
+            <h1 className="text-2xl font-semibold sm:text-3xl">Your Giving Journey</h1>
             <div className="mt-1 flex items-center gap-2">
               <span className="inline-flex items-center gap-1 rounded-full bg-white/20 px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide">
                 <Sparkles className="h-3 w-3" aria-hidden="true" />
@@ -76,7 +77,7 @@ export function RewardsHeader({ onOpenGrantFlow, onOpenRecap }: RewardsHeaderPro
             </span>
           </div>
           <div className="h-3 w-full overflow-hidden rounded-full bg-white/20">
-            <motion.div
+            <m.div
               className="h-full rounded-full bg-gradient-to-r from-amber-300 to-yellow-400"
               initial={false}
               animate={{ width: `${progressToNext}%` }}

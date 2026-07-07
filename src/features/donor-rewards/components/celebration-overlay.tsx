@@ -1,9 +1,9 @@
 "use client";
 
 import { Flame, Sparkles, TrendingUp } from "lucide-react";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, m } from "motion/react";
 import pluralize from "pluralize";
-import { useEffect, useState } from "react";
+import { useEffect, useRef } from "react";
 import { useRewards } from "../state/rewards-context";
 import { formatUsd } from "../utils/format";
 
@@ -17,12 +17,14 @@ const DISMISS_LOCK_MS = 400;
 export function CelebrationOverlay() {
   const { state, dismissCelebration } = useRewards();
   const celebration = state.celebration;
-  const [canDismiss, setCanDismiss] = useState(false);
+  const canDismissRef = useRef(false);
 
   useEffect(() => {
     if (!celebration) return;
-    setCanDismiss(false);
-    const unlock = setTimeout(() => setCanDismiss(true), DISMISS_LOCK_MS);
+    canDismissRef.current = false;
+    const unlock = setTimeout(() => {
+      canDismissRef.current = true;
+    }, DISMISS_LOCK_MS);
     return () => clearTimeout(unlock);
   }, [celebration]);
 
@@ -54,13 +56,13 @@ export function CelebrationOverlay() {
   }, [celebration]);
 
   const handleDismiss = () => {
-    if (canDismiss) dismissCelebration();
+    if (canDismissRef.current) dismissCelebration();
   };
 
   return (
     <AnimatePresence>
       {celebration && (
-        <motion.div
+        <m.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -68,7 +70,7 @@ export function CelebrationOverlay() {
           onClick={handleDismiss}
         >
           <div className="flex min-h-full items-center justify-center p-4">
-            <motion.div
+            <m.div
               role="dialog"
               aria-modal="true"
               aria-label="Grant celebration"
@@ -79,9 +81,9 @@ export function CelebrationOverlay() {
               className="my-4 w-full max-w-md rounded-3xl bg-white p-8 text-center shadow-2xl dark:bg-zinc-900"
               onClick={(event) => event.stopPropagation()}
             >
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1, rotate: [0, -10, 10, 0] }}
+              <m.div
+                initial={{ scale: 0.5, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1, rotate: [0, -10, 10, 0] }}
                 transition={{
                   delay: 0.15,
                   scale: { type: "spring", stiffness: 200, delay: 0.15 },
@@ -90,9 +92,9 @@ export function CelebrationOverlay() {
                 className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-emerald-100 text-5xl dark:bg-emerald-500/15"
               >
                 🎉
-              </motion.div>
+              </m.div>
 
-              <h2 className="mt-4 text-2xl font-bold text-zinc-900 dark:text-white">
+              <h2 className="mt-4 text-2xl font-semibold text-zinc-900 dark:text-white">
                 {formatUsd(celebration.grant.amount)} on its way!
               </h2>
               <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
@@ -100,7 +102,7 @@ export function CelebrationOverlay() {
                 {celebration.grant.recurring ? " will repeat monthly" : " is being processed"}.
               </p>
 
-              <motion.div
+              <m.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.35 }}
@@ -110,11 +112,11 @@ export function CelebrationOverlay() {
                 <span className="font-mono text-xl font-bold text-violet-700 dark:text-violet-300">
                   +{celebration.xpEarned} Impact Points
                 </span>
-              </motion.div>
+              </m.div>
 
               <div className="mt-3 flex flex-col gap-2">
                 {celebration.newStreak !== null && (
-                  <motion.div
+                  <m.div
                     initial={{ opacity: 0, x: -14 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.5 }}
@@ -129,11 +131,11 @@ export function CelebrationOverlay() {
                       Streak extended to {celebration.newStreak}{" "}
                       {pluralize("month", celebration.newStreak)}!
                     </span>
-                  </motion.div>
+                  </m.div>
                 )}
 
                 {celebration.leveledUpTo && (
-                  <motion.div
+                  <m.div
                     initial={{ opacity: 0, x: -14 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.65 }}
@@ -143,11 +145,11 @@ export function CelebrationOverlay() {
                     <span className="text-sm font-semibold text-emerald-800 dark:text-emerald-300">
                       Level up! You are now a {celebration.leveledUpTo}.
                     </span>
-                  </motion.div>
+                  </m.div>
                 )}
 
                 {celebration.questsCompleted.map((quest, index) => (
-                  <motion.div
+                  <m.div
                     key={quest.id}
                     initial={{ opacity: 0, x: -14 }}
                     animate={{ opacity: 1, x: 0 }}
@@ -158,11 +160,11 @@ export function CelebrationOverlay() {
                     <span className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
                       Quest complete: {quest.title}
                     </span>
-                  </motion.div>
+                  </m.div>
                 ))}
 
                 {celebration.badgesUnlocked.map((badge, index) => (
-                  <motion.div
+                  <m.div
                     key={badge.id}
                     initial={{ opacity: 0, scale: 0.7 }}
                     animate={{ opacity: 1, scale: 1 }}
@@ -178,7 +180,7 @@ export function CelebrationOverlay() {
                         {badge.description}
                       </span>
                     </span>
-                  </motion.div>
+                  </m.div>
                 ))}
               </div>
 
@@ -189,9 +191,9 @@ export function CelebrationOverlay() {
               >
                 Keep going
               </button>
-            </motion.div>
+            </m.div>
           </div>
-        </motion.div>
+        </m.div>
       )}
     </AnimatePresence>
   );

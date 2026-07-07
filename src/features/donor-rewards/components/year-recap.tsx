@@ -1,12 +1,13 @@
 "use client";
 
 import { X } from "lucide-react";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, m } from "motion/react";
 import pluralize from "pluralize";
 import { useEffect, useMemo, useState } from "react";
 import { CAUSES, RECAP_YEAR } from "../data/mock-data";
-import { levelForXp, useRewards } from "../state/rewards-context";
+import { useRewards } from "../state/rewards-context";
 import { formatNumber, formatUsd } from "../utils/format";
+import { levelForXp } from "../utils/levels";
 
 interface YearRecapProps {
   open: boolean;
@@ -25,14 +26,14 @@ export function YearRecap({ open, onClose }: YearRecapProps) {
   return (
     <AnimatePresence>
       {open && (
-        <motion.div
+        <m.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           className="fixed inset-0 z-[70] flex items-center justify-center bg-black/80 p-4"
         >
           <RecapStories onClose={onClose} />
-        </motion.div>
+        </m.div>
       )}
     </AnimatePresence>
   );
@@ -58,9 +59,9 @@ function RecapStories({ onClose }: { onClose: () => void }) {
         background: "bg-gradient-to-br from-emerald-600 to-teal-900",
         content: (
           <>
-            <motion.span
-              initial={{ scale: 0 }}
-              animate={{ scale: 1, rotate: [0, 10, -10, 0] }}
+            <m.span
+              initial={{ scale: 0.5, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1, rotate: [0, 10, -10, 0] }}
               transition={{
                 scale: { type: "spring", stiffness: 180 },
                 rotate: { duration: 0.6, ease: "easeInOut" },
@@ -68,8 +69,8 @@ function RecapStories({ onClose }: { onClose: () => void }) {
               className="text-7xl"
             >
               💚
-            </motion.span>
-            <h3 className="mt-6 text-3xl font-bold">Your {RECAP_YEAR} in giving</h3>
+            </m.span>
+            <h3 className="mt-6 text-3xl font-semibold">Your {RECAP_YEAR} in giving</h3>
             <p className="mt-3 text-lg text-white/80">
               Six months in, and you have already made it count. Let's look back.
             </p>
@@ -82,14 +83,14 @@ function RecapStories({ onClose }: { onClose: () => void }) {
         content: (
           <>
             <p className="text-lg font-medium text-white/80">You granted</p>
-            <motion.p
+            <m.p
               initial={{ scale: 0.6, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ type: "spring", stiffness: 160, delay: 0.2 }}
               className="mt-2 font-mono text-6xl font-bold"
             >
               {formatUsd(totalGranted)}
-            </motion.p>
+            </m.p>
             <p className="mt-4 text-lg text-white/80">
               across {totalGrants} {pluralize("grant", totalGrants)}. That puts your money to work,
               not to rest.
@@ -103,20 +104,20 @@ function RecapStories({ onClose }: { onClose: () => void }) {
         content: (
           <>
             <p className="text-lg font-medium text-white/80">You showed up for</p>
-            <motion.p
+            <m.p
               initial={{ scale: 0.6, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ type: "spring", stiffness: 160, delay: 0.2 }}
               className="mt-2 font-mono text-6xl font-bold"
             >
               {state.causesSupported.length}
-            </motion.p>
+            </m.p>
             <p className="text-lg text-white/80">
               {pluralize("cause", state.causesSupported.length)}
             </p>
             <div className="mt-5 flex flex-wrap justify-center gap-2">
               {causeChips.map((cause, index) => (
-                <motion.span
+                <m.span
                   key={cause.id}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -124,7 +125,7 @@ function RecapStories({ onClose }: { onClose: () => void }) {
                   className="rounded-full bg-white/20 px-4 py-1.5 text-sm font-semibold backdrop-blur-sm"
                 >
                   {cause.emoji} {cause.label}
-                </motion.span>
+                </m.span>
               ))}
             </div>
           </>
@@ -135,14 +136,14 @@ function RecapStories({ onClose }: { onClose: () => void }) {
         background: "bg-gradient-to-br from-orange-500 to-rose-800",
         content: (
           <>
-            <motion.span
-              initial={{ scale: 0 }}
-              animate={{ scale: [0, 1.3, 1] }}
-              transition={{ delay: 0.2, duration: 0.6 }}
+            <m.span
+              initial={{ scale: 0.5, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.2, type: "spring", stiffness: 260, damping: 12 }}
               className="text-7xl"
             >
               🔥
-            </motion.span>
+            </m.span>
             <p className="mt-4 text-lg font-medium text-white/80">Longest giving streak</p>
             <p className="mt-1 font-mono text-6xl font-bold">{state.longestStreak}</p>
             <p className="text-lg text-white/80">
@@ -157,14 +158,14 @@ function RecapStories({ onClose }: { onClose: () => void }) {
         background: "bg-gradient-to-br from-sky-600 to-blue-900",
         content: (
           <>
-            <motion.span
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
+            <m.span
+              initial={{ scale: 0.5, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
               transition={{ type: "spring", stiffness: 200, delay: 0.2 }}
               className="text-7xl"
             >
               ✅
-            </motion.span>
+            </m.span>
             <p className="mt-4 text-lg font-medium text-white/80">Your grants touched</p>
             <p className="mt-1 font-mono text-6xl font-bold">{state.verifiedMilestones}</p>
             <p className="text-lg text-white/80">
@@ -183,7 +184,7 @@ function RecapStories({ onClose }: { onClose: () => void }) {
         content: (
           <>
             <p className="text-lg font-medium text-white/80">Your giving card</p>
-            <motion.div
+            <m.div
               initial={{ rotateY: 90, opacity: 0 }}
               animate={{ rotateY: 0, opacity: 1 }}
               transition={{ delay: 0.3, type: "spring", stiffness: 120 }}
@@ -216,7 +217,7 @@ function RecapStories({ onClose }: { onClose: () => void }) {
                   <p className="font-mono text-lg font-bold">{state.verifiedMilestones}</p>
                 </div>
               </div>
-            </motion.div>
+            </m.div>
             <p className="mt-4 text-sm text-white/60">Share it. Generosity is contagious.</p>
           </>
         ),
@@ -241,16 +242,15 @@ function RecapStories({ onClose }: { onClose: () => void }) {
   const slide = slides[slideIndex];
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
+    <dialog
+      open
       aria-label="Year in giving recap"
-      className="relative h-[640px] max-h-[85vh] w-full max-w-sm overflow-hidden rounded-3xl shadow-2xl"
+      className="relative m-0 h-[640px] max-h-[85vh] w-full max-w-sm overflow-hidden rounded-3xl border-0 bg-transparent p-0 shadow-2xl"
     >
       <div className="absolute left-3 right-3 top-3 z-10 flex gap-1.5">
         {slides.map((item, index) => (
           <div key={item.id} className="h-1 flex-1 overflow-hidden rounded-full bg-white/30">
-            <motion.div
+            <m.div
               className="h-full bg-white"
               initial={{ width: index < slideIndex ? "100%" : "0%" }}
               animate={{ width: index <= slideIndex ? "100%" : "0%" }}
@@ -274,7 +274,7 @@ function RecapStories({ onClose }: { onClose: () => void }) {
       </button>
 
       <AnimatePresence mode="wait">
-        <motion.button
+        <m.button
           key={slide.id}
           type="button"
           onClick={goNext}
@@ -286,8 +286,8 @@ function RecapStories({ onClose }: { onClose: () => void }) {
         >
           {slide.content}
           <span className="absolute bottom-5 text-xs text-white/50">Tap to continue</span>
-        </motion.button>
+        </m.button>
       </AnimatePresence>
-    </div>
+    </dialog>
   );
 }

@@ -65,7 +65,7 @@ export function ImpactFeed() {
       aria-label="Impact feed"
       className="rounded-3xl border border-zinc-200 bg-zinc-50 p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950"
     >
-      <h2 className="text-lg font-bold text-zinc-900 dark:text-white">Your impact feed</h2>
+      <h2 className="text-lg font-semibold text-zinc-900 dark:text-white">Your impact feed</h2>
       <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
         Milestone updates from your grantees, verified through Karma's accountability protocol.
       </p>

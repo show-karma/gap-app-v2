@@ -1,8 +1,8 @@
 "use client";
 
 import { ArrowLeft, BadgeCheck, X } from "lucide-react";
-import { AnimatePresence, motion } from "motion/react";
-import React, { useState } from "react";
+import { AnimatePresence, m } from "motion/react";
+import React, { useEffect, useState } from "react";
 import { CAUSES, NONPROFITS } from "../data/mock-data";
 import { useRewards } from "../state/rewards-context";
 import type { Nonprofit } from "../types";
@@ -70,6 +70,15 @@ export function GrantFlow({ open, onClose }: GrantFlowProps) {
     setRecurring(false);
   };
 
+  useEffect(() => {
+    if (!open) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") handleClose();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  });
+
   const handleConfirm = () => {
     if (!selectedOrg) return;
     makeGrant(selectedOrg.id, amount, recurring);
@@ -81,23 +90,21 @@ export function GrantFlow({ open, onClose }: GrantFlowProps) {
   return (
     <AnimatePresence>
       {open && (
-        <motion.div
+        <m.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-0 backdrop-blur-sm sm:items-center sm:p-6"
-          onClick={handleClose}
         >
-          <motion.div
+          <m.div
             role="dialog"
             aria-modal="true"
             aria-label="Make a grant"
-            initial={{ y: 60, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 60, opacity: 0 }}
-            transition={{ type: "spring", stiffness: 300, damping: 28 }}
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.98 }}
+            transition={{ duration: 0.15 }}
             className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-t-3xl bg-zinc-50 p-6 shadow-2xl sm:rounded-3xl dark:bg-zinc-900"
-            onClick={(event) => event.stopPropagation()}
           >
             <div className="flex items-center justify-between">
               {selectedOrg ? (
@@ -110,7 +117,9 @@ export function GrantFlow({ open, onClose }: GrantFlowProps) {
                   Back
                 </button>
               ) : (
-                <h2 className="text-xl font-bold text-zinc-900 dark:text-white">Make a grant</h2>
+                <h2 className="text-xl font-semibold text-zinc-900 dark:text-white">
+                  Make a grant
+                </h2>
               )}
               <button
                 type="button"
@@ -176,6 +185,7 @@ export function GrantFlow({ open, onClose }: GrantFlowProps) {
                   </span>
                   <input
                     type="checkbox"
+                    aria-label="Make it monthly"
                     checked={recurring}
                     onChange={(event) => setRecurring(event.target.checked)}
                     className="peer sr-only"
@@ -208,21 +218,23 @@ export function GrantFlow({ open, onClose }: GrantFlowProps) {
                   </ul>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={handleConfirm}
-                  className="mt-5 w-full rounded-2xl bg-emerald-600 py-4 text-base font-bold text-white shadow-lg transition hover:bg-emerald-700 active:scale-[0.98]"
-                >
-                  Grant {formatUsd(amount)}
-                  {recurring ? " monthly" : ""} to {selectedOrg.name}
-                </button>
-                <p className="mt-2 text-center text-xs text-zinc-400 dark:text-zinc-500">
-                  Prototype: no real money moves.
-                </p>
+                <div className="sticky bottom-0 -mx-6 mt-5 bg-zinc-50 px-6 pb-1 pt-2 dark:bg-zinc-900">
+                  <button
+                    type="button"
+                    onClick={handleConfirm}
+                    className="w-full rounded-2xl bg-emerald-600 py-4 text-base font-bold text-white shadow-lg transition hover:bg-emerald-700 active:scale-[0.98]"
+                  >
+                    Grant {formatUsd(amount)}
+                    {recurring ? " monthly" : ""} to {selectedOrg.name}
+                  </button>
+                  <p className="mt-2 text-center text-xs text-zinc-400 dark:text-zinc-500">
+                    Prototype: no real money moves.
+                  </p>
+                </div>
               </div>
             )}
-          </motion.div>
-        </motion.div>
+          </m.div>
+        </m.div>
       )}
     </AnimatePresence>
   );

@@ -1,7 +1,7 @@
 "use client";
 
 import { Lock } from "lucide-react";
-import { motion } from "motion/react";
+import { m } from "motion/react";
 import pluralize from "pluralize";
 import React from "react";
 import { useRewards } from "../state/rewards-context";
@@ -9,7 +9,7 @@ import type { BadgeDef } from "../types";
 
 const BadgeTile = React.memo(function BadgeTile({ badge }: { badge: BadgeDef }) {
   return (
-    <motion.li
+    <m.li
       layout
       className={`flex flex-col items-center gap-1.5 rounded-2xl border p-4 text-center ${
         badge.unlocked
@@ -42,7 +42,7 @@ const BadgeTile = React.memo(function BadgeTile({ badge }: { badge: BadgeDef }) 
       <span className="text-[10px] leading-tight text-zinc-500 dark:text-zinc-400">
         {badge.description}
       </span>
-    </motion.li>
+    </m.li>
   );
 });
 
@@ -56,7 +56,7 @@ export function BadgesGrid() {
       className="rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
     >
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-bold text-zinc-900 dark:text-white">Badges</h2>
+        <h2 className="text-lg font-semibold text-zinc-900 dark:text-white">Badges</h2>
         <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-700 dark:bg-amber-500/15 dark:text-amber-400">
           {unlockedCount} of {state.badges.length} {pluralize("badge", state.badges.length)}
         </span>

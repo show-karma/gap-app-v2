@@ -74,7 +74,7 @@ export function LeagueCard() {
           <Shield className="h-6 w-6" aria-hidden="true" />
         </div>
         <div>
-          <h2 className="text-lg font-bold text-zinc-900 dark:text-white">Emerald League</h2>
+          <h2 className="text-lg font-semibold text-zinc-900 dark:text-white">Emerald League</h2>
           <p className="text-xs text-zinc-500 dark:text-zinc-400">
             Top {percentile}% most consistent givers among accounts your size
           </p>

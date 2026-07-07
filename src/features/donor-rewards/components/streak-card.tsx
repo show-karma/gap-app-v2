@@ -1,7 +1,7 @@
 "use client";
 
 import { Flame } from "lucide-react";
-import { motion } from "motion/react";
+import { m } from "motion/react";
 import pluralize from "pluralize";
 import { useRewards } from "../state/rewards-context";
 
@@ -31,7 +31,7 @@ export function StreakCard() {
             Giving streak
           </h2>
           <div className="mt-2 flex items-baseline gap-2">
-            <motion.span
+            <m.span
               key={state.streakMonths}
               initial={{ scale: 1.4 }}
               animate={{ scale: 1 }}
@@ -39,13 +39,13 @@ export function StreakCard() {
               className="font-mono text-5xl font-bold text-zinc-900 dark:text-white"
             >
               {state.streakMonths}
-            </motion.span>
+            </m.span>
             <span className="text-lg text-zinc-500 dark:text-zinc-400">
               {pluralize("month", state.streakMonths)}
             </span>
           </div>
         </div>
-        <motion.div
+        <m.div
           animate={
             state.grantedThisMonth
               ? { scale: [1, 1.25, 1], rotate: [0, -8, 8, 0] }
@@ -59,7 +59,7 @@ export function StreakCard() {
           }
         >
           <Flame className="h-8 w-8" fill="currentColor" aria-hidden="true" />
-        </motion.div>
+        </m.div>
       </div>
 
       <div className="mt-5 flex items-end justify-between gap-1.5">

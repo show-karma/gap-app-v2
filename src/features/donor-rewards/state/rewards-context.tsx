@@ -1,32 +1,20 @@
 "use client";
 
-import { createContext, useContext, useMemo, useReducer } from "react";
+import { createContext, use, useMemo, useReducer } from "react";
 import {
   INITIAL_STATE,
-  LEVELS,
   NONPROFITS,
   XP_NEW_CAUSE_BONUS,
   XP_PER_GRANT,
   XP_RECURRING_BONUS,
 } from "../data/mock-data";
-import type { BadgeDef, CelebrationPayload, LevelDef, Quest, RewardsState } from "../types";
+import type { BadgeDef, CelebrationPayload, Quest, RewardsState } from "../types";
+import { levelForXp } from "../utils/levels";
 
 type RewardsAction =
   | { type: "MAKE_GRANT"; orgId: string; amount: number; recurring: boolean }
   | { type: "READ_UPDATE"; updateId: string }
   | { type: "DISMISS_CELEBRATION" };
-
-export function levelForXp(xp: number): LevelDef {
-  let current = LEVELS[0];
-  for (const level of LEVELS) {
-    if (xp >= level.minXp) current = level;
-  }
-  return current;
-}
-
-export function nextLevelForXp(xp: number): LevelDef | null {
-  return LEVELS.find((level) => level.minXp > xp) ?? null;
-}
 
 function unlockBadge(badges: BadgeDef[], id: string, unlockedList: BadgeDef[]): BadgeDef[] {
   return badges.map((badge) => {
@@ -187,7 +175,7 @@ export function RewardsProvider({ children }: { children: React.ReactNode }) {
 }
 
 export function useRewards(): RewardsContextValue {
-  const context = useContext(RewardsContext);
+  const context = use(RewardsContext);
   if (!context) {
     throw new Error("useRewards must be used within a RewardsProvider");
   }
