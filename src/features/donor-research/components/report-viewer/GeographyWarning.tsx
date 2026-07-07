@@ -47,7 +47,7 @@ export function GeographyWarning({ diagnostic }: GeographyWarningProps) {
         </p>
         <p className="mt-0.5 text-amber-800 dark:text-amber-200">
           {emptyStates || unknownRadius
-            ? "Results aren't filtered by state — try a US city, state, or region (e.g., \"San Francisco\", \"Texas\", \"Pacific Northwest\")."
+            ? 'Results aren\'t filtered by state — try a US city, state, or region (e.g., "San Francisco", "Texas", "Pacific Northwest").'
             : `We mapped this to ${describeResolution(diagnostic)}. If that's wrong, try a more specific input.`}
         </p>
       </div>

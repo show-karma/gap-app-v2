@@ -28,7 +28,14 @@ const emptyTemplate: DiligenceTemplate = { questions: [], updatedAt: null };
 vi.mock("@/hooks/useDiligence", () => ({
   useCandidateDiligence: (...args: unknown[]) => mockUseCandidateDiligence(...args),
   useDiligenceTemplate: () => ({ data: emptyTemplate, isLoading: false, isError: false }),
+  useOutreachPreview: () => ({
+    data: undefined,
+    isLoading: true,
+    isError: false,
+    refetch: vi.fn(),
+  }),
   useAskQuestions: () => ({ mutate: vi.fn(), isPending: false }),
+  useSaveDiligenceTemplate: () => ({ mutate: vi.fn(), isPending: false }),
   useRequestIntro: () => ({ mutate: vi.fn(), isPending: false }),
   useUpdateAdvisorEmail: () => ({ mutate: vi.fn(), isPending: false }),
 }));
