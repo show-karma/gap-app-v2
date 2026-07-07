@@ -1,0 +1,195 @@
+"use client";
+
+import { createContext, useContext, useMemo, useReducer } from "react";
+import {
+  INITIAL_STATE,
+  LEVELS,
+  NONPROFITS,
+  XP_NEW_CAUSE_BONUS,
+  XP_PER_GRANT,
+  XP_RECURRING_BONUS,
+} from "../data/mock-data";
+import type { BadgeDef, CelebrationPayload, LevelDef, Quest, RewardsState } from "../types";
+
+type RewardsAction =
+  | { type: "MAKE_GRANT"; orgId: string; amount: number; recurring: boolean }
+  | { type: "READ_UPDATE"; updateId: string }
+  | { type: "DISMISS_CELEBRATION" };
+
+export function levelForXp(xp: number): LevelDef {
+  let current = LEVELS[0];
+  for (const level of LEVELS) {
+    if (xp >= level.minXp) current = level;
+  }
+  return current;
+}
+
+export function nextLevelForXp(xp: number): LevelDef | null {
+  return LEVELS.find((level) => level.minXp > xp) ?? null;
+}
+
+function unlockBadge(badges: BadgeDef[], id: string, unlockedList: BadgeDef[]): BadgeDef[] {
+  return badges.map((badge) => {
+    if (badge.id === id && !badge.unlocked) {
+      const unlockedBadge = { ...badge, unlocked: true };
+      unlockedList.push(unlockedBadge);
+      return unlockedBadge;
+    }
+    return badge;
+  });
+}
+
+function applyGrant(
+  state: RewardsState,
+  action: { orgId: string; amount: number; recurring: boolean }
+): RewardsState {
+  const org = NONPROFITS.find((nonprofit) => nonprofit.id === action.orgId);
+  if (!org) return state;
+
+  const grant = {
+    id: `grant-${state.grants.length + 1}`,
+    orgId: org.id,
+    orgName: org.name,
+    amount: action.amount,
+    cause: org.cause,
+    recurring: action.recurring,
+  };
+
+  const isNewCause = !state.causesSupported.includes(org.cause);
+  const causesSupported = isNewCause
+    ? [...state.causesSupported, org.cause]
+    : state.causesSupported;
+
+  let xpEarned = XP_PER_GRANT;
+  if (isNewCause) xpEarned += XP_NEW_CAUSE_BONUS;
+  if (action.recurring) xpEarned += XP_RECURRING_BONUS;
+
+  const questsCompleted: Quest[] = [];
+  const quests = state.quests.map((quest) => {
+    if (quest.progress >= quest.goal) return quest;
+    const matchesGrantQuest =
+      (quest.type === "grant_any" ||
+        (quest.type === "grant_cause" && quest.targetCause === org.cause) ||
+        (quest.type === "recurring" && action.recurring)) &&
+      quest.progress + 1 >= quest.goal;
+    if (matchesGrantQuest) {
+      const completed = { ...quest, progress: quest.goal };
+      questsCompleted.push(completed);
+      return completed;
+    }
+    return quest;
+  });
+  xpEarned += questsCompleted.reduce((sum, quest) => sum + quest.xp, 0);
+
+  const badgesUnlocked: BadgeDef[] = [];
+  let badges = state.badges;
+  if (causesSupported.length >= 5) {
+    badges = unlockBadge(badges, "b-cause-explorer", badgesUnlocked);
+  }
+  if (action.recurring) {
+    badges = unlockBadge(badges, "b-recurring", badgesUnlocked);
+  }
+
+  const previousLevel = levelForXp(state.xp);
+  const newXp = state.xp + xpEarned;
+  const newLevel = levelForXp(newXp);
+  const leveledUpTo = newLevel.minXp > previousLevel.minXp ? newLevel.name : null;
+  if (newLevel.name === "Luminary") {
+    badges = unlockBadge(badges, "b-luminary", badgesUnlocked);
+  }
+
+  const extendsStreak = !state.grantedThisMonth;
+  const streakMonths = extendsStreak ? state.streakMonths + 1 : state.streakMonths;
+
+  const celebration: CelebrationPayload = {
+    grant,
+    xpEarned,
+    questsCompleted,
+    badgesUnlocked,
+    leveledUpTo,
+    newStreak: extendsStreak ? streakMonths : null,
+  };
+
+  return {
+    ...state,
+    balance: state.balance - action.amount,
+    grantedThisYear: state.grantedThisYear + action.amount,
+    xp: newXp,
+    streakMonths,
+    longestStreak: Math.max(state.longestStreak, streakMonths),
+    grantedThisMonth: true,
+    idleDays: 0,
+    causesSupported,
+    quests,
+    badges,
+    grants: [...state.grants, grant],
+    hasRecurringGrant: state.hasRecurringGrant || action.recurring,
+    celebration,
+  };
+}
+
+function applyReadUpdate(state: RewardsState, updateId: string): RewardsState {
+  const update = state.updates.find((item) => item.id === updateId);
+  if (!update || update.read) return state;
+
+  const updates = state.updates.map((item) =>
+    item.id === updateId ? { ...item, read: true } : item
+  );
+
+  let xpEarned = update.xp;
+  const quests = state.quests.map((quest) => {
+    if (quest.type !== "read_updates" || quest.progress >= quest.goal) return quest;
+    const progress = quest.progress + 1;
+    if (progress >= quest.goal) xpEarned += quest.xp;
+    return { ...quest, progress };
+  });
+
+  return { ...state, updates, quests, xp: state.xp + xpEarned };
+}
+
+function rewardsReducer(state: RewardsState, action: RewardsAction): RewardsState {
+  switch (action.type) {
+    case "MAKE_GRANT":
+      return applyGrant(state, action);
+    case "READ_UPDATE":
+      return applyReadUpdate(state, action.updateId);
+    case "DISMISS_CELEBRATION":
+      return { ...state, celebration: null };
+    default:
+      return state;
+  }
+}
+
+interface RewardsContextValue {
+  state: RewardsState;
+  makeGrant: (orgId: string, amount: number, recurring: boolean) => void;
+  readUpdate: (updateId: string) => void;
+  dismissCelebration: () => void;
+}
+
+const RewardsContext = createContext<RewardsContextValue | null>(null);
+
+export function RewardsProvider({ children }: { children: React.ReactNode }) {
+  const [state, dispatch] = useReducer(rewardsReducer, INITIAL_STATE);
+
+  const value = useMemo<RewardsContextValue>(
+    () => ({
+      state,
+      makeGrant: (orgId, amount, recurring) =>
+        dispatch({ type: "MAKE_GRANT", orgId, amount, recurring }),
+      readUpdate: (updateId) => dispatch({ type: "READ_UPDATE", updateId }),
+      dismissCelebration: () => dispatch({ type: "DISMISS_CELEBRATION" }),
+    }),
+    [state]
+  );
+
+  return <RewardsContext.Provider value={value}>{children}</RewardsContext.Provider>;
+}
+
+export function useRewards(): RewardsContextValue {
+  const context = useContext(RewardsContext);
+  if (!context) {
+    throw new Error("useRewards must be used within a RewardsProvider");
+  }
+  return context;
+}
