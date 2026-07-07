@@ -31,6 +31,15 @@ const openAsModal = (node: HTMLDialogElement | null) => {
   if (node && !node.open) node.showModal();
 };
 
+// When a slide remounts, focus has fallen back to the body/dialog; claim it
+// for the new slide button so Enter/Space keeps advancing the deck.
+const refocusSlide = (node: HTMLButtonElement | null) => {
+  const active = document.activeElement;
+  if (node && (!active || active === document.body || active.tagName === "DIALOG")) {
+    node.focus();
+  }
+};
+
 export function YearRecap({ open, onClose }: YearRecapProps) {
   if (!open) return null;
 
@@ -283,9 +292,13 @@ function RecapStories({ onClose }: { onClose: () => void }) {
 
       {/* Enter-only animation: the outgoing slide unmounts instantly when the
           key changes, so rapid taps can never race an exit transition into a
-          blank card (an AnimatePresence mode="wait" exit did exactly that). */}
+          blank card (an AnimatePresence mode="wait" exit did exactly that).
+          The remount drops keyboard focus, so refocus the new slide button
+          unless the user has deliberately moved focus elsewhere (e.g. the
+          close button). */}
       <m.button
         key={slide.id}
+        ref={refocusSlide}
         type="button"
         onClick={goNext}
         initial={{ opacity: 0, x: 40 }}
