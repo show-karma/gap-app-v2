@@ -4,6 +4,7 @@ import { blo } from "blo";
 import Image from "next/image";
 import type React from "react";
 import { useEffect, useMemo } from "react";
+import { usePrivyBridge } from "@/contexts/privy-bridge-context";
 import { useContributorProfile } from "@/hooks/useContributorProfile";
 import { useENS } from "@/store/ens";
 import { useUserProfiles } from "@/store/userProfiles";
@@ -24,8 +25,11 @@ interface Props {
  * Fallback chain (highest priority first):
  * 1. ContributorProfile.name (on-chain attestation)
  * 2. Privy name (from public user profiles endpoint)
- * 3. Privy email (from same endpoint, only when name absent)
- * 4. ENS name
+ * 3. ENS name
+ * 4. Privy email — ONLY when the address is the logged-in user's own wallet.
+ *    Never exposed as a public label for other people (email is PII); this
+ *    tier only exists so an email/OAuth user never sees their own meaningless
+ *    embedded-wallet address.
  * 5. Truncated address (0xabcd...1234)
  *
  * When showProfilePicture is true, renders a 24×24 avatar to the left.
@@ -42,6 +46,7 @@ const EthereumAddressToProfileName: React.FC<Props> = ({
   const populateEns = useENS((state) => state.populateEns);
   const profiles = useUserProfiles((state) => state.profiles);
   const populateProfiles = useUserProfiles((state) => state.populateProfiles);
+  const { user, wallets } = usePrivyBridge();
 
   const lowerCasedAddress = address?.toLowerCase();
 
@@ -72,7 +77,16 @@ const EthereumAddressToProfileName: React.FC<Props> = ({
   const privyProfile = lowerCasedAddress ? profiles[lowerCasedAddress] : undefined;
   const ensEntry = lowerCasedAddress ? ensData[lowerCasedAddress as `0x${string}`] : undefined;
 
-  // Compute display name: contributor → privy.name → privy.email → ens.name → truncated address
+  // Only surface an email when the address is the viewer's own wallet. Emails
+  // for other people are PII and must never become a public display label.
+  const isSelf = useMemo(() => {
+    if (!lowerCasedAddress) return false;
+    return wallets.some((wallet) => wallet.address?.toLowerCase() === lowerCasedAddress);
+  }, [wallets, lowerCasedAddress]);
+
+  const selfEmail = isSelf ? user?.email?.address || user?.google?.email : undefined;
+
+  // Compute display name: contributor → privy.name → ens.name → (self) email → truncated address
   const displayName = useMemo(() => {
     if (!isValidAddress) return address ?? "";
 
@@ -80,12 +94,20 @@ const EthereumAddressToProfileName: React.FC<Props> = ({
 
     if (privyProfile?.isTried && privyProfile.name) return privyProfile.name;
 
-    if (privyProfile?.isTried && privyProfile.email) return privyProfile.email;
-
     if (ensEntry?.name) return ensEntry.name;
 
+    if (selfEmail) return selfEmail;
+
     return addressToDisplay;
-  }, [isValidAddress, address, contributorProfile, privyProfile, ensEntry, addressToDisplay]);
+  }, [
+    isValidAddress,
+    address,
+    contributorProfile,
+    privyProfile,
+    ensEntry,
+    selfEmail,
+    addressToDisplay,
+  ]);
 
   // Compute avatar when showProfilePicture is true
   const avatarSrc = useMemo(() => {
