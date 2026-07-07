@@ -26,12 +26,6 @@ interface VerificationsItemProps {
 }
 
 const VerificationItem = ({ verification }: VerificationsItemProps) => {
-  const populateEns = useENS((state) => state.populateEns);
-
-  useEffect(() => {
-    populateEns([verification.attester]);
-  }, [verification.attester, populateEns]);
-
   return (
     <div className="flex flex-col items-start gap-1.5 p-4">
       <div className="flex flex-row gap-3 items-center">

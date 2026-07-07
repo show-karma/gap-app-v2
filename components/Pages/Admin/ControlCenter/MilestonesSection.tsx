@@ -9,7 +9,6 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { memo, useCallback, useState } from "react";
 import toast from "react-hot-toast";
-import EthereumAddressToProfileName from "@/components/EthereumAddressToProfileName";
 import { FileUpload } from "@/components/Utilities/FileUpload";
 import {
   Dialog,
@@ -26,6 +25,7 @@ import {
   MilestoneLifecycleStatus,
 } from "@/src/features/payout-disbursement/types/payout-disbursement";
 import { formatDisplayAmount } from "@/src/features/payout-disbursement/utils/format-token-amount";
+import { formatAddressForDisplay } from "@/utilities/donations/helpers";
 import { formatDate } from "@/utilities/formatDate";
 import { formatMilestoneTitle } from "@/utilities/formatMilestoneTitle";
 import { INDEXER } from "@/utilities/indexer";
@@ -495,10 +495,7 @@ export const MilestonesSection = memo(function MilestonesSection({
                                   className="text-[10px] text-gray-400 dark:text-zinc-500 font-mono"
                                   title={invoice.invoiceReceivedBy}
                                 >
-                                  by{" "}
-                                  <EthereumAddressToProfileName
-                                    address={invoice.invoiceReceivedBy}
-                                  />
+                                  by {formatAddressForDisplay(invoice.invoiceReceivedBy)}
                                 </span>
                               )}
                             </div>

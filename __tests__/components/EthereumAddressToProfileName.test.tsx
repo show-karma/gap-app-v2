@@ -70,7 +70,14 @@ vi.mock("blo", () => ({
 }));
 
 // Mock the Privy bridge — drives "is this the logged-in user?" (self email tier)
-let mockBridgeUser: { email?: { address: string }; google?: { email: string } } | null = null;
+let mockBridgeUser: {
+  email?: { address: string };
+  google?: { email: string };
+  farcaster?: { displayName?: string; username?: string };
+  twitter?: { name?: string; username?: string };
+  discord?: { username?: string };
+  apple?: { email?: string };
+} | null = null;
 let mockBridgeWallets: Array<{ address: string }> = [];
 
 vi.mock("@/contexts/privy-bridge-context", () => ({
@@ -243,6 +250,24 @@ describe("EthereumAddressToProfileName", () => {
       });
 
       expect(screen.getByText("me@example.com")).toBeInTheDocument();
+    });
+
+    it("shows the logged-in user's own social display name when they have no email", () => {
+      // Self user authenticated via Farcaster only (no email/Google).
+      mockBridgeWallets = [{ address: MOCK_ADDRESS_LOWER }];
+      mockBridgeUser = { farcaster: { displayName: "vitalik" } };
+      mockContributorProfile = null;
+      mockProfilesData[MOCK_ADDRESS_LOWER] = {
+        publicAddress: MOCK_ADDRESS_LOWER,
+        name: "",
+        isTried: true,
+      };
+
+      render(<EthereumAddressToProfileName address={MOCK_ADDRESS} />, {
+        wrapper: createWrapper(),
+      });
+
+      expect(screen.getByText("vitalik")).toBeInTheDocument();
     });
 
     it("prefers ENS over the logged-in user's own email", () => {
