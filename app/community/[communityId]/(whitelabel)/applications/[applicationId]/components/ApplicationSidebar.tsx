@@ -14,6 +14,12 @@ interface ApplicationSidebarProps {
   postApprovalPending: boolean;
   editHref: string;
   reviewHref: string;
+  /**
+   * Status history with `reason` bodies already gated for the current viewer.
+   * Passed in (rather than read from `application`) so the rejection/revision
+   * communications are only shown to the applicant, reviewers, and admins.
+   */
+  statusHistory: Application["statusHistory"];
   onGoToMilestones?: () => void;
   onGoToPostApproval?: () => void;
   onViewActivity?: () => void;
@@ -28,6 +34,7 @@ export function ApplicationSidebar({
   postApprovalPending,
   editHref,
   reviewHref,
+  statusHistory,
   onGoToMilestones,
   onGoToPostApproval,
   onViewActivity,
@@ -46,10 +53,7 @@ export function ApplicationSidebar({
         onViewActivity={onViewActivity}
       />
 
-      <ApplicationStatusStepper
-        status={application.status}
-        statusHistory={application.statusHistory || []}
-      />
+      <ApplicationStatusStepper status={application.status} statusHistory={statusHistory || []} />
 
       <ApplicationInfoCard
         referenceNumber={application.referenceNumber}
