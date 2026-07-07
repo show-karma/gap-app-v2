@@ -19,6 +19,7 @@ import { Label } from "@/components/ui/label";
 import { useOutreachPreview, useRequestIntro, useUpdateAdvisorEmail } from "@/hooks/useDiligence";
 import { OutreachEmailPreview } from "./OutreachEmailPreview";
 import { getOutreachBodyIssue } from "./outreach-body";
+import { NO_CONTACT_FOUND_MESSAGE } from "./outreach-messages";
 
 interface ConnectDialogProps {
   reportId: string;
@@ -133,7 +134,15 @@ function ConnectBody({
       {
         onSuccess: (result) => {
           if (result.kind === "queued") {
-            toast.success("Intro sent");
+            // A queued intro always reports `intro_sent` (an active intro
+            // outranks everything in the coarse status); anything else on a
+            // 202 means the intro was immediately blocked — e.g. no contact
+            // could be resolved — and no email will go out.
+            if (result.data.coarseStatus === "intro_sent") {
+              toast.success("Intro sent");
+            } else {
+              toast.error(NO_CONTACT_FOUND_MESSAGE);
+            }
             onClose();
           } else {
             onEmailRequired(result.message);
