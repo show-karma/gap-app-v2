@@ -176,6 +176,7 @@ export const PAGES = {
   FOR_AGENTS: `/for-agents`,
   NONPROFITS: `/nonprofits`,
   DONOR_ADVISORS: `/donor-advisors`,
+  DONOR_REWARDS: `/donor-rewards`,
   CREATE_PROJECT_PROFILE: `/create-project-profile`,
   MCP_CONNECT: `/mcp/connect`,
   SEEDS: `/seeds`,
