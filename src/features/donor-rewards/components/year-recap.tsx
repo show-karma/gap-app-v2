@@ -1,7 +1,7 @@
 "use client";
 
 import { X } from "lucide-react";
-import { AnimatePresence, m } from "motion/react";
+import { m } from "motion/react";
 import pluralize from "pluralize";
 import { useEffect, useMemo, useState } from "react";
 import { CAUSES, RECAP_YEAR } from "../data/mock-data";
@@ -221,7 +221,7 @@ function RecapStories({ onClose }: { onClose: () => void }) {
                 <div>
                   <p className="text-white/70">Longest streak</p>
                   <p className="font-mono text-lg font-bold">
-                    {state.longestStreak} {pluralize("mo", state.longestStreak)}
+                    {state.longestStreak} {pluralize("month", state.longestStreak)}
                   </p>
                 </div>
                 <div>
@@ -281,21 +281,21 @@ function RecapStories({ onClose }: { onClose: () => void }) {
         <X className="h-5 w-5" aria-hidden="true" />
       </button>
 
-      <AnimatePresence mode="wait">
-        <m.button
-          key={slide.id}
-          type="button"
-          onClick={goNext}
-          initial={{ opacity: 0, x: 40 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -40 }}
-          transition={{ duration: 0.3 }}
-          className={`flex h-full w-full cursor-pointer flex-col items-center justify-center p-8 text-center text-white ${slide.background}`}
-        >
-          {slide.content}
-          <span className="absolute bottom-5 text-xs text-white/50">Tap to continue</span>
-        </m.button>
-      </AnimatePresence>
+      {/* Enter-only animation: the outgoing slide unmounts instantly when the
+          key changes, so rapid taps can never race an exit transition into a
+          blank card (an AnimatePresence mode="wait" exit did exactly that). */}
+      <m.button
+        key={slide.id}
+        type="button"
+        onClick={goNext}
+        initial={{ opacity: 0, x: 40 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.25 }}
+        className={`flex h-full w-full cursor-pointer flex-col items-center justify-center p-8 text-center text-white ${slide.background}`}
+      >
+        {slide.content}
+        <span className="absolute bottom-5 text-xs text-white/50">Tap to continue</span>
+      </m.button>
     </div>
   );
 }
