@@ -16,9 +16,18 @@ import { INDEXER } from "@/utilities/indexer";
 export async function getApplicationStatusHistory(
   referenceNumber: string
 ): Promise<Application["statusHistory"]> {
-  const [application] = await fetchData<Application>(
+  const [application, error] = await fetchData<Application>(
     INDEXER.V2.FUNDING_APPLICATIONS.GET(referenceNumber),
     "GET"
   );
+  // Throw on failure (network, timeout, 4xx/5xx) so React Query keeps `data`
+  // undefined and callers fall back to the sanitized SSR `application.statusHistory`.
+  // Resolving to `[]` here would win the `?? ` fallback and blank the timeline
+  // for authorized viewers on a transient re-fetch failure.
+  if (error) {
+    throw new Error(
+      typeof error === "string" ? error : "Failed to load application status history"
+    );
+  }
   return application?.statusHistory ?? [];
 }

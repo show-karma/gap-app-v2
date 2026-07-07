@@ -62,4 +62,16 @@ describe("useApplicationStatusHistory", () => {
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(mockGetStatusHistory).not.toHaveBeenCalled();
   });
+
+  it("should leave statusHistory undefined when the fetch fails (so callers fall back to SSR)", async () => {
+    mockUseAuth.mockReturnValue({ authenticated: true, ready: true });
+    mockGetStatusHistory.mockRejectedValue(new Error("boom"));
+
+    const { result } = renderHook(() => useApplicationStatusHistory("REF-123"), {
+      wrapper: createWrapper(),
+    });
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.statusHistory).toBeUndefined();
+  });
 });
