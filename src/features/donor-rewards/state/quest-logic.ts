@@ -1,6 +1,6 @@
 import type { CauseId, Quest } from "../types";
 
-export interface GrantQuestInput {
+interface GrantQuestInput {
   cause: CauseId;
   recurring: boolean;
 }
