@@ -33,9 +33,11 @@ export function ApplicationEditClient({ communityId, application }: ApplicationE
   const { statusHistory: authedStatusHistory } = useApplicationStatusHistory(
     application.referenceNumber
   );
-  const revisionReason = (authedStatusHistory ?? application.statusHistory ?? []).find(
-    (entry) => entry.status === "revision_requested"
-  )?.reason;
+  // Latest revision request wins — after multiple revision cycles there can be
+  // several `revision_requested` entries and the applicant needs the newest.
+  const revisionReason = (authedStatusHistory ?? application.statusHistory ?? [])
+    .filter((entry) => entry.status === "revision_requested")
+    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())[0]?.reason;
 
   // Fetch program details
   const {

@@ -32,9 +32,15 @@ describe("getApplicationStatusHistory", () => {
     expect(mockFetchData).toHaveBeenCalledWith("/v2/funding-applications/REF-123", "GET");
   });
 
-  it("should return an empty array when the application is missing", async () => {
-    mockFetchData.mockResolvedValue([null, "Not Found", null, 404]);
+  it("should return an empty array when the application has no status history", async () => {
+    mockFetchData.mockResolvedValue([{ referenceNumber: "REF-123" }, null, null, 200]);
 
     expect(await getApplicationStatusHistory("REF-123")).toEqual([]);
+  });
+
+  it("should throw on fetch failure so the SSR fallback is preserved", async () => {
+    mockFetchData.mockResolvedValue([null, "Request failed", null, 500]);
+
+    await expect(getApplicationStatusHistory("REF-123")).rejects.toThrow("Request failed");
   });
 });
