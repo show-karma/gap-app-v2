@@ -50,6 +50,8 @@ export interface ImpactUpdate {
   verified: boolean;
   read: boolean;
   xp: number;
+  /** Total IP actually credited when read, including quest-completion bonuses */
+  xpAwarded?: number;
 }
 
 export interface GrantRecord {

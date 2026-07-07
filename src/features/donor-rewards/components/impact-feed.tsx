@@ -1,17 +1,22 @@
 "use client";
 
 import { BadgeCheck, BookOpenCheck } from "lucide-react";
-import React from "react";
+import React, { useMemo } from "react";
+import { questsCompletedByRead } from "../state/quest-logic";
 import { useRewards } from "../state/rewards-context";
-import type { ImpactUpdate } from "../types";
+import type { ImpactUpdate, Quest } from "../types";
 
 const UpdateCard = React.memo(function UpdateCard({
   update,
   onRead,
+  pendingQuests,
 }: {
   update: ImpactUpdate;
   onRead: (id: string) => void;
+  /** Quests the next read completes — their XP is credited on top of the update's own */
+  pendingQuests: Quest[];
 }) {
+  const pendingBonus = pendingQuests.reduce((sum, quest) => sum + quest.xp, 0);
   return (
     <li className="rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
       <div className="flex items-start gap-3">
@@ -39,16 +44,26 @@ const UpdateCard = React.memo(function UpdateCard({
             {update.read ? (
               <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
                 <BookOpenCheck className="h-4 w-4" aria-hidden="true" />
-                Read · +{update.xp} IP earned
+                Read · +{update.xpAwarded ?? update.xp} IP earned
               </span>
             ) : (
-              <button
-                type="button"
-                onClick={() => onRead(update.id)}
-                className="rounded-xl bg-zinc-900 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-zinc-700 active:scale-95 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
-              >
-                Mark as read · +{update.xp} IP
-              </button>
+              <>
+                <button
+                  type="button"
+                  onClick={() => onRead(update.id)}
+                  className="rounded-xl bg-zinc-900 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-zinc-700 active:scale-95 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
+                >
+                  Mark as read · +{update.xp + pendingBonus} IP
+                </button>
+                {pendingQuests.map((quest) => (
+                  <p
+                    key={quest.id}
+                    className="mt-1.5 text-xs font-medium text-violet-600 dark:text-violet-400"
+                  >
+                    Completes quest "{quest.title}" · +{quest.xp} IP included
+                  </p>
+                ))}
+              </>
             )}
           </div>
         </div>
@@ -59,6 +74,7 @@ const UpdateCard = React.memo(function UpdateCard({
 
 export function ImpactFeed() {
   const { state, readUpdate } = useRewards();
+  const pendingQuests = useMemo(() => questsCompletedByRead(state.quests), [state.quests]);
 
   return (
     <section
@@ -71,7 +87,12 @@ export function ImpactFeed() {
       </p>
       <ul className="mt-4 flex flex-col gap-3">
         {state.updates.map((update) => (
-          <UpdateCard key={update.id} update={update} onRead={readUpdate} />
+          <UpdateCard
+            key={update.id}
+            update={update}
+            onRead={readUpdate}
+            pendingQuests={pendingQuests}
+          />
         ))}
       </ul>
     </section>

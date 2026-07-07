@@ -10,6 +10,7 @@ import {
 } from "../data/mock-data";
 import type { BadgeDef, CelebrationPayload, Quest, RewardsState } from "../types";
 import { levelForXp } from "../utils/levels";
+import { questsCompletedByGrant, questsCompletedByRead } from "./quest-logic";
 
 type RewardsAction =
   | { type: "MAKE_GRANT"; orgId: string; amount: number; recurring: boolean }
@@ -52,20 +53,17 @@ function applyGrant(
   if (isNewCause) xpEarned += XP_NEW_CAUSE_BONUS;
   if (action.recurring) xpEarned += XP_RECURRING_BONUS;
 
+  const completedIds = new Set(
+    questsCompletedByGrant(state.quests, { cause: org.cause, recurring: action.recurring }).map(
+      (quest) => quest.id
+    )
+  );
   const questsCompleted: Quest[] = [];
   const quests = state.quests.map((quest) => {
-    if (quest.progress >= quest.goal) return quest;
-    const matchesGrantQuest =
-      (quest.type === "grant_any" ||
-        (quest.type === "grant_cause" && quest.targetCause === org.cause) ||
-        (quest.type === "recurring" && action.recurring)) &&
-      quest.progress + 1 >= quest.goal;
-    if (matchesGrantQuest) {
-      const completed = { ...quest, progress: quest.goal };
-      questsCompleted.push(completed);
-      return completed;
-    }
-    return quest;
+    if (!completedIds.has(quest.id)) return quest;
+    const completed = { ...quest, progress: quest.goal };
+    questsCompleted.push(completed);
+    return completed;
   });
   xpEarned += questsCompleted.reduce((sum, quest) => sum + quest.xp, 0);
 
@@ -120,16 +118,18 @@ function applyReadUpdate(state: RewardsState, updateId: string): RewardsState {
   const update = state.updates.find((item) => item.id === updateId);
   if (!update || update.read) return state;
 
+  const questBonus = questsCompletedByRead(state.quests).reduce((sum, quest) => sum + quest.xp, 0);
+  const xpEarned = update.xp + questBonus;
+
+  // xpAwarded records the full credit (update + quest bonus) so the feed can
+  // report exactly what this read actually earned.
   const updates = state.updates.map((item) =>
-    item.id === updateId ? { ...item, read: true } : item
+    item.id === updateId ? { ...item, read: true, xpAwarded: xpEarned } : item
   );
 
-  let xpEarned = update.xp;
   const quests = state.quests.map((quest) => {
     if (quest.type !== "read_updates" || quest.progress >= quest.goal) return quest;
-    const progress = quest.progress + 1;
-    if (progress >= quest.goal) xpEarned += quest.xp;
-    return { ...quest, progress };
+    return { ...quest, progress: quest.progress + 1 };
   });
 
   return { ...state, updates, quests, xp: state.xp + xpEarned };

@@ -2,8 +2,15 @@
 
 import { ArrowLeft, BadgeCheck, X } from "lucide-react";
 import { AnimatePresence, m } from "motion/react";
-import React, { useEffect, useState } from "react";
-import { CAUSES, NONPROFITS } from "../data/mock-data";
+import React, { useCallback, useEffect, useState } from "react";
+import {
+  CAUSES,
+  NONPROFITS,
+  XP_NEW_CAUSE_BONUS,
+  XP_PER_GRANT,
+  XP_RECURRING_BONUS,
+} from "../data/mock-data";
+import { questsCompletedByGrant } from "../state/quest-logic";
 import { useRewards } from "../state/rewards-context";
 import type { Nonprofit } from "../types";
 import { formatUsd } from "../utils/format";
@@ -63,12 +70,12 @@ export function GrantFlow({ open, onClose }: GrantFlowProps) {
   const [amount, setAmount] = useState<number | null>(null);
   const [recurring, setRecurring] = useState(false);
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     onClose();
     setSelectedOrg(null);
     setAmount(null);
     setRecurring(false);
-  };
+  }, [onClose]);
 
   // Selecting an org seeds the amount from that org's own presets, so the
   // confirm CTA can never show a value that isn't one of the visible chips.
@@ -84,7 +91,7 @@ export function GrantFlow({ open, onClose }: GrantFlowProps) {
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  });
+  }, [open, handleClose]);
 
   const handleConfirm = () => {
     if (!selectedOrg || amount === null) return;
@@ -93,6 +100,11 @@ export function GrantFlow({ open, onClose }: GrantFlowProps) {
   };
 
   const isNewCause = selectedOrg ? !state.causesSupported.includes(selectedOrg.cause) : false;
+  // Same helper the reducer uses to credit XP, so the panel can never promise
+  // a different amount than the celebration actually awards.
+  const questsToComplete = selectedOrg
+    ? questsCompletedByGrant(state.quests, { cause: selectedOrg.cause, recurring })
+    : [];
 
   return (
     <AnimatePresence>
@@ -111,9 +123,9 @@ export function GrantFlow({ open, onClose }: GrantFlowProps) {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.98 }}
             transition={{ duration: 0.15 }}
-            className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-t-3xl bg-zinc-50 p-6 shadow-2xl sm:rounded-3xl dark:bg-zinc-900"
+            className="flex max-h-[90vh] w-full max-w-lg flex-col rounded-t-3xl bg-zinc-50 shadow-2xl sm:rounded-3xl dark:bg-zinc-900"
           >
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between px-6 pt-6">
               {selectedOrg ? (
                 <button
                   type="button"
@@ -138,8 +150,11 @@ export function GrantFlow({ open, onClose }: GrantFlowProps) {
               </button>
             </div>
 
+            {/* The body scrolls on its own while the confirm footer stays in
+                normal flex flow below it, so no content can ever be hidden
+                underneath the CTA. */}
             {!selectedOrg ? (
-              <>
+              <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-6">
                 <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
                   Suggested for you, based on your causes and this month's quests
                 </p>
@@ -148,9 +163,9 @@ export function GrantFlow({ open, onClose }: GrantFlowProps) {
                     <OrgOption key={org.id} org={org} onSelect={handleSelectOrg} />
                   ))}
                 </ul>
-              </>
+              </div>
             ) : (
-              <div className="mt-4">
+              <div className="mt-4 min-h-0 flex-1 overflow-y-auto px-6 pb-4">
                 <div className="flex items-center gap-3 rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-800">
                   <span className="text-3xl">{selectedOrg.emoji}</span>
                   <div>
@@ -187,7 +202,7 @@ export function GrantFlow({ open, onClose }: GrantFlowProps) {
                       Make it monthly
                     </span>
                     <span className="block text-xs text-zinc-500 dark:text-zinc-400">
-                      Protects your streak automatically · +100 IP bonus
+                      Protects your streak automatically · +{XP_RECURRING_BONUS} IP bonus
                     </span>
                   </span>
                   <input
@@ -216,29 +231,36 @@ export function GrantFlow({ open, onClose }: GrantFlowProps) {
                     You will earn
                   </p>
                   <ul className="mt-1 space-y-0.5 text-violet-700 dark:text-violet-400">
-                    <li>+150 IP for this grant</li>
-                    {isNewCause && <li>+50 IP for supporting a new cause</li>}
-                    {recurring && <li>+100 IP recurring bonus</li>}
+                    <li>+{XP_PER_GRANT} IP for this grant</li>
+                    {isNewCause && <li>+{XP_NEW_CAUSE_BONUS} IP for supporting a new cause</li>}
+                    {recurring && <li>+{XP_RECURRING_BONUS} IP recurring bonus</li>}
+                    {questsToComplete.map((quest) => (
+                      <li key={quest.id}>
+                        ✅ Completes quest "{quest.title}" · +{quest.xp} IP
+                      </li>
+                    ))}
                     {!state.grantedThisMonth && (
                       <li>🔥 Streak extends to month {state.streakMonths + 1}</li>
                     )}
                   </ul>
                 </div>
+              </div>
+            )}
 
-                <div className="sticky bottom-0 -mx-6 mt-5 bg-zinc-50 px-6 pb-1 pt-2 dark:bg-zinc-900">
-                  <button
-                    type="button"
-                    onClick={handleConfirm}
-                    disabled={amount === null}
-                    className="w-full rounded-2xl bg-emerald-600 py-4 text-base font-bold text-white shadow-lg transition hover:bg-emerald-700 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    Grant {amount !== null ? formatUsd(amount) : ""}
-                    {recurring ? " monthly" : ""} to {selectedOrg.name}
-                  </button>
-                  <p className="mt-2 text-center text-xs text-zinc-400 dark:text-zinc-500">
-                    Prototype: no real money moves.
-                  </p>
-                </div>
+            {selectedOrg && (
+              <div className="border-t border-zinc-200 px-6 pb-5 pt-3 dark:border-zinc-800">
+                <button
+                  type="button"
+                  onClick={handleConfirm}
+                  disabled={amount === null}
+                  className="w-full rounded-2xl bg-emerald-600 py-4 text-base font-bold text-white shadow-lg transition hover:bg-emerald-700 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  Grant {amount !== null ? formatUsd(amount) : ""}
+                  {recurring ? " monthly" : ""} to {selectedOrg.name}
+                </button>
+                <p className="mt-2 text-center text-xs text-zinc-400 dark:text-zinc-500">
+                  Prototype: no real money moves.
+                </p>
               </div>
             )}
           </m.div>
