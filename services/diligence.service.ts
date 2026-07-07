@@ -4,6 +4,8 @@ import type {
   DiligenceResponseContext,
   DiligenceTemplate,
   IntroQueuedResponse,
+  OutreachAction,
+  OutreachPreview,
   RequestIntroResult,
   SaveDiligenceTemplateRequest,
   SubmitDiligenceResponseRequest,
@@ -83,18 +85,45 @@ export const getCandidateDiligence = async (
 };
 
 /**
+ * Loads the exact email a send action would dispatch (DEV-500) so the advisor
+ * can review/edit the body first. The backend composes it with the same
+ * builders as delivery, so preview and sent content cannot drift. A 404 means
+ * the candidate is unknown / cross-advisor (same semantics as the diligence
+ * view).
+ */
+export const getOutreachPreview = async (
+  reportId: string,
+  candidateId: string,
+  action: OutreachAction
+): Promise<OutreachPreview> => {
+  const [data, error] = await fetchData<OutreachPreview>(
+    DILIGENCE_ENDPOINTS.OUTREACH_PREVIEW(reportId, candidateId, action)
+  );
+  if (error || !data) {
+    throw new Error(error || "Failed to load the email preview");
+  }
+  return data;
+};
+
+/**
  * Ask Questions — sends an anonymous diligence request (202, async). The email
  * is dispatched via the outbox, not synchronously, so callers should re-fetch
  * the candidate view shortly after. Idempotent per candidate, so retries are
  * safe.
+ *
+ * `body` is the advisor-edited email body. Pass it ONLY when the advisor
+ * actually edited the preview — omitted, the backend composes its own default,
+ * which is the contract for an untouched textarea.
  */
 export const askQuestions = async (
   reportId: string,
-  candidateId: string
+  candidateId: string,
+  body?: string
 ): Promise<AskQuestionsResponse> => {
   const [data, error] = await fetchData<AskQuestionsResponse>(
     DILIGENCE_ENDPOINTS.REQUESTS(reportId, candidateId),
-    "POST"
+    "POST",
+    body === undefined ? {} : { body }
   );
   if (error || !data) {
     throw new Error(error || "Failed to send diligence request");
@@ -118,11 +147,13 @@ export const askQuestions = async (
  */
 export const requestIntro = async (
   reportId: string,
-  candidateId: string
+  candidateId: string,
+  body?: string
 ): Promise<RequestIntroResult> => {
   const [data, error, , status] = await fetchData<IntroQueuedResponse>(
     DILIGENCE_ENDPOINTS.INTRO_REQUESTS(reportId, candidateId),
-    "POST"
+    "POST",
+    body === undefined ? {} : { body }
   );
   if (status === 422) {
     return {

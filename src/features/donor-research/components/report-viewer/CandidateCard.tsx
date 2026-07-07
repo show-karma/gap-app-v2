@@ -159,6 +159,7 @@ export function CandidateCard({
         <CandidateDiligenceFooter
           reportId={reportId}
           candidateId={candidate.id}
+          candidateName={candidate.organizationName}
           show={showDiligenceActions}
         />
       </div>
@@ -169,6 +170,7 @@ export function CandidateCard({
 interface CandidateDiligenceFooterProps {
   reportId: string | undefined;
   candidateId: string;
+  candidateName: string | null;
   show: boolean;
 }
 
@@ -177,9 +179,18 @@ interface CandidateDiligenceFooterProps {
  * already-dense {@link CandidateCard} body. Renders nothing on the donor shared
  * view (where `show` is false / `reportId` is absent).
  */
-function CandidateDiligenceFooter({ reportId, candidateId, show }: CandidateDiligenceFooterProps) {
+function CandidateDiligenceFooter({
+  reportId,
+  candidateId,
+  candidateName,
+  show,
+}: CandidateDiligenceFooterProps) {
   return show && reportId ? (
-    <CandidateDiligenceActions reportId={reportId} candidateId={candidateId} />
+    <CandidateDiligenceActions
+      reportId={reportId}
+      candidateId={candidateId}
+      candidateName={candidateName}
+    />
   ) : null;
 }
 

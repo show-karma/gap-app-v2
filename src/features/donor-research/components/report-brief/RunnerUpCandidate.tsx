@@ -165,7 +165,11 @@ export function RunnerUpCandidate({
       </div>
 
       {showDiligenceActions && reportId ? (
-        <CandidateDiligenceActions reportId={reportId} candidateId={candidate.id} />
+        <CandidateDiligenceActions
+          reportId={reportId}
+          candidateId={candidate.id}
+          candidateName={candidate.organizationName}
+        />
       ) : null}
     </section>
   );

@@ -155,7 +155,11 @@ export function LeadCandidate({
       <LeadJustification candidate={candidate} hasMore={hasMore} />
 
       {showDiligenceActions && reportId ? (
-        <CandidateDiligenceActions reportId={reportId} candidateId={candidate.id} />
+        <CandidateDiligenceActions
+          reportId={reportId}
+          candidateId={candidate.id}
+          candidateName={candidate.organizationName}
+        />
       ) : null}
     </section>
   );
