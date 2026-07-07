@@ -22,20 +22,32 @@ interface Slide {
   content: React.ReactNode;
 }
 
+// A ref callback opens the native dialog with showModal() the moment it mounts,
+// so it renders in the top layer — always viewport-centered and immune to page
+// scroll — with Escape-to-close and focus trapping for free. Unmounting on close
+// removes it from the top layer. A plain <dialog open> renders in normal flow
+// and opens off-screen once the page has been scrolled.
+const openAsModal = (node: HTMLDialogElement | null) => {
+  if (node && !node.open) node.showModal();
+};
+
 export function YearRecap({ open, onClose }: YearRecapProps) {
+  if (!open) return null;
+
   return (
-    <AnimatePresence>
-      {open && (
-        <m.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[70] flex items-center justify-center bg-black/80 p-4"
-        >
-          <RecapStories onClose={onClose} />
-        </m.div>
-      )}
-    </AnimatePresence>
+    <dialog
+      ref={openAsModal}
+      aria-label="Year in giving recap"
+      onCancel={(event) => {
+        event.preventDefault();
+        onClose();
+      }}
+      className="m-0 max-h-none max-w-none bg-transparent p-0 backdrop:bg-black/80 backdrop:backdrop-blur-sm"
+    >
+      <div className="fixed inset-0 flex items-center justify-center p-4">
+        <RecapStories onClose={onClose} />
+      </div>
+    </dialog>
   );
 }
 
@@ -47,17 +59,6 @@ function RecapStories({ onClose }: { onClose: () => void }) {
   const { state } = useRewards();
   const [slideIndex, setSlideIndex] = useState(0);
   const level = levelForXp(state.xp);
-
-  // A non-modal <dialog open> does not close on Escape on its own, so wire it
-  // up explicitly. onClose unmounts this component, which resets slideIndex —
-  // reopening always restarts at slide 1 regardless of how it was closed.
-  useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [onClose]);
 
   const slides = useMemo<Slide[]>(() => {
     const causeChips = state.causesSupported.map((causeId) => CAUSES[causeId]);
@@ -253,11 +254,7 @@ function RecapStories({ onClose }: { onClose: () => void }) {
   const slide = slides[slideIndex];
 
   return (
-    <dialog
-      open
-      aria-label="Year in giving recap"
-      className="relative m-0 h-[640px] max-h-[85vh] w-full max-w-sm overflow-hidden rounded-3xl border-0 bg-transparent p-0 shadow-2xl"
-    >
+    <div className="relative h-[640px] max-h-[85vh] w-full max-w-sm overflow-hidden rounded-3xl shadow-2xl">
       <div className="absolute left-3 right-3 top-3 z-10 flex gap-1.5">
         {slides.map((item, index) => (
           <div key={item.id} className="h-1 flex-1 overflow-hidden rounded-full bg-white/30">
@@ -299,6 +296,6 @@ function RecapStories({ onClose }: { onClose: () => void }) {
           <span className="absolute bottom-5 text-xs text-white/50">Tap to continue</span>
         </m.button>
       </AnimatePresence>
-    </dialog>
+    </div>
   );
 }
