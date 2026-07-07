@@ -71,7 +71,10 @@ export function CelebrationOverlay() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[60] overflow-y-auto bg-black/60 backdrop-blur-sm"
+          // above the grant sheet (z-[10000]) and the karma-assistant FAB
+          // (z-[9999]), which otherwise floats over the card and can swallow
+          // the dismiss click
+          className="fixed inset-0 z-[10010] overflow-y-auto bg-black/60 backdrop-blur-sm"
           onClick={handleDismiss}
         >
           <div className="flex min-h-full items-center justify-center p-4">

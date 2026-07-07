@@ -124,7 +124,9 @@ export function GrantFlow({ open, onClose }: GrantFlowProps) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-0 backdrop-blur-sm sm:items-center sm:p-6"
+          // above the karma-assistant FAB (z-[9999]); the FAB otherwise floats
+          // over the sheet and swallows clicks near the bottom-right corner
+          className="fixed inset-0 z-[10000] flex items-end justify-center bg-black/50 p-0 backdrop-blur-sm sm:items-center sm:p-6"
           onClick={handleClose}
         >
           <m.div
