@@ -2,7 +2,7 @@
 
 import { Plus, X } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { memo, useCallback, useState } from "react";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 import {
@@ -214,13 +214,13 @@ function InlineQuestionSetup() {
   const hasTooLong = rows.some((row) => row.text.trim().length > QUESTION_TEXT_MAX);
   const canSave = filled.length > 0 && !hasTooLong && !save.isPending;
 
-  const updateRow = (id: string, text: string) => {
+  const updateRow = useCallback((id: string, text: string) => {
     setRows((prev) => prev.map((row) => (row.id === id ? { ...row, text } : row)));
-  };
+  }, []);
 
-  const removeRow = (id: string) => {
+  const removeRow = useCallback((id: string) => {
     setRows((prev) => prev.filter((row) => row.id !== id));
-  };
+  }, []);
 
   const addRow = () => {
     setRows((prev) =>
@@ -250,41 +250,17 @@ function InlineQuestionSetup() {
       </p>
 
       <div className="flex flex-col gap-2">
-        {rows.map((row, index) => {
-          const tooLong = row.text.trim().length > QUESTION_TEXT_MAX;
-          return (
-            <div key={row.id} className="flex flex-col gap-1">
-              <div className="flex items-start gap-2">
-                <Textarea
-                  aria-label={`Question ${index + 1}`}
-                  placeholder="e.g. What is your annual operating budget?"
-                  value={row.text}
-                  onChange={(event) => updateRow(row.id, event.target.value)}
-                  disabled={save.isPending}
-                  className="min-h-[40px]"
-                  rows={1}
-                />
-                {rows.length > 1 ? (
-                  <Button
-                    type="button"
-                    size="icon"
-                    variant="ghost"
-                    aria-label={`Remove question ${index + 1}`}
-                    onClick={() => removeRow(row.id)}
-                    disabled={save.isPending}
-                  >
-                    <X className="size-4" aria-hidden />
-                  </Button>
-                ) : null}
-              </div>
-              {tooLong ? (
-                <p className="text-sm text-destructive">
-                  Use {QUESTION_TEXT_MAX.toLocaleString("en-US")} characters or fewer.
-                </p>
-              ) : null}
-            </div>
-          );
-        })}
+        {rows.map((row, index) => (
+          <InlineQuestionRow
+            key={row.id}
+            row={row}
+            index={index}
+            removable={rows.length > 1}
+            disabled={save.isPending}
+            onChangeText={updateRow}
+            onRemove={removeRow}
+          />
+        ))}
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
@@ -318,3 +294,56 @@ function InlineQuestionSetup() {
     </div>
   );
 }
+
+interface InlineQuestionRowProps {
+  row: DiligenceQuestion;
+  index: number;
+  removable: boolean;
+  disabled: boolean;
+  onChangeText: (id: string, text: string) => void;
+  onRemove: (id: string) => void;
+}
+
+/** One editable question row; memoized since it renders inside a map. */
+const InlineQuestionRow = memo(function InlineQuestionRow({
+  row,
+  index,
+  removable,
+  disabled,
+  onChangeText,
+  onRemove,
+}: InlineQuestionRowProps) {
+  const tooLong = row.text.trim().length > QUESTION_TEXT_MAX;
+  return (
+    <div className="flex flex-col gap-1">
+      <div className="flex items-start gap-2">
+        <Textarea
+          aria-label={`Question ${index + 1}`}
+          placeholder="e.g. What is your annual operating budget?"
+          value={row.text}
+          onChange={(event) => onChangeText(row.id, event.target.value)}
+          disabled={disabled}
+          className="min-h-[40px]"
+          rows={1}
+        />
+        {removable ? (
+          <Button
+            type="button"
+            size="icon"
+            variant="ghost"
+            aria-label={`Remove question ${index + 1}`}
+            onClick={() => onRemove(row.id)}
+            disabled={disabled}
+          >
+            <X className="size-4" aria-hidden />
+          </Button>
+        ) : null}
+      </div>
+      {tooLong ? (
+        <p className="text-sm text-destructive">
+          Use {QUESTION_TEXT_MAX.toLocaleString("en-US")} characters or fewer.
+        </p>
+      ) : null}
+    </div>
+  );
+});
