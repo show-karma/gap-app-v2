@@ -2,6 +2,7 @@
 
 import { Sparkles, Wallet } from "lucide-react";
 import { m } from "motion/react";
+import pluralize from "pluralize";
 import { useRewards } from "../state/rewards-context";
 import { formatNumber, formatUsd } from "../utils/format";
 import { levelForXp, nextLevelForXp } from "../utils/levels";
@@ -58,8 +59,9 @@ export function RewardsHeader({ onOpenGrantFlow, onOpenRecap }: RewardsHeaderPro
                 {formatUsd(state.lifetimeGranted)}
               </p>
               <p className="text-[10px] text-emerald-200/70">
-                {state.verifiedMilestones} verified milestones · {formatUsd(state.balance)} ready to
-                deploy
+                {state.verifiedMilestones} verified{" "}
+                {pluralize("milestone", state.verifiedMilestones)} · {formatUsd(state.balance)}{" "}
+                ready to deploy
               </p>
             </div>
           </div>
