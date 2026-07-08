@@ -126,6 +126,10 @@ export async function regenerateReport(
   return data;
 }
 
+export async function deleteReport(communitySlug: string, reportId: string): Promise<void> {
+  await apiClient.delete(`/v2/communities/${communitySlug}/reports/${reportId}`);
+}
+
 export async function publishReport(
   communitySlug: string,
   reportId: string
