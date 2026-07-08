@@ -1,7 +1,7 @@
 {
   "$schema": "./scripts/quality-baseline.schema.json",
-  "generatedAt": "2026-07-08T17:14:46.037Z",
-  "generatedFromCommit": "2b3a9dfd1b19e8a8fd89d4ef9373cf4676849d3b",
+  "generatedAt": "2026-07-08T20:13:23.316Z",
+  "generatedFromCommit": "fc23ccd395ba484ba838833f57a526e34b0d6c15",
   "coverage": {
     "lines": 0,
     "statements": 0,
@@ -382,8 +382,8 @@
       "maxBytes": 40000
     },
     "src/features/funding-map/components/funding-program-details-dialog.tsx": {
-      "lines": 793,
-      "bytes": 27004,
+      "lines": 794,
+      "bytes": 27208,
       "maxLines": 600,
       "maxBytes": 40000
     },
@@ -465,12 +465,12 @@
     "errors": 64,
     "warnings": 3298,
     "byCategory": {
-      "Accessibility": 284,
       "Architecture": 1175,
+      "Accessibility": 284,
       "Correctness": 393,
       "Next.js": 143,
-      "Performance": 624,
       "Server": 9,
+      "Performance": 624,
       "State & Effects": 684,
       "TanStack Query": 37,
       "Bundle Size": 10,

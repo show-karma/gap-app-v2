@@ -23,21 +23,6 @@ interface DatePickerProps {
   clearButtonFn?: () => void;
   ariaLabel?: string;
   disabled?: boolean;
-  /**
-   * Render the calendar popover inline (as a DOM descendant of this component)
-   * instead of portaling it to `document.body` (the default).
-   *
-   * Opt-in for use inside overlays that close on outside interaction — notably
-   * the HeadlessUI `<Dialog>` used by ProgressDialog. When the calendar is
-   * portaled to `body` it lives outside the `Dialog.Panel`, so pointer events on
-   * it are treated as an outside interaction and tear the whole dialog down
-   * before the calendar is usable. Rendering inline keeps the calendar within
-   * the panel's DOM subtree so the dialog stays open.
-   *
-   * Defaults to `false` to preserve the portal behavior for every existing
-   * (non-dialog) caller — do not flip this globally.
-   */
-  renderInline?: boolean;
 }
 
 function startOfDay(date: Date): Date {
@@ -94,7 +79,6 @@ export const DatePicker = ({
   clearButtonFn,
   ariaLabel,
   disabled = false,
-  renderInline = false,
 }: DatePickerProps) => {
   const [open, setOpen] = useState(false);
   const [inputValue, setInputValue] = useState(selected ? toDisplayDate(selected) : "");
@@ -179,36 +163,6 @@ export const DatePicker = ({
     setOpen(false);
   };
 
-  const popoverContent = (
-    <Popover.Content
-      className="z-[100] bg-white dark:bg-zinc-800 mt-4 rounded-md shadow-lg"
-      onOpenAutoFocus={(e) => e.preventDefault()}
-    >
-      <DayPicker
-        mode="single"
-        selected={selected}
-        onDayClick={handleDayClick}
-        defaultMonth={selected || undefined}
-        disabled={(date) => {
-          if (minDate && startOfDay(date) < startOfDay(minDate)) return true;
-          if (maxDate && startOfDay(date) > startOfDay(maxDate)) return true;
-          return false;
-        }}
-      />
-      {clearButtonFn && (
-        <div className="flex flex-row gap-2 items-center justify-end px-6 pb-2">
-          <button
-            type="button"
-            className={cn("w-max bg-transparent border px-4 py-2 rounded-md", clearButtonClassName)}
-            onClick={handleClear}
-          >
-            Clear
-          </button>
-        </div>
-      )}
-    </Popover.Content>
-  );
-
   return (
     <div className={className}>
       <Popover.Root open={open} onOpenChange={setOpen}>
@@ -242,7 +196,38 @@ export const DatePicker = ({
             </button>
           </Popover.Trigger>
         </div>
-        {renderInline ? popoverContent : <Popover.Portal>{popoverContent}</Popover.Portal>}
+        <Popover.Portal>
+          <Popover.Content
+            className="z-[100] bg-white dark:bg-zinc-800 mt-4 rounded-md shadow-lg"
+            onOpenAutoFocus={(e) => e.preventDefault()}
+          >
+            <DayPicker
+              mode="single"
+              selected={selected}
+              onDayClick={handleDayClick}
+              defaultMonth={selected || undefined}
+              disabled={(date) => {
+                if (minDate && startOfDay(date) < startOfDay(minDate)) return true;
+                if (maxDate && startOfDay(date) > startOfDay(maxDate)) return true;
+                return false;
+              }}
+            />
+            {clearButtonFn && (
+              <div className="flex flex-row gap-2 items-center justify-end px-6 pb-2">
+                <button
+                  type="button"
+                  className={cn(
+                    "w-max bg-transparent border px-4 py-2 rounded-md",
+                    clearButtonClassName
+                  )}
+                  onClick={handleClear}
+                >
+                  Clear
+                </button>
+              </div>
+            )}
+          </Popover.Content>
+        </Popover.Portal>
       </Popover.Root>
       {localError && <p className="text-sm text-red-500 mt-1">{localError}</p>}
     </div>
