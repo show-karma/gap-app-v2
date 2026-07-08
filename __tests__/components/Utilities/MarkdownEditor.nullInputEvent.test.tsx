@@ -127,7 +127,15 @@ describe("MarkdownEditor / md-editor-rt null InputEvent.data (GAP-FRONTEND-1WY)"
 
   // Each of these inputTypes produces a native InputEvent whose `.data` is
   // `null` per the Input Events spec — the exact events that crashed in prod.
-  const nullDataInputTypes = ["deleteContentBackward", "insertLineBreak", "insertFromPaste"];
+  // Note: the library's separate paste (clipboard) handler guard is covered by
+  // the pattern-integrity test (md-editor-rt-patch.test.ts) only — its sole
+  // nullable operand is `modelValue`, which the wrapper's `safeValue` prevents.
+  const nullDataInputTypes = [
+    "deleteContentBackward",
+    "insertLineBreak",
+    "insertFromPaste",
+    "insertFromDrop",
+  ];
 
   it.each(nullDataInputTypes)(
     "does not throw a length TypeError for inputType=%s with data:null",

@@ -39,9 +39,13 @@ describe("md-editor-rt@6.4.1 patch (GAP-FRONTEND-1WY)", () => {
     expect(source).not.toMatch(UNGUARDED_B);
   });
 
-  it.each(chunks)('%s contains the guarded `?? ""` form', (_label, file) => {
+  it.each(chunks)('%s contains the guarded `?? ""` form exactly twice', (_label, file) => {
     const source = readFileSync(file, "utf8");
-    // Whitespace differs between the es (pretty) and cjs (minified) builds.
-    expect(source).toMatch(/modelValue\s*\?\?\s*""/);
+    // Each chunk has TWO patched sites: the `input` handler and the `paste`
+    // handler. Requiring exactly two occurrences rejects a partial patch
+    // (e.g. input guarded but paste not). Whitespace differs between the es
+    // (pretty) and cjs (minified) builds, hence \s*.
+    const guarded = source.match(/modelValue\s*\?\?\s*""/g) ?? [];
+    expect(guarded).toHaveLength(2);
   });
 });
