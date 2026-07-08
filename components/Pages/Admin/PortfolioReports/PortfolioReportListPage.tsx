@@ -1,6 +1,16 @@
 "use client";
 
-import { Eye, EyeOff, FileSearch, FileText, Play, Plus, RefreshCw, Settings } from "lucide-react";
+import {
+  Eye,
+  EyeOff,
+  FileSearch,
+  FileText,
+  Play,
+  Plus,
+  RefreshCw,
+  Settings,
+  Trash2,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
@@ -9,6 +19,7 @@ import { Spinner } from "@/components/Utilities/Spinner";
 import { Button } from "@/components/ui/button";
 import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
 import {
+  useDeleteReport,
   useGenerateReport,
   usePortfolioReports,
   usePublishReport,
@@ -36,12 +47,13 @@ interface ReportTableRowProps {
   report: PortfolioReport;
   configName: string;
   rowPending: boolean;
-  activeMutationType: "publish" | "unpublish" | "regenerate" | null;
+  activeMutationType: "publish" | "unpublish" | "regenerate" | "delete" | null;
   onEdit: () => void;
   onPreview: () => void;
   onPublish: () => void;
   onUnpublish: () => void;
   onRegenerate: () => void;
+  onDelete: () => void;
 }
 
 function ReportTableRow({
@@ -55,12 +67,16 @@ function ReportTableRow({
   onPublish,
   onUnpublish,
   onRegenerate,
+  onDelete,
 }: ReportTableRowProps) {
   const report = useReportRowSync(slug, initialReport);
   const fmt = formatRunDate(report.runDate);
   const generating = isReportGenerating(report);
   const failed = report.status === "failed";
   const actionsDisabled = rowPending || generating;
+  // Drafts and failed generations can be removed; published reports back
+  // public URLs (unpublish first) and generating reports are still in flight.
+  const deletable = report.status === "draft" || failed;
   return (
     <tr className="hover:bg-zinc-50 dark:hover:bg-zinc-800/50">
       <td className="px-4 py-3 font-medium text-zinc-900 dark:text-zinc-100">{configName}</td>
@@ -109,6 +125,18 @@ function ReportTableRow({
                   ? "Retry"
                   : "Regen"}
           </Button>
+          {deletable ? (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onDelete}
+              disabled={actionsDisabled}
+              className="text-red-600 hover:text-red-700 dark:text-red-500 dark:hover:text-red-400"
+            >
+              <Trash2 className="mr-1 h-3 w-3" />
+              {rowPending && activeMutationType === "delete" ? "Deleting..." : "Delete"}
+            </Button>
+          ) : null}
         </div>
       </td>
     </tr>
@@ -129,6 +157,7 @@ export function PortfolioReportListPage({ community }: Props) {
   const publishMutation = usePublishReport(slug);
   const unpublishMutation = useUnpublishReport(slug);
   const regenerateMutation = useRegenerateReport(slug);
+  const deleteMutation = useDeleteReport(slug);
 
   const configById = useMemo(() => {
     const map = new Map<string, ReportConfig>();
@@ -151,10 +180,11 @@ export function PortfolioReportListPage({ community }: Props) {
   // Per-row pending state: track which report is being mutated and what action
   const [activeReportId, setActiveReportId] = useState<string | null>(null);
   const [activeMutationType, setActiveMutationType] = useState<
-    "publish" | "unpublish" | "regenerate" | null
+    "publish" | "unpublish" | "regenerate" | "delete" | null
   >(null);
   const [generatingConfigId, setGeneratingConfigId] = useState<string | null>(null);
   const [regenerateTargetId, setRegenerateTargetId] = useState<string | null>(null);
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
 
   if (accessLoading || isLoading) {
     return (
@@ -233,9 +263,31 @@ export function PortfolioReportListPage({ community }: Props) {
     }
   };
 
+  const handleDelete = async () => {
+    if (!deleteTargetId) return;
+    const reportId = deleteTargetId;
+    setActiveReportId(reportId);
+    setActiveMutationType("delete");
+    try {
+      await deleteMutation.mutateAsync(reportId);
+      toast.success("Report deleted");
+    } catch (error) {
+      toast.error(
+        `Failed to delete report: ${error instanceof Error ? error.message : "Unknown error"}`
+      );
+    } finally {
+      setActiveReportId(null);
+      setActiveMutationType(null);
+      setDeleteTargetId(null);
+    }
+  };
+
   const isRowPending = (reportId: string) =>
     activeReportId === reportId &&
-    (publishMutation.isPending || unpublishMutation.isPending || regenerateMutation.isPending);
+    (publishMutation.isPending ||
+      unpublishMutation.isPending ||
+      regenerateMutation.isPending ||
+      deleteMutation.isPending);
 
   const sortedReports = (reports ?? []).slice().sort((a, b) => b.runDate.localeCompare(a.runDate));
 
@@ -248,6 +300,17 @@ export function PortfolioReportListPage({ community }: Props) {
         externalIsOpen={regenerateTargetId !== null}
         externalSetIsOpen={(open) => {
           if (!open) setRegenerateTargetId(null);
+        }}
+        buttonElement={null}
+      />
+
+      <DeleteDialog
+        title="Delete this report? This can't be undone."
+        deleteFunction={handleDelete}
+        isLoading={deleteMutation.isPending}
+        externalIsOpen={deleteTargetId !== null}
+        externalSetIsOpen={(open) => {
+          if (!open) setDeleteTargetId(null);
         }}
         buttonElement={null}
       />
@@ -380,6 +443,7 @@ export function PortfolioReportListPage({ community }: Props) {
                   onPublish={() => handlePublish(report.id)}
                   onUnpublish={() => handleUnpublish(report.id)}
                   onRegenerate={() => setRegenerateTargetId(report.id)}
+                  onDelete={() => setDeleteTargetId(report.id)}
                 />
               ))}
             </tbody>
