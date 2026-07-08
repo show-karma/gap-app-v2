@@ -7,7 +7,7 @@
  * Enter / paste), so the handler throws
  * `TypeError: Cannot read properties of null (reading 'length')`.
  *
- * The fix is `normalizeNullInputEventData` in MarkdownEditor.tsx, passed as
+ * The fix is `normalizeNullInputEventData` (in utils/normalize-null-input-event-data.ts), passed as
  * `onInput` to MdEditor: the library invokes the consumer's `onInput` with the
  * raw event BEFORE destructuring `.data`, so shadowing the null with an own
  * `""` property defuses the crash. These tests render the REAL editor
@@ -25,7 +25,8 @@ import { render, waitFor } from "@testing-library/react";
 import { MdEditor } from "md-editor-rt";
 import React from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { MarkdownEditor, normalizeNullInputEventData } from "@/components/Utilities/MarkdownEditor";
+import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
+import { normalizeNullInputEventData } from "@/components/Utilities/utils/normalize-null-input-event-data";
 
 // The wrapper pulls in next-themes and a heavy preview component — mock those
 // (NOT md-editor-rt itself, which is the code under test).
@@ -271,8 +272,8 @@ describe("MarkdownEditor / md-editor-rt null InputEvent.data (GAP-FRONTEND-1WY)"
   describe("upstream bug canary (pristine library, NO shim)", () => {
     // Documents that md-editor-rt still crashes without the shim. If this
     // test starts FAILING after a library upgrade, upstream fixed the null
-    // guard: remove `normalizeNullInputEventData` from MarkdownEditor.tsx and
-    // delete this file.
+    // guard: remove `normalizeNullInputEventData` (utils/normalize-null-input-event-data.ts
+    // and its wiring in MarkdownEditor.tsx) and delete this file.
     it("unshimmed editor still throws the length TypeError on data:null", async () => {
       const utils = render(
         <MdEditor
