@@ -102,6 +102,16 @@ describe("executeWithRetry", () => {
     expect(attempt).toHaveBeenCalledTimes(1);
   });
 
+  it("retries HEAD requests like GET (idempotent)", async () => {
+    const attempt = vi.fn().mockRejectedValueOnce(socketError()).mockResolvedValueOnce("ok");
+
+    const promise = executeWithRetry(attempt, { method: "HEAD", isServer: true });
+    await vi.runAllTimersAsync();
+
+    await expect(promise).resolves.toBe("ok");
+    expect(attempt).toHaveBeenCalledTimes(2);
+  });
+
   it("stops when the signal is already aborted", async () => {
     const controller = new AbortController();
     controller.abort();
@@ -115,6 +125,30 @@ describe("executeWithRetry", () => {
 
     await vi.runAllTimersAsync();
     await promise;
+    expect(attempt).toHaveBeenCalledTimes(1);
+  });
+
+  it("stops when the signal aborts MID-BACKOFF (no extra attempt after the delay)", async () => {
+    const controller = new AbortController();
+    const err = socketError();
+    const attempt = vi.fn().mockRejectedValue(err);
+
+    const settled = executeWithRetry(attempt, {
+      method: "GET",
+      isServer: true,
+      signal: controller.signal,
+    }).catch((e) => e);
+
+    // Let the first attempt fail and the backoff timer get scheduled
+    // (ceiling 250ms * random 0.5 = 125ms), then abort partway through it.
+    await vi.advanceTimersByTimeAsync(50);
+    expect(attempt).toHaveBeenCalledTimes(1);
+    controller.abort();
+
+    // Run out the remaining backoff — the post-delay abort check must fire
+    // instead of a second attempt.
+    await vi.runAllTimersAsync();
+    await expect(settled).resolves.toBe(err);
     expect(attempt).toHaveBeenCalledTimes(1);
   });
 

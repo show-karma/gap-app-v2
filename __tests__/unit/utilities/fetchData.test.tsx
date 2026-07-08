@@ -1,5 +1,9 @@
 import * as Sentry from "@sentry/nextjs";
 import axios from "axios";
+// Same module instance as the aliased "@sentry/nextjs" import above (vitest
+// resolves both specifiers to this file), but typed — exposes the `__scope`
+// spy without an `as any` reach-in.
+import { __scope as sentryScope } from "@/__mocks__/@sentry/nextjs";
 import { TokenManager } from "@/utilities/auth/token-manager";
 import fetchData from "@/utilities/fetchData";
 
@@ -318,8 +322,7 @@ describe("fetchData — SSR transient socket retries (GAP-FRONTEND-1Y9)", () => 
     expect(Sentry.captureMessage).toHaveBeenCalledWith(
       "Indexer request failed after 3 attempts (ECONNRESET)"
     );
-    // biome-ignore lint/suspicious/noExplicitAny: reaching into the test mock's scope spy.
-    expect((Sentry as any).__scope.setFingerprint).toHaveBeenCalledWith([
+    expect(sentryScope.setFingerprint).toHaveBeenCalledWith([
       "transient-fetch-retries-exhausted",
       "ECONNRESET",
     ]);

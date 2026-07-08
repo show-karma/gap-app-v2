@@ -20,7 +20,7 @@ import { isRetryableIdempotentFetchError } from "@/utilities/sentry/transientErr
  * fire when `isServer` is true.
  */
 
-export interface FetchRetryPolicy {
+interface FetchRetryPolicy {
   /** Total attempts including the first. */
   maxAttempts: number;
   /** Base backoff delay; grows exponentially per attempt. */
@@ -35,7 +35,7 @@ export const DEFAULT_FETCH_RETRY_POLICY = {
   maxDelayMs: 1000,
 } as const satisfies FetchRetryPolicy;
 
-export interface ExecuteWithRetryOptions {
+interface ExecuteWithRetryOptions {
   /** HTTP method — only GET/HEAD are retried (idempotent). */
   method: string;
   /** Abort signal — retries stop the moment it is aborted. */
@@ -51,8 +51,10 @@ export interface ExecuteWithRetryOptions {
 const IDEMPOTENT_METHODS = new Set(["GET", "HEAD"]);
 
 function delay(ms: number): Promise<void> {
-  // The loop re-checks `signal.aborted` before the next attempt, so we don't
-  // need to reject this timer on abort.
+  // This timer never rejects on abort; instead the retry loop checks
+  // `signal.aborted` both before starting the backoff and again immediately
+  // after it resolves, so an abort that fires mid-backoff still prevents the
+  // next attempt (at the cost of waiting out the remaining <=1s delay).
   return new Promise((resolve) => {
     setTimeout(resolve, ms);
   });
@@ -109,6 +111,10 @@ export async function executeWithRetry<T>(
       // Full-jitter backoff: random point in [0, min(maxDelayMs, base * 2^i)].
       const ceiling = Math.min(policy.maxDelayMs, policy.baseDelayMs * 2 ** attemptIndex);
       await delay(Math.random() * ceiling);
+
+      // Re-check after the backoff: the caller may have aborted while we were
+      // waiting, and a cancelled request must not fire another attempt.
+      if (signal?.aborted) throw lastError;
     }
   }
 

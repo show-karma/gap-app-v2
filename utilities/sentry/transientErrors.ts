@@ -105,9 +105,13 @@ function getOwnCode(error: unknown): string | undefined {
   return undefined;
 }
 
-// Reads the error's own `code`, falling back to `error.cause.code` (one
-// level) for undici's `fetch failed` wrapper. See GAP-FRONTEND-1Y9.
-function getErrorCode(error: unknown): string | undefined {
+/**
+ * Reads the error's own `code`, falling back to `error.cause.code` (one
+ * level) for undici's `fetch failed` wrapper. Exported so the exhausted-retry
+ * reporter (`reportTransientFetchFailure.ts`) fingerprints by the same code
+ * classification used here. See GAP-FRONTEND-1Y9.
+ */
+export function getErrorCode(error: unknown): string | undefined {
   return getOwnCode(error) ?? getOwnCode(getErrorCause(error));
 }
 
@@ -153,8 +157,12 @@ export function isAxiosAbortError(error: unknown): boolean {
  * wrapper — or by message fragment ("socket hang up", the TLS-handshake reset
  * "Client network socket disconnected before secure TLS connection was
  * established"). Folded into `isTransientNetworkError` so both Sentry
- * `beforeSend` hooks and `errorManager` suppress it automatically. See
- * GAP-FRONTEND-1Y9 (siblings -1YD/-1YA/-1YB/-1YP).
+ * `beforeSend` hooks and `errorManager` suppress it automatically. Accepted
+ * observability blind spot: server-side POST socket failures are suppressed
+ * with no retry and no exhaustion warning (only idempotent GET/HEAD retries
+ * exist — see `utilities/fetchRetry.ts`), and an `ECONNREFUSED` raised by a
+ * code path that doesn't go through `fetchData` is dropped without any
+ * exhausted-retry signal. See GAP-FRONTEND-1Y9 (siblings -1YD/-1YA/-1YB/-1YP).
  */
 export function isTransientSocketError(error: unknown): boolean {
   if (!error) return false;

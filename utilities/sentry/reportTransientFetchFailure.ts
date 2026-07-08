@@ -1,4 +1,5 @@
 import * as Sentry from "@sentry/nextjs";
+import { getErrorCode } from "@/utilities/sentry/transientErrors";
 
 /**
  * Reports a transient indexer fetch that failed *after all retries were
@@ -7,12 +8,14 @@ import * as Sentry from "@sentry/nextjs";
  * across every attempt is worth a low-severity signal so we can spot a
  * sustained upstream outage.
  *
- * Emitted as a `captureMessage` at `warning` level (not `captureException`)
- * so it passes the server `beforeSend` filter — that hook only drops
- * exceptions whose `originalException` is a transient error, and a
- * `captureMessage` carries none. Fingerprinted by error code (NOT endpoint)
- * so all exhausted retries of one class collapse into a single Sentry issue;
- * the endpoint lives in `extra` for drill-down.
+ * Emitted as a `captureMessage` at `warning` level (not `captureException`).
+ * Note the server `beforeSend` hook still runs for messages — Sentry sets
+ * `hint.originalException` to the message string — so this survives the
+ * transient-error filter only because the message text below matches no
+ * transient fragment and no `ignoreErrors` pattern (pinned by a test that
+ * runs the real `beforeSend` against this exact string). Fingerprinted by
+ * error code (NOT endpoint) so all exhausted retries of one class collapse
+ * into a single Sentry issue; the endpoint lives in `extra` for drill-down.
  */
 export function reportTransientFetchFailure(params: {
   endpoint: string;
@@ -22,11 +25,10 @@ export function reportTransientFetchFailure(params: {
 }): void {
   const { endpoint, method, attempts, error } = params;
 
-  const errorCode =
-    error && typeof error === "object" && "code" in error
-      ? String((error as { code?: unknown }).code ?? "")
-      : undefined;
-  const code = errorCode || "unknown";
+  // Same cause-walking code extraction used for classification, so an undici
+  // `TypeError: fetch failed` wrapper fingerprints by its nested socket code
+  // instead of collapsing into the "unknown" bucket.
+  const code = getErrorCode(error) || "unknown";
 
   const message =
     error && typeof error === "object" && "message" in error
