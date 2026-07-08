@@ -207,7 +207,7 @@ function RecapStories({ onClose }: { onClose: () => void }) {
       },
       {
         id: "card",
-        background: "bg-gradient-to-br from-zinc-800 to-zinc-950",
+        background: "bg-gradient-to-br from-stone-800 to-stone-950",
         content: (
           <>
             <p className="text-lg font-medium text-white/80">Your giving card</p>
@@ -215,7 +215,7 @@ function RecapStories({ onClose }: { onClose: () => void }) {
               initial={{ rotateY: 90, opacity: 0 }}
               animate={{ rotateY: 0, opacity: 1 }}
               transition={{ delay: 0.3, type: "spring", stiffness: 120 }}
-              className="mt-4 w-full rounded-3xl bg-gradient-to-br from-emerald-500 to-teal-700 p-6 text-left shadow-2xl"
+              className="mt-4 w-full rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-700 p-6 text-left shadow-2xl"
             >
               <div className="flex items-center justify-between">
                 <span className="text-3xl">🦉</span>
@@ -269,7 +269,7 @@ function RecapStories({ onClose }: { onClose: () => void }) {
   const slide = slides[slideIndex];
 
   return (
-    <div className="relative h-[640px] max-h-[85vh] w-full max-w-sm overflow-hidden rounded-3xl shadow-2xl">
+    <div className="relative h-[640px] max-h-[85vh] w-full max-w-sm overflow-hidden rounded-2xl shadow-2xl">
       <div className="absolute left-3 right-3 top-3 z-10 flex gap-1.5">
         {slides.map((item, index) => (
           <div key={item.id} className="h-1 flex-1 overflow-hidden rounded-full bg-white/30">
