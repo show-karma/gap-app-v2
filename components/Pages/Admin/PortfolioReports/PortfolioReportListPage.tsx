@@ -1,5 +1,6 @@
 "use client";
 
+import * as Sentry from "@sentry/nextjs";
 import {
   Eye,
   EyeOff,
@@ -208,6 +209,7 @@ export function PortfolioReportListPage({ community }: Props) {
       await generateMutation.mutateAsync({ configId });
       toast.success("Generation started, this can take a few minutes.");
     } catch (error) {
+      Sentry.captureException(error);
       toast.error(
         `Failed to start generation: ${error instanceof Error ? error.message : "Unknown error"}`
       );
@@ -222,7 +224,8 @@ export function PortfolioReportListPage({ community }: Props) {
     try {
       await publishMutation.mutateAsync(reportId);
       toast.success("Report published");
-    } catch {
+    } catch (error) {
+      Sentry.captureException(error);
       toast.error("Failed to publish report");
     } finally {
       setActiveReportId(null);
@@ -236,7 +239,8 @@ export function PortfolioReportListPage({ community }: Props) {
     try {
       await unpublishMutation.mutateAsync(reportId);
       toast.success("Report unpublished");
-    } catch {
+    } catch (error) {
+      Sentry.captureException(error);
       toast.error("Failed to unpublish report");
     } finally {
       setActiveReportId(null);
@@ -253,6 +257,7 @@ export function PortfolioReportListPage({ community }: Props) {
       await regenerateMutation.mutateAsync(reportId);
       toast.success("Regeneration started, this can take a few minutes.");
     } catch (error) {
+      Sentry.captureException(error);
       toast.error(
         `Failed to start regeneration: ${error instanceof Error ? error.message : "Unknown error"}`
       );
@@ -272,6 +277,7 @@ export function PortfolioReportListPage({ community }: Props) {
       await deleteMutation.mutateAsync(reportId);
       toast.success("Report deleted");
     } catch (error) {
+      Sentry.captureException(error);
       toast.error(
         `Failed to delete report: ${error instanceof Error ? error.message : "Unknown error"}`
       );
