@@ -14,7 +14,6 @@ import { useStaff } from "@/src/core/rbac/hooks/use-staff-bridge";
 import { PAGES } from "@/utilities/pages";
 import { fetchMyProjects } from "@/utilities/sdk/projects/fetchMyProjects";
 import { useWhitelabel } from "@/utilities/whitelabel-context";
-import { AdminSection } from "./AdminSection/AdminSection";
 import { ApplicationsSection } from "./ApplicationsSection/ApplicationsSection";
 import { DashboardLoading } from "./DashboardLoading";
 import { ProjectsSection } from "./ProjectsSection/ProjectsSection";
@@ -22,6 +21,7 @@ import { ReviewsSection } from "./ReviewsSection/ReviewsSection";
 import { SuperAdminSection } from "./SuperAdminSection/SuperAdminSection";
 import { AdvisorFullView, useAdvisorData } from "./v3/AdvisorModule";
 import { BentoOverview } from "./v3/BentoOverview";
+import { CommunitiesFullView } from "./v3/CommunitiesFullView";
 import "./v3/dashboard-soft.css";
 import type { DashModule } from "./v3/module";
 import type { ModuleStatus } from "./v3/primitives";
@@ -189,7 +189,7 @@ export function Dashboard() {
         prompt: "Create a community to run funding programs and review applications.",
         cta: { label: "Create community", icon: "plus" },
       },
-      render: () => <AdminSection />,
+      render: () => <CommunitiesFullView />,
     });
   }
 

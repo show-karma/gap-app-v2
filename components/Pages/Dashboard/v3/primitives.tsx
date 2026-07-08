@@ -82,6 +82,7 @@ export function EmptyState({
   body,
   primary,
   secondary,
+  action,
   subtleLink,
 }: {
   icon: string;
@@ -90,6 +91,8 @@ export function EmptyState({
   body: string;
   primary?: EmptyAction;
   secondary?: EmptyAction;
+  /** Custom action node (e.g. a dialog trigger) rendered in the actions row. */
+  action?: React.ReactNode;
   subtleLink?: { label: string; href: string };
 }) {
   return (
@@ -122,6 +125,7 @@ export function EmptyState({
             {secondary.label}
           </Link>
         ) : null}
+        {action ?? null}
       </div>
       {subtleLink ? (
         <Link
