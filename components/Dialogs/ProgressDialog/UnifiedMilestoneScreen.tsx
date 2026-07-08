@@ -563,7 +563,13 @@ export const UnifiedMilestoneScreen = () => {
                 id="milestone-priority"
                 className="w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-white"
                 {...register("priority", {
-                  setValueAs: (value) => parseInt(value, 10),
+                  // The "Select priority" placeholder is value 0 — map it to
+                  // undefined so re-selecting it clears the priority instead
+                  // of attesting an out-of-range priority 0
+                  setValueAs: (value) => {
+                    const parsed = parseInt(value, 10);
+                    return Number.isNaN(parsed) || parsed === 0 ? undefined : parsed;
+                  },
                   required: false,
                 })}
               >

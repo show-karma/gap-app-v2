@@ -507,17 +507,16 @@ export const fundingApplicationsAPI = {
     programId: string,
     email: string
   ): Promise<IFundingApplication | null> {
-    const [data, error] = await fetchData<IFundingApplication>(
+    const [data, error, , status] = await fetchData<IFundingApplication>(
       INDEXER.V2.FUNDING_APPLICATIONS.BY_EMAIL(programId, email)
     );
 
     if (error) {
       // Return null for 404 (no application found)
-      const errorMessage = String(error);
-      if (errorMessage.includes("404") || errorMessage.includes("not found")) {
+      if (status === 404) {
         return null;
       }
-      throw new Error(errorMessage);
+      throw new Error(String(error));
     }
 
     return data || null;
