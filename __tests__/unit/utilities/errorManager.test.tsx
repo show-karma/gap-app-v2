@@ -1,5 +1,6 @@
 import * as Sentry from "@sentry/nextjs";
 import { errorManager } from "@/components/Utilities/errorManager";
+import { ContractViolationError, HttpError, NetworkError } from "@/utilities/api/errors";
 
 // Unmock errorManager from global setup to test the actual implementation
 vi.unmock("@/components/Utilities/errorManager");
@@ -9,6 +10,7 @@ vi.mock("@sentry/nextjs", () => ({
   setUser: vi.fn(),
   setTag: vi.fn(),
   setContext: vi.fn(),
+  addBreadcrumb: vi.fn(),
 }));
 
 describe("errorManager", () => {
@@ -83,5 +85,55 @@ describe("errorManager", () => {
     errorManager("Project Grants API Error", httpErr);
 
     expect(Sentry.captureException).toHaveBeenCalled();
+  });
+
+  describe("typed ApiError early-return", () => {
+    it("should add a breadcrumb and not capture an expected NetworkError", () => {
+      const error = new NetworkError({ endpoint: "/x", method: "GET" });
+
+      errorManager("Test error", error);
+
+      expect(Sentry.addBreadcrumb).toHaveBeenCalledWith({
+        category: "api",
+        message: error.message,
+        level: "warning",
+      });
+      expect(Sentry.captureException).not.toHaveBeenCalled();
+    });
+
+    it("should add a breadcrumb and not capture an expected HttpError (429)", () => {
+      const error = new HttpError(429, { endpoint: "/x", method: "GET" });
+
+      errorManager("Test error", error);
+
+      expect(Sentry.addBreadcrumb).toHaveBeenCalledWith({
+        category: "api",
+        message: error.message,
+        level: "warning",
+      });
+      expect(Sentry.captureException).not.toHaveBeenCalled();
+    });
+
+    it("should capture an unexpected ContractViolationError", () => {
+      const error = new ContractViolationError({
+        endpoint: "/x",
+        method: "GET",
+        issues: ["x"],
+      });
+
+      errorManager("Test error", error);
+
+      expect(Sentry.addBreadcrumb).not.toHaveBeenCalled();
+      expect(Sentry.captureException).toHaveBeenCalled();
+    });
+
+    it("should capture an unexpected HttpError (500)", () => {
+      const error = new HttpError(500, { endpoint: "/x", method: "GET" });
+
+      errorManager("Test error", error);
+
+      expect(Sentry.addBreadcrumb).not.toHaveBeenCalled();
+      expect(Sentry.captureException).toHaveBeenCalled();
+    });
   });
 });

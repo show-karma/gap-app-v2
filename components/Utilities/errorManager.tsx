@@ -1,4 +1,5 @@
 import * as Sentry from "@sentry/nextjs";
+import { isApiError } from "@/utilities/api/errors";
 import { isTransientHttpError, isTransientNetworkError } from "@/utilities/sentry/transientErrors";
 
 // Lazy import toast to avoid issues in server components
@@ -38,6 +39,26 @@ const errorContains = (error: ErrorLike | null | undefined, needle: string): boo
   );
 };
 
+// Handles the "switch chain" wallet error case: toasts a network-switch
+// hint and reports whether the caller should return early. Extracted
+// (alongside errorContains) to keep errorManager under biome's
+// cognitive-complexity ceiling.
+const handleSwitchChainError = (
+  error: ErrorLike | null | undefined,
+  extra?: { targetNetwork?: string }
+): boolean => {
+  if (!errorContains(error, "switch chain")) {
+    return false;
+  }
+  const toastInstance = getToast();
+  if (toastInstance) {
+    toastInstance.error(
+      `we couldn't switch to "${extra?.targetNetwork}" network in your wallet. Please manually switch network and try again`
+    );
+  }
+  return true;
+};
+
 export const errorManager = (
   errorMessage: string,
   error: any,
@@ -46,18 +67,15 @@ export const errorManager = (
     error?: string;
   }
 ) => {
+  if (isApiError(error) && error.expected) {
+    Sentry.addBreadcrumb({ category: "api", message: error.message, level: "warning" });
+    return;
+  }
   if (error?.originalError || error?.message) {
     if (errorContains(error, "reject")) {
       return;
     }
-    const targetNetwork = extra?.targetNetwork;
-    if (errorContains(error, "switch chain")) {
-      const toastInstance = getToast();
-      if (toastInstance) {
-        toastInstance.error(
-          `we couldn't switch to "${targetNetwork}" network in your wallet. Please manually switch network and try again`
-        );
-      }
+    if (handleSwitchChainError(error, extra)) {
       return;
     }
   }

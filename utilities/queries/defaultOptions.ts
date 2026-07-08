@@ -1,7 +1,8 @@
+import { type HttpError, isApiError } from "@/utilities/api/errors";
 import { isAxiosAbortError, isTransientNetworkError } from "@/utilities/sentry/transientErrors";
 
 /**
- * Smart retry function:
+ * Legacy untyped retry function (pre-#1775 typed taxonomy):
  * - Never retry rate limits (429) or auth failures (401)
  * - Never retry user-cancelled requests (route change / abort)
  * - Allow up to 2 retries for transient network errors (no HTTP response —
@@ -9,8 +10,11 @@ import { isAxiosAbortError, isTransientNetworkError } from "@/utilities/sentry/t
  *   cause of the funding-page Sentry noise (DEV-236) and usually succeed
  *   on retry.
  * - Allow one retry for everything else
+ *
+ * Kept verbatim (renamed only) as the fallback for any error that hasn't
+ * been normalized into the typed `ApiError` taxonomy yet.
  */
-function shouldRetry(failureCount: number, error: unknown): boolean {
+function legacyShouldRetry(failureCount: number, error: unknown): boolean {
   if (isAxiosAbortError(error)) {
     return false;
   }
@@ -33,9 +37,21 @@ export const defaultQueryOptions = {
   refetchOnWindowFocus: false,
   refetchOnMount: true,
   refetchOnReconnect: false,
-  retry: shouldRetry,
-  // Exponential backoff capped at 5s. Default is a constant 1s which
-  // hammers the indexer during a transient outage and fails fast enough
-  // that the user sees the error UI before the network recovers.
-  retryDelay: (attemptIndex: number) => Math.min(1000 * 2 ** attemptIndex, 5000),
+  // Typed `ApiError`s (issue #1775) carry their own `retryable` verdict from
+  // the classification taxonomy. Anything not yet normalized falls back to
+  // the legacy untyped heuristic.
+  retry: (failureCount: number, error: unknown): boolean =>
+    isApiError(error)
+      ? error.retryable && failureCount < 2
+      : legacyShouldRetry(failureCount, error),
+  // Exponential backoff capped at 30s, with full jitter. Typed HTTP errors
+  // that carry a `Retry-After` hint (e.g. 429/503) honor it instead of the
+  // exponential curve. Default is a constant 1s which hammers the indexer
+  // during a transient outage and fails fast enough that the user sees the
+  // error UI before the network recovers.
+  retryDelay: (attempt: number, error: unknown): number => {
+    const hint =
+      isApiError(error) && error.kind === "http" ? (error as HttpError).retryAfterMs : undefined;
+    return Math.min(hint ?? 2000 * 2 ** attempt, 30_000) + Math.random() * 250;
+  },
 };
