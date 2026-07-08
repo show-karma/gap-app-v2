@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { PortfolioReportListPage } from "@/components/Pages/Admin/PortfolioReports/PortfolioReportListPage";
 import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
 import {
+  useDeleteReport,
   useGenerateReport,
   usePortfolioReports,
   usePublishReport,
@@ -33,8 +34,35 @@ const mockUseGenerateReport = vi.mocked(useGenerateReport);
 const mockUsePublishReport = vi.mocked(usePublishReport);
 const mockUseUnpublishReport = vi.mocked(useUnpublishReport);
 const mockUseRegenerateReport = vi.mocked(useRegenerateReport);
+const mockUseDeleteReport = vi.mocked(useDeleteReport);
 const mockUseReportConfigs = vi.mocked(useReportConfigs);
 const mockUseReportRowSync = vi.mocked(useReportRowSync);
+
+function reportFixture(overrides: Record<string, unknown> = {}) {
+  return {
+    id: "report-1",
+    reportConfigId: "config-1",
+    communityId: "community-1",
+    runDate: "2026-03-15",
+    status: "draft",
+    content: "# Report",
+    dataSnapshot: {},
+    modelId: "gpt-4.1",
+    tokenUsage: null,
+    generatedAt: "2026-04-01T00:00:00.000Z",
+    generationError: null,
+    publishedAt: null,
+    publishedBy: null,
+    createdAt: "2026-04-01T00:00:00.000Z",
+    updatedAt: "2026-04-01T00:00:00.000Z",
+    ...overrides,
+  };
+}
+
+const filecoinCommunity = {
+  uid: "community-1",
+  details: { slug: "filecoin", name: "Filecoin" },
+} as any;
 
 describe("PortfolioReportListPage", () => {
   beforeEach(() => {
@@ -49,6 +77,7 @@ describe("PortfolioReportListPage", () => {
     mockUsePublishReport.mockReturnValue({ isPending: false, mutateAsync: vi.fn() } as any);
     mockUseUnpublishReport.mockReturnValue({ isPending: false, mutateAsync: vi.fn() } as any);
     mockUseRegenerateReport.mockReturnValue({ isPending: false, mutateAsync: vi.fn() } as any);
+    mockUseDeleteReport.mockReturnValue({ isPending: false, mutateAsync: vi.fn() } as any);
     mockUseReportConfigs.mockReturnValue({ data: [], isLoading: false } as any);
     // Return the initialReport passed as the second argument
     mockUseReportRowSync.mockImplementation((_slug, initialReport) => initialReport);
@@ -124,5 +153,59 @@ describe("PortfolioReportListPage", () => {
     );
 
     expect(screen.queryByRole("button", { name: /preview/i })).not.toBeInTheDocument();
+  });
+
+  it("deletes a draft report after confirmation", async () => {
+    const user = userEvent.setup();
+    const deleteMutateAsync = vi.fn().mockResolvedValue(undefined);
+    mockUseDeleteReport.mockReturnValue({
+      isPending: false,
+      mutateAsync: deleteMutateAsync,
+    } as any);
+    mockUsePortfolioReports.mockReturnValue({
+      data: [reportFixture({ id: "draft-report", status: "draft" })],
+      isLoading: false,
+    } as any);
+
+    render(<PortfolioReportListPage community={filecoinCommunity} />);
+
+    await user.click(screen.getByRole("button", { name: /delete/i }));
+    // Confirmation dialog
+    await user.click(screen.getByRole("button", { name: /continue/i }));
+
+    expect(deleteMutateAsync).toHaveBeenCalledWith("draft-report");
+  });
+
+  it("shows a Delete action for failed reports", () => {
+    mockUsePortfolioReports.mockReturnValue({
+      data: [reportFixture({ id: "failed-report", status: "failed" })],
+      isLoading: false,
+    } as any);
+
+    render(<PortfolioReportListPage community={filecoinCommunity} />);
+
+    expect(screen.getByRole("button", { name: /delete/i })).toBeInTheDocument();
+  });
+
+  it("does not show a Delete action for published reports", () => {
+    mockUsePortfolioReports.mockReturnValue({
+      data: [reportFixture({ id: "published-report", status: "published" })],
+      isLoading: false,
+    } as any);
+
+    render(<PortfolioReportListPage community={filecoinCommunity} />);
+
+    expect(screen.queryByRole("button", { name: /delete/i })).not.toBeInTheDocument();
+  });
+
+  it("does not show a Delete action for generating reports", () => {
+    mockUsePortfolioReports.mockReturnValue({
+      data: [reportFixture({ id: "generating-report", status: "generating" })],
+      isLoading: false,
+    } as any);
+
+    render(<PortfolioReportListPage community={filecoinCommunity} />);
+
+    expect(screen.queryByRole("button", { name: /delete/i })).not.toBeInTheDocument();
   });
 });
