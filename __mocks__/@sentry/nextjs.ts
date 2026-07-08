@@ -6,6 +6,7 @@
  */
 export const captureException = vi.fn();
 export const captureMessage = vi.fn();
+export const addBreadcrumb = vi.fn();
 export const setUser = vi.fn();
 export const setTag = vi.fn();
 export const setContext = vi.fn();
