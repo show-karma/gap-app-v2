@@ -52,6 +52,14 @@ function applyGrant(
     recurring: action.recurring,
   };
 
+  // Windfall-first accounting with separate pools: a grant spends this year's
+  // investment gains before it ever touches principal. Granting exactly your
+  // gains therefore leaves the "ready to deploy" balance whole — matching the
+  // Gains card's promise — and only a grant larger than the remaining gains
+  // draws principal down.
+  const gainsApplied = Math.min(action.amount, state.investmentGains);
+  const balanceDrawn = action.amount - gainsApplied;
+
   const isNewCause = !state.causesSupported.includes(org.cause);
   const causesSupported = isNewCause
     ? [...state.causesSupported, org.cause]
@@ -106,13 +114,10 @@ function applyGrant(
 
   return {
     ...state,
-    balance: state.balance - action.amount,
+    balance: Math.max(0, state.balance - balanceDrawn),
     grantedThisYear: state.grantedThisYear + action.amount,
     lifetimeGranted: state.lifetimeGranted + action.amount,
-    // Windfall-first accounting: grants draw down this year's investment
-    // gains before principal, so the gains card always reflects what is
-    // actually left to "grant out."
-    investmentGains: Math.max(0, state.investmentGains - action.amount),
+    investmentGains: state.investmentGains - gainsApplied,
     xp: newXp,
     streakMonths,
     longestStreak: Math.max(state.longestStreak, streakMonths),
