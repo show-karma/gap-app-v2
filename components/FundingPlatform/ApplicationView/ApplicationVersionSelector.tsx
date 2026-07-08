@@ -3,6 +3,7 @@
 import { Listbox, Transition } from "@headlessui/react";
 import { ChevronDownIcon, ClockIcon, UserIcon } from "@heroicons/react/24/outline";
 import { type FC, Fragment, useEffect, useMemo } from "react";
+import EthereumAddressToProfileName from "@/components/EthereumAddressToProfileName";
 import { useApplicationVersions } from "@/hooks/useFundingPlatform";
 import { useApplicationVersionsStore } from "@/store/applicationVersions";
 import type { IFormSchema } from "@/types/funding-platform";
@@ -79,8 +80,7 @@ const ApplicationVersionSelector: FC<ApplicationVersionSelectorProps> = ({
                     {formatDate(selectedVersion.createdAt)}
                     {selectedVersion.submittedBy && (
                       <span className="ml-2 text-gray-500 dark:text-gray-400">
-                        by {selectedVersion.submittedBy.slice(0, 6)}...
-                        {selectedVersion.submittedBy.slice(-4)}
+                        by <EthereumAddressToProfileName address={selectedVersion.submittedBy} />
                       </span>
                     )}
                   </>
@@ -135,8 +135,7 @@ const ApplicationVersionSelector: FC<ApplicationVersionSelectorProps> = ({
                                 {" • "}
                                 <span className="inline-flex items-center">
                                   <UserIcon className="h-3 w-3 mr-1 inline" />
-                                  {version.submittedBy.slice(0, 6)}...
-                                  {version.submittedBy.slice(-4)}
+                                  <EthereumAddressToProfileName address={version.submittedBy} />
                                 </span>
                               </>
                             )}
