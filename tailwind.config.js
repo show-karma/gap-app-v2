@@ -135,8 +135,14 @@ module.exports = {
           "0%": { opacity: "0", transform: "scale(0.96)" },
           "100%": { opacity: "1", transform: "scale(1)" },
         },
+        // Role-aware dashboard (v3) skeleton pulse.
+        "dashv3-pulse": {
+          "0%, 100%": { opacity: "1" },
+          "50%": { opacity: "0.5" },
+        },
       },
       animation: {
+        "dashv3-pulse": "dashv3-pulse 1.5s ease-in-out infinite",
         marquee: "marquee 30s linear infinite",
         scroll:
           "scroll var(--animation-duration, 40s) var(--animation-direction, forwards) linear infinite",
@@ -149,6 +155,23 @@ module.exports = {
         "scale-in": "scale-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both",
       },
       colors: {
+        // Role-aware dashboard (v3) "soft" tokens. Defined as CSS variables in
+        // components/Pages/Dashboard/v3/dashboard-soft.css (with .dark overrides),
+        // exposed here so components can use utilities like bg-sf-card / text-sf-muted.
+        sf: {
+          panel: "var(--sf-panel)",
+          card: "var(--sf-card)",
+          elev: "var(--sf-elev)",
+          hover: "var(--sf-hover)",
+          skeleton: "var(--sf-skeleton)",
+          ink: "var(--sf-ink)",
+          "ink-soft": "var(--sf-ink-soft)",
+          heading: "var(--sf-heading)",
+          muted: "var(--sf-muted)",
+          line: "var(--sf-line)",
+          "line-strong": "var(--sf-line-strong)",
+          chip: "var(--sf-chip)",
+        },
         brand: {
           // Semantic aliases (used by the non-profits / Grant Atlas components):
           // bg-brand, from-brand, to-brand-emphasis, text-brand-subtle, bg-brand-faint, …
@@ -312,6 +335,8 @@ module.exports = {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+        "sf-card": "var(--sf-r-card)",
+        "sf-tile": "var(--sf-r-tile)",
         "tremor-small": "0.375rem",
         "tremor-default": "0.5rem",
         "tremor-full": "9999px",

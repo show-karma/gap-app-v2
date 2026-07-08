@@ -1,9 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { AlertTriangle } from "lucide-react";
 import { useRouter } from "next/navigation";
-import type React from "react";
 import { useEffect } from "react";
 import type { Hex } from "viem";
 import { useProgramsWithConfig } from "@/features/programs/hooks/use-programs-with-config";
@@ -13,17 +11,28 @@ import { useDashboardAdmin } from "@/hooks/useDashboardAdmin";
 import { useReviewerPrograms } from "@/hooks/usePermissions";
 import { usePermissionContext } from "@/src/core/rbac/context/permission-context";
 import { useStaff } from "@/src/core/rbac/hooks/use-staff-bridge";
-import { layoutTheme } from "@/src/helper/theme";
 import { PAGES } from "@/utilities/pages";
 import { fetchMyProjects } from "@/utilities/sdk/projects/fetchMyProjects";
 import { useWhitelabel } from "@/utilities/whitelabel-context";
 import { AdminSection } from "./AdminSection/AdminSection";
 import { ApplicationsSection } from "./ApplicationsSection/ApplicationsSection";
-import { DashboardHeader } from "./DashboardHeader";
 import { DashboardLoading } from "./DashboardLoading";
 import { ProjectsSection } from "./ProjectsSection/ProjectsSection";
 import { ReviewsSection } from "./ReviewsSection/ReviewsSection";
 import { SuperAdminSection } from "./SuperAdminSection/SuperAdminSection";
+import { AdvisorFullView, useAdvisorData } from "./v3/AdvisorModule";
+import { BentoOverview } from "./v3/BentoOverview";
+import "./v3/dashboard-soft.css";
+import type { DashModule } from "./v3/module";
+import type { ModuleStatus } from "./v3/primitives";
+import { WarnBar } from "./v3/primitives";
+import { SoftShell } from "./v3/SoftShell";
+import {
+  buildApplicationsSummary,
+  buildCommunitiesSummary,
+  buildProjectsSummary,
+  buildReviewsSummary,
+} from "./v3/summaries";
 
 export function Dashboard() {
   const router = useRouter();
@@ -35,13 +44,14 @@ export function Dashboard() {
     isGuestDueToError,
   } = usePermissionContext();
   const { isStaff, isLoading: isStaffLoading } = useStaff();
-  const { hasPrograms: hasReviewerPrograms, isLoading: isReviewerProgramsLoading } =
-    useReviewerPrograms();
+  const {
+    programs: reviewerPrograms,
+    hasPrograms: hasReviewerPrograms,
+    isLoading: isReviewerProgramsLoading,
+  } = useReviewerPrograms();
 
   const userAddress = address as Hex | undefined;
 
-  // Start all data fetches eagerly — don't wait for RBAC to finish.
-  // These hooks use `enabled` guards internally so they're safe to call early.
   const {
     data: projects = [],
     isLoading: isLoadingProjects,
@@ -60,14 +70,12 @@ export function Dashboard() {
     isError: isAdminError,
   } = useDashboardAdmin();
 
-  // Fetch applications + programs eagerly so they start in parallel with RBAC
   const applicationsHook = useUserApplications(communitySlug ?? undefined);
   const { programs } = useProgramsWithConfig(communitySlug ?? "");
 
-  const hasProjects = projects.length > 0;
-  const showReviews = hasReviewerPrograms;
-  const hasAdminCommunities = adminCommunities.length > 0;
-  const showAdmin = hasAdminCommunities || isAdminLoading || isAdminError;
+  const advisor = useAdvisorData(Boolean(authenticated));
+
+  const showAdmin = adminCommunities.length > 0 || isAdminLoading || isAdminError;
   const showSuperAdmin = isRegistryAdmin || isStaff;
   const isLoading =
     !ready ||
@@ -75,82 +83,155 @@ export function Dashboard() {
 
   useEffect(() => {
     if (!ready || authenticated) return;
-    // In whitelabel mode, "/" is the community homepage — not a login page.
-    // Don't redirect; let the dashboard show its own unauthenticated state.
     if (isWhitelabel) return;
-
     setPostLoginRedirect(`${PAGES.DASHBOARD}${window.location.hash}`);
     router.replace(PAGES.HOME);
   }, [authenticated, ready, router, isWhitelabel]);
-
-  useEffect(() => {
-    if (!ready || isLoading || !window.location.hash) return;
-
-    const element = document.getElementById(window.location.hash.slice(1));
-    element?.scrollIntoView({ behavior: "smooth" });
-  }, [isLoading, ready, showReviews, showAdmin, showSuperAdmin]);
 
   if (!authenticated || isLoading) {
     return <DashboardLoading />;
   }
 
-  const hasApplications = applicationsHook.statusCounts
-    ? Object.values(applicationsHook.statusCounts).reduce((sum, c) => sum + c, 0) > 0
-    : false;
+  const applicationsTotal = applicationsHook.statusCounts
+    ? Object.values(applicationsHook.statusCounts).reduce((sum, count) => sum + count, 0)
+    : 0;
 
-  const applicationsSection = (
-    <ApplicationsSection
-      key="applications"
-      communitySlug={communitySlug ?? undefined}
-      applicationsHook={applicationsHook}
-      programs={programs}
-    />
-  );
+  const projectsStatus: ModuleStatus = isProjectsError
+    ? "error"
+    : isLoadingProjects
+      ? "loading"
+      : projects.length === 0
+        ? "empty"
+        : "ready";
 
-  const projectsSection = (
-    <ProjectsSection
-      key="projects"
-      projects={projects}
-      isLoading={isLoadingProjects}
-      isError={isProjectsError}
-      refetch={refetchProjects}
-    />
-  );
+  const communitiesStatus: ModuleStatus = isAdminError
+    ? "error"
+    : isAdminLoading
+      ? "loading"
+      : adminCommunities.length === 0
+        ? "empty"
+        : "ready";
 
-  const hasApplicationsContent = Boolean(
-    hasApplications || applicationsHook.isLoading || applicationsHook.error
-  );
-  const hasProjectsContent = hasProjects || isLoadingProjects || isProjectsError;
+  const applicationsStatus: ModuleStatus = applicationsHook.error
+    ? "error"
+    : applicationsHook.isLoading
+      ? "loading"
+      : applicationsTotal === 0
+        ? "empty"
+        : "ready";
 
-  const contentSections: React.ReactNode[] = [
-    showReviews && <ReviewsSection key="reviews" />,
-    showAdmin && <AdminSection key="admin" />,
-    showSuperAdmin && <SuperAdminSection key="super-admin" />,
-    hasApplicationsContent && applicationsSection,
-    hasProjectsContent && projectsSection,
-  ].filter(Boolean);
+  const reviewsStatus: ModuleStatus = isReviewerProgramsLoading ? "loading" : "ready";
 
-  const emptySections: React.ReactNode[] = [
-    !hasApplicationsContent && applicationsSection,
-    !hasProjectsContent && projectsSection,
-  ].filter(Boolean);
+  const modules: DashModule[] = [];
+
+  if (advisor.isAdvisor) {
+    modules.push({
+      key: "advisor",
+      label: "Funder research",
+      icon: "compass",
+      brand: true,
+      status: advisor.status,
+      summary: advisor.summary,
+      onRetry: advisor.onRetry,
+      empty: {
+        prompt: "Ask an agent to find funders aligned to a mission — grounded in 990 filings.",
+        cta: { label: "Start funder research", icon: "search" },
+      },
+      render: () => <AdvisorFullView authenticated={Boolean(authenticated)} />,
+    });
+  }
+
+  modules.push({
+    key: "projects",
+    label: "My projects",
+    icon: "rocket",
+    status: projectsStatus,
+    summary: projectsStatus === "ready" ? buildProjectsSummary(projects) : undefined,
+    onRetry: () => refetchProjects(),
+    empty: {
+      prompt: "Create a project to track grants and milestones on Karma GAP.",
+      cta: { label: "Create project", icon: "plus" },
+    },
+    render: () => (
+      <ProjectsSection
+        projects={projects}
+        isLoading={isLoadingProjects}
+        isError={isProjectsError}
+        refetch={refetchProjects}
+      />
+    ),
+  });
+
+  if (hasReviewerPrograms) {
+    modules.push({
+      key: "reviews",
+      label: "My reviews",
+      icon: "eye",
+      status: reviewsStatus,
+      summary: reviewsStatus === "ready" ? buildReviewsSummary(reviewerPrograms ?? []) : undefined,
+      empty: {
+        prompt: "No reviewer assignments yet. Admins can add you to their programs.",
+        cta: { label: "Browse communities", icon: "users" },
+      },
+      render: () => <ReviewsSection />,
+    });
+  }
+
+  if (showAdmin) {
+    modules.push({
+      key: "communities",
+      label: "My communities",
+      icon: "users",
+      status: communitiesStatus,
+      summary:
+        communitiesStatus === "ready" ? buildCommunitiesSummary(adminCommunities) : undefined,
+      empty: {
+        prompt: "Create a community to run funding programs and review applications.",
+        cta: { label: "Create community", icon: "plus" },
+      },
+      render: () => <AdminSection />,
+    });
+  }
+
+  modules.push({
+    key: "applications",
+    label: "My applications",
+    icon: "file",
+    status: applicationsStatus,
+    summary:
+      applicationsStatus === "ready"
+        ? buildApplicationsSummary(
+            applicationsHook.applications,
+            applicationsHook.statusCounts ?? {}
+          )
+        : undefined,
+    onRetry: () => applicationsHook.refresh(),
+    empty: {
+      prompt: "Browse funding programs and submit your first application.",
+      cta: { label: "Explore programs", icon: "bank" },
+    },
+    render: () => (
+      <ApplicationsSection
+        communitySlug={communitySlug ?? undefined}
+        applicationsHook={applicationsHook}
+        programs={programs}
+      />
+    ),
+  });
 
   return (
-    <div className={layoutTheme.padding}>
-      <div className="flex flex-col gap-8">
-        <DashboardHeader address={userAddress} />
-        {isGuestDueToError ? (
-          <div className="flex items-center gap-3 rounded-lg border border-amber-300 bg-amber-50 p-4 dark:border-amber-700 dark:bg-amber-900/20">
-            <AlertTriangle className="h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />
-            <p className="text-sm text-amber-800 dark:text-amber-200">
-              We couldn&apos;t verify your permissions. Some sections may be hidden. Try refreshing
-              the page.
-            </p>
-          </div>
-        ) : null}
-        {contentSections}
-        {emptySections}
-      </div>
-    </div>
+    <SoftShell address={userAddress}>
+      {isGuestDueToError ? (
+        <WarnBar>
+          We couldn&apos;t verify your permissions. Some sections may be hidden — try refreshing.
+        </WarnBar>
+      ) : null}
+      <BentoOverview modules={modules} />
+      {showSuperAdmin ? (
+        <div className="mt-[18px]">
+          <SuperAdminSection />
+        </div>
+      ) : null}
+    </SoftShell>
   );
 }

@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider, useQuery } from "@tanstack/react-query";
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { useRouter } from "next/navigation";
 import type { ReactNode } from "react";
 import { Dashboard } from "@/components/Pages/Dashboard/Dashboard";
@@ -135,6 +135,9 @@ const createWrapper = () => {
 describe("Dashboard", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Drill-in writes the module key to location.hash; jsdom keeps the URL
+    // across tests in this file, so reset it to avoid auto-opening a module.
+    window.history.replaceState(null, "", window.location.pathname);
     mockUseRouter.mockReturnValue({ replace: vi.fn() });
     setupAuth({ authenticated: true, address: "0x123" });
     setupPermissions();
@@ -166,17 +169,19 @@ describe("Dashboard", () => {
       expect(replace).toHaveBeenCalledWith("/");
     });
 
-    expect(container.querySelectorAll(".animate-pulse").length).toBeGreaterThan(0);
+    // The v3 loading skeleton pulses via the `animate-dashv3-pulse` utility.
+    expect(container.querySelectorAll(".animate-dashv3-pulse").length).toBeGreaterThan(0);
   });
 
   it("renders DashboardHeader when authenticated", () => {
     render(<Dashboard />, { wrapper: createWrapper() });
 
     expect(screen.getByText(/Welcome back/i)).toBeInTheDocument();
-    expect(screen.getByTestId("ens-avatar")).toBeInTheDocument();
+    // The soft shell shows the avatar in both the top nav and the header.
+    expect(screen.getAllByTestId("ens-avatar").length).toBeGreaterThan(0);
   });
 
-  it("renders section empty states when user has no projects and no roles", () => {
+  it("renders an actionable projects tile when user has no projects and no roles", () => {
     mockUseQuery.mockReturnValue({
       data: [],
       isLoading: false,
@@ -187,10 +192,13 @@ describe("Dashboard", () => {
 
     render(<Dashboard />, { wrapper: createWrapper() });
 
-    expect(screen.getByText(/No projects yet/i)).toBeInTheDocument();
+    // The bento overview shows an actionable empty tile rather than the full
+    // stacked section.
+    expect(screen.getByText("My projects")).toBeInTheDocument();
+    expect(screen.getByText(/Create a project to track grants/i)).toBeInTheDocument();
   });
 
-  it("shows the projects section empty state when no projects are found", () => {
+  it("drills into the full projects section from the tile", () => {
     mockUseQuery.mockReturnValue({
       data: [],
       isLoading: false,
@@ -201,8 +209,12 @@ describe("Dashboard", () => {
 
     render(<Dashboard />, { wrapper: createWrapper() });
 
+    fireEvent.click(screen.getByText("My projects"));
+
+    // Drill-in renders the full ProjectsSection (its heading + real empty state).
     expect(screen.getByText("My Projects")).toBeInTheDocument();
     expect(screen.getByText(/No projects yet/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /back to overview/i })).toBeInTheDocument();
   });
 
   it("does not render empty state when user has projects", () => {
@@ -267,7 +279,9 @@ describe("Dashboard", () => {
     it("should show Farcaster display name instead of embedded wallet address", () => {
       render(<Dashboard />, { wrapper: createWrapper() });
 
-      expect(screen.getByText(/Test FC User/)).toBeInTheDocument();
+      // The soft header greets by first name ("Welcome back, Test").
+      expect(screen.getByText(/Welcome back, Test/)).toBeInTheDocument();
+      expect(screen.queryByText(/0xEMBEDDED/i)).not.toBeInTheDocument();
     });
 
     it("should show Farcaster avatar instead of blockie", () => {
@@ -361,7 +375,7 @@ describe("Dashboard", () => {
     expect(screen.getByText(/couldn.t verify your permissions/i)).toBeInTheDocument();
   });
 
-  it("shows projects error banner with retry when projects query fails", () => {
+  it("surfaces a recoverable projects error via the tile and drill-in", () => {
     mockUseQuery.mockReturnValue({
       data: [],
       isLoading: false,
@@ -372,7 +386,12 @@ describe("Dashboard", () => {
 
     render(<Dashboard />, { wrapper: createWrapper() });
 
-    expect(screen.getByText("My Projects")).toBeInTheDocument();
+    // The tile shows a recover affordance; the full retry lives in the drill-in.
+    const tile = screen.getByText("My projects");
+    expect(tile).toBeInTheDocument();
+
+    fireEvent.click(tile);
+
     expect(screen.getByText(/Unable to load your projects/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /try again/i })).toBeInTheDocument();
   });
@@ -391,21 +410,20 @@ describe("Dashboard", () => {
     expect(screen.queryByText("Create your first project")).not.toBeInTheDocument();
   });
 
-  describe("section ordering", () => {
-    const getSectionOrder = (container: HTMLElement): string[] => {
-      const ids = ["applications", "projects"];
-      const sections = Array.from(container.querySelectorAll("section[id]")) as HTMLElement[];
-      return sections.map((s) => s.id).filter((id) => ids.includes(id));
-    };
+  describe("bento tiles", () => {
+    const getTileOrder = (container: HTMLElement): string[] =>
+      Array.from(container.querySelectorAll("[data-comment-anchor^='tile-']")).map((el) =>
+        (el.getAttribute("data-comment-anchor") ?? "").replace("tile-", "")
+      );
 
-    it("hides AdminSection entirely for users with no admin communities", () => {
+    it("hides the communities tile for users with no admin communities", () => {
       render(<Dashboard />, { wrapper: createWrapper() });
 
-      expect(screen.queryByText("My Communities")).not.toBeInTheDocument();
+      expect(screen.queryByText("My communities")).not.toBeInTheDocument();
       expect(screen.queryByText(/No communities yet/i)).not.toBeInTheDocument();
     });
 
-    it("renders AdminSection heading when admin hook is loading", () => {
+    it("shows the communities tile (loading skeleton) when the admin hook is loading", () => {
       mockUseDashboardAdmin.mockReturnValue({
         communities: [],
         isLoading: true,
@@ -413,12 +431,13 @@ describe("Dashboard", () => {
         refetch: vi.fn(),
       });
 
-      render(<Dashboard />, { wrapper: createWrapper() });
+      const { container } = render(<Dashboard />, { wrapper: createWrapper() });
 
-      expect(screen.getByText("My Communities")).toBeInTheDocument();
+      // The loading tile shows a skeleton (no label) but keeps its anchor.
+      expect(container.querySelector('[data-comment-anchor="tile-communities"]')).toBeInTheDocument();
     });
 
-    it("renders AdminSection with retry when admin hook errors", () => {
+    it("surfaces an error affordance on the communities tile when the admin hook errors", () => {
       mockUseDashboardAdmin.mockReturnValue({
         communities: [],
         isLoading: false,
@@ -428,100 +447,17 @@ describe("Dashboard", () => {
 
       render(<Dashboard />, { wrapper: createWrapper() });
 
-      expect(screen.getByText(/Unable to load your communities/i)).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: /try again/i })).toBeInTheDocument();
+      expect(screen.getByText("My communities")).toBeInTheDocument();
+      expect(screen.getByText(/Couldn't load this section/i)).toBeInTheDocument();
     });
 
-    it("places applications before projects when applications has content", async () => {
-      const { useUserApplications } = await import(
-        "@/features/user-applications/hooks/use-user-applications"
-      );
-      (useUserApplications as unknown as vi.Mock).mockReturnValue({
-        applications: [],
-        statusCounts: { pending: 2 },
-        filters: { status: "all", programId: null, searchQuery: "" },
-        sortBy: "createdAt",
-        sortOrder: "desc",
-        pagination: { page: 1, totalPages: 1, limit: 10 },
-        isLoading: false,
-        error: null,
-        setFilters: vi.fn(),
-        setSort: vi.fn(),
-        setPage: vi.fn(),
-        setPageSize: vi.fn(),
-        refresh: vi.fn(),
-      });
-
+    it("always orders the projects tile before the applications tile", () => {
       const { container } = render(<Dashboard />, { wrapper: createWrapper() });
 
-      const order = getSectionOrder(container);
-      expect(order).toEqual(["applications", "projects"]);
-    });
-
-    it("places projects before applications when only projects has content", async () => {
-      const { useUserApplications } = await import(
-        "@/features/user-applications/hooks/use-user-applications"
-      );
-      (useUserApplications as unknown as vi.Mock).mockReturnValue({
-        applications: [],
-        statusCounts: {},
-        filters: { status: "all", programId: null, searchQuery: "" },
-        sortBy: "createdAt",
-        sortOrder: "desc",
-        pagination: { page: 1, totalPages: 1, limit: 10 },
-        isLoading: false,
-        error: null,
-        setFilters: vi.fn(),
-        setSort: vi.fn(),
-        setPage: vi.fn(),
-        setPageSize: vi.fn(),
-        refresh: vi.fn(),
-      });
-      mockUseQuery.mockReturnValue({
-        data: [{ uid: "project-1" }],
-        isLoading: false,
-        isSuccess: true,
-        isError: false,
-        refetch: vi.fn(),
-      });
-
-      const { container } = render(<Dashboard />, { wrapper: createWrapper() });
-
-      const order = getSectionOrder(container);
-      expect(order).toEqual(["projects", "applications"]);
-    });
-
-    it("places projects error before empty applications (error state stays prominent)", async () => {
-      const { useUserApplications } = await import(
-        "@/features/user-applications/hooks/use-user-applications"
-      );
-      (useUserApplications as unknown as vi.Mock).mockReturnValue({
-        applications: [],
-        statusCounts: {},
-        filters: { status: "all", programId: null, searchQuery: "" },
-        sortBy: "createdAt",
-        sortOrder: "desc",
-        pagination: { page: 1, totalPages: 1, limit: 10 },
-        isLoading: false,
-        error: null,
-        setFilters: vi.fn(),
-        setSort: vi.fn(),
-        setPage: vi.fn(),
-        setPageSize: vi.fn(),
-        refresh: vi.fn(),
-      });
-      mockUseQuery.mockReturnValue({
-        data: [],
-        isLoading: false,
-        isSuccess: false,
-        isError: true,
-        refetch: vi.fn(),
-      });
-
-      const { container } = render(<Dashboard />, { wrapper: createWrapper() });
-
-      const order = getSectionOrder(container);
-      expect(order).toEqual(["projects", "applications"]);
+      const order = getTileOrder(container);
+      expect(order).toContain("projects");
+      expect(order).toContain("applications");
+      expect(order.indexOf("projects")).toBeLessThan(order.indexOf("applications"));
     });
   });
 });
