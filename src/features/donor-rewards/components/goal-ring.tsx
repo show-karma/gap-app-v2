@@ -1,7 +1,6 @@
 "use client";
 
 import { m } from "motion/react";
-import { useState } from "react";
 import { useRewards } from "../state/rewards-context";
 import { formatUsd } from "../utils/format";
 
@@ -19,7 +18,6 @@ function goalAmountForRate(balance: number, granted: number, rate: number): numb
 
 export function GoalRing() {
   const { state, setAnnualGoal } = useRewards();
-  const [editing, setEditing] = useState(false);
   const progress = Math.min(1, state.grantedThisYear / state.annualGoal);
   const percent = Math.round(progress * 100);
   const remaining = Math.max(0, state.annualGoal - state.grantedThisYear);
@@ -29,53 +27,45 @@ export function GoalRing() {
       aria-label="Annual giving goal"
       className="flex flex-col rounded-2xl border border-stone-200 bg-white p-6 shadow-sm dark:border-stone-800 dark:bg-stone-900"
     >
-      <div className="flex items-center justify-between">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400">
-          2026 giving goal
-        </h2>
-        <button
-          type="button"
-          onClick={() => setEditing((open) => !open)}
-          className="rounded-full px-2.5 py-1 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-950/40"
-        >
-          {editing ? "Done" : "Adjust"}
-        </button>
+      <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400">
+        2026 giving goal
+      </h2>
+
+      {/* Plan-to-give control is always visible: donors set the goal as a share
+          of the fund with a single tap, anchored on the peer-norm range. */}
+      <div className="mt-3">
+        <p className="text-xs text-stone-500 dark:text-stone-400">
+          Set your goal as a share of your fund. Donors like you target 8-15% per year.
+        </p>
+        <div className="mt-2 grid grid-cols-3 gap-2">
+          {GOAL_RATE_PRESETS.map((rate) => {
+            const amount = goalAmountForRate(state.balance, state.grantedThisYear, rate);
+            const selected = state.annualGoal === amount;
+            return (
+              <button
+                key={rate}
+                type="button"
+                aria-pressed={selected}
+                onClick={() => setAnnualGoal(amount)}
+                className={`rounded-xl border-2 px-2 py-2 text-center transition active:scale-95 ${
+                  selected
+                    ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-950/50"
+                    : "border-stone-200 bg-white hover:border-stone-300 dark:border-stone-700 dark:bg-stone-800"
+                }`}
+              >
+                <span className="block font-mono text-sm font-bold text-stone-900 dark:text-white">
+                  {rate}%
+                </span>
+                <span className="block text-[10px] text-stone-500 dark:text-stone-400">
+                  {formatUsd(amount)}
+                </span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
-      {editing && (
-        <div className="mt-3 rounded-2xl bg-stone-50 p-3 dark:bg-stone-800/60">
-          <p className="text-xs text-stone-500 dark:text-stone-400">
-            Set your goal as a share of your fund. Donors like you target 8-15% per year.
-          </p>
-          <div className="mt-2 grid grid-cols-3 gap-2">
-            {GOAL_RATE_PRESETS.map((rate) => {
-              const amount = goalAmountForRate(state.balance, state.grantedThisYear, rate);
-              const selected = state.annualGoal === amount;
-              return (
-                <button
-                  key={rate}
-                  type="button"
-                  onClick={() => setAnnualGoal(amount)}
-                  className={`rounded-xl border-2 px-2 py-2 text-center transition active:scale-95 ${
-                    selected
-                      ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-950/50"
-                      : "border-stone-200 bg-white hover:border-stone-300 dark:border-stone-700 dark:bg-stone-800"
-                  }`}
-                >
-                  <span className="block font-mono text-sm font-bold text-stone-900 dark:text-white">
-                    {rate}%
-                  </span>
-                  <span className="block text-[10px] text-stone-500 dark:text-stone-400">
-                    {formatUsd(amount)}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      <div className="mt-3 flex flex-1 items-center justify-center gap-6">
+      <div className="mt-4 flex flex-1 items-center justify-center gap-6">
         <div className="relative h-36 w-36">
           <svg viewBox="0 0 144 144" className="h-full w-full -rotate-90">
             <title>Progress toward annual giving goal</title>
