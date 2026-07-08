@@ -17,16 +17,16 @@ export function IdleNudge({ onOpenGrantFlow }: IdleNudgeProps) {
     return (
       <section
         aria-label="Funds at work"
-        className="flex flex-col justify-between rounded-3xl border border-emerald-200 bg-emerald-50 p-6 shadow-sm dark:border-emerald-900 dark:bg-emerald-950/40"
+        className="flex flex-col justify-between rounded-2xl bg-emerald-950 p-6 text-white shadow-sm dark:bg-emerald-950"
       >
         <div>
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-400">
+          <h2 className="text-xs font-semibold uppercase tracking-[0.15em] text-emerald-300/80">
             Funds at work
           </h2>
-          <p className="mt-3 text-2xl font-bold text-emerald-800 dark:text-emerald-200">
+          <p className="mt-3 [font-family:var(--font-display)] text-2xl font-medium leading-snug">
             Nice work! 🎉
           </p>
-          <p className="mt-2 text-sm text-emerald-700 dark:text-emerald-300">
+          <p className="mt-2 text-sm text-emerald-200/80">
             Your latest grant put your dollars back to work. Nonprofits will report verified
             milestones as your funding lands.
           </p>
@@ -34,7 +34,7 @@ export function IdleNudge({ onOpenGrantFlow }: IdleNudgeProps) {
         <button
           type="button"
           onClick={onOpenGrantFlow}
-          className="mt-4 w-full rounded-2xl bg-emerald-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-emerald-700 active:scale-95"
+          className="mt-4 w-full rounded-xl bg-white px-4 py-3 text-sm font-bold text-emerald-900 transition hover:bg-emerald-50 active:scale-95"
         >
           Grant again
         </button>
@@ -45,34 +45,33 @@ export function IdleNudge({ onOpenGrantFlow }: IdleNudgeProps) {
   return (
     <section
       aria-label="Idle funds nudge"
-      className="flex flex-col justify-between rounded-3xl border border-amber-200 bg-amber-50 p-6 shadow-sm dark:border-amber-900 dark:bg-amber-950/40"
+      className="flex flex-col justify-between rounded-2xl bg-emerald-950 p-6 text-white shadow-sm dark:bg-emerald-950"
     >
       <div>
         <div className="flex items-center gap-2">
-          <m.div
+          <m.span
             animate={{ y: [0, -3, 0] }}
             transition={{ repeat: Number.POSITIVE_INFINITY, duration: 2 }}
-            className="rounded-xl bg-amber-100 p-2 text-amber-600 dark:bg-amber-500/15 dark:text-amber-400"
+            className="text-amber-400"
           >
-            <Zap className="h-5 w-5" fill="currentColor" aria-hidden="true" />
-          </m.div>
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-400">
+            <Zap className="h-4 w-4" fill="currentColor" aria-hidden="true" />
+          </m.span>
+          <h2 className="text-xs font-semibold uppercase tracking-[0.15em] text-emerald-300/80">
             Money resting
           </h2>
         </div>
-        <p className="mt-3 text-2xl font-bold text-amber-900 dark:text-amber-100">
+        <p className="mt-3 [font-family:var(--font-display)] text-2xl font-medium leading-snug">
           {formatUsd(state.balance)} has been idle for {state.idleDays}{" "}
-          {pluralize("day", state.idleDays)}
+          {pluralize("day", state.idleDays)}.
         </p>
-        <p className="mt-2 text-sm text-amber-800 dark:text-amber-200">
-          Even {formatUsd(500)} could fund a month of verified impact. Put a piece of it to work
-          today.
+        <p className="mt-2 text-sm text-emerald-200/80">
+          Even {formatUsd(500)} could fund a month of verified impact.
         </p>
       </div>
       <button
         type="button"
         onClick={onOpenGrantFlow}
-        className="mt-4 w-full rounded-2xl bg-amber-500 px-4 py-3 text-sm font-bold text-white transition hover:bg-amber-600 active:scale-95"
+        className="mt-4 w-full rounded-xl bg-white px-4 py-3 text-sm font-bold text-emerald-900 transition hover:bg-emerald-50 active:scale-95"
       >
         Put {formatUsd(500)} to work
       </button>

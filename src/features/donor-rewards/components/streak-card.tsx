@@ -23,11 +23,11 @@ export function StreakCard() {
   return (
     <section
       aria-label="Giving streak"
-      className="flex flex-col justify-between rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
+      className="flex flex-col justify-between rounded-2xl border border-stone-200 bg-white p-6 shadow-sm dark:border-stone-800 dark:bg-stone-900"
     >
       <div className="flex items-start justify-between">
         <div>
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400">
             Giving streak
           </h2>
           <div className="mt-2 flex items-baseline gap-2">
@@ -36,11 +36,11 @@ export function StreakCard() {
               initial={{ scale: 1.4 }}
               animate={{ scale: 1 }}
               transition={{ type: "spring", stiffness: 300, damping: 12 }}
-              className="font-mono text-5xl font-bold text-zinc-900 dark:text-white"
+              className="font-mono text-5xl font-bold text-stone-900 dark:text-white"
             >
               {state.streakMonths}
             </m.span>
-            <span className="text-lg text-zinc-500 dark:text-zinc-400">
+            <span className="text-lg text-stone-500 dark:text-stone-400">
               {pluralize("month", state.streakMonths)}
             </span>
           </div>
@@ -54,8 +54,8 @@ export function StreakCard() {
           transition={{ duration: 0.7 }}
           className={
             state.grantedThisMonth
-              ? "rounded-2xl bg-orange-100 p-3 text-orange-500 dark:bg-orange-500/15"
-              : "rounded-2xl bg-zinc-100 p-3 text-zinc-400 dark:bg-zinc-800"
+              ? "rounded-2xl bg-amber-100 p-3 text-amber-500 dark:bg-amber-500/15"
+              : "rounded-2xl bg-stone-100 p-3 text-stone-400 dark:bg-stone-800"
           }
         >
           <Flame className="h-8 w-8" fill="currentColor" aria-hidden="true" />
@@ -68,15 +68,15 @@ export function StreakCard() {
             <div
               className={`h-3.5 w-full max-w-8 rounded-full transition-colors ${
                 dot.lit
-                  ? "bg-orange-400"
+                  ? "bg-amber-400"
                   : dot.current
-                    ? "border-2 border-dashed border-orange-300 bg-transparent dark:border-orange-500/50"
-                    : "bg-zinc-200 dark:bg-zinc-700"
+                    ? "border-2 border-dashed border-amber-300 bg-transparent dark:border-amber-500/50"
+                    : "bg-stone-200 dark:bg-stone-700"
               }`}
             />
             <span
               className={`text-[10px] font-medium ${
-                dot.current ? "text-orange-500" : "text-zinc-400 dark:text-zinc-500"
+                dot.current ? "text-amber-500" : "text-stone-400 dark:text-stone-500"
               }`}
             >
               {dot.label}
@@ -85,7 +85,7 @@ export function StreakCard() {
         ))}
       </div>
 
-      <p className="mt-4 text-xs text-zinc-500 dark:text-zinc-400">
+      <p className="mt-4 text-xs text-stone-500 dark:text-stone-400">
         {state.grantedThisMonth
           ? `July is locked in. Longest streak: ${state.longestStreak} ${pluralize("month", state.longestStreak)}.`
           : "Make a grant this month to keep your streak alive. A recurring grant protects it automatically."}
