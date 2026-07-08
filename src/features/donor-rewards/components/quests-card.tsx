@@ -15,7 +15,7 @@ const QuestRow = React.memo(function QuestRow({ quest }: { quest: Quest }) {
       className={`flex items-center gap-4 rounded-2xl border p-4 transition-colors ${
         done
           ? "border-emerald-200 bg-emerald-50 dark:border-emerald-900 dark:bg-emerald-950/40"
-          : "border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900"
+          : "border-stone-200 bg-white dark:border-stone-800 dark:bg-stone-900"
       }`}
     >
       {done ? (
@@ -28,7 +28,7 @@ const QuestRow = React.memo(function QuestRow({ quest }: { quest: Quest }) {
           <CheckCircle2 className="h-7 w-7" aria-hidden="true" />
         </m.span>
       ) : (
-        <span className="text-zinc-300 dark:text-zinc-600">
+        <span className="text-stone-300 dark:text-stone-600">
           <Circle className="h-7 w-7" aria-hidden="true" />
         </span>
       )}
@@ -38,21 +38,21 @@ const QuestRow = React.memo(function QuestRow({ quest }: { quest: Quest }) {
           className={`font-semibold ${
             done
               ? "text-emerald-800 line-through decoration-emerald-400 dark:text-emerald-300"
-              : "text-zinc-900 dark:text-white"
+              : "text-stone-900 dark:text-white"
           }`}
         >
           {quest.title}
         </p>
-        <p className="truncate text-sm text-zinc-500 dark:text-zinc-400">{quest.description}</p>
+        <p className="truncate text-sm text-stone-500 dark:text-stone-400">{quest.description}</p>
         {quest.goal > 1 && (
           <div className="mt-2 flex items-center gap-2">
-            <div className="h-1.5 w-32 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-700">
+            <div className="h-1.5 w-32 overflow-hidden rounded-full bg-stone-200 dark:bg-stone-700">
               <div
                 className="h-full rounded-full bg-emerald-500 transition-all"
                 style={{ width: `${(quest.progress / quest.goal) * 100}%` }}
               />
             </div>
-            <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
+            <span className="text-xs font-medium text-stone-500 dark:text-stone-400">
               {quest.progress}/{quest.goal}
             </span>
           </div>
@@ -63,7 +63,7 @@ const QuestRow = React.memo(function QuestRow({ quest }: { quest: Quest }) {
         className={`shrink-0 rounded-full px-3 py-1 font-mono text-xs font-bold ${
           done
             ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400"
-            : "bg-violet-100 text-violet-700 dark:bg-violet-500/15 dark:text-violet-400"
+            : "bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-400"
         }`}
       >
         +{quest.xp} IP
@@ -79,12 +79,14 @@ export function QuestsCard() {
   return (
     <section
       aria-label="Monthly quests"
-      className="rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
+      className="rounded-2xl border border-stone-200 bg-white p-6 shadow-sm dark:border-stone-800 dark:bg-stone-900"
     >
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-zinc-900 dark:text-white">July quests</h2>
+        <h2 className="[font-family:var(--font-display)] text-xl font-medium text-stone-900 dark:text-white">
+          July quests
+        </h2>
         {remaining > 0 ? (
-          <span className="rounded-full bg-violet-100 px-3 py-1 text-xs font-bold text-violet-700 dark:bg-violet-500/15 dark:text-violet-400">
+          <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-700 dark:bg-amber-500/15 dark:text-amber-400">
             {remaining} {pluralize("quest", remaining)} left
           </span>
         ) : (
