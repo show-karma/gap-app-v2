@@ -51,7 +51,7 @@ export function buildCommunitiesSummary(communities: DashboardAdminCommunity[]):
         c.pendingApplicationsCount > 0
           ? {
               tone: "amber" as BadgeTone,
-              label: `${c.pendingApplicationsCount} ${pluralize("app", c.pendingApplicationsCount)}`,
+              label: `${c.pendingApplicationsCount} ${pluralize("application", c.pendingApplicationsCount)}`,
             }
           : { tone: "gray" as BadgeTone, label: "Clear" },
     }));

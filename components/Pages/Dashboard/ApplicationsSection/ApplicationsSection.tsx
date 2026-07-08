@@ -2,6 +2,7 @@
 
 import { useQueries } from "@tanstack/react-query";
 import { BanknoteArrowDown, FileText, RefreshCw } from "lucide-react";
+import pluralize from "pluralize";
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import type { ProgramWithConfig } from "@/features/programs/hooks/use-programs-with-config";
@@ -165,7 +166,7 @@ export function ApplicationsSection({
               <div className="rounded-xl border border-border p-4 text-center">
                 <p className="text-3xl font-bold text-foreground">{stats.total}</p>
                 <p className="text-muted-foreground">
-                  Total {stats.total === 1 ? "Application" : "Applications"}
+                  Total {pluralize("Application", stats.total)}
                 </p>
               </div>
               <div className="rounded-xl border border-border p-4 text-center">

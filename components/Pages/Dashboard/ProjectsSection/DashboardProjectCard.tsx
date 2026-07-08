@@ -1,6 +1,7 @@
 "use client";
 
 import { CheckCircle2, Flag, Send } from "lucide-react";
+import pluralize from "pluralize";
 import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "@/src/components/navigation/Link";
@@ -49,8 +50,7 @@ export function DashboardProjectCard({ project }: DashboardProjectCardProps) {
               >
                 <Send className="h-3 w-3" />
                 {pendingActions.milestonesNeedingSubmission}{" "}
-                {pendingActions.milestonesNeedingSubmission === 1 ? "milestone" : "milestones"}{" "}
-                pending
+                {pluralize("milestone", pendingActions.milestonesNeedingSubmission)} pending
               </Badge>
             ) : null}
             {pendingActions.grantsInProgress > 0 ? (
@@ -60,7 +60,7 @@ export function DashboardProjectCard({ project }: DashboardProjectCardProps) {
               >
                 <Flag className="h-3 w-3" />
                 {pendingActions.grantsInProgress}{" "}
-                {pendingActions.grantsInProgress === 1 ? "grant" : "grants"} to complete
+                {pluralize("grant", pendingActions.grantsInProgress)} to complete
               </Badge>
             ) : null}
           </>
@@ -74,7 +74,7 @@ export function DashboardProjectCard({ project }: DashboardProjectCardProps) {
           </Badge>
         )}
         <Badge variant="outline">
-          {grantsCount} {grantsCount === 1 ? "grant" : "grants"}
+          {grantsCount} {pluralize("grant", grantsCount)}
         </Badge>
       </div>
     </Link>

@@ -1,3 +1,4 @@
+import pluralize from "pluralize";
 import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
 import { Button } from "@/components/ui/button";
 import type { DashboardAdminCommunity } from "@/hooks/useDashboardAdmin";
@@ -26,11 +27,11 @@ export function CommunityHealthCard({ community }: CommunityHealthCardProps) {
       <div className="flex flex-col gap-1 text-sm text-muted-foreground">
         <span>
           {community.activeProgramsCount} active{" "}
-          {community.activeProgramsCount === 1 ? "program" : "programs"}
+          {pluralize("program", community.activeProgramsCount)}
         </span>
         <span>
           {community.pendingApplicationsCount} pending{" "}
-          {community.pendingApplicationsCount === 1 ? "application" : "applications"}
+          {pluralize("application", community.pendingApplicationsCount)}
         </span>
       </div>
 

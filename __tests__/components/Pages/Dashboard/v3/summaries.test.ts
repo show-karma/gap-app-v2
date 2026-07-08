@@ -81,13 +81,13 @@ describe("buildCommunitiesSummary", () => {
     const summary = buildCommunitiesSummary([community("Quiet", 1, 0), community("Busy", 2, 12)]);
     expect(summary.big).toBe(2);
     expect(summary.rows[0].label).toBe("Busy");
-    expect(summary.rows[0].badge).toEqual({ tone: "amber", label: "12 apps" });
+    expect(summary.rows[0].badge).toEqual({ tone: "amber", label: "12 applications" });
     expect(summary.rows[1].badge).toEqual({ tone: "gray", label: "Clear" });
   });
 
   it("pluralizes the app count", () => {
     const summary = buildCommunitiesSummary([community("Solo", 1, 1)]);
-    expect(summary.rows[0].badge).toEqual({ tone: "amber", label: "1 app" });
+    expect(summary.rows[0].badge).toEqual({ tone: "amber", label: "1 application" });
   });
 });
 
