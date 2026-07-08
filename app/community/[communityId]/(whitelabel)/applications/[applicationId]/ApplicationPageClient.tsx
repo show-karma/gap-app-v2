@@ -13,8 +13,8 @@ import { Role } from "@/src/core/rbac/types/role";
 import { CommentTimeline } from "@/src/features/application-comments/components/CommentTimeline";
 import { PublicComments } from "@/src/features/application-comments/components/PublicComments";
 import { MilestonesTab } from "@/src/features/applications/components/MilestonesTab";
+import { useApplication } from "@/src/features/applications/hooks/use-application";
 import { useApplicationAccess } from "@/src/features/applications/hooks/use-application-access";
-import { useApplicationStatusHistory } from "@/src/features/applications/hooks/use-application-status-history";
 import type { IFundingApplication, ProgramWithFormSchema } from "@/types/funding-platform";
 import type { Application, ApplicationStatus, FundingProgram } from "@/types/whitelabel-entities";
 import { formatDate } from "@/utilities/formatDate";
@@ -49,7 +49,7 @@ export function ApplicationPageClient({
   application,
   program,
 }: ApplicationPageClientProps) {
-  const { user } = useAuth();
+  const { user, authenticated } = useAuth();
   const isAdmin = useIsFundingPlatformAdmin();
   const { hasRoleOrHigher, isReviewer, can } = usePermissionContext();
   const isAdminOrReviewer = hasRoleOrHigher(Role.MILESTONE_REVIEWER) || isReviewer;
@@ -117,14 +117,23 @@ export function ApplicationPageClient({
       : "guest";
 
   // The whitelabel page is fetched server-side without a Privy token, so the
-  // backend serves it anonymously and strips the private status-change reasons
-  // (rejection/revision messages) — the backend is the guard. Authenticated
-  // viewers re-fetch with their token; the backend returns the reasons only to
-  // the applicant, reviewers, and admins. Guests keep the sanitized SSR payload.
-  const { statusHistory: authedStatusHistory } = useApplicationStatusHistory(
-    application.referenceNumber
+  // backend serves it anonymously and strips the fields it gates by viewer: the
+  // private status-change reasons (rejection/revision messages) AND the
+  // applicant identity (ownerAddress / applicantEmail). The backend is the
+  // guard. Authenticated viewers re-fetch the full application with their token
+  // — one call restores both — and the backend returns those fields only to the
+  // applicant, reviewers, and admins. Guests keep the sanitized SSR payload.
+  const { application: liveApplication } = useApplication(
+    communityId,
+    application.referenceNumber,
+    { initialData: application, enabled: authenticated }
   );
-  const statusHistory = authedStatusHistory ?? application.statusHistory ?? [];
+  const app = liveApplication ?? application;
+  const statusHistory = app.statusHistory ?? [];
+
+  // Applicant identity is shown only to the applicant (owner) and
+  // reviewers/admins; everyone else gets no Applicant section at all.
+  const canViewApplicant = viewerRole !== "guest";
 
   const editHref = PAGES.COMMUNITY.APPLICATION_EDIT(communityId, application.referenceNumber);
   const reviewHref = PAGES.REVIEWER.APPLICATION_DETAIL(
@@ -267,10 +276,11 @@ export function ApplicationPageClient({
         {/* SIDEBAR */}
         <div className="order-1 lg:order-2">
           <ApplicationSidebar
-            application={application}
+            application={app}
             program={program}
             programName={programName}
             viewerRole={viewerRole}
+            canViewApplicant={canViewApplicant}
             hasMilestones={hasMilestones}
             postApprovalPending={postApprovalPending}
             editHref={editHref}
