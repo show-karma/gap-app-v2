@@ -176,21 +176,25 @@ describe("React Query integration trust tests", () => {
     });
   });
 
-  // --- FIXED: 429 no longer retried ---
+  // --- 429 bounded retry (GAP-FRONTEND-245) ---
 
-  describe("FIXED: 429 rate-limited requests are not retried", () => {
-    it("retry is a function that skips 429 errors", () => {
+  describe("429 rate-limited requests use a bounded retry (max 2)", () => {
+    it("retry is a status-aware function, not a static number", () => {
       // Previously retry was set to 1, retrying all errors including 429.
-      // Now it is a function that checks the HTTP status code.
+      // Now it is a function that checks the HTTP status code: 401 never
+      // retried, 429 retried at most twice with capped backoff.
       expect(typeof defaultQueryOptions.retry).toBe("function");
     });
 
-    it("429 error is not retried", async () => {
+    it("429 error is retried exactly twice (3 calls total)", async () => {
       let callCount = 0;
 
       const retryClient = new QueryClient({
         defaultOptions: {
-          queries: defaultQueryOptions,
+          queries: {
+            ...defaultQueryOptions,
+            retryDelay: 0, // no real backoff in tests
+          },
         },
       });
 
@@ -205,11 +209,11 @@ describe("React Query integration trust tests", () => {
           },
         });
       } catch {
-        // Expected to throw
+        // Expected to throw after retries are exhausted
       }
 
-      // With the fix, 429 should NOT be retried -- only 1 call
-      expect(callCount).toBe(1);
+      // Bounded retry: initial call + 2 retries, never unbounded.
+      expect(callCount).toBe(3);
 
       retryClient.clear();
     });

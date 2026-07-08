@@ -1,27 +1,32 @@
 /**
- * Regression test for Bug #2: 429 responses retried by React Query
+ * Regression test for the 429 retry policy.
  *
- * Previously, defaultQueryOptions used `retry: 1` (a number), which retried
- * ALL failed requests including 429 rate-limited responses. This caused
- * unnecessary load on rate-limited endpoints.
+ * History: defaultQueryOptions originally used `retry: 1` (a number), which
+ * blindly retried ALL failures including 429s. That was first fixed by never
+ * retrying 429; GAP-FRONTEND-245 then showed that "never retry" surfaces
+ * errors for what is expected load-shedding under the indexer's per-route
+ * rate limit. The current contract is a BOUNDED retry: up to 2 retries with
+ * capped backoff (honoring Retry-After when present), never unbounded.
  *
- * Fixed by replacing `retry: 1` with a function that skips retries for
- * 429 (rate limited) and 401 (unauthorized) responses.
+ * This suite guards both edges: 429s are retried at most twice (3 calls
+ * total), and 401s are never retried.
  */
 
 import { QueryClient } from "@tanstack/react-query";
 import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
 
-describe("Regression: 429 rate-limited responses should not be retried", () => {
+describe("Regression: 429 rate-limited responses use a bounded retry (max 2)", () => {
   it("retry is a function, not a static number", () => {
     expect(typeof defaultQueryOptions.retry).toBe("function");
   });
 
-  it("retry function returns false for 429 errors", () => {
+  it("retry function allows up to 2 retries for 429 errors, then stops", () => {
     const retryFn = defaultQueryOptions.retry as (failureCount: number, error: unknown) => boolean;
     const rateLimitError = { response: { status: 429 } };
 
-    expect(retryFn(0, rateLimitError)).toBe(false);
+    expect(retryFn(0, rateLimitError)).toBe(true);
+    expect(retryFn(1, rateLimitError)).toBe(true);
+    expect(retryFn(2, rateLimitError)).toBe(false);
   });
 
   it("retry function returns false for 401 errors", () => {
@@ -47,12 +52,15 @@ describe("Regression: 429 rate-limited responses should not be retried", () => {
     expect(retryFn(1, genericError)).toBe(false);
   });
 
-  it("429 error causes only one call (no retry) in QueryClient", async () => {
+  it("429 error causes exactly three calls (initial + 2 retries) in QueryClient", async () => {
     let callCount = 0;
 
     const testClient = new QueryClient({
       defaultOptions: {
-        queries: defaultQueryOptions,
+        queries: {
+          ...defaultQueryOptions,
+          retryDelay: 0, // no delay for test speed
+        },
       },
     });
 
@@ -70,8 +78,8 @@ describe("Regression: 429 rate-limited responses should not be retried", () => {
       // Expected to throw
     }
 
-    // With the fix, 429 should NOT be retried -- only 1 call
-    expect(callCount).toBe(1);
+    // Bounded retry: initial call + 2 retries, never more.
+    expect(callCount).toBe(3);
 
     testClient.clear();
   });

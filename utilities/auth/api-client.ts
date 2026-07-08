@@ -1,6 +1,7 @@
 import axios, { type AxiosError, type AxiosInstance, type InternalAxiosRequestConfig } from "axios";
 import toast from "react-hot-toast";
 import { envVars } from "../enviromentVars";
+import { parseRetryAfterMs } from "../fetchData";
 import { TokenManager } from "./token-manager";
 
 /**
@@ -67,15 +68,6 @@ function isTransientlyRetryable(error: AxiosError, config: RetryableRequestConfi
     default:
       return false;
   }
-}
-
-function parseRetryAfterMs(headerValue: unknown): number | null {
-  if (typeof headerValue !== "string" || headerValue.trim() === "") return null;
-  const seconds = Number(headerValue);
-  if (Number.isFinite(seconds)) return Math.max(0, seconds * 1000);
-  const dateMs = Date.parse(headerValue);
-  if (Number.isFinite(dateMs)) return Math.max(0, dateMs - Date.now());
-  return null;
 }
 
 function backoffDelayMs(attempt: number, error: AxiosError, opts: RetryOptions): number {

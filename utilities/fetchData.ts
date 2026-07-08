@@ -67,8 +67,8 @@ async function runFetch<T = any>(
   signal?: AbortSignal
 ): Promise<{
   data: T | null;
-  error: any;
-  pageInfo: any;
+  error: unknown;
+  pageInfo: unknown;
   status: number;
   retryAfterMs?: number;
 }> {
@@ -135,7 +135,7 @@ async function runFetch<T = any>(
     const pageInfo = resData?.pageInfo || null;
     return { data: resData, error: null, pageInfo, status: res.status };
   } catch (err: any) {
-    let error = "";
+    let error: unknown = "";
     let status = 500;
     let retryAfterMs: number | undefined;
     if (!err.response) {
@@ -193,7 +193,10 @@ export default async function fetchData<T = any>(
     signal
   );
   if (result.error !== null) {
-    return [null, result.error, null, result.status];
+    // The tuple's error slot is typed `string` but has historically carried
+    // the raw error object when no HTTP response was attached — preserved
+    // as-is for the many existing callers that rely on that shape.
+    return [null, result.error as string, null, result.status];
   }
   return [result.data as T, null, result.pageInfo, result.status];
 }
@@ -229,7 +232,11 @@ export async function fetchDataThrow<T = any>(
   );
   if (result.error !== null) {
     const message =
-      typeof result.error === "string" ? result.error : result.error?.message || "Request failed";
+      typeof result.error === "string"
+        ? result.error
+        : result.error instanceof Error
+          ? result.error.message
+          : "Request failed";
     throw new FetchDataError(message, result.status, result.retryAfterMs);
   }
   return result.data as T;

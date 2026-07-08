@@ -9,9 +9,14 @@ describe("defaultQueryOptions.retry", () => {
     expect(retry(0, err)).toBe(false);
   });
 
-  it("never retries 429 rate-limit", () => {
+  it("retries 429 rate-limit up to 2 times (capped backoff drains the window)", () => {
+    // See GAP-FRONTEND-245: 429s are expected load-shedding under the
+    // indexer's per-route rate limit; a short capped backoff lets the window
+    // drain instead of failing decorative data.
     const err = { response: { status: 429 } };
-    expect(retry(0, err)).toBe(false);
+    expect(retry(0, err)).toBe(true);
+    expect(retry(1, err)).toBe(true);
+    expect(retry(2, err)).toBe(false);
   });
 
   it("never retries aborted requests", () => {

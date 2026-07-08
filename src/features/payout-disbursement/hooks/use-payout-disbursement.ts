@@ -48,13 +48,10 @@ export const payoutDisbursementKeys = {
     all: ["payoutConfig"] as const,
     byCommunity: (communityUID: string) =>
       [...payoutDisbursementKeys.payoutConfigs.all, "community", communityUID] as const,
-    // Public (no-auth) community-wide configs. Shared by the batch milestone-
-    // allocation hooks and PublicControlCenter so both hit the same cache entry.
     byCommunityPublic: (communityUID: string) =>
       [...payoutDisbursementKeys.payoutConfigs.all, "communityPublic", communityUID] as const,
     byGrant: (grantUID: string) =>
       [...payoutDisbursementKeys.payoutConfigs.all, "grant", grantUID] as const,
-    // Public (no-auth) single-grant config.
     byGrantPublic: (grantUID: string) =>
       [...payoutDisbursementKeys.payoutConfigs.byGrant(grantUID), "public"] as const,
   },

@@ -73,7 +73,7 @@ describe("React Query integration trust tests", () => {
   // --- Default query options ---
 
   describe("default query options", () => {
-    it("retry is a smart function that skips 429s and 401s", () => {
+    it("retry is a smart status-aware function (401 never, 429 bounded)", () => {
       expect(typeof defaultQueryOptions.retry).toBe("function");
     });
 
@@ -186,22 +186,24 @@ describe("React Query integration trust tests", () => {
     });
   });
 
-  // --- FIXED: 429 no longer retried ---
+  // --- 429 bounded retry (GAP-FRONTEND-245) ---
 
-  describe("429 rate-limited requests are NOT retried (fixed)", () => {
-    it("retry function skips 429 rate-limited responses", () => {
-      // The defaultQueryOptions now uses a smart retry function that
-      // skips retries for rate-limited (429) and unauthorized (401) responses.
+  describe("429 rate-limited requests use a bounded retry (max 2)", () => {
+    it("retry function applies status-aware policy (function, not a number)", () => {
+      // defaultQueryOptions uses a smart retry function: 401 never retried,
+      // 429 retried at most twice with capped backoff, transient network
+      // errors retried twice, everything else once.
       expect(typeof defaultQueryOptions.retry).toBe("function");
     });
 
-    it("demonstrates 429 is not retried with QueryClient", async () => {
+    it("demonstrates 429 is retried exactly twice (3 calls) with QueryClient", async () => {
       let callCount = 0;
 
       const retryClient = new QueryClient({
         defaultOptions: {
           queries: {
             ...defaultQueryOptions,
+            retryDelay: 0, // no real backoff in tests
           },
         },
       });
@@ -218,11 +220,11 @@ describe("React Query integration trust tests", () => {
           retry: defaultQueryOptions.retry,
         });
       } catch {
-        // Expected to throw immediately without retries
+        // Expected to throw after retries are exhausted
       }
 
-      // With smart retry, 429 is not retried - only called once
-      expect(callCount).toBe(1);
+      // Bounded retry: initial call + 2 retries, never unbounded.
+      expect(callCount).toBe(3);
 
       retryClient.clear();
     });

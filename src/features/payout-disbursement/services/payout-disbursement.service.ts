@@ -1,5 +1,5 @@
 import { errorManager } from "@/components/Utilities/errorManager";
-import fetchData, { FetchDataError } from "@/utilities/fetchData";
+import fetchData, { FetchDataError, fetchDataThrow } from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import type {
   CommunityPayoutAgreementInfo,
@@ -23,6 +23,18 @@ import type {
 function getErrorMessage(error: unknown): string {
   if (error instanceof Error) return error.message;
   return String(error);
+}
+
+// Wraps an upstream failure in a caller-friendly message while preserving the
+// HTTP status and Retry-After hint (FetchDataError) so React Query's retry
+// policy stays 429-aware end-to-end. See GAP-FRONTEND-245.
+function wrapFetchError(error: unknown, prefix: string): FetchDataError {
+  const cause = error instanceof FetchDataError ? error : undefined;
+  return new FetchDataError(
+    `${prefix}: ${getErrorMessage(error)}`,
+    cause?.status,
+    cause?.retryAfterMs
+  );
 }
 
 /**
@@ -402,7 +414,7 @@ export const getPayoutConfigsByCommunityPublic = async (
   communityUID: string
 ): Promise<PayoutGrantConfig[]> => {
   try {
-    const [data, error, , status] = await fetchData<{ configs: PayoutGrantConfig[] }>(
+    const data = await fetchDataThrow<{ configs: PayoutGrantConfig[] }>(
       INDEXER.V2.PAYOUT_CONFIG.BY_COMMUNITY_PUBLIC(communityUID),
       "GET",
       {},
@@ -411,20 +423,11 @@ export const getPayoutConfigsByCommunityPublic = async (
       false,
       false
     );
-
-    if (error || !data) {
-      // Throw a status-carrying error so the data layer can apply 429-aware
-      // retry/backoff and errorManager can suppress rate-limit noise.
-      throw new FetchDataError(error || "Failed to fetch payout configs", status);
-    }
-
+    if (!data) throw new FetchDataError("Failed to fetch payout configs");
     return data.configs;
   } catch (error: unknown) {
     errorManager(`Error fetching public payout configs for community ${communityUID}`, error);
-    // Re-throw with the descriptive wrapper message but preserve the HTTP
-    // status so React Query can apply 429-aware retry/backoff.
-    const status = error instanceof FetchDataError ? error.status : undefined;
-    throw new FetchDataError(`Failed to fetch payout configs: ${getErrorMessage(error)}`, status);
+    throw wrapFetchError(error, "Failed to fetch payout configs");
   }
 };
 
@@ -491,7 +494,7 @@ export const getPayoutConfigByGrant = async (
   grantUID: string
 ): Promise<PayoutGrantConfig | null> => {
   try {
-    const [data, error, , status] = await fetchData<{ config: PayoutGrantConfig | null }>(
+    const data = await fetchDataThrow<{ config: PayoutGrantConfig | null }>(
       INDEXER.V2.PAYOUT_CONFIG.BY_GRANT(grantUID),
       "GET",
       {},
@@ -500,16 +503,11 @@ export const getPayoutConfigByGrant = async (
       true,
       false
     );
-
-    if (error || !data) {
-      throw new FetchDataError(error || "Failed to fetch payout config", status);
-    }
-
+    if (!data) throw new FetchDataError("Failed to fetch payout config");
     return data.config;
   } catch (error: unknown) {
     errorManager(`Error fetching payout config for grant ${grantUID}`, error);
-    const status = error instanceof FetchDataError ? error.status : undefined;
-    throw new FetchDataError(`Failed to fetch payout config: ${getErrorMessage(error)}`, status);
+    throw wrapFetchError(error, "Failed to fetch payout config");
   }
 };
 
@@ -520,7 +518,7 @@ export const getPayoutConfigByGrantPublic = async (
   grantUID: string
 ): Promise<PayoutGrantConfig | null> => {
   try {
-    const [data, error, , status] = await fetchData<{ config: PayoutGrantConfig | null }>(
+    const data = await fetchDataThrow<{ config: PayoutGrantConfig | null }>(
       INDEXER.V2.PAYOUT_CONFIG.BY_GRANT_PUBLIC(grantUID),
       "GET",
       {},
@@ -529,16 +527,11 @@ export const getPayoutConfigByGrantPublic = async (
       false,
       false
     );
-
-    if (error || !data) {
-      throw new FetchDataError(error || "Failed to fetch payout config", status);
-    }
-
+    if (!data) throw new FetchDataError("Failed to fetch payout config");
     return data.config;
   } catch (error: unknown) {
     errorManager(`Error fetching public payout config for grant ${grantUID}`, error);
-    const status = error instanceof FetchDataError ? error.status : undefined;
-    throw new FetchDataError(`Failed to fetch payout config: ${getErrorMessage(error)}`, status);
+    throw wrapFetchError(error, "Failed to fetch payout config");
   }
 };
 

@@ -6,15 +6,17 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mockFetchData = vi.fn();
+const mockFetchDataThrow = vi.fn();
 vi.mock("@/utilities/fetchData", async () => {
   // Preserve the real FetchDataError / parseRetryAfterMs named exports so the
-  // service can construct status-carrying errors; only the default export
-  // (the network call) is stubbed.
+  // service can construct status-carrying errors; only the network calls are
+  // stubbed.
   const actual =
     await vi.importActual<typeof import("@/utilities/fetchData")>("@/utilities/fetchData");
   return {
     ...actual,
     default: (...args: unknown[]) => mockFetchData(...args),
+    fetchDataThrow: (...args: unknown[]) => mockFetchDataThrow(...args),
   };
 });
 
@@ -99,10 +101,21 @@ import type {
   SavePayoutConfigRequest,
   UpdateStatusRequest,
 } from "@/features/payout-disbursement/types/payout-disbursement";
+import { FetchDataError } from "@/utilities/fetchData";
 
 describe("payout-disbursement.service", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Default fetchDataThrow behavior mirrors production: unwrap the tuple
+    // from mockFetchData and throw a FetchDataError on error. Individual
+    // tests may override (e.g. to inject retryAfterMs).
+    mockFetchDataThrow.mockImplementation(async (...args: unknown[]) => {
+      const [data, error, , status] = await mockFetchData(...args);
+      if (error !== null && error !== undefined) {
+        throw new FetchDataError(typeof error === "string" ? error : "Request failed", status);
+      }
+      return data;
+    });
   });
 
   // =========================================================================
@@ -431,6 +444,19 @@ describe("payout-disbursement.service", () => {
 
       expect(err).toMatchObject({ name: "FetchDataError", status: 429 });
       expect(err.message).toContain("Rate limit exceeded");
+    });
+
+    it("propagates retryAfterMs from the transport error through the wrapper", async () => {
+      mockFetchDataThrow.mockRejectedValueOnce(
+        new FetchDataError("Rate limit exceeded. Try again later.", 429, 30_000)
+      );
+
+      const err = await getPayoutConfigByGrantPublic("g1").then(
+        () => null,
+        (e) => e
+      );
+
+      expect(err).toMatchObject({ name: "FetchDataError", status: 429, retryAfterMs: 30_000 });
     });
   });
 

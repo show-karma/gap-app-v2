@@ -1,8 +1,29 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@/utilities/fetchData", () => ({
-  default: vi.fn(),
-}));
+vi.mock("@/utilities/fetchData", async () => {
+  // Preserve the real FetchDataError / parseRetryAfterMs named exports so the
+  // service can construct status-carrying errors; only the network calls are
+  // stubbed. fetchDataThrow mirrors the real semantics (throw FetchDataError
+  // on a tuple error) on top of the same stub, so tests keep driving both
+  // code paths through mockFetchData tuple values.
+  const actual =
+    await vi.importActual<typeof import("@/utilities/fetchData")>("@/utilities/fetchData");
+  const fetchDataMock = vi.fn();
+  return {
+    ...actual,
+    default: fetchDataMock,
+    fetchDataThrow: async (...args: unknown[]) => {
+      const [data, error, , status] = await fetchDataMock(...args);
+      if (error !== null && error !== undefined) {
+        throw new actual.FetchDataError(
+          typeof error === "string" ? error : "Request failed",
+          status
+        );
+      }
+      return data;
+    },
+  };
+});
 
 vi.mock("@/utilities/indexer", () => ({
   INDEXER: {
