@@ -68,6 +68,29 @@ const EXCLUDED_TOOLBARS = [
 ] as const;
 
 /**
+ * GAP-FRONTEND-1WY: md-editor-rt@6.4.1 destructures `InputEvent.data` inside its
+ * CodeMirror `input` DOM-event handler and reads `.length` on it in the
+ * `maxLength` overlength check. Per the Input Events spec, `data` is null for
+ * `deleteContentBackward`, `insertParagraph`/`insertLineBreak`,
+ * `insertFromPaste` and `insertFromDrop` (common on mobile IME deletions,
+ * Enter and paste), so the handler throws
+ * `TypeError: Cannot read properties of null (reading 'length')`.
+ *
+ * The library invokes the consumer's `onInput` callback with the raw event
+ * BEFORE destructuring `.data`, so this handler normalizes the event first:
+ * `InputEvent.data` is a prototype getter, and defining an own `""` value
+ * property shadows it for every later read. `null -> ""` makes the overlength
+ * check compute `modelValue.length + 0`, which is the correct semantics for
+ * deletions/Enter — genuine overlength insertions still fire the overlength
+ * event. Remove once upstream fixes the null guard (imzbf/md-editor-rt).
+ */
+export function normalizeNullInputEventData(event: Event): void {
+  if ((event as InputEvent).data == null) {
+    Object.defineProperty(event, "data", { value: "", configurable: true });
+  }
+}
+
+/**
  * Validates markdown content for potentially dangerous patterns
  * Note: md-editor-rt uses XSS sanitization internally, this adds extra validation
  */
@@ -128,12 +151,12 @@ export const MarkdownEditor: FC<MarkdownEditorProps> = ({
   //   2. `InputEvent.data` — null by spec for `deleteContentBackward`,
   //      `insertParagraph`/`insertLineBreak`, `insertFromPaste`, and
   //      `insertFromDrop` (common on mobile IME deletions/Enter/paste). The
-  //      library's `input`/`paste` handlers read `.data.length` unguarded.
-  //      `safeValue` does NOT cover this — the null is on the DOM event, not
-  //      the model — so it is fixed upstream via patches/md-editor-rt@6.4.1.patch
-  //      (pnpm patch guarding both `modelValue` and the event `data`). Since
-  //      `maxLength` is always set here, that buggy branch is armed on every
-  //      keystroke across all usage sites, which is why the patch is required.
+  //      library's `input` handler reads `.data.length` unguarded. `safeValue`
+  //      does NOT cover this — the null is on the DOM event, not the model —
+  //      so the `onInput` normalize shim (defined above) rewrites the null to
+  //      "" before the library's check runs. Since `maxLength` is always set
+  //      here, that buggy branch is armed on every keystroke across all usage
+  //      sites, which is why the shim is required.
   const safeValue = value ?? "";
 
   // md-editor-rt builds `#${id} .cm-scroller` and runs querySelector on it.
@@ -286,6 +309,7 @@ export const MarkdownEditor: FC<MarkdownEditorProps> = ({
             )}
             value={safeValue}
             onChange={handleChange}
+            onInput={normalizeNullInputEventData}
             onBlur={onBlur}
             theme={resolvedTheme === "dark" ? "dark" : "light"}
             preview={false}

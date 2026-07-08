@@ -37,17 +37,3 @@ allowBuilds:
   # committed mockServiceWorker.js, so there is nothing to build. If you later
   # add `msw.workerDirectory`, flip this to true.
   msw: false
-
-# NOTE: the md-editor-rt patch registration (`patchedDependencies`) lives in
-# package.json#pnpm, NOT here. pnpm 9 — which Vercel uses by default, see the
-# header comment above — only reads `patchedDependencies` from package.json;
-# declaring it here fails Vercel's frozen install with
-# ERR_PNPM_LOCKFILE_CONFIG_MISMATCH. pnpm 10 reads both locations.
-#
-# The patch itself (patches/md-editor-rt@6.4.1.patch) guards the CodeMirror
-# maxLength/overlength check against a null `modelValue` and a null
-# `InputEvent.data` (null by spec for deleteContentBackward,
-# insertLineBreak/insertParagraph, insertFromPaste, insertFromDrop). Fixes
-# Sentry GAP-FRONTEND-1WY. It is a stopgap: an upstream issue should be filed
-# against https://github.com/imzbf/md-editor-rt and linked here as the
-# tracking URL, so the patch can be dropped once a release includes the fix.

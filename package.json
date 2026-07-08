@@ -3,11 +3,6 @@
   "version": "2.0.1",
   "private": true,
   "packageManager": "pnpm@10.34.3",
-  "pnpm": {
-    "patchedDependencies": {
-      "md-editor-rt@6.4.1": "patches/md-editor-rt@6.4.1.patch"
-    }
-  },
   "scripts": {
     "dev": "next dev --turbopack",
     "dev:wl": "next dev --turbopack --experimental-https --experimental-https-key ./test-wl.local+2-key.pem --experimental-https-cert ./test-wl.local+2.pem",
