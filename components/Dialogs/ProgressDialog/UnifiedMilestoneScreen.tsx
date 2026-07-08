@@ -598,6 +598,10 @@ export const UnifiedMilestoneScreen = () => {
                       maxDate={watch("dates.endsAt")}
                       placeholder="Select start date"
                       className="w-full"
+                      // Render inline so the calendar lives inside the HeadlessUI
+                      // Dialog panel; portaling it to body makes the dialog treat
+                      // calendar clicks as an outside interaction and close.
+                      renderInline
                     />
                   )}
                 />
@@ -616,6 +620,9 @@ export const UnifiedMilestoneScreen = () => {
                       minDate={watch("dates.startsAt") || new Date()}
                       placeholder="Select end date"
                       className="w-full"
+                      // See start-date picker above: inline keeps the calendar
+                      // inside the dialog panel so it doesn't close the dialog.
+                      renderInline
                     />
                   )}
                 />

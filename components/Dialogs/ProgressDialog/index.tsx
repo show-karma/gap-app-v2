@@ -201,7 +201,17 @@ export const ProgressDialog = () => {
               leaveFrom="opacity-100 scale-100"
               leaveTo="opacity-0 scale-95"
             >
-              <Dialog.Panel className="w-full max-w-3xl h-max transform overflow-hidden rounded dark:bg-zinc-800 bg-white p-6 text-left align-middle transition-all">
+              <Dialog.Panel
+                className={cn(
+                  "w-full max-w-3xl h-max transform rounded dark:bg-zinc-800 bg-white p-6 text-left align-middle transition-all",
+                  // The milestone screen renders inline date-picker calendars that
+                  // must be able to overflow the panel; every other screen keeps
+                  // its content clipped to the rounded corners.
+                  progressModalScreen === "unified_milestone"
+                    ? "overflow-visible"
+                    : "overflow-hidden"
+                )}
+              >
                 <div className="flex flex-col gap-6">
                   <div className="flex flex-col gap-2">
                     <div className="flex flex-row gap-2 px-4 pt-4 items-center">
