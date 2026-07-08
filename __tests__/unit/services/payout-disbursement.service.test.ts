@@ -6,9 +6,17 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mockFetchData = vi.fn();
-vi.mock("@/utilities/fetchData", () => ({
-  default: (...args: unknown[]) => mockFetchData(...args),
-}));
+vi.mock("@/utilities/fetchData", async () => {
+  // Preserve the real FetchDataError / parseRetryAfterMs named exports so the
+  // service can construct status-carrying errors; only the default export
+  // (the network call) is stubbed.
+  const actual =
+    await vi.importActual<typeof import("@/utilities/fetchData")>("@/utilities/fetchData");
+  return {
+    ...actual,
+    default: (...args: unknown[]) => mockFetchData(...args),
+  };
+});
 
 vi.mock("@/utilities/indexer", () => ({
   INDEXER: {
@@ -411,6 +419,18 @@ describe("payout-disbursement.service", () => {
       await expect(getPayoutConfigByGrantPublic("g1")).rejects.toThrow(
         /Failed to fetch payout config/
       );
+    });
+
+    it("throws a FetchDataError carrying status 429 on rate limit", async () => {
+      mockFetchData.mockResolvedValue([null, "Rate limit exceeded. Try again later.", null, 429]);
+
+      const err = await getPayoutConfigByGrantPublic("g1").then(
+        () => null,
+        (e) => e
+      );
+
+      expect(err).toMatchObject({ name: "FetchDataError", status: 429 });
+      expect(err.message).toContain("Rate limit exceeded");
     });
   });
 

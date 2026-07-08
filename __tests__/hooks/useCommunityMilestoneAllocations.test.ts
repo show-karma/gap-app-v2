@@ -1,9 +1,44 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { renderHook, waitFor } from "@testing-library/react";
+import { createElement, type ReactNode } from "react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   buildGrantAllocationTotalMap,
   buildMilestoneAllocationMap,
   resolveTokenSymbol,
+  useCommunityMilestoneAllocations,
+  useMilestoneAllocationsByGrants,
 } from "@/hooks/useCommunityMilestoneAllocations";
 import type { PayoutGrantConfig } from "@/src/features/payout-disbursement/types/payout-disbursement";
+import type { CommunityMilestoneUpdate } from "@/types/community-updates";
+
+vi.mock("@/src/features/payout-disbursement/services/payout-disbursement.service", () => ({
+  getPayoutConfigByGrantPublic: vi.fn(),
+  getPayoutConfigsByCommunityPublic: vi.fn(),
+}));
+
+import * as payoutService from "@/src/features/payout-disbursement/services/payout-disbursement.service";
+
+const mockGetByGrant = vi.mocked(payoutService.getPayoutConfigByGrantPublic);
+const mockGetByCommunity = vi.mocked(payoutService.getPayoutConfigsByCommunityPublic);
+
+function makeConfig(grantUID: string): PayoutGrantConfig {
+  return {
+    grantUID,
+    milestoneAllocations: [
+      { id: `alloc-${grantUID}`, milestoneUID: `ms-${grantUID}`, label: "M1", amount: "1000" },
+    ],
+  } as PayoutGrantConfig;
+}
+
+function createWrapper() {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false, gcTime: Number.POSITIVE_INFINITY } },
+  });
+  const wrapper = ({ children }: { children: ReactNode }) =>
+    createElement(QueryClientProvider, { client: queryClient }, children);
+  return { wrapper, queryClient };
+}
 
 describe("resolveTokenSymbol", () => {
   it("should_return_grant_currency_when_provided", () => {
@@ -405,5 +440,127 @@ describe("buildGrantAllocationTotalMap", () => {
 
     expect(result.size).toBe(1);
     expect(result.get("grant-1")).toBe("$5,000");
+  });
+});
+
+describe("usePayoutConfigsForGrants (via public hooks) — request batching", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockGetByGrant.mockImplementation((grantUID: string) => Promise.resolve(makeConfig(grantUID)));
+    mockGetByCommunity.mockImplementation((_communityUID: string) =>
+      Promise.resolve(Array.from({ length: 50 }, (_, i) => makeConfig(`g${i}`)))
+    );
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("should_fetch_once_via_community_endpoint_when_communityUID_provided", async () => {
+    const grantUIDs = Array.from({ length: 50 }, (_, i) => `g${i}`);
+    const { wrapper } = createWrapper();
+
+    const { result } = renderHook(
+      () => useMilestoneAllocationsByGrants(grantUIDs, undefined, { communityUID: "0xComm" }),
+      { wrapper }
+    );
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(mockGetByCommunity).toHaveBeenCalledTimes(1);
+    expect(mockGetByGrant).not.toHaveBeenCalled();
+    expect(result.current.allocationMap.get("ms-g0")).toBe("$1,000");
+    expect(result.current.allocationMap.size).toBe(50);
+  });
+
+  it("should_dedupe_duplicate_grant_uids_in_per_grant_mode", async () => {
+    const { wrapper } = createWrapper();
+
+    const { result } = renderHook(
+      () => useMilestoneAllocationsByGrants(["g1", "g1", "g2", "g2", "g2"]),
+      { wrapper }
+    );
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(mockGetByGrant).toHaveBeenCalledTimes(2);
+    expect(mockGetByCommunity).not.toHaveBeenCalled();
+  });
+
+  it("should_issue_single_community_call_for_two_hooks_sharing_communityUID", async () => {
+    const grantUIDs = Array.from({ length: 50 }, (_, i) => `g${i}`);
+    const { wrapper } = createWrapper();
+
+    const { result } = renderHook(
+      () => ({
+        a: useMilestoneAllocationsByGrants(grantUIDs, undefined, { communityUID: "0xComm" }),
+        b: useMilestoneAllocationsByGrants(grantUIDs.slice(0, 10), undefined, {
+          communityUID: "0xComm",
+        }),
+      }),
+      { wrapper }
+    );
+
+    await waitFor(() => {
+      expect(result.current.a.isLoading).toBe(false);
+      expect(result.current.b.isLoading).toBe(false);
+    });
+
+    expect(mockGetByCommunity).toHaveBeenCalledTimes(1);
+    expect(mockGetByGrant).not.toHaveBeenCalled();
+    // The second hook filters the shared payload down to its 10 requested grants.
+    expect(result.current.b.allocationMap.size).toBe(10);
+  });
+
+  it("should_fetch_once_per_unique_grant_when_no_communityUID", async () => {
+    const { wrapper } = createWrapper();
+
+    const { result } = renderHook(() => useMilestoneAllocationsByGrants(["g0", "g1", "g2"]), {
+      wrapper,
+    });
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(mockGetByGrant).toHaveBeenCalledTimes(3);
+    expect(mockGetByCommunity).not.toHaveBeenCalled();
+  });
+
+  it("should_produce_identical_allocationMap_shape_in_both_fetch_modes", async () => {
+    const grantUIDs = ["g0", "g1", "g2"];
+
+    mockGetByCommunity.mockResolvedValue(grantUIDs.map(makeConfig));
+
+    const perGrant = renderHook(() => useMilestoneAllocationsByGrants(grantUIDs), {
+      wrapper: createWrapper().wrapper,
+    });
+    await waitFor(() => expect(perGrant.result.current.isLoading).toBe(false));
+
+    const community = renderHook(
+      () => useMilestoneAllocationsByGrants(grantUIDs, undefined, { communityUID: "0xComm" }),
+      { wrapper: createWrapper().wrapper }
+    );
+    await waitFor(() => expect(community.result.current.isLoading).toBe(false));
+
+    const perGrantEntries = [...perGrant.result.current.allocationMap.entries()].sort();
+    const communityEntries = [...community.result.current.allocationMap.entries()].sort();
+
+    expect(perGrantEntries).toEqual(communityEntries);
+  });
+
+  it("should_derive_communityUID_from_milestone_payload_for_updates_page", async () => {
+    mockGetByCommunity.mockResolvedValue([makeConfig("g0"), makeConfig("g1")]);
+    const milestones: CommunityMilestoneUpdate[] = [
+      { uid: "u0", communityUID: "0xDerived", grant: { uid: "g0" } } as CommunityMilestoneUpdate,
+      { uid: "u1", communityUID: "0xDerived", grant: { uid: "g1" } } as CommunityMilestoneUpdate,
+    ];
+    const { wrapper } = createWrapper();
+
+    const { result } = renderHook(() => useCommunityMilestoneAllocations(milestones), { wrapper });
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(mockGetByCommunity).toHaveBeenCalledTimes(1);
+    expect(mockGetByCommunity).toHaveBeenCalledWith("0xDerived");
+    expect(mockGetByGrant).not.toHaveBeenCalled();
   });
 });

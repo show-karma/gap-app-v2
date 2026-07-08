@@ -1,5 +1,9 @@
 import * as Sentry from "@sentry/nextjs";
-import { isTransientHttpError, isTransientNetworkError } from "@/utilities/sentry/transientErrors";
+import {
+  isRateLimitError,
+  isTransientHttpError,
+  isTransientNetworkError,
+} from "@/utilities/sentry/transientErrors";
 
 // Lazy import toast to avoid issues in server components
 let toast: typeof import("react-hot-toast").default | null = null;
@@ -90,6 +94,20 @@ export const errorManager = (
   // are tracked on the infra/indexer side, not here. See DEV-271 /
   // GAP-FRONTEND-1R1.
   if (isTransientHttpError(error)) {
+    return;
+  }
+
+  // Rate-limit (429) responses are expected load-shedding, not first-party
+  // bugs — the data layer retries with backoff and the affected UI degrades
+  // gracefully. Don't capture them (they burst at dozens/sec and drown out
+  // real signal), but leave a breadcrumb so the pressure is still visible on
+  // whatever event does get captured next. See GAP-FRONTEND-245 / -23E.
+  if (isRateLimitError(error)) {
+    Sentry.addBreadcrumb({
+      category: "rate-limit",
+      level: "warning",
+      message: errorMessage,
+    });
     return;
   }
 

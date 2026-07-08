@@ -1,5 +1,7 @@
+import { FetchDataError } from "../../../../utilities/fetchData";
 import {
   isAxiosAbortError,
+  isRateLimitError,
   isTransientNetworkError,
 } from "../../../../utilities/sentry/transientErrors";
 
@@ -46,5 +48,34 @@ describe("isTransientNetworkError", () => {
   it("treats cancellations as transient (abort during navigation/unmount)", () => {
     expect(isAxiosAbortError({ code: "ERR_CANCELED" })).toBe(true);
     expect(isTransientNetworkError({ name: "AbortError" })).toBe(true);
+  });
+});
+
+describe("isRateLimitError", () => {
+  it("matches a 429 via error.response.status", () => {
+    expect(isRateLimitError({ response: { status: 429 } })).toBe(true);
+  });
+
+  it("matches a 429 via error.status (FetchDataError)", () => {
+    expect(isRateLimitError(new FetchDataError("Rate limit exceeded. Try again later.", 429))).toBe(
+      true
+    );
+  });
+
+  it("matches the 'rate limit exceeded' message when status is missing", () => {
+    expect(isRateLimitError(new Error("Rate limit exceeded. Try again later."))).toBe(true);
+    expect(isRateLimitError("RATE LIMIT EXCEEDED")).toBe(true);
+  });
+
+  it("matches the re-wrapped 'status code 429' message", () => {
+    expect(isRateLimitError(new Error("Request failed with status code 429"))).toBe(true);
+  });
+
+  it("does NOT match other statuses or unrelated messages", () => {
+    expect(isRateLimitError({ response: { status: 500 } })).toBe(false);
+    expect(isRateLimitError(new FetchDataError("Server error", 500))).toBe(false);
+    expect(isRateLimitError(new Error("Something else broke"))).toBe(false);
+    expect(isRateLimitError(null)).toBe(false);
+    expect(isRateLimitError(undefined)).toBe(false);
   });
 });

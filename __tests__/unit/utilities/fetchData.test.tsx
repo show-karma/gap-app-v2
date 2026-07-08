@@ -1,6 +1,10 @@
 import axios from "axios";
 import { TokenManager } from "@/utilities/auth/token-manager";
-import fetchData from "@/utilities/fetchData";
+import fetchData, {
+  FetchDataError,
+  fetchDataThrow,
+  parseRetryAfterMs,
+} from "@/utilities/fetchData";
 
 vi.mock("axios");
 vi.mock("@/utilities/auth/token-manager");
@@ -260,5 +264,69 @@ describe("fetchData", () => {
     expect(axios.request).toHaveBeenCalledTimes(1);
     expect(TokenManager.getToken).not.toHaveBeenCalled();
     expect(status).toBe(401);
+  });
+});
+
+describe("parseRetryAfterMs", () => {
+  it("parses a delta-seconds header into milliseconds", () => {
+    expect(parseRetryAfterMs("120")).toBe(120_000);
+    expect(parseRetryAfterMs("0")).toBe(0);
+  });
+
+  it("parses an HTTP-date header into a non-negative delay", () => {
+    const future = new Date(Date.now() + 10_000).toUTCString();
+    const delay = parseRetryAfterMs(future);
+    expect(delay).toBeGreaterThan(0);
+    expect(delay).toBeLessThanOrEqual(10_000);
+  });
+
+  it("clamps a past HTTP-date to zero", () => {
+    const past = new Date(Date.now() - 10_000).toUTCString();
+    expect(parseRetryAfterMs(past)).toBe(0);
+  });
+
+  it("returns undefined for absent or unparseable values", () => {
+    expect(parseRetryAfterMs(undefined)).toBeUndefined();
+    expect(parseRetryAfterMs(null)).toBeUndefined();
+    expect(parseRetryAfterMs("")).toBeUndefined();
+    expect(parseRetryAfterMs("not-a-date")).toBeUndefined();
+  });
+});
+
+describe("fetchDataThrow", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("returns the response body on success", async () => {
+    (axios.request as vi.Mock).mockResolvedValue({ data: { ok: true }, status: 200 });
+    (TokenManager.getToken as vi.Mock).mockResolvedValue(null);
+
+    const data = await fetchDataThrow<{ ok: boolean }>("/test-endpoint", "GET", {}, {}, {}, false);
+
+    expect(data).toEqual({ ok: true });
+  });
+
+  it("throws a FetchDataError carrying status and Retry-After on 429", async () => {
+    const axiosErr = {
+      response: {
+        status: 429,
+        data: { message: "Rate limit exceeded. Try again later." },
+        headers: { "retry-after": "30" },
+      },
+      message: "Request failed with status code 429",
+    };
+    (axios.request as vi.Mock).mockRejectedValue(axiosErr);
+    (TokenManager.getToken as vi.Mock).mockResolvedValue(null);
+
+    const err = await fetchDataThrow("/test-endpoint", "GET", {}, {}, {}, false).then(
+      () => null,
+      (e) => e
+    );
+
+    expect(err).toBeInstanceOf(FetchDataError);
+    expect(err.status).toBe(429);
+    expect(err.retryAfterMs).toBe(30_000);
+    expect(err.message).toBe("Rate limit exceeded. Try again later.");
   });
 });

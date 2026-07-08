@@ -1,5 +1,5 @@
 import { errorManager } from "@/components/Utilities/errorManager";
-import fetchData from "@/utilities/fetchData";
+import fetchData, { FetchDataError } from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import type {
   CommunityPayoutAgreementInfo,
@@ -402,7 +402,7 @@ export const getPayoutConfigsByCommunityPublic = async (
   communityUID: string
 ): Promise<PayoutGrantConfig[]> => {
   try {
-    const [data, error] = await fetchData<{ configs: PayoutGrantConfig[] }>(
+    const [data, error, , status] = await fetchData<{ configs: PayoutGrantConfig[] }>(
       INDEXER.V2.PAYOUT_CONFIG.BY_COMMUNITY_PUBLIC(communityUID),
       "GET",
       {},
@@ -413,13 +413,18 @@ export const getPayoutConfigsByCommunityPublic = async (
     );
 
     if (error || !data) {
-      throw new Error(error || "Failed to fetch payout configs");
+      // Throw a status-carrying error so the data layer can apply 429-aware
+      // retry/backoff and errorManager can suppress rate-limit noise.
+      throw new FetchDataError(error || "Failed to fetch payout configs", status);
     }
 
     return data.configs;
   } catch (error: unknown) {
     errorManager(`Error fetching public payout configs for community ${communityUID}`, error);
-    throw new Error(`Failed to fetch payout configs: ${getErrorMessage(error)}`);
+    // Re-throw with the descriptive wrapper message but preserve the HTTP
+    // status so React Query can apply 429-aware retry/backoff.
+    const status = error instanceof FetchDataError ? error.status : undefined;
+    throw new FetchDataError(`Failed to fetch payout configs: ${getErrorMessage(error)}`, status);
   }
 };
 
@@ -486,7 +491,7 @@ export const getPayoutConfigByGrant = async (
   grantUID: string
 ): Promise<PayoutGrantConfig | null> => {
   try {
-    const [data, error] = await fetchData<{ config: PayoutGrantConfig | null }>(
+    const [data, error, , status] = await fetchData<{ config: PayoutGrantConfig | null }>(
       INDEXER.V2.PAYOUT_CONFIG.BY_GRANT(grantUID),
       "GET",
       {},
@@ -497,13 +502,14 @@ export const getPayoutConfigByGrant = async (
     );
 
     if (error || !data) {
-      throw new Error(error || "Failed to fetch payout config");
+      throw new FetchDataError(error || "Failed to fetch payout config", status);
     }
 
     return data.config;
   } catch (error: unknown) {
     errorManager(`Error fetching payout config for grant ${grantUID}`, error);
-    throw new Error(`Failed to fetch payout config: ${getErrorMessage(error)}`);
+    const status = error instanceof FetchDataError ? error.status : undefined;
+    throw new FetchDataError(`Failed to fetch payout config: ${getErrorMessage(error)}`, status);
   }
 };
 
@@ -514,7 +520,7 @@ export const getPayoutConfigByGrantPublic = async (
   grantUID: string
 ): Promise<PayoutGrantConfig | null> => {
   try {
-    const [data, error] = await fetchData<{ config: PayoutGrantConfig | null }>(
+    const [data, error, , status] = await fetchData<{ config: PayoutGrantConfig | null }>(
       INDEXER.V2.PAYOUT_CONFIG.BY_GRANT_PUBLIC(grantUID),
       "GET",
       {},
@@ -525,13 +531,14 @@ export const getPayoutConfigByGrantPublic = async (
     );
 
     if (error || !data) {
-      throw new Error(error || "Failed to fetch payout config");
+      throw new FetchDataError(error || "Failed to fetch payout config", status);
     }
 
     return data.config;
   } catch (error: unknown) {
     errorManager(`Error fetching public payout config for grant ${grantUID}`, error);
-    throw new Error(`Failed to fetch payout config: ${getErrorMessage(error)}`);
+    const status = error instanceof FetchDataError ? error.status : undefined;
+    throw new FetchDataError(`Failed to fetch payout config: ${getErrorMessage(error)}`, status);
   }
 };
 

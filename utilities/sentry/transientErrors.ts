@@ -130,6 +130,29 @@ export function isTransientWalletTimeoutError(error: unknown): boolean {
   return TRANSIENT_WALLET_TIMEOUT_FRAGMENTS.some((fragment) => message.includes(fragment));
 }
 
+// Rate-limit pressure (HTTP 429) is expected load-shedding, not a first-party
+// bug: the indexer caps public payout-config reads at 30 req/min/IP per route
+// template, so a milestones page that fans out one request per grant can burst
+// past the cap. The failed reads are retried by React Query and the affected UI
+// is decorative (allocation badges), so these must not page Sentry. The service
+// re-throws a `FetchDataError` carrying `status`, but SSR/re-wrapped paths can
+// arrive as a bare message ("Rate limit exceeded. Try again later." /
+// "Request failed with status code 429"), so match on both. See GAP-FRONTEND-245.
+const RATE_LIMIT_MESSAGE_FRAGMENTS = ["rate limit exceeded", "status code 429"];
+
+/**
+ * True when the error represents an HTTP 429 rate-limit response — detected
+ * either by status (`error.response.status` / `error.status`, incl.
+ * `FetchDataError`) or by a rate-limit message fragment for re-wrapped errors
+ * that lost their status. Used to suppress Sentry noise while still retrying.
+ */
+export function isRateLimitError(error: unknown): boolean {
+  if (!error) return false;
+  if (getHttpStatus(error) === 429) return true;
+  const message = getErrorMessage(error).toLowerCase();
+  return RATE_LIMIT_MESSAGE_FRAGMENTS.some((fragment) => message.includes(fragment));
+}
+
 /**
  * True when the error is a transient upstream HTTP failure (gateway timeout
  * / bad gateway / service unavailable / request timeout). Unlike

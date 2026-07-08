@@ -4,27 +4,58 @@ import { envVars } from "./enviromentVars";
 import { sanitizeObject } from "./sanitize";
 
 /**
- * Fetch data utility that uses Privy's TokenManager for authentication
- *
- * This replaces the complex cookie-based token retrieval with
- * Privy's simplified token management.
- *
- * The optional `signal` is forwarded to axios so a long-running request
- * is cancelled when the caller aborts — used by the milestone-completion
- * polling hook to halt in-flight fetches when a component unmounts mid-
- * poll. Without it, an aborted poll iteration still completes its
- * current request before the next abort check fires.
- *
- * **Caller contract** when passing `signal`: an aborted request lands in
- * the catch path as an axios cancel error. The function returns the
- * standard `[null, error, null, status]` tuple in that case; callers
- * should use `isAbortError(err)` (from `utilities/retries`) when
- * inspecting the error to distinguish cancellation from real failures.
- *
- * @template T - Optional type parameter for response data (defaults to any for backward compatibility)
- * @returns Promise<[T, null, any, number] | [null, string, null, number]> - Tuple of [data, error, pageInfo, status]
+ * Error thrown by {@link fetchDataThrow} (and constructed by services that
+ * need to surface the HTTP status to the data layer). Unlike the bare `Error`
+ * that services used to re-throw, this carries the numeric `status` so that
+ * `utilities/queries/defaultOptions.ts` can apply status-aware retry policy
+ * and `errorManager` can suppress expected rate-limit noise. `retryAfterMs`
+ * mirrors an upstream `Retry-After` header when the server sends one.
  */
-export default async function fetchData<T = any>(
+export class FetchDataError extends Error {
+  status?: number;
+  retryAfterMs?: number;
+
+  constructor(message: string, status?: number, retryAfterMs?: number) {
+    super(message);
+    this.name = "FetchDataError";
+    this.status = status;
+    this.retryAfterMs = retryAfterMs;
+  }
+}
+
+/**
+ * Parses an HTTP `Retry-After` header value into milliseconds.
+ * The header is either a non-negative integer number of seconds ("120") or an
+ * HTTP-date. Returns `undefined` when the value is absent or unparseable so
+ * callers can fall back to their own backoff schedule.
+ */
+export function parseRetryAfterMs(headerValue: unknown): number | undefined {
+  if (headerValue === undefined || headerValue === null) return undefined;
+  const raw = String(headerValue).trim();
+  if (!raw) return undefined;
+
+  // Delta-seconds form.
+  if (/^\d+$/.test(raw)) {
+    return Number(raw) * 1000;
+  }
+
+  // HTTP-date form: clamp to >= 0 so a slightly-past date doesn't yield a
+  // negative delay.
+  const dateMs = Date.parse(raw);
+  if (!Number.isNaN(dateMs)) {
+    return Math.max(0, dateMs - Date.now());
+  }
+
+  return undefined;
+}
+
+/**
+ * Internal fetch core shared by {@link fetchData} (tuple contract) and
+ * {@link fetchDataThrow} (throwing contract). Returns a normalized result
+ * object so the throwing variant can also surface the HTTP status and any
+ * `Retry-After` hint — data the flat tuple has no room for.
+ */
+async function runFetch<T = any>(
   endpoint: string,
   method: Method = "GET",
   axiosData = {},
@@ -34,7 +65,13 @@ export default async function fetchData<T = any>(
   cache: boolean | undefined = false,
   baseUrl: string = envVars.NEXT_PUBLIC_GAP_INDEXER_URL,
   signal?: AbortSignal
-): Promise<[T, null, any, number] | [null, string, null, number]> {
+): Promise<{
+  data: T | null;
+  error: any;
+  pageInfo: any;
+  status: number;
+  retryAfterMs?: number;
+}> {
   try {
     const sanitizedData = sanitizeObject(axiosData);
     const isIndexerUrl = baseUrl === envVars.NEXT_PUBLIC_GAP_INDEXER_URL;
@@ -96,16 +133,104 @@ export default async function fetchData<T = any>(
     }
     const resData = res.data;
     const pageInfo = resData?.pageInfo || null;
-    return [resData, null, pageInfo, res.status];
+    return { data: resData, error: null, pageInfo, status: res.status };
   } catch (err: any) {
     let error = "";
     let status = 500;
+    let retryAfterMs: number | undefined;
     if (!err.response) {
       error = err;
     } else {
       error = err.response.data.message || err.message;
       status = err.response.status;
+      retryAfterMs = parseRetryAfterMs(err.response.headers?.["retry-after"]);
     }
-    return [null, error, null, status];
+    return { data: null, error, pageInfo: null, status, retryAfterMs };
   }
+}
+
+/**
+ * Fetch data utility that uses Privy's TokenManager for authentication
+ *
+ * This replaces the complex cookie-based token retrieval with
+ * Privy's simplified token management.
+ *
+ * The optional `signal` is forwarded to axios so a long-running request
+ * is cancelled when the caller aborts — used by the milestone-completion
+ * polling hook to halt in-flight fetches when a component unmounts mid-
+ * poll. Without it, an aborted poll iteration still completes its
+ * current request before the next abort check fires.
+ *
+ * **Caller contract** when passing `signal`: an aborted request lands in
+ * the catch path as an axios cancel error. The function returns the
+ * standard `[null, error, null, status]` tuple in that case; callers
+ * should use `isAbortError(err)` (from `utilities/retries`) when
+ * inspecting the error to distinguish cancellation from real failures.
+ *
+ * @template T - Optional type parameter for response data (defaults to any for backward compatibility)
+ * @returns Promise<[T, null, any, number] | [null, string, null, number]> - Tuple of [data, error, pageInfo, status]
+ */
+export default async function fetchData<T = any>(
+  endpoint: string,
+  method: Method = "GET",
+  axiosData = {},
+  params = {},
+  headers = {},
+  isAuthorized = true,
+  cache: boolean | undefined = false,
+  baseUrl: string = envVars.NEXT_PUBLIC_GAP_INDEXER_URL,
+  signal?: AbortSignal
+): Promise<[T, null, any, number] | [null, string, null, number]> {
+  const result = await runFetch<T>(
+    endpoint,
+    method,
+    axiosData,
+    params,
+    headers,
+    isAuthorized,
+    cache,
+    baseUrl,
+    signal
+  );
+  if (result.error !== null) {
+    return [null, result.error, null, result.status];
+  }
+  return [result.data as T, null, result.pageInfo, result.status];
+}
+
+/**
+ * Throwing variant of {@link fetchData}. On success it returns the response
+ * body directly; on failure it throws a {@link FetchDataError} carrying the
+ * HTTP status and any `Retry-After` hint. Use this from React Query queryFns
+ * that want status-aware retry/Sentry handling without unpacking the tuple.
+ * The tuple contract of {@link fetchData} is unchanged for existing callers.
+ */
+export async function fetchDataThrow<T = any>(
+  endpoint: string,
+  method: Method = "GET",
+  axiosData = {},
+  params = {},
+  headers = {},
+  isAuthorized = true,
+  cache: boolean | undefined = false,
+  baseUrl: string = envVars.NEXT_PUBLIC_GAP_INDEXER_URL,
+  signal?: AbortSignal
+): Promise<T> {
+  const result = await runFetch<T>(
+    endpoint,
+    method,
+    axiosData,
+    params,
+    headers,
+    isAuthorized,
+    cache,
+    baseUrl,
+    signal
+  );
+  if (result.error !== null) {
+    const message =
+      typeof result.error === "string" ? result.error : result.error?.message || "Request failed";
+    throw new FetchDataError(message, result.status, result.retryAfterMs);
+  }
+  return result.data as T;
 }

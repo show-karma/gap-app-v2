@@ -1,11 +1,13 @@
 import * as Sentry from "@sentry/nextjs";
 import { errorManager } from "@/components/Utilities/errorManager";
+import { FetchDataError } from "@/utilities/fetchData";
 
 // Unmock errorManager from global setup to test the actual implementation
 vi.unmock("@/components/Utilities/errorManager");
 vi.mock("@sentry/nextjs", () => ({
   captureException: vi.fn(),
   captureMessage: vi.fn(),
+  addBreadcrumb: vi.fn(),
   setUser: vi.fn(),
   setTag: vi.fn(),
   setContext: vi.fn(),
@@ -83,5 +85,29 @@ describe("errorManager", () => {
     errorManager("Project Grants API Error", httpErr);
 
     expect(Sentry.captureException).toHaveBeenCalled();
+  });
+
+  it("should NOT capture 429 rate-limit errors but should add a breadcrumb (GAP-FRONTEND-245)", () => {
+    const rateLimitErr = new FetchDataError("Rate limit exceeded. Try again later.", 429);
+
+    errorManager("Error fetching public payout config for grant g1", rateLimitErr);
+
+    expect(Sentry.captureException).not.toHaveBeenCalled();
+    expect(Sentry.addBreadcrumb).toHaveBeenCalledWith(
+      expect.objectContaining({
+        category: "rate-limit",
+        level: "warning",
+        message: "Error fetching public payout config for grant g1",
+      })
+    );
+  });
+
+  it("should still capture a 500 FetchDataError (not rate-limited)", () => {
+    const serverErr = new FetchDataError("Internal server error", 500);
+
+    errorManager("Error fetching public payout config for grant g1", serverErr);
+
+    expect(Sentry.captureException).toHaveBeenCalled();
+    expect(Sentry.addBreadcrumb).not.toHaveBeenCalled();
   });
 });
