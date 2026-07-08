@@ -6,6 +6,10 @@ import { questsCompletedByRead } from "../state/quest-logic";
 import { useRewards } from "../state/rewards-context";
 import type { ImpactUpdate, Quest } from "../types";
 
+// Stable empty reference so memoized cards that get no pending bonus don't
+// re-render on every parent render.
+const NO_PENDING_QUESTS: Quest[] = [];
+
 const UpdateCard = React.memo(function UpdateCard({
   update,
   onRead,
@@ -75,6 +79,14 @@ const UpdateCard = React.memo(function UpdateCard({
 export function ImpactFeed() {
   const { state, readUpdate } = useRewards();
   const pendingQuests = useMemo(() => questsCompletedByRead(state.quests), [state.quests]);
+  // A read quest completes on the *next* read, whichever update that is, and it
+  // pays out only once. Advertise the bonus on just the first unread card so
+  // the feed never promises the same one-time quest reward on several cards at
+  // once (which would over-count what reading them all actually earns).
+  const firstUnreadId = useMemo(
+    () => state.updates.find((update) => !update.read)?.id,
+    [state.updates]
+  );
 
   return (
     <section
@@ -101,7 +113,7 @@ export function ImpactFeed() {
               key={update.id}
               update={update}
               onRead={readUpdate}
-              pendingQuests={pendingQuests}
+              pendingQuests={update.id === firstUnreadId ? pendingQuests : NO_PENDING_QUESTS}
             />
           ))}
         </ul>
