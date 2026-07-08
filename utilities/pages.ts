@@ -143,7 +143,7 @@ export const PAGES = {
   },
   PROJECT: {
     OVERVIEW: (project: string) => `/project/${project}`,
-    UPDATES: (project: string) => `/project/${project}`,
+    UPDATES: (project: string) => `/project/${project}/updates`,
     ABOUT: (project: string) => `/project/${project}/about`,
     GRANTS: (project: string) => `/project/${project}/funding`,
 
@@ -176,6 +176,7 @@ export const PAGES = {
   FOR_AGENTS: `/for-agents`,
   NONPROFITS: `/nonprofits`,
   DONOR_ADVISORS: `/donor-advisors`,
+  DONOR_REWARDS: `/donor-rewards`,
   CREATE_PROJECT_PROFILE: `/create-project-profile`,
   MCP_CONNECT: `/mcp/connect`,
   SEEDS: `/seeds`,

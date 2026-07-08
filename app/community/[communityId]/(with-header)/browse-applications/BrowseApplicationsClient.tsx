@@ -400,6 +400,9 @@ export function BrowseApplicationsClient({ communityId }: BrowseApplicationsClie
         return undefined;
       },
       enabled: !!selectedProgramId && !hasPrivateApplicationsSetting,
+      // Re-selecting a status chip you already viewed serves the cached page
+      // instead of re-hitting the API on every toggle.
+      staleTime: 1000 * 60 * 2, // 2 minutes
     });
 
   const applications = data?.pages.flatMap((page) => page.applications) || [];
