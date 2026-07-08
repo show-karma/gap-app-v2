@@ -1,27 +1,26 @@
 import { ShieldCheck } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Link } from "@/src/components/navigation/Link";
 import { PAGES } from "@/utilities/pages";
+import { cn } from "@/utilities/tailwind";
+import { BTN_BASE, BTN_MD, BTN_PRIMARY, THUMB_BASE } from "../v3/soft-classes";
 
 export function SuperAdminSection() {
   return (
-    <section className="flex flex-col gap-4">
-      <div className="flex flex-col gap-4 rounded-xl border border-border p-6 md:flex-row md:items-center md:justify-between">
-        <div className="flex items-start gap-4">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
-            <ShieldCheck className="h-6 w-6 text-muted-foreground" />
-          </div>
-          <div className="flex flex-col gap-1">
-            <h2 className="text-lg font-semibold text-foreground">Admin Panel</h2>
-            <p className="text-sm text-muted-foreground">
-              Manage communities, users, and platform settings
-            </p>
-          </div>
+    <div className="flex flex-col gap-4 rounded-sf-card bg-sf-card p-6 md:flex-row md:items-center md:justify-between">
+      <div className="flex min-w-0 items-center gap-4">
+        <div className={cn(THUMB_BASE, "h-12 w-12 rounded-[14px]")}>
+          <ShieldCheck className="h-6 w-6" />
         </div>
-        <Button asChild>
-          <Link href={PAGES.ADMIN.LIST}>Open Admin Panel</Link>
-        </Button>
+        <div className="flex min-w-0 flex-col gap-1">
+          <h2 className="text-lg font-bold tracking-[-0.01em] text-sf-heading">Admin panel</h2>
+          <p className="text-[13.5px] text-sf-muted">
+            Manage communities, users, and platform settings
+          </p>
+        </div>
       </div>
-    </section>
+      <Link className={cn(BTN_BASE, BTN_MD, BTN_PRIMARY, "shrink-0")} href={PAGES.ADMIN.LIST}>
+        Open admin panel
+      </Link>
+    </div>
   );
 }
