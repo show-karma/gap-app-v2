@@ -29,7 +29,8 @@ function NewCommunityButton({ label, onCreated }: { label: string; onCreated: ()
         text: label,
         icon: <SoftIcon name="plus" className="h-4 w-4" />,
         iconSide: "left",
-        styleClass: cn(BTN_BASE, BTN_SM, BTN_OUTLINE),
+        // shadow-none overrides the shadcn Button's default `shadow-primary-button`.
+        styleClass: cn(BTN_BASE, BTN_SM, BTN_OUTLINE, "shadow-none"),
       }}
       refreshCommunities={async () => {
         onCreated();
