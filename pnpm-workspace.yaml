@@ -37,3 +37,12 @@ allowBuilds:
   # committed mockServiceWorker.js, so there is nothing to build. If you later
   # add `msw.workerDirectory`, flip this to true.
   msw: false
+
+# Local source patches applied at install time (`pnpm patch`).
+# md-editor-rt@6.4.1: guards the CodeMirror maxLength/overlength check against a
+# null `modelValue` and a null `InputEvent.data` (null by spec for
+# deleteContentBackward, insertLineBreak/insertParagraph, insertFromPaste,
+# insertFromDrop). Fixes Sentry GAP-FRONTEND-1WY. Remove once fixed upstream
+# in imzbf/md-editor-rt.
+patchedDependencies:
+  md-editor-rt@6.4.1: patches/md-editor-rt@6.4.1.patch

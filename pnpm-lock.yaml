@@ -23,6 +23,11 @@ overrides:
   uuid@>=13.0.0 <13.0.1: 13.0.1
   ws@>=8.0.0 <8.20.1: 8.20.1
 
+patchedDependencies:
+  md-editor-rt@6.4.1:
+    hash: 09d16b04f4b5488af23cd3af235ca872e2b0a0811c4ad3695b1f3603445f7d92
+    path: patches/md-editor-rt@6.4.1.patch
+
 importers:
 
   .:
@@ -248,7 +253,7 @@ importers:
         version: 14.1.1
       md-editor-rt:
         specifier: ^6.4.1
-        version: 6.4.1(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+        version: 6.4.1(patch_hash=09d16b04f4b5488af23cd3af235ca872e2b0a0811c4ad3695b1f3603445f7d92)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
       millify:
         specifier: ^6.1.0
         version: 6.1.0
@@ -28284,7 +28289,7 @@ snapshots:
 
   mcl-wasm@0.7.9: {}
 
-  md-editor-rt@6.4.1(react-dom@19.2.1(react@19.2.1))(react@19.2.1):
+  md-editor-rt@6.4.1(patch_hash=09d16b04f4b5488af23cd3af235ca872e2b0a0811c4ad3695b1f3603445f7d92)(react-dom@19.2.1(react@19.2.1))(react@19.2.1):
     dependencies:
       '@codemirror/autocomplete': 6.20.1
       '@codemirror/commands': 6.10.3

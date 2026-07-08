@@ -117,10 +117,23 @@ export const MarkdownEditor: FC<MarkdownEditorProps> = ({
   enablePreviewToggle = true,
   labelClassName,
 }) => {
-  // md-editor-rt accesses `modelValue.length` synchronously inside its
-  // CodeMirror input/paste/setValue handlers — if a caller (or RHF default)
-  // passes `null`/`undefined` we hit `Cannot read properties of null` and a
-  // setValue→onChange→re-render cycle that trips React's max-update-depth.
+  // md-editor-rt has TWO independent null sources that both throw
+  // `Cannot read properties of null (reading 'length')` inside its CodeMirror
+  // maxLength/overlength check (Sentry GAP-FRONTEND-1WY, 1.7k events):
+  //
+  //   1. `modelValue` — if a caller (or RHF default) passes `null`/`undefined`
+  //      we hit the crash plus a setValue→onChange→re-render cycle that trips
+  //      React's max-update-depth. The `safeValue` guard below fixes this one.
+  //
+  //   2. `InputEvent.data` — null by spec for `deleteContentBackward`,
+  //      `insertParagraph`/`insertLineBreak`, `insertFromPaste`, and
+  //      `insertFromDrop` (common on mobile IME deletions/Enter/paste). The
+  //      library's `input`/`paste` handlers read `.data.length` unguarded.
+  //      `safeValue` does NOT cover this — the null is on the DOM event, not
+  //      the model — so it is fixed upstream via patches/md-editor-rt@6.4.1.patch
+  //      (pnpm patch guarding both `modelValue` and the event `data`). Since
+  //      `maxLength` is always set here, that buggy branch is armed on every
+  //      keystroke across all usage sites, which is why the patch is required.
   const safeValue = value ?? "";
 
   // md-editor-rt builds `#${id} .cm-scroller` and runs querySelector on it.
