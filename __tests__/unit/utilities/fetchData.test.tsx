@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/nextjs";
 import axios from "axios";
 import { TokenManager } from "@/utilities/auth/token-manager";
 import fetchData from "@/utilities/fetchData";
@@ -260,5 +261,118 @@ describe("fetchData", () => {
     expect(axios.request).toHaveBeenCalledTimes(1);
     expect(TokenManager.getToken).not.toHaveBeenCalled();
     expect(status).toBe(401);
+  });
+});
+
+// Server-side transient-socket retry behavior (GAP-FRONTEND-1Y9). fetchData
+// only retries when running on the server, so these simulate SSR by stubbing
+// `window` to undefined (making `typeof window === "undefined"` true).
+describe("fetchData — SSR transient socket retries (GAP-FRONTEND-1Y9)", () => {
+  const econnreset = () => Object.assign(new Error("read ECONNRESET"), { code: "ECONNRESET" });
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.useFakeTimers();
+    vi.spyOn(Math, "random").mockReturnValue(0.5);
+    // Simulate a server render: `typeof window` becomes "undefined".
+    vi.stubGlobal("window", undefined);
+    (TokenManager.getToken as vi.Mock).mockResolvedValue("test-token");
+  });
+
+  afterEach(() => {
+    vi.runOnlyPendingTimers();
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  it("retries a transient ECONNRESET GET and returns the success tuple without reporting", async () => {
+    (axios.request as vi.Mock)
+      .mockRejectedValueOnce(econnreset())
+      .mockResolvedValueOnce({ data: { result: "recovered" }, status: 200 });
+
+    const promise = fetchData("/test-endpoint");
+    await vi.runAllTimersAsync();
+    const [resData, error, , status] = await promise;
+
+    expect(axios.request).toHaveBeenCalledTimes(2);
+    expect(resData).toEqual({ result: "recovered" });
+    expect(error).toBeNull();
+    expect(status).toBe(200);
+    expect(Sentry.captureMessage).not.toHaveBeenCalled();
+  });
+
+  it("returns the error tuple after exhausting attempts and reports exactly one warning", async () => {
+    (axios.request as vi.Mock).mockRejectedValue(econnreset());
+
+    const promise = fetchData("/test-endpoint");
+    await vi.runAllTimersAsync();
+    const [resData, error, , status] = await promise;
+
+    expect(axios.request).toHaveBeenCalledTimes(3);
+    expect(resData).toBeNull();
+    expect(status).toBe(500);
+    expect(error).toBeInstanceOf(Error);
+
+    expect(Sentry.captureMessage).toHaveBeenCalledTimes(1);
+    expect(Sentry.captureMessage).toHaveBeenCalledWith(
+      "Indexer request failed after 3 attempts (ECONNRESET)"
+    );
+    // biome-ignore lint/suspicious/noExplicitAny: reaching into the test mock's scope spy.
+    expect((Sentry as any).__scope.setFingerprint).toHaveBeenCalledWith([
+      "transient-fetch-retries-exhausted",
+      "ECONNRESET",
+    ]);
+  });
+
+  it("still performs the per-attempt 401 refresh inside a retried attempt", async () => {
+    const unauthorized = { response: { data: { message: "Unauthorized" }, status: 401 } };
+    const ok = { data: { result: "recovered" }, status: 200 };
+    (axios.request as vi.Mock).mockRejectedValueOnce(unauthorized).mockResolvedValueOnce(ok);
+    (TokenManager.getToken as vi.Mock)
+      .mockResolvedValueOnce("stale-token")
+      .mockResolvedValueOnce("fresh-token");
+
+    const promise = fetchData("/test-endpoint");
+    await vi.runAllTimersAsync();
+    const [resData, error, , status] = await promise;
+
+    expect(axios.request).toHaveBeenCalledTimes(2);
+    expect(TokenManager.clearCache).toHaveBeenCalledTimes(1);
+    expect(resData).toEqual({ result: "recovered" });
+    expect(error).toBeNull();
+    expect(status).toBe(200);
+    expect(Sentry.captureMessage).not.toHaveBeenCalled();
+  });
+
+  it("does not retry a POST even on the server", async () => {
+    (axios.request as vi.Mock).mockRejectedValue(econnreset());
+
+    const promise = fetchData("/test-endpoint", "POST", { a: 1 });
+    await vi.runAllTimersAsync();
+    await promise;
+
+    expect(axios.request).toHaveBeenCalledTimes(1);
+    expect(Sentry.captureMessage).not.toHaveBeenCalled();
+  });
+});
+
+// In the browser (jsdom default: `window` defined), fetchData must NOT retry —
+// React Query owns client-side retries.
+describe("fetchData — no client-side retry", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    (TokenManager.getToken as vi.Mock).mockResolvedValue("test-token");
+  });
+
+  it("makes a single attempt on a transient ECONNRESET in the browser", async () => {
+    const err = Object.assign(new Error("read ECONNRESET"), { code: "ECONNRESET" });
+    (axios.request as vi.Mock).mockRejectedValue(err);
+
+    const [resData, , , status] = await fetchData("/test-endpoint");
+
+    expect(axios.request).toHaveBeenCalledTimes(1);
+    expect(resData).toBeNull();
+    expect(status).toBe(500);
   });
 });
