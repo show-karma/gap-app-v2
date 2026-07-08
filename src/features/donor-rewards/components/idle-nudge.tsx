@@ -45,7 +45,7 @@ export function IdleNudge({ onOpenGrantFlow }: IdleNudgeProps) {
   return (
     <section
       aria-label="Idle funds nudge"
-      className="flex flex-col justify-between rounded-2xl bg-emerald-950 p-6 text-white shadow-sm dark:bg-emerald-950"
+      className="flex flex-col justify-between rounded-2xl bg-amber-950 p-6 text-white shadow-sm dark:bg-amber-950"
     >
       <div>
         <div className="flex items-center gap-2">
@@ -56,7 +56,7 @@ export function IdleNudge({ onOpenGrantFlow }: IdleNudgeProps) {
           >
             <Zap className="h-4 w-4" fill="currentColor" aria-hidden="true" />
           </m.span>
-          <h2 className="text-xs font-semibold uppercase tracking-[0.15em] text-emerald-300/80">
+          <h2 className="text-xs font-semibold uppercase tracking-[0.15em] text-amber-300/80">
             Money resting
           </h2>
         </div>
@@ -64,14 +64,14 @@ export function IdleNudge({ onOpenGrantFlow }: IdleNudgeProps) {
           {formatUsd(state.balance)} has been idle for {state.idleDays}{" "}
           {pluralize("day", state.idleDays)}.
         </p>
-        <p className="mt-2 text-sm text-emerald-200/80">
+        <p className="mt-2 text-sm text-amber-200/80">
           Even {formatUsd(500)} could fund a month of verified impact.
         </p>
       </div>
       <button
         type="button"
         onClick={onOpenGrantFlow}
-        className="mt-4 w-full rounded-xl bg-white px-4 py-3 text-sm font-bold text-emerald-900 transition hover:bg-emerald-50 active:scale-95"
+        className="mt-4 w-full rounded-xl bg-amber-400 px-4 py-3 text-sm font-bold text-amber-950 transition hover:bg-amber-300 active:scale-95"
       >
         Put {formatUsd(500)} to work
       </button>
