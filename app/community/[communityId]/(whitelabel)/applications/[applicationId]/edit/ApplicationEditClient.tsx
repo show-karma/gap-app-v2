@@ -7,6 +7,7 @@ import toast from "react-hot-toast";
 import { Link } from "@/src/components/navigation/Link";
 import { useIsFundingPlatformAdmin } from "@/src/core/rbac";
 import { ApplicationForm } from "@/src/features/applications/components/ApplicationForm";
+import { useApplicationStatusHistory } from "@/src/features/applications/hooks/use-application-status-history";
 import {
   transformDataForDisplay,
   transformDataForSubmission,
@@ -25,6 +26,18 @@ export function ApplicationEditClient({ communityId, application }: ApplicationE
   const router = useRouter();
   const queryClient = useQueryClient();
   const isAdmin = useIsFundingPlatformAdmin();
+
+  // The SSR fetch is tokenless, so the backend strips the private revision
+  // reason. Re-fetch with the viewer's token; the backend returns it only to
+  // the applicant and admins — the backend is the guard.
+  const { statusHistory: authedStatusHistory } = useApplicationStatusHistory(
+    application.referenceNumber
+  );
+  // Latest revision request wins — after multiple revision cycles there can be
+  // several `revision_requested` entries and the applicant needs the newest.
+  const revisionReason = (authedStatusHistory ?? application.statusHistory ?? [])
+    .filter((entry) => entry.status === "revision_requested")
+    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())[0]?.reason;
 
   // Fetch program details
   const {
@@ -184,12 +197,10 @@ export function ApplicationEditClient({ communityId, application }: ApplicationE
           <p className="mb-1 font-semibold text-orange-700 dark:text-orange-400">
             Revision Required
           </p>
-          {application.statusHistory?.find((s) => s.status === "revision_requested")?.reason && (
+          {revisionReason && (
             <div className="space-y-1 text-sm text-orange-600 dark:text-orange-500">
               <p className="font-medium">Reason for revision:</p>
-              <p>
-                {application.statusHistory.find((s) => s.status === "revision_requested")?.reason}
-              </p>
+              <p>{revisionReason}</p>
             </div>
           )}
         </div>
