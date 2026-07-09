@@ -1,10 +1,15 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import toast from "react-hot-toast";
 import { PrivateNotesTab } from "@/src/features/application-notes/components/PrivateNotesTab";
 import { useApplicationNote } from "@/src/features/application-notes/hooks/use-application-note";
 import type { ApplicationNote } from "@/src/features/application-notes/types";
 
 vi.mock("@/src/features/application-notes/hooks/use-application-note", () => ({
   useApplicationNote: vi.fn(),
+}));
+
+vi.mock("react-hot-toast", () => ({
+  default: { error: vi.fn(), success: vi.fn() },
 }));
 
 const mockHook = vi.mocked(useApplicationNote);
@@ -85,5 +90,21 @@ describe("PrivateNotesTab", () => {
 
     expect(screen.getByDisplayValue("internal flag")).toBeInTheDocument();
     expect(screen.getByText(/Last edited by Greta/)).toBeInTheDocument();
+  });
+
+  it("should surface an error toast when saving fails (not silent)", async () => {
+    const saveNote = vi.fn().mockRejectedValue(new Error("Forbidden"));
+    mockHook.mockReturnValue(hookState({ note: createMockNote(), saveNote }));
+
+    render(<PrivateNotesTab referenceNumber="APP-1" canViewNotes />);
+
+    // Make the editor dirty so Save is enabled, then click it.
+    fireEvent.change(screen.getByLabelText("Private note"), {
+      target: { value: "updated note" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /save/i }));
+
+    await waitFor(() => expect(saveNote).toHaveBeenCalledWith("updated note"));
+    await waitFor(() => expect(toast.error).toHaveBeenCalled());
   });
 });
