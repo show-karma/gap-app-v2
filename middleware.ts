@@ -33,6 +33,19 @@ export async function middleware(request: NextRequest) {
 
     const { communitySlug, tenantId } = whitelabel;
 
+    // The blog is a shared Karma content surface, not tenant content — send
+    // whitelabel readers to the main site so `/blog` and `/blog/<slug>`
+    // always resolve to the canonical post instead of a 404 under the
+    // tenant's community rewrite.
+    if (path === PAGES.BLOG || path.startsWith(`${PAGES.BLOG}/`)) {
+      const mainDomain = getDomainInfo(hostname)?.isProduction
+        ? "karmahq.xyz"
+        : "staging.karmahq.xyz";
+      const protocol = request.nextUrl.protocol;
+      const search = request.nextUrl.search;
+      return NextResponse.redirect(new URL(`${protocol}//${mainDomain}${path}${search}`), 301);
+    }
+
     // In whitelabel mode, URLs should never show /community/<slug> in the browser.
     // If a component generates an href like `/community/optimism/programs/123`,
     // redirect to the clean path `/programs/123` so the browser URL stays clean.
