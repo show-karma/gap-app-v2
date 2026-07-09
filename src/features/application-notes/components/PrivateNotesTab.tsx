@@ -2,6 +2,7 @@
 
 import { AlertCircle, Lock, RefreshCw, Save } from "lucide-react";
 import { useState } from "react";
+import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Spinner } from "@/components/ui/spinner";
@@ -106,7 +107,11 @@ function NoteEditor({
 
   const handleSave = async () => {
     if (!isDirty || isSaving) return;
-    await onSave(draft);
+    try {
+      await onSave(draft);
+    } catch {
+      toast.error("Failed to save note. Please try again.");
+    }
   };
 
   const metaLine = note
@@ -130,6 +135,7 @@ function NoteEditor({
 
       <div className="space-y-3 px-5 py-4">
         <Textarea
+          aria-label="Private note"
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           placeholder="Add a private note visible only to reviewers…"

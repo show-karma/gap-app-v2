@@ -73,7 +73,7 @@ describe("useApplicationNote", () => {
       wrapper: createWrapper(),
     });
 
-    await new Promise((r) => setTimeout(r, 0));
+    // enabled:false means React Query never invokes the query fn — assert directly.
     expect(mockGetNote).not.toHaveBeenCalled();
   });
 

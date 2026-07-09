@@ -26,6 +26,6 @@ export async function saveNote(referenceNumber: string, content: string): Promis
     "PUT",
     { content }
   );
-  if (error) throw new Error(error);
-  return data!.note;
+  if (error || !data) throw new Error(error ?? "Failed to save note");
+  return data.note;
 }
