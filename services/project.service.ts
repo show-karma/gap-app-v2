@@ -1,15 +1,22 @@
+import { z } from "zod";
 import { errorManager } from "@/components/Utilities/errorManager";
 import type { Project as ProjectResponse } from "@/types/v2/project";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
+import { HttpError } from "@/utilities/api/errors";
 import { INDEXER } from "@/utilities/indexer";
 
-interface SlugAvailabilityResult {
-  available: boolean;
-  existingProject?: {
-    uid: string;
-    slug: string;
-  } | null;
-}
+const SlugAvailabilityResultSchema = z
+  .object({
+    available: z.boolean(),
+    existingProject: z
+      .object({
+        uid: z.string(),
+        slug: z.string(),
+      })
+      .nullable()
+      .optional(),
+  })
+  .passthrough();
 
 /**
  * Check if a project slug exists (is taken).
@@ -19,28 +26,30 @@ interface SlugAvailabilityResult {
  * @returns true if the slug is taken (project exists), false if available
  */
 export const checkSlugExists = async (slug: string): Promise<boolean> => {
-  const [data, error] = await fetchData<SlugAvailabilityResult>(
-    INDEXER.V2.PROJECTS.SLUG_CHECK(slug)
-  );
+  try {
+    const data = await api.get<z.infer<typeof SlugAvailabilityResultSchema>>(
+      INDEXER.V2.PROJECTS.SLUG_CHECK(slug),
+      { schema: SlugAvailabilityResultSchema }
+    );
 
-  if (error) {
-    // If there's an error, we can't determine availability - assume not available
+    // available = true means slug is free (project doesn't exist)
+    // available = false means slug is taken (project exists)
+    return !data?.available;
+  } catch {
+    // SUPPRESSED: mirrors legacy fetchData behavior — this powers polling during
+    // project creation, so any failure degrades to "not available" rather than
+    // creating Sentry noise for an expected transient state.
     return false;
   }
-
-  // available = true means slug is free (project doesn't exist)
-  // available = false means slug is taken (project exists)
-  return !data?.available;
 };
 
 export const getProject = async (projectIdOrSlug: string): Promise<ProjectResponse | null> => {
-  const [projectData, error, , status] = await fetchData<ProjectResponse>(
-    INDEXER.V2.PROJECTS.GET(projectIdOrSlug)
-  );
-
-  if (error) {
+  try {
+    // TODO(#1775): add zod schema
+    return await api.get<ProjectResponse>(INDEXER.V2.PROJECTS.GET(projectIdOrSlug));
+  } catch (error) {
     // Unknown slugs are expected on public routes and should not create Sentry noise.
-    if (status === 404) {
+    if (error instanceof HttpError && error.status === 404) {
       return null;
     }
 
@@ -49,8 +58,6 @@ export const getProject = async (projectIdOrSlug: string): Promise<ProjectRespon
     });
     return null;
   }
-
-  return projectData || null;
 };
 
 export const adminTransferOwnership = async (
@@ -58,13 +65,8 @@ export const adminTransferOwnership = async (
   chainId: number,
   newOwnerAddress: string
 ): Promise<void> => {
-  const [, error] = await fetchData(
+  await api.post(
     `/attestations/transfer-ownership/${projectUid}/${chainId}/${newOwnerAddress}`,
-    "POST",
     {}
   );
-
-  if (error) {
-    throw error;
-  }
 };

@@ -2,7 +2,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useParams, useSearchParams } from "next/navigation";
 import type { CommunityAggregateResponse } from "@/types/indicator";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 import { getCommunityDetails } from "@/utilities/queries/v2/getCommunityData";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
@@ -88,7 +88,8 @@ export function useAggregatedIndicators(
     }
 
     // Fetch community aggregate indicators
-    const [data, error] = await fetchData(
+    // TODO(#1775): add zod schema (CommunityAggregateResponse is declared in @/types/indicator)
+    const data = await api.get<CommunityAggregateResponse>(
       INDEXER.INDICATORS.V2.COMMUNITY_AGGREGATE(communityDetails.uid, {
         indicatorIds: indicatorIds.join(","),
         programId: parsedProgramId,
@@ -99,12 +100,8 @@ export function useAggregatedIndicators(
       })
     );
 
-    if (error) {
-      throw error;
-    }
-
     // Transform response to match existing interface
-    return transformResponse(data as CommunityAggregateResponse);
+    return transformResponse(data);
   };
 
   return useQuery({

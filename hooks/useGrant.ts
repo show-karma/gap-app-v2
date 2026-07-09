@@ -8,7 +8,7 @@ import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { getProjectGrants } from "@/services/project-grants.service";
 import { useProjectStore } from "@/store";
 import type { Grant } from "@/types/v2/grant";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
@@ -101,7 +101,7 @@ export function useGrant() {
           let retries = 1000;
           const txHash = res?.tx[0]?.hash;
           if (txHash) {
-            await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, oldGrant.chainID), "POST", {});
+            await api.post(INDEXER.ATTESTATION_LISTENER(txHash, oldGrant.chainID), {});
           }
           changeStepperStep("indexing");
           while (retries > 0) {

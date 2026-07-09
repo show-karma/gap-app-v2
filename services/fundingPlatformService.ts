@@ -13,9 +13,10 @@ import type {
   IFundingProgramConfig,
   IPaginatedApplicationsResponse,
 } from "@/types/funding-platform";
+import { api } from "@/utilities/api/client";
+import { HttpError } from "@/utilities/api/errors";
 import { createAuthenticatedApiClient } from "@/utilities/auth/api-client";
 import { envVars } from "@/utilities/enviromentVars";
-import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import {
   appendMergedReviewerAddresses,
@@ -27,6 +28,22 @@ const API_BASE = envVars.NEXT_PUBLIC_GAP_INDEXER_URL || "http://localhost:4000";
 
 // Keep apiClient for mutations and special cases (blob downloads)
 const apiClient = createAuthenticatedApiClient(API_BASE, 30000);
+
+/**
+ * Extracts the same human-readable error message the legacy `fetchData`
+ * adapter surfaced for an `HttpError`: prefer the server response body's
+ * `message`, then the original axios error's message, then the client's
+ * synthetic "HTTP <status> <method> <path>" message. Falls back to a plain
+ * `Error.message` (or `String(error)`) for non-HTTP `ApiError`s.
+ */
+function httpErrorMessage(error: unknown): string {
+  if (error instanceof HttpError) {
+    const bodyMessage = (error.body as { message?: string } | undefined)?.message;
+    const causeMessage = (error.cause as { message?: string } | undefined)?.message;
+    return bodyMessage || causeMessage || error.message;
+  }
+  return error instanceof Error ? error.message : String(error);
+}
 
 /**
  * Remove lone UTF-16 surrogate code units that can trigger UTF-8 serialization failures downstream.
@@ -134,13 +151,21 @@ export const fundingProgramsAPI = {
    * Get all grant programs for a community
    */
   async getProgramsByCommunity(communityId: string): Promise<FundingProgram[]> {
-    const [configs, error] = await fetchData<FundingProgram[]>(
-      INDEXER.V2.FUNDING_PROGRAMS.BY_COMMUNITY(communityId)
-    );
+    let configs: FundingProgram[];
+    try {
+      // TODO(#1775): add zod schema
+      configs = await api.get<FundingProgram[]>(
+        INDEXER.V2.FUNDING_PROGRAMS.BY_COMMUNITY(communityId)
+      );
+    } catch (error) {
+      const message = httpErrorMessage(error);
+      console.error("API Error:", message);
+      throw new Error(message || "Failed to fetch programs");
+    }
 
-    if (error || !configs) {
-      console.error("API Error:", error);
-      throw new Error(error || "Failed to fetch programs");
+    if (!configs) {
+      console.error("API Error:", undefined);
+      throw new Error("Failed to fetch programs");
     }
 
     // Transform to FundingProgram format for backward compatibility
@@ -174,13 +199,12 @@ export const fundingProgramsAPI = {
     fundingDetails?: { currency?: string };
     details?: { currency?: string };
   }> {
-    const [data, error] = await fetchData(INDEXER.V2.FUNDING_DETAILS(programId, chainId));
-
-    if (error) {
-      throw new Error(error);
+    try {
+      // TODO(#1775): add zod schema
+      return await api.get(INDEXER.V2.FUNDING_DETAILS(programId, chainId));
+    } catch (error) {
+      throw new Error(httpErrorMessage(error));
     }
-
-    return data;
   },
 
   /**
@@ -207,12 +231,16 @@ export const fundingProgramsAPI = {
    * Get all program configurations with optional community filter
    */
   async getAllProgramConfigs(community?: string): Promise<IFundingProgramConfig[]> {
-    const [data, error] = await fetchData<IFundingProgramConfig[]>(
-      INDEXER.V2.FUNDING_PROGRAMS.LIST(community)
-    );
+    let data: IFundingProgramConfig[];
+    try {
+      // TODO(#1775): add zod schema
+      data = await api.get<IFundingProgramConfig[]>(INDEXER.V2.FUNDING_PROGRAMS.LIST(community));
+    } catch (error) {
+      throw new Error(httpErrorMessage(error) || "Failed to fetch program configs");
+    }
 
-    if (error || !data) {
-      throw new Error(error || "Failed to fetch program configs");
+    if (!data) {
+      throw new Error("Failed to fetch program configs");
     }
 
     return data;
@@ -222,12 +250,16 @@ export const fundingProgramsAPI = {
    * Get only enabled programs
    */
   async getEnabledPrograms(): Promise<IFundingProgramConfig[]> {
-    const [data, error] = await fetchData<IFundingProgramConfig[]>(
-      INDEXER.V2.FUNDING_PROGRAMS.ENABLED()
-    );
+    let data: IFundingProgramConfig[];
+    try {
+      // TODO(#1775): add zod schema
+      data = await api.get<IFundingProgramConfig[]>(INDEXER.V2.FUNDING_PROGRAMS.ENABLED());
+    } catch (error) {
+      throw new Error(httpErrorMessage(error) || "Failed to fetch enabled programs");
+    }
 
-    if (error || !data) {
-      throw new Error(error || "Failed to fetch enabled programs");
+    if (!data) {
+      throw new Error("Failed to fetch enabled programs");
     }
 
     return data;
@@ -449,12 +481,18 @@ export const fundingApplicationsAPI = {
     if (filters.reviewerAddresses?.length)
       params.append("reviewerAddresses", filters.reviewerAddresses.join(","));
 
-    const [data, error] = await fetchData<IPaginatedApplicationsResponse>(
-      `${INDEXER.V2.FUNDING_APPLICATIONS.BY_PROGRAM(programId)}?${params}`
-    );
+    let data: IPaginatedApplicationsResponse;
+    try {
+      // TODO(#1775): add zod schema
+      data = await api.get<IPaginatedApplicationsResponse>(
+        `${INDEXER.V2.FUNDING_APPLICATIONS.BY_PROGRAM(programId)}?${params}`
+      );
+    } catch (error) {
+      throw new Error(httpErrorMessage(error) || "Failed to fetch applications");
+    }
 
-    if (error || !data) {
-      throw new Error(error || "Failed to fetch applications");
+    if (!data) {
+      throw new Error("Failed to fetch applications");
     }
 
     if (!data.applications) {
@@ -474,12 +512,16 @@ export const fundingApplicationsAPI = {
    * Get a specific application by ID
    */
   async getApplication(applicationId: string): Promise<IFundingApplication> {
-    const [data, error] = await fetchData<IFundingApplication>(
-      INDEXER.V2.FUNDING_APPLICATIONS.GET(applicationId)
-    );
+    let data: IFundingApplication;
+    try {
+      // TODO(#1775): add zod schema
+      data = await api.get<IFundingApplication>(INDEXER.V2.FUNDING_APPLICATIONS.GET(applicationId));
+    } catch (error) {
+      throw new Error(httpErrorMessage(error) || "Failed to fetch application");
+    }
 
-    if (error || !data) {
-      throw new Error(error || "Failed to fetch application");
+    if (!data) {
+      throw new Error("Failed to fetch application");
     }
 
     return data;
@@ -489,12 +531,18 @@ export const fundingApplicationsAPI = {
    * Get application by reference number
    */
   async getApplicationByReference(referenceNumber: string): Promise<IFundingApplication> {
-    const [data, error] = await fetchData<IFundingApplication>(
-      INDEXER.V2.FUNDING_APPLICATIONS.GET(referenceNumber)
-    );
+    let data: IFundingApplication;
+    try {
+      // TODO(#1775): add zod schema
+      data = await api.get<IFundingApplication>(
+        INDEXER.V2.FUNDING_APPLICATIONS.GET(referenceNumber)
+      );
+    } catch (error) {
+      throw new Error(httpErrorMessage(error) || "Failed to fetch application");
+    }
 
-    if (error || !data) {
-      throw new Error(error || "Failed to fetch application");
+    if (!data) {
+      throw new Error("Failed to fetch application");
     }
 
     return data;
@@ -507,20 +555,20 @@ export const fundingApplicationsAPI = {
     programId: string,
     email: string
   ): Promise<IFundingApplication | null> {
-    const [data, error] = await fetchData<IFundingApplication>(
-      INDEXER.V2.FUNDING_APPLICATIONS.BY_EMAIL(programId, email)
-    );
-
-    if (error) {
+    try {
+      // TODO(#1775): add zod schema
+      const data = await api.get<IFundingApplication>(
+        INDEXER.V2.FUNDING_APPLICATIONS.BY_EMAIL(programId, email)
+      );
+      return data || null;
+    } catch (error) {
       // Return null for 404 (no application found)
-      const errorMessage = String(error);
+      const errorMessage = httpErrorMessage(error);
       if (errorMessage.includes("404") || errorMessage.includes("not found")) {
         return null;
       }
       throw new Error(errorMessage);
     }
-
-    return data || null;
   },
 
   /**
@@ -536,13 +584,16 @@ export const fundingApplicationsAPI = {
     const query = params.toString();
     const statisticsUrl = INDEXER.V2.FUNDING_APPLICATIONS.STATISTICS(programId);
 
-    const [data, error] = await fetchData<IApplicationStatistics>(
-      query ? `${statisticsUrl}?${query}` : statisticsUrl
-    );
-
-    if (error || !data) {
+    try {
+      // TODO(#1775): add zod schema
+      const data = await api.get<IApplicationStatistics>(
+        query ? `${statisticsUrl}?${query}` : statisticsUrl
+      );
+      if (!data) throw new Error("Empty statistics response");
+      return data;
+    } catch (error) {
       // Return default stats instead of throwing - stats are optional
-      console.warn(`Failed to fetch statistics for program ${programId}:`, error);
+      console.warn(`Failed to fetch statistics for program ${programId}:`, httpErrorMessage(error));
       return {
         totalApplications: 0,
         pendingApplications: 0,
@@ -552,8 +603,6 @@ export const fundingApplicationsAPI = {
         underReviewApplications: 0,
       };
     }
-
-    return data;
   },
 
   /**
@@ -591,12 +640,18 @@ export const fundingApplicationsAPI = {
    * Uses the reference number to get the version history timeline
    */
   async getApplicationVersionsTimeline(referenceNumber: string): Promise<IApplicationVersion[]> {
-    const [data, error] = await fetchData<IApplicationVersionTimeline>(
-      INDEXER.V2.FUNDING_APPLICATIONS.VERSIONS_TIMELINE(referenceNumber)
-    );
+    let data: IApplicationVersionTimeline;
+    try {
+      // TODO(#1775): add zod schema
+      data = await api.get<IApplicationVersionTimeline>(
+        INDEXER.V2.FUNDING_APPLICATIONS.VERSIONS_TIMELINE(referenceNumber)
+      );
+    } catch (error) {
+      throw new Error(httpErrorMessage(error) || "Failed to fetch version timeline");
+    }
 
-    if (error || !data) {
-      throw new Error(error || "Failed to fetch version timeline");
+    if (!data) {
+      throw new Error("Failed to fetch version timeline");
     }
 
     return data.timeline;

@@ -1,37 +1,50 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
+import { z } from "zod";
 import { errorManager } from "@/components/Utilities/errorManager";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 
-interface CommunityWithStats {
-  uid: string;
-  chainID: number;
-  details: {
-    name: string;
-    description: string;
-    logoUrl: string;
-    slug: string;
-  };
-  stats: {
-    totalProjects: number;
-    totalGrants: number;
-    totalMembers: number;
-  };
-  categories?: { id: string; name: string }[];
-  createdAt: string;
-  updatedAt: string;
-}
+const CommunityWithStatsSchema = z
+  .object({
+    uid: z.string(),
+    chainID: z.number(),
+    details: z
+      .object({
+        name: z.string(),
+        description: z.string(),
+        logoUrl: z.string(),
+        slug: z.string(),
+      })
+      .passthrough(),
+    stats: z
+      .object({
+        totalProjects: z.number(),
+        totalGrants: z.number(),
+        totalMembers: z.number(),
+      })
+      .passthrough(),
+    categories: z.array(z.object({ id: z.string(), name: z.string() }).passthrough()).optional(),
+    createdAt: z.string(),
+    updatedAt: z.string(),
+  })
+  .passthrough();
+type CommunityWithStats = z.infer<typeof CommunityWithStatsSchema>;
 
-interface CommunitiesResponse {
-  payload: CommunityWithStats[];
-  pagination: {
-    totalCount: number;
-    totalPages: number;
-    page: number;
-    hasNextPage: boolean;
-    hasPrevPage: boolean;
-  };
-}
+const CommunitiesResponseSchema = z
+  .object({
+    payload: z.array(CommunityWithStatsSchema),
+    pagination: z
+      .object({
+        totalCount: z.number(),
+        totalPages: z.number(),
+        page: z.number(),
+        hasNextPage: z.boolean(),
+        hasPrevPage: z.boolean(),
+      })
+      .passthrough(),
+  })
+  .passthrough();
+type CommunitiesResponse = z.infer<typeof CommunitiesResponseSchema>;
 
 interface UseCommunitiesOptions {
   limit?: number;
@@ -50,26 +63,10 @@ export const useCommunities = (options: UseCommunitiesOptions = {}) => {
           limit,
           includeStats,
         });
-        const [response, error] = await fetchData(endpoint, "GET", {}, {}, {}, false);
-
-        if (error) {
-          throw new Error(error);
-        }
-
-        if (!response) {
-          return {
-            payload: [],
-            pagination: {
-              totalCount: 0,
-              totalPages: 0,
-              page: pageParam as number,
-              hasNextPage: false,
-              hasPrevPage: false,
-            },
-          };
-        }
-
-        return response as CommunitiesResponse;
+        return await api.get<CommunitiesResponse>(endpoint, {
+          isAuthorized: false,
+          schema: CommunitiesResponseSchema,
+        });
       } catch (error: any) {
         errorManager("Error fetching communities", error);
         throw error;

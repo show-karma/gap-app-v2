@@ -1,31 +1,42 @@
 import { useQuery } from "@tanstack/react-query";
+import { z } from "zod";
 
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 
-export interface MetricData {
-  lastUpdated: string;
-  source: string;
-  unit: string;
-  value: number;
-  breakdown?: Record<string, number>;
-}
+const MetricDataSchema = z
+  .object({
+    lastUpdated: z.string(),
+    source: z.string(),
+    unit: z.string(),
+    value: z.number(),
+    breakdown: z.record(z.string(), z.number()).optional(),
+  })
+  .passthrough();
+export type MetricData = z.infer<typeof MetricDataSchema>;
 
-export interface ProjectImpactResponse {
-  metrics: {
-    gitCommits: MetricData | null;
-    mergedPRs: MetricData | null;
-    transactions: MetricData | null;
-    uniqueUsers: MetricData | null;
-  };
-  projectTitle?: string;
-  projectUID: string;
-  period: string;
-  timeRange: {
-    endDate: string;
-    startDate: string;
-  };
-}
+const ProjectImpactResponseSchema = z
+  .object({
+    metrics: z
+      .object({
+        gitCommits: MetricDataSchema.nullable(),
+        mergedPRs: MetricDataSchema.nullable(),
+        transactions: MetricDataSchema.nullable(),
+        uniqueUsers: MetricDataSchema.nullable(),
+      })
+      .passthrough(),
+    projectTitle: z.string().optional(),
+    projectUID: z.string(),
+    period: z.string(),
+    timeRange: z
+      .object({
+        endDate: z.string(),
+        startDate: z.string(),
+      })
+      .passthrough(),
+  })
+  .passthrough();
+export type ProjectImpactResponse = z.infer<typeof ProjectImpactResponseSchema>;
 
 function mapRangeToPeriod(range: number): "30d" | "90d" | "180d" | "1y" {
   switch (range) {
@@ -45,13 +56,13 @@ export const useProjectImpactIndicators = (projectId: string, range: number = 30
 
   return useQuery({
     queryKey: ["project-impact-indicators", projectId, period],
-    queryFn: async () => {
-      const [data, error] = await fetchData(
-        INDEXER.INDICATORS.V2.DASHBOARD_METRICS(projectId, { period })
-      );
-      if (error) throw error;
-      return data as ProjectImpactResponse;
-    },
+    queryFn: () =>
+      api.get<ProjectImpactResponse>(
+        INDEXER.INDICATORS.V2.DASHBOARD_METRICS(projectId, { period }),
+        {
+          schema: ProjectImpactResponseSchema,
+        }
+      ),
     enabled: !!projectId,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
