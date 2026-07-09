@@ -315,3 +315,5 @@ export const api: ApiClient = createApiClient({
   },
   onExhausted: (error, attempts) => reportApiFailure(error, { attempts }),
 });
+
+// #1775: unified typed API client — see utilities/api/README.md
