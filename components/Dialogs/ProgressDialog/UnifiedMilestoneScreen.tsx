@@ -22,8 +22,8 @@ import { useProjectUpdates } from "@/hooks/v2/useProjectUpdates";
 import { useProjectStore } from "@/store";
 import { useProgressModalStore } from "@/store/modals/progress";
 import type { Grant } from "@/types/v2/grant";
+import { api } from "@/utilities/api/client";
 import { chainNameDictionary } from "@/utilities/chainNameDictionary";
-import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { PAGES } from "@/utilities/pages";
 import { sanitizeInput, sanitizeObject } from "@/utilities/sanitize";
@@ -169,13 +169,9 @@ export const UnifiedMilestoneScreen = () => {
         .then(async (res) => {
           const txHash = res?.tx[0]?.hash;
           if (txHash) {
-            await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, project.chainID), "POST", {});
+            await api.post(INDEXER.ATTESTATION_LISTENER(txHash, project.chainID), {});
           } else {
-            await fetchData(
-              INDEXER.ATTESTATION_LISTENER(newObjective.uid, project.chainID),
-              "POST",
-              {}
-            );
+            await api.post(INDEXER.ATTESTATION_LISTENER(newObjective.uid, project.chainID), {});
           }
 
           changeStepperStep("indexing");
@@ -319,11 +315,7 @@ export const UnifiedMilestoneScreen = () => {
           // Handle indexer notification
           const txHash = result?.tx[0]?.hash;
           if (txHash) {
-            await fetchData(
-              INDEXER.ATTESTATION_LISTENER(txHash, milestoneToAttest.chainID),
-              "POST",
-              {}
-            );
+            await api.post(INDEXER.ATTESTATION_LISTENER(txHash, milestoneToAttest.chainID), {});
           }
         } else {
           // Multiple grants on the same chain - use attestToMultipleGrants
@@ -380,11 +372,7 @@ export const UnifiedMilestoneScreen = () => {
           if (result.tx.length > 0) {
             const txPromises = result.tx.map((tx: Transaction) =>
               tx.hash
-                ? fetchData(
-                    INDEXER.ATTESTATION_LISTENER(tx.hash as `0x${string}`, chainId),
-                    "POST",
-                    {}
-                  )
+                ? api.post(INDEXER.ATTESTATION_LISTENER(tx.hash as `0x${string}`, chainId), {})
                 : Promise.resolve()
             );
             await Promise.all(txPromises);

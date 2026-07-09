@@ -36,6 +36,21 @@ vi.mock("@/utilities/fetchData", () => ({
   default: vi.fn().mockResolvedValue([null, null]),
 }));
 
+// The /manage/portfolio-reports/config page now calls the unified API client
+// directly (issue #1775 Phase 3 migration) and rethrows on failure, so it
+// needs api.get to resolve rather than hit the real (absent) indexer.
+vi.mock("@/utilities/api/client", () => ({
+  api: {
+    get: vi.fn().mockResolvedValue([]),
+    post: vi.fn(),
+    put: vi.fn(),
+    patch: vi.fn(),
+    delete: vi.fn(),
+    request: vi.fn(),
+    getPaginated: vi.fn(),
+  },
+}));
+
 vi.mock("@/utilities/indexer", () => ({
   INDEXER: {
     COMMUNITY: {

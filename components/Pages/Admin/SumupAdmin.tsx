@@ -8,7 +8,7 @@ import { z } from "zod";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { Button } from "@/components/ui/button";
 import { useOwnerStore } from "@/store";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { MESSAGES } from "@/utilities/messages";
 
 const schema = z.object({
@@ -41,13 +41,10 @@ export default function SumupAdminPage() {
   const onSubmit: SubmitHandler<SchemaType> = async (data) => {
     try {
       setIsLoading(true);
-      const [, error] = await fetchData("/sum-up/user/whitelist", "POST", {
+      // TODO(#1775): add zod schema
+      await api.post("/sum-up/user/whitelist", {
         identifier: data.addressOrEmail,
       });
-
-      if (error) {
-        throw new Error(error);
-      }
 
       reset();
       toast.success(MESSAGES.SUMUP_ADMIN.ADD_TO_WHITELIST.SUCCESS);

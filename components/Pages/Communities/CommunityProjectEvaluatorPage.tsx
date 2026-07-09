@@ -18,7 +18,7 @@ import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
 import { PROJECT_NAME } from "@/constants/brand";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { formatDate } from "@/utilities/formatDate";
 import { INDEXER } from "@/utilities/indexer";
 import { PAGES } from "@/utilities/pages";
@@ -883,11 +883,8 @@ export const CommunityProjectEvaluatorPage = () => {
 
   const { data: programs = [], isLoading: isLoadingPrograms } = useQuery<Program[]>({
     queryKey: ["evaluator-programs", communityId],
-    queryFn: async () => {
-      const [data, error] = await fetchData(INDEXER.COMMUNITY.PROGRAMS(communityId));
-      if (error) throw new Error(String(error));
-      return data as Program[];
-    },
+    // TODO(#1775): add zod schema
+    queryFn: () => api.get<Program[]>(INDEXER.COMMUNITY.PROGRAMS(communityId)),
     enabled: !!communityId,
   });
 
@@ -908,17 +905,15 @@ export const CommunityProjectEvaluatorPage = () => {
       selectedProgram?.chainID,
       communityId,
     ],
-    queryFn: async () => {
-      const [data, error] = (await fetchData(
+    // TODO(#1775): add zod schema
+    queryFn: () =>
+      api.get<Project[]>(
         INDEXER.PROJECTS.BY_PROGRAM(
           selectedProgram!.programId,
           Number(selectedProgram!.chainID),
           communityId
         )
-      )) as [Project[], string | null, any, number];
-      if (error) throw new Error(String(error));
-      return data;
-    },
+      ),
     enabled: !!selectedProgram,
   });
 

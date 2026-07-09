@@ -21,7 +21,7 @@ import { useProjectStore } from "@/store";
 import { useGrantStore } from "@/store/grant";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
 import type { Grant } from "@/types/v2/grant";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
@@ -161,7 +161,7 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
         let retries = 1000;
         const txHash = res?.tx[0]?.hash;
         if (txHash) {
-          await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, grantToUpdate.chainID), "POST", {});
+          await api.post(INDEXER.ATTESTATION_LISTENER(txHash, grantToUpdate.chainID), {});
         }
         updateStep("indexing");
         const attestUID = grantUpdate.uid;
