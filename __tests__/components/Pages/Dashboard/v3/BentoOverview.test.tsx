@@ -56,6 +56,37 @@ describe("BentoOverview", () => {
     await waitFor(() => expect(screen.queryByText("PROJECTS DETAIL")).not.toBeInTheDocument());
   });
 
+  it("opens a drill-in via pushState so the browser Back button can close it", async () => {
+    const pushSpy = vi.spyOn(window.history, "pushState");
+    render(<BentoOverview modules={modules} />);
+
+    fireEvent.click(screen.getByText("My projects"));
+    await screen.findByText("PROJECTS DETAIL");
+
+    // pushState (not replaceState) leaves a history entry for the overview, so
+    // browser Back pops the hash and the hashchange listener closes the drill-in
+    // instead of exiting the page.
+    expect(pushSpy).toHaveBeenCalledWith(null, "", "#projects");
+    expect(window.location.hash).toBe("#projects");
+    pushSpy.mockRestore();
+  });
+
+  it("closes the drill-in when the browser navigates back off the hash", async () => {
+    render(<BentoOverview modules={modules} />);
+    fireEvent.click(screen.getByText("My projects"));
+    expect(await screen.findByText("PROJECTS DETAIL")).toBeInTheDocument();
+
+    // Simulate the browser Back button: the pushed hash is popped and a
+    // hashchange fires. The drill-in should return to the overview.
+    window.history.replaceState(null, "", window.location.pathname);
+    act(() => {
+      window.dispatchEvent(new Event("hashchange"));
+    });
+
+    await waitFor(() => expect(screen.queryByText("PROJECTS DETAIL")).not.toBeInTheDocument());
+    expect(screen.getByText("My communities")).toBeInTheDocument();
+  });
+
   it("reports focus changes so callers can hide overview-only affordances", async () => {
     const onFocusChange = vi.fn();
     render(<BentoOverview modules={modules} onFocusChange={onFocusChange} />);

@@ -65,12 +65,17 @@ export function BentoOverview({
 
   const openModule = (key: string) => {
     setFocus(key);
-    // replaceState keeps the drill-in shareable/refreshable without spamming
-    // the history stack or dispatching an App Router navigation.
-    window.history.replaceState(null, "", `#${key}`);
+    // pushState (not replaceState) adds a history entry for the drill-in, so the
+    // browser Back button pops the hash off — the `hashchange` listener above
+    // then closes the drill-in and returns to the overview instead of exiting
+    // the page. It runs in a click handler, not a useEffect, so it doesn't
+    // dispatch an App Router navigation or race in-flight <Link> clicks (#1547).
+    window.history.pushState(null, "", `#${key}`);
   };
   const closeModule = () => {
     setFocus(null);
+    // Strip the hash in place (no new entry) so the in-app "Back to overview"
+    // button and deep-links both land cleanly on the overview.
     window.history.replaceState(null, "", window.location.pathname + window.location.search);
   };
 
