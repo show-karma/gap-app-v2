@@ -47,9 +47,9 @@
   --ring: 0 0% 4%;
 
   color: var(--sf-heading);
-  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
-  text-rendering: optimizeLegibility;
+  text-rendering: optimizelegibility;
 }
 
 /* Dark mode — invert the neutral surfaces/text/lines and re-pin the semantic

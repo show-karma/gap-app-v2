@@ -8,8 +8,9 @@ import { useAuth } from "@/hooks/useAuth";
 import { useContributorProfile } from "@/hooks/useContributorProfile";
 
 function initialsFrom(name?: string, email?: string, address?: string): string {
-  if (name) {
-    const parts = name.trim().split(/\s+/);
+  const trimmed = name?.trim();
+  if (trimmed) {
+    const parts = trimmed.split(/\s+/);
     return (parts[0][0] + (parts[1]?.[0] ?? "")).toUpperCase();
   }
   if (email) return email.slice(0, 2).toUpperCase();

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { BentoOverview } from "@/components/Pages/Dashboard/v3/BentoOverview";
 import type { DashModule } from "@/components/Pages/Dashboard/v3/module";
 
@@ -67,5 +67,49 @@ describe("BentoOverview", () => {
 
     fireEvent.click(await screen.findByRole("button", { name: /back to overview/i }));
     await waitFor(() => expect(onFocusChange).toHaveBeenLastCalledWith(null));
+  });
+
+  describe("hash deep-linking", () => {
+    const fireHashChange = () =>
+      act(() => {
+        window.dispatchEvent(new Event("hashchange"));
+      });
+
+    it("auto-opens the module whose key matches the URL hash on mount", async () => {
+      window.history.replaceState(null, "", "#projects");
+      render(<BentoOverview modules={modules} />);
+
+      expect(await screen.findByText("PROJECTS DETAIL")).toBeInTheDocument();
+    });
+
+    it("ignores a hash that matches no module key on mount", () => {
+      window.history.replaceState(null, "", "#nope");
+      render(<BentoOverview modules={modules} />);
+
+      expect(screen.getByText("My projects")).toBeInTheDocument();
+      expect(screen.queryByText("PROJECTS DETAIL")).not.toBeInTheDocument();
+    });
+
+    it("opens a module when the hash changes to its key", async () => {
+      render(<BentoOverview modules={modules} />);
+      expect(screen.queryByText("COMMUNITIES DETAIL")).not.toBeInTheDocument();
+
+      window.history.replaceState(null, "", "#communities");
+      fireHashChange();
+
+      expect(await screen.findByText("COMMUNITIES DETAIL")).toBeInTheDocument();
+    });
+
+    it("returns to the overview when the hash no longer matches a module", async () => {
+      window.history.replaceState(null, "", "#projects");
+      render(<BentoOverview modules={modules} />);
+      expect(await screen.findByText("PROJECTS DETAIL")).toBeInTheDocument();
+
+      window.history.replaceState(null, "", window.location.pathname);
+      fireHashChange();
+
+      await waitFor(() => expect(screen.queryByText("PROJECTS DETAIL")).not.toBeInTheDocument());
+      expect(screen.getByText("My projects")).toBeInTheDocument();
+    });
   });
 });
