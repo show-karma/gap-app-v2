@@ -228,7 +228,7 @@ interface UsableWalletState {
 // toast, so the user sees progress rather than a hang. Do not go below ~5s
 // or fresh-signup flows (new email/social users) regress.
 export const WALLET_READY_TIMEOUT_MS = 8_000;
-export const WALLET_READY_POLL_MS = 250;
+const WALLET_READY_POLL_MS = 250;
 
 /**
  * Waits for a usable wallet to appear, polling the live (ref-backed) auth
@@ -240,7 +240,7 @@ export const WALLET_READY_POLL_MS = 250;
  * identity guard below forbids falling back to an unlinked external wallet,
  * so this selection intentionally preserves that rule.
  */
-export async function waitForUsableWallet(stateRef: {
+async function waitForUsableWallet(stateRef: {
   current: WalletStateSnapshot;
 }): Promise<UsableWalletState> {
   const deadline = Date.now() + WALLET_READY_TIMEOUT_MS;

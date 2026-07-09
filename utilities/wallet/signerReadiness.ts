@@ -10,7 +10,7 @@
  * the state, show actionable guidance, and skip Sentry reporting.
  */
 
-export type SignerUnavailableReason =
+type SignerUnavailableReason =
   /** `walletsReady` from Privy's `useWallets()` is still false after the wait. */
   | "wallets-hydrating"
   /** Email/social login user whose embedded wallet hasn't been created yet. */

@@ -1,17 +1,20 @@
 /**
- * @file Real hook tests for useZeroDevSigner
- * @description Tests the actual useZeroDevSigner hook by importing from its real source path
- *   (bypassing the vitest alias that redirects @/hooks/useZeroDevSigner to a mock).
- *   Mocks its dependencies instead: privy-bridge-context, gasless utilities, wagmi, wallet-helpers.
+ * @file Real hook tests for useZeroDevSigner — wallet hydration & status
+ * @description Split from useZeroDevSigner-real.test.ts to stay under the
+ *   per-file size limit. Covers the external-wallet path, the no-wallet
+ *   SignerUnavailableError classification, mid-flight wallet hydration
+ *   (GAP-FRONTEND-24N), signerStatus derivation, and end-to-end smoke tests.
+ *   The wallet-detection / gasless happy-path coverage lives in the sibling
+ *   `useZeroDevSigner-real.paths.test.ts`.
  *
- *   The @/utilities/gasless alias is already resolved to __mocks__/utilities/gasless/index.ts
- *   by vitest.config.ts, so the real hook's gasless imports get the mock automatically.
+ *   Tests the actual useZeroDevSigner hook by importing from its real source
+ *   path (bypassing the vitest alias that redirects @/hooks/useZeroDevSigner to
+ *   a mock). Mocks its dependencies instead: privy-bridge-context, gasless
+ *   utilities, wagmi, wallet-helpers.
  *
- *   Unlike the original suite, the wallet + ethers mocks here model an actual
- *   *chain identity* and the Privy `switchChain` propagation race. This is the
- *   gap that let GAP-FRONTEND-1T9 ("Network mainnet not supported.") ship: the
- *   old mocks made `switchChain` always succeed and gave signers no chain, so a
- *   signer stuck on chain 1 was impossible to express in a test.
+ *   The @/utilities/gasless alias is already resolved to
+ *   __mocks__/utilities/gasless/index.ts by vitest.config.ts, so the real
+ *   hook's gasless imports get the mock automatically.
  */
 
 import { act, renderHook } from "@testing-library/react";
@@ -122,7 +125,6 @@ vi.mock("ethers", () => ({
 import {
   createGaslessClient,
   createPrivySignerForGasless,
-  GaslessProviderError,
   getGaslessSigner,
   isChainSupportedForGasless,
 } from "@/utilities/gasless";
@@ -169,12 +171,6 @@ function setupGoogleUser(opts: { embedded?: boolean; external?: boolean } = {}) 
   if (opts.external) mockPrivyState.wallets.push(createExternalWallet());
 }
 
-function setupFarcasterUser(opts: { embedded?: boolean } = {}) {
-  mockPrivyState.user = { linkedAccounts: [{ type: "farcaster" }] };
-  mockPrivyState.wallets = [];
-  if (opts.embedded !== false) mockPrivyState.wallets.push(createEmbeddedWallet());
-}
-
 function setupExternalWalletUser() {
   mockPrivyState.user = { linkedAccounts: [{ type: "wallet" }] };
   mockPrivyState.wallets = [createExternalWallet()];
@@ -194,7 +190,7 @@ function enableGaslessOnChain(chainId: number) {
 // Tests
 // ---------------------------------------------------------------------------
 
-describe("useZeroDevSigner (real hook)", () => {
+describe("useZeroDevSigner (real hook) — hydration & status", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockPrivyState.ready = true;
@@ -232,287 +228,6 @@ describe("useZeroDevSigner (real hook)", () => {
     // WALLET_READY_TIMEOUT_MS wait — always restore real timers so it can't
     // leak into a later test.
     vi.useRealTimers();
-  });
-
-  // =========================================================================
-  // Wallet detection
-  // =========================================================================
-
-  describe("wallet detection", () => {
-    it("should detect embedded wallet (privy walletClientType)", () => {
-      setupEmailUser();
-      const { result } = renderHook(() => useZeroDevSigner());
-
-      expect(result.current.hasEmbeddedWallet).toBe(true);
-      expect(result.current.hasExternalWallet).toBe(false);
-    });
-
-    it("should detect external wallet (non-privy walletClientType)", () => {
-      setupExternalWalletUser();
-      const { result } = renderHook(() => useZeroDevSigner());
-
-      expect(result.current.hasEmbeddedWallet).toBe(false);
-      expect(result.current.hasExternalWallet).toBe(true);
-    });
-
-    it("should detect both embedded and external wallets", () => {
-      setupEmailUser({ embedded: true, external: true });
-      const { result } = renderHook(() => useZeroDevSigner());
-
-      expect(result.current.hasEmbeddedWallet).toBe(true);
-      expect(result.current.hasExternalWallet).toBe(true);
-    });
-
-    it("should report no wallets when privy is not ready", () => {
-      mockPrivyState.ready = false;
-      mockPrivyState.user = { linkedAccounts: [{ type: "email" }] };
-      mockPrivyState.wallets = [createEmbeddedWallet()];
-
-      const { result } = renderHook(() => useZeroDevSigner());
-
-      expect(result.current.hasEmbeddedWallet).toBe(false);
-      expect(result.current.hasExternalWallet).toBe(false);
-    });
-
-    it("should report no wallets when wallets array is empty", () => {
-      mockPrivyState.user = { linkedAccounts: [{ type: "email" }] };
-      mockPrivyState.wallets = [];
-
-      const { result } = renderHook(() => useZeroDevSigner());
-
-      expect(result.current.hasEmbeddedWallet).toBe(false);
-      expect(result.current.hasExternalWallet).toBe(false);
-    });
-  });
-
-  // =========================================================================
-  // attestationAddress
-  // =========================================================================
-
-  describe("attestationAddress", () => {
-    it("should return embedded wallet address for email users", () => {
-      setupEmailUser();
-      const { result } = renderHook(() => useZeroDevSigner());
-
-      expect(result.current.attestationAddress).toBe(EMBEDDED_WALLET_ADDRESS);
-    });
-
-    it("should return embedded wallet address for Google users", () => {
-      setupGoogleUser();
-      const { result } = renderHook(() => useZeroDevSigner());
-
-      expect(result.current.attestationAddress).toBe(EMBEDDED_WALLET_ADDRESS);
-    });
-
-    it("should return external wallet address for external wallet users", () => {
-      setupExternalWalletUser();
-      const { result } = renderHook(() => useZeroDevSigner());
-
-      expect(result.current.attestationAddress).toBe(EXTERNAL_WALLET_ADDRESS);
-    });
-
-    it("should return null when no user and no wallets", () => {
-      mockPrivyState.user = null;
-      mockPrivyState.wallets = [];
-      const { result } = renderHook(() => useZeroDevSigner());
-
-      expect(result.current.attestationAddress).toBeNull();
-    });
-  });
-
-  // =========================================================================
-  // isGaslessAvailable
-  // =========================================================================
-
-  describe("isGaslessAvailable", () => {
-    it("should be true for email user with embedded wallet on supported chain", () => {
-      setupEmailUser();
-      (isChainSupportedForGasless as ReturnType<typeof vi.fn>).mockReturnValue(true);
-
-      const { result } = renderHook(() => useZeroDevSigner());
-
-      expect(result.current.isGaslessAvailable).toBe(true);
-    });
-
-    it("should be false for email user on unsupported chain", () => {
-      setupEmailUser();
-      (isChainSupportedForGasless as ReturnType<typeof vi.fn>).mockReturnValue(false);
-
-      const { result } = renderHook(() => useZeroDevSigner());
-
-      expect(result.current.isGaslessAvailable).toBe(false);
-    });
-
-    it("should be false for external wallet user even on supported chain", () => {
-      setupExternalWalletUser();
-      (isChainSupportedForGasless as ReturnType<typeof vi.fn>).mockReturnValue(true);
-
-      const { result } = renderHook(() => useZeroDevSigner());
-
-      expect(result.current.isGaslessAvailable).toBe(false);
-    });
-  });
-
-  // =========================================================================
-  // getAttestationSigner — Case 1: Email/Google user with gasless
-  // =========================================================================
-
-  describe("getAttestationSigner — email user with gasless", () => {
-    it("should return gasless signer for email user on supported chain", async () => {
-      setupEmailUser();
-      enableGaslessOnChain(10);
-
-      const { result } = renderHook(() => useZeroDevSigner());
-
-      let signer: unknown;
-      await act(async () => {
-        signer = await result.current.getAttestationSigner(10);
-      });
-
-      expect(signer).toBeDefined();
-      expect(await chainIdOf(signer)).toBe(10);
-      expect(createPrivySignerForGasless).toHaveBeenCalledWith(
-        expect.objectContaining({ address: EMBEDDED_WALLET_ADDRESS }),
-        10
-      );
-      expect(createGaslessClient).toHaveBeenCalledWith(10, "mockPrivySigner");
-      expect(getGaslessSigner).toHaveBeenCalledWith(
-        expect.objectContaining({ account: { address: EMBEDDED_WALLET_ADDRESS } }),
-        10
-      );
-      // Gasless path must NOT build the embedded-direct BrowserProvider signer.
-      // (getEthereumProvider IS now called to confirm the chain switch first.)
-      expect(mockGetSigner).not.toHaveBeenCalled();
-    });
-
-    it("does not switch the embedded wallet chain for the gasless path (signer is chain-pinned)", async () => {
-      setupEmailUser();
-      const embeddedWallet = mockPrivyState.wallets[0];
-      enableGaslessOnChain(42161);
-
-      const { result } = renderHook(() => useZeroDevSigner());
-
-      let signer: unknown;
-      await act(async () => {
-        signer = await result.current.getAttestationSigner(42161);
-      });
-
-      expect(await chainIdOf(signer)).toBe(42161);
-      // The gasless smart account targets the chain regardless of the embedded
-      // EOA's current chain (its ethers provider is pinned by toEthersSigner), so
-      // the embedded wallet is never asked to switch.
-      expect(embeddedWallet.switchChain).not.toHaveBeenCalled();
-    });
-
-    it("should return gasless signer for Google OAuth user", async () => {
-      setupGoogleUser();
-      enableGaslessOnChain(10);
-
-      const { result } = renderHook(() => useZeroDevSigner());
-
-      let signer: unknown;
-      await act(async () => {
-        signer = await result.current.getAttestationSigner(10);
-      });
-
-      expect(await chainIdOf(signer)).toBe(10);
-    });
-
-    it("should return gasless signer for Farcaster user", async () => {
-      setupFarcasterUser();
-      enableGaslessOnChain(10);
-
-      const { result } = renderHook(() => useZeroDevSigner());
-
-      let signer: unknown;
-      await act(async () => {
-        signer = await result.current.getAttestationSigner(10);
-      });
-
-      expect(await chainIdOf(signer)).toBe(10);
-    });
-  });
-
-  // =========================================================================
-  // getAttestationSigner — Gasless fallback to embedded wallet
-  // =========================================================================
-
-  describe("getAttestationSigner — gasless fallback", () => {
-    it("should fall back to embedded wallet when gasless client returns null", async () => {
-      setupEmailUser();
-      (isChainSupportedForGasless as ReturnType<typeof vi.fn>).mockReturnValue(true);
-      (createPrivySignerForGasless as ReturnType<typeof vi.fn>).mockResolvedValue("signer");
-      (createGaslessClient as ReturnType<typeof vi.fn>).mockResolvedValue(null); // null = no client
-
-      const { result } = renderHook(() => useZeroDevSigner());
-
-      let signer: unknown;
-      await act(async () => {
-        signer = await result.current.getAttestationSigner(10);
-      });
-
-      expect(await chainIdOf(signer)).toBe(10);
-      // getEthereumProvider should have been called to create BrowserProvider
-      expect(mockPrivyState.wallets[0].getEthereumProvider).toHaveBeenCalled();
-    });
-
-    it("should fall back to embedded wallet on non-GaslessProviderError", async () => {
-      setupEmailUser();
-      (isChainSupportedForGasless as ReturnType<typeof vi.fn>).mockReturnValue(true);
-      (createPrivySignerForGasless as ReturnType<typeof vi.fn>).mockRejectedValue(
-        new Error("some random error")
-      );
-
-      const { result } = renderHook(() => useZeroDevSigner());
-
-      let signer: unknown;
-      await act(async () => {
-        signer = await result.current.getAttestationSigner(10);
-      });
-
-      expect(await chainIdOf(signer)).toBe(10);
-    });
-
-    it("should NOT fall back for GaslessProviderError — rethrows it", async () => {
-      setupEmailUser();
-      (isChainSupportedForGasless as ReturnType<typeof vi.fn>).mockReturnValue(true);
-      const gaslessError = new GaslessProviderError("provider failed", "zerodev", 10);
-      (createPrivySignerForGasless as ReturnType<typeof vi.fn>).mockRejectedValue(gaslessError);
-
-      const { result } = renderHook(() => useZeroDevSigner());
-
-      await act(async () => {
-        await expect(result.current.getAttestationSigner(10)).rejects.toThrow(GaslessProviderError);
-      });
-    });
-  });
-
-  // =========================================================================
-  // getAttestationSigner — Case 2: Email user without gasless support
-  // =========================================================================
-
-  describe("getAttestationSigner — email user on unsupported chain", () => {
-    it("should use embedded wallet directly (user pays gas)", async () => {
-      setupEmailUser();
-      (isChainSupportedForGasless as ReturnType<typeof vi.fn>).mockReturnValue(false);
-      const embeddedWallet = mockPrivyState.wallets[0];
-      const provider = await embeddedWallet.getEthereumProvider();
-
-      const { result } = renderHook(() => useZeroDevSigner());
-
-      let signer: unknown;
-      await act(async () => {
-        signer = await result.current.getAttestationSigner(999);
-      });
-
-      expect(await chainIdOf(signer)).toBe(999);
-      // Switches at the provider level, not via the inert high-level switchChain.
-      expect(provider.request).toHaveBeenCalledWith({
-        method: "wallet_switchEthereumChain",
-        params: [{ chainId: "0x3e7" }],
-      });
-      expect(embeddedWallet.switchChain).not.toHaveBeenCalled();
-    });
   });
 
   // =========================================================================
