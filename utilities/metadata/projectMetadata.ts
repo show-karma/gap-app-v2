@@ -101,7 +101,10 @@ export const generateProjectAboutMetadata = (
     description:
       getRealDescriptionExcerpt(project) ||
       `Learn about ${projectTitle}: mission, problem statement, solution, and project details.`,
-    canonicalPath: `/project/${projectId}/about`,
+    // The About tab shares its mission/description content with the project root
+    // (overview), so it reads as a near-duplicate to search engines. Canonicalize
+    // to the project root to consolidate ranking signals onto the primary URL.
+    canonicalPath: `/project/${projectId}`,
   });
 };
 

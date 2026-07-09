@@ -4,6 +4,7 @@ import {
   fetchDiligenceResponseContext,
   getCandidateDiligence,
   getDiligenceTemplate,
+  getOutreachPreview,
   requestIntro,
   saveDiligenceTemplate,
   submitDiligenceResponse,
@@ -14,6 +15,8 @@ import type {
   CandidateDiligenceView,
   DiligenceResponseContext,
   DiligenceTemplate,
+  OutreachAction,
+  OutreachPreview,
   RequestIntroResult,
   SaveDiligenceTemplateRequest,
   SubmitDiligenceResponseRequest,
@@ -29,6 +32,12 @@ export const candidateDiligenceQueryKey = (reportId: string, candidateId: string
 
 export const diligenceResponseContextQueryKey = (token: string) =>
   ["donor-research", "diligence", "response-context", token] as const;
+
+export const outreachPreviewQueryKey = (
+  reportId: string,
+  candidateId: string,
+  action: OutreachAction
+) => ["donor-research", "diligence", "outreach-preview", reportId, candidateId, action] as const;
 
 // -- Advisor: template -------------------------------------------------------
 
@@ -74,13 +83,39 @@ export function useCandidateDiligence(
 }
 
 /**
+ * Loads the exact outreach email a send action would dispatch, for the
+ * preview-and-edit step. `staleTime: 0` + refetch on mount so every dialog
+ * open shows the current composition (the intro body embeds live Q&A context).
+ */
+export function useOutreachPreview(
+  reportId: string,
+  candidateId: string,
+  action: OutreachAction,
+  enabled = true
+) {
+  return useQuery<OutreachPreview>({
+    queryKey: outreachPreviewQueryKey(reportId, candidateId, action),
+    queryFn: () => getOutreachPreview(reportId, candidateId, action),
+    enabled: enabled && !!reportId && !!candidateId,
+    staleTime: 0,
+    refetchOnWindowFocus: false,
+  });
+}
+
+/**
  * Ask Questions (202, async). Invalidates the candidate view so the new
  * `in_progress` / `blocked` state is reflected after the outbox dispatches.
+ * `body` carries the advisor-edited email body — pass it ONLY when edited so
+ * an untouched preview lets the backend compose its own default.
  */
 export function useAskQuestions() {
   const queryClient = useQueryClient();
-  return useMutation<AskQuestionsResponse, Error, { reportId: string; candidateId: string }>({
-    mutationFn: ({ reportId, candidateId }) => askQuestions(reportId, candidateId),
+  return useMutation<
+    AskQuestionsResponse,
+    Error,
+    { reportId: string; candidateId: string; body?: string }
+  >({
+    mutationFn: ({ reportId, candidateId, body }) => askQuestions(reportId, candidateId, body),
     onSuccess: (_data, { reportId, candidateId }) => {
       queryClient.invalidateQueries({
         queryKey: candidateDiligenceQueryKey(reportId, candidateId),
@@ -92,12 +127,17 @@ export function useAskQuestions() {
 /**
  * Connect / named intro (202 | 422-email). On a queued result invalidates the
  * candidate view. The `email_required` branch is surfaced to the caller (it
- * resolves, not rejects) so the UI can run the email-capture flow.
+ * resolves, not rejects) so the UI can run the email-capture flow. `body`
+ * follows the same only-when-edited contract as {@link useAskQuestions}.
  */
 export function useRequestIntro() {
   const queryClient = useQueryClient();
-  return useMutation<RequestIntroResult, Error, { reportId: string; candidateId: string }>({
-    mutationFn: ({ reportId, candidateId }) => requestIntro(reportId, candidateId),
+  return useMutation<
+    RequestIntroResult,
+    Error,
+    { reportId: string; candidateId: string; body?: string }
+  >({
+    mutationFn: ({ reportId, candidateId, body }) => requestIntro(reportId, candidateId, body),
     onSuccess: (result, { reportId, candidateId }) => {
       if (result.kind === "queued") {
         queryClient.invalidateQueries({

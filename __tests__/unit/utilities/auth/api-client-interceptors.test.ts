@@ -294,9 +294,15 @@ describe("createAuthenticatedApiClient — interceptors", () => {
       expect(callCount).toBe(1);
     });
 
-    it("should pass through network errors (no response object)", async () => {
+    it("should retry network errors (backend unreachable) then reject after exhausting retries", async () => {
       vi.mocked(TokenManager.getToken).mockResolvedValue("token");
-      const client = createAuthenticatedApiClient("https://api.test");
+      const client = createAuthenticatedApiClient("https://api.test", 30000, {
+        retries: 2,
+        baseDelayMs: 0,
+        maxDelayMs: 0,
+        jitter: 0,
+        reconnectToastAfterAttempt: Number.POSITIVE_INFINITY,
+      });
 
       let callCount = 0;
       client.defaults.adapter = async (config: any) => {
@@ -305,19 +311,29 @@ describe("createAuthenticatedApiClient — interceptors", () => {
       };
 
       await expect(client.get("/endpoint")).rejects.toThrow("Network Error");
-      expect(callCount).toBe(1);
+      // Original attempt + 2 retries
+      expect(callCount).toBe(3);
       expect(TokenManager.clearCache).not.toHaveBeenCalled();
     });
 
-    it("should pass through timeout errors", async () => {
+    it("should retry idempotent timeouts then reject after exhausting retries", async () => {
       vi.mocked(TokenManager.getToken).mockResolvedValue("token");
-      const client = createAuthenticatedApiClient("https://api.test");
+      const client = createAuthenticatedApiClient("https://api.test", 30000, {
+        retries: 2,
+        baseDelayMs: 0,
+        maxDelayMs: 0,
+        jitter: 0,
+        reconnectToastAfterAttempt: Number.POSITIVE_INFINITY,
+      });
 
+      let callCount = 0;
       client.defaults.adapter = async (config: any) => {
+        callCount++;
         throw new axios.AxiosError("Timeout", "ECONNABORTED", config);
       };
 
       await expect(client.get("/slow")).rejects.toThrow("Timeout");
+      expect(callCount).toBe(3);
       expect(TokenManager.clearCache).not.toHaveBeenCalled();
     });
   });

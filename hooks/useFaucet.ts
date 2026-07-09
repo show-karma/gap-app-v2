@@ -198,12 +198,18 @@ export const useFaucetRequest = (requestId: string | null) => {
       return faucetService.getRequest(requestId);
     },
     enabled: !!requestId,
-    // refetchInterval: (data) => {
-    //   // Stop polling if request is completed or failed
-    //   if (data?.d === "CLAIMED" || data?.status === "FAILED") {
-    //     return false;
-    //   }
-    //   return 2000; // Poll every 2 seconds
-    // }
+    refetchInterval: (query) => {
+      // Stop polling once the request no longer exists (getRequest resolved to
+      // null/undefined) — otherwise a missing request would poll forever.
+      const data = query.state.data;
+      if (!data) {
+        return false;
+      }
+      const { status } = data;
+      if (status === "CLAIMED" || status === "FAILED" || status === "EXPIRED") {
+        return false;
+      }
+      return 2000;
+    },
   });
 };
