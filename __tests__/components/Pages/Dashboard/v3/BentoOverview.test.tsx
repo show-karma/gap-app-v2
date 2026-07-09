@@ -1,6 +1,11 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { BentoOverview } from "@/components/Pages/Dashboard/v3/BentoOverview";
 import type { DashModule } from "@/components/Pages/Dashboard/v3/module";
+
+// Render motion elements/AnimatePresence synchronously (jsdom has no layout
+// engine). Scoped here rather than globally so it can't mask motion behavior
+// in other suites.
+vi.mock("motion/react", () => import("@/__tests__/helpers/motion-mock"));
 
 const makeModule = (key: string, label: string, detail: string): DashModule => ({
   key,
@@ -18,6 +23,12 @@ describe("BentoOverview", () => {
     makeModule("communities", "My communities", "COMMUNITIES DETAIL"),
   ];
 
+  beforeEach(() => {
+    // Drill-in writes the module key to location.hash; jsdom keeps the URL
+    // across tests in this file, so reset it to avoid auto-opening a module.
+    window.history.replaceState(null, "", window.location.pathname);
+  });
+
   it("renders one tile per module in the overview", () => {
     render(<BentoOverview modules={modules} />);
     expect(screen.getByText("My projects")).toBeInTheDocument();
@@ -25,20 +36,36 @@ describe("BentoOverview", () => {
     expect(screen.queryByText("PROJECTS DETAIL")).not.toBeInTheDocument();
   });
 
-  it("drills into a module on tile click and back again", () => {
+  it("drills into a module on tile click and back again", async () => {
     render(<BentoOverview modules={modules} />);
 
     fireEvent.click(screen.getByText("My projects"));
 
-    // Full module view + back affordance are shown; the other tile is hidden.
-    expect(screen.getByText("PROJECTS DETAIL")).toBeInTheDocument();
+    // The clicked tile morphs into the drill-in via a shared layoutId
+    // (AnimatePresence mode="popLayout"), so the new view mounts immediately
+    // while the overview fades out alongside it — both content and its
+    // eventual removal need to be awaited.
+    expect(await screen.findByText("PROJECTS DETAIL")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /back to overview/i })).toBeInTheDocument();
-    expect(screen.queryByText("My communities")).not.toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByText("My communities")).not.toBeInTheDocument());
 
     fireEvent.click(screen.getByRole("button", { name: /back to overview/i }));
 
     // Back to the grid.
-    expect(screen.getByText("My communities")).toBeInTheDocument();
-    expect(screen.queryByText("PROJECTS DETAIL")).not.toBeInTheDocument();
+    expect(await screen.findByText("My communities")).toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByText("PROJECTS DETAIL")).not.toBeInTheDocument());
+  });
+
+  it("reports focus changes so callers can hide overview-only affordances", async () => {
+    const onFocusChange = vi.fn();
+    render(<BentoOverview modules={modules} onFocusChange={onFocusChange} />);
+
+    expect(onFocusChange).toHaveBeenLastCalledWith(null);
+
+    fireEvent.click(screen.getByText("My projects"));
+    await waitFor(() => expect(onFocusChange).toHaveBeenLastCalledWith("projects"));
+
+    fireEvent.click(await screen.findByRole("button", { name: /back to overview/i }));
+    await waitFor(() => expect(onFocusChange).toHaveBeenLastCalledWith(null));
   });
 });

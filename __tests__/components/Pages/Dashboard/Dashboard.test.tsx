@@ -3,9 +3,11 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { useRouter } from "next/navigation";
 import type { ReactNode } from "react";
 import { Dashboard } from "@/components/Pages/Dashboard/Dashboard";
+import { useUserApplications } from "@/features/user-applications/hooks/use-user-applications";
 import { setPostLoginRedirect, useAuth } from "@/hooks/useAuth";
 import { useContributorProfile } from "@/hooks/useContributorProfile";
 import { useDashboardAdmin } from "@/hooks/useDashboardAdmin";
+import { useDonorAdvisor } from "@/hooks/useDonorAdvisor";
 import { useReviewerPrograms } from "@/hooks/usePermissions";
 import { usePermissionContext } from "@/src/core/rbac/context/permission-context";
 import { useStaff } from "@/src/core/rbac/hooks/use-staff-bridge";
@@ -31,6 +33,13 @@ vi.mock("@/hooks/useDashboardAdmin", () => ({
   useDashboardAdmin: vi.fn(),
 }));
 
+// The global useQuery mock above would make useDonorAdvisor resolve `[]`
+// (non-null → advisor); the "not an advisor" default is set in beforeEach
+// since clearAllMocks doesn't undo a per-test mockReturnValue override.
+vi.mock("@/hooks/useDonorAdvisor", () => ({
+  useDonorAdvisor: vi.fn(),
+}));
+
 vi.mock("@/hooks/usePermissions", () => ({
   useReviewerPrograms: vi.fn(),
 }));
@@ -48,6 +57,11 @@ vi.mock("next/navigation", () => ({
   useParams: vi.fn(() => ({})),
   usePathname: vi.fn(() => "/"),
 }));
+
+// Render motion elements/AnimatePresence synchronously (jsdom has no layout
+// engine). Scoped here rather than globally so it can't mask motion behavior
+// in other suites.
+vi.mock("motion/react", () => import("@/__tests__/helpers/motion-mock"));
 
 vi.mock("@/components/EthereumAddressToENSAvatar", () => ({
   __esModule: true,
@@ -89,6 +103,8 @@ const mockUseDashboardAdmin = useDashboardAdmin as unknown as vi.Mock;
 const mockUsePermissionContext = usePermissionContext as unknown as vi.Mock;
 const mockUseStaff = useStaff as unknown as vi.Mock;
 const mockUseReviewerPrograms = useReviewerPrograms as unknown as vi.Mock;
+const mockUseUserApplications = useUserApplications as unknown as vi.Mock;
+const mockUseDonorAdvisor = useDonorAdvisor as unknown as vi.Mock;
 
 const setupAuth = ({
   authenticated,
@@ -155,6 +171,24 @@ describe("Dashboard", () => {
       isError: false,
       refetch: vi.fn(),
     });
+    // Reset per-test since `vi.clearAllMocks()` doesn't clear a prior
+    // `mockReturnValue` override — without this, a later test could
+    // inherit another test's applications data.
+    mockUseUserApplications.mockReturnValue({
+      applications: [],
+      filters: { status: "all", programId: null, searchQuery: "" },
+      sortBy: "createdAt",
+      sortOrder: "desc",
+      pagination: { page: 1, totalPages: 1, limit: 10 },
+      isLoading: false,
+      error: null,
+      setFilters: vi.fn(),
+      setSort: vi.fn(),
+      setPage: vi.fn(),
+      setPageSize: vi.fn(),
+      refresh: vi.fn(),
+    });
+    mockUseDonorAdvisor.mockReturnValue({ data: null, isLoading: false });
   });
 
   it("redirects unauthenticated users away from dashboard", async () => {
@@ -181,7 +215,7 @@ describe("Dashboard", () => {
     expect(screen.getAllByTestId("ens-avatar").length).toBeGreaterThan(0);
   });
 
-  it("renders an actionable projects tile when user has no projects and no roles", () => {
+  it("hides the projects tile when the user has no projects and no roles", () => {
     mockUseQuery.mockReturnValue({
       data: [],
       isLoading: false,
@@ -192,15 +226,13 @@ describe("Dashboard", () => {
 
     render(<Dashboard />, { wrapper: createWrapper() });
 
-    // The bento overview shows an actionable empty tile rather than the full
-    // stacked section.
-    expect(screen.getByText("My projects")).toBeInTheDocument();
-    expect(screen.getByText(/Create a project to track grants/i)).toBeInTheDocument();
+    // My projects should show only if the user has projects.
+    expect(screen.queryByText("My projects")).not.toBeInTheDocument();
   });
 
-  it("drills into the full projects section from the tile", () => {
+  it("drills into the full projects section from the tile", async () => {
     mockUseQuery.mockReturnValue({
-      data: [],
+      data: [{ uid: "project-1", details: { title: "Project One" } }],
       isLoading: false,
       isSuccess: true,
       isError: false,
@@ -211,9 +243,10 @@ describe("Dashboard", () => {
 
     fireEvent.click(screen.getByText("My projects"));
 
-    // Drill-in renders the full ProjectsSection (its heading + real empty state).
-    expect(screen.getByText("My Projects")).toBeInTheDocument();
-    expect(screen.getByText(/No projects yet/i)).toBeInTheDocument();
+    // The overview <-> drill-in switch animates (AnimatePresence mode="wait"),
+    // so the new content mounts once the outgoing view's exit finishes.
+    expect(await screen.findByText("Project One")).toBeInTheDocument();
+    expect(screen.getByText("My projects")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /back to overview/i })).toBeInTheDocument();
   });
 
@@ -375,7 +408,39 @@ describe("Dashboard", () => {
     expect(screen.getByText(/couldn.t verify your permissions/i)).toBeInTheDocument();
   });
 
-  it("surfaces a recoverable projects error via the tile and drill-in", () => {
+  it("hides the admin panel banner while drilled into a module, and restores it on back", async () => {
+    // Admin panel should show only for a super-admin (staff), not for a
+    // registry admin (Allo registry curator — a distinct, lesser role).
+    mockUseStaff.mockReturnValue({ isStaff: true, isLoading: false });
+    mockUseQuery.mockReturnValue({
+      data: [{ uid: "project-1", details: { title: "Project One" } }],
+      isLoading: false,
+      isSuccess: true,
+      isError: false,
+      refetch: vi.fn(),
+    });
+
+    render(<Dashboard />, { wrapper: createWrapper() });
+
+    // Overview: the admin banner sits below the bento grid.
+    expect(screen.getByText("Admin panel")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText("My projects"));
+
+    // Drilled in: the banner is a bento-overview affordance, so it hides. This
+    // is driven by Dashboard's own isDrilledIn state (not the BentoOverview
+    // transition), so it updates immediately — no need to await it.
+    expect(screen.queryByText("Admin panel")).not.toBeInTheDocument();
+
+    // The overview <-> drill-in switch animates (AnimatePresence mode="wait"),
+    // so the back button mounts once the drill-in's enter transition settles.
+    fireEvent.click(await screen.findByRole("button", { name: /back to overview/i }));
+
+    // Back on the overview: the banner returns.
+    expect(await screen.findByText("Admin panel")).toBeInTheDocument();
+  });
+
+  it("surfaces a recoverable projects error via the tile and drill-in", async () => {
     mockUseQuery.mockReturnValue({
       data: [],
       isLoading: false,
@@ -392,7 +457,7 @@ describe("Dashboard", () => {
 
     fireEvent.click(tile);
 
-    expect(screen.getByText(/Unable to load your projects/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Unable to load your projects/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /try again/i })).toBeInTheDocument();
   });
 
@@ -434,7 +499,9 @@ describe("Dashboard", () => {
       const { container } = render(<Dashboard />, { wrapper: createWrapper() });
 
       // The loading tile shows a skeleton (no label) but keeps its anchor.
-      expect(container.querySelector('[data-comment-anchor="tile-communities"]')).toBeInTheDocument();
+      expect(
+        container.querySelector('[data-comment-anchor="tile-communities"]')
+      ).toBeInTheDocument();
     });
 
     it("surfaces an error affordance on the communities tile when the admin hook errors", () => {
@@ -452,12 +519,122 @@ describe("Dashboard", () => {
     });
 
     it("always orders the projects tile before the applications tile", () => {
+      mockUseQuery.mockReturnValue({
+        data: [{ uid: "project-1", details: { title: "Project One" } }],
+        isLoading: false,
+        isSuccess: true,
+        isError: false,
+        refetch: vi.fn(),
+      });
+      mockUseUserApplications.mockReturnValue({
+        applications: [{ id: "app-1", programTitle: "Program One", status: "pending" }],
+        filters: { status: "all", programId: null, searchQuery: "" },
+        sortBy: "createdAt",
+        sortOrder: "desc",
+        pagination: { page: 1, totalPages: 1, limit: 10 },
+        statusCounts: { pending: 1 },
+        isLoading: false,
+        error: null,
+        setFilters: vi.fn(),
+        setSort: vi.fn(),
+        setPage: vi.fn(),
+        setPageSize: vi.fn(),
+        refresh: vi.fn(),
+      });
+
       const { container } = render(<Dashboard />, { wrapper: createWrapper() });
 
       const order = getTileOrder(container);
       expect(order).toContain("projects");
       expect(order).toContain("applications");
       expect(order.indexOf("projects")).toBeLessThan(order.indexOf("applications"));
+    });
+  });
+
+  describe("role-aware section visibility", () => {
+    it("hides the admin panel for a registry admin who is not a super-admin", () => {
+      mockUsePermissionContext.mockReturnValue({
+        isCommunityAdmin: false,
+        isRegistryAdmin: true,
+        isLoading: false,
+        isGuestDueToError: false,
+      });
+      mockUseStaff.mockReturnValue({ isStaff: false, isLoading: false });
+
+      render(<Dashboard />, { wrapper: createWrapper() });
+
+      expect(screen.queryByText("Admin panel")).not.toBeInTheDocument();
+    });
+
+    it("shows the admin panel for a super-admin", () => {
+      mockUseStaff.mockReturnValue({ isStaff: true, isLoading: false });
+
+      render(<Dashboard />, { wrapper: createWrapper() });
+
+      expect(screen.getByText("Admin panel")).toBeInTheDocument();
+    });
+
+    it("hides My reviews for a user with no reviewer role and no admin pending applications", () => {
+      render(<Dashboard />, { wrapper: createWrapper() });
+
+      expect(screen.queryByText("My reviews")).not.toBeInTheDocument();
+    });
+
+    it("shows getting-started cards when the user matches no role module", () => {
+      render(<Dashboard />, { wrapper: createWrapper() });
+
+      expect(screen.getByText("Get started with Karma")).toBeInTheDocument();
+      expect(screen.getByText("Create a project")).toBeInTheDocument();
+      expect(screen.getByText("Apply for funding")).toBeInTheDocument();
+      expect(screen.getByText("Explore communities")).toBeInTheDocument();
+      expect(screen.getByText("Find funders")).toBeInTheDocument();
+    });
+
+    it("holds a skeleton instead of getting-started cards while the advisor check is undecided", () => {
+      mockUseDonorAdvisor.mockReturnValue({ data: undefined, isLoading: true });
+
+      const { container } = render(<Dashboard />, { wrapper: createWrapper() });
+
+      expect(screen.queryByText("Get started with Karma")).not.toBeInTheDocument();
+      expect(container.querySelectorAll(".animate-dashv3-pulse").length).toBeGreaterThan(0);
+    });
+
+    it("hides getting-started cards when any role module is present", () => {
+      mockUseQuery.mockReturnValue({
+        data: [{ uid: "project-1", details: { title: "Project One" } }],
+        isLoading: false,
+        isSuccess: true,
+        isError: false,
+        refetch: vi.fn(),
+      });
+
+      render(<Dashboard />, { wrapper: createWrapper() });
+
+      expect(screen.queryByText("Get started with Karma")).not.toBeInTheDocument();
+      expect(screen.getByText("My projects")).toBeInTheDocument();
+    });
+
+    it("shows My reviews for a community admin/owner with pending applications, even without an explicit reviewer role", () => {
+      mockUseDashboardAdmin.mockReturnValue({
+        communities: [
+          {
+            uid: "community-1",
+            name: "Optimism",
+            slug: "optimism",
+            chainID: 10,
+            activeProgramsCount: 1,
+            pendingApplicationsCount: 3,
+            manageUrl: "/admin/optimism",
+          },
+        ],
+        isLoading: false,
+        isError: false,
+        refetch: vi.fn(),
+      });
+
+      render(<Dashboard />, { wrapper: createWrapper() });
+
+      expect(screen.getByText("My reviews")).toBeInTheDocument();
     });
   });
 });

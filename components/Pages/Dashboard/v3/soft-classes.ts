@@ -42,3 +42,15 @@ export const THUMB_BRAND = "bg-sf-ink text-white dark:bg-brand-500 dark:text-bra
 
 /* Skeleton block. */
 export const SK = "animate-dashv3-pulse rounded-lg bg-sf-skeleton";
+
+/**
+ * Shared layoutId + timing for the bento tile <-> drill-in morph (BentoTile.tsx
+ * + BentoOverview.tsx). Both sides must use the SAME transition for the shared
+ * layoutId animation to read as one continuous box resize/move rather than a
+ * generic center-scale — this is the cubic-bezier the app's other scale-in /
+ * fade-in-up tailwind animations already use.
+ */
+export const bentoLayoutId = (key: string) => `bento-tile-${key}`;
+export const BENTO_LAYOUT_TRANSITION = {
+  layout: { duration: 0.32, ease: [0.22, 1, 0.36, 1] as const },
+};

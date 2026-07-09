@@ -2,11 +2,13 @@ import {
   AlertTriangle,
   ArrowRight,
   Bell,
+  Bookmark,
   CheckCircle2,
   Clock,
   Compass,
   Eye,
   FileText,
+  Filter,
   Flag,
   Landmark,
   LayoutGrid,
@@ -18,6 +20,7 @@ import {
   Search,
   Send,
   Users,
+  X,
 } from "lucide-react";
 
 /** Design icon-name → lucide component, matching the v3 prototype's icon set. */
@@ -40,6 +43,9 @@ const ICONS: Record<string, LucideIcon> = {
   clock: Clock,
   grid: LayoutGrid,
   bell: Bell,
+  filter: Filter,
+  close: X,
+  bookmark: Bookmark,
 };
 
 export type SoftIconName = keyof typeof ICONS;

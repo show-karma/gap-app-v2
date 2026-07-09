@@ -50,14 +50,14 @@ export function SoftShell({ address, children }: { address?: Hex; children: Reac
 
   return (
     <div className="dashv3 min-h-[calc(100vh-var(--navbar-height,64px))] bg-sf-panel">
-      <div className="mx-auto max-w-[1920px] px-8 lg:px-24">
+      <div className="mx-auto max-w-[1920px] px-4 sm:px-8 lg:px-24">
         <div className="pb-12 pt-8">
-          <div className="mb-[22px] flex items-center gap-[18px]">
-            <div className="grid h-[60px] w-[60px] flex-none place-items-center overflow-hidden rounded-full border-[3px] border-sf-card bg-brand-100 text-xl font-bold text-brand-800 shadow-[0_0_0_1px_var(--sf-line-strong)]">
+          <div className="mb-[22px] flex items-center gap-3 sm:gap-[18px]">
+            <div className="grid h-[44px] w-[44px] flex-none place-items-center overflow-hidden rounded-full border-[3px] border-sf-card bg-brand-100 text-base font-bold text-brand-800 shadow-[0_0_0_1px_var(--sf-line-strong)] sm:h-[60px] sm:w-[60px] sm:text-xl">
               {avatarInner}
             </div>
             <div className="min-w-0">
-              <h1 className="m-0 text-[40px] font-bold leading-none tracking-[-0.03em] text-sf-heading">
+              <h1 className="m-0 break-words text-[26px] font-bold leading-tight tracking-[-0.02em] text-sf-heading sm:text-[40px] sm:leading-none sm:tracking-[-0.03em]">
                 Welcome back{greetingName ? <>, {greetingName}</> : null}
               </h1>
             </div>

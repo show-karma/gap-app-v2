@@ -38,6 +38,7 @@ export function Section({
   title,
   sub,
   action,
+  soft,
   children,
 }: {
   id?: string;
@@ -45,11 +46,16 @@ export function Section({
   title: string;
   sub?: string;
   action?: React.ReactNode;
+  /** Adds the design's pillowy card border + shadow (default is the flat drill-in). */
+  soft?: boolean;
   children: React.ReactNode;
 }) {
   return (
     <section
-      className="flex scroll-mt-5 flex-col gap-4 rounded-sf-card bg-sf-card px-6 py-[22px]"
+      className={cn(
+        "flex scroll-mt-5 flex-col gap-4 rounded-sf-card bg-sf-card px-6 py-[22px]",
+        soft && "border border-sf-line shadow-[var(--sf-shadow-card)]"
+      )}
       id={id}
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -69,10 +75,29 @@ export function Section({
 
 /* ── Empty / error / warn ─────────────────────────────────────── */
 
-export interface EmptyAction {
-  label: string;
-  icon?: string;
-  href: string;
+/** A primary/secondary CTA — either a route (`href`) or a click handler (`onClick`). */
+export type EmptyAction = { label: string; icon?: string } & (
+  | { href: string }
+  | { onClick: () => void }
+);
+
+function EmptyActionButton({ action, variant }: { action: EmptyAction; variant: string }) {
+  const className = cn(BTN_BASE, BTN_MD, variant);
+  const inner = (
+    <>
+      {action.icon ? <SoftIcon name={action.icon} className="h-4 w-4" /> : null}
+      {action.label}
+    </>
+  );
+  return "href" in action ? (
+    <Link className={className} href={action.href}>
+      {inner}
+    </Link>
+  ) : (
+    <button className={className} onClick={action.onClick} type="button">
+      {inner}
+    </button>
+  );
 }
 
 export function EmptyState({
@@ -93,8 +118,11 @@ export function EmptyState({
   secondary?: EmptyAction;
   /** Custom action node (e.g. a dialog trigger) rendered in the actions row. */
   action?: React.ReactNode;
-  subtleLink?: { label: string; href: string };
+  /** Muted underlined link below the CTAs — either a route (`href`) or a click handler (e.g. open a modal). */
+  subtleLink?: { label: string; href: string } | { label: string; onClick: () => void };
 }) {
+  const subtleClass =
+    "mt-3.5 text-[13px] text-sf-muted underline underline-offset-2 hover:text-sf-heading";
   return (
     <div className="flex flex-col items-center gap-1 rounded-sf-tile border-[1.5px] border-dashed border-sf-line-strong bg-sf-elev px-6 py-11 text-center">
       <div
@@ -113,27 +141,20 @@ export function EmptyState({
         {body}
       </p>
       <div className="mt-5 flex flex-wrap justify-center gap-2.5">
-        {primary ? (
-          <Link className={cn(BTN_BASE, BTN_MD, BTN_PRIMARY)} href={primary.href}>
-            {primary.icon ? <SoftIcon name={primary.icon} className="h-4 w-4" /> : null}
-            {primary.label}
-          </Link>
-        ) : null}
-        {secondary ? (
-          <Link className={cn(BTN_BASE, BTN_MD, BTN_OUTLINE)} href={secondary.href}>
-            {secondary.icon ? <SoftIcon name={secondary.icon} className="h-4 w-4" /> : null}
-            {secondary.label}
-          </Link>
-        ) : null}
+        {primary ? <EmptyActionButton action={primary} variant={BTN_PRIMARY} /> : null}
+        {secondary ? <EmptyActionButton action={secondary} variant={BTN_OUTLINE} /> : null}
         {action ?? null}
       </div>
       {subtleLink ? (
-        <Link
-          className="mt-3.5 text-[13px] text-sf-muted underline underline-offset-2 hover:text-sf-heading"
-          href={subtleLink.href}
-        >
-          {subtleLink.label}
-        </Link>
+        "href" in subtleLink ? (
+          <Link className={subtleClass} href={subtleLink.href}>
+            {subtleLink.label}
+          </Link>
+        ) : (
+          <button type="button" className={subtleClass} onClick={subtleLink.onClick}>
+            {subtleLink.label}
+          </button>
+        )
       ) : null}
     </div>
   );

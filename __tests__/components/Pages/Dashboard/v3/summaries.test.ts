@@ -98,8 +98,8 @@ describe("buildReviewsSummary", () => {
       program("filecoin", "Filecoin", 32),
       program("optimism", "Optimism", 18),
     ]);
-    // big = number of programs, labeled to avoid reading as open reviews
-    expect(summary.big).toBe("3 programs");
+    // big = number of distinct communities, labeled to avoid reading as open reviews
+    expect(summary.big).toBe("2 communities");
     // Filecoin (42) sorted ahead of Optimism (18)
     expect(summary.rows[0]).toMatchObject({
       label: "Filecoin",
@@ -111,6 +111,26 @@ describe("buildReviewsSummary", () => {
   it("omits communities with no applications to review", () => {
     const summary = buildReviewsSummary([program("empty", "Empty", 0)]);
     expect(summary.rows).toHaveLength(0);
+  });
+
+  it("includes admin communities with pending applications alongside reviewer programs", () => {
+    const summary = buildReviewsSummary(
+      [program("filecoin", "Filecoin", 10)],
+      [community("Optimism Admin", 1, 5)]
+    );
+    expect(summary.big).toBe("2 communities");
+    expect(summary.rows.map((r) => r.label)).toEqual(
+      expect.arrayContaining(["Filecoin", "Optimism Admin"])
+    );
+  });
+
+  it("does not double-count a community already covered by a reviewer program", () => {
+    const summary = buildReviewsSummary(
+      [program("filecoin", "Filecoin", 10)],
+      [community("filecoin", 1, 5)]
+    );
+    expect(summary.big).toBe("1 community");
+    expect(summary.rows[0]).toMatchObject({ badge: { label: "10 to review" } });
   });
 });
 
@@ -125,8 +145,17 @@ describe("buildApplicationsSummary", () => {
     expect(summary.rows[1].badge).toEqual({ tone: "blue", label: "Pending" });
   });
 
-  it("falls back to the raw status label for unmapped statuses", () => {
+  it("maps draft to a gray Draft badge", () => {
     const summary = buildApplicationsSummary([application("Draft One", "draft")], { draft: 1 });
-    expect(summary.rows[0].badge).toEqual({ tone: "gray", label: "draft" });
+    expect(summary.rows[0].badge).toEqual({ tone: "gray", label: "Draft" });
+  });
+
+  it("falls back to the raw status label for unmapped statuses", () => {
+    const summary = buildApplicationsSummary(
+      // biome-ignore lint/suspicious/noExplicitAny: exercising the unknown-status fallback
+      [application("Odd One", "archived" as any)],
+      { archived: 1 }
+    );
+    expect(summary.rows[0].badge).toEqual({ tone: "gray", label: "archived" });
   });
 });

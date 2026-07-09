@@ -1,21 +1,23 @@
 "use client";
 
 import { CheckCircle2 } from "lucide-react";
+import { motion } from "motion/react";
 import { cn } from "@/utilities/tailwind";
 import type { DashModule } from "./module";
 import { SoftIcon } from "./SoftIcon";
 import {
+  BENTO_LAYOUT_TRANSITION,
   BTN_BASE,
   BTN_PRIMARY,
   BTN_SM,
   badgeClasses,
+  bentoLayoutId,
   SK,
   THUMB_BASE,
   THUMB_BRAND,
 } from "./soft-classes";
 
-const TILE =
-  "relative flex flex-col gap-3 rounded-sf-card bg-sf-card p-5 text-left transition-[transform,background-color] duration-150";
+const TILE = "relative flex flex-col gap-3 rounded-sf-card bg-sf-card p-5 text-left";
 
 function spanClasses(wide?: boolean): string {
   return wide
@@ -70,10 +72,15 @@ export function BentoTile({
   const showHeadcount = status === "ready" && Boolean(summary);
 
   return (
-    <button
+    <motion.button
       type="button"
-      className={cn(TILE, spanClasses(wide), "hover:-translate-y-[3px]")}
+      layout
+      layoutId={bentoLayoutId(key)}
+      className={cn(TILE, spanClasses(wide))}
       onClick={() => onOpen(key)}
+      whileHover={{ y: -3 }}
+      whileTap={{ scale: 0.98 }}
+      transition={BENTO_LAYOUT_TRANSITION}
       data-comment-anchor={`tile-${key}`}
     >
       <div className="flex items-center gap-2.5">
@@ -130,6 +137,6 @@ export function BentoTile({
           ))}
         </div>
       )}
-    </button>
+    </motion.button>
   );
 }

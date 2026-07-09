@@ -29,8 +29,10 @@ function NewCommunityButton({ label, onCreated }: { label: string; onCreated: ()
         text: label,
         icon: <SoftIcon name="plus" className="h-4 w-4" />,
         iconSide: "left",
-        // shadow-none overrides the shadcn Button's default `shadow-primary-button`.
-        styleClass: cn(BTN_BASE, BTN_SM, BTN_OUTLINE, "shadow-none"),
+        // `!shadow-none` (important) is required: the Button's default variant sets
+        // the custom `shadow-primary-button`, which twMerge doesn't recognize as a
+        // shadow-group conflict, so a plain `shadow-none` wouldn't win the cascade.
+        styleClass: cn(BTN_BASE, BTN_SM, BTN_OUTLINE, "!shadow-none"),
       }}
       refreshCommunities={async () => {
         onCreated();
