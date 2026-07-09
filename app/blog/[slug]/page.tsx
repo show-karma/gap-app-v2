@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { draftMode } from "next/headers";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
@@ -8,6 +9,7 @@ import { getPostBySlug } from "@/sanity/lib/gateway";
 import { urlForImage } from "@/sanity/lib/image";
 import type { BlogPost, CoverImage } from "@/sanity/lib/types";
 import { PostBody } from "@/src/components/blog/PostBody";
+import { PreviewBanner } from "@/src/components/blog/PreviewBanner";
 import { formatDate } from "@/utilities/formatDate";
 import { customMetadata } from "@/utilities/meta";
 import { PAGES } from "@/utilities/pages";
@@ -44,7 +46,8 @@ function resolveOgImage(
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
-  const post = await getPostBySlug(slug);
+  const { isEnabled: isPreview } = await draftMode();
+  const post = await getPostBySlug(slug, { draft: isPreview });
 
   if (!post) {
     return customMetadata({
@@ -63,12 +66,16 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     path: PAGES.BLOG_POST(slug),
     ogType: "article",
     images: ogImage ? [ogImage] : undefined,
+    // Draft previews must never be indexed, even though the same route
+    // (with `revalidate = 60`) normally serves the indexable published copy.
+    robots: isPreview ? { index: false, follow: true } : undefined,
   });
 }
 
 export default async function BlogPostPage({ params }: PageProps) {
   const { slug } = await params;
-  const post = await getPostBySlug(slug);
+  const { isEnabled: isPreview } = await draftMode();
+  const post = await getPostBySlug(slug, { draft: isPreview });
 
   if (!post) notFound();
 
@@ -82,6 +89,7 @@ export default async function BlogPostPage({ params }: PageProps) {
 
   return (
     <main className="container mx-auto max-w-3xl px-4 py-12">
+      {isPreview ? <PreviewBanner slug={post.slug} /> : null}
       <Breadcrumbs
         items={[
           { label: "Home", href: PAGES.HOME },

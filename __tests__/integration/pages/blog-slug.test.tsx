@@ -7,8 +7,9 @@ import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
 import { createMockBlogPost } from "../../factories/blogPost.factory";
 
-const { getPostBySlugMock } = vi.hoisted(() => ({
+const { getPostBySlugMock, draftModeMock } = vi.hoisted(() => ({
   getPostBySlugMock: vi.fn(),
+  draftModeMock: vi.fn(),
 }));
 
 const notFoundMock = vi.fn(() => {
@@ -29,12 +30,17 @@ vi.mock("next/navigation", async () => {
   };
 });
 
+vi.mock("next/headers", () => ({
+  draftMode: draftModeMock,
+}));
+
 function getJsonLdScripts(container: HTMLElement) {
   return Array.from(container.querySelectorAll('script[type="application/ld+json"]'));
 }
 
 beforeEach(() => {
   vi.clearAllMocks();
+  draftModeMock.mockResolvedValue({ isEnabled: false });
 });
 
 describe("/blog/[slug] page", () => {
@@ -100,5 +106,49 @@ describe("/blog/[slug] page", () => {
     });
 
     expect(metadata.robots).toEqual({ index: false, follow: true });
+  });
+
+  describe("draft mode preview", () => {
+    it("reads the draft post and renders the preview banner with an exit link when draft mode is enabled", async () => {
+      draftModeMock.mockResolvedValue({ isEnabled: true });
+      const post = createMockBlogPost({ slug: "hello-world", title: "Hello World" });
+      getPostBySlugMock.mockResolvedValue(post);
+
+      const { default: BlogPostPage } = await import("@/app/blog/[slug]/page");
+      const result = await BlogPostPage({ params: Promise.resolve({ slug: "hello-world" }) });
+      render(result);
+
+      expect(getPostBySlugMock).toHaveBeenCalledWith("hello-world", { draft: true });
+      expect(screen.getByRole("status")).toHaveTextContent(/preview mode/i);
+      const exitLink = screen.getByRole("link", { name: /exit preview/i });
+      expect(exitLink).toHaveAttribute("href", expect.stringContaining("/api/blog/preview/exit"));
+      expect(exitLink).toHaveAttribute("href", expect.stringContaining("slug=hello-world"));
+    });
+
+    it("does not render the preview banner when draft mode is disabled", async () => {
+      draftModeMock.mockResolvedValue({ isEnabled: false });
+      const post = createMockBlogPost({ slug: "hello-world", title: "Hello World" });
+      getPostBySlugMock.mockResolvedValue(post);
+
+      const { default: BlogPostPage } = await import("@/app/blog/[slug]/page");
+      const result = await BlogPostPage({ params: Promise.resolve({ slug: "hello-world" }) });
+      render(result);
+
+      expect(getPostBySlugMock).toHaveBeenCalledWith("hello-world", { draft: false });
+      expect(screen.queryByRole("status")).not.toBeInTheDocument();
+    });
+
+    it("generateMetadata marks a draft preview noindex even for a known slug", async () => {
+      draftModeMock.mockResolvedValue({ isEnabled: true });
+      const post = createMockBlogPost({ slug: "hello-world", title: "Hello World" });
+      getPostBySlugMock.mockResolvedValue(post);
+
+      const { generateMetadata } = await import("@/app/blog/[slug]/page");
+      const metadata = await generateMetadata({
+        params: Promise.resolve({ slug: "hello-world" }),
+      });
+
+      expect(metadata.robots).toEqual({ index: false, follow: true });
+    });
   });
 });

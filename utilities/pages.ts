@@ -199,6 +199,7 @@ export const PAGES = {
   },
   BLOG: `/blog`,
   BLOG_POST: (slug: string) => `/blog/${slug}`,
+  BLOG_PREVIEW_EXIT: `/api/blog/preview/exit`,
 };
 
 /**
