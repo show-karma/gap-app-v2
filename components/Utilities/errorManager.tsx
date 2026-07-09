@@ -1,5 +1,5 @@
 import * as Sentry from "@sentry/nextjs";
-import { isApiError } from "@/utilities/api/errors";
+import { isApiError, isTransientApiError } from "@/utilities/api/errors";
 import { reportApiFailure } from "@/utilities/api/report";
 import { isTransientHttpError, isTransientNetworkError } from "@/utilities/sentry/transientErrors";
 
@@ -68,19 +68,6 @@ export const errorManager = (
     error?: string;
   }
 ) => {
-  if (isApiError(error) && error.expected) {
-    Sentry.addBreadcrumb({ category: "api", message: error.message, level: "warning" });
-    return;
-  }
-  // Non-expected typed ApiErrors (ContractViolation, non-retryable 4xx/5xx,
-  // etc.) route through the single Sentry reporting policy — the same one
-  // the client's exhaustion hook uses — so ContractViolationError gets its
-  // per-endpoint fingerprint instead of falling through to the generic
-  // captureException below.
-  if (isApiError(error)) {
-    reportApiFailure(error);
-    return;
-  }
   if (error?.originalError || error?.message) {
     if (errorContains(error, "reject")) {
       return;
@@ -104,6 +91,22 @@ export const errorManager = (
       }
     }
   }
+  // Typed ApiErrors (issue #1775) route through the single Sentry reporting
+  // policy shared with the client's exhaustion hook. Transient failures
+  // (network/timeout/abort/429, or a retryable upstream 502/503/504) are
+  // suppressed to a breadcrumb — matching the historical
+  // isTransientNetworkError/isTransientHttpError posture immediately below —
+  // while genuine failures (ContractViolation, non-retryable 4xx/5xx) get
+  // reportApiFailure's per-endpoint fingerprinting.
+  if (isApiError(error)) {
+    if (isTransientApiError(error)) {
+      Sentry.addBreadcrumb({ category: "api", message: error.message, level: "warning" });
+      return;
+    }
+    reportApiFailure(error, { errorMessage, extra });
+    return;
+  }
+
   // Transient browser-side network errors (offline, CORS preflight, ad-
   // blocker, navigation abort) produce stacks that are pure minified Axios
   // bundle frames with no actionable signal. They get retried by React

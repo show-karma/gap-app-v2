@@ -137,6 +137,11 @@ export function isApiError(e: unknown): e is ApiError {
   return e instanceof ApiError;
 }
 
+/** Operational/transient failure: expected noise, OR a retryable upstream HTTP status (408/429/502/503/504). */
+export function isTransientApiError(error: unknown): error is ApiError {
+  return isApiError(error) && (error.expected || (error instanceof HttpError && error.retryable));
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }

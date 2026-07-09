@@ -102,6 +102,13 @@ describe("typed ApiError path", () => {
     expect(delay).toBeGreaterThanOrEqual(2000);
     expect(delay).toBeLessThan(2250);
   });
+
+  it("retryDelay caps a typed HttpError's Retry-After hint at 30s (Math.min(hint, 30_000))", () => {
+    const err = new HttpError(429, { endpoint: "/x", method: "GET", retryAfterMs: 999_000 });
+    const delay = retryDelay(0, err);
+    expect(delay).toBeGreaterThanOrEqual(30000);
+    expect(delay).toBeLessThan(30250);
+  });
 });
 
 describe("retryDelay — legacy path for untyped errors (production backoff unchanged)", () => {
