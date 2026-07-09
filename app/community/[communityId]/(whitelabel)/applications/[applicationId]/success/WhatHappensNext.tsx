@@ -1,5 +1,6 @@
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
+import { orElse } from "@/utilities/api/or-else";
 
 interface WhatHappensNextProps {
   programId: string;
@@ -87,9 +88,13 @@ export async function WhatHappensNext({
   templateVariables = {},
 }: WhatHappensNextProps) {
   // Fetch program config to get successPageContent
-  const [programConfig] = await fetchData<{
-    formSchema?: { settings?: { successPageContent?: string } };
-  }>(`/v2/funding-program-configs/${programId}`, "GET", {}, {}, {}, false);
+  // TODO(#1775): add zod schema
+  const programConfig = await orElse(
+    api.get<{
+      formSchema?: { settings?: { successPageContent?: string } };
+    }>(`/v2/funding-program-configs/${programId}`, { isAuthorized: false }),
+    null
+  );
 
   const successPageContent = programConfig?.formSchema?.settings?.successPageContent;
 

@@ -9,7 +9,8 @@ import {
   KycVerificationStatus,
   KycVerificationType,
 } from "@/types/kyc";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
+import { HttpError } from "@/utilities/api/errors";
 import {
   KYC_QUERY_KEYS,
   useKycBatchStatuses,
@@ -19,10 +20,23 @@ import {
   useSaveKycConfig,
 } from "../useKycStatus";
 
-// Mock the fetchData utility
-vi.mock("@/utilities/fetchData");
+// Mock the typed api client
+vi.mock("@/utilities/api/client", () => ({
+  api: { get: vi.fn(), post: vi.fn(), put: vi.fn() },
+}));
 
-const mockFetchData = fetchData as vi.MockedFunction<typeof fetchData>;
+const mockApi = api as unknown as {
+  get: vi.Mock;
+  post: vi.Mock;
+  put: vi.Mock;
+};
+
+const httpError = (status: number, message: string) =>
+  new HttpError(status, {
+    endpoint: "/kyc",
+    method: "GET",
+    body: { message },
+  });
 
 describe("KYC Hooks", () => {
   let queryClient: QueryClient;
@@ -72,7 +86,7 @@ describe("KYC Hooks", () => {
     describe("successful data fetching", () => {
       it("should fetch KYC status for a project", async () => {
         const mockStatus = createMockKycStatus();
-        mockFetchData.mockResolvedValue([mockStatus, null]);
+        mockApi.get.mockResolvedValue(mockStatus);
 
         const { result } = renderHook(() => useKycStatus("project-123", "community-456"), {
           wrapper,
@@ -87,7 +101,7 @@ describe("KYC Hooks", () => {
       });
 
       it("should return null when no status exists", async () => {
-        mockFetchData.mockResolvedValue([null, null]);
+        mockApi.get.mockResolvedValue(null);
 
         const { result } = renderHook(() => useKycStatus("project-123", "community-456"), {
           wrapper,
@@ -105,7 +119,7 @@ describe("KYC Hooks", () => {
           status: KycVerificationStatus.EXPIRED,
           isExpired: true,
         });
-        mockFetchData.mockResolvedValue([mockStatus, null]);
+        mockApi.get.mockResolvedValue(mockStatus);
 
         const { result } = renderHook(() => useKycStatus("project-123", "community-456"), {
           wrapper,
@@ -118,20 +132,35 @@ describe("KYC Hooks", () => {
         expect(result.current.status?.status).toBe(KycVerificationStatus.EXPIRED);
         expect(result.current.status?.isExpired).toBe(true);
       });
+
+      it("should return null on a 404", async () => {
+        mockApi.get.mockRejectedValue(httpError(404, "not found"));
+
+        const { result } = renderHook(() => useKycStatus("project-123", "community-456"), {
+          wrapper,
+        });
+
+        await waitFor(() => {
+          expect(result.current.isLoading).toBe(false);
+        });
+
+        expect(result.current.status).toBeNull();
+        expect(result.current.isError).toBe(false);
+      });
     });
 
     describe("disabled state", () => {
       it("should not fetch when projectUID is undefined", async () => {
         const { result } = renderHook(() => useKycStatus(undefined, "community-456"), { wrapper });
 
-        expect(mockFetchData).not.toHaveBeenCalled();
+        expect(mockApi.get).not.toHaveBeenCalled();
         expect(result.current.status).toBeUndefined();
       });
 
       it("should not fetch when communityUID is undefined", async () => {
         const { result } = renderHook(() => useKycStatus("project-123", undefined), { wrapper });
 
-        expect(mockFetchData).not.toHaveBeenCalled();
+        expect(mockApi.get).not.toHaveBeenCalled();
         expect(result.current.status).toBeUndefined();
       });
 
@@ -141,14 +170,14 @@ describe("KYC Hooks", () => {
           { wrapper }
         );
 
-        expect(mockFetchData).not.toHaveBeenCalled();
+        expect(mockApi.get).not.toHaveBeenCalled();
         expect(result.current.status).toBeUndefined();
       });
     });
 
     describe("error handling", () => {
       it("should handle fetch errors", async () => {
-        mockFetchData.mockResolvedValue([null, "API Error"]);
+        mockApi.get.mockRejectedValue(httpError(500, "API Error"));
 
         const { result } = renderHook(() => useKycStatus("project-123", "community-456"), {
           wrapper,
@@ -167,7 +196,7 @@ describe("KYC Hooks", () => {
     describe("successful data fetching", () => {
       it("should fetch KYC config for a community", async () => {
         const mockConfig = createMockKycConfig();
-        mockFetchData.mockResolvedValue([mockConfig, null]);
+        mockApi.get.mockResolvedValue(mockConfig);
 
         const { result } = renderHook(() => useKycConfig("optimism"), {
           wrapper,
@@ -183,7 +212,7 @@ describe("KYC Hooks", () => {
 
       it("should return isEnabled=false when config is disabled", async () => {
         const mockConfig = createMockKycConfig({ isEnabled: false });
-        mockFetchData.mockResolvedValue([mockConfig, null]);
+        mockApi.get.mockResolvedValue(mockConfig);
 
         const { result } = renderHook(() => useKycConfig("optimism"), {
           wrapper,
@@ -197,8 +226,8 @@ describe("KYC Hooks", () => {
       });
 
       it("should return null when config does not exist (404)", async () => {
-        // Mock a successful response with null data (config not found)
-        mockFetchData.mockResolvedValue([null, null]);
+        // Mock a "not found" HttpError — the hook treats this as "not configured yet"
+        mockApi.get.mockRejectedValue(httpError(404, "Config not found"));
 
         const { result } = renderHook(() => useKycConfig("optimism"), {
           wrapper,
@@ -219,7 +248,7 @@ describe("KYC Hooks", () => {
           wrapper,
         });
 
-        expect(mockFetchData).not.toHaveBeenCalled();
+        expect(mockApi.get).not.toHaveBeenCalled();
         expect(result.current.config).toBeUndefined();
       });
     });
@@ -238,7 +267,7 @@ describe("KYC Hooks", () => {
             "project-3": null,
           },
         };
-        mockFetchData.mockResolvedValue([mockResponse, null]);
+        mockApi.post.mockResolvedValue(mockResponse);
 
         const projectUIDs = ["project-1", "project-2", "project-3"];
 
@@ -259,7 +288,7 @@ describe("KYC Hooks", () => {
       it("should return empty map when projectUIDs is empty", async () => {
         const { result } = renderHook(() => useKycBatchStatuses("community-456", []), { wrapper });
 
-        expect(mockFetchData).not.toHaveBeenCalled();
+        expect(mockApi.post).not.toHaveBeenCalled();
         expect(result.current.statuses.size).toBe(0);
       });
     });
@@ -270,7 +299,7 @@ describe("KYC Hooks", () => {
           wrapper,
         });
 
-        expect(mockFetchData).not.toHaveBeenCalled();
+        expect(mockApi.post).not.toHaveBeenCalled();
         expect(result.current.statuses.size).toBe(0);
       });
     });
@@ -282,7 +311,7 @@ describe("KYC Hooks", () => {
             "project-1": createMockKycStatus({ projectUID: "project-1" }),
           },
         };
-        mockFetchData.mockResolvedValue([mockResponse, null]);
+        mockApi.post.mockResolvedValue(mockResponse);
 
         const { result } = renderHook(() => useKycBatchStatuses("community-456", ["project-1"]), {
           wrapper,
@@ -304,7 +333,7 @@ describe("KYC Hooks", () => {
         applicationReference: "REF-001",
         verificationType: "KYC" as const,
       };
-      mockFetchData.mockResolvedValue([mockResponse, null]);
+      mockApi.post.mockResolvedValue(mockResponse);
 
       const { result } = renderHook(() => useKycFormUrl(), { wrapper });
 
@@ -322,7 +351,7 @@ describe("KYC Hooks", () => {
     });
 
     it("should handle errors", async () => {
-      mockFetchData.mockResolvedValue([null, "Failed to get form URL"]);
+      mockApi.post.mockRejectedValue(httpError(500, "Failed to get form URL"));
 
       const { result } = renderHook(() => useKycFormUrl(), { wrapper });
 
@@ -341,7 +370,7 @@ describe("KYC Hooks", () => {
   describe("useSaveKycConfig", () => {
     it("should save config successfully", async () => {
       const mockConfig = createMockKycConfig();
-      mockFetchData.mockResolvedValue([mockConfig, null]);
+      mockApi.put.mockResolvedValue(mockConfig);
 
       const { result } = renderHook(() => useSaveKycConfig("optimism"), {
         wrapper,
@@ -383,7 +412,7 @@ describe("KYC Hooks", () => {
 
     it("should invalidate config cache on success", async () => {
       const mockConfig = createMockKycConfig();
-      mockFetchData.mockResolvedValue([mockConfig, null]);
+      mockApi.put.mockResolvedValue(mockConfig);
 
       const invalidateQueriesSpy = vi.spyOn(queryClient, "invalidateQueries");
 

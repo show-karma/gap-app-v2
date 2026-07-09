@@ -1,6 +1,6 @@
 import { errorManager } from "@/components/Utilities/errorManager";
 import type { ProjectWithGrantsResponse } from "@/types/v2/project";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 
 // V2 API response types - user projects endpoint includes grants
@@ -23,22 +23,17 @@ export const fetchMyProjects = async (
   page: number = 1,
   limit: number = 100
 ): Promise<ProjectWithGrantsResponse[]> => {
-  const [data, error] = await fetchData<UserProjectsV2Response>(
-    INDEXER.V2.USER.PROJECTS(page, limit),
-    "GET",
-    {},
-    {},
-    {},
-    true, // Requires authentication
-    false
-  );
-
-  if (error || !data) {
+  try {
+    // TODO(#1775): add zod schema
+    const data = await api.get<UserProjectsV2Response>(INDEXER.V2.USER.PROJECTS(page, limit));
+    if (!data) {
+      throw new Error("Failed to fetch user projects");
+    }
+    return data.projects || [];
+  } catch (error) {
     errorManager(`Error fetching user projects`, error);
-    throw new Error(error || "Failed to fetch user projects");
+    throw error;
   }
-
-  return data.projects || [];
 };
 
 /**
@@ -49,18 +44,11 @@ export const fetchMyProjectsPaginated = async (
   limit: number = 20
 ): Promise<UserProjectsV2Response | null> => {
   try {
-    const [data, error] = await fetchData<UserProjectsV2Response>(
-      INDEXER.V2.USER.PROJECTS(page, limit),
-      "GET",
-      {},
-      {},
-      {},
-      true,
-      false
-    );
+    // TODO(#1775): add zod schema
+    const data = await api.get<UserProjectsV2Response>(INDEXER.V2.USER.PROJECTS(page, limit));
 
-    if (error || !data) {
-      errorManager(`Error fetching user projects`, error);
+    if (!data) {
+      errorManager(`Error fetching user projects`, null);
       return null;
     }
 

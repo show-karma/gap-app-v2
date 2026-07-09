@@ -2,7 +2,7 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import { PROJECTS_EXPLORER_CONSTANTS } from "@/constants/projects-explorer";
 import type { ExplorerSortByOptions, ExplorerSortOrder } from "@/types/explorer";
 import type { PaginatedProjectsResponse, Project as ProjectResponse } from "@/types/v2/project";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 
 export interface ExplorerProjectsParams {
@@ -49,9 +49,19 @@ export const getExplorerProjects = async (
       ? INDEXER.V2.PROJECTS.SEARCH(search, limit)
       : INDEXER.V2.PROJECTS.LIST(limit);
 
-  const [data, error] = await fetchData<ProjectResponse[]>(endpoint);
-
-  if (error || !data) {
+  try {
+    // TODO(#1775): add zod schema
+    const data = await api.get<ProjectResponse[]>(endpoint);
+    if (!data) {
+      errorManager("Failed to fetch explorer projects", undefined, {
+        context: "projects-explorer.service",
+        search,
+        limit,
+      });
+      return [];
+    }
+    return filterTestProjects(data);
+  } catch (error) {
     errorManager("Failed to fetch explorer projects", error, {
       context: "projects-explorer.service",
       search,
@@ -59,8 +69,6 @@ export const getExplorerProjects = async (
     });
     return [];
   }
-
-  return filterTestProjects(data);
 };
 
 /**
@@ -98,9 +106,14 @@ export const getExplorerProjectsPaginated = async (
     hasPayoutAddress,
   });
 
-  const [data, error] = await fetchData<PaginatedProjectsResponse>(endpoint);
-
-  if (error || !data) {
+  try {
+    // TODO(#1775): add zod schema
+    const data = await api.get<PaginatedProjectsResponse>(endpoint);
+    if (!data) {
+      throw new Error("Failed to fetch explorer projects (paginated)");
+    }
+    return data;
+  } catch (error) {
     const errorMessage = "Failed to fetch explorer projects (paginated)";
     errorManager(errorMessage, error, {
       context: "projects-explorer.service",
@@ -110,9 +123,7 @@ export const getExplorerProjectsPaginated = async (
       sortBy,
       sortOrder,
     });
-    // Throw error so React Query can properly handle it and set isError state
-    throw new Error(error || errorMessage);
+    // Rethrow (already an Error) so React Query can properly handle it and set isError state
+    throw error instanceof Error ? error : new Error(errorMessage);
   }
-
-  return data;
 };

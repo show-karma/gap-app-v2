@@ -14,6 +14,23 @@ vi.mock("@/utilities/fetchData", () => ({
   default: vi.fn(),
 }));
 
+// programReviewersService, milestoneReviewersService, and
+// fetchApplicationByProjectUID were migrated off fetchData onto the unified
+// api client in #1775 Phase 3 — the regression these tests guard against
+// (a non-string error crashing `.includes()`) now lives in the api-client
+// error path (httpErrorMessage), not the fetchData adapter.
+vi.mock("@/utilities/api/client", () => ({
+  api: {
+    get: vi.fn(),
+    post: vi.fn(),
+    put: vi.fn(),
+    patch: vi.fn(),
+    delete: vi.fn(),
+    request: vi.fn(),
+    getPaginated: vi.fn(),
+  },
+}));
+
 vi.mock("@/utilities/indexer", () => ({
   INDEXER: {
     V2: {
@@ -50,9 +67,10 @@ vi.mock("axios", () => ({
 import { fetchApplicationByProjectUID } from "@/services/funding-applications";
 import { milestoneReviewersService } from "@/services/milestone-reviewers.service";
 import { programReviewersService } from "@/services/program-reviewers.service";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
+import { HttpError } from "@/utilities/api/errors";
 
-const mockFetchData = fetchData as ReturnType<typeof vi.fn>;
+const mockApiGet = api.get as ReturnType<typeof vi.fn>;
 
 describe("Regression: error.includes() crash on Error objects", () => {
   beforeEach(() => {
@@ -60,9 +78,9 @@ describe("Regression: error.includes() crash on Error objects", () => {
   });
 
   describe("programReviewersService.getReviewers", () => {
-    it("should not crash when fetchData returns an Error object (network error)", async () => {
+    it("should not crash when api.get rejects with a plain Error (network error)", async () => {
       const networkError = new Error("Network Error");
-      mockFetchData.mockResolvedValue([null, networkError, null, 500]);
+      mockApiGet.mockRejectedValue(networkError);
 
       // Before the fix, this would throw TypeError: error.includes is not a function
       // After the fix, it should throw a proper Error with the message
@@ -70,15 +88,26 @@ describe("Regression: error.includes() crash on Error objects", () => {
     });
 
     it("should still handle string errors correctly", async () => {
-      mockFetchData.mockResolvedValue([null, "Program Reviewer Not Found", null, 404]);
+      mockApiGet.mockRejectedValue(
+        new HttpError(404, {
+          endpoint: "/v2/funding-program-configs/p1/reviewers",
+          method: "GET",
+          body: { message: "Program Reviewer Not Found" },
+        })
+      );
 
       const result = await programReviewersService.getReviewers("p1");
       expect(result).toEqual([]);
     });
 
     it("should handle Error objects with 'No reviewers found' message", async () => {
-      const error = new Error("No reviewers found");
-      mockFetchData.mockResolvedValue([null, error, null, 404]);
+      mockApiGet.mockRejectedValue(
+        new HttpError(404, {
+          endpoint: "/v2/funding-program-configs/p1/reviewers",
+          method: "GET",
+          body: { message: "No reviewers found" },
+        })
+      );
 
       const result = await programReviewersService.getReviewers("p1");
       expect(result).toEqual([]);
@@ -86,16 +115,21 @@ describe("Regression: error.includes() crash on Error objects", () => {
   });
 
   describe("milestoneReviewersService.getReviewers", () => {
-    it("should not crash when fetchData returns an Error object (network error)", async () => {
+    it("should not crash when api.get rejects with a plain Error (network error)", async () => {
       const networkError = new Error("Network Error");
-      mockFetchData.mockResolvedValue([null, networkError, null, 500]);
+      mockApiGet.mockRejectedValue(networkError);
 
       await expect(milestoneReviewersService.getReviewers("p1")).rejects.toThrow("Network Error");
     });
 
     it("should handle Error objects with known message", async () => {
-      const error = new Error("Milestone Reviewer Not Found");
-      mockFetchData.mockResolvedValue([null, error, null, 404]);
+      mockApiGet.mockRejectedValue(
+        new HttpError(404, {
+          endpoint: "/v2/programs/p1/milestone-reviewers",
+          method: "GET",
+          body: { message: "Milestone Reviewer Not Found" },
+        })
+      );
 
       const result = await milestoneReviewersService.getReviewers("p1");
       expect(result).toEqual([]);
@@ -103,16 +137,21 @@ describe("Regression: error.includes() crash on Error objects", () => {
   });
 
   describe("fetchApplicationByProjectUID", () => {
-    it("should not crash when fetchData returns an Error object (network error)", async () => {
+    it("should not crash when api.get rejects with a plain Error (network error)", async () => {
       const networkError = new Error("Network Error");
-      mockFetchData.mockResolvedValue([null, networkError, null, 500]);
+      mockApiGet.mockRejectedValue(networkError);
 
       await expect(fetchApplicationByProjectUID("uid-1")).rejects.toThrow("Network Error");
     });
 
-    it("should handle Error objects with 404 message", async () => {
-      const error = new Error("404 not found");
-      mockFetchData.mockResolvedValue([null, error, null, 404]);
+    it("should return null on a 404 (no application found)", async () => {
+      mockApiGet.mockRejectedValue(
+        new HttpError(404, {
+          endpoint: "/v2/applications/by-project/uid-1",
+          method: "GET",
+          body: { message: "404 not found" },
+        })
+      );
 
       const result = await fetchApplicationByProjectUID("uid-1");
       expect(result).toBeNull();

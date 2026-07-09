@@ -8,7 +8,7 @@ import { useGrant } from "@/components/Pages/GrantMilestonesAndUpdates/GrantCont
 import { TabContent, Tabs, TabTrigger } from "@/components/Utilities/Tabs";
 import { useENS } from "@/store/ens";
 import { useProjectStore } from "@/store/project";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { formatDate } from "@/utilities/formatDate";
 import { INDEXER } from "@/utilities/indexer";
 import type { VerificationRecord } from "./VerifiedBadge";
@@ -74,13 +74,20 @@ export const VerificationsDialog: FC<VerificationsDialogProps> = ({
     const fetchCommunityAdmins = async () => {
       if (!communityUid) return;
 
-      const [data, error] = await fetchData<{
-        id: string;
-        admins: Array<{ user: { id: string } }>;
-      }>(INDEXER.COMMUNITY.ADMINS(communityUid), "GET", {}, {}, {}, false);
+      try {
+        // TODO(#1775): add zod schema
+        const data = await api.get<{
+          id: string;
+          admins: Array<{ user: { id: string } }>;
+        }>(INDEXER.COMMUNITY.ADMINS(communityUid), { isAuthorized: false });
 
-      if (!error && data?.admins) {
-        setCommunityAdmins(data.admins.map((admin) => admin.user.id.toLowerCase()));
+        if (data?.admins) {
+          setCommunityAdmins(data.admins.map((admin) => admin.user.id.toLowerCase()));
+        }
+      } catch {
+        // Community admins list is best-effort here — the verifications
+        // dialog still renders (falls back to a single "members" tab)
+        // without the admin/member split.
       }
     };
 

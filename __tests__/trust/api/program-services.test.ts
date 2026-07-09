@@ -5,13 +5,10 @@ const { mockApiPost, mockApiDelete } = vi.hoisted(() => ({
   mockApiDelete: vi.fn(),
 }));
 
-vi.mock("@/utilities/fetchData", () => ({
-  default: vi.fn(),
-}));
-
-// ProgramRegistryService itself is migrated off fetchData onto the typed
-// `api` client (issue #1775) — mocked separately from the legacy
-// createAuthenticatedApiClient used by programReviewersService below.
+// ProgramRegistryService AND programReviewersService.getReviewers are both
+// migrated off fetchData onto the typed `api` client (issue #1775) — mocked
+// separately from the legacy createAuthenticatedApiClient still used by
+// programReviewersService's mutation methods below.
 vi.mock("@/utilities/api/client", () => ({
   api: {
     get: vi.fn(),
@@ -75,11 +72,11 @@ vi.mock("axios", () => ({
 import { programReviewersService } from "@/services/program-reviewers.service";
 import { ProgramRegistryService } from "@/src/features/program-registry/services/program-registry.service";
 import { api } from "@/utilities/api/client";
-import fetchData from "@/utilities/fetchData";
+import { HttpError, NetworkError } from "@/utilities/api/errors";
 
-const mockFetchData = fetchData as ReturnType<typeof vi.fn>;
 const mockRegistryPost = api.post as ReturnType<typeof vi.fn>;
 const mockRegistryPut = api.put as ReturnType<typeof vi.fn>;
+const mockApiGet = api.get as ReturnType<typeof vi.fn>;
 
 describe("ProgramRegistryService trust tests", () => {
   beforeEach(() => {
@@ -227,27 +224,22 @@ describe("programReviewersService trust tests", () => {
 
   describe("getReviewers", () => {
     it("maps API response to ProgramReviewer format", async () => {
-      mockFetchData.mockResolvedValue([
-        {
-          reviewers: [
-            {
-              publicAddress: "0x123",
-              programId: "p1",
-              chainID: 1,
-              userProfile: {
-                name: "Alice",
-                email: "alice@example.com",
-                telegram: "@alice",
-              },
-              assignedAt: "2024-01-01",
-              assignedBy: "0xadmin",
+      mockApiGet.mockResolvedValue({
+        reviewers: [
+          {
+            publicAddress: "0x123",
+            programId: "p1",
+            chainID: 1,
+            userProfile: {
+              name: "Alice",
+              email: "alice@example.com",
+              telegram: "@alice",
             },
-          ],
-        },
-        null,
-        null,
-        200,
-      ]);
+            assignedAt: "2024-01-01",
+            assignedBy: "0xadmin",
+          },
+        ],
+      });
 
       const result = await programReviewersService.getReviewers("p1");
 
@@ -265,7 +257,13 @@ describe("programReviewersService trust tests", () => {
     });
 
     it("returns empty array when 'No reviewers found' error", async () => {
-      mockFetchData.mockResolvedValue([null, "No reviewers found", null, 404]);
+      mockApiGet.mockRejectedValue(
+        new HttpError(404, {
+          endpoint: "/v2/funding-program-configs/p1/reviewers",
+          method: "GET",
+          body: { message: "No reviewers found" },
+        })
+      );
 
       const result = await programReviewersService.getReviewers("p1");
 
@@ -273,7 +271,13 @@ describe("programReviewersService trust tests", () => {
     });
 
     it("returns empty array when 'Program Reviewer Not Found' error", async () => {
-      mockFetchData.mockResolvedValue([null, "Program Reviewer Not Found", null, 404]);
+      mockApiGet.mockRejectedValue(
+        new HttpError(404, {
+          endpoint: "/v2/funding-program-configs/p1/reviewers",
+          method: "GET",
+          body: { message: "Program Reviewer Not Found" },
+        })
+      );
 
       const result = await programReviewersService.getReviewers("p1");
 
@@ -281,7 +285,13 @@ describe("programReviewersService trust tests", () => {
     });
 
     it("throws on other errors", async () => {
-      mockFetchData.mockResolvedValue([null, "Internal server error", null, 500]);
+      mockApiGet.mockRejectedValue(
+        new HttpError(500, {
+          endpoint: "/v2/funding-program-configs/p1/reviewers",
+          method: "GET",
+          body: { message: "Internal server error" },
+        })
+      );
 
       await expect(programReviewersService.getReviewers("p1")).rejects.toThrow(
         "Internal server error"
@@ -399,13 +409,17 @@ describe("programReviewersService trust tests", () => {
 
   // --- FIXED: error.includes() crash ---
 
-  describe("error handling with Error objects (fixed)", () => {
-    it("handles Error objects gracefully via String() coercion", async () => {
-      // fetchData returns Error objects for network errors (no response).
-      // Previously this crashed because .includes() was called on Error objects.
-      // Now uses String(error) to safely coerce before checking.
-      const networkError = new Error("Network Error");
-      mockFetchData.mockResolvedValue([null, networkError, null, 500]);
+  describe("error handling with non-HTTP errors (fixed)", () => {
+    it("handles network errors (no HTTP response) gracefully via httpErrorMessage()", async () => {
+      // A connection failure (no HTTP response) is classified as a NetworkError,
+      // not an HttpError. Previously raw Error objects reaching `.includes()`
+      // crashed; httpErrorMessage() now safely coerces to a string first.
+      const networkError = new NetworkError({
+        endpoint: "/v2/funding-program-configs/p1/reviewers",
+        method: "GET",
+        message: "Network Error",
+      });
+      mockApiGet.mockRejectedValue(networkError);
 
       // Should throw a regular Error with the stringified message, not TypeError
       await expect(programReviewersService.getReviewers("p1")).rejects.toThrow("Network Error");

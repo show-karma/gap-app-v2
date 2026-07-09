@@ -17,16 +17,27 @@ vi.mock("@/components/Utilities/errorManager", () => ({
   errorManager: vi.fn(),
 }));
 
-// Mock fetchData utility - the service now uses fetchData instead of api-client directly
-vi.mock("@/utilities/fetchData");
+// Mock the unified api client - the service now uses api.get instead of fetchData
+vi.mock("@/utilities/api/client", () => ({
+  api: {
+    get: vi.fn(),
+    post: vi.fn(),
+    put: vi.fn(),
+    patch: vi.fn(),
+    delete: vi.fn(),
+    request: vi.fn(),
+    getPaginated: vi.fn(),
+  },
+}));
 
 import { errorManager } from "@/components/Utilities/errorManager";
 // Import the service AFTER all mocks are set up
 import { getProjectGrants } from "@/services/project-grants.service";
 // Import the mocked module to get access to the mock function
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
+import { HttpError } from "@/utilities/api/errors";
 
-const mockFetchData = fetchData as vi.MockedFunction<typeof fetchData>;
+const mockApiGet = api.get as vi.Mock;
 const mockErrorManager = errorManager as vi.MockedFunction<typeof errorManager>;
 
 describe("project-grants.service", () => {
@@ -59,17 +70,17 @@ describe("project-grants.service", () => {
     ];
 
     it("should return grants array when API returns array", async () => {
-      mockFetchData.mockResolvedValueOnce([mockGrants, null, null, 200]);
+      mockApiGet.mockResolvedValueOnce(mockGrants);
 
       const result = await getProjectGrants("test-project");
 
       expect(result).toEqual(mockGrants);
-      expect(mockFetchData.mock.calls[0][0]).toEqual(expect.stringContaining("test-project"));
+      expect(mockApiGet.mock.calls[0][0]).toEqual(expect.stringContaining("test-project"));
     });
 
     it("should return array with single grant when API returns single object", async () => {
       const singleGrant = mockGrants[0];
-      mockFetchData.mockResolvedValueOnce([singleGrant, null, null, 200]);
+      mockApiGet.mockResolvedValueOnce(singleGrant);
 
       const result = await getProjectGrants("test-project");
 
@@ -77,7 +88,13 @@ describe("project-grants.service", () => {
     });
 
     it("should return empty array when API returns null", async () => {
-      mockFetchData.mockResolvedValueOnce([null, "Not found", null, 404]);
+      mockApiGet.mockRejectedValueOnce(
+        new HttpError(404, {
+          endpoint: "/v2/projects/test-project/grants",
+          method: "GET",
+          body: { message: "Not found" },
+        })
+      );
 
       const result = await getProjectGrants("test-project");
 
@@ -86,7 +103,13 @@ describe("project-grants.service", () => {
     });
 
     it("should return empty array on error", async () => {
-      mockFetchData.mockResolvedValueOnce([null, "Not found", null, 404]);
+      mockApiGet.mockRejectedValueOnce(
+        new HttpError(404, {
+          endpoint: "/v2/projects/nonexistent-project/grants",
+          method: "GET",
+          body: { message: "Not found" },
+        })
+      );
 
       const result = await getProjectGrants("nonexistent-project");
 
@@ -95,14 +118,20 @@ describe("project-grants.service", () => {
     });
 
     it("should return empty array on API error", async () => {
-      mockFetchData.mockResolvedValueOnce([null, "Server error", null, 500]);
+      mockApiGet.mockRejectedValueOnce(
+        new HttpError(500, {
+          endpoint: "/v2/projects/test-project/grants",
+          method: "GET",
+          body: { message: "Server error" },
+        })
+      );
 
       const result = await getProjectGrants("test-project");
 
       expect(result).toEqual([]);
       expect(mockErrorManager).toHaveBeenCalledWith(
-        "Project Grants API Error: Server error",
-        "Server error",
+        expect.stringContaining("Project Grants API Error:"),
+        expect.any(HttpError),
         {
           context: "project-grants.service",
         }
@@ -110,20 +139,20 @@ describe("project-grants.service", () => {
     });
 
     it("should call correct endpoint for project slug", async () => {
-      mockFetchData.mockResolvedValueOnce([mockGrants, null, null, 200]);
+      mockApiGet.mockResolvedValueOnce(mockGrants);
 
       await getProjectGrants("my-project-slug");
 
-      expect(mockFetchData.mock.calls[0][0]).toEqual(expect.stringContaining("my-project-slug"));
-      expect(mockFetchData.mock.calls[0][0]).toEqual(expect.stringContaining("/grants"));
+      expect(mockApiGet.mock.calls[0][0]).toEqual(expect.stringContaining("my-project-slug"));
+      expect(mockApiGet.mock.calls[0][0]).toEqual(expect.stringContaining("/grants"));
     });
 
     it("should call correct endpoint for project UID", async () => {
-      mockFetchData.mockResolvedValueOnce([mockGrants, null, null, 200]);
+      mockApiGet.mockResolvedValueOnce(mockGrants);
 
       await getProjectGrants("0x1234567890");
 
-      expect(mockFetchData.mock.calls[0][0]).toEqual(expect.stringContaining("0x1234567890"));
+      expect(mockApiGet.mock.calls[0][0]).toEqual(expect.stringContaining("0x1234567890"));
     });
   });
 });

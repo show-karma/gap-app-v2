@@ -4,7 +4,7 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import { useAuth } from "@/hooks/useAuth";
 import { useCommunitiesStore } from "@/store/communities";
 import type { Community } from "@/types/v2/community";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 
 interface GetAdminCommunitiesV2Response {
@@ -12,18 +12,12 @@ interface GetAdminCommunitiesV2Response {
 }
 
 const fetchAdminCommunities = async (): Promise<Community[]> => {
-  const [data, error] = await fetchData<GetAdminCommunitiesV2Response>(
-    INDEXER.V2.USER.ADMIN_COMMUNITIES(),
-    "GET",
-    {},
-    {},
-    {},
-    true, // Requires authentication
-    false
-  );
+  // Requires authentication (default isAuthorized: true)
+  // TODO(#1775): add zod schema
+  const data = await api.get<GetAdminCommunitiesV2Response>(INDEXER.V2.USER.ADMIN_COMMUNITIES());
 
-  if (error || !data) {
-    throw new Error(error || "Failed to fetch admin communities");
+  if (!data) {
+    throw new Error("Failed to fetch admin communities");
   }
 
   // Map imageURL to logoUrl for consistency

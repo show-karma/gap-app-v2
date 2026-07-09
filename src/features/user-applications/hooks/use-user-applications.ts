@@ -1,8 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import type { Application } from "@/types/whitelabel-entities";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { useUserApplicationsStore } from "../lib/store";
 import type { UserApplicationsResponse, UseUserApplicationsReturn } from "../types";
 
@@ -50,12 +49,10 @@ export function useUserApplications(communitySlug?: string): UseUserApplications
 
       const communityParam = communitySlug ? `&communitySlug=${communitySlug}` : "";
 
-      const [res, err] = await fetchData<UserApplicationsResponse>(
-        `/v2/funding-applications/user/my-applications?page=${pagination.page}&limit=${pagination.limit}${communityParam}${statusParam}${searchParam}${programParam}`,
-        "GET"
+      // TODO(#1775): add zod schema
+      return api.get<UserApplicationsResponse>(
+        `/v2/funding-applications/user/my-applications?page=${pagination.page}&limit=${pagination.limit}${communityParam}${statusParam}${searchParam}${programParam}`
       );
-      if (err) throw new Error(err);
-      return res as UserApplicationsResponse;
     },
     staleTime: 1000 * 60 * 2,
     enabled: !!authenticated,
@@ -106,14 +103,11 @@ export function useUserApplications(communitySlug?: string): UseUserApplications
 
       queryClient.prefetchQuery({
         queryKey: nextPageKey,
-        queryFn: async () => {
-          const [res, err] = await fetchData<UserApplicationsResponse>(
-            `/v2/funding-applications/user/my-applications?page=${pagination.page + 1}&limit=${pagination.limit}${communityParam}${statusParam}${searchParam}${programParam}`,
-            "GET"
-          );
-          if (err) throw new Error(err);
-          return res;
-        },
+        queryFn: () =>
+          // TODO(#1775): add zod schema
+          api.get<UserApplicationsResponse>(
+            `/v2/funding-applications/user/my-applications?page=${pagination.page + 1}&limit=${pagination.limit}${communityParam}${statusParam}${searchParam}${programParam}`
+          ),
         staleTime: 1000 * 60 * 2,
       });
     }

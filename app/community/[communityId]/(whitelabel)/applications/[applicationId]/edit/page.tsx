@@ -1,7 +1,8 @@
 import { Lock } from "lucide-react";
 import { Link } from "@/src/components/navigation/Link";
 import type { Application } from "@/types/whitelabel-entities";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
+import { orElse } from "@/utilities/api/or-else";
 import { PAGES } from "@/utilities/pages";
 import { ApplicationEditClient } from "./ApplicationEditClient";
 
@@ -12,9 +13,10 @@ export default async function ApplicationEditPage({
 }) {
   const { communityId, applicationId } = await params;
 
-  const [application] = await fetchData<Application>(
-    `/v2/funding-applications/${applicationId}`,
-    "GET"
+  // TODO(#1775): add zod schema
+  const application = await orElse(
+    api.get<Application>(`/v2/funding-applications/${applicationId}`),
+    null
   );
 
   if (!application) {
