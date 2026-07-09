@@ -22,6 +22,15 @@ function formatEditor(name: string | null | undefined, address: string): string 
   return `${address.slice(0, 6)}…${address.slice(-4)}`;
 }
 
+// Deterministic date display from the ISO timestamp — no locale/timezone
+// formatting APIs, so it is hydration-safe and renders identically everywhere.
+// "2026-07-09T17:30:31.074Z" -> "2026-07-09 17:30 UTC"
+function formatEditedAt(iso: string): string {
+  const [date, time = ""] = iso.split("T");
+  const hhmm = time.slice(0, 5);
+  return hhmm ? `${date} ${hhmm} UTC` : date;
+}
+
 /**
  * DEV-515 — reviewer/admin-only private note on a funding application.
  * The permission gate is the ONE allowed `return null` (not a data state).
@@ -100,6 +109,13 @@ function NoteEditor({
     await onSave(draft);
   };
 
+  const metaLine = note
+    ? `Last edited by ${formatEditor(
+        note.updatedByName,
+        note.updatedByAddress
+      )} · ${formatEditedAt(note.updatedAt)}`
+    : "No note yet.";
+
   return (
     <section className="rounded-2xl border border-border bg-card shadow-sm">
       <div className="flex items-center gap-2 border-b border-border px-5 py-4">
@@ -122,14 +138,7 @@ function NoteEditor({
           disabled={isSaving}
         />
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <p className="text-[12.5px] text-muted-foreground">
-            {note
-              ? `Last edited by ${formatEditor(
-                  note.updatedByName,
-                  note.updatedByAddress
-                )} · ${new Date(note.updatedAt).toLocaleString()}`
-              : "No note yet."}
-          </p>
+          <p className="text-[12.5px] text-muted-foreground">{metaLine}</p>
           <Button size="sm" onClick={handleSave} disabled={!isDirty || isSaving}>
             {isSaving ? <Spinner className="size-4" /> : <Save className="w-4 h-4" />}
             Save
