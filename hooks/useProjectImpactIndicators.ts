@@ -13,7 +13,7 @@ const MetricDataSchema = z
     breakdown: z.record(z.string(), z.number()).optional(),
   })
   .passthrough();
-export type MetricData = z.infer<typeof MetricDataSchema>;
+type MetricData = z.infer<typeof MetricDataSchema>;
 
 const ProjectImpactResponseSchema = z
   .object({
@@ -36,7 +36,7 @@ const ProjectImpactResponseSchema = z
       .passthrough(),
   })
   .passthrough();
-export type ProjectImpactResponse = z.infer<typeof ProjectImpactResponseSchema>;
+type ProjectImpactResponse = z.infer<typeof ProjectImpactResponseSchema>;
 
 function mapRangeToPeriod(range: number): "30d" | "90d" | "180d" | "1y" {
   switch (range) {

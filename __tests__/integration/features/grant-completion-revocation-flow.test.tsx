@@ -119,17 +119,13 @@ vi.mock("@/utilities/eas-wagmi-utils", () => ({
   walletClientToSigner: vi.fn(),
 }));
 
-vi.mock("@/utilities/api/client", () => ({
-  api: {
-    get: vi.fn().mockResolvedValue({}),
-    post: vi.fn().mockResolvedValue({}),
-    put: vi.fn().mockResolvedValue({}),
-    patch: vi.fn().mockResolvedValue({}),
-    delete: vi.fn().mockResolvedValue({}),
-    request: vi.fn().mockResolvedValue({ data: {}, status: 200, pageInfo: null }),
-    getPaginated: vi.fn().mockResolvedValue({ data: {}, pageInfo: null }),
-  },
-}));
+vi.mock("@/utilities/api/client", () => {
+  const ok = () => vi.fn().mockResolvedValue({});
+  const api = Object.fromEntries(["get", "post", "put", "patch", "delete"].map((m) => [m, ok()]));
+  api.request = vi.fn().mockResolvedValue({ data: {}, status: 200, pageInfo: null });
+  api.getPaginated = vi.fn().mockResolvedValue({ data: {}, pageInfo: null });
+  return { api };
+});
 
 vi.mock("@/hooks/useOffChainRevoke", () => ({
   useOffChainRevoke: vi.fn(() => ({
@@ -171,12 +167,9 @@ vi.mock("@/store/communityAdmin", () => ({
   useCommunityAdminStore: vi.fn(),
 }));
 
-// The button now resolves authorization through the tri-state
-// `useProjectAuthorization` hook (which internally pulls `useProjectPermissions`
-// → `useProjectInstance` → `useQuery`). These integration tests render the
-// button without a QueryClientProvider and drive authorization through the
-// zustand stores below, so mock the hook to derive `isAuthorized` from those
-// same store signals (matching the pre-tri-state behavior the tests assert).
+// The button resolves authorization through the tri-state `useProjectAuthorization` hook; these
+// integration tests render without a QueryClientProvider, so mock it to derive `isAuthorized`
+// from the zustand stores below (matching the pre-tri-state behavior the tests assert).
 vi.mock("@/hooks/useProjectAuthorization", () => ({
   useProjectAuthorization: vi.fn(() => ({ isAuthorized: false, isLoading: false })),
 }));
