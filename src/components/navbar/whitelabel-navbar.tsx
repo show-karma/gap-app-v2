@@ -14,6 +14,7 @@ import "@show-karma/karma-gap-sdk";
 
 import { ChevronDown, Menu, X } from "lucide-react";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 import { Fragment, useMemo, useState } from "react";
 import {
   DropdownMenu,
@@ -30,6 +31,7 @@ import { Link } from "@/src/components/navigation/Link";
 import type { NavDropdown, NavItem, TenantNavigation } from "@/src/infrastructure/types/tenant";
 import { useTenantSafe } from "@/store/tenant";
 import { karmaLinks } from "@/utilities/karma/karma";
+import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 import { NavbarAuthButtons } from "./navbar-auth-buttons";
 import { NavbarPermissionsProvider } from "./navbar-permissions-context";
@@ -101,6 +103,7 @@ function buildSocialLinks(
 }
 
 export function WhitelabelNavbar() {
+  const pathname = usePathname();
   const tenant = useTenantSafe();
   const { authenticated } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -111,6 +114,10 @@ export function WhitelabelNavbar() {
     () => buildSocialLinks(tenantSocialLinks, tenantSocialLinkLabels),
     [tenantSocialLinks, tenantSocialLinkLabels]
   );
+
+  if (pathname.startsWith(PAGES.ADMIN_STUDIO)) {
+    return null;
+  }
 
   if (!tenant) {
     return (
