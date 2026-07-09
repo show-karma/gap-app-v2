@@ -1,5 +1,5 @@
 import { errorManager } from "@/components/Utilities/errorManager";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 
 export interface ProjectImpactVerification {
@@ -45,19 +45,15 @@ export const getProjectImpacts = async (
   options: GetProjectImpactsOptions = {}
 ): Promise<ProjectImpact[]> => {
   const { isAuthorized = true, signal } = options;
-  const [data, error] = await fetchData<ProjectImpact[]>(
-    INDEXER.V2.PROJECTS.IMPACTS(projectIdOrSlug),
-    "GET",
-    {},
-    {},
-    {},
-    isAuthorized,
-    false,
-    undefined,
-    signal
-  );
 
-  if (error) {
+  let data: ProjectImpact[] | null;
+  try {
+    // TODO(#1775): add zod schema
+    data = await api.get<ProjectImpact[]>(INDEXER.V2.PROJECTS.IMPACTS(projectIdOrSlug), {
+      isAuthorized,
+      signal,
+    });
+  } catch (error) {
     errorManager(`Project Impacts API Error: ${error}`, error, {
       context: "project-impacts.service",
     });

@@ -1,6 +1,7 @@
 /**
- * SSR-safe fetchData wrapper for use in Next.js Server Components and
- * route handlers. Unlike client-side fetchData, this wrapper:
+ * SSR-safe fetch wrapper (backed by the typed `api` client) for use in
+ * Next.js Server Components and route handlers. Unlike client-side calls
+ * through `api` directly, this wrapper:
  *
  * - Swallows errors and returns null (appropriate for SSR — missing data
  *   should render a graceful shell, not crash the server)
@@ -14,8 +15,8 @@
  * ```
  */
 
+import { api } from "@/utilities/api/client";
 import { envVars } from "@/utilities/enviromentVars";
-import fetchData from "@/utilities/fetchData";
 
 const BASE_URL = envVars.NEXT_PUBLIC_GAP_INDEXER_URL;
 
@@ -33,17 +34,17 @@ export async function serverFetch<T>(
     headers.Authorization = `Bearer ${authToken}`;
   }
 
-  const [data, error] = await fetchData<T>(
-    endpoint,
-    method,
-    body,
-    {},
-    headers,
-    !!authToken,
-    false,
-    BASE_URL
-  );
-
-  if (error || data === null) return null;
-  return data;
+  try {
+    // TODO(#1775): add zod schema
+    const { data } = await api.request<T>(method, endpoint, body, {
+      isAuthorized: !!authToken,
+      baseURL: BASE_URL,
+      ...(Object.keys(headers).length ? { headers } : {}),
+    });
+    return data;
+  } catch {
+    // SUPPRESSED: SSR degrade-to-null is intentional — a missing/failed
+    // fetch should render a graceful fallback shell, never crash the server.
+    return null;
+  }
 }

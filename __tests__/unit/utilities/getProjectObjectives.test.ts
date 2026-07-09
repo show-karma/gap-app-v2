@@ -3,14 +3,15 @@
  * @description Tests for fetching project milestones using V2 endpoint
  */
 
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { getProjectObjectives } from "@/utilities/gapIndexerApi/getProjectObjectives";
 import { INDEXER } from "@/utilities/indexer";
 
-// Mock fetchData utility
-vi.mock("@/utilities/fetchData", () => ({
-  __esModule: true,
-  default: vi.fn(),
+// Mock the api client
+vi.mock("@/utilities/api/client", () => ({
+  api: {
+    get: vi.fn(),
+  },
 }));
 
 describe("getProjectObjectives (V2)", () => {
@@ -55,23 +56,18 @@ describe("getProjectObjectives (V2)", () => {
     const projectId = "project-123";
 
     it("should fetch project milestones successfully", async () => {
-      (fetchData as vi.Mock).mockResolvedValue([mockV2Response, null]);
+      (api.get as vi.Mock).mockResolvedValue(mockV2Response);
 
       const result = await getProjectObjectives(projectId);
 
-      expect(fetchData).toHaveBeenCalledWith(
-        INDEXER.V2.PROJECTS.MILESTONES(projectId),
-        "GET",
-        {},
-        {},
-        {},
-        false
-      );
+      expect(api.get).toHaveBeenCalledWith(INDEXER.V2.PROJECTS.MILESTONES(projectId), {
+        isAuthorized: false,
+      });
       expect(result).toHaveLength(2);
     });
 
     it("should map V2 response to SDK format correctly", async () => {
-      (fetchData as vi.Mock).mockResolvedValue([mockV2Response, null]);
+      (api.get as vi.Mock).mockResolvedValue(mockV2Response);
 
       const result = await getProjectObjectives(projectId);
 
@@ -93,8 +89,8 @@ describe("getProjectObjectives (V2)", () => {
       expect(result[1].completed?.data?.proofOfWork).toBe("https://proof.example.com");
     });
 
-    it("should return empty array when fetch fails", async () => {
-      (fetchData as vi.Mock).mockResolvedValue([null, "Not found"]);
+    it("should return empty array when fetch resolves without data", async () => {
+      (api.get as vi.Mock).mockResolvedValue(null);
 
       const result = await getProjectObjectives(projectId);
 
@@ -102,7 +98,7 @@ describe("getProjectObjectives (V2)", () => {
     });
 
     it("should return empty array when no milestones exist", async () => {
-      (fetchData as vi.Mock).mockResolvedValue([{ milestones: [] }, null]);
+      (api.get as vi.Mock).mockResolvedValue({ milestones: [] });
 
       const result = await getProjectObjectives(projectId);
 
@@ -123,7 +119,7 @@ describe("getProjectObjectives (V2)", () => {
         },
       ];
 
-      (fetchData as vi.Mock).mockResolvedValue([{ milestones: milestonesWithoutDueDate }, null]);
+      (api.get as vi.Mock).mockResolvedValue({ milestones: milestonesWithoutDueDate });
 
       const result = await getProjectObjectives(projectId);
 
@@ -132,22 +128,17 @@ describe("getProjectObjectives (V2)", () => {
 
     it("should work with project slug instead of UID", async () => {
       const projectSlug = "my-project-slug";
-      (fetchData as vi.Mock).mockResolvedValue([mockV2Response, null]);
+      (api.get as vi.Mock).mockResolvedValue(mockV2Response);
 
       await getProjectObjectives(projectSlug);
 
-      expect(fetchData).toHaveBeenCalledWith(
-        INDEXER.V2.PROJECTS.MILESTONES(projectSlug),
-        "GET",
-        {},
-        {},
-        {},
-        false
-      );
+      expect(api.get).toHaveBeenCalledWith(INDEXER.V2.PROJECTS.MILESTONES(projectSlug), {
+        isAuthorized: false,
+      });
     });
 
     it("should handle fetch throwing an error", async () => {
-      (fetchData as vi.Mock).mockRejectedValue(new Error("Network error"));
+      (api.get as vi.Mock).mockRejectedValue(new Error("Network error"));
 
       const result = await getProjectObjectives(projectId);
 

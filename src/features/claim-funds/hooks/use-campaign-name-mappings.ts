@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 
 interface HedgeyCampaignMapping {
   id: string;
@@ -16,10 +16,10 @@ export function useCampaignNameMappings(communityId: string, enabled = true) {
   return useQuery({
     queryKey: ["claim-campaign-name-mappings", communityId],
     queryFn: async () => {
-      const [data, error] = await fetchData<HedgeyCampaignMapping[]>(
+      // TODO(#1775): add zod schema
+      const data = await api.get<HedgeyCampaignMapping[]>(
         `/v2/hedgey-campaign-mappings?tenantId=${encodeURIComponent(communityId)}`
       );
-      if (error) throw new Error(error);
       return data ?? [];
     },
     enabled: enabled && !!communityId,

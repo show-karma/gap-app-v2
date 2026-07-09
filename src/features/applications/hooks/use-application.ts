@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { applicationKeys } from "@/src/lib/query-keys";
 import type { Application } from "@/types/whitelabel-entities";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 import type { UseApplicationReturn } from "../types";
 
@@ -34,10 +34,11 @@ export function useApplication(
       if (!applicationId) {
         throw new Error("Application ID is required");
       }
-      const [response, fetchError] = await fetchData<Application>(
+      // TODO(#1775): add zod schema
+      const response = await api.get<Application>(
         INDEXER.V2.FUNDING_APPLICATIONS.GET(applicationId)
       );
-      if (fetchError || !response) throw new Error(fetchError ?? "Application not found");
+      if (!response) throw new Error("Application not found");
       return response;
     },
     enabled: !!applicationId && enabled && ready,

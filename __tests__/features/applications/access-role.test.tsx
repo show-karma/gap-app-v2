@@ -16,7 +16,8 @@ import {
   ApplicationAccessError,
   useApplicationAccess,
 } from "@/src/features/applications/hooks/use-application-access";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
+import { HttpError } from "@/utilities/api/errors";
 
 vi.mock("@/hooks/useAuth", () => ({
   useAuth: vi.fn().mockReturnValue({
@@ -25,8 +26,13 @@ vi.mock("@/hooks/useAuth", () => ({
   }),
 }));
 
-vi.mock("@/utilities/fetchData");
-const mockFetchData = fetchData as vi.MockedFunction<typeof fetchData>;
+vi.mock("@/utilities/api/client", () => ({
+  api: { get: vi.fn() },
+}));
+const mockApiGet = api.get as vi.MockedFunction<typeof api.get>;
+
+const httpError = (status: number) =>
+  new HttpError(status, { endpoint: "/v2/funding-applications/x/access", method: "GET" });
 
 const ALL_ACCESS_ROLES = [
   "SUPER_ADMIN",
@@ -74,7 +80,7 @@ describe("ApplicationAccessRole", () => {
   describe("valid accessRole values match backend contract", () => {
     it.each(ALL_ACCESS_ROLES)("correctly handles accessRole = %s", async (role) => {
       const accessInfo = makeAccessInfo(role);
-      mockFetchData.mockResolvedValue([accessInfo, null, undefined, 200]);
+      mockApiGet.mockResolvedValue(accessInfo);
 
       const { result } = renderHook(() => useApplicationAccess("optimism", "REF-001"), { wrapper });
 
@@ -105,7 +111,7 @@ describe("ApplicationAccessRole", () => {
 
   describe("permission flags by role", () => {
     it("SUPER_ADMIN can view, edit, review, and administer", async () => {
-      mockFetchData.mockResolvedValue([makeAccessInfo("SUPER_ADMIN"), null, undefined, 200]);
+      mockApiGet.mockResolvedValue(makeAccessInfo("SUPER_ADMIN"));
 
       const { result } = renderHook(() => useApplicationAccess("optimism", "REF-001"), { wrapper });
 
@@ -117,7 +123,7 @@ describe("ApplicationAccessRole", () => {
     });
 
     it("APPLICANT is marked as owner", async () => {
-      mockFetchData.mockResolvedValue([makeAccessInfo("APPLICANT"), null, undefined, 200]);
+      mockApiGet.mockResolvedValue(makeAccessInfo("APPLICANT"));
 
       const { result } = renderHook(() => useApplicationAccess("optimism", "REF-001"), { wrapper });
 
@@ -127,7 +133,7 @@ describe("ApplicationAccessRole", () => {
     });
 
     it("NONE cannot view, edit, review, or administer", async () => {
-      mockFetchData.mockResolvedValue([makeAccessInfo("NONE"), null, undefined, 200]);
+      mockApiGet.mockResolvedValue(makeAccessInfo("NONE"));
 
       const { result } = renderHook(() => useApplicationAccess("optimism", "REF-001"), { wrapper });
 
@@ -142,7 +148,7 @@ describe("ApplicationAccessRole", () => {
 
   describe("error handling", () => {
     it("returns ApplicationAccessError with code NETWORK on 5xx", async () => {
-      mockFetchData.mockResolvedValue([null, "Server error", undefined, 500]);
+      mockApiGet.mockRejectedValue(httpError(500));
 
       const { result } = renderHook(() => useApplicationAccess("optimism", "REF-001"), { wrapper });
 
@@ -153,7 +159,7 @@ describe("ApplicationAccessRole", () => {
     });
 
     it("returns ApplicationAccessError with code AUTH on 401", async () => {
-      mockFetchData.mockResolvedValue([null, "Unauthorized", undefined, 401]);
+      mockApiGet.mockRejectedValue(httpError(401));
 
       const { result } = renderHook(() => useApplicationAccess("optimism", "REF-001"), { wrapper });
 
@@ -164,7 +170,7 @@ describe("ApplicationAccessRole", () => {
     });
 
     it("returns ApplicationAccessError with code NOT_FOUND on 404", async () => {
-      mockFetchData.mockResolvedValue([null, "Not found", undefined, 404]);
+      mockApiGet.mockRejectedValue(httpError(404));
 
       const { result } = renderHook(() => useApplicationAccess("optimism", "REF-001"), { wrapper });
 

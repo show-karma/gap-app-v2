@@ -4,8 +4,9 @@ import { redirect } from "next/navigation";
 import { cache } from "react";
 import { PublicControlCenter } from "@/components/Pages/Communities/Financials/PublicControlCenter";
 import { getCommunityPayoutsPublic } from "@/src/features/payout-disbursement/services/payout-disbursement.service";
+import { api } from "@/utilities/api/client";
+import { HttpError, isApiError } from "@/utilities/api/errors";
 import { FINANCIALS_ENABLED_COMMUNITIES } from "@/utilities/community-flags";
-import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { PAGES } from "@/utilities/pages";
 import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
@@ -52,22 +53,26 @@ async function prefetchFinancialsData(queryClient: QueryClient, communityId: str
     queryClient.prefetchQuery({
       queryKey: ["kyc", "config", communityId],
       queryFn: async () => {
-        const [data, error] = await fetchData<KycConfigResponse>(
-          INDEXER.KYC.GET_CONFIG(communityId),
-          "GET",
-          {},
-          {},
-          {},
-          false
-        );
-        if (error) {
-          const errorLower = error.toLowerCase();
-          if (errorLower.includes("not found") || errorLower.includes("not configured")) {
-            return null;
+        try {
+          // TODO(#1775): add zod schema
+          const data = await api.get<KycConfigResponse>(INDEXER.KYC.GET_CONFIG(communityId), {
+            isAuthorized: false,
+          });
+          return data ?? null;
+        } catch (e) {
+          if (isApiError(e)) {
+            const bodyMessage =
+              e instanceof HttpError
+                ? (e.body as { message?: string } | undefined)?.message
+                : undefined;
+            const causeMessage = (e.cause as { message?: string } | undefined)?.message;
+            const errorLower = (bodyMessage || causeMessage || e.message).toLowerCase();
+            if (errorLower.includes("not found") || errorLower.includes("not configured")) {
+              return null;
+            }
           }
-          throw new Error(error);
+          throw e;
         }
-        return data ?? null;
       },
       staleTime: 1000 * 60 * 10,
     }),

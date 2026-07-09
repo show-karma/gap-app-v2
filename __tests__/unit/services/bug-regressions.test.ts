@@ -18,6 +18,20 @@
 
 vi.mock("@/utilities/auth/token-manager");
 vi.mock("@/utilities/fetchData");
+// programReviewersService.getReviewers (Bug 1) was migrated off fetchData
+// onto the unified api client in #1775 Phase 3. Bug 2 / Bug 3 below exercise
+// the fetchData adapter directly (unchanged) and don't need this mock.
+vi.mock("@/utilities/api/client", () => ({
+  api: {
+    get: vi.fn(),
+    post: vi.fn(),
+    put: vi.fn(),
+    patch: vi.fn(),
+    delete: vi.fn(),
+    request: vi.fn(),
+    getPaginated: vi.fn(),
+  },
+}));
 vi.mock("@/utilities/auth/api-client", () => ({
   createAuthenticatedApiClient: vi.fn(() => ({
     get: vi.fn(),
@@ -38,43 +52,58 @@ vi.mock("@/utilities/auth/api-client", () => ({
 }));
 
 import { programReviewersService } from "@/services/program-reviewers.service";
+import { api } from "@/utilities/api/client";
+import { HttpError } from "@/utilities/api/errors";
 import fetchData from "@/utilities/fetchData";
 
 const mockFetchData = fetchData as vi.MockedFunction<typeof fetchData>;
+const mockApiGet = api.get as vi.MockedFunction<typeof api.get>;
 
 describe("Bug 1 regression: error.includes() crash on non-string error", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it("should NOT crash when fetchData returns an Error object (network failure)", async () => {
-    // When there's no response (network failure), fetchData returns the Error object itself
-    // as the error value in the tuple: [null, Error("Network Error"), null, 500]
+  it("should NOT crash when api.get rejects with an Error object (network failure)", async () => {
+    // When there's no response (network failure), the api client rejects
+    // with the raw Error/rejection reason it received.
     const networkError = new Error("Network Error");
-    mockFetchData.mockResolvedValue([null, networkError as unknown as string, null, 500]);
+    mockApiGet.mockRejectedValue(networkError);
 
     // This should NOT throw TypeError: error.includes is not a function
     // The fix normalizes the error to a string before calling .includes()
     await expect(programReviewersService.getReviewers("program-1")).rejects.toThrow();
   });
 
-  it("should NOT crash when fetchData returns a plain object as error", async () => {
+  it("should NOT crash when api.get rejects with a plain object as error", async () => {
     // Edge case: some libraries return non-Error, non-string objects
     const objectError = { code: "ECONNREFUSED", message: "Connection refused" };
-    mockFetchData.mockResolvedValue([null, objectError as unknown as string, null, 500]);
+    mockApiGet.mockRejectedValue(objectError);
 
     await expect(programReviewersService.getReviewers("program-1")).rejects.toThrow();
   });
 
   it("should still return empty array for 'No reviewers found' as string", async () => {
-    mockFetchData.mockResolvedValue([null, "No reviewers found", null, 404]);
+    mockApiGet.mockRejectedValue(
+      new HttpError(404, {
+        endpoint: "/v2/funding-program-configs/program-1/reviewers",
+        method: "GET",
+        body: { message: "No reviewers found" },
+      })
+    );
 
     const result = await programReviewersService.getReviewers("program-1");
     expect(result).toEqual([]);
   });
 
   it("should still return empty array for 'Program Reviewer Not Found' as string", async () => {
-    mockFetchData.mockResolvedValue([null, "Program Reviewer Not Found", null, 404]);
+    mockApiGet.mockRejectedValue(
+      new HttpError(404, {
+        endpoint: "/v2/funding-program-configs/program-1/reviewers",
+        method: "GET",
+        body: { message: "Program Reviewer Not Found" },
+      })
+    );
 
     const result = await programReviewersService.getReviewers("program-1");
     expect(result).toEqual([]);

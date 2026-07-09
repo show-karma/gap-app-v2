@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import type { Community } from "@/types/v2/community";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 import { PAGES } from "@/utilities/pages";
 import { useWhitelabel } from "@/utilities/whitelabel-context";
@@ -34,36 +34,25 @@ export interface DashboardAdminCommunity {
 }
 
 const fetchAdminCommunities = async (): Promise<Community[]> => {
-  const [data, error] = await fetchData<AdminCommunitiesResponse>(
-    INDEXER.V2.USER.ADMIN_COMMUNITIES(),
-    "GET",
-    {},
-    {},
-    {},
-    true,
-    false
-  );
+  // TODO(#1775): add zod schema
+  const data = await api.get<AdminCommunitiesResponse>(INDEXER.V2.USER.ADMIN_COMMUNITIES());
 
-  if (error || !data) {
-    throw new Error(error || "Failed to fetch admin communities");
+  if (!data) {
+    throw new Error("Failed to fetch admin communities");
   }
 
   return data.communities ?? [];
 };
 
 const fetchCommunityMetrics = async (communityId: string): Promise<CommunityMetricsResponse> => {
-  const [data, error] = await fetchData<CommunityMetricsResponse>(
+  // TODO(#1775): add zod schema
+  const data = await api.get<CommunityMetricsResponse>(
     INDEXER.V2.COMMUNITY_PROGRAM_METRICS(communityId),
-    "GET",
-    {},
-    {},
-    {},
-    false,
-    false
+    { isAuthorized: false }
   );
 
-  if (error || !data) {
-    throw new Error(error || "Failed to fetch community metrics");
+  if (!data) {
+    throw new Error("Failed to fetch community metrics");
   }
 
   return data;

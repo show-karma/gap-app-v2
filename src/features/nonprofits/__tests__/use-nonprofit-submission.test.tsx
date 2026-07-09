@@ -2,9 +2,9 @@
  * useNonprofitSubmission tests
  *
  * The hook wraps a public (unauthenticated) POST to the gap-indexer's
- * nonprofit-submissions intake. fetchData returns the project's standard
- * [data, error, pageInfo, status] tuple; the hook must surface the error
- * arm as a thrown Error so React Query's isError state drives the form UI.
+ * nonprofit-submissions intake via the typed api client. api.post throws on
+ * failure; the hook must surface that rejection as the mutation error so
+ * React Query's isError state drives the form UI.
  */
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -12,10 +12,13 @@ import { renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useNonprofitSubmission } from "../hooks/use-nonprofit-submission";
 
-const mockFetchData = vi.fn();
-vi.mock("@/utilities/fetchData", () => ({
-  default: (...args: unknown[]) => mockFetchData(...args),
+vi.mock("@/utilities/api/client", () => ({
+  api: { post: vi.fn() },
 }));
+
+import { api } from "@/utilities/api/client";
+
+const mockApiPost = api.post as unknown as vi.Mock;
 
 function createWrapper() {
   const queryClient = new QueryClient({
@@ -33,11 +36,11 @@ const payload = {
 
 describe("useNonprofitSubmission", () => {
   beforeEach(() => {
-    mockFetchData.mockReset();
+    mockApiPost.mockReset();
   });
 
   it("posts the payload to the public V2 submission endpoint without auth", async () => {
-    mockFetchData.mockResolvedValue([{ id: "sub_1", createdAt: "2026-06-10" }, null, null, 201]);
+    mockApiPost.mockResolvedValue({ id: "sub_1", createdAt: "2026-06-10" });
 
     const { result } = renderHook(() => useNonprofitSubmission(), {
       wrapper: createWrapper(),
@@ -46,19 +49,14 @@ describe("useNonprofitSubmission", () => {
     result.current.mutate(payload);
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-    expect(mockFetchData).toHaveBeenCalledWith(
-      "/v2/nonprofit-submissions/submit",
-      "POST",
-      payload,
-      {},
-      {},
-      false
-    );
+    expect(mockApiPost).toHaveBeenCalledWith("/v2/nonprofit-submissions/submit", payload, {
+      isAuthorized: false,
+    });
     expect(result.current.data).toEqual({ id: "sub_1", createdAt: "2026-06-10" });
   });
 
-  it("surfaces the tuple error arm as a mutation error", async () => {
-    mockFetchData.mockResolvedValue([null, "Validation failed", null, 422]);
+  it("surfaces the api rejection as a mutation error", async () => {
+    mockApiPost.mockRejectedValue(new Error("Validation failed"));
 
     const { result } = renderHook(() => useNonprofitSubmission(), {
       wrapper: createWrapper(),
@@ -70,8 +68,8 @@ describe("useNonprofitSubmission", () => {
     expect(result.current.error?.message).toBe("Validation failed");
   });
 
-  it("treats a null data response without an error string as a failure", async () => {
-    mockFetchData.mockResolvedValue([null, null, null, 500]);
+  it("treats a server failure as a mutation error", async () => {
+    mockApiPost.mockRejectedValue(new Error("Request failed with status 500"));
 
     const { result } = renderHook(() => useNonprofitSubmission(), {
       wrapper: createWrapper(),

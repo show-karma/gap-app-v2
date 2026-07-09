@@ -1,6 +1,6 @@
 import { errorManager } from "@/components/Utilities/errorManager";
 import type { Community } from "@/types/v2/community";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 
 interface CommunitiesListResponse {
@@ -53,18 +53,24 @@ export const getCommunities = async (options?: {
 }): Promise<Community[]> => {
   const { page = 1, limit = 100, includeStats = false } = options ?? {};
 
-  const [data, error] = await fetchData<CommunitiesListResponse>(
-    INDEXER.COMMUNITY.LIST({ page, limit, includeStats })
-  );
-
-  if (error || !data) {
+  try {
+    // TODO(#1775): add zod schema
+    const data = await api.get<CommunitiesListResponse>(
+      INDEXER.COMMUNITY.LIST({ page, limit, includeStats })
+    );
+    if (!data) {
+      errorManager(`Communities API Error: ${null}`, null, {
+        context: "communities.service",
+      });
+      return [];
+    }
+    return data.payload ?? [];
+  } catch (error) {
     errorManager(`Communities API Error: ${error}`, error, {
       context: "communities.service",
     });
     return [];
   }
-
-  return data.payload ?? [];
 };
 
 /**
@@ -78,23 +84,25 @@ export const getCommunityAdminsBatch = async (
 ): Promise<CommunityAdmin[]> => {
   if (!communityUIDs.length) return [];
 
-  const [adminsResponse, adminsError] = await fetchData<CommunityAdminsBatchResponse>(
-    INDEXER.COMMUNITY.ADMINS_BATCH(),
-    "POST",
-    { communityUIDs },
-    {},
-    {}
-  );
+  let adminsResponse: CommunityAdminsBatchResponse | undefined;
+  try {
+    // TODO(#1775): add zod schema
+    adminsResponse = await api.post<CommunityAdminsBatchResponse>(
+      INDEXER.COMMUNITY.ADMINS_BATCH(),
+      { communityUIDs }
+    );
+  } catch (error) {
+    errorManager("Error fetching batch community admins", error, {
+      context: "admin.community.batch-admins",
+    });
+    throw error instanceof Error ? error : new Error("Failed to fetch batch community admins");
+  }
 
   if (!adminsResponse?.data) {
-    errorManager(
-      "Error fetching batch community admins",
-      adminsError || "Empty batch admins response",
-      {
-        context: "admin.community.batch-admins",
-      }
-    );
-    throw new Error(adminsError || "Failed to fetch batch community admins");
+    errorManager("Error fetching batch community admins", "Empty batch admins response", {
+      context: "admin.community.batch-admins",
+    });
+    throw new Error("Failed to fetch batch community admins");
   }
 
   const adminsById = new Map(

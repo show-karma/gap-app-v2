@@ -1,7 +1,8 @@
 import axios from "axios";
+import { api } from "@/utilities/api/client";
+import { HttpError } from "@/utilities/api/errors";
 import { createAuthenticatedApiClient } from "@/utilities/auth/api-client";
 import { envVars } from "@/utilities/enviromentVars";
-import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import {
   validateEmail,
@@ -13,6 +14,22 @@ const API_URL = envVars.NEXT_PUBLIC_GAP_INDEXER_URL;
 
 // Keep apiClient for mutations (POST, DELETE)
 const apiClient = createAuthenticatedApiClient(API_URL, 30000);
+
+/**
+ * Extracts the same human-readable error message the legacy `fetchData`
+ * adapter surfaced for an `HttpError`: prefer the server response body's
+ * `message`, then the original axios error's message, then the client's
+ * synthetic message. Falls back to a plain `Error.message` (or
+ * `String(error)`) for non-HTTP `ApiError`s.
+ */
+function httpErrorMessage(error: unknown): string {
+  if (error instanceof HttpError) {
+    const bodyMessage = (error.body as { message?: string } | undefined)?.message;
+    const causeMessage = (error.cause as { message?: string } | undefined)?.message;
+    return bodyMessage || causeMessage || error.message;
+  }
+  return error instanceof Error ? error.message : String(error);
+}
 
 /**
  * User profile information
@@ -80,13 +97,15 @@ export const programReviewersService = {
    * Get all reviewers for a program
    */
   async getReviewers(programId: string): Promise<ProgramReviewer[]> {
-    const [data, error] = await fetchData<{ reviewers: ProgramReviewerResponse[] }>(
-      INDEXER.V2.FUNDING_PROGRAMS.REVIEWERS(programId)
-    );
-
-    if (error) {
+    let data: { reviewers: ProgramReviewerResponse[] } | null;
+    try {
+      // TODO(#1775): add zod schema
+      data = await api.get<{ reviewers: ProgramReviewerResponse[] }>(
+        INDEXER.V2.FUNDING_PROGRAMS.REVIEWERS(programId)
+      );
+    } catch (error) {
       // Handle "No reviewers found" as an empty list, not an error
-      const errorMessage = String(error);
+      const errorMessage = httpErrorMessage(error);
       if (
         errorMessage.includes("Program Reviewer Not Found") ||
         errorMessage.includes("No reviewers found")

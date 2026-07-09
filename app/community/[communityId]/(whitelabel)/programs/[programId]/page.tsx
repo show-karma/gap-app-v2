@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import { cache } from "react";
 import { PROJECT_NAME } from "@/constants/brand";
 import type { FundingProgram } from "@/types/whitelabel-entities";
+import { api } from "@/utilities/api/client";
 import { envVars } from "@/utilities/enviromentVars";
-import fetchData from "@/utilities/fetchData";
 import { cleanMarkdownForPlainText } from "@/utilities/markdown";
 import { DEFAULT_DESCRIPTION, SITE_URL, twitterMeta } from "@/utilities/meta";
 import { getWhitelabelContext } from "@/utilities/whitelabel-server";
@@ -27,15 +27,11 @@ type Params = Promise<{
 // below does not depend on it.
 const getProgramDetails = cache(async (programId: string): Promise<FundingProgram | null> => {
   try {
-    const [data] = await fetchData<FundingProgram>(
+    // TODO(#1775): add zod schema
+    return await api.get<FundingProgram>(
       `/v2/funding-program-configs/${encodeURIComponent(programId)}`,
-      "GET",
-      {},
-      {},
-      {},
-      false
+      { isAuthorized: false }
     );
-    return data;
   } catch {
     return null;
   }

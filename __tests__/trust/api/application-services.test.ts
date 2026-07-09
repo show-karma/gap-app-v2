@@ -6,8 +6,16 @@ const { mockPost, mockPut, mockDelete } = vi.hoisted(() => ({
   mockDelete: vi.fn(),
 }));
 
-vi.mock("@/utilities/fetchData", () => ({
-  default: vi.fn(),
+vi.mock("@/utilities/api/client", () => ({
+  api: {
+    get: vi.fn(),
+    post: vi.fn(),
+    put: vi.fn(),
+    patch: vi.fn(),
+    delete: vi.fn(),
+    request: vi.fn(),
+    getPaginated: vi.fn(),
+  },
 }));
 
 vi.mock("@/utilities/auth/api-client", () => ({
@@ -38,9 +46,10 @@ vi.mock("@/utilities/enviromentVars", () => ({
 
 import { applicationCommentsService } from "@/services/application-comments.service";
 import { deleteApplication, fetchApplicationByProjectUID } from "@/services/funding-applications";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
+import { HttpError } from "@/utilities/api/errors";
 
-const mockFetchData = fetchData as ReturnType<typeof vi.fn>;
+const mockApiGet = api.get as ReturnType<typeof vi.fn>;
 
 describe("application-comments service trust tests", () => {
   beforeEach(() => {
@@ -50,43 +59,34 @@ describe("application-comments service trust tests", () => {
   // --- getComments ---
 
   describe("getComments", () => {
-    it("calls fetchData with correct endpoint", async () => {
-      mockFetchData.mockResolvedValue([{ comments: [] }, null, null, 200]);
+    it("calls api.get with correct endpoint", async () => {
+      mockApiGet.mockResolvedValue({ comments: [] });
 
       await applicationCommentsService.getComments("app-1");
 
-      expect(mockFetchData).toHaveBeenCalledWith(
-        "/v2/applications/app-1/comments",
-        "GET",
-        {},
-        expect.any(Object)
-      );
+      expect(mockApiGet).toHaveBeenCalledWith("/v2/applications/app-1/comments", {
+        params: {},
+      });
     });
 
     it("passes admin flag as param when isAdmin=true", async () => {
-      mockFetchData.mockResolvedValue([{ comments: [] }, null, null, 200]);
+      mockApiGet.mockResolvedValue({ comments: [] });
 
       await applicationCommentsService.getComments("app-1", true);
 
-      expect(mockFetchData).toHaveBeenCalledWith(
-        expect.any(String),
-        "GET",
-        {},
-        expect.objectContaining({ admin: "true" })
-      );
+      expect(mockApiGet).toHaveBeenCalledWith(expect.any(String), {
+        params: expect.objectContaining({ admin: "true" }),
+      });
     });
 
     it("does not pass admin param when isAdmin is false/undefined", async () => {
-      mockFetchData.mockResolvedValue([{ comments: [] }, null, null, 200]);
+      mockApiGet.mockResolvedValue({ comments: [] });
 
       await applicationCommentsService.getComments("app-1", false);
 
-      expect(mockFetchData).toHaveBeenCalledWith(
-        expect.any(String),
-        "GET",
-        {},
-        expect.not.objectContaining({ admin: "true" })
-      );
+      expect(mockApiGet).toHaveBeenCalledWith(expect.any(String), {
+        params: expect.not.objectContaining({ admin: "true" }),
+      });
     });
 
     it("returns comments array", async () => {
@@ -94,17 +94,23 @@ describe("application-comments service trust tests", () => {
         { id: "c1", content: "Great work!" },
         { id: "c2", content: "Needs revision" },
       ];
-      mockFetchData.mockResolvedValue([{ comments }, null, null, 200]);
+      mockApiGet.mockResolvedValue({ comments });
 
       const result = await applicationCommentsService.getComments("app-1");
 
       expect(result).toEqual(comments);
     });
 
-    it("throws on fetchData error", async () => {
-      mockFetchData.mockResolvedValue([null, "Not Found", null, 404]);
+    it("throws on api.get error", async () => {
+      const error = new HttpError(404, {
+        endpoint: "/v2/applications/app-1/comments",
+        method: "GET",
+        body: { message: "Not Found" },
+      });
+      mockApiGet.mockRejectedValue(error);
 
-      await expect(applicationCommentsService.getComments("app-1")).rejects.toThrow("Not Found");
+      // getComments rethrows the caught error unchanged (no message extraction).
+      await expect(applicationCommentsService.getComments("app-1")).rejects.toBe(error);
     });
   });
 
@@ -177,23 +183,35 @@ describe("funding-applications service trust tests", () => {
   describe("fetchApplicationByProjectUID", () => {
     it("returns application data on success", async () => {
       const app = { id: "a1", projectUID: "p1", status: "submitted" };
-      mockFetchData.mockResolvedValue([app, null, null, 200]);
+      mockApiGet.mockResolvedValue(app);
 
       const result = await fetchApplicationByProjectUID("p1");
 
       expect(result).toEqual(app);
     });
 
-    it("returns null when no application found (404 error string)", async () => {
-      mockFetchData.mockResolvedValue([null, "404 not found", null, 404]);
+    it("returns null when no application found (404 status)", async () => {
+      mockApiGet.mockRejectedValue(
+        new HttpError(404, {
+          endpoint: "/v2/applications/by-project/p1",
+          method: "GET",
+          body: { message: "404 not found" },
+        })
+      );
 
       const result = await fetchApplicationByProjectUID("p1");
 
       expect(result).toBeNull();
     });
 
-    it("returns null when error contains 'not found'", async () => {
-      mockFetchData.mockResolvedValue([null, "Application not found", null, 404]);
+    it("returns null when the 404 error body says 'not found'", async () => {
+      mockApiGet.mockRejectedValue(
+        new HttpError(404, {
+          endpoint: "/v2/applications/by-project/p1",
+          method: "GET",
+          body: { message: "Application not found" },
+        })
+      );
 
       const result = await fetchApplicationByProjectUID("p1");
 
@@ -201,13 +219,19 @@ describe("funding-applications service trust tests", () => {
     });
 
     it("throws on non-404 errors", async () => {
-      mockFetchData.mockResolvedValue([null, "Internal server error", null, 500]);
+      mockApiGet.mockRejectedValue(
+        new HttpError(500, {
+          endpoint: "/v2/applications/by-project/p1",
+          method: "GET",
+          body: { message: "Internal server error" },
+        })
+      );
 
       await expect(fetchApplicationByProjectUID("p1")).rejects.toThrow("Internal server error");
     });
 
     it("returns null when data is null but no error", async () => {
-      mockFetchData.mockResolvedValue([null, null, null, 200]);
+      mockApiGet.mockResolvedValue(null);
 
       const result = await fetchApplicationByProjectUID("p1");
 
