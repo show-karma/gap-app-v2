@@ -58,6 +58,8 @@ const portableTextComponents: PortableTextComponents = {
   marks: {
     link: ({ children, value }) => {
       const href = typeof value?.href === "string" ? value.href : "";
+      const isSafeScheme = /^(https?:|mailto:)/i.test(href);
+      if (!isSafeScheme) return <>{children}</>;
       const isExternal = /^https?:\/\//.test(href);
       return (
         <a

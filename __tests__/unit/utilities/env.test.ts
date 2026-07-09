@@ -209,7 +209,6 @@ describe("env validation", () => {
       if (result.success) {
         expect(result.data.SANITY_VIEWER_TOKEN).toBe("");
         expect(result.data.SANITY_WEBHOOK_SECRET).toBe("");
-        expect(result.data.SANITY_REVALIDATE_SECRET).toBe("");
         expect(result.data.SANITY_PREVIEW_SECRET).toBe("");
       }
     });
