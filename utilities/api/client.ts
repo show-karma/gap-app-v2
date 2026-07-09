@@ -186,6 +186,7 @@ export function createApiClient(config: ApiClientConfig): ApiClient {
       headers: {
         ...opts.headers,
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...(opts.idempotencyKey ? { "Idempotency-Key": opts.idempotencyKey } : {}),
       },
       signal: opts.signal,
       timeout: timeoutMs,
@@ -312,5 +313,5 @@ export const api: ApiClient = createApiClient({
     TokenManager.clearCache();
     return TokenManager.getToken();
   },
-  onExhausted: reportApiFailure,
+  onExhausted: (error, attempts) => reportApiFailure(error, { attempts }),
 });

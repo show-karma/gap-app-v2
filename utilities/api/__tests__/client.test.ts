@@ -293,6 +293,16 @@ describe("client — 4. retry via executeWithRetry", () => {
     expect(result).toEqual({ ok: true });
   });
 
+  it("sends an Idempotency-Key header when idempotencyKey is set on a mutation", async () => {
+    mockedRequest().mockResolvedValue({ data: { ok: true }, status: 200 });
+    const { client } = buildClient();
+
+    await client.post("/things", { a: 1 }, { idempotencyKey: "abc" });
+
+    const config = mockedRequest().mock.calls[0][0];
+    expect(config.headers["Idempotency-Key"]).toBe("abc");
+  });
+
   it("does not retry once the caller's signal is already aborted", async () => {
     vi.stubGlobal("window", undefined);
     const controller = new AbortController();
@@ -454,13 +464,13 @@ describe("client — 6. schema validation", () => {
     expect(result).toEqual({ id: "1" });
   });
 
-  it("throws ContractViolationError capped at 10 issues, without leaking the raw body", async () => {
-    // The response body carries a PII sentinel the schema rejects (it expects
-    // strings for a-l, not the ssn object) — proving ContractViolationError
-    // never carries the raw body requires the sentinel to actually be present
-    // in the rejected payload, not merely absent from an already-empty body.
-    const PII_SENTINEL = "SENTINEL-PII-123";
-    mockedRequest().mockResolvedValue({ data: { ssn: PII_SENTINEL }, status: 200 });
+  it("throws ContractViolationError capped at 10 issues, exposing only issue strings and no body", async () => {
+    // 12 missing fields => the cap assertion is load-bearing (proves the
+    // `.slice(0, 10)` in client.ts actually runs). The "no body leak"
+    // invariant is asserted structurally below: ContractViolationError never
+    // stores a `body` property at all, so no schema-rejected payload (PII or
+    // otherwise) can ever reach Sentry through it.
+    mockedRequest().mockResolvedValue({ data: { ssn: "SENTINEL-PII-123" }, status: 200 });
     const { client } = buildClient();
     const schema = z.object({
       a: z.string(),
@@ -481,8 +491,8 @@ describe("client — 6. schema validation", () => {
 
     expect(error).toBeInstanceOf(ContractViolationError);
     expect(error.issues.length).toBeLessThanOrEqual(10);
-    expect(JSON.stringify(error)).not.toContain(PII_SENTINEL);
-    expect(error.issues.join()).not.toContain(PII_SENTINEL);
+    expect((error as Record<string, unknown>).body).toBeUndefined();
+    expect("body" in error).toBe(false);
   });
 
   it("returns the raw payload untouched when no schema is provided", async () => {

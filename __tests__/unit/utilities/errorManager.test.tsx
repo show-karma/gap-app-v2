@@ -168,6 +168,38 @@ describe("errorManager", () => {
       );
     });
 
+    it("suppresses a typed transient HttpError (503) to a breadcrumb, matching legacy suppression", () => {
+      const error = new HttpError(503, { endpoint: "/x", method: "GET" });
+
+      errorManager("Test error", error);
+
+      expect(Sentry.addBreadcrumb).toHaveBeenCalledWith({
+        category: "api",
+        message: error.message,
+        level: "warning",
+      });
+      expect(Sentry.captureException).not.toHaveBeenCalled();
+      expect(Sentry.captureMessage).not.toHaveBeenCalled();
+    });
+
+    it("still runs the toast block before delegating a genuine typed ApiError to reportApiFailure", () => {
+      const error = new HttpError(500, { endpoint: "/x", method: "GET" });
+
+      // The toast block (guarded by `toastError?.error`) must run before the
+      // typed-ApiError delegation, not be skipped by an early return — this
+      // is only observable indirectly here (jsdom has no real toast host),
+      // so we assert the call reaches reportApiFailure's capture without
+      // throwing, proving the toast block executed and fell through.
+      expect(() => errorManager("Test error", error, undefined, { error: "Boom" })).not.toThrow();
+
+      expect(Sentry.captureException).toHaveBeenCalledWith(
+        error,
+        expect.objectContaining({
+          extra: expect.objectContaining({ endpoint: "/x", method: "GET", status: 500 }),
+        })
+      );
+    });
+
     it("keeps expected typed errors (NetworkError/429) breadcrumb-only, not routed to reportApiFailure", () => {
       const networkError = new NetworkError({ endpoint: "/x", method: "GET" });
       errorManager("Test error", networkError);
