@@ -142,6 +142,31 @@ describe("env validation", () => {
         expect(result.success).toBe(true);
       }
     });
+
+    it("defaults Sanity vars so an unset CMS never fails validation", () => {
+      const result = clientSchema.safeParse(validClientEnv);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.NEXT_PUBLIC_SANITY_PROJECT_ID).toBe("");
+        expect(result.data.NEXT_PUBLIC_SANITY_DATASET).toBe("production");
+        expect(result.data.NEXT_PUBLIC_SANITY_API_VERSION).toBe("2024-01-01");
+      }
+    });
+
+    it("accepts explicit Sanity vars when configured", () => {
+      const result = clientSchema.safeParse({
+        ...validClientEnv,
+        NEXT_PUBLIC_SANITY_PROJECT_ID: "abc123",
+        NEXT_PUBLIC_SANITY_DATASET: "staging",
+        NEXT_PUBLIC_SANITY_API_VERSION: "2025-01-01",
+      });
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.NEXT_PUBLIC_SANITY_PROJECT_ID).toBe("abc123");
+        expect(result.data.NEXT_PUBLIC_SANITY_DATASET).toBe("staging");
+        expect(result.data.NEXT_PUBLIC_SANITY_API_VERSION).toBe("2025-01-01");
+      }
+    });
   });
 
   describe("serverSchema", () => {
@@ -175,6 +200,17 @@ describe("env validation", () => {
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.data.ANALYZE).toBe(false);
+      }
+    });
+
+    it("defaults Sanity server secrets to empty string so an unconfigured CMS never fails validation", () => {
+      const result = serverSchema.safeParse({});
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.SANITY_VIEWER_TOKEN).toBe("");
+        expect(result.data.SANITY_WEBHOOK_SECRET).toBe("");
+        expect(result.data.SANITY_REVALIDATE_SECRET).toBe("");
+        expect(result.data.SANITY_PREVIEW_SECRET).toBe("");
       }
     });
   });

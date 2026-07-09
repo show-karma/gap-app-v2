@@ -51,6 +51,11 @@ export const clientSchema = z.object({
 
   // Testing
   NEXT_PUBLIC_E2E_AUTH_BYPASS: booleanEnvVar,
+
+  // Sanity Blog CMS
+  NEXT_PUBLIC_SANITY_PROJECT_ID: z.string().optional().default(""),
+  NEXT_PUBLIC_SANITY_DATASET: z.string().optional().default("production"),
+  NEXT_PUBLIC_SANITY_API_VERSION: z.string().optional().default("2024-01-01"),
 });
 
 // --- Server env schema (only available server-side) ---
@@ -60,6 +65,12 @@ export const serverSchema = z.object({
   SENTRY_AUTH_TOKEN: z.string().min(1).optional(),
   ANALYZE: booleanEnvVar,
   VERCEL_URL: z.string().min(1).optional(),
+
+  // Sanity Blog CMS — server-only secrets
+  SANITY_VIEWER_TOKEN: z.string().optional().default(""),
+  SANITY_WEBHOOK_SECRET: z.string().optional().default(""),
+  SANITY_REVALIDATE_SECRET: z.string().optional().default(""),
+  SANITY_PREVIEW_SECRET: z.string().optional().default(""),
 });
 
 // --- Validation ---

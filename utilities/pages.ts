@@ -197,6 +197,8 @@ export const PAGES = {
     PUBLIC_SCORECARD: (slug: string) => `/s/${slug}`,
     OG_IMAGE: (slug: string) => `/api/scanner/og/${slug}`,
   },
+  BLOG: `/blog`,
+  BLOG_POST: (slug: string) => `/blog/${slug}`,
 };
 
 /**
