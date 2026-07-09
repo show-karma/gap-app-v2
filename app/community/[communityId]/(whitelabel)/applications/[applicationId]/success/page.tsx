@@ -5,7 +5,6 @@ import { Link } from "@/src/components/navigation/Link";
 import { ApplicationStatusChip } from "@/src/components/ui/ApplicationStatusChip";
 import type { Application } from "@/types/whitelabel-entities";
 import { api } from "@/utilities/api/client";
-import { orElse } from "@/utilities/api/or-else";
 import { PAGES } from "@/utilities/pages";
 import { extractApplicantName, WhatHappensNext } from "./WhatHappensNext";
 import { WhatHappensNextSkeleton } from "./WhatHappensNextSkeleton";
@@ -20,7 +19,11 @@ interface PageProps {
 // P1-09: React.cache() deduplicates the fetch between generateMetadata and the page component
 const getApplicationDetails = cache(async (applicationId: string): Promise<Application | null> => {
   // TODO(#1775): add zod schema
-  return orElse(api.get<Application>(`/v2/funding-applications/${applicationId}`), null);
+  try {
+    return await api.get<Application>(`/v2/funding-applications/${applicationId}`);
+  } catch {
+    return null;
+  }
 });
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
