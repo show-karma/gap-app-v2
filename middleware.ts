@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { getDomainInfo } from "./src/infrastructure/config/domain-constants";
 import { isKnownTenant } from "./src/infrastructure/types/tenant";
 import { chosenCommunities } from "./utilities/chosenCommunities";
-import { COMMUNITY_SUB_ROUTE_SEGMENTS } from "./utilities/pages";
+import { COMMUNITY_SUB_ROUTE_SEGMENTS, PAGES } from "./utilities/pages";
 import { redirectToGov, shouldRedirectToGov } from "./utilities/redirectHelpers";
 import { hasForbiddenChars, sanitizeCommunitySlug } from "./utilities/sanitize";
 import { getWhitelabelByDomain, getWhitelabelDomainForSlug } from "./utilities/whitelabel-config";
@@ -20,6 +20,14 @@ export async function middleware(request: NextRequest) {
     // The middleware matcher already excludes root-level files (e.g. /favicon.ico)
     // and /_next, but not subdirectory assets like /images/, /logo/, /tenants/.
     if (/^\/(images|logo|tenants|icons|shared|fonts)\//i.test(path)) {
+      return NextResponse.next();
+    }
+
+    // The embedded Sanity Studio must stay at the top-level /admin/studio
+    // path on every domain. "admin" is a COMMUNITY_SUB_ROUTE_SEGMENTS entry
+    // (for /community/<slug>/admin/*), so without this guard the rewrite
+    // below would send it to /community/<slug>/admin/studio instead.
+    if (path === PAGES.ADMIN_STUDIO || path.startsWith(`${PAGES.ADMIN_STUDIO}/`)) {
       return NextResponse.next();
     }
 

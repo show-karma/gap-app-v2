@@ -90,6 +90,21 @@ describe("middleware dashboard redirects", () => {
     expect(response?.headers.get("location")).toBeNull();
   });
 
+  it("passes through the Sanity Studio route on a whitelabel domain without rewrite", async () => {
+    if (!primaryWhitelabel) {
+      throw new Error("No whitelabel domain configured for middleware tests.");
+    }
+
+    const response = await middleware(
+      createRequestWithHost("/admin/studio/structure", primaryWhitelabel.domain)
+    );
+
+    // /admin/studio must stay top-level even though "admin" is otherwise a
+    // community sub-route segment (see the /admin/settings rewrite test below).
+    expect(response?.headers.get("x-middleware-rewrite")).toBeNull();
+    expect(response?.headers.get("location")).toBeNull();
+  });
+
   it("rewrites other whitelabel paths instead of redirecting", async () => {
     if (!primaryWhitelabel) {
       throw new Error("No whitelabel domain configured for middleware tests.");
