@@ -104,9 +104,15 @@ export const milestoneReviewersService = {
         INDEXER.V2.MILESTONE_REVIEWERS.LIST(programId)
       );
     } catch (error) {
-      // Handle "No reviewers found" as an empty list, not an error
+      // A program with no reviewers is an empty list, not a failure. The
+      // backend signals this with a 404 (list resource not found); some
+      // deployments also phrase it in the body message. Match on the status
+      // first so we don't depend on exact copy, then keep the message checks
+      // for backends that return a non-404 "not found". Only a genuine error
+      // (500, network, etc.) surfaces to the caller.
       const errorMessage = httpErrorMessage(error);
       if (
+        (error instanceof HttpError && error.status === 404) ||
         errorMessage.includes("Milestone Reviewer Not Found") ||
         errorMessage.includes("No reviewers found")
       ) {
