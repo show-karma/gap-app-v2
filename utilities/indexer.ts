@@ -413,11 +413,7 @@ export const INDEXER = {
     },
     SUBSCRIBE: (projectId: Hex) => `/projects/${projectId}/subscribe`,
     FEED: (projectIdOrSlug: string) => `/projects/${projectIdOrSlug}/feed`,
-    // GAP-FRONTEND-24Z: the V2 route `/v2/projects/:idOrSlug/impacts` does not
-    // exist on the indexer (verified against prod + staging). Fall back to
-    // the V1 route until the backend ships a V2 counterpart, then flip this
-    // back to the V2 group.
-    IMPACTS: (projectIdOrSlug: string) => `/projects/${projectIdOrSlug}/impacts`,
+    IMPACTS: (projectIdOrSlug: string) => `/projects/${projectIdOrSlug}/impacts`, // GAP-FRONTEND-24Z: V2 route absent on indexer; use V1 until BE ships V2
     FUNDEDBY: (address: string) => `/projects/fundedby/${address}`,
     GRANTS_GENIE: (projectId: string) => `/projects/${projectId}/grants-genie`,
     REQUEST_INTRO: (projectIdOrSlug: string) => `/projects/requestintro/${projectIdOrSlug}`,
