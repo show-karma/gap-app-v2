@@ -84,7 +84,7 @@ export default async function BlogPostPage({ params }: PageProps) {
     <main className="container mx-auto max-w-3xl px-4 py-12">
       <Breadcrumbs
         items={[
-          { label: "Home", href: "/" },
+          { label: "Home", href: PAGES.HOME },
           { label: "Blog", href: PAGES.BLOG },
           { label: post.title, href: PAGES.BLOG_POST(post.slug) },
         ]}
@@ -100,7 +100,7 @@ export default async function BlogPostPage({ params }: PageProps) {
       />
       <BreadcrumbJsonLd
         items={[
-          { name: "Home", url: "/" },
+          { name: "Home", url: PAGES.HOME },
           { name: "Blog", url: PAGES.BLOG },
           { name: post.title, url: PAGES.BLOG_POST(post.slug) },
         ]}

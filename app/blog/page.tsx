@@ -46,14 +46,14 @@ export default async function BlogIndexPage() {
     <main className="container mx-auto max-w-5xl px-4 py-12">
       <Breadcrumbs
         items={[
-          { label: "Home", href: "/" },
+          { label: "Home", href: PAGES.HOME },
           { label: "Blog", href: PAGES.BLOG },
         ]}
       />
       <CollectionPageJsonLd name={TITLE} description={DESCRIPTION} url={PAGES.BLOG} />
       <BreadcrumbJsonLd
         items={[
-          { name: "Home", url: "/" },
+          { name: "Home", url: PAGES.HOME },
           { name: "Blog", url: PAGES.BLOG },
         ]}
       />
