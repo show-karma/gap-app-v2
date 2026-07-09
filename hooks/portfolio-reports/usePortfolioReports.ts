@@ -196,6 +196,21 @@ export function useRegenerateReport(communitySlug: string) {
   });
 }
 
+export function useDeleteReport(communitySlug: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (reportId: string) => portfolioService.deleteReport(communitySlug, reportId),
+    onSuccess: (_data, reportId) => {
+      queryClient.removeQueries({
+        queryKey: QUERY_KEYS.report(communitySlug, reportId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.reports(communitySlug),
+      });
+    },
+  });
+}
+
 export function usePublishReport(communitySlug: string) {
   const queryClient = useQueryClient();
   return useMutation({

@@ -86,7 +86,7 @@ export function CelebrationOverlay() {
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.9, opacity: 0 }}
               transition={{ type: "spring", stiffness: 260, damping: 20 }}
-              className="my-4 w-full max-w-md rounded-3xl bg-white p-8 text-center shadow-2xl dark:bg-zinc-900"
+              className="my-4 w-full max-w-md rounded-2xl bg-white p-8 text-center shadow-2xl dark:bg-stone-900"
               onClick={(event) => event.stopPropagation()}
             >
               <m.div
@@ -102,10 +102,10 @@ export function CelebrationOverlay() {
                 🎉
               </m.div>
 
-              <h2 className="mt-4 text-2xl font-semibold text-zinc-900 dark:text-white">
+              <h2 className="mt-4 text-2xl font-semibold text-stone-900 dark:text-white">
                 {formatUsd(celebration.grant.amount)} on its way!
               </h2>
-              <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+              <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">
                 Your grant to {celebration.grant.orgName}
                 {celebration.grant.recurring ? " will repeat monthly" : " is being processed"}.
               </p>
@@ -114,10 +114,10 @@ export function CelebrationOverlay() {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.35 }}
-                className="mt-5 flex items-center justify-center gap-2 rounded-2xl bg-violet-50 py-3 dark:bg-violet-950/40"
+                className="mt-5 flex items-center justify-center gap-2 rounded-2xl bg-amber-50 py-3 dark:bg-amber-950/40"
               >
-                <Sparkles className="h-5 w-5 text-violet-500" aria-hidden="true" />
-                <span className="font-mono text-xl font-bold text-violet-700 dark:text-violet-300">
+                <Sparkles className="h-5 w-5 text-amber-500" aria-hidden="true" />
+                <span className="font-mono text-xl font-bold text-amber-700 dark:text-amber-300">
                   +{celebration.xpEarned} Impact Points
                 </span>
               </m.div>
@@ -128,14 +128,14 @@ export function CelebrationOverlay() {
                     initial={{ opacity: 0, x: -14 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.5 }}
-                    className="flex items-center gap-3 rounded-2xl bg-orange-50 px-4 py-3 text-left dark:bg-orange-950/40"
+                    className="flex items-center gap-3 rounded-2xl bg-amber-50 px-4 py-3 text-left dark:bg-amber-950/40"
                   >
                     <Flame
-                      className="h-6 w-6 shrink-0 text-orange-500"
+                      className="h-6 w-6 shrink-0 text-amber-500"
                       fill="currentColor"
                       aria-hidden="true"
                     />
-                    <span className="text-sm font-semibold text-orange-800 dark:text-orange-300">
+                    <span className="text-sm font-semibold text-amber-800 dark:text-amber-300">
                       Streak extended to {celebration.newStreak}{" "}
                       {pluralize("month", celebration.newStreak)}!
                     </span>
@@ -162,10 +162,10 @@ export function CelebrationOverlay() {
                     initial={{ opacity: 0, x: -14 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.8 + index * 0.12 }}
-                    className="flex items-center gap-3 rounded-2xl bg-zinc-100 px-4 py-3 text-left dark:bg-zinc-800"
+                    className="flex items-center gap-3 rounded-2xl bg-stone-100 px-4 py-3 text-left dark:bg-stone-800"
                   >
                     <span className="text-lg">✅</span>
-                    <span className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
+                    <span className="text-sm font-semibold text-stone-700 dark:text-stone-300">
                       Quest complete: {quest.title}
                     </span>
                   </m.div>
@@ -195,7 +195,7 @@ export function CelebrationOverlay() {
               <button
                 type="button"
                 onClick={handleDismiss}
-                className="mt-6 w-full rounded-2xl bg-zinc-900 py-3.5 font-bold text-white transition hover:bg-zinc-700 active:scale-[0.98] dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
+                className="mt-6 w-full rounded-2xl bg-stone-900 py-3.5 font-bold text-white transition hover:bg-stone-700 active:scale-[0.98] dark:bg-white dark:text-stone-900 dark:hover:bg-stone-200"
               >
                 Keep going
               </button>

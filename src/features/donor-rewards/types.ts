@@ -85,10 +85,22 @@ export interface CelebrationPayload {
   newStreak: number | null;
 }
 
+export interface PersonalGoalTargets {
+  /** how many distinct cause areas to support this year */
+  causesTarget: number;
+  /** how many months in a row to give */
+  monthsTarget: number;
+}
+
 export interface RewardsState {
   balance: number;
   grantedThisYear: number;
+  /** cumulative dollars granted since the fund opened */
+  lifetimeGranted: number;
+  /** investment returns earned inside the fund this year */
+  investmentGains: number;
   annualGoal: number;
+  personalGoals: PersonalGoalTargets;
   xp: number;
   streakMonths: number;
   longestStreak: number;

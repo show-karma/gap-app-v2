@@ -271,7 +271,10 @@ export const LEAGUE_PEERS: Omit<LeaguePeer, "points" | "isUser">[] = [
 export const INITIAL_STATE: RewardsState = {
   balance: 48200,
   grantedThisYear: 16750,
+  lifetimeGranted: 64500,
+  investmentGains: 3850,
   annualGoal: 25000,
+  personalGoals: { causesTarget: 6, monthsTarget: 12 },
   xp: 2140,
   streakMonths: 4,
   longestStreak: 7,
