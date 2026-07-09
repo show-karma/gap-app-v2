@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { CommunityProjectEvaluatorPage } from "@/components/Pages/Communities/CommunityProjectEvaluatorPage";
+import { api } from "@/utilities/api/client";
+import { orElse } from "@/utilities/api/or-else";
 import { envVars } from "@/utilities/enviromentVars";
-import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { DEFAULT_DESCRIPTION, DEFAULT_TITLE, SITE_URL, twitterMeta } from "@/utilities/meta";
 import { getCommunityDetails } from "@/utilities/queries/v2/community";
@@ -13,6 +14,11 @@ type Params = Promise<{
 type SearchParams = Promise<{
   programId: string;
 }>;
+
+interface CommunityProgramSummary {
+  programId?: string;
+  metadata?: { title?: string };
+}
 
 export async function generateMetadata({
   params,
@@ -39,9 +45,12 @@ export async function generateMetadata({
   };
 
   if (programId) {
-    const [programsRes, _programsError] = await fetchData(INDEXER.COMMUNITY.PROGRAMS(communityId));
-    const program = programsRes?.find((p: Record<string, unknown>) => p.programId === programId)
-      ?.metadata?.title;
+    // TODO(#1775): add zod schema
+    const programsRes = await orElse<CommunityProgramSummary[]>(
+      api.get<CommunityProgramSummary[]>(INDEXER.COMMUNITY.PROGRAMS(communityId)),
+      []
+    );
+    const program = programsRes?.find((p) => p.programId === programId)?.metadata?.title;
     if (program) {
       dynamicMetadata = {
         ...dynamicMetadata,

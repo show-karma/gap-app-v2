@@ -28,10 +28,11 @@ vi.mock("next/image", () => ({
   ),
 }));
 
-const mockFetchData = vi.fn();
-vi.mock("@/utilities/fetchData", () => ({
-  __esModule: true,
-  default: (...args: unknown[]) => mockFetchData(...args),
+const mockApiGet = vi.fn();
+vi.mock("@/utilities/api/client", () => ({
+  api: {
+    get: (...args: unknown[]) => mockApiGet(...args),
+  },
 }));
 
 vi.mock("@/utilities/formatDate", () => ({
@@ -205,12 +206,9 @@ describe("CommunityProjectEvaluatorPage", () => {
 
   describe("initial load - no program selected", () => {
     beforeEach(() => {
-      mockFetchData.mockResolvedValue([
-        [
-          createMockProgram(),
-          createMockProgram({ programId: "program-2", name: "Second Program" }),
-        ],
-        null,
+      mockApiGet.mockResolvedValue([
+        createMockProgram(),
+        createMockProgram({ programId: "program-2", name: "Second Program" }),
       ]);
     });
 
@@ -250,7 +248,7 @@ describe("CommunityProjectEvaluatorPage", () => {
     });
 
     it("shows loading spinner while programs are fetching", () => {
-      mockFetchData.mockReturnValue(new Promise(() => {}));
+      mockApiGet.mockReturnValue(new Promise(() => {}));
       renderWithProviders(<CommunityProjectEvaluatorPage />);
 
       const spinner = document.querySelector(".animate-spin");
@@ -273,23 +271,20 @@ describe("CommunityProjectEvaluatorPage", () => {
       mockSearchParams = new URLSearchParams("programId=program-1");
 
       // First call returns programs, second returns projects
-      mockFetchData.mockResolvedValueOnce([[createMockProgram()], null]).mockResolvedValue([
-        [
-          createMockProject(),
-          createMockProject({
-            projectUID: "project-uid-2",
-            projectDetails: {
-              uid: "project-uid-2",
-              title: "Beta Project",
-              slug: "beta-project",
-            },
-            milestones: [],
-            updates: [],
-            project_categories: ["NFT"],
-            impacts: [{ id: "impact-1" }],
-          }),
-        ],
-        null,
+      mockApiGet.mockResolvedValueOnce([createMockProgram()]).mockResolvedValue([
+        createMockProject(),
+        createMockProject({
+          projectUID: "project-uid-2",
+          projectDetails: {
+            uid: "project-uid-2",
+            title: "Beta Project",
+            slug: "beta-project",
+          },
+          milestones: [],
+          updates: [],
+          project_categories: ["NFT"],
+          impacts: [{ id: "impact-1" }],
+        }),
       ]);
     });
 
@@ -411,12 +406,9 @@ describe("CommunityProjectEvaluatorPage", () => {
   describe("filtering behavior", () => {
     it("fetches projects when a program is selected via URL params", async () => {
       // First render: no program selected, loads programs
-      mockFetchData.mockResolvedValue([
-        [
-          createMockProgram(),
-          createMockProgram({ programId: "program-2", name: "Second Program" }),
-        ],
-        null,
+      mockApiGet.mockResolvedValue([
+        createMockProgram(),
+        createMockProgram({ programId: "program-2", name: "Second Program" }),
       ]);
 
       const { unmount } = renderWithProviders(<CommunityProjectEvaluatorPage />);
@@ -425,30 +417,26 @@ describe("CommunityProjectEvaluatorPage", () => {
         expect(screen.getByTestId("program-search-dropdown")).toBeInTheDocument();
       });
 
-      const initialCallCount = mockFetchData.mock.calls.length;
+      const initialCallCount = mockApiGet.mock.calls.length;
       unmount();
 
       // Now render with a program pre-selected - this triggers a project fetch
       mockSearchParams = new URLSearchParams("programId=program-2");
-      mockFetchData
+      mockApiGet
         .mockResolvedValueOnce([
-          [createMockProgram({ programId: "program-2", name: "Second Program" })],
-          null,
+          createMockProgram({ programId: "program-2", name: "Second Program" }),
         ])
         .mockResolvedValue([
-          [
-            createMockProject({
-              projectDetails: { uid: "p-2", title: "Filtered Project", slug: "filtered" },
-            }),
-          ],
-          null,
+          createMockProject({
+            projectDetails: { uid: "p-2", title: "Filtered Project", slug: "filtered" },
+          }),
         ]);
 
       renderWithProviders(<CommunityProjectEvaluatorPage />);
 
       await waitFor(() => {
         // Verify a project fetch occurred (more calls than initial load)
-        expect(mockFetchData.mock.calls.length).toBeGreaterThan(initialCallCount);
+        expect(mockApiGet.mock.calls.length).toBeGreaterThan(initialCallCount);
       });
     });
   });
@@ -456,9 +444,9 @@ describe("CommunityProjectEvaluatorPage", () => {
   describe("chat messages rendering", () => {
     beforeEach(() => {
       mockSearchParams = new URLSearchParams("programId=program-1");
-      mockFetchData
-        .mockResolvedValueOnce([[createMockProgram()], null])
-        .mockResolvedValue([[createMockProject()], null]);
+      mockApiGet
+        .mockResolvedValueOnce([createMockProgram()])
+        .mockResolvedValue([createMockProject()]);
     });
 
     it("renders chat messages when useChat returns non-empty messages", async () => {
@@ -523,9 +511,9 @@ describe("CommunityProjectEvaluatorPage", () => {
   describe("chat input interaction", () => {
     beforeEach(() => {
       mockSearchParams = new URLSearchParams("programId=program-1");
-      mockFetchData
-        .mockResolvedValueOnce([[createMockProgram()], null])
-        .mockResolvedValue([[createMockProject()], null]);
+      mockApiGet
+        .mockResolvedValueOnce([createMockProgram()])
+        .mockResolvedValue([createMockProject()]);
     });
 
     it("calls handleSubmit when send button is clicked with input", async () => {
@@ -577,9 +565,10 @@ describe("CommunityProjectEvaluatorPage", () => {
 
   describe("error handling", () => {
     it("handles program fetch error gracefully - renders with empty programs", async () => {
-      // When fetch returns error, programs is set to null which causes crash
-      // This demonstrates the component needs null-safety. Return empty array for resilience.
-      mockFetchData.mockResolvedValue([[], "Error fetching programs"]);
+      // When the fetch rejects, programs stays at the useQuery default ([])
+      // instead of crashing. This demonstrates the component needs
+      // null-safety, not that the error is swallowed.
+      mockApiGet.mockRejectedValue(new Error("Error fetching programs"));
 
       renderWithProviders(<CommunityProjectEvaluatorPage />);
 
@@ -589,7 +578,7 @@ describe("CommunityProjectEvaluatorPage", () => {
     });
 
     it("renders dropdown with no options when no programs exist", async () => {
-      mockFetchData.mockResolvedValue([[], null]);
+      mockApiGet.mockResolvedValue([]);
 
       renderWithProviders(<CommunityProjectEvaluatorPage />);
 

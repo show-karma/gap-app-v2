@@ -3,13 +3,30 @@ import { Dialog, Transition } from "@headlessui/react";
 import { ArrowPathIcon, ChartBarSquareIcon } from "@heroicons/react/24/solid";
 import { Fragment, useState } from "react";
 import { Button } from "@/components/Utilities/Button";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 
 import { errorManager } from "./Utilities/errorManager";
 
 interface CommunityStatsProps {
   communityId: string;
+}
+
+interface CommunityStatsData {
+  projects?: number;
+  ProjectEdits?: number;
+  ProjectEndorsements?: number;
+  ProjectImpacts?: number;
+  ProjectImpactVerifieds?: number;
+  grants?: number;
+  GrantEdits?: number;
+  GrantUpdates?: number;
+  GrantUpdateStatuses?: number;
+  GrantCompleted?: number;
+  Milestones?: number;
+  MilestoneCompleted?: number;
+  MilestoneVerified?: number;
+  MemberOf?: number;
 }
 
 export default function CommunityStats({ communityId }: CommunityStatsProps) {
@@ -21,49 +38,47 @@ export default function CommunityStats({ communityId }: CommunityStatsProps) {
   async function fetchStats() {
     setLoading(true);
     try {
-      const [data, error]: any = await fetchData(INDEXER.COMMUNITY.STATS(communityId as string));
-      if (error) {
-        console.error("Error fetching data:", error);
-        setError(error);
-      } else {
-        if (data?.projects) {
-          setStats({
-            "No. of Projects": data?.projects,
-            "No. of Project Edits": data?.ProjectEdits,
-            "No. of Project Endorsements": data?.ProjectEndorsements,
-            "No. of Project Impacts": data?.ProjectImpacts,
-            "No. of Project Impact Verifications": data?.ProjectImpactVerifieds,
-            "No. of Grants": data?.grants,
-            "No. of Grant Edits": data?.GrantEdits,
-            "No. of Grant Updates": data?.GrantUpdates,
-            "No. of Grant Update Status Posts": data?.GrantUpdateStatuses,
-            "No. of Grants Completed": data?.GrantCompleted,
-            "No. of Milestones": data?.Milestones,
-            "No. of Milestones Completed": data?.MilestoneCompleted,
-            "No. of Milestones Verifications": data?.MilestoneVerified,
-            "No. of Members Added": data?.MemberOf,
-            "Total Attestations":
-              data?.projects +
-              data?.grants +
-              data?.GrantUpdates +
-              data?.GrantCompleted +
-              data?.ProjectImpacts +
-              data?.MemberOf +
-              data?.ProjectEndorsements +
-              data?.Milestones +
-              data?.MilestoneCompleted +
-              data?.MilestoneVerified +
-              data?.ProjectImpactVerifieds +
-              data?.GrantUpdateStatuses +
-              data?.GrantEdits +
-              data?.ProjectEdits,
-          });
+      // TODO(#1775): add zod schema
+      const data = await api.get<CommunityStatsData>(
+        INDEXER.COMMUNITY.STATS(communityId as string)
+      );
+      if (data?.projects) {
+        setStats({
+          "No. of Projects": data?.projects,
+          "No. of Project Edits": data?.ProjectEdits,
+          "No. of Project Endorsements": data?.ProjectEndorsements,
+          "No. of Project Impacts": data?.ProjectImpacts,
+          "No. of Project Impact Verifications": data?.ProjectImpactVerifieds,
+          "No. of Grants": data?.grants,
+          "No. of Grant Edits": data?.GrantEdits,
+          "No. of Grant Updates": data?.GrantUpdates,
+          "No. of Grant Update Status Posts": data?.GrantUpdateStatuses,
+          "No. of Grants Completed": data?.GrantCompleted,
+          "No. of Milestones": data?.Milestones,
+          "No. of Milestones Completed": data?.MilestoneCompleted,
+          "No. of Milestones Verifications": data?.MilestoneVerified,
+          "No. of Members Added": data?.MemberOf,
+          "Total Attestations":
+            (data?.projects ?? 0) +
+            (data?.grants ?? 0) +
+            (data?.GrantUpdates ?? 0) +
+            (data?.GrantCompleted ?? 0) +
+            (data?.ProjectImpacts ?? 0) +
+            (data?.MemberOf ?? 0) +
+            (data?.ProjectEndorsements ?? 0) +
+            (data?.Milestones ?? 0) +
+            (data?.MilestoneCompleted ?? 0) +
+            (data?.MilestoneVerified ?? 0) +
+            (data?.ProjectImpactVerifieds ?? 0) +
+            (data?.GrantUpdateStatuses ?? 0) +
+            (data?.GrantEdits ?? 0) +
+            (data?.ProjectEdits ?? 0),
+        });
 
-          setError("");
-        } else {
-          console.error("No stats found for community:", communityId);
-          setError("No stats found for community");
-        }
+        setError("");
+      } else {
+        console.error("No stats found for community:", communityId);
+        setError("No stats found for community");
       }
     } catch (error: any) {
       console.error("Error fetching stats:", error);

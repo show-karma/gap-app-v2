@@ -33,7 +33,7 @@ import { useProjectStore } from "@/store";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
 import type { ImpactIndicatorWithData } from "@/types/impactMeasurement";
 import type { Project as ProjectResponse } from "@/types/v2/project";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { formatDate } from "@/utilities/formatDate";
 import { sendImpactAnswers } from "@/utilities/impact";
 import { INDEXER } from "@/utilities/indexer";
@@ -614,7 +614,18 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
         let retries = 1000;
         const txHash = res?.tx[0]?.hash;
         if (txHash) {
-          await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, projectUpdate.chainID), "POST", {});
+          try {
+            await api.post(INDEXER.ATTESTATION_LISTENER(txHash, projectUpdate.chainID), {});
+          } catch (listenerError) {
+            // SUPPRESSED: best-effort attestation-listener notification; the
+            // indexing polling loop below independently retries refetchUpdates()
+            // regardless of whether this notify succeeds, matching the legacy
+            // fetchData behavior which never surfaced errors from this call.
+            errorManager("Failed to notify attestation listener", listenerError, {
+              projectUID: projectUpdate.uid,
+              txHash,
+            });
+          }
         }
         updateStep("indexing");
         while (retries > 0) {

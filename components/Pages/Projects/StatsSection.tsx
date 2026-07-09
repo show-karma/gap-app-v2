@@ -2,16 +2,25 @@
 
 import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
-import fetchData from "@/utilities/fetchData";
+import { z } from "zod";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 
-interface GlobalStats {
-  activeCommunities: number;
-  totalProjectUpdates: number;
-  totalProjects: number;
-  totalGrants: number;
-  activeBuilders: number;
-}
+// The indexer response has never been runtime-validated here — fields are
+// marked optional so this schema is not stricter than the reality it
+// replaces.
+const GlobalStatsSchema = z
+  .object({
+    activeCommunities: z.number(),
+    totalProjectUpdates: z.number(),
+    totalProjects: z.number(),
+    totalGrants: z.number(),
+    activeBuilders: z.number(),
+  })
+  .partial()
+  .passthrough();
+
+type GlobalStats = z.infer<typeof GlobalStatsSchema>;
 
 const formatNumber = (num: number | undefined): string => {
   if (num === undefined || num === null) return "...";
@@ -23,22 +32,11 @@ const formatNumber = (num: number | undefined): string => {
 export const ProjectsStatsSection = () => {
   const { data: stats, isLoading } = useQuery<GlobalStats>({
     queryKey: ["projects-global-stats"],
-    queryFn: async () => {
-      const [response, error] = await fetchData(
-        INDEXER.COMMUNITY.GLOBAL_STATS(),
-        "GET",
-        {},
-        {},
-        {},
-        false
-      );
-
-      if (error || !response) {
-        throw new Error(error || "Failed to fetch stats");
-      }
-
-      return response as GlobalStats;
-    },
+    queryFn: () =>
+      api.get<GlobalStats>(INDEXER.COMMUNITY.GLOBAL_STATS(), {
+        isAuthorized: false,
+        schema: GlobalStatsSchema,
+      }),
     staleTime: 5 * 60 * 1000,
   });
 

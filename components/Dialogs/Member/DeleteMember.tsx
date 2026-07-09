@@ -12,7 +12,7 @@ import { useOffChainRevoke } from "@/hooks/useOffChainRevoke";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
 import { useProjectStore } from "@/store";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 import { queryClient } from "@/utilities/query-client";
 import { getProjectById } from "@/utilities/sdk";
@@ -64,12 +64,11 @@ export const DeleteMemberDialog: FC<DeleteMemberDialogProps> = ({ memberAddress 
       );
       if (!member) {
         // Ghost member: attestation already revoked in V1, clean up V2 data
-        const [, error] = await fetchData(
-          INDEXER.ATTESTATION_LISTENER(project.uid, project.chainID),
-          "POST",
-          {}
-        );
-        if (error) throw new Error("Failed to clean up ghost member data");
+        try {
+          await api.post(INDEXER.ATTESTATION_LISTENER(project.uid, project.chainID), {});
+        } catch {
+          throw new Error("Failed to clean up ghost member data");
+        }
         await refreshProject();
         showSuccess("Member removed successfully");
         closeModal();
@@ -101,7 +100,7 @@ export const DeleteMemberDialog: FC<DeleteMemberDialogProps> = ({ memberAddress 
         changeStepperStep("indexing");
         const txHash = res?.tx[0]?.hash;
         if (txHash) {
-          await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, project.chainID), "POST", {});
+          await api.post(INDEXER.ATTESTATION_LISTENER(txHash, project.chainID), {});
         }
         await checkIfMemberRemoved();
         changeStepperStep("indexed");

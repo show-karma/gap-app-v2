@@ -19,7 +19,7 @@ import { useIsCommunityAdmin } from "@/src/core/rbac/context/permission-context"
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useGrantStore } from "@/store/grant";
 import type { GrantMilestone } from "@/types/v2/grant";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { formatDate } from "@/utilities/formatDate";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
@@ -124,11 +124,7 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
           changeStepperStep("indexing");
           const txHash = res?.tx[0]?.hash;
           if (txHash) {
-            await fetchData(
-              INDEXER.ATTESTATION_LISTENER(txHash, instanceMilestone.chainID),
-              "POST",
-              {}
-            );
+            await api.post(INDEXER.ATTESTATION_LISTENER(txHash, instanceMilestone.chainID), {});
           }
           await checkIfAttestationExists(() => {
             changeStepperStep("indexed");

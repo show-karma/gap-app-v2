@@ -122,11 +122,12 @@ vi.mock("@/hooks/useWallet", () => ({
   }),
 }));
 
-// Mock fetchData
-const mockFetchData = vi.fn();
-vi.mock("@/utilities/fetchData", () => ({
-  __esModule: true,
-  default: (...args: any[]) => mockFetchData(...args),
+// Mock the typed api client
+const mockApiPost = vi.fn();
+vi.mock("@/utilities/api/client", () => ({
+  api: {
+    post: (...args: any[]) => mockApiPost(...args),
+  },
 }));
 
 // Mock INDEXER
@@ -257,7 +258,7 @@ describe("DeleteMemberDialog", () => {
       mockGetProjectById.mockResolvedValue(sdkProjectWithoutGhostMember);
 
       // Mock the V2 API call to remove the ghost member
-      mockFetchData.mockResolvedValue([{ success: true }, null]);
+      mockApiPost.mockResolvedValue({ success: true });
 
       // After cleanup, refreshProject returns project without the ghost member
       mockRefreshProject.mockResolvedValue({
@@ -303,7 +304,7 @@ describe("DeleteMemberDialog", () => {
       };
 
       mockGetProjectById.mockResolvedValue(sdkProjectWithoutGhostMember);
-      mockFetchData.mockResolvedValue([null, new Error("API error")]);
+      mockApiPost.mockRejectedValue(new Error("API error"));
 
       await openDialogAndConfirm(GHOST_MEMBER_ADDRESS);
 
@@ -345,7 +346,7 @@ describe("DeleteMemberDialog", () => {
       };
 
       mockGetProjectById.mockResolvedValue(sdkProjectWithMember);
-      mockFetchData.mockResolvedValue([null, null]);
+      mockApiPost.mockResolvedValue(null);
 
       // After revoke, refreshProject returns project without the member
       mockRefreshProject.mockResolvedValue({

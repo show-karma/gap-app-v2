@@ -9,7 +9,7 @@ import { IndicatorForm, type IndicatorFormData } from "@/components/Forms/Indica
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useIndicators } from "@/hooks/useIndicators";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import type { Indicator } from "@/utilities/queries/getIndicatorsByCommunity";
@@ -90,8 +90,7 @@ export const IndicatorsHub = ({ communitySlug, communityId }: IndicatorsHubProps
   const handleDelete = async (id: string) => {
     try {
       setDeletingId(id);
-      const [, error] = await fetchData(INDEXER.INDICATORS.V2.DELETE(id), "DELETE");
-      if (error) throw error;
+      await api.delete(INDEXER.INDICATORS.V2.DELETE(id));
 
       refetch();
       toast.success("Indicator deleted successfully");
