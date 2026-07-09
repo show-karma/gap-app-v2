@@ -1,13 +1,14 @@
 import { dehydrate, HydrationBoundary, QueryClient } from "@tanstack/react-query";
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
 import { cache } from "react";
 import { PublicControlCenter } from "@/components/Pages/Communities/Financials/PublicControlCenter";
+import { Link } from "@/src/components/navigation/Link";
 import { getCommunityPayoutsPublic } from "@/src/features/payout-disbursement/services/payout-disbursement.service";
 import { api } from "@/utilities/api/client";
 import { HttpError, isApiError } from "@/utilities/api/errors";
 import { FINANCIALS_ENABLED_COMMUNITIES } from "@/utilities/community-flags";
 import { INDEXER } from "@/utilities/indexer";
+import { PAGES } from "@/utilities/pages";
 import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
 import { getCommunityDetails } from "@/utilities/queries/v2/getCommunityData";
 
@@ -81,11 +82,27 @@ async function prefetchFinancialsData(queryClient: QueryClient, communityId: str
 export default async function FinancialsPage({ params }: { params: Params }) {
   const { communityId } = await params;
 
-  // Financials is a per-community feature flag. For a community without it
-  // enabled the route genuinely does not exist — render the not-found state
-  // (clear feedback) rather than silently redirecting to the grants grid.
+  // Financials is a per-community feature flag. For a community that exists but
+  // hasn't enabled it, render an explicit "not available" state with a way back
+  // — clear feedback, rather than a silent redirect (looks broken) or a generic
+  // "community not found" (misleading — the community exists).
   if (!FINANCIALS_ENABLED_COMMUNITIES.includes(communityId)) {
-    notFound();
+    const community = await getCachedCommunity(communityId);
+    const communityName = community?.details?.name || communityId;
+    return (
+      <div className="flex flex-col items-center justify-center gap-3 py-24 text-center">
+        <h1 className="text-2xl font-bold">Financials not available</h1>
+        <p className="max-w-md text-muted-foreground">
+          The financials dashboard isn&apos;t enabled for {communityName}.
+        </p>
+        <Link
+          href={PAGES.COMMUNITY.ALL_GRANTS(communityId)}
+          className="mt-2 inline-flex items-center justify-center rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+        >
+          Back to grants
+        </Link>
+      </div>
+    );
   }
 
   const queryClient = new QueryClient({
