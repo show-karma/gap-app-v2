@@ -27,6 +27,7 @@ import { GettingStartedView } from "./v3/GettingStartedView";
 import type { DashModule } from "./v3/module";
 import type { ModuleStatus, ModuleSummary } from "./v3/primitives";
 import { SkeletonList, WarnBar } from "./v3/primitives";
+import { ReviewsInboxSkeleton } from "./v3/ReviewsInboxSkeleton";
 import { SoftShell } from "./v3/SoftShell";
 import {
   buildApplicationsSummary,
@@ -58,7 +59,7 @@ const ProjectsFullView = dynamic(
 );
 const ReviewsFullView = dynamic(
   () => import("./v3/ReviewsFullView").then((m) => m.ReviewsFullView),
-  { ssr: false, loading: drillInFallback }
+  { ssr: false, loading: () => <ReviewsInboxSkeleton /> }
 );
 
 /** Collapse a data source's error/loading/empty flags into a tile status. */

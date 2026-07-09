@@ -7,7 +7,8 @@ import type { FundingProgram } from "@/services/fundingPlatformService";
 import { PermissionProvider } from "@/src/core/rbac/context/permission-context";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
-import { EmptyState, SkeletonList } from "./primitives";
+import { EmptyState } from "./primitives";
+import { ReviewsInboxSkeleton } from "./ReviewsInboxSkeleton";
 import { deriveReviewerCommunities, type ReviewerCommunity } from "./reviewCommunities";
 
 /**
@@ -19,7 +20,7 @@ import { deriveReviewerCommunities, type ReviewerCommunity } from "./reviewCommu
  */
 const ReviewerInboxPage = dynamic(
   () => import("@/components/Inbox/ReviewerInboxPage").then((mod) => mod.ReviewerInboxPage),
-  { ssr: false, loading: () => <SkeletonList count={4} /> }
+  { ssr: false, loading: () => <ReviewsInboxSkeleton /> }
 );
 
 /**
@@ -86,7 +87,7 @@ export function ReviewsFullView({
       ) : null}
 
       <PermissionProvider key={active.id} resourceContext={{ communityId: active.id }}>
-        <ReviewerInboxPage community={active.community} />
+        <ReviewerInboxPage community={active.community} loadingSlot={<ReviewsInboxSkeleton />} />
       </PermissionProvider>
     </section>
   );

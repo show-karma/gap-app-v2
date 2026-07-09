@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { type ReactNode, useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/Utilities/Button";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
@@ -31,9 +31,15 @@ function getSelectedIdFromHash(): string | null {
 
 interface ReviewerInboxPageProps {
   community: Community;
+  /**
+   * Optional placeholder shown while permissions resolve, in place of the
+   * default centered spinner. Lets a host (e.g. the dashboard drill-in) supply
+   * a themed skeleton so the loading state doesn't jump.
+   */
+  loadingSlot?: ReactNode;
 }
 
-export function ReviewerInboxPage({ community }: ReviewerInboxPageProps) {
+export function ReviewerInboxPage({ community, loadingSlot }: ReviewerInboxPageProps) {
   const communityId = community?.details?.slug || community?.uid || "";
   const { authenticated, ready } = useAuth();
   const { isLoading: isRbacLoading } = usePermissionContext();
@@ -84,6 +90,7 @@ export function ReviewerInboxPage({ community }: ReviewerInboxPageProps) {
   );
 
   if (isCheckingPermissions) {
+    if (loadingSlot) return <>{loadingSlot}</>;
     return (
       <div className="flex w-full items-center justify-center py-24">
         <Spinner />
