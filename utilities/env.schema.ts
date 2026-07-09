@@ -69,7 +69,6 @@ export const serverSchema = z.object({
   // Sanity Blog CMS — server-only secrets
   SANITY_VIEWER_TOKEN: z.string().optional().default(""),
   SANITY_WEBHOOK_SECRET: z.string().optional().default(""),
-  SANITY_REVALIDATE_SECRET: z.string().optional().default(""),
   SANITY_PREVIEW_SECRET: z.string().optional().default(""),
 });
 

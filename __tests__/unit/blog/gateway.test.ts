@@ -42,7 +42,6 @@ beforeEach(() => {
   getServerEnvMock.mockReturnValue({
     SANITY_VIEWER_TOKEN: "viewer-token",
     SANITY_WEBHOOK_SECRET: "",
-    SANITY_REVALIDATE_SECRET: "",
     SANITY_PREVIEW_SECRET: "",
   });
 });
