@@ -44,6 +44,9 @@ function MinimalFooter() {
 export function FooterSwitcher({ isWhitelabel }: { isWhitelabel: boolean }) {
   const pathname = usePathname();
 
+  // The embedded Sanity Studio is a full-screen authoring tool with its own
+  // chrome — never wrap it in a site footer, whitelabel or not.
+  if (pathname.startsWith(PAGES.ADMIN_STUDIO)) return null;
   if (isWhitelabel) return <WhitelabelFooter />;
   if (pathname.startsWith(NON_PROFITS_PAGES.HOME)) return null;
   if (isAppRoute(pathname)) return <MinimalFooter />;

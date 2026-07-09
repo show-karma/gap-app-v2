@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { NON_PROFITS_PAGES } from "@/utilities/pages";
+import { NON_PROFITS_PAGES, PAGES } from "@/utilities/pages";
 import { Navbar } from "./navbar";
 
 // The /nonprofits/find-funders section supplies its own navbar via its layout.
@@ -10,6 +10,9 @@ export function GlobalNavbarSlot() {
   const pathname = usePathname();
 
   if (pathname.startsWith(NON_PROFITS_PAGES.HOME)) return null;
+  // The embedded Sanity Studio is a full-screen authoring tool with its own
+  // chrome — never wrap it in the marketing navbar.
+  if (pathname.startsWith(PAGES.ADMIN_STUDIO)) return null;
 
   return (
     <>
