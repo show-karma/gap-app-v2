@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import type { Application } from "@/types/whitelabel-entities";
 import { api } from "@/utilities/api/client";
 import { useUserApplicationsStore } from "../lib/store";
 import type {
