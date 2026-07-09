@@ -33,17 +33,21 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # gate-check is deliberately FAST (~10s): draft check, outputs, pending
+  # status, progress comment. The wait for the Claude Code review used to
+  # live here too, which serialized the ENTIRE pipeline (build, plan, all
+  # shards) behind the review — up to 15 minutes of pure idle. That wait now
+  # lives in review-gate, which runs in parallel with qa-plan and build;
+  # only the Claude-driven jobs (qa-execution, dogfood) gate on it.
   gate-check:
-    # For pull_request events: always run gate-check (we check Claude Code check-run inside).
-    # For workflow_dispatch: always run.
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 5
     outputs:
       should_run: ${{ steps.check.outputs.should_run }}
       pr_number: ${{ steps.check.outputs.pr_number }}
       head_sha: ${{ steps.check.outputs.head_sha }}
     steps:
-      - name: Check Claude Code verdict and PR state
+      - name: Check PR state and set pending status
         id: check
         uses: actions/github-script@v8
         with:
@@ -76,122 +80,6 @@ jobs:
 
             core.setOutput('head_sha', headSha);
             core.setOutput('pr_number', prNumber);
-
-            // For pull_request events: wait for the "Claude Code" check-run
-            // on this commit to finish, then evaluate. We can't rely on
-            // claude-completion to re-trigger QA — pull_request workflows
-            // only fire on push events, not on workflow_run, and a cancelled
-            // claude (e.g. via cancel-in-progress) re-triggers nothing.
-            // So poll here instead with a generous timeout.
-            if (!isManual) {
-              const sleep = (ms) => new Promise(r => setTimeout(r, ms));
-              const POLL_INTERVAL_MS = 30_000;
-              const MAX_WAIT_MS = 15 * 60 * 1000; // 15 min; gate-check job timeout is 20 min
-              const startedAt = Date.now();
-
-              let proceed = false;
-              while (true) {
-                const { data: checkRuns } = await github.rest.checks.listForRef({
-                  owner, repo, ref: headSha, per_page: 100
-                });
-                const claudeRuns = checkRuns.check_runs
-                  .filter(r => r.name === 'Claude Code')
-                  .sort((a, b) => new Date(b.started_at) - new Date(a.started_at));
-
-                // Also fetch workflow runs as a fallback signal — claude
-                // may be cancelled before publishing its check-run.
-                const { data: wfRunsList } = await github.rest.actions.listWorkflowRunsForRepo({
-                  owner, repo, head_sha: headSha, per_page: 50
-                });
-                const claudeWfRuns = wfRunsList.workflow_runs.filter(r => r.name === 'Claude Code');
-
-                const elapsedSec = Math.round((Date.now() - startedAt) / 1000);
-
-                if (claudeRuns.length === 0 && claudeWfRuns.length === 0) {
-                  // Nothing yet — give it a moment to register
-                  if (Date.now() - startedAt > 2 * 60 * 1000) {
-                    console.log(`No "Claude Code" check-run or workflow run after ${elapsedSec}s — proceeding without gating`);
-                    proceed = true;
-                    break;
-                  }
-                  console.log(`No "Claude Code" run yet (${elapsedSec}s elapsed) — waiting...`);
-                  await sleep(POLL_INTERVAL_MS);
-                  continue;
-                }
-
-                if (claudeRuns.length > 0) {
-                  const latest = claudeRuns[0];
-                  if (latest.status === 'completed') {
-                    if (latest.conclusion === 'success') {
-                      console.log(`✅ Claude Code check succeeded (after ${elapsedSec}s)`);
-                      proceed = true;
-                      break;
-                    }
-                    if (latest.conclusion === 'cancelled') {
-                      console.log(`"Claude Code" check was cancelled (after ${elapsedSec}s) — proceeding (cancelled ≠ failed)`);
-                      proceed = true;
-                      break;
-                    }
-                    console.log(`"Claude Code" check concluded with ${latest.conclusion} — skipping QA`);
-                    core.setOutput('should_run', 'false');
-                    return;
-                  }
-                  console.log(`"Claude Code" check is ${latest.status} (${elapsedSec}s elapsed) — waiting...`);
-                } else {
-                  // No check-run, but a workflow exists — inspect it
-                  const inProgress = claudeWfRuns.find(r => r.status !== 'completed');
-                  if (!inProgress) {
-                    const conclusions = claudeWfRuns.map(r => r.conclusion);
-                    if (conclusions.every(c => c === 'cancelled')) {
-                      console.log(`"Claude Code" workflow runs all cancelled (${claudeWfRuns.length}, after ${elapsedSec}s) — proceeding (cancelled ≠ failed)`);
-                    } else {
-                      console.log(`"Claude Code" workflow finished without publishing a check-run (conclusions: ${conclusions.join(', ')}) — proceeding`);
-                    }
-                    proceed = true;
-                    break;
-                  }
-                  console.log(`"Claude Code" workflow is ${inProgress.status} (${elapsedSec}s elapsed) — waiting...`);
-                }
-
-                if (Date.now() - startedAt > MAX_WAIT_MS) {
-                  console.log(`Timed out waiting for "Claude Code" after ${elapsedSec}s — proceeding without gating`);
-                  proceed = true;
-                  break;
-                }
-
-                await sleep(POLL_INTERVAL_MS);
-              }
-
-              if (!proceed) {
-                core.setOutput('should_run', 'false');
-                return;
-              }
-
-              // Additionally verify the PR-review verdict comment is APPROVE
-              const { data: comments } = await github.rest.issues.listComments({
-                owner, repo, issue_number: prNumber, per_page: 100
-              });
-
-              const reviewComment = [...comments].reverse().find(c =>
-                (c.user.login === 'github-actions[bot]' || c.user.login.includes('claude') || c.user.login.includes('karma')) &&
-                (c.body.includes('APPROVE') || c.body.includes('REQUEST CHANGES'))
-              );
-
-              if (reviewComment) {
-                const verdict = reviewComment.body;
-                const isApproved = (verdict.includes('✅') || verdict.includes('⚠️')) && verdict.includes('APPROVE') && !verdict.includes('REQUEST CHANGES');
-                if (!isApproved) {
-                  console.log('Review verdict is REQUEST CHANGES — skipping QA');
-                  core.setOutput('should_run', 'false');
-                  return;
-                }
-                console.log('✅ Review approved');
-              } else {
-                console.log('No review verdict comment found — proceeding (Claude Code check was successful)');
-              }
-            } else {
-              console.log('Manual trigger — skipping Claude Code check');
-            }
 
             // Set pending commit status + post/update consolidated progress comment
             await github.rest.repos.createCommitStatus({
@@ -230,6 +118,155 @@ jobs:
             }
 
             core.setOutput('should_run', 'true');
+
+  # review-gate waits for the "Claude Code" review check on the head commit
+  # and reads the review verdict comment. It runs IN PARALLEL with qa-plan
+  # and build — only the Claude-driven jobs (qa-execution, dogfood chain)
+  # gate on its `approved` output, so the review wait no longer sits in
+  # front of the build. On a REQUEST CHANGES verdict the plan/build minutes
+  # are sunk cost — acceptable: reviews pass far more often than not, and
+  # the wall-clock win on approved PRs is large (up to 15 min).
+  review-gate:
+    needs: gate-check
+    if: needs.gate-check.outputs.should_run == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    outputs:
+      approved: ${{ steps.check.outputs.approved }}
+    steps:
+      - name: Wait for Claude Code check and review verdict
+        id: check
+        uses: actions/github-script@v8
+        env:
+          HEAD_SHA: ${{ needs.gate-check.outputs.head_sha }}
+          PR_NUMBER: ${{ needs.gate-check.outputs.pr_number }}
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const isManual = context.eventName === 'workflow_dispatch';
+            const headSha = process.env.HEAD_SHA;
+            const prNumber = parseInt(process.env.PR_NUMBER, 10);
+
+            if (isManual) {
+              console.log('Manual trigger — skipping Claude Code check');
+              core.setOutput('approved', 'true');
+              return;
+            }
+
+            // Wait for the "Claude Code" check-run on this commit to finish,
+            // then evaluate. We can't rely on claude-completion to re-trigger
+            // QA — pull_request workflows only fire on push events, not on
+            // workflow_run, and a cancelled claude (e.g. via
+            // cancel-in-progress) re-triggers nothing. So poll here instead
+            // with a generous timeout.
+            const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+            const POLL_INTERVAL_MS = 30_000;
+            const MAX_WAIT_MS = 15 * 60 * 1000; // 15 min; job timeout is 20 min
+            const startedAt = Date.now();
+
+            let proceed = false;
+            while (true) {
+              const { data: checkRuns } = await github.rest.checks.listForRef({
+                owner, repo, ref: headSha, per_page: 100
+              });
+              const claudeRuns = checkRuns.check_runs
+                .filter(r => r.name === 'Claude Code')
+                .sort((a, b) => new Date(b.started_at) - new Date(a.started_at));
+
+              // Also fetch workflow runs as a fallback signal — claude
+              // may be cancelled before publishing its check-run.
+              const { data: wfRunsList } = await github.rest.actions.listWorkflowRunsForRepo({
+                owner, repo, head_sha: headSha, per_page: 50
+              });
+              const claudeWfRuns = wfRunsList.workflow_runs.filter(r => r.name === 'Claude Code');
+
+              const elapsedSec = Math.round((Date.now() - startedAt) / 1000);
+
+              if (claudeRuns.length === 0 && claudeWfRuns.length === 0) {
+                // Nothing yet — give it a moment to register
+                if (Date.now() - startedAt > 2 * 60 * 1000) {
+                  console.log(`No "Claude Code" check-run or workflow run after ${elapsedSec}s — proceeding without gating`);
+                  proceed = true;
+                  break;
+                }
+                console.log(`No "Claude Code" run yet (${elapsedSec}s elapsed) — waiting...`);
+                await sleep(POLL_INTERVAL_MS);
+                continue;
+              }
+
+              if (claudeRuns.length > 0) {
+                const latest = claudeRuns[0];
+                if (latest.status === 'completed') {
+                  if (latest.conclusion === 'success') {
+                    console.log(`✅ Claude Code check succeeded (after ${elapsedSec}s)`);
+                    proceed = true;
+                    break;
+                  }
+                  if (latest.conclusion === 'cancelled') {
+                    console.log(`"Claude Code" check was cancelled (after ${elapsedSec}s) — proceeding (cancelled ≠ failed)`);
+                    proceed = true;
+                    break;
+                  }
+                  console.log(`"Claude Code" check concluded with ${latest.conclusion} — skipping QA`);
+                  core.setOutput('approved', 'false');
+                  return;
+                }
+                console.log(`"Claude Code" check is ${latest.status} (${elapsedSec}s elapsed) — waiting...`);
+              } else {
+                // No check-run, but a workflow exists — inspect it
+                const inProgress = claudeWfRuns.find(r => r.status !== 'completed');
+                if (!inProgress) {
+                  const conclusions = claudeWfRuns.map(r => r.conclusion);
+                  if (conclusions.every(c => c === 'cancelled')) {
+                    console.log(`"Claude Code" workflow runs all cancelled (${claudeWfRuns.length}, after ${elapsedSec}s) — proceeding (cancelled ≠ failed)`);
+                  } else {
+                    console.log(`"Claude Code" workflow finished without publishing a check-run (conclusions: ${conclusions.join(', ')}) — proceeding`);
+                  }
+                  proceed = true;
+                  break;
+                }
+                console.log(`"Claude Code" workflow is ${inProgress.status} (${elapsedSec}s elapsed) — waiting...`);
+              }
+
+              if (Date.now() - startedAt > MAX_WAIT_MS) {
+                console.log(`Timed out waiting for "Claude Code" after ${elapsedSec}s — proceeding without gating`);
+                proceed = true;
+                break;
+              }
+
+              await sleep(POLL_INTERVAL_MS);
+            }
+
+            if (!proceed) {
+              core.setOutput('approved', 'false');
+              return;
+            }
+
+            // Additionally verify the PR-review verdict comment is APPROVE
+            const { data: comments } = await github.rest.issues.listComments({
+              owner, repo, issue_number: prNumber, per_page: 100
+            });
+
+            const reviewComment = [...comments].reverse().find(c =>
+              (c.user.login === 'github-actions[bot]' || c.user.login.includes('claude') || c.user.login.includes('karma')) &&
+              (c.body.includes('APPROVE') || c.body.includes('REQUEST CHANGES'))
+            );
+
+            if (reviewComment) {
+              const verdict = reviewComment.body;
+              const isApproved = (verdict.includes('✅') || verdict.includes('⚠️')) && verdict.includes('APPROVE') && !verdict.includes('REQUEST CHANGES');
+              if (!isApproved) {
+                console.log('Review verdict is REQUEST CHANGES — skipping QA');
+                core.setOutput('approved', 'false');
+                return;
+              }
+              console.log('✅ Review approved');
+            } else {
+              console.log('No review verdict comment found — proceeding (Claude Code check was successful)');
+            }
+
+            core.setOutput('approved', 'true');
 
   qa-plan:
     needs: gate-check
@@ -351,20 +388,24 @@ jobs:
           # empty qa-results file and exits in <30s — see PR #1378's
           # public shard for a real example).
           #
-          # Prefixes with 4+ scenarios are split into two round-robin
-          # sub-shards (`public-1of2`, `public-2of2`, ...) — Claude execution
-          # time is the pipeline's critical path and scales linearly with
-          # scenario count, so halving the per-runner scenario load roughly
-          # halves the tail. The qa-executor skill's "Sharded Execution"
-          # section defines the `<prefix>-<k>of<n>` contract.
+          # Claude execution time is the pipeline's critical path and scales
+          # linearly with scenario count (~90s per scenario), so fan out to
+          # round-robin sub-shards (`public-1of2`, `auth-2of3`, ...) keeping
+          # each shard at ~3 scenarios, capped at 3 sub-shards per prefix to
+          # bound runner + token spend. The qa-executor skill's "Sharded
+          # Execution" section defines the generic `<prefix>-<k>of<n>`
+          # contract.
           SHARDS=$(python3 -c "
-          import json
+          import json, math
           shards = []
           for prefix, count in [('public', $PUBLIC), ('auth', $AUTH)]:
-              if count >= 4:
-                  shards += [f'{prefix}-1of2', f'{prefix}-2of2']
-              elif count > 0:
+              if count <= 0:
+                  continue
+              n = min(3, math.ceil(count / 3))
+              if n == 1:
                   shards.append(prefix)
+              else:
+                  shards += [f'{prefix}-{k}of{n}' for k in range(1, n + 1)]
           print(json.dumps(shards or ['public']))
           ")
           echo "shards=$SHARDS" >> "$GITHUB_OUTPUT"
@@ -511,7 +552,11 @@ jobs:
   # skill. Each uploads `qa-results-<shard>.json`; the verdict job
   # aggregates by globbing all shards.
   qa-execution:
-    needs: [gate-check, qa-plan, build]
+    # review-gate is in `needs` so Claude tokens are only spent on PRs whose
+    # review passed; it typically resolves well before the build finishes,
+    # so it adds no wall clock on the happy path.
+    needs: [gate-check, qa-plan, build, review-gate]
+    if: needs.review-gate.outputs.approved == 'true'
     runs-on: ubuntu-latest
     # 18 min covers: setup (~3m) + single 14m claude attempt + cleanup (~1m).
     # Single attempt only — retrying a hung claude on the same prompt almost
@@ -776,11 +821,12 @@ jobs:
           if-no-files-found: warn
 
   # dogfood-plan: compute changed UI pages and bucket them into shards.
-  # Runs after qa-plan (to reuse the checkout + diff already done for QA plan)
-  # and in parallel with build (it only inspects file paths, not the build).
+  # Needs only gate-check — it does its own checkout and only inspects file
+  # paths (not the QA plan or the build), so it starts at t≈0 and unblocks
+  # dogfood-auth-prep immediately.
   # Emits dogfood-plan.json: { should_run, shard_count, groups: [["/a"], ["/b"]] }
   dogfood-plan:
-    needs: [gate-check, qa-plan]
+    needs: [gate-check]
     if: needs.gate-check.outputs.should_run == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -893,11 +939,21 @@ jobs:
   # unreachable on shards that touch /oauth/consent or other auth pages.
   # Reuses the existing e2e/tests/auth.setup.ts so the login flow is
   # the same one verified by the smoke + qa-execution suites.
+  # No `needs: build` — this job's own setup (pnpm install + Playwright)
+  # costs ~2 minutes, which used to run strictly AFTER the ~5-minute build.
+  # It now starts alongside the build, does its setup while the app
+  # compiles, and blocks on the "Wait for qa-build artifact" step only at
+  # the moment the artifact is actually needed.
   dogfood-auth-prep:
-    needs: [gate-check, build, dogfood-plan]
-    if: needs.gate-check.outputs.should_run == 'true' && needs.dogfood-plan.outputs.should_run == 'true'
+    needs: [gate-check, dogfood-plan, review-gate]
+    if: >
+      needs.gate-check.outputs.should_run == 'true' &&
+      needs.dogfood-plan.outputs.should_run == 'true' &&
+      needs.review-gate.outputs.approved == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    # 18 min covers the worst case: ~2 min setup + waiting out the build's
+    # full 15-minute timeout + ~1 min login. Median is ~6 min.
+    timeout-minutes: 18
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
@@ -933,6 +989,30 @@ jobs:
       - name: Install Playwright system deps (cache hit)
         if: steps.playwright-cache.outputs.cache-hit == 'true'
         run: pnpm exec playwright install-deps chromium
+
+      - name: Wait for qa-build artifact
+        # Replaces `needs: build` (see job comment). Polls the run's artifact
+        # list until the build job uploads qa-build, and fails fast if the
+        # build job concludes unsuccessfully — no artifact will ever arrive.
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          for i in $(seq 1 190); do
+            if gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/artifacts" \
+                 --jq '.artifacts[].name' | grep -qx 'qa-build'; then
+              echo "qa-build artifact available after ~$(( (i - 1) * 5 ))s of polling"
+              exit 0
+            fi
+            CONCLUSION=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/jobs?per_page=100" \
+              --jq '[.jobs[] | select(.name == "build")][0].conclusion // empty')
+            if [ -n "$CONCLUSION" ] && [ "$CONCLUSION" != "success" ]; then
+              echo "::error::build job concluded '$CONCLUSION' — qa-build artifact will never arrive"
+              exit 1
+            fi
+            sleep 5
+          done
+          echo "::error::Timed out waiting for the qa-build artifact (~16 min)"
+          exit 1
 
       - name: Download prebuilt .next
         uses: actions/download-artifact@v7
@@ -1300,7 +1380,13 @@ jobs:
   # and files GitHub issues for unique pre-existing findings not yet tracked.
   dogfood-aggregate:
     needs: [gate-check, dogfood-plan, dogfood]
-    if: always() && needs.gate-check.outputs.should_run == 'true' && needs.dogfood-plan.outputs.should_run == 'true'
+    # `dogfood.result != 'skipped'` keeps this from spinning up (and filing
+    # nothing) when the dogfood chain was skipped by the review gate.
+    if: >
+      always() &&
+      needs.gate-check.outputs.should_run == 'true' &&
+      needs.dogfood-plan.outputs.should_run == 'true' &&
+      needs.dogfood.result != 'skipped'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -1446,7 +1532,11 @@ jobs:
           if-no-files-found: ignore
 
   verdict:
-    needs: [gate-check, qa-execution, dogfood-plan, dogfood-aggregate]
+    # Runs whenever gate-check ran (always()), INCLUDING when review-gate
+    # rejected — gate-check already set a pending 'qa-pipeline' commit
+    # status, and this is the only job that can overwrite it so it never
+    # dangles as "pending — do not merge".
+    needs: [gate-check, review-gate, qa-execution, dogfood-plan, dogfood-aggregate]
     if: always() && needs.gate-check.outputs.should_run == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -1473,6 +1563,7 @@ jobs:
           HEAD_SHA: ${{ needs.gate-check.outputs.head_sha }}
           PR_NUMBER: ${{ needs.gate-check.outputs.pr_number }}
           RUN_ID: ${{ github.run_id }}
+          REVIEW_APPROVED: ${{ needs.review-gate.outputs.approved }}
           QA_EXEC_RESULT: ${{ needs.qa-execution.result }}
           DOGFOOD_RESULT: ${{ needs.dogfood-aggregate.result }}
           DOGFOOD_SKIPPED: ${{ needs.dogfood-plan.outputs.should_run != 'true' }}
@@ -1482,14 +1573,35 @@ jobs:
             const owner = context.repo.owner;
             const repo = context.repo.repo;
             const sha = process.env.HEAD_SHA;
+            const runUrl = `https://github.com/${owner}/${repo}/actions/runs/${process.env.RUN_ID}`;
             const execResult = process.env.QA_EXEC_RESULT;
             const dogfoodResult = process.env.DOGFOOD_RESULT;
             const dogfoodSkipped = process.env.DOGFOOD_SKIPPED === 'true';
 
+            // review-gate rejected (Claude review failed or verdict was
+            // REQUEST CHANGES): QA never ran, so overwrite the pending
+            // status with an explicit failure instead of leaving it to
+            // dangle or — worse — reporting a false green.
+            if (process.env.REVIEW_APPROVED !== 'true') {
+              const description = 'QA skipped — code review gate did not pass';
+              await github.rest.repos.createCommitStatus({
+                owner, repo, sha,
+                state: 'failure',
+                description,
+                context: 'qa-pipeline',
+                target_url: runUrl
+              });
+              core.setFailed(description + ' (fix review findings; the next push re-runs QA)');
+              return;
+            }
+
             // dogfood-aggregate is 'skipped' when dogfood-plan emitted should_run=false
             // (CI-only PR with no changed UI pages). That is not a failure.
-            const dogfoodFailed = !dogfoodSkipped && dogfoodResult === 'failure';
-            const jobsFailed = execResult === 'failure' || dogfoodFailed;
+            const dogfoodFailed = !dogfoodSkipped && dogfoodResult !== 'success';
+            // exec 'skipped'/'cancelled' with an approved review means QA
+            // should have run but didn't (e.g. build failure) — that must
+            // not produce a green status.
+            const jobsFailed = execResult !== 'success' || dogfoodFailed;
 
             let criticalCount = 0;
             let highCount = 0;
@@ -1536,10 +1648,10 @@ jobs:
             let description;
             if (jobsFailed) {
               const failed = [
-                execResult === 'failure' ? 'QA Execution' : null,
-                dogfoodFailed ? 'Dogfood' : null
+                execResult !== 'success' ? `QA Execution (${execResult})` : null,
+                dogfoodFailed ? `Dogfood (${dogfoodResult})` : null
               ].filter(Boolean).join(', ');
-              description = `${failed} failed — check workflow logs`;
+              description = `${failed} — check workflow logs`;
             } else if (criticalCount > 0 || highCount > 0) {
               description = `${criticalCount} critical, ${highCount} high issues found`;
             } else {
