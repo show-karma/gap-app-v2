@@ -1,4 +1,4 @@
-import { NotesService } from "@/src/features/application-notes/api/notes-service";
+import { getNote, saveNote } from "@/src/features/application-notes/api/notes-service";
 import type { ApplicationNote } from "@/src/features/application-notes/types";
 import fetchData from "@/utilities/fetchData";
 
@@ -33,7 +33,7 @@ describe("NotesService", () => {
       const note = createMockNote();
       mockFetchData.mockResolvedValue([{ note }, null, null, 200] as any);
 
-      const result = await NotesService.getNote("APP-1");
+      const result = await getNote("APP-1");
 
       expect(result).toEqual(note);
       expect(mockFetchData).toHaveBeenCalledWith("/v2/applications/APP-1/notes", "GET");
@@ -42,7 +42,7 @@ describe("NotesService", () => {
     it("should return null when no note exists yet (200 note:null)", async () => {
       mockFetchData.mockResolvedValue([{ note: null }, null, null, 200] as any);
 
-      const result = await NotesService.getNote("APP-1");
+      const result = await getNote("APP-1");
 
       expect(result).toBeNull();
     });
@@ -50,7 +50,7 @@ describe("NotesService", () => {
     it("should throw on error instead of swallowing to null", async () => {
       mockFetchData.mockResolvedValue([null, "Forbidden", null, 403] as any);
 
-      await expect(NotesService.getNote("APP-1")).rejects.toThrow("Forbidden");
+      await expect(getNote("APP-1")).rejects.toThrow("Forbidden");
     });
   });
 
@@ -59,7 +59,7 @@ describe("NotesService", () => {
       const note = createMockNote({ content: "updated" });
       mockFetchData.mockResolvedValue([{ note }, null, null, 200] as any);
 
-      const result = await NotesService.saveNote("APP-1", "updated");
+      const result = await saveNote("APP-1", "updated");
 
       expect(result).toEqual(note);
       expect(mockFetchData).toHaveBeenCalledWith("/v2/applications/APP-1/notes", "PUT", {
@@ -70,7 +70,7 @@ describe("NotesService", () => {
     it("should throw on error", async () => {
       mockFetchData.mockResolvedValue([null, "Forbidden", null, 403] as any);
 
-      await expect(NotesService.saveNote("APP-1", "x")).rejects.toThrow("Forbidden");
+      await expect(saveNote("APP-1", "x")).rejects.toThrow("Forbidden");
     });
   });
 });

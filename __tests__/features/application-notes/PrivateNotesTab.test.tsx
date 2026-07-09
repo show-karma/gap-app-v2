@@ -1,5 +1,4 @@
 import { render, screen } from "@testing-library/react";
-import React from "react";
 import { PrivateNotesTab } from "@/src/features/application-notes/components/PrivateNotesTab";
 import { useApplicationNote } from "@/src/features/application-notes/hooks/use-application-note";
 import type { ApplicationNote } from "@/src/features/application-notes/types";
