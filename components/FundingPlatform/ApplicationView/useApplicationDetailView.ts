@@ -15,7 +15,11 @@ import {
   useProgramConfig,
 } from "@/hooks/useFundingPlatform";
 import { useKycConfig, useKycStatus } from "@/hooks/useKycStatus";
-import { Permission, useIsFundingPlatformAdmin } from "@/src/core/rbac";
+import {
+  Permission,
+  useIsFundingPlatformAdmin,
+  useIsFundingPlatformReviewer,
+} from "@/src/core/rbac";
 import { usePermissionContext } from "@/src/core/rbac/context/permission-context";
 import { useMilestonesAdminRefetch } from "@/src/features/applications/hooks/use-milestones-admin-refetch";
 import { useApplicationVersionsStore } from "@/store/applicationVersions";
@@ -25,7 +29,7 @@ import { PAGES } from "@/utilities/pages";
 // Whitelist used when seeding activeTabId from the `?tab=` query
 // param. Keeps unknown values from drifting the polling-gate state
 // away from the actually-rendered tab.
-const KNOWN_TAB_IDS = ["application", "milestones", "ai-analysis", "comments"] as const;
+const KNOWN_TAB_IDS = ["application", "milestones", "ai-analysis", "comments", "notes"] as const;
 type KnownTabId = (typeof KNOWN_TAB_IDS)[number];
 
 export function isKnownTabId(value: string | null): value is KnownTabId {
@@ -59,6 +63,11 @@ export function useApplicationDetailView({
   const router = useRouter();
 
   const isAdmin = useIsFundingPlatformAdmin();
+  const isReviewer = useIsFundingPlatformReviewer();
+  // Private notes are reviewer/admin-only. Both hooks are `!isLoading && …`, so
+  // this is FALSE while permissions resolve — the Notes tab fails closed and
+  // never flashes for an applicant (DEV-515 no-glimpse requirement).
+  const canViewNotes = isAdmin || isReviewer;
   const { isLoading: isLoadingPermissions, can } = usePermissionContext();
 
   const searchParams = useSearchParams();
@@ -110,7 +119,11 @@ export function useApplicationDetailView({
     if (activeTabId === "milestones" && !isApprovedApplication) {
       setActiveTabId("application");
     }
-  }, [application, activeTabId, isApprovedApplication]);
+    // A stale ?tab=notes must never strand a non-reviewer on a phantom tab.
+    if (activeTabId === "notes" && !canViewNotes) {
+      setActiveTabId("application");
+    }
+  }, [application, activeTabId, isApprovedApplication, canViewNotes]);
 
   const { data: program, config } = useProgramConfig(programId);
   // chainId from program config, needed for V1 components
@@ -312,6 +325,7 @@ export function useApplicationDetailView({
     isLoadingComments,
     // Permissions / derived flags
     isAdmin,
+    canViewNotes,
     canEditApplication,
     canEditPostApproval,
     showStatusActions,
