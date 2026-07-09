@@ -8,7 +8,7 @@ import { redirectToGov, shouldRedirectToGov } from "./utilities/redirectHelpers"
 import { hasForbiddenChars, sanitizeCommunitySlug } from "./utilities/sanitize";
 import { getWhitelabelByDomain, getWhitelabelDomainForSlug } from "./utilities/whitelabel-config";
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const path = request.nextUrl.pathname;
 
   // --- Whitelabel domain handling (must run before all other logic) ---

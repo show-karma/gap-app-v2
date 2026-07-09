@@ -69,10 +69,6 @@ const nextConfig: NextConfig = {
       "semver",
     ],
   },
-  eslint: {
-    dirs: ["app", "components", "utilities", "hooks", "store", "types"],
-    ignoreDuringBuilds: false,
-  },
   typescript: {
     ignoreBuildErrors: false,
   },
@@ -119,6 +115,12 @@ const nextConfig: NextConfig = {
         hostname: "**",
       },
     ],
+    // Next 16 defaults images.qualities to [75], coercing any other quality
+    // prop to the closest listed value. The app uses quality={50}/{100} in a
+    // few places (CommunityProjectEvaluatorPage) — list them explicitly so
+    // those renders keep their existing quality instead of silently
+    // shifting to 75.
+    qualities: [50, 75, 100],
   },
   async headers() {
     const headerRules = [

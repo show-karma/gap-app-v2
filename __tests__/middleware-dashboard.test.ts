@@ -1,5 +1,5 @@
 import type { NextRequest } from "next/server";
-import { middleware } from "@/middleware";
+import { proxy } from "@/proxy";
 import { WHITELABEL_DOMAINS } from "@/utilities/whitelabel-config";
 
 vi.mock("next/server", async (importOriginal) => {
@@ -55,25 +55,25 @@ const createRequestWithHost = (path: string, host: string) => {
 
 describe("middleware dashboard redirects", () => {
   it("redirects /my-projects to /dashboard#projects", async () => {
-    const response = await middleware(createRequest("/my-projects"));
+    const response = await proxy(createRequest("/my-projects"));
 
     expect(response?.headers.get("location")).toBe(`http://${STANDARD_HOST}/dashboard#projects`);
   });
 
   it("redirects /my-reviews to /dashboard#reviews", async () => {
-    const response = await middleware(createRequest("/my-reviews"));
+    const response = await proxy(createRequest("/my-reviews"));
 
     expect(response?.headers.get("location")).toBe(`http://${STANDARD_HOST}/dashboard#reviews`);
   });
 
   it("does not redirect /my-projects/:slug", async () => {
-    const response = await middleware(createRequest("/my-projects/project-1"));
+    const response = await proxy(createRequest("/my-projects/project-1"));
 
     expect(response?.headers.get("location")).toBeNull();
   });
 
   it("does not redirect /admin routes", async () => {
-    const response = await middleware(createRequest("/admin/settings"));
+    const response = await proxy(createRequest("/admin/settings"));
 
     expect(response?.headers.get("location")).toBeNull();
   });
@@ -83,7 +83,7 @@ describe("middleware dashboard redirects", () => {
       throw new Error("No whitelabel domain configured for middleware tests.");
     }
 
-    const response = await middleware(
+    const response = await proxy(
       createRequestWithHost("/project/test-project", primaryWhitelabel.domain)
     );
 
@@ -97,7 +97,7 @@ describe("middleware dashboard redirects", () => {
       throw new Error("No whitelabel domain configured for middleware tests.");
     }
 
-    const response = await middleware(
+    const response = await proxy(
       createRequestWithHost("/admin/studio/structure", primaryWhitelabel.domain)
     );
 
@@ -112,7 +112,7 @@ describe("middleware dashboard redirects", () => {
       throw new Error("No whitelabel domain configured for middleware tests.");
     }
 
-    const response = await middleware(
+    const response = await proxy(
       createRequestWithHost("/admin/settings", primaryWhitelabel.domain)
     );
 
@@ -129,7 +129,7 @@ describe("middleware blog whitelabel redirect", () => {
       throw new Error("No whitelabel domain configured for middleware tests.");
     }
 
-    const response = await middleware(createRequestWithHost("/blog", primaryWhitelabel.domain));
+    const response = await proxy(createRequestWithHost("/blog", primaryWhitelabel.domain));
 
     expect(response?.headers.get("location")).toBe("http://karmahq.xyz/blog");
     expect(response?.status).toBe(301);
@@ -140,7 +140,7 @@ describe("middleware blog whitelabel redirect", () => {
       throw new Error("No whitelabel domain configured for middleware tests.");
     }
 
-    const response = await middleware(
+    const response = await proxy(
       createRequestWithHost("/blog/hello-world", primaryWhitelabel.domain)
     );
 
@@ -149,7 +149,7 @@ describe("middleware blog whitelabel redirect", () => {
   });
 
   it("passes /blog through untouched on the main domain", async () => {
-    const response = await middleware(createRequest("/blog"));
+    const response = await proxy(createRequest("/blog"));
 
     expect(response?.headers.get("location")).toBeNull();
   });
@@ -159,7 +159,7 @@ describe("middleware blog whitelabel redirect", () => {
       throw new Error("No whitelabel domain configured for middleware tests.");
     }
 
-    const response = await middleware(
+    const response = await proxy(
       createRequestWithHost("/project/test-project", primaryWhitelabel.domain)
     );
 
@@ -171,7 +171,7 @@ describe("middleware project URL-structure redirects", () => {
   const uid = `0x${"a".repeat(64)}`;
 
   it("permanently (308) redirects legacy /grants/:uid to /funding/:uid", async () => {
-    const response = await middleware(createRequest(`/project/karma/grants/${uid}`));
+    const response = await proxy(createRequest(`/project/karma/grants/${uid}`));
 
     expect(response?.headers.get("location")).toBe(
       `http://${STANDARD_HOST}/project/karma/funding/${uid}`
@@ -180,7 +180,7 @@ describe("middleware project URL-structure redirects", () => {
   });
 
   it("permanently (308) redirects /funding/create-grant to /funding/new", async () => {
-    const response = await middleware(createRequest("/project/karma/funding/create-grant"));
+    const response = await proxy(createRequest("/project/karma/funding/create-grant"));
 
     expect(response?.headers.get("location")).toBe(
       `http://${STANDARD_HOST}/project/karma/funding/new`
@@ -189,14 +189,14 @@ describe("middleware project URL-structure redirects", () => {
   });
 
   it("redirects legacy /roadmap straight to the project overview (no chain) with 308", async () => {
-    const response = await middleware(createRequest("/project/karma/roadmap"));
+    const response = await proxy(createRequest("/project/karma/roadmap"));
 
     expect(response?.headers.get("location")).toBe(`http://${STANDARD_HOST}/project/karma`);
     expect(response?.status).toBe(308);
   });
 
   it("does not redirect a project literally named 'grants'", async () => {
-    const response = await middleware(createRequest("/project/grants"));
+    const response = await proxy(createRequest("/project/grants"));
 
     expect(response?.headers.get("location")).toBeNull();
   });
