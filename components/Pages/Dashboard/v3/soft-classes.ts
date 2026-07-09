@@ -43,6 +43,15 @@ export const THUMB_BRAND = "bg-sf-ink text-white dark:bg-brand-500 dark:text-bra
 /* Skeleton block. */
 export const SK = "animate-dashv3-pulse rounded-lg bg-sf-skeleton";
 
+/* Bento tile shell — shared by the button (BentoTile) and link (BentoTileLink)
+   variants so both render an identical face. */
+export const TILE_BASE = "relative flex flex-col gap-3 rounded-sf-card bg-sf-card p-5 text-left";
+export function tileSpanClasses(wide?: boolean): string {
+  return wide
+    ? "col-span-2 min-[640px]:col-span-1 min-[980px]:col-span-3"
+    : "col-span-2 min-[640px]:col-span-1 min-[980px]:col-span-2";
+}
+
 /**
  * Shared layoutId + timing for the bento tile <-> drill-in morph (BentoTile.tsx
  * + BentoOverview.tsx). Both sides must use the SAME transition for the shared
