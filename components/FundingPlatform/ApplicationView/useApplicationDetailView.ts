@@ -119,11 +119,10 @@ export function useApplicationDetailView({
     if (activeTabId === "milestones" && !isApprovedApplication) {
       setActiveTabId("application");
     }
-    // A stale ?tab=notes must never strand a non-reviewer on a phantom tab.
-    if (activeTabId === "notes" && !canViewNotes) {
-      setActiveTabId("application");
-    }
-  }, [application, activeTabId, isApprovedApplication, canViewNotes]);
+    // No reconcile needed for a stale ?tab=notes on a non-reviewer: the notes
+    // tab simply isn't in `tabs`, so the render's Math.max(0, findIndex(-1))
+    // falls back to the Application tab. (No side effect is keyed on "notes".)
+  }, [application, activeTabId, isApprovedApplication]);
 
   const { data: program, config } = useProgramConfig(programId);
   // chainId from program config, needed for V1 components
