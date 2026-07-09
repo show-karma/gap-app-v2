@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { type ReactNode, useEffect, useState } from "react";
 import type { Hex } from "viem";
@@ -10,6 +11,7 @@ import { setPostLoginRedirect, useAuth } from "@/hooks/useAuth";
 import type { DashboardAdminCommunity } from "@/hooks/useDashboardAdmin";
 import { useDashboardAdmin } from "@/hooks/useDashboardAdmin";
 import { useReviewerPrograms } from "@/hooks/usePermissions";
+import { useTokenReady } from "@/hooks/useTokenReady";
 import type { FundingProgram } from "@/services/fundingPlatformService";
 import { usePermissionContext } from "@/src/core/rbac/context/permission-context";
 import { useStaff } from "@/src/core/rbac/hooks/use-staff-bridge";
@@ -19,17 +21,12 @@ import { fetchMyProjects } from "@/utilities/sdk/projects/fetchMyProjects";
 import { useWhitelabel } from "@/utilities/whitelabel-context";
 import { DashboardLoading } from "./DashboardLoading";
 import { SuperAdminSection } from "./SuperAdminSection/SuperAdminSection";
-import { AdvisorFullView, useAdvisorData } from "./v3/AdvisorModule";
-import { ApplicationsFullView } from "./v3/ApplicationsFullView";
 import { BentoOverview } from "./v3/BentoOverview";
-import { CommunitiesFullView } from "./v3/CommunitiesFullView";
 import "./v3/dashboard-soft.css";
 import { GettingStartedView } from "./v3/GettingStartedView";
 import type { DashModule } from "./v3/module";
-import { ProjectsFullView } from "./v3/ProjectsFullView";
 import type { ModuleStatus } from "./v3/primitives";
 import { SkeletonList, WarnBar } from "./v3/primitives";
-import { ReviewsFullView } from "./v3/ReviewsFullView";
 import { SoftShell } from "./v3/SoftShell";
 import {
   buildApplicationsSummary,
@@ -37,6 +34,32 @@ import {
   buildProjectsSummary,
   buildReviewsSummary,
 } from "./v3/summaries";
+import { useAdvisorData } from "./v3/useAdvisorData";
+
+// Each drill-in view (and its heavy deps — the reviewer inbox, persona editors,
+// dialogs) is code-split so its chunk only downloads when that module is opened,
+// not on the initial /dashboard load. The overview only needs the tile summaries.
+const drillInFallback = () => <SkeletonList count={4} />;
+const AdvisorFullView = dynamic(() => import("./v3/AdvisorModule").then((m) => m.AdvisorFullView), {
+  ssr: false,
+  loading: drillInFallback,
+});
+const ApplicationsFullView = dynamic(
+  () => import("./v3/ApplicationsFullView").then((m) => m.ApplicationsFullView),
+  { ssr: false, loading: drillInFallback }
+);
+const CommunitiesFullView = dynamic(
+  () => import("./v3/CommunitiesFullView").then((m) => m.CommunitiesFullView),
+  { ssr: false, loading: drillInFallback }
+);
+const ProjectsFullView = dynamic(
+  () => import("./v3/ProjectsFullView").then((m) => m.ProjectsFullView),
+  { ssr: false, loading: drillInFallback }
+);
+const ReviewsFullView = dynamic(
+  () => import("./v3/ReviewsFullView").then((m) => m.ReviewsFullView),
+  { ssr: false, loading: drillInFallback }
+);
 
 /** Collapse a data source's error/loading/empty flags into a tile status. */
 function computeStatus(isError: boolean, isLoading: boolean, isEmpty: boolean): ModuleStatus {
@@ -201,11 +224,17 @@ export function Dashboard() {
   const { isWhitelabel, communitySlug } = useWhitelabel();
   const { isLoading: isPermissionsLoading, isGuestDueToError } = usePermissionContext();
   const { isStaff, isLoading: isStaffLoading } = useStaff();
+
+  // Privy flips `authenticated` true before the JWT mints and flickers during
+  // init; gate every data query on the resolved token instead so they fire once
+  // (after auth settles) rather than refetching on each flicker. See #1804.
+  const tokenReady = useTokenReady();
+
   const {
     programs: reviewerPrograms,
     hasPrograms: hasReviewerPrograms,
     isLoading: isReviewerProgramsLoading,
-  } = useReviewerPrograms();
+  } = useReviewerPrograms({ enabled: tokenReady });
 
   const userAddress = address as Hex | undefined;
 
@@ -217,7 +246,7 @@ export function Dashboard() {
   } = useQuery({
     queryKey: ["myProjects", userAddress],
     queryFn: () => fetchMyProjects(userAddress),
-    enabled: Boolean(authenticated),
+    enabled: tokenReady,
     staleTime: 5 * 60 * 1000,
   });
 
@@ -225,11 +254,11 @@ export function Dashboard() {
     communities: adminCommunities,
     isLoading: isAdminLoading,
     isError: isAdminError,
-  } = useDashboardAdmin();
+  } = useDashboardAdmin({ enabled: tokenReady });
 
-  const applicationsHook = useUserApplications(communitySlug ?? undefined);
+  const applicationsHook = useUserApplications(communitySlug ?? undefined, { enabled: tokenReady });
 
-  const advisor = useAdvisorData(Boolean(authenticated));
+  const advisor = useAdvisorData(tokenReady);
 
   // Tracks whether a bento tile is drilled into, so the admin panel banner
   // (a bento-overview affordance) hides while a module's full view is open.
@@ -239,9 +268,13 @@ export function Dashboard() {
   const showSuperAdmin = isStaff;
   const hasAdminPendingReviews = adminCommunities.some((c) => c.pendingApplicationsCount > 0);
   const showReviews = hasReviewerPrograms || hasAdminPendingReviews || isAdminLoading;
+  // Hold the full-page skeleton until the auth token has resolved — the data
+  // queries are gated on `tokenReady`, so before it they're disabled (and would
+  // otherwise read as "empty" and flash the getting-started view).
   const isLoading =
     !ready ||
-    (authenticated && (isPermissionsLoading || isStaffLoading || isReviewerProgramsLoading));
+    (authenticated &&
+      (!tokenReady || isPermissionsLoading || isStaffLoading || isReviewerProgramsLoading));
 
   useEffect(() => {
     if (!ready || authenticated) return;

@@ -44,6 +44,12 @@ vi.mock("@/hooks/usePermissions", () => ({
   useReviewerPrograms: vi.fn(),
 }));
 
+// The data queries are gated on a resolved auth token; treat it as ready so the
+// dashboard renders past the loading skeleton in tests.
+vi.mock("@/hooks/useTokenReady", () => ({
+  useTokenReady: () => true,
+}));
+
 vi.mock("@/src/core/rbac/context/permission-context", () => ({
   usePermissionContext: vi.fn(),
 }));

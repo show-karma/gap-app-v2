@@ -22,7 +22,10 @@ const SORT_FIELD: Record<UserApplicationsSortBy, (app: Application) => string> =
   status: (app) => app.status ?? "",
 };
 
-export function useUserApplications(communitySlug?: string): UseUserApplicationsReturn {
+export function useUserApplications(
+  communitySlug?: string,
+  options?: { enabled?: boolean }
+): UseUserApplicationsReturn {
   const queryClient = useQueryClient();
   const { address, authenticated } = useAuth();
 
@@ -75,7 +78,7 @@ export function useUserApplications(communitySlug?: string): UseUserApplications
       return res as UserApplicationsResponse;
     },
     staleTime: 1000 * 60 * 2,
-    enabled: !!authenticated,
+    enabled: !!authenticated && (options?.enabled ?? true),
   });
 
   // Update store with query results
