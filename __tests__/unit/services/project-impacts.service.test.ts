@@ -28,8 +28,8 @@ import { getProjectImpacts } from "@/services/project-impacts.service";
 // Import the mocked module to get access to the mock function
 import fetchData from "@/utilities/fetchData";
 
-const mockFetchData = fetchData as vi.MockedFunction<typeof fetchData>;
-const mockErrorManager = errorManager as vi.MockedFunction<typeof errorManager>;
+const mockFetchData = fetchData as ReturnType<typeof vi.fn>;
+const mockErrorManager = errorManager as ReturnType<typeof vi.fn>;
 
 describe("project-impacts.service", () => {
   beforeEach(() => {
