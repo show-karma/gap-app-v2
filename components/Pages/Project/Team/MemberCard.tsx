@@ -2,11 +2,10 @@
 
 import { PencilIcon } from "@heroicons/react/24/outline";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect } from "react";
-import type { Hex } from "viem";
 import { DeleteMemberDialog } from "@/components/Dialogs/Member/DeleteMember";
 import { DemoteMemberDialog } from "@/components/Dialogs/Member/DemoteMember";
 import { PromoteMemberDialog } from "@/components/Dialogs/Member/PromoteMember";
+import EthereumAddressToProfileName from "@/components/EthereumAddressToProfileName";
 import { GithubIcon, LinkedInIcon, Twitter2Icon } from "@/components/Icons";
 import { FarcasterIcon } from "@/components/Icons/Farcaster";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
@@ -15,10 +14,10 @@ import { useAuth } from "@/hooks/useAuth";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { useTeamProfiles } from "@/hooks/useTeamProfiles";
 import { useOwnerStore, useProjectStore } from "@/store";
-import { useENS } from "@/store/ens";
 import { useContributorProfileModalStore } from "@/store/modals/contributorProfile";
 import { formatFarcasterLink } from "@/utilities/farcaster";
 import { getProjectMemberRoles, type Member } from "@/utilities/getProjectMemberRoles";
+import { shortAddress } from "@/utilities/shortAddress";
 
 const iconsClassnames = {
   general: "w-6 h-6 text-zinc-400 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-300",
@@ -50,25 +49,13 @@ export const MemberCard = ({ member }: { member: string }) => {
     staleTime: 1000 * 60 * 5,
   });
 
-  const ensNames = useENS((state) => state.ensData);
-  const populateEns = useENS((state) => state.populateEns);
-
-  useEffect(() => {
-    if (member) {
-      populateEns([member?.toLowerCase() as string]);
-    }
-  }, [member, populateEns]);
-
   return (
     <div className="flex w-full flex-col gap-4 items-start shadow-sm rounded-lg p-4 bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700">
       <div className="flex flex-col gap-0 w-full">
         <div className="flex flex-row justify-between w-full gap-4">
           <div className="flex flex-col gap-1 mb-4 w-full">
             <p className="text-lg font-bold text-black dark:text-zinc-100 break-words">
-              {profile?.data.name ||
-                ensNames[(member?.toLowerCase() || "") as Hex]?.name ||
-                profile?.recipient ||
-                member}
+              <EthereumAddressToProfileName address={member} />
             </p>
             {isLoadingRoles || isFetchingRoles ? (
               <Skeleton className="w-full h-4" />
@@ -104,7 +91,9 @@ export const MemberCard = ({ member }: { member: string }) => {
           </div>
         </div>
         <div className="flex flex-row gap-2">
-          <p className="text-sm text-zinc-600 dark:text-zinc-400 w-full truncate">{member}</p>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400 w-full truncate">
+            {shortAddress(member)}
+          </p>
           <button type="button" onClick={() => copy(member)}>
             <img
               src="/icons/copy-2.svg"

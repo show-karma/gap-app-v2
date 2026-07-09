@@ -76,6 +76,22 @@ describe("errorManager", () => {
     expect(Sentry.captureException).not.toHaveBeenCalled();
   });
 
+  it("should NOT capture transient SSR socket resets (GAP-FRONTEND-1Y9)", () => {
+    const econnreset = Object.assign(new Error("read ECONNRESET"), { code: "ECONNRESET" });
+    errorManager("Indexer fetch failed", econnreset, { context: "ssr" });
+    expect(Sentry.captureException).not.toHaveBeenCalled();
+
+    const socketHangUp = Object.assign(new Error("socket hang up"), { code: "ECONNRESET" });
+    errorManager("Indexer fetch failed", socketHangUp);
+    expect(Sentry.captureException).not.toHaveBeenCalled();
+
+    const tlsReset = new Error(
+      "Client network socket disconnected before secure TLS connection was established"
+    );
+    errorManager("Indexer fetch failed", tlsReset);
+    expect(Sentry.captureException).not.toHaveBeenCalled();
+  });
+
   it("should still capture HTTP errors (e.g. 500) that carry a response", () => {
     const httpErr = {
       message: "Request failed with status code 500",

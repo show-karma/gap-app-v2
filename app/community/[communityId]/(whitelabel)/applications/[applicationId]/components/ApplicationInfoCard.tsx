@@ -11,6 +11,7 @@ interface ApplicationInfoCardProps {
   deadline?: string;
   applicantEmail?: string;
   ownerAddress?: string;
+  canViewApplicant: boolean;
 }
 
 function truncateAddress(address: string): string {
@@ -40,10 +41,16 @@ export function ApplicationInfoCard({
   deadline,
   applicantEmail,
   ownerAddress,
+  canViewApplicant,
 }: ApplicationInfoCardProps) {
   const [copiedText, copy] = useCopyToClipboard();
   const isCopied = copiedText === referenceNumber;
-  const applicant = deriveApplicant(applicantEmail, ownerAddress);
+  // The applicant identity is shown only to the applicant themselves and to
+  // reviewers/admins. For everyone else the section is hidden entirely (rather
+  // than shown as "Anonymous"); unauthorized viewers also receive no identity
+  // data because the backend redacts it.
+  const showApplicant = canViewApplicant && Boolean(applicantEmail || ownerAddress);
+  const applicant = showApplicant ? deriveApplicant(applicantEmail, ownerAddress) : null;
 
   return (
     <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
@@ -87,20 +94,26 @@ export function ApplicationInfoCard({
         </div>
       </dl>
 
-      <p className="mb-3 mt-5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-        Applicant
-      </p>
-      <div className="flex items-center gap-3">
-        <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[rgb(var(--color-primary))]/10 text-sm font-semibold text-[rgb(var(--color-primary-dark))]">
-          {applicant.initial}
-        </span>
-        <div className="min-w-0">
-          <div className="truncate text-[13px] font-medium text-foreground">{applicant.name}</div>
-          {applicant.secondary && (
-            <div className="truncate text-xs text-muted-foreground">{applicant.secondary}</div>
-          )}
-        </div>
-      </div>
+      {showApplicant && applicant && (
+        <>
+          <p className="mb-3 mt-5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            Applicant
+          </p>
+          <div className="flex items-center gap-3">
+            <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[rgb(var(--color-primary))]/10 text-sm font-semibold text-[rgb(var(--color-primary-dark))]">
+              {applicant.initial}
+            </span>
+            <div className="min-w-0">
+              <div className="truncate text-[13px] font-medium text-foreground">
+                {applicant.name}
+              </div>
+              {applicant.secondary && (
+                <div className="truncate text-xs text-muted-foreground">{applicant.secondary}</div>
+              )}
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }

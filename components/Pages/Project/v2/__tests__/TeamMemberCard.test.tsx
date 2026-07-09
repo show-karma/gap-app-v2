@@ -181,6 +181,12 @@ vi.mock("@/components/Utilities/Skeleton", () => ({
   ),
 }));
 
+// Mock the shared identity component — its name/ENS/email/address resolution is
+// covered by its own test suite; here we only assert TeamMemberCard delegates to it.
+vi.mock("@/components/EthereumAddressToProfileName", () => ({
+  default: ({ address }: { address?: string }) => <span data-testid="profile-name">{address}</span>,
+}));
+
 describe("TeamMemberCard", () => {
   const defaultMember = "0x1234567890123456789012345678901234567890";
 
@@ -196,10 +202,13 @@ describe("TeamMemberCard", () => {
       expect(screen.getByTestId("team-member-card")).toBeInTheDocument();
     });
 
-    it("should display member name from profile", () => {
+    it("should render the member identity via the shared profile-name component", () => {
       render(<TeamMemberCard member={defaultMember} />);
 
-      expect(screen.getByTestId("member-name")).toHaveTextContent("John Doe");
+      // Identity resolution (contributor name → ENS → self email → truncated
+      // address) is owned and tested by EthereumAddressToProfileName; here we
+      // only assert TeamMemberCard delegates to it with the member address.
+      expect(screen.getByTestId("member-name")).toHaveTextContent(defaultMember);
     });
 
     it("should display member role when not a regular member", () => {
@@ -208,10 +217,10 @@ describe("TeamMemberCard", () => {
       expect(screen.getByTestId("member-role")).toHaveTextContent("Owner");
     });
 
-    it("should display member address", () => {
+    it("should display a truncated member address", () => {
       render(<TeamMemberCard member={defaultMember} />);
 
-      expect(screen.getByTestId("member-address")).toHaveTextContent(defaultMember);
+      expect(screen.getByTestId("member-address")).toHaveTextContent("0x1234...567890");
     });
 
     it("should display member email when available", () => {

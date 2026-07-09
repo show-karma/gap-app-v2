@@ -10,6 +10,7 @@ interface ApplicationSidebarProps {
   program: FundingProgram | null;
   programName: string;
   viewerRole: ApplicationViewerRole;
+  canViewApplicant: boolean;
   hasMilestones: boolean;
   postApprovalPending: boolean;
   editHref: string;
@@ -30,6 +31,7 @@ export function ApplicationSidebar({
   program,
   programName,
   viewerRole,
+  canViewApplicant,
   hasMilestones,
   postApprovalPending,
   editHref,
@@ -62,6 +64,7 @@ export function ApplicationSidebar({
         deadline={program?.metadata.endsAt}
         applicantEmail={application.applicantEmail}
         ownerAddress={application.ownerAddress}
+        canViewApplicant={canViewApplicant}
       />
     </aside>
   );
