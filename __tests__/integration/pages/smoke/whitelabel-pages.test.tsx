@@ -5,8 +5,8 @@ import type React from "react";
 
 /**
  * Smoke tests for whitelabel application/program routes. These pages are
- * async server components that fetch from the indexer; we mock fetchData
- * to return a sentinel application/program and assert the page renders.
+ * async server components that fetch from the indexer; we mock the api
+ * client to return a sentinel application/program and assert the page renders.
  */
 
 const mockApplication = {
@@ -31,15 +31,6 @@ const mockProgram = {
     },
   },
 };
-
-vi.mock("@/utilities/fetchData", () => ({
-  __esModule: true,
-  default: vi.fn().mockImplementation(async (url: string) => {
-    if (url.includes("funding-applications/")) return [mockApplication, null];
-    if (url.includes("funding-program-configs/")) return [mockProgram, null];
-    return [null, null];
-  }),
-}));
 
 // The application detail/edit/success pages and the programs/apply page were
 // migrated off fetchData onto the unified api client (#1775 Phase 3). Mirror

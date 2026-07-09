@@ -57,11 +57,6 @@ vi.mock("@/store/communities", () => ({
   useCommunitiesStore: vi.fn(),
 }));
 
-vi.mock("@/utilities/fetchData", () => ({
-  __esModule: true,
-  default: vi.fn(),
-}));
-
 vi.mock("@/src/components/ui/AccessDenied", () => ({
   AccessDenied: ({ title, cta }: { title?: string; cta?: { label: string } }) => (
     <div data-testid="access-denied">
