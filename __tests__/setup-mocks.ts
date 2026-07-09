@@ -106,6 +106,14 @@ vi.mock("@/utilities/enviromentVars", () => ({
     ALCHEMY_POLICY_ID: "",
     NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: "",
     KARMA_TELEGRAM_BOT_HANDLE: "test_bot",
+    // Sanity Blog CMS — keep in sync with the real defaults in
+    // utilities/enviromentVars.ts / utilities/env.schema.ts so any test that
+    // transitively imports @/sanity/lib/client doesn't crash on a missing
+    // apiVersion (createClient treats an explicit `undefined` apiVersion key
+    // differently from an omitted one).
+    NEXT_PUBLIC_SANITY_PROJECT_ID: "",
+    NEXT_PUBLIC_SANITY_DATASET: "production",
+    NEXT_PUBLIC_SANITY_API_VERSION: "2024-01-01",
   },
   // Named re-export — mirror the production module.
   KARMA_TELEGRAM_BOT_HANDLE: "test_bot",
