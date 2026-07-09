@@ -1,6 +1,7 @@
 "use client";
 
 import { Check, Copy } from "lucide-react";
+import EthereumAddressToProfileName from "@/components/EthereumAddressToProfileName";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { formatDate } from "@/utilities/formatDate";
 
@@ -14,24 +15,19 @@ interface ApplicationInfoCardProps {
   canViewApplicant: boolean;
 }
 
-function truncateAddress(address: string): string {
-  if (address.length <= 12) return address;
-  return `${address.slice(0, 6)}…${address.slice(-4)}`;
-}
-
 function deriveApplicant(email?: string, ownerAddress?: string) {
   if (email) {
     const localPart = email.split("@")[0] || email;
     return { name: localPart, secondary: email, initial: localPart.charAt(0).toUpperCase() };
   }
-  if (ownerAddress) {
-    return {
-      name: truncateAddress(ownerAddress),
-      secondary: undefined,
-      initial: ownerAddress.slice(2, 3).toUpperCase() || "?",
-    };
-  }
-  return { name: "Anonymous", secondary: undefined, initial: "?" };
+  // Address-only: the name is resolved by EthereumAddressToProfileName in the
+  // render (contributor → Privy → ENS → self email → truncated address); here we
+  // only supply the avatar initial.
+  return {
+    name: null as string | null,
+    secondary: undefined as string | undefined,
+    initial: ownerAddress?.slice(2, 3).toUpperCase() || "?",
+  };
 }
 
 export function ApplicationInfoCard({
@@ -105,7 +101,9 @@ export function ApplicationInfoCard({
             </span>
             <div className="min-w-0">
               <div className="truncate text-[13px] font-medium text-foreground">
-                {applicant.name}
+                {applicant.name ?? (
+                  <EthereumAddressToProfileName address={ownerAddress} shouldTruncate />
+                )}
               </div>
               {applicant.secondary && (
                 <div className="truncate text-xs text-muted-foreground">{applicant.secondary}</div>

@@ -2,10 +2,9 @@ import { Dialog, Transition } from "@headlessui/react";
 import { ShieldExclamationIcon } from "@heroicons/react/24/outline";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { type FC, Fragment, useState } from "react";
+import EthereumAddressToProfileName from "@/components/EthereumAddressToProfileName";
 import { Button } from "@/components/Utilities/Button";
 import { useMemberRoleChange } from "@/hooks/useMemberRoleChange";
-import { useTeamProfiles } from "@/hooks/useTeamProfiles";
-import { useProjectStore } from "@/store";
 
 interface DemoteMemberDialogProps {
   memberAddress: string;
@@ -13,18 +12,12 @@ interface DemoteMemberDialogProps {
 
 export const DemoteMemberDialog: FC<DemoteMemberDialogProps> = ({ memberAddress }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const project = useProjectStore((state) => state.project);
-  const { teamProfiles } = useTeamProfiles(project);
   const { execute, isLoading } = useMemberRoleChange("demote");
 
   const openModal = () => setIsOpen(true);
   const closeModal = () => setIsOpen(false);
 
   const handleDemote = () => execute(memberAddress, closeModal);
-
-  const profile = teamProfiles?.find(
-    (profile) => profile.recipient.toLowerCase() === memberAddress.toLowerCase()
-  );
 
   return (
     <>
@@ -87,7 +80,8 @@ export const DemoteMemberDialog: FC<DemoteMemberDialogProps> = ({ memberAddress 
                   </Dialog.Title>
                   <div className="mt-2">
                     <p className="text-sm text-gray-600 dark:text-zinc-400">
-                      Are you sure you want to remove {profile?.data.name || memberAddress} as
+                      Are you sure you want to remove{" "}
+                      <EthereumAddressToProfileName address={memberAddress} shouldTruncate /> as
                       admin?
                     </p>
                   </div>
