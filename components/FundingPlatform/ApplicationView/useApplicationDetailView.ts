@@ -191,7 +191,7 @@ export function useApplicationDetailView({
         toast.success(`Application status updated to ${selectedStatus}`);
       }
     } catch {
-      // The status mutation's onError owns the failure toast; keep the form open to retry.
+      // SUPPRESSED: the status mutation's onError owns the failure toast; keep the form open to retry.
     }
   };
 

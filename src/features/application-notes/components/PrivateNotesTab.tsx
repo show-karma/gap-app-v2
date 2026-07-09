@@ -1,12 +1,13 @@
 "use client";
 
 import { AlertCircle, Lock, RefreshCw, Save } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
 import { useApplicationNote } from "../hooks/use-application-note";
+import type { ApplicationNote } from "../types";
 
 interface PrivateNotesTabProps {
   referenceNumber: string;
@@ -40,18 +41,6 @@ function PrivateNotesTabContent({ referenceNumber }: { referenceNumber: string }
     canViewNotes: true,
   });
 
-  const [draft, setDraft] = useState("");
-  const [initialized, setInitialized] = useState(false);
-
-  // Seed the editor once from the loaded note (or empty when none exists yet).
-  // Not re-seeded on every render so an in-progress draft is never clobbered.
-  useEffect(() => {
-    if (!initialized && !isLoading) {
-      setDraft(note?.content ?? "");
-      setInitialized(true);
-    }
-  }, [initialized, isLoading, note]);
-
   if (isLoading) {
     return (
       <Card>
@@ -81,11 +70,34 @@ function PrivateNotesTabContent({ referenceNumber }: { referenceNumber: string }
     );
   }
 
+  // Key the editor by the note's identity so its initial draft reseeds when the
+  // note changes (after a save, or another reviewer's edit) via the useState
+  // initializer — no derived-state effect needed.
+  return (
+    <NoteEditor
+      key={note?.updatedAt ?? "empty"}
+      note={note}
+      onSave={saveNote}
+      isSaving={isSaving}
+    />
+  );
+}
+
+function NoteEditor({
+  note,
+  onSave,
+  isSaving,
+}: {
+  note: ApplicationNote | null;
+  onSave: (content: string) => Promise<void>;
+  isSaving: boolean;
+}) {
+  const [draft, setDraft] = useState(note?.content ?? "");
   const isDirty = draft !== (note?.content ?? "");
 
   const handleSave = async () => {
     if (!isDirty || isSaving) return;
-    await saveNote(draft);
+    await onSave(draft);
   };
 
   return (

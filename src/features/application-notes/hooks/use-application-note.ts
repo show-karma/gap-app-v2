@@ -3,7 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useMemo } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { NotesService } from "../api/notes-service";
+import { getNote, saveNote as saveNoteRequest } from "../api/notes-service";
 import type { ApplicationNote } from "../types";
 
 interface UseApplicationNoteOptions {
@@ -31,14 +31,14 @@ export function useApplicationNote({ referenceNumber, canViewNotes }: UseApplica
     refetch,
   } = useQuery({
     queryKey,
-    queryFn: () => NotesService.getNote(referenceNumber),
+    queryFn: () => getNote(referenceNumber),
     enabled: !!referenceNumber && authenticated && canViewNotes,
     staleTime: 1000 * 60 * 2,
     gcTime: 1000 * 60 * 5,
   });
 
   const saveNoteMutation = useMutation({
-    mutationFn: (content: string) => NotesService.saveNote(referenceNumber, content),
+    mutationFn: (content: string) => saveNoteRequest(referenceNumber, content),
     onSuccess: (saved) => {
       queryClient.setQueryData<ApplicationNote>(queryKey, saved);
     },
