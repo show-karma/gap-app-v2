@@ -1,7 +1,6 @@
 import { errorManager } from "@/components/Utilities/errorManager";
 import { api } from "@/utilities/api/client";
 import { HttpError } from "@/utilities/api/errors";
-import { orElse } from "@/utilities/api/or-else";
 import type { ApplicationComment } from "../types";
 
 // TODO(#1775): add zod schema — response shape not yet verified against the
@@ -24,12 +23,10 @@ export class CommentsService {
    */
   static async getComments(applicationId: string): Promise<ApplicationComment[]> {
     try {
-      return await orElse(
-        api
-          .get<{ comments: ApplicationComment[] }>(`/v2/applications/${applicationId}/comments`)
-          .then((data) => data?.comments ?? []),
-        []
+      const data = await api.get<{ comments: ApplicationComment[] }>(
+        `/v2/applications/${applicationId}/comments`
       );
+      return data?.comments ?? [];
     } catch (error) {
       errorManager(`Error fetching comments for application: ${applicationId}`, error);
       return [];

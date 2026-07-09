@@ -3,7 +3,6 @@ import React from "react";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { api } from "@/utilities/api/client";
 import { HttpError } from "@/utilities/api/errors";
-import { orElse } from "@/utilities/api/or-else";
 import { getWhitelabelByDomain } from "@/utilities/whitelabel-config";
 import { getTenantConfig } from "../config/tenant-config";
 import type { TenantConfig } from "../types/tenant";
@@ -55,10 +54,7 @@ export const getTenantServer = serverCache(async (): Promise<GetTenantServerResu
   // threw and only checked for a falsy payload.
   let communityData: CommunityApiResponse | undefined;
   try {
-    communityData = await orElse(
-      api.get<CommunityApiResponse>(`/v2/communities/${effectiveSlug}`),
-      undefined
-    );
+    communityData = await api.get<CommunityApiResponse>(`/v2/communities/${effectiveSlug}`);
   } catch (error) {
     // A 404 here just means the slug doesn't match a known community —
     // the expected `communityNotFound` outcome, not a failure to report.

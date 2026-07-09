@@ -2,7 +2,6 @@ import toast from "react-hot-toast";
 import { z } from "zod";
 import type { ImpactIndicatorWithData } from "@/types/impactMeasurement";
 import { api } from "../api/client";
-import { orElse } from "../api/or-else";
 import { INDEXER } from "../indexer";
 import { MESSAGES } from "../messages";
 
@@ -170,17 +169,11 @@ export const getMilestoneImpactAnswers = async (
   milestoneUID: string
 ): Promise<ImpactIndicatorWithData[]> => {
   try {
-    return await orElse(
-      api
-        .get<MilestoneIndicatorsResponse>(
-          INDEXER.INDICATORS.V2.MILESTONE_INDICATORS(milestoneUID),
-          {
-            schema: MilestoneIndicatorsResponseSchema,
-          }
-        )
-        .then(transformMilestoneIndicators),
-      []
+    const response = await api.get<MilestoneIndicatorsResponse>(
+      INDEXER.INDICATORS.V2.MILESTONE_INDICATORS(milestoneUID),
+      { schema: MilestoneIndicatorsResponseSchema }
     );
+    return transformMilestoneIndicators(response);
   } catch (error) {
     console.error("Error fetching milestone impact data:", error);
     return [];

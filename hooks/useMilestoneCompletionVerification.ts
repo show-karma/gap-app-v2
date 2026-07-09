@@ -199,7 +199,16 @@ export const useMilestoneCompletionVerification = ({
     communityUID: string
   ) => {
     if (txHash) {
-      await api.post(INDEXER.ATTESTATION_LISTENER(txHash, chainId), {});
+      // Best-effort nudge to the indexer's attestation listener — the
+      // indexer also picks this up from its own chain listener, so a
+      // failure here must not abort the flow (the on-chain attestation
+      // already succeeded by this point). Legacy `fetchData` never threw
+      // and its returned error was discarded; preserve that here.
+      try {
+        await api.post(INDEXER.ATTESTATION_LISTENER(txHash, chainId), {});
+      } catch (error) {
+        errorManager("Error notifying indexer of attestation", error, { txHash, chainId });
+      }
 
       // If multiple attestations, wait for indexer to process all
       if (attestationCount > 1) {
