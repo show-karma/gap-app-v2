@@ -82,13 +82,24 @@ export function ReviewerInboxPage({
 
   const handleSelect = useCallback(
     (id: string) => {
+      if (syncSelectionToHash) {
+        const url = new URL(window.location.href);
+        url.hash = `${HASH_PREFIX}${encodeURIComponent(id)}`;
+        // Opening a detail from the list (no prior selection) pushes a history
+        // entry so the browser Back button returns to the list — the hashchange
+        // listener below clears the selection — instead of navigating off the
+        // page entirely. Switching between items replaces the entry so we don't
+        // spam the history stack. pushState runs in a click handler (not a
+        // useEffect), so it never dispatches an App Router navigation (#1547).
+        if (selectedId == null) {
+          window.history.pushState({}, "", url.toString());
+        } else {
+          window.history.replaceState({}, "", url.toString());
+        }
+      }
       setSelectedId(id);
-      if (!syncSelectionToHash) return;
-      const url = new URL(window.location.href);
-      url.hash = `${HASH_PREFIX}${encodeURIComponent(id)}`;
-      window.history.replaceState({}, "", url.toString());
     },
-    [syncSelectionToHash]
+    [syncSelectionToHash, selectedId]
   );
 
   useEffect(() => {
