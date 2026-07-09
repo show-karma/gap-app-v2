@@ -1,7 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@/utilities/fetchData", () => ({
-  default: vi.fn(),
+vi.mock("@/utilities/api/client", () => ({
+  api: {
+    get: vi.fn(),
+    post: vi.fn(),
+    put: vi.fn(),
+    patch: vi.fn(),
+    delete: vi.fn(),
+    request: vi.fn(),
+  },
 }));
 
 vi.mock("@/utilities/indexer", () => ({
@@ -69,9 +76,12 @@ import {
   savePayoutConfigs,
   updateDisbursementStatus,
 } from "@/features/payout-disbursement/services/payout-disbursement.service";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 
-const mockFetchData = fetchData as ReturnType<typeof vi.fn>;
+const mockApiGet = api.get as ReturnType<typeof vi.fn>;
+const mockApiPost = api.post as ReturnType<typeof vi.fn>;
+const mockApiPatch = api.patch as ReturnType<typeof vi.fn>;
+const mockApiDelete = api.delete as ReturnType<typeof vi.fn>;
 
 describe("payout-disbursement service trust tests", () => {
   beforeEach(() => {
@@ -81,9 +91,9 @@ describe("payout-disbursement service trust tests", () => {
   // --- createDisbursements ---
 
   describe("createDisbursements", () => {
-    it("calls fetchData with correct endpoint and POST method", async () => {
+    it("calls api.post with correct endpoint and body", async () => {
       const disbursements = [{ id: "d1", grantUID: "g1" }];
-      mockFetchData.mockResolvedValue([{ disbursements }, null, null, 201]);
+      mockApiPost.mockResolvedValue({ disbursements });
 
       await createDisbursements({
         communityUID: "c1",
@@ -97,15 +107,7 @@ describe("payout-disbursement service trust tests", () => {
         ],
       } as any);
 
-      expect(mockFetchData).toHaveBeenCalledWith(
-        "/v2/payouts/create",
-        "POST",
-        expect.any(Object),
-        {},
-        {},
-        true,
-        false
-      );
+      expect(mockApiPost).toHaveBeenCalledWith("/v2/payouts/create", expect.any(Object));
     });
 
     it("returns disbursements array from response", async () => {
@@ -113,7 +115,7 @@ describe("payout-disbursement service trust tests", () => {
         { id: "d1", grantUID: "g1", amount: "100" },
         { id: "d2", grantUID: "g2", amount: "200" },
       ];
-      mockFetchData.mockResolvedValue([{ disbursements }, null, null, 201]);
+      mockApiPost.mockResolvedValue({ disbursements });
 
       const result = await createDisbursements({
         communityUID: "c1",
@@ -123,8 +125,8 @@ describe("payout-disbursement service trust tests", () => {
       expect(result).toEqual(disbursements);
     });
 
-    it("throws when fetchData returns error", async () => {
-      mockFetchData.mockResolvedValue([null, "Bad Request", null, 400]);
+    it("throws when api.post rejects", async () => {
+      mockApiPost.mockRejectedValue(new Error("Bad Request"));
 
       await expect(
         createDisbursements({ communityUID: "c1", disbursements: [] } as any)
@@ -135,32 +137,22 @@ describe("payout-disbursement service trust tests", () => {
   // --- recordSafeTransaction ---
 
   describe("recordSafeTransaction", () => {
-    it("calls fetchData with correct endpoint containing disbursement ID", async () => {
-      mockFetchData.mockResolvedValue([
-        { id: "d1", safeTransactionHash: "0xabc" },
-        null,
-        null,
-        200,
-      ]);
+    it("calls api.post with correct endpoint containing disbursement ID", async () => {
+      mockApiPost.mockResolvedValue({ id: "d1", safeTransactionHash: "0xabc" });
 
       await recordSafeTransaction("d1", {
         safeTransactionHash: "0xabc",
       } as any);
 
-      expect(mockFetchData).toHaveBeenCalledWith(
+      expect(mockApiPost).toHaveBeenCalledWith(
         "/v2/payouts/d1/safe-tx",
-        "POST",
-        expect.objectContaining({ safeTransactionHash: "0xabc" }),
-        {},
-        {},
-        true,
-        false
+        expect.objectContaining({ safeTransactionHash: "0xabc" })
       );
     });
 
     it("returns updated disbursement", async () => {
       const updated = { id: "d1", safeTransactionHash: "0xabc" };
-      mockFetchData.mockResolvedValue([updated, null, null, 200]);
+      mockApiPost.mockResolvedValue(updated);
 
       const result = await recordSafeTransaction("d1", {
         safeTransactionHash: "0xabc",
@@ -170,7 +162,7 @@ describe("payout-disbursement service trust tests", () => {
     });
 
     it("throws with context when error occurs", async () => {
-      mockFetchData.mockResolvedValue([null, "Not Found", null, 404]);
+      mockApiPost.mockRejectedValue(new Error("Not Found"));
 
       await expect(
         recordSafeTransaction("d1", {
@@ -183,21 +175,13 @@ describe("payout-disbursement service trust tests", () => {
   // --- getPayoutHistory ---
 
   describe("getPayoutHistory", () => {
-    it("calls fetchData with grant UID and pagination params", async () => {
+    it("calls api.get with grant UID and pagination params", async () => {
       const response = { disbursements: [], total: 0, page: 1, limit: 10 };
-      mockFetchData.mockResolvedValue([response, null, null, 200]);
+      mockApiGet.mockResolvedValue(response);
 
       await getPayoutHistory("g1", 1, 10);
 
-      expect(mockFetchData).toHaveBeenCalledWith(
-        expect.stringContaining("g1"),
-        "GET",
-        {},
-        {},
-        {},
-        true,
-        false
-      );
+      expect(mockApiGet).toHaveBeenCalledWith(expect.stringContaining("g1"));
     });
 
     it("returns paginated response", async () => {
@@ -207,7 +191,7 @@ describe("payout-disbursement service trust tests", () => {
         page: 1,
         limit: 10,
       };
-      mockFetchData.mockResolvedValue([response, null, null, 200]);
+      mockApiGet.mockResolvedValue(response);
 
       const result = await getPayoutHistory("g1");
 
@@ -215,7 +199,7 @@ describe("payout-disbursement service trust tests", () => {
     });
 
     it("throws on error", async () => {
-      mockFetchData.mockResolvedValue([null, "Server Error", null, 500]);
+      mockApiGet.mockRejectedValue(new Error("Server Error"));
 
       await expect(getPayoutHistory("g1")).rejects.toThrow("Failed to fetch payout history");
     });
@@ -225,7 +209,7 @@ describe("payout-disbursement service trust tests", () => {
 
   describe("getTotalDisbursed", () => {
     it("returns totalDisbursed string", async () => {
-      mockFetchData.mockResolvedValue([{ totalDisbursed: "5000.00" }, null, null, 200]);
+      mockApiGet.mockResolvedValue({ totalDisbursed: "5000.00" });
 
       const result = await getTotalDisbursed("g1");
 
@@ -233,7 +217,7 @@ describe("payout-disbursement service trust tests", () => {
     });
 
     it("throws on error", async () => {
-      mockFetchData.mockResolvedValue([null, "Error", null, 500]);
+      mockApiGet.mockRejectedValue(new Error("Error"));
 
       await expect(getTotalDisbursed("g1")).rejects.toThrow("Failed to fetch total disbursed");
     });
@@ -242,21 +226,13 @@ describe("payout-disbursement service trust tests", () => {
   // --- getPendingDisbursements ---
 
   describe("getPendingDisbursements", () => {
-    it("calls fetchData with community UID", async () => {
+    it("calls api.get with community UID", async () => {
       const response = { disbursements: [], total: 0, page: 1, limit: 10 };
-      mockFetchData.mockResolvedValue([response, null, null, 200]);
+      mockApiGet.mockResolvedValue(response);
 
       await getPendingDisbursements("c1", 1, 20);
 
-      expect(mockFetchData).toHaveBeenCalledWith(
-        expect.stringContaining("c1"),
-        "GET",
-        {},
-        {},
-        {},
-        true,
-        false
-      );
+      expect(mockApiGet).toHaveBeenCalledWith(expect.stringContaining("c1"));
     });
 
     it("returns paginated pending disbursements", async () => {
@@ -266,7 +242,7 @@ describe("payout-disbursement service trust tests", () => {
         page: 1,
         limit: 10,
       };
-      mockFetchData.mockResolvedValue([response, null, null, 200]);
+      mockApiGet.mockResolvedValue(response);
 
       const result = await getPendingDisbursements("c1");
 
@@ -274,7 +250,7 @@ describe("payout-disbursement service trust tests", () => {
     });
 
     it("throws on error", async () => {
-      mockFetchData.mockResolvedValue([null, "Unauthorized", null, 401]);
+      mockApiGet.mockRejectedValue(new Error("Unauthorized"));
 
       await expect(getPendingDisbursements("c1")).rejects.toThrow(
         "Failed to fetch pending disbursements"
@@ -285,48 +261,38 @@ describe("payout-disbursement service trust tests", () => {
   // --- updateDisbursementStatus ---
 
   describe("updateDisbursementStatus", () => {
-    it("calls fetchData with PATCH method", async () => {
-      mockFetchData.mockResolvedValue([{ id: "d1", status: "completed" }, null, null, 200]);
+    it("calls api.patch with PATCH-equivalent method call", async () => {
+      mockApiPatch.mockResolvedValue({ id: "d1", status: "completed" });
 
       await updateDisbursementStatus("d1", {
         status: "completed",
       } as any);
 
-      expect(mockFetchData).toHaveBeenCalledWith(
+      expect(mockApiPatch).toHaveBeenCalledWith(
         "/v2/payouts/d1/status",
-        "PATCH",
-        expect.objectContaining({ status: "completed" }),
-        {},
-        {},
-        true,
-        false
+        expect.objectContaining({ status: "completed" })
       );
     });
 
     it("passes status and reason in request body", async () => {
-      mockFetchData.mockResolvedValue([{ id: "d1", status: "rejected" }, null, null, 200]);
+      mockApiPatch.mockResolvedValue({ id: "d1", status: "rejected" });
 
       await updateDisbursementStatus("d1", {
         status: "rejected",
         reason: "Invalid data",
       } as any);
 
-      expect(mockFetchData).toHaveBeenCalledWith(
+      expect(mockApiPatch).toHaveBeenCalledWith(
         expect.any(String),
-        "PATCH",
         expect.objectContaining({
           status: "rejected",
           reason: "Invalid data",
-        }),
-        {},
-        {},
-        true,
-        false
+        })
       );
     });
 
     it("throws on error", async () => {
-      mockFetchData.mockResolvedValue([null, "Forbidden", null, 403]);
+      mockApiPatch.mockRejectedValue(new Error("Forbidden"));
 
       await expect(updateDisbursementStatus("d1", { status: "completed" } as any)).rejects.toThrow(
         "Failed to update disbursement status"
@@ -337,25 +303,17 @@ describe("payout-disbursement service trust tests", () => {
   // --- savePayoutConfigs ---
 
   describe("savePayoutConfigs", () => {
-    it("calls fetchData with POST method", async () => {
-      mockFetchData.mockResolvedValue([{ configs: [] }, null, null, 201]);
+    it("calls api.post with correct endpoint", async () => {
+      mockApiPost.mockResolvedValue({ configs: [] });
 
       await savePayoutConfigs({ configs: [] } as any);
 
-      expect(mockFetchData).toHaveBeenCalledWith(
-        "/v2/payout-configs",
-        "POST",
-        expect.any(Object),
-        {},
-        {},
-        true,
-        false
-      );
+      expect(mockApiPost).toHaveBeenCalledWith("/v2/payout-configs", expect.any(Object));
     });
 
     it("returns save response", async () => {
       const response = { configs: [{ grantUID: "g1" }] };
-      mockFetchData.mockResolvedValue([response, null, null, 201]);
+      mockApiPost.mockResolvedValue(response);
 
       const result = await savePayoutConfigs({ configs: [] } as any);
 
@@ -363,7 +321,7 @@ describe("payout-disbursement service trust tests", () => {
     });
 
     it("throws on error", async () => {
-      mockFetchData.mockResolvedValue([null, "Bad Request", null, 400]);
+      mockApiPost.mockRejectedValue(new Error("Bad Request"));
 
       await expect(savePayoutConfigs({ configs: [] } as any)).rejects.toThrow(
         "Failed to save payout configs"
@@ -376,7 +334,7 @@ describe("payout-disbursement service trust tests", () => {
   describe("getPayoutConfigByGrant", () => {
     it("returns config when found", async () => {
       const config = { grantUID: "g1", payoutAddress: "0x1" };
-      mockFetchData.mockResolvedValue([{ config }, null, null, 200]);
+      mockApiGet.mockResolvedValue({ config });
 
       const result = await getPayoutConfigByGrant("g1");
 
@@ -384,7 +342,7 @@ describe("payout-disbursement service trust tests", () => {
     });
 
     it("returns null when config is null", async () => {
-      mockFetchData.mockResolvedValue([{ config: null }, null, null, 200]);
+      mockApiGet.mockResolvedValue({ config: null });
 
       const result = await getPayoutConfigByGrant("g1");
 
@@ -392,7 +350,7 @@ describe("payout-disbursement service trust tests", () => {
     });
 
     it("throws on error", async () => {
-      mockFetchData.mockResolvedValue([null, "Not Found", null, 404]);
+      mockApiGet.mockRejectedValue(new Error("Not Found"));
 
       await expect(getPayoutConfigByGrant("g1")).rejects.toThrow("Failed to fetch payout config");
     });
@@ -401,30 +359,22 @@ describe("payout-disbursement service trust tests", () => {
   // --- deletePayoutConfig ---
 
   describe("deletePayoutConfig", () => {
-    it("calls fetchData with DELETE method", async () => {
-      mockFetchData.mockResolvedValue([{}, null, null, 200]);
+    it("calls api.delete with correct endpoint", async () => {
+      mockApiDelete.mockResolvedValue({});
 
       await deletePayoutConfig("g1");
 
-      expect(mockFetchData).toHaveBeenCalledWith(
-        "/v2/payout-configs/grant/g1",
-        "DELETE",
-        {},
-        {},
-        {},
-        true,
-        false
-      );
+      expect(mockApiDelete).toHaveBeenCalledWith("/v2/payout-configs/grant/g1");
     });
 
     it("throws on error", async () => {
-      mockFetchData.mockResolvedValue([null, "Forbidden", null, 403]);
+      mockApiDelete.mockRejectedValue(new Error("Forbidden"));
 
       await expect(deletePayoutConfig("g1")).rejects.toThrow("Failed to delete payout config");
     });
 
     it("resolves void on success", async () => {
-      mockFetchData.mockResolvedValue([{}, null, null, 200]);
+      mockApiDelete.mockResolvedValue({});
 
       await expect(deletePayoutConfig("g1")).resolves.toBeUndefined();
     });

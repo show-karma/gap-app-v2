@@ -1,10 +1,16 @@
 import { errorManager } from "@/components/Utilities/errorManager";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { getNewProjects } from "@/utilities/indexer/getNewProjects";
 import "@testing-library/jest-dom";
 
-vi.mock("@/utilities/fetchData");
+vi.mock("@/utilities/api/client", () => ({
+  api: {
+    getPaginated: vi.fn(),
+  },
+}));
 vi.mock("@/components/Utilities/errorManager");
+
+const mockGetPaginated = api.getPaginated as vi.Mock;
 
 describe("getNewProjects", () => {
   afterEach(() => {
@@ -12,27 +18,25 @@ describe("getNewProjects", () => {
   });
 
   it("should fetch projects successfully", async () => {
-    const mockData = {
-      data: [
-        { id: 1, name: "Project 1" },
-        { id: 2, name: "Project 2" },
-      ],
-    };
+    const mockProjects = [
+      { id: 1, name: "Project 1" },
+      { id: 2, name: "Project 2" },
+    ];
     const mockPageInfo = { totalItems: 2, page: 0, pageLimit: 10 };
-    (fetchData as vi.Mock).mockResolvedValue([mockData, null, mockPageInfo]);
+    mockGetPaginated.mockResolvedValue({ data: mockProjects, pageInfo: mockPageInfo });
 
     const result = await getNewProjects(10, 0, "createdAt", "desc");
 
     expect(result).toEqual({
-      projects: mockData.data,
+      projects: mockProjects,
       pageInfo: mockPageInfo,
       nextOffset: 1,
     });
-    expect(fetchData).toHaveBeenCalledWith(expect.any(String));
+    expect(mockGetPaginated).toHaveBeenCalledWith(expect.any(String));
   });
 
   it("should handle errors when fetching projects", async () => {
-    (fetchData as vi.Mock).mockResolvedValue([null, new Error("Fetch error"), null]);
+    mockGetPaginated.mockRejectedValue(new Error("Fetch error"));
 
     const result = await getNewProjects(10, 0, "createdAt", "desc");
 
@@ -48,21 +52,21 @@ describe("getNewProjects", () => {
   });
 
   it("should use default values for optional parameters", async () => {
-    const mockData = { data: [] };
+    const mockProjects: unknown[] = [];
     const mockPageInfo = { totalItems: 0, page: 0, pageLimit: 10 };
-    (fetchData as vi.Mock).mockResolvedValue([mockData, null, mockPageInfo]);
+    mockGetPaginated.mockResolvedValue({ data: mockProjects, pageInfo: mockPageInfo });
 
     await getNewProjects(10);
 
-    expect(fetchData).toHaveBeenCalledWith(
+    expect(mockGetPaginated).toHaveBeenCalledWith(
       expect.stringContaining("createdAt") && expect.stringContaining("desc")
     );
   });
 
   it("should calculate correct nextOffset", async () => {
-    const mockData = { data: [{ id: 1, name: "Project 1" }] };
+    const mockProjects = [{ id: 1, name: "Project 1" }];
     const mockPageInfo = { totalItems: 1, page: 2, pageLimit: 10 };
-    (fetchData as vi.Mock).mockResolvedValue([mockData, null, mockPageInfo]);
+    mockGetPaginated.mockResolvedValue({ data: mockProjects, pageInfo: mockPageInfo });
 
     const result = await getNewProjects(10, 2, "updatedAt", "asc");
 

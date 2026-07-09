@@ -1,14 +1,16 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@/utilities/fetchData", () => ({
-  default: vi.fn(),
+vi.mock("@/utilities/api/client", () => ({
+  api: {
+    get: vi.fn(),
+  },
 }));
 
 import type { CommunityStats } from "@/types/v2/community";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { getCommunityStats } from "@/utilities/queries/v2/getCommunityData";
 
-const mockFetchData = fetchData as unknown as ReturnType<typeof vi.fn>;
+const mockApiGet = api.get as unknown as ReturnType<typeof vi.fn>;
 
 const fullStats: CommunityStats = {
   totalProjects: 7,
@@ -37,7 +39,7 @@ afterEach(() => {
 
 describe("getCommunityStats", () => {
   it("returns the stats payload on success", async () => {
-    mockFetchData.mockResolvedValue([fullStats, null, null, 200]);
+    mockApiGet.mockResolvedValue(fullStats);
     // Unique slug per test — getCommunityStats is wrapped in React cache().
     await expect(getCommunityStats("success-community")).resolves.toEqual(fullStats);
   });
@@ -50,19 +52,19 @@ describe("getCommunityStats", () => {
       totalMilestones: 0,
       projectUpdates: 0,
     };
-    mockFetchData.mockResolvedValue([zeroStats, null, null, 200]);
+    mockApiGet.mockResolvedValue(zeroStats);
     await expect(getCommunityStats("zero-community")).resolves.toEqual(zeroStats);
   });
 
-  it("throws when fetchData reports an error instead of fabricating an all-zero object", async () => {
-    mockFetchData.mockResolvedValue([null, "Internal Server Error", null, 500]);
+  it("throws when the request fails instead of fabricating an all-zero object", async () => {
+    mockApiGet.mockRejectedValue(new Error("Internal Server Error"));
     await expect(getCommunityStats("error-community")).rejects.toThrow(
       /Failed to fetch community stats/
     );
   });
 
   it("throws when the response payload is empty", async () => {
-    mockFetchData.mockResolvedValue([null, null, null, 200]);
+    mockApiGet.mockResolvedValue(null);
     await expect(getCommunityStats("empty-community")).rejects.toThrow(/empty response/);
   });
 });
