@@ -60,12 +60,6 @@ export function ReviewerInboxPage({ community, loadingSlot }: ReviewerInboxPageP
   });
 
   const hasBothRoles = includeApplications && includeMilestones;
-  const roleLabel = useMemo(() => {
-    if (hasAccess && !isProgramReviewer && !isMilestoneReviewer) return "Community admin";
-    if (includeApplications && includeMilestones) return "Application + Milestone reviewer";
-    if (includeApplications) return "Application reviewer";
-    return "Milestone reviewer";
-  }, [hasAccess, isProgramReviewer, isMilestoneReviewer, includeApplications, includeMilestones]);
 
   // Selection synced to the URL hash so detail views are shareable / survive back-forward.
   const [selectedId, setSelectedId] = useState<string | null>(() => getSelectedIdFromHash());
@@ -110,7 +104,7 @@ export function ReviewerInboxPage({ community, loadingSlot }: ReviewerInboxPageP
 
   return (
     <div className="w-full space-y-6">
-      <InboxHeader role={roleLabel} stats={stats} />
+      <InboxHeader stats={stats} />
 
       {error ? (
         <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-gray-200 bg-white p-12 text-center dark:border-zinc-700 dark:bg-zinc-900">
