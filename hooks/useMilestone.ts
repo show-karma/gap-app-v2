@@ -8,9 +8,9 @@ import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
+import { api } from "@/utilities/api/client";
 import { chainNameDictionary } from "@/utilities/chainNameDictionary";
 import { IndexingTimeoutError, isSurfacedError, markSurfaced } from "@/utilities/errors";
-import fetchData from "@/utilities/fetchData";
 import { getProjectObjectives } from "@/utilities/gapIndexerApi/getProjectObjectives";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
@@ -160,7 +160,7 @@ export const useMilestone = () => {
               if (res.tx.length > 0) {
                 const txPromises = res.tx.map((tx: any) =>
                   tx.hash
-                    ? fetchData(INDEXER.ATTESTATION_LISTENER(tx.hash, chainId), "POST", {})
+                    ? api.post(INDEXER.ATTESTATION_LISTENER(tx.hash, chainId), {})
                     : Promise.resolve()
                 );
                 await Promise.all(txPromises);
@@ -246,7 +246,7 @@ export const useMilestone = () => {
             // Notify indexer
             const txHash = result?.tx[0]?.hash;
             if (txHash) {
-              await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, milestone.chainID), "POST", {});
+              await api.post(INDEXER.ATTESTATION_LISTENER(txHash, milestone.chainID), {});
             }
 
             // Poll for indexing completion
@@ -583,9 +583,8 @@ export const useMilestone = () => {
           // Notify indexer
           const txHash = result?.tx[0]?.hash;
           if (txHash) {
-            await fetchData(
+            await api.post(
               INDEXER.ATTESTATION_LISTENER(txHash, milestoneInstance?.chainID as number),
-              "POST",
               {}
             );
           }
@@ -739,7 +738,7 @@ export const useMilestone = () => {
             if (result.tx?.length > 0) {
               const txPromises = result.tx.map((tx: any) =>
                 tx.hash
-                  ? fetchData(INDEXER.ATTESTATION_LISTENER(tx.hash, chainId), "POST", {})
+                  ? api.post(INDEXER.ATTESTATION_LISTENER(tx.hash, chainId), {})
                   : Promise.resolve()
               );
               await Promise.all(txPromises);
@@ -936,9 +935,8 @@ export const useMilestone = () => {
                   changeStepperStep("indexing");
                   const txHash = res?.tx[0]?.hash;
                   if (txHash) {
-                    await fetchData(
+                    await api.post(
                       INDEXER.ATTESTATION_LISTENER(txHash, milestoneInstance.chainID),
-                      "POST",
                       {}
                     );
                   }
@@ -1035,11 +1033,7 @@ export const useMilestone = () => {
               changeStepperStep("indexing");
               const txHash = res?.tx[0]?.hash;
               if (txHash) {
-                await fetchData(
-                  INDEXER.ATTESTATION_LISTENER(txHash, milestoneInstance.chainID),
-                  "POST",
-                  {}
-                );
+                await api.post(INDEXER.ATTESTATION_LISTENER(txHash, milestoneInstance.chainID), {});
               }
 
               await checkIfCompletionUpdated(() => {
@@ -1111,11 +1105,7 @@ export const useMilestone = () => {
               changeStepperStep("indexing");
               const txHash = res?.tx[0]?.hash;
               if (txHash) {
-                await fetchData(
-                  INDEXER.ATTESTATION_LISTENER(txHash, objectiveInstance.chainID),
-                  "POST",
-                  {}
-                );
+                await api.post(INDEXER.ATTESTATION_LISTENER(txHash, objectiveInstance.chainID), {});
               }
 
               await checkIfCompletionUpdated(() => {

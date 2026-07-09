@@ -1,13 +1,18 @@
 import { apiKeyService } from "@/src/features/api-keys/services/api-key.service";
 
-vi.mock("@/utilities/fetchData", () => ({
-  __esModule: true,
-  default: vi.fn(),
+vi.mock("@/utilities/api/client", () => ({
+  api: {
+    get: vi.fn(),
+    post: vi.fn(),
+    delete: vi.fn(),
+  },
 }));
 
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 
-const mockFetchData = fetchData as unknown as vi.Mock;
+const mockApiGet = api.get as unknown as vi.Mock;
+const mockApiPost = api.post as unknown as vi.Mock;
+const mockApiDelete = api.delete as unknown as vi.Mock;
 
 describe("apiKeyService", () => {
   beforeEach(() => {
@@ -25,16 +30,19 @@ describe("apiKeyService", () => {
           lastUsedAt: null,
         },
       };
-      mockFetchData.mockResolvedValue([mockResponse, null]);
+      mockApiGet.mockResolvedValue(mockResponse);
 
       const result = await apiKeyService.get();
 
       expect(result).toEqual(mockResponse);
-      expect(mockFetchData).toHaveBeenCalledWith(expect.stringContaining("api-keys"), "GET");
+      expect(mockApiGet).toHaveBeenCalledWith(
+        expect.stringContaining("api-keys"),
+        expect.objectContaining({ schema: expect.anything() })
+      );
     });
 
     it("should throw on error", async () => {
-      mockFetchData.mockResolvedValue([null, "Unauthorized"]);
+      mockApiGet.mockRejectedValue(new Error("Unauthorized"));
 
       await expect(apiKeyService.get()).rejects.toThrow("Unauthorized");
     });
@@ -48,14 +56,16 @@ describe("apiKeyService", () => {
         name: "My Key",
         createdAt: "2026-02-22T00:00:00.000Z",
       };
-      mockFetchData.mockResolvedValue([mockResponse, null]);
+      mockApiPost.mockResolvedValue(mockResponse);
 
       const result = await apiKeyService.create("My Key");
 
       expect(result).toEqual(mockResponse);
-      expect(mockFetchData).toHaveBeenCalledWith(expect.stringContaining("api-keys"), "POST", {
-        name: "My Key",
-      });
+      expect(mockApiPost).toHaveBeenCalledWith(
+        expect.stringContaining("api-keys"),
+        { name: "My Key" },
+        expect.objectContaining({ schema: expect.anything() })
+      );
     });
 
     it("should create API key without name", async () => {
@@ -65,16 +75,20 @@ describe("apiKeyService", () => {
         name: "Default",
         createdAt: "2026-02-22T00:00:00.000Z",
       };
-      mockFetchData.mockResolvedValue([mockResponse, null]);
+      mockApiPost.mockResolvedValue(mockResponse);
 
       const result = await apiKeyService.create();
 
       expect(result).toEqual(mockResponse);
-      expect(mockFetchData).toHaveBeenCalledWith(expect.stringContaining("api-keys"), "POST", {});
+      expect(mockApiPost).toHaveBeenCalledWith(
+        expect.stringContaining("api-keys"),
+        {},
+        expect.objectContaining({ schema: expect.anything() })
+      );
     });
 
     it("should throw on error", async () => {
-      mockFetchData.mockResolvedValue([null, "Failed to create"]);
+      mockApiPost.mockRejectedValue(new Error("Failed to create"));
 
       await expect(apiKeyService.create("Test")).rejects.toThrow("Failed to create");
     });
@@ -82,14 +96,14 @@ describe("apiKeyService", () => {
 
   describe("revoke", () => {
     it("should revoke API key successfully", async () => {
-      mockFetchData.mockResolvedValue([{}, null]);
+      mockApiDelete.mockResolvedValue(undefined);
 
       await expect(apiKeyService.revoke()).resolves.toBeUndefined();
-      expect(mockFetchData).toHaveBeenCalledWith(expect.stringContaining("api-keys"), "DELETE");
+      expect(mockApiDelete).toHaveBeenCalledWith(expect.stringContaining("api-keys"));
     });
 
     it("should throw on error", async () => {
-      mockFetchData.mockResolvedValue([null, "Not found"]);
+      mockApiDelete.mockRejectedValue(new Error("Not found"));
 
       await expect(apiKeyService.revoke()).rejects.toThrow("Not found");
     });

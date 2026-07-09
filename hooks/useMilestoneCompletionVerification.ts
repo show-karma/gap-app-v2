@@ -14,7 +14,7 @@ import {
   type GrantMilestoneWithCompletion,
   type ProjectGrantMilestonesResponse,
 } from "@/services/milestones";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 import { queryClient } from "@/utilities/query-client";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
@@ -199,7 +199,7 @@ export const useMilestoneCompletionVerification = ({
     communityUID: string
   ) => {
     if (txHash) {
-      await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, chainId), "POST", {});
+      await api.post(INDEXER.ATTESTATION_LISTENER(txHash, chainId), {});
 
       // If multiple attestations, wait for indexer to process all
       if (attestationCount > 1) {

@@ -8,10 +8,10 @@ import { useAuth } from "@/hooks/useAuth";
 import { useMixpanel } from "@/hooks/useMixpanel";
 import { useProjectStore } from "@/store";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
+import { api } from "@/utilities/api/client";
 import { createAuthenticatedApiClient } from "@/utilities/auth/api-client";
 import { chainNameDictionary } from "@/utilities/chainNameDictionary";
 import { envVars } from "@/utilities/enviromentVars";
-import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { queryClient } from "@/utilities/query-client";
 import { createProjectQueryPredicate, QUERY_KEYS } from "@/utilities/queryKeys";
@@ -309,7 +309,7 @@ export const useMilestoneEdit = (options?: UseMilestoneEditOptions) => {
             changeStepperStep("indexing");
             const txHash = result?.tx?.[0]?.hash;
             if (txHash) {
-              await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, chainId), "POST", {});
+              await api.post(INDEXER.ATTESTATION_LISTENER(txHash, chainId), {});
             }
           }
 
@@ -383,7 +383,7 @@ export const useMilestoneEdit = (options?: UseMilestoneEditOptions) => {
 
         const txHash = result?.tx?.[0]?.hash;
         if (txHash) {
-          await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, milestone.chainID), "POST", {});
+          await api.post(INDEXER.ATTESTATION_LISTENER(txHash, milestone.chainID), {});
         }
 
         await retryUntilConditionMet(

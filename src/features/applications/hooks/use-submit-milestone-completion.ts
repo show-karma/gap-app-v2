@@ -12,7 +12,7 @@ import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
 import { submitGranteeInvoice } from "@/src/features/payout-disbursement/services/payout-disbursement.service";
 import type { Application, MilestoneStatusEntry } from "@/types/whitelabel-entities";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
 import { isAbortError, retryUntilConditionMet } from "@/utilities/retries";
@@ -156,7 +156,7 @@ export function useSubmitMilestoneCompletion() {
         // ingests the tx regardless — the polling below waits until the
         // completion is visible end-to-end before we declare success.
         if (txHash) {
-          fetchData(INDEXER.ATTESTATION_LISTENER(txHash, chainID), "POST", {}).catch(() => {
+          api.post(INDEXER.ATTESTATION_LISTENER(txHash, chainID), {}).catch(() => {
             // intentional — propagation lag is expected, not an error
           });
         }
@@ -175,16 +175,10 @@ export function useSubmitMilestoneCompletion() {
         try {
           await retryUntilConditionMet(
             async () => {
-              const [data] = await fetchData<Application>(
+              // TODO(#1775): add zod schema
+              const data = await api.get<Application>(
                 INDEXER.V2.FUNDING_APPLICATIONS.GET(params.referenceNumber),
-                "GET",
-                {},
-                {},
-                {},
-                true,
-                false,
-                undefined,
-                signal
+                { signal }
               );
               if (!data) return false;
               const entry = data.milestoneStatuses?.find(

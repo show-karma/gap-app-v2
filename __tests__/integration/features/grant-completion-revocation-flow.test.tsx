@@ -125,6 +125,18 @@ vi.mock("@/utilities/fetchData", () => ({
   default: vi.fn(),
 }));
 
+vi.mock("@/utilities/api/client", () => ({
+  api: {
+    get: vi.fn().mockResolvedValue({}),
+    post: vi.fn().mockResolvedValue({}),
+    put: vi.fn().mockResolvedValue({}),
+    patch: vi.fn().mockResolvedValue({}),
+    delete: vi.fn().mockResolvedValue({}),
+    request: vi.fn().mockResolvedValue({ data: {}, status: 200, pageInfo: null }),
+    getPaginated: vi.fn().mockResolvedValue({ data: {}, pageInfo: null }),
+  },
+}));
+
 vi.mock("@/hooks/useOffChainRevoke", () => ({
   useOffChainRevoke: vi.fn(() => ({
     performOffChainRevoke: vi.fn(),
