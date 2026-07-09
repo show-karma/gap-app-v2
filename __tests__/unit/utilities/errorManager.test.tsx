@@ -214,6 +214,25 @@ describe("errorManager", () => {
       );
     });
 
+    it("routes a genuine typed ApiError to reportApiFailure even when a toastError is supplied (typed errors are handled above the toast block by design)", () => {
+      // Intentional seam: hoisting the typed-ApiError handling above the
+      // toastError block means typed errors report to Sentry but do not fire
+      // the errorManager toast — user feedback for typed failures is the
+      // migrating call site's responsibility (§C top-placement design).
+      const error = new HttpError(500, { endpoint: "/grants/x", method: "GET" });
+
+      expect(() =>
+        errorManager("Could not save", error, undefined, { error: "Could not save" })
+      ).not.toThrow();
+
+      expect(Sentry.captureException).toHaveBeenCalledWith(
+        error,
+        expect.objectContaining({
+          extra: expect.objectContaining({ endpoint: "/grants/x", status: 500 }),
+        })
+      );
+    });
+
     it("keeps expected typed errors (NetworkError/429) breadcrumb-only, not routed to reportApiFailure", () => {
       const networkError = new NetworkError({ endpoint: "/x", method: "GET" });
       errorManager("Test error", networkError);
