@@ -113,7 +113,6 @@ export const INDEXER = {
         `/v2/projects/${projectUid}/grants/${programId}/milestones`,
       UPDATES: (projectIdOrSlug: string) => `/v2/projects/${projectIdOrSlug}/updates`,
       MILESTONES: (projectIdOrSlug: string) => `/v2/projects/${projectIdOrSlug}/milestones`,
-      IMPACTS: (projectIdOrSlug: string) => `/v2/projects/${projectIdOrSlug}/impacts`,
     },
     APPLICATIONS: {
       BY_PROJECT_UID: (projectUID: string) => `/v2/funding-applications/project/${projectUID}`,
@@ -414,6 +413,11 @@ export const INDEXER = {
     },
     SUBSCRIBE: (projectId: Hex) => `/projects/${projectId}/subscribe`,
     FEED: (projectIdOrSlug: string) => `/projects/${projectIdOrSlug}/feed`,
+    // GAP-FRONTEND-24Z: the V2 route `/v2/projects/:idOrSlug/impacts` does not
+    // exist on the indexer (verified against prod + staging). Fall back to
+    // the V1 route until the backend ships a V2 counterpart, then flip this
+    // back to the V2 group.
+    IMPACTS: (projectIdOrSlug: string) => `/projects/${projectIdOrSlug}/impacts`,
     FUNDEDBY: (address: string) => `/projects/fundedby/${address}`,
     GRANTS_GENIE: (projectId: string) => `/projects/${projectId}/grants-genie`,
     REQUEST_INTRO: (projectIdOrSlug: string) => `/projects/requestintro/${projectIdOrSlug}`,
