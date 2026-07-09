@@ -325,6 +325,7 @@ export const MESSAGES = {
       ERROR: (title: string) => `There was an error creating ${title} project.`,
       RETRYABLE_ERROR:
         "We couldn't reach the network just now. Your details are saved — please try again in a moment.",
+      WALLET_PREPARING: "Your wallet is still being prepared. Please try again in a moment.",
     },
     UPDATE: {
       SUCCESS: "Project updated successfully",

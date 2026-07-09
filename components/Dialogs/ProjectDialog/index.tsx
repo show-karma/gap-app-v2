@@ -75,6 +75,7 @@ import { getProjectById } from "@/utilities/sdk";
 import { updateProject } from "@/utilities/sdk/projects/editProject";
 import { SOCIALS } from "@/utilities/socials";
 import { cn } from "@/utilities/tailwind";
+import { isSignerUnavailableError } from "@/utilities/wallet/signerReadiness";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { SimilarProjectsDialog } from "../SimilarProjectsDialog";
 import { ContactInfoSection } from "./ContactInfoSection";
@@ -178,6 +179,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
     login,
     isConnected: authIsConnected,
     address: authAddress,
+    connectWallet,
   } = useAuth();
   const { chain } = useAccount();
   const { switchChainAsync } = useWallet();
@@ -185,7 +187,8 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   const router = useRouter();
   const { gap } = useGap();
   const { openSimilarProjectsModal, isSimilarProjectsModalOpen } = useSimilarProjectsModalStore();
-  const { setupChainAndWallet, smartWalletAddress, hasEmbeddedWallet } = useSetupChainAndWallet();
+  const { setupChainAndWallet, smartWalletAddress, hasEmbeddedWallet, signerStatus } =
+    useSetupChainAndWallet();
   // Resolve address: wagmi (external wallet) > useAuth (Privy wallets) > smartWalletAddress (embedded wallet for social login)
   const address = wagmiAddress || authAddress || (smartWalletAddress as `0x${string}` | undefined);
   const isConnected = wagmiIsConnected || authIsConnected || !!smartWalletAddress;
@@ -714,6 +717,16 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       setContacts([]);
       setCustomLinks([]);
     } catch (error: any) {
+      // No wallet was ready to sign yet — an expected user/lifecycle state
+      // (wallet hydrating, embedded wallet provisioning, none connected),
+      // not a defect. Show actionable guidance and skip errorManager/Sentry
+      // entirely (GAP-FRONTEND-24N).
+      if (isSignerUnavailableError(error)) {
+        showError(error.message);
+        setShouldResetOnOpen(false);
+        openModal();
+        return;
+      }
       // A transient chain-switch / bundler-RPC hiccup (GAP-FRONTEND-23C) is
       // recoverable by retrying — tell the user that instead of a dead-end
       // generic error. The form data is preserved either way.
@@ -853,6 +866,14 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         }, 1500);
       });
     } catch (error: any) {
+      // No wallet was ready to sign yet — an expected user/lifecycle state,
+      // not a defect. Show actionable guidance and skip Sentry (GAP-FRONTEND-24N).
+      if (isSignerUnavailableError(error)) {
+        showError(error.message);
+        setShouldResetOnOpen(false);
+        openModal();
+        return;
+      }
       const userMessage = isRetryableChainError(error)
         ? MESSAGES.PROJECT.UPDATE.RETRYABLE_ERROR
         : MESSAGES.PROJECT.UPDATE.ERROR;
@@ -895,6 +916,9 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
     const errors = hasErrors();
     if (isLoading) {
       return <p>Loading...</p>;
+    }
+    if (signerStatus === "initializing") {
+      return <p>{MESSAGES.PROJECT.CREATE.WALLET_PREPARING}</p>;
     }
     if (!errors) {
       return;
@@ -1683,7 +1707,16 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                           </Tooltip.Provider>
                         )}
 
-                        {step === categories.length - 1 && (
+                        {step === categories.length - 1 && signerStatus === "no-wallet" ? (
+                          <Button
+                            type="button"
+                            className="flex disabled:opacity-50 flex-row dark:bg-zinc-900 hover:text-white dark:text-white gap-2 items-center justify-center rounded-md border border-transparent bg-black px-6 py-2 text-md font-medium text-white hover:opacity-70 hover:bg-black focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                            onClick={() => connectWallet()}
+                          >
+                            Connect wallet
+                          </Button>
+                        ) : null}
+                        {step === categories.length - 1 && signerStatus !== "no-wallet" && (
                           <Tooltip.Provider>
                             <Tooltip.Root delayDuration={0}>
                               <Tooltip.Trigger asChild>
@@ -1691,7 +1724,9 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                                   <Button
                                     type={"submit"}
                                     className="flex disabled:opacity-50 flex-row dark:bg-zinc-900 hover:text-white dark:text-white gap-2 items-center justify-center rounded-md border border-transparent bg-black px-6 py-2 text-md font-medium text-white hover:opacity-70 hover:bg-black focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
-                                    disabled={hasErrors() || isLoading}
+                                    disabled={
+                                      hasErrors() || isLoading || signerStatus === "initializing"
+                                    }
                                   >
                                     {projectToUpdate ? "Update project" : "Create project"}
                                     {!projectToUpdate ? (
@@ -1701,7 +1736,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                                 </div>
                               </Tooltip.Trigger>
                               <Tooltip.Portal>
-                                {hasErrors() || isLoading ? (
+                                {hasErrors() || isLoading || signerStatus === "initializing" ? (
                                   <Tooltip.Content
                                     className="TooltipContent bg-brand-darkblue rounded-lg text-white p-3 z-[1000]"
                                     sideOffset={5}

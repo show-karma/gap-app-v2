@@ -30,6 +30,10 @@ const {
   const mockUseChainId = vi.fn().mockReturnValue(10);
   const mockPrivyState = {
     ready: true as boolean,
+    // Defaults to true so existing tests (wallets present at render time)
+    // resolve immediately instead of waiting out WALLET_READY_TIMEOUT_MS.
+    // Tests for the hydration-wait behavior set this to false explicitly.
+    walletsReady: true as boolean,
     user: null as MockUser | null,
     wallets: [] as MockWallet[],
   };
@@ -60,6 +64,7 @@ vi.mock("wagmi", () => ({
 vi.mock("@/contexts/privy-bridge-context", () => ({
   usePrivyBridge: vi.fn(() => ({
     ready: mockPrivyState.ready,
+    walletsReady: mockPrivyState.walletsReady,
     user: mockPrivyState.user,
     wallets: mockPrivyState.wallets,
   })),
@@ -125,7 +130,7 @@ import {
 // ---------------------------------------------------------------------------
 // Import the REAL hook using a relative path to bypass the @/ alias mock
 // ---------------------------------------------------------------------------
-import { useZeroDevSigner } from "../../../hooks/useZeroDevSigner";
+import { useZeroDevSigner, WALLET_READY_TIMEOUT_MS } from "../../../hooks/useZeroDevSigner";
 
 // ---------------------------------------------------------------------------
 // Shared chain-aware fixtures (see zerodev-signer-test-utils.ts)
@@ -193,6 +198,7 @@ describe("useZeroDevSigner (real hook)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockPrivyState.ready = true;
+    mockPrivyState.walletsReady = true;
     mockPrivyState.user = null;
     mockPrivyState.wallets = [];
     mockUseChainId.mockReturnValue(10);
@@ -219,6 +225,13 @@ describe("useZeroDevSigner (real hook)", () => {
         getNetwork: vi.fn().mockResolvedValue({ chainId: 1n }),
       },
     }));
+  });
+
+  afterEach(() => {
+    // Some tests below install fake timers to fast-forward the
+    // WALLET_READY_TIMEOUT_MS wait — always restore real timers so it can't
+    // leak into a later test.
+    vi.useRealTimers();
   });
 
   // =========================================================================
@@ -575,30 +588,182 @@ describe("useZeroDevSigner (real hook)", () => {
   // =========================================================================
 
   describe("getAttestationSigner — no wallet", () => {
-    it("should throw 'No wallet available for signing' when no wallets exist", async () => {
+    it("throws SignerUnavailableError('wallets-hydrating') when walletsReady never flips true", async () => {
+      vi.useFakeTimers();
+      mockPrivyState.walletsReady = false;
       mockPrivyState.user = { linkedAccounts: [{ type: "wallet" }] };
       mockPrivyState.wallets = [];
 
       const { result } = renderHook(() => useZeroDevSigner());
 
-      await act(async () => {
-        await expect(result.current.getAttestationSigner(10)).rejects.toThrow(
-          "No wallet available for signing"
-        );
+      const assertion = expect(result.current.getAttestationSigner(10)).rejects.toMatchObject({
+        name: "SignerUnavailableError",
+        reason: "wallets-hydrating",
+        expected: true,
       });
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(WALLET_READY_TIMEOUT_MS + 500);
+      });
+
+      await assertion;
     });
 
-    it("should throw when user is null", async () => {
+    it("throws SignerUnavailableError('no-wallet-connected') when wallets are hydrated but empty (wallet-login user)", async () => {
+      vi.useFakeTimers();
+      mockPrivyState.walletsReady = true;
+      mockPrivyState.user = { linkedAccounts: [{ type: "wallet" }] };
+      mockPrivyState.wallets = [];
+
+      const { result } = renderHook(() => useZeroDevSigner());
+
+      const assertion = expect(result.current.getAttestationSigner(10)).rejects.toMatchObject({
+        name: "SignerUnavailableError",
+        reason: "no-wallet-connected",
+      });
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(WALLET_READY_TIMEOUT_MS + 500);
+      });
+
+      await assertion;
+    });
+
+    it("throws SignerUnavailableError('embedded-wallet-provisioning') for an email user whose embedded wallet never appears", async () => {
+      vi.useFakeTimers();
+      mockPrivyState.walletsReady = true;
+      mockPrivyState.user = { linkedAccounts: [{ type: "email" }] };
+      mockPrivyState.wallets = [];
+
+      const { result } = renderHook(() => useZeroDevSigner());
+
+      const assertion = expect(result.current.getAttestationSigner(10)).rejects.toMatchObject({
+        name: "SignerUnavailableError",
+        reason: "embedded-wallet-provisioning",
+      });
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(WALLET_READY_TIMEOUT_MS + 500);
+      });
+
+      await assertion;
+    });
+
+    it("throws when user is null (unauthenticated)", async () => {
+      vi.useFakeTimers();
+      mockPrivyState.walletsReady = true;
       mockPrivyState.user = null;
       mockPrivyState.wallets = [];
 
       const { result } = renderHook(() => useZeroDevSigner());
 
-      await act(async () => {
-        await expect(result.current.getAttestationSigner(10)).rejects.toThrow(
-          "No wallet available for signing"
-        );
+      const assertion = expect(result.current.getAttestationSigner(10)).rejects.toMatchObject({
+        name: "SignerUnavailableError",
+        reason: "no-wallet-connected",
       });
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(WALLET_READY_TIMEOUT_MS + 500);
+      });
+
+      await assertion;
+    });
+  });
+
+  // =========================================================================
+  // Regression: GAP-FRONTEND-24N — a wallet that hydrates mid-wait must
+  // resolve, not throw the old instantaneous "No wallet available" error.
+  // =========================================================================
+
+  describe("getAttestationSigner — mid-flight wallet hydration (GAP-FRONTEND-24N)", () => {
+    it("resolves with a signer once an external wallet appears during the wait", async () => {
+      vi.useFakeTimers();
+      mockPrivyState.walletsReady = false;
+      mockPrivyState.user = { linkedAccounts: [{ type: "wallet" }] };
+      mockPrivyState.wallets = [];
+      mockViemCreateWalletClient.mockReturnValue({ account: { address: EXTERNAL_WALLET_ADDRESS } });
+      mockWalletClientToSigner.mockResolvedValue({
+        getAddress: vi.fn().mockResolvedValue(EXTERNAL_WALLET_ADDRESS),
+      });
+
+      const { result, rerender } = renderHook(() => useZeroDevSigner());
+
+      const signerPromise = result.current.getAttestationSigner(10);
+
+      // Advance past the first poll tick(s) without resolving hydration yet.
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(500);
+      });
+
+      // Wallet hydrates mid-wait — mutate the same object the hook's ref reads,
+      // then rerender so the ref-sync-on-render line picks up the new value
+      // (mutating the mock state alone doesn't trigger a React re-render).
+      mockPrivyState.walletsReady = true;
+      mockPrivyState.wallets = [createExternalWallet()];
+      rerender();
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(500);
+      });
+
+      const signer = await signerPromise;
+      expect(signer).toBeDefined();
+      expect(await addressOf(signer)).toBe(EXTERNAL_WALLET_ADDRESS);
+    });
+  });
+
+  // =========================================================================
+  // signerStatus derivation
+  // =========================================================================
+
+  describe("signerStatus", () => {
+    it("is 'initializing' while Privy is not ready", () => {
+      mockPrivyState.ready = false;
+      mockPrivyState.walletsReady = false;
+      mockPrivyState.user = { linkedAccounts: [{ type: "wallet" }] };
+      mockPrivyState.wallets = [];
+
+      const { result } = renderHook(() => useZeroDevSigner());
+
+      expect(result.current.signerStatus).toBe("initializing");
+    });
+
+    it("is 'initializing' while wallets have not hydrated yet", () => {
+      mockPrivyState.walletsReady = false;
+      mockPrivyState.user = { linkedAccounts: [{ type: "wallet" }] };
+      mockPrivyState.wallets = [];
+
+      const { result } = renderHook(() => useZeroDevSigner());
+
+      expect(result.current.signerStatus).toBe("initializing");
+    });
+
+    it("is 'ready' once a usable wallet exists", () => {
+      setupExternalWalletUser();
+
+      const { result } = renderHook(() => useZeroDevSigner());
+
+      expect(result.current.signerStatus).toBe("ready");
+    });
+
+    it("is 'no-wallet' when hydrated with no wallets for a wallet-login user", () => {
+      mockPrivyState.walletsReady = true;
+      mockPrivyState.user = { linkedAccounts: [{ type: "wallet" }] };
+      mockPrivyState.wallets = [];
+
+      const { result } = renderHook(() => useZeroDevSigner());
+
+      expect(result.current.signerStatus).toBe("no-wallet");
+    });
+
+    it("stays 'initializing' (not 'no-wallet') for an email user whose embedded wallet hasn't appeared yet", () => {
+      mockPrivyState.walletsReady = true;
+      mockPrivyState.user = { linkedAccounts: [{ type: "email" }] };
+      mockPrivyState.wallets = [];
+
+      const { result } = renderHook(() => useZeroDevSigner());
+
+      expect(result.current.signerStatus).toBe("initializing");
     });
   });
 
