@@ -67,12 +67,15 @@ describe("rewards reducer — grants", () => {
     expect(result.current.state.celebration?.newStreak).toBeNull();
   });
 
-  it("debits the balance and adds the grant record", () => {
+  it("draws the grant from investment gains before principal, and adds the grant record", () => {
     const { result } = renderRewards();
 
+    // 250 is within this year's investment gains (3850), so windfall-first
+    // accounting spends the gains and leaves the principal balance whole.
     act(() => result.current.makeGrant("org-meals", 250, false));
 
-    expect(result.current.state.balance).toBe(INITIAL_STATE.balance - 250);
+    expect(result.current.state.balance).toBe(INITIAL_STATE.balance);
+    expect(result.current.state.investmentGains).toBe(INITIAL_STATE.investmentGains - 250);
     expect(result.current.state.grantedThisYear).toBe(INITIAL_STATE.grantedThisYear + 250);
     expect(result.current.state.grants).toHaveLength(1);
     expect(result.current.state.grants[0]).toMatchObject({
