@@ -71,11 +71,9 @@ export const useMilestoneCompletionVerification = ({
     useAttestationToast();
   const { setupChainAndWallet } = useSetupChainAndWallet();
 
-  // AbortController owns the in-flight verification's polling loop.
-  // React state updates and `onSuccess` callbacks that fire after the
-  // component unmounts trigger React's "state update on unmounted
-  // component" warning and waste network calls. The controller is
-  // refreshed at every `verifyMilestone` call and aborted on cleanup.
+  // AbortController owns the in-flight verification's polling loop (refreshed at
+  // every verifyMilestone call, aborted on cleanup) so post-unmount state updates
+  // don't warn or waste network calls.
   const controllerRef = useRef<AbortController | null>(null);
   useEffect(() => {
     return () => {
@@ -199,18 +197,10 @@ export const useMilestoneCompletionVerification = ({
     communityUID: string
   ) => {
     if (txHash) {
-      // Best-effort nudge to the indexer's attestation listener — the
-      // indexer also picks this up from its own chain listener, so a
-      // failure here must not abort the flow (the on-chain attestation
-      // already succeeded by this point). Legacy `fetchData` never threw
-      // and its returned error was discarded; preserve that here.
-      try {
-        await api.post(INDEXER.ATTESTATION_LISTENER(txHash, chainId), {});
-      } catch (error) {
-        errorManager("Error notifying indexer of attestation", error, { txHash, chainId });
-      }
-
-      // If multiple attestations, wait for indexer to process all
+      // Best-effort indexer nudge; it also catches this via its own chain listener,
+      // so a failure must not abort the flow. Legacy fetchData discarded the error.
+      await api.post(INDEXER.ATTESTATION_LISTENER(txHash, chainId), {}).catch(() => undefined);
+      // If multiple attestations, wait for the indexer to process all of them.
       if (attestationCount > 1) {
         await new Promise((resolve) => setTimeout(resolve, INDEXER_PROCESSING_DELAY_MS));
       }
