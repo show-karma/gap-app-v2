@@ -87,7 +87,11 @@ export function ReviewsFullView({
       ) : null}
 
       <PermissionProvider key={active.id} resourceContext={{ communityId: active.id }}>
-        <ReviewerInboxPage community={active.community} loadingSlot={<ReviewsInboxSkeleton />} />
+        <ReviewerInboxPage
+          community={active.community}
+          loadingSlot={<ReviewsInboxSkeleton />}
+          syncSelectionToHash={false}
+        />
       </PermissionProvider>
     </section>
   );

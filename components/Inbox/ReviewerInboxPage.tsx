@@ -37,9 +37,21 @@ interface ReviewerInboxPageProps {
    * a themed skeleton so the loading state doesn't jump.
    */
   loadingSlot?: ReactNode;
+  /**
+   * Mirror the selected item into the URL hash (`#review-<id>`) for deep links.
+   * Disable when embedded in a host that already owns the hash — e.g. the
+   * dashboard drill-in, which navigates via `#reviews`; two writers of the same
+   * hash collide (selection resets, back-to-overview breaks). Off → selection is
+   * pure component state.
+   */
+  syncSelectionToHash?: boolean;
 }
 
-export function ReviewerInboxPage({ community, loadingSlot }: ReviewerInboxPageProps) {
+export function ReviewerInboxPage({
+  community,
+  loadingSlot,
+  syncSelectionToHash = true,
+}: ReviewerInboxPageProps) {
   const communityId = community?.details?.slug || community?.uid || "";
   const { authenticated, ready } = useAuth();
   const { isLoading: isRbacLoading } = usePermissionContext();
@@ -61,22 +73,30 @@ export function ReviewerInboxPage({ community, loadingSlot }: ReviewerInboxPageP
 
   const hasBothRoles = includeApplications && includeMilestones;
 
-  // Selection synced to the URL hash so detail views are shareable / survive back-forward.
-  const [selectedId, setSelectedId] = useState<string | null>(() => getSelectedIdFromHash());
+  // Selection synced to the URL hash so detail views are shareable / survive
+  // back-forward — unless the host owns the hash (see syncSelectionToHash).
+  const [selectedId, setSelectedId] = useState<string | null>(() =>
+    syncSelectionToHash ? getSelectedIdFromHash() : null
+  );
   const [kindFilter, setKindFilter] = useState<InboxKindFilter>("all");
 
-  const handleSelect = useCallback((id: string) => {
-    setSelectedId(id);
-    const url = new URL(window.location.href);
-    url.hash = `${HASH_PREFIX}${encodeURIComponent(id)}`;
-    window.history.replaceState({}, "", url.toString());
-  }, []);
+  const handleSelect = useCallback(
+    (id: string) => {
+      setSelectedId(id);
+      if (!syncSelectionToHash) return;
+      const url = new URL(window.location.href);
+      url.hash = `${HASH_PREFIX}${encodeURIComponent(id)}`;
+      window.history.replaceState({}, "", url.toString());
+    },
+    [syncSelectionToHash]
+  );
 
   useEffect(() => {
+    if (!syncSelectionToHash) return;
     const sync = () => setSelectedId(getSelectedIdFromHash());
     window.addEventListener("hashchange", sync);
     return () => window.removeEventListener("hashchange", sync);
-  }, []);
+  }, [syncSelectionToHash]);
 
   const selectedItem: InboxItem | undefined = useMemo(
     () => items.find((i) => i.id === selectedId),
