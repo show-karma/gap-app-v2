@@ -168,6 +168,24 @@ describe("milestoneReviewersService", () => {
       });
     });
 
+    it("should return empty array for any 404, regardless of message copy", async () => {
+      // A program with no reviewers is an empty list, not a failure. Some
+      // deployments return a 404 whose body message doesn't match the known
+      // "not found" phrases — treating the 404 status itself as "empty" keeps
+      // the reviewers filter from surfacing a spurious error toast.
+      mockApiGet.mockRejectedValue(
+        new HttpError(404, {
+          endpoint: "/v2/programs/program-1/milestone-reviewers",
+          method: "GET",
+          body: { message: "Not found" },
+        })
+      );
+
+      const result = await milestoneReviewersService.getReviewers("program-1");
+
+      expect(result).toEqual([]);
+    });
+
     it("should throw error for non-404 errors", async () => {
       mockApiGet.mockRejectedValue(
         new HttpError(500, {
