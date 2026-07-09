@@ -48,6 +48,11 @@ export const envVars = {
   // Karma platform-owned Telegram bot handle (without leading @).
   // Hardcoded — single bot used across all environments.
   KARMA_TELEGRAM_BOT_HANDLE: "karmahq_support_bot",
+  // Sanity Blog CMS — see sanity/env.ts for the module that consumes these.
+  NEXT_PUBLIC_SANITY_PROJECT_ID: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID as string,
+  NEXT_PUBLIC_SANITY_DATASET: (process.env.NEXT_PUBLIC_SANITY_DATASET || "production") as string,
+  NEXT_PUBLIC_SANITY_API_VERSION: (process.env.NEXT_PUBLIC_SANITY_API_VERSION ||
+    "2024-01-01") as string,
 };
 
 // Re-exported as a named constant so callers can `import { KARMA_TELEGRAM_BOT_HANDLE }`

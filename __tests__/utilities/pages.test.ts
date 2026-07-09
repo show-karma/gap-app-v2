@@ -104,4 +104,21 @@ describe("PAGES constants", () => {
       expect(PAGES.COMMUNITIES).toBe("/communities");
     });
   });
+
+  describe("PAGES.BLOG", () => {
+    it("BLOG is /blog", () => {
+      expect(PAGES.BLOG).toBe("/blog");
+    });
+
+    it("BLOG_POST builds a slug path", () => {
+      const result = PAGES.BLOG_POST("my-first-post");
+      expect(result).toBe("/blog/my-first-post");
+    });
+
+    it("BLOG_POST handles different slugs distinctly", () => {
+      const path1 = PAGES.BLOG_POST("post-a");
+      const path2 = PAGES.BLOG_POST("post-b");
+      expect(path1).not.toBe(path2);
+    });
+  });
 });
