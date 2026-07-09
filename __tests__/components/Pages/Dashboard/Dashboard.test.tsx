@@ -530,6 +530,43 @@ describe("Dashboard", () => {
       expect(screen.getByText(/Couldn't load this section/i)).toBeInTheDocument();
     });
 
+    it("keeps the applications tile mounted when a filter matches zero applications", () => {
+      // Search/status filters are applied server-side, so a zero-match search
+      // returns empty applications AND zero status counts. That must NOT be
+      // treated as a true-empty module (which would unmount the whole tile and
+      // strand the user with no way to clear the filter) — the tile stays so the
+      // drill-in can show "no matches" and offer to clear.
+      mockUseUserApplications.mockReturnValue({
+        applications: [],
+        filters: { status: "all", programId: null, searchQuery: "no-such-app" },
+        sortBy: "createdAt",
+        sortOrder: "desc",
+        pagination: { page: 1, totalPages: 1, limit: 10 },
+        statusCounts: {},
+        isLoading: false,
+        error: null,
+        setFilters: vi.fn(),
+        setSort: vi.fn(),
+        setPage: vi.fn(),
+        setPageSize: vi.fn(),
+        refresh: vi.fn(),
+      });
+
+      const { container } = render(<Dashboard />, { wrapper: createWrapper() });
+
+      expect(
+        container.querySelector('[data-comment-anchor="tile-applications"]')
+      ).toBeInTheDocument();
+    });
+
+    it("hides the applications tile when there are no applications and no active filter", () => {
+      // Default mock: empty applications, no status counts, no filters → the
+      // genuine "get started" empty state, so the tile is hidden entirely.
+      render(<Dashboard />, { wrapper: createWrapper() });
+
+      expect(screen.queryByText("My applications")).not.toBeInTheDocument();
+    });
+
     it("always orders the projects tile before the applications tile", () => {
       mockUseQuery.mockReturnValue({
         data: [{ uid: "project-1", details: { title: "Project One" } }],

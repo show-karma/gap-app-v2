@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { type ReactNode, useEffect, useState } from "react";
 import type { Hex } from "viem";
 import { useUserApplications } from "@/features/user-applications/hooks/use-user-applications";
+import { hasActiveApplicationFilters } from "@/features/user-applications/lib/filters";
 import type { UseUserApplicationsReturn } from "@/features/user-applications/types";
 import { setPostLoginRedirect, useAuth } from "@/hooks/useAuth";
 import type { DashboardAdminCommunity } from "@/hooks/useDashboardAdmin";
@@ -301,10 +302,14 @@ export function Dashboard() {
     isAdminLoading,
     adminCommunities.length === 0
   );
+  // Search/status filters are applied server-side, so a filter that matches
+  // nothing returns zero counts. Treat that as a filtered state (module stays
+  // mounted so the drill-in can show "no matches" and offer to clear), NOT as a
+  // true empty module — otherwise a zero-match search unmounts the whole tile.
   const applicationsStatus = computeStatus(
     Boolean(applicationsHook.error),
     applicationsHook.isLoading,
-    applicationsTotal === 0
+    applicationsTotal === 0 && !hasActiveApplicationFilters(applicationsHook.filters)
   );
   // While the reviewer-program / admin-community lists load we can't build the
   // review communities yet; once resolved, defer to the inbox-stats summary.

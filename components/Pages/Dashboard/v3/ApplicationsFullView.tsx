@@ -10,6 +10,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useEnrichedApplications } from "@/features/user-applications/hooks/use-enriched-applications";
+import { hasActiveApplicationFilters } from "@/features/user-applications/lib/filters";
 import type {
   UserApplicationsFilters,
   UseUserApplicationsReturn,
@@ -66,15 +67,6 @@ const STATUS_OPTIONS: Array<{ value: ApplicationStatus | "all"; label: string }>
   { value: "approved", label: "Approved" },
   { value: "rejected", label: "Rejected" },
 ];
-
-function hasActiveFilters(filters: UserApplicationsFilters): boolean {
-  return (
-    (filters.status ?? "all") !== "all" ||
-    !!filters.programId ||
-    !!filters.searchQuery ||
-    !!filters.dateRange
-  );
-}
 
 const FIELD_CLASS =
   "h-10 w-full rounded-full border border-sf-line bg-sf-elev text-[13px] text-sf-heading focus:border-sf-line-strong focus:outline-none";
@@ -173,7 +165,7 @@ function ApplicationsFilterBar({
         </SelectContent>
       </Select>
 
-      {hasActiveFilters(filters) ? (
+      {hasActiveApplicationFilters(filters) ? (
         <button
           className={cn(BTN_BASE, BTN_SM, BTN_OUTLINE, "!shadow-none")}
           onClick={onReset}
@@ -354,7 +346,7 @@ export function ApplicationsFullView({
     return { total, pending, approved };
   }, [statusCounts]);
 
-  const filtersActive = hasActiveFilters(filters);
+  const filtersActive = hasActiveApplicationFilters(filters);
   const hasApplications = stats.total > 0;
   // The true "get started" empty state — no applications AND no filters applied.
   // A filter that matches nothing is a different state (handled in the list).
