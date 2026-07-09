@@ -25,7 +25,7 @@ const POST_SUMMARY_PROJECTION = `{
   excerpt,
   publishedAt,
   "tags": coalesce(tags, []),
-  coverImage
+  "coverImage": coalesce(coverImage, null)
 }`;
 
 const POSTS_QUERY = `*[_type == "post" && defined(slug.current) && defined(publishedAt) && publishedAt <= now()] | order(publishedAt desc) ${POST_SUMMARY_PROJECTION}`;
@@ -43,7 +43,7 @@ function postDetailProjection() {
     excerpt,
     publishedAt,
     "tags": coalesce(tags, []),
-    coverImage,
+    "coverImage": coalesce(coverImage, null),
     body,
     "author": author->{ name, "slug": slug.current },
     seo
