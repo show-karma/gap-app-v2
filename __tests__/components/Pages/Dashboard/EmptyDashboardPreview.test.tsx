@@ -27,14 +27,13 @@ vi.mock("@/src/components/navigation/Link", () => ({
 vi.mock("motion/react", () => import("@/__tests__/helpers/motion-mock"));
 
 describe("EmptyDashboardPreview", () => {
-  it("renders the getting-started cards, including Review applications", () => {
+  it("renders the getting-started cards", () => {
     render(<EmptyDashboardPreview />);
 
     expect(screen.getByText("Get started with Karma")).toBeInTheDocument();
     expect(screen.getByText("Create a project")).toBeInTheDocument();
     expect(screen.getByText("Apply for funding")).toBeInTheDocument();
     expect(screen.getByText("Explore communities")).toBeInTheDocument();
-    expect(screen.getByText("Review applications")).toBeInTheDocument();
     expect(screen.getByText("Find funders")).toBeInTheDocument();
   });
 });

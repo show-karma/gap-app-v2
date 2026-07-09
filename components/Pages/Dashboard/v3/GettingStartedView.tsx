@@ -44,13 +44,6 @@ const CARDS: GettingStartedCard[] = [
     cta: { label: "Browse communities", icon: "arrow", href: PAGES.COMMUNITIES },
   },
   {
-    key: "review",
-    icon: "eye",
-    title: "Review applications",
-    body: "Community admins can add you as a reviewer to evaluate grant applications and verify milestones.",
-    cta: { label: "Browse communities", icon: "arrow", href: PAGES.COMMUNITIES },
-  },
-  {
     key: "funders",
     icon: "compass",
     title: "Find funders",

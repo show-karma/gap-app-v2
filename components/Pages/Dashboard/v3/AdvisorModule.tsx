@@ -98,6 +98,9 @@ export function useAdvisorData(authenticated: boolean): AdvisorData {
     queryKey: donorReportsQueryKey({ limit: REPORTS_LIMIT }),
     queryFn: () => listResearchReports({ limit: REPORTS_LIMIT }),
     enabled: isAdvisor,
+    // Keep the fetched list fresh so a re-enable (e.g. auth state settling on
+    // load) returns cached data instead of refetching, matching the advisor query.
+    staleTime: 5 * 60 * 1000,
   });
 
   const reports = reportsQuery.data?.items ?? [];
