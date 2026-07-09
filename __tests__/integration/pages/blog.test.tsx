@@ -1,8 +1,8 @@
 /**
  * @file `/blog` index route behavior: newest-first list, designed empty
  * state, and JSON-LD presence. The error state (error.tsx) is exercised
- * separately since it's a client boundary Next mounts on a render throw,
- * not something the page component itself returns.
+ * separately in `blog-error.test.tsx` since it's a client boundary Next
+ * mounts on a render throw, not something the page component itself returns.
  */
 import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
