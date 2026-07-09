@@ -136,4 +136,72 @@ describe("errorManager", () => {
       expect(Sentry.captureException).toHaveBeenCalled();
     });
   });
+
+  describe("reportApiFailure delegation (Y2)", () => {
+    it("routes an unexpected ContractViolationError through reportApiFailure's per-endpoint fingerprint", () => {
+      const error = new ContractViolationError({
+        endpoint: "/x/y",
+        method: "GET",
+        issues: ["bad"],
+      });
+
+      errorManager("Test error", error);
+
+      expect(Sentry.captureException).toHaveBeenCalledWith(
+        error,
+        expect.objectContaining({
+          fingerprint: ["api-contract-violation", "/x/y"],
+        })
+      );
+    });
+
+    it("still reports a non-retryable typed HttpError (500)", () => {
+      const error = new HttpError(500, { endpoint: "/x", method: "GET" });
+
+      errorManager("Test error", error);
+
+      expect(Sentry.captureException).toHaveBeenCalledWith(
+        error,
+        expect.objectContaining({
+          extra: expect.objectContaining({ endpoint: "/x", method: "GET", status: 500 }),
+        })
+      );
+    });
+
+    it("keeps expected typed errors (NetworkError/429) breadcrumb-only, not routed to reportApiFailure", () => {
+      const networkError = new NetworkError({ endpoint: "/x", method: "GET" });
+      errorManager("Test error", networkError);
+      expect(Sentry.addBreadcrumb).toHaveBeenCalledWith({
+        category: "api",
+        message: networkError.message,
+        level: "warning",
+      });
+      expect(Sentry.captureException).not.toHaveBeenCalled();
+      expect(Sentry.captureMessage).not.toHaveBeenCalled();
+
+      vi.clearAllMocks();
+
+      const rateLimited = new HttpError(429, { endpoint: "/x", method: "GET" });
+      errorManager("Test error", rateLimited);
+      expect(Sentry.addBreadcrumb).toHaveBeenCalledWith({
+        category: "api",
+        message: rateLimited.message,
+        level: "warning",
+      });
+      expect(Sentry.captureException).not.toHaveBeenCalled();
+      expect(Sentry.captureMessage).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("handleSwitchChainError path", () => {
+    it("toasts a network-switch hint and returns early without capturing to Sentry", () => {
+      const error = { message: "please switch chain to Base and retry" };
+
+      errorManager("Test error", error, { targetNetwork: "Base" });
+
+      expect(Sentry.captureException).not.toHaveBeenCalled();
+      expect(Sentry.addBreadcrumb).not.toHaveBeenCalled();
+      expect(Sentry.captureMessage).not.toHaveBeenCalled();
+    });
+  });
 });

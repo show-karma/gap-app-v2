@@ -5,6 +5,28 @@ import { defaultQueryOptions } from "../defaultOptions";
 const retry = defaultQueryOptions.retry as (failureCount: number, error: unknown) => boolean;
 const retryDelay = defaultQueryOptions.retryDelay as (attempt: number, error: unknown) => number;
 
+describe("defaultQueryOptions — load-bearing config", () => {
+  it("staleTime is 60000ms (1 minute)", () => {
+    expect(defaultQueryOptions.staleTime).toBe(60000);
+  });
+
+  it("gcTime matches staleTime", () => {
+    expect(defaultQueryOptions.gcTime).toBe(defaultQueryOptions.staleTime);
+  });
+
+  it("refetchOnWindowFocus is disabled", () => {
+    expect(defaultQueryOptions.refetchOnWindowFocus).toBe(false);
+  });
+
+  it("refetchOnMount is enabled", () => {
+    expect(defaultQueryOptions.refetchOnMount).toBe(true);
+  });
+
+  it("refetchOnReconnect is disabled", () => {
+    expect(defaultQueryOptions.refetchOnReconnect).toBe(false);
+  });
+});
+
 describe("defaultQueryOptions.retry", () => {
   it("never retries 401 unauthorized", () => {
     const err = { response: { status: 401 } };
@@ -74,9 +96,24 @@ describe("typed ApiError path", () => {
     expect(delay).toBeLessThan(5250);
   });
 
-  it("retryDelay falls back to exponential backoff for non-typed errors", () => {
-    const delay = retryDelay(0, new Error("boom"));
+  it("retryDelay uses the new base formula for a typed error with no Retry-After hint", () => {
+    const err = new NetworkError({ endpoint: "/x", method: "GET" });
+    const delay = retryDelay(0, err);
     expect(delay).toBeGreaterThanOrEqual(2000);
     expect(delay).toBeLessThan(2250);
+  });
+});
+
+describe("retryDelay — legacy path for untyped errors (production backoff unchanged)", () => {
+  it("attempt 0 -> exactly 1000ms", () => {
+    expect(retryDelay(0, new Error("boom"))).toBe(1000);
+  });
+
+  it("attempt 2 -> 4000ms", () => {
+    expect(retryDelay(2, new Error("boom"))).toBe(4000);
+  });
+
+  it("attempt 10 -> capped at 5000ms", () => {
+    expect(retryDelay(10, new Error("boom"))).toBe(5000);
   });
 });

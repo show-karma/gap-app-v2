@@ -46,12 +46,15 @@ export const defaultQueryOptions = {
       : legacyShouldRetry(failureCount, error),
   // Exponential backoff capped at 30s, with full jitter. Typed HTTP errors
   // that carry a `Retry-After` hint (e.g. 429/503) honor it instead of the
-  // exponential curve. Default is a constant 1s which hammers the indexer
-  // during a transient outage and fails fast enough that the user sees the
-  // error UI before the network recovers.
+  // exponential curve. This NEW formula only applies to typed `ApiError`s
+  // (issue #1775) — untyped/live-query errors fall back to the LEGACY
+  // 1s-base/5s-cap delay below so current production backoff is unchanged
+  // for anything not yet normalized into the typed taxonomy (dark launch).
   retryDelay: (attempt: number, error: unknown): number => {
-    const hint =
-      isApiError(error) && error.kind === "http" ? (error as HttpError).retryAfterMs : undefined;
-    return Math.min(hint ?? 2000 * 2 ** attempt, 30_000) + Math.random() * 250;
+    if (isApiError(error)) {
+      const hint = error.kind === "http" ? (error as HttpError).retryAfterMs : undefined;
+      return Math.min(hint ?? 2000 * 2 ** attempt, 30_000) + Math.random() * 250;
+    }
+    return Math.min(1000 * 2 ** attempt, 5000); // legacy untyped path — unchanged from main
   },
 };

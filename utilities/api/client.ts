@@ -250,11 +250,17 @@ export function createApiClient(config: ApiClientConfig): ApiClient {
       return { body: res.data, status: res.status, pageInfo, ctx };
     } catch (err) {
       const apiErr = isApiError(err) ? err : toApiError(err, ctx);
-      // Only a genuine retry EXHAUSTION reports to Sentry. A single-attempt
-      // failure (every browser call, and every server mutation/non-retryable
-      // error) never reports — matching legacy fetchData behavior and keeping
-      // the 220 adapter call sites (retryAttempts:1) silent as they are today.
-      if (attemptsMade > 1) config.onExhausted?.(apiErr, attemptsMade);
+      // Only a genuine exhaustion of a RETRYABLE error reports to Sentry. A
+      // single-attempt failure (every browser call, and every server
+      // mutation/non-retryable error) never reports — matching legacy
+      // fetchData behavior and keeping the 220 adapter call sites
+      // (retryAttempts:1) silent as they are today. Requiring
+      // `apiErr.retryable` also guards two mis-report cases: (1) a retried
+      // 503 that terminates on a non-retryable status (e.g. 500) — the loop
+      // stops because the FINAL error isn't retryable, not because retries
+      // were exhausted; (2) a RequestAborted surfacing mid-retry — aborts are
+      // never retryable and are caller-initiated, not a transport failure.
+      if (attemptsMade > 1 && apiErr.retryable) config.onExhausted?.(apiErr, attemptsMade);
       throw apiErr;
     }
   };
@@ -286,8 +292,14 @@ export function createApiClient(config: ApiClientConfig): ApiClient {
       request<T>("DELETE", path, undefined, opts).then((r) => r.data),
     getPaginated: async <T = unknown>(path: string, opts: RequestOptions<T> = {}) => {
       const { body, pageInfo, ctx } = await performRequest("GET", path, undefined, opts);
-      const inner = isRecord(body) ? body.data : undefined;
-      return { data: finalize(inner, opts, ctx.endpoint, ctx.method), pageInfo };
+      if (!isRecord(body) || !("data" in body)) {
+        throw new ContractViolationError({
+          endpoint: ctx.endpoint,
+          method: ctx.method,
+          issues: ["expected paginated envelope { data, pageInfo }"],
+        });
+      }
+      return { data: finalize(body.data, opts, ctx.endpoint, ctx.method), pageInfo };
     },
     request,
   };
