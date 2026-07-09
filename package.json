@@ -159,6 +159,7 @@
     "require-in-the-middle": "^7.5.2",
     "sanity": "5.24.0",
     "sass": "^1.71.0",
+    "server-only": "0.0.1",
     "shiki": "^3.22.0",
     "streamdown": "^2.1.0",
     "styled-components": "6.4.1",

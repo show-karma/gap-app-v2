@@ -38,6 +38,13 @@ const tsconfigAliases = [
 // Aliases that redirect ESM-only modules to mock implementations for unit tests
 const unitTestMockAliases = [
   {
+    // The real package throws on import outside a bundler that sets the
+    // `react-server` export condition (vitest doesn't) — see the mock file
+    // for details.
+    find: /^server-only$/,
+    replacement: `${dirname}/__mocks__/server-only.ts`,
+  },
+  {
     find: /^@\/hooks\/useZeroDevSigner$/,
     replacement: `${dirname}/__mocks__/hooks/useZeroDevSigner.ts`,
   },
