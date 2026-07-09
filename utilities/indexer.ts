@@ -113,7 +113,7 @@ export const INDEXER = {
         `/v2/projects/${projectUid}/grants/${programId}/milestones`,
       UPDATES: (projectIdOrSlug: string) => `/v2/projects/${projectIdOrSlug}/updates`,
       MILESTONES: (projectIdOrSlug: string) => `/v2/projects/${projectIdOrSlug}/milestones`,
-      IMPACTS: (projectIdOrSlug: string) => `/projects/${projectIdOrSlug}/impacts`,
+      IMPACTS: (projectIdOrSlug: string) => `/v2/projects/${projectIdOrSlug}/impacts`,
     },
     APPLICATIONS: {
       BY_PROJECT_UID: (projectUID: string) => `/v2/funding-applications/project/${projectUID}`,
@@ -819,5 +819,8 @@ export const INDEXER = {
     REPORT_STREAM: (reportId: string) => `/v2/donor-research/reports/${reportId}/stream`,
     SHARE_TOKEN: (reportId: string) => `/v2/donor-research/reports/${reportId}/share-token`,
     SHARED: (token: string) => `/v2/donor-research/shared/${token}`,
+    // Staff-only admin overview (DEV-467).
+    ADMIN_ADVISORS: "/v2/admin/donor-research/advisors",
+    ADMIN_REPORT_BY_ID: (reportId: string) => `/v2/admin/donor-research/reports/${reportId}`,
   },
 };

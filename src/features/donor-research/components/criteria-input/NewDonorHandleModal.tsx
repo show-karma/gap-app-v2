@@ -58,9 +58,10 @@ interface NewDonorHandleModalProps {
  *  - Edit: opens directly on the persona editor for an existing handle,
  *    pre-filled from its saved persona.
  *
- * In both modes the AI narrative is generated (read-only); the source text,
- * structured chips, and notes are hand-editable. Dismissal is guarded only
- * while the persona has unsaved edits.
+ * In both modes the persona is a single text field: Refine generates a
+ * recommended persona the advisor accepts or rejects; the structured chips and
+ * notes are hand-editable. Dismissal is guarded only while the persona has
+ * unsaved edits.
  */
 export function NewDonorHandleModal({
   open,
@@ -240,8 +241,8 @@ export function NewDonorHandleModal({
                 : `Set up ${activeHandle.opaqueLabel}'s persona`}
             </DialogTitle>
             <DialogDescription>
-              Add what you know about this donor and refine it into a persona. The AI narrative is
-              generated for you; the source, structured profile, and notes are yours to edit.
+              Describe what you know about this donor and click Refine — then accept or reject the
+              recommended persona. The structured profile and notes are yours to edit.
             </DialogDescription>
           </DialogHeader>
 

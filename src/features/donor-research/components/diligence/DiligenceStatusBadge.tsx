@@ -3,6 +3,14 @@ import type { DiligenceCoarseStatus } from "@/types/diligence";
 
 interface DiligenceStatusBadgeProps {
   status: DiligenceCoarseStatus;
+  /**
+   * True while an active intro is queued but not yet delivered (`intro.sentAt`
+   * is null). The backend deliberately collapses queued+sent intros into the
+   * one `intro_sent` coarse status, so the split lives here, where `sentAt`
+   * is available — otherwise the badge claims "Intro sent" while the intro
+   * line right next to it says "Intro queued".
+   */
+  introQueued?: boolean;
 }
 
 /**
@@ -35,11 +43,17 @@ const STATUS_CONFIG: Record<
   },
 };
 
-export function DiligenceStatusBadge({ status }: DiligenceStatusBadgeProps) {
+const INTRO_QUEUED_CONFIG = {
+  label: "Intro queued",
+  className: "border-border bg-muted text-muted-foreground",
+};
+
+export function DiligenceStatusBadge({ status, introQueued }: DiligenceStatusBadgeProps) {
   if (status === "not_requested") {
     return null;
   }
-  const config = STATUS_CONFIG[status];
+  const config =
+    status === "intro_sent" && introQueued ? INTRO_QUEUED_CONFIG : STATUS_CONFIG[status];
   return (
     <Badge variant="outline" className={config.className}>
       {config.label}

@@ -51,6 +51,19 @@ module.exports = {
         "Arial",
         "sans-serif",
       ],
+      // Measurement / instrument font (JetBrains Mono). Used by the AI-
+      // Readiness Scanner for numeric scores, per-check evidence, and
+      // anywhere a value should read as instrument output rather than prose.
+      mono: [
+        "var(--font-mono)",
+        "ui-monospace",
+        "SFMono-Regular",
+        '"SF Mono"',
+        "Menlo",
+        "Consolas",
+        '"Liberation Mono"',
+        "monospace",
+      ],
     },
     fontSize: {
       xs: "0.75rem",
@@ -140,6 +153,11 @@ module.exports = {
           "0%, 100%": { opacity: "1" },
           "50%": { opacity: "0.5" },
         },
+        shake: {
+          "0%, 100%": { transform: "translateX(0)" },
+          "20%, 60%": { transform: "translateX(-4px)" },
+          "40%, 80%": { transform: "translateX(4px)" },
+        },
       },
       animation: {
         "dashv3-pulse": "dashv3-pulse 1.5s ease-in-out infinite",
@@ -153,6 +171,7 @@ module.exports = {
         "fade-in-up": "fade-in-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) both",
         "fade-in": "fade-in 0.4s ease-out both",
         "scale-in": "scale-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both",
+        shake: "shake 0.4s ease-in-out",
       },
       colors: {
         // Role-aware dashboard (v3) "soft" tokens. Defined as CSS variables in
@@ -200,8 +219,15 @@ module.exports = {
           black: "#18181B",
         },
         warning: {
+          // DEFAULT/500 follow the runtime --color-warning variable (rgb
+          // triplet, #f5a623 by default) so tenant themes stay in sync.
+          DEFAULT: "rgb(var(--color-warning))",
           50: "#fffbeb",
+          500: "rgb(var(--color-warning))",
           700: "#b45309",
+          // Dark amber for legible ink on a bright warning-500 surface (e.g.
+          // the scanner's grade-C chip).
+          900: "#78350f",
         },
         slack: {
           aubergine: "#4A154B",
@@ -358,6 +384,22 @@ module.exports = {
     },
   },
   safelist: [
+    // Semantic band tokens the scanner composes dynamically (via BAND_* maps in
+    // src/features/scanner/utils/labels.ts). Because these class strings live in
+    // one util file and are applied by lookup, the content scanner can miss
+    // them; safelist keeps the gauge ticks, bar fills, and percentage / label
+    // text coloured on the app's own brand teal + warning amber + destructive
+    // red rather than raw palette. Every band has fill (bg-/stroke-) + text.
+    "bg-brand",
+    "stroke-brand",
+    "text-brand-emphasis",
+    "bg-warning-500",
+    "stroke-warning-500",
+    "text-warning-700",
+    "text-warning-900",
+    "bg-destructive",
+    "stroke-destructive",
+    "text-destructive",
     {
       pattern:
         /^(bg-(?:slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-(?:50|100|200|300|400|500|600|700|800|900|950))$/,

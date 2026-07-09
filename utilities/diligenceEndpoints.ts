@@ -12,6 +12,8 @@ export const DILIGENCE_ENDPOINTS = {
     `/v2/donor-research/reports/${reportId}/candidates/${candidateId}/diligence`,
   REQUESTS: (reportId: string, candidateId: string) =>
     `/v2/donor-research/reports/${reportId}/candidates/${candidateId}/diligence-requests`,
+  OUTREACH_PREVIEW: (reportId: string, candidateId: string, action: "diligence" | "intro") =>
+    `/v2/donor-research/reports/${reportId}/candidates/${candidateId}/outreach-preview?action=${action}`,
   INTRO_REQUESTS: (reportId: string, candidateId: string) =>
     `/v2/donor-research/reports/${reportId}/candidates/${candidateId}/intro-requests`,
   // Public (token = capability, no auth):

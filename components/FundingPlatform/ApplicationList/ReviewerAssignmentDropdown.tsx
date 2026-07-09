@@ -10,6 +10,7 @@ import { type DropdownItem, MultiSelectDropdown } from "@/components/Utilities/M
 import { ReviewerType, useReviewerAssignment } from "@/hooks/useReviewerAssignment";
 import type { AddMilestoneReviewerRequest } from "@/services/milestone-reviewers.service";
 import type { AddReviewerRequest } from "@/services/program-reviewers.service";
+import { shortAddress } from "@/utilities/shortAddress";
 
 const ReviewerPickerModal = dynamic(
   () => import("@/components/FundingPlatform/ReviewerPicker/ReviewerPickerModal"),
@@ -79,7 +80,7 @@ export const ReviewerAssignmentDropdown: FC<ReviewerAssignmentDropdownProps> = (
         )
         .map((reviewer) => ({
           id: reviewer.publicAddress.toLowerCase(),
-          label: reviewer.name || reviewer.email || reviewer.publicAddress,
+          label: reviewer.name || reviewer.email || shortAddress(reviewer.publicAddress),
           value: reviewer,
         })),
     [availableReviewers]

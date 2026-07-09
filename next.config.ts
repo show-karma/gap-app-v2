@@ -147,6 +147,14 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
+      // The AI-readiness checker moved from /scanner to /nonprofits/is-ai-ready.
+      // The wildcard covers both the landing page and the /scans/:id report so
+      // old links (including v1.7.74 shares) keep working.
+      {
+        source: "/scanner/:path*",
+        destination: "/nonprofits/is-ai-ready/:path*",
+        permanent: true,
+      },
       // Bare /community has no content of its own — the listing lives at /communities.
       // Redirecting at the edge (vs. a page that calls permanentRedirect) keeps the bare
       // path from 404'ing without shipping a route bundle. Closes #1312.
@@ -196,14 +204,13 @@ const nextConfig: NextConfig = {
         destination: "/community/:communityId/funding-opportunities",
         permanent: true,
       },
-      // Redirect old project update routes
+      // Redirect the legacy singular /update route to the project root. The
+      // plural /project/:projectId/updates path is a real profile tab (renders
+      // ProjectRoadmap, mirrors /about and /funding) and must NOT be redirected
+      // — a stale redirect here made the Updates tab and shared update links
+      // bounce back to the project root.
       {
         source: "/project/:projectId/update",
-        destination: "/project/:projectId",
-        permanent: true,
-      },
-      {
-        source: "/project/:projectId/updates",
         destination: "/project/:projectId",
         permanent: true,
       },
