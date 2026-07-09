@@ -92,7 +92,7 @@ export function ApplicationEditClient({ communityId, application }: ApplicationE
     : undefined;
 
   const handleSubmit = async (data: ApplicationFormData) => {
-    const submissionData = transformDataForSubmission(data, questions);
+    const submissionData = transformDataForSubmission(data);
     await updateMutation.mutateAsync(submissionData);
   };
 

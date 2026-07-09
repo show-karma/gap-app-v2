@@ -1,6 +1,6 @@
 import { dehydrate, HydrationBoundary, QueryClient } from "@tanstack/react-query";
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { cache } from "react";
 import { PublicControlCenter } from "@/components/Pages/Communities/Financials/PublicControlCenter";
 import { getCommunityPayoutsPublic } from "@/src/features/payout-disbursement/services/payout-disbursement.service";
@@ -8,7 +8,6 @@ import { api } from "@/utilities/api/client";
 import { HttpError, isApiError } from "@/utilities/api/errors";
 import { FINANCIALS_ENABLED_COMMUNITIES } from "@/utilities/community-flags";
 import { INDEXER } from "@/utilities/indexer";
-import { PAGES } from "@/utilities/pages";
 import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
 import { getCommunityDetails } from "@/utilities/queries/v2/getCommunityData";
 
@@ -82,8 +81,11 @@ async function prefetchFinancialsData(queryClient: QueryClient, communityId: str
 export default async function FinancialsPage({ params }: { params: Params }) {
   const { communityId } = await params;
 
+  // Financials is a per-community feature flag. For a community without it
+  // enabled the route genuinely does not exist — render the not-found state
+  // (clear feedback) rather than silently redirecting to the grants grid.
   if (!FINANCIALS_ENABLED_COMMUNITIES.includes(communityId)) {
-    redirect(PAGES.COMMUNITY.ALL_GRANTS(communityId));
+    notFound();
   }
 
   const queryClient = new QueryClient({

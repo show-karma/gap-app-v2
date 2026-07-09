@@ -1,5 +1,6 @@
 import { CheckCircle } from "lucide-react";
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { cache, Suspense } from "react";
 import { Link } from "@/src/components/navigation/Link";
 import { ApplicationStatusChip } from "@/src/components/ui/ApplicationStatusChip";
@@ -43,7 +44,14 @@ export default async function ApplicationSuccessPage({ params }: PageProps) {
   const { communityId, applicationId } = await params;
   const application = await getApplicationDetails(applicationId); // cache HIT — no second fetch
 
-  const referenceNumber = application?.referenceNumber ?? applicationId;
+  // An unknown/invalid applicationId must not render a fabricated "success"
+  // confirmation (which would echo the raw URL param as the reference number).
+  // Show the not-found state instead — never a fake success (three-states rule).
+  if (!application) {
+    notFound();
+  }
+
+  const referenceNumber = application.referenceNumber ?? applicationId;
 
   const templateVariables: Record<string, string> = { applicationId };
   if (application) {
