@@ -50,6 +50,12 @@ vi.mock("@/hooks/useTokenReady", () => ({
   useTokenReady: () => true,
 }));
 
+// The reviews tile fetches per-community inbox stats; stub the summary hook so
+// these tests don't need the inbox endpoint (its own test covers the logic).
+vi.mock("@/components/Pages/Dashboard/v3/useReviewsSummary", () => ({
+  useReviewsSummary: () => ({ status: "ready", summary: { big: 0, rows: [] } }),
+}));
+
 vi.mock("@/src/core/rbac/context/permission-context", () => ({
   usePermissionContext: vi.fn(),
 }));

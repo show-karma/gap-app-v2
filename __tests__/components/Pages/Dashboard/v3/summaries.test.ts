@@ -2,10 +2,8 @@ import {
   buildApplicationsSummary,
   buildCommunitiesSummary,
   buildProjectsSummary,
-  buildReviewsSummary,
 } from "@/components/Pages/Dashboard/v3/summaries";
 import type { DashboardAdminCommunity } from "@/hooks/useDashboardAdmin";
-import type { FundingProgram } from "@/services/fundingPlatformService";
 import type { ProjectWithGrantsResponse } from "@/types/v2/project";
 import type { Application } from "@/types/whitelabel-entities";
 
@@ -28,16 +26,6 @@ const community = (name: string, activeProgramsCount: number, pendingApplication
     pendingApplicationsCount,
     manageUrl: `/admin/${name}`,
   }) as DashboardAdminCommunity;
-
-// The tile counts applications that still need a review decision, so seed the
-// program with `pendingApplications` (the field buildReviewsSummary reads).
-const program = (communitySlug: string, communityName: string, pendingApplications: number) =>
-  ({
-    programId: `${communitySlug}-${pendingApplications}`,
-    communitySlug,
-    communityName,
-    metrics: { totalApplications: pendingApplications + 5, pendingApplications },
-  }) as unknown as FundingProgram;
 
 const application = (programTitle: string, status: Application["status"]) =>
   ({ id: programTitle, programTitle, status }) as Application;
@@ -90,49 +78,6 @@ describe("buildCommunitiesSummary", () => {
   it("pluralizes the app count", () => {
     const summary = buildCommunitiesSummary([community("Solo", 1, 1)]);
     expect(summary.rows[0].badge).toEqual({ tone: "amber", label: "1 application" });
-  });
-});
-
-describe("buildReviewsSummary", () => {
-  it("groups programs by community and sums applications to review", () => {
-    const summary = buildReviewsSummary([
-      program("filecoin", "Filecoin", 10),
-      program("filecoin", "Filecoin", 32),
-      program("optimism", "Optimism", 18),
-    ]);
-    // big = number of distinct communities, labeled to avoid reading as open reviews
-    expect(summary.big).toBe("2 communities");
-    // Filecoin (42) sorted ahead of Optimism (18)
-    expect(summary.rows[0]).toMatchObject({
-      label: "Filecoin",
-      badge: { tone: "amber", label: "42 to review" },
-    });
-    expect(summary.rows[1].label).toBe("Optimism");
-  });
-
-  it("omits communities with no applications to review", () => {
-    const summary = buildReviewsSummary([program("empty", "Empty", 0)]);
-    expect(summary.rows).toHaveLength(0);
-  });
-
-  it("includes admin communities with pending applications alongside reviewer programs", () => {
-    const summary = buildReviewsSummary(
-      [program("filecoin", "Filecoin", 10)],
-      [community("Optimism Admin", 1, 5)]
-    );
-    expect(summary.big).toBe("2 communities");
-    expect(summary.rows.map((r) => r.label)).toEqual(
-      expect.arrayContaining(["Filecoin", "Optimism Admin"])
-    );
-  });
-
-  it("does not double-count a community already covered by a reviewer program", () => {
-    const summary = buildReviewsSummary(
-      [program("filecoin", "Filecoin", 10)],
-      [community("filecoin", 1, 5)]
-    );
-    expect(summary.big).toBe("1 community");
-    expect(summary.rows[0]).toMatchObject({ badge: { label: "10 to review" } });
   });
 });
 

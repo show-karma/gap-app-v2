@@ -25,16 +25,16 @@ import { BentoOverview } from "./v3/BentoOverview";
 import "./v3/dashboard-soft.css";
 import { GettingStartedView } from "./v3/GettingStartedView";
 import type { DashModule } from "./v3/module";
-import type { ModuleStatus } from "./v3/primitives";
+import type { ModuleStatus, ModuleSummary } from "./v3/primitives";
 import { SkeletonList, WarnBar } from "./v3/primitives";
 import { SoftShell } from "./v3/SoftShell";
 import {
   buildApplicationsSummary,
   buildCommunitiesSummary,
   buildProjectsSummary,
-  buildReviewsSummary,
 } from "./v3/summaries";
 import { useAdvisorData } from "./v3/useAdvisorData";
+import { useReviewsSummary } from "./v3/useReviewsSummary";
 
 // Each drill-in view (and its heavy deps — the reviewer inbox, persona editors,
 // dialogs) is code-split so its chunk only downloads when that module is opened,
@@ -79,6 +79,7 @@ interface BuildDashboardModulesParams {
   projectsStatus: ModuleStatus;
   showReviews: boolean;
   reviewsStatus: ModuleStatus;
+  reviewsSummary: ModuleSummary | undefined;
   reviewerPrograms: FundingProgram[] | undefined;
   adminCommunities: DashboardAdminCommunity[];
   showAdmin: boolean;
@@ -104,6 +105,7 @@ function buildDashboardModules(params: BuildDashboardModulesParams): DashModule[
     projectsStatus,
     showReviews,
     reviewsStatus,
+    reviewsSummary,
     reviewerPrograms,
     adminCommunities,
     showAdmin,
@@ -161,10 +163,7 @@ function buildDashboardModules(params: BuildDashboardModulesParams): DashModule[
       label: "My reviews",
       icon: "eye",
       status: reviewsStatus,
-      summary:
-        reviewsStatus === "ready"
-          ? buildReviewsSummary(reviewerPrograms ?? [], adminCommunities)
-          : undefined,
+      summary: reviewsStatus === "ready" ? reviewsSummary : undefined,
       empty: {
         prompt: "No reviewer assignments yet. Admins can add you to their programs.",
         cta: { label: "Browse communities", icon: "users" },
@@ -260,6 +259,10 @@ export function Dashboard() {
 
   const advisor = useAdvisorData(tokenReady);
 
+  // The reviews tile shows the reviewer inbox's actual actionable count per
+  // community (fetched here), not a metrics approximation.
+  const reviewsSummary = useReviewsSummary(reviewerPrograms ?? [], adminCommunities, tokenReady);
+
   // Tracks whether a bento tile is drilled into, so the admin panel banner
   // (a bento-overview affordance) hides while a module's full view is open.
   const [isDrilledIn, setIsDrilledIn] = useState(false);
@@ -302,8 +305,10 @@ export function Dashboard() {
     applicationsHook.isLoading,
     applicationsTotal === 0
   );
+  // While the reviewer-program / admin-community lists load we can't build the
+  // review communities yet; once resolved, defer to the inbox-stats summary.
   const reviewsStatus: ModuleStatus =
-    isReviewerProgramsLoading || isAdminLoading ? "loading" : "ready";
+    isReviewerProgramsLoading || isAdminLoading ? "loading" : reviewsSummary.status;
 
   const modules = buildDashboardModules({
     authenticated: Boolean(authenticated),
@@ -315,6 +320,7 @@ export function Dashboard() {
     projectsStatus,
     showReviews,
     reviewsStatus,
+    reviewsSummary: reviewsSummary.summary,
     reviewerPrograms,
     adminCommunities,
     showAdmin,

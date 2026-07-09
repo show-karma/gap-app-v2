@@ -5,10 +5,10 @@ import { useMemo, useState } from "react";
 import type { DashboardAdminCommunity } from "@/hooks/useDashboardAdmin";
 import type { FundingProgram } from "@/services/fundingPlatformService";
 import { PermissionProvider } from "@/src/core/rbac/context/permission-context";
-import type { Community } from "@/types/v2/community";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 import { EmptyState, SkeletonList } from "./primitives";
+import { deriveReviewerCommunities, type ReviewerCommunity } from "./reviewCommunities";
 
 /**
  * The reviewer inbox drill-in reuses the exact same component that powers
@@ -21,67 +21,6 @@ const ReviewerInboxPage = dynamic(
   () => import("@/components/Inbox/ReviewerInboxPage").then((mod) => mod.ReviewerInboxPage),
   { ssr: false, loading: () => <SkeletonList count={4} /> }
 );
-
-interface ReviewerCommunity {
-  /** Slug (preferred) or UID — the identifier RBAC + the inbox endpoint key on. */
-  id: string;
-  community: Community;
-}
-
-/** Build the minimal `Community` shape `ReviewerInboxPage` reads from a program. */
-function toCommunity(program: FundingProgram): Community {
-  return {
-    uid: (program.communityUID ?? "") as `0x${string}`,
-    chainID: program.chainID,
-    details: {
-      name: program.communityName ?? program.communitySlug ?? "Community",
-      slug: program.communitySlug ?? program.communityUID ?? "",
-      logoUrl: program.communityImage,
-    },
-  };
-}
-
-/** Build the `Community` shape `ReviewerInboxPage` reads from an admin community. */
-function adminToCommunity(admin: DashboardAdminCommunity): Community {
-  return {
-    uid: admin.uid as `0x${string}`,
-    chainID: admin.chainID,
-    details: { name: admin.name, slug: admin.slug, logoUrl: admin.logoUrl },
-  };
-}
-
-/**
- * Derive the distinct communities a user can review in — from reviewer-role
- * programs plus admin/owner communities with pending applications. A community
- * can surface under either its slug or its uid, so each is claimed against a
- * shared seen-set: whichever source hits it first wins, and it's never listed
- * twice.
- */
-function deriveReviewerCommunities(
-  programs: FundingProgram[],
-  adminCommunities: DashboardAdminCommunity[]
-): ReviewerCommunity[] {
-  const map = new Map<string, Community>();
-  const seen = new Set<string>();
-  const claim = (community: Community, ...ids: Array<string | undefined | null>) => {
-    const key = ids.find((id): id is string => !!id);
-    if (!key) return;
-    if (ids.some((id) => id && seen.has(id.toLowerCase()))) return;
-    for (const id of ids) if (id) seen.add(id.toLowerCase());
-    map.set(key, community);
-  };
-
-  for (const program of programs) {
-    claim(toCommunity(program), program.communitySlug, program.communityUID);
-  }
-  // Community admins/owners can review applications in their own communities
-  // even without an explicit reviewer-role program.
-  for (const admin of adminCommunities) {
-    if (admin.pendingApplicationsCount <= 0) continue;
-    claim(adminToCommunity(admin), admin.slug, admin.uid);
-  }
-  return Array.from(map, ([id, community]) => ({ id, community }));
-}
 
 /**
  * "My reviews" drill-in. A reviewer may hold reviewer roles across several
