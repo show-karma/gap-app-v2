@@ -10,10 +10,6 @@
  * funding-applications, fundingPlatformService.
  */
 
-vi.mock("@/utilities/fetchData", () => ({
-  default: vi.fn(),
-}));
-
 // programReviewersService, milestoneReviewersService, and
 // fetchApplicationByProjectUID were migrated off fetchData onto the unified
 // api client in #1775 Phase 3 — the regression these tests guard against

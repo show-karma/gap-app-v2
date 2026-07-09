@@ -96,12 +96,6 @@ vi.mock("@/src/core/rbac/hooks/use-permissions", () => ({
   })),
 }));
 
-// Mock fetchData - use a shared reference accessible after mock hoisting
-vi.mock("@/utilities/fetchData", () => {
-  const fn = vi.fn();
-  return { __esModule: true, default: fn, _mockFn: fn };
-});
-
 // Mock the unified API client - ManagePrograms now calls api.get() directly
 // (issue #1775 Phase 3 migration) instead of the legacy fetchData tuple.
 vi.mock("@/utilities/api/client", () => ({
@@ -201,10 +195,7 @@ vi.mock("@/components/Pages/ProgramRegistry/programUtils", () => ({
 import { ManagePrograms } from "@/components/Pages/ProgramRegistry/ManagePrograms";
 import { api } from "@/utilities/api/client";
 import { HttpError } from "@/utilities/api/errors";
-import * as fetchDataModule from "@/utilities/fetchData";
 
-// Get the mock function reference after vi.mock hoisting
-const mockFetchData = (fetchDataModule as any)._mockFn as vi.Mock;
 const mockApiGet = api.get as unknown as vi.Mock;
 
 // ---------------------------------------------------------------------------

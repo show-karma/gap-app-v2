@@ -32,7 +32,6 @@ import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { useGrantStore } from "@/store/grant";
 import type { GrantResponse } from "@/types/v2/grant";
 import type { ProjectResponse } from "@/types/v2/project";
-import fetchData from "@/utilities/fetchData";
 import {
   buildRevocationPayload,
   createCheckIfCompletionExists,
@@ -118,11 +117,6 @@ vi.mock("@/utilities/wallet-helpers", () => ({
 
 vi.mock("@/utilities/eas-wagmi-utils", () => ({
   walletClientToSigner: vi.fn(),
-}));
-
-vi.mock("@/utilities/fetchData", () => ({
-  __esModule: true,
-  default: vi.fn(),
 }));
 
 vi.mock("@/utilities/api/client", () => ({
@@ -466,7 +460,6 @@ describe("Integration: Grant Completion Revocation Flow", () => {
         transactionHash: "0xtxhash123",
       });
       vi.mocked(buildRevocationPayload).mockReturnValue([{ schema: "0xschema123", data: [] }]);
-      vi.mocked(fetchData).mockResolvedValue({});
 
       // Render component
       render(<GrantCompleteButton grant={mockGrant} project={mockProject} />);
@@ -872,7 +865,6 @@ describe("Integration: Grant Completion Revocation Flow", () => {
         transactionHash: "0xtxhash123",
       });
       vi.mocked(buildRevocationPayload).mockReturnValue([{ schema: "0xschema123", data: [] }]);
-      vi.mocked(fetchData).mockResolvedValue({});
       const mockChangeStepperStep = vi.fn();
       const mockSetIsStepper = vi.fn();
       const mockDismiss = vi.fn();

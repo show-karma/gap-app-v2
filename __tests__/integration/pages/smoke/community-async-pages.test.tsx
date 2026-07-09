@@ -31,11 +31,6 @@ vi.mock("@/utilities/queries/v2/getCommunityData", () => ({
 
 vi.mock("@/utilities/pagesOnRoot", () => ({ pagesOnRoot: [] }));
 
-vi.mock("@/utilities/fetchData", () => ({
-  __esModule: true,
-  default: vi.fn().mockResolvedValue([null, null]),
-}));
-
 // The /manage/portfolio-reports/config page now calls the unified API client
 // directly (issue #1775 Phase 3 migration) and rethrows on failure, so it
 // needs api.get to resolve rather than hit the real (absent) indexer.

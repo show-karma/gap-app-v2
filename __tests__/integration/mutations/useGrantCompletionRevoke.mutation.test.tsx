@@ -83,10 +83,6 @@ vi.mock("@/utilities/grantCompletionHelpers", () => ({
   validateGrantCompletion: vi.fn(),
 }));
 
-vi.mock("@/utilities/fetchData", () => ({
-  default: vi.fn().mockResolvedValue([{}, null]),
-}));
-
 vi.mock("@/components/Utilities/errorManager", () => ({
   errorManager: vi.fn(),
 }));
