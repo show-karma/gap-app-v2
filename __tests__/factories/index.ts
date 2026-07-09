@@ -15,7 +15,6 @@ export type {
   MockUser,
   MockWallet,
 } from "./auth.factory";
-
 // Auth factories
 export {
   applicantPermissions,
@@ -37,6 +36,13 @@ export {
   reviewerPermissions,
   superAdminPermissions,
 } from "./auth.factory";
+// Blog post factories
+export {
+  createMockBlogPost,
+  createMockBlogPostSlugEntry,
+  createMockBlogPostSummary,
+  createMockCoverImage,
+} from "./blogPost.factory";
 export type {
   MockCampaign,
   MockClaimConfig,
