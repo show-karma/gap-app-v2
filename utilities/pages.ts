@@ -52,6 +52,9 @@ export const PAGES = {
     ONBOARDING: `/nonprofit-research/onboarding`,
     REPORT: (reportId: string) => `/nonprofit-research/${reportId}`,
     SHARED: (token: string) => `/nonprofit-research/shared/${token}`,
+    // Staff-only admin overview (DEV-467).
+    ADMIN: `/admin/nonprofit-research`,
+    ADMIN_REPORT: (reportId: string) => `/admin/nonprofit-research/${reportId}`,
     // Advisor's one-per-advisor diligence question template editor (DEV-428).
     DILIGENCE_TEMPLATE: `/nonprofit-research/diligence-template`,
     // Public nonprofit response page — the secure email link opens this.
@@ -140,7 +143,7 @@ export const PAGES = {
   },
   PROJECT: {
     OVERVIEW: (project: string) => `/project/${project}`,
-    UPDATES: (project: string) => `/project/${project}`,
+    UPDATES: (project: string) => `/project/${project}/updates`,
     ABOUT: (project: string) => `/project/${project}/about`,
     GRANTS: (project: string) => `/project/${project}/funding`,
 
@@ -173,6 +176,7 @@ export const PAGES = {
   FOR_AGENTS: `/for-agents`,
   NONPROFITS: `/nonprofits`,
   DONOR_ADVISORS: `/donor-advisors`,
+  DONOR_REWARDS: `/donor-rewards`,
   CREATE_PROJECT_PROFILE: `/create-project-profile`,
   MCP_CONNECT: `/mcp/connect`,
   SEEDS: `/seeds`,
@@ -187,6 +191,12 @@ export const PAGES = {
   WORK: (slug: string) => `/ai-teams/${slug}/work`,
   SKILLS: (slug: string) => `/ai-teams/${slug}/skills`,
   ASK_KARMA: `/ask-karma`,
+  SCANNER: {
+    ROOT: `/nonprofits/is-ai-ready`,
+    SCAN_DETAIL: (id: string) => `/nonprofits/is-ai-ready/scans/${id}`,
+    PUBLIC_SCORECARD: (slug: string) => `/s/${slug}`,
+    OG_IMAGE: (slug: string) => `/api/scanner/og/${slug}`,
+  },
 };
 
 /**

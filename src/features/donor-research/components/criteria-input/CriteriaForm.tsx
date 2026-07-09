@@ -1,12 +1,55 @@
 "use client";
 
-import type { UseFormReturn } from "react-hook-form";
+import { type Control, Controller, type UseFormReturn } from "react-hook-form";
 import type { DonorHandle } from "@/types/donor-research";
 import { DEFAULT_WEIGHTS_BASIS_POINTS } from "../report-brief/scoring";
 import { WeightsAllocator } from "../weights/WeightsAllocator";
 import { isValidWeights } from "../weights/weights-allocation";
 import type { CriteriaFormValues } from "./CriteriaInputPanel";
 import { DonorHandlePicker } from "./DonorHandlePicker";
+import { type PersonaPrefillField, PrefilledFromPersonaBadge } from "./PrefilledFromPersonaBadge";
+
+/**
+ * Controlled optional-number input. Value-driven (not `register`) so a
+ * `form.reset()` that clears the field to `undefined` reliably empties the
+ * DOM — an uncontrolled number input keeps its stale value on reset, which
+ * left an old amount behind when switching to a persona with an open-ended
+ * gift band.
+ */
+function AmountInput({
+  control,
+  name,
+  id,
+  placeholder,
+}: {
+  control: Control<CriteriaFormValues>;
+  name: "amountMin" | "amountMax";
+  id: string;
+  placeholder: string;
+}) {
+  return (
+    <Controller
+      control={control}
+      name={name}
+      render={({ field }) => (
+        <input
+          id={id}
+          type="number"
+          min={0}
+          name={field.name}
+          ref={field.ref}
+          onBlur={field.onBlur}
+          value={field.value ?? ""}
+          onChange={(e) =>
+            field.onChange(e.target.value === "" ? undefined : Number(e.target.value))
+          }
+          className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+          placeholder={placeholder}
+        />
+      )}
+    />
+  );
+}
 
 interface CriteriaFormProps {
   form: UseFormReturn<CriteriaFormValues>;
@@ -14,6 +57,17 @@ interface CriteriaFormProps {
   handles: DonorHandle[];
   handlesLoading: boolean;
   submitting: boolean;
+  /** Fields seeded from the selected handle's persona (U8) — each gets a badge. */
+  prefilledFields?: Set<PersonaPrefillField>;
+  /**
+   * Routes a handle change through the parent so it can gate on a dirty form
+   * (discard-confirm). Falls back to a plain field set when absent.
+   */
+  onRequestHandleChange?: (handleId: string) => void;
+  /** Opens the parent-owned persona-creation modal. */
+  onRequestCreate?: () => void;
+  /** Opens the persona modal pre-filled to edit the given handle (gear). */
+  onRequestEdit?: (handleId: string) => void;
 }
 
 /**
@@ -28,11 +82,22 @@ export function CriteriaForm({
   handles,
   handlesLoading,
   submitting,
+  prefilledFields,
+  onRequestHandleChange,
+  onRequestCreate,
+  onRequestEdit,
 }: CriteriaFormProps) {
-  const { register, handleSubmit, watch, setValue, formState } = form;
+  const { register, handleSubmit, watch, setValue, formState, control } = form;
   const errors = formState.errors;
   const weights = watch("weights");
   const weightsBalanced = isValidWeights(weights);
+
+  const badge = (name: PersonaPrefillField) =>
+    prefilledFields?.has(name) ? <PrefilledFromPersonaBadge control={control} name={name} /> : null;
+
+  const onHandleChange =
+    onRequestHandleChange ??
+    ((handleId: string) => setValue("donorHandleId", handleId, { shouldValidate: true }));
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
@@ -40,12 +105,16 @@ export function CriteriaForm({
         handles={handles}
         loading={handlesLoading}
         value={watch("donorHandleId")}
-        onChange={(handleId) => setValue("donorHandleId", handleId, { shouldValidate: true })}
+        onChange={onHandleChange}
+        onRequestCreate={onRequestCreate ?? (() => {})}
+        onRequestEdit={onRequestEdit ?? (() => {})}
         error={errors.donorHandleId?.message}
       />
 
       <label className="flex flex-col gap-1.5 text-sm">
-        <span className="font-medium">Criteria</span>
+        <span className="flex items-center gap-2 font-medium">
+          Criteria {badge("criteriaText")}
+        </span>
         <textarea
           {...register("criteriaText")}
           rows={4}
@@ -61,7 +130,9 @@ export function CriteriaForm({
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <label className="flex flex-col gap-1.5 text-sm">
-          <span className="font-medium">Cause (optional)</span>
+          <span className="flex items-center gap-2 font-medium">
+            Cause (optional) {badge("cause")}
+          </span>
           <input
             {...register("cause")}
             className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
@@ -69,43 +140,43 @@ export function CriteriaForm({
           />
         </label>
         <label className="flex flex-col gap-1.5 text-sm">
-          <span className="font-medium">Geography (optional)</span>
+          <span className="flex items-center gap-2 font-medium">
+            Geography (optional) {badge("geography")}
+          </span>
           <input
             {...register("geography")}
             className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
             placeholder="California, Pacific Northwest, NYC metro…"
           />
         </label>
-        <label className="flex flex-col gap-1.5 text-sm">
-          <span className="font-medium">Amount min ($, optional)</span>
-          <input
-            {...register("amountMin", {
-              setValueAs: (v) =>
-                v === "" || v === null || v === undefined ? undefined : Number(v),
-            })}
-            type="number"
-            min={0}
-            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+        <div className="flex flex-col gap-1.5 text-sm">
+          <label htmlFor="criteria-amount-min" className="flex items-center gap-2 font-medium">
+            Amount min ($, optional) {badge("amountMin")}
+          </label>
+          <AmountInput
+            control={control}
+            name="amountMin"
+            id="criteria-amount-min"
             placeholder="5000"
           />
-        </label>
-        <label className="flex flex-col gap-1.5 text-sm">
-          <span className="font-medium">Amount max ($, optional)</span>
-          <input
-            {...register("amountMax", {
-              setValueAs: (v) =>
-                v === "" || v === null || v === undefined ? undefined : Number(v),
-            })}
-            type="number"
-            min={0}
-            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+        </div>
+        <div className="flex flex-col gap-1.5 text-sm">
+          <label htmlFor="criteria-amount-max" className="flex items-center gap-2 font-medium">
+            Amount max ($, optional) {badge("amountMax")}
+          </label>
+          <AmountInput
+            control={control}
+            name="amountMax"
+            id="criteria-amount-max"
             placeholder="25000"
           />
-        </label>
+        </div>
       </div>
 
       <fieldset className="flex flex-col gap-3 rounded-md border border-border bg-muted/10 px-3 py-3">
-        <legend className="px-1 text-sm font-medium">Scoring weights</legend>
+        <legend className="flex items-center gap-2 px-1 text-sm font-medium">
+          Scoring weights {badge("weights")}
+        </legend>
         <p className="text-xs text-muted-foreground">
           Set how much each criterion counts toward the composite. You can adjust this again after
           the report renders.

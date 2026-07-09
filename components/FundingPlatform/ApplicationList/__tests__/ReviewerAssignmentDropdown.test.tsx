@@ -256,7 +256,7 @@ describe("ReviewerAssignmentDropdown", () => {
 
       expect(
         screen.getByTestId("option-0x1111111111111111111111111111111111111111")
-      ).toHaveTextContent("0x1111111111111111111111111111111111111111");
+      ).toHaveTextContent("0x1111...111111");
     });
 
     it("should exclude reviewers without wallet addresses from options", () => {
