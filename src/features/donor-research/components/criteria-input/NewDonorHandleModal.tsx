@@ -206,15 +206,18 @@ export function NewDonorHandleModal({
       ) : activeHandle ? (
         <DialogContent
           className="flex max-h-[85vh] flex-col gap-0 p-0 sm:max-w-2xl"
-          // The persona editor hosts portaled widgets (the Radix Select chips).
-          // Radix misclassifies a pointerdown on one of those portaled poppers as
-          // an "outside" interaction, which would fire the dirty-close guard on
-          // every chip click (QA: the editor became mouse-unusable). Ignore only
-          // those popper interactions; a genuine click on the overlay still closes
-          // via requestClose(), which prompts to discard any unsaved edits.
+          // The persona editor hosts portaled widgets (the Radix Select). Radix
+          // reports an interaction with the Select trigger or its portaled
+          // dropdown as "outside" (the dropdown renders outside the dialog DOM),
+          // which would fire the dirty-close guard and dismiss the modal — losing
+          // unsaved edits — on a plain Select click. Only a genuine click on the
+          // overlay backdrop should dismiss: keep the modal open for anything
+          // inside the dialog content or a portaled popper. A real overlay click
+          // (target is neither) still closes via requestClose(), which prompts to
+          // discard unsaved edits.
           onInteractOutside={(event) => {
             const target = event.target as Element | null;
-            if (target?.closest("[data-radix-popper-content-wrapper]")) {
+            if (target?.closest('[role="dialog"], [data-radix-popper-content-wrapper]')) {
               event.preventDefault();
             }
           }}
