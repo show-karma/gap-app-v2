@@ -158,6 +158,40 @@ describe("reportApiFailure", () => {
     );
   });
 
+  it("normalizes a long-hex (Mongo ObjectId) path id at the end of the path", () => {
+    const error = new ContractViolationError({
+      endpoint: "/v2/reports/507f1f77bcf86cd799439011",
+      method: "get",
+      issues: ["title: Required"],
+    });
+
+    reportApiFailure(error);
+
+    expect(mockCaptureException).toHaveBeenCalledWith(
+      error,
+      expect.objectContaining({
+        fingerprint: ["api-contract-violation", "/v2/reports/:id"],
+      })
+    );
+  });
+
+  it("normalizes a numeric path id at the end of the path (end-anchored)", () => {
+    const error = new ContractViolationError({
+      endpoint: "/v2/projects/123",
+      method: "get",
+      issues: ["title: Required"],
+    });
+
+    reportApiFailure(error);
+
+    expect(mockCaptureException).toHaveBeenCalledWith(
+      error,
+      expect.objectContaining({
+        fingerprint: ["api-contract-violation", "/v2/projects/:id"],
+      })
+    );
+  });
+
   it("reports an unexpected HttpError (e.g. 500) via a normal captureException", () => {
     const error = new HttpError(500, { endpoint: "/v2/projects", method: "post" });
 

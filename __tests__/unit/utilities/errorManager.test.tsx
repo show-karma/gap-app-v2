@@ -182,20 +182,34 @@ describe("errorManager", () => {
       expect(Sentry.captureMessage).not.toHaveBeenCalled();
     });
 
-    it("still runs the toast block before delegating a genuine typed ApiError to reportApiFailure", () => {
-      const error = new HttpError(500, { endpoint: "/x", method: "GET" });
+    it("reports a typed ApiError whose endpoint path contains a wallet-guard word ('reject') instead of swallowing it", () => {
+      // Regression: an ApiError's message embeds the endpoint, so a route like
+      // /communities/x/reject matches the legacy `errorContains(error,"reject")`
+      // wallet guard. Handling typed ApiErrors FIRST (above those guards) keeps
+      // genuine failures on such endpoints from vanishing from Sentry.
+      const contract = new ContractViolationError({
+        endpoint: "/communities/x/reject",
+        method: "POST",
+        issues: ["bad"],
+      });
 
-      // The toast block (guarded by `toastError?.error`) must run before the
-      // typed-ApiError delegation, not be skipped by an early return — this
-      // is only observable indirectly here (jsdom has no real toast host),
-      // so we assert the call reaches reportApiFailure's capture without
-      // throwing, proving the toast block executed and fell through.
-      expect(() => errorManager("Test error", error, undefined, { error: "Boom" })).not.toThrow();
+      errorManager("Test error", contract);
 
       expect(Sentry.captureException).toHaveBeenCalledWith(
-        error,
+        contract,
         expect.objectContaining({
-          extra: expect.objectContaining({ endpoint: "/x", method: "GET", status: 500 }),
+          fingerprint: ["api-contract-violation", "/communities/x/reject"],
+        })
+      );
+
+      vi.clearAllMocks();
+
+      const serverError = new HttpError(500, { endpoint: "/proposals/123/reject", method: "GET" });
+      errorManager("Test error", serverError);
+      expect(Sentry.captureException).toHaveBeenCalledWith(
+        serverError,
+        expect.objectContaining({
+          extra: expect.objectContaining({ endpoint: "/proposals/123/reject", status: 500 }),
         })
       );
     });

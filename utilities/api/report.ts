@@ -5,7 +5,7 @@ import {
   HttpError,
   isApiError,
   isTransientApiError,
-  type NetworkError,
+  NetworkError,
 } from "./errors";
 
 /**
@@ -78,7 +78,7 @@ export function reportApiFailure(
     const kindDiscriminator =
       error instanceof HttpError
         ? String(error.status)
-        : ((error as NetworkError).code ?? "unknown");
+        : ((error instanceof NetworkError ? error.code : undefined) ?? "unknown");
 
     Sentry.captureMessage(`API ${error.method} request exhausted retries (${error.kind})`, {
       level: "warning",

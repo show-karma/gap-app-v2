@@ -493,6 +493,10 @@ describe("client — 6. schema validation", () => {
     expect(error.issues.length).toBeLessThanOrEqual(10);
     expect((error as Record<string, unknown>).body).toBeUndefined();
     expect("body" in error).toBe(false);
+    // Defense-in-depth: the rejected payload's PII value must not surface via
+    // the serialized error or its issue strings.
+    expect(JSON.stringify(error)).not.toContain("SENTINEL-PII-123");
+    expect(error.issues.join(" ")).not.toContain("SENTINEL-PII-123");
   });
 
   it("returns the raw payload untouched when no schema is provided", async () => {
