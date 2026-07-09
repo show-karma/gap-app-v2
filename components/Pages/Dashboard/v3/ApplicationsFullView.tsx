@@ -334,6 +334,17 @@ export function ApplicationsFullView({
   const resetFilters = () =>
     setFilters({ status: "all", programId: undefined, searchQuery: "", dateRange: undefined });
 
+  // The filters live in a store shared with the compact overview tile. Clear
+  // them when the drill-in unmounts (the user returns to the overview) so a
+  // filter applied here can't leak into the tile — otherwise filtering to zero
+  // matches would leave the tile showing a misleading "all caught up" while a
+  // pending application is merely filtered out.
+  useEffect(() => {
+    return () => {
+      setFilters({ status: "all", programId: undefined, searchQuery: "", dateRange: undefined });
+    };
+  }, [setFilters]);
+
   // Without a scoped community, resolve each application's community from its
   // funding-program config so rows can display a name and build a detail link.
   const enrichedApplications = useEnrichedApplications(applications, communitySlug);

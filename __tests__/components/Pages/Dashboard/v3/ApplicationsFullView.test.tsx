@@ -330,4 +330,28 @@ describe("ApplicationsFullView", () => {
     expect(screen.getByText("No applications yet")).toBeInTheDocument();
     expect(screen.queryByPlaceholderText("Search applications...")).not.toBeInTheDocument();
   });
+
+  it("resets the shared filters on unmount so they can't leak into the overview tile", () => {
+    const setFilters = vi.fn();
+    const hook = makeHook({
+      applications: [app()],
+      statusCounts: { pending: 1 },
+      filters: { status: "approved" },
+      pagination: { page: 1, limit: 10, total: 1, totalPages: 1 },
+      setFilters,
+    });
+    const { unmount } = renderView(hook, "octant");
+
+    // The store filters are shared with the compact overview tile; leaving the
+    // drill-in must clear them so a drill-in filter doesn't strand the tile in a
+    // misleading filtered-empty state.
+    setFilters.mockClear();
+    unmount();
+    expect(setFilters).toHaveBeenCalledWith({
+      status: "all",
+      programId: undefined,
+      searchQuery: "",
+      dateRange: undefined,
+    });
+  });
 });
