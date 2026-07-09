@@ -44,6 +44,8 @@ const createRequestWithHost = (path: string, host: string) => {
   return {
     nextUrl: {
       pathname: path,
+      protocol: requestUrl.protocol,
+      search: requestUrl.search,
       clone: () => new URL(requestUrl.toString()),
     },
     headers: new Headers({ host }),
@@ -117,6 +119,50 @@ describe("middleware dashboard redirects", () => {
     expect(response?.headers.get("x-middleware-rewrite")).toBe(
       `http://${primaryWhitelabel.domain}/community/${primaryWhitelabel.communitySlug}/admin/settings`
     );
+    expect(response?.headers.get("location")).toBeNull();
+  });
+});
+
+describe("middleware blog whitelabel redirect", () => {
+  it("301s a whitelabel tenant's /blog to the main domain", async () => {
+    if (!primaryWhitelabel) {
+      throw new Error("No whitelabel domain configured for middleware tests.");
+    }
+
+    const response = await middleware(createRequestWithHost("/blog", primaryWhitelabel.domain));
+
+    expect(response?.headers.get("location")).toBe("http://karmahq.xyz/blog");
+    expect(response?.status).toBe(301);
+  });
+
+  it("301s a whitelabel tenant's /blog/<slug> to the main domain, preserving the slug", async () => {
+    if (!primaryWhitelabel) {
+      throw new Error("No whitelabel domain configured for middleware tests.");
+    }
+
+    const response = await middleware(
+      createRequestWithHost("/blog/hello-world", primaryWhitelabel.domain)
+    );
+
+    expect(response?.headers.get("location")).toBe("http://karmahq.xyz/blog/hello-world");
+    expect(response?.status).toBe(301);
+  });
+
+  it("passes /blog through untouched on the main domain", async () => {
+    const response = await middleware(createRequest("/blog"));
+
+    expect(response?.headers.get("location")).toBeNull();
+  });
+
+  it("does not redirect unrelated whitelabel routes", async () => {
+    if (!primaryWhitelabel) {
+      throw new Error("No whitelabel domain configured for middleware tests.");
+    }
+
+    const response = await middleware(
+      createRequestWithHost("/project/test-project", primaryWhitelabel.domain)
+    );
+
     expect(response?.headers.get("location")).toBeNull();
   });
 });
