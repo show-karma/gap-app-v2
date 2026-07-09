@@ -2,11 +2,11 @@
 
 import { memo, useCallback, useState } from "react";
 import { isAddress } from "viem";
+import EthereumAddressToProfileName from "@/components/EthereumAddressToProfileName";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import { formatAddressForDisplay } from "@/utilities/donations/helpers";
 import { cn } from "@/utilities/tailwind";
 
 interface EmptyStateProps {
@@ -15,8 +15,6 @@ interface EmptyStateProps {
   isChecking: boolean;
   compact?: boolean;
 }
-
-const truncateAddress = (address: string) => formatAddressForDisplay(address, 6, 4);
 
 function EmptyStateComponent({
   connectedAddress,
@@ -64,7 +62,7 @@ function EmptyStateComponent({
                 No claimable funds found for this wallet:
               </p>
               <p className="font-mono text-sm text-muted-foreground">
-                {truncateAddress(connectedAddress)}
+                <EthereumAddressToProfileName address={connectedAddress} shouldTruncate />
               </p>
             </div>
             <Separator className="my-6" />
