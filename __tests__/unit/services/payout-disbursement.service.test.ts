@@ -5,9 +5,15 @@
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const mockFetchData = vi.fn();
-vi.mock("@/utilities/fetchData", () => ({
-  default: (...args: unknown[]) => mockFetchData(...args),
+vi.mock("@/utilities/api/client", () => ({
+  api: {
+    get: vi.fn(),
+    post: vi.fn(),
+    put: vi.fn(),
+    patch: vi.fn(),
+    delete: vi.fn(),
+    request: vi.fn(),
+  },
 }));
 
 vi.mock("@/utilities/indexer", () => ({
@@ -91,6 +97,13 @@ import type {
   SavePayoutConfigRequest,
   UpdateStatusRequest,
 } from "@/features/payout-disbursement/types/payout-disbursement";
+import { api } from "@/utilities/api/client";
+
+const mockApiGet = api.get as ReturnType<typeof vi.fn>;
+const mockApiPost = api.post as ReturnType<typeof vi.fn>;
+const mockApiPut = api.put as ReturnType<typeof vi.fn>;
+const mockApiPatch = api.patch as ReturnType<typeof vi.fn>;
+const mockApiDelete = api.delete as ReturnType<typeof vi.fn>;
 
 describe("payout-disbursement.service", () => {
   beforeEach(() => {
@@ -104,7 +117,7 @@ describe("payout-disbursement.service", () => {
   describe("createDisbursements", () => {
     it("creates and returns disbursements", async () => {
       const disbursements = [{ id: "d1" }, { id: "d2" }];
-      mockFetchData.mockResolvedValue([{ disbursements }, null]);
+      mockApiPost.mockResolvedValue({ disbursements });
 
       const result = await createDisbursements({
         grants: [],
@@ -113,14 +126,14 @@ describe("payout-disbursement.service", () => {
     });
 
     it("throws on fetch error", async () => {
-      mockFetchData.mockResolvedValue([null, "Server error"]);
+      mockApiPost.mockRejectedValue(new Error("Server error"));
       await expect(
         createDisbursements({ grants: [] } as unknown as CreateDisbursementsRequest)
       ).rejects.toThrow(/Failed to create disbursements/);
     });
 
     it("throws when data is null", async () => {
-      mockFetchData.mockResolvedValue([null, null]);
+      mockApiPost.mockResolvedValue(null);
       await expect(
         createDisbursements({ grants: [] } as unknown as CreateDisbursementsRequest)
       ).rejects.toThrow(/Failed to create disbursements/);
@@ -146,39 +159,31 @@ describe("payout-disbursement.service", () => {
       notes: "Initial Payment",
     };
 
-    it("should call fetchData with correct url and method", async () => {
+    it("should call api.post with correct url and body", async () => {
       const disbursement = { id: "d1", status: "DISBURSED" };
-      mockFetchData.mockResolvedValue([disbursement, null]);
+      mockApiPost.mockResolvedValue(disbursement);
 
       await recordPayment(request);
 
-      expect(mockFetchData).toHaveBeenCalledWith(
-        "/v2/payouts/record-payment",
-        "POST",
-        request,
-        {},
-        {},
-        true,
-        false
-      );
+      expect(mockApiPost).toHaveBeenCalledWith("/v2/payouts/record-payment", request);
     });
 
     it("should return disbursement on success", async () => {
       const disbursement = { id: "d1", status: "DISBURSED", grantUID: "grant-1" };
-      mockFetchData.mockResolvedValue([disbursement, null]);
+      mockApiPost.mockResolvedValue(disbursement);
 
       const result = await recordPayment(request);
       expect(result).toEqual(disbursement);
     });
 
     it("should throw on error response", async () => {
-      mockFetchData.mockResolvedValue([null, "Server error"]);
+      mockApiPost.mockRejectedValue(new Error("Server error"));
 
       await expect(recordPayment(request)).rejects.toThrow(/Failed to record payment/);
     });
 
     it("should throw when data is null", async () => {
-      mockFetchData.mockResolvedValue([null, null]);
+      mockApiPost.mockResolvedValue(null);
 
       await expect(recordPayment(request)).rejects.toThrow(/Failed to record payment/);
     });
@@ -191,7 +196,7 @@ describe("payout-disbursement.service", () => {
   describe("recordSafeTransaction", () => {
     it("records safe tx and returns disbursement", async () => {
       const disbursement = { id: "d1", status: "pending_signatures" };
-      mockFetchData.mockResolvedValue([disbursement, null]);
+      mockApiPost.mockResolvedValue(disbursement);
 
       const result = await recordSafeTransaction("d1", {
         safeTxHash: "0xhash",
@@ -201,7 +206,7 @@ describe("payout-disbursement.service", () => {
     });
 
     it("throws on error", async () => {
-      mockFetchData.mockResolvedValue([null, "Not found"]);
+      mockApiPost.mockRejectedValue(new Error("Not found"));
       await expect(
         recordSafeTransaction("d1", { safeTxHash: "0x" } as unknown as RecordSafeTransactionRequest)
       ).rejects.toThrow(/Failed to record Safe transaction/);
@@ -215,14 +220,14 @@ describe("payout-disbursement.service", () => {
   describe("getPayoutHistory", () => {
     it("returns paginated disbursement history", async () => {
       const response = { data: [{ id: "d1" }], total: 1, page: 1 };
-      mockFetchData.mockResolvedValue([response, null]);
+      mockApiGet.mockResolvedValue(response);
 
       const result = await getPayoutHistory("grant-1", 1, 10);
       expect(result).toEqual(response);
     });
 
     it("throws on error", async () => {
-      mockFetchData.mockResolvedValue([null, "Error"]);
+      mockApiGet.mockRejectedValue(new Error("Error"));
       await expect(getPayoutHistory("grant-1")).rejects.toThrow(/Failed to fetch payout history/);
     });
   });
@@ -233,13 +238,13 @@ describe("payout-disbursement.service", () => {
 
   describe("getTotalDisbursed", () => {
     it("returns total disbursed amount", async () => {
-      mockFetchData.mockResolvedValue([{ totalDisbursed: "1500.00" }, null]);
+      mockApiGet.mockResolvedValue({ totalDisbursed: "1500.00" });
       const result = await getTotalDisbursed("grant-1");
       expect(result).toBe("1500.00");
     });
 
     it("throws on error", async () => {
-      mockFetchData.mockResolvedValue([null, "Error"]);
+      mockApiGet.mockRejectedValue(new Error("Error"));
       await expect(getTotalDisbursed("grant-1")).rejects.toThrow(/Failed to fetch total disbursed/);
     });
   });
@@ -251,14 +256,14 @@ describe("payout-disbursement.service", () => {
   describe("getPendingDisbursements", () => {
     it("returns pending disbursements", async () => {
       const response = { data: [{ id: "d1", status: "pending" }], total: 1 };
-      mockFetchData.mockResolvedValue([response, null]);
+      mockApiGet.mockResolvedValue(response);
 
       const result = await getPendingDisbursements("community-1");
       expect(result).toEqual(response);
     });
 
     it("throws on error", async () => {
-      mockFetchData.mockResolvedValue([null, "Error"]);
+      mockApiGet.mockRejectedValue(new Error("Error"));
       await expect(getPendingDisbursements("c1")).rejects.toThrow(
         /Failed to fetch pending disbursements/
       );
@@ -272,7 +277,7 @@ describe("payout-disbursement.service", () => {
   describe("updateDisbursementStatus", () => {
     it("updates status and returns disbursement", async () => {
       const disbursement = { id: "d1", status: "completed" };
-      mockFetchData.mockResolvedValue([disbursement, null]);
+      mockApiPatch.mockResolvedValue(disbursement);
 
       const result = await updateDisbursementStatus("d1", {
         status: "completed",
@@ -281,7 +286,7 @@ describe("payout-disbursement.service", () => {
     });
 
     it("throws on error", async () => {
-      mockFetchData.mockResolvedValue([null, "Forbidden"]);
+      mockApiPatch.mockRejectedValue(new Error("Forbidden"));
       await expect(
         updateDisbursementStatus("d1", { status: "completed" } as unknown as UpdateStatusRequest)
       ).rejects.toThrow(/Failed to update disbursement status/);
@@ -295,14 +300,14 @@ describe("payout-disbursement.service", () => {
   describe("getAwaitingSignaturesDisbursements", () => {
     it("returns awaiting signatures disbursements", async () => {
       const response = { data: [{ id: "d1" }], total: 1 };
-      mockFetchData.mockResolvedValue([response, null]);
+      mockApiGet.mockResolvedValue(response);
 
       const result = await getAwaitingSignaturesDisbursements("0xSafe");
       expect(result).toEqual(response);
     });
 
     it("throws on error", async () => {
-      mockFetchData.mockResolvedValue([null, "Error"]);
+      mockApiGet.mockRejectedValue(new Error("Error"));
       await expect(getAwaitingSignaturesDisbursements("0xSafe")).rejects.toThrow(
         /Failed to fetch awaiting signatures/
       );
@@ -316,14 +321,14 @@ describe("payout-disbursement.service", () => {
   describe("savePayoutConfigs", () => {
     it("saves and returns payout config response", async () => {
       const response = { saved: 2, configs: [] };
-      mockFetchData.mockResolvedValue([response, null]);
+      mockApiPost.mockResolvedValue(response);
 
       const result = await savePayoutConfigs({ configs: [] } as unknown as SavePayoutConfigRequest);
       expect(result).toEqual(response);
     });
 
     it("throws on error", async () => {
-      mockFetchData.mockResolvedValue([null, "Error"]);
+      mockApiPost.mockRejectedValue(new Error("Error"));
       await expect(
         savePayoutConfigs({ configs: [] } as unknown as SavePayoutConfigRequest)
       ).rejects.toThrow(/Failed to save payout configs/);
@@ -333,14 +338,14 @@ describe("payout-disbursement.service", () => {
   describe("getPayoutConfigsByCommunity", () => {
     it("returns configs array", async () => {
       const configs = [{ grantUID: "g1" }];
-      mockFetchData.mockResolvedValue([{ configs }, null]);
+      mockApiGet.mockResolvedValue({ configs });
 
       const result = await getPayoutConfigsByCommunity("community-1");
       expect(result).toEqual(configs);
     });
 
     it("throws on error", async () => {
-      mockFetchData.mockResolvedValue([null, "Error"]);
+      mockApiGet.mockRejectedValue(new Error("Error"));
       await expect(getPayoutConfigsByCommunity("c1")).rejects.toThrow(
         /Failed to fetch payout configs/
       );
@@ -350,7 +355,7 @@ describe("payout-disbursement.service", () => {
   describe("getPayoutConfigsByCommunityPublic", () => {
     it("returns configs array (no auth)", async () => {
       const configs = [{ grantUID: "g1" }];
-      mockFetchData.mockResolvedValue([{ configs }, null]);
+      mockApiGet.mockResolvedValue({ configs });
 
       const result = await getPayoutConfigsByCommunityPublic("community-1");
       expect(result).toEqual(configs);
@@ -360,14 +365,14 @@ describe("payout-disbursement.service", () => {
   describe("getPayoutConfigByGrant", () => {
     it("returns config for grant", async () => {
       const config = { grantUID: "g1", payoutAddress: "0xAddr" };
-      mockFetchData.mockResolvedValue([{ config }, null]);
+      mockApiGet.mockResolvedValue({ config });
 
       const result = await getPayoutConfigByGrant("g1");
       expect(result).toEqual(config);
     });
 
     it("returns null when config is null", async () => {
-      mockFetchData.mockResolvedValue([{ config: null }, null]);
+      mockApiGet.mockResolvedValue({ config: null });
       const result = await getPayoutConfigByGrant("g1");
       expect(result).toBeNull();
     });
@@ -380,34 +385,28 @@ describe("payout-disbursement.service", () => {
         payoutAddress: "0xAddr",
         milestoneAllocations: [{ id: "a1", label: "Milestone 1", amount: "5000" }],
       };
-      mockFetchData.mockResolvedValue([{ config }, null]);
+      mockApiGet.mockResolvedValue({ config });
 
       const result = await getPayoutConfigByGrantPublic("g1");
       expect(result).toEqual(config);
     });
 
     it("returns null when no config exists", async () => {
-      mockFetchData.mockResolvedValue([{ config: null }, null]);
+      mockApiGet.mockResolvedValue({ config: null });
       const result = await getPayoutConfigByGrantPublic("g1");
       expect(result).toBeNull();
     });
 
     it("calls the public endpoint without auth flag", async () => {
-      mockFetchData.mockResolvedValue([{ config: null }, null]);
+      mockApiGet.mockResolvedValue({ config: null });
       await getPayoutConfigByGrantPublic("g1");
-      expect(mockFetchData).toHaveBeenCalledWith(
-        "/v2/payout-config/grant/g1/public",
-        "GET",
-        {},
-        {},
-        {},
-        false,
-        false
-      );
+      expect(mockApiGet).toHaveBeenCalledWith("/v2/payout-config/grant/g1/public", {
+        isAuthorized: false,
+      });
     });
 
     it("throws when fetch fails", async () => {
-      mockFetchData.mockResolvedValue([null, "Not found"]);
+      mockApiGet.mockRejectedValue(new Error("Not found"));
       await expect(getPayoutConfigByGrantPublic("g1")).rejects.toThrow(
         /Failed to fetch payout config/
       );
@@ -416,12 +415,12 @@ describe("payout-disbursement.service", () => {
 
   describe("deletePayoutConfig", () => {
     it("deletes config without error", async () => {
-      mockFetchData.mockResolvedValue([null, null]);
+      mockApiDelete.mockResolvedValue(undefined);
       await expect(deletePayoutConfig("g1")).resolves.toBeUndefined();
     });
 
     it("throws on error", async () => {
-      mockFetchData.mockResolvedValue([null, "Forbidden"]);
+      mockApiDelete.mockRejectedValue(new Error("Forbidden"));
       await expect(deletePayoutConfig("g1")).rejects.toThrow(/Failed to delete payout config/);
     });
   });
@@ -433,29 +432,24 @@ describe("payout-disbursement.service", () => {
   describe("toggleGrantAgreement", () => {
     it("toggles agreement signed status", async () => {
       const agreement = { grantUID: "g1", signed: true };
-      mockFetchData.mockResolvedValue([agreement, null]);
+      mockApiPost.mockResolvedValue(agreement);
 
       const result = await toggleGrantAgreement("g1", true, "community-1");
       expect(result).toEqual(agreement);
     });
 
     it("includes signedAt when provided", async () => {
-      mockFetchData.mockResolvedValue([{ grantUID: "g1", signed: true }, null]);
+      mockApiPost.mockResolvedValue({ grantUID: "g1", signed: true });
 
       await toggleGrantAgreement("g1", true, "c1", "2025-01-01T00:00:00Z");
-      expect(mockFetchData).toHaveBeenCalledWith(
+      expect(mockApiPost).toHaveBeenCalledWith(
         expect.any(String),
-        "POST",
-        expect.objectContaining({ signedAt: "2025-01-01T00:00:00Z" }),
-        expect.anything(),
-        expect.anything(),
-        true,
-        false
+        expect.objectContaining({ signedAt: "2025-01-01T00:00:00Z" })
       );
     });
 
     it("throws on error", async () => {
-      mockFetchData.mockResolvedValue([null, "Error"]);
+      mockApiPost.mockRejectedValue(new Error("Error"));
       await expect(toggleGrantAgreement("g1", true, "c1")).rejects.toThrow(
         /Failed to toggle agreement/
       );
@@ -469,7 +463,7 @@ describe("payout-disbursement.service", () => {
   describe("saveMilestoneInvoices", () => {
     it("saves milestone invoices", async () => {
       const invoices = [{ milestoneLabel: "M1", invoiceReceivedAt: "2025-01-01" }];
-      mockFetchData.mockResolvedValue([{ invoices }, null]);
+      mockApiPut.mockResolvedValue({ invoices });
 
       const result = await saveMilestoneInvoices("g1", "c1", [
         { milestoneLabel: "M1", invoiceReceivedAt: "2025-01-01" },
@@ -478,7 +472,7 @@ describe("payout-disbursement.service", () => {
     });
 
     it("throws on error", async () => {
-      mockFetchData.mockResolvedValue([null, "Error"]);
+      mockApiPut.mockRejectedValue(new Error("Error"));
       await expect(saveMilestoneInvoices("g1", "c1", [])).rejects.toThrow(
         /Failed to save invoices/
       );
@@ -492,7 +486,7 @@ describe("payout-disbursement.service", () => {
   describe("validateBulkImportRows", () => {
     it("returns validated rows", async () => {
       const rows = [{ rowNumber: 1, status: "valid", errors: [] }];
-      mockFetchData.mockResolvedValue([{ rows }, null]);
+      mockApiPost.mockResolvedValue({ rows });
 
       const result = await validateBulkImportRows("c1", [
         {
@@ -509,7 +503,7 @@ describe("payout-disbursement.service", () => {
     });
 
     it("throws on error", async () => {
-      mockFetchData.mockResolvedValue([null, "Validation failed"]);
+      mockApiPost.mockRejectedValue(new Error("Validation failed"));
       await expect(validateBulkImportRows("c1", [])).rejects.toThrow(
         /Failed to validate bulk import/
       );
@@ -522,22 +516,19 @@ describe("payout-disbursement.service", () => {
 
   describe("getInvoiceDownloadUrl", () => {
     it("returns presigned download URL", async () => {
-      mockFetchData.mockResolvedValue([
-        { downloadUrl: "https://s3.example.com/invoice.pdf" },
-        null,
-      ]);
+      mockApiGet.mockResolvedValue({ downloadUrl: "https://s3.example.com/invoice.pdf" });
 
       const result = await getInvoiceDownloadUrl("invoices/grant-1/file.pdf");
       expect(result).toBe("https://s3.example.com/invoice.pdf");
     });
 
     it("throws when downloadUrl is missing from response", async () => {
-      mockFetchData.mockResolvedValue([{}, null]);
+      mockApiGet.mockResolvedValue({});
       await expect(getInvoiceDownloadUrl("key")).rejects.toThrow(/Failed to get download URL/);
     });
 
     it("throws on fetch error", async () => {
-      mockFetchData.mockResolvedValue([null, "Not found"]);
+      mockApiGet.mockRejectedValue(new Error("Not found"));
       await expect(getInvoiceDownloadUrl("key")).rejects.toThrow(/Failed to get download URL/);
     });
   });
@@ -549,46 +540,38 @@ describe("payout-disbursement.service", () => {
   describe("checkGrantInvoiceRequired", () => {
     it("returns invoice requirement data when API succeeds", async () => {
       const response = { invoiceRequired: true, invoiceStatus: "pending", invoiceFileKey: null };
-      mockFetchData.mockResolvedValue([{ data: response }, null]);
+      mockApiGet.mockResolvedValue({ data: response });
 
       const result = await checkGrantInvoiceRequired("grant-1");
       expect(result).toEqual(response);
     });
 
     it("returns { invoiceRequired: false } on fetch error", async () => {
-      mockFetchData.mockResolvedValue([null, "Server error"]);
+      mockApiGet.mockRejectedValue(new Error("Server error"));
 
       const result = await checkGrantInvoiceRequired("grant-1");
       expect(result).toEqual({ invoiceRequired: false });
     });
 
     it("returns { invoiceRequired: false } when data is null", async () => {
-      mockFetchData.mockResolvedValue([null, null]);
+      mockApiGet.mockResolvedValue(null);
 
       const result = await checkGrantInvoiceRequired("grant-1");
       expect(result).toEqual({ invoiceRequired: false });
     });
 
     it("returns { invoiceRequired: false } when fetchData throws", async () => {
-      mockFetchData.mockRejectedValue(new Error("Network failure"));
+      mockApiGet.mockRejectedValue(new Error("Network failure"));
 
       const result = await checkGrantInvoiceRequired("grant-1");
       expect(result).toEqual({ invoiceRequired: false });
     });
 
     it("calls the correct URL with the grant UID", async () => {
-      mockFetchData.mockResolvedValue([{ data: { invoiceRequired: false } }, null]);
+      mockApiGet.mockResolvedValue({ data: { invoiceRequired: false } });
 
       await checkGrantInvoiceRequired("abc-123");
-      expect(mockFetchData).toHaveBeenCalledWith(
-        "/v2/grants/abc-123/invoice-requirement",
-        "GET",
-        {},
-        {},
-        {},
-        true,
-        false
-      );
+      expect(mockApiGet).toHaveBeenCalledWith("/v2/grants/abc-123/invoice-requirement");
     });
   });
 
@@ -606,36 +589,28 @@ describe("payout-disbursement.service", () => {
 
     it("submits invoice and returns the saved invoice", async () => {
       const savedInvoice = { ...invoice, id: "inv-1", createdAt: "2026-04-01" };
-      mockFetchData.mockResolvedValue([{ data: { invoice: savedInvoice } }, null]);
+      mockApiPut.mockResolvedValue({ data: { invoice: savedInvoice } });
 
       const result = await submitGranteeInvoice("grant-1", invoice);
       expect(result).toEqual(savedInvoice);
     });
 
     it("calls the correct URL with PUT method and invoice body", async () => {
-      mockFetchData.mockResolvedValue([{ data: { invoice: {} } }, null]);
+      mockApiPut.mockResolvedValue({ data: { invoice: {} } });
 
       await submitGranteeInvoice("grant-1", invoice);
-      expect(mockFetchData).toHaveBeenCalledWith(
-        "/v2/grants/grant-1/invoice",
-        "PUT",
-        invoice,
-        {},
-        {},
-        true,
-        false
-      );
+      expect(mockApiPut).toHaveBeenCalledWith("/v2/grants/grant-1/invoice", invoice);
     });
 
     it("surfaces the backend error message verbatim", async () => {
-      mockFetchData.mockResolvedValue([null, "An invoice already exists for this milestone"]);
+      mockApiPut.mockRejectedValue(new Error("An invoice already exists for this milestone"));
       await expect(submitGranteeInvoice("grant-1", invoice)).rejects.toThrow(
         "An invoice already exists for this milestone"
       );
     });
 
     it("falls back to a generic message when the backend provides none", async () => {
-      mockFetchData.mockResolvedValue([null, null]);
+      mockApiPut.mockResolvedValue(null);
       await expect(submitGranteeInvoice("grant-1", invoice)).rejects.toThrow(
         "Failed to submit invoice"
       );
@@ -648,39 +623,30 @@ describe("payout-disbursement.service", () => {
 
   describe("getGrantInvoiceDownloadUrl", () => {
     it("returns the download URL", async () => {
-      mockFetchData.mockResolvedValue([
-        { data: { downloadUrl: "https://s3.example.com/signed-url" } },
-        null,
-      ]);
+      mockApiGet.mockResolvedValue({ data: { downloadUrl: "https://s3.example.com/signed-url" } });
 
       const result = await getGrantInvoiceDownloadUrl("grant-1", "invoices/file.pdf");
       expect(result).toBe("https://s3.example.com/signed-url");
     });
 
     it("calls the correct URL with grant UID and encoded file key", async () => {
-      mockFetchData.mockResolvedValue([{ data: { downloadUrl: "https://example.com" } }, null]);
+      mockApiGet.mockResolvedValue({ data: { downloadUrl: "https://example.com" } });
 
       await getGrantInvoiceDownloadUrl("grant-1", "path/with spaces.pdf");
-      expect(mockFetchData).toHaveBeenCalledWith(
-        "/v2/grants/grant-1/invoice/download?key=path%2Fwith%20spaces.pdf",
-        "GET",
-        {},
-        {},
-        {},
-        true,
-        false
+      expect(mockApiGet).toHaveBeenCalledWith(
+        "/v2/grants/grant-1/invoice/download?key=path%2Fwith%20spaces.pdf"
       );
     });
 
     it("throws when downloadUrl is missing from response", async () => {
-      mockFetchData.mockResolvedValue([{}, null]);
+      mockApiGet.mockResolvedValue({});
       await expect(getGrantInvoiceDownloadUrl("grant-1", "key")).rejects.toThrow(
         /Failed to get download URL/
       );
     });
 
     it("throws on fetch error", async () => {
-      mockFetchData.mockResolvedValue([null, "Forbidden"]);
+      mockApiGet.mockRejectedValue(new Error("Forbidden"));
       await expect(getGrantInvoiceDownloadUrl("grant-1", "key")).rejects.toThrow(
         /Failed to get download URL/
       );

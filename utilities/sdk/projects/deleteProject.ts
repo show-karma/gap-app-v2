@@ -3,7 +3,7 @@ import type { AppRouterInstance } from "next/dist/shared/lib/app-router-context.
 import { errorManager } from "@/components/Utilities/errorManager";
 import type { AttestationStep } from "@/hooks/useAttestationToast";
 import { getProject } from "@/services/project.service";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 import { PAGES } from "@/utilities/pages";
 
@@ -25,7 +25,17 @@ export const deleteProject = async (
       changeStepperStep("indexing");
       const txHash = res?.tx[0]?.hash;
       if (txHash) {
-        await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, project.chainID), "POST", {});
+        try {
+          // Fire-and-forget: the polling loop below is the source of truth
+          // for indexing completion, so a failure here shouldn't abort the
+          // delete flow.
+          await api.post(INDEXER.ATTESTATION_LISTENER(txHash, project.chainID), {});
+        } catch (notifyError: unknown) {
+          errorManager(
+            `Error notifying attestation listener for project ${project.uid}`,
+            notifyError
+          );
+        }
       }
       while (retries > 0) {
         // eslint-disable-next-line no-await-in-loop
