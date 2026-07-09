@@ -206,21 +206,18 @@ export function NewDonorHandleModal({
       ) : activeHandle ? (
         <DialogContent
           className="flex max-h-[85vh] flex-col gap-0 p-0 sm:max-w-2xl"
-          // The persona editor hosts portaled widgets (the Radix Select). Radix
-          // reports an interaction with the Select trigger or its portaled
-          // dropdown as "outside" (the dropdown renders outside the dialog DOM),
-          // which would fire the dirty-close guard and dismiss the modal — losing
-          // unsaved edits — on a plain Select click. Only a genuine click on the
-          // overlay backdrop should dismiss: keep the modal open for anything
-          // inside the dialog content or a portaled popper. A real overlay click
-          // (target is neither) still closes via requestClose(), which prompts to
-          // discard unsaved edits.
-          onInteractOutside={(event) => {
-            const target = event.target as Element | null;
-            if (target?.closest('[role="dialog"], [data-radix-popper-content-wrapper]')) {
-              event.preventDefault();
-            }
-          }}
+          // The persona editor hosts portaled Radix Selects. Radix reports a
+          // pointerdown on a Select trigger (or its portaled dropdown) as an
+          // "outside" interaction, so any outside-dismiss handler tears the modal
+          // down on a plain Select click and drops unsaved edits. Trying to
+          // distinguish "real overlay click" from "Select interaction" by the
+          // event target is unreliable across Radix versions (the dropdown
+          // portals out of the dialog DOM), so we disable outside-dismiss on this
+          // step entirely: the modal still closes via the X, Esc, and its footer
+          // buttons — all routed through requestClose(), which prompts to discard
+          // unsaved edits.
+          onPointerDownOutside={(event) => event.preventDefault()}
+          onInteractOutside={(event) => event.preventDefault()}
         >
           <DialogHeader className="border-b border-border px-6 py-4 pr-12 text-left">
             {isEditing ? (
