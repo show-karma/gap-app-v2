@@ -79,7 +79,11 @@ export function buildReviewsSummary(
       name: program.communityName ?? id,
       applications: 0,
     };
-    entry.applications += program.metrics?.totalApplications ?? 0;
+    // Count only applications that still need a review decision — matching the
+    // reviewer inbox's "action" bucket and the admin path below. Using
+    // totalApplications here overcounts (it includes approved/rejected/draft),
+    // so the tile would promise "N to review" while the inbox is empty.
+    entry.applications += program.metrics?.pendingApplications ?? 0;
     byCommunity.set(id, entry);
     remember(program.communitySlug, program.communityUID);
   }

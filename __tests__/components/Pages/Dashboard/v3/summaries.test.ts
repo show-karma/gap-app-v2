@@ -29,12 +29,14 @@ const community = (name: string, activeProgramsCount: number, pendingApplication
     manageUrl: `/admin/${name}`,
   }) as DashboardAdminCommunity;
 
-const program = (communitySlug: string, communityName: string, totalApplications: number) =>
+// The tile counts applications that still need a review decision, so seed the
+// program with `pendingApplications` (the field buildReviewsSummary reads).
+const program = (communitySlug: string, communityName: string, pendingApplications: number) =>
   ({
-    programId: `${communitySlug}-${totalApplications}`,
+    programId: `${communitySlug}-${pendingApplications}`,
     communitySlug,
     communityName,
-    metrics: { totalApplications },
+    metrics: { totalApplications: pendingApplications + 5, pendingApplications },
   }) as unknown as FundingProgram;
 
 const application = (programTitle: string, status: Application["status"]) =>
