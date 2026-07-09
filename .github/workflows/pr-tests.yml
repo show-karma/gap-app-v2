@@ -63,7 +63,9 @@ jobs:
   # ── Step 1: run tests (6 shards) ────────────────────────────────────────────
   test:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    # Raised from 10: --maxWorkers=1 runs each shard's files sequentially to
+    # cap peak memory, which is slower per shard than the old parallel run.
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
@@ -93,13 +95,24 @@ jobs:
         # Invoke vitest directly: `pnpm run test -- <flags>` forwards the
         # literal `--` to vitest, which then parses the flags as test-name
         # filters — silently running the whole suite unsharded.
+        # OOM background: the jsdom + axe suites build large JS-heap structures.
+        # With --max-old-space-size=8192 on a 16 GB runner V8 had no reason to
+        # GC until ~8 GB, so a shard's heap plus external memory accumulated
+        # until the OS killed the worker (a crash with no test failures, no V8
+        # "heap limit" line). Two changes bound it: a 6144 MB heap cap makes V8
+        # collect aggressively so RSS stays well under the runner limit, and
+        # --maxWorkers=1 keeps a single file's heap on the shared thread pool at
+        # a time (concurrent heavy files would otherwise share, then blow, that
+        # cap). Combined with the six-way split and the render-once homepage
+        # a11y suite, shards stay comfortably in memory.
         run: |
           pnpm exec vitest run --project unit \
             --reporter=dot \
+            --maxWorkers=1 \
             --shard=${{ matrix.shard }}/${{ env.SHARD_COUNT }}
         env:
           NODE_ENV: test
-          NODE_OPTIONS: --max-old-space-size=8192
+          NODE_OPTIONS: --max-old-space-size=6144
 
       # Upload a tiny outcome artifact so the report job can aggregate across
       # shards. Matrix job outputs only return the LAST shard's value, so
