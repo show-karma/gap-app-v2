@@ -1,10 +1,12 @@
 "use client";
 
+import { useEffect } from "react";
 import { useDashboardContext } from "@/components/Pages/Dashboard/DashboardProvider";
 import { SuperAdminSection } from "@/components/Pages/Dashboard/SuperAdminSection/SuperAdminSection";
 import { BentoGrid } from "@/components/Pages/Dashboard/v3/BentoGrid";
 import { GettingStartedView } from "@/components/Pages/Dashboard/v3/GettingStartedView";
 import { SkeletonList } from "@/components/Pages/Dashboard/v3/primitives";
+import { signalDashboardRoutePainted } from "@/components/Pages/Dashboard/v3/useDashboardTransition";
 
 /**
  * `/dashboard` — the bento overview. Renders one link tile per active role
@@ -14,6 +16,12 @@ import { SkeletonList } from "@/components/Pages/Dashboard/v3/primitives";
  */
 export default function DashboardOverviewPage() {
   const { modules, showSuperAdmin, advisorLoading } = useDashboardContext();
+
+  // Resolve an in-flight close transition once the overview has painted so the
+  // drill-in morphs back to its tile.
+  useEffect(() => {
+    signalDashboardRoutePainted();
+  }, []);
 
   let content: React.ReactNode;
   if (modules.length > 0) {

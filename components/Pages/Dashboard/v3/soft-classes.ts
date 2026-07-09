@@ -46,6 +46,13 @@ export const SK = "animate-dashv3-pulse rounded-lg bg-sf-skeleton";
 /* Bento tile shell — shared by the button (BentoTile) and link (BentoTileLink)
    variants so both render an identical face. */
 export const TILE_BASE = "relative flex flex-col gap-3 rounded-sf-card bg-sf-card p-5 text-left";
+
+/**
+ * Shared `view-transition-name` for a module's tile and its `/dashboard/[module]`
+ * drill-in. Matching names let the browser morph the box across the route change
+ * — the cross-route counterpart to the in-place framer `layoutId` (bentoLayoutId).
+ */
+export const moduleTransitionName = (key: string) => `dash-module-${key}`;
 export function tileSpanClasses(wide?: boolean): string {
   return wide
     ? "col-span-2 min-[640px]:col-span-1 min-[980px]:col-span-3"

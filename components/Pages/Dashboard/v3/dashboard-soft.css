@@ -92,3 +92,34 @@
 .dashv3 button {
   cursor: pointer;
 }
+
+/*
+ * Dashboard route morph (View Transitions API).
+ *
+ * A bento tile and its `/dashboard/[module]` drill-in share a
+ * `view-transition-name` (moduleTransitionName), so the browser morphs the box
+ * between them on navigation — the cross-route equivalent of the in-place
+ * framer `layoutId`. These pseudo-elements only exist while a transition is
+ * running, and only dashboard navigation starts one (useDashboardTransition),
+ * so the rules are inert everywhere else.
+ *
+ * Match the box morph to the old framer timing, and hold the shared shell
+ * (header/background = the `root` group) static so only the opened module moves.
+ */
+::view-transition-group(*) {
+  animation-duration: 0.32s;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}
