@@ -120,9 +120,11 @@ const ProjectCard = memo(function ProjectCard({ project }: { project: ProjectWit
       </div>
       <div className="flex flex-wrap items-center gap-1.5">
         <ProjectStatusBadge project={project} />
-        <span className={badgeClasses("gray")}>
-          {grantsCount} {pluralize("grant", grantsCount)}
-        </span>
+        {grantsCount > 0 ? (
+          <span className={badgeClasses("gray")}>
+            {grantsCount} {pluralize("grant", grantsCount)}
+          </span>
+        ) : null}
       </div>
     </Link>
   );

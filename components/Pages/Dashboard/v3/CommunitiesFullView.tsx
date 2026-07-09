@@ -111,13 +111,17 @@ export function CommunitiesFullView() {
               </span>
             </div>
             <div className="flex flex-col gap-[3px] text-[12.5px] text-sf-muted">
-              <span>
-                {c.activeProgramsCount} active {pluralize("program", c.activeProgramsCount)}
-              </span>
-              <span>
-                {c.pendingApplicationsCount} pending{" "}
-                {pluralize("application", c.pendingApplicationsCount)}
-              </span>
+              {c.activeProgramsCount > 0 ? (
+                <span>
+                  {c.activeProgramsCount} active {pluralize("program", c.activeProgramsCount)}
+                </span>
+              ) : null}
+              {c.pendingApplicationsCount > 0 ? (
+                <span>
+                  {c.pendingApplicationsCount} pending{" "}
+                  {pluralize("application", c.pendingApplicationsCount)}
+                </span>
+              ) : null}
             </div>
             <Link className={cn(BTN_BASE, BTN_SM, BTN_OUTLINE, "self-start")} href={c.manageUrl}>
               Manage

@@ -1,8 +1,13 @@
 import { ShieldCheck } from "lucide-react";
+import {
+  BTN_BASE,
+  BTN_MD,
+  BTN_PRIMARY,
+  THUMB_BASE,
+} from "@/components/Pages/Dashboard/v3/soft-classes";
 import { Link } from "@/src/components/navigation/Link";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
-import { BTN_BASE, BTN_MD, BTN_PRIMARY, THUMB_BASE } from "../v3/soft-classes";
 
 export function SuperAdminSection() {
   return (

@@ -2,6 +2,7 @@
 
 import { AlertTriangle, RefreshCw } from "lucide-react";
 import { Link } from "@/src/components/navigation/Link";
+import { PAGES } from "@/utilities/pages";
 
 export default function EmptyDashboardError({
   error,
@@ -33,7 +34,7 @@ export default function EmptyDashboardError({
             Try again
           </button>
           <Link
-            href="/"
+            href={PAGES.HOME}
             className="flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted"
           >
             Go home
