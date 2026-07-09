@@ -54,13 +54,7 @@ vi.mock("@/services/fundingPlatformService", async (importOriginal) => {
 });
 
 vi.mock("@/utilities/api/client", () => ({
-  api: {
-    get: vi.fn(),
-    post: vi.fn(),
-    put: vi.fn(),
-    patch: vi.fn(),
-    delete: vi.fn(),
-  },
+  api: { get: vi.fn(), post: vi.fn(), put: vi.fn(), patch: vi.fn(), delete: vi.fn() },
 }));
 
 vi.mock("@/utilities/indexer", () => ({

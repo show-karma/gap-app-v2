@@ -170,7 +170,6 @@ const GrantSearchDropdown: FC<{
 const getFormErrorMessage = (errors: any, formValues: any) => {
   const errorMessages = [];
 
-  // Check for validation errors first
   if (errors.title?.message) {
     errorMessages.push(errors.title.message);
   } else if (!formValues.title) {
@@ -183,7 +182,6 @@ const getFormErrorMessage = (errors: any, formValues: any) => {
     errorMessages.push("Description is required");
   }
 
-  // Check outputs
   if (errors.outputs?.message) {
     errorMessages.push("Please check your metrics values");
   } else if (formValues.outputs?.length > 0) {
@@ -195,7 +193,6 @@ const getFormErrorMessage = (errors: any, formValues: any) => {
     }
   }
 
-  // Check deliverables
   if (errors.deliverables) {
     const hasDeliverableErrors = errors.deliverables.some((d: any) => d?.name || d?.proof);
     if (hasDeliverableErrors) {
@@ -229,13 +226,11 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
   const [isEditMode, setIsEditMode] = useState(false);
   const queryClient = useQueryClient();
 
-  // Fetch updates using dedicated hook
   const { rawData: projectUpdatesData, refetch: refetchUpdates } = useProjectUpdates(
     project?.uid || ""
   );
   const projectUpdates = projectUpdatesData?.projectUpdates || [];
 
-  // Fetch grants using dedicated hook
   const { grants: projectGrants } = useProjectGrants(project?.uid || "");
 
   const { register, handleSubmit, watch, control, setValue, formState, reset, setError } =
@@ -260,10 +255,8 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
     projectIdentifier: project?.uid,
   });
 
-  // Fetch auto-synced indicators from API
   const { data: autosyncedIndicators = [] } = useAutosyncedIndicators();
 
-  // Get communities from selected grants
   const watchedGrantIds = watch("grants") || [];
   const selectedCommunities = useMemo(() => {
     const communities = new Map<string, { uid: string; name: string }>();
@@ -283,7 +276,6 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
     return Array.from(communities.values());
   }, [watchedGrantIds, grants, projectGrants]);
 
-  // Fetch community indicators for all selected communities
   const _communityIndicatorQueries = selectedCommunities.map((community) => ({
     queryKey: ["communityIndicators", community.uid],
     queryFn: () => getIndicatorsByCommunity(community.uid),
@@ -314,10 +306,8 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
     enabled: selectedCommunities.length > 0,
   });
 
-  // Fetch unlinked indicators
   const { data: unlinkedIndicatorsData = [] } = useUnlinkedIndicators();
 
-  // Categorized indicators combining project, community, and unlinked indicators
   const categorizedIndicators = useMemo((): CategorizedIndicator[] => {
     const projectIndicators: CategorizedIndicator[] = (indicatorsData || []).map((indicator) => ({
       ...indicator,
@@ -617,10 +607,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
           try {
             await api.post(INDEXER.ATTESTATION_LISTENER(txHash, projectUpdate.chainID), {});
           } catch (listenerError) {
-            // SUPPRESSED: best-effort attestation-listener notification; the
-            // indexing polling loop below independently retries refetchUpdates()
-            // regardless of whether this notify succeeds, matching the legacy
-            // fetchData behavior which never surfaced errors from this call.
+            // SUPPRESSED: best-effort notify; indexing poll below retries regardless (matches legacy fetchData, which never surfaced errors here).
             errorManager("Failed to notify attestation listener", listenerError, {
               projectUID: projectUpdate.uid,
               txHash,
