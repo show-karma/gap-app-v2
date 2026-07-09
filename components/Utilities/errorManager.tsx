@@ -68,6 +68,26 @@ export const errorManager = (
     error?: string;
   }
 ) => {
+  // Typed ApiErrors (issue #1775) are handled FIRST — above the legacy wallet-
+  // error string heuristics below — because an ApiError's message embeds the
+  // endpoint path, so a route containing "reject"/"switch chain" (e.g. "HTTP
+  // 500 POST /communities/x/reject") would otherwise match the wallet guards
+  // and be silently swallowed. Transient failures (network/timeout/abort/429,
+  // or a retryable upstream 502/503/504) suppress to a breadcrumb — matching
+  // the historical isTransientNetworkError/isTransientHttpError posture below;
+  // genuine failures (ContractViolation, non-retryable 4xx/5xx) get
+  // reportApiFailure's per-endpoint fingerprinting (§C: "above the existing
+  // checks"; isTransientApiError intentionally broadens the snippet's
+  // error.expected to also suppress retryable 5xx).
+  if (isApiError(error)) {
+    if (isTransientApiError(error)) {
+      Sentry.addBreadcrumb({ category: "api", message: error.message, level: "warning" });
+      return;
+    }
+    reportApiFailure(error, { errorMessage, extra });
+    return;
+  }
+
   if (error?.originalError || error?.message) {
     if (errorContains(error, "reject")) {
       return;
@@ -91,22 +111,6 @@ export const errorManager = (
       }
     }
   }
-  // Typed ApiErrors (issue #1775) route through the single Sentry reporting
-  // policy shared with the client's exhaustion hook. Transient failures
-  // (network/timeout/abort/429, or a retryable upstream 502/503/504) are
-  // suppressed to a breadcrumb — matching the historical
-  // isTransientNetworkError/isTransientHttpError posture immediately below —
-  // while genuine failures (ContractViolation, non-retryable 4xx/5xx) get
-  // reportApiFailure's per-endpoint fingerprinting.
-  if (isApiError(error)) {
-    if (isTransientApiError(error)) {
-      Sentry.addBreadcrumb({ category: "api", message: error.message, level: "warning" });
-      return;
-    }
-    reportApiFailure(error, { errorMessage, extra });
-    return;
-  }
-
   // Transient browser-side network errors (offline, CORS preflight, ad-
   // blocker, navigation abort) produce stacks that are pure minified Axios
   // bundle frames with no actionable signal. They get retried by React
