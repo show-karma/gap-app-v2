@@ -116,6 +116,28 @@ describe("client — 2. 401 refresh once per logical request", () => {
     await expect(client.get("/things")).rejects.toBeInstanceOf(HttpError);
     expect(mockedRequest()).toHaveBeenCalledTimes(1);
   });
+
+  it("does not attempt a refresh on 401 when isAuthorized is false", async () => {
+    mockedRequest().mockRejectedValue({ response: { status: 401, data: {} } });
+    const { client, onAuthExpired } = buildClient();
+
+    await expect(client.get("/things", { isAuthorized: false })).rejects.toBeInstanceOf(HttpError);
+
+    expect(onAuthExpired).not.toHaveBeenCalled();
+    expect(mockedRequest()).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not attempt a refresh on 401 for a non-default baseURL override", async () => {
+    mockedRequest().mockRejectedValue({ response: { status: 401, data: {} } });
+    const { client, onAuthExpired } = buildClient();
+
+    await expect(client.get("/things", { baseURL: "https://other.test" })).rejects.toBeInstanceOf(
+      HttpError
+    );
+
+    expect(onAuthExpired).not.toHaveBeenCalled();
+    expect(mockedRequest()).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe("client — 3. timeout", () => {
@@ -170,19 +192,57 @@ describe("client — 4. retry via executeWithRetry", () => {
     expect(result).toEqual({ ok: true });
   });
 
-  it("honors HttpError.retryAfterMs capped at 30000 for the retry delay", async () => {
+  it("honors HttpError.retryAfterMs for the retry delay — does not fire before the header's wait", async () => {
     vi.stubGlobal("window", undefined);
     mockedRequest()
       .mockRejectedValueOnce({
-        response: { status: 429, data: {}, headers: { "retry-after": "9999" } },
+        response: { status: 429, data: {}, headers: { "retry-after": "10" } },
       })
       .mockResolvedValueOnce({ data: { ok: true }, status: 200 });
     const { client } = buildClient();
 
-    const promise = client.get("/things");
-    await vi.advanceTimersByTimeAsync(30_000);
+    let settled = false;
+    const promise = client.get("/things").then((r) => {
+      settled = true;
+      return r;
+    });
+
+    await vi.advanceTimersByTimeAsync(9_000);
+    expect(mockedRequest()).toHaveBeenCalledTimes(1);
+    expect(settled).toBe(false);
+
+    await vi.advanceTimersByTimeAsync(1_500);
     const result = await promise;
 
+    expect(mockedRequest()).toHaveBeenCalledTimes(2);
+    expect(settled).toBe(true);
+    expect(result).toEqual({ ok: true });
+  });
+
+  it("caps HttpError.retryAfterMs at 30000 for the retry delay — does not fire before the cap", async () => {
+    vi.stubGlobal("window", undefined);
+    mockedRequest()
+      .mockRejectedValueOnce({
+        response: { status: 429, data: {}, headers: { "retry-after": "999" } },
+      })
+      .mockResolvedValueOnce({ data: { ok: true }, status: 200 });
+    const { client } = buildClient();
+
+    let settled = false;
+    const promise = client.get("/things").then((r) => {
+      settled = true;
+      return r;
+    });
+
+    await vi.advanceTimersByTimeAsync(29_000);
+    expect(mockedRequest()).toHaveBeenCalledTimes(1);
+    expect(settled).toBe(false);
+
+    await vi.advanceTimersByTimeAsync(1_500);
+    const result = await promise;
+
+    expect(mockedRequest()).toHaveBeenCalledTimes(2);
+    expect(settled).toBe(true);
     expect(result).toEqual({ ok: true });
   });
 
@@ -253,6 +313,11 @@ describe("client — 4b. onExhausted only reports a genuine retry exhaustion", (
   });
 
   afterEach(() => {
+    // Restore real timers unconditionally so a fake-timer test that throws
+    // before its trailing vi.useRealTimers() cannot leak frozen timers into
+    // the next test file in this worker (was freezing Date.now() in
+    // rpc-failure-modes.test.ts under the full suite).
+    vi.useRealTimers();
     vi.unstubAllGlobals();
   });
 
@@ -291,6 +356,64 @@ describe("client — 4b. onExhausted only reports a genuine retry exhaustion", (
     expect(mockedRequest()).toHaveBeenCalledTimes(3);
     expect(onExhausted).toHaveBeenCalledTimes(1);
     expect(onExhausted).toHaveBeenCalledWith(expect.any(HttpError), 3);
+    vi.useRealTimers();
+  });
+
+  it("(a) 503→503 exhausted with retryAttempts:2 → onExhausted called once with attemptsMade=2", async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal("window", undefined);
+    mockedRequest().mockRejectedValue({ response: { status: 503, data: {} } });
+    const { client, onExhausted } = buildClient();
+
+    const promise = client.get("/things", { retryAttempts: 2 });
+    const assertion = expect(promise).rejects.toBeInstanceOf(HttpError);
+    await vi.runAllTimersAsync();
+    await assertion;
+
+    expect(mockedRequest()).toHaveBeenCalledTimes(2);
+    expect(onExhausted).toHaveBeenCalledTimes(1);
+    expect(onExhausted).toHaveBeenCalledWith(expect.any(HttpError), 2);
+    vi.useRealTimers();
+  });
+
+  it("(b) 503→500 (non-retryable 2nd failure) → onExhausted NOT called despite attemptsMade=2", async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal("window", undefined);
+    mockedRequest()
+      .mockRejectedValueOnce({ response: { status: 503, data: {} } })
+      .mockRejectedValueOnce({ response: { status: 500, data: {} } });
+    const { client, onExhausted } = buildClient();
+
+    const promise = client.get("/things").catch((e) => e);
+    await vi.runAllTimersAsync();
+    const error = await promise;
+
+    expect(error).toBeInstanceOf(HttpError);
+    expect(error.status).toBe(500);
+    expect(mockedRequest()).toHaveBeenCalledTimes(2);
+    expect(onExhausted).not.toHaveBeenCalled();
+    vi.useRealTimers();
+  });
+
+  it("(c) a RequestAborted surfacing on the 2nd attempt (signal aborted mid-flight) → onExhausted NOT called despite attemptsMade=2", async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal("window", undefined);
+    const controller = new AbortController();
+    mockedRequest()
+      .mockRejectedValueOnce({ response: { status: 503, data: {} } })
+      .mockImplementationOnce(() => {
+        controller.abort();
+        return Promise.reject({ code: "ERR_CANCELED", name: "CanceledError" });
+      });
+    const { client, onExhausted } = buildClient();
+
+    const promise = client.get("/things", { signal: controller.signal }).catch((e) => e);
+    await vi.runAllTimersAsync();
+    const error = await promise;
+
+    expect(error).toBeInstanceOf(RequestAborted);
+    expect(mockedRequest()).toHaveBeenCalledTimes(2);
+    expect(onExhausted).not.toHaveBeenCalled();
     vi.useRealTimers();
   });
 });
@@ -332,7 +455,12 @@ describe("client — 6. schema validation", () => {
   });
 
   it("throws ContractViolationError capped at 10 issues, without leaking the raw body", async () => {
-    mockedRequest().mockResolvedValue({ data: {}, status: 200 });
+    // The response body carries a PII sentinel the schema rejects (it expects
+    // strings for a-l, not the ssn object) — proving ContractViolationError
+    // never carries the raw body requires the sentinel to actually be present
+    // in the rejected payload, not merely absent from an already-empty body.
+    const PII_SENTINEL = "SENTINEL-PII-123";
+    mockedRequest().mockResolvedValue({ data: { ssn: PII_SENTINEL }, status: 200 });
     const { client } = buildClient();
     const schema = z.object({
       a: z.string(),
@@ -353,7 +481,8 @@ describe("client — 6. schema validation", () => {
 
     expect(error).toBeInstanceOf(ContractViolationError);
     expect(error.issues.length).toBeLessThanOrEqual(10);
-    expect(JSON.stringify(error)).not.toContain("secretValueThatShouldNotLeak");
+    expect(JSON.stringify(error)).not.toContain(PII_SENTINEL);
+    expect(error.issues.join()).not.toContain(PII_SENTINEL);
   });
 
   it("returns the raw payload untouched when no schema is provided", async () => {
@@ -416,6 +545,16 @@ describe("client — 7. envelope unwrap + pageInfo", () => {
     const result = await client.getPaginated("/things");
 
     expect(result).toEqual({ data: [1, 2], pageInfo: { page: 1, totalItems: 2 } });
+  });
+
+  it("getPaginated<T>() throws ContractViolationError on a malformed envelope (no data key)", async () => {
+    mockedRequest().mockResolvedValue({
+      data: { items: [1, 2] },
+      status: 200,
+    });
+    const { client } = buildClient();
+
+    await expect(client.getPaginated("/things")).rejects.toBeInstanceOf(ContractViolationError);
   });
 });
 

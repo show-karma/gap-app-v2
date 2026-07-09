@@ -1,5 +1,6 @@
 import * as Sentry from "@sentry/nextjs";
 import { isApiError } from "@/utilities/api/errors";
+import { reportApiFailure } from "@/utilities/api/report";
 import { isTransientHttpError, isTransientNetworkError } from "@/utilities/sentry/transientErrors";
 
 // Lazy import toast to avoid issues in server components
@@ -69,6 +70,15 @@ export const errorManager = (
 ) => {
   if (isApiError(error) && error.expected) {
     Sentry.addBreadcrumb({ category: "api", message: error.message, level: "warning" });
+    return;
+  }
+  // Non-expected typed ApiErrors (ContractViolation, non-retryable 4xx/5xx,
+  // etc.) route through the single Sentry reporting policy — the same one
+  // the client's exhaustion hook uses — so ContractViolationError gets its
+  // per-endpoint fingerprint instead of falling through to the generic
+  // captureException below.
+  if (isApiError(error)) {
+    reportApiFailure(error);
     return;
   }
   if (error?.originalError || error?.message) {

@@ -261,4 +261,23 @@ describe("fetchData", () => {
     expect(TokenManager.getToken).not.toHaveBeenCalled();
     expect(status).toBe(401);
   });
+
+  it("falls back to the axios error message when the body message is an empty string (legacy `||` parity)", async () => {
+    // Legacy fetchData used `err.response.data.message || err.message`, so an
+    // empty-string body message fell through to the axios message instead of
+    // surfacing "" in the tuple's error slot.
+    const mockError = {
+      response: { status: 502, data: { message: "" } },
+      message: "Request failed with status code 502",
+    };
+    (axios.request as vi.Mock).mockRejectedValue(mockError);
+    (TokenManager.getToken as vi.Mock).mockResolvedValue("test-token");
+
+    const [resData, error, pageInfo, status] = await fetchData("/test-endpoint");
+
+    expect(resData).toBeNull();
+    expect(error).toBe("Request failed with status code 502");
+    expect(pageInfo).toBeNull();
+    expect(status).toBe(502);
+  });
 });

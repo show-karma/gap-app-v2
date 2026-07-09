@@ -71,7 +71,10 @@ export default async function fetchData<T = any>(
         // it before the synthetic `HttpError.message` ("HTTP 504 GET /path").
         const bodyMessage = (err.body as { message?: string } | undefined)?.message;
         const causeMessage = (err.cause as { message?: string } | undefined)?.message;
-        return [null, bodyMessage ?? causeMessage ?? err.message, null, err.status];
+        // Falsy-coalescing (not `??`) to match the legacy adapter exactly: a
+        // body with an empty-string message (`{ message: "" }`) must fall
+        // through to the axios message, not surface `""` in the tuple.
+        return [null, bodyMessage || causeMessage || err.message, null, err.status];
       }
       // Network / timeout / aborted / contract-violation: preserve the
       // legacy behavior of surfacing the *original* underlying error object
