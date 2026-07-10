@@ -217,6 +217,7 @@ vi.mock("@/hooks/useZeroDevSigner", () => ({
     attestationAddress: "0x1234567890abcdef1234567890abcdef12345678",
     hasEmbeddedWallet: false,
     hasExternalWallet: true,
+    signerStatus: "ready",
   }),
 }));
 
@@ -227,6 +228,7 @@ vi.mock("hooks/useZeroDevSigner", () => ({
     attestationAddress: "0x1234567890abcdef1234567890abcdef12345678",
     hasEmbeddedWallet: false,
     hasExternalWallet: true,
+    signerStatus: "ready",
   }),
 }));
 
@@ -237,6 +239,7 @@ vi.mock("@/hooks/useSetupChainAndWallet", () => ({
     smartWalletAddress: null,
     hasEmbeddedWallet: false,
     hasExternalWallet: true,
+    signerStatus: "ready",
   }),
 }));
 
@@ -247,6 +250,7 @@ vi.mock("hooks/useSetupChainAndWallet", () => ({
     smartWalletAddress: null,
     hasEmbeddedWallet: false,
     hasExternalWallet: true,
+    signerStatus: "ready",
   }),
 }));
 

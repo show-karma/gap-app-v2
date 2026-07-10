@@ -401,6 +401,7 @@ describe("Auth Integration Tests", () => {
       getAccessToken: expect.any(Function),
       connectWallet: expect.any(Function),
       wallets: [],
+      walletsReady: false,
       smartWalletClient: null,
       isConnected: false,
     });
