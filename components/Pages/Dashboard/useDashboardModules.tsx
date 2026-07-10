@@ -227,6 +227,11 @@ export interface DashboardModulesState {
   /** The advisor gate is the only one that can be undecided once every other
    *  module resolved empty — used to hold a skeleton before getting-started. */
   advisorLoading: boolean;
+  /** True once every query that decides module membership has resolved. The
+   *  drill-in route gates its 404 on this so a hard load doesn't 404 before its
+   *  module has appeared (`isLoading` only waits for the minimum to render the
+   *  overview, not every module query). */
+  isSettled: boolean;
 }
 
 /**
@@ -300,7 +305,11 @@ export function useDashboardModules(): DashboardModulesState {
   useEffect(() => {
     if (!ready || authenticated) return;
     if (isWhitelabel) return;
-    setPostLoginRedirect(`${PAGES.DASHBOARD}${window.location.hash}`);
+    // Preserve the exact target (incl. a drill-in path like /dashboard/reviews)
+    // so login returns the user where they were headed, not the home page.
+    setPostLoginRedirect(
+      `${window.location.pathname}${window.location.search}${window.location.hash}`
+    );
     router.replace(PAGES.HOME);
   }, [authenticated, ready, router, isWhitelabel]);
 
@@ -327,6 +336,18 @@ export function useDashboardModules(): DashboardModulesState {
   // review communities yet; once resolved, defer to the inbox-stats summary.
   const reviewsStatus: ModuleStatus =
     isReviewerProgramsLoading || isAdminLoading ? "loading" : reviewsSummary.status;
+
+  // Membership is decided only once every module query has resolved. `tokenReady`
+  // gates the whole thing because a disabled React Query reports isLoading=false
+  // while still undecided (see CLAUDE.md tri-state auth rule).
+  const isSettled =
+    tokenReady &&
+    !isReviewerProgramsLoading &&
+    !isAdminLoading &&
+    !isLoadingProjects &&
+    !applicationsHook.isLoading &&
+    !advisor.advisorLoading &&
+    reviewsSummary.status !== "loading";
 
   const modules = buildDashboardModules({
     authenticated: Boolean(authenticated),
@@ -356,5 +377,6 @@ export function useDashboardModules(): DashboardModulesState {
     showSuperAdmin,
     isGuestDueToError,
     advisorLoading: advisor.advisorLoading,
+    isSettled,
   };
 }

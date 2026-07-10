@@ -203,7 +203,10 @@ describe("Dashboard", () => {
     mockUseDonorAdvisor.mockReturnValue({ data: null, isLoading: false });
   });
 
-  it("redirects unauthenticated users away from dashboard", async () => {
+  it("redirects unauthenticated users away, preserving the target path", async () => {
+    // The post-login redirect preserves the exact path (incl. a drill-in like
+    // /dashboard/reviews), not a hardcoded /dashboard.
+    window.history.replaceState(null, "", "/dashboard/reviews");
     const replace = vi.fn();
     mockUseRouter.mockReturnValue({ replace });
     setupAuth({ authenticated: false, address: undefined, ready: true });
@@ -211,7 +214,7 @@ describe("Dashboard", () => {
     const { container } = render(<Dashboard />, { wrapper: createWrapper() });
 
     await waitFor(() => {
-      expect(mockSetPostLoginRedirect).toHaveBeenCalledWith("/dashboard");
+      expect(mockSetPostLoginRedirect).toHaveBeenCalledWith("/dashboard/reviews");
       expect(replace).toHaveBeenCalledWith("/");
     });
 

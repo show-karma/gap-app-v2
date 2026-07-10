@@ -1,8 +1,10 @@
 "use client";
 
-import { notFound, useParams } from "next/navigation";
+import { notFound, redirect, useParams } from "next/navigation";
 import { type MouseEvent, useEffect } from "react";
 import { useDashboardContext } from "@/components/Pages/Dashboard/DashboardProvider";
+import { DASHBOARD_MODULE_KEYS } from "@/components/Pages/Dashboard/v3/module";
+import { SkeletonList } from "@/components/Pages/Dashboard/v3/primitives";
 import { SoftIcon } from "@/components/Pages/Dashboard/v3/SoftIcon";
 import { moduleTransitionName } from "@/components/Pages/Dashboard/v3/soft-classes";
 import {
@@ -14,15 +16,21 @@ import { Link } from "@/src/components/navigation/Link";
 
 /**
  * `/dashboard/[module]` — a single role module's full drill-in view. The module
- * is resolved from the shared context by its route key; an unknown/ungated key
- * 404s. "Back to overview" is a plain `<Link href="/dashboard">`, so browser
- * Back closes the drill-in natively.
+ * is resolved from the shared context by its route key.
  *
- * The drill-in container carries the module's `view-transition-name`, matching
- * its overview tile, so opening/closing morphs the box across the route change.
+ * A key resolves in three ways, in order:
+ *  - **still resolving** (`!isSettled`): hold a skeleton — never 404 while the
+ *    module queries are in flight, or a hard load / refresh / deep link would
+ *    404 before its module appears;
+ *  - **known but not gated for this user**: send them back to the overview;
+ *  - **unknown key**: a genuine 404.
+ *
+ * "Back to overview" is a plain `<Link href="/dashboard">`, so browser Back
+ * closes the drill-in natively; the container carries the module's
+ * `view-transition-name` so opening/closing morphs across the route change.
  */
 export default function DashboardModulePage() {
-  const { modules } = useDashboardContext();
+  const { modules, isSettled } = useDashboardContext();
   const params = useParams<{ module: string }>();
   const navigate = useDashboardTransition();
   const activeModule = modules.find((m) => m.key === params.module);
@@ -34,6 +42,12 @@ export default function DashboardModulePage() {
   }, []);
 
   if (!activeModule) {
+    if (!isSettled) {
+      return <SkeletonList count={4} />;
+    }
+    if ((DASHBOARD_MODULE_KEYS as readonly string[]).includes(params.module)) {
+      redirect("/dashboard");
+    }
     notFound();
   }
 
