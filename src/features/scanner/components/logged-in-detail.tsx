@@ -27,7 +27,7 @@ import { useScan } from "../hooks/use-scan";
 import { markFreshScanSubmit } from "../hooks/use-scorecard-by-slug";
 import type { CategoryScore, DetailScorecardPayload, ScanGrade } from "../types";
 import { BAND_FG, GRADE_LABEL, gradeBand } from "../utils/labels";
-import { hostnameOf, titleFromUrl } from "../utils/site";
+import { buildScanShareUrl, hostnameOf, titleFromUrl } from "../utils/site";
 import { CategoryBar } from "./category-bar";
 import { ContactCta } from "./contact-cta";
 import { ErrorState } from "./error-state";
@@ -388,11 +388,7 @@ export function LoggedInDetail({ scanId, userEmail }: LoggedInDetailProps) {
 
   function handleShare() {
     if (typeof window === "undefined") return;
-    const host = hostnameOf(data?.url);
-    const href = host
-      ? `${window.location.origin}${PAGES.SCANNER.SITE(host)}`
-      : window.location.href;
-    copyToClipboard(href).then((ok) => {
+    copyToClipboard(buildScanShareUrl(data?.url)).then((ok) => {
       if (!ok) return;
       setCopied(true);
       setTimeout(() => setCopied(false), 1800);

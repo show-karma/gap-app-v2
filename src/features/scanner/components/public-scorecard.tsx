@@ -23,7 +23,7 @@ import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { PAGES } from "@/utilities/pages";
 import { useScorecardBySlug } from "../hooks/use-scorecard-by-slug";
 import type { CategoryScore, PublicScorecardPayload } from "../types";
-import { hostnameOf, titleFromUrl } from "../utils/site";
+import { buildScanShareUrl, hostnameOf, titleFromUrl } from "../utils/site";
 import { CategoryBar } from "./category-bar";
 import { ErrorState } from "./error-state";
 import { MembersAreaCta } from "./members-area-cta";
@@ -357,11 +357,7 @@ export function PublicScorecard({ slug, initialData }: PublicScorecardProps) {
 
   async function handleShare() {
     if (typeof window === "undefined") return;
-    const host = hostnameOf(url);
-    const href = host
-      ? `${window.location.origin}${PAGES.SCANNER.SITE(host)}`
-      : window.location.href;
-    const ok = await copyToClipboard(href);
+    const ok = await copyToClipboard(buildScanShareUrl(url));
     if (!ok) return;
     setCopied(true);
     setTimeout(() => setCopied(false), 1800);

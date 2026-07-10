@@ -1,6 +1,8 @@
 // Small helpers for presenting the scanned site when the backend didn't return
 // a captured org name — shared by the public scorecard and the detail report.
 
+import { PAGES } from "@/utilities/pages";
+
 export function hostnameOf(url?: string | null): string | null {
   if (!url) return null;
   try {
@@ -33,4 +35,15 @@ export function domainToScanUrl(domain: string): string | null {
   const withProtocol = domain.includes("://") ? domain : `https://${domain}`;
   const host = hostnameOf(withProtocol);
   return host ? `https://${host}` : null;
+}
+
+// Absolute, website-keyed share URL for a scanned report (ora.ai model):
+// `origin` + `/nonprofits/is-ai-ready/<host>`. Keeps the public scorecard and the
+// detail report's Share buttons in lockstep as the route format evolves. Falls
+// back to the current page URL when the report URL is missing/unparseable, and
+// returns "" when called outside the browser (callers guard on `window`).
+export function buildScanShareUrl(url?: string | null): string {
+  if (typeof window === "undefined") return "";
+  const host = hostnameOf(url);
+  return host ? `${window.location.origin}${PAGES.SCANNER.SITE(host)}` : window.location.href;
 }
