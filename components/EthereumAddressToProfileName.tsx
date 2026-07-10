@@ -19,6 +19,12 @@ interface Props {
   pictureClassName?: string;
 }
 
+/** Local-part of an email ("alice@example.com" → "alice"). The full address is never rendered. */
+function emailLocalPart(email: string | undefined): string | undefined {
+  if (!email) return undefined;
+  return email.split("@")[0] || undefined;
+}
+
 /**
  * Displays a human-readable name for an Ethereum address.
  *
@@ -26,10 +32,11 @@ interface Props {
  * 1. ContributorProfile.name (on-chain attestation)
  * 2. Privy name (from public user profiles endpoint)
  * 3. ENS name
- * 4. Self identity (email / OAuth / social display name) — ONLY when the
- *    address is the logged-in user's own wallet. Never exposed as a public
- *    label for other people (PII); this tier only exists so a social/email/
- *    OAuth user never sees their own meaningless embedded-wallet address.
+ * 4. Self identity — ONLY when the address is the logged-in user's own wallet:
+ *    a provider display name (Google name, Farcaster/Twitter/Discord handle) or,
+ *    as a last resort, the local-part of their email. Never a full email, and
+ *    never any of this for other people (PII). Spares a self user their own
+ *    meaningless embedded-wallet address.
  * 5. Truncated address (0xabcd...1234)
  *
  * When showProfilePicture is true, renders a 24×24 avatar to the left.
@@ -85,18 +92,18 @@ const EthereumAddressToProfileName: React.FC<Props> = ({
     return wallets.some((wallet) => wallet.address?.toLowerCase() === lowerCasedAddress);
   }, [wallets, lowerCasedAddress]);
 
-  // Cover every provider Privy may have authenticated the self user with, not
-  // just email/Google (e.g. a Farcaster/Twitter-only login has no email).
+  // Prefer a real name/handle across whichever provider Privy authenticated the
+  // self user with; only fall back to the email's local-part. Never render the
+  // full email (PII), and never any of this for other people.
   const selfIdentity =
     isSelf && user
-      ? user.email?.address ||
-        user.google?.email ||
+      ? user.google?.name ||
         user.farcaster?.displayName ||
         user.farcaster?.username ||
         user.twitter?.name ||
         user.twitter?.username ||
         user.discord?.username ||
-        user.apple?.email ||
+        emailLocalPart(user.email?.address || user.google?.email || user.apple?.email) ||
         undefined
       : undefined;
 

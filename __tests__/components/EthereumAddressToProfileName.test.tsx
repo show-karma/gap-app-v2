@@ -72,7 +72,7 @@ vi.mock("blo", () => ({
 // Mock the Privy bridge — drives "is this the logged-in user?" (self email tier)
 let mockBridgeUser: {
   email?: { address: string };
-  google?: { email: string };
+  google?: { email?: string; name?: string };
   farcaster?: { displayName?: string; username?: string };
   twitter?: { name?: string; username?: string };
   discord?: { username?: string };
@@ -234,8 +234,8 @@ describe("EthereumAddressToProfileName", () => {
       expect(screen.getByText("ens.eth")).toBeInTheDocument();
     });
 
-    it("shows the logged-in user's own email as a last resort (never a raw 0x for self)", () => {
-      // The rendered address IS the connected wallet → self.
+    it("shows the self user's email LOCAL-PART as a last resort — never the full email", () => {
+      // The rendered address IS the connected wallet → self, with only an email.
       mockBridgeWallets = [{ address: MOCK_ADDRESS_LOWER }];
       mockBridgeUser = { email: { address: "me@example.com" } };
       mockContributorProfile = null;
@@ -249,7 +249,26 @@ describe("EthereumAddressToProfileName", () => {
         wrapper: createWrapper(),
       });
 
-      expect(screen.getByText("me@example.com")).toBeInTheDocument();
+      expect(screen.getByText("me")).toBeInTheDocument();
+      expect(screen.queryByText("me@example.com")).not.toBeInTheDocument();
+    });
+
+    it("prefers a self user's provider display name over their email", () => {
+      mockBridgeWallets = [{ address: MOCK_ADDRESS_LOWER }];
+      mockBridgeUser = { google: { name: "Bruno De Masi", email: "bruno@karmahq.xyz" } };
+      mockContributorProfile = null;
+      mockProfilesData[MOCK_ADDRESS_LOWER] = {
+        publicAddress: MOCK_ADDRESS_LOWER,
+        name: "",
+        isTried: true,
+      };
+
+      render(<EthereumAddressToProfileName address={MOCK_ADDRESS} />, {
+        wrapper: createWrapper(),
+      });
+
+      expect(screen.getByText("Bruno De Masi")).toBeInTheDocument();
+      expect(screen.queryByText("bruno@karmahq.xyz")).not.toBeInTheDocument();
     });
 
     it("shows the logged-in user's own social display name when they have no email", () => {

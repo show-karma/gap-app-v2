@@ -7,6 +7,11 @@ vi.mock("@/hooks/useCopyToClipboard", () => ({
   useCopyToClipboard: () => [null, vi.fn()],
 }));
 
+// The address-only branch renders the shared identity component (tested separately).
+vi.mock("@/components/EthereumAddressToProfileName", () => ({
+  default: ({ address }: { address?: string }) => <span>{address}</span>,
+}));
+
 const baseProps = {
   referenceNumber: "APP-9BLARDP8-560VRW",
   programName: "Filecoin ProPGF Batch 3",
@@ -61,7 +66,7 @@ describe("ApplicationInfoCard — applicant visibility", () => {
     expect(screen.getByText("applicant")).toBeInTheDocument();
   });
 
-  it("shows a truncated address when only ownerAddress is available", () => {
+  it("resolves the applicant identity via the shared component when only ownerAddress is available", () => {
     render(
       <ApplicationInfoCard
         {...baseProps}
@@ -72,6 +77,6 @@ describe("ApplicationInfoCard — applicant visibility", () => {
     );
 
     expect(screen.getByText("Applicant")).toBeInTheDocument();
-    expect(screen.getByText("0x1234…7890")).toBeInTheDocument();
+    expect(screen.getByText(ADDRESS)).toBeInTheDocument();
   });
 });
