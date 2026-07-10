@@ -71,7 +71,8 @@ export const useGrantCompletion = ({
       });
 
       if (!setup) {
-        showError("Please switch to the correct network and try again");
+        // setupChainAndWallet surfaces its own toast on failure (#1821); the
+        // finally below dismisses the loading toast and resets state.
         return;
       }
 

@@ -255,9 +255,8 @@ describe("useGrantCompletion", () => {
 
       expect(mockSetupChainAndWallet).toHaveBeenCalled();
 
-      expect(mockShowError).toHaveBeenCalledWith(
-        "Please switch to the correct network and try again"
-      );
+      // Error feedback is now surfaced centrally by setupChainAndWallet (#1821);
+      // this flow no longer double-toasts. It just stops and resets state.
       expect(mockFetchGrantInstance).not.toHaveBeenCalled();
       expect(result.current.isCompleting).toBe(false);
     });

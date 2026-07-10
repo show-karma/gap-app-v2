@@ -107,8 +107,8 @@ export const UnifiedMilestoneScreen = () => {
     });
 
     if (!setup?.gapClient) {
+      // setupChainAndWallet surfaces its own toast on failure (#1821).
       dismiss();
-      showError("Couldn't prepare your wallet for this network. Please try again.");
       return;
     }
 

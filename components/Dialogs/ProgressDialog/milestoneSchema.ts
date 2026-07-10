@@ -28,7 +28,7 @@ export const milestoneSchema = z.object({
         return data.startsAt <= data.endsAt;
       },
       {
-        message: "Start date must be before the end date",
+        message: "Start date must be on or before the end date",
         path: ["startsAt"],
       }
     ),

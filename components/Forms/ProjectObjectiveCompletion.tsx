@@ -92,7 +92,7 @@ export const ProjectObjectiveCompletionForm = ({
       });
 
       if (!setup) {
-        showError("Failed to set up wallet connection. Please try again.");
+        // setupChainAndWallet surfaces its own toast on failure (#1821).
         setIsCompleting(false);
         setIsStepper(false);
         return;

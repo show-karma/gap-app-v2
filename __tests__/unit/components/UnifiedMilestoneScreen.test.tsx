@@ -133,7 +133,7 @@ function renderScreen() {
 describe("UnifiedMilestoneScreen — false-success guard (#1821)", () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it("shows an error and NO success toast when the wallet can't be prepared", async () => {
+  it("shows NO success toast when the wallet can't be prepared", async () => {
     // Signer is 'ready' so submit proceeds, but chain/wallet setup fails.
     mockSetupChainAndWallet.mockResolvedValue(null);
 
@@ -152,7 +152,8 @@ describe("UnifiedMilestoneScreen — false-success guard (#1821)", () => {
 
     await waitFor(() => expect(mockSetupChainAndWallet).toHaveBeenCalled());
     // The core #1821 sibling-bug contract: no success toast for zero attestations.
-    expect(mockShowError).toHaveBeenCalled();
+    // (Error feedback is surfaced centrally by setupChainAndWallet, not here, so
+    // the flow no longer double-toasts.)
     expect(mockShowSuccess).not.toHaveBeenCalled();
   });
 
