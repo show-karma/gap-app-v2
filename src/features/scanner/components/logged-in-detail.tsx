@@ -27,7 +27,7 @@ import { useScan } from "../hooks/use-scan";
 import { markFreshScanSubmit } from "../hooks/use-scorecard-by-slug";
 import type { CategoryScore, DetailScorecardPayload, ScanGrade } from "../types";
 import { BAND_FG, GRADE_LABEL, gradeBand } from "../utils/labels";
-import { titleFromUrl } from "../utils/site";
+import { buildScanShareUrl, hostnameOf, titleFromUrl } from "../utils/site";
 import { CategoryBar } from "./category-bar";
 import { ContactCta } from "./contact-cta";
 import { ErrorState } from "./error-state";
@@ -328,7 +328,12 @@ export function LoggedInDetail({ scanId, userEmail }: LoggedInDetailProps) {
     onSuccess: (response) => {
       toast.success("Re-scan started");
       markFreshScanSubmit(response.slug);
-      push(PAGES.SCANNER.PUBLIC_SCORECARD(response.slug));
+      // Keep the logged-in viewer on the canonical domain URL so they stay in
+      // the detail tier and watch the fresh scan resolve, instead of dropping
+      // to the public /s/<slug> scorecard. Fall back to the slug permalink only
+      // when the report URL is missing/unparseable.
+      const host = hostnameOf(data?.url);
+      push(host ? PAGES.SCANNER.SITE(host) : PAGES.SCANNER.PUBLIC_SCORECARD(response.slug));
     },
     onError: (error) => {
       // Credit cap — retrying will never succeed, so surface the contact modal
@@ -383,10 +388,7 @@ export function LoggedInDetail({ scanId, userEmail }: LoggedInDetailProps) {
 
   function handleShare() {
     if (typeof window === "undefined") return;
-    const href = data?.slug
-      ? `${window.location.origin}${PAGES.SCANNER.PUBLIC_SCORECARD(data.slug)}`
-      : window.location.href;
-    copyToClipboard(href).then((ok) => {
+    copyToClipboard(buildScanShareUrl(data?.url)).then((ok) => {
       if (!ok) return;
       setCopied(true);
       setTimeout(() => setCopied(false), 1800);
