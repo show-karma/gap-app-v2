@@ -65,7 +65,7 @@ describe("project-impacts.service", () => {
     it("regression GAP-FRONTEND-24Z: returns [] and does NOT report to Sentry on 404", async () => {
       mockFetchData.mockResolvedValueOnce([
         null,
-        "Route GET:/v2/projects/test-project/impacts not found",
+        "Route GET:/projects/test-project/impacts not found",
         null,
         404,
       ]);
