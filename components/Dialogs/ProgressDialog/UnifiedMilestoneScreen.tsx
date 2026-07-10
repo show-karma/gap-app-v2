@@ -411,7 +411,7 @@ export const UnifiedMilestoneScreen = () => {
 
       setTimeout(() => {
         dismiss();
-        router.push(PAGES.PROJECT.UPDATES(project?.details?.slug || project?.uid || ""));
+        router.push(PAGES.PROJECT.OVERVIEW(project?.details?.slug || project?.uid || ""));
         closeProgressModal();
       }, 1500);
     } finally {

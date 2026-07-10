@@ -174,7 +174,7 @@ export const ProjectObjectiveCompletionForm = ({
               });
 
               setTimeout(() => {
-                router.push(PAGES.PROJECT.UPDATES(slugOrUid));
+                router.push(PAGES.PROJECT.OVERVIEW(slugOrUid));
               }, 250);
               return;
             }

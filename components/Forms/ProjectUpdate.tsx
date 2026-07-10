@@ -630,7 +630,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
               );
               afterSubmit?.();
               setTimeout(() => {
-                const updatesPath = PAGES.PROJECT.UPDATES(projectSlug || projectUid);
+                const updatesPath = PAGES.PROJECT.OVERVIEW(projectSlug || projectUid);
                 dismiss();
 
                 // Only show share dialog for new activities, not edits
