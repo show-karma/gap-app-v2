@@ -101,12 +101,12 @@ describe("project-impacts.service", () => {
       expect(mockErrorManager).not.toHaveBeenCalled();
     });
 
-    it("calls the V2 impacts endpoint (locks the wire contract)", async () => {
+    it("calls the V1 impacts endpoint (locks the wire contract)", async () => {
       mockFetchData.mockResolvedValueOnce([mockImpacts, null, null, 200]);
 
       await getProjectImpacts("my-project-slug");
 
-      expect(mockFetchData.mock.calls[0][0]).toBe("/v2/projects/my-project-slug/impacts");
+      expect(mockFetchData.mock.calls[0][0]).toBe("/projects/my-project-slug/impacts");
     });
 
     it("forwards isAuthorized and signal positionally", async () => {

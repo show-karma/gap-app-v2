@@ -45,8 +45,10 @@ export const getProjectImpacts = async (
   options: GetProjectImpactsOptions = {}
 ): Promise<ProjectImpact[]> => {
   const { isAuthorized = true, signal } = options;
+  // TEMP: use the V1 impacts route until the V2 endpoint ships (gap-indexer#2178),
+  // then switch back to INDEXER.V2.PROJECTS.IMPACTS.
   const [data, error, , status] = await fetchData<ProjectImpact[]>(
-    INDEXER.V2.PROJECTS.IMPACTS(projectIdOrSlug),
+    INDEXER.PROJECT.IMPACTS(projectIdOrSlug),
     "GET",
     {},
     {},
