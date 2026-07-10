@@ -23,6 +23,7 @@ import { TabPanel } from "@/components/FundingPlatform/ApplicationView/TabPanel"
 import { Button } from "@/components/Utilities/Button";
 import { Link } from "@/src/components/navigation/Link";
 import { AdminOnly } from "@/src/core/rbac";
+import { PrivateNotesTab } from "@/src/features/application-notes/components/PrivateNotesTab";
 import { MilestonesTab } from "@/src/features/applications/components/MilestonesTab";
 import { layoutTheme } from "@/src/helper/theme";
 import { cn } from "@/utilities/tailwind";
@@ -74,6 +75,7 @@ export default function ApplicationDetailView({
     isLoading,
     isLoadingComments,
     isAdmin,
+    canViewNotes,
     canEditApplication,
     canEditPostApproval,
     showStatusActions,
@@ -222,6 +224,26 @@ export default function ApplicationDetailView({
         </TabPanel>
       ),
     },
+    // Private notes tab — reviewer/admin-only. Conditional spread fails closed:
+    // no "Notes" entry exists in the tab bar for a non-reviewer or while
+    // permissions resolve (DEV-515 no-glimpse). The BE endpoint is the real guard.
+    ...(canViewNotes
+      ? [
+          {
+            id: "notes",
+            label: "Notes",
+            icon: TabIcons.Notes,
+            content: (
+              <TabPanel>
+                <PrivateNotesTab
+                  referenceNumber={application.referenceNumber}
+                  canViewNotes={canViewNotes}
+                />
+              </TabPanel>
+            ),
+          } satisfies TabConfig,
+        ]
+      : []),
   ];
 
   // Seed the rendered tab from the live activeTabId (not the static `?tab=`
