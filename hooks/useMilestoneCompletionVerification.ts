@@ -441,7 +441,7 @@ export const useMilestoneCompletionVerification = ({
   ) => {
     // Validation
     if (!data) {
-      showError("Please connect your wallet");
+      showError("This milestone is still loading. Please try again.");
       return;
     }
 
@@ -570,7 +570,7 @@ export const useMilestoneCompletionVerification = ({
     completionComment: string
   ) => {
     if (!data) {
-      showError("Please connect your wallet");
+      showError("This milestone is still loading. Please try again.");
       return;
     }
 

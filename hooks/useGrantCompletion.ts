@@ -55,7 +55,7 @@ export const useGrantCompletion = ({
 
   const completeGrant = async (grant: Grant, project: { uid: string }) => {
     if (!project || !grant) {
-      showError("Please connect your wallet");
+      showError("This grant is still loading. Please try again.");
       return;
     }
 

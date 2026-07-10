@@ -289,7 +289,7 @@ describe("useGrantCompletion", () => {
         await result.current.completeGrant(mockGrant, null as any);
       });
 
-      expect(mockShowError).toHaveBeenCalledWith("Please connect your wallet");
+      expect(mockShowError).toHaveBeenCalledWith("This grant is still loading. Please try again.");
       expect(mockSetupChainAndWallet).not.toHaveBeenCalled();
     });
 
@@ -300,7 +300,7 @@ describe("useGrantCompletion", () => {
         await result.current.completeGrant(null as any, mockProject);
       });
 
-      expect(mockShowError).toHaveBeenCalledWith("Please connect your wallet");
+      expect(mockShowError).toHaveBeenCalledWith("This grant is still loading. Please try again.");
       expect(mockSetupChainAndWallet).not.toHaveBeenCalled();
     });
   });

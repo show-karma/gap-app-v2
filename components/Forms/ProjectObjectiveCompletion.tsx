@@ -79,7 +79,7 @@ export const ProjectObjectiveCompletionForm = ({
 
   const onSubmit = async (data: SchemaType) => {
     if (!project) {
-      showError("Please connect your wallet to complete the milestone.");
+      showError("This project is still loading. Please try again.");
       return;
     }
     setIsCompleting(true);
