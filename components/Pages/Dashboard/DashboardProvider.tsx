@@ -6,6 +6,7 @@ import { type DashboardModulesState, useDashboardModules } from "./useDashboardM
 import "./v3/dashboard-soft.css";
 import { WarnBar } from "./v3/primitives";
 import { SoftShell } from "./v3/SoftShell";
+import { useBackForwardViewTransition } from "./v3/useDashboardTransition";
 
 const DashboardContext = createContext<DashboardModulesState | null>(null);
 
@@ -34,6 +35,8 @@ export function useDashboardContext(): DashboardModulesState {
  */
 export function DashboardProvider({ children }: { children: React.ReactNode }) {
   const state = useDashboardModules();
+  // Browser Back/Forward morph too (in-app clicks are handled per-link).
+  useBackForwardViewTransition();
 
   if (!state.authenticated || state.isLoading) {
     return <DashboardLoading />;
