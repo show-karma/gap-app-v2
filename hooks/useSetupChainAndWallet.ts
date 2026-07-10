@@ -37,6 +37,9 @@ interface UseSetupChainAndWalletResult {
 
   /** Whether user has an external wallet (MetaMask, etc.) */
   hasExternalWallet: boolean;
+
+  /** Signing readiness for UI gating — see useZeroDevSigner's signerStatus. */
+  signerStatus: "initializing" | "ready" | "no-wallet";
 }
 
 function isNetworkChangedError(error: unknown): boolean {
@@ -98,6 +101,7 @@ export function useSetupChainAndWallet(): UseSetupChainAndWalletResult {
     attestationAddress,
     hasEmbeddedWallet,
     hasExternalWallet,
+    signerStatus,
   } = useZeroDevSigner();
 
   const setupChainAndWallet = useCallback(
@@ -126,9 +130,12 @@ export function useSetupChainAndWallet(): UseSetupChainAndWalletResult {
           isGasless: isGaslessAvailable,
         };
       } catch (error) {
-        // Only swallow NETWORK_ERROR — other failures (unsupported chain, no
-        // wallet, signer construction) are real bugs and must surface to
-        // Sentry instead of being hidden behind a generic toast.
+        // Only swallow NETWORK_ERROR here — everything else propagates typed.
+        // A SignerUnavailableError is an expected wallet-lifecycle state (no
+        // wallet yet / still hydrating); callers show guidance and skip
+        // Sentry. Other failures (unsupported chain, signer construction)
+        // are real bugs and must surface to Sentry instead of being hidden
+        // behind a generic toast.
         if (!isNetworkChangedError(error)) {
           throw error;
         }
@@ -148,6 +155,7 @@ export function useSetupChainAndWallet(): UseSetupChainAndWalletResult {
       smartWalletAddress: attestationAddress,
       hasEmbeddedWallet,
       hasExternalWallet,
+      signerStatus,
     }),
     [
       setupChainAndWallet,
@@ -155,6 +163,7 @@ export function useSetupChainAndWallet(): UseSetupChainAndWalletResult {
       attestationAddress,
       hasEmbeddedWallet,
       hasExternalWallet,
+      signerStatus,
     ]
   );
 }

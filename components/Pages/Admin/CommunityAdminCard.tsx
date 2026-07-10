@@ -4,6 +4,7 @@ import { blo } from "blo";
 import Image from "next/image";
 import { isAddress } from "viem";
 import CommunityStats from "@/components/CommunityStats";
+import EthereumAddressToProfileName from "@/components/EthereumAddressToProfileName";
 import { AddAdmin } from "@/components/Pages/Admin/AddAdminDialog";
 import { RemoveAdmin } from "@/components/Pages/Admin/RemoveAdminDialog";
 import type { CommunityAdmin, CommunityAdminsBatchStatus } from "@/services/communities.service";
@@ -178,7 +179,7 @@ export function CommunityAdminCard({
                         </>
                       ) : null}
                       <span className="text-xs font-mono text-gray-500 dark:text-gray-500 break-all">
-                        {admin.user.id}
+                        <EthereumAddressToProfileName address={admin.user.id} shouldTruncate />
                       </span>
                     </div>
                     {canManageAdmins && (

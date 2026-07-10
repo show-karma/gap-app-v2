@@ -8,6 +8,7 @@ import { type FC, Fragment, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useAccount } from "wagmi";
 import { z } from "zod";
+import EthereumAddressToProfileName from "@/components/EthereumAddressToProfileName";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
@@ -233,7 +234,7 @@ export const RemoveAdmin: FC<RemoveAdminDialogProps> = ({
                             </span>
                           )}
                           <span className="text-xs font-mono text-gray-500 dark:text-zinc-400 break-all">
-                            {Admin}
+                            <EthereumAddressToProfileName address={Admin} shouldTruncate />
                           </span>
                         </div>
                       </div>

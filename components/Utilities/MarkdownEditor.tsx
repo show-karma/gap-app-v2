@@ -1,11 +1,10 @@
 "use client";
 
 import { Eye, EyeOff, Loader2 } from "lucide-react";
-import dynamic from "next/dynamic";
 import { useTheme } from "next-themes";
 import { type FC, useCallback, useEffect, useMemo, useState } from "react";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
-import { normalizeNullInputEventData } from "@/components/Utilities/utils/normalize-null-input-event-data";
+import { SafeMdEditor } from "@/components/Utilities/SafeMdEditor";
 import { cn } from "@/utilities/tailwind";
 
 // Constants for content validation and performance
@@ -42,18 +41,6 @@ interface MarkdownEditorProps {
   /** Override the label element's className. When omitted, a bold default is used. */
   labelClassName?: string;
 }
-
-import "md-editor-rt/lib/style.css";
-
-const MdEditor = dynamic(() => import("md-editor-rt").then((mod) => mod.MdEditor), {
-  ssr: false,
-  loading: () => (
-    <div className="flex items-center justify-center h-[300px] border border-gray-200 dark:border-gray-700 rounded-lg">
-      <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
-      <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">Loading editor...</span>
-    </div>
-  ),
-});
 
 // Toolbar buttons to exclude — removes overflow-causing and rarely-used items in modal contexts
 const EXCLUDED_TOOLBARS = [
@@ -119,8 +106,9 @@ export const MarkdownEditor: FC<MarkdownEditorProps> = ({
   labelClassName,
 }) => {
   // md-editor-rt has TWO independent null sources that both throw
-  // `Cannot read properties of null (reading 'length')` inside its CodeMirror
-  // maxLength/overlength check (Sentry GAP-FRONTEND-1WY, 1.7k events):
+  // `Cannot read properties of null (reading 'length')` (or, on WebKit,
+  // `null is not an object (evaluating 'r.length')`) inside its CodeMirror
+  // maxLength/overlength check (Sentry GAP-FRONTEND-1WY / GAP-FRONTEND-24S):
   //
   //   1. `modelValue` — if a caller (or RHF default) passes `null`/`undefined`
   //      we hit the crash plus a setValue→onChange→re-render cycle that trips
@@ -131,10 +119,10 @@ export const MarkdownEditor: FC<MarkdownEditorProps> = ({
   //      `insertFromDrop` (common on mobile IME deletions/Enter/paste). The
   //      library's `input` handler reads `.data.length` unguarded. `safeValue`
   //      does NOT cover this — the null is on the DOM event, not the model —
-  //      so the `onInput` normalize shim (defined above) rewrites the null to
-  //      "" before the library's check runs. Since `maxLength` is always set
-  //      here, that buggy branch is armed on every keystroke across all usage
-  //      sites, which is why the shim is required.
+  //      so `SafeMdEditor` normalizes it before the library's check runs.
+  //      Since `maxLength` is always set here, that buggy branch is armed on
+  //      every keystroke across all usage sites, which is why every consumer
+  //      must render through `SafeMdEditor` rather than `MdEditor` directly.
   const safeValue = value ?? "";
 
   // md-editor-rt builds `#${id} .cm-scroller` and runs querySelector on it.
@@ -151,18 +139,6 @@ export const MarkdownEditor: FC<MarkdownEditorProps> = ({
   // Ensure client-side only rendering to prevent hydration mismatches
   useEffect(() => {
     setMounted(true);
-  }, []);
-
-  // Configure markdown-it to treat single newlines as <br>.
-  // Done via dynamic import so md-editor-rt is never statically bundled.
-  useEffect(() => {
-    import("md-editor-rt").then(({ config }) => {
-      config({
-        markdownItConfig(md) {
-          md.options.breaks = true;
-        },
-      });
-    });
   }, []);
 
   // Use disabled prop if provided, otherwise use isDisabled
@@ -277,7 +253,7 @@ export const MarkdownEditor: FC<MarkdownEditorProps> = ({
             <MarkdownPreview source={safeValue} />
           </div>
         ) : (
-          <MdEditor
+          <SafeMdEditor
             id={safeId}
             className={cn(
               "flex-1",
@@ -287,7 +263,6 @@ export const MarkdownEditor: FC<MarkdownEditorProps> = ({
             )}
             value={safeValue}
             onChange={handleChange}
-            onInput={normalizeNullInputEventData}
             onBlur={onBlur}
             theme={resolvedTheme === "dark" ? "dark" : "light"}
             preview={false}

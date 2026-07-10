@@ -1,14 +1,17 @@
 /**
- * @file Regression tests for Sentry GAP-FRONTEND-1WY
+ * @file Regression tests for Sentry GAP-FRONTEND-1WY / GAP-FRONTEND-24S
  * @description md-editor-rt@6.4.1 reads `InputEvent.data.length` unguarded in
  * its CodeMirror `input` overlength (`maxLength`) handler. `data` is `null` by
  * spec for `deleteContentBackward`, `insertParagraph`/`insertLineBreak`,
  * `insertFromPaste` and `insertFromDrop` (common on mobile IME deletions /
  * Enter / paste), so the handler throws
- * `TypeError: Cannot read properties of null (reading 'length')`.
+ * `TypeError: Cannot read properties of null (reading 'length')` on V8
+ * (GAP-FRONTEND-1WY) or `null is not an object (evaluating 'r.length')` on
+ * WebKit/Safari (GAP-FRONTEND-24S) — same defect, engine-split grouping.
  *
  * The fix is `normalizeNullInputEventData` (in utils/normalize-null-input-event-data.ts), passed as
- * `onInput` to MdEditor: the library invokes the consumer's `onInput` with the
+ * `onInput` to MdEditor via the `SafeMdEditor` boundary (components/Utilities/SafeMdEditor.tsx):
+ * the library invokes the consumer's `onInput` with the
  * raw event BEFORE destructuring `.data`, so shadowing the null with an own
  * `""` property defuses the crash. These tests render the REAL editor
  * (md-editor-rt is intentionally NOT mocked) and drive native input events
@@ -16,9 +19,13 @@
  *   1. the normalize function itself behaves (unit tests),
  *   2. the shim defuses the crash while preserving the overlength behavior
  *      (raw MdEditor + onInput),
- *   3. the shared MarkdownEditor wrapper wires the shim (end-to-end),
+ *   3. the shared MarkdownEditor wrapper (via SafeMdEditor) wires the shim (end-to-end),
  *   4. the upstream bug still exists in the pristine library (canary — when
  *      this one starts failing, upstream fixed it and the shim can go).
+ *
+ * See also `SafeMdEditor.test.tsx` (the boundary itself, all consumers) and
+ * `CommentMarkdownInput.safety.test.tsx` (the comment box, GAP-FRONTEND-24S's
+ * direct regression target).
  */
 
 import { render, waitFor } from "@testing-library/react";
@@ -27,6 +34,13 @@ import React from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { normalizeNullInputEventData } from "@/components/Utilities/utils/normalize-null-input-event-data";
+import {
+  dispatchInputAndCollectErrors,
+  installCodeMirrorPolyfills,
+  LENGTH_CRASH,
+  nullDataInputTypes,
+  waitForEditorContent,
+} from "../../utils/codemirror-jsdom";
 
 // The wrapper pulls in next-themes and a heavy preview component — mock those
 // (NOT md-editor-rt itself, which is the code under test).
@@ -59,99 +73,6 @@ vi.mock("next/dynamic", () => ({
     return DynamicShim;
   },
 }));
-
-// ---------------------------------------------------------------------------
-// CodeMirror-in-jsdom polyfills. CodeMirror 6 measures the DOM on mount and on
-// every input; jsdom implements none of these, so without them the editor
-// throws while laying out rather than exercising the code path under test.
-// ---------------------------------------------------------------------------
-function installCodeMirrorPolyfills() {
-  const emptyRect = {
-    top: 0,
-    left: 0,
-    bottom: 0,
-    right: 0,
-    width: 0,
-    height: 0,
-    x: 0,
-    y: 0,
-    toJSON: () => ({}),
-  } as DOMRect;
-
-  if (!Range.prototype.getClientRects) {
-    Range.prototype.getClientRects = () =>
-      ({
-        length: 0,
-        item: () => null,
-        [Symbol.iterator]: function* () {},
-      }) as unknown as DOMRectList;
-  }
-  if (!Range.prototype.getBoundingClientRect) {
-    Range.prototype.getBoundingClientRect = () => emptyRect;
-  }
-  if (!document.elementFromPoint) {
-    document.elementFromPoint = () => null;
-  }
-}
-
-/**
- * Dispatches a native `input` InputEvent on the CodeMirror content DOM and
- * returns every error surfaced through any channel (a thrown listener, the
- * window `error` event, or CodeMirror's logException -> console.error).
- */
-function dispatchInputAndCollectErrors(
-  content: Element,
-  init: { data: string | null; inputType: string }
-): string[] {
-  const errors: string[] = [];
-
-  const onWindowError = (event: ErrorEvent) => {
-    errors.push(String(event.error?.message ?? event.message ?? ""));
-  };
-  window.addEventListener("error", onWindowError);
-  const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation((...args: unknown[]) => {
-    errors.push(args.map((a) => (a instanceof Error ? a.message : String(a))).join(" "));
-  });
-
-  try {
-    content.dispatchEvent(
-      new InputEvent("input", { data: init.data, inputType: init.inputType, bubbles: true })
-    );
-  } catch (err) {
-    errors.push(err instanceof Error ? err.message : String(err));
-  } finally {
-    window.removeEventListener("error", onWindowError);
-    consoleErrorSpy.mockRestore();
-  }
-
-  return errors;
-}
-
-const LENGTH_CRASH = /Cannot read properties of null|reading 'length'|reading "length"/;
-
-/** Waits for CodeMirror to mount its content DOM inside the given container. */
-async function waitForEditorContent(container: HTMLElement): Promise<Element> {
-  let content: Element | null = null;
-  await waitFor(
-    () => {
-      content = container.querySelector(".cm-content");
-      expect(content).not.toBeNull();
-    },
-    { timeout: 5000 }
-  );
-  return content as unknown as Element;
-}
-
-// Each of these inputTypes produces a native InputEvent whose `.data` is
-// `null` per the Input Events spec — the exact events that crashed in prod.
-// Note: the library's separate paste (clipboard) handler's only nullable
-// operand is `modelValue`, which the wrapper's `safeValue` already prevents.
-const nullDataInputTypes = [
-  "deleteContentBackward",
-  "insertLineBreak",
-  "insertFromPaste",
-  "insertFromDrop",
-];
 
 describe("normalizeNullInputEventData (GAP-FRONTEND-1WY)", () => {
   it("jsdom matches browsers: InputEvent.data is a prototype getter, null by default", () => {
@@ -273,7 +194,7 @@ describe("MarkdownEditor / md-editor-rt null InputEvent.data (GAP-FRONTEND-1WY)"
     // Documents that md-editor-rt still crashes without the shim. If this
     // test starts FAILING after a library upgrade, upstream fixed the null
     // guard: remove `normalizeNullInputEventData` (utils/normalize-null-input-event-data.ts
-    // and its wiring in MarkdownEditor.tsx) and delete this file.
+    // and its wiring in SafeMdEditor.tsx) and delete this file.
     it("unshimmed editor still throws the length TypeError on data:null", async () => {
       const utils = render(
         <MdEditor
