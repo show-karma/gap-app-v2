@@ -88,7 +88,7 @@ export async function generateMetadata(): Promise<Metadata> {
     manifest: "/manifest.json",
     icons: {
       icon: [{ url: "/favicon.ico", sizes: "48x48" }],
-      apple: [{ url: "/images/favicon.png" }],
+      apple: [{ url: "/favicon.ico" }],
     },
   };
 }
