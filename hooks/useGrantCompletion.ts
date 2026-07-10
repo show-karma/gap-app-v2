@@ -54,7 +54,7 @@ export const useGrantCompletion = ({
   const { setupChainAndWallet } = useSetupChainAndWallet();
 
   const completeGrant = async (grant: Grant, project: { uid: string }) => {
-    if (!address || !project || !grant) {
+    if (!project || !grant) {
       showError("Please connect your wallet");
       return;
     }

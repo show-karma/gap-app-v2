@@ -438,7 +438,7 @@ export const useMilestoneCompletionVerification = ({
     verificationComment: string
   ) => {
     // Validation
-    if (!address || !data) {
+    if (!data) {
       showError("Please connect your wallet");
       return;
     }
@@ -567,7 +567,7 @@ export const useMilestoneCompletionVerification = ({
     data: ProjectGrantMilestonesResponse,
     completionComment: string
   ) => {
-    if (!address || !data) {
+    if (!data) {
       showError("Please connect your wallet");
       return;
     }

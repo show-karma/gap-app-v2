@@ -507,7 +507,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
   }));
 
   const createProjectUpdate = async (data: UpdateType) => {
-    if (!address || !project) return;
+    if (!project) return;
 
     startAttestation(isEditMode ? "Updating activity..." : "Posting activity...");
     try {

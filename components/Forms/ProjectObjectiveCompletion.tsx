@@ -78,7 +78,7 @@ export const ProjectObjectiveCompletionForm = ({
   const { refetch } = useProjectUpdates(projectId as string);
 
   const onSubmit = async (data: SchemaType) => {
-    if (!address || !project) {
+    if (!project) {
       showError("Please connect your wallet to complete the milestone.");
       return;
     }

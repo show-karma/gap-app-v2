@@ -130,7 +130,7 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
   const pathname = usePathname();
 
   const createGrantUpdate = async (grantToUpdate: Grant, data: UpdateType) => {
-    if (!address || !project) return;
+    if (!project) return;
     startAttestation("Posting update...");
     try {
       const setup = await setupChainAndWallet({
