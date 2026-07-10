@@ -70,9 +70,6 @@ export function ScannerSubmitForm({ showExamples = false }: ScannerSubmitFormPro
   // two clicks dispatched in the same tick both pass the `disabled` check and
   // fire duplicate POSTs. This ref blocks the second call immediately.
   const submittingRef = useRef(false);
-  // The normalized URL of the in-flight submit, captured so onSuccess can build
-  // the website-keyed report URL from its host (the mutation result only carries
-  // the slug/status).
   const submittedUrlRef = useRef<string | null>(null);
 
   const { mutate, isPending } = useSubmitScan({
@@ -87,9 +84,6 @@ export function ScannerSubmitForm({ showExamples = false }: ScannerSubmitFormPro
         // A report already existed — viewing it is free (no credit spent).
         toast.success("Generating report for this website");
       }
-      // Land on the constructible, website-keyed report URL (ora.ai model)
-      // instead of the opaque slug. Fall back to the slug scorecard only if the
-      // submitted host can't be parsed for some reason.
       const host = hostnameOf(submittedUrlRef.current);
       push(host ? PAGES.SCANNER.SITE(host) : PAGES.SCANNER.PUBLIC_SCORECARD(response.slug));
     },

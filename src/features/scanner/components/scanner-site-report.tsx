@@ -16,20 +16,13 @@ import { RateLimitModal } from "./rate-limit-modal";
 import { ReportGenerating } from "./report-generating";
 
 interface ScannerSiteReportProps {
-  // The raw `[id]` route param, already known to be a domain (not a UUID).
   readonly domain: string;
-  readonly userEmail?: string;
 }
 
 interface RateLimitState {
   readonly mode: "login_required" | "contact_for_more";
 }
 
-// Empty state for a domain that has never been scanned: offer to generate the
-// report for free-first (findOrCreateScan). A successful create invalidates the
-// scanner queries, so `useScanByUrl` refetches and the page flips to the
-// generating view on its own — no redirect needed, we're already on the
-// canonical domain URL.
 function NoReportForSite({ domain, url }: { readonly domain: string; readonly url: string }) {
   const { authenticated, login } = useAuth();
   const [rateLimit, setRateLimit] = useState<RateLimitState | null>(null);
@@ -71,7 +64,7 @@ function NoReportForSite({ domain, url }: { readonly domain: string; readonly ur
         <div className="flex flex-col gap-2">
           <h1 className="text-xl font-semibold text-foreground">No report yet for {domain}</h1>
           <p className="text-sm leading-relaxed text-muted-foreground">
-            We haven't scanned this website. Generate its AI-readiness report — your grade is free
+            We haven't scanned this website. Generate its AI-readiness report: your grade is free
             and takes about 40 seconds.
           </p>
         </div>
@@ -94,14 +87,11 @@ function NoReportForSite({ domain, url }: { readonly domain: string; readonly ur
   );
 }
 
-// Website-addressable report view (ora.ai model). Resolves the latest report for
-// the domain, then delegates rendering to the existing tier components:
-// authenticated viewers get the members-only detail, anonymous viewers get the
-// free public scorecard. It does NOT build a third report layout.
-export function ScannerSiteReport({ domain, userEmail }: ScannerSiteReportProps) {
+export function ScannerSiteReport({ domain }: ScannerSiteReportProps) {
   const url = domainToScanUrl(domain);
   const { data, isError, isPending, refetch } = useScanByUrl(url);
-  const { ready, authenticated } = useAuth();
+  const { ready, authenticated, user } = useAuth();
+  const userEmail = user?.email?.address ?? undefined;
 
   if (!url) {
     return (
@@ -112,8 +102,6 @@ export function ScannerSiteReport({ domain, userEmail }: ScannerSiteReportProps)
     );
   }
 
-  // No data yet: keep the query in its pending state readable as motion. Auth
-  // must resolve too, since it decides which tier we delegate to below.
   if (!ready || isPending) {
     return <ReportGenerating url={url} />;
   }
@@ -128,20 +116,16 @@ export function ScannerSiteReport({ domain, userEmail }: ScannerSiteReportProps)
     );
   }
 
-  // Resolved, but the site has never been scanned.
   if (!data) {
     return <NoReportForSite domain={domain} url={url} />;
   }
 
-  // Envelope exists but the scan is still running — show progress until terminal.
   if (data.status && data.status !== "complete" && data.status !== "failed") {
     return (
       <ReportGenerating orgName={data.orgName ?? null} url={data.url ?? url} status={data.status} />
     );
   }
 
-  // Terminal report: reuse the existing tier components. Both re-resolve their
-  // own data (by scanId / slug) and own the in-place polling + share affordance.
   if (authenticated) {
     return <LoggedInDetail scanId={data.scanId} userEmail={userEmail} />;
   }

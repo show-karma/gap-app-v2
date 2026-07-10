@@ -383,10 +383,6 @@ export function LoggedInDetail({ scanId, userEmail }: LoggedInDetailProps) {
 
   function handleShare() {
     if (typeof window === "undefined") return;
-    // Share the constructible, website-keyed URL (ora.ai model) so the link is
-    // recognizable and reconstructable. Fall back to the current URL only if the
-    // scanned host can't be parsed. `copyToClipboard` never rejects (it catches
-    // internally and resolves false), so the `.then` handles both outcomes.
     const host = hostnameOf(data?.url);
     const href = host
       ? `${window.location.origin}${PAGES.SCANNER.SITE(host)}`
