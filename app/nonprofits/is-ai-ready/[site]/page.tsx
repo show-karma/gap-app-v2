@@ -1,26 +1,30 @@
-"use client";
-
-import { useParams } from "next/navigation";
-import { useAuth } from "@/hooks/useAuth";
+import type { Metadata } from "next";
 import { ErrorState } from "@/src/features/scanner/components/error-state";
 import { ScannerSiteReport } from "@/src/features/scanner/components/scanner-site-report";
 import { isDomainParam } from "@/src/features/scanner/utils/site";
+import { customMetadata } from "@/utilities/meta";
 
-// Website-addressable report route (ora.ai model): /nonprofits/is-ai-ready/
-// <domain>. The `[site]` dynamic segment coexists with the static `scans/`
-// folder — the App Router matches the static segment first, so /scans/<uuid>
-// stays a pure permalink and only bare domains land here.
-export default function ScannerSitePage() {
-  // useParams returns proxies; per gap-app-v2/CLAUDE.md, destructure to a
-  // primitive before using the value anywhere reactive.
-  const params = useParams<{ site: string }>();
-  const site = params?.site ?? null;
-  const { user } = useAuth();
-  const userEmail = user?.email?.address ?? undefined;
+interface SitePageParams {
+  site: string;
+}
 
-  // The segment must be a plausible website domain. A would-be UUID, a stray
-  // token, or anything without a dot is a not-found — don't spin up the by-url
-  // resolver for garbage.
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<SitePageParams>;
+}): Promise<Metadata> {
+  const { site } = await params;
+  const domain = decodeURIComponent(site);
+  return customMetadata({
+    title: `Is ${domain} AI-ready? — Karma`,
+    description: `See how well ${domain} can be discovered, read, and acted on by AI agents and donors, with a prioritized path to a better score.`,
+    path: `/nonprofits/is-ai-ready/${domain}`,
+  });
+}
+
+export default async function ScannerSitePage({ params }: { params: Promise<SitePageParams> }) {
+  const { site } = await params;
+
   if (!site || !isDomainParam(site)) {
     return (
       <main className="mx-auto w-full max-w-3xl px-4">
@@ -34,7 +38,7 @@ export default function ScannerSitePage() {
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-12">
-      <ScannerSiteReport domain={site} userEmail={userEmail} />
+      <ScannerSiteReport domain={site} />
     </main>
   );
 }
