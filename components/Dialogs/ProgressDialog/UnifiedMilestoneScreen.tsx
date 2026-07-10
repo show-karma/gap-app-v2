@@ -239,6 +239,7 @@ export const UnifiedMilestoneScreen = () => {
     startAttestation("Creating grant milestone(s)...");
 
     const toastsToRemove: string[] = [];
+    const failedChains: string[] = [];
     let anyAttested = false;
 
     try {
@@ -290,10 +291,13 @@ export const UnifiedMilestoneScreen = () => {
         });
 
         if (!setup?.gapClient) {
-          // Don't silently skip — tell the user this chain didn't go through.
-          toast.error(`Couldn't prepare ${chainName}. Please try again.`, {
-            id: `chain-${chainId}`,
-          });
+          // Don't silently skip — record the failure and clear this chain's
+          // loading toast. A durable partial-failure notice is surfaced after
+          // the loop; we must NOT rely on a per-chain toast here because the
+          // `finally` sweep would remove it, masking the failure behind the
+          // success toast when other chains succeed (#1821).
+          toast.remove(`chain-${chainId}`);
+          failedChains.push(chainName);
           continue;
         }
 
@@ -429,6 +433,16 @@ export const UnifiedMilestoneScreen = () => {
       }
 
       await refetchUpdates();
+
+      // Partial success: at least one chain attested but others failed to
+      // prepare. Surface a DURABLE notice so the success toast below doesn't
+      // mask the chains that didn't go through (#1821).
+      if (failedChains.length > 0) {
+        toast.error(
+          `Couldn't prepare ${failedChains.join(", ")} — no milestone was created there. Please try again.`,
+          { duration: 8000 }
+        );
+      }
 
       if (indexed) {
         changeStepperStep("indexed");

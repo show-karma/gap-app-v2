@@ -32,6 +32,14 @@ rule:
           stopBy: end
           kind: identifier
           regex: '^address$'
+    # Exclude JSX-returning branches — `if (!address) return <ConnectButton/>`
+    # is a legitimate display guard, not the silent-no-op write guard we target.
     - has:
         stopBy: end
         kind: return_statement
+        not:
+          has:
+            stopBy: end
+            any:
+              - kind: jsx_element
+              - kind: jsx_self_closing_element

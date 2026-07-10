@@ -144,6 +144,25 @@ describe("useAttestation", () => {
     expect(showError).toHaveBeenCalledWith("Failed to create milestone");
   });
 
+  it("does NOT show a 'Failed to …' toast when the user rejects the signature", async () => {
+    // errorManager stays silent on user rejection; the central handler must too,
+    // so a user who deliberately cancelled doesn't see a failure they caused.
+    const attest = vi
+      .fn()
+      .mockRejectedValue(new Error("User rejected the request (ACTION_REJECTED)"));
+    const showError = vi.fn();
+    const { result } = renderHook(
+      () => useAttestation({ attest, action: "create milestone", showError }),
+      { wrapper }
+    );
+
+    result.current.mutate(undefined);
+
+    await waitFor(() => expect(mockErrorManager).toHaveBeenCalled());
+    // errorManager was still called (it decides Sentry), but no user toast fired.
+    expect(showError).not.toHaveBeenCalled();
+  });
+
   it("routes a SignerUnavailableError thrown inside attest to guidance, not errorManager", async () => {
     const attest = vi.fn().mockRejectedValue(new SignerUnavailableError("no-wallet-connected"));
     const showError = vi.fn();

@@ -36,7 +36,11 @@ rule:
           stopBy: end
           kind: identifier
           regex: '^address$'
-    # ...and the guard returns early (no user feedback before the return)
+    # ...and the guard returns early (no user feedback before the return).
+    # This is the .ts variant — pure TS can't return JSX, so no display-guard
+    # exclusion is needed here (that lives in the .tsx variant).
+    # Known limitation: only catches the idiomatic `!address`; semantically
+    # equivalent forms (`address === undefined`, renamed destructure) escape.
     - has:
         stopBy: end
         kind: return_statement

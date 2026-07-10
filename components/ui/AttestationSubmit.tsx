@@ -5,7 +5,7 @@ import type { ReactNode } from "react";
 import { Button } from "@/components/Utilities/Button";
 import type { SignerStatus } from "@/utilities/wallet/signerReadiness";
 
-interface AttestationSubmitProps {
+interface AttestationSubmitBaseProps {
   /**
    * Signing readiness (see `useSetupChainAndWallet().signerStatus`):
    * - `no-wallet` → render a "Connect wallet" CTA instead of the submit button.
@@ -28,16 +28,18 @@ interface AttestationSubmitProps {
    * Defaults to a wallet-preparing message while `initializing`.
    */
   tooltipContent?: ReactNode;
-  /**
-   * Button `type`. Defaults to `submit` (inside a `<form>`). Use `button` with
-   * `onSubmit` when there is no surrounding form.
-   */
-  type?: "submit" | "button";
-  /** Click handler when `type="button"`. */
-  onSubmit?: () => void;
   /** Optional className override for both the submit button and the CTA. */
   className?: string;
 }
+
+/**
+ * `type="button"` REQUIRES `onSubmit` (there's no surrounding `<form>` to
+ * submit to). The default `type="submit"` must NOT take one. This discriminated
+ * union makes a `type="button"` with no handler a compile error instead of a
+ * silent clickable no-op — the exact bug class #1821 is about.
+ */
+type AttestationSubmitProps = AttestationSubmitBaseProps &
+  ({ type?: "submit"; onSubmit?: never } | { type: "button"; onSubmit: () => void });
 
 const DEFAULT_BUTTON_CLASSNAME =
   "flex flex-row items-center justify-center gap-2 rounded-md bg-brand-blue px-6 py-2 text-md font-medium text-white hover:bg-brand-blue/90 disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2";

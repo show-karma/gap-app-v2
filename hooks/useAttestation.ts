@@ -6,6 +6,7 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import {
   isSignerUnavailableError,
+  isUserRejectionError,
   type SignerStatus,
   SignerUnavailableError,
 } from "@/utilities/wallet/signerReadiness";
@@ -89,8 +90,14 @@ export function useAttestation<TVars = void, TData = unknown>({
         onSignerUnavailable?.(error);
         return;
       }
+      // errorManager owns Sentry reporting (and stays silent for user
+      // rejections). Route through it, then show the user toast — EXCEPT when
+      // the user deliberately cancelled the signature, where errorManager is
+      // silent and a "Failed to …" toast would be misleading.
       errorManager(`Failed to ${action}`, error);
-      showError(`Failed to ${action}`);
+      if (!isUserRejectionError(error)) {
+        showError(`Failed to ${action}`);
+      }
     },
   });
 
