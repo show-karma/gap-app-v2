@@ -4,6 +4,11 @@
 
 import * as Sentry from "@sentry/nextjs";
 import { isAttestRetryExhaustedError } from "./utilities/attestWithRetry";
+import {
+  installChunkRecoveryListeners,
+  shouldDropChunkErrorEvent,
+} from "./utilities/chunkRecovery";
+import { isChunkLoadError } from "./utilities/isChunkLoadError";
 import { sentryIgnoreErrors } from "./utilities/sentry/ignoreErrors";
 import {
   isTransientHttpError,
@@ -30,6 +35,19 @@ Sentry.init({
     // GAP-FRONTEND-1Y2 and ./utilities/attestWithRetry.ts
     if (isAttestRetryExhaustedError(original)) {
       return event;
+    }
+    // Stale-deploy chunk failures: drop while one-time reload recovery is
+    // possible/in flight; report only when recovery is exhausted. See
+    // GAP-FRONTEND-20T / utilities/chunkRecovery.ts. Deliberately NOT in
+    // `sentryIgnoreErrors` — see the note in utilities/sentry/ignoreErrors.ts.
+    if (shouldDropChunkErrorEvent(original)) {
+      return null;
+    }
+    if (isChunkLoadError(original)) {
+      // Recovery already ran once this session and the chunk still failed —
+      // tag as exhausted so surviving events are triage-ready (offline
+      // client, blocked chunk, genuine 404 in the new build).
+      event.tags = { ...event.tags, chunk_recovery: "exhausted" };
     }
     if (
       isTransientNetworkError(original) ||
@@ -66,6 +84,11 @@ Sentry.init({
   // Setting this option to true will print useful information to the console while you're setting up Sentry.
   debug: false,
 });
+
+// Runs as early as possible on the client (before the app's own chunks
+// evaluate), so it catches a chunk-load rejection even during initial
+// hydration. See GAP-FRONTEND-20T / utilities/chunkRecovery.ts.
+installChunkRecoveryListeners();
 
 // Lazy-load Replay after init — keeps ~400KB out of the shared bundle.
 // The Replay SDK is fetched on-demand and added to the existing Sentry client.
