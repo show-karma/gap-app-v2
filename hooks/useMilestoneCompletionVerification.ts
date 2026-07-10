@@ -96,8 +96,6 @@ export const useMilestoneCompletionVerification = ({
     });
 
     if (!setup) {
-      // setupChainAndWallet surfaces its own feedback on failure (#1821); just
-      // reset local state here.
       setIsVerifying(false);
       dismiss();
       return null;
