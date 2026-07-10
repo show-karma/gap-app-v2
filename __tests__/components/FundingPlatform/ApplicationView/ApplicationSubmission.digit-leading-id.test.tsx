@@ -26,6 +26,10 @@ vi.mock("wagmi", () => ({
   }),
 }));
 
+vi.mock("@/components/EthereumAddressToProfileName", () => ({
+  default: ({ address }: { address?: string }) => <span>{address}</span>,
+}));
+
 vi.mock("react-hot-toast", () => ({
   __esModule: true,
   default: {
