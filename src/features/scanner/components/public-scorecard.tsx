@@ -334,7 +334,11 @@ export function PublicScorecard({ slug, initialData }: PublicScorecardProps) {
   // to the detail report; an anonymous one logs in first and lands there after.
   function openReport() {
     if (!scanId) return;
-    const detailHref = PAGES.SCANNER.SCAN_DETAIL(scanId);
+    // Land on the canonical domain URL (ora.ai model) rather than the scan-id
+    // permalink, so an authed viewer opens the detail tier at the constructible
+    // website URL. Fall back to the permalink only when the URL can't be parsed.
+    const host = hostnameOf(url);
+    const detailHref = host ? PAGES.SCANNER.SITE(host) : PAGES.SCANNER.SCAN_DETAIL(scanId);
     if (authenticated) {
       push(detailHref);
       return;
