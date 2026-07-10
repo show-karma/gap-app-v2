@@ -22,12 +22,8 @@ vi.mock("@/utilities/indexer", () => ({
       PROJECTS: {
         GRANTS: (slug: string) => `/v2/projects/${slug}/grants`,
         UPDATES: (slug: string) => `/v2/projects/${slug}/updates`,
+        IMPACTS: (slug: string) => `/v2/projects/${slug}/impacts`,
       },
-    },
-    PROJECT: {
-      // GAP-FRONTEND-24Z: impacts uses the V1 route — the V2 route does not
-      // exist on the indexer.
-      IMPACTS: (slug: string) => `/projects/${slug}/impacts`,
     },
   },
 }));
@@ -59,7 +55,7 @@ describe("public project profile fetch auth", () => {
     await getProjectImpacts("my-project", { isAuthorized: false });
 
     const [url, , , , , isAuthorized] = mockFetchData.mock.calls[0];
-    expect(url).toBe("/projects/my-project/impacts");
+    expect(url).toBe("/v2/projects/my-project/impacts");
     expect(isAuthorized).toBe(false);
   });
 

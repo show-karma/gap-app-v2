@@ -46,7 +46,7 @@ export const getProjectImpacts = async (
 ): Promise<ProjectImpact[]> => {
   const { isAuthorized = true, signal } = options;
   const [data, error, , status] = await fetchData<ProjectImpact[]>(
-    INDEXER.PROJECT.IMPACTS(projectIdOrSlug),
+    INDEXER.V2.PROJECTS.IMPACTS(projectIdOrSlug),
     "GET",
     {},
     {},
@@ -58,9 +58,9 @@ export const getProjectImpacts = async (
   );
 
   if (error) {
-    // A 404 means the project/slug has no impacts route match (unknown
-    // slug, crawler traffic) — an expected empty result, not a reportable
-    // error. Mirrors project-grants.service / project-updates.service.
+    // A 404 means the project/slug has no impacts (unknown slug, crawler
+    // traffic, or a project with none yet) — an expected empty result, not a
+    // reportable error. Mirrors project-grants.service / project-updates.service.
     // See GAP-FRONTEND-24Z.
     if (status === 404) {
       return [];
@@ -73,7 +73,7 @@ export const getProjectImpacts = async (
   }
 
   if (!Array.isArray(data)) {
-    // The V1 endpoint returns `null` for an unknown slug — also expected empty.
+    // The endpoint returns `null` for an unknown slug — also expected empty.
     return [];
   }
 
