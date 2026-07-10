@@ -15,8 +15,10 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { site } = await params;
   const domain = decodeURIComponent(site);
+  // The root layout applies a `%s | Karma` title template, so keep the brand
+  // out of the page title here to avoid a doubled suffix ("… — Karma | Karma").
   return customMetadata({
-    title: `Is ${domain} AI-ready? — Karma`,
+    title: `Is ${domain} AI-ready?`,
     description: `See how well ${domain} can be discovered, read, and acted on by AI agents and donors, with a prioritized path to a better score.`,
     path: `/nonprofits/is-ai-ready/${domain}`,
   });
