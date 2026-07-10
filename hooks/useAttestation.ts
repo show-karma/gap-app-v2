@@ -34,7 +34,7 @@ interface UseAttestationParams<TVars, TData> {
   onSignerUnavailable?: (error: SignerUnavailableError) => void;
 }
 
-export type UseAttestationResult<TVars, TData> = UseMutationResult<TData, unknown, TVars> & {
+type UseAttestationResult<TVars, TData> = UseMutationResult<TData, unknown, TVars> & {
   /** Signing readiness for gating the submit control (see `AttestationSubmit`). */
   signerStatus: SignerStatus;
   /** The address that will sign (embedded/external wallet), never wagmi's. */

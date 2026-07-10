@@ -44,7 +44,8 @@ import { SHARE_TEXTS } from "@/utilities/share/text";
 import { cn } from "@/utilities/tailwind";
 import { ExternalLink } from "../Utilities/ExternalLink";
 import { errorManager } from "../Utilities/errorManager";
-import { type CategorizedIndicator, OutputsSection } from "./Outputs";
+import { OutputsSection } from "./Outputs/OutputsSection";
+import type { CategorizedIndicator } from "./Outputs/types";
 
 interface GrantOption {
   title: string;

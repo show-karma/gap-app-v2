@@ -8,7 +8,6 @@ import { useEffect, useState } from "react";
 import { Controller, type SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
-import { z } from "zod";
 import { ProjectObjectiveForm } from "@/components/Forms/ProjectObjective";
 import { Button } from "@/components/Utilities/Button";
 import { DatePicker } from "@/components/Utilities/DatePicker";
@@ -31,46 +30,9 @@ import { PAGES } from "@/utilities/pages";
 import { sanitizeInput, sanitizeObject } from "@/utilities/sanitize";
 import { zodResolver } from "@/utilities/zodResolver";
 import { MultiSelect } from "../../../components/Utilities/MultiSelect";
+import { type MilestoneFormData, milestoneSchema } from "./milestoneSchema";
 
-// Helper function to wait for a specified time
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
-// Define the form schema for creating milestones
-const milestoneSchema = z.object({
-  title: z
-    .string()
-    .min(3, { message: "Title must be at least 3 characters" })
-    .max(50, { message: "Title must be at most 50 characters" }),
-  description: z.string().min(3, { message: "Description is required" }),
-  priority: z
-    .literal("")
-    .transform(() => undefined)
-    .or(z.coerce.number())
-    .optional(),
-  dates: z
-    .object({
-      endsAt: z.date({
-        error: "End date is required",
-      }),
-      startsAt: z.date().optional(),
-    })
-    .optional()
-    .refine(
-      (data) => {
-        // Only validate if both dates exist
-        if (!data || !data.startsAt || !data.endsAt) return true;
-
-        // Ensure start date is not after end date
-        return data.startsAt <= data.endsAt;
-      },
-      {
-        message: "Start date must be before the end date",
-        path: ["startsAt"],
-      }
-    ),
-});
-
-type MilestoneFormData = z.infer<typeof milestoneSchema>;
 
 export const UnifiedMilestoneScreen = () => {
   const project = useProjectStore((state) => state.project);
@@ -132,10 +94,8 @@ export const UnifiedMilestoneScreen = () => {
     setSelectedGrantIds(selectedIds);
   };
 
-  // Create a roadmap milestone (project objective).
-  // Signer readiness is gated upstream by useAttestation; errors thrown here are
-  // routed to useAttestation.onError (errorManager + toast). Chain-prep failures
-  // (transient, not defects) surface a toast without Sentry noise.
+  // Create a roadmap milestone. Readiness is gated upstream by useAttestation;
+  // thrown errors route to useAttestation.onError (errorManager + toast).
   const createRoadmapMilestone = async (data: MilestoneFormData) => {
     if (!project) return;
     startAttestation("Creating roadmap milestone...");
@@ -229,10 +189,9 @@ export const UnifiedMilestoneScreen = () => {
     return false;
   };
 
-  // Create grant milestone(s) for selected grants.
-  // Signer readiness is gated upstream by useAttestation; errors thrown here are
-  // routed to useAttestation.onError. We track whether anything actually attested
-  // so we never show a success toast for zero attestations (#1821 false-success).
+  // Create grant milestone(s). Readiness gated upstream by useAttestation; we
+  // track whether anything attested so a zero-attestation run never shows a
+  // success toast (#1821 false-success).
   const createGrantMilestones = async (data: MilestoneFormData) => {
     if (!project || selectedGrantIds.length === 0) return;
 
@@ -434,9 +393,8 @@ export const UnifiedMilestoneScreen = () => {
 
       await refetchUpdates();
 
-      // Partial success: at least one chain attested but others failed to
-      // prepare. Surface a DURABLE notice so the success toast below doesn't
-      // mask the chains that didn't go through (#1821).
+      // Partial success — surface a DURABLE notice so the success toast below
+      // doesn't mask chains that failed to prepare (#1821).
       if (failedChains.length > 0) {
         toast.error(
           `Couldn't prepare ${failedChains.join(", ")} — no milestone was created there. Please try again.`,
@@ -457,18 +415,16 @@ export const UnifiedMilestoneScreen = () => {
         closeProgressModal();
       }, 1500);
     } finally {
-      // Always clear the per-chain progress toasts — on success, early return,
-      // or a thrown error routed to useAttestation.onError.
+      // Always clear the per-chain progress toasts (success, early return, throw).
       toastsToRemove.forEach((toastId) => {
         toast.remove(toastId);
       });
     }
   };
 
-  // Single attestation mutation (CLAUDE.md "always useMutation"). It gates the
-  // submit on the signing identity (signerStatus), throws a typed
-  // SignerUnavailableError with a Sentry breadcrumb when the wallet isn't ready,
-  // and routes feedback centrally — killing the wagmi-address silent no-op (#1821).
+  // Single attestation mutation (CLAUDE.md "always useMutation"): gates submit on
+  // signerStatus, throws a typed SignerUnavailableError when the wallet isn't
+  // ready, and routes feedback centrally — killing the silent no-op (#1821).
   const {
     mutate: submitMilestone,
     isPending,
