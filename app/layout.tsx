@@ -43,7 +43,6 @@ import { ThemeProvider } from "next-themes";
 import { DeferredLayoutComponents } from "@/components/DeferredLayoutComponents";
 import { OrganizationJsonLd } from "@/components/Seo/OrganizationJsonLd";
 import { SpeakableJsonLd } from "@/components/Seo/SpeakableJsonLd";
-import { ChunkReloadResetter } from "@/components/Utilities/ChunkReloadResetter";
 import { PermissionsProvider } from "@/components/Utilities/PermissionsProvider";
 import PrivyProviderWrapper from "@/components/Utilities/PrivyProviderWrapper";
 import { TenantStoreInitializer } from "@/components/Utilities/TenantStoreInitializer";
@@ -166,7 +165,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               {isWhitelabel && tenantConfig && (
                 <TenantStoreInitializer tenant={tenantConfig}>{null}</TenantStoreInitializer>
               )}
-              <ChunkReloadResetter />
               <PermissionsProvider />
               <DeferredLayoutComponents toasterConfig={toasterConfig} />
               <div className="min-h-screen flex flex-col justify-between h-full text-gray-700 bg-white dark:bg-black dark:text-white">
