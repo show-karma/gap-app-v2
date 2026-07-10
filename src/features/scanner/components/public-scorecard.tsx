@@ -353,7 +353,14 @@ export function PublicScorecard({ slug, initialData }: PublicScorecardProps) {
 
   async function handleShare() {
     if (typeof window === "undefined") return;
-    const ok = await copyToClipboard(window.location.href);
+    // Copy the constructible, website-keyed report URL (ora.ai model) rather
+    // than this /s/<slug> permalink. `copyToClipboard` catches internally and
+    // resolves false on failure, so there's nothing here that can reject.
+    const host = hostnameOf(url);
+    const href = host
+      ? `${window.location.origin}${PAGES.SCANNER.SITE(host)}`
+      : window.location.href;
+    const ok = await copyToClipboard(href);
     if (!ok) return;
     setCopied(true);
     setTimeout(() => setCopied(false), 1800);
