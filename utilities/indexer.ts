@@ -113,7 +113,6 @@ export const INDEXER = {
         `/v2/projects/${projectUid}/grants/${programId}/milestones`,
       UPDATES: (projectIdOrSlug: string) => `/v2/projects/${projectIdOrSlug}/updates`,
       MILESTONES: (projectIdOrSlug: string) => `/v2/projects/${projectIdOrSlug}/milestones`,
-      IMPACTS: (projectIdOrSlug: string) => `/v2/projects/${projectIdOrSlug}/impacts`,
     },
     APPLICATIONS: {
       BY_PROJECT_UID: (projectUID: string) => `/v2/funding-applications/project/${projectUID}`,
@@ -414,6 +413,7 @@ export const INDEXER = {
     },
     SUBSCRIBE: (projectId: Hex) => `/projects/${projectId}/subscribe`,
     FEED: (projectIdOrSlug: string) => `/projects/${projectIdOrSlug}/feed`,
+    IMPACTS: (projectIdOrSlug: string) => `/projects/${projectIdOrSlug}/impacts`, // TEMP: V1 bridge pending gap-indexer#2178; move back to V2.PROJECTS.IMPACTS (/v2/projects/:id/impacts) once shipped
     FUNDEDBY: (address: string) => `/projects/fundedby/${address}`,
     GRANTS_GENIE: (projectId: string) => `/projects/${projectId}/grants-genie`,
     REQUEST_INTRO: (projectIdOrSlug: string) => `/projects/requestintro/${projectIdOrSlug}`,
