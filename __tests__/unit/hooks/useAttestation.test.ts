@@ -113,9 +113,13 @@ describe("useAttestation", () => {
     expect(result.current.error).toBeInstanceOf(SignerUnavailableError);
   });
 
-  it("treats initializing signer as not-ready (guidance, no Sentry error)", async () => {
+  it("PROCEEDS while initializing (auto-proceed) — the signer's own wait handles provisioning, no retry", async () => {
+    // "initializing" is the transient provisioning window. Instead of blocking
+    // with a "try again", useAttestation runs attest and lets getAttestationSigner
+    // wait for the wallet. (If it never becomes ready, getAttestationSigner throws
+    // SignerUnavailableError, routed to guidance — covered by the attest-throws case.)
     mockSetup.signerStatus = "initializing";
-    const attest = vi.fn();
+    const attest = vi.fn().mockResolvedValue("ok");
     const showError = vi.fn();
     const { result } = renderHook(
       () => useAttestation({ attest, action: "create milestone", showError }),
@@ -124,10 +128,11 @@ describe("useAttestation", () => {
 
     result.current.mutate(undefined);
 
-    await waitFor(() => expect(showError).toHaveBeenCalled());
-    expect(attest).not.toHaveBeenCalled();
+    await waitFor(() => expect(attest).toHaveBeenCalledTimes(1));
+    expect(showError).not.toHaveBeenCalled();
     expect(mockErrorManager).not.toHaveBeenCalled();
-    expect(mockAddBreadcrumb).toHaveBeenCalledTimes(1);
+    // No up-front breadcrumb for the expected provisioning window.
+    expect(mockAddBreadcrumb).not.toHaveBeenCalled();
   });
 
   it("routes a real (non-signer) attest error through errorManager", async () => {

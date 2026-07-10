@@ -44,9 +44,6 @@ type AttestationSubmitProps = AttestationSubmitBaseProps &
 const DEFAULT_BUTTON_CLASSNAME =
   "flex flex-row items-center justify-center gap-2 rounded-md bg-brand-blue px-6 py-2 text-md font-medium text-white hover:bg-brand-blue/90 disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2";
 
-const WALLET_PREPARING_MESSAGE =
-  "Your wallet is still being prepared. Please try again in a moment.";
-
 /**
  * Generalized submit region for any attestation flow. Mirrors the
  * ProjectDialog's `ProjectSubmitControls` (GAP-FRONTEND-24N) without the
@@ -54,7 +51,9 @@ const WALLET_PREPARING_MESSAGE =
  * `signerStatus` the same way:
  *
  * - `no-wallet` → "Connect wallet" CTA (never a silent no-op).
- * - `initializing` → disabled submit + "wallet preparing" tooltip.
+ * - `initializing` → clickable "Preparing…" state. The wallet is still being
+ *   provisioned, but the button stays enabled: clicking auto-proceeds and the
+ *   signer's bounded wait resolves it — no "try again" retry for the user.
  * - `ready` → normal submit, disabled only by `disabled`/`isLoading`.
  */
 export function AttestationSubmit({
@@ -77,19 +76,23 @@ export function AttestationSubmit({
     );
   }
 
-  const isInitializing = signerStatus === "initializing";
-  const isSubmitBlocked = disabled || isLoading || isInitializing;
-  const resolvedTooltip = tooltipContent ?? (isInitializing ? WALLET_PREPARING_MESSAGE : null);
+  // While the wallet finishes provisioning, show a "Preparing…" state but keep
+  // the button clickable — clicking auto-proceeds (the signer waits) instead of
+  // forcing a manual retry. Only the real in-flight submit / an invalid form
+  // blocks it.
+  const preparing = signerStatus === "initializing" && !isLoading;
+  const isSubmitBlocked = disabled || isLoading;
+  const resolvedTooltip = tooltipContent ?? null;
 
   const button = (
     <Button
       type={type}
       className={className}
       disabled={isSubmitBlocked}
-      isLoading={isLoading}
+      isLoading={isLoading || preparing}
       onClick={type === "button" ? onSubmit : undefined}
     >
-      {label}
+      {preparing ? "Preparing…" : label}
     </Button>
   );
 

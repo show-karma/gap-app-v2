@@ -69,16 +69,21 @@ export function useAttestation<TVars = void, TData = unknown>({
 
   const mutation = useMutation<TData, unknown, TVars>({
     mutationFn: async (variables: TVars) => {
-      if (signerStatus !== "ready") {
+      // "initializing" is the brief window while Privy/the embedded wallet is
+      // still provisioning. Don't block the user with a "try again" — proceed
+      // and let getAttestationSigner's bounded wait (waitForUsableWallet, ~8s)
+      // resolve it, so a click during provisioning auto-completes instead of
+      // forcing a manual retry. If the wait times out, getAttestationSigner
+      // throws a typed SignerUnavailableError, routed to guidance below.
+      // Only a genuinely absent wallet is blocked up front.
+      if (signerStatus === "no-wallet") {
         Sentry.addBreadcrumb({
           category: "attestation",
           level: "warning",
-          message: `Attestation submit attempted while signer not ready (${action})`,
+          message: `Attestation submit attempted with no connected wallet (${action})`,
           data: { signerStatus },
         });
-        throw new SignerUnavailableError(
-          signerStatus === "no-wallet" ? "no-wallet-connected" : "wallets-hydrating"
-        );
+        throw new SignerUnavailableError("no-wallet-connected");
       }
       return attest(variables);
     },

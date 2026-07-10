@@ -39,10 +39,31 @@ describe("AttestationSubmit", () => {
   });
 
   describe("initializing", () => {
-    it("renders the submit label but disables it", () => {
+    it("shows a clickable 'Preparing…' state (no manual retry) while the wallet provisions", () => {
       render(<AttestationSubmit signerStatus="initializing" {...baseProps} />);
-      const button = screen.getByRole("button", { name: /Create Milestone/i });
-      expect(button).toBeDisabled();
+      // Enabled so the click auto-proceeds; labelled 'Preparing…', not the action label.
+      const button = screen.getByRole("button", { name: /Preparing/i });
+      expect(button).toBeEnabled();
+      expect(screen.queryByRole("button", { name: /Create Milestone/i })).not.toBeInTheDocument();
+    });
+
+    it("still disables the submit while initializing if the form is invalid", () => {
+      render(<AttestationSubmit signerStatus="initializing" disabled {...baseProps} />);
+      expect(screen.getByRole("button", { name: /Preparing/i })).toBeDisabled();
+    });
+
+    it("fires onSubmit when clicked during initializing (auto-proceed)", () => {
+      const onSubmit = vi.fn();
+      render(
+        <AttestationSubmit
+          signerStatus="initializing"
+          type="button"
+          onSubmit={onSubmit}
+          {...baseProps}
+        />
+      );
+      fireEvent.click(screen.getByRole("button", { name: /Preparing/i }));
+      expect(onSubmit).toHaveBeenCalledTimes(1);
     });
   });
 
