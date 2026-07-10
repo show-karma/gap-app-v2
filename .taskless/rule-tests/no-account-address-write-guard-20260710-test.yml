@@ -1,0 +1,13 @@
+id: no-account-address-write-guard
+valid:
+  # Guards on the signing identity, not wagmi address.
+  - "const f = async () => { if (signerStatus !== 'ready') return; await entity.attest(s); };"
+  # Address guard but no attestation in the file (display-only usage).
+  - "const f = () => { if (!address) return null; return address; };"
+  # Attestation present but guarded on project, not address.
+  - "const f = async () => { if (!project) return; await setupChainAndWallet({}); };"
+invalid:
+  # `!address` early-return guard inside an attestation function.
+  - "const f = async () => { if (!address) return; await setupChainAndWallet({}); };"
+  # Compound `!address || !project` guard before an attest call.
+  - "const f = async () => { if (!address || !project) { return; } await entity.attest(s); };"

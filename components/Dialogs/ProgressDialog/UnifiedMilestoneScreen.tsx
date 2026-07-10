@@ -12,9 +12,11 @@ import { z } from "zod";
 import { ProjectObjectiveForm } from "@/components/Forms/ProjectObjective";
 import { Button } from "@/components/Utilities/Button";
 import { DatePicker } from "@/components/Utilities/DatePicker";
-import { errorManager } from "@/components/Utilities/errorManager";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
+import { AttestationSubmit } from "@/components/ui/AttestationSubmit";
+import { useAttestation } from "@/hooks/useAttestation";
 import { useAttestationToast } from "@/hooks/useAttestationToast";
+import { useAuth } from "@/hooks/useAuth";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
 import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
@@ -74,7 +76,6 @@ export const UnifiedMilestoneScreen = () => {
   const project = useProjectStore((state) => state.project);
   const { closeProgressModal, preSelectedGrantId, setPreSelectedGrantId } = useProgressModalStore();
   const [selectedGrantIds, setSelectedGrantIds] = useState<string[]>([]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasInitializedSelection, setHasInitializedSelection] = useState(false);
 
   // Fetch grants using dedicated hook
@@ -93,10 +94,13 @@ export const UnifiedMilestoneScreen = () => {
       setPreSelectedGrantId(null);
     }
   }, [preSelectedGrantId, grants, hasInitializedSelection, setPreSelectedGrantId]);
+  // wagmi address is DISPLAY/recipient-only — never gate signing on it (#1821).
+  // The signing identity comes from useSetupChainAndWallet (Privy signer).
   const { address, chain } = useAccount();
   const { switchChainAsync } = useWallet();
   const { setupChainAndWallet, smartWalletAddress } = useSetupChainAndWallet();
-  const { startAttestation, showLoading, showSuccess, showError, dismiss, changeStepperStep } =
+  const { connectWallet } = useAuth();
+  const { startAttestation, showSuccess, showError, dismiss, changeStepperStep } =
     useAttestationToast();
   const { projectId } = useParams();
   const { refetch: refetchUpdates } = useProjectUpdates(projectId as string);
@@ -128,26 +132,28 @@ export const UnifiedMilestoneScreen = () => {
     setSelectedGrantIds(selectedIds);
   };
 
-  // Create a roadmap milestone (project objective)
+  // Create a roadmap milestone (project objective).
+  // Signer readiness is gated upstream by useAttestation; errors thrown here are
+  // routed to useAttestation.onError (errorManager + toast). Chain-prep failures
+  // (transient, not defects) surface a toast without Sentry noise.
   const createRoadmapMilestone = async (data: MilestoneFormData) => {
-    if (!address || !project) return;
-    setIsSubmitting(true);
+    if (!project) return;
     startAttestation("Creating roadmap milestone...");
 
-    try {
-      const setup = await setupChainAndWallet({
-        targetChainId: project.chainID,
-        currentChainId: chain?.id,
-        switchChainAsync,
-      });
+    const setup = await setupChainAndWallet({
+      targetChainId: project.chainID,
+      currentChainId: chain?.id,
+      switchChainAsync,
+    });
 
-      if (!setup) {
-        setIsSubmitting(false);
-        return;
-      }
+    if (!setup?.gapClient) {
+      dismiss();
+      showError("Couldn't prepare your wallet for this network. Please try again.");
+      return;
+    }
 
+    {
       const { gapClient, walletSigner } = setup;
-      if (!gapClient) return;
 
       const newObjective = new ProjectMilestone({
         data: sanitizeObject({
@@ -196,12 +202,6 @@ export const UnifiedMilestoneScreen = () => {
             closeProgressModal();
           }, 1500);
         });
-    } catch (error) {
-      dismiss();
-      errorManager("Error creating roadmap milestone", error);
-      showError("Failed to create roadmap milestone");
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -229,14 +229,17 @@ export const UnifiedMilestoneScreen = () => {
     return false;
   };
 
-  // Create grant milestone(s) for selected grants
+  // Create grant milestone(s) for selected grants.
+  // Signer readiness is gated upstream by useAttestation; errors thrown here are
+  // routed to useAttestation.onError. We track whether anything actually attested
+  // so we never show a success toast for zero attestations (#1821 false-success).
   const createGrantMilestones = async (data: MilestoneFormData) => {
-    if (!address || !project || selectedGrantIds.length === 0) return;
+    if (!project || selectedGrantIds.length === 0) return;
 
-    setIsSubmitting(true);
     startAttestation("Creating grant milestone(s)...");
 
     const toastsToRemove: string[] = [];
+    let anyAttested = false;
 
     try {
       // Group grants by chain ID to process each network separately
@@ -286,13 +289,15 @@ export const UnifiedMilestoneScreen = () => {
           switchChainAsync,
         });
 
-        if (!setup) {
-          setIsSubmitting(false);
-          continue; // Skip this chain if switch fails
+        if (!setup?.gapClient) {
+          // Don't silently skip — tell the user this chain didn't go through.
+          toast.error(`Couldn't prepare ${chainName}. Please try again.`, {
+            id: `chain-${chainId}`,
+          });
+          continue;
         }
 
         const { gapClient, walletSigner } = setup;
-        if (!gapClient) continue;
 
         // If there's only one grant on this chain, process it normally
         if (chainGrants.length === 1) {
@@ -315,6 +320,7 @@ export const UnifiedMilestoneScreen = () => {
           });
 
           const result = await milestoneToAttest.attest(walletSigner as any, changeStepperStep);
+          anyAttested = true;
 
           // Handle indexer notification
           const txHash = result?.tx[0]?.hash;
@@ -375,6 +381,7 @@ export const UnifiedMilestoneScreen = () => {
             walletSigner as any,
             allPayloads.map((p) => p[1])
           );
+          anyAttested = true;
 
           // Handle indexer notification for each tx
           if (result.tx.length > 0) {
@@ -390,6 +397,14 @@ export const UnifiedMilestoneScreen = () => {
             await Promise.all(txPromises);
           }
         }
+      }
+
+      // Nothing attested across any chain — surface guidance, never a false
+      // "Milestones created!" success (#1821 sibling bug).
+      if (!anyAttested) {
+        dismiss();
+        showError("No milestone was created — your wallet wasn't ready. Please try again.");
+        return;
       }
 
       changeStepperStep("indexing");
@@ -427,19 +442,40 @@ export const UnifiedMilestoneScreen = () => {
         router.push(PAGES.PROJECT.UPDATES(project?.details?.slug || project?.uid || ""));
         closeProgressModal();
       }, 1500);
-    } catch (error) {
-      dismiss();
-      showError("Failed to create grant milestones");
-      errorManager("Error creating grant milestones", error);
+    } finally {
+      // Always clear the per-chain progress toasts — on success, early return,
+      // or a thrown error routed to useAttestation.onError.
       toastsToRemove.forEach((toastId) => {
         toast.remove(toastId);
       });
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
-  const onSubmit: SubmitHandler<MilestoneFormData> = async (data) => {
+  // Single attestation mutation (CLAUDE.md "always useMutation"). It gates the
+  // submit on the signing identity (signerStatus), throws a typed
+  // SignerUnavailableError with a Sentry breadcrumb when the wallet isn't ready,
+  // and routes feedback centrally — killing the wagmi-address silent no-op (#1821).
+  const {
+    mutate: submitMilestone,
+    isPending,
+    signerStatus,
+  } = useAttestation<MilestoneFormData, void>({
+    attest: async (data) => {
+      if (selectedGrantIds.length === 0) {
+        await createRoadmapMilestone(data);
+      } else {
+        await createGrantMilestones(data);
+      }
+    },
+    action: "create milestone",
+    // Dismiss the in-flight attestation toast before surfacing the error.
+    showError: (message) => {
+      dismiss();
+      showError(message);
+    },
+  });
+
+  const onSubmit: SubmitHandler<MilestoneFormData> = (data) => {
     // For grant milestones, validate that endsAt is provided
     if (selectedGrantIds.length > 0 && !data.dates?.endsAt) {
       showError("End date is required for grant milestones");
@@ -454,13 +490,7 @@ export const UnifiedMilestoneScreen = () => {
       }
     }
 
-    if (selectedGrantIds.length === 0) {
-      // Create a roadmap milestone
-      await createRoadmapMilestone(data);
-    } else {
-      // Create grant milestone(s)
-      await createGrantMilestones(data);
-    }
+    submitMilestone(data);
   };
 
   // If no grants exist - simpler UI for roadmap milestones only
@@ -645,14 +675,14 @@ export const UnifiedMilestoneScreen = () => {
           >
             Cancel
           </Button>
-          <Button
-            type="submit"
-            disabled={isSubmitting || !isValid}
-            isLoading={isSubmitting}
-            className="px-4 py-2 bg-brand-blue text-white hover:bg-brand-blue/90 disabled:opacity-50"
-          >
-            Create Milestone
-          </Button>
+          <AttestationSubmit
+            signerStatus={signerStatus}
+            disabled={!isValid}
+            isLoading={isPending}
+            onConnectWallet={connectWallet}
+            label="Create Milestone"
+            className="px-4 py-2 rounded-md bg-brand-blue text-white hover:bg-brand-blue/90 disabled:opacity-50 flex flex-row items-center justify-center gap-2 font-medium"
+          />
         </div>
       </form>
     </div>

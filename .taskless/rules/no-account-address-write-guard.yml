@@ -1,0 +1,42 @@
+id: no-account-address-write-guard
+language: typescript
+severity: error
+message: Don't gate an attestation/write on wagmi useAccount().address — it lags the Privy signer and silently no-ops. Gate on signerStatus/attestationAddress (see AttestationSubmit / useAttestation).
+note: |
+  CLAUDE.md gap-app-v2: "wagmi useAccount().address is display-only; gate writes
+  on signerStatus/attestationAddress." An early-return guard like
+  `if (!address) return;` inside a function that also calls `setupChainAndWallet`
+  or `.attest(` runs BEFORE any feedback, so an authenticated user whose Privy
+  signer is ready but whose outer wagmi address hasn't synced gets a silent
+  no-op (issue #1821). Use `useAttestation()` + `<AttestationSubmit>` which gate
+  on the signing identity and always surface a Connect CTA / error.
+ignores:
+  - "**/__tests__/**"
+  - "**/*.test.ts"
+  - "**/*.test.tsx"
+  - "**/*.spec.ts"
+  - "**/*.spec.tsx"
+  - "scripts/**"
+rule:
+  kind: if_statement
+  inside:
+    kind: program
+    stopBy: end
+    has:
+      stopBy: end
+      any:
+        - pattern: setupChainAndWallet($$$SETUP)
+        - pattern: $OBJ.attest($$$ATTEST)
+  all:
+    # condition negates an identifier literally named `address`
+    - has:
+        stopBy: end
+        kind: unary_expression
+        has:
+          stopBy: end
+          kind: identifier
+          regex: '^address$'
+    # ...and the guard returns early (no user feedback before the return)
+    - has:
+        stopBy: end
+        kind: return_statement

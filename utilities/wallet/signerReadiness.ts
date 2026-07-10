@@ -10,6 +10,14 @@
  * the state, show actionable guidance, and skip Sentry reporting.
  */
 
+/**
+ * Signing readiness for UI gating — the single source of truth for the union
+ * that `useZeroDevSigner`/`useSetupChainAndWallet` expose as `signerStatus` and
+ * that the attestation submit controls gate on. Import this instead of
+ * re-declaring the literal union per file.
+ */
+export type SignerStatus = "initializing" | "ready" | "no-wallet";
+
 type SignerUnavailableReason =
   /** `walletsReady` from Privy's `useWallets()` is still false after the wait. */
   | "wallets-hydrating"

@@ -1,0 +1,118 @@
+"use client";
+
+import * as Tooltip from "@radix-ui/react-tooltip";
+import type { ReactNode } from "react";
+import { Button } from "@/components/Utilities/Button";
+import type { SignerStatus } from "@/utilities/wallet/signerReadiness";
+
+interface AttestationSubmitProps {
+  /**
+   * Signing readiness (see `useSetupChainAndWallet().signerStatus`):
+   * - `no-wallet` → render a "Connect wallet" CTA instead of the submit button.
+   * - `initializing` → submit button disabled with a tooltip.
+   * - `ready` → normal submit (disabled only when `disabled` / `isLoading`).
+   */
+  signerStatus: SignerStatus;
+  /** Disable submit for reasons other than signer readiness (e.g. invalid form). */
+  disabled?: boolean;
+  /** Show the spinner and block submit while the attestation is in flight. */
+  isLoading?: boolean;
+  /** Called when the user clicks the "Connect wallet" CTA (no-wallet state). */
+  onConnectWallet: () => void;
+  /** Submit button label, e.g. "Create Milestone", "Post Update". */
+  label: ReactNode;
+  /** CTA label for the no-wallet state. Defaults to "Connect wallet". */
+  connectLabel?: ReactNode;
+  /**
+   * Tooltip shown while submit is blocked (invalid form / initializing signer).
+   * Defaults to a wallet-preparing message while `initializing`.
+   */
+  tooltipContent?: ReactNode;
+  /**
+   * Button `type`. Defaults to `submit` (inside a `<form>`). Use `button` with
+   * `onSubmit` when there is no surrounding form.
+   */
+  type?: "submit" | "button";
+  /** Click handler when `type="button"`. */
+  onSubmit?: () => void;
+  /** Optional className override for both the submit button and the CTA. */
+  className?: string;
+}
+
+const DEFAULT_BUTTON_CLASSNAME =
+  "flex flex-row items-center justify-center gap-2 rounded-md bg-brand-blue px-6 py-2 text-md font-medium text-white hover:bg-brand-blue/90 disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2";
+
+const WALLET_PREPARING_MESSAGE =
+  "Your wallet is still being prepared. Please try again in a moment.";
+
+/**
+ * Generalized submit region for any attestation flow. Mirrors the
+ * ProjectDialog's `ProjectSubmitControls` (GAP-FRONTEND-24N) without the
+ * project-specific copy so every write/attestation flow can gate its submit on
+ * `signerStatus` the same way:
+ *
+ * - `no-wallet` → "Connect wallet" CTA (never a silent no-op).
+ * - `initializing` → disabled submit + "wallet preparing" tooltip.
+ * - `ready` → normal submit, disabled only by `disabled`/`isLoading`.
+ */
+export function AttestationSubmit({
+  signerStatus,
+  disabled = false,
+  isLoading = false,
+  onConnectWallet,
+  label,
+  connectLabel = "Connect wallet",
+  tooltipContent,
+  type = "submit",
+  onSubmit,
+  className = DEFAULT_BUTTON_CLASSNAME,
+}: AttestationSubmitProps) {
+  if (signerStatus === "no-wallet") {
+    return (
+      <Button type="button" className={className} onClick={() => onConnectWallet()}>
+        {connectLabel}
+      </Button>
+    );
+  }
+
+  const isInitializing = signerStatus === "initializing";
+  const isSubmitBlocked = disabled || isLoading || isInitializing;
+  const resolvedTooltip = tooltipContent ?? (isInitializing ? WALLET_PREPARING_MESSAGE : null);
+
+  const button = (
+    <Button
+      type={type}
+      className={className}
+      disabled={isSubmitBlocked}
+      isLoading={isLoading}
+      onClick={type === "button" ? onSubmit : undefined}
+    >
+      {label}
+    </Button>
+  );
+
+  // Only wrap in a tooltip when there is something to say and submit is blocked.
+  if (!resolvedTooltip || !isSubmitBlocked) {
+    return button;
+  }
+
+  return (
+    <Tooltip.Provider>
+      <Tooltip.Root delayDuration={0}>
+        <Tooltip.Trigger asChild>
+          <div className="flex w-max h-max">{button}</div>
+        </Tooltip.Trigger>
+        <Tooltip.Portal>
+          <Tooltip.Content
+            className="TooltipContent bg-brand-darkblue rounded-lg text-white p-3 z-[1000]"
+            sideOffset={5}
+            side="bottom"
+          >
+            {resolvedTooltip}
+            <Tooltip.Arrow className="TooltipArrow" />
+          </Tooltip.Content>
+        </Tooltip.Portal>
+      </Tooltip.Root>
+    </Tooltip.Provider>
+  );
+}
