@@ -141,7 +141,7 @@ describe("AdminAdvisorsList", () => {
     expect(screen.getByText("Smith Family")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /view/i })).toHaveAttribute(
       "href",
-      "/admin/nonprofit-research/r1"
+      "/nonprofit-research/r1"
     );
   });
 

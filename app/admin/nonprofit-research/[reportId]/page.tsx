@@ -1,19 +1,16 @@
-import type { Metadata } from "next";
-import { AdminReportView } from "@/src/features/donor-research/components/admin/AdminReportView";
-import { customMetadata } from "@/utilities/meta";
+import { permanentRedirect } from "next/navigation";
+import { PAGES } from "@/utilities/pages";
 
 interface PageProps {
   params: Promise<{ reportId: string }>;
 }
 
-export const metadata: Metadata = customMetadata({
-  title: "Nonprofit Research — Report (Admin)",
-  description: "Staff view of a nonprofit-research report.",
-  path: "/admin/nonprofit-research",
-  robots: { index: false, follow: false },
-});
-
+/**
+ * Legacy staff report URL. The staff report view now lives on the regular
+ * advisor route — the API grants the staff allowlist an unscoped read on the
+ * same endpoint — so this route only preserves old bookmarks/links.
+ */
 export default async function Page({ params }: PageProps) {
   const { reportId } = await params;
-  return <AdminReportView reportId={reportId} />;
+  permanentRedirect(PAGES.DONOR_RESEARCH.REPORT(reportId));
 }
