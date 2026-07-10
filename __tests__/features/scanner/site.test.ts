@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildScanShareUrl,
   domainToScanUrl,
   hostnameOf,
   isDomainParam,
@@ -66,6 +67,19 @@ describe("hostnameOf", () => {
   it("round-trips a domainToScanUrl result back to the bare host", () => {
     const url = domainToScanUrl("www.karmahq.xyz");
     expect(hostnameOf(url)).toBe("karmahq.xyz");
+  });
+});
+
+describe("buildScanShareUrl", () => {
+  it("builds an absolute origin + website-keyed path, stripping www", () => {
+    const href = buildScanShareUrl("https://www.watsi.org/");
+    expect(href.startsWith(window.location.origin)).toBe(true);
+    expect(href.endsWith(PAGES.SCANNER.SITE("watsi.org"))).toBe(true);
+  });
+
+  it("falls back to the current page URL when the report url is unparseable", () => {
+    expect(buildScanShareUrl("not a url")).toBe(window.location.href);
+    expect(buildScanShareUrl(null)).toBe(window.location.href);
   });
 });
 
