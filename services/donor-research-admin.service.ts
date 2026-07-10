@@ -1,12 +1,13 @@
-import type { AdminAdvisorsList, ResearchReportDetail } from "@/types/donor-research";
+import type { AdminAdvisorsList } from "@/types/donor-research";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
 /**
- * Staff-only donor-research admin API client (DEV-467). Kept separate from the
+ * Staff-only donor-research admin API client. Kept separate from the
  * advisor-facing `donor-research.service` so that file stays under the size
  * budget. All calls are staff-guarded server-side; the routes are also gated
- * on `isStaff` in the FE.
+ * on `isStaff` in the FE. Report reads have no admin variant — staff open the
+ * regular advisor endpoint, which grants staff an unscoped read.
  */
 
 export interface ListAdvisorsOptions {
@@ -35,20 +36,6 @@ export const listAdvisors = async (
   );
   if (error || !data) {
     throw new Error(error || "Failed to load advisors");
-  }
-  return data;
-};
-
-/**
- * Reads any advisor's report with the same shape the advisor sees, so the
- * admin view renders the identical brief.
- */
-export const getAdminReport = async (reportId: string): Promise<ResearchReportDetail> => {
-  const [data, error] = await fetchData<ResearchReportDetail>(
-    INDEXER.DONOR_RESEARCH.ADMIN_REPORT_BY_ID(reportId)
-  );
-  if (error || !data) {
-    throw new Error(error || "Failed to load report");
   }
   return data;
 };

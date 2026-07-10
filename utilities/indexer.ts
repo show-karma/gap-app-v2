@@ -819,8 +819,8 @@ export const INDEXER = {
     REPORT_STREAM: (reportId: string) => `/v2/donor-research/reports/${reportId}/stream`,
     SHARE_TOKEN: (reportId: string) => `/v2/donor-research/reports/${reportId}/share-token`,
     SHARED: (token: string) => `/v2/donor-research/shared/${token}`,
-    // Staff-only admin overview (DEV-467).
+    // Staff-only admin overview. Report reads use REPORT_BY_ID — the
+    // endpoint grants staff an unscoped read.
     ADMIN_ADVISORS: "/v2/admin/donor-research/advisors",
-    ADMIN_REPORT_BY_ID: (reportId: string) => `/v2/admin/donor-research/reports/${reportId}`,
   },
 };
