@@ -328,7 +328,12 @@ export function LoggedInDetail({ scanId, userEmail }: LoggedInDetailProps) {
     onSuccess: (response) => {
       toast.success("Re-scan started");
       markFreshScanSubmit(response.slug);
-      push(PAGES.SCANNER.PUBLIC_SCORECARD(response.slug));
+      // Keep the logged-in viewer on the canonical domain URL so they stay in
+      // the detail tier and watch the fresh scan resolve, instead of dropping
+      // to the public /s/<slug> scorecard. Fall back to the slug permalink only
+      // when the report URL is missing/unparseable.
+      const host = hostnameOf(data?.url);
+      push(host ? PAGES.SCANNER.SITE(host) : PAGES.SCANNER.PUBLIC_SCORECARD(response.slug));
     },
     onError: (error) => {
       // Credit cap — retrying will never succeed, so surface the contact modal
