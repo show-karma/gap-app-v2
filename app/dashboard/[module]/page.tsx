@@ -1,7 +1,7 @@
 "use client";
 
 import { notFound, redirect, useParams } from "next/navigation";
-import { type MouseEvent, useEffect } from "react";
+import { type MouseEvent, useEffect, useState } from "react";
 import { useDashboardContext } from "@/components/Pages/Dashboard/DashboardProvider";
 import { DASHBOARD_MODULE_KEYS } from "@/components/Pages/Dashboard/v3/module";
 import { SkeletonList } from "@/components/Pages/Dashboard/v3/primitives";
@@ -34,6 +34,7 @@ export default function DashboardModulePage() {
   const params = useParams<{ module: string }>();
   const navigate = useDashboardTransition();
   const activeModule = modules.find((m) => m.key === params.module);
+  const isKnownKey = (DASHBOARD_MODULE_KEYS as readonly string[]).includes(params.module);
 
   // Tell an in-flight open transition the drill-in has painted so it can
   // capture the "after" snapshot and run the morph.
@@ -41,14 +42,32 @@ export default function DashboardModulePage() {
     signalDashboardRoutePainted();
   }, []);
 
+  // A gated module can be briefly absent from `modules` right after its query
+  // resolves — some hooks (e.g. useUserApplications) land the data in a Zustand
+  // store one render later. Wait out a short grace before treating a known key
+  // as "not gated", so a hard load / deep link of a module the user DOES have
+  // renders instead of bouncing to the overview.
+  const [graceExpired, setGraceExpired] = useState(false);
+  useEffect(() => {
+    if (activeModule || !isSettled) {
+      setGraceExpired(false);
+      return;
+    }
+    const timer = setTimeout(() => setGraceExpired(true), 600);
+    return () => clearTimeout(timer);
+  }, [activeModule, isSettled]);
+
   if (!activeModule) {
-    if (!isSettled) {
+    // A key that isn't a real module is a genuine 404, immediately.
+    if (!isKnownKey) {
+      notFound();
+    }
+    // Known key: hold a skeleton while data resolves (and through the grace),
+    // then — if the module still hasn't appeared — the user isn't gated for it.
+    if (!isSettled || !graceExpired) {
       return <SkeletonList count={4} />;
     }
-    if ((DASHBOARD_MODULE_KEYS as readonly string[]).includes(params.module)) {
-      redirect("/dashboard");
-    }
-    notFound();
+    redirect("/dashboard");
   }
 
   const handleBack = (e: MouseEvent<HTMLAnchorElement>) => {
