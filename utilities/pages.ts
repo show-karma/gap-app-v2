@@ -197,9 +197,9 @@ export const PAGES = {
     SCAN_DETAIL: (id: string) => `/nonprofits/is-ai-ready/scans/${id}`,
     // Website-keyed report URL (ora.ai model): the scanned domain is the path,
     // so a link is constructible from scratch (e.g. /nonprofits/is-ai-ready/
-    // scans/karmahq.xyz). Shares the `scans/[id]` route with SCAN_DETAIL — the
-    // page tells a UUID permalink apart from a domain and renders the right tier.
-    SITE: (domain: string) => `/nonprofits/is-ai-ready/scans/${domain}`,
+    // karmahq.xyz). Served by the `[site]` dynamic segment, which coexists with
+    // the static `scans/` folder (static wins in the App Router).
+    SITE: (domain: string) => `/nonprofits/is-ai-ready/${domain}`,
     PUBLIC_SCORECARD: (slug: string) => `/s/${slug}`,
     OG_IMAGE: (slug: string) => `/api/scanner/og/${slug}`,
   },

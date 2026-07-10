@@ -5,6 +5,7 @@ import {
   isDomainParam,
   isScanIdParam,
 } from "@/src/features/scanner/utils/site";
+import { PAGES } from "@/utilities/pages";
 
 // The `scans/[id]` route param is overloaded: a UUID is a permalink, a domain
 // is the constructible website URL. These helpers are the seam that tells them
@@ -65,5 +66,17 @@ describe("hostnameOf", () => {
   it("round-trips a domainToScanUrl result back to the bare host", () => {
     const url = domainToScanUrl("www.karmahq.xyz");
     expect(hostnameOf(url)).toBe("karmahq.xyz");
+  });
+});
+
+describe("PAGES.SCANNER.SITE", () => {
+  it("builds the clean website-keyed route (no /scans/ segment)", () => {
+    expect(PAGES.SCANNER.SITE("karmahq.xyz")).toBe("/nonprofits/is-ai-ready/karmahq.xyz");
+  });
+
+  it("is the host portion of what hostnameOf yields, so share/submit round-trip", () => {
+    const host = hostnameOf(domainToScanUrl("www.karmahq.xyz"));
+    expect(host).toBe("karmahq.xyz");
+    expect(PAGES.SCANNER.SITE(host ?? "")).toBe("/nonprofits/is-ai-ready/karmahq.xyz");
   });
 });

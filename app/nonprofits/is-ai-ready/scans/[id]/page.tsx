@@ -5,8 +5,6 @@ import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { setPostLoginRedirect, useAuth } from "@/hooks/useAuth";
 import { LoggedInDetail } from "@/src/features/scanner/components/logged-in-detail";
-import { ScannerSiteReport } from "@/src/features/scanner/components/scanner-site-report";
-import { isDomainParam } from "@/src/features/scanner/utils/site";
 import { PAGES } from "@/utilities/pages";
 
 export default function ScanDetailPage() {
@@ -17,18 +15,6 @@ export default function ScanDetailPage() {
   const { push } = useRouter();
   const { authenticated, ready, login, user } = useAuth();
   const userEmail = user?.email?.address ?? undefined;
-
-  // The `[id]` segment is either a scan UUID (this login-gated permalink) or a
-  // website domain (the constructible ora.ai-style URL). A domain resolves the
-  // latest report by website and shows the public grade for free — no login
-  // wall — with the members-only detail layered on for authenticated viewers.
-  if (scanId && isDomainParam(scanId)) {
-    return (
-      <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-12">
-        <ScannerSiteReport domain={scanId} userEmail={userEmail} />
-      </main>
-    );
-  }
 
   const showLogin = ready && !authenticated;
 
