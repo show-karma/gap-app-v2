@@ -10,6 +10,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { PAGES } from "@/utilities/pages";
 import { markFreshScanSubmit } from "../hooks/use-scorecard-by-slug";
 import { useSubmitScan } from "../hooks/use-submit-scan";
+import { hostnameOf } from "../utils/site";
 import { RateLimitModal } from "./rate-limit-modal";
 
 interface RateLimitState {
@@ -69,6 +70,10 @@ export function ScannerSubmitForm({ showExamples = false }: ScannerSubmitFormPro
   // two clicks dispatched in the same tick both pass the `disabled` check and
   // fire duplicate POSTs. This ref blocks the second call immediately.
   const submittingRef = useRef(false);
+  // The normalized URL of the in-flight submit, captured so onSuccess can build
+  // the website-keyed report URL from its host (the mutation result only carries
+  // the slug/status).
+  const submittedUrlRef = useRef<string | null>(null);
 
   const { mutate, isPending } = useSubmitScan({
     onSuccess: (response) => {
@@ -82,7 +87,11 @@ export function ScannerSubmitForm({ showExamples = false }: ScannerSubmitFormPro
         // A report already existed — viewing it is free (no credit spent).
         toast.success("Generating report for this website");
       }
-      push(PAGES.SCANNER.PUBLIC_SCORECARD(response.slug));
+      // Land on the constructible, website-keyed report URL (ora.ai model)
+      // instead of the opaque slug. Fall back to the slug scorecard only if the
+      // submitted host can't be parsed for some reason.
+      const host = hostnameOf(submittedUrlRef.current);
+      push(host ? PAGES.SCANNER.SITE(host) : PAGES.SCANNER.PUBLIC_SCORECARD(response.slug));
     },
     onError: (error) => {
       submittingRef.current = false;
@@ -117,6 +126,7 @@ export function ScannerSubmitForm({ showExamples = false }: ScannerSubmitFormPro
     }
     if (submittingRef.current) return;
     submittingRef.current = true;
+    submittedUrlRef.current = result.value;
     mutate({ url: result.value });
   }
 

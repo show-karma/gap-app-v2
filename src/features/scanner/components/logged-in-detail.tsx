@@ -27,7 +27,7 @@ import { useScan } from "../hooks/use-scan";
 import { markFreshScanSubmit } from "../hooks/use-scorecard-by-slug";
 import type { CategoryScore, DetailScorecardPayload, ScanGrade } from "../types";
 import { BAND_FG, GRADE_LABEL, gradeBand } from "../utils/labels";
-import { titleFromUrl } from "../utils/site";
+import { hostnameOf, titleFromUrl } from "../utils/site";
 import { CategoryBar } from "./category-bar";
 import { ContactCta } from "./contact-cta";
 import { ErrorState } from "./error-state";
@@ -383,8 +383,13 @@ export function LoggedInDetail({ scanId, userEmail }: LoggedInDetailProps) {
 
   function handleShare() {
     if (typeof window === "undefined") return;
-    const href = data?.slug
-      ? `${window.location.origin}${PAGES.SCANNER.PUBLIC_SCORECARD(data.slug)}`
+    // Share the constructible, website-keyed URL (ora.ai model) so the link is
+    // recognizable and reconstructable. Fall back to the current URL only if the
+    // scanned host can't be parsed. `copyToClipboard` never rejects (it catches
+    // internally and resolves false), so the `.then` handles both outcomes.
+    const host = hostnameOf(data?.url);
+    const href = host
+      ? `${window.location.origin}${PAGES.SCANNER.SITE(host)}`
       : window.location.href;
     copyToClipboard(href).then((ok) => {
       if (!ok) return;
