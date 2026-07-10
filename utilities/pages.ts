@@ -52,9 +52,10 @@ export const PAGES = {
     ONBOARDING: `/nonprofit-research/onboarding`,
     REPORT: (reportId: string) => `/nonprofit-research/${reportId}`,
     SHARED: (token: string) => `/nonprofit-research/shared/${token}`,
-    // Staff-only admin overview (DEV-467).
+    // Staff-only admin overview. Reports have no admin route — staff open
+    // the regular REPORT page; the API grants staff an unscoped read on
+    // the same endpoint.
     ADMIN: `/admin/nonprofit-research`,
-    ADMIN_REPORT: (reportId: string) => `/admin/nonprofit-research/${reportId}`,
     // Advisor's one-per-advisor diligence question template editor (DEV-428).
     DILIGENCE_TEMPLATE: `/nonprofit-research/diligence-template`,
     // Public nonprofit response page — the secure email link opens this.

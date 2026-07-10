@@ -16,11 +16,11 @@ interface MastheadProps {
   surfacedCount: number;
   isTerminal: boolean;
   /**
-   * "shared" hides advisor-only affordances (the dashboard back-link and the
-   * share-token controls) that a donor can't use, while keeping the masthead
-   * visually identical otherwise.
+   * Only "advisor" (the report owner) gets the dashboard back-link and the
+   * weights/share-token controls — those are owner-only writes. "staff" and
+   * "shared" keep the masthead visually identical otherwise.
    */
-  variant?: "advisor" | "shared";
+  variant?: "advisor" | "shared" | "staff";
 }
 
 /**
@@ -38,7 +38,7 @@ export function Masthead({
   isTerminal,
   variant = "advisor",
 }: MastheadProps) {
-  const isShared = variant === "shared";
+  const isOwner = variant === "advisor";
   const issuedAt = report.fastCompletedAt ?? report.completedAt ?? report.createdAt;
   const issuedLabel = formatIssueDate(issuedAt);
   const updatedAt = report.completedAt ?? report.fastCompletedAt ?? report.createdAt;
@@ -54,7 +54,7 @@ export function Masthead({
       data-section="masthead"
     >
       <div className="min-w-0">
-        {isShared ? null : (
+        {isOwner ? (
           <Link
             href={PAGES.DONOR_RESEARCH.INDEX}
             className={`${briefDisplay.className} inline-flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-[0.28em] text-muted-foreground transition-colors hover:text-foreground`}
@@ -62,7 +62,7 @@ export function Masthead({
             <ArrowLeft className="h-3 w-3" aria-hidden />
             Research dashboard
           </Link>
-        )}
+        ) : null}
 
         <div
           className={`${briefDisplay.className} mt-10 flex flex-wrap items-baseline gap-x-3 gap-y-1 text-[10px] uppercase tracking-[0.34em] text-muted-foreground`}
@@ -107,7 +107,7 @@ export function Masthead({
         </div>
       </div>
 
-      {isTerminal && !isShared ? (
+      {isTerminal && isOwner ? (
         <div className="flex flex-wrap items-start justify-end gap-2 sm:justify-self-end">
           {report.weights && report.candidates.length > 0 ? <WeightsPanel report={report} /> : null}
           <ShareTokenControls

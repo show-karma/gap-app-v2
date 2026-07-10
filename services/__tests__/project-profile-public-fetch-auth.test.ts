@@ -28,9 +28,11 @@ vi.mock("@/utilities/indexer", () => ({
     V2: {
       PROJECTS: {
         GRANTS: (slug: string) => `/v2/projects/${slug}/grants`,
-        IMPACTS: (slug: string) => `/v2/projects/${slug}/impacts`,
         UPDATES: (slug: string) => `/v2/projects/${slug}/updates`,
       },
+    },
+    PROJECT: {
+      IMPACTS: (slug: string) => `/projects/${slug}/impacts`,
     },
   },
 }));
@@ -61,7 +63,8 @@ describe("public project profile fetch auth", () => {
     await getProjectImpacts("my-project", { isAuthorized: false });
 
     const [url, opts] = mockApiGet.mock.calls[0];
-    expect(url).toBe("/v2/projects/my-project/impacts");
+    // TEMP V1 bridge (gap-indexer#2178) — impacts uses INDEXER.PROJECT.IMPACTS.
+    expect(url).toBe("/projects/my-project/impacts");
     expect(opts?.isAuthorized).toBe(false);
   });
 

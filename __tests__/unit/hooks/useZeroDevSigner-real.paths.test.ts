@@ -1,17 +1,20 @@
 /**
- * @file Real hook tests for useZeroDevSigner
- * @description Tests the actual useZeroDevSigner hook by importing from its real source path
- *   (bypassing the vitest alias that redirects @/hooks/useZeroDevSigner to a mock).
- *   Mocks its dependencies instead: privy-bridge-context, gasless utilities, wagmi, wallet-helpers.
+ * @file Real hook tests for useZeroDevSigner — signer-selection paths
+ * @description Split from useZeroDevSigner-real.test.ts to stay under the
+ *   per-file size limit. Covers wallet detection, attestationAddress,
+ *   isGaslessAvailable, and the getAttestationSigner happy paths (gasless,
+ *   gasless fallback, embedded-direct on unsupported chains). The no-wallet /
+ *   hydration / signerStatus / smoke coverage lives in the sibling
+ *   `useZeroDevSigner-real.hydration.test.ts`.
  *
- *   The @/utilities/gasless alias is already resolved to __mocks__/utilities/gasless/index.ts
- *   by vitest.config.ts, so the real hook's gasless imports get the mock automatically.
+ *   Tests the actual useZeroDevSigner hook by importing from its real source
+ *   path (bypassing the vitest alias that redirects @/hooks/useZeroDevSigner to
+ *   a mock). Mocks its dependencies instead: privy-bridge-context, gasless
+ *   utilities, wagmi, wallet-helpers.
  *
- *   Unlike the original suite, the wallet + ethers mocks here model an actual
- *   *chain identity* and the Privy `switchChain` propagation race. This is the
- *   gap that let GAP-FRONTEND-1T9 ("Network mainnet not supported.") ship: the
- *   old mocks made `switchChain` always succeed and gave signers no chain, so a
- *   signer stuck on chain 1 was impossible to express in a test.
+ *   The @/utilities/gasless alias is already resolved to
+ *   __mocks__/utilities/gasless/index.ts by vitest.config.ts, so the real
+ *   hook's gasless imports get the mock automatically.
  */
 
 import { act, renderHook } from "@testing-library/react";
@@ -30,6 +33,10 @@ const {
   const mockUseChainId = vi.fn().mockReturnValue(10);
   const mockPrivyState = {
     ready: true as boolean,
+    // Defaults to true so existing tests (wallets present at render time)
+    // resolve immediately instead of waiting out WALLET_READY_TIMEOUT_MS.
+    // Tests for the hydration-wait behavior set this to false explicitly.
+    walletsReady: true as boolean,
     user: null as MockUser | null,
     wallets: [] as MockWallet[],
   };
@@ -60,6 +67,7 @@ vi.mock("wagmi", () => ({
 vi.mock("@/contexts/privy-bridge-context", () => ({
   usePrivyBridge: vi.fn(() => ({
     ready: mockPrivyState.ready,
+    walletsReady: mockPrivyState.walletsReady,
     user: mockPrivyState.user,
     wallets: mockPrivyState.wallets,
   })),
@@ -131,7 +139,6 @@ import { useZeroDevSigner } from "../../../hooks/useZeroDevSigner";
 // Shared chain-aware fixtures (see zerodev-signer-test-utils.ts)
 // ---------------------------------------------------------------------------
 import {
-  addressOf,
   chainIdOf,
   createEmbeddedWallet,
   createExternalWallet,
@@ -189,10 +196,11 @@ function enableGaslessOnChain(chainId: number) {
 // Tests
 // ---------------------------------------------------------------------------
 
-describe("useZeroDevSigner (real hook)", () => {
+describe("useZeroDevSigner (real hook) — signer-selection paths", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockPrivyState.ready = true;
+    mockPrivyState.walletsReady = true;
     mockPrivyState.user = null;
     mockPrivyState.wallets = [];
     mockUseChainId.mockReturnValue(10);
@@ -219,6 +227,13 @@ describe("useZeroDevSigner (real hook)", () => {
         getNetwork: vi.fn().mockResolvedValue({ chainId: 1n }),
       },
     }));
+  });
+
+  afterEach(() => {
+    // Some tests below install fake timers to fast-forward the
+    // WALLET_READY_TIMEOUT_MS wait — always restore real timers so it can't
+    // leak into a later test.
+    vi.useRealTimers();
   });
 
   // =========================================================================
@@ -499,186 +514,6 @@ describe("useZeroDevSigner (real hook)", () => {
         params: [{ chainId: "0x3e7" }],
       });
       expect(embeddedWallet.switchChain).not.toHaveBeenCalled();
-    });
-  });
-
-  // =========================================================================
-  // getAttestationSigner — Case 3: External wallet user
-  // =========================================================================
-
-  describe("getAttestationSigner — external wallet user", () => {
-    it("should use external wallet via Privy provider (primary path)", async () => {
-      setupExternalWalletUser();
-      const mockCreatedClient = { account: { address: EXTERNAL_WALLET_ADDRESS } };
-      mockViemCreateWalletClient.mockReturnValue(mockCreatedClient);
-      const mockSigner = { getAddress: vi.fn().mockResolvedValue(EXTERNAL_WALLET_ADDRESS) };
-      mockWalletClientToSigner.mockResolvedValue(mockSigner);
-
-      const { result } = renderHook(() => useZeroDevSigner());
-
-      let signer: unknown;
-      await act(async () => {
-        signer = await result.current.getAttestationSigner(10);
-      });
-
-      expect(signer).toBe(mockSigner);
-      // Primary path uses Privy's provider directly, not wagmi's safeGetWalletClient
-      expect(mockSafeGetWalletClient).not.toHaveBeenCalled();
-      expect(mockWalletClientToSigner).toHaveBeenCalledWith(mockCreatedClient);
-      // Should switch chain before creating client
-      expect(mockPrivyState.wallets[0].switchChain).toHaveBeenCalledWith(10);
-    });
-
-    it("should throw if safeGetWalletClient returns an error", async () => {
-      setupExternalWalletUser();
-      // Force the Privy-first path to fail so it falls back to wagmi.
-      mockPrivyState.wallets[0].getEthereumProvider = vi
-        .fn()
-        .mockRejectedValue(new Error("Provider not available"));
-      mockSafeGetWalletClient.mockResolvedValue({
-        walletClient: null,
-        error: "Connection failed",
-      });
-
-      const { result } = renderHook(() => useZeroDevSigner());
-
-      await act(async () => {
-        await expect(result.current.getAttestationSigner(10)).rejects.toThrow(
-          "Failed to get wallet client: Connection failed"
-        );
-      });
-    });
-
-    it("should throw if walletClientToSigner returns null", async () => {
-      setupExternalWalletUser();
-      mockPrivyState.wallets[0].getEthereumProvider = vi
-        .fn()
-        .mockRejectedValue(new Error("Provider not available"));
-      mockSafeGetWalletClient.mockResolvedValue({
-        walletClient: { account: {}, chain: {}, transport: {} },
-        error: null,
-      });
-      mockWalletClientToSigner.mockResolvedValue(null);
-
-      const { result } = renderHook(() => useZeroDevSigner());
-
-      await act(async () => {
-        await expect(result.current.getAttestationSigner(10)).rejects.toThrow(
-          "Failed to create signer from wallet client"
-        );
-      });
-    });
-  });
-
-  // =========================================================================
-  // getAttestationSigner — No wallet at all
-  // =========================================================================
-
-  describe("getAttestationSigner — no wallet", () => {
-    it("should throw 'No wallet available for signing' when no wallets exist", async () => {
-      mockPrivyState.user = { linkedAccounts: [{ type: "wallet" }] };
-      mockPrivyState.wallets = [];
-
-      const { result } = renderHook(() => useZeroDevSigner());
-
-      await act(async () => {
-        await expect(result.current.getAttestationSigner(10)).rejects.toThrow(
-          "No wallet available for signing"
-        );
-      });
-    });
-
-    it("should throw when user is null", async () => {
-      mockPrivyState.user = null;
-      mockPrivyState.wallets = [];
-
-      const { result } = renderHook(() => useZeroDevSigner());
-
-      await act(async () => {
-        await expect(result.current.getAttestationSigner(10)).rejects.toThrow(
-          "No wallet available for signing"
-        );
-      });
-    });
-  });
-
-  // =========================================================================
-  // Smoke tests — broad "does the basic flow work end to end" coverage
-  // =========================================================================
-
-  describe("smoke tests", () => {
-    it("email + gasless: returns a usable signer on the requested chain", async () => {
-      setupEmailUser();
-      enableGaslessOnChain(10);
-
-      const { result } = renderHook(() => useZeroDevSigner());
-
-      let signer: unknown;
-      await act(async () => {
-        signer = await result.current.getAttestationSigner(10);
-      });
-
-      expect(signer).toBeDefined();
-      expect(await addressOf(signer)).toBe(EMBEDDED_WALLET_ADDRESS);
-      expect(await chainIdOf(signer)).toBe(10);
-    });
-
-    it("email + unsupported chain: returns a usable embedded-direct signer", async () => {
-      setupEmailUser();
-      (isChainSupportedForGasless as ReturnType<typeof vi.fn>).mockReturnValue(false);
-
-      const { result } = renderHook(() => useZeroDevSigner());
-
-      let signer: unknown;
-      await act(async () => {
-        signer = await result.current.getAttestationSigner(999);
-      });
-
-      expect(signer).toBeDefined();
-      expect(await chainIdOf(signer)).toBe(999);
-    });
-
-    it("external wallet: returns a usable signer", async () => {
-      setupExternalWalletUser();
-      mockViemCreateWalletClient.mockReturnValue({ account: { address: EXTERNAL_WALLET_ADDRESS } });
-      const mockSigner = { getAddress: vi.fn().mockResolvedValue(EXTERNAL_WALLET_ADDRESS) };
-      mockWalletClientToSigner.mockResolvedValue(mockSigner);
-
-      const { result } = renderHook(() => useZeroDevSigner());
-
-      let signer: unknown;
-      await act(async () => {
-        signer = await result.current.getAttestationSigner(10);
-      });
-
-      expect(signer).toBeDefined();
-      expect(await addressOf(signer)).toBe(EXTERNAL_WALLET_ADDRESS);
-    });
-
-    it("Google + gasless: returns a usable signer on the requested chain", async () => {
-      setupGoogleUser();
-      enableGaslessOnChain(42161);
-
-      const { result } = renderHook(() => useZeroDevSigner());
-
-      let signer: unknown;
-      await act(async () => {
-        signer = await result.current.getAttestationSigner(42161);
-      });
-
-      expect(signer).toBeDefined();
-      expect(await chainIdOf(signer)).toBe(42161);
-    });
-
-    it("hook exposes a stable shape", () => {
-      setupEmailUser();
-      const { result } = renderHook(() => useZeroDevSigner());
-
-      expect(typeof result.current.getAttestationSigner).toBe("function");
-      expect(typeof result.current.isGaslessAvailable).toBe("boolean");
-      expect(typeof result.current.hasEmbeddedWallet).toBe("boolean");
-      expect(typeof result.current.hasExternalWallet).toBe("boolean");
-      expect(result.current.attestationAddress).toBe(EMBEDDED_WALLET_ADDRESS);
     });
   });
 });
