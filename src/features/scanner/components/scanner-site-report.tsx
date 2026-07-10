@@ -90,7 +90,7 @@ function NoReportForSite({ domain, url }: { readonly domain: string; readonly ur
 export function ScannerSiteReport({ domain }: ScannerSiteReportProps) {
   const url = domainToScanUrl(domain);
   const { data, isError, isPending, refetch } = useScanByUrl(url);
-  const { ready, authenticated, user } = useAuth();
+  const { authenticated, user } = useAuth();
   const userEmail = user?.email?.address ?? undefined;
 
   if (!url) {
@@ -102,7 +102,7 @@ export function ScannerSiteReport({ domain }: ScannerSiteReportProps) {
     );
   }
 
-  if (!ready || isPending) {
+  if (isPending) {
     return <ReportGenerating url={url} />;
   }
 

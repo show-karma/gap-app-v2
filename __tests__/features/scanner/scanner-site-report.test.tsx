@@ -82,6 +82,15 @@ describe("ScannerSiteReport", () => {
     expect(screen.getByRole("button", { name: /scan this site/i })).toBeInTheDocument();
   });
 
+  it("offers to scan on a no-report domain even while Privy auth is still loading", () => {
+    mockAuthState.ready = false;
+    mockHook.mockReturnValue(hookState({ data: null }));
+    render(<ScannerSiteReport domain="karmahq.xyz" />);
+
+    expect(screen.getByRole("button", { name: /scan this site/i })).toBeInTheDocument();
+    expect(screen.queryByLabelText(/generating report/i)).not.toBeInTheDocument();
+  });
+
   it("keeps showing progress for a non-terminal scan", () => {
     mockHook.mockReturnValue(hookState({ data: scan({ status: "running_agent" }) }));
     render(<ScannerSiteReport domain="karmahq.xyz" />);
