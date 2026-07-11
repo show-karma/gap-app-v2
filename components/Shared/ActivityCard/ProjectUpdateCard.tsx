@@ -71,7 +71,7 @@ export const ProjectUpdateCard: FC<ProjectUpdateCardProps> = ({ update, index, i
   const canShare = !!update.uid;
 
   const handleShare = () => {
-    const url = `${window.location.origin}${PAGES.PROJECT.UPDATES(
+    const url = `${window.location.origin}${PAGES.PROJECT.OVERVIEW(
       project?.details?.slug || project?.uid || ""
     )}`;
     void copyToClipboard(url, "Update link copied to clipboard");

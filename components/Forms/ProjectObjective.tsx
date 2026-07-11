@@ -153,7 +153,7 @@ export const ProjectObjectiveForm = ({
                   setTimeout(() => {
                     dismiss();
                     router.push(
-                      PAGES.PROJECT.UPDATES(project?.details?.slug || project?.uid || "")
+                      PAGES.PROJECT.OVERVIEW(project?.details?.slug || project?.uid || "")
                     );
                   }, 1500);
                 }

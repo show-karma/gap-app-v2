@@ -255,16 +255,20 @@ describe("useGrantCompletion", () => {
 
       expect(mockSetupChainAndWallet).toHaveBeenCalled();
 
-      expect(mockShowError).toHaveBeenCalledWith(
-        "Please switch to the correct network and try again"
-      );
+      // Error feedback is now surfaced centrally by setupChainAndWallet (#1821);
+      // this flow no longer double-toasts. It just stops and resets state.
       expect(mockFetchGrantInstance).not.toHaveBeenCalled();
       expect(result.current.isCompleting).toBe(false);
     });
   });
 
   describe("Validation", () => {
-    it("should not proceed without address", async () => {
+    it("proceeds despite a missing wagmi address — signing uses the Privy signer, not useAccount().address (#1821)", async () => {
+      // Regression for #1821: wagmi useAccount().address lags the Privy signer,
+      // so gating the write on it silently blocked ready users. The guard no
+      // longer checks address — the flow must reach setupChainAndWallet, where
+      // a genuinely unavailable signer surfaces a typed error (never a silent
+      // "connect your wallet" no-op keyed on the wrong identity).
       mockUseAccount.mockReturnValue({ chain: { id: 1 }, address: undefined });
 
       const { result } = renderHook(() => useGrantCompletion({}));
@@ -273,8 +277,8 @@ describe("useGrantCompletion", () => {
         await result.current.completeGrant(mockGrant, mockProject);
       });
 
-      expect(mockShowError).toHaveBeenCalledWith("Please connect your wallet");
-      expect(mockSetupChainAndWallet).not.toHaveBeenCalled();
+      expect(mockSetupChainAndWallet).toHaveBeenCalled();
+      expect(mockShowError).not.toHaveBeenCalledWith("Please connect your wallet");
     });
 
     it("should not proceed without project", async () => {
@@ -284,7 +288,7 @@ describe("useGrantCompletion", () => {
         await result.current.completeGrant(mockGrant, null as any);
       });
 
-      expect(mockShowError).toHaveBeenCalledWith("Please connect your wallet");
+      expect(mockShowError).toHaveBeenCalledWith("This grant is still loading. Please try again.");
       expect(mockSetupChainAndWallet).not.toHaveBeenCalled();
     });
 
@@ -295,7 +299,7 @@ describe("useGrantCompletion", () => {
         await result.current.completeGrant(null as any, mockProject);
       });
 
-      expect(mockShowError).toHaveBeenCalledWith("Please connect your wallet");
+      expect(mockShowError).toHaveBeenCalledWith("This grant is still loading. Please try again.");
       expect(mockSetupChainAndWallet).not.toHaveBeenCalled();
     });
   });
