@@ -186,14 +186,14 @@ describe("ProjectsGrid", () => {
     expect(screen.getByText("No projects found")).toBeInTheDocument();
   });
 
-  it("renders a spotlight without an empty project-block grid for one project", () => {
+  it("renders a single project as a standard project block", () => {
     render(<ProjectsGrid projects={[makeProject("only-project")]} />);
 
-    expect(screen.getByText("Project spotlight")).toBeInTheDocument();
-    expect(screen.queryByTestId("project-block")).not.toBeInTheDocument();
+    expect(screen.queryByText("Project spotlight")).not.toBeInTheDocument();
+    expect(screen.getByTestId("project-block")).toBeInTheDocument();
   });
 
-  it("renders a spotlight banner followed by square-image project blocks", () => {
+  it("renders every project as an equal square-image block", () => {
     const projects = [
       makeProject("featured", {
         details: {
@@ -218,9 +218,9 @@ describe("ProjectsGrid", () => {
 
     render(<ProjectsGrid projects={projects} />);
 
-    expect(screen.getByText("Project spotlight")).toBeInTheDocument();
+    expect(screen.queryByText("Project spotlight")).not.toBeInTheDocument();
     expect(screen.getAllByText("Featured Project")).toHaveLength(1);
-    expect(screen.getByRole("link", { name: /view featured project/i })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: /featured project/i })).toHaveAttribute(
       "href",
       "/project/featured-project"
     );
@@ -230,7 +230,8 @@ describe("ProjectsGrid", () => {
     );
     expect(screen.queryByText("Infrastructure")).not.toBeInTheDocument();
     expect(screen.queryByText("Storage")).not.toBeInTheDocument();
-    expect(screen.getAllByTestId("project-block")).toHaveLength(2);
+    expect(screen.getAllByTestId("project-block")).toHaveLength(3);
+    expect(screen.queryByText(/^Added /)).not.toBeInTheDocument();
     expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
   });
 });

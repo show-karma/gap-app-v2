@@ -1,9 +1,8 @@
-import { ArrowUpRightIcon, CalendarDaysIcon } from "lucide-react";
+import { ArrowUpRightIcon } from "lucide-react";
 import Link from "next/link";
 import pluralize from "pluralize";
 import { memo } from "react";
 import type { CommunityProject } from "@/types/v2/community";
-import { formatDate } from "@/utilities/formatDate";
 import { PAGES } from "@/utilities/pages";
 import { MarkdownPreview } from "../Utilities/MarkdownPreview";
 import { ProjectVisual } from "./ProjectVisual";
@@ -15,8 +14,6 @@ interface ProjectBlockProps {
 function ProjectBlockComponent({ project }: ProjectBlockProps) {
   const title = project.details.title || project.uid;
   const projectPath = PAGES.PROJECT.OVERVIEW(project.details.slug || project.uid);
-  const createdAt = formatDate(project.createdAt);
-
   return (
     <article
       data-testid="project-block"
@@ -61,12 +58,6 @@ function ProjectBlockComponent({ project }: ProjectBlockProps) {
             {project.numUpdates > 0 ? (
               <span>
                 {project.numUpdates} {pluralize("update", project.numUpdates)}
-              </span>
-            ) : null}
-            {createdAt ? (
-              <span className="inline-flex items-center gap-1.5">
-                <CalendarDaysIcon aria-hidden className="size-3.5" />
-                Added {createdAt}
               </span>
             ) : null}
           </div>
