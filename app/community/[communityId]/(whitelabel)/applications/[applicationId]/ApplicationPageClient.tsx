@@ -301,6 +301,7 @@ export function ApplicationPageClient({
             application={app}
             program={program}
             programName={programName}
+            communityId={communityId}
             viewerRole={viewerRole}
             canViewApplicant={canViewApplicant}
             hasMilestones={hasMilestones}
