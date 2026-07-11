@@ -102,4 +102,41 @@ describe("getCommunityAdminsBatch", () => {
     expect(result.find((r) => r.id === uid(1))?.status).toBe("ok");
     expect(result.find((r) => r.id === uid(2))?.status).toBe("community_not_found");
   });
+
+  it("should_retry_a_transient_chunk_failure_once_and_recover", async () => {
+    let calls = 0;
+    mockFetchData.mockImplementation((_endpoint, _method, axiosData) => {
+      const uids = (axiosData as { communityUIDs: string[] }).communityUIDs;
+      calls += 1;
+      if (calls === 1) {
+        return Promise.resolve([null, "transient network error", null, 502]);
+      }
+      return Promise.resolve([{ data: uids.map(okItem) }, null, null, 200]);
+    });
+
+    const result = await getCommunityAdminsBatch([uid(1)]);
+
+    expect(mockFetchData).toHaveBeenCalledTimes(2);
+    expect(result.find((r) => r.id === uid(1))?.status).toBe("ok");
+  });
+
+  it("should_not_retry_and_should_degrade_when_a_chunk_times_out", async () => {
+    vi.useFakeTimers();
+    // Resolves only when its abort signal fires — simulates a hung upstream.
+    mockFetchData.mockImplementation((...args: unknown[]) => {
+      const signal = args[8] as AbortSignal;
+      return new Promise((_resolve, reject) => {
+        signal.addEventListener("abort", () => reject(new Error("aborted")));
+      });
+    });
+
+    const promise = getCommunityAdminsBatch([uid(1)]);
+    await vi.advanceTimersByTimeAsync(25_000);
+    const result = await promise;
+
+    expect(mockFetchData).toHaveBeenCalledTimes(1);
+    expect(result.find((r) => r.id === uid(1))?.status).toBe("subgraph_unavailable");
+
+    vi.useRealTimers();
+  });
 });
