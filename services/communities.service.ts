@@ -75,8 +75,11 @@ export const getCommunities = async (options?: {
 // Split into small chunks, each with its own abort timeout, so a hung chunk
 // is dropped to "unavailable" for its communities while the rest resolve fast.
 const ADMINS_BATCH_CHUNK_SIZE = 20;
-const ADMINS_BATCH_CHUNK_TIMEOUT_MS = 15_000;
-const ADMINS_BATCH_CHUNK_CONCURRENCY = 6;
+// Sits above the backend's own worst case (10s subgraph timeout + one retry ≈
+// 20s) so a slow-but-working chunk isn't aborted and falsely marked unavailable.
+const ADMINS_BATCH_CHUNK_TIMEOUT_MS = 25_000;
+const ADMINS_BATCH_CHUNK_CONCURRENCY = 4;
+const ADMINS_BATCH_CHUNK_MAX_ATTEMPTS = 2;
 
 const chunkArray = <T>(items: T[], size: number): T[][] => {
   const chunks: T[][] = [];
@@ -87,39 +90,53 @@ const chunkArray = <T>(items: T[], size: number): T[][] => {
 };
 
 /**
- * Fetches admins for a single ≤200-UID chunk with an abort timeout. Rejects on
- * transport error, empty response, or timeout so the caller can degrade the
- * chunk's communities to "unavailable".
+ * Fetches admins for a single ≤200-UID chunk with an abort timeout, retrying
+ * once on a transient failure. A timeout/abort is NOT retried — it signals a
+ * genuinely slow/unreachable upstream, so retrying would only double the wait
+ * before the caller degrades the chunk's communities to "unavailable". Rejects
+ * on transport error, empty response, or timeout.
  */
 const fetchCommunityAdminsChunk = async (communityUIDs: string[]): Promise<CommunityAdmin[]> => {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), ADMINS_BATCH_CHUNK_TIMEOUT_MS);
+  let lastError: unknown;
 
-  try {
-    const [adminsResponse, adminsError] = await fetchData<CommunityAdminsBatchResponse>(
-      INDEXER.COMMUNITY.ADMINS_BATCH(),
-      "POST",
-      { communityUIDs },
-      {},
-      {},
-      true,
-      false,
-      undefined,
-      controller.signal
-    );
+  for (let attempt = 0; attempt < ADMINS_BATCH_CHUNK_MAX_ATTEMPTS; attempt += 1) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), ADMINS_BATCH_CHUNK_TIMEOUT_MS);
 
-    if (!adminsResponse?.data) {
-      throw new Error(adminsError || "Empty batch admins response");
+    try {
+      const [adminsResponse, adminsError] = await fetchData<CommunityAdminsBatchResponse>(
+        INDEXER.COMMUNITY.ADMINS_BATCH(),
+        "POST",
+        { communityUIDs },
+        {},
+        {},
+        true,
+        false,
+        undefined,
+        controller.signal
+      );
+
+      if (!adminsResponse?.data) {
+        throw new Error(adminsError || "Empty batch admins response");
+      }
+
+      return adminsResponse.data.map((item) => ({
+        id: item.communityUID,
+        admins: item.admins,
+        status: item.status,
+      }));
+    } catch (error) {
+      lastError = error;
+      // Don't retry a timeout — the upstream is slow/unreachable, not flaky.
+      if (controller.signal.aborted) break;
+    } finally {
+      clearTimeout(timeout);
     }
-
-    return adminsResponse.data.map((item) => ({
-      id: item.communityUID,
-      admins: item.admins,
-      status: item.status,
-    }));
-  } finally {
-    clearTimeout(timeout);
   }
+
+  throw lastError instanceof Error
+    ? lastError
+    : new Error("Failed to fetch community admins chunk");
 };
 
 /**
