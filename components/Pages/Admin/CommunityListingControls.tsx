@@ -1,6 +1,6 @@
 "use client";
 import debounce from "lodash.debounce";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { Skeleton } from "@/components/Utilities/Skeleton";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -11,6 +11,13 @@ import { useCommunityConfig, useCommunityConfigMutation } from "@/hooks/useCommu
 interface CommunityListingControlsProps {
   slug: string;
   communityName: string;
+}
+
+/** Parse a rank input into a non-negative integer, or null if invalid. */
+function parseRank(value: string): number | null {
+  const parsed = Number.parseInt(value, 10);
+  if (Number.isNaN(parsed) || parsed < 0) return null;
+  return parsed;
 }
 
 /**
@@ -24,20 +31,21 @@ export function CommunityListingControls({ slug, communityName }: CommunityListi
   const { data: config, isLoading } = useCommunityConfig(slug);
   const mutation = useCommunityConfigMutation();
 
-  // BE default: a community with no config row (or `public` unset) is public.
-  // Mirror the indexer directory filter `config.public !== false`.
+  // Derived during render — never copied into state (a derived-state effect
+  // would cost an extra render per keystroke and per server sync).
+  // BE default: no config row (or `public` unset) = public. Mirror the
+  // indexer directory filter `config.public !== false`.
   const isPublic = config?.public !== false;
   const serverRank = config?.rank ?? 0;
 
-  const [localRank, setLocalRank] = useState(serverRank);
+  // The rank field is uncontrolled: typing writes straight to the DOM (no
+  // re-render), and the debounced save reads the parsed value. `defaultValue`
+  // re-seeds only on remount, which is fine — the only source that changes
+  // `serverRank` is this component's own save, which echoes what was typed.
+  const rankInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    setLocalRank(serverRank);
-  }, [serverRank]);
-
-  // Snapshot the latest values so the debounced commit is created once and
-  // never captures stale closures (the mutation object is a new identity each
-  // render — porting the old useEffect-in-deps debounce would recreate it).
+  // Live snapshot so the once-created debounced commit never captures stale
+  // values (the mutation object gets a new identity on every render).
   const latest = useRef({ slug, serverRank, isPublic, mutate: mutation.mutate });
   latest.current = { slug, serverRank, isPublic, mutate: mutation.mutate };
 
@@ -55,17 +63,15 @@ export function CommunityListingControls({ slug, communityName }: CommunityListi
   useEffect(() => () => commitRank.cancel(), [commitRank]);
 
   const handleRankChange = (value: string) => {
-    const parsed = Number.parseInt(value, 10);
-    const next = Number.isNaN(parsed) ? 0 : parsed;
-    if (next < 0) return;
-    setLocalRank(next);
-    commitRank(next);
+    const rank = parseRank(value);
+    if (rank !== null) commitRank(rank);
   };
 
   const handlePublicChange = (checked: boolean) => {
     // Public toggles save immediately and carry any in-progress rank edit.
     commitRank.cancel();
-    mutation.mutate({ slug, config: { public: checked, rank: localRank } });
+    const typed = parseRank(rankInputRef.current?.value ?? "");
+    mutation.mutate({ slug, config: { public: checked, rank: typed ?? serverRank } });
   };
 
   const publicCheckboxId = `community-public-${slug}`;
@@ -102,10 +108,11 @@ export function CommunityListingControls({ slug, communityName }: CommunityListi
         </Label>
         <div className="flex items-center gap-2">
           <Input
+            ref={rankInputRef}
             id={rankInputId}
             type="number"
             min={0}
-            value={localRank}
+            defaultValue={serverRank}
             onChange={(e) => handleRankChange(e.target.value)}
             disabled={mutation.isPending}
             className="w-24"
