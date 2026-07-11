@@ -128,7 +128,6 @@ export const ContributorProfileDialog: FC = () => {
   const isAllowed = isConnected && isAuth;
 
   const onSubmit = async (data: SchemaType) => {
-    if (!address) return;
     if (!isGlobal && !project) return;
     try {
       setIsLoading(true);

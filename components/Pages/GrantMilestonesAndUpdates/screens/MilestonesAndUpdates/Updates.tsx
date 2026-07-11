@@ -63,7 +63,7 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
   const { grants } = useProjectGrants(project?.uid || "");
 
   const undoMilestoneCompletion = async () => {
-    if (!address || !project) return;
+    if (!project) return;
     setIsDeleting(true);
     startAttestation("Revoking milestone completion...");
     try {
