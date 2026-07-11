@@ -380,7 +380,7 @@ export default function CommunitiesToAdminPage() {
                       community={community}
                       matchingCommunityAdmin={communityAdminsById.get(community.uid)}
                       canManageAdmins={isSuperAdminOrOwner || isAdminOfThisCommunity}
-                      canManageConfig={isOwner}
+                      canManageConfig={isSuperAdminOrOwner}
                       isExpanded={expandedAdmins.has(community.uid)}
                       onToggleExpansion={toggleAdminExpansion}
                       adminProfiles={adminProfiles}
