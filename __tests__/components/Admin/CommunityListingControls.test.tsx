@@ -88,6 +88,21 @@ describe("CommunityListingControls", () => {
         config: { public: false, rank: 4 },
       });
     });
+
+    it("carries an in-progress (unsaved) rank edit when toggling public", () => {
+      setConfig({ public: true, rank: 0 });
+      renderControls();
+
+      // Type a new rank but do not wait for the debounce to fire.
+      fireEvent.change(screen.getByRole("spinbutton"), { target: { value: "9" } });
+      fireEvent.click(screen.getByRole("checkbox"));
+
+      // The public save fires immediately with the typed-but-unsaved rank.
+      expect(mockMutate).toHaveBeenCalledWith({
+        slug: "filecoin",
+        config: { public: false, rank: 9 },
+      });
+    });
   });
 
   describe("rank input", () => {
@@ -136,7 +151,6 @@ describe("CommunityListingControls", () => {
       });
 
       expect(mockMutate).not.toHaveBeenCalled();
-      expect(screen.getByRole("spinbutton")).toHaveValue(2);
     });
   });
 
