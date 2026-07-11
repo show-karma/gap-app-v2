@@ -89,7 +89,8 @@ describe("CommunityListingControls", () => {
       });
     });
 
-    it("carries an in-progress (unsaved) rank edit when toggling public", () => {
+    it("cancels a pending debounced rank save and carries the edited rank", () => {
+      vi.useFakeTimers();
       setConfig({ public: true, rank: 0 });
       renderControls();
 
@@ -98,10 +99,19 @@ describe("CommunityListingControls", () => {
       fireEvent.click(screen.getByRole("checkbox"));
 
       // The public save fires immediately with the typed-but-unsaved rank.
+      expect(mockMutate).toHaveBeenCalledTimes(1);
       expect(mockMutate).toHaveBeenCalledWith({
         slug: "filecoin",
         config: { public: false, rank: 9 },
       });
+
+      // The pending rank debounce was cancelled — no second save fires.
+      act(() => {
+        vi.advanceTimersByTime(800);
+      });
+      expect(mockMutate).toHaveBeenCalledTimes(1);
+
+      vi.useRealTimers();
     });
   });
 
