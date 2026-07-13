@@ -44,6 +44,18 @@ describe("post schema — publishedAt", () => {
     expect(field.initialValue).toBeUndefined();
   });
 
+  it("requires the cover image to have an uploaded asset, not just alt text", () => {
+    const cover = getField("coverImage") as SchemaField & {
+      validation?: (rule: unknown) => unknown;
+    };
+    const required = vi.fn().mockReturnThis();
+    const assetRequired = vi.fn().mockReturnThis();
+    const rule = { required, assetRequired } as unknown;
+    cover.validation?.(rule);
+    expect(required).toHaveBeenCalled();
+    expect(assetRequired).toHaveBeenCalled();
+  });
+
   it("locks the slug once a publish date is set", () => {
     const slug = getField("slug") as SchemaField & {
       readOnly?: (ctx: { document?: Record<string, unknown> }) => boolean;

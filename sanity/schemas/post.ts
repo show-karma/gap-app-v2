@@ -60,7 +60,10 @@ export const post = defineType({
           type: "string",
         }),
       ],
-      validation: (Rule) => Rule.required(),
+      // `assetRequired()` blocks publishing an alt-only cover with no uploaded
+      // image — `required()` alone is satisfied by the object existing (e.g. just
+      // the alt text), which then throws when the renderer builds an image URL.
+      validation: (Rule) => Rule.required().assetRequired(),
     }),
     defineField({
       name: "body",

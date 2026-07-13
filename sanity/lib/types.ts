@@ -10,7 +10,10 @@ import type { PortableTextBlock } from "@portabletext/types";
 /** A Sanity image reference, shaped to satisfy `@sanity/image-url`'s `SanityImageSource`. */
 export interface SanityImageRef {
   _type: "image";
-  asset: { _ref: string; _type: "reference" };
+  // Optional on purpose: an editor can save an image field with only alt text
+  // and no uploaded asset, so Sanity returns `{ _type: "image", alt }` with no
+  // `asset`. Callers must guard on `asset` before building an image URL.
+  asset?: { _ref: string; _type: "reference" };
 }
 
 /** A cover/body image with the required alt text and optional caption. */
