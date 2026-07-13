@@ -131,8 +131,7 @@ export const post = defineType({
       type: "datetime",
       group: "content",
       description:
-        "Controls when the post goes live. New posts default to now; a post is only listed on /blog and in the sitemap once this date is set and in the past. Publishing the document is not enough on its own.",
-      initialValue: () => new Date().toISOString(),
+        'Controls when the post goes live: a post is only listed on /blog and in the sitemap once this date is set and in the past. Publishing the document is not enough on its own — set the date (use "now") before publishing. NOTE: do not add an initialValue here — the slug locks as soon as publishedAt is set (see slug.readOnly), so auto-filling this on a new doc would lock the slug before the editor can set it.',
       validation: (Rule) => Rule.required(),
     }),
     defineField({
