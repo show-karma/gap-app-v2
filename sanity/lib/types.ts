@@ -61,7 +61,9 @@ export interface BlogPostSummary {
 
 /** Full post shape used by `/blog/[slug]`. */
 export interface BlogPost extends BlogPostSummary {
-  body: BlogBodyBlock[];
+  // Optional: `body` is not a required field, so a published post can have no
+  // body at all. Renderers must treat it as possibly-undefined.
+  body?: BlogBodyBlock[];
   author: BlogAuthor | null;
   seo?: SeoOverride;
 }

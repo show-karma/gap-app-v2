@@ -72,6 +72,14 @@ const portableTextComponents: PortableTextComponents = {
       );
     },
   },
+  // Never surface Sanity's default "Unknown type/mark" warning boxes to
+  // readers: if content ever contains a block/mark the renderer doesn't know
+  // (e.g. schema/deploy skew), degrade silently instead of showing debug text.
+  unknownType: () => null,
+  unknownMark: ({ children }) => <>{children}</>,
+  unknownBlockStyle: ({ children }) => (
+    <p className="mb-4 text-gray-700 dark:text-gray-300">{children}</p>
+  ),
   types: {
     blockImage: ({ value }) => {
       if (!value?.asset) return null;
@@ -107,13 +115,13 @@ const portableTextComponents: PortableTextComponents = {
 };
 
 interface PostBodyProps {
-  body: BlogBodyBlock[];
+  body?: BlogBodyBlock[];
 }
 
 export function PostBody({ body }: PostBodyProps) {
   return (
     <div className="blog-post-body">
-      <PortableText value={body} components={portableTextComponents} />
+      <PortableText value={body ?? []} components={portableTextComponents} />
     </div>
   );
 }
