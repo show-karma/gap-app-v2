@@ -183,7 +183,7 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
   const { setupChainAndWallet } = useSetupChainAndWallet();
 
   const createProjectPointer = async ({ ogProjectUID }: PointerType) => {
-    if (!address || !project) return;
+    if (!project) return;
     startAttestation("Merging projects...");
     try {
       const setup = await setupChainAndWallet({

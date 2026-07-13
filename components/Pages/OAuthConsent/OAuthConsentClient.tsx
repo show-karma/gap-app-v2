@@ -4,9 +4,9 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { type ReactElement, useCallback, useState } from "react";
+import EthereumAddressToProfileName from "@/components/EthereumAddressToProfileName";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
-import { useContributorProfile } from "@/hooks/useContributorProfile";
 import { envVars } from "@/utilities/enviromentVars";
 
 /**
@@ -48,11 +48,6 @@ interface InteractionDetails {
 }
 
 const OAUTH_BASE = envVars.NEXT_PUBLIC_GAP_OAUTH_URL;
-
-function shortenAddress(address: string): string {
-  if (address.length <= 14) return address;
-  return `${address.slice(0, 6)}…${address.slice(-4)}`;
-}
 
 async function loadInteraction(uid: string): Promise<InteractionDetails> {
   const res = await fetch(`${OAUTH_BASE}/interaction/${encodeURIComponent(uid)}`, {
@@ -239,13 +234,7 @@ function renderConsentGuard(args: ConsentGuardArgs): ReactElement | undefined {
 export function OAuthConsentClient() {
   const searchParams = useSearchParams();
   const interactionUid = searchParams.get("interaction");
-  const { ready, authenticated, login, address, user, getAccessToken } = useAuth();
-  const { profile } = useContributorProfile(address);
-  const signedInLabel =
-    profile?.data?.name ||
-    user?.email?.address ||
-    user?.google?.email ||
-    (address ? shortenAddress(address) : null);
+  const { ready, authenticated, login, address, getAccessToken } = useAuth();
 
   const interactionQuery = useQuery({
     queryKey: ["oauth", "interaction", interactionUid],
@@ -388,10 +377,12 @@ export function OAuthConsentClient() {
         {clientName} can only do what you can do. You can revoke access anytime.
       </p>
 
-      {signedInLabel ? (
+      {address ? (
         <p className="mt-6 text-xs text-muted-foreground">
           Signed in as{" "}
-          <code className="rounded bg-muted px-1.5 py-0.5 text-foreground">{signedInLabel}</code>
+          <code className="rounded bg-muted px-1.5 py-0.5 text-foreground">
+            <EthereumAddressToProfileName address={address} />
+          </code>
         </p>
       ) : null}
 

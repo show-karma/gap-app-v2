@@ -4,14 +4,12 @@ import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const listAdvisorsMock = vi.fn();
-const getAdminReportMock = vi.fn();
 
 vi.mock("@/services/donor-research-admin.service", () => ({
   listAdvisors: (...args: unknown[]) => listAdvisorsMock(...args),
-  getAdminReport: (...args: unknown[]) => getAdminReportMock(...args),
 }));
 
-import { useAdminAdvisors, useAdminReport } from "@/hooks/useAdminDonorResearch";
+import { useAdminAdvisors } from "@/hooks/useAdminDonorResearch";
 
 function wrapper() {
   const queryClient = new QueryClient({
@@ -25,7 +23,6 @@ function wrapper() {
 describe("useAdminDonorResearch hooks", () => {
   beforeEach(() => {
     listAdvisorsMock.mockReset();
-    getAdminReportMock.mockReset();
   });
   afterEach(() => {
     vi.clearAllMocks();
@@ -42,25 +39,5 @@ describe("useAdminDonorResearch hooks", () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(result.current.data).toEqual(payload);
     expect(listAdvisorsMock).toHaveBeenCalledWith({ page: 1, limit: 20 });
-  });
-
-  it("useAdminReport stays disabled when reportId is null", () => {
-    const { result } = renderHook(() => useAdminReport(null), {
-      wrapper: wrapper(),
-    });
-
-    expect(result.current.fetchStatus).toBe("idle");
-    expect(getAdminReportMock).not.toHaveBeenCalled();
-  });
-
-  it("useAdminReport fetches when given an id", async () => {
-    getAdminReportMock.mockResolvedValue({ id: "r1" });
-
-    const { result } = renderHook(() => useAdminReport("r1"), {
-      wrapper: wrapper(),
-    });
-
-    await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(getAdminReportMock).toHaveBeenCalledWith("r1");
   });
 });

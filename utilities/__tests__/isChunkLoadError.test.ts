@@ -1,7 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { attemptChunkReload, clearChunkReloadFlag, isChunkLoadError } from "../isChunkLoadError";
+import {
+  attemptChunkReload,
+  hasChunkReloadBeenAttempted,
+  isChunkLoadError,
+} from "../isChunkLoadError";
 
 const RELOAD_FLAG_KEY = "chunk-reload-attempted";
+const RELOAD_TTL_MS = 60_000;
 
 describe("isChunkLoadError", () => {
   it("detects a webpack ChunkLoadError by name", () => {
@@ -41,6 +46,8 @@ describe("attemptChunkReload", () => {
   beforeEach(() => {
     window.sessionStorage.clear();
     reloadMock.mockClear();
+    vi.useFakeTimers();
+    vi.setSystemTime(0);
     // jsdom's location.reload is non-configurable; stub it.
     Object.defineProperty(window, "location", {
       configurable: true,
@@ -50,25 +57,72 @@ describe("attemptChunkReload", () => {
 
   afterEach(() => {
     window.sessionStorage.clear();
+    vi.useRealTimers();
   });
 
-  it("triggers a reload and sets the guard flag on the first attempt", () => {
+  it("triggers a reload and writes a timestamp guard flag on the first attempt", () => {
     expect(attemptChunkReload()).toBe(true);
     expect(reloadMock).toHaveBeenCalledTimes(1);
-    expect(window.sessionStorage.getItem(RELOAD_FLAG_KEY)).toBe("true");
+    expect(window.sessionStorage.getItem(RELOAD_FLAG_KEY)).toBe("0");
   });
 
-  it("does NOT reload a second time once the guard flag is set", () => {
+  it("does NOT reload a second time within the TTL window", () => {
+    expect(attemptChunkReload()).toBe(true);
+    reloadMock.mockClear();
+
+    vi.setSystemTime(RELOAD_TTL_MS - 1);
+    expect(attemptChunkReload()).toBe(false);
+    expect(reloadMock).not.toHaveBeenCalled();
+  });
+
+  it("allows a new reload once the TTL window has elapsed", () => {
+    expect(attemptChunkReload()).toBe(true);
+    reloadMock.mockClear();
+
+    vi.setSystemTime(RELOAD_TTL_MS + 1);
+    expect(attemptChunkReload()).toBe(true);
+    expect(reloadMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("treats a legacy boolean flag value as 'not attempted' and reloads exactly once", () => {
     window.sessionStorage.setItem(RELOAD_FLAG_KEY, "true");
+    expect(attemptChunkReload()).toBe(true);
+    expect(reloadMock).toHaveBeenCalledTimes(1);
+    // The legacy value is overwritten with a real timestamp, so a second
+    // call within the TTL is blocked as usual (no loop).
+    reloadMock.mockClear();
     expect(attemptChunkReload()).toBe(false);
     expect(reloadMock).not.toHaveBeenCalled();
   });
 });
 
-describe("clearChunkReloadFlag", () => {
-  it("removes the guard flag", () => {
+describe("hasChunkReloadBeenAttempted", () => {
+  afterEach(() => {
+    window.sessionStorage.clear();
+    vi.useRealTimers();
+  });
+
+  it("is false when no attempt has been recorded", () => {
+    expect(hasChunkReloadBeenAttempted()).toBe(false);
+  });
+
+  it("is true within the TTL window after an attempt", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(1000);
+    window.sessionStorage.setItem(RELOAD_FLAG_KEY, "1000");
+    expect(hasChunkReloadBeenAttempted()).toBe(true);
+  });
+
+  it("is false once the TTL window has elapsed", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(0);
+    window.sessionStorage.setItem(RELOAD_FLAG_KEY, "0");
+    vi.setSystemTime(RELOAD_TTL_MS + 1);
+    expect(hasChunkReloadBeenAttempted()).toBe(false);
+  });
+
+  it("is false for a legacy non-numeric flag value", () => {
     window.sessionStorage.setItem(RELOAD_FLAG_KEY, "true");
-    clearChunkReloadFlag();
-    expect(window.sessionStorage.getItem(RELOAD_FLAG_KEY)).toBeNull();
+    expect(hasChunkReloadBeenAttempted()).toBe(false);
   });
 });

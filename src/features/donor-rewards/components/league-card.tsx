@@ -26,7 +26,7 @@ const LeagueRow = React.memo(function LeagueRow({
     >
       <span
         className={`w-6 text-center font-mono text-sm font-bold ${
-          rank <= 3 ? "text-amber-500" : "text-zinc-400 dark:text-zinc-500"
+          rank <= 3 ? "text-amber-500" : "text-stone-400 dark:text-stone-500"
         }`}
       >
         {rank}
@@ -36,12 +36,12 @@ const LeagueRow = React.memo(function LeagueRow({
         className={`flex-1 truncate text-sm ${
           peer.isUser
             ? "font-bold text-emerald-800 dark:text-emerald-300"
-            : "font-medium text-zinc-700 dark:text-zinc-300"
+            : "font-medium text-stone-700 dark:text-stone-300"
         }`}
       >
         {peer.isUser ? "You" : peer.alias}
       </span>
-      <span className="font-mono text-sm font-semibold text-zinc-500 dark:text-zinc-400">
+      <span className="font-mono text-sm font-semibold text-stone-500 dark:text-stone-400">
         {formatNumber(peer.points)}
       </span>
     </li>
@@ -67,15 +67,15 @@ export function LeagueCard() {
   return (
     <section
       aria-label="Giving league"
-      className="rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
+      className="rounded-2xl border border-stone-200 bg-white p-6 shadow-sm dark:border-stone-800 dark:bg-stone-900"
     >
       <div className="flex items-center gap-3">
-        <div className="rounded-2xl bg-emerald-100 p-2.5 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-400">
-          <Shield className="h-6 w-6" aria-hidden="true" />
-        </div>
+        <Shield className="h-5 w-5 text-emerald-700 dark:text-emerald-500" aria-hidden="true" />
         <div>
-          <h2 className="text-lg font-semibold text-zinc-900 dark:text-white">Emerald League</h2>
-          <p className="text-xs text-zinc-500 dark:text-zinc-400">
+          <h2 className="[font-family:var(--font-display)] text-xl font-medium text-stone-900 dark:text-white">
+            Emerald League
+          </h2>
+          <p className="text-xs text-stone-500 dark:text-stone-400">
             Top {percentile}% most consistent givers among accounts your size
           </p>
         </div>
@@ -87,7 +87,7 @@ export function LeagueCard() {
         ))}
       </ol>
 
-      <p className="mt-4 text-xs text-zinc-400 dark:text-zinc-500">
+      <p className="mt-4 text-xs text-stone-400 dark:text-stone-500">
         Rankings are based on giving consistency, never dollar amounts. Aliases keep everyone
         anonymous.
       </p>

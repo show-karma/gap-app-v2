@@ -942,8 +942,9 @@ export const useApplicationVersions = (applicationIdOrReference: string | null) 
     staleTime: 1000 * 60 * 5, // 5 minutes
     gcTime: 1000 * 60 * 10, // 10 minutes
     select: (data) => {
-      // Sort versions by version number descending (newest first)
-      return data.sort((a, b) => b.versionNumber - a.versionNumber);
+      // Sort versions by version number descending (newest first).
+      // Copy first: sorting in place would mutate the cached array.
+      return [...data].sort((a, b) => b.versionNumber - a.versionNumber);
     },
   });
 
