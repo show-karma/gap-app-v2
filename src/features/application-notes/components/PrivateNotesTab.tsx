@@ -3,6 +3,7 @@
 import { AlertCircle, Lock, RefreshCw, Save } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
+import EthereumAddressToProfileName from "@/components/EthereumAddressToProfileName";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Spinner } from "@/components/ui/spinner";
@@ -17,11 +18,6 @@ interface PrivateNotesTabProps {
 }
 
 const MAX_NOTE_LENGTH = 10000;
-
-function formatEditor(name: string | null | undefined, address: string): string {
-  if (name) return name;
-  return `${address.slice(0, 6)}…${address.slice(-4)}`;
-}
 
 // Deterministic date display from the ISO timestamp — no locale/timezone
 // formatting APIs, so it is hydration-safe and renders identically everywhere.
@@ -114,12 +110,15 @@ function NoteEditor({
     }
   };
 
-  const metaLine = note
-    ? `Last edited by ${formatEditor(
-        note.updatedByName,
-        note.updatedByAddress
-      )} · ${formatEditedAt(note.updatedAt)}`
-    : "No note yet.";
+  const metaLine = note ? (
+    <>
+      Last edited by{" "}
+      {note.updatedByName || <EthereumAddressToProfileName address={note.updatedByAddress} />} ·{" "}
+      {formatEditedAt(note.updatedAt)}
+    </>
+  ) : (
+    "No note yet."
+  );
 
   return (
     <section className="rounded-2xl border border-border bg-card shadow-sm">
