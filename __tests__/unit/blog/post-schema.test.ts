@@ -15,9 +15,13 @@ import { post } from "@/sanity/schemas/post";
  * Guards the "a post can't silently ship without a publish date" behavior.
  * The /blog index + sitemap only surface posts whose `publishedAt` is set and
  * in the past, so an editor who clicks Publish without a date would otherwise
- * get an invisible post (regression seen in Studio, 2026-07). The schema must
- * (a) default new posts to "now" and (b) make the date required so publish is
- * blocked when it is missing.
+ * get an invisible post (regression seen in Studio, 2026-07). The schema makes
+ * the date required so publish is blocked when it is missing.
+ *
+ * It must NOT auto-populate `publishedAt` (no initialValue): the slug locks as
+ * soon as publishedAt is set (`slug.readOnly`), so auto-filling the date on a
+ * brand-new document would lock the required slug field before the editor could
+ * ever set it — a publish-blocking catch-22. Both invariants are asserted here.
  */
 type SchemaField = {
   name: string;
@@ -33,16 +37,21 @@ function getField(name: string): SchemaField {
 }
 
 describe("post schema — publishedAt", () => {
-  it("defaults new posts to a valid current ISO datetime", () => {
+  it("does not auto-populate, so the slug stays editable on a new post", () => {
+    // slug.readOnly locks on `!!document.publishedAt`; an initialValue here
+    // would lock the required slug before it could be set (publish catch-22).
     const field = getField("publishedAt");
-    expect(typeof field.initialValue).toBe("function");
+    expect(field.initialValue).toBeUndefined();
+  });
 
-    const value = field.initialValue?.();
-    expect(typeof value).toBe("string");
-    const parsed = new Date(value as string);
-    expect(Number.isNaN(parsed.getTime())).toBe(false);
-    // Default must be now-or-past so the post is immediately eligible for /blog.
-    expect(parsed.getTime()).toBeLessThanOrEqual(Date.now() + 1000);
+  it("locks the slug once a publish date is set", () => {
+    const slug = getField("slug") as SchemaField & {
+      readOnly?: (ctx: { document?: Record<string, unknown> }) => boolean;
+    };
+    expect(typeof slug.readOnly).toBe("function");
+    // Editable while unset, locked once a date exists (URL stability after go-live).
+    expect(slug.readOnly?.({ document: {} })).toBeFalsy();
+    expect(slug.readOnly?.({ document: { publishedAt: "2026-07-13T00:00:00Z" } })).toBe(true);
   });
 
   it("is required so a post can't be published without a date", () => {
