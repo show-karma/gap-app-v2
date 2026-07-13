@@ -130,7 +130,10 @@ export const post = defineType({
       title: "Published at",
       type: "datetime",
       group: "content",
-      description: "Unset = draft. The gateway only returns posts with a past Published date.",
+      description:
+        "Controls when the post goes live. New posts default to now; a post is only listed on /blog and in the sitemap once this date is set and in the past. Publishing the document is not enough on its own.",
+      initialValue: () => new Date().toISOString(),
+      validation: (Rule) => Rule.required(),
     }),
     defineField({
       name: "seo",
