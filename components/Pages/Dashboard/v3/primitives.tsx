@@ -23,6 +23,13 @@ export interface TileRow {
   imageUrl?: string;
   label: string;
   badge?: { tone: BadgeTone; label: string };
+  /**
+   * Deep-link to the page this row's work lives on (e.g. a project's milestones,
+   * a community's pending applications). When set, the row renders as its own
+   * link on the overview tile — layered above the tile's "open module" click so
+   * the pill/row navigates straight to the item instead of the module overview.
+   */
+  href?: string;
 }
 
 export interface ModuleSummary {
@@ -46,15 +53,17 @@ export function Section({
   title: string;
   sub?: string;
   action?: React.ReactNode;
-  /** Adds the design's pillowy card border + shadow (default is the flat drill-in). */
+  /** Reserved for callers that want to opt into the card treatment explicitly; the
+   *  base Section now always matches the platform's standard card (border + subtle
+   *  shadow), so this is currently a no-op kept for call-site compatibility. */
   soft?: boolean;
   children: React.ReactNode;
 }) {
   return (
     <section
       className={cn(
-        "flex scroll-mt-5 flex-col gap-4 rounded-sf-card bg-sf-card px-6 py-[22px]",
-        soft && "border border-sf-line shadow-[var(--sf-shadow-card)]"
+        "flex scroll-mt-5 flex-col gap-4 rounded-sf-card border border-sf-line bg-sf-card px-6 py-[22px]",
+        soft && "border-sf-line"
       )}
       id={id}
     >
@@ -194,7 +203,9 @@ export function WarnBar({ children }: { children: React.ReactNode }) {
 export interface StatItem {
   n: React.ReactNode;
   l: string;
-  tone?: "brand" | "amber" | "green";
+  // Colors mirror the platform's application-status palette: pending → blue,
+  // approved → green (see applicationStatusBadge.tsx). `brand` is the mint accent.
+  tone?: "brand" | "amber" | "green" | "blue";
 }
 
 function statSurface(tone: StatItem["tone"]): string {
@@ -207,7 +218,8 @@ function statSurface(tone: StatItem["tone"]): string {
 function statNumber(tone: StatItem["tone"]): string {
   if (tone === "brand") return "text-white";
   if (tone === "amber") return "text-amber-700 dark:text-amber-400";
-  if (tone === "green") return "text-brand-700 dark:text-brand-400";
+  if (tone === "blue") return "text-blue-700 dark:text-blue-400";
+  if (tone === "green") return "text-green-700 dark:text-green-400";
   return "text-sf-heading";
 }
 

@@ -1,27 +1,19 @@
 "use client";
 
-import type { MouseEvent } from "react";
 import { Link } from "@/src/components/navigation/Link";
 import { cn } from "@/utilities/tailwind";
 import { TileFace, TileFaceSkeleton } from "./BentoTileFace";
 import type { DashModule } from "./module";
-import { moduleTransitionName, TILE_BASE, tileSpanClasses } from "./soft-classes";
-import { supportsViewTransitions, useDashboardTransition } from "./useDashboardTransition";
+import { TILE_BASE, tileSpanClasses } from "./soft-classes";
 
 /**
  * A bento tile as a navigation link to `/dashboard/[module]` — the route-based
- * counterpart to BentoTile. Same face; a real `<Link>` so browser Back/Forward
- * work natively.
- *
- * The tile and its drill-in share a `view-transition-name`, so opening/closing
- * a module morphs the box across the route change (the cross-route counterpart
- * to the old framer `layoutId`). A plain link click drives the navigation where
- * the View Transitions API is unavailable (or modified/middle clicks), so
- * prefetch, open-in-new-tab and no-JS all keep working.
+ * counterpart to BentoTile. Same face; a plain `<Link>` so browser Back/Forward,
+ * prefetch, open-in-new-tab and no-JS all work natively with no view-transition
+ * box morph.
  */
 export function BentoTileLink({ module, wide }: { module: DashModule; wide?: boolean }) {
-  const { key, status } = module;
-  const navigate = useDashboardTransition();
+  const { key, label, status } = module;
   const href = `/dashboard/${key}`;
 
   if (status === "loading") {
@@ -35,28 +27,22 @@ export function BentoTileLink({ module, wide }: { module: DashModule; wide?: boo
     );
   }
 
-  const handleClick = (e: MouseEvent<HTMLAnchorElement>) => {
-    // Defer to the browser for new-tab / middle clicks and where the View
-    // Transitions API isn't available — those get a normal link navigation.
-    if (e.defaultPrevented || e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
-    if (!supportsViewTransitions()) return;
-    e.preventDefault();
-    navigate(href);
-  };
-
+  // The tile is a plain container; a stretched link fills it to open the module,
+  // and any per-row deep-links (rendered inside TileFace) layer above it — so
+  // clicking a pill/row navigates to that item, clicking elsewhere opens the
+  // module. The stretched link is a SIBLING of the row links (not their parent),
+  // so there is no invalid <a>-in-<a> nesting.
   return (
-    <Link
-      href={href}
-      onClick={handleClick}
-      style={{ viewTransitionName: moduleTransitionName(key) }}
-      className={cn(
-        TILE_BASE,
-        tileSpanClasses(wide),
-        "transition-transform duration-150 hover:-translate-y-[3px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40"
-      )}
+    <div
+      className={cn(TILE_BASE, tileSpanClasses(wide), "relative")}
       data-comment-anchor={`tile-${key}`}
     >
+      <Link
+        aria-label={`Open ${label}`}
+        className="absolute inset-0 rounded-[inherit] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40"
+        href={href}
+      />
       <TileFace module={module} />
-    </Link>
+    </div>
   );
 }

@@ -61,7 +61,7 @@ export function ReviewsFullView({
   }
 
   return (
-    <section className="flex scroll-mt-5 flex-col gap-4" id="reviews">
+    <section className="flex scroll-mt-5 flex-col gap-3" id="reviews">
       {communities.length > 1 ? (
         <div className="flex flex-wrap gap-2">
           {communities.map((entry) => {

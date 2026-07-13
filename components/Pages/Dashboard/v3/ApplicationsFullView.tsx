@@ -150,7 +150,7 @@ function ApplicationsFilterBar({
           </span>
         </SelectTrigger>
         <SelectContent
-          className="rounded-xl border-sf-line bg-sf-card text-sf-heading shadow-[var(--sf-shadow-card)]"
+          className="rounded-xl border-sf-line bg-sf-card text-sf-heading shadow-sf-card"
           container={portalContainer}
         >
           {STATUS_OPTIONS.map((option) => (
@@ -349,13 +349,32 @@ export function ApplicationsFullView({
   // funding-program config so rows can display a name and build a detail link.
   const enrichedApplications = useEnrichedApplications(applications, communitySlug);
 
+  // `statusCounts` is computed server-side as a second, independent
+  // aggregate query (see gap-indexer's getStatusCountsByOwner) — a
+  // page-agnostic breakdown across every status matching the current
+  // filters. When everything already fits on a single page,
+  // `enrichedApplications` IS the complete matching set, so the tiles are
+  // derived directly from it: that guarantees the "Total applications"
+  // number can never disagree with the rows actually rendered below. Once
+  // pagination is genuinely in play the list is an intentional partial
+  // view (see the pager), so the aggregate — the only number that
+  // describes the whole filtered set, not just this page — is used instead.
   const stats = useMemo(() => {
     const counts = statusCounts ?? {};
+    const isSinglePage = pagination.totalPages <= 1;
+    if (isSinglePage) {
+      const total = enrichedApplications.length;
+      const pending = enrichedApplications.filter(
+        (app) => app.status === "pending" || app.status === "resubmitted"
+      ).length;
+      const approved = enrichedApplications.filter((app) => app.status === "approved").length;
+      return { total, pending, approved };
+    }
     const total = Object.values(counts).reduce((sum, count) => sum + count, 0);
     const pending = (counts.pending ?? 0) + (counts.resubmitted ?? 0);
     const approved = counts.approved ?? 0;
     return { total, pending, approved };
-  }, [statusCounts]);
+  }, [statusCounts, enrichedApplications, pagination.totalPages]);
 
   const filtersActive = hasActiveApplicationFilters(filters);
   const hasApplications = stats.total > 0;
@@ -409,7 +428,7 @@ export function ApplicationsFullView({
           <StatTiles
             items={[
               { n: stats.total, l: "Total applications" },
-              { n: stats.pending, l: "Pending", tone: "amber" },
+              { n: stats.pending, l: "Pending", tone: "blue" },
               { n: stats.approved, l: "Approved", tone: "green" },
             ]}
           />

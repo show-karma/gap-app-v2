@@ -53,7 +53,7 @@ function ReportsGrid({ reports }: { reports: ResearchReportListItem[] }) {
         const updated = timeAgo(r.completedAt ?? r.fastCompletedAt ?? r.createdAt);
         return (
           <Link
-            className="flex flex-col gap-3 rounded-sf-tile border border-sf-line bg-sf-elev p-4 transition-[border-color,box-shadow,transform] duration-150 hover:-translate-y-[3px] hover:border-sf-line-strong hover:bg-sf-card hover:shadow-[var(--sf-shadow-card)]"
+            className="flex flex-col gap-3 rounded-sf-tile border border-sf-line bg-sf-elev p-4 transition-[border-color,background-color] duration-150 hover:border-sf-line-strong hover:bg-sf-card"
             href={PAGES.DONOR_RESEARCH.REPORT(r.id)}
             key={r.id}
           >
@@ -142,7 +142,7 @@ function LeftRail({
   handleCount: number;
 }) {
   return (
-    <aside className="flex flex-col gap-[3px] self-start rounded-sf-card border border-sf-line bg-sf-card p-3 shadow-[var(--sf-shadow-card)] lg:sticky lg:top-5">
+    <aside className="flex flex-col gap-[3px] self-start rounded-sf-card border border-sf-line bg-sf-card p-3 lg:sticky lg:top-5">
       <div className="mt-1 px-[10px] pb-1 pt-2 text-[10.5px] font-bold uppercase tracking-[0.07em] text-sf-muted">
         Your work
       </div>

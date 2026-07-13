@@ -39,7 +39,7 @@ describe("BentoOverview", () => {
   it("drills into a module on tile click and back again", async () => {
     render(<BentoOverview modules={modules} />);
 
-    fireEvent.click(screen.getByText("My projects"));
+    fireEvent.click(screen.getByRole("button", { name: /open my projects/i }));
 
     // The clicked tile morphs into the drill-in via a shared layoutId
     // (AnimatePresence mode="popLayout"), so the new view mounts immediately
@@ -60,7 +60,7 @@ describe("BentoOverview", () => {
     const pushSpy = vi.spyOn(window.history, "pushState");
     render(<BentoOverview modules={modules} />);
 
-    fireEvent.click(screen.getByText("My projects"));
+    fireEvent.click(screen.getByRole("button", { name: /open my projects/i }));
     await screen.findByText("PROJECTS DETAIL");
 
     // pushState (not replaceState) leaves a history entry for the overview, so
@@ -73,7 +73,7 @@ describe("BentoOverview", () => {
 
   it("closes the drill-in when the browser navigates back off the hash", async () => {
     render(<BentoOverview modules={modules} />);
-    fireEvent.click(screen.getByText("My projects"));
+    fireEvent.click(screen.getByRole("button", { name: /open my projects/i }));
     expect(await screen.findByText("PROJECTS DETAIL")).toBeInTheDocument();
 
     // Simulate the browser Back button: the pushed hash is popped and a
@@ -93,7 +93,7 @@ describe("BentoOverview", () => {
 
     expect(onFocusChange).toHaveBeenLastCalledWith(null);
 
-    fireEvent.click(screen.getByText("My projects"));
+    fireEvent.click(screen.getByRole("button", { name: /open my projects/i }));
     await waitFor(() => expect(onFocusChange).toHaveBeenLastCalledWith("projects"));
 
     fireEvent.click(await screen.findByRole("button", { name: /back to overview/i }));

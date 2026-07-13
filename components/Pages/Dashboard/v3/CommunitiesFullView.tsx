@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import pluralize from "pluralize";
 import { useDashboardAdmin } from "@/hooks/useDashboardAdmin";
 import { Link } from "@/src/components/navigation/Link";
+import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 import { EmptyState, ErrorState, Section } from "./primitives";
 import { SoftIcon } from "./SoftIcon";
@@ -13,6 +14,10 @@ const CommunityDialog = dynamic(
   () => import("@/components/Dialogs/CommunityDialog").then((mod) => mod.CommunityDialog),
   { ssr: false }
 );
+
+/** Shared hover affordance for the count lines that link out to a community's queues. */
+const COUNT_LINK_AFFORDANCE =
+  "w-fit text-sf-muted underline-offset-2 transition-colors hover:text-sf-heading hover:underline";
 
 function communityInitials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
@@ -112,15 +117,15 @@ export function CommunitiesFullView() {
             </div>
             <div className="flex flex-col gap-[3px] text-[12.5px] text-sf-muted">
               {c.activeProgramsCount > 0 ? (
-                <span>
+                <Link href={PAGES.COMMUNITY.APPLICATIONS(c.slug)} className={COUNT_LINK_AFFORDANCE}>
                   {c.activeProgramsCount} active {pluralize("program", c.activeProgramsCount)}
-                </span>
+                </Link>
               ) : null}
               {c.pendingApplicationsCount > 0 ? (
-                <span>
+                <Link href={PAGES.MANAGE.ACTION_ITEMS(c.slug)} className={COUNT_LINK_AFFORDANCE}>
                   {c.pendingApplicationsCount} pending{" "}
                   {pluralize("application", c.pendingApplicationsCount)}
-                </span>
+                </Link>
               ) : null}
             </div>
             <Link className={cn(BTN_BASE, BTN_SM, BTN_OUTLINE, "self-start")} href={c.manageUrl}>

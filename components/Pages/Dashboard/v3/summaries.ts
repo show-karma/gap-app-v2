@@ -8,6 +8,7 @@ import pluralize from "pluralize";
 import type { DashboardAdminCommunity } from "@/hooks/useDashboardAdmin";
 import type { ProjectWithGrantsResponse } from "@/types/v2/project";
 import type { Application, ApplicationStatus } from "@/types/whitelabel-entities";
+import { PAGES } from "@/utilities/pages";
 import { computeProjectPendingActions } from "../utils/pending-actions";
 import type { BadgeTone, ModuleSummary, TileRow } from "./primitives";
 
@@ -18,21 +19,27 @@ export function buildProjectsSummary(projects: ProjectWithGrantsResponse[]): Mod
     .slice(0, 3)
     .map(({ project, actions }) => {
       const title = project.details?.title || "Untitled project";
+      const slug = project.details?.slug || project.uid;
+      // Pending work lives on the funding tab (grants + their milestones);
+      // otherwise the row just points at the project overview.
+      const hasPendingWork =
+        actions.milestonesNeedingSubmission > 0 || actions.grantsInProgress > 0;
+      const href = hasPendingWork ? PAGES.PROJECT.GRANTS(slug) : PAGES.PROJECT.OVERVIEW(slug);
       let badge: TileRow["badge"];
       if (actions.milestonesNeedingSubmission > 0) {
         badge = {
-          tone: "amber",
+          tone: "orange",
           label: `${actions.milestonesNeedingSubmission} ${pluralize("milestone", actions.milestonesNeedingSubmission)} pending`,
         };
       } else if (actions.grantsInProgress > 0) {
         badge = {
-          tone: "amber",
-          label: `${actions.grantsInProgress} ${pluralize("grant", actions.grantsInProgress)} to complete`,
+          tone: "blue",
+          label: `${actions.grantsInProgress} ${pluralize("grant", actions.grantsInProgress)} in progress`,
         };
       } else {
-        badge = { tone: "green", label: "Clear" };
+        badge = { tone: "green", label: "All caught up" };
       }
-      return { icon: Rocket, imageUrl: project.details?.logoUrl, label: title, badge };
+      return { icon: Rocket, imageUrl: project.details?.logoUrl, label: title, badge, href };
     });
 
   return { big: projects.length, rows };
@@ -46,13 +53,18 @@ export function buildCommunitiesSummary(communities: DashboardAdminCommunity[]):
       icon: Users,
       imageUrl: c.logoUrl,
       label: c.name,
+      // No badge when there are no pending applications — an empty state
+      // shouldn't render a pill (the row just shows the community name).
       badge:
         c.pendingApplicationsCount > 0
           ? {
               tone: "amber" as BadgeTone,
               label: `${c.pendingApplicationsCount} ${pluralize("application", c.pendingApplicationsCount)}`,
             }
-          : { tone: "gray" as BadgeTone, label: "Clear" },
+          : undefined,
+      // Pending applications → the review queue; otherwise the community's
+      // manage page.
+      href: c.pendingApplicationsCount > 0 ? PAGES.MANAGE.ACTION_ITEMS(c.slug) : c.manageUrl,
     }));
 
   return { big: communities.length, rows };
@@ -91,6 +103,12 @@ export function buildApplicationsSummary(
     icon: FileText,
     label: a.programTitle || a.resolvedProjectName || a.communityName || "Application",
     badge: getApplicationBadge(a.status),
+    // Link to the application's detail page when we can resolve its community;
+    // cross-community rows without a resolved slug fall back to the tile's
+    // "open module" click (the drill-in resolves + links them).
+    href: a.communitySlug
+      ? PAGES.COMMUNITY.APPLICATION_DETAIL(a.communitySlug, a.referenceNumber)
+      : undefined,
   }));
 
   return { big: total, rows };

@@ -1,6 +1,7 @@
 "use client";
 
 import { CheckCircle2 } from "lucide-react";
+import { Link } from "@/src/components/navigation/Link";
 import { cn } from "@/utilities/tailwind";
 import type { DashModule } from "./module";
 import { SoftIcon } from "./SoftIcon";
@@ -31,7 +32,7 @@ export function TileFace({ module }: { module: DashModule }) {
           {
             icon: CheckCircle2,
             label: "All caught up",
-            badge: { tone: "gray" as const, label: "Clear" },
+            badge: { tone: "gray" as const, label: "Done" },
           },
         ];
   const showHeadcount = status === "ready" && Boolean(summary);
@@ -59,7 +60,7 @@ export function TileFace({ module }: { module: DashModule }) {
       ) : isEmpty ? (
         <>
           <p className="my-0.5 text-[12.5px] leading-[1.5] text-sf-muted">{module.empty.prompt}</p>
-          <span className={cn(BTN_BASE, BTN_SM, BTN_PRIMARY, "mt-auto self-start")}>
+          <span className={cn(BTN_BASE, BTN_SM, BTN_PRIMARY, "self-start")}>
             {module.empty.cta.icon ? (
               <SoftIcon name={module.empty.cta.icon} className="h-4 w-4" />
             ) : null}
@@ -67,29 +68,56 @@ export function TileFace({ module }: { module: DashModule }) {
           </span>
         </>
       ) : (
-        <div className="mt-auto flex flex-col gap-2.5">
-          {rows.map((r, i) => (
-            <div
-              className="flex min-w-0 items-center gap-[9px] text-[13px] font-[550] text-sf-ink-soft"
-              key={`${key}-row-${i}`}
-            >
-              {r.imageUrl ? (
-                <img
-                  className="h-[18px] w-[18px] flex-none rounded-[5px] bg-sf-chip object-cover"
-                  src={r.imageUrl}
-                  alt=""
-                />
-              ) : (
-                <r.icon className="h-[13px] w-[13px] flex-none text-sf-muted" aria-hidden />
-              )}
-              <span className="overflow-hidden text-ellipsis whitespace-nowrap">{r.label}</span>
-              {r.badge ? (
-                <span className={cn(badgeClasses(r.badge.tone), "ml-auto flex-none")}>
-                  {r.badge.label}
+        <div className="flex flex-col gap-2.5">
+          {rows.map((r, i) => {
+            const rowClass =
+              "flex min-w-0 items-center gap-[9px] text-[13px] font-[550] text-sf-ink-soft";
+            const inner = (
+              <>
+                {r.imageUrl ? (
+                  <img
+                    className="h-[18px] w-[18px] flex-none rounded-[5px] bg-sf-chip object-cover"
+                    src={r.imageUrl}
+                    alt=""
+                  />
+                ) : (
+                  <r.icon className="h-[13px] w-[13px] flex-none text-sf-muted" aria-hidden />
+                )}
+                <span
+                  className={cn(
+                    "overflow-hidden text-ellipsis whitespace-nowrap",
+                    r.href && "group-hover/row:underline"
+                  )}
+                >
+                  {r.label}
                 </span>
-              ) : null}
-            </div>
-          ))}
+                {r.badge ? (
+                  <span className={cn(badgeClasses(r.badge.tone), "ml-auto flex-none")}>
+                    {r.badge.label}
+                  </span>
+                ) : null}
+              </>
+            );
+            // A row with a target deep-links to where its work lives. It sits
+            // above the tile's stretched "open module" link (relative z-[1]), so
+            // the pill/row navigates to the item, not the module overview.
+            return r.href ? (
+              <Link
+                className={cn(
+                  "group/row relative z-[1] transition-colors hover:text-sf-heading",
+                  rowClass
+                )}
+                href={r.href}
+                key={`${key}-row-${i}`}
+              >
+                {inner}
+              </Link>
+            ) : (
+              <div className={rowClass} key={`${key}-row-${i}`}>
+                {inner}
+              </div>
+            );
+          })}
         </div>
       )}
     </>

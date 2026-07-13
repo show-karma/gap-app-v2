@@ -23,7 +23,10 @@ export const BADGE_BASE =
   "inline-flex items-center gap-[5px] whitespace-nowrap rounded-full border border-transparent px-[10px] py-[3px] text-[11.5px] font-[650]";
 
 const BADGE_TONE: Record<BadgeTone, string> = {
-  green: "bg-brand-50 text-brand-700 dark:bg-brand-500/[.16] dark:text-brand-300",
+  // Real green — matches the platform's application-status "approved" badge
+  // (see FundingPlatform/ApplicationList/applicationStatusBadge.tsx). Used for
+  // approved applications and "All caught up". `brand` stays the mint accent.
+  green: "bg-green-100 text-green-800 dark:bg-green-500/[.16] dark:text-green-400",
   brand: "bg-brand-50 text-brand-700 dark:bg-brand-500/[.16] dark:text-brand-300",
   amber: "bg-amber-50 text-amber-700 dark:bg-amber-500/[.16] dark:text-amber-400",
   orange: "bg-orange-100 text-orange-600 dark:bg-orange-500/[.18] dark:text-orange-400",
@@ -44,13 +47,14 @@ export const THUMB_BRAND = "bg-sf-ink text-white dark:bg-brand-500 dark:text-bra
 export const SK = "animate-dashv3-pulse rounded-lg bg-sf-skeleton";
 
 /* Bento tile shell — shared by the button (BentoTile) and link (BentoTileLink)
-   variants so both render an identical face. */
-export const TILE_BASE = "relative flex flex-col gap-3 rounded-sf-card bg-sf-card p-5 text-left";
+   variants so both render an identical face. Flat bordered card (rounded-xl +
+   border, no shadow), theme-driven via the --sf-* tokens. */
+export const TILE_BASE =
+  "relative flex flex-col gap-3 rounded-sf-card border border-sf-line bg-sf-card p-5 text-left transition-colors hover:bg-sf-hover";
 
 /**
  * Shared `view-transition-name` for a module's tile and its `/dashboard/[module]`
- * drill-in. Matching names let the browser morph the box across the route change
- * — the cross-route counterpart to the in-place framer `layoutId` (bentoLayoutId).
+ * drill-in route.
  */
 export const moduleTransitionName = (key: string) => `dash-module-${key}`;
 export function tileSpanClasses(wide?: boolean): string {
@@ -58,15 +62,3 @@ export function tileSpanClasses(wide?: boolean): string {
     ? "col-span-2 min-[640px]:col-span-1 min-[980px]:col-span-3"
     : "col-span-2 min-[640px]:col-span-1 min-[980px]:col-span-2";
 }
-
-/**
- * Shared layoutId + timing for the bento tile <-> drill-in morph (BentoTile.tsx
- * + BentoOverview.tsx). Both sides must use the SAME transition for the shared
- * layoutId animation to read as one continuous box resize/move rather than a
- * generic center-scale — this is the cubic-bezier the app's other scale-in /
- * fade-in-up tailwind animations already use.
- */
-export const bentoLayoutId = (key: string) => `bento-tile-${key}`;
-export const BENTO_LAYOUT_TRANSITION = {
-  layout: { duration: 0.32, ease: [0.22, 1, 0.36, 1] as const },
-};

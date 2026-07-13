@@ -256,7 +256,7 @@ describe("Dashboard", () => {
 
     render(<Dashboard />, { wrapper: createWrapper() });
 
-    fireEvent.click(screen.getByText("My projects"));
+    fireEvent.click(screen.getByRole("button", { name: /open my projects/i }));
 
     // The overview <-> drill-in switch animates (AnimatePresence mode="wait"),
     // so the new content mounts once the outgoing view's exit finishes.
@@ -440,7 +440,7 @@ describe("Dashboard", () => {
     // Overview: the admin banner sits below the bento grid.
     expect(screen.getByText("Admin panel")).toBeInTheDocument();
 
-    fireEvent.click(screen.getByText("My projects"));
+    fireEvent.click(screen.getByRole("button", { name: /open my projects/i }));
 
     // Drilled in: the banner is a bento-overview affordance, so it hides. This
     // is driven by Dashboard's own isDrilledIn state (not the BentoOverview
@@ -467,10 +467,9 @@ describe("Dashboard", () => {
     render(<Dashboard />, { wrapper: createWrapper() });
 
     // The tile shows a recover affordance; the full retry lives in the drill-in.
-    const tile = screen.getByText("My projects");
-    expect(tile).toBeInTheDocument();
+    expect(screen.getByText("My projects")).toBeInTheDocument();
 
-    fireEvent.click(tile);
+    fireEvent.click(screen.getByRole("button", { name: /open my projects/i }));
 
     expect(await screen.findByText(/Unable to load your projects/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /try again/i })).toBeInTheDocument();

@@ -8,6 +8,7 @@ import type {
   ResearchReportList,
   ResearchReportListItem,
 } from "@/types/donor-research";
+import { PAGES } from "@/utilities/pages";
 import type { BadgeTone, ModuleStatus, ModuleSummary } from "./primitives";
 
 export const REPORTS_LIMIT = 6;
@@ -77,6 +78,7 @@ export function useAdvisorData(authenticated: boolean): AdvisorData {
               icon: FileText,
               label: reportTitle(r),
               badge: { tone: b.tone, label: b.label },
+              href: PAGES.DONOR_RESEARCH.REPORT(r.id),
             };
           }),
         }

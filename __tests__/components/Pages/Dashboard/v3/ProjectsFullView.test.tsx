@@ -77,10 +77,10 @@ describe("ProjectsFullView", () => {
     );
 
     expect(screen.getByText(/1 milestone pending/)).toBeInTheDocument();
-    expect(screen.getByText("2 grants")).toBeInTheDocument();
+    expect(screen.getByText("2 total grants")).toBeInTheDocument();
   });
 
-  it("falls back to a 'grants to complete' badge when no milestones are pending", () => {
+  it("falls back to a 'grant in progress' badge when no milestones are pending", () => {
     render(
       <ProjectsFullView
         projects={[
@@ -92,8 +92,8 @@ describe("ProjectsFullView", () => {
       />
     );
 
-    expect(screen.getByText(/1 grant to complete/)).toBeInTheDocument();
-    expect(screen.getByText("1 grant")).toBeInTheDocument();
+    expect(screen.getByText(/1 grant in progress/)).toBeInTheDocument();
+    expect(screen.getByText("1 total grant")).toBeInTheDocument();
   });
 
   it("shows 'All caught up' when there is no pending work", () => {

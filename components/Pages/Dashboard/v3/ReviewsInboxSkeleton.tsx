@@ -31,9 +31,9 @@ function RowSkeleton() {
  */
 export function ReviewsInboxSkeleton() {
   return (
-    <div className="w-full space-y-6" aria-hidden>
+    <div className="w-full space-y-4" aria-hidden>
       {/* Header: icon chip + title/role, then the four stat pills. */}
-      <div className="space-y-5">
+      <div className="space-y-4">
         <div className="flex items-start gap-3">
           <span className={cn(SK, "h-11 w-11 !rounded-xl")} />
           <div className="space-y-2 pt-1">

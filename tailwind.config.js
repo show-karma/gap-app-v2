@@ -368,6 +368,12 @@ module.exports = {
         "tremor-full": "9999px",
       },
       boxShadow: {
+        // Dashboard v3 card shadow — theme-aware via the --sf-shadow-card token
+        // (light/dark values defined in dashboard-soft.css). Registered as a
+        // named utility so `shadow-sf-card` emits a real box-shadow; the
+        // arbitrary `shadow-[var(--sf-shadow-card)]` form is mis-parsed as a
+        // shadow *color* and never renders.
+        "sf-card": "var(--sf-shadow-card)",
         "primary-button":
           "0 1px 2px 0 rgba(0, 0, 0, 0.08), 0 2px 8px 0 rgba(46, 209, 168, 0.15), inset 0 2px 0 0 rgba(255, 255, 255, 0.15), inset 0 -2px 2px 0 rgba(0, 0, 0, 0.08)",
         "outline-button":

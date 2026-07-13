@@ -103,13 +103,17 @@ describe("ApplicationsFullView", () => {
   });
 
   it("renders stat tiles and a list row per application", () => {
+    // Single page (totalPages: 1): the tiles are derived from the rendered
+    // list itself, so the fixture's applications and statusCounts must
+    // describe the same set — a mismatch here is exactly the bug class
+    // this view guards against (stats disagreeing with the visible rows).
     const hook = makeHook({
       applications: [
         app({ resolvedProjectName: "Atlas" }),
-        app({ referenceNumber: "REF-002", resolvedProjectName: "Nova" }),
+        app({ referenceNumber: "REF-002", resolvedProjectName: "Nova", status: "rejected" }),
       ],
-      statusCounts: { pending: 2, approved: 1, rejected: 1 },
-      pagination: { page: 1, limit: 10, total: 4, totalPages: 1 },
+      statusCounts: { pending: 1, rejected: 1 },
+      pagination: { page: 1, limit: 10, total: 2, totalPages: 1 },
     });
     renderView(hook, "octant");
 
@@ -117,14 +121,34 @@ describe("ApplicationsFullView", () => {
 
     // Stat tiles: total / pending / approved (counts are unique in this fixture).
     expect(screen.getByText("Total applications")).toBeInTheDocument();
-    expect(screen.getByText("4")).toBeInTheDocument();
     expect(screen.getByText("2")).toBeInTheDocument();
+    expect(screen.getByText("1")).toBeInTheDocument();
 
     // A row per application: project-title headline + app-id token.
     expect(screen.getByText("Atlas")).toBeInTheDocument();
     expect(screen.getByText("Nova")).toBeInTheDocument();
     expect(screen.getByText("REF-001")).toBeInTheDocument();
     expect(screen.getByText("REF-002")).toBeInTheDocument();
+  });
+
+  it("regression: ignores a stale/mismatched statusCounts aggregate on a single page and counts the visible rows instead", () => {
+    // Reproduces the reported bug: the backend's statusCounts aggregate
+    // (a separate, page-independent query) claims far more applications
+    // than are actually present in the fetched page. With only one page of
+    // results, the rendered list is the complete matching set, so the
+    // tiles must reflect it — not the disagreeing aggregate.
+    const hook = makeHook({
+      applications: [app({ resolvedProjectName: "Atlas", status: "rejected" })],
+      statusCounts: { pending: 0, approved: 4, rejected: 1, under_review: 1 },
+      pagination: { page: 1, limit: 10, total: 6, totalPages: 1 },
+    });
+    renderView(hook, "octant");
+
+    // Total tile matches the single row actually rendered, not the stale "6".
+    expect(screen.getByText("Total applications")).toBeInTheDocument();
+    expect(screen.getByText("1")).toBeInTheDocument();
+    expect(screen.queryByText("6")).not.toBeInTheDocument();
+    expect(screen.getByText("Atlas")).toBeInTheDocument();
   });
 
   it("headlines the project name with the app id, moving the program to the subline", () => {

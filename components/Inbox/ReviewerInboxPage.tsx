@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactNode, useCallback, useEffect, useMemo, useState } from "react";
+import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/Utilities/Button";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
@@ -17,6 +17,7 @@ import ApplicationDetailView from "../FundingPlatform/ApplicationView/Applicatio
 import { InboxHeader } from "./InboxHeader";
 import { type InboxKindFilter, InboxList } from "./InboxList";
 import { InboxMilestoneDetail } from "./InboxMilestoneDetail";
+import { BUCKET_RANK } from "./statusToBucket";
 import type { InboxItem } from "./types";
 import { useInboxFeed } from "./useInboxFeed";
 
@@ -109,6 +110,33 @@ export function ReviewerInboxPage({
     return () => window.removeEventListener("hashchange", sync);
   }, [syncSelectionToHash]);
 
+  // Auto-select the first item once the feed loads, so the detail pane isn't
+  // stuck on the "select an item" placeholder. Picks the first item in the
+  // currently visible (kind-filtered) list, ordered the same way InboxList
+  // groups them — by bucket rank, then feed order within a bucket.
+  //
+  // ONLY in the embedded dashboard drill-in (syncSelectionToHash === false).
+  // On the standalone action-items page the URL hash drives selection AND its
+  // history (pushState on the first selection so browser Back returns to the
+  // list); auto-selecting there would make that first selection a "switch"
+  // (replaceState) and Back would eject off-page. Selection there stays
+  // hash-driven, so a fresh load shows the list until the user picks an item.
+  //
+  // Runs once: after the selection is later cleared, this must NOT jump back
+  // into a detail, or the surrounding Back gesture would be inert.
+  const hasAutoSelected = useRef(false);
+  useEffect(() => {
+    if (syncSelectionToHash) return;
+    if (hasAutoSelected.current || selectedId != null || items.length === 0) return;
+    const visible = kindFilter === "all" ? items : items.filter((i) => i.kind === kindFilter);
+    if (visible.length === 0) return;
+    const first = visible.reduce((best, current) =>
+      BUCKET_RANK[current.bucket] < BUCKET_RANK[best.bucket] ? current : best
+    );
+    hasAutoSelected.current = true;
+    setSelectedId(first.id);
+  }, [items, selectedId, kindFilter, syncSelectionToHash]);
+
   const selectedItem: InboxItem | undefined = useMemo(
     () => items.find((i) => i.id === selectedId),
     [items, selectedId]
@@ -134,7 +162,7 @@ export function ReviewerInboxPage({
   }
 
   return (
-    <div className="w-full space-y-6">
+    <div className="w-full space-y-4">
       <InboxHeader stats={stats} />
 
       {error ? (

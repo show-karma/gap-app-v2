@@ -16,7 +16,7 @@ interface InboxHeaderProps {
 }
 
 const InboxHeaderComponent: FC<InboxHeaderProps> = ({ stats }) => (
-  <div className="space-y-5">
+  <div className="space-y-4">
     <div className="flex items-start gap-3">
       <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-teal-50 text-teal-600 dark:bg-teal-900/30 dark:text-teal-300">
         <InboxIcon className="h-6 w-6" aria-hidden="true" />

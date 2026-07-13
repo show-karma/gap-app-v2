@@ -63,24 +63,44 @@ function ProjectSkeletonCard() {
   );
 }
 
-/** Pending-work badge for a project, mirroring the design's precedence. */
-function ProjectStatusBadge({ project }: { project: ProjectWithGrantsResponse }) {
+/** Shared hover affordance for badges that link out to the grants/funding tab. */
+const BADGE_LINK_AFFORDANCE = "transition-opacity duration-150 hover:opacity-80";
+
+/**
+ * Pending-work badge for a project, mirroring the design's precedence. The
+ * milestones-pending / grants-in-progress badges link through to the
+ * project's funding tab (where the grants + milestones actually live);
+ * "All caught up" has nothing to drill into, so it stays a plain span.
+ */
+function ProjectStatusBadge({
+  project,
+  slug,
+}: {
+  project: ProjectWithGrantsResponse;
+  slug: string;
+}) {
   const { milestonesNeedingSubmission, grantsInProgress } = computeProjectPendingActions(project);
 
   if (milestonesNeedingSubmission > 0) {
     return (
-      <span className={badgeClasses("orange")}>
+      <Link
+        href={PAGES.PROJECT.GRANTS(slug)}
+        className={cn(badgeClasses("orange"), BADGE_LINK_AFFORDANCE)}
+      >
         <SoftIcon name="send" className="h-3 w-3" />
         {milestonesNeedingSubmission} {pluralize("milestone", milestonesNeedingSubmission)} pending
-      </span>
+      </Link>
     );
   }
   if (grantsInProgress > 0) {
     return (
-      <span className={badgeClasses("amber")}>
+      <Link
+        href={PAGES.PROJECT.GRANTS(slug)}
+        className={cn(badgeClasses("blue"), BADGE_LINK_AFFORDANCE)}
+      >
         <SoftIcon name="flag" className="h-3 w-3" />
-        {grantsInProgress} {pluralize("grant", grantsInProgress)} to complete
-      </span>
+        {grantsInProgress} {pluralize("grant", grantsInProgress)} in progress
+      </Link>
     );
   }
   return (
@@ -97,11 +117,8 @@ const ProjectCard = memo(function ProjectCard({ project }: { project: ProjectWit
   const slug = project.details?.slug || project.uid;
   const grantsCount = project.grants?.length ?? 0;
   return (
-    <Link
-      href={PAGES.PROJECT.OVERVIEW(slug)}
-      className="flex flex-col gap-[14px] rounded-sf-tile border border-sf-line bg-sf-elev p-4 transition-[transform,border-color,background-color] duration-150 hover:-translate-y-[3px] hover:border-sf-line-strong hover:bg-sf-card"
-    >
-      <div className="flex min-w-0 items-center gap-3">
+    <div className="flex flex-col gap-[14px] rounded-sf-tile border border-sf-line bg-sf-elev p-4 transition-[transform,border-color,background-color] duration-150 hover:-translate-y-[3px] hover:border-sf-line-strong hover:bg-sf-card">
+      <Link href={PAGES.PROJECT.OVERVIEW(slug)} className="flex min-w-0 items-center gap-3">
         <div
           className={cn(
             THUMB_BASE,
@@ -117,16 +134,19 @@ const ProjectCard = memo(function ProjectCard({ project }: { project: ProjectWit
         <span className="min-w-0 truncate text-[15px] font-[650] tracking-[-0.01em] text-sf-heading">
           {title}
         </span>
-      </div>
+      </Link>
       <div className="flex flex-wrap items-center gap-1.5">
-        <ProjectStatusBadge project={project} />
+        <ProjectStatusBadge project={project} slug={slug} />
         {grantsCount > 0 ? (
-          <span className={badgeClasses("gray")}>
-            {grantsCount} {pluralize("grant", grantsCount)}
-          </span>
+          <Link
+            href={PAGES.PROJECT.GRANTS(slug)}
+            className={cn(badgeClasses("gray"), BADGE_LINK_AFFORDANCE)}
+          >
+            {grantsCount} total {pluralize("grant", grantsCount)}
+          </Link>
         ) : null}
       </div>
-    </Link>
+    </div>
   );
 });
 

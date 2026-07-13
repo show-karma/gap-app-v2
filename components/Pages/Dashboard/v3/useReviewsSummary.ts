@@ -5,6 +5,7 @@ import { QUERY_KEYS } from "@/hooks/fundingPlatformQueryKeys";
 import type { DashboardAdminCommunity } from "@/hooks/useDashboardAdmin";
 import type { FundingProgram } from "@/services/fundingPlatformService";
 import { getReviewerInbox } from "@/services/reviewerInboxService";
+import { PAGES } from "@/utilities/pages";
 import type { ModuleStatus, ModuleSummary, TileRow } from "./primitives";
 import { deriveReviewerCommunities } from "./reviewCommunities";
 
@@ -47,6 +48,7 @@ export function useReviewsSummary(
   if (queries.length > 0 && queries.every((q) => q.isError)) return { status: "error" };
 
   const perCommunity = communities.map((c, i) => ({
+    id: c.id,
     name: c.community.details.name || c.id,
     action: queries[i]?.data?.stats?.action ?? 0,
   }));
@@ -61,6 +63,8 @@ export function useReviewsSummary(
       icon: Eye,
       label: c.name,
       badge: { tone: "amber", label: `${c.action} to review` },
+      // Straight to that community's review queue.
+      href: PAGES.MANAGE.ACTION_ITEMS(c.id),
     }));
 
   return { status: "ready", summary: { big: totalAction, rows } };

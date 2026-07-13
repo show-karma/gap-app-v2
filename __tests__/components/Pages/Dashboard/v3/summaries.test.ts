@@ -42,19 +42,19 @@ describe("buildProjectsSummary", () => {
     expect(summary.big).toBe(2);
     // Busy One (2 pending milestones) should be sorted ahead of Clear One.
     expect(summary.rows[0].label).toBe("Busy One");
-    expect(summary.rows[0].badge).toEqual({ tone: "amber", label: "2 milestones pending" });
+    expect(summary.rows[0].badge).toEqual({ tone: "orange", label: "2 milestones pending" });
   });
 
-  it("marks a project with only in-progress grants as 'to complete'", () => {
+  it("marks a project with only in-progress grants as 'in progress'", () => {
     const summary = buildProjectsSummary([
       project("In Progress", [{ completed: false, milestones: [{ completed: true }] }]),
     ]);
-    expect(summary.rows[0].badge).toEqual({ tone: "amber", label: "1 grant to complete" });
+    expect(summary.rows[0].badge).toEqual({ tone: "blue", label: "1 grant in progress" });
   });
 
-  it("marks a fully-complete project as Clear", () => {
+  it("marks a fully-complete project as All caught up", () => {
     const summary = buildProjectsSummary([project("Done", [{ completed: true, milestones: [] }])]);
-    expect(summary.rows[0].badge).toEqual({ tone: "green", label: "Clear" });
+    expect(summary.rows[0].badge).toEqual({ tone: "green", label: "All caught up" });
   });
 
   it("caps preview rows at three", () => {
@@ -72,7 +72,8 @@ describe("buildCommunitiesSummary", () => {
     expect(summary.big).toBe(2);
     expect(summary.rows[0].label).toBe("Busy");
     expect(summary.rows[0].badge).toEqual({ tone: "amber", label: "12 applications" });
-    expect(summary.rows[1].badge).toEqual({ tone: "gray", label: "Clear" });
+    // No pending applications → no badge (the row just shows the community name).
+    expect(summary.rows[1].badge).toBeUndefined();
   });
 
   it("pluralizes the app count", () => {

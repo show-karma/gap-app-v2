@@ -3,8 +3,9 @@
 import { useQuery } from "@tanstack/react-query";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import type { Hex } from "viem";
+import { useEnrichedApplications } from "@/features/user-applications/hooks/use-enriched-applications";
 import { useUserApplications } from "@/features/user-applications/hooks/use-user-applications";
 import { hasActiveApplicationFilters } from "@/features/user-applications/lib/filters";
 import type { UseUserApplicationsReturn } from "@/features/user-applications/types";
@@ -17,6 +18,7 @@ import type { FundingProgram } from "@/services/fundingPlatformService";
 import { usePermissionContext } from "@/src/core/rbac/context/permission-context";
 import { useStaff } from "@/src/core/rbac/hooks/use-staff-bridge";
 import type { ProjectWithGrantsResponse } from "@/types/v2/project";
+import type { Application } from "@/types/whitelabel-entities";
 import { PAGES } from "@/utilities/pages";
 import { fetchMyProjects } from "@/utilities/sdk/projects/fetchMyProjects";
 import { useWhitelabel } from "@/utilities/whitelabel-context";
@@ -82,6 +84,8 @@ interface BuildDashboardModulesParams {
   communitiesStatus: ModuleStatus;
   applicationsStatus: ModuleStatus;
   applicationsHook: UseUserApplicationsReturn;
+  /** Top applications with their community resolved, so overview rows deep-link. */
+  enrichedApplications: Application[];
   communitySlug: string | undefined;
 }
 
@@ -108,6 +112,7 @@ function buildDashboardModules(params: BuildDashboardModulesParams): DashModule[
     communitiesStatus,
     applicationsStatus,
     applicationsHook,
+    enrichedApplications,
     communitySlug,
   } = params;
 
@@ -194,10 +199,7 @@ function buildDashboardModules(params: BuildDashboardModulesParams): DashModule[
       status: applicationsStatus,
       summary:
         applicationsStatus === "ready"
-          ? buildApplicationsSummary(
-              applicationsHook.applications,
-              applicationsHook.statusCounts ?? {}
-            )
+          ? buildApplicationsSummary(enrichedApplications, applicationsHook.statusCounts ?? {})
           : undefined,
       onRetry: () => applicationsHook.refresh(),
       empty: {
@@ -283,6 +285,16 @@ export function useDashboardModules(): DashboardModulesState {
 
   const applicationsHook = useUserApplications(communitySlug ?? undefined, { enabled: tokenReady });
 
+  // Only the first three applications surface on the overview tile; enriching
+  // just those keeps the overview light (≤3 program-config fetches, cached and
+  // shared with the drill-in) while giving each row a resolved community so its
+  // pill deep-links to the application detail.
+  const topApplications = useMemo(
+    () => applicationsHook.applications.slice(0, 3),
+    [applicationsHook.applications]
+  );
+  const enrichedApplications = useEnrichedApplications(topApplications, communitySlug ?? undefined);
+
   const advisor = useAdvisorData(tokenReady);
 
   // The reviews tile shows the reviewer inbox's actual actionable count per
@@ -366,6 +378,7 @@ export function useDashboardModules(): DashboardModulesState {
     communitiesStatus,
     applicationsStatus,
     applicationsHook,
+    enrichedApplications,
     communitySlug: communitySlug ?? undefined,
   });
 

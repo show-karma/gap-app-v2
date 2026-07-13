@@ -1,15 +1,14 @@
 "use client";
 
-import { motion } from "motion/react";
 import { cn } from "@/utilities/tailwind";
 import { TileFace, TileFaceSkeleton } from "./BentoTileFace";
 import type { DashModule } from "./module";
-import { BENTO_LAYOUT_TRANSITION, bentoLayoutId, TILE_BASE, tileSpanClasses } from "./soft-classes";
+import { TILE_BASE, tileSpanClasses } from "./soft-classes";
 
 /**
  * A single bento tile (design "list" content variant) for the in-place
  * drill-in overview. The whole tile is one button that opens the full module
- * via `onOpen`, morphing into the drill-in through a shared `layoutId`.
+ * via `onOpen`.
  *
  * The route-based overview uses BentoTileLink instead — same face, but a
  * navigation `<Link>` to `/dashboard/[module]`.
@@ -23,7 +22,7 @@ export function BentoTile({
   wide?: boolean;
   onOpen: (key: string) => void;
 }) {
-  const { key, status } = module;
+  const { key, label, status } = module;
 
   if (status === "loading") {
     return (
@@ -36,19 +35,21 @@ export function BentoTile({
     );
   }
 
+  // A stretched button fills the tile to open the module; per-row deep-links
+  // (inside TileFace) layer above it. The button is a SIBLING of the row links,
+  // so no interactive element nests inside another.
   return (
-    <motion.button
-      type="button"
-      layout
-      layoutId={bentoLayoutId(key)}
-      className={cn(TILE_BASE, tileSpanClasses(wide))}
-      onClick={() => onOpen(key)}
-      whileHover={{ y: -3 }}
-      whileTap={{ scale: 0.98 }}
-      transition={BENTO_LAYOUT_TRANSITION}
+    <div
+      className={cn(TILE_BASE, tileSpanClasses(wide), "relative")}
       data-comment-anchor={`tile-${key}`}
     >
+      <button
+        aria-label={`Open ${label}`}
+        className="absolute inset-0 rounded-[inherit] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40"
+        onClick={() => onOpen(key)}
+        type="button"
+      />
       <TileFace module={module} />
-    </motion.button>
+    </div>
   );
 }

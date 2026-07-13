@@ -22,9 +22,9 @@
   --sf-line: #f4f4f5;
   --sf-line-strong: #e4e4e7;
   --sf-chip: #f4f4f5;
-  --sf-r-card: 22px;
-  --sf-r-tile: 15px;
-  --sf-shadow-card: 0 1px 2px rgba(9, 9, 11, 0.04), 0 6px 16px -8px rgba(9, 9, 11, 0.1);
+  --sf-r-card: 12px;
+  --sf-r-tile: 10px;
+  --sf-shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
 
   /* Pin the app's hsl-triplet semantic tokens so the reused Tailwind drill-in
      sections (bg-card / text-muted-foreground / border-border / …) match the
@@ -68,7 +68,7 @@
   --sf-line: #262626;
   --sf-line-strong: #383838;
   --sf-chip: #232323;
-  --sf-shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 20px -10px rgba(0, 0, 0, 0.6);
+  --sf-shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 1px 2px -1px rgba(0, 0, 0, 0.3);
 
   --background: 0 0% 0%;
   --foreground: 0 0% 98%;
@@ -94,32 +94,16 @@
 }
 
 /*
- * Dashboard route morph (View Transitions API).
+ * Dashboard route navigation (View Transitions API).
  *
- * A bento tile and its `/dashboard/[module]` drill-in share a
- * `view-transition-name` (moduleTransitionName), so the browser morphs the box
- * between them on navigation — the cross-route equivalent of the in-place
- * framer `layoutId`. These pseudo-elements only exist while a transition is
- * running, and only dashboard navigation starts one (useDashboardTransition),
- * so the rules are inert everywhere else.
- *
- * Match the box morph to the old framer timing, and hold the shared shell
- * (header/background = the `root` group) static so only the opened module moves.
+ * A bento tile and its `/dashboard/[module]` drill-in may still share a
+ * `view-transition-name` (moduleTransitionName) elsewhere in the app, but the
+ * dashboard no longer animates a box morph/scale across that navigation —
+ * disable the built-in cross-fade/resize for every group so navigation is an
+ * instant swap with no zoom-in/zoom-out.
  */
-::view-transition-group(*) {
-  animation-duration: 0.32s;
-  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
-}
-::view-transition-old(root),
-::view-transition-new(root) {
+::view-transition-group(*),
+::view-transition-old(*),
+::view-transition-new(*) {
   animation: none;
-  mix-blend-mode: normal;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  ::view-transition-group(*),
-  ::view-transition-old(*),
-  ::view-transition-new(*) {
-    animation: none !important;
-  }
 }
