@@ -1,7 +1,7 @@
 {
   "$schema": "./scripts/quality-baseline.schema.json",
-  "generatedAt": "2026-07-08T20:13:23.316Z",
-  "generatedFromCommit": "fc23ccd395ba484ba838833f57a526e34b0d6c15",
+  "generatedAt": "2026-07-13T15:06:40.537Z",
+  "generatedFromCommit": "c67fe5f3eedf9c6908f2e4452c1d80f16b5d5550",
   "coverage": {
     "lines": 0,
     "statements": 0,
@@ -9,14 +9,14 @@
     "branches": 0
   },
   "duplication": {
-    "percent": 1.2,
+    "percent": 1.19,
     "fragments": 73
   },
   "violations": {
-    "biome": 1239,
-    "knipUnusedFiles": 208,
-    "knipUnusedExports": 417,
-    "knipUnusedTypes": 360,
+    "biome": 1235,
+    "knipUnusedFiles": 207,
+    "knipUnusedExports": 415,
+    "knipUnusedTypes": 358,
     "knipUnusedDeps": 19,
     "knipDuplicates": 33
   },
@@ -29,7 +29,7 @@
     },
     "__tests__/components/Community/CommunityMilestoneCard.test.tsx": {
       "lines": 827,
-      "bytes": 26988,
+      "bytes": 26972,
       "maxLines": 800,
       "maxBytes": 60000
     },
@@ -173,13 +173,13 @@
     },
     "components/Dialogs/ProgressDialog/UnifiedMilestoneScreen.tsx": {
       "lines": 660,
-      "bytes": 23612,
+      "bytes": 24554,
       "maxLines": 600,
       "maxBytes": 40000
     },
     "components/Dialogs/ProjectDialog/index.tsx": {
-      "lines": 1729,
-      "bytes": 65889,
+      "lines": 1722,
+      "bytes": 64862,
       "maxLines": 600,
       "maxBytes": 40000
     },
@@ -197,7 +197,7 @@
     },
     "components/Forms/ProjectUpdate.tsx": {
       "lines": 989,
-      "bytes": 36248,
+      "bytes": 36262,
       "maxLines": 600,
       "maxBytes": 40000
     },
@@ -209,7 +209,7 @@
     },
     "components/FundingPlatform/ApplicationView/ApplicationSubmission.tsx": {
       "lines": 979,
-      "bytes": 36667,
+      "bytes": 36642,
       "maxLines": 600,
       "maxBytes": 40000
     },
@@ -353,13 +353,13 @@
     },
     "hooks/useMilestone.ts": {
       "lines": 1148,
-      "bytes": 41594,
+      "bytes": 41596,
       "maxLines": 600,
       "maxBytes": 40000
     },
     "hooks/useMilestoneCompletionVerification.ts": {
       "lines": 667,
-      "bytes": 20369,
+      "bytes": 20393,
       "maxLines": 600,
       "maxBytes": 40000
     },
@@ -449,7 +449,7 @@
     },
     "utilities/indexer.ts": {
       "lines": 826,
-      "bytes": 40539,
+      "bytes": 40633,
       "maxLines": 600,
       "maxBytes": 40000
     },
@@ -463,17 +463,17 @@
   "reactDoctor": {
     "score": 0,
     "errors": 64,
-    "warnings": 3299,
+    "warnings": 3309,
     "byCategory": {
-      "Architecture": 1175,
       "Accessibility": 284,
+      "Architecture": 1180,
       "Correctness": 393,
+      "Server": 11,
+      "Performance": 628,
       "Next.js": 143,
-      "Server": 9,
-      "Performance": 624,
       "State & Effects": 684,
-      "TanStack Query": 37,
-      "Bundle Size": 10,
+      "TanStack Query": 38,
+      "Bundle Size": 9,
       "Security": 3
     }
   }
