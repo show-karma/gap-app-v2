@@ -7,7 +7,7 @@ import { Link } from "@/src/components/navigation/Link";
 import type { ProjectWithGrantsResponse } from "@/types/v2/project";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
-import { computeProjectPendingActions } from "../utils/pending-actions";
+import { computeProjectPendingActions, projectPendingHref } from "../utils/pending-actions";
 import { EmptyState, ErrorState, Section } from "./primitives";
 import { SoftIcon } from "./SoftIcon";
 import { BTN_BASE, BTN_OUTLINE, BTN_SM, badgeClasses, SK, THUMB_BASE } from "./soft-classes";
@@ -79,14 +79,14 @@ function ProjectStatusBadge({
   project: ProjectWithGrantsResponse;
   slug: string;
 }) {
-  const { milestonesNeedingSubmission, grantsInProgress } = computeProjectPendingActions(project);
+  const actions = computeProjectPendingActions(project);
+  const { milestonesNeedingSubmission, grantsInProgress } = actions;
+  // Deep-links to the single grant when the work is in one grant, else funding.
+  const href = projectPendingHref(slug, actions);
 
   if (milestonesNeedingSubmission > 0) {
     return (
-      <Link
-        href={PAGES.PROJECT.GRANTS(slug)}
-        className={cn(badgeClasses("orange"), BADGE_LINK_AFFORDANCE)}
-      >
+      <Link href={href} className={cn(badgeClasses("orange"), BADGE_LINK_AFFORDANCE)}>
         <SoftIcon name="send" className="h-3 w-3" />
         {milestonesNeedingSubmission} {pluralize("milestone", milestonesNeedingSubmission)} pending
       </Link>
@@ -94,10 +94,7 @@ function ProjectStatusBadge({
   }
   if (grantsInProgress > 0) {
     return (
-      <Link
-        href={PAGES.PROJECT.GRANTS(slug)}
-        className={cn(badgeClasses("blue"), BADGE_LINK_AFFORDANCE)}
-      >
+      <Link href={href} className={cn(badgeClasses("blue"), BADGE_LINK_AFFORDANCE)}>
         <SoftIcon name="flag" className="h-3 w-3" />
         {grantsInProgress} {pluralize("grant", grantsInProgress)} in progress
       </Link>

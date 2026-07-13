@@ -80,6 +80,11 @@ describe("buildCommunitiesSummary", () => {
     const summary = buildCommunitiesSummary([community("Solo", 1, 1)]);
     expect(summary.rows[0].badge).toEqual({ tone: "amber", label: "1 application" });
   });
+
+  it("links each community row to its manage page (not action-items)", () => {
+    const summary = buildCommunitiesSummary([community("Busy", 2, 12)]);
+    expect(summary.rows[0].href).toBe("/admin/Busy");
+  });
 });
 
 describe("buildApplicationsSummary", () => {

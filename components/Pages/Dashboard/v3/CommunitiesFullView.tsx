@@ -4,7 +4,6 @@ import dynamic from "next/dynamic";
 import pluralize from "pluralize";
 import { useDashboardAdmin } from "@/hooks/useDashboardAdmin";
 import { Link } from "@/src/components/navigation/Link";
-import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 import { EmptyState, ErrorState, Section } from "./primitives";
 import { SoftIcon } from "./SoftIcon";
@@ -117,12 +116,12 @@ export function CommunitiesFullView() {
             </div>
             <div className="flex flex-col gap-[3px] text-[12.5px] text-sf-muted">
               {c.activeProgramsCount > 0 ? (
-                <Link href={PAGES.COMMUNITY.APPLICATIONS(c.slug)} className={COUNT_LINK_AFFORDANCE}>
+                <Link href={c.manageUrl} className={COUNT_LINK_AFFORDANCE}>
                   {c.activeProgramsCount} active {pluralize("program", c.activeProgramsCount)}
                 </Link>
               ) : null}
               {c.pendingApplicationsCount > 0 ? (
-                <Link href={PAGES.MANAGE.ACTION_ITEMS(c.slug)} className={COUNT_LINK_AFFORDANCE}>
+                <Link href={c.manageUrl} className={COUNT_LINK_AFFORDANCE}>
                   {c.pendingApplicationsCount} pending{" "}
                   {pluralize("application", c.pendingApplicationsCount)}
                 </Link>

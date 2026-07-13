@@ -9,7 +9,7 @@ import type { DashboardAdminCommunity } from "@/hooks/useDashboardAdmin";
 import type { ProjectWithGrantsResponse } from "@/types/v2/project";
 import type { Application, ApplicationStatus } from "@/types/whitelabel-entities";
 import { PAGES } from "@/utilities/pages";
-import { computeProjectPendingActions } from "../utils/pending-actions";
+import { computeProjectPendingActions, projectPendingHref } from "../utils/pending-actions";
 import type { BadgeTone, ModuleSummary, TileRow } from "./primitives";
 
 export function buildProjectsSummary(projects: ProjectWithGrantsResponse[]): ModuleSummary {
@@ -20,11 +20,9 @@ export function buildProjectsSummary(projects: ProjectWithGrantsResponse[]): Mod
     .map(({ project, actions }) => {
       const title = project.details?.title || "Untitled project";
       const slug = project.details?.slug || project.uid;
-      // Pending work lives on the funding tab (grants + their milestones);
-      // otherwise the row just points at the project overview.
-      const hasPendingWork =
-        actions.milestonesNeedingSubmission > 0 || actions.grantsInProgress > 0;
-      const href = hasPendingWork ? PAGES.PROJECT.GRANTS(slug) : PAGES.PROJECT.OVERVIEW(slug);
+      // Deep-link to the single grant when the pending work lives in one grant,
+      // else the funding tab (all grants), else the project overview.
+      const href = projectPendingHref(slug, actions);
       let badge: TileRow["badge"];
       if (actions.milestonesNeedingSubmission > 0) {
         badge = {
@@ -62,9 +60,8 @@ export function buildCommunitiesSummary(communities: DashboardAdminCommunity[]):
               label: `${c.pendingApplicationsCount} ${pluralize("application", c.pendingApplicationsCount)}`,
             }
           : undefined,
-      // Pending applications → the review queue; otherwise the community's
-      // manage page.
-      href: c.pendingApplicationsCount > 0 ? PAGES.MANAGE.ACTION_ITEMS(c.slug) : c.manageUrl,
+      // The whole community row opens its manage page.
+      href: c.manageUrl,
     }));
 
   return { big: communities.length, rows };
