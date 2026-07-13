@@ -107,4 +107,31 @@ describe("PostBody", () => {
       "https://x.com"
     );
   });
+
+  // Resilience against partial/unexpected editor data — none of these may throw.
+  it("renders nothing (no throw) when body is undefined", () => {
+    expect(() => render(<PostBody body={undefined} />)).not.toThrow();
+  });
+
+  it("renders nothing (no throw) for an empty body", () => {
+    expect(() => render(<PostBody body={[]} />)).not.toThrow();
+  });
+
+  it("skips a block image that has no uploaded asset", () => {
+    const body: BlogBodyBlock[] = [
+      { _type: "blockImage", _key: "img1", alt: "alt but no asset" } as BlogBodyBlock,
+    ];
+
+    expect(() => render(<PostBody body={body} />)).not.toThrow();
+    expect(screen.queryByRole("img")).toBeNull();
+  });
+
+  it("degrades silently on an unknown block type (no debug text, no throw)", () => {
+    const body: BlogBodyBlock[] = [
+      { _type: "somethingNew", _key: "x1" } as unknown as BlogBodyBlock,
+    ];
+
+    const { container } = render(<PostBody body={body} />);
+    expect(container.textContent ?? "").not.toMatch(/unknown/i);
+  });
 });
