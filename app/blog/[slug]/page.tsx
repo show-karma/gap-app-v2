@@ -31,7 +31,7 @@ function resolveOgImage(
   post: BlogPost
 ): { url: string; width: number; height: number; alt: string } | undefined {
   const image: CoverImage | null | undefined = post.seo?.ogImage ?? post.coverImage;
-  if (!image) return undefined;
+  if (!image?.asset) return undefined;
   return {
     url: urlForImage(image)
       .width(OG_IMAGE_WIDTH)
@@ -79,7 +79,9 @@ export default async function BlogPostPage({ params }: PageProps) {
 
   if (!post) notFound();
 
-  const coverSrc = post.coverImage
+  // Guard on `.asset` (not just the object): an alt-only cover with no uploaded
+  // asset would otherwise throw in urlForImage(...).url() and crash the page.
+  const coverSrc = post.coverImage?.asset
     ? urlForImage(post.coverImage)
         .width(COVER_WIDTH)
         .height(COVER_HEIGHT)

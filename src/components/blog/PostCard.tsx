@@ -21,7 +21,10 @@ interface PostCardProps {
  * server-rendered once per request rather than re-rendered client-side.
  */
 function PostCardComponent({ post }: PostCardProps) {
-  const coverSrc = post.coverImage
+  // Guard on `.asset`, not just the object: a required cover can still be an
+  // alt-only image with no uploaded asset, and urlForImage(...).url() throws
+  // on a missing asset ref — which would crash the whole index grid.
+  const coverSrc = post.coverImage?.asset
     ? urlForImage(post.coverImage)
         .width(COVER_WIDTH)
         .height(COVER_HEIGHT)
