@@ -13,6 +13,7 @@ import { useCommunitiesStore } from "@/store/communities";
 import type { Grant } from "@/types/v2/grant";
 import type { Project } from "@/types/v2/project";
 import formatCurrency from "@/utilities/formatCurrency";
+import { isCancelledMilestoneStatus } from "@/utilities/milestones/getEffectiveMilestoneStatus";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 
@@ -68,7 +69,10 @@ function GrantCard({
   isSelected: boolean;
 }) {
   // Calculate milestone progress
-  const milestones = grant.milestones || [];
+  // Cancelled milestones (DEV-523) are excluded from the progress ratio.
+  const milestones = (grant.milestones || []).filter(
+    (m) => !isCancelledMilestoneStatus(m.currentStatus)
+  );
   const completedMilestones = milestones.filter((m) => m.completed).length;
   const totalMilestones = milestones.length;
   const rawAmount = grant.details?.amount?.trim() || "";

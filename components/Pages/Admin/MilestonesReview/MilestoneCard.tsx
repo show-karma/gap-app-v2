@@ -454,7 +454,7 @@ export function MilestoneCard({
             projectTitle={projectTitle}
             projectSlug={projectSlug}
           />
-          {unifiedMilestone && !isVerified && !hasCompletion && (
+          {unifiedMilestone && !isVerified && !hasCompletion && !isCancelled && (
             <Button
               onClick={handleEditOpen}
               className="bg-transparent p-1 w-max h-max hover:bg-gray-100 dark:hover:bg-zinc-700 rounded"

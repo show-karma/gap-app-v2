@@ -6,6 +6,7 @@ import pluralize from "pluralize";
 import type { Grant } from "@/types/v2/grant";
 import formatCurrency from "@/utilities/formatCurrency";
 import { formatDate } from "@/utilities/formatDate";
+import { isCancelledMilestoneStatus } from "@/utilities/milestones/getEffectiveMilestoneStatus";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 import { GrantPercentage } from "./Pages/Project/Grants/components/GrantPercentage";
@@ -39,8 +40,12 @@ export const pickColor = (index: number) => {
   return cardColors[index % cardColors.length];
 };
 
+// Cancelled milestones (DEV-523) are excluded from the milestone ratio.
+const activeMilestones = (milestones: Grant["milestones"]) =>
+  milestones?.filter((milestone) => !isCancelledMilestoneStatus(milestone.currentStatus)) ?? [];
+
 const completedMilestonesCount = (milestones: Grant["milestones"]) =>
-  milestones?.filter((milestone) => milestone.completed)?.length ?? 0;
+  activeMilestones(milestones).filter((milestone) => milestone.completed).length;
 
 // Loading indicator component that uses useLinkStatus
 const LoadingIndicator = () => {
@@ -150,8 +155,9 @@ const GrantCardContent = ({
               <div className="flex w-full flex-row flex-wrap justify-start gap-1">
                 <div className="flex h-max w-max items-center justify-start rounded-full bg-slate-50   dark:bg-slate-700 text-slate-600 dark:text-gray-300 px-3 py-1 max-2xl:px-2">
                   <p className="text-center text-sm font-semibold text-slate-600 dark:text-slate-100 max-2xl:text-[13px]">
-                    {completedMilestonesCount(grant.milestones)}/{grant.milestones?.length || 0}{" "}
-                    {pluralize("Milestone", grant.milestones?.length || 0)}
+                    {completedMilestonesCount(grant.milestones)}/
+                    {activeMilestones(grant.milestones).length}{" "}
+                    {pluralize("Milestone", activeMilestones(grant.milestones).length)}
                   </p>
                 </div>
 
