@@ -44,16 +44,38 @@ describe("post schema — publishedAt", () => {
     expect(field.initialValue).toBeUndefined();
   });
 
-  it("requires the cover image to have an uploaded asset, not just alt text", () => {
+  it("does not require a cover image (optional)", () => {
+    const cover = getField("coverImage");
+    // No top-level validation → the field is optional; a post can ship coverless.
+    expect(cover.validation).toBeUndefined();
+  });
+
+  it("requires alt text only when a cover image is actually set", () => {
     const cover = getField("coverImage") as SchemaField & {
-      validation?: (rule: unknown) => unknown;
+      fields?: SchemaField[];
     };
-    const required = vi.fn().mockReturnThis();
-    const assetRequired = vi.fn().mockReturnThis();
-    const rule = { required, assetRequired } as unknown;
-    cover.validation?.(rule);
-    expect(required).toHaveBeenCalled();
-    expect(assetRequired).toHaveBeenCalled();
+    const alt = cover.fields?.find((f) => f.name === "alt");
+    const validate = alt?.validation as
+      | ((rule: { custom: (fn: (v: unknown, ctx: unknown) => unknown) => unknown }) => unknown)
+      | undefined;
+    let rule: (value: unknown, context: unknown) => unknown = () => true;
+    validate?.({
+      custom: (fn) => {
+        rule = fn;
+        return "custom-rule";
+      },
+    });
+
+    // No image uploaded → alt optional (valid even when empty).
+    expect(rule(undefined, { parent: {} })).toBe(true);
+    // Image uploaded but no alt → invalid (returns an error message).
+    expect(rule("", { parent: { asset: { _ref: "x", _type: "reference" } } })).toEqual(
+      expect.any(String)
+    );
+    // Image + alt → valid.
+    expect(rule("A description", { parent: { asset: { _ref: "x", _type: "reference" } } })).toBe(
+      true
+    );
   });
 
   it("locks the slug once a publish date is set", () => {

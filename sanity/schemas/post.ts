@@ -45,14 +45,27 @@ export const post = defineType({
       title: "Cover image",
       type: "image",
       group: "content",
+      description:
+        "Optional. Shown on the /blog index card and at the top of the post. A post without a cover renders fine — the index shows a neutral placeholder.",
       options: { hotspot: true },
       fields: [
         defineField({
           name: "alt",
           title: "Alt text",
-          description: "Required for accessibility and SEO.",
+          description:
+            "Describe the image for screen readers and search engines. Required only when a cover image is set.",
           type: "string",
-          validation: (Rule) => Rule.required(),
+          // Alt is required *only when an image is actually uploaded* — you're
+          // never forced to add a cover, but an image without alt text is an
+          // accessibility/SEO miss, so we ask for it when (and only when) there is one.
+          validation: (Rule) =>
+            Rule.custom((alt, context) => {
+              const parent = context.parent as { asset?: unknown } | undefined;
+              if (parent?.asset && !alt) {
+                return "Add alt text when a cover image is set (accessibility & SEO).";
+              }
+              return true;
+            }),
         }),
         defineField({
           name: "caption",
@@ -60,10 +73,9 @@ export const post = defineType({
           type: "string",
         }),
       ],
-      // `assetRequired()` blocks publishing an alt-only cover with no uploaded
-      // image — `required()` alone is satisfied by the object existing (e.g. just
-      // the alt text), which then throws when the renderer builds an image URL.
-      validation: (Rule) => Rule.required().assetRequired(),
+      // Intentionally not required: a post can ship without a cover. The
+      // renderers guard on `coverImage.asset`, so a missing/alt-only cover
+      // degrades to a placeholder (index) or is omitted (post page) — never a crash.
     }),
     defineField({
       name: "body",
