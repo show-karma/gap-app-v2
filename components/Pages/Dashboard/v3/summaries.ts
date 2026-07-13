@@ -60,8 +60,8 @@ export function buildCommunitiesSummary(communities: DashboardAdminCommunity[]):
               label: `${c.pendingApplicationsCount} ${pluralize("application", c.pendingApplicationsCount)}`,
             }
           : undefined,
-      // The whole community row opens its manage page.
-      href: c.manageUrl,
+      // The whole community row opens its funding-platform manage page.
+      href: `${c.manageUrl}/funding-platform`,
     }));
 
   return { big: communities.length, rows };

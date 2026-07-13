@@ -116,12 +116,12 @@ export function CommunitiesFullView() {
             </div>
             <div className="flex flex-col gap-[3px] text-[12.5px] text-sf-muted">
               {c.activeProgramsCount > 0 ? (
-                <Link href={c.manageUrl} className={COUNT_LINK_AFFORDANCE}>
+                <Link href={`${c.manageUrl}/funding-platform`} className={COUNT_LINK_AFFORDANCE}>
                   {c.activeProgramsCount} active {pluralize("program", c.activeProgramsCount)}
                 </Link>
               ) : null}
               {c.pendingApplicationsCount > 0 ? (
-                <Link href={c.manageUrl} className={COUNT_LINK_AFFORDANCE}>
+                <Link href={`${c.manageUrl}/funding-platform`} className={COUNT_LINK_AFFORDANCE}>
                   {c.pendingApplicationsCount} pending{" "}
                   {pluralize("application", c.pendingApplicationsCount)}
                 </Link>

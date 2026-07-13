@@ -81,9 +81,9 @@ describe("buildCommunitiesSummary", () => {
     expect(summary.rows[0].badge).toEqual({ tone: "amber", label: "1 application" });
   });
 
-  it("links each community row to its manage page (not action-items)", () => {
+  it("links each community row to its funding-platform manage page", () => {
     const summary = buildCommunitiesSummary([community("Busy", 2, 12)]);
-    expect(summary.rows[0].href).toBe("/admin/Busy");
+    expect(summary.rows[0].href).toBe("/admin/Busy/funding-platform");
   });
 });
 
