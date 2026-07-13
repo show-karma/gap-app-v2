@@ -74,8 +74,12 @@ const notFoundErrors = ["Project not found", "Community not found"];
 // the manual `Sentry.captureException` the error boundaries call on a
 // non-recoverable second attempt — so suppressing the signature here would also
 // drop the genuinely-broken cases we want to see. Recovery is gated entirely by
-// the boundaries: the first attempt hard-reloads without capturing and the
-// second (recovery exhausted) reports normally. See utilities/isChunkLoadError.ts.
+// the boundaries (render-path: `app/error.tsx`, `app/global-error.tsx`,
+// `components/ErrorBoundary.tsx`) and the window-level listeners for
+// non-render paths (`utilities/chunkRecovery.ts`, gated via `beforeSend` in
+// `instrumentation-client.ts`): the first attempt hard-reloads without
+// capturing and the second (recovery exhausted) reports normally. See
+// utilities/isChunkLoadError.ts.
 
 // Anonymous-traffic errors. When a logged-out user lands on a public page
 // (e.g. /project/:projectId), some indexer routes (or SDK callers) still

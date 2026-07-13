@@ -10,16 +10,23 @@ const FIXED_NOW = new Date("2026-05-07T12:00:00.000Z");
 const daysFromNow = (days: number): string =>
   new Date(FIXED_NOW.getTime() + days * 24 * 60 * 60 * 1000).toISOString();
 
-const createProgram = (overrides: Partial<FundingProgram["metadata"]> = {}): FundingProgram => ({
+const createProgram = (
+  overrides: Partial<FundingProgram["metadata"]> = {},
+  applicationConfig: FundingProgram["applicationConfig"] = null
+): FundingProgram => ({
   programId: "program-1",
   chainID: 1,
   name: "Test Program",
-  applicationConfig: null,
+  applicationConfig,
   metadata: {
     title: "Test Program",
     ...overrides,
   },
 });
+
+// A genuinely-open program accepts applications; the card status logic gates
+// "open"/"urgent"/"closing" on this, matching the list filter's `matchesStatus`.
+const ENABLED: FundingProgram["applicationConfig"] = { isEnabled: true };
 
 describe("computeProgramView", () => {
   beforeEach(() => {
@@ -48,19 +55,19 @@ describe("computeProgramView", () => {
     });
 
     it("returns urgent when 3 or fewer days remain", () => {
-      const view = computeProgramView(createProgram({ endsAt: daysFromNow(2) }));
+      const view = computeProgramView(createProgram({ endsAt: daysFromNow(2) }, ENABLED));
       expect(view.urgency).toBe("urgent");
       expect(view.daysLeft).toBe(2);
     });
 
     it("returns closing when 4-7 days remain", () => {
-      const view = computeProgramView(createProgram({ endsAt: daysFromNow(6) }));
+      const view = computeProgramView(createProgram({ endsAt: daysFromNow(6) }, ENABLED));
       expect(view.urgency).toBe("closing");
       expect(view.daysLeft).toBe(6);
     });
 
     it("returns open when more than 7 days remain", () => {
-      const view = computeProgramView(createProgram({ endsAt: daysFromNow(20) }));
+      const view = computeProgramView(createProgram({ endsAt: daysFromNow(20) }, ENABLED));
       expect(view.urgency).toBe("open");
       expect(view.status).toBe("open");
     });
@@ -74,9 +81,44 @@ describe("computeProgramView", () => {
     });
 
     it("returns null daysLeft when no endsAt is provided", () => {
-      const view = computeProgramView(createProgram({}));
+      const view = computeProgramView(createProgram({}, ENABLED));
       expect(view.daysLeft).toBeNull();
       expect(view.urgency).toBe("open");
+    });
+  });
+
+  // P4: a program with applications disabled must read "closed" so the card
+  // matches the "Closed" list tab (`matchesStatus` treats isEnabled=false as
+  // ended). Genuinely-open programs (isEnabled=true) must be unaffected.
+  describe("applications-disabled gating", () => {
+    it("returns closed when applications are disabled, even with a future deadline", () => {
+      const view = computeProgramView(
+        createProgram({ endsAt: daysFromNow(20) }, { isEnabled: false })
+      );
+      expect(view.status).toBe("closed");
+      expect(view.urgency).toBe("closed");
+    });
+
+    it("returns closed when applicationConfig is null and no dates are set", () => {
+      const view = computeProgramView(createProgram({}, null));
+      expect(view.status).toBe("closed");
+      expect(view.urgency).toBe("closed");
+    });
+
+    it("does NOT force closed for a genuinely-open program (isEnabled=true)", () => {
+      const view = computeProgramView(
+        createProgram({ endsAt: daysFromNow(20) }, { isEnabled: true })
+      );
+      expect(view.status).toBe("open");
+      expect(view.urgency).toBe("open");
+    });
+
+    it("keeps a disabled program that has already ended as deadline-passed", () => {
+      const view = computeProgramView(
+        createProgram({ endsAt: daysFromNow(-1) }, { isEnabled: false })
+      );
+      expect(view.status).toBe("deadline-passed");
+      expect(view.urgency).toBe("closed");
     });
   });
 

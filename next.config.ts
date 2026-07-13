@@ -206,13 +206,19 @@ const nextConfig: NextConfig = {
         destination: "/community/:communityId/funding-opportunities",
         permanent: true,
       },
-      // Redirect the legacy singular /update route to the project root. The
-      // plural /project/:projectId/updates path is a real profile tab (renders
-      // ProjectRoadmap, mirrors /about and /funding) and must NOT be redirected
-      // — a stale redirect here made the Updates tab and shared update links
-      // bounce back to the project root.
+      // The project Updates view is consolidated into the project root
+      // (/project/:projectId now renders the v2 UpdatesContent). Redirect the
+      // legacy singular /update AND plural /updates paths there so old links,
+      // bookmarks, and shared update URLs land on the canonical page. The
+      // separate Updates tab has been removed and share links now point to the
+      // root, so this no longer bounces the tab (the earlier breakage).
       {
         source: "/project/:projectId/update",
+        destination: "/project/:projectId",
+        permanent: true,
+      },
+      {
+        source: "/project/:projectId/updates",
         destination: "/project/:projectId",
         permanent: true,
       },

@@ -1,10 +1,26 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import type { Application } from "@/types/whitelabel-entities";
 import fetchData from "@/utilities/fetchData";
 import { useUserApplicationsStore } from "../lib/store";
-import type { UserApplicationsResponse, UseUserApplicationsReturn } from "../types";
+import type {
+  UserApplicationsResponse,
+  UserApplicationsSortBy,
+  UseUserApplicationsReturn,
+} from "../types";
+
+// The my-applications endpoint does not accept sort params, so sorting is
+// applied client-side over the fetched page. ISO date strings compare
+// correctly as strings.
+const SORT_FIELD: Record<UserApplicationsSortBy, (app: Application) => string> = {
+  createdAt: (app) => app.createdAt ?? "",
+  updatedAt: (app) => app.updatedAt ?? "",
+  // Application has no submittedAt field; creation time is the closest proxy
+  submittedAt: (app) => app.createdAt ?? "",
+  programName: (app) => app.programTitle ?? "",
+  status: (app) => app.status ?? "",
+};
 
 export function useUserApplications(communitySlug?: string): UseUserApplicationsReturn {
   const queryClient = useQueryClient();
@@ -28,13 +44,14 @@ export function useUserApplications(communitySlug?: string): UseUserApplications
     setError,
   } = useUserApplicationsStore();
 
+  // sortBy/sortOrder are intentionally NOT in the key: the endpoint doesn't
+  // accept them, so including them refetches byte-identical data on every
+  // header click. Sorting happens client-side below.
   const queryKey = [
     "wl-user-applications",
     communitySlug,
     address,
     filters,
-    sortBy,
-    sortOrder,
     pagination.page,
     pagination.limit,
   ];
@@ -90,8 +107,6 @@ export function useUserApplications(communitySlug?: string): UseUserApplications
         communitySlug,
         address,
         filters,
-        sortBy,
-        sortOrder,
         pagination.page + 1,
         pagination.limit,
       ];
@@ -123,15 +138,19 @@ export function useUserApplications(communitySlug?: string): UseUserApplications
     pagination.totalPages,
     pagination.limit,
     filters,
-    sortBy,
-    sortOrder,
     communitySlug,
     queryClient,
     address,
   ]);
 
+  const sortedApplications = useMemo(() => {
+    const getField = SORT_FIELD[sortBy] ?? SORT_FIELD.createdAt;
+    const sorted = [...applications].sort((a, b) => getField(a).localeCompare(getField(b)));
+    return sortOrder === "desc" ? sorted.reverse() : sorted;
+  }, [applications, sortBy, sortOrder]);
+
   return {
-    applications,
+    applications: sortedApplications,
     filters,
     sortBy,
     sortOrder,

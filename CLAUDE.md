@@ -30,6 +30,7 @@ pnpm lint:fix           # Biome lint + format
 ## Non-Obvious Rules (will cause bugs if ignored)
 
 - **Mutations**: Always `useMutation` with optimistic updates — never `useState` + direct service calls.
+- **Attestation gating**: wagmi `useAccount().address` is **display/recipient-only** — it lags the Privy signer behind the dual-`WagmiProvider` bridge, so gating a write on it (`if (!address) return`) silently no-ops (issue #1821). Gate attestation submits on `signerStatus`/`attestationAddress` from `useSetupChainAndWallet`. Use `useAttestation()` (hooks/useAttestation.ts) + `<AttestationSubmit>` (components/ui/AttestationSubmit.tsx): they throw a typed `SignerUnavailableError` (routed to guidance, kept out of Sentry) and render a Connect-wallet CTA / disabled+tooltip instead of failing silently. Enforced by the `no-account-address-write-guard` taskless rule.
 - **Three States**: Every data component renders loading (skeleton), empty (CTA), error (retry). Never `return null`.
 - **Routes**: `PAGES` constants from `utilities/pages.ts` — never hardcode strings.
 - **New routes**: Every `app/` route needs `page.tsx` + `loading.tsx` + `error.tsx`.

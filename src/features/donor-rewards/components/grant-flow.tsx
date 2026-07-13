@@ -17,6 +17,8 @@ import { formatUsd } from "../utils/format";
 
 interface GrantFlowProps {
   open: boolean;
+  /** pre-seeded amount, e.g. "grant your investment gains" */
+  requestedAmount?: number | null;
   onClose: () => void;
 }
 
@@ -34,29 +36,29 @@ const OrgOption = React.memo(function OrgOption({
       <button
         type="button"
         onClick={() => onSelect(org)}
-        className="flex w-full items-start gap-3 rounded-2xl border border-zinc-200 bg-white p-4 text-left transition hover:border-emerald-400 hover:shadow-md active:scale-[0.99] dark:border-zinc-700 dark:bg-zinc-800 dark:hover:border-emerald-500"
+        className="flex w-full items-start gap-3 rounded-2xl border border-stone-200 bg-white p-4 text-left transition hover:border-emerald-400 hover:shadow-md active:scale-[0.99] dark:border-stone-700 dark:bg-stone-800 dark:hover:border-emerald-500"
       >
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-zinc-100 text-2xl dark:bg-zinc-700">
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-stone-100 text-2xl dark:bg-stone-700">
           {org.emoji}
         </span>
         <span className="min-w-0 flex-1">
           <span className="flex flex-wrap items-center gap-1.5">
-            <span className="font-bold text-zinc-900 dark:text-white">{org.name}</span>
+            <span className="font-bold text-stone-900 dark:text-white">{org.name}</span>
             {org.verified && (
-              <span className="inline-flex items-center gap-0.5 rounded-full bg-sky-100 px-2 py-0.5 text-[10px] font-bold text-sky-700 dark:bg-sky-500/15 dark:text-sky-400">
+              <span className="inline-flex items-center gap-0.5 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400">
                 <BadgeCheck className="h-3 w-3" aria-hidden="true" />
                 Verified
               </span>
             )}
           </span>
-          <span className="mt-0.5 block text-sm text-zinc-500 dark:text-zinc-400">
+          <span className="mt-0.5 block text-sm text-stone-500 dark:text-stone-400">
             {org.tagline}
           </span>
           <span className="mt-1.5 flex items-center gap-2 text-xs">
-            <span className="rounded-full bg-zinc-100 px-2 py-0.5 font-medium text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300">
+            <span className="rounded-full bg-stone-100 px-2 py-0.5 font-medium text-stone-600 dark:bg-stone-700 dark:text-stone-300">
               {cause.emoji} {cause.label}
             </span>
-            <span className="text-zinc-400 dark:text-zinc-500">{org.impactNote}</span>
+            <span className="text-stone-400 dark:text-stone-500">{org.impactNote}</span>
           </span>
         </span>
       </button>
@@ -64,7 +66,7 @@ const OrgOption = React.memo(function OrgOption({
   );
 });
 
-export function GrantFlow({ open, onClose }: GrantFlowProps) {
+export function GrantFlow({ open, requestedAmount = null, onClose }: GrantFlowProps) {
   const { state, makeGrant } = useRewards();
   const [selectedOrg, setSelectedOrg] = useState<Nonprofit | null>(null);
   const [amount, setAmount] = useState<number | null>(null);
@@ -77,11 +79,12 @@ export function GrantFlow({ open, onClose }: GrantFlowProps) {
     setRecurring(false);
   }, [onClose]);
 
-  // Selecting an org seeds the amount from that org's own presets, so the
-  // confirm CTA can never show a value that isn't one of the visible chips.
+  // Selecting an org seeds the amount from the caller's request (e.g. "grant
+  // your gains") or from that org's own presets, so the confirm CTA always
+  // shows a value that appears as a visible, selected chip.
   const handleSelectOrg = (org: Nonprofit) => {
     setSelectedOrg(org);
-    setAmount(org.suggestedAmounts[org.suggestedAmounts.length - 1]);
+    setAmount(requestedAmount ?? org.suggestedAmounts[org.suggestedAmounts.length - 1]);
   };
 
   useEffect(() => {
@@ -137,7 +140,7 @@ export function GrantFlow({ open, onClose }: GrantFlowProps) {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.98 }}
             transition={{ duration: 0.15 }}
-            className="flex max-h-[90vh] w-full max-w-lg flex-col rounded-t-3xl bg-zinc-50 shadow-2xl sm:rounded-3xl dark:bg-zinc-900"
+            className="flex max-h-[90vh] w-full max-w-lg flex-col rounded-t-2xl bg-stone-50 shadow-2xl sm:rounded-2xl dark:bg-stone-900"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="flex items-center justify-between px-6 pt-6">
@@ -145,13 +148,13 @@ export function GrantFlow({ open, onClose }: GrantFlowProps) {
                 <button
                   type="button"
                   onClick={() => setSelectedOrg(null)}
-                  className="flex items-center gap-1 text-sm font-semibold text-zinc-500 transition hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200"
+                  className="flex items-center gap-1 text-sm font-semibold text-stone-500 transition hover:text-stone-800 dark:text-stone-400 dark:hover:text-stone-200"
                 >
                   <ArrowLeft className="h-4 w-4" aria-hidden="true" />
                   Back
                 </button>
               ) : (
-                <h2 className="text-xl font-semibold text-zinc-900 dark:text-white">
+                <h2 className="text-xl font-semibold text-stone-900 dark:text-white">
                   Make a grant
                 </h2>
               )}
@@ -159,7 +162,7 @@ export function GrantFlow({ open, onClose }: GrantFlowProps) {
                 type="button"
                 onClick={handleClose}
                 aria-label="Close"
-                className="rounded-full p-2 text-zinc-400 transition hover:bg-zinc-200 hover:text-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+                className="rounded-full p-2 text-stone-400 transition hover:bg-stone-200 hover:text-stone-700 dark:hover:bg-stone-800 dark:hover:text-stone-200"
               >
                 <X className="h-5 w-5" aria-hidden="true" />
               </button>
@@ -170,7 +173,7 @@ export function GrantFlow({ open, onClose }: GrantFlowProps) {
                 underneath the CTA. */}
             {!selectedOrg ? (
               <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-6">
-                <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+                <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">
                   Suggested for you, based on your causes and this month's quests
                 </p>
                 <ul className="mt-4 flex flex-col gap-3">
@@ -181,17 +184,17 @@ export function GrantFlow({ open, onClose }: GrantFlowProps) {
               </div>
             ) : (
               <div className="mt-3 min-h-0 flex-1 overflow-y-auto px-6 pb-3">
-                <div className="flex items-center gap-3 rounded-2xl border border-zinc-200 bg-white p-3 dark:border-zinc-700 dark:bg-zinc-800">
+                <div className="flex items-center gap-3 rounded-2xl border border-stone-200 bg-white p-3 dark:border-stone-700 dark:bg-stone-800">
                   <span className="text-3xl">{selectedOrg.emoji}</span>
                   <div>
-                    <p className="font-bold text-zinc-900 dark:text-white">{selectedOrg.name}</p>
-                    <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                    <p className="font-bold text-stone-900 dark:text-white">{selectedOrg.name}</p>
+                    <p className="text-xs text-stone-500 dark:text-stone-400">
                       {selectedOrg.impactNote}
                     </p>
                   </div>
                 </div>
 
-                <p className="mt-4 text-sm font-semibold text-zinc-700 dark:text-zinc-300">
+                <p className="mt-4 text-sm font-semibold text-stone-700 dark:text-stone-300">
                   Grant amount
                 </p>
                 <div className="mt-2 grid grid-cols-3 gap-2">
@@ -203,20 +206,37 @@ export function GrantFlow({ open, onClose }: GrantFlowProps) {
                       className={`rounded-2xl border-2 py-2.5 font-mono text-lg font-bold transition active:scale-95 ${
                         amount === suggested
                           ? "border-emerald-500 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300"
-                          : "border-zinc-200 bg-white text-zinc-700 hover:border-zinc-300 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
+                          : "border-stone-200 bg-white text-stone-700 hover:border-stone-300 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-300"
                       }`}
                     >
                       {formatUsd(suggested)}
                     </button>
                   ))}
+                  {requestedAmount !== null &&
+                    !selectedOrg.suggestedAmounts.includes(requestedAmount) && (
+                      <button
+                        type="button"
+                        onClick={() => setAmount(requestedAmount)}
+                        className={`col-span-3 rounded-2xl border-2 py-2.5 font-mono text-lg font-bold transition active:scale-95 ${
+                          amount === requestedAmount
+                            ? "border-amber-500 bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300"
+                            : "border-stone-200 bg-white text-stone-700 hover:border-stone-300 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-300"
+                        }`}
+                      >
+                        {formatUsd(requestedAmount)}
+                        <span className="ml-2 text-xs font-semibold uppercase tracking-wide">
+                          your gains ✨
+                        </span>
+                      </button>
+                    )}
                 </div>
 
-                <label className="mt-4 flex cursor-pointer items-center justify-between rounded-2xl border border-zinc-200 bg-white p-3 dark:border-zinc-700 dark:bg-zinc-800">
+                <label className="mt-4 flex cursor-pointer items-center justify-between rounded-2xl border border-stone-200 bg-white p-3 dark:border-stone-700 dark:bg-stone-800">
                   <span>
-                    <span className="block font-semibold text-zinc-900 dark:text-white">
+                    <span className="block font-semibold text-stone-900 dark:text-white">
                       Make it monthly
                     </span>
-                    <span className="block text-xs text-zinc-500 dark:text-zinc-400">
+                    <span className="block text-xs text-stone-500 dark:text-stone-400">
                       Protects your streak automatically · +{XP_RECURRING_BONUS} IP bonus
                     </span>
                   </span>
@@ -230,7 +250,7 @@ export function GrantFlow({ open, onClose }: GrantFlowProps) {
                   <span
                     aria-hidden="true"
                     className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${
-                      recurring ? "bg-emerald-500" : "bg-zinc-300 dark:bg-zinc-600"
+                      recurring ? "bg-emerald-500" : "bg-stone-300 dark:bg-stone-600"
                     }`}
                   >
                     <span
@@ -249,12 +269,12 @@ export function GrantFlow({ open, onClose }: GrantFlowProps) {
                 never grows tall enough to clip the scrollable body's controls
                 on short viewports. */}
             {selectedOrg && (
-              <div className="border-t border-zinc-200 px-6 pb-4 pt-2.5 dark:border-zinc-800">
-                <div className="rounded-2xl bg-violet-50 px-4 py-3 dark:bg-violet-950/40">
-                  <p className="text-sm font-semibold text-violet-800 dark:text-violet-300">
+              <div className="border-t border-stone-200 px-6 pb-4 pt-2.5 dark:border-stone-800">
+                <div className="rounded-2xl bg-amber-50 px-4 py-3 dark:bg-amber-950/40">
+                  <p className="text-sm font-semibold text-amber-800 dark:text-amber-300">
                     You will earn <span className="font-mono">+{totalIp} IP</span>
                   </p>
-                  <p className="mt-0.5 text-xs text-violet-700 dark:text-violet-400">
+                  <p className="mt-0.5 text-xs text-amber-700 dark:text-amber-400">
                     {earnParts.join(" · ")}
                     {!state.grantedThisMonth &&
                       ` · 🔥 streak extends to month ${state.streakMonths + 1}`}
@@ -269,7 +289,7 @@ export function GrantFlow({ open, onClose }: GrantFlowProps) {
                   Grant {amount !== null ? formatUsd(amount) : ""}
                   {recurring ? " monthly" : ""} to {selectedOrg.name}
                 </button>
-                <p className="mt-2 text-center text-xs text-zinc-400 dark:text-zinc-500">
+                <p className="mt-2 text-center text-xs text-stone-400 dark:text-stone-500">
                   Prototype: no real money moves.
                 </p>
               </div>

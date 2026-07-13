@@ -1,0 +1,45 @@
+id: no-account-address-write-guard-tsx
+language: tsx
+severity: error
+message: Don't gate an attestation/write on wagmi useAccount().address — it lags the Privy signer and silently no-ops. Gate on signerStatus/attestationAddress (see AttestationSubmit / useAttestation).
+note: |
+  TSX variant of `no-account-address-write-guard`. ast-grep scopes a rule to a
+  single language, and `.tsx` files are parsed as `tsx`, not `typescript`.
+  CLAUDE.md gap-app-v2: "wagmi useAccount().address is display-only; gate writes
+  on signerStatus/attestationAddress." See issue #1821 and useAttestation.
+ignores:
+  - "**/__tests__/**"
+  - "**/*.test.ts"
+  - "**/*.test.tsx"
+  - "**/*.spec.ts"
+  - "**/*.spec.tsx"
+  - "scripts/**"
+rule:
+  kind: if_statement
+  inside:
+    kind: program
+    stopBy: end
+    has:
+      stopBy: end
+      any:
+        - pattern: setupChainAndWallet($$$SETUP)
+        - pattern: $OBJ.attest($$$ATTEST)
+  all:
+    - has:
+        stopBy: end
+        kind: unary_expression
+        has:
+          stopBy: end
+          kind: identifier
+          regex: '^address$'
+    # Exclude JSX-returning branches — `if (!address) return <ConnectButton/>`
+    # is a legitimate display guard, not the silent-no-op write guard we target.
+    - has:
+        stopBy: end
+        kind: return_statement
+        not:
+          has:
+            stopBy: end
+            any:
+              - kind: jsx_element
+              - kind: jsx_self_closing_element

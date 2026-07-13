@@ -8,13 +8,21 @@ import {
   XP_PER_GRANT,
   XP_RECURRING_BONUS,
 } from "../data/mock-data";
-import type { BadgeDef, CelebrationPayload, Quest, RewardsState } from "../types";
+import type {
+  BadgeDef,
+  CelebrationPayload,
+  PersonalGoalTargets,
+  Quest,
+  RewardsState,
+} from "../types";
 import { levelForXp } from "../utils/levels";
 import { questsCompletedByGrant, questsCompletedByRead } from "./quest-logic";
 
 type RewardsAction =
   | { type: "MAKE_GRANT"; orgId: string; amount: number; recurring: boolean }
   | { type: "READ_UPDATE"; updateId: string }
+  | { type: "SET_ANNUAL_GOAL"; amount: number }
+  | { type: "SET_PERSONAL_GOALS"; targets: Partial<PersonalGoalTargets> }
   | { type: "DISMISS_CELEBRATION" };
 
 function unlockBadge(badges: BadgeDef[], id: string, unlockedList: BadgeDef[]): BadgeDef[] {
@@ -43,6 +51,14 @@ function applyGrant(
     cause: org.cause,
     recurring: action.recurring,
   };
+
+  // Windfall-first accounting with separate pools: a grant spends this year's
+  // investment gains before it ever touches principal. Granting exactly your
+  // gains therefore leaves the "ready to deploy" balance whole — matching the
+  // Gains card's promise — and only a grant larger than the remaining gains
+  // draws principal down.
+  const gainsApplied = Math.min(action.amount, state.investmentGains);
+  const balanceDrawn = action.amount - gainsApplied;
 
   const isNewCause = !state.causesSupported.includes(org.cause);
   const causesSupported = isNewCause
@@ -98,8 +114,10 @@ function applyGrant(
 
   return {
     ...state,
-    balance: state.balance - action.amount,
+    balance: Math.max(0, state.balance - balanceDrawn),
     grantedThisYear: state.grantedThisYear + action.amount,
+    lifetimeGranted: state.lifetimeGranted + action.amount,
+    investmentGains: state.investmentGains - gainsApplied,
     xp: newXp,
     streakMonths,
     longestStreak: Math.max(state.longestStreak, streakMonths),
@@ -141,6 +159,10 @@ function rewardsReducer(state: RewardsState, action: RewardsAction): RewardsStat
       return applyGrant(state, action);
     case "READ_UPDATE":
       return applyReadUpdate(state, action.updateId);
+    case "SET_ANNUAL_GOAL":
+      return { ...state, annualGoal: action.amount };
+    case "SET_PERSONAL_GOALS":
+      return { ...state, personalGoals: { ...state.personalGoals, ...action.targets } };
     case "DISMISS_CELEBRATION":
       return { ...state, celebration: null };
     default:
@@ -152,6 +174,8 @@ interface RewardsContextValue {
   state: RewardsState;
   makeGrant: (orgId: string, amount: number, recurring: boolean) => void;
   readUpdate: (updateId: string) => void;
+  setAnnualGoal: (amount: number) => void;
+  setPersonalGoals: (targets: Partial<PersonalGoalTargets>) => void;
   dismissCelebration: () => void;
 }
 
@@ -166,6 +190,8 @@ export function RewardsProvider({ children }: { children: React.ReactNode }) {
       makeGrant: (orgId, amount, recurring) =>
         dispatch({ type: "MAKE_GRANT", orgId, amount, recurring }),
       readUpdate: (updateId) => dispatch({ type: "READ_UPDATE", updateId }),
+      setAnnualGoal: (amount) => dispatch({ type: "SET_ANNUAL_GOAL", amount }),
+      setPersonalGoals: (targets) => dispatch({ type: "SET_PERSONAL_GOALS", targets }),
       dismissCelebration: () => dispatch({ type: "DISMISS_CELEBRATION" }),
     }),
     [state]

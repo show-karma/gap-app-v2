@@ -101,7 +101,7 @@ const CommunityMilestoneCardComponent: FC<CommunityMilestoneCardProps> = ({
         external: true,
       }
     : {
-        href: `/project/${projectSlug}/updates`,
+        href: `/project/${projectSlug}`,
         label: "View project updates →",
         external: true,
       };

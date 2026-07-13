@@ -1,7 +1,7 @@
 {
   "$schema": "./scripts/quality-baseline.schema.json",
-  "generatedAt": "2026-07-09T15:36:28.285Z",
-  "generatedFromCommit": "c4bf8e20cc7167a123c1d346e9c710952eb5977c",
+  "generatedAt": "2026-07-08T20:13:23.316Z",
+  "generatedFromCommit": "fc23ccd395ba484ba838833f57a526e34b0d6c15",
   "coverage": {
     "lines": 0,
     "statements": 0,
@@ -9,15 +9,15 @@
     "branches": 0
   },
   "duplication": {
-    "percent": 1.21,
-    "fragments": 74
+    "percent": 1.2,
+    "fragments": 73
   },
   "violations": {
-    "biome": 1242,
-    "knipUnusedFiles": 213,
-    "knipUnusedExports": 415,
-    "knipUnusedTypes": 363,
-    "knipUnusedDeps": 21,
+    "biome": 1239,
+    "knipUnusedFiles": 208,
+    "knipUnusedExports": 417,
+    "knipUnusedTypes": 360,
+    "knipUnusedDeps": 19,
     "knipDuplicates": 33
   },
   "oversizedFiles": {
@@ -34,8 +34,8 @@
       "maxBytes": 60000
     },
     "__tests__/components/FundingPlatform/ApplicationView/ApplicationSubmission.test.tsx": {
-      "lines": 2825,
-      "bytes": 81352,
+      "lines": 2830,
+      "bytes": 81570,
       "maxLines": 800,
       "maxBytes": 60000
     },
@@ -172,8 +172,8 @@
       "maxBytes": 40000
     },
     "components/Dialogs/ProgressDialog/UnifiedMilestoneScreen.tsx": {
-      "lines": 654,
-      "bytes": 23249,
+      "lines": 660,
+      "bytes": 23612,
       "maxLines": 600,
       "maxBytes": 40000
     },
@@ -190,8 +190,8 @@
       "maxBytes": 40000
     },
     "components/Forms/MilestoneUpdate.tsx": {
-      "lines": 764,
-      "bytes": 28372,
+      "lines": 766,
+      "bytes": 28471,
       "maxLines": 600,
       "maxBytes": 40000
     },
@@ -346,8 +346,8 @@
       "maxBytes": 40000
     },
     "hooks/useFundingPlatform.ts": {
-      "lines": 1065,
-      "bytes": 35295,
+      "lines": 1066,
+      "bytes": 35370,
       "maxLines": 600,
       "maxBytes": 40000
     },
@@ -358,8 +358,8 @@
       "maxBytes": 40000
     },
     "hooks/useMilestoneCompletionVerification.ts": {
-      "lines": 661,
-      "bytes": 20047,
+      "lines": 667,
+      "bytes": 20369,
       "maxLines": 600,
       "maxBytes": 40000
     },
@@ -370,8 +370,8 @@
       "maxBytes": 60000
     },
     "services/fundingPlatformService.ts": {
-      "lines": 695,
-      "bytes": 20258,
+      "lines": 694,
+      "bytes": 20175,
       "maxLines": 600,
       "maxBytes": 40000
     },
@@ -382,8 +382,8 @@
       "maxBytes": 40000
     },
     "src/features/funding-map/components/funding-program-details-dialog.tsx": {
-      "lines": 788,
-      "bytes": 26743,
+      "lines": 794,
+      "bytes": 27208,
       "maxLines": 600,
       "maxBytes": 40000
     },
@@ -449,7 +449,7 @@
     },
     "utilities/indexer.ts": {
       "lines": 826,
-      "bytes": 40536,
+      "bytes": 40539,
       "maxLines": 600,
       "maxBytes": 40000
     },
@@ -462,15 +462,15 @@
   },
   "reactDoctor": {
     "score": 0,
-    "errors": 63,
-    "warnings": 3291,
+    "errors": 64,
+    "warnings": 3299,
     "byCategory": {
+      "Architecture": 1175,
       "Accessibility": 284,
-      "Architecture": 1172,
       "Correctness": 393,
       "Next.js": 143,
-      "Performance": 619,
       "Server": 9,
+      "Performance": 624,
       "State & Effects": 684,
       "TanStack Query": 37,
       "Bundle Size": 10,

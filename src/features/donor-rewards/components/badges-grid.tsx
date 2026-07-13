@@ -11,35 +11,33 @@ const BadgeTile = React.memo(function BadgeTile({ badge }: { badge: BadgeDef }) 
   return (
     <m.li
       layout
-      className={`flex flex-col items-center gap-1.5 rounded-2xl border p-4 text-center ${
-        badge.unlocked
-          ? "border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/30"
-          : "border-zinc-200 bg-zinc-50 opacity-70 dark:border-zinc-800 dark:bg-zinc-900"
+      className={`flex flex-col items-center gap-2 px-2 py-4 text-center ${
+        badge.unlocked ? "" : "opacity-50"
       }`}
       title={badge.description}
     >
       <span
-        className={`relative flex h-12 w-12 items-center justify-center rounded-full text-2xl ${
+        className={`relative flex h-16 w-16 items-center justify-center rounded-full text-3xl ${
           badge.unlocked
-            ? "bg-amber-100 dark:bg-amber-500/15"
-            : "bg-zinc-200 grayscale dark:bg-zinc-800"
+            ? "bg-amber-50 ring-2 ring-amber-400/70 dark:bg-amber-500/10 dark:ring-amber-500/50"
+            : "bg-stone-100 grayscale ring-1 ring-stone-200 dark:bg-stone-800 dark:ring-stone-700"
         }`}
       >
         {badge.emoji}
         {!badge.unlocked && (
-          <span className="absolute -bottom-1 -right-1 rounded-full bg-zinc-500 p-1 text-white dark:bg-zinc-600">
+          <span className="absolute -bottom-0.5 -right-0.5 rounded-full bg-stone-400 p-1 text-white dark:bg-stone-600">
             <Lock className="h-2.5 w-2.5" aria-hidden="true" />
           </span>
         )}
       </span>
       <span
-        className={`text-xs font-bold leading-tight ${
-          badge.unlocked ? "text-amber-800 dark:text-amber-300" : "text-zinc-500 dark:text-zinc-400"
+        className={`text-xs font-semibold leading-tight ${
+          badge.unlocked ? "text-stone-900 dark:text-white" : "text-stone-500 dark:text-stone-400"
         }`}
       >
         {badge.name}
       </span>
-      <span className="text-[10px] leading-tight text-zinc-500 dark:text-zinc-400">
+      <span className="text-[10px] leading-tight text-stone-400 dark:text-stone-500">
         {badge.description}
       </span>
     </m.li>
@@ -53,10 +51,12 @@ export function BadgesGrid() {
   return (
     <section
       aria-label="Badges"
-      className="rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
+      className="rounded-2xl border border-stone-200 bg-white p-6 shadow-sm dark:border-stone-800 dark:bg-stone-900"
     >
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-zinc-900 dark:text-white">Badges</h2>
+        <h2 className="[font-family:var(--font-display)] text-xl font-medium text-stone-900 dark:text-white">
+          Badges
+        </h2>
         <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-700 dark:bg-amber-500/15 dark:text-amber-400">
           {unlockedCount} of {state.badges.length} {pluralize("badge", state.badges.length)}
         </span>
