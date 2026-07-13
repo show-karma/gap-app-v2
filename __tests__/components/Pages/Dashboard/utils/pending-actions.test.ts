@@ -84,9 +84,9 @@ describe("projectPendingHref", () => {
       computeProjectPendingActions({ grants } as ProjectWithGrantsResponse)
     );
 
-  it("deep-links to the single grant when the pending milestones live in one grant", () => {
+  it("deep-links to the single grant's milestones tab when the pending milestones live in one grant", () => {
     expect(hrefFor([{ uid: "0xabc", completed: null, milestones: [{ completed: null }] }])).toBe(
-      "/project/proj/funding/0xabc"
+      "/project/proj/funding/0xabc/milestones-and-updates"
     );
   });
 

@@ -49,8 +49,9 @@ export function computeProjectPendingActions(project: ProjectWithGrantsResponse)
  */
 export function projectPendingHref(slug: string, actions: PendingActions): string {
   if (actions.milestonesNeedingSubmission > 0) {
+    // Land on the grant's milestones tab — where the pending milestones live.
     return actions.grantsWithPendingMilestones.length === 1
-      ? PAGES.PROJECT.GRANT(slug, actions.grantsWithPendingMilestones[0])
+      ? PAGES.PROJECT.MILESTONES_AND_UPDATES(slug, actions.grantsWithPendingMilestones[0])
       : PAGES.PROJECT.GRANTS(slug);
   }
   if (actions.grantsInProgress > 0) {
