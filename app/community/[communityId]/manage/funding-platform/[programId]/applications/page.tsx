@@ -3,7 +3,7 @@
 import { Cog6ToothIcon } from "@heroicons/react/24/outline";
 import { ArrowLeftIcon } from "@heroicons/react/24/solid";
 import { useParams, useSearchParams } from "next/navigation";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { ApplicationListWithAPI } from "@/components/FundingPlatform";
 import { Button } from "@/components/Utilities/Button";
 import { Spinner } from "@/components/Utilities/Spinner";
@@ -19,7 +19,9 @@ import { Link } from "@/src/components/navigation/Link";
 import { AdminOnly, FundingPlatformGuard, useIsFundingPlatformAdmin } from "@/src/core/rbac";
 import { usePermissionContext } from "@/src/core/rbac/context/permission-context";
 import type { IFundingApplication } from "@/types/funding-platform";
+import { getBrowseApplicationsUrl } from "@/utilities/fundingPlatformUrls";
 import { PAGES } from "@/utilities/pages";
+import { useWhitelabel } from "@/utilities/whitelabel-context";
 
 export default function ApplicationsPage() {
   const searchParams = useSearchParams();
@@ -62,6 +64,16 @@ export default function ApplicationsPage() {
   const isAdmin = useIsFundingPlatformAdmin();
   const { isLoading } = usePermissionContext();
 
+  const { isWhitelabel } = useWhitelabel();
+  const [clientOrigin] = useState(() =>
+    typeof window !== "undefined" ? window.location.origin : undefined
+  );
+  const whitelabelOrigin = isWhitelabel ? clientOrigin : undefined;
+
+  // DEV-496: a non-reviewer handed the review-queue link is sent to the public
+  // browse-applications list for the program rather than an "Access Denied" box.
+  const applicantRedirect = getBrowseApplicationsUrl(communityId, programId, whitelabelOrigin);
+
   const { data: programConfig } = useProgramConfig(programId);
   const { applications: _applications } = useFundingApplications(programId, initialFilters);
   const { prefetchApplication } = useApplication(null);
@@ -92,7 +104,7 @@ export default function ApplicationsPage() {
   }
 
   return (
-    <FundingPlatformGuard>
+    <FundingPlatformGuard onDeniedRedirectTo={applicantRedirect}>
       <div className="min-h-screen">
         {/* Header */}
         <div className="bg-white dark:bg-zinc-800 border-b border-gray-200 dark:border-gray-700">
