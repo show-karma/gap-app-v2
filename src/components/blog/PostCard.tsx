@@ -1,4 +1,4 @@
-import { ImageOff } from "lucide-react";
+import { Newspaper } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { memo } from "react";
@@ -47,8 +47,8 @@ function PostCardComponent({ post }: PostCardProps) {
             className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center">
-            <ImageOff className="h-8 w-8 text-gray-300 dark:text-zinc-700" aria-hidden />
+          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 dark:from-zinc-800 dark:to-zinc-900">
+            <Newspaper className="h-8 w-8 text-gray-300 dark:text-zinc-600" aria-hidden />
           </div>
         )}
       </div>
