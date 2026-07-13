@@ -145,6 +145,22 @@ export function getBrowseApplicationsUrl(
 }
 
 /**
+ * Optional context appended to an application detail URL.
+ *
+ * The reference number alone identifies the application (globally unique —
+ * enforced at generation + a DB `@unique` index, DEV-496), so `/applications/:ref`
+ * is the single canonical URL for every role and no `programId` is carried.
+ * `tab` deep-links a tab (e.g. `milestones`), honored by `useUrlTabState` on the
+ * detail page.
+ */
+export type ApplicationDetailUrlContext = { tab?: string };
+
+function buildApplicationDetailQuery(context?: ApplicationDetailUrlContext): string {
+  if (!context?.tab) return "";
+  return `?${new URLSearchParams({ tab: context.tab }).toString()}`;
+}
+
+/**
  * Generate the applicant-facing application detail URL.
  *
  * This is the same route that serves both the public and the private (owner)
@@ -155,18 +171,21 @@ export function getBrowseApplicationsUrl(
  * @param communityId - The community slug
  * @param referenceNumber - The application's reference number
  * @param whitelabelOrigin - Current origin when running in whitelabel mode
+ * @param context - Optional `programId`/`tab` query context (DEV-496)
  * @returns The full URL to the application detail page
  */
 export function getApplicationDetailUrl(
   communityId: string,
   referenceNumber: string,
-  whitelabelOrigin?: string
+  whitelabelOrigin?: string,
+  context?: ApplicationDetailUrlContext
 ): string {
+  const query = buildApplicationDetailQuery(context);
   if (usesSameOriginLinks(whitelabelOrigin)) {
-    return PAGES.COMMUNITY.APPLICATION_DETAIL(communityId, referenceNumber);
+    return `${PAGES.COMMUNITY.APPLICATION_DETAIL(communityId, referenceNumber)}${query}`;
   }
   const domain = getDomainForCommunity(communityId, whitelabelOrigin);
-  return `${domain}/applications/${referenceNumber}`;
+  return `${domain}/applications/${referenceNumber}${query}`;
 }
 
 export type GranteeRedirect = { kind: "application" | "dashboard"; url: string };
