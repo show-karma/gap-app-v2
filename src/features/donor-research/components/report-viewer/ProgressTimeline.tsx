@@ -1,6 +1,7 @@
 "use client";
 
 import { Check } from "lucide-react";
+import pluralize from "pluralize";
 import type { FastReportEvent } from "@/types/donor-research";
 
 interface ProgressTimelineProps {
@@ -54,6 +55,78 @@ const STAGE_ORDER: Array<{
 ];
 
 /**
+ * Persistent result-count line for a completed stage, derived from that
+ * stage's own terminal event payload (`data` is `Record<string, unknown>`
+ * over the wire, so every field read is defensively narrowed). Returns
+ * null when the expected numeric fields are missing or malformed so the
+ * caller falls back to the plain label instead of rendering "undefined"
+ * or "NaN".
+ */
+function formatPoolLoadedDetail(data: Record<string, unknown>): string | null {
+  const count = data.count;
+  if (typeof count !== "number") return null;
+  return `${count} ${pluralize("candidate", count)} identified`;
+}
+
+function formatComplianceCompleteDetail(data: Record<string, unknown>): string | null {
+  const scoredCount = data.scoredCount;
+  const disqualifiedCount = data.disqualifiedCount;
+  if (typeof scoredCount !== "number" || typeof disqualifiedCount !== "number") return null;
+  return disqualifiedCount > 0
+    ? `${scoredCount} passed · ${disqualifiedCount} disqualified`
+    : `${scoredCount} passed`;
+}
+
+function formatContactDiscoveryCompleteDetail(data: Record<string, unknown>): string | null {
+  const discovered = data.discovered;
+  const cached = data.cached;
+  const failed = data.failed;
+  if (typeof discovered !== "number" || typeof cached !== "number") return null;
+  const base = `${discovered} researched · ${cached} already known`;
+  return typeof failed === "number" && failed > 0 ? `${base} · ${failed} failed` : base;
+}
+
+function formatRankingCompleteDetail(data: Record<string, unknown>): string | null {
+  const rankedCount = data.rankedCount;
+  if (typeof rankedCount !== "number") return null;
+  return `${rankedCount} ${pluralize("candidate", rankedCount)} ranked`;
+}
+
+function formatActivityCompleteDetail(data: Record<string, unknown>): string | null {
+  const { okCount, partialCount, failedCount, noSignalCount } = data;
+  if (
+    typeof okCount !== "number" ||
+    typeof partialCount !== "number" ||
+    typeof failedCount !== "number" ||
+    typeof noSignalCount !== "number"
+  ) {
+    return null;
+  }
+  const total = okCount + partialCount + failedCount + noSignalCount;
+  return `${total} ${pluralize("signal", total)} sampled`;
+}
+
+type StageDetailFormatter = (data: Record<string, unknown>) => string | null;
+
+/** Resolves a completed stage's detail line, or null if it isn't seen yet, has no matching event, or has no formatter registered. */
+function getStageDetailText(
+  seen: boolean,
+  stageEvent: FastReportEvent | undefined,
+  formatter: StageDetailFormatter | undefined
+): string | null {
+  if (!seen || !stageEvent || !formatter) return null;
+  return formatter(stageEvent.data);
+}
+
+const STAGE_DETAIL_FORMATTERS: Partial<Record<FastReportEvent["name"], StageDetailFormatter>> = {
+  pool_loaded: formatPoolLoadedDetail,
+  compliance_complete: formatComplianceCompleteDetail,
+  contact_discovery_complete: formatContactDiscoveryCompleteDetail,
+  ranking_complete: formatRankingCompleteDetail,
+  activity_complete: formatActivityCompleteDetail,
+};
+
+/**
  * Live SSE timeline (U13c, post-impeccable redesign).
  *
  * Vertical stepper anchored by a single connecting line on the left.
@@ -66,6 +139,7 @@ const STAGE_ORDER: Array<{
  */
 export function ProgressTimeline({ events, latest, errorCount }: ProgressTimelineProps) {
   const seenNames = new Set(events.map((e) => e.name));
+  const eventByName = new Map(events.map((e) => [e.name, e] as const));
   const failed = events.some((e) => e.name === "report_failed");
 
   // Find the active stage: the first one we haven't seen yet (or null
@@ -118,6 +192,13 @@ export function ProgressTimeline({ events, latest, errorCount }: ProgressTimelin
           {STAGE_ORDER.map((stage, index) => {
             const seen = seenNames.has(stage.name);
             const isActive = index === activeIndex;
+            const stageEvent = eventByName.get(stage.name);
+            const detail = getStageDetailText(
+              seen,
+              stageEvent,
+              STAGE_DETAIL_FORMATTERS[stage.name]
+            );
+            const captionText = isActive ? stage.caption : detail;
             return (
               <li key={stage.name} className="relative flex items-start gap-3.5">
                 <span
@@ -148,9 +229,9 @@ export function ProgressTimeline({ events, latest, errorCount }: ProgressTimelin
                   >
                     {stage.label}
                   </p>
-                  {isActive ? (
+                  {captionText ? (
                     <p className="mt-0.5 text-xs leading-snug text-muted-foreground">
-                      {stage.caption}
+                      {captionText}
                     </p>
                   ) : null}
                 </div>
