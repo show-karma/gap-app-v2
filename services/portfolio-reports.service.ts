@@ -184,14 +184,16 @@ function readSnapshotSource(headers: Record<string, unknown>): ReportSnapshotSou
   return raw === "generation" || raw === "live-recompute" ? raw : null;
 }
 
+function exportPath(communitySlug: string, reportId: string): string {
+  return `/v2/communities/${encodeURIComponent(communitySlug)}/reports/${encodeURIComponent(reportId)}/export`;
+}
+
 /** List the data-bearing sections of a report — drives the export menu. */
 export async function getReportExportManifest(
   communitySlug: string,
   reportId: string
 ): Promise<ReportExportManifest> {
-  const { data } = await apiClient.get(
-    `/v2/communities/${communitySlug}/reports/${reportId}/export?format=manifest`
-  );
+  const { data } = await apiClient.get(`${exportPath(communitySlug, reportId)}?format=manifest`);
   return data;
 }
 
@@ -202,7 +204,7 @@ export async function exportReportSection(
   section: string
 ): Promise<ReportExportDownload> {
   const response = await apiClient.get(
-    `/v2/communities/${communitySlug}/reports/${reportId}/export?format=csv&section=${encodeURIComponent(section)}`,
+    `${exportPath(communitySlug, reportId)}?format=csv&section=${encodeURIComponent(section)}`,
     { responseType: "blob" }
   );
   return {
@@ -217,10 +219,9 @@ export async function exportReportAll(
   communitySlug: string,
   reportId: string
 ): Promise<ReportExportDownload> {
-  const response = await apiClient.get(
-    `/v2/communities/${communitySlug}/reports/${reportId}/export?format=json`,
-    { responseType: "blob" }
-  );
+  const response = await apiClient.get(`${exportPath(communitySlug, reportId)}?format=json`, {
+    responseType: "blob",
+  });
   return {
     blob: response.data,
     filename: parseFilename(

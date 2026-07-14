@@ -54,7 +54,11 @@ export const ExportDataMenu: FC<ExportDataMenuProps> = ({ communitySlug, reportI
     if (manifest.isError) {
       return (
         <DropdownMenuItem
-          onClick={() => manifest.refetch()}
+          onSelect={(e) => {
+            // Keep the menu open so the loading → result is visible on retry.
+            e.preventDefault();
+            manifest.refetch();
+          }}
           className="text-sm text-red-600 dark:text-red-400 cursor-pointer"
         >
           Couldn’t load export options — retry
