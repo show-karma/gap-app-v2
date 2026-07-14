@@ -28,13 +28,14 @@ function ProjectBlockComponent({ project }: ProjectBlockProps) {
           title={title}
           imageUrl={project.details.logoUrl}
           categories={project.categories}
-          className="w-full self-start"
+          variant="fill"
+          className="h-full w-full"
         />
 
         <div className="flex min-w-0 flex-col p-4 sm:p-5">
           <div className="mb-2 flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <h3 className="line-clamp-2 text-base font-semibold leading-snug text-zinc-950 dark:text-zinc-100 sm:text-lg">
+              <h3 className="line-clamp-2 text-base font-semibold leading-snug text-zinc-950 dark:text-zinc-100 lg:text-lg">
                 {title}
               </h3>
             </div>
