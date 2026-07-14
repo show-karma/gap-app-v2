@@ -21,6 +21,7 @@ import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import type { IFormField, IFormSchema } from "@/types/funding-platform";
 import { cn } from "@/utilities/tailwind";
 import { PROJECT_UID_REGEX } from "@/utilities/validation";
+import { SubmittingAsFooter } from "./SubmittingAsFooter";
 
 interface IApplicationSubmissionProps {
   programId: string;
@@ -970,8 +971,7 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
         </div>
       </form>
 
-      {/* Connected Wallet Info */}
-      <div className="text-xs text-gray-500 dark:text-gray-400">Submitting as: {address}</div>
+      <SubmittingAsFooter address={address} />
     </div>
   );
 };

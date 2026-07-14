@@ -443,7 +443,7 @@ const ReportRow = memo(function ReportRow({ report }: { report: AdminAdvisorRepo
         {formatDate(report.createdAt)}
       </span>
       <Link
-        href={PAGES.DONOR_RESEARCH.ADMIN_REPORT(report.id)}
+        href={PAGES.DONOR_RESEARCH.REPORT(report.id)}
         className="inline-flex h-7 flex-shrink-0 items-center gap-1.5 rounded-lg border border-border bg-background px-3 text-xs font-medium text-foreground/80 transition-colors hover:border-primary hover:text-primary"
       >
         <Eye className="h-3 w-3" />

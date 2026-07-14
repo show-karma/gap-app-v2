@@ -148,8 +148,19 @@ module.exports = {
           "0%": { opacity: "0", transform: "scale(0.96)" },
           "100%": { opacity: "1", transform: "scale(1)" },
         },
+        // Role-aware dashboard (v3) skeleton pulse.
+        "dashv3-pulse": {
+          "0%, 100%": { opacity: "1" },
+          "50%": { opacity: "0.5" },
+        },
+        shake: {
+          "0%, 100%": { transform: "translateX(0)" },
+          "20%, 60%": { transform: "translateX(-4px)" },
+          "40%, 80%": { transform: "translateX(4px)" },
+        },
       },
       animation: {
+        "dashv3-pulse": "dashv3-pulse 1.5s ease-in-out infinite",
         marquee: "marquee 30s linear infinite",
         scroll:
           "scroll var(--animation-duration, 40s) var(--animation-direction, forwards) linear infinite",
@@ -160,8 +171,26 @@ module.exports = {
         "fade-in-up": "fade-in-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) both",
         "fade-in": "fade-in 0.4s ease-out both",
         "scale-in": "scale-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both",
+        shake: "shake 0.4s ease-in-out",
       },
       colors: {
+        // Role-aware dashboard (v3) "soft" tokens. Defined as CSS variables in
+        // components/Pages/Dashboard/v3/dashboard-soft.css (with .dark overrides),
+        // exposed here so components can use utilities like bg-sf-card / text-sf-muted.
+        sf: {
+          panel: "var(--sf-panel)",
+          card: "var(--sf-card)",
+          elev: "var(--sf-elev)",
+          hover: "var(--sf-hover)",
+          skeleton: "var(--sf-skeleton)",
+          ink: "var(--sf-ink)",
+          "ink-soft": "var(--sf-ink-soft)",
+          heading: "var(--sf-heading)",
+          muted: "var(--sf-muted)",
+          line: "var(--sf-line)",
+          "line-strong": "var(--sf-line-strong)",
+          chip: "var(--sf-chip)",
+        },
         brand: {
           // Semantic aliases (used by the non-profits / Grant Atlas components):
           // bg-brand, from-brand, to-brand-emphasis, text-brand-subtle, bg-brand-faint, …
@@ -190,8 +219,15 @@ module.exports = {
           black: "#18181B",
         },
         warning: {
+          // DEFAULT/500 follow the runtime --color-warning variable (rgb
+          // triplet, #f5a623 by default) so tenant themes stay in sync.
+          DEFAULT: "rgb(var(--color-warning))",
           50: "#fffbeb",
+          500: "rgb(var(--color-warning))",
           700: "#b45309",
+          // Dark amber for legible ink on a bright warning-500 surface (e.g.
+          // the scanner's grade-C chip).
+          900: "#78350f",
         },
         slack: {
           aubergine: "#4A154B",
@@ -325,11 +361,19 @@ module.exports = {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+        "sf-card": "var(--sf-r-card)",
+        "sf-tile": "var(--sf-r-tile)",
         "tremor-small": "0.375rem",
         "tremor-default": "0.5rem",
         "tremor-full": "9999px",
       },
       boxShadow: {
+        // Dashboard v3 card shadow — theme-aware via the --sf-shadow-card token
+        // (light/dark values defined in dashboard-soft.css). Registered as a
+        // named utility so `shadow-sf-card` emits a real box-shadow; the
+        // arbitrary `shadow-[var(--sf-shadow-card)]` form is mis-parsed as a
+        // shadow *color* and never renders.
+        "sf-card": "var(--sf-shadow-card)",
         "primary-button":
           "0 1px 2px 0 rgba(0, 0, 0, 0.08), 0 2px 8px 0 rgba(46, 209, 168, 0.15), inset 0 2px 0 0 rgba(255, 255, 255, 0.15), inset 0 -2px 2px 0 rgba(0, 0, 0, 0.08)",
         "outline-button":
@@ -346,6 +390,22 @@ module.exports = {
     },
   },
   safelist: [
+    // Semantic band tokens the scanner composes dynamically (via BAND_* maps in
+    // src/features/scanner/utils/labels.ts). Because these class strings live in
+    // one util file and are applied by lookup, the content scanner can miss
+    // them; safelist keeps the gauge ticks, bar fills, and percentage / label
+    // text coloured on the app's own brand teal + warning amber + destructive
+    // red rather than raw palette. Every band has fill (bg-/stroke-) + text.
+    "bg-brand",
+    "stroke-brand",
+    "text-brand-emphasis",
+    "bg-warning-500",
+    "stroke-warning-500",
+    "text-warning-700",
+    "text-warning-900",
+    "bg-destructive",
+    "stroke-destructive",
+    "text-destructive",
     {
       pattern:
         /^(bg-(?:slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-(?:50|100|200|300|400|500|600|700|800|900|950))$/,

@@ -12,17 +12,16 @@ const apiClient = createAuthenticatedApiClient(API_URL, 30000);
 export async function fetchApplicationByProjectUID(
   projectUID: string
 ): Promise<IFundingApplication | null> {
-  const [data, error] = await fetchData<IFundingApplication>(
+  const [data, error, , status] = await fetchData<IFundingApplication>(
     INDEXER.V2.APPLICATIONS.BY_PROJECT_UID(projectUID)
   );
 
   if (error) {
     // Return null for 404 (no application found)
-    const errorMessage = String(error);
-    if (errorMessage.includes("404") || errorMessage.includes("not found")) {
+    if (status === 404) {
       return null;
     }
-    throw new Error(errorMessage);
+    throw new Error(String(error));
   }
 
   return data || null;

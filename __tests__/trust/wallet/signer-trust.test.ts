@@ -96,6 +96,7 @@ import {
   getGaslessSigner,
   isChainSupportedForGasless,
 } from "@/utilities/gasless";
+import { SignerUnavailableError } from "@/utilities/wallet/signerReadiness";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 
 describe("Signer trust tests", () => {
@@ -252,15 +253,25 @@ describe("Signer trust tests", () => {
       // The hook would throw: "Failed to get wallet client: ..."
     });
 
-    it("No wallet available throws error", () => {
-      // When no embedded or external wallet exists
+    it("No wallet available throws a typed, expected SignerUnavailableError", () => {
+      // When no embedded or external wallet exists, the hook throws a typed
+      // SignerUnavailableError (GAP-FRONTEND-24N) instead of a bare Error —
+      // `expected: true` tells errorManager to skip reporting it to Sentry.
       const externalWallet = null;
       const embeddedWallet = null;
 
       if (!externalWallet && !embeddedWallet) {
         expect(() => {
-          throw new Error("No wallet available for signing");
-        }).toThrow("No wallet available for signing");
+          throw new SignerUnavailableError("no-wallet-connected");
+        }).toThrow(SignerUnavailableError);
+
+        try {
+          throw new SignerUnavailableError("no-wallet-connected");
+        } catch (error) {
+          expect(error).toBeInstanceOf(SignerUnavailableError);
+          expect((error as SignerUnavailableError).expected).toBe(true);
+          expect((error as SignerUnavailableError).reason).toBe("no-wallet-connected");
+        }
       }
     });
   });

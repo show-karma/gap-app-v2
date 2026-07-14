@@ -1,5 +1,6 @@
 "use client";
 
+import { useDonorAdvisor } from "@/hooks/useDonorAdvisor";
 import { useDonorReportStream } from "@/hooks/useDonorReportStream";
 import { useDonorReport } from "@/hooks/useDonorReports";
 import { DonorResearchLoading } from "../common/DonorResearchLoading";
@@ -10,13 +11,19 @@ interface ReportBriefViewProps {
 }
 
 /**
- * Authenticated advisor report view. Owns the data-fetching (React Query +
- * SSE) and delegates all rendering to {@link ReportBrief}, the same
- * presentational component the donor share view uses — so the two surfaces
- * stay visually identical.
+ * Authenticated report view for advisors AND staff (the API scopes what each
+ * caller may read). Owns the data-fetching (React Query + SSE) and delegates
+ * all rendering to {@link ReportBrief}, the same presentational component the
+ * donor share view uses — so the surfaces stay visually identical.
+ *
+ * Owner-only write controls (share, weights, diligence actions) render only
+ * once the viewer is CONFIRMED as the report's advisor — a resolving or
+ * absent advisor row gets the read-only staff variant, never a flash of
+ * controls that would only error for a non-owner.
  */
 export function ReportBriefView({ reportId }: ReportBriefViewProps) {
   const reportQuery = useDonorReport(reportId);
+  const advisorQuery = useDonorAdvisor();
   const reportStatus = reportQuery.data?.status;
   const isTerminal =
     reportStatus === "complete" || reportStatus === "fast_complete" || reportStatus === "failed";
@@ -30,11 +37,13 @@ export function ReportBriefView({ reportId }: ReportBriefViewProps) {
     throw reportQuery.error;
   }
 
+  const isOwner = !!advisorQuery.data && advisorQuery.data.id === reportQuery.data!.advisorId;
+
   return (
     <ReportBrief
       report={reportQuery.data!}
       isTerminal={isTerminal}
-      variant="advisor"
+      variant={isOwner ? "advisor" : "staff"}
       stream={stream}
     />
   );

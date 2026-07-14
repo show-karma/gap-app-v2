@@ -28,7 +28,7 @@ export function categorySubtitle(score: CategoryScore | string): string | null {
   return score.subtitle ?? null;
 }
 
-export type ScoreBand = "strong" | "ok" | "weak" | "critical";
+type ScoreBand = "strong" | "ok" | "weak" | "critical";
 
 export function bandForScore(
   score: Pick<CategoryScore, "pointsAwarded" | "pointsPossible">
@@ -49,7 +49,7 @@ export function bandForScore(
   return "weak";
 }
 
-export const GRADE_TAGLINE: Record<string, { tag: string; tone: ScoreBand }> = {
+const GRADE_TAGLINE: Record<string, { tag: string; tone: ScoreBand }> = {
   A: { tag: "Excellent", tone: "strong" },
   B: { tag: "Competitive", tone: "strong" },
   C: { tag: "Improving", tone: "ok" },
@@ -69,27 +69,64 @@ export const GRADE_LABEL: Record<string, string> = {
   F: "Not AI-ready",
 };
 
-// Map a band to brand-aware Tailwind classes. Brand teal lives in the
-// "strong" slot; warm amber for "ok"; orange-amber for "weak"; rose for
-// critical / no-EIN gate fired. Reserve the teal accent for the gauge fill
-// and pass states so it stays meaningful when it appears.
+// One-line "what this grade means for a donor's agent" blurb, keyed by grade.
+// Part of the public rubric vocabulary shown under the score gauge.
+export const GRADE_BLURB: Record<string, string> = {
+  A: "An agent can reach, understand, trust, and give — start to finish.",
+  B: "An agent gets most of the way. A few gaps stand between you and a clean pass.",
+  C: "An agent can find you, but stumbles on trust or the donate flow.",
+  D: "An agent hits walls early. Most donors' assistants would give up.",
+  F: "An agent can't complete the journey. Critical checks are failing.",
+};
+
+// Colour vocabulary for the scorecard, drawn only from the Karma Design
+// System's semantic tokens (never raw Tailwind palette). Each band is a
+// three-tier traffic light: brand teal ("strong"), the app's warning amber
+// ("ok"), and the `destructive` red token (both failing bands). Fills and text
+// share the band's hue so every element in a row agrees; the amber band uses
+// the bright warning-500 for fills and the darker warning-700 for text so
+// small labels stay AA-legible. The neutral track keeps the unfilled portion
+// of a bar readable behind any fill colour.
 export const BAND_FG: Record<ScoreBand, string> = {
   strong: "text-brand-emphasis",
-  ok: "text-amber-700",
-  weak: "text-orange-700",
-  critical: "text-rose-700",
+  ok: "text-warning-700",
+  weak: "text-destructive",
+  critical: "text-destructive",
 };
 
+// Solid fills — grade chip and progress-bar fills.
 export const BAND_BG: Record<ScoreBand, string> = {
   strong: "bg-brand",
-  ok: "bg-amber-500",
-  weak: "bg-orange-500",
-  critical: "bg-rose-500",
+  ok: "bg-warning-500",
+  weak: "bg-destructive",
+  critical: "bg-destructive",
 };
 
-export const BAND_TRACK: Record<ScoreBand, string> = {
-  strong: "bg-brand-faint",
-  ok: "bg-amber-100",
-  weak: "bg-orange-100",
-  critical: "bg-rose-100",
+// SVG stroke variant of the band palette — used by the radial ScoreGauge ticks.
+export const BAND_STROKE: Record<ScoreBand, string> = {
+  strong: "stroke-brand",
+  ok: "stroke-warning-500",
+  weak: "stroke-destructive",
+  critical: "stroke-destructive",
 };
+
+// Neutral track behind every progress bar, regardless of band.
+export const BAR_TRACK = "bg-secondary";
+
+// Score band from the 0-100 total alone, so the gauge still colours correctly
+// in the brief window where a score exists but the BE grade letter hasn't
+// landed. Thresholds mirror the grade cutoffs (A/B strong, C ok, D weak, F
+// critical).
+export function bandForRawScore(score: number): ScoreBand {
+  if (score >= 80) return "strong";
+  if (score >= 70) return "ok";
+  if (score >= 55) return "weak";
+  return "critical";
+}
+
+// Grade -> score band, so the grade badge / gauge share one color vocabulary
+// with the category bars. Mirrors GRADE_TAGLINE's tones (A/B strong, C ok,
+// D weak, F critical).
+export function gradeBand(grade: string): ScoreBand {
+  return GRADE_TAGLINE[grade]?.tone ?? "weak";
+}

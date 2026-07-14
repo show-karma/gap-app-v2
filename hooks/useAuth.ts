@@ -12,6 +12,12 @@ import { TokenManager } from "@/utilities/auth/token-manager";
 import { queryClient } from "@/utilities/query-client";
 import { useWhitelabel } from "@/utilities/whitelabel-context";
 
+// The connected address the auth-ready refetch barrier has already run for,
+// shared across every useAuth instance (see the barrier effect below for why it
+// must be module-level and not a per-hook ref). Client-only (only ever written
+// inside a useEffect), so there is no SSR request bleed.
+let authReadyBarrierAddress: Hex | undefined;
+
 /**
  * Initial delay (in ms) before first auth status check.
  * Gives Privy a moment to initialize before we start checking.
@@ -247,7 +253,17 @@ export const useAuth = () => {
   useEffect(() => {
     const prev = prevAddressRef.current;
     prevAddressRef.current = address;
-    if (authenticated && !prev && address) {
+    // Fire once when the address hydrates after auth (the undefined→defined gap).
+    // Two guards, both required:
+    //  - `!prev && address`: only the absent→present transition, per instance —
+    //    so an address already present at mount doesn't invalidate.
+    //  - module-level `authReadyBarrierAddress`: useAuth has ~100+ call sites, each
+    //    running this effect; without a SHARED guard every mounted instance would
+    //    invalidate ALL queries in the same commit — N simultaneous full
+    //    invalidations, i.e. a refetch storm (GAP A11). The shared value lets only
+    //    the first instance fire per distinct connected address.
+    if (authenticated && !prev && address && authReadyBarrierAddress !== address) {
+      authReadyBarrierAddress = address;
       queryClient.invalidateQueries();
     }
   }, [authenticated, address]);

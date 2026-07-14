@@ -38,12 +38,6 @@ export const useIsCommunityAdmin = (
     enabled: options?.enabled,
   });
 
-  useEffect(() => {
-    if (options?.zustandSync?.setIsCommunityAdmin && !adminQuery.isLoading) {
-      options.zustandSync.setIsCommunityAdmin(adminQuery.isAdmin);
-    }
-  }, [adminQuery.isAdmin, adminQuery.isLoading, options?.zustandSync]);
-
   const isLoading = communityQuery.isLoading || (!!communityQuery.data && adminQuery.isLoading);
 
   // isPending-aware resolution state for authorization gating (React Query v5).
@@ -60,6 +54,16 @@ export const useIsCommunityAdmin = (
     !(communityQuery.isError || adminQuery.isError) &&
     adminQuery.hasCandidateWallets &&
     (communityQuery.isPending || (!!communityQuery.data && adminQuery.isPending));
+
+  useEffect(() => {
+    // Gate on isResolving, not just isLoading: while the community details are
+    // still fetching, the admin query is disabled and reports isLoading=false
+    // even though authorization is undecided — syncing then would flash a
+    // false "not admin" into the store.
+    if (options?.zustandSync?.setIsCommunityAdmin && !adminQuery.isLoading && !isResolving) {
+      options.zustandSync.setIsCommunityAdmin(adminQuery.isAdmin);
+    }
+  }, [adminQuery.isAdmin, adminQuery.isLoading, isResolving, options?.zustandSync]);
 
   return {
     isCommunityAdmin: adminQuery.isAdmin,

@@ -35,8 +35,7 @@ export function ScannerViewTracker(props: ScannerViewTrackerProps) {
     if (!scanId && !slug) return;
     firedRef.current = true;
     void mixpanelEvent({
-      event:
-        variant === "public" ? "scanner:public-scorecard-view" : "scanner:scan-detail-view",
+      event: variant === "public" ? "scanner:public-scorecard-view" : "scanner:scan-detail-view",
       properties: {
         scanId: scanId ?? null,
         slug: slug ?? null,
@@ -44,8 +43,8 @@ export function ScannerViewTracker(props: ScannerViewTrackerProps) {
         totalScore: totalScore ?? null,
         orgName: orgName ?? null,
         viewerIsAuthenticated: authenticated,
-        viewerUserId: authenticated ? user?.id ?? null : null,
-        viewerEmail: authenticated ? user?.email?.address ?? null : null,
+        viewerUserId: authenticated ? (user?.id ?? null) : null,
+        viewerEmail: authenticated ? (user?.email?.address ?? null) : null,
         viewerIsOwner: viewerIsOwner ?? false,
       },
     });

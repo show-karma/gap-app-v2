@@ -1,5 +1,6 @@
 import "@testing-library/jest-dom";
 import { act, render, screen } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { RotatingWord } from "./rotating-word";
 
 // useReducedMotion drives both the auto-rotation and the transition; mock it so
