@@ -4,6 +4,9 @@ import type {
   GenerateReportRequest,
   PortfolioReport,
   ReportConfig,
+  ReportExportDownload,
+  ReportExportManifest,
+  ReportSnapshotSource,
   UpdateReportConfigRequest,
 } from "@/types/portfolio-report";
 import { createAuthenticatedApiClient } from "@/utilities/auth/api-client";
@@ -170,4 +173,65 @@ export async function getPublishedReportByRunDate(
   if (res.status === 404) return null;
   if (!res.ok) throw new Error(`API error: ${res.status} ${res.statusText}`);
   return res.json() as Promise<PortfolioReport>;
+}
+
+// ── Data export (admin-only) ─────────────────────────────────
+
+function parseFilename(contentDisposition: string | undefined, fallback: string): string {
+  if (!contentDisposition) return fallback;
+  const match = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+  return match?.[1] ? match[1].replace(/['"]/g, "") : fallback;
+}
+
+function readSnapshotSource(headers: Record<string, unknown>): ReportSnapshotSource | null {
+  const raw = headers["x-snapshot-source"];
+  return raw === "generation" || raw === "live-recompute" ? raw : null;
+}
+
+function exportPath(communitySlug: string, reportId: string): string {
+  return `/v2/communities/${encodeURIComponent(communitySlug)}/reports/${encodeURIComponent(reportId)}/export`;
+}
+
+/** List the data-bearing sections of a report — drives the export menu. */
+export async function getReportExportManifest(
+  communitySlug: string,
+  reportId: string
+): Promise<ReportExportManifest> {
+  const { data } = await apiClient.get(`${exportPath(communitySlug, reportId)}?format=manifest`);
+  return data;
+}
+
+/** Download one section's raw rows as CSV. */
+export async function exportReportSection(
+  communitySlug: string,
+  reportId: string,
+  section: string
+): Promise<ReportExportDownload> {
+  const response = await apiClient.get(
+    `${exportPath(communitySlug, reportId)}?format=csv&section=${encodeURIComponent(section)}`,
+    { responseType: "blob" }
+  );
+  return {
+    blob: response.data,
+    filename: parseFilename(response.headers["content-disposition"], `report-data_${section}.csv`),
+    snapshotSource: readSnapshotSource(response.headers),
+  };
+}
+
+/** Download every section's raw rows as a single JSON file. */
+export async function exportReportAll(
+  communitySlug: string,
+  reportId: string
+): Promise<ReportExportDownload> {
+  const response = await apiClient.get(`${exportPath(communitySlug, reportId)}?format=json`, {
+    responseType: "blob",
+  });
+  return {
+    blob: response.data,
+    filename: parseFilename(
+      response.headers["content-disposition"],
+      `report-data_${reportId}.json`
+    ),
+    snapshotSource: readSnapshotSource(response.headers),
+  };
 }
