@@ -206,13 +206,16 @@ export function NewDonorHandleModal({
       ) : activeHandle ? (
         <DialogContent
           className="flex max-h-[85vh] flex-col gap-0 p-0 sm:max-w-2xl"
-          // The persona editor hosts portaled widgets (the Radix Select chips)
-          // and is a multi-field form with unsaved work. Radix can misclassify a
-          // pointerdown on a portaled/in-content element as an "outside"
-          // interaction, which fires the dirty-close guard on every mouse click
-          // (QA: the editor became mouse-unusable, keyboard-only). Disable
-          // close-on-outside-interaction entirely — the X button and Escape
-          // still route through requestClose() and prompt to discard.
+          // The persona editor hosts portaled Radix Selects. Radix reports a
+          // pointerdown on a Select trigger (or its portaled dropdown) as an
+          // "outside" interaction, so any outside-dismiss handler tears the modal
+          // down on a plain Select click and drops unsaved edits. Trying to
+          // distinguish "real overlay click" from "Select interaction" by the
+          // event target is unreliable across Radix versions (the dropdown
+          // portals out of the dialog DOM), so we disable outside-dismiss on this
+          // step entirely: the modal still closes via the X, Esc, and its footer
+          // buttons — all routed through requestClose(), which prompts to discard
+          // unsaved edits.
           onPointerDownOutside={(event) => event.preventDefault()}
           onInteractOutside={(event) => event.preventDefault()}
         >

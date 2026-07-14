@@ -141,12 +141,13 @@ export async function middleware(request: NextRequest) {
     return redirectToGov(request);
   }
 
-  // Dashboard redirects
+  // Dashboard redirects — the drill-ins are real nested routes now
+  // (/dashboard/[module]), not a #hash on the overview.
   if (path === "/my-projects") {
-    return NextResponse.redirect(new URL("/dashboard#projects", request.url), 301);
+    return NextResponse.redirect(new URL("/dashboard/projects", request.url), 301);
   }
   if (path === "/my-reviews") {
-    return NextResponse.redirect(new URL("/dashboard#reviews", request.url), 301);
+    return NextResponse.redirect(new URL("/dashboard/reviews", request.url), 301);
   }
 
   // Handle community slugs with forbidden characters
