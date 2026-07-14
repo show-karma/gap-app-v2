@@ -145,7 +145,15 @@ export function GettingStartedView({
         <h2 className="m-0 text-2xl font-bold tracking-[-0.02em] text-sf-heading">{heading}</h2>
         <p className="m-0 text-[13.5px] text-sf-muted">{subtitle}</p>
       </div>
-      <div className="grid grid-cols-1 gap-[14px] min-[640px]:grid-cols-2">
+      <div
+        className={cn(
+          "grid grid-cols-1 gap-[14px]",
+          // Only split into two columns when there's more than one card, so a
+          // lone leftover card (all others filtered out) spans the full width
+          // instead of sitting in a half-row with a large empty gap.
+          cards.length > 1 && "min-[640px]:grid-cols-2"
+        )}
+      >
         {cards.map((card) => (
           <Card key={card.key} card={card} />
         ))}
