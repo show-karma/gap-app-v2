@@ -1,13 +1,14 @@
 "use client";
 
 import { useParams, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import ApplicationDetailView from "@/components/FundingPlatform/ApplicationView/ApplicationDetailView";
+import { Spinner } from "@/components/Utilities/Spinner";
 import { FundingPlatformGuard } from "@/src/core/rbac";
 import { getApplicationDetailUrl } from "@/utilities/fundingPlatformUrls";
 import { useWhitelabel } from "@/utilities/whitelabel-context";
 
-export default function ApplicationDetailPage() {
+function ApplicationDetailPageContent() {
   const {
     communityId,
     programId: combinedProgramId,
@@ -49,5 +50,21 @@ export default function ApplicationDetailPage() {
         variant="page"
       />
     </FundingPlatformGuard>
+  );
+}
+
+export default function ApplicationDetailPage() {
+  // useSearchParams must sit under a Suspense boundary so it doesn't force the
+  // whole route into client-side rendering (react-doctor: nextjs-no-use-search-params-without-suspense).
+  return (
+    <Suspense
+      fallback={
+        <div className="flex w-full items-center justify-center min-h-[400px]">
+          <Spinner />
+        </div>
+      }
+    >
+      <ApplicationDetailPageContent />
+    </Suspense>
   );
 }
