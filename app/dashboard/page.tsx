@@ -25,7 +25,15 @@ export default function DashboardOverviewPage() {
 
   let content: React.ReactNode;
   if (modules.length > 0) {
-    content = <BentoGrid modules={modules} />;
+    // Beneath the user's active modules, surface the getting-started cards for
+    // the starting points they haven't set up yet (a project, an application,
+    // etc.), so a single-module dashboard still points to what's next.
+    content = (
+      <div className="flex flex-col gap-[18px]">
+        <BentoGrid modules={modules} />
+        <GettingStartedView activeModuleKeys={modules.map((m) => m.key)} variant="secondary" />
+      </div>
+    );
   } else if (advisorLoading) {
     // The advisor gate is the only one that can still be undecided once every
     // other module resolved empty — hold a skeleton so the getting-started

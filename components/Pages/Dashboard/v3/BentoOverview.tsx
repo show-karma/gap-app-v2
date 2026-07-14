@@ -1,9 +1,9 @@
 "use client";
 
+import { ArrowLeftIcon } from "@heroicons/react/24/outline";
 import { useEffect, useRef, useState } from "react";
 import { BentoTile } from "./BentoTile";
 import type { DashModule } from "./module";
-import { SoftIcon } from "./SoftIcon";
 
 /**
  * Bento overview with drill-in. Renders one summary tile per active module in
@@ -82,14 +82,10 @@ export function BentoOverview({
       <div key={`module-${focusedModule.key}`}>
         <button
           type="button"
-          className="mb-4 inline-flex h-9 items-center gap-2 rounded-full border border-sf-line-strong bg-sf-card pl-[11px] pr-[15px] text-[13px] font-semibold text-sf-ink-soft hover:bg-sf-chip"
+          className="mb-4 inline-flex w-fit items-center gap-2 text-sm font-medium text-gray-600 transition-colors hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
           onClick={closeModule}
         >
-          <SoftIcon
-            name="arrow"
-            className="h-[15px] w-[15px]"
-            style={{ transform: "rotate(180deg)" }}
-          />
+          <ArrowLeftIcon className="h-4 w-4" />
           Back to overview
         </button>
         {focusedModule.render()}

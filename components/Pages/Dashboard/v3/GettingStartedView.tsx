@@ -5,6 +5,7 @@ import { memo } from "react";
 import { Link } from "@/src/components/navigation/Link";
 import { NON_PROFITS_PAGES, PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
+import type { DashboardModuleKey } from "./module";
 import { SoftIcon } from "./SoftIcon";
 import { BTN_BASE, BTN_OUTLINE, BTN_SM, THUMB_BASE } from "./soft-classes";
 
@@ -15,6 +16,11 @@ const ProjectDialog = dynamic(
 
 interface GettingStartedCard {
   key: string;
+  /**
+   * The role module this card introduces. When the user already has that
+   * module, the card is redundant and is filtered out of the secondary row.
+   */
+  moduleKey?: DashboardModuleKey;
   icon: string;
   title: string;
   body: string;
@@ -24,6 +30,7 @@ interface GettingStartedCard {
 const CARDS: GettingStartedCard[] = [
   {
     key: "project",
+    moduleKey: "projects",
     icon: "rocket",
     title: "Create a project",
     body: "Set up a project profile to track grants and share milestone progress with funders.",
@@ -31,6 +38,7 @@ const CARDS: GettingStartedCard[] = [
   },
   {
     key: "funding",
+    moduleKey: "applications",
     icon: "bank",
     title: "Apply for funding",
     body: "Browse open funding programs across communities and submit your first application.",
@@ -38,6 +46,7 @@ const CARDS: GettingStartedCard[] = [
   },
   {
     key: "communities",
+    moduleKey: "communities",
     icon: "users",
     title: "Explore communities",
     body: "Discover grant communities on Karma and the projects they fund.",
@@ -45,6 +54,7 @@ const CARDS: GettingStartedCard[] = [
   },
   {
     key: "funders",
+    moduleKey: "advisor",
     icon: "compass",
     title: "Find funders",
     body: "Search foundations and grants aligned to a mission — grounded in IRS 990 filings.",
@@ -87,24 +97,56 @@ const Card = memo(function Card({ card }: { card: GettingStartedCard }) {
   );
 });
 
+interface GettingStartedViewProps {
+  /**
+   * Role modules the user already has. Cards that introduce one of these are
+   * filtered out so the secondary row only surfaces starting points the user
+   * hasn't set up yet. Omit for the first-run (no-modules) state.
+   */
+  activeModuleKeys?: string[];
+  /**
+   * `"full"` — the first-run overview (user has no role modules).
+   * `"secondary"` — a follow-on row beneath the user's existing modules.
+   */
+  variant?: "full" | "secondary";
+}
+
 /**
- * First-run overview shown when the user matches none of the role modules
- * (no projects, applications, communities, reviews, or funder-research
- * profile): simple cards introducing what they can do on Karma.
+ * Getting-started cards introducing what the user can do on Karma. Rendered
+ * either as the first-run overview (`variant="full"`, when the user matches no
+ * role module) or as a secondary row beneath a user's existing modules
+ * (`variant="secondary"`), filtered to the starting points they haven't set up.
  */
-export function GettingStartedView() {
+export function GettingStartedView({
+  activeModuleKeys,
+  variant = "full",
+}: GettingStartedViewProps = {}) {
+  const active = new Set(activeModuleKeys ?? []);
+  const cards = CARDS.filter((card) => !card.moduleKey || !active.has(card.moduleKey));
+
+  if (cards.length === 0) return null;
+
+  const isSecondary = variant === "secondary";
+  const heading = isSecondary ? "Explore more on Karma" : "Get started with Karma";
+  const subtitle = isSecondary
+    ? "Other ways to make the most of your dashboard."
+    : "Pick a starting point — your dashboard fills in as you go.";
+
   return (
-    <section className="flex flex-col gap-4">
+    <section
+      className={cn(
+        "flex flex-col gap-4",
+        // As a follow-on row, set it apart from the modules above with a divider
+        // and generous breathing room so the two sections read as distinct.
+        isSecondary && "mt-6 border-t border-sf-line pt-8"
+      )}
+    >
       <div className="flex flex-col gap-[3px]">
-        <h2 className="m-0 text-2xl font-bold tracking-[-0.02em] text-sf-heading">
-          Get started with Karma
-        </h2>
-        <p className="m-0 text-[13.5px] text-sf-muted">
-          Pick a starting point — your dashboard fills in as you go.
-        </p>
+        <h2 className="m-0 text-2xl font-bold tracking-[-0.02em] text-sf-heading">{heading}</h2>
+        <p className="m-0 text-[13.5px] text-sf-muted">{subtitle}</p>
       </div>
       <div className="grid grid-cols-1 gap-[14px] min-[640px]:grid-cols-2">
-        {CARDS.map((card) => (
+        {cards.map((card) => (
           <Card key={card.key} card={card} />
         ))}
       </div>

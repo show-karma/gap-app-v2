@@ -44,7 +44,14 @@ export function Dashboard() {
   let mainContent: ReactNode;
   if (modules.length > 0) {
     mainContent = (
-      <BentoOverview modules={modules} onFocusChange={(key) => setIsDrilledIn(key != null)} />
+      <div className="flex flex-col gap-[18px]">
+        <BentoOverview modules={modules} onFocusChange={(key) => setIsDrilledIn(key != null)} />
+        {/* Getting-started cards for the starting points the user hasn't set up
+            yet, shown beneath their active modules — hidden while drilled in. */}
+        {!isDrilledIn ? (
+          <GettingStartedView activeModuleKeys={modules.map((m) => m.key)} variant="secondary" />
+        ) : null}
+      </div>
     );
   } else if (advisorLoading) {
     mainContent = <SkeletonList count={3} />;

@@ -1,11 +1,11 @@
 "use client";
 
+import { ArrowLeftIcon } from "@heroicons/react/24/outline";
 import { notFound, redirect, useParams } from "next/navigation";
 import { type MouseEvent, useEffect, useState } from "react";
 import { useDashboardContext } from "@/components/Pages/Dashboard/DashboardProvider";
 import { DASHBOARD_MODULE_KEYS } from "@/components/Pages/Dashboard/v3/module";
 import { SkeletonList } from "@/components/Pages/Dashboard/v3/primitives";
-import { SoftIcon } from "@/components/Pages/Dashboard/v3/SoftIcon";
 import { moduleTransitionName } from "@/components/Pages/Dashboard/v3/soft-classes";
 import {
   signalDashboardRoutePainted,
@@ -82,13 +82,9 @@ export default function DashboardModulePage() {
       <Link
         href="/dashboard"
         onClick={handleBack}
-        className="mb-4 inline-flex h-9 items-center gap-2 rounded-full border border-sf-line-strong bg-sf-card pl-[11px] pr-[15px] text-[13px] font-semibold text-sf-ink-soft hover:bg-sf-chip"
+        className="mb-4 inline-flex w-fit items-center gap-2 text-sm font-medium text-gray-600 transition-colors hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
       >
-        <SoftIcon
-          name="arrow"
-          className="h-[15px] w-[15px]"
-          style={{ transform: "rotate(180deg)" }}
-        />
+        <ArrowLeftIcon className="h-4 w-4" />
         Back to overview
       </Link>
       <div style={{ viewTransitionName: moduleTransitionName(activeModule.key) }}>

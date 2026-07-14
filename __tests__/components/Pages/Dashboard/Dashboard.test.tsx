@@ -222,12 +222,12 @@ describe("Dashboard", () => {
     expect(container.querySelectorAll(".animate-dashv3-pulse").length).toBeGreaterThan(0);
   });
 
-  it("renders DashboardHeader when authenticated", () => {
+  it("renders dashboard content when authenticated", () => {
     render(<Dashboard />, { wrapper: createWrapper() });
 
-    expect(screen.getByText(/Welcome back/i)).toBeInTheDocument();
-    // The soft shell shows the avatar in both the top nav and the header.
-    expect(screen.getAllByTestId("ens-avatar").length).toBeGreaterThan(0);
+    // With no role modules the authenticated shell renders the getting-started
+    // cards rather than a loading skeleton.
+    expect(screen.getByText("Get started with Karma")).toBeInTheDocument();
   });
 
   it("hides the projects tile when the user has no projects and no roles", () => {
@@ -305,41 +305,6 @@ describe("Dashboard", () => {
     expect(screen.queryByText("Create your first project")).not.toBeInTheDocument();
   });
 
-  describe("Farcaster user with embedded wallet", () => {
-    beforeEach(() => {
-      mockUseAuth.mockReturnValue({
-        authenticated: true,
-        address: "0xEMBEDDED000000000000000000000000CAFE",
-        ready: true,
-        user: {
-          id: "did:privy:fc-user",
-          farcaster: {
-            fid: 12345,
-            username: "testfcuser",
-            displayName: "Test FC User",
-            pfp: "https://example.com/fc-avatar.png",
-          },
-        },
-      });
-      mockUseContributorProfile.mockReturnValue({ profile: null });
-    });
-
-    it("should show Farcaster display name instead of embedded wallet address", () => {
-      render(<Dashboard />, { wrapper: createWrapper() });
-
-      // The soft header greets by first name ("Welcome back, Test").
-      expect(screen.getByText(/Welcome back, Test/)).toBeInTheDocument();
-      expect(screen.queryByText(/0xEMBEDDED/i)).not.toBeInTheDocument();
-    });
-
-    it("should show Farcaster avatar instead of blockie", () => {
-      const { container } = render(<Dashboard />, { wrapper: createWrapper() });
-
-      const fcAvatar = container.querySelector('img[src="https://example.com/fc-avatar.png"]');
-      expect(fcAvatar).toBeInTheDocument();
-    });
-  });
-
   describe("Farcaster user (no wallet address)", () => {
     beforeEach(() => {
       // Farcaster user: authenticated but no wallet address
@@ -351,7 +316,7 @@ describe("Dashboard", () => {
 
       // Farcaster users have no wallet address but are authenticated.
       // The dashboard should NOT be permanently stuck on the loading skeleton.
-      expect(screen.getByText(/Welcome back/i)).toBeInTheDocument();
+      expect(screen.getByText("Get started with Karma")).toBeInTheDocument();
     });
 
     it("should not show loading skeleton when authenticated without address", () => {
@@ -368,50 +333,6 @@ describe("Dashboard", () => {
       // The API uses JWT auth, not wallet address.
       const queryOptions = mockUseQuery.mock.calls[0][0];
       expect(queryOptions.enabled).toBe(true);
-    });
-  });
-
-  describe("Email authenticated user", () => {
-    beforeEach(() => {
-      mockUseAuth.mockReturnValue({
-        authenticated: true,
-        address: "0xEMBEDDED000000000000000000000000CAFE",
-        ready: true,
-        user: {
-          id: "did:privy:email-user",
-          email: { address: "user@example.com" },
-        },
-      });
-      mockUseContributorProfile.mockReturnValue({ profile: null });
-    });
-
-    it("should show email instead of wallet address in welcome message", () => {
-      render(<Dashboard />, { wrapper: createWrapper() });
-
-      expect(screen.getByText(/user@example.com/)).toBeInTheDocument();
-      expect(screen.queryByText(/0xEMBEDDED/i)).not.toBeInTheDocument();
-    });
-  });
-
-  describe("Google authenticated user", () => {
-    beforeEach(() => {
-      mockUseAuth.mockReturnValue({
-        authenticated: true,
-        address: "0xEMBEDDED000000000000000000000000CAFE",
-        ready: true,
-        user: {
-          id: "did:privy:google-user",
-          google: { email: "googleuser@gmail.com" },
-        },
-      });
-      mockUseContributorProfile.mockReturnValue({ profile: null });
-    });
-
-    it("should show Google email instead of wallet address in welcome message", () => {
-      render(<Dashboard />, { wrapper: createWrapper() });
-
-      expect(screen.getByText(/googleuser@gmail.com/)).toBeInTheDocument();
-      expect(screen.queryByText(/0xEMBEDDED/i)).not.toBeInTheDocument();
     });
   });
 
@@ -650,7 +571,7 @@ describe("Dashboard", () => {
       expect(container.querySelectorAll(".animate-dashv3-pulse").length).toBeGreaterThan(0);
     });
 
-    it("hides getting-started cards when any role module is present", () => {
+    it("shows a secondary getting-started row beside a role module, minus the module's own card", () => {
       mockUseQuery.mockReturnValue({
         data: [{ uid: "project-1", details: { title: "Project One" } }],
         isLoading: false,
@@ -661,8 +582,15 @@ describe("Dashboard", () => {
 
       render(<Dashboard />, { wrapper: createWrapper() });
 
-      expect(screen.queryByText("Get started with Karma")).not.toBeInTheDocument();
       expect(screen.getByText("My projects")).toBeInTheDocument();
+      // Secondary variant heading, not the first-run one.
+      expect(screen.queryByText("Get started with Karma")).not.toBeInTheDocument();
+      expect(screen.getByText("Explore more on Karma")).toBeInTheDocument();
+      // The user already has projects, so that card is filtered out; the rest remain.
+      expect(screen.queryByText("Create a project")).not.toBeInTheDocument();
+      expect(screen.getByText("Apply for funding")).toBeInTheDocument();
+      expect(screen.getByText("Explore communities")).toBeInTheDocument();
+      expect(screen.getByText("Find funders")).toBeInTheDocument();
     });
 
     it("shows My reviews for a community admin/owner with pending applications, even without an explicit reviewer role", () => {
