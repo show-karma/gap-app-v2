@@ -74,6 +74,22 @@ describe("errorManager", () => {
     expect(Sentry.captureException).not.toHaveBeenCalled();
   });
 
+  it("should NOT capture transient SSR socket resets (GAP-FRONTEND-1Y9)", () => {
+    const econnreset = Object.assign(new Error("read ECONNRESET"), { code: "ECONNRESET" });
+    errorManager("Indexer fetch failed", econnreset, { context: "ssr" });
+    expect(Sentry.captureException).not.toHaveBeenCalled();
+
+    const socketHangUp = Object.assign(new Error("socket hang up"), { code: "ECONNRESET" });
+    errorManager("Indexer fetch failed", socketHangUp);
+    expect(Sentry.captureException).not.toHaveBeenCalled();
+
+    const tlsReset = new Error(
+      "Client network socket disconnected before secure TLS connection was established"
+    );
+    errorManager("Indexer fetch failed", tlsReset);
+    expect(Sentry.captureException).not.toHaveBeenCalled();
+  });
+
   it("should still capture HTTP errors (e.g. 500) that carry a response", () => {
     const httpErr = {
       message: "Request failed with status code 500",
@@ -83,5 +99,38 @@ describe("errorManager", () => {
     errorManager("Project Grants API Error", httpErr);
 
     expect(Sentry.captureException).toHaveBeenCalled();
+  });
+
+  // ---------------------------------------------------------------------
+  // Expected-state filter (GAP-FRONTEND-24N) — errors marked `expected: true`
+  // (e.g. SignerUnavailableError) are guidance, not defects.
+  // ---------------------------------------------------------------------
+  describe("expected errors (GAP-FRONTEND-24N)", () => {
+    it("does NOT capture an error with expected: true", () => {
+      const error = Object.assign(new Error("No wallet is connected."), { expected: true });
+
+      errorManager("Failed to create project", error);
+
+      expect(Sentry.captureException).not.toHaveBeenCalled();
+    });
+
+    it("does not capture or throw for an expected error even when toastError.error is provided", () => {
+      const error = Object.assign(new Error("No wallet is connected."), { expected: true });
+
+      expect(() =>
+        errorManager("Failed to create project", error, undefined, {
+          error: "No wallet is connected.",
+        })
+      ).not.toThrow();
+
+      expect(Sentry.captureException).not.toHaveBeenCalled();
+    });
+
+    it("does not throw when expected: true and no toastError is provided", () => {
+      const error = Object.assign(new Error("No wallet is connected."), { expected: true });
+
+      expect(() => errorManager("Failed to create project", error)).not.toThrow();
+      expect(Sentry.captureException).not.toHaveBeenCalled();
+    });
   });
 });

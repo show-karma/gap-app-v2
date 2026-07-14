@@ -3,10 +3,14 @@ export const revalidate = 60;
 
 import { dehydrate, HydrationBoundary, QueryClient } from "@tanstack/react-query";
 import type { Metadata } from "next";
+import { unstable_rethrow } from "next/navigation";
 import { ProjectShareDialogMount } from "@/components/Pages/Project/ProjectShareDialogMount";
+import { BreadcrumbJsonLd } from "@/components/Seo/BreadcrumbJsonLd";
+import { ProjectJsonLd } from "@/components/Seo/ProjectJsonLd";
 import { E2EStoreExposer } from "@/components/Utilities/E2EStoreExposer";
 import { layoutTheme } from "@/src/helper/theme";
 import { generateProjectOverviewMetadata } from "@/utilities/metadata/projectMetadata";
+import { PAGES } from "@/utilities/pages";
 import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
 import { getProjectCachedData } from "@/utilities/queries/getProjectCachedData";
 import { prefetchProjectProfileData } from "@/utilities/queries/prefetchProjectProfile";
@@ -105,15 +109,61 @@ export default async function RootLayout(props: {
   // Skip prefetch during E2E tests — the staging API may be behind Cloudflare,
   // and a server-side prefetch failure gets cached by React Query, preventing
   // client-side refetch (which Cypress CAN intercept).
-  if (process.env.NEXT_PUBLIC_E2E_AUTH_BYPASS !== "true") {
+  const isE2E = process.env.NEXT_PUBLIC_E2E_AUTH_BYPASS === "true";
+  if (!isE2E) {
     await safePrefetchProjectData(queryClient, projectId);
   }
 
+  // Structured data for crawlers. `getProjectCachedData` is memoized (react
+  // `cache`) and already resolved during `generateMetadata`, so this reuses the
+  // same result with no extra request. Skipped under E2E for the same reason as
+  // the prefetch above. Wrapped defensively: notFound()/redirect() are already
+  // enforced by generateMetadata, so a throw here is a transient fetch error —
+  // render the shell rather than failing the whole page.
+  let projectInfo: Awaited<ReturnType<typeof getProjectCachedData>> | null = null;
+  if (!isE2E) {
+    try {
+      projectInfo = await getProjectCachedData(projectId);
+    } catch (error) {
+      // Re-throw Next.js control-flow errors (notFound()/redirect(), which work
+      // by throwing) so a bare catch can't swallow them; only a genuine
+      // transient fetch failure falls through to render the shell.
+      unstable_rethrow(error);
+      // SUPPRESSED: transient project fetch failure — client hooks refetch.
+    }
+  }
+  const canonicalSlug = projectInfo?.details?.slug || projectId;
+
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
+      {projectInfo?.details?.title ? (
+        <>
+          <ProjectJsonLd project={projectInfo} slug={canonicalSlug} />
+          <BreadcrumbJsonLd
+            items={[
+              { name: "Home", url: PAGES.HOME },
+              { name: "Projects", url: PAGES.PROJECTS_EXPLORER },
+              { name: projectInfo.details.title, url: PAGES.PROJECT.OVERVIEW(canonicalSlug) },
+            ]}
+          />
+        </>
+      ) : null}
       <E2EStoreExposer />
       <ProjectShareDialogMount />
-      <div className={layoutTheme.padding}>{children}</div>
+      <div className={layoutTheme.padding}>
+        {/*
+          Server-render exactly one <h1> per project page for SEO. The visible
+          project title lives in the sidebar profile card as an <h2>, and that
+          card renders twice (mobile + desktop, toggled by CSS) — promoting it
+          to <h1> would emit two h1s. A single screen-reader-only <h1> at this
+          shared layout level is the one authoritative, viewport-independent
+          page heading crawlers see, and it covers every project sub-route.
+        */}
+        {projectInfo?.details?.title ? (
+          <h1 className="sr-only">{projectInfo.details.title}</h1>
+        ) : null}
+        {children}
+      </div>
     </HydrationBoundary>
   );
 }

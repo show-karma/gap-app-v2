@@ -255,10 +255,10 @@ describe("TeamContent", () => {
         (card) => card.querySelector('[data-testid="member-address"]')?.textContent
       );
 
-      // Owner should be first, then Admin, then Member
-      expect(addresses[0]).toBe("0x1111111111111111111111111111111111111111");
-      expect(addresses[1]).toBe("0x2222222222222222222222222222222222222222");
-      expect(addresses[2]).toBe("0x3333333333333333333333333333333333333333");
+      // Owner should be first, then Admin, then Member (address chip is truncated)
+      expect(addresses[0]).toBe("0x1111...111111");
+      expect(addresses[1]).toBe("0x2222...222222");
+      expect(addresses[2]).toBe("0x3333...333333");
     });
   });
 

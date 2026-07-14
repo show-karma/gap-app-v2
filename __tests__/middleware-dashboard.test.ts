@@ -52,16 +52,16 @@ const createRequestWithHost = (path: string, host: string) => {
 };
 
 describe("middleware dashboard redirects", () => {
-  it("redirects /my-projects to /dashboard#projects", async () => {
+  it("redirects /my-projects to /dashboard/projects", async () => {
     const response = await middleware(createRequest("/my-projects"));
 
-    expect(response?.headers.get("location")).toBe(`http://${STANDARD_HOST}/dashboard#projects`);
+    expect(response?.headers.get("location")).toBe(`http://${STANDARD_HOST}/dashboard/projects`);
   });
 
-  it("redirects /my-reviews to /dashboard#reviews", async () => {
+  it("redirects /my-reviews to /dashboard/reviews", async () => {
     const response = await middleware(createRequest("/my-reviews"));
 
-    expect(response?.headers.get("location")).toBe(`http://${STANDARD_HOST}/dashboard#reviews`);
+    expect(response?.headers.get("location")).toBe(`http://${STANDARD_HOST}/dashboard/reviews`);
   });
 
   it("does not redirect /my-projects/:slug", async () => {

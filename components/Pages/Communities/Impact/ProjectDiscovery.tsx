@@ -2,6 +2,7 @@
 
 import { useParams } from "next/navigation";
 import { useMemo, useState } from "react";
+import EthereumAddressToProfileName from "@/components/EthereumAddressToProfileName";
 import { Button } from "@/components/Utilities/Button";
 import { useCommunityCategories } from "@/hooks/communities/useCommunityCategories";
 import { useIsCommunityAdmin } from "@/hooks/communities/useIsCommunityAdmin";
@@ -251,7 +252,9 @@ export const ProjectDiscovery = () => {
                   key={endorser}
                   className="flex items-center gap-2 bg-primary/5 text-primary rounded-full px-4 py-2 group hover:bg-primary/10 transition-colors"
                 >
-                  <span className="text-sm font-medium truncate max-w-[200px]">{endorser}</span>
+                  <span className="text-sm font-medium truncate max-w-[200px]" title={endorser}>
+                    <EthereumAddressToProfileName address={endorser} />
+                  </span>
                   <button
                     type="button"
                     onClick={() => handleEndorserRemove(endorser)}

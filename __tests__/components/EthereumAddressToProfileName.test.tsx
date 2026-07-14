@@ -69,6 +69,24 @@ vi.mock("blo", () => ({
   blo: vi.fn((addr: string) => `blockie:${addr}`),
 }));
 
+// Mock the Privy bridge — drives "is this the logged-in user?" (self email tier)
+let mockBridgeUser: {
+  email?: { address: string };
+  google?: { email?: string; name?: string };
+  farcaster?: { displayName?: string; username?: string };
+  twitter?: { name?: string; username?: string };
+  discord?: { username?: string };
+  apple?: { email?: string };
+} | null = null;
+let mockBridgeWallets: Array<{ address: string }> = [];
+
+vi.mock("@/contexts/privy-bridge-context", () => ({
+  usePrivyBridge: vi.fn(() => ({
+    user: mockBridgeUser,
+    wallets: mockBridgeWallets,
+  })),
+}));
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -94,6 +112,8 @@ describe("EthereumAddressToProfileName", () => {
     Object.keys(mockEnsData).forEach((k) => delete mockEnsData[k]);
     Object.keys(mockProfilesData).forEach((k) => delete mockProfilesData[k]);
     mockContributorProfile = null;
+    mockBridgeUser = null;
+    mockBridgeWallets = [];
   });
 
   // -------------------------------------------------------------------------
@@ -178,12 +198,30 @@ describe("EthereumAddressToProfileName", () => {
       expect(screen.getByText("Privy Name")).toBeInTheDocument();
     });
 
-    it("tier 3: falls back to Privy email when no name", () => {
+    it("masks another user's email — never renders it as a public label", () => {
+      // Not the logged-in user (no wallets match), only an email on file, no ENS.
       mockContributorProfile = null;
       mockProfilesData[MOCK_ADDRESS_LOWER] = {
         publicAddress: MOCK_ADDRESS_LOWER,
         name: "",
-        email: "user@example.com",
+        email: "private@example.com",
+        isTried: true,
+      };
+
+      render(<EthereumAddressToProfileName address={MOCK_ADDRESS} />, {
+        wrapper: createWrapper(),
+      });
+
+      expect(screen.queryByText("private@example.com")).not.toBeInTheDocument();
+      expect(screen.getByText("0x1234...345678")).toBeInTheDocument();
+    });
+
+    it("prefers ENS over another user's email", () => {
+      mockContributorProfile = null;
+      mockProfilesData[MOCK_ADDRESS_LOWER] = {
+        publicAddress: MOCK_ADDRESS_LOWER,
+        name: "",
+        email: "private@example.com",
         isTried: true,
       };
       mockEnsData[MOCK_ADDRESS_LOWER] = { name: "ens.eth" };
@@ -192,7 +230,82 @@ describe("EthereumAddressToProfileName", () => {
         wrapper: createWrapper(),
       });
 
-      expect(screen.getByText("user@example.com")).toBeInTheDocument();
+      expect(screen.queryByText("private@example.com")).not.toBeInTheDocument();
+      expect(screen.getByText("ens.eth")).toBeInTheDocument();
+    });
+
+    it("shows the self user's email LOCAL-PART as a last resort — never the full email", () => {
+      // The rendered address IS the connected wallet → self, with only an email.
+      mockBridgeWallets = [{ address: MOCK_ADDRESS_LOWER }];
+      mockBridgeUser = { email: { address: "me@example.com" } };
+      mockContributorProfile = null;
+      mockProfilesData[MOCK_ADDRESS_LOWER] = {
+        publicAddress: MOCK_ADDRESS_LOWER,
+        name: "",
+        isTried: true,
+      };
+
+      render(<EthereumAddressToProfileName address={MOCK_ADDRESS} />, {
+        wrapper: createWrapper(),
+      });
+
+      expect(screen.getByText("me")).toBeInTheDocument();
+      expect(screen.queryByText("me@example.com")).not.toBeInTheDocument();
+    });
+
+    it("prefers a self user's provider display name over their email", () => {
+      mockBridgeWallets = [{ address: MOCK_ADDRESS_LOWER }];
+      mockBridgeUser = { google: { name: "Bruno De Masi", email: "bruno@karmahq.xyz" } };
+      mockContributorProfile = null;
+      mockProfilesData[MOCK_ADDRESS_LOWER] = {
+        publicAddress: MOCK_ADDRESS_LOWER,
+        name: "",
+        isTried: true,
+      };
+
+      render(<EthereumAddressToProfileName address={MOCK_ADDRESS} />, {
+        wrapper: createWrapper(),
+      });
+
+      expect(screen.getByText("Bruno De Masi")).toBeInTheDocument();
+      expect(screen.queryByText("bruno@karmahq.xyz")).not.toBeInTheDocument();
+    });
+
+    it("shows the logged-in user's own social display name when they have no email", () => {
+      // Self user authenticated via Farcaster only (no email/Google).
+      mockBridgeWallets = [{ address: MOCK_ADDRESS_LOWER }];
+      mockBridgeUser = { farcaster: { displayName: "vitalik" } };
+      mockContributorProfile = null;
+      mockProfilesData[MOCK_ADDRESS_LOWER] = {
+        publicAddress: MOCK_ADDRESS_LOWER,
+        name: "",
+        isTried: true,
+      };
+
+      render(<EthereumAddressToProfileName address={MOCK_ADDRESS} />, {
+        wrapper: createWrapper(),
+      });
+
+      expect(screen.getByText("vitalik")).toBeInTheDocument();
+    });
+
+    it("prefers ENS over the logged-in user's own email", () => {
+      mockBridgeWallets = [{ address: MOCK_ADDRESS_LOWER }];
+      mockBridgeUser = { google: { email: "me@example.com" } };
+      mockContributorProfile = null;
+      mockProfilesData[MOCK_ADDRESS_LOWER] = {
+        publicAddress: MOCK_ADDRESS_LOWER,
+        name: "",
+        isTried: true,
+      };
+      mockEnsData[MOCK_ADDRESS_LOWER] = { name: "mine.eth" };
+
+      render(<EthereumAddressToProfileName address={MOCK_ADDRESS} />, {
+        wrapper: createWrapper(),
+      });
+
+      expect(screen.getByText("mine.eth")).toBeInTheDocument();
+      expect(screen.queryByText("me@example.com")).not.toBeInTheDocument();
     });
 
     it("tier 4: falls back to ENS name when no privy data", () => {

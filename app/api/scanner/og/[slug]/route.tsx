@@ -2,9 +2,9 @@
 
 import { ImageResponse } from "next/og";
 import type { NextRequest } from "next/server";
-import { envVars } from "@/utilities/enviromentVars";
-import { categoryLabel, GRADE_LABEL } from "@/src/features/scanner/utils/labels";
 import type { PublicScorecardPayload, ScanGrade } from "@/src/features/scanner/types";
+import { categoryLabel, GRADE_LABEL } from "@/src/features/scanner/utils/labels";
+import { envVars } from "@/utilities/enviromentVars";
 
 // next/og renders via wasm in the edge runtime. nodejs runtime silently
 // fails with empty responses under turbopack dev when sharp is not
@@ -17,7 +17,7 @@ export const runtime = "edge";
 // the edge route handler. Plain fetch keeps this route hermetic.
 async function fetchScorecard(slug: string): Promise<PublicScorecardPayload | null> {
   try {
-    const url = `${envVars.NEXT_PUBLIC_GAP_INDEXER_URL.replace(/\/$/, "")}/api/scanner/v1/s/${encodeURIComponent(slug)}`;
+    const url = `${envVars.NEXT_PUBLIC_GAP_INDEXER_URL.replace(/\/$/, "")}/v2/nonprofits/ai-readiness/reports/${encodeURIComponent(slug)}`;
     const res = await fetch(url, { cache: "no-store" });
     if (!res.ok) return null;
     return (await res.json()) as PublicScorecardPayload;
@@ -27,20 +27,44 @@ async function fetchScorecard(slug: string): Promise<PublicScorecardPayload | nu
 }
 
 // next/og's ImageResponse renders to a PNG via inline CSS; Tailwind classes
-// and CSS variables are not honored. Hex literals are the only option.
+// and CSS variables are not honored, so these hex literals mirror the
+// design-system tokens the in-app scorecard uses. Every element in a row
+// shares one band hue: brand teal (strong), burnt amber warning-700 (ok),
+// destructive red (weak/critical). Neutrals follow the KDS dark palette
+// (pure-black background, pure-gray text ramp).
+const TONE_STRONG = "#2ed1a8"; // brand-500
+const TONE_OK = "#f5a623"; // warning-500
+const TONE_FAIL = "#dc2828"; // destructive — hsl(0 72% 51%)
 const GRADE_TONE: Record<ScanGrade, string> = {
-  A: "#10B981",
-  B: "#84CC16",
-  C: "#F59E0B",
-  D: "#F97316",
-  F: "#F43F5E",
+  A: TONE_STRONG,
+  B: TONE_STRONG,
+  C: TONE_OK,
+  D: TONE_FAIL,
+  F: TONE_FAIL,
 };
-const COLOR_BG_DARK = "#0F172A";
-const COLOR_BG_BAR = "#1E293B";
+// Chip ink: the bright teal and amber chips take dark same-hue ink (as
+// in-app); the red failing chips take white.
+const GRADE_INK: Record<ScanGrade, string> = {
+  A: "#061d18", // brand-950
+  B: "#061d18", // brand-950
+  C: "#78350f", // warning-900
+  D: "white",
+  F: "white",
+};
+// Per-category bar colour from its 0-100 percentage — mirrors bandForScore:
+// a zero-point category reads as failing, not merely weak.
+function toneForPct(pct: number): string {
+  if (pct <= 0) return TONE_FAIL;
+  if (pct >= 80) return TONE_STRONG;
+  if (pct >= 50) return TONE_OK;
+  return TONE_FAIL;
+}
+const COLOR_BG_DARK = "#000000";
+const COLOR_BG_BAR = "#292929"; // KDS dark border — hsl(0 0% 16%)
 const COLOR_FG_PRIMARY = "white";
-const COLOR_FG_MUTED = "#94A3B8";
-const COLOR_FG_SUBTLE = "#CBD5E1";
-const COLOR_FG_LABEL = "#E2E8F0";
+const COLOR_FG_MUTED = "#a3a3a3";
+const COLOR_FG_SUBTLE = "#d4d4d4";
+const COLOR_FG_LABEL = "#e5e5e5";
 
 // Satori (next/og's renderer) requires display:flex on EVERY div that
 // has multiple children. Even single-text divs render more predictably
@@ -67,12 +91,8 @@ function renderFallback(message: string) {
         color: COLOR_FG_PRIMARY,
       })}
     >
-      <div style={textRow({ fontSize: 48, fontWeight: 700 })}>
-        Karma AI-Readiness Checker
-      </div>
-      <div style={textRow({ fontSize: 24, marginTop: 16, color: COLOR_FG_MUTED })}>
-        {message}
-      </div>
+      <div style={textRow({ fontSize: 48, fontWeight: 700 })}>Karma - Is AI Ready</div>
+      <div style={textRow({ fontSize: 24, marginTop: 16, color: COLOR_FG_MUTED })}>{message}</div>
     </div>,
     {
       width: 1200,
@@ -111,7 +131,7 @@ export async function GET(_request: NextRequest, context: { params: Promise<{ sl
     >
       <div style={col({ gap: 16 })}>
         <div style={textRow({ fontSize: 24, color: COLOR_FG_MUTED, letterSpacing: 1 })}>
-          KARMA AI-READINESS CHECKER
+          KARMA - IS AI READY
         </div>
         <div style={textRow({ fontSize: 44, fontWeight: 700, color: COLOR_FG_PRIMARY })}>
           {orgName}
@@ -129,7 +149,7 @@ export async function GET(_request: NextRequest, context: { params: Promise<{ sl
             backgroundColor: gradeBg,
             fontSize: 120,
             fontWeight: 800,
-            color: COLOR_FG_PRIMARY,
+            color: GRADE_INK[scorecard.grade],
           })}
         >
           {scorecard.grade}
@@ -138,9 +158,7 @@ export async function GET(_request: NextRequest, context: { params: Promise<{ sl
           <div style={textRow({ fontSize: 80, fontWeight: 700 })}>
             {`${scorecard.totalScore} / 100`}
           </div>
-          <div style={textRow({ fontSize: 32, color: COLOR_FG_SUBTLE })}>
-            {label}
-          </div>
+          <div style={textRow({ fontSize: 32, color: COLOR_FG_SUBTLE })}>{label}</div>
         </div>
       </div>
 
@@ -156,9 +174,7 @@ export async function GET(_request: NextRequest, context: { params: Promise<{ sl
           return (
             <div key={category.category} style={col({ gap: 4 })}>
               <div style={row({ justifyContent: "space-between", fontSize: 18 })}>
-                <div style={textRow({ color: COLOR_FG_LABEL })}>
-                  {categoryLabel(category)}
-                </div>
+                <div style={textRow({ color: COLOR_FG_LABEL })}>{categoryLabel(category)}</div>
                 <div style={textRow({ color: COLOR_FG_MUTED })}>
                   {`${category.pointsAwarded} / ${category.pointsPossible}`}
                 </div>
@@ -176,7 +192,7 @@ export async function GET(_request: NextRequest, context: { params: Promise<{ sl
                     width: `${pct}%`,
                     height: "100%",
                     borderRadius: 999,
-                    backgroundColor: gradeBg,
+                    backgroundColor: toneForPct(pct),
                   })}
                 />
               </div>

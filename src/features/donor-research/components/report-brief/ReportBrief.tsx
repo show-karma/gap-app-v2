@@ -21,11 +21,14 @@ interface ReportBriefProps {
   report: ResearchReportDetail;
   isTerminal: boolean;
   /**
-   * "advisor" renders the dashboard back-link + share controls; "shared"
-   * hides those advisor-only affordances so the donor share view is visually
-   * identical to the advisor report, minus controls a donor can't use.
+   * "advisor" renders the dashboard back-link + share/weights controls and
+   * diligence actions — owner-only writes. "staff" keeps the full brief
+   * (including the query disclosure) but hides those write affordances,
+   * which are advisor-scoped server-side and would only error for staff.
+   * "shared" additionally hides the query disclosure so the donor share
+   * view never reveals the advisor's search criteria.
    */
-  variant?: "advisor" | "shared";
+  variant?: "advisor" | "shared" | "staff";
   /**
    * Live SSE stream — advisor view only. Omitted on the unauthenticated share
    * view (which refreshes via polling instead), so the running panel is hidden.
@@ -49,9 +52,10 @@ export function ReportBrief({
   const featured = candidates.filter((c) => c.featuredFlag);
   const remaining = candidates.filter((c) => !c.featuredFlag);
   const weights = report.weights ?? null;
-  // Diligence + intro actions are advisor-only — the donor shared view must
-  // never surface them (they'd reveal that diligence is in flight).
-  const showDiligenceActions = variant !== "shared";
+  // Diligence + intro actions are owner-only writes — the donor shared view
+  // must never surface them (they'd reveal that diligence is in flight) and
+  // staff can't use them (the endpoints are advisor-scoped).
+  const showDiligenceActions = variant === "advisor";
 
   return (
     <div

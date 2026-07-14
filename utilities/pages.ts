@@ -51,9 +51,10 @@ export const PAGES = {
     ONBOARDING: `/nonprofit-research/onboarding`,
     REPORT: (reportId: string) => `/nonprofit-research/${reportId}`,
     SHARED: (token: string) => `/nonprofit-research/shared/${token}`,
-    // Staff-only admin overview (DEV-467).
+    // Staff-only admin overview. Reports have no admin route — staff open
+    // the regular REPORT page; the API grants staff an unscoped read on
+    // the same endpoint.
     ADMIN: `/admin/nonprofit-research`,
-    ADMIN_REPORT: (reportId: string) => `/admin/nonprofit-research/${reportId}`,
     // Advisor's one-per-advisor diligence question template editor (DEV-428).
     DILIGENCE_TEMPLATE: `/nonprofit-research/diligence-template`,
     // Public nonprofit response page — the secure email link opens this.
@@ -119,7 +120,7 @@ export const PAGES = {
   },
   PROJECT: {
     OVERVIEW: (project: string) => `/project/${project}`,
-    UPDATES: (project: string) => `/project/${project}`,
+    UPDATES: (project: string) => `/project/${project}/updates`,
     ABOUT: (project: string) => `/project/${project}/about`,
     GRANTS: (project: string) => `/project/${project}/funding`,
 
@@ -152,6 +153,7 @@ export const PAGES = {
   FOR_AGENTS: `/for-agents`,
   NONPROFITS: `/nonprofits`,
   DONOR_ADVISORS: `/donor-advisors`,
+  DONOR_REWARDS: `/donor-rewards`,
   CREATE_PROJECT_PROFILE: `/create-project-profile`,
   MCP_CONNECT: `/mcp/connect`,
   SEEDS: `/seeds`,
@@ -167,10 +169,14 @@ export const PAGES = {
   SKILLS: (slug: string) => `/ai-teams/${slug}/skills`,
   ASK_KARMA: `/ask-karma`,
   SCANNER: {
-    ROOT: `/scanner`,
-    SCAN_DETAIL: (id: string) => `/scanner/scans/${id}`,
+    ROOT: `/nonprofits/is-ai-ready`,
+    SCAN_DETAIL: (id: string) => `/nonprofits/is-ai-ready/scans/${id}`,
+    // Website-keyed report URL (ora.ai model): the scanned domain is the path,
+    // so a link is constructible from scratch (e.g. /nonprofits/is-ai-ready/
+    // karmahq.xyz). Served by the `[site]` dynamic segment, which coexists with
+    // the static `scans/` folder (static wins in the App Router).
+    SITE: (domain: string) => `/nonprofits/is-ai-ready/${domain}`,
     PUBLIC_SCORECARD: (slug: string) => `/s/${slug}`,
-    API_KEYS_SETTINGS: `/settings/api-keys/scanner`,
     OG_IMAGE: (slug: string) => `/api/scanner/og/${slug}`,
   },
 };

@@ -4,18 +4,21 @@ import { ImageResponse } from "next/og";
 import type { NextRequest } from "next/server";
 import pluralize from "pluralize";
 import { PROJECT_NAME } from "@/constants/brand";
+import { getProject } from "@/services/project.service";
 import { getProjectGrants } from "@/services/project-grants.service";
 import { cleanMarkdownForPlainText } from "@/utilities/markdown";
-import { getProjectCachedData } from "@/utilities/queries/getProjectCachedData";
 
 export async function GET(
   _request: NextRequest,
   context: { params: Promise<{ projectId: string }> }
 ) {
   const projectId = (await context.params).projectId;
+  // Fetch directly instead of via getProjectCachedData: that helper throws
+  // notFound()/redirect(), which would turn this image endpoint into a 404
+  // page or an HTML redirect and make the branded fallback below unreachable.
   const [project, grants] = await Promise.all([
-    getProjectCachedData(projectId),
-    getProjectGrants(projectId),
+    getProject(projectId).catch(() => null),
+    getProjectGrants(projectId).catch(() => []),
   ]);
   if (!project) {
     return new ImageResponse(

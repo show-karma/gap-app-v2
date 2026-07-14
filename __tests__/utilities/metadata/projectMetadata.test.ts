@@ -42,7 +42,12 @@ describe("generateProjectAboutMetadata", () => {
     const meta = generateProjectAboutMetadata(project, "acme");
 
     expect(meta.robots).toBeUndefined();
-    expect(meta.alternates?.canonical).toBe("/project/acme/about");
+  });
+
+  it("canonicalizes the about tab to the project root to consolidate ranking signals", () => {
+    const meta = generateProjectAboutMetadata(project, "acme");
+
+    expect(meta.alternates?.canonical).toBe("/project/acme");
   });
 });
 
