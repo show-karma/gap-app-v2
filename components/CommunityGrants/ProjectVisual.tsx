@@ -21,7 +21,7 @@ interface ProjectVisualProps {
   categories?: string[];
   className?: string;
   priority?: boolean;
-  variant?: "square" | "banner";
+  variant?: "square" | "banner" | "fill";
 }
 
 interface VisualTheme {
@@ -253,7 +253,7 @@ export function ProjectVisual({
       className={cn(
         "relative isolate overflow-hidden bg-gradient-to-br",
         theme.background,
-        variant === "square" ? "aspect-square" : "h-full min-h-64",
+        variant === "square" ? "aspect-square" : variant === "fill" ? "h-full" : "h-full min-h-64",
         className
       )}
     >

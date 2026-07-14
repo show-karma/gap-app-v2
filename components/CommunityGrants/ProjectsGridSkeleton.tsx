@@ -12,7 +12,7 @@ function ProjectBlockSkeleton() {
       className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-950"
     >
       <div className="grid min-h-36 grid-cols-[112px_minmax(0,1fr)] lg:grid-cols-[152px_minmax(0,1fr)]">
-        <Skeleton className="aspect-square h-full w-full self-start rounded-none" />
+        <Skeleton className="h-full min-h-36 w-full rounded-none" />
 
         <div className="flex min-w-0 flex-col p-4 sm:p-5">
           <div className="mb-2 flex flex-col gap-1.5">
