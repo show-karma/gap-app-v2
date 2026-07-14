@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, Download } from "lucide-react";
+import { AlertTriangle, ChevronDown, Download } from "lucide-react";
 import pluralize from "pluralize";
 import { type FC, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -41,6 +41,7 @@ export const ExportDataMenu: FC<ExportDataMenuProps> = ({ communitySlug, reportI
 
   const isExporting = exportSection.isPending || exportAll.isPending;
   const sections = orderSections(manifest.data?.sections ?? []);
+  const isLegacyReport = manifest.data?.snapshotSource === "live-recompute";
 
   const renderSections = () => {
     if (manifest.isLoading) {
@@ -102,8 +103,20 @@ export const ExportDataMenu: FC<ExportDataMenuProps> = ({ communitySlug, reportI
           <ChevronDown className="ml-1 h-3 w-3" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-64">
+      <DropdownMenuContent align="end" className="w-72">
         <DropdownMenuLabel>Export raw data</DropdownMenuLabel>
+        {isLegacyReport ? (
+          <div
+            role="note"
+            className="mx-1 mb-1 flex items-start gap-2 rounded-md bg-amber-50 px-2 py-2 text-xs text-amber-800 dark:bg-amber-950/40 dark:text-amber-300"
+          >
+            <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+            <span>
+              This report predates data snapshots. Its data is reconstructed from source records and
+              may not exactly match the report as it was originally generated.
+            </span>
+          </div>
+        ) : null}
         <DropdownMenuSeparator />
         {renderSections()}
       </DropdownMenuContent>

@@ -36,7 +36,7 @@ function triggerDownload(blob: Blob, filename: string): void {
 function notifySource(snapshotSource: ReportSnapshotSource | null): void {
   if (snapshotSource === "live-recompute") {
     toast.success(
-      "Exported — this report predates data snapshots, so it reflects current data, not the data at the time it was generated.",
+      "Exported — this report predates data snapshots, so its data is reconstructed from source records and may not exactly match the original report.",
       { icon: "ℹ️", duration: 6000 }
     );
     return;
