@@ -11,7 +11,7 @@ function ProjectBlockSkeleton() {
       aria-hidden
       className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-950"
     >
-      <div className="grid min-h-36 grid-cols-[112px_minmax(0,1fr)] sm:grid-cols-[152px_minmax(0,1fr)]">
+      <div className="grid min-h-36 grid-cols-[112px_minmax(0,1fr)] lg:grid-cols-[152px_minmax(0,1fr)]">
         <Skeleton className="aspect-square h-full w-full self-start rounded-none" />
 
         <div className="flex min-w-0 flex-col p-4 sm:p-5">
@@ -39,7 +39,7 @@ export function ProjectsGridSkeleton({ count = 8 }: ProjectsGridSkeletonProps) {
   const items = Array.from({ length: count }, (_, index) => `project-block-skeleton-${index}`);
 
   return (
-    <div className="grid w-full grid-cols-1 gap-4 xl:grid-cols-2">
+    <div className="grid w-full grid-cols-1 gap-4 md:grid-cols-2">
       {items.map((id) => (
         <ProjectBlockSkeleton key={id} />
       ))}
