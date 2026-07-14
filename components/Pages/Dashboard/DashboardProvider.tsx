@@ -43,7 +43,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <SoftShell address={state.address}>
+    <SoftShell>
       {state.isGuestDueToError ? (
         <WarnBar>
           We couldn&apos;t verify your permissions. Some sections may be hidden — try refreshing.

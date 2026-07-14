@@ -13,6 +13,7 @@ import {
   useDashboardTransition,
 } from "@/components/Pages/Dashboard/v3/useDashboardTransition";
 import { Link } from "@/src/components/navigation/Link";
+import { PAGES } from "@/utilities/pages";
 
 /**
  * `/dashboard/[module]` — a single role module's full drill-in view. The module
@@ -67,20 +68,20 @@ export default function DashboardModulePage() {
     if (!isSettled || !graceExpired) {
       return <SkeletonList count={4} />;
     }
-    redirect("/dashboard");
+    redirect(PAGES.DASHBOARD);
   }
 
   const handleBack = (e: MouseEvent<HTMLAnchorElement>) => {
     if (e.defaultPrevented || e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
     if (!supportsViewTransitions()) return;
     e.preventDefault();
-    navigate("/dashboard");
+    navigate(PAGES.DASHBOARD);
   };
 
   return (
     <div>
       <Link
-        href="/dashboard"
+        href={PAGES.DASHBOARD}
         onClick={handleBack}
         className="mb-4 inline-flex w-fit items-center gap-2 text-sm font-medium text-gray-600 transition-colors hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
       >

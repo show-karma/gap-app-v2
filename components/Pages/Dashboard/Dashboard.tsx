@@ -23,15 +23,8 @@ import { SoftShell } from "./v3/SoftShell";
  * animation is ported to a cross-route View Transition.
  */
 export function Dashboard() {
-  const {
-    modules,
-    isLoading,
-    authenticated,
-    address,
-    showSuperAdmin,
-    isGuestDueToError,
-    advisorLoading,
-  } = useDashboardModules();
+  const { modules, isLoading, authenticated, showSuperAdmin, isGuestDueToError, advisorLoading } =
+    useDashboardModules();
 
   // Tracks whether a bento tile is drilled into, so the admin panel banner
   // (a bento-overview affordance) hides while a module's full view is open.
@@ -60,7 +53,7 @@ export function Dashboard() {
   }
 
   return (
-    <SoftShell address={address}>
+    <SoftShell>
       {isGuestDueToError ? (
         <WarnBar>
           We couldn&apos;t verify your permissions. Some sections may be hidden — try refreshing.
