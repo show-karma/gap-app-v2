@@ -81,7 +81,7 @@ export const ObjectiveOptionsMenu = ({
   });
 
   const deleteFn = async () => {
-    if (!address || !project) return;
+    if (!project) return;
     setIsDeleting(true);
     startAttestation("Deleting milestone...");
     try {

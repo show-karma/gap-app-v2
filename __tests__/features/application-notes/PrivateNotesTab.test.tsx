@@ -12,6 +12,13 @@ vi.mock("react-hot-toast", () => ({
   default: { error: vi.fn(), success: vi.fn() },
 }));
 
+// The shared identity component pulls in React Query / Privy context; stub it to
+// the raw address so this suite can assert the byline delegates to it (no local
+// truncation) without wiring up those providers.
+vi.mock("@/components/EthereumAddressToProfileName", () => ({
+  default: ({ address }: { address: string }) => <span>{address}</span>,
+}));
+
 const mockHook = vi.mocked(useApplicationNote);
 
 type HookReturn = ReturnType<typeof useApplicationNote>;
@@ -90,6 +97,18 @@ describe("PrivateNotesTab", () => {
 
     expect(screen.getByDisplayValue("internal flag")).toBeInTheDocument();
     expect(screen.getByText(/Last edited by Greta/)).toBeInTheDocument();
+  });
+
+  it("delegates editor identity to the shared component when the note has no stored name", () => {
+    mockHook.mockReturnValue(hookState({ note: createMockNote({ updatedByName: null }) }));
+
+    render(<PrivateNotesTab referenceNumber="APP-1" canViewNotes />);
+
+    expect(screen.getByText(/Last edited by/)).toBeInTheDocument();
+    // Falls through to EthereumAddressToProfileName (name/ENS/masked) instead of
+    // the old home-grown 6/4 truncation of the raw address.
+    expect(screen.queryByText(/0xabcd…0000/)).not.toBeInTheDocument();
+    expect(screen.getByText("0xabcdef0000000000000000000000000000000000")).toBeInTheDocument();
   });
 
   it("should surface an error toast when saving fails (not silent)", async () => {

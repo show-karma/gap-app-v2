@@ -41,7 +41,7 @@ export const DeleteMemberDialog: FC<DeleteMemberDialogProps> = ({ memberAddress 
 
   const deleteMember = async () => {
     // await deleteMemberFromProject(memberAddress);
-    if (!address || !project) return;
+    if (!project) return;
     try {
       setIsDeleting(true);
       startAttestation("Removing member...");

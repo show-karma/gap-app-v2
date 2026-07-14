@@ -54,8 +54,8 @@ export const useGrantCompletion = ({
   const { setupChainAndWallet } = useSetupChainAndWallet();
 
   const completeGrant = async (grant: Grant, project: { uid: string }) => {
-    if (!address || !project || !grant) {
-      showError("Please connect your wallet");
+    if (!project || !grant) {
+      showError("This grant is still loading. Please try again.");
       return;
     }
 
@@ -71,7 +71,8 @@ export const useGrantCompletion = ({
       });
 
       if (!setup) {
-        showError("Please switch to the correct network and try again");
+        // setupChainAndWallet surfaces its own toast on failure (#1821); the
+        // finally below dismisses the loading toast and resets state.
         return;
       }
 

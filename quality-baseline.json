@@ -1,7 +1,7 @@
 {
   "$schema": "./scripts/quality-baseline.schema.json",
   "generatedAt": "2026-07-08T20:13:23.316Z",
-  "generatedFromCommit": "fc23ccd395ba484ba838833f57a526e34b0d6c15",
+  "generatedFromCommit": "a04dd3937025acf50a4278a4bd1be4579364e822",
   "coverage": {
     "lines": 0,
     "statements": 0,
@@ -13,10 +13,10 @@
     "fragments": 73
   },
   "violations": {
-    "biome": 1239,
-    "knipUnusedFiles": 208,
-    "knipUnusedExports": 417,
-    "knipUnusedTypes": 360,
+    "biome": 1238,
+    "knipUnusedFiles": 210,
+    "knipUnusedExports": 418,
+    "knipUnusedTypes": 363,
     "knipUnusedDeps": 19,
     "knipDuplicates": 33
   },
@@ -463,17 +463,17 @@
   "reactDoctor": {
     "score": 0,
     "errors": 64,
-    "warnings": 3302,
+    "warnings": 3337,
     "byCategory": {
-      "Architecture": 1176,
+      "Architecture": 1184,
       "Accessibility": 285,
-      "Correctness": 393,
-      "Next.js": 143,
+      "Correctness": 399,
+      "Next.js": 145,
       "Server": 9,
-      "Performance": 626,
-      "State & Effects": 684,
-      "TanStack Query": 37,
-      "Bundle Size": 10,
+      "Performance": 631,
+      "State & Effects": 698,
+      "TanStack Query": 38,
+      "Bundle Size": 9,
       "Security": 3
     }
   }

@@ -117,6 +117,14 @@ export function useSetupChainAndWallet(): UseSetupChainAndWalletResult {
       });
 
       if (!success || !gapClient) {
+        // The chain switch failed (wallet on the wrong network / switch
+        // rejected). Surface feedback here so every caller stops failing
+        // silently (#1821) — before, ~20 attestation flows did
+        // `if (!setup) return;` with no message. Fixed toast id de-dupes the
+        // multi-chain case.
+        toast.error("Couldn't switch to the required network. Please try again.", {
+          id: "chain-prep-failed",
+        });
         return null;
       }
 
