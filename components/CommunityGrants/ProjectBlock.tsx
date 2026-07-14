@@ -21,7 +21,7 @@ function ProjectBlockComponent({ project }: ProjectBlockProps) {
     >
       <Link
         href={projectPath}
-        className="grid min-h-36 grid-cols-[112px_minmax(0,1fr)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-inset sm:grid-cols-[152px_minmax(0,1fr)]"
+        className="grid min-h-36 grid-cols-[112px_minmax(0,1fr)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-inset lg:grid-cols-[152px_minmax(0,1fr)]"
       >
         <ProjectVisual
           uid={project.uid}
