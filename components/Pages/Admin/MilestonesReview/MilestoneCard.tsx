@@ -341,9 +341,14 @@ export function MilestoneCard({
     setCancelReason("");
   }, [onCancelMilestone, milestone, cancelReason]);
 
-  const handleUncancelMenuClick = useCallback(() => {
+  const handleUncancelMenuClick = useCallback(async () => {
     setIsOverflowOpen(false);
-    onUncancelMilestone?.(milestone);
+    try {
+      await onUncancelMilestone?.(milestone);
+    } catch {
+      // SUPPRESSED: the un-cancel mutation's onError already surfaces + reports
+      // the failure; we swallow here only to avoid an unhandled promise rejection.
+    }
   }, [onUncancelMilestone, milestone]);
 
   const handleOverflowBlur = useCallback((e: React.FocusEvent) => {
@@ -465,14 +470,20 @@ export function MilestoneCard({
             </Button>
           )}
           {(() => {
-            const showDeleteAction = canDeleteMilestones && !hasCompletion;
+            const showDeleteAction = canDeleteMilestones && !hasCompletion && !isCancelled;
             const showCancelAction =
               canCancelMilestones &&
               !!onCancelMilestone &&
               !isCancelled &&
               !hasCompletion &&
               !isVerified;
-            const showUncancelAction = canCancelMilestones && !!onUncancelMilestone && isCancelled;
+            // Only offer restore once a revocable UID exists — during the optimistic
+            // cancel window `cancellation.uid` is "" and there is nothing to revoke.
+            const showUncancelAction =
+              canCancelMilestones &&
+              !!onUncancelMilestone &&
+              isCancelled &&
+              !!milestone.cancellation?.uid;
             if (!showDeleteAction && !showCancelAction && !showUncancelAction) {
               return null;
             }
