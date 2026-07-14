@@ -76,9 +76,9 @@ describe("PAGES constants", () => {
     });
   });
 
-  describe("REVIEWER.FUNDING_PLATFORM.MILESTONES", () => {
+  describe("MANAGE.FUNDING_PLATFORM.MILESTONES", () => {
     it("adds an encoded milestone hash for reviewer milestone review links", () => {
-      const result = PAGES.REVIEWER.FUNDING_PLATFORM.MILESTONES(
+      const result = PAGES.MANAGE.FUNDING_PLATFORM.MILESTONES(
         "filecoin",
         "992",
         "project-uid",
