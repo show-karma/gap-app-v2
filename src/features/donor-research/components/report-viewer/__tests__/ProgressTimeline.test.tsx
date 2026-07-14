@@ -230,3 +230,118 @@ describe("ProgressTimeline completed-stage detail lines", () => {
     expect(screen.getByText("Running Pub 78, recent 990, and CA AG checks.")).toBeInTheDocument();
   });
 });
+
+describe("ProgressTimeline live contact-discovery progress caption", () => {
+  const eventsThroughCompliance: FastReportEvent[] = [
+    makeEvent("snapshot"),
+    makeEvent("pool_loaded", { count: 12 }),
+    makeEvent("compliance_complete", { scoredCount: 10, disqualifiedCount: 2 }),
+  ];
+
+  it("should_show_the_candidate_currently_being_worked_mid_stage", () => {
+    render(
+      <ProgressTimeline
+        events={[
+          ...eventsThroughCompliance,
+          makeEvent("contact_discovery_progress", { done: 3, total: 12 }),
+        ]}
+        latest={null}
+        errorCount={0}
+      />
+    );
+
+    expect(screen.getByText("Researching 4 of 12 candidates…")).toBeInTheDocument();
+  });
+
+  it("should_clamp_the_current_candidate_to_the_total_when_the_last_one_is_in_flight", () => {
+    render(
+      <ProgressTimeline
+        events={[
+          ...eventsThroughCompliance,
+          makeEvent("contact_discovery_progress", { done: 12, total: 12 }),
+        ]}
+        latest={null}
+        errorCount={0}
+      />
+    );
+
+    expect(screen.getByText("Researching 12 of 12 candidates…")).toBeInTheDocument();
+  });
+
+  it("should_singularize_a_total_of_one_candidate", () => {
+    render(
+      <ProgressTimeline
+        events={[
+          ...eventsThroughCompliance,
+          makeEvent("contact_discovery_progress", { done: 0, total: 1 }),
+        ]}
+        latest={null}
+        errorCount={0}
+      />
+    );
+
+    expect(screen.getByText("Researching 1 of 1 candidate…")).toBeInTheDocument();
+  });
+
+  it("should_keep_the_static_caption_when_no_progress_event_exists", () => {
+    render(<ProgressTimeline events={eventsThroughCompliance} latest={null} errorCount={0} />);
+
+    expect(
+      screen.getByText(
+        "Searching the web for each candidate's official website and social handles (~30 seconds per organization)."
+      )
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/Researching/)).not.toBeInTheDocument();
+  });
+
+  it("should_keep_the_static_caption_when_the_progress_payload_is_malformed", () => {
+    render(
+      <ProgressTimeline
+        events={[...eventsThroughCompliance, makeEvent("contact_discovery_progress", {})]}
+        latest={null}
+        errorCount={0}
+      />
+    );
+
+    expect(
+      screen.getByText(
+        "Searching the web for each candidate's official website and social handles (~30 seconds per organization)."
+      )
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/Researching/)).not.toBeInTheDocument();
+  });
+
+  it("should_replace_the_live_counter_with_the_completed_summary_once_contact_discovery_completes", () => {
+    render(
+      <ProgressTimeline
+        events={[
+          ...eventsThroughCompliance,
+          makeEvent("contact_discovery_progress", { done: 12, total: 12 }),
+          makeEvent("contact_discovery_complete", { discovered: 8, cached: 4, failed: 0 }),
+        ]}
+        latest={null}
+        errorCount={0}
+      />
+    );
+
+    expect(screen.queryByText(/Researching/)).not.toBeInTheDocument();
+    expect(screen.getByText("8 researched · 4 already known")).toBeInTheDocument();
+  });
+
+  it("should_not_advance_activeIndex_when_only_a_progress_event_is_present", () => {
+    render(
+      <ProgressTimeline
+        events={[
+          ...eventsThroughCompliance,
+          makeEvent("contact_discovery_progress", { done: 3, total: 12 }),
+        ]}
+        latest={null}
+        errorCount={0}
+      />
+    );
+
+    // Contact discovery remains the active stage — progress events don't
+    // count toward `seenNames`/`activeIndex` since they aren't in STAGE_ORDER.
+    expect(screen.getAllByText("Contact discovery")).toHaveLength(2);
+  });
+});

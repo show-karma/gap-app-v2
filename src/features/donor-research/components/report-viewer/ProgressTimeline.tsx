@@ -118,6 +118,19 @@ function getStageDetailText(
   return formatter(stageEvent.data);
 }
 
+/**
+ * Caption shown while `stage` is the active step. Only the contact-discovery
+ * stage swaps in a live counter (from the latest `contact_discovery_progress`
+ * event); every other stage keeps its static caption unconditionally.
+ */
+function getActiveStageCaption(
+  stage: { name: FastReportEvent["name"]; caption: string },
+  progressEvent: FastReportEvent | undefined
+): string {
+  if (stage.name !== "contact_discovery_complete") return stage.caption;
+  return formatContactDiscoveryProgressCaption(progressEvent?.data) ?? stage.caption;
+}
+
 const STAGE_DETAIL_FORMATTERS: Partial<Record<FastReportEvent["name"], StageDetailFormatter>> = {
   pool_loaded: formatPoolLoadedDetail,
   compliance_complete: formatComplianceCompleteDetail,
@@ -125,6 +138,25 @@ const STAGE_DETAIL_FORMATTERS: Partial<Record<FastReportEvent["name"], StageDeta
   ranking_complete: formatRankingCompleteDetail,
   activity_complete: formatActivityCompleteDetail,
 };
+
+/**
+ * Live "Researching Y of X" caption for the active contact-discovery
+ * stage, derived from the latest `contact_discovery_progress` event.
+ * `done + 1` (clamped to `total`) surfaces the candidate currently being
+ * worked rather than the count already finished. Returns null on
+ * missing/malformed data so the caller falls back to the static caption
+ * (covers the all-cached case, where no progress event is ever emitted).
+ */
+function formatContactDiscoveryProgressCaption(
+  data: Record<string, unknown> | undefined
+): string | null {
+  if (!data) return null;
+  const done = data.done;
+  const total = data.total;
+  if (typeof done !== "number" || typeof total !== "number" || total <= 0) return null;
+  const current = Math.min(done + 1, total);
+  return `Researching ${current} of ${total} ${pluralize("candidate", total)}…`;
+}
 
 /**
  * Live SSE timeline (U13c, post-impeccable redesign).
@@ -141,6 +173,7 @@ export function ProgressTimeline({ events, latest, errorCount }: ProgressTimelin
   const seenNames = new Set(events.map((e) => e.name));
   const eventByName = new Map(events.map((e) => [e.name, e] as const));
   const failed = events.some((e) => e.name === "report_failed");
+  const progressEvent = eventByName.get("contact_discovery_progress");
 
   // Find the active stage: the first one we haven't seen yet (or null
   // if everything is complete).
@@ -198,7 +231,7 @@ export function ProgressTimeline({ events, latest, errorCount }: ProgressTimelin
               stageEvent,
               STAGE_DETAIL_FORMATTERS[stage.name]
             );
-            const captionText = isActive ? stage.caption : detail;
+            const captionText = isActive ? getActiveStageCaption(stage, progressEvent) : detail;
             return (
               <li key={stage.name} className="relative flex items-start gap-3.5">
                 <span
