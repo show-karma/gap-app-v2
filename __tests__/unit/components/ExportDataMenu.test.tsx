@@ -86,4 +86,27 @@ describe("ExportDataMenu", () => {
       )
     );
   });
+
+  it("warns that a legacy (live-recompute) report may not match the original", async () => {
+    vi.mocked(portfolioService.getReportExportManifest).mockResolvedValue({
+      snapshotSource: "live-recompute",
+      sections: [{ key: "aging_analysis", title: "Milestone/Payment Age", rowCount: 5 }],
+    });
+    const user = userEvent.setup();
+    renderMenu();
+
+    await user.click(screen.getByRole("button", { name: /export data/i }));
+
+    expect(await screen.findByText(/predates data snapshots/i)).toBeInTheDocument();
+  });
+
+  it("does not warn for a snapshot-backed report", async () => {
+    const user = userEvent.setup();
+    renderMenu();
+
+    await user.click(screen.getByRole("button", { name: /export data/i }));
+
+    await screen.findByText("Milestone/Payment Age — 5 rows");
+    expect(screen.queryByText(/predates data snapshots/i)).not.toBeInTheDocument();
+  });
 });

@@ -108,7 +108,7 @@ describe("useExportReportSection", () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(clickSpy).toHaveBeenCalledTimes(1);
     expect(toast.success).toHaveBeenCalledWith(
-      expect.stringContaining("reflects current data"),
+      expect.stringContaining("reconstructed"),
       expect.objectContaining({ icon: "ℹ️" })
     );
   });
