@@ -11,11 +11,22 @@
 - **Application list redirect: DONE.** The review-queue route (`.../applications`) redirects a denied non-reviewer to the public `getBrowseApplicationsUrl(...)` (Mahesh's "if the queue is shared with a grantee, we redirect").
 - **FE tests:** 27 green (URL 6, guard 6, grantee-access 9 unchanged, milestone-redirect 6) + manage regression 2/2; biome + tsc clean (only the 12 pre-existing unrelated `rotating-word.test.tsx` errors remain). **Pre-merge gate:** E2E flows 1–8 on preview (both hosts).
 
-## Out of scope / follow-up (the "clean up URL" sheet rows — NOT redirect consolidation)
+## Follow-up
+
+**DONE (commit a5af904, same PR #1836):**
+- **Reviewer/admin workspace** (J8): deleted the `PAGES.REVIEWER.*` alias + repointed all 6 call sites to `PAGES.MANAGE`; deleted dead constants `ADMIN.PROJECT_MILESTONES` + `COMMUNITY.RECEIVEPROJECTUPDATES`.
+- **Bug — Control Center milestone link** (`MilestonesSection.tsx`): built with the on-chain community UID + a bare `#<uid>` anchor; now uses the route slug + the builder's `#milestone-<uid>`.
+- **Bug — MilestonesReview drift**: admin used raw `programId` (+string concat), reviewer used parsed; unified to one canonical `MANAGE.APPLICATION_DETAIL` with the parsed id.
+- (also fixed a pre-existing Phase-1 test regression: `ReviewerStatusChange.test` had an incomplete hand-rolled `PAGES` mock → switched to the real module.)
+
+**Still open (NOT redirect consolidation):**
+- **Copy/share emission** — 4 copy-link buttons copy `window.location.href`; 6 `SHARE_TEXTS` use the legacy `?grantId=&tab=` milestone shape. (The biggest remaining DEV-496 win on the copy/share side.)
+- **Middleware inbound safety net** — hoist the legacy `/project` redirects above the whitelabel early-return so old emailed `/project/:slug/grants/…` links stop 404ing on tenant domains.
+- **gap-indexer email emitters** — comment-mention `/application/:ref` (404) + reviewer digest `/admin/…` shape (frozen V1 → needs dispensation).
 - **Reports** (J5): merge admin `preview` URL ↔ public `/reports/:runDate`.
-- **Milestones report** (J7): repoint its row links to the one canonical milestone URL; page stays reviewer-only.
-- **Reviewer/admin workspace** (J8): delete the `PAGES.REVIEWER.*` alias (byte-identical to `PAGES.MANAGE.*`) and fix call-site drift (raw vs parsed programId, community UID vs slug in Control Center).
-- **Payouts / Financials:** explicitly excluded (Mahesh — redesign pending).
+- **Milestones report** (J7): repoint row links to the one canonical milestone URL.
+- **Page-file cleanup DEFERRED (not safe):** the "dead" pages (`project/updates`, `admin/kyc-settings`, `my-projects`) are referenced by route-structure + smoke tests, have sibling files, and `my-projects` is reachable on whitelabel — needs its own PR that updates those tests.
+- **Payouts / Financials:** excluded (Mahesh — redesign pending).
 
 
 **Goal:** collapse the role-split links in the `/funding-platform` area onto one canonical
