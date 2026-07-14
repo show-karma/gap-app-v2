@@ -7,7 +7,6 @@ import type { Hex } from "viem";
 import { useAccount } from "wagmi";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useAttestationToast } from "@/hooks/useAttestationToast";
-import { useAuth } from "@/hooks/useAuth";
 import { useMixpanel } from "@/hooks/useMixpanel";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
@@ -21,6 +20,17 @@ import { QUERY_KEYS } from "@/utilities/queryKeys";
 import { sanitizeObject } from "@/utilities/sanitize";
 
 const normalizeProgramId = (id: string): string => (id.includes("_") ? id.split("_")[0] : id);
+
+// Thrown when wallet/chain setup does not complete (user aborted, or a
+// preparation failure). `setupChainAndWallet` already surfaces the reason
+// centrally, so onError must roll back the optimistic update WITHOUT
+// re-toasting or re-reporting it.
+class ChainSetupAbortedError extends Error {
+  constructor() {
+    super("Wallet setup was cancelled");
+    this.name = "ChainSetupAbortedError";
+  }
+}
 
 interface UseMilestoneCancellationParams {
   projectId: string;
@@ -72,7 +82,7 @@ export const useMilestoneCancellation = ({
       currentChainId: chain?.id,
       switchChainAsync,
     });
-    if (!setup) throw new Error("Wallet setup was cancelled");
+    if (!setup) throw new ChainSetupAbortedError();
 
     const { gapClient, walletSigner } = setup;
     const project = await gapClient.fetch.projectById(data.project.uid as Hex);
@@ -97,10 +107,17 @@ export const useMilestoneCancellation = ({
 
   const cancelMutation = useMutation({
     mutationFn: async ({ milestone, data, reason }: CancelArgs) => {
-      if (milestone.completionDetails || milestone.verificationDetails) {
+      if (
+        milestone.completionDetails ||
+        milestone.verificationDetails ||
+        milestone.fundingApplicationCompletion
+      ) {
         throw new Error(
           "This milestone has already been completed or verified and cannot be cancelled."
         );
+      }
+      if (milestone.status === "cancelled" || milestone.cancellation != null) {
+        throw new Error("This milestone is already cancelled.");
       }
       showLoading("Cancelling milestone...");
 
@@ -162,6 +179,7 @@ export const useMilestoneCancellation = ({
     onError: (error: Error, _vars, context) => {
       if (context?.previousData) queryClient.setQueryData(queryKey, context.previousData);
       dismiss();
+      if (error instanceof ChainSetupAbortedError) return;
       showError(error.message || "Failed to cancel milestone");
       errorManager("Failed to cancel milestone", error);
     },
@@ -180,7 +198,7 @@ export const useMilestoneCancellation = ({
         currentChainId: chain?.id,
         switchChainAsync,
       });
-      if (!setup) throw new Error("Wallet setup was cancelled");
+      if (!setup) throw new ChainSetupAbortedError();
       const { gapClient, walletSigner } = setup;
       const schema = gapClient.findSchema("MilestoneCompleted");
 
@@ -222,6 +240,7 @@ export const useMilestoneCancellation = ({
     onError: (error: Error, _vars, context) => {
       if (context?.previousData) queryClient.setQueryData(queryKey, context.previousData);
       dismiss();
+      if (error instanceof ChainSetupAbortedError) return;
       showError(error.message || "Failed to un-cancel milestone");
       errorManager("Failed to un-cancel milestone", error);
     },

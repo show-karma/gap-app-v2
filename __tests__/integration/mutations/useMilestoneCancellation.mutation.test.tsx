@@ -160,6 +160,46 @@ describe("useMilestoneCancellation", () => {
     expect(mockMultiAttest).not.toHaveBeenCalled();
   });
 
+  it("blocks cancelling a funding-application-completed milestone", async () => {
+    const { result } = renderCancellationHook();
+
+    await expect(
+      act(async () => {
+        await result.current.cancelMilestone({
+          milestone: baseMilestone({
+            fundingApplicationCompletion: {
+              description: "done via application",
+            } as GrantMilestoneWithCompletion["fundingApplicationCompletion"],
+          }),
+          data,
+        });
+      })
+    ).rejects.toThrow(/already been completed or verified/);
+    expect(mockMultiAttest).not.toHaveBeenCalled();
+  });
+
+  it("blocks cancelling an already-cancelled milestone", async () => {
+    const { result } = renderCancellationHook();
+
+    await expect(
+      act(async () => {
+        await result.current.cancelMilestone({
+          milestone: baseMilestone({
+            status: "cancelled",
+            cancellation: {
+              uid: CANCEL_ATTESTATION_UID,
+              cancelledBy: "0xadmin",
+              cancelledAt: null,
+              reason: null,
+            },
+          }),
+          data,
+        });
+      })
+    ).rejects.toThrow(/already cancelled/);
+    expect(mockMultiAttest).not.toHaveBeenCalled();
+  });
+
   it("revokes the surfaced cancellation attestation for un-cancel", async () => {
     const { result } = renderCancellationHook();
 

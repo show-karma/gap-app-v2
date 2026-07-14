@@ -804,7 +804,7 @@ function MilestonesReviewPageContent({
   }
 
   // Check authorization: user must be logged in AND (community admin OR contract owner OR program reviewer OR staff)
-  const isAuthorized = address && (hasAdminAccess || isReviewer);
+  const isAuthorized = address && (hasAdminAccess || isReviewer || isStaff);
 
   if (!isAuthorized) {
     return (
