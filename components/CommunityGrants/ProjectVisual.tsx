@@ -237,6 +237,7 @@ export function ProjectVisual({
   const visualSource = hasProjectImage ? "logo" : kind === "generic" ? "generic" : "category";
   const initials = title
     .split(/\s+/)
+    .map((word) => word.replace(/[^a-z0-9]/gi, ""))
     .filter(Boolean)
     .slice(0, 2)
     .map((word) => word[0])

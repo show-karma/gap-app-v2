@@ -463,14 +463,14 @@
   "reactDoctor": {
     "score": 0,
     "errors": 64,
-    "warnings": 3299,
+    "warnings": 3302,
     "byCategory": {
-      "Architecture": 1175,
-      "Accessibility": 284,
+      "Architecture": 1176,
+      "Accessibility": 285,
       "Correctness": 393,
       "Next.js": 143,
       "Server": 9,
-      "Performance": 624,
+      "Performance": 626,
       "State & Effects": 684,
       "TanStack Query": 37,
       "Bundle Size": 10,

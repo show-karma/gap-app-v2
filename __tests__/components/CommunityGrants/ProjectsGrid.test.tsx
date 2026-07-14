@@ -135,6 +135,13 @@ describe("ProjectVisual", () => {
     }
   );
 
+  it("strips punctuation when deriving fallback initials", () => {
+    render(<ProjectVisual uid="project-ipni" title="IPNI (InterPlanetary Network Indexer)" />);
+
+    expect(screen.getByText("II")).toBeInTheDocument();
+    expect(screen.queryByText("I(")).not.toBeInTheDocument();
+  });
+
   it("recovers from a broken project image with category artwork", () => {
     render(
       <ProjectVisual
