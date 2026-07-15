@@ -1280,7 +1280,17 @@ jobs:
             6. Also write dogfood-results.json: {\"total\":N,\"critical\":N,\"high\":N,\"medium\":N,\"low\":N,\"preexisting\":N,\"blocking\":bool}
                where critical/high counts = PR-caused only.
             7. Do NOT post a separate PR comment.
-            8. If you hit the 6-min mark with 0 findings, write empty results JSON and exit cleanly — that is success."
+            8. If you hit the 6-min mark with 0 findings, write empty results JSON and exit cleanly — that is success.
+            9. INTERACTION VALIDITY — clearing inputs: never clear a React/controlled input with an empty fill
+               (agent-browser fill @ref with an empty value). An empty fill emits a single untrusted event that
+               React's value-tracker ignores, so the field and any derived URL/results do NOT change — a false
+               stale-state finding. To clear: focus (or click) the field, then 'press Control+a' and 'press Backspace',
+               and wait for the debounce before asserting URL/state/results. Prefer 'type' over 'fill' for entering text.
+            10. INTERACTION VALIDITY — click/navigation: before reporting a click or navigation failure, run
+               'scrollintoview @ref', wait for layout to settle, take a fresh snapshot for a current ref, and click that.
+               If it still does not navigate, confirm the trusted event targeted the intended element (not <html> or an
+               overlay from a layout shift / off-screen coordinate). If the target was wrong, classify it as a driver/harness
+               miss, NOT an app bug."
         timeout-minutes: 10
 
       - name: Upload dogfood shard artifacts

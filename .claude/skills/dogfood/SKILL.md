@@ -187,6 +187,14 @@ agent-browser --session {SESSION} close
 
 3. Tell the user the report is ready and summarize findings: total issues, breakdown by severity, and the most critical items.
 
+## Interaction validity (avoid false negatives)
+
+Before reporting any interaction failure, make sure the interaction itself was valid. A driver mistake is not an app bug. These rules are mandatory:
+
+1. **Clearing a controlled input** -- never use `fill @ref ""` (an empty fill) to clear a React/controlled input. Setting the value to empty emits a single untrusted event that React's value-tracker ignores, so the field's state and any derived URL/results do **not** update -- looking like a stale-state bug that does not exist for real users. To clear, `focus` (or `click`) the field, then `press Control+a` and `press Backspace`, and wait for any debounce before asserting the URL, state, or results. To enter text, prefer `type` / `keyboard type` (trusted keystrokes) over `fill`.
+
+2. **Click / navigation "failures"** -- before reporting a click or navigation as broken, `scrollintoview @ref`, wait for the layout to settle, take a fresh `snapshot -i` to get a current ref, and click that ref. If it still does not navigate, confirm the trusted event actually targeted the intended element (not `<html>` or an overlay from a layout shift or off-screen coordinate). If the target was wrong, classify it as a **driver/harness miss, not an app bug**.
+
 ## Guidance
 
 - **Repro is everything.** Every issue needs proof -- but match the evidence to the issue. Interactive bugs need video and step-by-step screenshots. Static bugs (typos, placeholder text, visual glitches visible on load) only need a single annotated screenshot.
