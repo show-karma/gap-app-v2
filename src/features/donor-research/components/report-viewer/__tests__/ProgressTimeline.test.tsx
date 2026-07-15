@@ -345,3 +345,39 @@ describe("ProgressTimeline live contact-discovery progress caption", () => {
     expect(screen.getAllByText("Contact discovery")).toHaveLength(2);
   });
 });
+
+describe("ProgressTimeline connector line geometry", () => {
+  it("should_render_one_connector_per_stage_except_the_last_so_the_line_never_extends_past_the_final_dot", () => {
+    const { container } = render(
+      <ProgressTimeline
+        events={[makeEvent("snapshot"), makeEvent("pool_loaded", { count: 3 })]}
+        latest={null}
+        errorCount={0}
+      />
+    );
+
+    const items = container.querySelectorAll("ol > li");
+    const connectors = container.querySelectorAll("[data-connector]");
+    expect(connectors).toHaveLength(items.length - 1);
+    expect(items[items.length - 1]?.querySelector("[data-connector]")).toBeNull();
+  });
+
+  it("should_mark_connectors_of_completed_stages_as_traveled_and_the_rest_pending", () => {
+    const { container } = render(
+      <ProgressTimeline
+        events={[
+          makeEvent("snapshot"),
+          makeEvent("pool_loaded", { count: 3 }),
+          makeEvent("compliance_complete", { disqualifiedCount: 0, scoredCount: 3 }),
+        ]}
+        latest={null}
+        errorCount={0}
+      />
+    );
+
+    const traveled = container.querySelectorAll('[data-connector="traveled"]');
+    const pending = container.querySelectorAll('[data-connector="pending"]');
+    expect(traveled).toHaveLength(3);
+    expect(pending).toHaveLength(3);
+  });
+});

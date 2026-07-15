@@ -2,6 +2,7 @@
 
 import { Check } from "lucide-react";
 import pluralize from "pluralize";
+import { memo } from "react";
 import type { FastReportEvent } from "@/types/donor-research";
 
 interface ProgressTimelineProps {
@@ -158,14 +159,81 @@ function formatContactDiscoveryProgressCaption(
   return `Researching ${current} of ${total} ${pluralize("candidate", total)}…`;
 }
 
+interface StageRowProps {
+  label: string;
+  seen: boolean;
+  isActive: boolean;
+  isLast: boolean;
+  captionText: string | null;
+}
+
+/**
+ * One stepper row: dot + label + optional caption/detail line, plus the
+ * connector segment down to the next dot. Per-row segments (instead of one
+ * absolute line over the list) mean variable row heights — e.g. a caption
+ * under the last stage — can never make the line overshoot the last dot.
+ * Segments turn brand-colored once their stage completes: distance
+ * traveled vs. distance remaining.
+ */
+const StageRow = memo(function StageRow({
+  label,
+  seen,
+  isActive,
+  isLast,
+  captionText,
+}: StageRowProps) {
+  return (
+    <li className="relative flex items-start gap-3.5">
+      {!isLast ? (
+        <span
+          aria-hidden
+          data-connector={seen ? "traveled" : "pending"}
+          className={`absolute -bottom-3.5 left-[0.6rem] top-5 w-px transition-colors duration-700 ease-out ${
+            seen ? "bg-brand" : "bg-border"
+          }`}
+        />
+      ) : null}
+      <span
+        aria-hidden
+        className={`relative z-10 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
+          seen
+            ? "border-brand bg-brand text-card"
+            : isActive
+              ? "border-brand bg-card"
+              : "border-border bg-card"
+        }`}
+      >
+        {seen ? (
+          <Check className="h-3 w-3" strokeWidth={3} />
+        ) : isActive ? (
+          <span className="h-2 w-2 animate-pulse rounded-full bg-brand" />
+        ) : null}
+      </span>
+      <div className="flex-1 pt-px">
+        <p
+          className={`text-sm leading-tight ${
+            seen || isActive ? "font-medium text-foreground" : "text-muted-foreground"
+          }`}
+        >
+          {label}
+        </p>
+        {captionText ? (
+          <p className="mt-0.5 text-xs leading-snug text-muted-foreground">{captionText}</p>
+        ) : null}
+      </div>
+    </li>
+  );
+});
+
 /**
  * Live SSE timeline (U13c, post-impeccable redesign).
  *
- * Vertical stepper anchored by a single connecting line on the left.
- * The line is half brand color (completed) and half hairline (pending),
- * with the active stage marked by a pulsing dot. This conveys a real
- * progression metaphor — distance traveled vs. distance remaining —
- * instead of the prior six identical dots that all flipped green.
+ * Vertical stepper connected by per-row line segments on the left —
+ * each row draws its own segment down to the next dot, brand-colored
+ * once that stage completes and hairline while pending. This conveys a
+ * real progression metaphor — distance traveled vs. distance remaining —
+ * and, because segments are row-scoped, variable row heights (detail
+ * lines, captions) can never make the line overshoot the last dot.
  *
  * `aria-live="polite"` announces the latest stage to assistive tech.
  */
@@ -178,8 +246,6 @@ export function ProgressTimeline({ events, latest, errorCount }: ProgressTimelin
   // Find the active stage: the first one we haven't seen yet (or null
   // if everything is complete).
   const activeIndex = STAGE_ORDER.findIndex((s) => !seenNames.has(s.name));
-  const progressFraction =
-    activeIndex === -1 ? 1 : activeIndex / Math.max(STAGE_ORDER.length - 1, 1);
 
   return (
     <section
@@ -210,65 +276,25 @@ export function ProgressTimeline({ events, latest, errorCount }: ProgressTimelin
         ) : null}
       </header>
 
-      <div className="relative px-5 py-4">
-        {/* Vertical connecting line — pinned to the left of the step dots.
-            Background hairline (full height), filled by a brand-color
-            overlay that animates to the active step. */}
-        <div className="absolute left-[1.85rem] top-7 bottom-7 w-px bg-border" aria-hidden />
-        <div
-          className="absolute left-[1.85rem] top-7 w-px bg-brand transition-all duration-700 ease-out"
-          aria-hidden
-          style={{ height: `calc((100% - 3.5rem) * ${progressFraction})` }}
-        />
-
+      <div className="px-5 py-4">
         <ol className="flex flex-col gap-3.5">
           {STAGE_ORDER.map((stage, index) => {
             const seen = seenNames.has(stage.name);
             const isActive = index === activeIndex;
-            const stageEvent = eventByName.get(stage.name);
             const detail = getStageDetailText(
               seen,
-              stageEvent,
+              eventByName.get(stage.name),
               STAGE_DETAIL_FORMATTERS[stage.name]
             );
-            const captionText = isActive ? getActiveStageCaption(stage, progressEvent) : detail;
             return (
-              <li key={stage.name} className="relative flex items-start gap-3.5">
-                <span
-                  aria-hidden
-                  className={`relative z-10 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
-                    seen
-                      ? "border-brand bg-brand text-card"
-                      : isActive
-                        ? "border-brand bg-card"
-                        : "border-border bg-card"
-                  }`}
-                >
-                  {seen ? (
-                    <Check className="h-3 w-3" strokeWidth={3} />
-                  ) : isActive ? (
-                    <span className="h-2 w-2 animate-pulse rounded-full bg-brand" />
-                  ) : null}
-                </span>
-                <div className="flex-1 pt-px">
-                  <p
-                    className={`text-sm leading-tight ${
-                      seen
-                        ? "font-medium text-foreground"
-                        : isActive
-                          ? "font-medium text-foreground"
-                          : "text-muted-foreground"
-                    }`}
-                  >
-                    {stage.label}
-                  </p>
-                  {captionText ? (
-                    <p className="mt-0.5 text-xs leading-snug text-muted-foreground">
-                      {captionText}
-                    </p>
-                  ) : null}
-                </div>
-              </li>
+              <StageRow
+                key={stage.name}
+                label={stage.label}
+                seen={seen}
+                isActive={isActive}
+                isLast={index === STAGE_ORDER.length - 1}
+                captionText={isActive ? getActiveStageCaption(stage, progressEvent) : detail}
+              />
             );
           })}
         </ol>
