@@ -51,8 +51,8 @@ const INDEXER_BASE = "https://indexer.test";
 type Fetcher = (url: string, init: RequestInit) => Promise<Response>;
 const fetchMock = vi.fn<Fetcher>();
 
-function createRequest(host: string, path: string, query = ""): NextRequest {
-  const requestUrl = new URL(`https://${host}${path}${query ? `?${query}` : ""}`);
+function createRequest(host: string, path: string, query = "", scheme = "https"): NextRequest {
+  const requestUrl = new URL(`${scheme}://${host}${path}${query ? `?${query}` : ""}`);
   return {
     nextUrl: {
       pathname: requestUrl.pathname,
@@ -409,5 +409,18 @@ describe("middleware canonical-host origin policy", () => {
 
     expect(response?.status).toBe(308);
     expect(response?.headers.get("location")).toBe("https://www.karmahq.xyz/project/abc123-1");
+  });
+
+  it("normalizes a localhost:port roadmap collapse on its own origin, preserving scheme, host, and port", async () => {
+    fetchMock.mockResolvedValue(decisionResponse(roadmapCollapse));
+
+    const response = await middleware(
+      createRequest("localhost:3000", "/project/abc123-1/roadmap", "utm_source=x", "http")
+    );
+
+    expect(response?.status).toBe(308);
+    expect(response?.headers.get("location")).toBe(
+      "http://localhost:3000/project/abc123-1?utm_source=x"
+    );
   });
 });
