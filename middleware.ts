@@ -290,26 +290,39 @@ async function handleProjectIndexability(
     baseUrl: process.env.NEXT_PUBLIC_GAP_INDEXER_URL ?? "",
   });
 
+  // The final canonical path is the redirect target when the indexer relocates
+  // the route, otherwise the normalized path parsed from the request. A gone
+  // route has no relocation target, so it keeps its normalized path and the
+  // canonical host answers the 404/410.
+  const finalPath = decision.outcome === "redirect" ? decision.to : parsed.normalizedPath;
+
+  // Alias hosts (karmahq.xyz / gap.karmahq.xyz) owe exactly ONE 308 to the
+  // canonical www host for EVERY request — including gone routes. Answering the
+  // 404/410 directly here would strand the response on a duplicate host, so we
+  // always hop to www first (folding any normalization/relocation into the same
+  // hop, preserving the query) and let the canonical host re-evaluate and return
+  // the 404/410. This must run before the gone short-circuit below.
+  if (isAliasHost) {
+    return NextResponse.redirect(
+      new URL(`${CANONICAL_ORIGIN}${finalPath}${request.nextUrl.search}`),
+      308
+    );
+  }
+
+  // Canonical / non-alias host (Vercel preview, staging, localhost, www) below.
   // Gone routes answer with their exact status and a noindex header — no hop.
   if (decision.outcome === "gone") {
     return withRobots(new NextResponse(null, { status: decision.status }), NOINDEX_FOLLOW);
   }
 
-  // The final canonical path is the redirect target when the indexer relocates
-  // the route, otherwise the normalized path parsed from the request.
-  const finalPath = decision.outcome === "redirect" ? decision.to : parsed.normalizedPath;
-
-  // One 308 whenever we are on an alias host or the request is not already at
-  // its canonical path (legacy/identifier drift). Only the real production alias
-  // hosts (karmahq.xyz / gap.karmahq.xyz) collapse onto the canonical www
-  // origin; every other host (Vercel preview, staging, localhost, canonical www)
-  // keeps the redirect on the request's own origin so a preview/staging
-  // normalization never emits a link to production. Query is preserved either way.
-  if (isAliasHost || finalPath !== path) {
-    const target = isAliasHost
-      ? new URL(`${CANONICAL_ORIGIN}${finalPath}${request.nextUrl.search}`)
-      : new URL(`${finalPath}${request.nextUrl.search}`, request.url);
-    return NextResponse.redirect(target, 308);
+  // Not already at the canonical path (legacy/identifier drift or an indexer
+  // relocation) — one 308 on the request's own origin so a preview/staging
+  // normalization never emits a link to production. Query is preserved.
+  if (finalPath !== path) {
+    return NextResponse.redirect(
+      new URL(`${finalPath}${request.nextUrl.search}`, request.url),
+      308
+    );
   }
 
   // Already canonical: pass through. A noindex-follow decision or any stateful

@@ -186,6 +186,35 @@ describe("middleware indexability", () => {
     }
   );
 
+  it.each([404, 410])(
+    "308s an apex-alias gone route (%s) to www instead of returning the status directly",
+    async (status) => {
+      // Every alias request owes exactly one hop to the canonical host — even a
+      // gone route. The canonical host re-evaluates and returns the 404/410; the
+      // alias host must not answer it directly (that would strand the response on
+      // a duplicate host).
+      fetchMock.mockResolvedValue(new Response("gone", { status }));
+
+      const response = await middleware(createRequest("karmahq.xyz", "/project/paraswap"));
+
+      expect(response?.status).toBe(308);
+      expect(response?.headers.get("location")).toBe("https://www.karmahq.xyz/project/paraswap");
+    }
+  );
+
+  it("308s a gap-alias gone route to www, preserving the path and query", async () => {
+    fetchMock.mockResolvedValue(new Response("gone", { status: 410 }));
+
+    const response = await middleware(
+      createRequest("gap.karmahq.xyz", "/project/paraswap/team", "utm_source=x")
+    );
+
+    expect(response?.status).toBe(308);
+    expect(response?.headers.get("location")).toBe(
+      "https://www.karmahq.xyz/project/paraswap/team?utm_source=x"
+    );
+  });
+
   it("issues a 308 preserving the query for a redirect decision on www", async () => {
     fetchMock.mockResolvedValue(
       decisionResponse({
