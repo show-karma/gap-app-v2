@@ -48,6 +48,8 @@ const baseReport = {
   communityId: "community-1",
   runDate: "2026-03-15",
   status: "draft",
+  title: null,
+  reportConfigName: "Monthly Pods Report",
   content: "<p>Server content</p>",
   dataSnapshot: {},
   modelId: "gpt-4.1",
@@ -230,6 +232,86 @@ describe("PortfolioReportEditorPage", () => {
         screen.queryByRole("heading", { name: /discard unsaved edits/i })
       ).not.toBeInTheDocument();
       expect(screen.getByRole("heading", { name: /^regenerate report/i })).toBeInTheDocument();
+    });
+  });
+
+  describe("report title", () => {
+    it("should_seed_title_input_with_stored_title_when_dialog_opens", async () => {
+      const user = userEvent.setup();
+      mockUsePortfolioReport.mockReturnValue({
+        data: { ...baseReport, title: "Monthly Pods Report — June 2026" },
+        isLoading: false,
+      } as any);
+
+      render(<PortfolioReportEditorPage community={community} reportId="report-1" />);
+      await user.click(screen.getByRole("button", { name: /^edit$/i }));
+
+      expect((screen.getByLabelText(/^title$/i) as HTMLInputElement).value).toBe(
+        "Monthly Pods Report — June 2026"
+      );
+    });
+
+    it("should_seed_title_input_empty_when_report_is_untitled", async () => {
+      const user = userEvent.setup();
+      mockUsePortfolioReport.mockReturnValue({ data: baseReport, isLoading: false } as any);
+
+      render(<PortfolioReportEditorPage community={community} reportId="report-1" />);
+      await user.click(screen.getByRole("button", { name: /^edit$/i }));
+
+      expect((screen.getByLabelText(/^title$/i) as HTMLInputElement).value).toBe("");
+    });
+
+    it("should_send_the_typed_title_when_saved", async () => {
+      const user = userEvent.setup();
+      const updateMutate = vi.fn().mockResolvedValue(baseReport);
+      mockUseUpdateReportContent.mockReturnValue({
+        isPending: false,
+        mutateAsync: updateMutate,
+      } as any);
+      mockUsePortfolioReport.mockReturnValue({ data: baseReport, isLoading: false } as any);
+
+      render(<PortfolioReportEditorPage community={community} reportId="report-1" />);
+      await user.click(screen.getByRole("button", { name: /^edit$/i }));
+      await user.type(screen.getByLabelText(/^title$/i), "June 2026");
+      await user.click(screen.getByRole("button", { name: /^save$/i }));
+
+      expect(updateMutate).toHaveBeenCalledWith(
+        expect.objectContaining({ reportId: "report-1", title: "June 2026" })
+      );
+    });
+
+    it("should_send_null_title_when_the_field_is_emptied", async () => {
+      const user = userEvent.setup();
+      const updateMutate = vi.fn().mockResolvedValue(baseReport);
+      mockUseUpdateReportContent.mockReturnValue({
+        isPending: false,
+        mutateAsync: updateMutate,
+      } as any);
+      mockUsePortfolioReport.mockReturnValue({
+        data: { ...baseReport, title: "June 2026" },
+        isLoading: false,
+      } as any);
+
+      render(<PortfolioReportEditorPage community={community} reportId="report-1" />);
+      await user.click(screen.getByRole("button", { name: /^edit$/i }));
+      await user.clear(screen.getByLabelText(/^title$/i));
+      await user.click(screen.getByRole("button", { name: /^save$/i }));
+
+      expect(updateMutate).toHaveBeenCalledWith(expect.objectContaining({ title: null }));
+    });
+
+    it("should_enable_save_when_only_the_title_changed", async () => {
+      const user = userEvent.setup();
+      mockUsePortfolioReport.mockReturnValue({ data: baseReport, isLoading: false } as any);
+
+      render(<PortfolioReportEditorPage community={community} reportId="report-1" />);
+      await user.click(screen.getByRole("button", { name: /^edit$/i }));
+
+      expect(screen.getByRole("button", { name: /^save$/i })).toBeDisabled();
+
+      await user.type(screen.getByLabelText(/^title$/i), "June 2026");
+
+      expect(screen.getByRole("button", { name: /^save$/i })).toBeEnabled();
     });
   });
 });
