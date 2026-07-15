@@ -550,19 +550,24 @@ function MilestonesReviewPageContent({
     return `Program ${parsedProgramId}`;
   }, [data?.grantMilestones, parsedProgramId]);
 
+  // Canonical application detail URL for admins/reviewers (null otherwise)
+  const applicationDetailUrl = useMemo(
+    () =>
+      referenceNumber && (hasAdminAccess || isReviewer)
+        ? PAGES.MANAGE.FUNDING_PLATFORM.APPLICATION_DETAIL(
+            communityId,
+            parsedProgramId,
+            referenceNumber
+          )
+        : null,
+    [referenceNumber, hasAdminAccess, isReviewer, communityId, parsedProgramId]
+  );
+
   // Memoized back button configuration
   const backButtonConfig = useMemo(() => {
     // Only show back to application if came from application page
-    if (referrer === "application" && referenceNumber) {
-      const appUrl = hasAdminAccess
-        ? PAGES.ADMIN.FUNDING_PLATFORM_APPLICATIONS(communityId, programId) + `/${referenceNumber}`
-        : isReviewer
-          ? PAGES.REVIEWER.APPLICATION_DETAIL(communityId, parsedProgramId, referenceNumber)
-          : null;
-
-      if (appUrl) {
-        return { url: appUrl, label: "Back to Application" };
-      }
+    if (referrer === "application" && applicationDetailUrl) {
+      return { url: applicationDetailUrl, label: "Back to Application" };
     }
 
     // Default: back to milestones report
@@ -570,37 +575,13 @@ function MilestonesReviewPageContent({
       url: PAGES.ADMIN.MILESTONES(communityId),
       label: "Back to Milestones Report",
     };
-  }, [
-    referrer,
-    referenceNumber,
-    hasAdminAccess,
-    isReviewer,
-    communityId,
-    programId,
-    parsedProgramId,
-  ]);
+  }, [referrer, applicationDetailUrl, communityId]);
 
   // Memoized milestone review URL - only returns URL if application is approved
-  const milestoneReviewUrl = useMemo(() => {
-    if (fundingApplication?.status?.toLowerCase() === "approved" && referenceNumber) {
-      const appUrl = hasAdminAccess
-        ? PAGES.ADMIN.FUNDING_PLATFORM_APPLICATIONS(communityId, programId) + `/${referenceNumber}`
-        : isReviewer
-          ? PAGES.REVIEWER.APPLICATION_DETAIL(communityId, parsedProgramId, referenceNumber)
-          : null;
-
-      return appUrl;
-    }
-    return null;
-  }, [
-    fundingApplication?.status,
-    referenceNumber,
-    hasAdminAccess,
-    isReviewer,
-    communityId,
-    programId,
-    parsedProgramId,
-  ]);
+  const milestoneReviewUrl = useMemo(
+    () => (fundingApplication?.status?.toLowerCase() === "approved" ? applicationDetailUrl : null),
+    [fundingApplication?.status, applicationDetailUrl]
+  );
 
   const { verifyMilestone, isVerifying, completeMilestone, isCompleting } =
     useMilestoneCompletionVerification({

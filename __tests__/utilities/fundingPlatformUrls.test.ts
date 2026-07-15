@@ -34,6 +34,8 @@ function setHostname(hostname: string) {
 
 // Import after the mock is registered.
 import {
+  getApplicationDetailUrl,
+  getBrowseApplicationsRedirectUrl,
   getBrowseApplicationsUrl,
   getDomainForCommunity,
   getGatedApplyUrl,
@@ -148,6 +150,73 @@ describe("getBrowseApplicationsUrl", () => {
     setHostname("gap.karmahq.xyz");
     expect(getBrowseApplicationsUrl("optimism", "123")).toBe(
       "https://app.opgrants.io/browse-applications?programId=123"
+    );
+  });
+});
+
+describe("getApplicationDetailUrl (in-app redirect target — always same-origin)", () => {
+  it("emits a same-origin path on localhost", () => {
+    setHostname("localhost");
+    expect(getApplicationDetailUrl("optimism", "REF-1")).toBe(
+      "/community/optimism/applications/REF-1"
+    );
+  });
+
+  it("stays same-origin on a deployed host instead of jumping to the tenant domain", () => {
+    // Regression (DEV-496): a redirect must keep the visitor on the current
+    // deployment. A reviewer link opened on the standard (non-whitelabel) host
+    // must resolve to /community/:slug/applications/:ref, never app.opgrants.io.
+    setHostname("gap.karmahq.xyz");
+    expect(getApplicationDetailUrl("optimism", "REF-1")).toBe(
+      "/community/optimism/applications/REF-1"
+    );
+  });
+
+  it("stays same-origin on staging even for tenants whose dev domain equals prod", () => {
+    // Regression (DEV-496): filecoin's dev domain === its prod domain
+    // (app.filpgf.io), so the old external-domain path bounced staging → prod.
+    setHostname("staging.karmahq.xyz");
+    mockEnv.isDev = true;
+    expect(getApplicationDetailUrl("filecoin", "REF-9")).toBe(
+      "/community/filecoin/applications/REF-9"
+    );
+  });
+
+  it("prefers the whitelabel origin (bare path on the current host)", () => {
+    setHostname("gap.karmahq.xyz");
+    expect(getApplicationDetailUrl("filecoin", "REF-1", "https://app.filpgf.io")).toBe(
+      "https://app.filpgf.io/applications/REF-1"
+    );
+  });
+
+  it("appends the tab query when provided", () => {
+    setHostname("localhost");
+    expect(getApplicationDetailUrl("optimism", "REF-1", undefined, { tab: "milestones" })).toBe(
+      "/community/optimism/applications/REF-1?tab=milestones"
+    );
+  });
+});
+
+describe("getBrowseApplicationsRedirectUrl (in-app redirect target — always same-origin)", () => {
+  it("stays same-origin on a deployed host instead of jumping to the tenant domain", () => {
+    setHostname("gap.karmahq.xyz");
+    expect(getBrowseApplicationsRedirectUrl("optimism", "123")).toBe(
+      "/community/optimism/browse-applications?programId=123"
+    );
+  });
+
+  it("stays same-origin on staging even for tenants whose dev domain equals prod", () => {
+    setHostname("staging.karmahq.xyz");
+    mockEnv.isDev = true;
+    expect(getBrowseApplicationsRedirectUrl("filecoin", "123")).toBe(
+      "/community/filecoin/browse-applications?programId=123"
+    );
+  });
+
+  it("prefers the whitelabel origin (bare path on the current host)", () => {
+    setHostname("gap.karmahq.xyz");
+    expect(getBrowseApplicationsRedirectUrl("filecoin", "123", "https://app.filpgf.io")).toBe(
+      "https://app.filpgf.io/browse-applications?programId=123"
     );
   });
 });

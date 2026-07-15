@@ -126,3 +126,31 @@ export interface UpdateReportConfigRequest {
 export interface GenerateReportRequest {
   configId: string;
 }
+
+// ── Data export ──────────────────────────────────────────────
+
+export type ReportExportFormat = "manifest" | "csv" | "json";
+
+/**
+ * Whether an export came from the report's generation-time snapshot
+ * (`generation`) or a live recompute for a legacy report predating snapshots
+ * (`live-recompute` — reflects current data, not the data at generation time).
+ */
+export type ReportSnapshotSource = "generation" | "live-recompute";
+
+export interface ReportExportManifestEntry {
+  key: string;
+  title: string;
+  rowCount: number;
+}
+
+export interface ReportExportManifest {
+  snapshotSource: ReportSnapshotSource;
+  sections: ReportExportManifestEntry[];
+}
+
+export interface ReportExportDownload {
+  blob: Blob;
+  filename: string;
+  snapshotSource: ReportSnapshotSource | null;
+}
