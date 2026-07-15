@@ -292,13 +292,19 @@ export function usePublishedReport(communitySlug: string, runDate: string) {
  * from the admin list (auth-gated server-side, so non-admins never see drafts).
  * Only fires when `enabled` — i.e. published lookup came back empty AND the
  * viewer is a resolved community admin.
+ *
+ * Restricted to `draft` reports: matching only on `runDate` could otherwise
+ * surface a failed/generating/published row and expose it to the document view
+ * as a draft preview.
  */
 export function useAdminReportByRunDate(communitySlug: string, runDate: string, enabled: boolean) {
   return useQuery({
     queryKey: [...QUERY_KEYS.reports(communitySlug), "by-run-date", runDate],
     queryFn: async () => {
       const reports = await portfolioService.listReports(communitySlug);
-      return reports.find((report) => report.runDate === runDate) ?? null;
+      return (
+        reports.find((report) => report.runDate === runDate && report.status === "draft") ?? null
+      );
     },
     enabled: Boolean(communitySlug && runDate) && enabled,
   });

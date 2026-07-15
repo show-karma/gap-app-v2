@@ -22,24 +22,36 @@ export function PublicReportViewPage({ community, runDate }: Props) {
   const {
     data: published,
     isLoading: publishedLoading,
-    isError,
-    refetch,
+    isError: publishedError,
+    refetch: refetchPublished,
   } = usePublishedReport(slug, runDate);
 
   // DEV-496: the admin "preview" and the public report share this one URL. When
-  // there's no published report, a community admin can still see the draft here
-  // (the list endpoint is auth-gated, so non-admins never receive it).
+  // there's no published report, a resolved community admin can still see the
+  // draft here (the list endpoint is auth-gated, so non-admins never receive it).
   const publishedMissing = !publishedLoading && !published;
   const { isCommunityAdmin, isLoading: adminLoading } = useIsCommunityAdmin(slug);
-  const { data: draft, isLoading: draftLoading } = useAdminReportByRunDate(
-    slug,
-    runDate,
-    publishedMissing && isCommunityAdmin
-  );
+  const canPreviewDraft = publishedMissing && isCommunityAdmin;
+  const {
+    data: draft,
+    isLoading: draftLoading,
+    isError: draftError,
+    refetch: refetchDraft,
+  } = useAdminReportByRunDate(slug, runDate, canPreviewDraft);
 
-  const report = published ?? draft ?? null;
+  // A disabled React Query still holds its last cached value, so gate the
+  // selection (not just the fetch) on the resolved admin state — a stale draft
+  // must not linger after the admin signs out or the report gets published.
+  const report = published ?? (canPreviewDraft ? (draft ?? null) : null);
   const resolving =
     publishedLoading || (publishedMissing && (adminLoading || (isCommunityAdmin && draftLoading)));
+  // Surface a failed admin draft lookup instead of falling through to the
+  // "no published report" empty state.
+  const isError = publishedError || (canPreviewDraft && draftError);
+  const handleRetry = () => {
+    refetchPublished();
+    if (canPreviewDraft) refetchDraft();
+  };
 
   if (resolving) {
     return (
@@ -57,7 +69,7 @@ export function PublicReportViewPage({ community, runDate }: Props) {
           <p className="text-zinc-500">Failed to load the report. Please try again.</p>
           <button
             type="button"
-            onClick={() => refetch()}
+            onClick={handleRetry}
             className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
           >
             <RefreshCw className="h-4 w-4" />

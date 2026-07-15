@@ -40,9 +40,19 @@ const RUN_DATE = "2026-03-15";
 describe("PublicReportViewPage (DEV-496 unified report URL)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockPublished.mockReturnValue({ data: null, isLoading: false, isError: false } as any);
+    mockPublished.mockReturnValue({
+      data: null,
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    } as any);
     mockAdmin.mockReturnValue({ isCommunityAdmin: false, isLoading: false } as any);
-    mockDraft.mockReturnValue({ data: null, isLoading: false } as any);
+    mockDraft.mockReturnValue({
+      data: null,
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    } as any);
   });
 
   it("renders a published report as the public view, with no admin banner", () => {
@@ -85,5 +95,37 @@ describe("PublicReportViewPage (DEV-496 unified report URL)", () => {
     expect(screen.queryByTestId("doc-view")).not.toBeInTheDocument();
     // The draft lookup is gated off for non-admins.
     expect(mockDraft).toHaveBeenCalledWith("filecoin", RUN_DATE, false);
+  });
+
+  it("surfaces the error state (not 'no report') when the admin draft lookup fails", () => {
+    const refetchDraft = vi.fn();
+    mockAdmin.mockReturnValue({ isCommunityAdmin: true, isLoading: false } as any);
+    mockDraft.mockReturnValue({
+      data: null,
+      isLoading: false,
+      isError: true,
+      refetch: refetchDraft,
+    } as any);
+
+    render(<PublicReportViewPage community={community} runDate={RUN_DATE} />);
+
+    expect(screen.getByText(/failed to load the report/i)).toBeInTheDocument();
+    expect(screen.queryByText(/no published report found/i)).not.toBeInTheDocument();
+  });
+
+  it("does not render a cached draft to a non-admin (selection is gated, not just the fetch)", () => {
+    // Query is disabled for non-admins but React Query still returns the last
+    // cached draft — the page must not surface it.
+    mockDraft.mockReturnValue({
+      data: { id: "stale-draft", publishedAt: null },
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    } as any);
+
+    render(<PublicReportViewPage community={community} runDate={RUN_DATE} />);
+
+    expect(screen.getByText(/no published report found/i)).toBeInTheDocument();
+    expect(screen.queryByTestId("doc-view")).not.toBeInTheDocument();
   });
 });
