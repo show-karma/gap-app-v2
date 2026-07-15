@@ -4,7 +4,6 @@ import { MagnifyingGlassIcon } from "@heroicons/react/20/solid";
 import { ArrowDownIcon, ArrowUpIcon } from "@heroicons/react/24/solid";
 import type { InfiniteData } from "@tanstack/react-query";
 import debounce from "lodash.debounce";
-import Link from "next/link";
 import { useQueryState } from "nuqs";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -19,11 +18,11 @@ import { useProjectsExplorerInfinite } from "@/hooks/useProjectsExplorerInfinite
 import type { ExplorerSortByOptions, ExplorerSortOrder } from "@/types/explorer";
 import type { PaginatedProjectsResponse } from "@/types/v2/project";
 import {
-  buildProjectsPageHref,
   type ProjectsExplorerState,
   parseProjectsExplorerRequest,
 } from "@/utilities/projects-explorer-request";
 import { queryClient } from "@/utilities/query-client";
+import { CrawlableProjectsPagination } from "./CrawlablePagination";
 import { ProjectsLoading } from "./Loading";
 import { ProjectCard } from "./ProjectCard";
 
@@ -198,7 +197,7 @@ export const ProjectsExplorer = ({ initialData, initialState }: ProjectsExplorer
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
         <div>
-          <h2 className="text-2xl font-bold text-black dark:text-white">Projects on Karma</h2>
+          <h2 className="text-2xl font-semibold text-black dark:text-white">Projects on Karma</h2>
           {!isLoading && totalCount > 0 && (
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
               {totalCount.toLocaleString()} {totalCount === 1 ? "project" : "projects"} found
@@ -214,7 +213,7 @@ export const ProjectsExplorer = ({ initialData, initialState }: ProjectsExplorer
             <input
               type="text"
               aria-label="Search projects"
-              placeholder="Search projects..."
+              placeholder="Search projects…"
               value={inputValue}
               onChange={handleSearchChange}
               className="w-full sm:w-64 pl-10 pr-4 py-2 rounded-md border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-zinc-100 placeholder-gray-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
@@ -225,6 +224,7 @@ export const ProjectsExplorer = ({ initialData, initialState }: ProjectsExplorer
           <label className="flex items-center gap-2 cursor-pointer select-none">
             <input
               type="checkbox"
+              aria-label="Filter to projects raising funds"
               checked={isPayoutAddressFilterActive}
               onChange={() => setHasPayoutAddress(isPayoutAddressFilterActive ? null : "true")}
               className="sr-only peer"
@@ -321,36 +321,18 @@ export const ProjectsExplorer = ({ initialData, initialState }: ProjectsExplorer
             ))}
           </div>
 
-          {/* Crawlable pagination — ordinary links bots can follow without JS.
-              Rendered only in SSR mode; the Load More button below remains the
-              progressive-enhancement path for humans. */}
-          {(hasCrawlablePrev || hasCrawlableNext) && (
-            <nav aria-label="Pagination" className="flex justify-center items-center gap-4 py-8">
-              {hasCrawlablePrev && (
-                <Link
-                  href={buildProjectsPageHref(hrefState, effectivePage - 1)}
-                  rel="prev"
-                  className="px-4 py-2 rounded-md border border-gray-300 dark:border-zinc-700 text-sm font-medium text-gray-700 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors"
-                >
-                  Previous
-                </Link>
-              )}
-              {hasCrawlableNext && (
-                <Link
-                  href={buildProjectsPageHref(hrefState, effectivePage + 1)}
-                  rel="next"
-                  className="px-4 py-2 rounded-md border border-gray-300 dark:border-zinc-700 text-sm font-medium text-gray-700 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors"
-                >
-                  Next
-                </Link>
-              )}
-            </nav>
-          )}
+          <CrawlableProjectsPagination
+            hrefState={hrefState}
+            effectivePage={effectivePage}
+            hasPrev={hasCrawlablePrev}
+            hasNext={hasCrawlableNext}
+          />
 
           {/* Load More Button */}
           {hasNextPage && (
             <div className="flex justify-center py-8">
               <button
+                type="button"
                 onClick={() => fetchNextPage()}
                 disabled={isFetchingNextPage}
                 className="px-6 py-3 bg-blue-600 text-white rounded-md font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
@@ -358,7 +340,7 @@ export const ProjectsExplorer = ({ initialData, initialState }: ProjectsExplorer
                 {isFetchingNextPage ? (
                   <>
                     <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    Loading...
+                    Loading…
                   </>
                 ) : (
                   "Load More Projects"
@@ -380,7 +362,7 @@ export const ProjectsExplorer = ({ initialData, initialState }: ProjectsExplorer
       {isFetching && !isLoading && !isFetchingNextPage && (
         <div className="fixed bottom-4 right-4 bg-blue-500 text-white px-4 py-2 rounded-lg shadow-lg text-sm flex items-center gap-2">
           <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-          Updating...
+          Updating…
         </div>
       )}
     </section>

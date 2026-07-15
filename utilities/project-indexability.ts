@@ -23,9 +23,6 @@ type GrantScopedProjectRoute =
   | "grant-milestones-and-updates"
   | "grant-impact-criteria";
 
-/** The closed set of indexer route literals. */
-export type ProjectIndexabilityRoute = SimpleProjectRoute | GrantScopedProjectRoute | "grant-new";
-
 /** The strict indexer query — grant-scoped routes carry a grantUid. */
 export type ProjectIndexabilityQuery =
   | { route: SimpleProjectRoute }
@@ -38,7 +35,7 @@ export interface ProjectIndexabilityRequest {
   normalizedPath: string;
 }
 
-export type ProjectQueryClassification = "clean" | "tracking-only" | "stateful";
+type ProjectQueryClassification = "clean" | "tracking-only" | "stateful";
 
 /**
  * Rewrite legacy route segments that appear AFTER the project identifier —

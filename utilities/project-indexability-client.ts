@@ -11,16 +11,16 @@ import {
 } from "./project-indexability";
 
 /** The exact indexability decision union returned by the backend. */
-export type ProjectIndexabilityDecision =
+type ProjectIndexabilityDecision =
   | { outcome: "canonical-indexable"; url: string }
   | { outcome: "duplicate-alias"; url: string; canonicalUrl: string }
   | { outcome: "noindex-follow"; url: string }
   | { outcome: "redirect"; from: string; to: string }
   | { outcome: "gone"; status: 404 | 410 };
 
-export type ProjectIndexabilityFetcher = (url: string, init: RequestInit) => Promise<Response>;
+type ProjectIndexabilityFetcher = (url: string, init: RequestInit) => Promise<Response>;
 
-export interface FetchProjectIndexabilityOptions {
+interface FetchProjectIndexabilityOptions {
   baseUrl: string;
   fetcher?: ProjectIndexabilityFetcher;
   timeoutMs?: number;
