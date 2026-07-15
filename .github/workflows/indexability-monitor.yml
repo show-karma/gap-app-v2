@@ -1,0 +1,100 @@
+name: Indexability Monitor
+
+on:
+  schedule:
+    # Daily at 07:15 UTC.
+    - cron: "15 7 * * *"
+  workflow_dispatch:
+    inputs:
+      min_leaf_count:
+        # Floor recalibrated 4000 -> 3800 after gap-indexer #2195 (production-1.47.49)
+        # projects=v4 content-gate dropped the accepted projects baseline (~4087 ->
+        # ~3992 total leaves). 3800 is ~95% of the new 3992 baseline.
+        description: "Minimum sitemap leaf count"
+        required: false
+        default: "3800"
+      timeout_ms:
+        description: "Per-request timeout in milliseconds"
+        required: false
+        default: "15000"
+
+permissions:
+  contents: read
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Run Node test suites
+        run: >
+          node --test
+          scripts/indexability/__tests__/audit-sitemaps.test.mjs
+          scripts/indexability/__tests__/verify-indexability.test.mjs
+          scripts/indexability/__tests__/cli.test.mjs
+
+      - name: Run indexability verification
+        id: verify
+        continue-on-error: true
+        # Pass workflow_dispatch inputs through the environment and reference them
+        # as quoted shell variables — never interpolate ${{ }} directly into the
+        # run script, which would let a crafted manual input escape the quotes.
+        env:
+          MIN_LEAF_COUNT: ${{ github.event.inputs.min_leaf_count || '3800' }}
+          TIMEOUT_MS: ${{ github.event.inputs.timeout_ms || '15000' }}
+        run: >
+          node scripts/verify-indexability.mjs
+          --output artifacts/indexability-report.json
+          --min-leaf-count "$MIN_LEAF_COUNT"
+          --timeout-ms "$TIMEOUT_MS"
+
+      - name: Append report summary
+        if: always()
+        shell: bash
+        run: |
+          if [ -f artifacts/indexability-report.json ]; then
+            node --input-type=module -e '
+              import { readFileSync } from "node:fs";
+              const r = JSON.parse(readFileSync("artifacts/indexability-report.json", "utf8"));
+              const failing = (r.checks ?? []).filter((c) => !c.ok).map((c) => c.name);
+              const passed = (r.checks ?? []).filter((c) => c.ok).length;
+              const lines = [
+                "## Indexability monitor",
+                "",
+                `- Overall: ${r.ok ? "PASS" : "FAIL"}`,
+                `- Timestamp: ${r.timestamp ?? "unknown"}`,
+                `- Canonical: ${r.origins?.canonical ?? "unknown"}`,
+                `- Sitemaps: ${r.sitemap?.sitemapCount ?? 0} docs, ${r.sitemap?.leafCount ?? 0} leaves`,
+                `- Representative: ${r.representativeProject ?? "none"}`,
+                `- Checks: ${passed}/${(r.checks ?? []).length} passed`,
+                `- Failing: ${failing.length ? failing.join(", ") : "none"}`,
+              ];
+              process.stdout.write(lines.join("\n") + "\n");
+            ' >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "No indexability report was produced." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload report artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: indexability-report
+          path: artifacts/indexability-report.json
+          retention-days: 30
+          if-no-files-found: warn
+
+      - name: Fail job if verification failed
+        if: always()
+        run: |
+          if [ "${{ steps.verify.outcome }}" != "success" ]; then
+            echo "Indexability verification failed."
+            exit 1
+          fi
