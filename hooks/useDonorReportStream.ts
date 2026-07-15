@@ -26,6 +26,7 @@ const KNOWN_EVENT_NAMES = new Set<FastReportEvent["name"]>([
   "snapshot",
   "pool_loaded",
   "compliance_complete",
+  "contact_discovery_progress",
   "contact_discovery_complete",
   "activity_complete",
   "ranking_complete",
