@@ -443,9 +443,7 @@ export function PortfolioReportListPage({ community }: Props) {
                   rowPending={isRowPending(report.id)}
                   activeMutationType={activeMutationType}
                   onEdit={() => router.push(`${PAGES.ADMIN.PORTFOLIO_REPORTS(slug)}/${report.id}`)}
-                  onPreview={() =>
-                    router.push(PAGES.ADMIN.PORTFOLIO_REPORTS_PREVIEW(slug, report.id))
-                  }
+                  onPreview={() => router.push(PAGES.COMMUNITY.REPORT_DETAIL(slug, report.runDate))}
                   onPublish={() => handlePublish(report.id)}
                   onUnpublish={() => handleUnpublish(report.id)}
                   onRegenerate={() => setRegenerateTargetId(report.id)}
