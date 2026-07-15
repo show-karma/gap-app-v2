@@ -5,12 +5,12 @@ import type { ExplorerSortByOptions, ExplorerSortOrder } from "@/types/explorer"
 import type { PaginatedProjectsResponse } from "@/types/v2/project";
 
 /**
- * RED (SSR seeding for useProjectsExplorerInfinite, ADR 0001). Pins the new
- * optional initialData/initialPage contract: a seed becomes the query's
- * initialData (InfiniteData), initialPageParam and the query key adopt the start
- * page, refetchOnMount is disabled so the SSR page is not re-fetched on mount,
- * and the flattened projects/totalCount come from the seed. Without a seed the
- * hook keeps its current behavior (page 1, no initialData, refetchOnMount
+ * SSR seeding for useProjectsExplorerInfinite (ADR 0001). Pins the optional
+ * initialData/initialPage contract now supported by the hook: a seed becomes the
+ * query's initialData (InfiniteData), initialPageParam and the query key adopt
+ * the start page, refetchOnMount is disabled so the SSR page is not re-fetched on
+ * mount, and the flattened projects/totalCount come from the seed. Without a seed
+ * the hook keeps its baseline behavior (page 1, no initialData, refetchOnMount
  * always) but still keys on the start page so page-1 and page-3 stay distinct.
  *
  * useInfiniteQuery is mocked to capture the exact config without a network or a

@@ -7,17 +7,15 @@ import type { ExplorerSortByOptions, ExplorerSortOrder } from "@/types/explorer"
 import type { PaginatedProjectsResponse } from "@/types/v2/project";
 
 /**
- * RED (ProjectsExplorer SSR seeding + crawlable pagination, ADR 0001). Pins the
- * new optional seed/state props: when the live URL state matches initialState
- * the component seeds the hook with InfiniteData {pages:[response]} + initialPage
- * and renders the SSR cards synchronously as ordinary /project/<slug> anchors,
- * plus visible Previous/Next Next.js links (with preserved filters and
- * #browse-projects) derived from pagination metadata, while keeping Load More as
- * progressive enhancement. A URL filter change away from initialState must drop
- * the seed so a page-3 payload cannot bleed into another query.
- *
- * The current component takes no props, never seeds the hook, and renders no
- * Previous/Next links, so these are behavioral REDs.
+ * ProjectsExplorer SSR seeding + crawlable pagination (ADR 0001). Pins the
+ * optional seed/state props the component accepts: when the live URL state
+ * matches initialState the component seeds the hook with InfiniteData
+ * {pages:[response]} + initialPage and renders the SSR cards synchronously as
+ * ordinary /project/<slug> anchors, plus visible Previous/Next Next.js links
+ * (with preserved filters and #browse-projects) derived from pagination
+ * metadata, while keeping Load More as progressive enhancement. A URL filter
+ * change away from initialState drops the seed so a page-3 payload cannot bleed
+ * into another query.
  */
 
 interface InfiniteSeed {

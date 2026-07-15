@@ -1,6 +1,13 @@
 import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
-import { isValidElement, type ReactElement, Suspense } from "react";
+import {
+  Children,
+  cloneElement,
+  isValidElement,
+  type ReactElement,
+  type ReactNode,
+  Suspense,
+} from "react";
 
 /**
  * Smoke tests for top-level marketing pages (landing pages composed of
@@ -316,24 +323,32 @@ describe("/seeds marketing pages", () => {
 
 describe("/projects explorer page", () => {
   it("renders hero, explorer, stats", async () => {
-    // Async server component that streams: the shell renders immediately while
-    // the explorer is deferred into a Suspense child. Render the shell, then
-    // resolve and render the deferred child (it cannot resume in a client tree).
+    // The page streams: the hero + stats shell render immediately while the
+    // explorer is an async server component deferred behind Suspense. Mounting
+    // that unresolved promise into a client render tree throws (React #482), so
+    // resolve the Suspense child to a concrete element FIRST, substitute it back
+    // into the page's children, and render the fully-synchronous tree exactly
+    // once. This still exercises the real page composition (hero, deferred
+    // explorer, stats) end to end.
     const { default: ProjectsPage } = await import("@/app/projects/page");
     const runAsyncPage = ProjectsPage as unknown as (props: {
       searchParams: Promise<Record<string, string | string[] | undefined>>;
     }) => Promise<ReactElement>;
 
     const page = await runAsyncPage({ searchParams: Promise.resolve({}) });
-    render(page);
 
-    const children = (page.props as { children?: unknown }).children;
-    const list = Array.isArray(children) ? children : [children];
-    const suspense = list.find(
-      (child): child is ReactElement => isValidElement(child) && child.type === Suspense
+    const children = Children.toArray((page.props as { children?: ReactNode }).children);
+    const resolvedChildren = await Promise.all(
+      children.map(async (child) => {
+        if (isValidElement(child) && child.type === Suspense) {
+          const loader = (child.props as { children: ReactElement }).children;
+          return (loader.type as (props: unknown) => Promise<ReactElement>)(loader.props);
+        }
+        return child;
+      })
     );
-    const loader = (suspense?.props as { children: ReactElement }).children;
-    render(await (loader.type as (props: unknown) => Promise<ReactElement>)(loader.props));
+
+    render(cloneElement(page, undefined, ...resolvedChildren));
 
     expect(screen.getByTestId("projects-hero")).toBeInTheDocument();
     expect(screen.getByTestId("projects-explorer")).toBeInTheDocument();

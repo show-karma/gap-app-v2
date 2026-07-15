@@ -23,7 +23,10 @@ const ALIAS_HOSTS = new Set(["karmahq.xyz", "gap.karmahq.xyz"]);
 const NOINDEX_FOLLOW = "noindex, follow";
 
 function bareHostname(hostname: string): string {
-  return hostname.split(":")[0].toLowerCase();
+  // Strip the port and lower-case, then drop a single trailing DNS dot:
+  // `karmahq.xyz.` is the fully-qualified form of the same host and must still
+  // match ALIAS_HOSTS, otherwise it would bypass the canonical redirect.
+  return hostname.split(":")[0].toLowerCase().replace(/\.$/, "");
 }
 
 function withRobots(response: Response, value: string): Response {

@@ -206,6 +206,45 @@ describe("parseProjectIndexabilityRequest", () => {
   });
 });
 
+describe("parseProjectIndexabilityRequest identifier decoding", () => {
+  it("decodes a %20 identifier exactly once and re-encodes it in normalizedPath", () => {
+    expect(parseProjectIndexabilityRequest("/project/weird%20slug")).toEqual({
+      identifier: "weird slug",
+      query: { route: "root" },
+      normalizedPath: "/project/weird%20slug",
+    });
+  });
+
+  it("decodes exactly once — a %2520 identifier yields a literal %20, not a space", () => {
+    const parsed = parseProjectIndexabilityRequest("/project/%2520");
+    expect(parsed).not.toBeNull();
+    if (!parsed) {
+      return;
+    }
+    expect(parsed).toEqual({
+      identifier: "%20",
+      query: { route: "root" },
+      normalizedPath: "/project/%2520",
+    });
+    // Endpoint construction re-encodes the single-decoded identifier exactly
+    // once (no double-decode), so the indexer sees the same %2520 segment.
+    expect(buildProjectIndexabilityEndpoint("https://api.example.com", parsed)).toBe(
+      "https://api.example.com/v2/projects/%2520/indexability?route=root"
+    );
+  });
+
+  it.each([
+    "/project/%", // lone percent
+    "/project/%zz", // non-hex escape
+    "/project/50%", // truncated escape
+    "/project/a%2Fb", // encoded forward slash would span segments
+    "/project/a%2fb", // lowercase encoded forward slash
+    "/project/a%5Cb", // encoded backslash the URL parser folds to "/"
+  ])("fails closed (null) for the malformed/traversal identifier %s", (pathname) => {
+    expect(parseProjectIndexabilityRequest(pathname)).toBeNull();
+  });
+});
+
 describe("classifyProjectQuery", () => {
   it("returns clean when there are no query params", () => {
     expect(classifyProjectQuery(new URLSearchParams(""))).toBe("clean");

@@ -32,7 +32,8 @@ const DEFAULT_TIMEOUT_MS = 2500;
  * Strictly parse an unknown value into a ProjectIndexabilityDecision, or null.
  * Every member must match exactly — the correct outcome, correctly-typed fields,
  * and no extra keys — so a malformed or partial payload is rejected rather than
- * trusted.
+ * trusted. Every URL field is additionally validated as a local `/project/...`
+ * path so a hostile payload cannot drive a cross-origin redirect.
  */
 export function parseProjectIndexabilityDecision(
   value: unknown
@@ -47,7 +48,7 @@ export function parseProjectIndexabilityDecision(
     case "canonical-indexable":
     case "noindex-follow": {
       const url = record.url;
-      if (hasExactKeys(record, ["outcome", "url"]) && typeof url === "string") {
+      if (hasExactKeys(record, ["outcome", "url"]) && isLocalProjectPath(url)) {
         return { outcome, url };
       }
       return null;
@@ -57,8 +58,8 @@ export function parseProjectIndexabilityDecision(
       const canonicalUrl = record.canonicalUrl;
       if (
         hasExactKeys(record, ["outcome", "url", "canonicalUrl"]) &&
-        typeof url === "string" &&
-        typeof canonicalUrl === "string"
+        isLocalProjectPath(url) &&
+        isLocalProjectPath(canonicalUrl)
       ) {
         return { outcome, url, canonicalUrl };
       }
@@ -69,8 +70,8 @@ export function parseProjectIndexabilityDecision(
       const to = record.to;
       if (
         hasExactKeys(record, ["outcome", "from", "to"]) &&
-        typeof from === "string" &&
-        typeof to === "string"
+        isLocalProjectPath(from) &&
+        isLocalProjectPath(to)
       ) {
         return { outcome, from, to };
       }
@@ -150,4 +151,44 @@ export async function fetchProjectIndexabilityDecision(
 
 function hasExactKeys(record: Record<string, unknown>, keys: string[]): boolean {
   return Object.keys(record).length === keys.length && keys.every((key) => key in record);
+}
+
+const PROJECT_PATH_PREFIX = "/project/";
+const MAX_CONTROL_CHAR_CODE = 0x20; // space and everything below (tab, CR, LF, NUL)
+const DEL_CHAR_CODE = 0x7f;
+
+/**
+ * Every URL field in a decision (`url`, `canonicalUrl`, `from`, `to`) is a
+ * redirect/canonical target the middleware concatenates with an origin, so it
+ * must be a root-relative path into a `/project/...` route and nothing else.
+ * Reject anything that could yield a cross-origin URL: an absolute or
+ * protocol-relative form (`//host`), userinfo (`@host`), a query or fragment
+ * (`?` / `#`), a backslash (the URL parser folds `\` to `/`), or any embedded
+ * whitespace/control character. Fails closed for non-strings.
+ */
+function isLocalProjectPath(value: unknown): value is string {
+  if (typeof value !== "string") {
+    return false;
+  }
+  if (!value.startsWith(PROJECT_PATH_PREFIX) || value.length === PROJECT_PATH_PREFIX.length) {
+    return false;
+  }
+  if (
+    value.includes("//") ||
+    value.includes("@") ||
+    value.includes("?") ||
+    value.includes("#") ||
+    value.includes("\\")
+  ) {
+    return false;
+  }
+  // Reject any ASCII control char, space, or DEL — blocks tab/newline URL
+  // smuggling — using char codes so no literal control byte lives in source.
+  for (let index = 0; index < value.length; index += 1) {
+    const code = value.charCodeAt(index);
+    if (code <= MAX_CONTROL_CHAR_CODE || code === DEL_CHAR_CODE) {
+      return false;
+    }
+  }
+  return true;
 }

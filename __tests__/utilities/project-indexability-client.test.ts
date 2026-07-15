@@ -103,6 +103,66 @@ describe("parseProjectIndexabilityDecision", () => {
   it.each(invalidDecisions)("rejects the $name input", ({ value }) => {
     expect(parseProjectIndexabilityDecision(value)).toBeNull();
   });
+
+  // Every URL field is a redirect/canonical target the middleware concatenates
+  // with an origin, so a non-local value could produce a cross-origin 308. The
+  // parser must reject any authority, query, fragment, backslash, control char,
+  // or non-`/project/` path and fail closed.
+  const maliciousDecisions: Array<{ name: string; value: unknown }> = [
+    {
+      name: "redirect to a userinfo authority (@evil)",
+      value: { outcome: "redirect", from: "/project/x", to: "@evil.example/path" },
+    },
+    {
+      name: "redirect to a protocol-relative //host",
+      value: { outcome: "redirect", from: "/project/x", to: "//evil.example/x" },
+    },
+    {
+      name: "absolute http URL",
+      value: { outcome: "canonical-indexable", url: "https://evil.example/project/x" },
+    },
+    {
+      name: "non-project local path",
+      value: { outcome: "canonical-indexable", url: "/about" },
+    },
+    {
+      name: "url carrying a query string",
+      value: { outcome: "canonical-indexable", url: "/project/x?next=//evil" },
+    },
+    {
+      name: "url carrying a fragment",
+      value: { outcome: "noindex-follow", url: "/project/x#@evil" },
+    },
+    {
+      name: "url carrying a backslash",
+      value: { outcome: "canonical-indexable", url: "/project/x\\@evil.example" },
+    },
+    {
+      name: "url carrying an embedded newline",
+      value: { outcome: "canonical-indexable", url: "/project/x\nhttps://evil" },
+    },
+    {
+      name: "bare /project/ with no identifier",
+      value: { outcome: "canonical-indexable", url: "/project/" },
+    },
+    {
+      name: "duplicate-alias with a hostile canonicalUrl",
+      value: {
+        outcome: "duplicate-alias",
+        url: "/project/x/about",
+        canonicalUrl: "https://evil.example/project/x",
+      },
+    },
+  ];
+
+  it.each(maliciousDecisions)("rejects the non-local URL field: $name", ({ value }) => {
+    expect(parseProjectIndexabilityDecision(value)).toBeNull();
+  });
+
+  it("still accepts a well-formed local /project path with a hyphenated slug", () => {
+    const value = { outcome: "redirect", from: "/project/old-slug", to: "/project/new-slug" };
+    expect(parseProjectIndexabilityDecision(value)).toEqual(value);
+  });
 });
 
 describe("fetchProjectIndexabilityDecision", () => {

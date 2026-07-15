@@ -101,6 +101,22 @@ describe("middleware indexability", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
+  it("treats a fully-qualified apex host with a trailing DNS dot (karmahq.xyz.) as an alias", async () => {
+    const response = await middleware(createRequest("karmahq.xyz.", "/about", "utm_source=x"));
+
+    expect(response?.status).toBe(308);
+    expect(response?.headers.get("location")).toBe("https://www.karmahq.xyz/about?utm_source=x");
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("treats a trailing-dot gap host (gap.karmahq.xyz.) as an alias", async () => {
+    const response = await middleware(createRequest("gap.karmahq.xyz.", "/funding-map"));
+
+    expect(response?.status).toBe(308);
+    expect(response?.headers.get("location")).toBe("https://www.karmahq.xyz/funding-map");
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it("passes a www canonical-indexable project through without an X-Robots-Tag", async () => {
     fetchMock.mockResolvedValue(
       decisionResponse({ outcome: "canonical-indexable", url: "/project/paraswap" })

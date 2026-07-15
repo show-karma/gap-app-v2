@@ -5,6 +5,7 @@
  * pagination links all agree on one normalization policy (ADR 0001).
  */
 import type { ExplorerSortByOptions, ExplorerSortOrder } from "@/types/explorer";
+import { PAGES } from "@/utilities/pages";
 
 /** Shape of Next.js `searchParams` once resolved. */
 export type ProjectsExplorerSearchParams = Record<string, string | string[] | undefined>;
@@ -18,7 +19,7 @@ export interface ProjectsExplorerState {
   raisingFunds: boolean;
 }
 
-const BASE_PATH = "/projects";
+const BASE_PATH = PAGES.PROJECTS_EXPLORER;
 const BROWSE_ANCHOR = "#browse-projects";
 const DEFAULT_SORT_BY: ExplorerSortByOptions = "updatedAt";
 const DEFAULT_SORT_ORDER: ExplorerSortOrder = "desc";

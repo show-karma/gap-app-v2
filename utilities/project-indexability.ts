@@ -82,8 +82,19 @@ export function parseProjectIndexabilityRequest(
   if (segments[0] !== "project") {
     return null;
   }
-  const identifier = segments[1];
-  if (!identifier) {
+  const rawIdentifier = segments[1];
+  if (!rawIdentifier) {
+    return null;
+  }
+
+  // Decode the identifier segment exactly once. A malformed percent-escape (a
+  // lone or truncated `%`, e.g. `%` or `%zz`) makes decodeURIComponent throw →
+  // fail closed. A decoded path separator (`%2F` → "/", `%5C` → "\") would let a
+  // crafted slug span segments or inject a backslash into the indexer URL, so
+  // reject those too. Everything downstream consumes the decoded identifier and
+  // re-encodes it once, so there is never a double-decode.
+  const identifier = decodeIdentifierSegment(rawIdentifier);
+  if (identifier === null) {
     return null;
   }
 
@@ -92,11 +103,33 @@ export function parseProjectIndexabilityRequest(
     return null;
   }
 
+  // Re-encode the decoded identifier so the canonical path is well-formed and
+  // encoding-stable (a space is always `%20`), independent of how the incoming
+  // request happened to encode it. Route segments are fixed vocabulary and pass
+  // through unchanged.
+  const canonicalSegments = ["project", encodeURIComponent(identifier), ...segments.slice(2)];
   return {
     identifier,
     query,
-    normalizedPath: `/${segments.join("/")}`,
+    normalizedPath: `/${canonicalSegments.join("/")}`,
   };
+}
+
+/**
+ * Decode a project identifier path segment exactly once, failing closed (null)
+ * on a malformed percent-escape or any decoded path separator (`/` or `\`).
+ */
+function decodeIdentifierSegment(segment: string): string | null {
+  let decoded: string;
+  try {
+    decoded = decodeURIComponent(segment);
+  } catch {
+    return null;
+  }
+  if (decoded.includes("/") || decoded.includes("\\")) {
+    return null;
+  }
+  return decoded;
 }
 
 /**
@@ -121,6 +154,8 @@ export function buildProjectIndexabilityEndpoint(
   parsed: ProjectIndexabilityRequest
 ): string {
   const base = baseUrl.replace(/\/+$/, "");
+  // parsed.identifier was decoded exactly once during parsing; encode it exactly
+  // once here so the indexer receives a single, well-formed path segment.
   const identifier = encodeURIComponent(parsed.identifier);
   const search = new URLSearchParams({ route: parsed.query.route });
   if ("grantUid" in parsed.query) {
