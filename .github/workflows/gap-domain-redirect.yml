@@ -31,6 +31,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # This job only reads the repo (tests + CLI) and needs no git-authenticated
+          # writes; don't persist GITHUB_TOKEN into .git/config where an uploaded
+          # artifact could leak it (zizmor artipacked).
+          persist-credentials: false
 
       - name: Set up Node
         uses: actions/setup-node@v4
