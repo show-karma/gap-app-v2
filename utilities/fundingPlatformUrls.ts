@@ -145,6 +145,33 @@ export function getBrowseApplicationsUrl(
 }
 
 /**
+ * Same-origin browse-applications URL, for use as an in-app **redirect** target
+ * (a non-reviewer handed a `/manage` review-queue link is sent to the public
+ * browse list for the same program).
+ *
+ * Unlike {@link getBrowseApplicationsUrl} — which intentionally emits the external
+ * tenant domain so admins can copy a shareable public link — a redirect must keep
+ * the visitor on the current deployment. Emitting the external domain here would
+ * bounce staging → production for tenants whose dev domain equals their prod
+ * domain (e.g. filecoin, scroll).
+ *
+ * @param communityId - The community slug
+ * @param programId - The program ID
+ * @param whitelabelOrigin - Current origin when running in whitelabel mode
+ * @returns The same-origin URL to the browse-applications list
+ */
+export function getBrowseApplicationsRedirectUrl(
+  communityId: string,
+  programId: string,
+  whitelabelOrigin?: string
+): string {
+  if (whitelabelOrigin) {
+    return `${whitelabelOrigin}/browse-applications?programId=${programId}`;
+  }
+  return `${PAGES.COMMUNITY.BROWSE_APPLICATIONS(communityId)}?programId=${programId}`;
+}
+
+/**
  * Optional context appended to an application detail URL.
  *
  * The reference number alone identifies the application (globally unique —
@@ -168,11 +195,18 @@ function buildApplicationDetailQuery(context?: ApplicationDetailUrlContext): str
  * authenticated grantee lands on their private view. The route is keyed by
  * `referenceNumber`, not the application's internal id.
  *
+ * Always resolves to a **same-origin** target: this URL is only ever used as an
+ * in-app redirect destination (a visitor handed a `/manage` reviewer link is sent
+ * here), so it must keep them on the current deployment. Emitting the external
+ * tenant domain would bounce staging → production for tenants whose dev domain
+ * equals their prod domain (e.g. filecoin `app.filpgf.io`, scroll
+ * `grantsapp.scroll.io`), which is why the external-domain branch is not used here.
+ *
  * @param communityId - The community slug
  * @param referenceNumber - The application's reference number
  * @param whitelabelOrigin - Current origin when running in whitelabel mode
- * @param context - Optional `programId`/`tab` query context (DEV-496)
- * @returns The full URL to the application detail page
+ * @param context - Optional `tab` query context (DEV-496)
+ * @returns The same-origin URL to the application detail page
  */
 export function getApplicationDetailUrl(
   communityId: string,
@@ -181,11 +215,10 @@ export function getApplicationDetailUrl(
   context?: ApplicationDetailUrlContext
 ): string {
   const query = buildApplicationDetailQuery(context);
-  if (usesSameOriginLinks(whitelabelOrigin)) {
-    return `${PAGES.COMMUNITY.APPLICATION_DETAIL(communityId, referenceNumber)}${query}`;
+  if (whitelabelOrigin) {
+    return `${whitelabelOrigin}/applications/${referenceNumber}${query}`;
   }
-  const domain = getDomainForCommunity(communityId, whitelabelOrigin);
-  return `${domain}/applications/${referenceNumber}${query}`;
+  return `${PAGES.COMMUNITY.APPLICATION_DETAIL(communityId, referenceNumber)}${query}`;
 }
 
 export type GranteeRedirect = { kind: "application" | "dashboard"; url: string };
