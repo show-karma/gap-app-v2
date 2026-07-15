@@ -249,10 +249,14 @@ export function PublicReportListPage({ community }: Props) {
   const timeline = useMemo(() => deriveTimeline(filteredReports), [filteredReports]);
 
   useEffect(() => {
+    // The active dot must not survive a filter change that removed it. Keyed on
+    // the filter rather than on `filteredReports`, whose identity changes on
+    // every refetch — clearing it there would jump the timeline to the top each
+    // time data refreshed. Re-observing below on refetch is harmless: seeding
+    // keeps any dot already set.
     seededRef.current = false;
-    // The active dot must not survive a filter change that removed it.
     setActiveKey(null);
-  }, [filteredReports]);
+  }, [typeFilter]);
 
   useEffect(() => {
     if (filteredReports.length === 0) return;
@@ -343,10 +347,11 @@ export function PublicReportListPage({ community }: Props) {
           <h1 className="text-2xl font-bold tracking-tight text-zinc-900 sm:text-3xl dark:text-zinc-100">
             Portfolio Reports
           </h1>
-          <p className="mt-2 font-mono text-[11px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
-            {count} {pluralize("report", count)}
-            {latest ? ` · Latest ${formatRunDate(latest.runDate).label}` : ""}
-          </p>
+          {count > 0 && (
+            <p className="mt-2 font-mono text-[11px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
+              {count} {pluralize("report", count)} · Latest {formatRunDate(latest.runDate).label}
+            </p>
+          )}
         </div>
         {reportTypes.length > 1 && (
           <ReportTypeFilterSelect
