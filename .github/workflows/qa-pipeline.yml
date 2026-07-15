@@ -1274,7 +1274,9 @@ jobs:
                entries, infer the SINGLE most likely URL the component affects and visit that.
             2. On each page: load via state, take ONE screenshot, scan console errors, interact briefly.
             3. Do NOT repeat scenarios already covered by qa-plan.md (if present).
-            4. CLASSIFY EVERY ISSUE: 'pr-caused' (file in git diff) or 'pre-existing' (not in diff).
+            4. CLASSIFY EVERY ISSUE 'pr-caused' or 'pre-existing'. A changed/touched file establishes SCOPE
+               (what to inspect), NOT causation. Mark 'pr-caused' ONLY with an observed before/after regression
+               or direct causal evidence; otherwise classify 'pre-existing'.
             5. Do NOT call 'gh issue create'. Write findings to dogfood-findings-\$SHARD_ID.json per the
                skill's CI Pipeline Mode schema (includes fingerprint field).
             6. Also write dogfood-results.json: {\"total\":N,\"critical\":N,\"high\":N,\"medium\":N,\"low\":N,\"preexisting\":N,\"blocking\":bool}
@@ -1290,7 +1292,10 @@ jobs:
                'scrollintoview @ref', wait for layout to settle, take a fresh snapshot for a current ref, and click that.
                If it still does not navigate, confirm the trusted event targeted the intended element (not <html> or an
                overlay from a layout shift / off-screen coordinate). If the target was wrong, classify it as a driver/harness
-               miss, NOT an app bug."
+               miss, NOT an app bug.
+            11. EVIDENCE — duplicates: repeated labels/titles are NOT duplicate records. Before reporting duplicate or
+               repeated items (cards/rows/list entries), compare a stable identity (href/slug/id). Distinct identities =
+               distinct records (usually seeded data) — no finding. Report a duplicate only when the stable identity itself repeats."
         timeout-minutes: 10
 
       - name: Upload dogfood shard artifacts

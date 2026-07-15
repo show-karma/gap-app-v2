@@ -195,6 +195,10 @@ Before reporting any interaction failure, make sure the interaction itself was v
 
 2. **Click / navigation "failures"** -- before reporting a click or navigation as broken, `scrollintoview @ref`, wait for the layout to settle, take a fresh `snapshot -i` to get a current ref, and click that ref. If it still does not navigate, confirm the trusted event actually targeted the intended element (not `<html>` or an overlay from a layout shift or off-screen coordinate). If the target was wrong, classify it as a **driver/harness miss, not an app bug**.
 
+3. **Repeated labels/titles are not duplicate records** -- before reporting duplicate or repeated items (cards, rows, list entries), compare a stable identity: `href`, slug, or id. Distinct identities mean distinct records (usually seeded data) -- **no finding**. Report a duplicate only when the stable identity itself repeats.
+
+**Scope vs. causation.** A changed or touched file establishes *scope* (what to inspect), not that the PR caused an issue. Mark a finding `pr-caused` only with a directly observed before/after regression or clear causal evidence; otherwise classify it `pre-existing`.
+
 ## Guidance
 
 - **Repro is everything.** Every issue needs proof -- but match the evidence to the issue. Interactive bugs need video and step-by-step screenshots. Static bugs (typos, placeholder text, visual glitches visible on load) only need a single annotated screenshot.
