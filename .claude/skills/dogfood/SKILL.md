@@ -197,7 +197,7 @@ Before reporting any interaction failure, make sure the interaction itself was v
 
 3. **Repeated labels/titles are not duplicate records** -- before reporting duplicate or repeated items (cards, rows, list entries), compare a stable identity: `href`, slug, or id. Distinct identities mean distinct records (usually seeded data) -- **no finding**. Report a duplicate only when the stable identity itself repeats.
 
-**Scope vs. causation.** A changed or touched file establishes *scope* (what to inspect), not that the PR caused an issue. Mark a finding `pr-caused` only with a directly observed before/after regression or clear causal evidence; otherwise classify it `pre-existing`.
+**Scope vs. causation.** A changed or touched file establishes *scope* (what to inspect), not that the PR caused an issue. Each classification needs its own evidence: mark a finding `pr-caused` only with a directly observed before/after regression or clear causal evidence, and `pre-existing` only with evidence it predates the PR (baseline/existing behavior). Lack of PR causation does **not** prove `pre-existing`. If neither is established, gather more evidence or do not report it -- it is not a blocking finding.
 
 ## Guidance
 

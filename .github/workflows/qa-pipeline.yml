@@ -1274,9 +1274,11 @@ jobs:
                entries, infer the SINGLE most likely URL the component affects and visit that.
             2. On each page: load via state, take ONE screenshot, scan console errors, interact briefly.
             3. Do NOT repeat scenarios already covered by qa-plan.md (if present).
-            4. CLASSIFY EVERY ISSUE 'pr-caused' or 'pre-existing'. A changed/touched file establishes SCOPE
-               (what to inspect), NOT causation. Mark 'pr-caused' ONLY with an observed before/after regression
-               or direct causal evidence; otherwise classify 'pre-existing'.
+            4. CLASSIFY EVERY ISSUE 'pr-caused' or 'pre-existing' — each needs its OWN evidence. A changed/touched
+               file establishes SCOPE (what to inspect), NOT causation. Mark 'pr-caused' ONLY with an observed
+               before/after regression or direct causal evidence. Mark 'pre-existing' ONLY with evidence it predates
+               the PR (baseline/existing behavior). Lack of PR causation does NOT prove pre-existing; if neither is
+               established, gather evidence or do NOT report it (not a blocking finding).
             5. Do NOT call 'gh issue create'. Write findings to dogfood-findings-\$SHARD_ID.json per the
                skill's CI Pipeline Mode schema (includes fingerprint field).
             6. Also write dogfood-results.json: {\"total\":N,\"critical\":N,\"high\":N,\"medium\":N,\"low\":N,\"preexisting\":N,\"blocking\":bool}
