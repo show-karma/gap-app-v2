@@ -41,6 +41,24 @@ const TITLE_INPUT_ID = "portfolio-report-title";
 /** Mirrors `UpdateReportContentBodySchema.title` max on the indexer. */
 const TITLE_MAX_LENGTH = 200;
 
+interface EditState {
+  open: boolean;
+  draft: string;
+  titleDraft: string;
+  /** Server content when the dialog opened. */
+  baseContent: string;
+  /** Server title when the dialog opened, "" for untitled. */
+  baseTitle: string;
+}
+
+const CLOSED_EDIT_STATE: EditState = {
+  open: false,
+  draft: "",
+  titleDraft: "",
+  baseContent: "",
+  baseTitle: "",
+};
+
 /**
  * Admin preview + actions page.
  *
@@ -65,15 +83,12 @@ export function PortfolioReportEditorPage({ community, reportId }: Props) {
   // Edit-dialog state lives in one object so we can update {open, draft}
   // atomically in event handlers. Avoids a chain of setState updates
   // across useState + useEffect.
-  const [editState, setEditState] = useState<{
-    open: boolean;
-    draft: string;
-    titleDraft: string;
-  }>({
-    open: false,
-    draft: "",
-    titleDraft: "",
-  });
+  //
+  // `base*` snapshot what the server held when the dialog opened. Dirty checks
+  // compare drafts against those snapshots rather than against live `report`,
+  // which can refresh underneath an open dialog — otherwise a title-only save
+  // would write the stale seeded content back over the newer body.
+  const [editState, setEditState] = useState<EditState>(CLOSED_EDIT_STATE);
 
   const isReportRegenerating = report ? isReportGenerating(report) : false;
   // Edit dialog hides automatically while a regenerate is in flight — the
@@ -119,6 +134,8 @@ export function PortfolioReportEditorPage({ community, reportId }: Props) {
       open: true,
       draft: report.content ?? "",
       titleDraft: report.title ?? "",
+      baseContent: report.content ?? "",
+      baseTitle: report.title ?? "",
     });
   };
 
@@ -153,7 +170,7 @@ export function PortfolioReportEditorPage({ community, reportId }: Props) {
       // stale draft would surface a misleading "unsaved edits" warning
       // on the next Regenerate click.
       if (editState.open) {
-        setEditState({ open: false, draft: "", titleDraft: "" });
+        setEditState(CLOSED_EDIT_STATE);
         toast("Closed Edit — report is regenerating. Reopen when it finishes.", {
           icon: "ℹ️",
         });
@@ -168,14 +185,18 @@ export function PortfolioReportEditorPage({ community, reportId }: Props) {
     try {
       await updateContentMutation.mutateAsync({
         reportId,
-        content: editState.draft,
-        // An emptied field clears the title (null) rather than sending "",
-        // which the API rejects. Null restores the config-name fallback.
-        title: editState.titleDraft.trim() || null,
+        // Send the draft only when the user actually edited the body. Otherwise
+        // send the server's current content, so saving a title alone can't push
+        // stale seeded content over a body that refreshed while we were open.
+        content: hasContentEdits ? editState.draft : (report.content ?? ""),
+        // `undefined` leaves the stored title untouched; an emptied field sends
+        // null to clear it (the API rejects ""), restoring the config-name
+        // fallback.
+        title: hasTitleEdits ? editState.titleDraft.trim() || null : undefined,
       });
       // Atomically close + clear so the brief window before React Query's
       // cache update propagates doesn't make `hasUnsavedEdits` falsely true.
-      setEditState({ open: false, draft: "", titleDraft: "" });
+      setEditState(CLOSED_EDIT_STATE);
       toast.success("Report saved");
     } catch (err) {
       toast.error(`Failed to save: ${err instanceof Error ? err.message : "Unknown error"}`);
@@ -184,11 +205,12 @@ export function PortfolioReportEditorPage({ community, reportId }: Props) {
 
   const runDateLabel = formatRunDate(report.runDate).label;
 
-  // True when the user has typed in the Edit dialog and their local draft
-  // diverges from the server's saved state. We only warn about *user* edits,
-  // not the initial empty state before the dialog has ever been opened.
-  const hasContentEdits = editState.draft !== "" && editState.draft !== (report.content ?? "");
-  const hasTitleEdits = editState.open && editState.titleDraft.trim() !== (report.title ?? "");
+  // Drafts are compared against the snapshot taken when the dialog opened, not
+  // against live `report` — so a background refresh is never mistaken for a
+  // user edit. Before the dialog has ever opened both sides are "", so a
+  // titled report doesn't read as dirty.
+  const hasContentEdits = editState.draft !== editState.baseContent;
+  const hasTitleEdits = editState.titleDraft.trim() !== editState.baseTitle;
   const hasUnsavedEdits = hasContentEdits || hasTitleEdits;
 
   return (

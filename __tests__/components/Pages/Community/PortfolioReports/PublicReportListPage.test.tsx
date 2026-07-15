@@ -4,9 +4,15 @@ import { useState } from "react";
 import { PublicReportListPage } from "@/components/Pages/Community/PortfolioReports/PublicReportListPage";
 import { usePublishedReports } from "@/hooks/portfolio-reports/usePortfolioReports";
 
+// `initialType` seeds the query param, standing in for a URL arriving with
+// `?type=` already set (a shared or reloaded link).
+const mockNuqs = vi.hoisted(() => ({ initialType: null as string | null }));
+
 vi.mock("nuqs", () => ({
   useQueryState: (_key: string, options: { defaultValue?: unknown }) => {
-    const [value, setValue] = useState<unknown>(options?.defaultValue ?? null);
+    const [value, setValue] = useState<unknown>(
+      mockNuqs.initialType ?? options?.defaultValue ?? null
+    );
     // Mirrors nuqs: setting null drops the param, so the hook falls back to
     // the default value rather than storing a literal null.
     return [value, (next: unknown) => setValue(next ?? options?.defaultValue ?? null)] as const;
@@ -125,6 +131,7 @@ function filecoinReports() {
 describe("PublicReportListPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockNuqs.initialType = null;
   });
 
   describe("loading, error, and empty states", () => {
@@ -411,6 +418,22 @@ describe("PublicReportListPage", () => {
       expect(screen.getByText(/^1 report /)).toBeInTheDocument();
     });
 
+    it("should_keep_the_filter_applied_across_a_background_refetch", async () => {
+      // React Query hands back a new array identity on every refetch; the
+      // filtered view must survive that rather than snapping back.
+      const user = userEvent.setup();
+      mockUsePublishedReports.mockReturnValue({ data: filecoinReports(), isLoading: false } as any);
+
+      const { rerender } = render(<PublicReportListPage community={community} />);
+      await user.selectOptions(screen.getByLabelText(/filter reports by type/i), "config-pods");
+      expect(screen.getAllByRole("heading", { level: 2 })).toHaveLength(2);
+
+      mockUsePublishedReports.mockReturnValue({ data: filecoinReports(), isLoading: false } as any);
+      rerender(<PublicReportListPage community={community} />);
+
+      expect(screen.getAllByRole("heading", { level: 2 })).toHaveLength(2);
+    });
+
     it("should_restore_every_report_when_the_filter_is_reset", async () => {
       const user = userEvent.setup();
       mockUsePublishedReports.mockReturnValue({ data: filecoinReports(), isLoading: false } as any);
@@ -423,16 +446,34 @@ describe("PublicReportListPage", () => {
       expect(screen.getAllByRole("heading", { level: 2 })).toHaveLength(6);
     });
 
-    it("should_offer_a_reset_when_a_stale_type_param_matches_nothing", async () => {
-      const user = userEvent.setup();
+    it("should_render_the_empty_state_when_a_stale_type_param_matches_nothing", () => {
+      // A shared or bookmarked link whose config has since been deleted, so the
+      // `?type=` value matches no report.
+      mockNuqs.initialType = "config-deleted-since-the-link-was-shared";
       mockUsePublishedReports.mockReturnValue({ data: filecoinReports(), isLoading: false } as any);
 
       render(<PublicReportListPage community={community} />);
-      // A shared link whose config has since been deleted.
-      await user.selectOptions(screen.getByLabelText(/filter reports by type/i), "config-propgf");
-      expect(screen.getAllByRole("heading", { level: 2 })).toHaveLength(2);
 
-      await user.selectOptions(screen.getByLabelText(/filter reports by type/i), "all");
+      expect(screen.getByText(/no reports of this type/i)).toBeInTheDocument();
+      expect(screen.queryAllByRole("heading", { level: 2 })).toHaveLength(0);
+    });
+
+    it("should_not_render_a_zero_count_in_the_filtered_empty_state", () => {
+      mockNuqs.initialType = "config-deleted-since-the-link-was-shared";
+      mockUsePublishedReports.mockReturnValue({ data: filecoinReports(), isLoading: false } as any);
+
+      render(<PublicReportListPage community={community} />);
+
+      expect(screen.queryByText(/0 reports/i)).not.toBeInTheDocument();
+    });
+
+    it("should_offer_a_reset_when_a_stale_type_param_matches_nothing", async () => {
+      const user = userEvent.setup();
+      mockNuqs.initialType = "config-deleted-since-the-link-was-shared";
+      mockUsePublishedReports.mockReturnValue({ data: filecoinReports(), isLoading: false } as any);
+
+      render(<PublicReportListPage community={community} />);
+      await user.click(screen.getByRole("button", { name: /show all reports/i }));
 
       expect(screen.getAllByRole("heading", { level: 2 })).toHaveLength(6);
     });
