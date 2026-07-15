@@ -1,0 +1,68 @@
+name: Gap domain redirect (manual)
+
+# Manually inspect / clear / restore the Vercel project-domain redirect on
+# gap.karmahq.xyz. Clearing the redirect lets the app serve gap.karmahq.xyz so
+# the middleware collapses the host-swap + grants->funding normalization into a
+# single 308 (see scripts/vercel-domain-redirect/manage-gap-redirect.mjs).
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "Action to perform"
+        type: choice
+        required: true
+        options:
+          - inspect
+          - apply
+          - rollback
+      confirmation:
+        description: "apply: CLEAR gap.karmahq.xyz | rollback: RESTORE gap.karmahq.xyz -> www.karmahq.xyz"
+        type: string
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  manage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      # Focused tests run BEFORE any live CLI invocation.
+      - name: Run focused tests
+        run: node --test scripts/vercel-domain-redirect/__tests__/manage-gap-redirect.test.mjs
+
+      - name: Manage gap.karmahq.xyz domain redirect
+        # All inputs + secrets enter through the environment and are referenced
+        # as quoted shell variables — never interpolate ${{ }} directly into run.
+        env:
+          MODE: ${{ inputs.mode }}
+          CONFIRMATION: ${{ inputs.confirmation }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+        run: |
+          mkdir -p artifacts
+          node scripts/vercel-domain-redirect/manage-gap-redirect.mjs \
+            --mode "$MODE" \
+            --confirm "$CONFIRMATION" \
+            --report artifacts/gap-domain-report.json \
+            --rollback-state artifacts/gap-domain-rollback-state.json
+
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gap-domain-redirect
+          path: artifacts/
+          if-no-files-found: warn
+          retention-days: 30
