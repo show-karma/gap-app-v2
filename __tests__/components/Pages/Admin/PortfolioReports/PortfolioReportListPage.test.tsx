@@ -83,7 +83,7 @@ describe("PortfolioReportListPage", () => {
     mockUseReportRowSync.mockImplementation((_slug, initialReport) => initialReport);
   });
 
-  it("shows a Preview action for draft reports and navigates to the admin preview page", async () => {
+  it("shows a Preview action for draft reports and navigates to the unified public report URL", async () => {
     const user = userEvent.setup();
 
     mockUsePortfolioReports.mockReturnValue({
@@ -117,9 +117,7 @@ describe("PortfolioReportListPage", () => {
 
     await user.click(screen.getByRole("button", { name: /preview/i }));
 
-    expect(mockPush).toHaveBeenCalledWith(
-      "/community/filecoin/manage/portfolio-reports/draft-report/preview"
-    );
+    expect(mockPush).toHaveBeenCalledWith("/community/filecoin/reports/2026-03-15");
   });
 
   it("does not show a Preview action for published reports", () => {
