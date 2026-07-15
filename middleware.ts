@@ -4,9 +4,35 @@ import { getDomainInfo } from "./src/infrastructure/config/domain-constants";
 import { isKnownTenant } from "./src/infrastructure/types/tenant";
 import { chosenCommunities } from "./utilities/chosenCommunities";
 import { COMMUNITY_SUB_ROUTE_SEGMENTS } from "./utilities/pages";
+import {
+  classifyProjectQuery,
+  parseProjectIndexabilityRequest,
+} from "./utilities/project-indexability";
+import { fetchProjectIndexabilityDecision } from "./utilities/project-indexability-client";
 import { redirectToGov, shouldRedirectToGov } from "./utilities/redirectHelpers";
 import { hasForbiddenChars, sanitizeCommunitySlug } from "./utilities/sanitize";
 import { getWhitelabelByDomain, getWhitelabelDomainForSlug } from "./utilities/whitelabel-config";
+
+// --- Canonical host policy (ADR 0001) ---
+// www.karmahq.xyz is the single canonical serving host. The production apex
+// (karmahq.xyz) and the legacy GAP subdomain (gap.karmahq.xyz) are duplicate
+// hosts; every request on them collapses to www in a single 308 so Google
+// consolidates ranking signals onto one host instead of indexing three.
+const CANONICAL_ORIGIN = "https://www.karmahq.xyz";
+const ALIAS_HOSTS = new Set(["karmahq.xyz", "gap.karmahq.xyz"]);
+const NOINDEX_FOLLOW = "noindex, follow";
+
+function bareHostname(hostname: string): string {
+  // Strip the port and lower-case, then drop a single trailing DNS dot:
+  // `karmahq.xyz.` is the fully-qualified form of the same host and must still
+  // match ALIAS_HOSTS, otherwise it would bypass the canonical redirect.
+  return hostname.split(":")[0].toLowerCase().replace(/\.$/, "");
+}
+
+function withRobots(response: Response, value: string): Response {
+  response.headers.set("X-Robots-Tag", value);
+  return response;
+}
 
 export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
@@ -134,6 +160,20 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL(`${protocol}//${mainDomain}${path}`), 301);
   }
 
+  // --- Canonical host policy: collapse alias hosts to www (ADR 0001) ---
+  const isAliasHost = ALIAS_HOSTS.has(bareHostname(hostname));
+
+  // Non-project alias requests take one permanent hop to the canonical host,
+  // preserving the exact path and query — no indexer round-trip needed. Project
+  // requests fall through to the shared handler below so the alias-host switch
+  // and any legacy/identifier normalization collapse into a single 308.
+  if (isAliasHost && !path.startsWith("/project/")) {
+    return NextResponse.redirect(
+      new URL(`${CANONICAL_ORIGIN}${path}${request.nextUrl.search}`),
+      308
+    );
+  }
+
   // --- Standard karmahq.xyz logic below ---
 
   // Redirect frontend-nextjs routes to gov.karmahq.xyz
@@ -195,29 +235,102 @@ export async function middleware(request: NextRequest) {
     }
   }
 
+  // The explorer listing at exactly /projects (or /projects/) is a static route
+  // — no indexer lookup. A stateful query (filters/pagination) is a duplicate of
+  // the clean listing, so mark it noindex,follow; clean or tracking-only stays
+  // indexable. Alias hosts already 308'd above, so this only runs on www.
+  if (path === "/projects" || path === "/projects/") {
+    const response = NextResponse.next();
+    return classifyProjectQuery(request.nextUrl.searchParams) === "stateful"
+      ? withRobots(response, NOINDEX_FOLLOW)
+      : response;
+  }
+
   if (path.startsWith("/project/")) {
-    // These are permanent URL-structure changes, so emit 308 (not the default
-    // 307). A 307 tells Google the old URL is temporary, so it keeps the
-    // legacy URL in "Page with redirect" instead of consolidating to the new
-    // one; 308 lets it transfer signals to the new URL and drop the old.
-    if (path.includes("/grants") && !path.includes("/project/grants")) {
-      const newPath = path.replace("/grants", "/funding");
-      return NextResponse.redirect(new URL(newPath, request.url), 308);
-    }
-    if (path.includes("/funding/create-grant")) {
-      const newPath = path.replace("/funding/create-grant", "/funding/new");
-      return NextResponse.redirect(new URL(newPath, request.url), 308);
-    }
-    // Send legacy /roadmap straight to the project overview. It used to
-    // redirect to /updates, which then redirects to the overview — a redirect
-    // chain Google has to follow; collapse it to a single hop.
-    if (path.includes("/roadmap") && !path.includes("/project/roadmap")) {
-      const newPath = path.replace(/\/roadmap.*$/, "");
-      return NextResponse.redirect(new URL(newPath, request.url), 308);
-    }
+    return handleProjectIndexability(request, path, isAliasHost);
   }
 
   return NextResponse.next();
+}
+
+/**
+ * Resolve the canonical indexability outcome for a `/project/...` request and
+ * turn it into a single response (ADR 0001). The authoritative decision comes
+ * from the indexer; this collapses the alias-host switch, legacy segment
+ * normalization (grants → funding, create-grant → new), roadmap collapse, and
+ * old-identifier redirects into exactly one 308 hop when the request is not
+ * already at its canonical www URL. Any decision failure fails closed to
+ * noindex,follow via the client.
+ */
+async function handleProjectIndexability(
+  request: NextRequest,
+  path: string,
+  isAliasHost: boolean
+): Promise<Response> {
+  const parsed = parseProjectIndexabilityRequest(path);
+
+  // Unknown project route — we cannot build a trusted indexer query for a route
+  // we do not recognize, so never fetch. On an alias host we still owe the
+  // caller the canonical-host hop (one 308 to www, preserving path + query); on
+  // the canonical host we fail closed to noindex,follow.
+  if (!parsed) {
+    if (isAliasHost) {
+      return NextResponse.redirect(
+        new URL(`${CANONICAL_ORIGIN}${path}${request.nextUrl.search}`),
+        308
+      );
+    }
+    return withRobots(NextResponse.next(), NOINDEX_FOLLOW);
+  }
+
+  const isStatefulQuery = classifyProjectQuery(request.nextUrl.searchParams) === "stateful";
+
+  const decision = await fetchProjectIndexabilityDecision(parsed, {
+    // Read process.env at request time so tests can stub the base URL.
+    baseUrl: process.env.NEXT_PUBLIC_GAP_INDEXER_URL ?? "",
+  });
+
+  // The final canonical path is the redirect target when the indexer relocates
+  // the route, otherwise the normalized path parsed from the request. A gone
+  // route has no relocation target, so it keeps its normalized path and the
+  // canonical host answers the 404/410.
+  const finalPath = decision.outcome === "redirect" ? decision.to : parsed.normalizedPath;
+
+  // Alias hosts (karmahq.xyz / gap.karmahq.xyz) owe exactly ONE 308 to the
+  // canonical www host for EVERY request — including gone routes. Answering the
+  // 404/410 directly here would strand the response on a duplicate host, so we
+  // always hop to www first (folding any normalization/relocation into the same
+  // hop, preserving the query) and let the canonical host re-evaluate and return
+  // the 404/410. This must run before the gone short-circuit below.
+  if (isAliasHost) {
+    return NextResponse.redirect(
+      new URL(`${CANONICAL_ORIGIN}${finalPath}${request.nextUrl.search}`),
+      308
+    );
+  }
+
+  // Canonical / non-alias host (Vercel preview, staging, localhost, www) below.
+  // Gone routes answer with their exact status and a noindex header — no hop.
+  if (decision.outcome === "gone") {
+    return withRobots(new NextResponse(null, { status: decision.status }), NOINDEX_FOLLOW);
+  }
+
+  // Not already at the canonical path (legacy/identifier drift or an indexer
+  // relocation) — one 308 on the request's own origin so a preview/staging
+  // normalization never emits a link to production. Query is preserved.
+  if (finalPath !== path) {
+    return NextResponse.redirect(
+      new URL(`${finalPath}${request.nextUrl.search}`, request.url),
+      308
+    );
+  }
+
+  // Already canonical: pass through. A noindex-follow decision or any stateful
+  // query suppresses indexing; canonical-indexable / duplicate-alias with a
+  // clean or tracking-only query stay indexable.
+  const shouldNoindex = decision.outcome === "noindex-follow" || isStatefulQuery;
+  const response = NextResponse.next();
+  return shouldNoindex ? withRobots(response, NOINDEX_FOLLOW) : response;
 }
 
 export const config = {

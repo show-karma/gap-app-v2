@@ -259,6 +259,7 @@ export const QUERY_KEYS = {
       sortOrder?: string;
       limit?: number;
       hasPayoutAddress?: boolean;
+      page?: number;
     }) =>
       [
         "projects-explorer-infinite",
@@ -267,6 +268,7 @@ export const QUERY_KEYS = {
         params.sortOrder || "desc",
         params.limit ?? 50,
         params.hasPayoutAddress ?? false,
+        params.page ?? 1,
       ] as const,
   },
   INDICATORS: {
