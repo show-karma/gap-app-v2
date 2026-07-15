@@ -23,7 +23,6 @@ export const PAGES = {
     PROJECT_DISCOVERY: (community: string) => `/community/${community}/impact/project-discovery`,
     UPDATES: (community: string) => `/community/${community}/updates`,
     FINANCIALS: (community: string) => `/community/${community}/financials`,
-    RECEIVEPROJECTUPDATES: (community: string) => `/community/${community}/receive-project-updates`,
     PROGRAMS: (community: string) => `/community/${community}/funding-opportunities`,
     PROGRAM_DETAIL: (community: string, programId: string) =>
       `/community/${community}/programs/${programId}`,
@@ -63,27 +62,6 @@ export const PAGES = {
     DILIGENCE_RESPONSE: (token: string) => `/nonprofit-research/diligence/${token}`,
   },
   EVALUATE: `/evaluate`,
-  // REVIEWER routes now point to MANAGE (unified RBAC-based routes)
-  REVIEWER: {
-    DASHBOARD: (community: string) => `/community/${community}/manage/funding-platform`,
-    APPLICATIONS: (community: string, programId: string) =>
-      `/community/${community}/manage/funding-platform/${programId}/applications`,
-    APPLICATION_DETAIL: (community: string, programId: string, applicationId: string) =>
-      `/community/${community}/manage/funding-platform/${programId}/applications/${applicationId}`,
-    QUESTION_BUILDER: (community: string, programId: string) =>
-      `/community/${community}/manage/funding-platform/${programId}/question-builder`,
-    FUNDING_PLATFORM: {
-      MILESTONES: (
-        community: string,
-        programId: string,
-        projectId: string,
-        milestoneUid?: string
-      ) =>
-        `/community/${community}/manage/funding-platform/${programId}/milestones/${projectId}${
-          milestoneUid ? `#milestone-${encodeURIComponent(milestoneUid)}` : ""
-        }`,
-    },
-  },
   MANAGE: {
     ROOT: (community: string) => `/community/${community}/manage`,
     ACTION_ITEMS: (community: string) => `/community/${community}/manage/action-items`,
@@ -139,8 +117,6 @@ export const PAGES = {
       `/community/${community}/manage/portfolio-reports/${reportId}/preview`,
     PORTFOLIO_REPORTS_CONFIG: (community: string) =>
       `/community/${community}/manage/portfolio-reports/config`,
-    PROJECT_MILESTONES: (community: string, projectId: string, programId: string) =>
-      `/community/${community}/manage/${projectId}/milestones?programIds=${programId}`,
   },
   PROJECT: {
     OVERVIEW: (project: string) => `/project/${project}`,
