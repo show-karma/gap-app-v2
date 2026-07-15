@@ -126,7 +126,10 @@ function decodeIdentifierSegment(segment: string): string | null {
   } catch {
     return null;
   }
-  if (decoded.includes("/") || decoded.includes("\\")) {
+  // Reject a dot-segment identifier (literal or percent-encoded) — `/project/..`
+  // would otherwise be treated as a valid project and, once resolved against an
+  // origin, escape the route — and any decoded path separator.
+  if (decoded === "." || decoded === ".." || decoded.includes("/") || decoded.includes("\\")) {
     return null;
   }
   return decoded;

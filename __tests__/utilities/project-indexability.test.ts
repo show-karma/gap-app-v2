@@ -240,6 +240,11 @@ describe("parseProjectIndexabilityRequest identifier decoding", () => {
     "/project/a%2Fb", // encoded forward slash would span segments
     "/project/a%2fb", // lowercase encoded forward slash
     "/project/a%5Cb", // encoded backslash the URL parser folds to "/"
+    "/project/.", // literal single dot-segment identifier
+    "/project/..", // literal parent dot-segment identifier
+    "/project/%2e", // percent-encoded single dot
+    "/project/%2e%2e", // percent-encoded parent traversal
+    "/project/%2E%2E", // uppercase percent-encoded parent traversal
   ])("fails closed (null) for the malformed/traversal identifier %s", (pathname) => {
     expect(parseProjectIndexabilityRequest(pathname)).toBeNull();
   });

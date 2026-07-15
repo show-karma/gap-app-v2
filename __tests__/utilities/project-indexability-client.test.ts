@@ -153,6 +153,37 @@ describe("parseProjectIndexabilityDecision", () => {
         canonicalUrl: "https://evil.example/project/x",
       },
     },
+    // Dot-segment traversal: the `/project/` prefix passes, but resolving the
+    // value against an origin (`new URL`) collapses the `..` and escapes the
+    // route, so these must be rejected.
+    {
+      name: "literal ../ traversal escaping the route",
+      value: { outcome: "redirect", from: "/project/x", to: "/project/x/../../evil" },
+    },
+    {
+      name: "percent-encoded dot traversal (%2e%2e)",
+      value: { outcome: "canonical-indexable", url: "/project/%2e%2e/evil" },
+    },
+    {
+      name: "uppercase percent-encoded dot traversal (%2E%2E)",
+      value: { outcome: "canonical-indexable", url: "/project/x/%2E%2E/evil" },
+    },
+    {
+      name: "bare dot-segment path (/project/..)",
+      value: { outcome: "canonical-indexable", url: "/project/.." },
+    },
+    {
+      name: "encoded forward slash in a segment (%2F)",
+      value: { outcome: "canonical-indexable", url: "/project/a%2Fb" },
+    },
+    {
+      name: "lowercase encoded forward slash in a segment (%2f)",
+      value: { outcome: "redirect", from: "/project/x", to: "/project/a%2fb" },
+    },
+    {
+      name: "encoded backslash in a segment (%5C)",
+      value: { outcome: "canonical-indexable", url: "/project/a%5Cb" },
+    },
   ];
 
   it.each(maliciousDecisions)("rejects the non-local URL field: $name", ({ value }) => {
@@ -161,6 +192,11 @@ describe("parseProjectIndexabilityDecision", () => {
 
   it("still accepts a well-formed local /project path with a hyphenated slug", () => {
     const value = { outcome: "redirect", from: "/project/old-slug", to: "/project/new-slug" };
+    expect(parseProjectIndexabilityDecision(value)).toEqual(value);
+  });
+
+  it("accepts a multi-segment path whose segment carries a legitimate encoded space", () => {
+    const value = { outcome: "canonical-indexable", url: "/project/weird%20slug/about" };
     expect(parseProjectIndexabilityDecision(value)).toEqual(value);
   });
 });

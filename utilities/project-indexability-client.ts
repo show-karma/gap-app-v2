@@ -190,5 +190,39 @@ function isLocalProjectPath(value: unknown): value is string {
       return false;
     }
   }
+  // The `/project/` prefix alone is not enough: a dot-segment lets the value
+  // escape the route once the middleware resolves it against an origin — e.g.
+  // `new URL("<origin>/project/x/../../evil")` normalizes to "<origin>/evil".
+  // Validate every segment so no traversal (literal or percent-encoded) or
+  // encoded separator survives.
+  const segments = value.split("/");
+  for (let index = 1; index < segments.length; index += 1) {
+    if (!isSafeProjectPathSegment(segments[index])) {
+      return false;
+    }
+  }
   return true;
+}
+
+/**
+ * A path segment is safe when it is non-empty, is not a literal or
+ * percent-encoded dot-segment ("." / ".." / "%2e%2e"), decodes cleanly (a
+ * malformed escape throws), and carries no encoded path separator once decoded
+ * ("%2F" -> "/", "%5C" -> "\"). Guards against traversal that only appears
+ * after the URL parser resolves the value.
+ */
+function isSafeProjectPathSegment(segment: string): boolean {
+  if (segment.length === 0 || segment === "." || segment === "..") {
+    return false;
+  }
+  let decoded: string;
+  try {
+    decoded = decodeURIComponent(segment);
+  } catch {
+    return false;
+  }
+  if (decoded === "." || decoded === "..") {
+    return false;
+  }
+  return !decoded.includes("/") && !decoded.includes("\\");
 }
