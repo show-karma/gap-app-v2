@@ -7,7 +7,6 @@ import {
   type CreateReportConfigRequest,
   type GenerateReportRequest,
   type PortfolioReport,
-  type ReportConfig,
   reportPollIntervalMs,
   type UpdateReportConfigRequest,
 } from "@/types/portfolio-report";
@@ -283,6 +282,25 @@ export function usePublishedReport(communitySlug: string, runDate: string) {
     queryKey: QUERY_KEYS.publishedRunDate(communitySlug, runDate),
     queryFn: () => portfolioService.getPublishedReportByRunDate(communitySlug, runDate),
     enabled: Boolean(communitySlug && runDate),
+  });
+}
+
+/**
+ * Admin-only fallback for the unified report URL (DEV-496): when the public
+ * `/reports/:runDate` page finds no published report, a community admin can
+ * still preview the draft at the same URL. Resolves the report for the run date
+ * from the admin list (auth-gated server-side, so non-admins never see drafts).
+ * Only fires when `enabled` — i.e. published lookup came back empty AND the
+ * viewer is a resolved community admin.
+ */
+export function useAdminReportByRunDate(communitySlug: string, runDate: string, enabled: boolean) {
+  return useQuery({
+    queryKey: [...QUERY_KEYS.reports(communitySlug), "by-run-date", runDate],
+    queryFn: async () => {
+      const reports = await portfolioService.listReports(communitySlug);
+      return reports.find((report) => report.runDate === runDate) ?? null;
+    },
+    enabled: Boolean(communitySlug && runDate) && enabled,
   });
 }
 
