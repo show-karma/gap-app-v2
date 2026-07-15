@@ -117,6 +117,15 @@ export const ProjectsExplorer = ({ initialData, initialState }: ProjectsExplorer
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setInputValue(value);
+    if (value === "") {
+      // Clearing must take effect immediately. Cancel any pending debounced write
+      // and clear the URL synchronously, otherwise the next render or the
+      // debounce-cleanup effect can cancel the queued clear and leave a stale ?q
+      // (and stale results) behind.
+      debouncedSetSearch.cancel();
+      setSearchQuery(null);
+      return;
+    }
     debouncedSetSearch(value);
   };
 
