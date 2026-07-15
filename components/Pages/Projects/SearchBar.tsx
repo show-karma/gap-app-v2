@@ -33,7 +33,7 @@ export const ProjectsSearchBar = ({
     };
   }, [debouncedSearch]);
 
-  const handleChange = useCallback(
+  const handleSearchInputChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const newValue = e.target.value;
       setValue(newValue);
@@ -49,7 +49,7 @@ export const ProjectsSearchBar = ({
         type="text"
         aria-label="Search projects"
         value={value}
-        onChange={handleChange}
+        onChange={handleSearchInputChange}
         placeholder={placeholder}
         className="w-full pl-10 pr-4 py-2.5 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-800 text-gray-900 dark:text-zinc-100 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
       />

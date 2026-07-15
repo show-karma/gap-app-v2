@@ -1,5 +1,13 @@
 import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
+import {
+  Children,
+  cloneElement,
+  isValidElement,
+  type ReactElement,
+  type ReactNode,
+  Suspense,
+} from "react";
 
 /**
  * Smoke tests for top-level marketing pages (landing pages composed of
@@ -177,6 +185,24 @@ vi.mock("@/components/Pages/Projects", () => ({
   ProjectsStatsSection: () => <div data-testid="projects-stats" />,
 }));
 
+// The /projects page now fetches its first page server-side; stub the service so
+// the smoke render stays offline and deterministic.
+vi.mock("@/services/projects-explorer.service", () => ({
+  getExplorerProjectsPaginated: vi.fn().mockResolvedValue({
+    payload: [],
+    pagination: {
+      totalCount: 0,
+      page: 1,
+      limit: 50,
+      totalPages: 0,
+      nextPage: null,
+      prevPage: null,
+      hasNextPage: false,
+      hasPrevPage: false,
+    },
+  }),
+}));
+
 const renderPage = async (importer: () => Promise<{ default: React.ComponentType }>) => {
   const { default: Page } = await importer();
   return render(<Page />);
@@ -297,7 +323,33 @@ describe("/seeds marketing pages", () => {
 
 describe("/projects explorer page", () => {
   it("renders hero, explorer, stats", async () => {
-    await renderPage(() => import("@/app/projects/page"));
+    // The page streams: the hero + stats shell render immediately while the
+    // explorer is an async server component deferred behind Suspense. Mounting
+    // that unresolved promise into a client render tree throws (React #482), so
+    // resolve the Suspense child to a concrete element FIRST, substitute it back
+    // into the page's children, and render the fully-synchronous tree exactly
+    // once. This still exercises the real page composition (hero, deferred
+    // explorer, stats) end to end.
+    const { default: ProjectsPage } = await import("@/app/projects/page");
+    const runAsyncPage = ProjectsPage as unknown as (props: {
+      searchParams: Promise<Record<string, string | string[] | undefined>>;
+    }) => Promise<ReactElement>;
+
+    const page = await runAsyncPage({ searchParams: Promise.resolve({}) });
+
+    const children = Children.toArray((page.props as { children?: ReactNode }).children);
+    const resolvedChildren = await Promise.all(
+      children.map(async (child) => {
+        if (isValidElement(child) && child.type === Suspense) {
+          const loader = (child.props as { children: ReactElement }).children;
+          return (loader.type as (props: unknown) => Promise<ReactElement>)(loader.props);
+        }
+        return child;
+      })
+    );
+
+    render(cloneElement(page, undefined, ...resolvedChildren));
+
     expect(screen.getByTestId("projects-hero")).toBeInTheDocument();
     expect(screen.getByTestId("projects-explorer")).toBeInTheDocument();
     expect(screen.getByTestId("projects-stats")).toBeInTheDocument();
