@@ -10,7 +10,7 @@
 import { mkdir as fsMkdir, writeFile as fsWriteFile } from "node:fs/promises";
 import { dirname } from "node:path";
 import { pathToFileURL } from "node:url";
-import { verifyIndexability } from "./indexability/verify-indexability.mjs";
+import { normalizeOrigin, verifyIndexability } from "./indexability/verify-indexability.mjs";
 
 const DEFAULTS = Object.freeze({
   canonicalOrigin: "https://www.karmahq.xyz",
@@ -101,20 +101,33 @@ function resolveConfig(flags, env) {
     return fallback;
   };
 
-  const canonicalOrigin = pick("canonicalOrigin", DEFAULTS.canonicalOrigin);
-  const apexOrigin = pick("apexOrigin", DEFAULTS.apexOrigin);
-  const gapOrigin = pick("gapOrigin", DEFAULTS.gapOrigin);
-  const indexerOrigin = pick("indexerOrigin", DEFAULTS.indexerOrigin);
+  // Normalize + validate every origin before building URLs downstream: reject
+  // path/query/hash/credentials/non-http and collapse a trailing slash to
+  // URL.origin (shared with the direct verifier via normalizeOrigin).
+  const canonicalOrigin = normalizeOrigin(
+    pick("canonicalOrigin", DEFAULTS.canonicalOrigin),
+    "--canonical-origin"
+  );
+  const apexOrigin = normalizeOrigin(pick("apexOrigin", DEFAULTS.apexOrigin), "--apex-origin");
+  const gapOrigin = normalizeOrigin(pick("gapOrigin", DEFAULTS.gapOrigin), "--gap-origin");
+  const indexerOrigin = normalizeOrigin(
+    pick("indexerOrigin", DEFAULTS.indexerOrigin),
+    "--indexer-origin"
+  );
 
-  // Derived root follows canonical unless set explicitly (flag or env).
-  // Default to /sitemap_index.xml — the sitemap INDEX is the sole URL currently
-  // submitted to Google Search Console, so the monitor must audit that entry
-  // point by default (override with --root-sitemap-url / INDEXABILITY_ROOT_SITEMAP_URL).
+  // Derived root follows the normalized canonical unless set explicitly (flag or
+  // env). Default to /sitemap_index.xml — the sitemap INDEX is the sole URL
+  // submitted to Google Search Console, so the monitor audits that entry point by
+  // default (override with --root-sitemap-url / INDEXABILITY_ROOT_SITEMAP_URL).
   const explicitRoot = pick("rootSitemapUrl", undefined);
-  const rootSitemapUrl = explicitRoot ?? `${canonicalOrigin}/sitemap_index.xml`;
+  const rootSitemapUrl = explicitRoot ?? new URL("/sitemap_index.xml", canonicalOrigin).href;
 
   // minLeafCount: nonnegative safe integer; timeoutMs: positive safe integer.
-  const minLeafCount = parseBoundedInt(pick("minLeafCount", DEFAULTS.minLeafCount), "--min-leaf-count", 0);
+  const minLeafCount = parseBoundedInt(
+    pick("minLeafCount", DEFAULTS.minLeafCount),
+    "--min-leaf-count",
+    0
+  );
   const timeoutMs = parseBoundedInt(pick("timeoutMs", DEFAULTS.timeoutMs), "--timeout-ms", 1);
 
   const output = pick("output", undefined);

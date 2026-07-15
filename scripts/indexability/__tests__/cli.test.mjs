@@ -55,7 +55,13 @@ async function withTempDir(run) {
 
 describe("parseArgs", () => {
   it("parses known flags in both --flag value and --flag=value forms", () => {
-    const flags = parseArgs(["--canonical-origin=https://x", "--timeout-ms", "5", "--output", "/tmp/r.json"]);
+    const flags = parseArgs([
+      "--canonical-origin=https://x",
+      "--timeout-ms",
+      "5",
+      "--output",
+      "/tmp/r.json",
+    ]);
     assert.equal(flags.canonicalOrigin, "https://x");
     assert.equal(flags.timeoutMs, "5");
     assert.equal(flags.output, "/tmp/r.json");
@@ -74,7 +80,13 @@ describe("parseArgs", () => {
 describe("main configuration", () => {
   it("applies production defaults", async () => {
     const verify = captureVerify(makeReport(true));
-    const code = await main({ argv: [], env: {}, verify, stdout: fakeStream(), stderr: fakeStream() });
+    const code = await main({
+      argv: [],
+      env: {},
+      verify,
+      stdout: fakeStream(),
+      stderr: fakeStream(),
+    });
 
     assert.equal(code, 0);
     const options = verify.calls[0];
@@ -130,7 +142,12 @@ describe("main configuration", () => {
   it("uses an explicit root sitemap url verbatim even when canonical changes", async () => {
     const verify = captureVerify(makeReport(true));
     await main({
-      argv: ["--root-sitemap-url", "https://c.example/custom.xml", "--canonical-origin", "https://other.example"],
+      argv: [
+        "--root-sitemap-url",
+        "https://c.example/custom.xml",
+        "--canonical-origin",
+        "https://other.example",
+      ],
       env: {},
       verify,
       stdout: fakeStream(),
@@ -143,7 +160,13 @@ describe("main configuration", () => {
   it("returns 1 without running verify on invalid numeric args", async () => {
     const verify = captureVerify(makeReport(true));
     const stderr = fakeStream();
-    const code = await main({ argv: ["--min-leaf-count", "abc"], env: {}, verify, stdout: fakeStream(), stderr });
+    const code = await main({
+      argv: ["--min-leaf-count", "abc"],
+      env: {},
+      verify,
+      stdout: fakeStream(),
+      stderr,
+    });
 
     assert.equal(code, 1);
     assert.equal(verify.calls.length, 0);
@@ -152,7 +175,13 @@ describe("main configuration", () => {
 
   it("returns 1 without running verify on unknown flags", async () => {
     const verify = captureVerify(makeReport(true));
-    const code = await main({ argv: ["--bogus"], env: {}, verify, stdout: fakeStream(), stderr: fakeStream() });
+    const code = await main({
+      argv: ["--bogus"],
+      env: {},
+      verify,
+      stdout: fakeStream(),
+      stderr: fakeStream(),
+    });
 
     assert.equal(code, 1);
     assert.equal(verify.calls.length, 0);
@@ -166,7 +195,13 @@ describe("main output + exit codes", () => {
       const stdout = fakeStream();
       const verify = captureVerify(makeReport(true));
 
-      const code = await main({ argv: ["--output", outputPath], env: {}, verify, stdout, stderr: fakeStream() });
+      const code = await main({
+        argv: ["--output", outputPath],
+        env: {},
+        verify,
+        stdout,
+        stderr: fakeStream(),
+      });
 
       assert.equal(code, 0);
       const content = await readFile(outputPath, "utf8");
@@ -184,7 +219,13 @@ describe("main output + exit codes", () => {
       const stdout = fakeStream();
       const verify = captureVerify(makeReport(false));
 
-      const code = await main({ argv: ["--output", outputPath], env: {}, verify, stdout, stderr: fakeStream() });
+      const code = await main({
+        argv: ["--output", outputPath],
+        env: {},
+        verify,
+        stdout,
+        stderr: fakeStream(),
+      });
 
       assert.equal(code, 1);
       const parsed = JSON.parse(await readFile(outputPath, "utf8"));
@@ -195,7 +236,13 @@ describe("main output + exit codes", () => {
 
   it("exits 1 without an output file when the report is not ok and no output is set", async () => {
     const verify = captureVerify(makeReport(false));
-    const code = await main({ argv: [], env: {}, verify, stdout: fakeStream(), stderr: fakeStream() });
+    const code = await main({
+      argv: [],
+      env: {},
+      verify,
+      stdout: fakeStream(),
+      stderr: fakeStream(),
+    });
     assert.equal(code, 1);
   });
 });
@@ -261,7 +308,13 @@ describe("main failure handling", () => {
 describe("strict numeric validation", () => {
   it("accepts --min-leaf-count 0 (nonnegative)", async () => {
     const verify = captureVerify(makeReport(true));
-    const code = await main({ argv: ["--min-leaf-count", "0"], env: {}, verify, stdout: fakeStream(), stderr: fakeStream() });
+    const code = await main({
+      argv: ["--min-leaf-count", "0"],
+      env: {},
+      verify,
+      stdout: fakeStream(),
+      stderr: fakeStream(),
+    });
     assert.equal(code, 0);
     assert.equal(verify.calls[0].minLeafCount, 0);
   });
@@ -270,7 +323,13 @@ describe("strict numeric validation", () => {
     it(`rejects --min-leaf-count ${bad} before running verify`, async () => {
       const verify = captureVerify(makeReport(true));
       const stderr = fakeStream();
-      const code = await main({ argv: ["--min-leaf-count", bad], env: {}, verify, stdout: fakeStream(), stderr });
+      const code = await main({
+        argv: ["--min-leaf-count", bad],
+        env: {},
+        verify,
+        stdout: fakeStream(),
+        stderr,
+      });
       assert.equal(code, 1);
       assert.equal(verify.calls.length, 0);
       assert.match(stderr.text(), /--min-leaf-count/);
@@ -281,7 +340,13 @@ describe("strict numeric validation", () => {
     it(`rejects --timeout-ms ${bad} before running verify`, async () => {
       const verify = captureVerify(makeReport(true));
       const stderr = fakeStream();
-      const code = await main({ argv: ["--timeout-ms", bad], env: {}, verify, stdout: fakeStream(), stderr });
+      const code = await main({
+        argv: ["--timeout-ms", bad],
+        env: {},
+        verify,
+        stdout: fakeStream(),
+        stderr,
+      });
       assert.equal(code, 1);
       assert.equal(verify.calls.length, 0);
       assert.match(stderr.text(), /--timeout-ms/);
@@ -290,8 +355,56 @@ describe("strict numeric validation", () => {
 
   it("accepts a positive safe --timeout-ms", async () => {
     const verify = captureVerify(makeReport(true));
-    const code = await main({ argv: ["--timeout-ms", "500"], env: {}, verify, stdout: fakeStream(), stderr: fakeStream() });
+    const code = await main({
+      argv: ["--timeout-ms", "500"],
+      env: {},
+      verify,
+      stdout: fakeStream(),
+      stderr: fakeStream(),
+    });
     assert.equal(code, 0);
     assert.equal(verify.calls[0].timeoutMs, 500);
+  });
+});
+
+describe("origin normalization and validation", () => {
+  it("normalizes a trailing-slash canonical origin and derives a single-slash root sitemap", async () => {
+    const verify = captureVerify(makeReport(true));
+    await main({
+      argv: [],
+      env: { INDEXABILITY_CANONICAL_ORIGIN: "https://c.example/" },
+      verify,
+      stdout: fakeStream(),
+      stderr: fakeStream(),
+    });
+    const options = verify.calls[0];
+    assert.equal(options.canonicalOrigin, "https://c.example");
+    assert.equal(options.rootSitemapUrl, "https://c.example/sitemap_index.xml");
+  });
+
+  it("rejects a path-bearing canonical origin without running verify", async () => {
+    const verify = captureVerify(makeReport(true));
+    const code = await main({
+      argv: ["--canonical-origin=https://c.example/foo"],
+      env: {},
+      verify,
+      stdout: fakeStream(),
+      stderr: fakeStream(),
+    });
+    assert.equal(code, 1);
+    assert.equal(verify.calls.length, 0);
+  });
+
+  it("rejects a non-http origin scheme without running verify", async () => {
+    const verify = captureVerify(makeReport(true));
+    const code = await main({
+      argv: ["--apex-origin=ftp://c.example"],
+      env: {},
+      verify,
+      stdout: fakeStream(),
+      stderr: fakeStream(),
+    });
+    assert.equal(code, 1);
+    assert.equal(verify.calls.length, 0);
   });
 });

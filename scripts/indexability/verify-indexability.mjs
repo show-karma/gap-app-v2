@@ -89,26 +89,36 @@ export async function auditSitemaps({
     visited.add(url);
     stack.add(url);
     try {
-      let response;
+      let fetched;
       try {
-        // Timeout + redirect: manual apply to root and child sitemap fetches.
-        response = await timedFetch(fetch, url, { timeoutMs, redirect: "manual" });
+        // Timeout + redirect: manual apply to root and child sitemap fetches. The
+        // body is read inside `consume`, so it stays under the same timeout — a
+        // stalled sitemap body aborts instead of hanging after the timer is cleared.
+        fetched = await timedFetch(fetch, url, {
+          timeoutMs,
+          redirect: "manual",
+          consume: async (response) => {
+            const status = response?.status;
+            const contentType = headerValue(response, "content-type");
+            const body = status === 200 && /xml/i.test(contentType) ? await response.text() : null;
+            return { status, contentType, body };
+          },
+        });
       } catch (err) {
         errors.push(`sitemap fetch failed for ${url}: ${errMsg(err)}`);
         return;
       }
 
-      if (!response || response.status !== 200) {
-        errors.push(`sitemap ${url} returned status ${response?.status ?? "unknown"}`);
+      if (!fetched || fetched.status !== 200) {
+        errors.push(`sitemap ${url} returned status ${fetched?.status ?? "unknown"}`);
         return;
       }
-      const contentType = headerValue(response, "content-type");
-      if (!/xml/i.test(contentType)) {
-        errors.push(`sitemap ${url} has non-XML content-type "${contentType}"`);
+      if (!/xml/i.test(fetched.contentType)) {
+        errors.push(`sitemap ${url} has non-XML content-type "${fetched.contentType}"`);
         return;
       }
 
-      const body = await response.text();
+      const body = fetched.body;
       sitemapCount += 1;
       const locs = extractLocs(body);
 
@@ -167,12 +177,22 @@ export async function verifyIndexability({
   apexOrigin = APEX_DEFAULT,
   gapOrigin = GAP_DEFAULT,
   indexerBaseUrl = INDEXER_DEFAULT,
-  // Default to the sitemap INDEX — the sole GSC-submitted entry point.
-  rootSitemapUrl = `${canonicalOrigin}/sitemap_index.xml`,
+  rootSitemapUrl,
   minLeafCount = 0,
   timeoutMs = DEFAULT_TIMEOUT_MS,
   now,
 } = {}) {
+  // Normalize + validate every origin before constructing URLs so a trailing
+  // slash or stray path can never corrupt them (e.g. `https://c.example/` must
+  // not yield `https://c.example//sitemap_index.xml`). The default root sitemap
+  // follows the normalized canonical origin — the sitemap INDEX is the sole
+  // GSC-submitted entry point; an explicit rootSitemapUrl override is verbatim.
+  canonicalOrigin = normalizeOrigin(canonicalOrigin, "canonicalOrigin");
+  apexOrigin = normalizeOrigin(apexOrigin, "apexOrigin");
+  gapOrigin = normalizeOrigin(gapOrigin, "gapOrigin");
+  indexerBaseUrl = normalizeOrigin(indexerBaseUrl, "indexerBaseUrl");
+  rootSitemapUrl = rootSitemapUrl ?? new URL("/sitemap_index.xml", canonicalOrigin).href;
+
   const errors = [];
   const checks = [];
 
@@ -193,28 +213,28 @@ export async function verifyIndexability({
   const slug = representativeProject ? representativeProject.split("/")[2] : null;
 
   const probe = async (url) => {
-    let response;
     try {
-      response = await timedFetch(fetch, url, { timeoutMs, redirect: "manual" });
+      // Read the body inside `consume`, so a 2xx body stays under the same
+      // timeout as the fetch — a stalled page body aborts and fails this check
+      // instead of hanging the whole run after the timer would have been cleared.
+      const result = await timedFetch(fetch, url, {
+        timeoutMs,
+        redirect: "manual",
+        consume: async (response) => {
+          const status = response.status;
+          const body = status >= 200 && status < 300 ? await response.text() : "";
+          return {
+            status,
+            robots: headerValue(response, "x-robots-tag") || null,
+            location: headerValue(response, "location") || null,
+            body,
+          };
+        },
+      });
+      return { ...result, error: null };
     } catch (err) {
       return { status: 0, robots: null, location: null, body: "", error: errMsg(err) };
     }
-    const status = response.status;
-    let body = "";
-    if (status >= 200 && status < 300) {
-      try {
-        body = await response.text();
-      } catch {
-        body = "";
-      }
-    }
-    return {
-      status,
-      robots: headerValue(response, "x-robots-tag") || null,
-      location: headerValue(response, "location") || null,
-      body,
-      error: null,
-    };
   };
 
   const addCheck = async (name, url, evaluate, extra = {}) => {
@@ -236,7 +256,9 @@ export async function verifyIndexability({
     return check;
   };
 
-  const projectRootUrl = slug ? `${canonicalOrigin}/project/${slug}` : `${canonicalOrigin}/project/`;
+  const projectRootUrl = slug
+    ? `${canonicalOrigin}/project/${slug}`
+    : `${canonicalOrigin}/project/`;
 
   // --- Listing routes ---
   await addCheck("root", `${canonicalOrigin}/`, (r) => ({
@@ -318,9 +340,7 @@ export async function verifyIndexability({
   // --- Compound gap legacy grants → ONE permanent hop to the FINAL www funding
   // target. Deliberately strict about the one-hop final target: a live 2-hop
   // chain (gap → www/.../grants, then a second hop to funding) fails here. ---
-  const legacyUrl = slug
-    ? `${gapOrigin}/project/${slug}/grants`
-    : `${gapOrigin}/project//grants`;
+  const legacyUrl = slug ? `${gapOrigin}/project/${slug}/grants` : `${gapOrigin}/project//grants`;
   const legacyExpected = `${projectRootUrl}/funding`;
   await addCheck("gap-legacy-grants-redirect", legacyUrl, (r) => {
     const match = permanentRedirectMatch(r.status, r.location, legacyUrl, legacyExpected);
@@ -388,7 +408,10 @@ export async function verifyIndexability({
 
 // Single timed fetch: one AbortController + one timer per request (no double
 // timers). Timeout aborts the signal; redirect is passed through when given.
-async function timedFetch(fetch, url, { timeoutMs, redirect } = {}) {
+// An optional `consume` callback reads the response (e.g. body) WHILE the timer
+// is still armed, so a stalled body aborts under the same timeout instead of
+// hanging after the timer would otherwise have been cleared.
+async function timedFetch(fetch, url, { timeoutMs, redirect, consume } = {}) {
   const controller = new AbortController();
   const timer =
     typeof timeoutMs === "number" && timeoutMs > 0
@@ -399,12 +422,37 @@ async function timedFetch(fetch, url, { timeoutMs, redirect } = {}) {
     if (redirect) {
       options.redirect = redirect;
     }
-    return await fetch(url, options);
+    const response = await fetch(url, options);
+    return consume ? await consume(response) : response;
   } finally {
     if (timer) {
       clearTimeout(timer);
     }
   }
+}
+
+/**
+ * Normalize + validate an origin override. Accepts only an http(s), origin-only
+ * URL (an optional single trailing slash is allowed) and returns its canonical
+ * `URL.origin` with no trailing slash — so `https://c.example/` can never yield
+ * `https://c.example//sitemap_index.xml`. Rejects any path, query, hash, embedded
+ * credentials, or non-http(s) scheme.
+ */
+export function normalizeOrigin(value, label = "origin") {
+  const url = safeUrl(value);
+  if (!url) {
+    throw new Error(`Invalid ${label}: "${value}" is not a valid URL`);
+  }
+  if (url.protocol !== "http:" && url.protocol !== "https:") {
+    throw new Error(`Invalid ${label}: "${value}" must use http(s)`);
+  }
+  if (url.username || url.password) {
+    throw new Error(`Invalid ${label}: "${value}" must not embed credentials`);
+  }
+  if ((url.pathname && url.pathname !== "/") || url.search || url.hash) {
+    throw new Error(`Invalid ${label}: "${value}" must be origin-only (no path, query, or hash)`);
+  }
+  return url.origin;
 }
 
 function safeUrl(value, base) {
@@ -459,15 +507,17 @@ function extractLocs(xml) {
 }
 
 function decodeXmlEntities(value) {
-  return value
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"')
-    .replace(/&apos;/g, "'")
-    .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => codePoint(parseInt(hex, 16)))
-    .replace(/&#(\d+);/g, (_, dec) => codePoint(Number(dec)))
-    // Decode &amp; last so it does not double-decode the entities above.
-    .replace(/&amp;/g, "&");
+  return (
+    value
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .replace(/&quot;/g, '"')
+      .replace(/&apos;/g, "'")
+      .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => codePoint(parseInt(hex, 16)))
+      .replace(/&#(\d+);/g, (_, dec) => codePoint(Number(dec)))
+      // Decode &amp; last so it does not double-decode the entities above.
+      .replace(/&amp;/g, "&")
+  );
 }
 
 function codePoint(value) {

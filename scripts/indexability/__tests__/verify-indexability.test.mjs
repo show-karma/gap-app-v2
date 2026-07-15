@@ -59,8 +59,7 @@ function healthyRoutes() {
     // Listing + home.
     [`${CANONICAL}/`]: () => htmlPage({ status: 200, canonical: `${CANONICAL}/` }),
     [`${CANONICAL}/projects`]: () => htmlPage({ status: 200, canonical: `${CANONICAL}/projects` }),
-    [`${CANONICAL}/projects?page=2`]: () =>
-      htmlPage({ status: 200, robots: "noindex, follow" }),
+    [`${CANONICAL}/projects?page=2`]: () => htmlPage({ status: 200, robots: "noindex, follow" }),
     [`${CANONICAL}/projects?utm_source=x`]: () => htmlPage({ status: 200 }),
 
     // Alias hosts: exact one-hop 308 to www, preserving path + query.
@@ -77,8 +76,7 @@ function healthyRoutes() {
       htmlPage({ status: 200, robots: "noindex, follow" }),
 
     // Compound gap legacy grants route → one 308 to final www funding.
-    [`${GAP}/project/${SLUG}/grants`]: () =>
-      redirectTo(`${CANONICAL}/project/${SLUG}/funding`),
+    [`${GAP}/project/${SLUG}/grants`]: () => redirectTo(`${CANONICAL}/project/${SLUG}/funding`),
 
     // Invalid slug → gone with noindex.
     [`${CANONICAL}/project/this-project-does-not-exist`]: () =>
@@ -386,4 +384,62 @@ describe("verifyIndexability permanent-redirect handling", () => {
     assert.equal(legacy.ok, false);
     assert.equal(legacy.resolved, `${CANONICAL}/project/${SLUG}/grants`);
   });
+});
+
+describe("origin normalization and validation", () => {
+  it("normalizes a trailing-slash canonical origin so same-origin leaves are accepted", async () => {
+    const CANON2 = "https://c.example";
+    const root2 = `${CANON2}/sitemap_index.xml`;
+    const fetchImpl = makeFetch({
+      [root2]: () => xml(urlSet([`${CANON2}/project/foo`])),
+    });
+    const report = await verifyIndexability({
+      fetch: fetchImpl,
+      canonicalOrigin: "https://c.example/",
+      apexOrigin: APEX,
+      gapOrigin: GAP,
+      indexerBaseUrl: INDEXER,
+      rootSitemapUrl: root2,
+      minLeafCount: 1,
+      now: NOW,
+    });
+    assert.equal(report.origins.canonical, CANON2);
+    assert.equal(report.sitemap.leafCount, 1);
+  });
+
+  it("rejects a path-bearing canonical origin by throwing", async () => {
+    await assert.rejects(
+      () =>
+        verifyIndexability({
+          fetch: makeFetch({}),
+          canonicalOrigin: "https://c.example/path",
+          apexOrigin: APEX,
+          gapOrigin: GAP,
+          indexerBaseUrl: INDEXER,
+          now: NOW,
+        }),
+      /origin/i
+    );
+  });
+});
+
+describe("body-read timeout (page probes)", () => {
+  it(
+    "aborts a stalled page body read via the timeout and still runs later checks",
+    { timeout: 3000 },
+    async () => {
+      const routes = healthyRoutes();
+      routes[`${CANONICAL}/`] = (options) => ({
+        status: 200,
+        headers: { get: () => null },
+        text: () =>
+          new Promise((_, reject) => {
+            options.signal.addEventListener("abort", () => reject(new Error("aborted")));
+          }),
+      });
+      const report = await runVerify(makeFetch(routes), { timeoutMs: 20 });
+      assert.equal(byName(report, "root").ok, false);
+      assert.equal(byName(report, "projects-listing").ok, true);
+    }
+  );
 });

@@ -43,11 +43,17 @@ jobs:
       - name: Run indexability verification
         id: verify
         continue-on-error: true
+        # Pass workflow_dispatch inputs through the environment and reference them
+        # as quoted shell variables — never interpolate ${{ }} directly into the
+        # run script, which would let a crafted manual input escape the quotes.
+        env:
+          MIN_LEAF_COUNT: ${{ github.event.inputs.min_leaf_count || '3800' }}
+          TIMEOUT_MS: ${{ github.event.inputs.timeout_ms || '15000' }}
         run: >
           node scripts/verify-indexability.mjs
           --output artifacts/indexability-report.json
-          --min-leaf-count "${{ github.event.inputs.min_leaf_count || '3800' }}"
-          --timeout-ms "${{ github.event.inputs.timeout_ms || '15000' }}"
+          --min-leaf-count "$MIN_LEAF_COUNT"
+          --timeout-ms "$TIMEOUT_MS"
 
       - name: Append report summary
         if: always()

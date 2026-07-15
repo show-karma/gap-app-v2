@@ -49,12 +49,7 @@ describe("auditSitemaps", () => {
   it("recursively traverses to urlset leaves and reports counts", async () => {
     const fetchImpl = makeFetch({
       [ROOT]: () =>
-        xml(
-          sitemapIndex([
-            `${CANONICAL}/sitemap-projects.xml`,
-            `${CANONICAL}/sitemap-pages.xml`,
-          ])
-        ),
+        xml(sitemapIndex([`${CANONICAL}/sitemap-projects.xml`, `${CANONICAL}/sitemap-pages.xml`])),
       [`${CANONICAL}/sitemap-projects.xml`]: () =>
         xml(urlSet([`${CANONICAL}/project/paraswap`, `${CANONICAL}/project/gitcoin`])),
       [`${CANONICAL}/sitemap-pages.xml`]: () =>
@@ -103,8 +98,7 @@ describe("auditSitemaps", () => {
 
   it("rejects leaves that carry a query or hash", async () => {
     const fetchImpl = makeFetch({
-      [ROOT]: () =>
-        xml(urlSet([`${CANONICAL}/project/a?tab=1`, `${CANONICAL}/project/b#frag`])),
+      [ROOT]: () => xml(urlSet([`${CANONICAL}/project/a?tab=1`, `${CANONICAL}/project/b#frag`])),
     });
 
     const report = await auditSitemaps({ fetch: fetchImpl, rootSitemapUrl: ROOT, minLeafCount: 0 });
@@ -281,4 +275,31 @@ describe("auditSitemaps", () => {
     assert.equal(report.ok, false);
     assert.ok(report.errors.some((e) => /minimum|min leaf|too few/i.test(e)));
   });
+});
+
+describe("body-read timeout", () => {
+  it(
+    "aborts a stalled sitemap body read via the timeout and still returns",
+    { timeout: 3000 },
+    async () => {
+      const fetchImpl = async (_url, options) => ({
+        status: 200,
+        headers: {
+          get: (name) => (name.toLowerCase() === "content-type" ? "application/xml" : null),
+        },
+        text: () =>
+          new Promise((_, reject) => {
+            options.signal.addEventListener("abort", () => reject(new Error("aborted")));
+          }),
+      });
+      const report = await auditSitemaps({
+        fetch: fetchImpl,
+        rootSitemapUrl: ROOT,
+        minLeafCount: 0,
+        timeoutMs: 20,
+      });
+      assert.equal(report.leafCount, 0);
+      assert.ok(report.errors.some((e) => /sitemap fetch failed/.test(e)));
+    }
+  );
 });
