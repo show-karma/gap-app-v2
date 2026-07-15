@@ -6,6 +6,7 @@ import {
   ProjectsStatsSection,
 } from "@/components/Pages/Projects";
 import { CollectionPageJsonLd } from "@/components/Seo/CollectionPageJsonLd";
+import { errorManager } from "@/components/Utilities/errorManager";
 import { PROJECTS_EXPLORER_CONSTANTS } from "@/constants/projects-explorer";
 import { getExplorerProjectsPaginated } from "@/services/projects-explorer.service";
 import type { PaginatedProjectsResponse } from "@/types/v2/project";
@@ -66,7 +67,15 @@ async function ProjectsExplorerLoader({ initialState }: { initialState: Projects
       includeStats: true,
       hasPayoutAddress: initialState.raisingFunds,
     });
-  } catch {
+  } catch (error) {
+    // Fail closed: degrade to a client-only render (React Query retries with no
+    // seed). Record the failure through the shared Sentry pipeline for
+    // observability, with a route-scoped context that deliberately omits the
+    // request query / user data (transient network/gateway errors are dropped
+    // inside errorManager, so this stays quiet under normal upstream blips).
+    errorManager("SSR /projects seed fetch failed; degrading to client render", error, {
+      context: "app/projects/page",
+    });
     initialData = undefined;
   }
 

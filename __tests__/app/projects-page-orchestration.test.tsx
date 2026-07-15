@@ -13,12 +13,17 @@ import type { PaginatedProjectsResponse } from "@/types/v2/project";
  * the exact seed/state props, and the rejection fallback (no seed).
  */
 
-const { getExplorerProjectsPaginatedMock } = vi.hoisted(() => ({
+const { getExplorerProjectsPaginatedMock, errorManagerMock } = vi.hoisted(() => ({
   getExplorerProjectsPaginatedMock: vi.fn(),
+  errorManagerMock: vi.fn(),
 }));
 
 vi.mock("@/services/projects-explorer.service", () => ({
   getExplorerProjectsPaginated: getExplorerProjectsPaginatedMock,
+}));
+
+vi.mock("@/components/Utilities/errorManager", () => ({
+  errorManager: errorManagerMock,
 }));
 
 // The explorer is a heavy client component; stub the section exports so the
@@ -133,5 +138,39 @@ describe("app/projects/page.tsx server orchestration", () => {
       sortOrder: "desc",
       raisingFunds: false,
     });
+  });
+
+  it("reports the seed fetch failure via errorManager without leaking the query/user data", async () => {
+    const failure = new Error("indexer down");
+    getExplorerProjectsPaginatedMock.mockRejectedValueOnce(failure);
+
+    const page = await runPage({ q: "confidential search term", page: "2" });
+    await resolveExplorer(page);
+
+    expect(errorManagerMock).toHaveBeenCalledTimes(1);
+    const [message, error, extra] = errorManagerMock.mock.calls[0];
+    expect(typeof message).toBe("string");
+    expect(error).toBe(failure);
+    // The observability payload must not carry the user's query or request state.
+    const serializedExtra = JSON.stringify(extra ?? {});
+    expect(serializedExtra).not.toContain("confidential search term");
+    expect(extra).not.toHaveProperty("search");
+    expect(extra).not.toHaveProperty("q");
+    expect(extra).not.toHaveProperty("page");
+  });
+
+  it("does not call errorManager when the seed fetch succeeds", async () => {
+    getExplorerProjectsPaginatedMock.mockResolvedValueOnce(buildResponse());
+
+    const page = await runPage({
+      page: "3",
+      q: "dao",
+      sortBy: "title",
+      sortOrder: "asc",
+      raisingFunds: "true",
+    });
+    await resolveExplorer(page);
+
+    expect(errorManagerMock).not.toHaveBeenCalled();
   });
 });
