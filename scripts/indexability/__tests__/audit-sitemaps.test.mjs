@@ -189,7 +189,7 @@ describe("auditSitemaps", () => {
     assert.ok(report.errors.some((e) => /xml|content-type/i.test(e)));
   });
 
-  it("rejects banned exact project slugs (-1, ---, -nan, test)", async () => {
+  it("rejects banned exact project slugs (-1, ---, -nan, test, delete_test, qa-bug-sweep-project-1752)", async () => {
     const fetchImpl = makeFetch({
       [ROOT]: () =>
         xml(
@@ -198,6 +198,8 @@ describe("auditSitemaps", () => {
             `${CANONICAL}/project/---`,
             `${CANONICAL}/project/-nan`,
             `${CANONICAL}/project/test`,
+            `${CANONICAL}/project/delete_test`,
+            `${CANONICAL}/project/qa-bug-sweep-project-1752`,
             `${CANONICAL}/project/valid`,
           ])
         ),
@@ -207,12 +209,38 @@ describe("auditSitemaps", () => {
 
     assert.equal(report.ok, false);
     assert.equal(report.leafCount, 1); // only /project/valid survives
-    for (const banned of ["-1", "---", "-nan", "test"]) {
+    for (const banned of [
+      "-1",
+      "---",
+      "-nan",
+      "test",
+      "delete_test",
+      "qa-bug-sweep-project-1752",
+    ]) {
       assert.ok(
         report.errors.some((e) => e.includes(`/project/${banned}`)),
         `banned slug ${banned} must be reported`
       );
     }
+  });
+
+  it("does not reject near-miss leaves that merely contain a reserved token but are not the exact banned slug", async () => {
+    const fetchImpl = makeFetch({
+      [ROOT]: () =>
+        xml(
+          urlSet([
+            `${CANONICAL}/project/delete_test_project`,
+            `${CANONICAL}/project/qa-bug-sweep-project-1753`,
+            `${CANONICAL}/project/test-project`,
+          ])
+        ),
+    });
+
+    const report = await auditSitemaps({ fetch: fetchImpl, rootSitemapUrl: ROOT, minLeafCount: 3 });
+
+    assert.equal(report.ok, true);
+    assert.equal(report.leafCount, 3);
+    assert.deepEqual(report.errors, []);
   });
 
   it("fetches root and child sitemaps with redirect: manual", async () => {
