@@ -554,10 +554,13 @@ function MilestonesReviewPageContent({
   const backButtonConfig = useMemo(() => {
     // Only show back to application if came from application page
     if (referrer === "application" && referenceNumber) {
-      const appUrl = hasAdminAccess
-        ? PAGES.ADMIN.FUNDING_PLATFORM_APPLICATIONS(communityId, programId) + `/${referenceNumber}`
-        : isReviewer
-          ? PAGES.REVIEWER.APPLICATION_DETAIL(communityId, parsedProgramId, referenceNumber)
+      const appUrl =
+        hasAdminAccess || isReviewer
+          ? PAGES.MANAGE.FUNDING_PLATFORM.APPLICATION_DETAIL(
+              communityId,
+              parsedProgramId,
+              referenceNumber
+            )
           : null;
 
       if (appUrl) {
@@ -583,10 +586,13 @@ function MilestonesReviewPageContent({
   // Memoized milestone review URL - only returns URL if application is approved
   const milestoneReviewUrl = useMemo(() => {
     if (fundingApplication?.status?.toLowerCase() === "approved" && referenceNumber) {
-      const appUrl = hasAdminAccess
-        ? PAGES.ADMIN.FUNDING_PLATFORM_APPLICATIONS(communityId, programId) + `/${referenceNumber}`
-        : isReviewer
-          ? PAGES.REVIEWER.APPLICATION_DETAIL(communityId, parsedProgramId, referenceNumber)
+      const appUrl =
+        hasAdminAccess || isReviewer
+          ? PAGES.MANAGE.FUNDING_PLATFORM.APPLICATION_DETAIL(
+              communityId,
+              parsedProgramId,
+              referenceNumber
+            )
           : null;
 
       return appUrl;

@@ -148,7 +148,7 @@ export function ApplicationPageClient({
   const canViewApplicant = viewerRole !== "guest";
 
   const editHref = PAGES.COMMUNITY.APPLICATION_EDIT(communityId, application.referenceNumber);
-  const reviewHref = PAGES.REVIEWER.APPLICATION_DETAIL(
+  const reviewHref = PAGES.MANAGE.FUNDING_PLATFORM.APPLICATION_DETAIL(
     communityId,
     application.programId,
     application.referenceNumber

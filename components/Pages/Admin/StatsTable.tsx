@@ -353,7 +353,7 @@ export function StatsTable({
                     <td className="px-4 py-3">
                       {report.programId && (
                         <Link
-                          href={PAGES.REVIEWER.FUNDING_PLATFORM.MILESTONES(
+                          href={PAGES.MANAGE.FUNDING_PLATFORM.MILESTONES(
                             communityId,
                             normalizeProgramId(report.programId),
                             report.projectUid
