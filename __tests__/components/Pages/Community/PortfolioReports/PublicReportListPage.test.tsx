@@ -179,6 +179,18 @@ describe("PublicReportListPage", () => {
       expect(screen.getByRole("heading", { name: "Monthly Pods Report" })).toBeInTheDocument();
     });
 
+    it("should_fall_back_to_the_config_name_when_the_api_omits_title_entirely", () => {
+      // Deploy-order safety: if this ships before the indexer adds `title`,
+      // the field is absent rather than null and every report must render
+      // exactly as it does today.
+      const { title: _omitted, ...withoutTitle } = createReport();
+      mockUsePublishedReports.mockReturnValue({ data: [withoutTitle], isLoading: false } as any);
+
+      render(<PublicReportListPage community={community} />);
+
+      expect(screen.getByRole("heading", { name: "Monthly Pods Report" })).toBeInTheDocument();
+    });
+
     it("should_fall_back_to_a_content_heading_when_untitled_and_the_config_is_deleted", () => {
       mockUsePublishedReports.mockReturnValue({
         data: [
