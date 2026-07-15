@@ -221,6 +221,42 @@ export function getApplicationDetailUrl(
   return `${PAGES.COMMUNITY.APPLICATION_DETAIL(communityId, referenceNumber)}${query}`;
 }
 
+/**
+ * Maps a `/manage/funding-platform` route that a non-privileged visitor was
+ * handed to the canonical **public** page they should be redirected to (DEV-496),
+ * or `null` when the route has no public equivalent (they keep the access-denied
+ * view). Used at the manage-layout denial boundary, which shadows the page-level
+ * `FundingPlatformGuard` redirect for anyone without manage access.
+ *
+ * - application detail (`.../applications/:ref`) → the public application page.
+ *   The reference is globally unique, so this resolves regardless of ownership.
+ * - review queue (`.../applications`) → the public browse-applications list.
+ *
+ * Both targets are same-origin (see {@link getApplicationDetailUrl} /
+ * {@link getBrowseApplicationsRedirectUrl}); the caller is responsible for only
+ * redirecting authenticated visitors (a logged-out visitor keeps the denial).
+ *
+ * @param params - Route params from `useParams()` (communityId, and programId /
+ *   applicationId when present on the matched route).
+ * @param pathname - Current pathname from `usePathname()`, to disambiguate the
+ *   review-queue list route from other program-scoped routes.
+ * @param whitelabelOrigin - Current origin when running in whitelabel mode.
+ */
+export function getManageFundingPlatformPublicRedirect(
+  params: { communityId: string; programId?: string; applicationId?: string },
+  pathname: string | null,
+  whitelabelOrigin?: string
+): string | null {
+  const { communityId, programId, applicationId } = params;
+  if (applicationId) {
+    return getApplicationDetailUrl(communityId, applicationId, whitelabelOrigin);
+  }
+  if (programId && pathname?.endsWith(`/funding-platform/${programId}/applications`)) {
+    return getBrowseApplicationsRedirectUrl(communityId, programId, whitelabelOrigin);
+  }
+  return null;
+}
+
 export type GranteeRedirect = { kind: "application" | "dashboard"; url: string };
 
 /**

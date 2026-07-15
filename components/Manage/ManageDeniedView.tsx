@@ -1,8 +1,10 @@
 "use client";
 
-import { useParams } from "next/navigation";
-import { useState } from "react";
+import { useParams, usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { Spinner } from "@/components/Utilities/Spinner";
 import { useAccessDeniedMessages } from "@/hooks/useAccessDeniedMessages";
+import { useAuth } from "@/hooks/useAuth";
 import { AccessDenied } from "@/src/components/ui/AccessDenied";
 import { manageLayoutDenial } from "@/src/components/ui/access-denied-presets";
 import { usePermissionContext } from "@/src/core/rbac/context/permission-context";
@@ -11,7 +13,10 @@ import {
   ACCESS_DENIED_DEFAULT_MESSAGES,
   substituteAccessDeniedTemplate,
 } from "@/utilities/accessDeniedTemplate";
-import type { GranteeRedirect } from "@/utilities/fundingPlatformUrls";
+import {
+  type GranteeRedirect,
+  getManageFundingPlatformPublicRedirect,
+} from "@/utilities/fundingPlatformUrls";
 import { PAGES } from "@/utilities/pages";
 import { useWhitelabel } from "@/utilities/whitelabel-context";
 
@@ -34,8 +39,14 @@ const CTA_LABEL: Record<GranteeRedirect["kind"], string> = {
  */
 export function ManageDeniedView({ communityId, communityName }: ManageDeniedViewProps) {
   // useParams returns the full matched route's params, so on funding-platform
-  // routes programId is available here to scope the lookup to that program.
-  const { programId } = useParams() as { programId?: string };
+  // routes programId/applicationId are available here.
+  const { programId, applicationId } = useParams() as {
+    programId?: string;
+    applicationId?: string;
+  };
+  const pathname = usePathname();
+  const { replace } = useRouter();
+  const { ready, authenticated } = useAuth();
   const { isWhitelabel } = useWhitelabel();
   const [clientOrigin] = useState(() =>
     typeof window !== "undefined" ? window.location.origin : undefined
@@ -47,8 +58,30 @@ export function ManageDeniedView({ communityId, communityName }: ManageDeniedVie
   // transient failure can't redirect a user who was never actually denied.
   const { isGuestDueToError } = usePermissionContext();
 
+  // DEV-496: the /manage layout gate shadows the page-level FundingPlatformGuard
+  // redirect, so an authenticated visitor without manage access who opened a
+  // funding-platform review link is sent to the canonical public page from here.
+  // A logged-out visitor keeps the denial (they must sign in first); a transient
+  // permission-lookup failure is undetermined, so it never redirects.
+  const publicRedirectTarget = getManageFundingPlatformPublicRedirect(
+    { communityId, programId, applicationId },
+    pathname,
+    whitelabelOrigin
+  );
+  const isRedirectRoute = publicRedirectTarget !== null;
+  const shouldRedirect = isRedirectRoute && ready && authenticated && !isGuestDueToError;
+  // On a redirect route we can't tell "redirect" from "deny" until Privy is
+  // ready, so wait on a spinner rather than flashing the denial to a signed-in user.
+  const resolvingRedirect = isRedirectRoute && !isGuestDueToError && !ready;
+
+  useEffect(() => {
+    if (shouldRedirect && publicRedirectTarget) {
+      replace(publicRedirectTarget);
+    }
+  }, [shouldRedirect, publicRedirectTarget, replace]);
+
   const grantee = useGranteeApplicationAccess({
-    enabled: !isGuestDueToError,
+    enabled: !isGuestDueToError && !shouldRedirect,
     communityId,
     programId,
     whitelabelOrigin,
@@ -80,6 +113,16 @@ export function ManageDeniedView({ communityId, communityName }: ManageDeniedVie
           message: applicantMessage,
         }
       : undefined;
+
+  // Signed-in visitor on a funding-platform route with a public equivalent: hold
+  // a spinner while the redirect above resolves/fires so the denial never flashes.
+  if (shouldRedirect || resolvingRedirect) {
+    return (
+      <div className="flex w-full items-center justify-center min-h-[400px]">
+        <Spinner />
+      </div>
+    );
+  }
 
   return (
     <AccessDenied

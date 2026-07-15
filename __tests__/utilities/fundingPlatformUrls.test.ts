@@ -39,6 +39,7 @@ import {
   getBrowseApplicationsUrl,
   getDomainForCommunity,
   getGatedApplyUrl,
+  getManageFundingPlatformPublicRedirect,
   getProgramApplyUrl,
   getProgramPageUrl,
   shouldUseExternalFundingPlatformLinks,
@@ -218,6 +219,72 @@ describe("getBrowseApplicationsRedirectUrl (in-app redirect target — always sa
     expect(getBrowseApplicationsRedirectUrl("filecoin", "123", "https://app.filpgf.io")).toBe(
       "https://app.filpgf.io/browse-applications?programId=123"
     );
+  });
+});
+
+describe("getManageFundingPlatformPublicRedirect (manage → public, same-origin)", () => {
+  const detailPath = "/community/optimism/manage/funding-platform/prog-1/applications/REF-9";
+  const listPath = "/community/optimism/manage/funding-platform/prog-1/applications";
+
+  it("maps the application-detail manage route to the public application page", () => {
+    setHostname("gap.karmahq.xyz");
+    expect(
+      getManageFundingPlatformPublicRedirect(
+        { communityId: "optimism", programId: "prog-1", applicationId: "REF-9" },
+        detailPath
+      )
+    ).toBe("/community/optimism/applications/REF-9");
+  });
+
+  it("honors the whitelabel origin for the application-detail route", () => {
+    setHostname("app.opgrants.io");
+    expect(
+      getManageFundingPlatformPublicRedirect(
+        { communityId: "optimism", programId: "prog-1", applicationId: "REF-9" },
+        detailPath,
+        "https://app.opgrants.io"
+      )
+    ).toBe("https://app.opgrants.io/applications/REF-9");
+  });
+
+  it("maps the review-queue list route to the public browse list", () => {
+    setHostname("gap.karmahq.xyz");
+    expect(
+      getManageFundingPlatformPublicRedirect(
+        { communityId: "optimism", programId: "prog-1" },
+        listPath
+      )
+    ).toBe("/community/optimism/browse-applications?programId=prog-1");
+  });
+
+  it("returns null for the milestones route (no ownership-free public equivalent)", () => {
+    setHostname("gap.karmahq.xyz");
+    expect(
+      getManageFundingPlatformPublicRedirect(
+        { communityId: "optimism", programId: "prog-1" },
+        "/community/optimism/manage/funding-platform/prog-1/milestones/project-1"
+      )
+    ).toBeNull();
+  });
+
+  it("returns null for non-redirect program routes (e.g. question builder)", () => {
+    setHostname("gap.karmahq.xyz");
+    expect(
+      getManageFundingPlatformPublicRedirect(
+        { communityId: "optimism", programId: "prog-1" },
+        "/community/optimism/manage/funding-platform/prog-1/question-builder"
+      )
+    ).toBeNull();
+  });
+
+  it("returns null when there is no program/application context", () => {
+    setHostname("gap.karmahq.xyz");
+    expect(
+      getManageFundingPlatformPublicRedirect(
+        { communityId: "optimism" },
+        "/community/optimism/manage/portfolio-reports"
+      )
+    ).toBeNull();
   });
 });
 
