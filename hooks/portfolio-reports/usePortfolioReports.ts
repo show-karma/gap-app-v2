@@ -20,6 +20,12 @@ const QUERY_KEYS = {
   published: (slug: string) => ["portfolio-reports-published", slug] as const,
   publishedRunDate: (slug: string, runDate: string) =>
     ["portfolio-report-published", slug, runDate] as const,
+  /**
+   * Deliberately nested under `publishedRunDate` so the existing
+   * publish/unpublish invalidations prefix-match and clear this too.
+   */
+  publishedRunDateConfig: (slug: string, runDate: string, configSlug: string) =>
+    ["portfolio-report-published", slug, runDate, configSlug] as const,
 };
 
 // ── Config queries ───────────────────────────────────────────
@@ -277,10 +283,28 @@ export function usePublishedReports(communitySlug: string) {
   });
 }
 
-export function usePublishedReport(communitySlug: string, runDate: string) {
+/**
+ * Fetches the published report for a run date. Pass `configSlug` to address a
+ * specific report — without it, a date shared by two configs resolves to the
+ * most recently published one.
+ */
+export function usePublishedReport(
+  communitySlug: string,
+  runDate: string,
+  configSlug?: string | null
+) {
   return useQuery({
-    queryKey: QUERY_KEYS.publishedRunDate(communitySlug, runDate),
-    queryFn: () => portfolioService.getPublishedReportByRunDate(communitySlug, runDate),
+    queryKey: configSlug
+      ? QUERY_KEYS.publishedRunDateConfig(communitySlug, runDate, configSlug)
+      : QUERY_KEYS.publishedRunDate(communitySlug, runDate),
+    queryFn: () =>
+      configSlug
+        ? portfolioService.getPublishedReportByRunDateAndConfigSlug(
+            communitySlug,
+            runDate,
+            configSlug
+          )
+        : portfolioService.getPublishedReportByRunDate(communitySlug, runDate),
     enabled: Boolean(communitySlug && runDate),
   });
 }

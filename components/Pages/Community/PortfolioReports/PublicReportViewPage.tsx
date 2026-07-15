@@ -15,16 +15,21 @@ import { formatRunDate } from "@/utilities/portfolio-reports/period";
 interface Props {
   community: Community;
   runDate: string;
+  /**
+   * Identifies which config's report to show. Absent on the legacy
+   * run-date-only URL, which resolves to the newest report for that date.
+   */
+  configSlug?: string;
 }
 
-export function PublicReportViewPage({ community, runDate }: Props) {
+export function PublicReportViewPage({ community, runDate, configSlug }: Props) {
   const slug = community.details.slug;
   const {
     data: published,
     isLoading: publishedLoading,
     isError: publishedError,
     refetch: refetchPublished,
-  } = usePublishedReport(slug, runDate);
+  } = usePublishedReport(slug, runDate, configSlug);
 
   // DEV-496: the admin "preview" and the public report share this one URL. When
   // there's no published report, a resolved community admin can still see the

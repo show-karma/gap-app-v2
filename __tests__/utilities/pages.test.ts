@@ -1,6 +1,26 @@
 import { PAGES } from "@/utilities/pages";
 
 describe("PAGES constants", () => {
+  describe("COMMUNITY.REPORT_DETAIL", () => {
+    it("appends the config slug so same-date reports get distinct URLs", () => {
+      const quarterly = PAGES.COMMUNITY.REPORT_DETAIL("filpgf", "2026-07-06", "quarterly-review");
+      const health = PAGES.COMMUNITY.REPORT_DETAIL("filpgf", "2026-07-06", "portfolio-health");
+
+      expect(quarterly).toBe("/community/filpgf/reports/2026-07-06/quarterly-review");
+      expect(health).toBe("/community/filpgf/reports/2026-07-06/portfolio-health");
+      expect(quarterly).not.toBe(health);
+    });
+
+    it("falls back to the run-date-only URL when no slug is available", () => {
+      expect(PAGES.COMMUNITY.REPORT_DETAIL("filpgf", "2026-07-06")).toBe(
+        "/community/filpgf/reports/2026-07-06"
+      );
+      expect(PAGES.COMMUNITY.REPORT_DETAIL("filpgf", "2026-07-06", null)).toBe(
+        "/community/filpgf/reports/2026-07-06"
+      );
+    });
+  });
+
   describe("COMMUNITY.APPLICATION_SUCCESS", () => {
     it("returns correct path format", () => {
       const result = PAGES.COMMUNITY.APPLICATION_SUCCESS("optimism", "app-123");

@@ -128,4 +128,37 @@ describe("PublicReportViewPage (DEV-496 unified report URL)", () => {
     expect(screen.getByText(/no published report found/i)).toBeInTheDocument();
     expect(screen.queryByTestId("doc-view")).not.toBeInTheDocument();
   });
+
+  it("passes the config slug through so the right same-date report is fetched", () => {
+    mockPublished.mockReturnValue({
+      data: { id: "r-health", publishedAt: "2026-03-15T00:00:00.000Z" },
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    } as any);
+
+    render(
+      <PublicReportViewPage
+        community={community}
+        runDate={RUN_DATE}
+        configSlug="portfolio-health"
+      />
+    );
+
+    expect(mockPublished).toHaveBeenCalledWith("filecoin", RUN_DATE, "portfolio-health");
+    expect(screen.getByTestId("doc-view")).toHaveTextContent("report:r-health");
+  });
+
+  it("omits the config slug on the legacy run-date-only URL", () => {
+    mockPublished.mockReturnValue({
+      data: { id: "r-newest", publishedAt: "2026-03-15T00:00:00.000Z" },
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    } as any);
+
+    render(<PublicReportViewPage community={community} runDate={RUN_DATE} />);
+
+    expect(mockPublished).toHaveBeenCalledWith("filecoin", RUN_DATE, undefined);
+  });
 });

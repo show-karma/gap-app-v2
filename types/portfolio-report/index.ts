@@ -71,6 +71,13 @@ export interface PortfolioReport {
    * has been deleted.
    */
   reportConfigName?: string | null;
+  /**
+   * URL segment identifying the originating ReportConfig. Needed because
+   * `runDate` alone is ambiguous — two configs can publish on the same day.
+   * Populated by the public list endpoint only; `null` when the config has
+   * been deleted, in which case callers fall back to the run-date-only URL.
+   */
+  reportConfigSlug?: string | null;
   communityId: string;
   runDate: string;
   status: PortfolioReportStatus;
