@@ -300,6 +300,25 @@ describe("PortfolioReportEditorPage", () => {
       expect(updateMutate).toHaveBeenCalledWith(expect.objectContaining({ title: null }));
     });
 
+    it("should_not_treat_a_stored_title_as_unsaved_edits_before_the_dialog_opens", async () => {
+      // The title draft is empty until the dialog seeds it, so comparing it to
+      // a stored title without gating on the dialog being open would report
+      // unsaved edits on every titled report and wrongly warn here.
+      const user = userEvent.setup();
+      mockUsePortfolioReport.mockReturnValue({
+        data: { ...baseReport, title: "Monthly Pods Report — June 2026" },
+        isLoading: false,
+      } as any);
+
+      render(<PortfolioReportEditorPage community={community} reportId="report-1" />);
+      await user.click(screen.getByRole("button", { name: /^regenerate$/i }));
+
+      expect(
+        screen.queryByRole("heading", { name: /discard unsaved edits/i })
+      ).not.toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: /^regenerate report/i })).toBeInTheDocument();
+    });
+
     it("should_enable_save_when_only_the_title_changed", async () => {
       const user = userEvent.setup();
       mockUsePortfolioReport.mockReturnValue({ data: baseReport, isLoading: false } as any);
