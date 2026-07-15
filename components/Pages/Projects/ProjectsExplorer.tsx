@@ -2,7 +2,9 @@
 
 import { MagnifyingGlassIcon } from "@heroicons/react/20/solid";
 import { ArrowDownIcon, ArrowUpIcon } from "@heroicons/react/24/solid";
+import type { InfiniteData } from "@tanstack/react-query";
 import debounce from "lodash.debounce";
+import Link from "next/link";
 import { useQueryState } from "nuqs";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -15,6 +17,12 @@ import {
 import { PROJECTS_EXPLORER_CONSTANTS } from "@/constants/projects-explorer";
 import { useProjectsExplorerInfinite } from "@/hooks/useProjectsExplorerInfinite";
 import type { ExplorerSortByOptions, ExplorerSortOrder } from "@/types/explorer";
+import type { PaginatedProjectsResponse } from "@/types/v2/project";
+import {
+  buildProjectsPageHref,
+  type ProjectsExplorerState,
+  parseProjectsExplorerRequest,
+} from "@/utilities/projects-explorer-request";
 import { queryClient } from "@/utilities/query-client";
 import { ProjectsLoading } from "./Loading";
 import { ProjectCard } from "./ProjectCard";
@@ -28,7 +36,14 @@ const sortOptions: Record<ExplorerSortByOptions, string> = {
   noOfGrantMilestones: "No. of Milestones",
 };
 
-export const ProjectsExplorer = () => {
+interface ProjectsExplorerProps {
+  /** Server-rendered first page for the initial (matching) request. */
+  initialData?: PaginatedProjectsResponse;
+  /** Effective request the server rendered, used to gate the seed. */
+  initialState?: ProjectsExplorerState;
+}
+
+export const ProjectsExplorer = ({ initialData, initialState }: ProjectsExplorerProps = {}) => {
   const sectionRef = useRef<HTMLElement>(null);
   const hasScrolledRef = useRef(false);
 
@@ -106,6 +121,31 @@ export const ProjectsExplorer = () => {
     debouncedSetSearch(value);
   };
 
+  // Normalize the live URL filters with the shared policy so the seed decision
+  // matches exactly what the server parsed.
+  const normalizedState = parseProjectsExplorerRequest({
+    q: searchQuery,
+    sortBy: selectedSort,
+    sortOrder: selectedSortOrder,
+    raisingFunds: hasPayoutAddress,
+  });
+
+  const matchesInitialState =
+    initialState !== undefined &&
+    normalizedState.q === initialState.q &&
+    normalizedState.sortBy === initialState.sortBy &&
+    normalizedState.sortOrder === initialState.sortOrder &&
+    normalizedState.raisingFunds === initialState.raisingFunds;
+
+  // When the live filters still match the server request, start from its page so
+  // even a failed server fetch retries the same page client-side; otherwise
+  // reset to page 1 so a stale seed cannot bleed into a different query.
+  const effectivePage = matchesInitialState && initialState ? initialState.page : 1;
+  const seededData: InfiniteData<PaginatedProjectsResponse, number> | undefined =
+    matchesInitialState && initialData
+      ? { pages: [initialData], pageParams: [effectivePage] }
+      : undefined;
+
   // Infinite query
   const {
     projects,
@@ -117,11 +157,24 @@ export const ProjectsExplorer = () => {
     hasNextPage,
     fetchNextPage,
   } = useProjectsExplorerInfinite({
-    search: searchQuery,
-    sortBy: selectedSort as ExplorerSortByOptions,
-    sortOrder: selectedSortOrder as ExplorerSortOrder,
-    hasPayoutAddress: isPayoutAddressFilterActive,
+    // Feed the service normalized values so an invalid URL param can never reach
+    // the indexer or diverge from the seed decision.
+    search: normalizedState.q,
+    sortBy: normalizedState.sortBy,
+    sortOrder: normalizedState.sortOrder,
+    hasPayoutAddress: normalizedState.raisingFunds,
+    initialData: seededData,
+    initialPage: effectivePage,
   });
+
+  // Crawlable pagination: only meaningful in SSR mode (initialState present).
+  // Derived from the effective page and the total pages so bots can follow
+  // Previous/Next without JavaScript.
+  const totalPages = Math.ceil(totalCount / PROJECTS_EXPLORER_CONSTANTS.RESULT_LIMIT);
+  const hrefState: ProjectsExplorerState = { ...normalizedState, page: effectivePage };
+  const showCrawlablePagination = initialState !== undefined && projects.length > 0;
+  const hasCrawlablePrev = showCrawlablePagination && effectivePage > 1;
+  const hasCrawlableNext = showCrawlablePagination && effectivePage < totalPages;
 
   // Handle sort change
   const changeSort = async (newValue: ExplorerSortByOptions) => {
@@ -202,7 +255,7 @@ export const ProjectsExplorer = () => {
             </label>
             <div className="flex items-center gap-1">
               <Select
-                value={selectedSort}
+                value={normalizedState.sortBy}
                 onValueChange={(value) => {
                   changeSort(value as ExplorerSortByOptions);
                 }}
@@ -212,7 +265,7 @@ export const ProjectsExplorer = () => {
                   aria-label="Sort projects by"
                   className="w-48 bg-white dark:bg-zinc-800 dark:text-zinc-200 border-gray-300 dark:border-zinc-700"
                 >
-                  <SelectValue>{sortOptions[selectedSort as ExplorerSortByOptions]}</SelectValue>
+                  <SelectValue>{sortOptions[normalizedState.sortBy]}</SelectValue>
                 </SelectTrigger>
                 <SelectContent className="bg-white dark:bg-zinc-800">
                   {Object.keys(sortOptions).map((sortOption) => (
@@ -228,11 +281,13 @@ export const ProjectsExplorer = () => {
               </Select>
               <button
                 type="button"
-                onClick={() => setSelectedSortOrder(selectedSortOrder === "asc" ? "desc" : "asc")}
-                aria-label={`Sort ${selectedSortOrder === "asc" ? "descending" : "ascending"}`}
+                onClick={() =>
+                  setSelectedSortOrder(normalizedState.sortOrder === "asc" ? "desc" : "asc")
+                }
+                aria-label={`Sort ${normalizedState.sortOrder === "asc" ? "descending" : "ascending"}`}
                 className="p-2 rounded-md border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:bg-gray-50 dark:hover:bg-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
               >
-                {selectedSortOrder === "asc" ? (
+                {normalizedState.sortOrder === "asc" ? (
                   <ArrowUpIcon className="h-4 w-4 text-gray-600 dark:text-gray-400" />
                 ) : (
                   <ArrowDownIcon className="h-4 w-4 text-gray-600 dark:text-gray-400" />
@@ -265,6 +320,32 @@ export const ProjectsExplorer = () => {
               <ProjectCard key={project.uid} project={project} index={index} />
             ))}
           </div>
+
+          {/* Crawlable pagination — ordinary links bots can follow without JS.
+              Rendered only in SSR mode; the Load More button below remains the
+              progressive-enhancement path for humans. */}
+          {(hasCrawlablePrev || hasCrawlableNext) && (
+            <nav aria-label="Pagination" className="flex justify-center items-center gap-4 py-8">
+              {hasCrawlablePrev && (
+                <Link
+                  href={buildProjectsPageHref(hrefState, effectivePage - 1)}
+                  rel="prev"
+                  className="px-4 py-2 rounded-md border border-gray-300 dark:border-zinc-700 text-sm font-medium text-gray-700 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors"
+                >
+                  Previous
+                </Link>
+              )}
+              {hasCrawlableNext && (
+                <Link
+                  href={buildProjectsPageHref(hrefState, effectivePage + 1)}
+                  rel="next"
+                  className="px-4 py-2 rounded-md border border-gray-300 dark:border-zinc-700 text-sm font-medium text-gray-700 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors"
+                >
+                  Next
+                </Link>
+              )}
+            </nav>
+          )}
 
           {/* Load More Button */}
           {hasNextPage && (

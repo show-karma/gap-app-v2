@@ -1,5 +1,6 @@
 import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
+import { isValidElement, type ReactElement, Suspense } from "react";
 
 /**
  * Smoke tests for top-level marketing pages (landing pages composed of
@@ -177,6 +178,24 @@ vi.mock("@/components/Pages/Projects", () => ({
   ProjectsStatsSection: () => <div data-testid="projects-stats" />,
 }));
 
+// The /projects page now fetches its first page server-side; stub the service so
+// the smoke render stays offline and deterministic.
+vi.mock("@/services/projects-explorer.service", () => ({
+  getExplorerProjectsPaginated: vi.fn().mockResolvedValue({
+    payload: [],
+    pagination: {
+      totalCount: 0,
+      page: 1,
+      limit: 50,
+      totalPages: 0,
+      nextPage: null,
+      prevPage: null,
+      hasNextPage: false,
+      hasPrevPage: false,
+    },
+  }),
+}));
+
 const renderPage = async (importer: () => Promise<{ default: React.ComponentType }>) => {
   const { default: Page } = await importer();
   return render(<Page />);
@@ -297,7 +316,25 @@ describe("/seeds marketing pages", () => {
 
 describe("/projects explorer page", () => {
   it("renders hero, explorer, stats", async () => {
-    await renderPage(() => import("@/app/projects/page"));
+    // Async server component that streams: the shell renders immediately while
+    // the explorer is deferred into a Suspense child. Render the shell, then
+    // resolve and render the deferred child (it cannot resume in a client tree).
+    const { default: ProjectsPage } = await import("@/app/projects/page");
+    const runAsyncPage = ProjectsPage as unknown as (props: {
+      searchParams: Promise<Record<string, string | string[] | undefined>>;
+    }) => Promise<ReactElement>;
+
+    const page = await runAsyncPage({ searchParams: Promise.resolve({}) });
+    render(page);
+
+    const children = (page.props as { children?: unknown }).children;
+    const list = Array.isArray(children) ? children : [children];
+    const suspense = list.find(
+      (child): child is ReactElement => isValidElement(child) && child.type === Suspense
+    );
+    const loader = (suspense?.props as { children: ReactElement }).children;
+    render(await (loader.type as (props: unknown) => Promise<ReactElement>)(loader.props));
+
     expect(screen.getByTestId("projects-hero")).toBeInTheDocument();
     expect(screen.getByTestId("projects-explorer")).toBeInTheDocument();
     expect(screen.getByTestId("projects-stats")).toBeInTheDocument();

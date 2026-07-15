@@ -1,6 +1,6 @@
 "use client";
 
-import { useInfiniteQuery } from "@tanstack/react-query";
+import { type InfiniteData, useInfiniteQuery } from "@tanstack/react-query";
 import { PROJECTS_EXPLORER_CONSTANTS } from "@/constants/projects-explorer";
 import { getExplorerProjectsPaginated } from "@/services/projects-explorer.service";
 import type { ExplorerSortByOptions, ExplorerSortOrder } from "@/types/explorer";
@@ -14,6 +14,10 @@ interface UseProjectsExplorerInfiniteOptions {
   limit?: number;
   enabled?: boolean;
   hasPayoutAddress?: boolean;
+  /** SSR seed: the server-rendered first page wrapped as InfiniteData. */
+  initialData?: InfiniteData<PaginatedProjectsResponse, number>;
+  /** Page the seed (or client retry) starts from. Defaults to 1. */
+  initialPage?: number;
 }
 
 /**
@@ -46,20 +50,29 @@ export const useProjectsExplorerInfinite = (options: UseProjectsExplorerInfinite
     limit = PROJECTS_EXPLORER_CONSTANTS.RESULT_LIMIT,
     enabled = true,
     hasPayoutAddress = false,
+    initialData,
+    initialPage = 1,
   } = options;
 
-  const query = useInfiniteQuery<PaginatedProjectsResponse, Error>({
+  const query = useInfiniteQuery<
+    PaginatedProjectsResponse,
+    Error,
+    InfiniteData<PaginatedProjectsResponse, number>,
+    ReturnType<typeof QUERY_KEYS.PROJECT.EXPLORER_INFINITE>,
+    number
+  >({
     queryKey: QUERY_KEYS.PROJECT.EXPLORER_INFINITE({
       search,
       sortBy,
       sortOrder,
       limit,
       hasPayoutAddress,
+      page: initialPage,
     }),
-    queryFn: async ({ pageParam = 1 }) => {
+    queryFn: async ({ pageParam }) => {
       return getExplorerProjectsPaginated({
         search,
-        page: pageParam as number,
+        page: pageParam,
         limit,
         sortBy,
         sortOrder,
@@ -70,11 +83,14 @@ export const useProjectsExplorerInfinite = (options: UseProjectsExplorerInfinite
     getNextPageParam: (lastPage) => {
       return lastPage.pagination.hasNextPage ? lastPage.pagination.page + 1 : undefined;
     },
-    initialPageParam: 1,
+    initialData,
+    initialPageParam: initialPage,
     enabled,
     staleTime: PROJECTS_EXPLORER_CONSTANTS.STALE_TIME_MS,
     gcTime: 1000 * 60 * 10, // 10 minutes
-    refetchOnMount: "always",
+    // A server seed is already fresh — don't refetch it on mount; without a seed
+    // keep the previous always-refetch behavior.
+    refetchOnMount: initialData ? false : "always",
   });
 
   // Flatten all pages into a single array of projects
