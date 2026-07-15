@@ -88,6 +88,10 @@ function healthyRoutes() {
     [`${CANONICAL}/project/---`]: () => htmlPage({ status: 410, robots: "noindex, follow" }),
     [`${CANONICAL}/project/-nan`]: () => htmlPage({ status: 404, robots: "noindex, follow" }),
     [`${CANONICAL}/project/test`]: () => htmlPage({ status: 410, robots: "noindex, follow" }),
+    [`${CANONICAL}/project/delete_test`]: () =>
+      htmlPage({ status: 404, robots: "noindex, follow" }),
+    [`${CANONICAL}/project/qa-bug-sweep-project-1752`]: () =>
+      htmlPage({ status: 410, robots: "noindex, follow" }),
 
     // Indexer decision endpoint → strict canonical-indexable root decision.
     [`${INDEXER}/v2/projects/${SLUG}/indexability?route=root`]: () =>
@@ -268,7 +272,7 @@ describe("verifyIndexability", () => {
   it("probes each exact banned slug at canonical /project/{slug}, requiring 404/410 + noindex", async () => {
     const report = await runVerify(makeFetch(healthyRoutes()));
 
-    for (const slug of ["-1", "---", "-nan", "test"]) {
+    for (const slug of ["-1", "---", "-nan", "test", "delete_test", "qa-bug-sweep-project-1752"]) {
       const check = byName(report, `banned-slug:${slug}`);
       assert.ok(check, `expected a per-slug check for banned slug ${slug}`);
       assert.equal(check.slug, slug);

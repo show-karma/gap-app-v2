@@ -20,7 +20,14 @@ const APEX_DEFAULT = "https://karmahq.xyz";
 const GAP_DEFAULT = "https://gap.karmahq.xyz";
 const INDEXER_DEFAULT = "https://gapapi.karmahq.xyz";
 
-const BANNED_PROJECT_SLUGS = Object.freeze(["-1", "---", "-nan", "test"]);
+const BANNED_PROJECT_SLUGS = Object.freeze([
+  "-1",
+  "---",
+  "-nan",
+  "test",
+  "delete_test",
+  "qa-bug-sweep-project-1752",
+]);
 const INVALID_PROBE_SLUG = "this-project-does-not-exist";
 const DEFAULT_TIMEOUT_MS = 15000;
 const MAX_SITEMAP_DEPTH = 12;
