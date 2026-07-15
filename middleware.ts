@@ -296,13 +296,17 @@ async function handleProjectIndexability(
   // the route, otherwise the normalized path parsed from the request.
   const finalPath = decision.outcome === "redirect" ? decision.to : parsed.normalizedPath;
 
-  // One 308 to the canonical host+path whenever we are on an alias host or the
-  // request is not already at its canonical path (legacy/identifier drift).
+  // One 308 whenever we are on an alias host or the request is not already at
+  // its canonical path (legacy/identifier drift). Only the real production alias
+  // hosts (karmahq.xyz / gap.karmahq.xyz) collapse onto the canonical www
+  // origin; every other host (Vercel preview, staging, localhost, canonical www)
+  // keeps the redirect on the request's own origin so a preview/staging
+  // normalization never emits a link to production. Query is preserved either way.
   if (isAliasHost || finalPath !== path) {
-    return NextResponse.redirect(
-      new URL(`${CANONICAL_ORIGIN}${finalPath}${request.nextUrl.search}`),
-      308
-    );
+    const target = isAliasHost
+      ? new URL(`${CANONICAL_ORIGIN}${finalPath}${request.nextUrl.search}`)
+      : new URL(`${finalPath}${request.nextUrl.search}`, request.url);
+    return NextResponse.redirect(target, 308);
   }
 
   // Already canonical: pass through. A noindex-follow decision or any stateful

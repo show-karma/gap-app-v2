@@ -332,3 +332,66 @@ describe("middleware indexability", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 });
+
+/**
+ * Canonical-host origin policy (ADR 0001). A normalized/relocated project path
+ * must be redirected on the *right* origin: only the real production alias hosts
+ * (karmahq.xyz / gap.karmahq.xyz) collapse onto https://www.karmahq.xyz; every
+ * other host — Vercel preview, staging, localhost, and the canonical www itself
+ * — keeps the redirect on its own origin so a preview normalization never leaks
+ * a link to production. The roadmap tab is a valid route, so its collapse to the
+ * canonical root comes from an indexer `redirect` decision.
+ */
+describe("middleware canonical-host origin policy", () => {
+  const roadmapCollapse = {
+    outcome: "redirect",
+    from: "/project/abc123-1/roadmap",
+    to: "/project/abc123-1",
+  };
+
+  it("redirects a Vercel-preview roadmap collapse on the request's own origin, not production www", async () => {
+    fetchMock.mockResolvedValue(decisionResponse(roadmapCollapse));
+
+    const response = await middleware(
+      createRequest("gap-app-v2-git-preview.vercel.app", "/project/abc123-1/roadmap")
+    );
+
+    expect(response?.status).toBe(308);
+    expect(response?.headers.get("location")).toBe(
+      "https://gap-app-v2-git-preview.vercel.app/project/abc123-1"
+    );
+  });
+
+  it("redirects a staging roadmap collapse on the staging origin, preserving the query", async () => {
+    fetchMock.mockResolvedValue(decisionResponse(roadmapCollapse));
+
+    const response = await middleware(
+      createRequest("staging.karmahq.xyz", "/project/abc123-1/roadmap", "utm_source=x")
+    );
+
+    expect(response?.status).toBe(308);
+    expect(response?.headers.get("location")).toBe(
+      "https://staging.karmahq.xyz/project/abc123-1?utm_source=x"
+    );
+  });
+
+  it("collapses an alias-host roadmap normalization into one hop to production www", async () => {
+    fetchMock.mockResolvedValue(decisionResponse(roadmapCollapse));
+
+    const response = await middleware(createRequest("karmahq.xyz", "/project/abc123-1/roadmap"));
+
+    expect(response?.status).toBe(308);
+    expect(response?.headers.get("location")).toBe("https://www.karmahq.xyz/project/abc123-1");
+  });
+
+  it("keeps a canonical-www roadmap normalization on www", async () => {
+    fetchMock.mockResolvedValue(decisionResponse(roadmapCollapse));
+
+    const response = await middleware(
+      createRequest("www.karmahq.xyz", "/project/abc123-1/roadmap")
+    );
+
+    expect(response?.status).toBe(308);
+    expect(response?.headers.get("location")).toBe("https://www.karmahq.xyz/project/abc123-1");
+  });
+});
