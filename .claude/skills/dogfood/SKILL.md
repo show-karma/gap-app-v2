@@ -187,7 +187,7 @@ agent-browser --session {SESSION} close
 
 3. Tell the user the report is ready and summarize findings: total issues, breakdown by severity, and the most critical items.
 
-## Interaction validity (avoid false negatives)
+## Interaction validity (avoid false positives)
 
 Before reporting any interaction failure, make sure the interaction itself was valid. A driver mistake is not an app bug. These rules are mandatory:
 
