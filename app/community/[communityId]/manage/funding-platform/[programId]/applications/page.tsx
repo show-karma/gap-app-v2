@@ -19,7 +19,7 @@ import { Link } from "@/src/components/navigation/Link";
 import { AdminOnly, FundingPlatformGuard, useIsFundingPlatformAdmin } from "@/src/core/rbac";
 import { usePermissionContext } from "@/src/core/rbac/context/permission-context";
 import type { IFundingApplication } from "@/types/funding-platform";
-import { getBrowseApplicationsUrl } from "@/utilities/fundingPlatformUrls";
+import { getBrowseApplicationsRedirectUrl } from "@/utilities/fundingPlatformUrls";
 import { PAGES } from "@/utilities/pages";
 import { useWhitelabel } from "@/utilities/whitelabel-context";
 
@@ -72,7 +72,13 @@ export default function ApplicationsPage() {
 
   // DEV-496: a non-reviewer handed the review-queue link is sent to the public
   // browse-applications list for the program rather than an "Access Denied" box.
-  const applicantRedirect = getBrowseApplicationsUrl(communityId, programId, whitelabelOrigin);
+  // Same-origin so the redirect stays on the current deployment (staging must not
+  // bounce to the production tenant domain).
+  const applicantRedirect = getBrowseApplicationsRedirectUrl(
+    communityId,
+    programId,
+    whitelabelOrigin
+  );
 
   const { data: programConfig } = useProgramConfig(programId);
   const { applications: _applications } = useFundingApplications(programId, initialFilters);
