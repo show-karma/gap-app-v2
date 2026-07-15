@@ -74,7 +74,9 @@ function deriveTimeline(sortedReports: Array<{ id: string; runDate: string }>): 
     const monthIdx = Number(monthStr) - 1;
     const monthAbbr = MONTH_ABBR[monthIdx] ?? monthStr;
     return {
-      key: r.runDate,
+      // Keyed by report id, not runDate: two configs can publish on the same
+      // day, and a runDate key would collide and scrub to the wrong report.
+      key: r.id,
       year: Number(yearStr),
       label: `${monthAbbr} ${Number(dayStr)}`,
       hasReport: true,
@@ -204,13 +206,17 @@ export function PublicReportListPage({ community }: Props) {
             return (
               <article
                 key={report.id}
-                data-report-key={report.runDate}
+                data-report-key={report.id}
                 className={`py-8 ${
                   index !== 0 ? "border-t border-zinc-200 dark:border-zinc-800" : ""
                 }`}
               >
                 <Link
-                  href={PAGES.COMMUNITY.REPORT_DETAIL(slug, report.runDate)}
+                  href={PAGES.COMMUNITY.REPORT_DETAIL(
+                    slug,
+                    report.runDate,
+                    report.reportConfigSlug
+                  )}
                   className="group/link flex items-start gap-8"
                 >
                   <div className="min-w-0 flex-1">

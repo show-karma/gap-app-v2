@@ -175,6 +175,27 @@ export async function getPublishedReportByRunDate(
   return res.json() as Promise<PortfolioReport>;
 }
 
+/**
+ * Fetch the report a specific config published on `runDate`. Preferred over
+ * {@link getPublishedReportByRunDate}: a run date identifies at most one report
+ * *per config*, so the date alone cannot address a report when a community runs
+ * two configs on the same day.
+ */
+export async function getPublishedReportByRunDateAndConfigSlug(
+  communitySlug: string,
+  runDate: string,
+  configSlug: string
+): Promise<PortfolioReport | null> {
+  const res = await fetch(
+    `${API_URL}/v2/communities/${communitySlug}/reports/published/${encodeURIComponent(
+      runDate
+    )}/${encodeURIComponent(configSlug)}`
+  );
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(`API error: ${res.status} ${res.statusText}`);
+  return res.json() as Promise<PortfolioReport>;
+}
+
 // ── Data export (admin-only) ─────────────────────────────────
 
 function parseFilename(contentDisposition: string | undefined, fallback: string): string {
