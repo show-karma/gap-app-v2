@@ -37,6 +37,32 @@ interface Props {
   reportId: string;
 }
 
+const TITLE_INPUT_ID = "portfolio-report-title";
+/** Mirrors `UpdateReportContentBodySchema.title` max on the indexer. */
+const TITLE_MAX_LENGTH = 200;
+// Static example rather than the config's name: this page loads the report from
+// the admin endpoint, whose response has no `reportConfigName` — only the public
+// list projects it.
+const TITLE_PLACEHOLDER = "e.g. Monthly Pods Report — June 2026";
+
+interface EditState {
+  open: boolean;
+  draft: string;
+  titleDraft: string;
+  /** Server content when the dialog opened. */
+  baseContent: string;
+  /** Server title when the dialog opened, "" for untitled. */
+  baseTitle: string;
+}
+
+const CLOSED_EDIT_STATE: EditState = {
+  open: false,
+  draft: "",
+  titleDraft: "",
+  baseContent: "",
+  baseTitle: "",
+};
+
 /**
  * Admin preview + actions page.
  *
@@ -61,10 +87,12 @@ export function PortfolioReportEditorPage({ community, reportId }: Props) {
   // Edit-dialog state lives in one object so we can update {open, draft}
   // atomically in event handlers. Avoids a chain of setState updates
   // across useState + useEffect.
-  const [editState, setEditState] = useState<{ open: boolean; draft: string }>({
-    open: false,
-    draft: "",
-  });
+  //
+  // `base*` snapshot what the server held when the dialog opened. Dirty checks
+  // compare drafts against those snapshots rather than against live `report`,
+  // which can refresh underneath an open dialog — otherwise a title-only save
+  // would write the stale seeded content back over the newer body.
+  const [editState, setEditState] = useState<EditState>(CLOSED_EDIT_STATE);
 
   const isReportRegenerating = report ? isReportGenerating(report) : false;
   // Edit dialog hides automatically while a regenerate is in flight — the
@@ -101,12 +129,26 @@ export function PortfolioReportEditorPage({ community, reportId }: Props) {
   const generating = isReportGenerating(report);
   const failed = report.status === "failed";
 
+  // Drafts are compared against the snapshot taken when the dialog opened, not
+  // against live `report` — so a background refresh is never mistaken for a
+  // user edit. Before the dialog has ever opened both sides are "", so a
+  // titled report doesn't read as dirty.
+  const hasContentEdits = editState.draft !== editState.baseContent;
+  const hasTitleEdits = editState.titleDraft.trim() !== editState.baseTitle;
+  const hasUnsavedEdits = hasContentEdits || hasTitleEdits;
+
   const navigateBack = () => {
     routerPush(PAGES.ADMIN.PORTFOLIO_REPORTS(slug));
   };
 
   const openEditDialog = () => {
-    setEditState({ open: true, draft: report.content ?? "" });
+    setEditState({
+      open: true,
+      draft: report.content ?? "",
+      titleDraft: report.title ?? "",
+      baseContent: report.content ?? "",
+      baseTitle: report.title ?? "",
+    });
   };
 
   const closeEditDialog = () => {
@@ -140,7 +182,7 @@ export function PortfolioReportEditorPage({ community, reportId }: Props) {
       // stale draft would surface a misleading "unsaved edits" warning
       // on the next Regenerate click.
       if (editState.open) {
-        setEditState({ open: false, draft: "" });
+        setEditState(CLOSED_EDIT_STATE);
         toast("Closed Edit — report is regenerating. Reopen when it finishes.", {
           icon: "ℹ️",
         });
@@ -153,22 +195,27 @@ export function PortfolioReportEditorPage({ community, reportId }: Props) {
 
   const handleSaveEdit = async () => {
     try {
-      await updateContentMutation.mutateAsync({ reportId, content: editState.draft });
+      await updateContentMutation.mutateAsync({
+        reportId,
+        // Send the draft only when the user actually edited the body. Otherwise
+        // send the server's current content, so saving a title alone can't push
+        // stale seeded content over a body that refreshed while we were open.
+        content: hasContentEdits ? editState.draft : (report.content ?? ""),
+        // `undefined` leaves the stored title untouched; an emptied field sends
+        // null to clear it (the API rejects ""), restoring the config-name
+        // fallback.
+        title: hasTitleEdits ? editState.titleDraft.trim() || null : undefined,
+      });
       // Atomically close + clear so the brief window before React Query's
       // cache update propagates doesn't make `hasUnsavedEdits` falsely true.
-      setEditState({ open: false, draft: "" });
-      toast.success("Report content saved");
+      setEditState(CLOSED_EDIT_STATE);
+      toast.success("Report saved");
     } catch (err) {
       toast.error(`Failed to save: ${err instanceof Error ? err.message : "Unknown error"}`);
     }
   };
 
   const runDateLabel = formatRunDate(report.runDate).label;
-
-  // True when the user has typed in the Edit textarea and their local draft
-  // diverges from the server's saved content. We only warn about *user* edits,
-  // not the initial empty state before the dialog has ever been opened.
-  const hasUnsavedEdits = editState.draft !== "" && editState.draft !== (report.content ?? "");
 
   return (
     <div className="flex h-full flex-col">
@@ -215,14 +262,37 @@ export function PortfolioReportEditorPage({ community, reportId }: Props) {
       >
         <DialogContent className="max-w-4xl">
           <DialogHeader>
-            <DialogTitle>Edit report content</DialogTitle>
+            <DialogTitle>Edit report</DialogTitle>
             <DialogDescription>
-              Edits the rendered HTML directly. Regenerating the report will overwrite these
-              changes.
+              Edits the rendered HTML directly. Regenerating the report will overwrite the content,
+              but keeps the title.
             </DialogDescription>
           </DialogHeader>
+          <div className="flex flex-col gap-1.5">
+            <label
+              htmlFor={TITLE_INPUT_ID}
+              className="text-xs font-medium text-zinc-700 dark:text-zinc-300"
+            >
+              Title
+            </label>
+            <input
+              id={TITLE_INPUT_ID}
+              type="text"
+              className="w-full rounded border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+              value={editState.titleDraft}
+              onChange={(event) =>
+                setEditState((prev) => ({ ...prev, titleDraft: event.target.value }))
+              }
+              maxLength={TITLE_MAX_LENGTH}
+              placeholder={TITLE_PLACEHOLDER}
+            />
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              Name the period this report covers — it&apos;s what readers see in the public list.
+              Leave empty to fall back to the report config&apos;s name.
+            </p>
+          </div>
           <textarea
-            className="h-[60vh] w-full resize-none rounded border border-zinc-300 bg-white p-3 font-mono text-xs text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+            className="h-[50vh] w-full resize-none rounded border border-zinc-300 bg-white p-3 font-mono text-xs text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
             value={editState.draft}
             onChange={(event) => setEditState((prev) => ({ ...prev, draft: event.target.value }))}
             spellCheck={false}
@@ -238,9 +308,7 @@ export function PortfolioReportEditorPage({ community, reportId }: Props) {
             </Button>
             <Button
               onClick={handleSaveEdit}
-              disabled={
-                updateContentMutation.isPending || editState.draft === (report.content ?? "")
-              }
+              disabled={updateContentMutation.isPending || !hasUnsavedEdits}
             >
               {updateContentMutation.isPending ? "Saving…" : "Save"}
             </Button>
@@ -261,10 +329,11 @@ export function PortfolioReportEditorPage({ community, reportId }: Props) {
           </Button>
           <div>
             <h1 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-              {runDateLabel}
+              {report.title ?? runDateLabel}
             </h1>
             <div className="flex items-center gap-2 text-xs text-zinc-500">
               <GenerationStatusBadge status={report.status} />
+              {report.title && <span>{runDateLabel}</span>}
               <span>Model: {report.modelId}</span>
               {report.tokenUsage && (
                 <span>{report.tokenUsage.totalTokens.toLocaleString()} tokens</span>

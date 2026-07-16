@@ -100,13 +100,19 @@ export async function getReportCharts(
   return data;
 }
 
+/**
+ * `title` is tri-state: omit it to preserve the stored title, pass a string to
+ * set it, or pass `null` to clear it back to the report config's name.
+ */
 export async function updateReportContent(
   communitySlug: string,
   reportId: string,
-  content: string
+  content: string,
+  title?: string | null
 ): Promise<PortfolioReport> {
   const { data } = await apiClient.put(`/v2/communities/${communitySlug}/reports/${reportId}`, {
     content,
+    ...(title !== undefined && { title }),
   });
   return data;
 }

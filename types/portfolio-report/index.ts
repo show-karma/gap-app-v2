@@ -82,6 +82,14 @@ export interface PortfolioReport {
   runDate: string;
   status: PortfolioReportStatus;
   /**
+   * Admin-authored title for this specific report (e.g. "Monthly Pods Report
+   * — June 2026"). `null` when untitled, which is every report generated
+   * before DEV-520 — readers fall back to `reportConfigName`. Exists because
+   * the period a report covers is recorded nowhere: `runDate` is the
+   * generation date, not the covered range.
+   */
+  title: string | null;
+  /**
    * Rendered report body. New reports are full `<!DOCTYPE html>`
    * documents emitted by the agentic generator's structured-document
    * pipeline. Pre-migration rows carry markdown text (one-time

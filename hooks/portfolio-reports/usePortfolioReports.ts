@@ -257,8 +257,15 @@ export function useUnpublishReport(communitySlug: string) {
 export function useUpdateReportContent(communitySlug: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ reportId, content }: { reportId: string; content: string }) =>
-      portfolioService.updateReportContent(communitySlug, reportId, content),
+    mutationFn: ({
+      reportId,
+      content,
+      title,
+    }: {
+      reportId: string;
+      content: string;
+      title?: string | null;
+    }) => portfolioService.updateReportContent(communitySlug, reportId, content, title),
     onSuccess: (data: PortfolioReport) => {
       queryClient.setQueryData(QUERY_KEYS.report(communitySlug, data.id), data);
       if (data.status === "published") {
