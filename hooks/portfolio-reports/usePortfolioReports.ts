@@ -20,6 +20,12 @@ const QUERY_KEYS = {
   published: (slug: string) => ["portfolio-reports-published", slug] as const,
   publishedRunDate: (slug: string, runDate: string) =>
     ["portfolio-report-published", slug, runDate] as const,
+  /**
+   * Deliberately nested under `publishedRunDate` so the existing
+   * publish/unpublish invalidations prefix-match and clear this too.
+   */
+  publishedRunDateConfig: (slug: string, runDate: string, configSlug: string) =>
+    ["portfolio-report-published", slug, runDate, configSlug] as const,
 };
 
 // ── Config queries ───────────────────────────────────────────
@@ -251,8 +257,15 @@ export function useUnpublishReport(communitySlug: string) {
 export function useUpdateReportContent(communitySlug: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ reportId, content }: { reportId: string; content: string }) =>
-      portfolioService.updateReportContent(communitySlug, reportId, content),
+    mutationFn: ({
+      reportId,
+      content,
+      title,
+    }: {
+      reportId: string;
+      content: string;
+      title?: string | null;
+    }) => portfolioService.updateReportContent(communitySlug, reportId, content, title),
     onSuccess: (data: PortfolioReport) => {
       queryClient.setQueryData(QUERY_KEYS.report(communitySlug, data.id), data);
       if (data.status === "published") {
@@ -277,10 +290,28 @@ export function usePublishedReports(communitySlug: string) {
   });
 }
 
-export function usePublishedReport(communitySlug: string, runDate: string) {
+/**
+ * Fetches the published report for a run date. Pass `configSlug` to address a
+ * specific report — without it, a date shared by two configs resolves to the
+ * most recently published one.
+ */
+export function usePublishedReport(
+  communitySlug: string,
+  runDate: string,
+  configSlug?: string | null
+) {
   return useQuery({
-    queryKey: QUERY_KEYS.publishedRunDate(communitySlug, runDate),
-    queryFn: () => portfolioService.getPublishedReportByRunDate(communitySlug, runDate),
+    queryKey: configSlug
+      ? QUERY_KEYS.publishedRunDateConfig(communitySlug, runDate, configSlug)
+      : QUERY_KEYS.publishedRunDate(communitySlug, runDate),
+    queryFn: () =>
+      configSlug
+        ? portfolioService.getPublishedReportByRunDateAndConfigSlug(
+            communitySlug,
+            runDate,
+            configSlug
+          )
+        : portfolioService.getPublishedReportByRunDate(communitySlug, runDate),
     enabled: Boolean(communitySlug && runDate),
   });
 }
@@ -297,14 +328,27 @@ export function usePublishedReport(communitySlug: string, runDate: string) {
  * surface a failed/generating/published row and expose it to the document view
  * as a draft preview.
  */
-export function useAdminReportByRunDate(communitySlug: string, runDate: string, enabled: boolean) {
+/**
+ * Finds the draft an admin can preview at a report URL. `configSlug` narrows to
+ * a specific config: matching on `runDate` alone returns whichever draft comes
+ * first when two configs ran the same day, which is not necessarily the one the
+ * URL points at.
+ */
+export function useAdminReportByRunDate(
+  communitySlug: string,
+  runDate: string,
+  enabled: boolean,
+  configSlug?: string
+) {
   return useQuery({
-    queryKey: [...QUERY_KEYS.reports(communitySlug), "by-run-date", runDate],
+    queryKey: [...QUERY_KEYS.reports(communitySlug), "by-run-date", runDate, configSlug ?? null],
     queryFn: async () => {
       const reports = await portfolioService.listReports(communitySlug);
-      return (
-        reports.find((report) => report.runDate === runDate && report.status === "draft") ?? null
+      const drafts = reports.filter(
+        (report) => report.runDate === runDate && report.status === "draft"
       );
+      if (!configSlug) return drafts[0] ?? null;
+      return drafts.find((report) => report.reportConfigSlug === configSlug) ?? null;
     },
     enabled: Boolean(communitySlug && runDate) && enabled,
   });

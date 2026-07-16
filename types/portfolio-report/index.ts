@@ -71,9 +71,24 @@ export interface PortfolioReport {
    * has been deleted.
    */
   reportConfigName?: string | null;
+  /**
+   * URL segment identifying the originating ReportConfig. Needed because
+   * `runDate` alone is ambiguous — two configs can publish on the same day.
+   * Populated by the public list endpoint only; `null` when the config has
+   * been deleted, in which case callers fall back to the run-date-only URL.
+   */
+  reportConfigSlug?: string | null;
   communityId: string;
   runDate: string;
   status: PortfolioReportStatus;
+  /**
+   * Admin-authored title for this specific report (e.g. "Monthly Pods Report
+   * — June 2026"). `null` when untitled, which is every report generated
+   * before DEV-520 — readers fall back to `reportConfigName`. Exists because
+   * the period a report covers is recorded nowhere: `runDate` is the
+   * generation date, not the covered range.
+   */
+  title: string | null;
   /**
    * Rendered report body. New reports are full `<!DOCTYPE html>`
    * documents emitted by the agentic generator's structured-document
