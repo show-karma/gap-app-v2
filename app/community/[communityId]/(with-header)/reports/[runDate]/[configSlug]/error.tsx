@@ -3,7 +3,7 @@
 import { AlertTriangle, RefreshCw } from "lucide-react";
 import { Link } from "@/src/components/navigation/Link";
 
-export default function ReportMonthError({
+export default function ReportError({
   error,
   reset,
 }: {
