@@ -40,6 +40,10 @@ interface Props {
 const TITLE_INPUT_ID = "portfolio-report-title";
 /** Mirrors `UpdateReportContentBodySchema.title` max on the indexer. */
 const TITLE_MAX_LENGTH = 200;
+// Static example rather than the config's name: this page loads the report from
+// the admin endpoint, whose response has no `reportConfigName` — only the public
+// list projects it.
+const TITLE_PLACEHOLDER = "e.g. Monthly Pods Report — June 2026";
 
 interface EditState {
   open: boolean;
@@ -125,6 +129,14 @@ export function PortfolioReportEditorPage({ community, reportId }: Props) {
   const generating = isReportGenerating(report);
   const failed = report.status === "failed";
 
+  // Drafts are compared against the snapshot taken when the dialog opened, not
+  // against live `report` — so a background refresh is never mistaken for a
+  // user edit. Before the dialog has ever opened both sides are "", so a
+  // titled report doesn't read as dirty.
+  const hasContentEdits = editState.draft !== editState.baseContent;
+  const hasTitleEdits = editState.titleDraft.trim() !== editState.baseTitle;
+  const hasUnsavedEdits = hasContentEdits || hasTitleEdits;
+
   const navigateBack = () => {
     routerPush(PAGES.ADMIN.PORTFOLIO_REPORTS(slug));
   };
@@ -205,14 +217,6 @@ export function PortfolioReportEditorPage({ community, reportId }: Props) {
 
   const runDateLabel = formatRunDate(report.runDate).label;
 
-  // Drafts are compared against the snapshot taken when the dialog opened, not
-  // against live `report` — so a background refresh is never mistaken for a
-  // user edit. Before the dialog has ever opened both sides are "", so a
-  // titled report doesn't read as dirty.
-  const hasContentEdits = editState.draft !== editState.baseContent;
-  const hasTitleEdits = editState.titleDraft.trim() !== editState.baseTitle;
-  const hasUnsavedEdits = hasContentEdits || hasTitleEdits;
-
   return (
     <div className="flex h-full flex-col">
       <Dialog open={showRegenerateDialog} onOpenChange={setShowRegenerateDialog}>
@@ -280,7 +284,7 @@ export function PortfolioReportEditorPage({ community, reportId }: Props) {
                 setEditState((prev) => ({ ...prev, titleDraft: event.target.value }))
               }
               maxLength={TITLE_MAX_LENGTH}
-              placeholder={report.reportConfigName ?? "e.g. Monthly Pods Report — June 2026"}
+              placeholder={TITLE_PLACEHOLDER}
             />
             <p className="text-xs text-zinc-500 dark:text-zinc-400">
               Name the period this report covers — it&apos;s what readers see in the public list.
