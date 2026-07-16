@@ -13,8 +13,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { usePublishedReports } from "@/hooks/portfolio-reports/usePortfolioReports";
-import type { PortfolioReport } from "@/types/portfolio-report";
+import {
+  usePublishedReports,
+  usePublishedReportTypes,
+} from "@/hooks/portfolio-reports/usePortfolioReports";
+import type { PortfolioReport, ReportType } from "@/types/portfolio-report";
 import type { Community } from "@/types/v2/community";
 import { PAGES } from "@/utilities/pages";
 import { reportExcerpt } from "@/utilities/portfolio-reports/excerpt";
@@ -31,7 +34,8 @@ interface Props {
  */
 const ALL_TYPES = "all";
 
-interface ReportType {
+/** A single option in the type dropdown. `id` matches `report.reportConfigId`. */
+interface ReportTypeOption {
   id: string;
   label: string;
 }
@@ -102,12 +106,20 @@ function resolveReportTitle(report: PortfolioReport): string {
   );
 }
 
+/** The report types the community exposes, mapped to dropdown options. */
+function toTypeOptions(types: ReportType[]): ReportTypeOption[] {
+  return types
+    .map((type) => ({ id: type.id, label: type.name }))
+    .sort((a, b) => a.label.localeCompare(b.label));
+}
+
 /**
- * The report *config* is the closest thing the system has to a "report type" —
- * each one is effectively a template ("Monthly Pods Report", "Bi-Weekly
- * Progress Report"), and every report names its originating config.
+ * Fallback used only when the `/reports/types` endpoint is unavailable (e.g.
+ * deployed ahead of the backend): derive options from the published reports on
+ * hand. Narrower than the endpoint — a config with no published report can't
+ * appear this way — but it keeps the filter working rather than vanishing.
  */
-function deriveReportTypes(reports: PortfolioReport[]): ReportType[] {
+function deriveReportTypesFromReports(reports: PortfolioReport[]): ReportTypeOption[] {
   const byId = new Map<string, string>();
   for (const report of reports) {
     if (!byId.has(report.reportConfigId)) {
@@ -194,7 +206,7 @@ function ReportTypeFilterSelect({
   value,
   onChange,
 }: {
-  types: ReportType[];
+  types: ReportTypeOption[];
   value: string;
   onChange: (next: string) => void;
 }) {
@@ -221,6 +233,7 @@ function ReportTypeFilterSelect({
 export function PublicReportListPage({ community }: Props) {
   const slug = community.details.slug;
   const { data: reports, isLoading, isError, refetch } = usePublishedReports(slug);
+  const { data: reportTypeData } = usePublishedReportTypes(slug);
   const [activeKey, setActiveKey] = useState<string | null>(null);
   const sectionsRef = useRef<HTMLDivElement>(null);
   const seededRef = useRef(false);
@@ -231,7 +244,16 @@ export function PublicReportListPage({ community }: Props) {
     [reports]
   );
 
-  const reportTypes = useMemo(() => deriveReportTypes(sortedReports), [sortedReports]);
+  // Prefer the types endpoint — it lists a config as soon as it exists, even
+  // before its first report. Fall back to deriving from the reports on hand
+  // only when the endpoint has nothing to give (unreachable, or still loading).
+  const reportTypes = useMemo(
+    () =>
+      reportTypeData && reportTypeData.length > 0
+        ? toTypeOptions(reportTypeData)
+        : deriveReportTypesFromReports(sortedReports),
+    [reportTypeData, sortedReports]
+  );
 
   const filteredReports = useMemo(
     () =>

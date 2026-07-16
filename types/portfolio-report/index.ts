@@ -9,6 +9,18 @@ export interface ReportSchedule {
   ends: ScheduleEnds;
 }
 
+/**
+ * A selectable report type on the public list — the redacted identity of a
+ * report config (no prompt or other internals). Returned by the public
+ * `/reports/types` endpoint: one per config that is active or has a published
+ * report, so a new type is filterable before its first report ships.
+ */
+export interface ReportType {
+  id: string;
+  name: string;
+  slug: string;
+}
+
 export interface ReportConfig {
   id: string;
   communityId: string;

@@ -18,6 +18,7 @@ const QUERY_KEYS = {
   reportCharts: (slug: string, id: string, authenticated: boolean) =>
     ["portfolio-report-charts", slug, id, authenticated ? "auth" : "public"] as const,
   published: (slug: string) => ["portfolio-reports-published", slug] as const,
+  publishedTypes: (slug: string) => ["portfolio-report-types", slug] as const,
   publishedRunDate: (slug: string, runDate: string) =>
     ["portfolio-report-published", slug, runDate] as const,
   /**
@@ -286,6 +287,14 @@ export function usePublishedReports(communitySlug: string) {
   return useQuery({
     queryKey: QUERY_KEYS.published(communitySlug),
     queryFn: () => portfolioService.getPublishedReports(communitySlug),
+    enabled: Boolean(communitySlug),
+  });
+}
+
+export function usePublishedReportTypes(communitySlug: string) {
+  return useQuery({
+    queryKey: QUERY_KEYS.publishedTypes(communitySlug),
+    queryFn: () => portfolioService.getPublishedReportTypes(communitySlug),
     enabled: Boolean(communitySlug),
   });
 }

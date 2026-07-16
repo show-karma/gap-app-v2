@@ -7,6 +7,7 @@ import type {
   ReportExportDownload,
   ReportExportManifest,
   ReportSnapshotSource,
+  ReportType,
   UpdateReportConfigRequest,
 } from "@/types/portfolio-report";
 import { createAuthenticatedApiClient } from "@/utilities/auth/api-client";
@@ -163,6 +164,15 @@ export async function unpublishReport(
 
 export async function getPublishedReports(communitySlug: string): Promise<PortfolioReport[]> {
   return fetchPublic<PortfolioReport[]>(`/v2/communities/${communitySlug}/reports/published`);
+}
+
+/**
+ * The selectable report types for a community's public report list — one per
+ * config that is active or has a published report. Drives the type filter, so
+ * a newly-created type is filterable before its first report ships.
+ */
+export async function getPublishedReportTypes(communitySlug: string): Promise<ReportType[]> {
+  return fetchPublic<ReportType[]>(`/v2/communities/${communitySlug}/reports/types`);
 }
 
 /**

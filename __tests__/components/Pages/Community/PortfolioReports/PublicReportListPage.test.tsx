@@ -2,7 +2,10 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
 import { PublicReportListPage } from "@/components/Pages/Community/PortfolioReports/PublicReportListPage";
-import { usePublishedReports } from "@/hooks/portfolio-reports/usePortfolioReports";
+import {
+  usePublishedReports,
+  usePublishedReportTypes,
+} from "@/hooks/portfolio-reports/usePortfolioReports";
 
 // `initialType` seeds the query param, standing in for a URL arriving with
 // `?type=` already set (a shared or reloaded link).
@@ -50,6 +53,7 @@ vi.mock("@/components/ui/select", () => ({
 vi.mock("@/hooks/portfolio-reports/usePortfolioReports");
 
 const mockUsePublishedReports = vi.mocked(usePublishedReports);
+const mockUsePublishedReportTypes = vi.mocked(usePublishedReportTypes);
 
 const community = {
   uid: "community-1",
@@ -132,6 +136,10 @@ describe("PublicReportListPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockNuqs.initialType = null;
+    // Default: types endpoint gives nothing, so the dropdown falls back to
+    // deriving from the published reports each test sets up. Tests that
+    // exercise the endpoint override this.
+    mockUsePublishedReportTypes.mockReturnValue({ data: undefined } as any);
   });
 
   describe("loading, error, and empty states", () => {
@@ -349,6 +357,82 @@ describe("PublicReportListPage", () => {
       const links = hrefs();
       expect(links).toContain(`/community/filecoin/reports/${SAME_DATE}/quarterly-review`);
       expect(new Set(links).size).toBe(links.length);
+    });
+  });
+
+  describe("report types from the endpoint", () => {
+    it("lists a report type that has no published reports yet", () => {
+      // The reason this endpoint exists: a config the user just created, with
+      // nothing published, must still be filterable.
+      mockUsePublishedReports.mockReturnValue({
+        data: [createReport({ reportConfigId: "config-pods" })],
+        isLoading: false,
+      } as any);
+      mockUsePublishedReportTypes.mockReturnValue({
+        data: [
+          { id: "config-pods", name: "Monthly Pods Report", slug: "monthly-pods-report" },
+          { id: "config-empty", name: "Brand New Type", slug: "brand-new-type" },
+        ],
+      } as any);
+
+      render(<PublicReportListPage community={community} />);
+
+      const options = screen.getAllByRole("option").map((o) => o.textContent);
+      expect(options).toEqual(["All report types", "Brand New Type", "Monthly Pods Report"]);
+    });
+
+    it("shows the empty state when a report-less type is selected", async () => {
+      const user = userEvent.setup();
+      mockUsePublishedReports.mockReturnValue({
+        data: [createReport({ reportConfigId: "config-pods" })],
+        isLoading: false,
+      } as any);
+      mockUsePublishedReportTypes.mockReturnValue({
+        data: [
+          { id: "config-pods", name: "Monthly Pods Report", slug: "monthly-pods-report" },
+          { id: "config-empty", name: "Brand New Type", slug: "brand-new-type" },
+        ],
+      } as any);
+
+      render(<PublicReportListPage community={community} />);
+      await user.selectOptions(screen.getByLabelText(/filter reports by type/i), "config-empty");
+
+      expect(screen.getByText(/no reports of this type/i)).toBeInTheDocument();
+    });
+
+    it("prefers endpoint types over deriving from reports", () => {
+      // Reports carry one config; the endpoint knows two. The endpoint wins.
+      mockUsePublishedReports.mockReturnValue({
+        data: [createReport({ reportConfigId: "config-pods" })],
+        isLoading: false,
+      } as any);
+      mockUsePublishedReportTypes.mockReturnValue({
+        data: [
+          { id: "config-pods", name: "Monthly Pods Report", slug: "monthly-pods-report" },
+          { id: "config-other", name: "Other Type", slug: "other-type" },
+        ],
+      } as any);
+
+      render(<PublicReportListPage community={community} />);
+
+      expect(screen.getAllByRole("option")).toHaveLength(3);
+    });
+
+    it("falls back to report-derived types when the endpoint is unavailable", () => {
+      // Deploy-order safety: FE shipped ahead of the backend, so the endpoint
+      // 404s and the hook has no data. The filter still works off the reports.
+      mockUsePublishedReports.mockReturnValue({ data: filecoinReports(), isLoading: false } as any);
+      mockUsePublishedReportTypes.mockReturnValue({ data: undefined } as any);
+
+      render(<PublicReportListPage community={community} />);
+
+      const options = screen.getAllByRole("option").map((o) => o.textContent);
+      expect(options).toEqual([
+        "All report types",
+        "Bi-Weekly Progress Report",
+        "Filecoin ProPGF Monthly",
+        "Monthly Pods Report",
+      ]);
     });
   });
 
