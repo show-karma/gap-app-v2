@@ -3,11 +3,10 @@
 import { PencilIcon } from "@heroicons/react/24/outline";
 import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
-import { useEffect } from "react";
-import type { Hex } from "viem";
 import { DeleteMemberDialog } from "@/components/Dialogs/Member/DeleteMember";
 import { DemoteMemberDialog } from "@/components/Dialogs/Member/DemoteMember";
 import { PromoteMemberDialog } from "@/components/Dialogs/Member/PromoteMember";
+import EthereumAddressToProfileName from "@/components/EthereumAddressToProfileName";
 import { GithubIcon, LinkedInIcon, Twitter2Icon } from "@/components/Icons";
 import { FarcasterIcon } from "@/components/Icons/Farcaster";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
@@ -16,10 +15,10 @@ import { useAuth } from "@/hooks/useAuth";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { useTeamProfiles } from "@/hooks/useTeamProfiles";
 import { useOwnerStore, useProjectStore } from "@/store";
-import { useENS } from "@/store/ens";
 import { useContributorProfileModalStore } from "@/store/modals/contributorProfile";
 import { formatFarcasterLink } from "@/utilities/farcaster";
 import { getProjectMemberRoles, type Member } from "@/utilities/getProjectMemberRoles";
+import { shortAddress } from "@/utilities/shortAddress";
 
 const iconsClassnames = {
   general: "w-5 h-5 text-zinc-400 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-300",
@@ -60,21 +59,6 @@ export function TeamMemberCard({ member, className }: TeamMemberCardProps) {
     staleTime: 1000 * 60 * 5,
   });
 
-  const ensNames = useENS((state) => state.ensData);
-  const populateEns = useENS((state) => state.populateEns);
-
-  useEffect(() => {
-    if (member) {
-      populateEns([member?.toLowerCase() as string]);
-    }
-  }, [member, populateEns]);
-
-  const displayName =
-    profile?.data.name ||
-    ensNames[(member?.toLowerCase() || "") as Hex]?.name ||
-    profile?.recipient ||
-    member;
-
   const role = memberRoles?.[member.toLowerCase()];
   const isRoleLoading = isLoadingRoles || isFetchingRoles;
   const isMemberRole = role === "Member";
@@ -100,7 +84,7 @@ export function TeamMemberCard({ member, className }: TeamMemberCardProps) {
               className="text-base font-semibold text-black dark:text-zinc-100 break-words"
               data-testid="member-name"
             >
-              {displayName}
+              <EthereumAddressToProfileName address={member} />
             </p>
             {isRoleLoading ? (
               <Skeleton className="w-16 h-4" />
@@ -139,7 +123,7 @@ export function TeamMemberCard({ member, className }: TeamMemberCardProps) {
             className="text-sm text-zinc-500 dark:text-zinc-400 w-full truncate"
             data-testid="member-address"
           >
-            {member}
+            {shortAddress(member)}
           </p>
           <button
             type="button"

@@ -44,8 +44,8 @@ export const ProjectsHeroSection = () => {
         Discover projects. Evaluate track records and traction. Fund with confidence
       </p>
 
-      {/* Title - Display xl/Bold: 60px, 700, 72px line height, -2% letter spacing */}
-      <h1 className="text-[60px] leading-[72px] font-bold text-center text-black dark:text-white tracking-[-0.02em] mb-5">
+      {/* Title - Display xl: 60px, 72px line height, -2% letter spacing */}
+      <h1 className="text-[60px] leading-[72px] font-semibold text-center text-black dark:text-white tracking-[-0.02em] mb-5">
         Projects on Karma
       </h1>
 

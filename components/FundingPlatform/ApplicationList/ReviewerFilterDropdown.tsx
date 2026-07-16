@@ -4,6 +4,7 @@ import { Listbox, Transition } from "@headlessui/react";
 import { CheckIcon, ChevronDownIcon, UsersIcon } from "@heroicons/react/24/outline";
 import pluralize from "pluralize";
 import { type FC, Fragment, memo, useMemo } from "react";
+import EthereumAddressToProfileName from "@/components/EthereumAddressToProfileName";
 import type { ProgramReviewer } from "@/services/program-reviewers.service";
 import { cn } from "@/utilities/tailwind";
 
@@ -114,7 +115,9 @@ const ReviewerFilterDropdownComponent: FC<IReviewerFilterDropdownProps> = ({
                   <>
                     <div className="flex flex-col">
                       <span className={cn("block truncate", selected && "font-semibold")}>
-                        {reviewerLabel(reviewer)}
+                        {reviewer.name || reviewer.email || (
+                          <EthereumAddressToProfileName address={reviewer.address} shouldTruncate />
+                        )}
                       </span>
                       {reviewer.name && reviewer.email && (
                         <span className="block truncate text-xs text-gray-500 dark:text-gray-400">

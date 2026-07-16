@@ -12,6 +12,7 @@ export const PRIVY_BRIDGE_DEFAULTS: PrivyBridgeValue = {
   getAccessToken: async () => null,
   connectWallet: noop,
   wallets: [],
+  walletsReady: false,
   smartWalletClient: null,
   isConnected: false,
 };

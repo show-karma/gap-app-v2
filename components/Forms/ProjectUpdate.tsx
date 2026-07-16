@@ -43,7 +43,8 @@ import { SHARE_TEXTS } from "@/utilities/share/text";
 import { cn } from "@/utilities/tailwind";
 import { ExternalLink } from "../Utilities/ExternalLink";
 import { errorManager } from "../Utilities/errorManager";
-import { type CategorizedIndicator, OutputsSection } from "./Outputs";
+import { OutputsSection } from "./Outputs/OutputsSection";
+import type { CategorizedIndicator } from "./Outputs/types";
 
 interface GrantOption {
   title: string;
@@ -495,7 +496,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
   }));
 
   const createProjectUpdate = async (data: UpdateType) => {
-    if (!address || !project) return;
+    if (!project) return;
 
     startAttestation(isEditMode ? "Updating activity..." : "Posting activity...");
     try {
@@ -618,7 +619,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
               );
               afterSubmit?.();
               setTimeout(() => {
-                const updatesPath = PAGES.PROJECT.UPDATES(projectSlug || projectUid);
+                const updatesPath = PAGES.PROJECT.OVERVIEW(projectSlug || projectUid);
                 dismiss();
 
                 // Only show share dialog for new activities, not edits

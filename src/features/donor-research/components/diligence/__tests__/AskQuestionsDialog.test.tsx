@@ -2,10 +2,13 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import "@testing-library/jest-dom";
-import type { CandidateDiligenceView, DiligenceTemplate } from "@/types/diligence";
+import type { CandidateDiligenceView, DiligenceTemplate, OutreachPreview } from "@/types/diligence";
+import { OUTREACH_BODY_LIMITS } from "@/types/diligence";
 
 const mockAskMutate = vi.fn();
+const mockSaveTemplateMutate = vi.fn();
 const mockUseDiligenceTemplate = vi.fn();
+const mockUseOutreachPreview = vi.fn();
 const toastSuccess = vi.fn();
 const toastError = vi.fn();
 
@@ -26,10 +29,44 @@ vi.mock("next/link", () => ({
 
 vi.mock("@/hooks/useDiligence", () => ({
   useDiligenceTemplate: () => mockUseDiligenceTemplate(),
+  useOutreachPreview: (...args: unknown[]) => mockUseOutreachPreview(...args),
   useAskQuestions: () => ({ mutate: mockAskMutate, isPending: false }),
+  useSaveDiligenceTemplate: () => ({ mutate: mockSaveTemplateMutate, isPending: false }),
 }));
 
 import { AskQuestionsDialog } from "../AskQuestionsDialog";
+
+const DEFAULT_BODY =
+  "Hello,\n\nA philanthropic funder researching organizations like Hope Shelter would like to learn more about your work.\n\n1. What is your budget?";
+
+function buildPreview(overrides: Partial<OutreachPreview> = {}): OutreachPreview {
+  return {
+    action: "diligence",
+    subject: "A funder is interested in learning more about Hope Shelter",
+    bodyText: DEFAULT_BODY,
+    fixedFooter:
+      'A secure "Answer securely" link is added to the end of this email automatically when it is sent.',
+    editable: { subject: false, body: true },
+    ...overrides,
+  };
+}
+
+function mockPreviewLoaded(preview = buildPreview()) {
+  mockUseOutreachPreview.mockReturnValue({
+    data: preview,
+    isLoading: false,
+    isError: false,
+    refetch: vi.fn(),
+  });
+}
+
+function mockTemplateWithQuestions() {
+  const template: DiligenceTemplate = {
+    questions: [{ id: "q1", text: "What is your budget?" }],
+    updatedAt: "2026-06-01T00:00:00Z",
+  };
+  mockUseDiligenceTemplate.mockReturnValue({ data: template, isLoading: false, isError: false });
+}
 
 function buildView(overrides: Partial<CandidateDiligenceView> = {}): CandidateDiligenceView {
   return {
@@ -44,36 +81,96 @@ function buildView(overrides: Partial<CandidateDiligenceView> = {}): CandidateDi
   };
 }
 
+function renderDialog(view = buildView()) {
+  return render(
+    <AskQuestionsDialog
+      reportId="report-1"
+      candidateId="candidate-1"
+      open
+      onOpenChange={vi.fn()}
+      view={view}
+      candidateName="Hope Shelter"
+    />
+  );
+}
+
 afterEach(() => {
   vi.clearAllMocks();
 });
 
 describe("AskQuestionsDialog", () => {
-  it("guards on an empty template, links to the editor, and disables send", () => {
+  it("guards on an empty template with the inline editor, keeps the page link, and disables send", () => {
     const template: DiligenceTemplate = { questions: [], updatedAt: null };
     mockUseDiligenceTemplate.mockReturnValue({ data: template, isLoading: false, isError: false });
+    mockPreviewLoaded();
 
-    render(
-      <AskQuestionsDialog
-        reportId="report-1"
-        candidateId="candidate-1"
-        open
-        onOpenChange={vi.fn()}
-        view={buildView()}
-      />
-    );
+    renderDialog();
 
+    expect(screen.getByLabelText("Question 1")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Edit your question template" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Send questions" })).toBeDisabled();
+    // No question typed yet → nothing to save.
+    expect(screen.getByRole("button", { name: "Save questions" })).toBeDisabled();
+    // The preview fetch is disabled while the template is empty.
+    expect(mockUseOutreachPreview).toHaveBeenCalledWith(
+      "report-1",
+      "candidate-1",
+      "diligence",
+      false
+    );
   });
 
-  it("sends the questions and closes on success", () => {
-    const template: DiligenceTemplate = {
-      questions: [{ id: "q1", text: "What is your budget?" }],
-      updatedAt: "2026-06-01T00:00:00Z",
-    };
+  it("saves inline questions to the template, dropping blank rows", () => {
+    const template: DiligenceTemplate = { questions: [], updatedAt: null };
     mockUseDiligenceTemplate.mockReturnValue({ data: template, isLoading: false, isError: false });
-    mockAskMutate.mockImplementation((_vars, opts) => opts.onSuccess?.());
+    mockPreviewLoaded();
+    mockSaveTemplateMutate.mockImplementation((_vars, opts) => opts.onSuccess?.());
+
+    renderDialog();
+
+    fireEvent.change(screen.getByLabelText("Question 1"), {
+      target: { value: "  What is your annual operating budget?  " },
+    });
+    // A second, blank row must not be saved.
+    fireEvent.click(screen.getByRole("button", { name: "Add another question" }));
+    expect(screen.getByLabelText("Question 2")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Save questions" }));
+
+    expect(mockSaveTemplateMutate).toHaveBeenCalledWith(
+      {
+        questions: [
+          expect.objectContaining({
+            id: expect.any(String),
+            text: "What is your annual operating budget?",
+          }),
+        ],
+      },
+      expect.any(Object)
+    );
+    expect(toastSuccess).toHaveBeenCalledWith("Questions saved to your template");
+  });
+
+  it("shows the full email (To, locked subject, editable body, fixed footer)", () => {
+    mockTemplateWithQuestions();
+    mockPreviewLoaded();
+
+    renderDialog();
+
+    expect(screen.getByText("Hope Shelter")).toBeInTheDocument();
+    expect(
+      screen.getByText("A funder is interested in learning more about Hope Shelter")
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText("Email body")).toHaveValue(DEFAULT_BODY);
+    expect(screen.getByText(/Answer securely.*link is added/)).toBeInTheDocument();
+  });
+
+  it("POSTs WITHOUT a body when the advisor didn't edit", () => {
+    mockTemplateWithQuestions();
+    mockPreviewLoaded();
+    mockAskMutate.mockImplementation((_vars, opts) =>
+      opts.onSuccess?.({ requestId: "req-1", coarseStatus: "in_progress" })
+    );
     const onOpenChange = vi.fn();
 
     render(
@@ -83,10 +180,9 @@ describe("AskQuestionsDialog", () => {
         open
         onOpenChange={onOpenChange}
         view={buildView()}
+        candidateName="Hope Shelter"
       />
     );
-
-    expect(screen.getByText("What is your budget?")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Send questions" }));
 
@@ -98,33 +194,136 @@ describe("AskQuestionsDialog", () => {
     expect(onOpenChange).toHaveBeenCalledWith(false);
   });
 
-  it("previews the frozen snapshot when a request already exists", () => {
-    mockUseDiligenceTemplate.mockReturnValue({
-      data: { questions: [{ id: "live", text: "Live template question" }], updatedAt: null },
-      isLoading: false,
-      isError: false,
-    });
+  it("shows a couldn't-reach toast (not success) when the 202 reports blocked", () => {
+    mockTemplateWithQuestions();
+    mockPreviewLoaded();
+    mockAskMutate.mockImplementation((_vars, opts) =>
+      opts.onSuccess?.({ requestId: "req-1", coarseStatus: "blocked" })
+    );
+    const onOpenChange = vi.fn();
 
     render(
       <AskQuestionsDialog
         reportId="report-1"
         candidateId="candidate-1"
         open
-        onOpenChange={vi.fn()}
-        view={buildView({
-          coarseStatus: "in_progress",
-          request: {
-            requestId: "req-1",
-            requestedAt: "2026-06-01T00:00:00Z",
-            answeredAt: null,
-            questions: [{ id: "frozen", text: "Frozen snapshot question" }],
-          },
-        })}
+        onOpenChange={onOpenChange}
+        view={buildView()}
+        candidateName="Hope Shelter"
       />
     );
 
-    // Renders the frozen snapshot, NOT the diverged live template.
-    expect(screen.getByText("Frozen snapshot question")).toBeInTheDocument();
-    expect(screen.queryByText("Live template question")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Send questions" }));
+
+    expect(toastSuccess).not.toHaveBeenCalled();
+    expect(toastError).toHaveBeenCalledWith(
+      "We couldn't find a contact for this nonprofit, so nothing was sent."
+    );
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+
+  it("POSTs WITH the edited body when the advisor changed the text", () => {
+    mockTemplateWithQuestions();
+    mockPreviewLoaded();
+    mockAskMutate.mockImplementation((_vars, opts) =>
+      opts.onSuccess?.({ requestId: "req-1", coarseStatus: "in_progress" })
+    );
+
+    renderDialog();
+
+    fireEvent.change(screen.getByLabelText("Email body"), {
+      target: { value: "Hello,\n\nMy own words.\n\n1. What is your budget?" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Send questions" }));
+
+    expect(mockAskMutate).toHaveBeenCalledWith(
+      {
+        reportId: "report-1",
+        candidateId: "candidate-1",
+        body: "Hello,\n\nMy own words.\n\n1. What is your budget?",
+      },
+      expect.any(Object)
+    );
+  });
+
+  it("treats a whitespace-only tweak as unedited (trimmed comparison)", () => {
+    mockTemplateWithQuestions();
+    mockPreviewLoaded();
+
+    renderDialog();
+
+    fireEvent.change(screen.getByLabelText("Email body"), {
+      target: { value: `${DEFAULT_BODY}\n\n   ` },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Send questions" }));
+
+    expect(mockAskMutate).toHaveBeenCalledWith(
+      { reportId: "report-1", candidateId: "candidate-1" },
+      expect.any(Object)
+    );
+  });
+
+  it("treats a body edited back to the default as unedited", () => {
+    mockTemplateWithQuestions();
+    mockPreviewLoaded();
+
+    renderDialog();
+
+    const textarea = screen.getByLabelText("Email body");
+    fireEvent.change(textarea, { target: { value: "changed" } });
+    fireEvent.change(textarea, { target: { value: DEFAULT_BODY } });
+    fireEvent.click(screen.getByRole("button", { name: "Send questions" }));
+
+    expect(mockAskMutate).toHaveBeenCalledWith(
+      { reportId: "report-1", candidateId: "candidate-1" },
+      expect.any(Object)
+    );
+  });
+
+  it("disables send and explains when the body is cleared", () => {
+    mockTemplateWithQuestions();
+    mockPreviewLoaded();
+
+    renderDialog();
+
+    fireEvent.change(screen.getByLabelText("Email body"), { target: { value: "   " } });
+
+    expect(screen.getByText("The email body can't be empty.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Send questions" })).toBeDisabled();
+    expect(mockAskMutate).not.toHaveBeenCalled();
+  });
+
+  it("blocks send above the character limit and shows the counter", () => {
+    mockTemplateWithQuestions();
+    mockPreviewLoaded();
+
+    renderDialog();
+
+    fireEvent.change(screen.getByLabelText("Email body"), {
+      target: { value: "x".repeat(OUTREACH_BODY_LIMITS.MAX_CHARS + 1) },
+    });
+
+    expect(screen.getByText(/can't exceed 10,000 characters/)).toBeInTheDocument();
+    expect(screen.getByText("10,001 / 10,000")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Send questions" })).toBeDisabled();
+  });
+
+  it("shows an in-modal error with retry and blocks sending when the preview fails", () => {
+    mockTemplateWithQuestions();
+    const refetch = vi.fn();
+    mockUseOutreachPreview.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isError: true,
+      refetch,
+    });
+
+    renderDialog();
+
+    expect(screen.getByText("Couldn't load the email preview.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Send questions" })).toBeDisabled();
+
+    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+    expect(refetch).toHaveBeenCalled();
   });
 });

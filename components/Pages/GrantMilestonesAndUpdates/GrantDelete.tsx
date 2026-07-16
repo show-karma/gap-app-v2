@@ -42,7 +42,6 @@ export const GrantDelete: FC<GrantDeleteProps> = ({ grant }) => {
   const { push } = useRouter();
 
   const deleteFn = async () => {
-    if (!address) return;
     setIsDeletingGrant(true);
     startAttestation("Deleting grant...");
     try {

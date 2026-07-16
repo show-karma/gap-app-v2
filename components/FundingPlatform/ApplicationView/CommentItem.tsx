@@ -384,7 +384,13 @@ const CommentItem: FC<CommentItemProps> = ({
 
           {comment.deletedAt && (
             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 italic">
-              Deleted by {comment.deletedBy || "unknown"} {renderRelativeTime(comment.deletedAt)}
+              Deleted by{" "}
+              {comment.deletedBy ? (
+                <EthereumAddressToProfileName address={comment.deletedBy} />
+              ) : (
+                "unknown"
+              )}{" "}
+              {renderRelativeTime(comment.deletedAt)}
             </p>
           )}
         </div>

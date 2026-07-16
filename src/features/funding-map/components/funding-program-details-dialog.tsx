@@ -77,7 +77,12 @@ function formatGrantSize(min: string | undefined, max: string | undefined): stri
 
 function normalizeUrl(url: string | undefined): string | null {
   if (!url) return null;
-  return url.includes("http") ? url : `https://${url}`;
+  const trimmed = url.trim();
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  // Reject any other explicit scheme (javascript:, data:, mailto:, ...) —
+  // this value lands in an href, so a substring check is not enough
+  if (/^[a-z][a-z0-9+.-]*:/i.test(trimmed)) return null;
+  return `https://${trimmed}`;
 }
 
 function getApplyUrl(
@@ -462,6 +467,11 @@ function DialogContentInner({ program }: { program: FundingProgramResponse }) {
 
   // Only used for non-Karma programs as fallback
   const fallbackApplyUrl = normalizeUrl(metadata?.socialLinks?.grantsSite);
+  // Normalize the external submission URL through the same scheme-safe helper —
+  // a substring `startsWith("http")` check let javascript:/data: values through
+  // into an href. A dangerous or empty value resolves to null so the link is
+  // suppressed rather than rendered as `https://javascript:...`.
+  const submissionApplyUrl = normalizeUrl(program.submissionUrl);
   const isActive = isProgramActive(program);
 
   const budget = formatBudgetValue(metadata?.programBudget);
@@ -671,15 +681,11 @@ function DialogContentInner({ program }: { program: FundingProgramResponse }) {
             </a>
           )}
 
-          {program.submissionUrl ? (
+          {submissionApplyUrl ? (
             isActive ? (
               <Button asChild size="sm" className="gap-1.5 ml-auto">
                 <Link
-                  href={
-                    program.submissionUrl.startsWith("http")
-                      ? program.submissionUrl
-                      : `https://${program.submissionUrl}`
-                  }
+                  href={submissionApplyUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={() => {

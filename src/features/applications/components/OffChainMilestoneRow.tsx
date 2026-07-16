@@ -4,6 +4,7 @@ import { PaperClipIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { Pencil } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useCallback, useRef, useState } from "react";
+import EthereumAddressToProfileName from "@/components/EthereumAddressToProfileName";
 import { FileUpload } from "@/components/Utilities/FileUpload";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { Button } from "@/components/ui/button";
@@ -381,7 +382,7 @@ export function OffChainMilestoneRow({
                       </p>
                     )}
                     <p className="text-xs text-zinc-400 mt-1">
-                      Verified by: {verifiedEntry.attester}
+                      Verified by: <EthereumAddressToProfileName address={verifiedEntry.attester} />
                     </p>
                   </div>
                 )}

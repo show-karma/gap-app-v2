@@ -2,7 +2,8 @@
 
 import { AlertTriangle, ArrowLeft, RefreshCw } from "lucide-react";
 import Link from "next/link";
-import { PortfolioReportDocumentView } from "@/components/Pages/Community/PortfolioReports/PortfolioReportDocumentView";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { usePortfolioReport } from "@/hooks/portfolio-reports/usePortfolioReports";
 import type { Community } from "@/types/v2/community";
@@ -13,25 +14,34 @@ interface Props {
   reportId: string;
 }
 
+/**
+ * DEV-496: the admin preview and the public report now share one URL. This
+ * legacy `/manage/.../preview` route redirects to `/reports/:runDate`, where a
+ * community admin sees the draft preview inline (public sees published only).
+ */
 export function PortfolioReportPreviewPage({ community, reportId }: Props) {
   const slug = community.details.slug;
   const { data: report, isLoading, isError, refetch } = usePortfolioReport(slug, reportId);
+  const { replace } = useRouter();
   const backHref = PAGES.ADMIN.PORTFOLIO_REPORTS(slug);
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center p-12">
-        <Spinner />
-      </div>
-    );
-  }
+  const runDate = report?.runDate;
+  // Carry the config slug through: this route knows exactly which report was
+  // requested, and a run-date-only redirect would drop that and land on
+  // whichever report is newest when two configs ran the same day.
+  const configSlug = report?.reportConfigSlug ?? null;
+  useEffect(() => {
+    if (runDate) {
+      replace(PAGES.COMMUNITY.REPORT_DETAIL(slug, runDate, configSlug));
+    }
+  }, [runDate, configSlug, slug, replace]);
 
   if (isError) {
     return (
       <div className="mx-auto max-w-4xl px-4 py-12 text-center">
         <div className="flex flex-col items-center gap-4">
           <AlertTriangle className="h-8 w-8 text-red-400" />
-          <p className="text-zinc-500">Failed to load the report preview. Please try again.</p>
+          <p className="text-zinc-500">Failed to load the report. Please try again.</p>
           <button
             type="button"
             onClick={() => refetch()}
@@ -52,7 +62,7 @@ export function PortfolioReportPreviewPage({ community, reportId }: Props) {
     );
   }
 
-  if (!report) {
+  if (!isLoading && !report) {
     return (
       <div className="mx-auto max-w-4xl px-4 py-12 text-center">
         <p className="text-zinc-500">Report not found.</p>
@@ -67,19 +77,10 @@ export function PortfolioReportPreviewPage({ community, reportId }: Props) {
     );
   }
 
-  const bannerText = report.publishedAt
-    ? "Preview mode — admin view of this report."
-    : "Preview mode — this draft is only visible to community admins.";
-
+  // Loading the report, or redirecting once its run date resolves.
   return (
-    <PortfolioReportDocumentView
-      community={community}
-      runDate={report.runDate}
-      report={report}
-      backHref={backHref}
-      backLabel="Back to portfolio reports"
-      bannerText={bannerText}
-      isAdmin
-    />
+    <div className="flex items-center justify-center p-12">
+      <Spinner />
+    </div>
   );
 }

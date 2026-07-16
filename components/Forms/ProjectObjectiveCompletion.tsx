@@ -76,8 +76,8 @@ export const ProjectObjectiveCompletionForm = ({
   const { refetch } = useProjectUpdates(projectId as string);
 
   const onSubmit = async (data: SchemaType) => {
-    if (!address || !project) {
-      showError("Please connect your wallet to complete the milestone.");
+    if (!project) {
+      showError("This project is still loading. Please try again.");
       return;
     }
     setIsCompleting(true);
@@ -90,7 +90,7 @@ export const ProjectObjectiveCompletionForm = ({
       });
 
       if (!setup) {
-        showError("Failed to set up wallet connection. Please try again.");
+        // setupChainAndWallet surfaces its own toast on failure (#1821).
         setIsCompleting(false);
         setIsStepper(false);
         return;
@@ -172,7 +172,7 @@ export const ProjectObjectiveCompletionForm = ({
               });
 
               setTimeout(() => {
-                push(PAGES.PROJECT.UPDATES(slugOrUid));
+                push(PAGES.PROJECT.OVERVIEW(slugOrUid));
               }, 250);
               return;
             }

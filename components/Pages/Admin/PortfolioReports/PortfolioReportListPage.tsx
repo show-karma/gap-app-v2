@@ -1,14 +1,35 @@
 "use client";
 
-import { Eye, EyeOff, FileSearch, FileText, Play, Plus, RefreshCw, Settings } from "lucide-react";
+import * as Sentry from "@sentry/nextjs";
+import {
+  Eye,
+  EyeOff,
+  FileSearch,
+  FileText,
+  Play,
+  Plus,
+  RefreshCw,
+  Settings,
+  Trash2,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useQueryState } from "nuqs";
+import pluralize from "pluralize";
 import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { DeleteDialog } from "@/components/DeleteDialog";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
 import {
+  useDeleteReport,
   useGenerateReport,
   usePortfolioReports,
   usePublishReport,
@@ -31,17 +52,80 @@ interface Props {
   community: Community;
 }
 
+/** Sentinel for "no type filter"; also the value the URL param is cleared to. */
+const ALL_TYPES = "all";
+
+interface ReportTypeOption {
+  id: string;
+  label: string;
+}
+
+/**
+ * Report types for the admin filter: one per config that has a *generated*
+ * report — draft or published. A report mid-generation (`generating`) or one
+ * whose generation `failed` hasn't produced anything to review, so its config
+ * doesn't count until it does. This is why the admin filter is broader than the
+ * public one (published-only): the admin table shows drafts too.
+ */
+function deriveGeneratedTypes(
+  reports: PortfolioReport[],
+  configById: Map<string, ReportConfig>
+): ReportTypeOption[] {
+  const byId = new Map<string, string>();
+  for (const report of reports) {
+    if (report.status !== "draft" && report.status !== "published") continue;
+    if (byId.has(report.reportConfigId)) continue;
+    byId.set(
+      report.reportConfigId,
+      configById.get(report.reportConfigId)?.name ?? "(deleted config)"
+    );
+  }
+  return Array.from(byId, ([id, label]) => ({ id, label })).sort((a, b) =>
+    a.label.localeCompare(b.label)
+  );
+}
+
+function ReportTypeFilterSelect({
+  types,
+  value,
+  onChange,
+}: {
+  types: ReportTypeOption[];
+  value: string;
+  onChange: (next: string) => void;
+}) {
+  return (
+    <div className="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
+      <span className="font-medium uppercase tracking-wider">Type</span>
+      <Select value={value} onValueChange={onChange}>
+        <SelectTrigger aria-label="Filter reports by type" className="h-8 max-w-[16rem] text-xs">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value={ALL_TYPES}>All report types</SelectItem>
+          {types.map((type) => (
+            <SelectItem key={type.id} value={type.id}>
+              {type.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+}
+
 interface ReportTableRowProps {
   slug: string;
   report: PortfolioReport;
   configName: string;
   rowPending: boolean;
-  activeMutationType: "publish" | "unpublish" | "regenerate" | null;
+  activeMutationType: "publish" | "unpublish" | "regenerate" | "delete" | null;
   onEdit: () => void;
   onPreview: () => void;
   onPublish: () => void;
   onUnpublish: () => void;
   onRegenerate: () => void;
+  onDelete: () => void;
 }
 
 function ReportTableRow({
@@ -55,12 +139,16 @@ function ReportTableRow({
   onPublish,
   onUnpublish,
   onRegenerate,
+  onDelete,
 }: ReportTableRowProps) {
   const report = useReportRowSync(slug, initialReport);
   const fmt = formatRunDate(report.runDate);
   const generating = isReportGenerating(report);
   const failed = report.status === "failed";
   const actionsDisabled = rowPending || generating;
+  // Drafts and failed generations can be removed; published reports back
+  // public URLs (unpublish first) and generating reports are still in flight.
+  const deletable = report.status === "draft" || failed;
   return (
     <tr className="hover:bg-zinc-50 dark:hover:bg-zinc-800/50">
       <td className="px-4 py-3 font-medium text-zinc-900 dark:text-zinc-100">{configName}</td>
@@ -109,6 +197,18 @@ function ReportTableRow({
                   ? "Retry"
                   : "Regen"}
           </Button>
+          {deletable ? (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onDelete}
+              disabled={actionsDisabled}
+              className="text-red-600 hover:text-red-700 dark:text-red-500 dark:hover:text-red-400"
+            >
+              <Trash2 className="mr-1 h-3 w-3" />
+              {rowPending && activeMutationType === "delete" ? "Deleting..." : "Delete"}
+            </Button>
+          ) : null}
         </div>
       </td>
     </tr>
@@ -129,6 +229,7 @@ export function PortfolioReportListPage({ community }: Props) {
   const publishMutation = usePublishReport(slug);
   const unpublishMutation = useUnpublishReport(slug);
   const regenerateMutation = useRegenerateReport(slug);
+  const deleteMutation = useDeleteReport(slug);
 
   const configById = useMemo(() => {
     const map = new Map<string, ReportConfig>();
@@ -139,6 +240,18 @@ export function PortfolioReportListPage({ community }: Props) {
   }, [configs]);
 
   const activeConfigs = useMemo(() => (configs ?? []).filter((c) => c.isActive), [configs]);
+
+  const [typeFilter, setTypeFilter] = useQueryState("type", { defaultValue: ALL_TYPES });
+
+  const reportTypes = useMemo(
+    () => deriveGeneratedTypes(reports ?? [], configById),
+    [reports, configById]
+  );
+
+  // Clearing to null (not the sentinel) drops `?type=` from the URL.
+  const handleTypeChange = (next: string) => {
+    setTypeFilter(next === ALL_TYPES ? null : next);
+  };
 
   const generatingConfigIds = useMemo(() => {
     const ids = new Set<string>();
@@ -151,10 +264,11 @@ export function PortfolioReportListPage({ community }: Props) {
   // Per-row pending state: track which report is being mutated and what action
   const [activeReportId, setActiveReportId] = useState<string | null>(null);
   const [activeMutationType, setActiveMutationType] = useState<
-    "publish" | "unpublish" | "regenerate" | null
+    "publish" | "unpublish" | "regenerate" | "delete" | null
   >(null);
   const [generatingConfigId, setGeneratingConfigId] = useState<string | null>(null);
   const [regenerateTargetId, setRegenerateTargetId] = useState<string | null>(null);
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
 
   if (accessLoading || isLoading) {
     return (
@@ -178,6 +292,7 @@ export function PortfolioReportListPage({ community }: Props) {
       await generateMutation.mutateAsync({ configId });
       toast.success("Generation started, this can take a few minutes.");
     } catch (error) {
+      Sentry.captureException(error);
       toast.error(
         `Failed to start generation: ${error instanceof Error ? error.message : "Unknown error"}`
       );
@@ -192,7 +307,8 @@ export function PortfolioReportListPage({ community }: Props) {
     try {
       await publishMutation.mutateAsync(reportId);
       toast.success("Report published");
-    } catch {
+    } catch (error) {
+      Sentry.captureException(error);
       toast.error("Failed to publish report");
     } finally {
       setActiveReportId(null);
@@ -206,7 +322,8 @@ export function PortfolioReportListPage({ community }: Props) {
     try {
       await unpublishMutation.mutateAsync(reportId);
       toast.success("Report unpublished");
-    } catch {
+    } catch (error) {
+      Sentry.captureException(error);
       toast.error("Failed to unpublish report");
     } finally {
       setActiveReportId(null);
@@ -223,6 +340,7 @@ export function PortfolioReportListPage({ community }: Props) {
       await regenerateMutation.mutateAsync(reportId);
       toast.success("Regeneration started, this can take a few minutes.");
     } catch (error) {
+      Sentry.captureException(error);
       toast.error(
         `Failed to start regeneration: ${error instanceof Error ? error.message : "Unknown error"}`
       );
@@ -233,11 +351,38 @@ export function PortfolioReportListPage({ community }: Props) {
     }
   };
 
+  const handleDelete = async () => {
+    if (!deleteTargetId) return;
+    const reportId = deleteTargetId;
+    setActiveReportId(reportId);
+    setActiveMutationType("delete");
+    try {
+      await deleteMutation.mutateAsync(reportId);
+      toast.success("Report deleted");
+    } catch (error) {
+      Sentry.captureException(error);
+      toast.error(
+        `Failed to delete report: ${error instanceof Error ? error.message : "Unknown error"}`
+      );
+    } finally {
+      setActiveReportId(null);
+      setActiveMutationType(null);
+      setDeleteTargetId(null);
+    }
+  };
+
   const isRowPending = (reportId: string) =>
     activeReportId === reportId &&
-    (publishMutation.isPending || unpublishMutation.isPending || regenerateMutation.isPending);
+    (publishMutation.isPending ||
+      unpublishMutation.isPending ||
+      regenerateMutation.isPending ||
+      deleteMutation.isPending);
 
   const sortedReports = (reports ?? []).slice().sort((a, b) => b.runDate.localeCompare(a.runDate));
+  const visibleReports =
+    typeFilter === ALL_TYPES
+      ? sortedReports
+      : sortedReports.filter((report) => report.reportConfigId === typeFilter);
 
   return (
     <div className="space-y-6">
@@ -248,6 +393,17 @@ export function PortfolioReportListPage({ community }: Props) {
         externalIsOpen={regenerateTargetId !== null}
         externalSetIsOpen={(open) => {
           if (!open) setRegenerateTargetId(null);
+        }}
+        buttonElement={null}
+      />
+
+      <DeleteDialog
+        title="Delete this report? This can't be undone."
+        deleteFunction={handleDelete}
+        isLoading={deleteMutation.isPending}
+        externalIsOpen={deleteTargetId !== null}
+        externalSetIsOpen={(open) => {
+          if (!open) setDeleteTargetId(null);
         }}
         buttonElement={null}
       />
@@ -352,36 +508,74 @@ export function PortfolioReportListPage({ community }: Props) {
           </p>
         </div>
       ) : (
-        <div className="overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-700">
-          <table className="w-full text-sm">
-            <thead className="bg-zinc-50 dark:bg-zinc-800">
-              <tr>
-                <th className="px-4 py-3 text-left font-medium text-zinc-500">Report</th>
-                <th className="px-4 py-3 text-left font-medium text-zinc-500">Run date</th>
-                <th className="px-4 py-3 text-left font-medium text-zinc-500">Status</th>
-                <th className="px-4 py-3 text-left font-medium text-zinc-500">Model</th>
-                <th className="px-4 py-3 text-left font-medium text-zinc-500">Generated</th>
-                <th className="px-4 py-3 text-right font-medium text-zinc-500">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-zinc-200 dark:divide-zinc-700">
-              {sortedReports.map((report: PortfolioReport) => (
-                <ReportTableRow
-                  key={report.id}
-                  slug={slug}
-                  report={report}
-                  configName={configById.get(report.reportConfigId)?.name ?? "(deleted config)"}
-                  rowPending={isRowPending(report.id)}
-                  activeMutationType={activeMutationType}
-                  onEdit={() => push(`${PAGES.ADMIN.PORTFOLIO_REPORTS(slug)}/${report.id}`)}
-                  onPreview={() => push(PAGES.ADMIN.PORTFOLIO_REPORTS_PREVIEW(slug, report.id))}
-                  onPublish={() => handlePublish(report.id)}
-                  onUnpublish={() => handleUnpublish(report.id)}
-                  onRegenerate={() => setRegenerateTargetId(report.id)}
-                />
-              ))}
-            </tbody>
-          </table>
+        <div className="space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              {visibleReports.length} {pluralize("report", visibleReports.length)}
+            </p>
+            {reportTypes.length > 1 && (
+              <ReportTypeFilterSelect
+                types={reportTypes}
+                value={typeFilter}
+                onChange={handleTypeChange}
+              />
+            )}
+          </div>
+
+          {visibleReports.length === 0 ? (
+            <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-zinc-300 p-12 text-center dark:border-zinc-600">
+              <FileText className="mb-3 h-8 w-8 text-zinc-400" />
+              <p className="text-sm text-zinc-500">No reports of this type.</p>
+              <button
+                type="button"
+                onClick={() => handleTypeChange(ALL_TYPES)}
+                className="mt-4 text-sm font-medium text-blue-600 hover:underline dark:text-blue-400"
+              >
+                Show all reports
+              </button>
+            </div>
+          ) : (
+            <div className="overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-700">
+              <table className="w-full text-sm">
+                <thead className="bg-zinc-50 dark:bg-zinc-800">
+                  <tr>
+                    <th className="px-4 py-3 text-left font-medium text-zinc-500">Report</th>
+                    <th className="px-4 py-3 text-left font-medium text-zinc-500">Run date</th>
+                    <th className="px-4 py-3 text-left font-medium text-zinc-500">Status</th>
+                    <th className="px-4 py-3 text-left font-medium text-zinc-500">Model</th>
+                    <th className="px-4 py-3 text-left font-medium text-zinc-500">Generated</th>
+                    <th className="px-4 py-3 text-right font-medium text-zinc-500">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-zinc-200 dark:divide-zinc-700">
+                  {visibleReports.map((report: PortfolioReport) => (
+                    <ReportTableRow
+                      key={report.id}
+                      slug={slug}
+                      report={report}
+                      configName={configById.get(report.reportConfigId)?.name ?? "(deleted config)"}
+                      rowPending={isRowPending(report.id)}
+                      activeMutationType={activeMutationType}
+                      onEdit={() => push(`${PAGES.ADMIN.PORTFOLIO_REPORTS(slug)}/${report.id}`)}
+                      onPreview={() =>
+                        push(
+                          PAGES.COMMUNITY.REPORT_DETAIL(
+                            slug,
+                            report.runDate,
+                            report.reportConfigSlug
+                          )
+                        )
+                      }
+                      onPublish={() => handlePublish(report.id)}
+                      onUnpublish={() => handleUnpublish(report.id)}
+                      onRegenerate={() => setRegenerateTargetId(report.id)}
+                      onDelete={() => setDeleteTargetId(report.id)}
+                    />
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       )}
     </div>

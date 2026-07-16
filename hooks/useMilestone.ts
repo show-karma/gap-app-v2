@@ -629,7 +629,7 @@ export const useMilestone = () => {
 
             // Let the share dialog render before any route transition
             setTimeout(() => {
-              router.push(PAGES.PROJECT.UPDATES(slugOrUid));
+              router.push(PAGES.PROJECT.OVERVIEW(slugOrUid));
             }, 250);
           });
         });
@@ -794,7 +794,7 @@ export const useMilestone = () => {
 
       // Let the share dialog render before any route transition
       setTimeout(() => {
-        router.push(PAGES.PROJECT.UPDATES(slugOrUid));
+        router.push(PAGES.PROJECT.OVERVIEW(slugOrUid));
       }, 250);
     } catch (error) {
       console.error("[completeMilestone] failed:", error);

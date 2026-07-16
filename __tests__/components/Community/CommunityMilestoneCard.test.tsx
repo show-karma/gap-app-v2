@@ -464,7 +464,7 @@ describe("CommunityMilestoneCard", () => {
       render(<CommunityMilestoneCard milestone={milestone} />);
 
       const viewUpdatesLink = screen.getByText("View project updates →");
-      expect(viewUpdatesLink).toHaveAttribute("href", "/project/my-project-slug/updates");
+      expect(viewUpdatesLink).toHaveAttribute("href", "/project/my-project-slug");
     });
 
     it("should handle missing project details gracefully by using project uid as fallback", () => {
@@ -518,7 +518,7 @@ describe("CommunityMilestoneCard", () => {
 
       // Should use project uid when details.data is undefined
       const viewLink = screen.getByText("View project updates →");
-      expect(viewLink).toHaveAttribute("href", "/project/fallback-uid-789/updates");
+      expect(viewLink).toHaveAttribute("href", "/project/fallback-uid-789");
     });
   });
 

@@ -2,6 +2,7 @@ import {
   ChatBubbleLeftRightIcon,
   DocumentTextIcon,
   FlagIcon,
+  LockClosedIcon,
   SparklesIcon,
 } from "@heroicons/react/24/outline";
 
@@ -11,4 +12,5 @@ export const TabIcons = {
   AIAnalysis: SparklesIcon,
   Discussion: ChatBubbleLeftRightIcon,
   Milestones: FlagIcon,
+  Notes: LockClosedIcon,
 };

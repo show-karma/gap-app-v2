@@ -72,7 +72,9 @@ const schema = z.object({
   description: z.string().optional(),
   completionPercentage: z.string().refine(
     (value) => {
-      if (value === "") return false; // Empty string is not valid
+      // Number("") === 0 and Number(" ") === 0, so an empty or whitespace-only
+      // string would slip through as 0%
+      if (value.trim() === "") return false;
       const num = Number(value);
       return !Number.isNaN(num) && num >= 0 && num <= 100;
     },

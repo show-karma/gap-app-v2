@@ -4,6 +4,13 @@ export interface ApplicationFormData {
   [questionId: string]: unknown;
 }
 
+export interface UseApplicationReturn {
+  application: Application | null;
+  isLoading: boolean;
+  error: Error | null;
+  refetch: () => void;
+}
+
 export interface UseApplicationSubmitReturn {
   submit: (
     programId: string,

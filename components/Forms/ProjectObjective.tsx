@@ -152,7 +152,7 @@ export const ProjectObjectiveForm = ({
                   stateHandler?.(false);
                   setTimeout(() => {
                     dismiss();
-                    push(PAGES.PROJECT.UPDATES(project?.details?.slug || project?.uid || ""));
+                    push(PAGES.PROJECT.OVERVIEW(project?.details?.slug || project?.uid || ""));
                   }, 1500);
                 }
                 retries -= 1;

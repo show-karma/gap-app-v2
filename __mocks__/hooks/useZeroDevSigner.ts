@@ -12,6 +12,7 @@ export const useZeroDevSigner = vi.fn().mockReturnValue({
   attestationAddress: null,
   hasEmbeddedWallet: false,
   hasExternalWallet: false,
+  signerStatus: "ready",
   // Legacy aliases for backward compatibility
   getSignerForChain: vi.fn().mockResolvedValue(null),
   isLoading: false,

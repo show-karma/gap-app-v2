@@ -1,5 +1,5 @@
-// Wire shapes mirror gap-indexer/app/modules/v2/api/scanner/v1/dto/scanner/*.ts.
-// Keep in sync with backend OpenAPI: GET /api/scanner/v1/openapi.json.
+// Wire shapes mirror gap-indexer/app/modules/v2/nonprofits/ai-readiness/dto/*.ts.
+// Keep in sync with the backend OpenAPI for /v2/nonprofits/ai-readiness/*.
 
 export type ScanStatus =
   | "queued"
@@ -44,10 +44,9 @@ export interface CheckEvidence {
   readonly details?: Record<string, unknown>;
 }
 
-// Wire shape matches gap-indexer's PublicScorecardResponseSchema in
-// app/modules/v2/api/scanner/v1/dto/scanner/scorecard.response.ts.
-// The slug endpoint (/api/scanner/v1/s/:slug) always returns a fully
-// scored scorecard — required fields are required.
+// Wire shape matches gap-indexer's public scorecard response DTO.
+// The report endpoint (/v2/nonprofits/ai-readiness/reports/:slug) always
+// returns a fully scored scorecard — required fields are required.
 export interface PublicScorecardPayload {
   readonly scanId: string;
   readonly slug: string;
@@ -71,9 +70,8 @@ export interface PublicScorecardPayload {
   readonly finishedAtComplete: string | null;
 }
 
-// Wire shape matches gap-indexer's ScanResponseSchema in
-// app/modules/v2/api/scanner/v1/dto/scanner/scan.response.ts.
-// The scan-id endpoint (/api/scanner/v1/scans/:id) returns three
+// Wire shape matches gap-indexer's scan response DTO. The scan endpoints
+// (/v2/nonprofits/ai-readiness/scans/:id and ?url=) return three
 // nested tiers: envelope (always present), scorecard (when scored),
 // detail (authenticated callers only). Scorecard and detail fields
 // are optional here because the BE emits envelope-only for queued
@@ -121,6 +119,15 @@ export interface SubmitScanResponse {
   readonly slug: string;
   readonly publicUrl: string;
   readonly status: ScanStatus;
+}
+
+// Result of the view-first entry flow (findOrCreateScan). `created` is false
+// when an existing report was found and viewed for free, true when a new scan
+// was generated (spending a credit).
+export interface ScanEntryResult {
+  readonly slug: string;
+  readonly status: ScanStatus;
+  readonly created: boolean;
 }
 
 export type ContactSourceTag = "fix-help" | "more-scans" | "api-key-request" | "removal" | "other";

@@ -22,6 +22,11 @@ vi.mock("wagmi", () => ({
   })),
 }));
 
+// Mock the shared identity component (uses React Query; tested separately)
+vi.mock("@/components/EthereumAddressToProfileName", () => ({
+  default: ({ address }: { address?: string }) => <span>{address}</span>,
+}));
+
 // Mock next/dynamic to render nothing (DeleteDialog is lazy-loaded but unused in our tests)
 vi.mock("next/dynamic", () => ({
   default: () => {

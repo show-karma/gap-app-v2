@@ -7,8 +7,10 @@ import {
 } from "@heroicons/react/24/outline";
 import dynamic from "next/dynamic";
 import Link from "next/link";
+import { useParams } from "next/navigation";
 import { memo, useCallback, useState } from "react";
 import toast from "react-hot-toast";
+import EthereumAddressToProfileName from "@/components/EthereumAddressToProfileName";
 import { FileUpload } from "@/components/Utilities/FileUpload";
 import {
   Dialog,
@@ -25,7 +27,6 @@ import {
   MilestoneLifecycleStatus,
 } from "@/src/features/payout-disbursement/types/payout-disbursement";
 import { formatDisplayAmount } from "@/src/features/payout-disbursement/utils/format-token-amount";
-import { formatAddressForDisplay } from "@/utilities/donations/helpers";
 import { formatDate } from "@/utilities/formatDate";
 import { formatMilestoneTitle } from "@/utilities/formatMilestoneTitle";
 import { INDEXER } from "@/utilities/indexer";
@@ -144,6 +145,10 @@ export const MilestonesSection = memo(function MilestonesSection({
   onRequestRecordPayment,
   onRequestDeleteDisbursement,
 }: MilestonesSectionProps) {
+  // Community slug from the current route — the manage milestone link must be
+  // built with the slug (like every other PAGES.MANAGE link), not the on-chain
+  // community UID that `communityUID` carries for invoice API calls (DEV-496).
+  const { communityId } = useParams() as { communityId: string };
   const [uploadModalInvoice, setUploadModalInvoice] = useState<{
     mKey: string;
     label: string;
@@ -309,7 +314,12 @@ export const MilestonesSection = memo(function MilestonesSection({
                             />
                           )}
                           <Link
-                            href={`${PAGES.MANAGE.FUNDING_PLATFORM.MILESTONES(communityUID, grant.grantProgramId, grant.projectUid)}${invoice.milestoneUID ? `#${invoice.milestoneUID}` : ""}`}
+                            href={PAGES.MANAGE.FUNDING_PLATFORM.MILESTONES(
+                              communityId,
+                              grant.grantProgramId,
+                              grant.projectUid,
+                              invoice.milestoneUID ?? undefined
+                            )}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="inline-flex items-center gap-1 font-medium text-gray-900 dark:text-zinc-100 hover:text-blue-600 dark:hover:text-blue-400 hover:underline transition-colors"
@@ -495,7 +505,11 @@ export const MilestonesSection = memo(function MilestonesSection({
                                   className="text-[10px] text-gray-400 dark:text-zinc-500 font-mono"
                                   title={invoice.invoiceReceivedBy}
                                 >
-                                  by {formatAddressForDisplay(invoice.invoiceReceivedBy)}
+                                  by{" "}
+                                  <EthereumAddressToProfileName
+                                    address={invoice.invoiceReceivedBy}
+                                    shouldTruncate
+                                  />
                                 </span>
                               )}
                             </div>

@@ -284,6 +284,11 @@ vi.mock("@/utilities/project-lookup", () => ({
 
 vi.mock("@/utilities/fundingPlatformUrls", () => ({
   getProgramApplyUrl: (cId: string, pId: string) => `/c/${cId}/p/${pId}`,
+  getApplicationDetailUrl: (cId: string, ref: string) => `/community/${cId}/applications/${ref}`,
+  getBrowseApplicationsUrl: (cId: string, pId: string) =>
+    `/community/${cId}/browse-applications?programId=${pId}`,
+  getBrowseApplicationsRedirectUrl: (cId: string, pId: string) =>
+    `/community/${cId}/browse-applications?programId=${pId}`,
 }));
 
 vi.mock("@/utilities/formatCurrency", () => ({

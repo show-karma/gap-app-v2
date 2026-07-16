@@ -4,6 +4,7 @@ import {
   XMarkIcon,
 } from "@heroicons/react/24/outline";
 import { memo } from "react";
+import EthereumAddressToProfileName from "@/components/EthereumAddressToProfileName";
 import { KycStatusBadge } from "@/components/KycStatusIcon";
 import { DatePicker } from "@/components/Utilities/DatePicker";
 import { Button } from "@/components/ui/button";
@@ -116,7 +117,7 @@ export const DetailsSection = memo(function DetailsSection({
                     className="text-[10px] text-gray-400 dark:text-zinc-500"
                     title={agreement.signedBy}
                   >
-                    by {formatAddressForDisplay(agreement.signedBy)}
+                    by <EthereumAddressToProfileName address={agreement.signedBy} />
                   </span>
                 )}
                 <button

@@ -11,7 +11,8 @@ import type { SubmitHandler } from "react-hook-form";
 import { Controller, useForm } from "react-hook-form";
 import type { Hex } from "viem";
 import { useAccount } from "wagmi";
-import { z } from "zod";
+import type { z } from "zod";
+import { milestoneSchema } from "@/components/Forms/Milestone.schema";
 import { Button } from "@/components/Utilities/Button";
 import { DatePicker } from "@/components/Utilities/DatePicker";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
@@ -31,34 +32,6 @@ import { PAGES } from "@/utilities/pages";
 import { sanitizeObject } from "@/utilities/sanitize";
 import { errorManager } from "../Utilities/errorManager";
 
-const milestoneSchema = z.object({
-  title: z
-    .string()
-    .min(3, { message: MESSAGES.MILESTONES.FORM.TITLE.MIN })
-    .max(50, { message: MESSAGES.MILESTONES.FORM.TITLE.MAX }),
-  priority: z.number().optional(),
-  description: z.string().optional(),
-  dates: z
-    .object({
-      endsAt: z.date({
-        error: MESSAGES.MILESTONES.FORM.DATE,
-      }),
-      startsAt: z.date().optional(),
-    })
-    .refine(
-      (data) => {
-        const endsAt = data.endsAt.getTime() / 1000;
-        const startsAt = data.startsAt ? data.startsAt.getTime() / 1000 : undefined;
-
-        return startsAt ? startsAt <= endsAt : true;
-      },
-      {
-        message: "Start date must be before the end date",
-        path: ["dates", "startsAt"],
-      }
-    ),
-});
-
 const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
 const inputStyle =
   "mt-1 w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100";
@@ -74,9 +47,6 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
   grant: { uid, chainID, milestones },
   afterSubmit,
 }) => {
-  const form = useForm<z.infer<typeof milestoneSchema>>({
-    resolver: zodResolver(milestoneSchema),
-  });
   const isOwner = useOwnerStore((state) => state.isOwner);
   const [recipient, setRecipient] = useState("");
 
@@ -86,6 +56,7 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
     handleSubmit,
     setValue,
     watch,
+    control,
     formState: { errors, isSubmitting, isValid },
   } = useForm<MilestoneType>({
     resolver: zodResolver(milestoneSchema),
@@ -110,7 +81,6 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
   const onSubmit: SubmitHandler<MilestoneType> = async (data, event) => {
     event?.preventDefault();
     event?.stopPropagation();
-    if (!address) return;
     if (!gap) throw new Error("Please, connect a wallet");
     setIsLoading(true);
     startAttestation("Creating milestone...");
@@ -220,7 +190,7 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
         <div className="flex w-full flex-row justify-between gap-4">
           <Controller
             name="priority"
-            control={form.control}
+            control={control}
             render={({ field, formState }) => (
               <div className="flex w-full flex-col gap-2">
                 <div className={labelStyle}>Milestone priority (optional)</div>
@@ -281,7 +251,7 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
                     </Popover.Panel>
                   </Popover>
                 </div>
-                <p className="text-base text-red-400">{formState.errors.dates?.endsAt?.message}</p>
+                <p className="text-base text-red-400">{formState.errors.priority?.message}</p>
               </div>
             )}
           />
@@ -291,7 +261,7 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
         <div className="flex w-full flex-row justify-between gap-4">
           <Controller
             name="dates.startsAt"
-            control={form.control}
+            control={control}
             render={({ field, formState }) => (
               <div className="flex w-full flex-col gap-2">
                 <div className={labelStyle}>Start date (optional)</div>
@@ -328,7 +298,7 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
         <div className="flex w-full flex-row justify-between gap-4">
           <Controller
             name="dates.endsAt"
-            control={form.control}
+            control={control}
             render={({ field, formState }) => (
               <div className="flex w-full flex-col gap-2">
                 <div className={labelStyle}>End date *</div>

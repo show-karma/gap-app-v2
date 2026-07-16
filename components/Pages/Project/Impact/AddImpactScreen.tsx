@@ -74,7 +74,7 @@ export const AddImpactScreen: FC = () => {
     event?.preventDefault();
     event?.stopPropagation();
     const { completedAt, startedAt } = data;
-    if (!address || !project) return;
+    if (!project) return;
     setIsLoading(true);
     try {
       const setup = await setupChainAndWallet({

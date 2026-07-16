@@ -44,7 +44,7 @@ const pickColor = (index: number) => {
 };
 
 export default function MyProjects() {
-  const { authenticated: isAuth, isConnected, address } = useAuth();
+  const { authenticated: isAuth, address, ready } = useAuth();
   const { theme: currentTheme } = useTheme();
   const { setIsOnboarding } = useOnboarding();
   const { mixpanel } = useMixpanel();
@@ -81,7 +81,17 @@ export default function MyProjects() {
   return (
     <div className={layoutTheme.padding}>
       <div className="mt-5 w-full gap-5">
-        {isConnected && isAuth ? (
+        {!ready ? (
+          // Auth is still resolving — show skeletons instead of flashing the
+          // "not connected" denial to users who are actually authenticated.
+          <div className="flex flex-col gap-4 justify-start">
+            <div className="grid grid-cols-4 gap-7 pb-4 max-xl:grid-cols-3 max-lg:grid-cols-2 max-sm:grid-cols-1">
+              {loadingArray.map((item) => (
+                <LoadingCard key={item} />
+              ))}
+            </div>
+          </div>
+        ) : isAuth ? (
           <div className="flex flex-col gap-4">
             {/* Show header only when loading or when there are projects */}
             {(isLoading || myProjects.length > 0) && (

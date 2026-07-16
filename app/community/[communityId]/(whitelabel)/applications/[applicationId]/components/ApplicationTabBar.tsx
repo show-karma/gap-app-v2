@@ -3,7 +3,7 @@
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/utilities/tailwind";
 
-export type ApplicationTabKey = "details" | "milestones" | "post-approval" | "comments";
+export type ApplicationTabKey = "details" | "milestones" | "post-approval" | "comments" | "notes";
 
 export interface TabDescriptor {
   key: ApplicationTabKey;

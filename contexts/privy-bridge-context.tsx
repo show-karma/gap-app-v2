@@ -30,6 +30,8 @@ export interface PrivyBridgeValue {
   connectWallet: () => void;
   // From useWallets
   wallets: ConnectedWallet[];
+  /** From useWallets().ready — false until Privy finishes hydrating connected wallets. */
+  walletsReady: boolean;
   // From useSmartWallets
   // biome-ignore lint/suspicious/noExplicitAny: Privy smart wallet client type is complex and internal
   smartWalletClient: any;

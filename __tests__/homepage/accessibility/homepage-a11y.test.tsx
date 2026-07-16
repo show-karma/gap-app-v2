@@ -2,8 +2,11 @@
  * Homepage Accessibility Tests
  * Tests WCAG 2.2 AA compliance using jest-axe
  *
- * Target: 8 tests
- * - Automated Checks (8): Each major section tested with axe
+ * Every major section is axe-checked against a SINGLE render of the homepage.
+ * The suite previously rendered the full page once per section (8 full-page
+ * renders in one file); the resulting native jsdom/axe memory churn was a
+ * major contributor to CI test-shard worker OOMs. Rendering once and reusing
+ * the DOM keeps identical coverage at a fraction of the memory.
  */
 
 import { axe, toHaveNoViolations } from "jest-axe";
@@ -21,6 +24,7 @@ vi.mock("@/src/services/funding/getLiveFundingOpportunities", () => ({
   getLiveFundingOpportunities: vi.fn(() => mockGetLiveFundingOpportunities()),
 }));
 
+// Import fixtures
 import { mockFundingOpportunities } from "../fixtures/funding-opportunities";
 
 // Mock chosenCommunities
@@ -35,106 +39,57 @@ describe("Homepage Accessibility", () => {
   });
 
   describe("Automated Accessibility Checks", () => {
-    it("Hero section passes axe with minor violations", async () => {
-      renderWithProviders(await HomePage());
-
-      // Find Hero section
-      const heroSection = screen.getAllByText(/Get funded/i)[0].closest("section");
-      expect(heroSection).toBeInTheDocument();
-
-      const results = await axe(heroSection as HTMLElement);
-
-      // Hero may have image-redundant-alt violations in carousel (acceptable)
-      // Filter out known acceptable violations
-      const criticalViolations = results.violations.filter(
-        (v: any) => v.id !== "image-redundant-alt"
-      );
-
-      expect(criticalViolations.length).toBe(0);
-    });
-
-    it("Live Funding section passes axe", async () => {
-      renderWithProviders(await HomePage());
-
-      await waitFor(() => {
-        expect(screen.getByText(/Live funding opportunities/i)).toBeInTheDocument();
-      });
-
-      // Find LiveFunding section
-      const fundingSection = screen.getByText(/Live funding opportunities/i).closest("section");
-      expect(fundingSection).toBeInTheDocument();
-
-      const results = await axe(fundingSection as HTMLElement);
-      expect(results).toHaveNoViolations();
-    });
-
-    it("Platform Features passes axe", async () => {
-      renderWithProviders(await HomePage());
-
-      // Find PlatformFeatures section
-      const featuresSection = screen.getByText(/Karma connects builders/i).closest("section");
-      expect(featuresSection).toBeInTheDocument();
-
-      const results = await axe(featuresSection as HTMLElement);
-      expect(results).toHaveNoViolations();
-    });
-
-    it("How It Works passes axe", async () => {
-      renderWithProviders(await HomePage());
-
-      // Find HowItWorks section
-      const howItWorksSection = screen.getAllByText(/One profile./i)[0].closest("section");
-      expect(howItWorksSection).toBeInTheDocument();
-
-      const results = await axe(howItWorksSection as HTMLElement);
-      expect(results).toHaveNoViolations();
-    });
-
-    it("Join Community passes axe", async () => {
-      renderWithProviders(await HomePage());
-
-      // Find JoinCommunity section
-      const communitySection = screen.getByText(/Join our community/i).closest("section");
-      expect(communitySection).toBeInTheDocument();
-
-      const results = await axe(communitySection as HTMLElement);
-      expect(results).toHaveNoViolations();
-    });
-
-    it("FAQ section passes axe", async () => {
-      renderWithProviders(await HomePage());
-
-      // Find FAQ section
-      const faqSection = screen.getByText(/What is Karma/i).closest("section");
-      expect(faqSection).toBeInTheDocument();
-
-      const results = await axe(faqSection as HTMLElement);
-      expect(results).toHaveNoViolations();
-    });
-
-    it("Where Builders Grow passes axe", async () => {
-      renderWithProviders(await HomePage());
-
-      // Find WhereBuildersGrow section
-      const buildersSection = screen.getAllByText(/Where builders grow/i)[0].closest("section");
-      expect(buildersSection).toBeInTheDocument();
-
-      const results = await axe(buildersSection as HTMLElement);
-      expect(results).toHaveNoViolations();
-    });
-
-    it("Full page passes axe with acceptable violations", async () => {
+    // One render, every section checked. RTL auto-cleanup unmounts between
+    // separate `it`s, so a shared render can only live within a single test —
+    // hence the section checks run sequentially here instead of one `it` each.
+    it("each section and the full page pass axe", async () => {
       const { container } = renderWithProviders(await HomePage());
 
       await waitFor(() => {
         expect(screen.getByText(/Live funding opportunities/i)).toBeInTheDocument();
       });
 
-      const results = await axe(container);
+      // Hero — the carousel may carry acceptable image-redundant-alt violations
+      const heroSection = screen.getAllByText(/Get funded/i)[0].closest("section");
+      expect(heroSection).toBeInTheDocument();
+      const heroResults = await axe(heroSection as HTMLElement);
+      expect(
+        heroResults.violations.filter((violation) => violation.id !== "image-redundant-alt").length
+      ).toBe(0);
 
-      // Full page should have minimal violations
-      // We allow up to 5 violations for full page as per plan
-      expect(results.violations.length).toBeLessThanOrEqual(5);
+      // Live funding
+      const fundingSection = screen.getByText(/Live funding opportunities/i).closest("section");
+      expect(fundingSection).toBeInTheDocument();
+      expect(await axe(fundingSection as HTMLElement)).toHaveNoViolations();
+
+      // Platform features
+      const featuresSection = screen.getByText(/Karma connects builders/i).closest("section");
+      expect(featuresSection).toBeInTheDocument();
+      expect(await axe(featuresSection as HTMLElement)).toHaveNoViolations();
+
+      // How it works
+      const howItWorksSection = screen.getAllByText(/One profile./i)[0].closest("section");
+      expect(howItWorksSection).toBeInTheDocument();
+      expect(await axe(howItWorksSection as HTMLElement)).toHaveNoViolations();
+
+      // Join community
+      const communitySection = screen.getByText(/Join our community/i).closest("section");
+      expect(communitySection).toBeInTheDocument();
+      expect(await axe(communitySection as HTMLElement)).toHaveNoViolations();
+
+      // FAQ
+      const faqSection = screen.getByText(/What is Karma/i).closest("section");
+      expect(faqSection).toBeInTheDocument();
+      expect(await axe(faqSection as HTMLElement)).toHaveNoViolations();
+
+      // Where builders grow
+      const buildersSection = screen.getAllByText(/Where builders grow/i)[0].closest("section");
+      expect(buildersSection).toBeInTheDocument();
+      expect(await axe(buildersSection as HTMLElement)).toHaveNoViolations();
+
+      // Full page — allow up to 5 acceptable violations, per the a11y plan
+      const fullResults = await axe(container);
+      expect(fullResults.violations.length).toBeLessThanOrEqual(5);
     });
   });
 });

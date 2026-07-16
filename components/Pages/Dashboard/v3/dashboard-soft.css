@@ -1,0 +1,109 @@
+/**
+ * Role-aware Dashboard v3 — "soft" theme TOKENS.
+ *
+ * Component styling lives in the components as Tailwind utilities (the `--sf-*`
+ * tokens below are registered in tailwind.config.js as the `sf` color scale +
+ * `sf-card`/`sf-tile` radii). This file only defines the CSS variables + their
+ * `.dark` overrides — the mechanism that also re-themes the reused Tailwind
+ * drill-in sections (Projects/Admin/Reviews/Applications) via the semantic
+ * HSL tokens. This is the same variable-driven approach as globals.css.
+ */
+
+.dashv3 {
+  --sf-panel: #f7f9fb;
+  --sf-card: #ffffff;
+  --sf-elev: #fafafa;
+  --sf-hover: #f4f4f5;
+  --sf-skeleton: #e4e4e7;
+  --sf-ink: #18181b;
+  --sf-ink-soft: #27272a;
+  --sf-heading: #18181b;
+  --sf-muted: #71717a;
+  --sf-line: #f4f4f5;
+  --sf-line-strong: #e4e4e7;
+  --sf-chip: #f4f4f5;
+  --sf-r-card: 12px;
+  --sf-r-tile: 10px;
+  --sf-shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+
+  /* Pin the app's hsl-triplet semantic tokens so the reused Tailwind drill-in
+     sections (bg-card / text-muted-foreground / border-border / …) match the
+     soft palette. LIGHT values; `.dark .dashv3` overrides them for dark mode. */
+  --background: 0 0% 100%;
+  --foreground: 0 0% 4%;
+  --foreground-alt: 0 0% 26%;
+  --card: 0 0% 100%;
+  --card-foreground: 0 0% 4%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 0 0% 4%;
+  --secondary: 0 0% 96%;
+  --secondary-foreground: 0 0% 9%;
+  --muted: 0 0% 96%;
+  --muted-foreground: 0 0% 45%;
+  --accent: 0 0% 96%;
+  --accent-foreground: 0 0% 9%;
+  --border: 0 0% 90%;
+  --input: 0 0% 90%;
+  --ring: 0 0% 4%;
+
+  color: var(--sf-heading);
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizelegibility;
+}
+
+/* Dark mode — invert the neutral surfaces/text/lines and re-pin the semantic
+   HSL tokens to dark so the drill-in sections render dark too. Brand/status
+   accents are handled per-component via Tailwind `dark:` variants. */
+.dark .dashv3 {
+  --sf-panel: #000000;
+  --sf-card: #161616;
+  --sf-elev: #1e1e1e;
+  --sf-hover: #262626;
+  --sf-skeleton: #262626;
+  --sf-ink: #fafafa;
+  --sf-ink-soft: #e4e4e7;
+  --sf-heading: #fafafa;
+  --sf-muted: #a1a1aa;
+  --sf-line: #262626;
+  --sf-line-strong: #383838;
+  --sf-chip: #232323;
+  --sf-shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 1px 2px -1px rgba(0, 0, 0, 0.3);
+
+  --background: 0 0% 0%;
+  --foreground: 0 0% 98%;
+  --foreground-alt: 0 0% 83%;
+  --card: 0 0% 9%;
+  --card-foreground: 0 0% 98%;
+  --popover: 0 0% 9%;
+  --popover-foreground: 0 0% 98%;
+  --secondary: 0 0% 12%;
+  --secondary-foreground: 0 0% 96%;
+  --muted: 0 0% 12%;
+  --muted-foreground: 0 0% 64%;
+  --accent: 0 0% 12%;
+  --accent-foreground: 0 0% 96%;
+  --border: 0 0% 20%;
+  --input: 0 0% 20%;
+  --ring: 0 0% 83%;
+}
+
+/* Base resets scoped to the dashboard subtree. */
+.dashv3 button {
+  cursor: pointer;
+}
+
+/*
+ * Dashboard route navigation (View Transitions API).
+ *
+ * A bento tile and its `/dashboard/[module]` drill-in may still share a
+ * `view-transition-name` (moduleTransitionName) elsewhere in the app, but the
+ * dashboard no longer animates a box morph/scale across that navigation —
+ * disable the built-in cross-fade/resize for every group so navigation is an
+ * instant swap with no zoom-in/zoom-out.
+ */
+::view-transition-group(*),
+::view-transition-old(*),
+::view-transition-new(*) {
+  animation: none;
+}
