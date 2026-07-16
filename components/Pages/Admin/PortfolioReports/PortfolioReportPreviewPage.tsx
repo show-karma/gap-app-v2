@@ -26,11 +26,15 @@ export function PortfolioReportPreviewPage({ community, reportId }: Props) {
   const backHref = PAGES.ADMIN.PORTFOLIO_REPORTS(slug);
 
   const runDate = report?.runDate;
+  // Carry the config slug through: this route knows exactly which report was
+  // requested, and a run-date-only redirect would drop that and land on
+  // whichever report is newest when two configs ran the same day.
+  const configSlug = report?.reportConfigSlug ?? null;
   useEffect(() => {
     if (runDate) {
-      replace(PAGES.COMMUNITY.REPORT_DETAIL(slug, runDate));
+      replace(PAGES.COMMUNITY.REPORT_DETAIL(slug, runDate, configSlug));
     }
-  }, [runDate, slug, replace]);
+  }, [runDate, configSlug, slug, replace]);
 
   if (isError) {
     return (

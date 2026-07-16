@@ -94,7 +94,7 @@ describe("PublicReportViewPage (DEV-496 unified report URL)", () => {
     expect(screen.getByText(/no published report found/i)).toBeInTheDocument();
     expect(screen.queryByTestId("doc-view")).not.toBeInTheDocument();
     // The draft lookup is gated off for non-admins.
-    expect(mockDraft).toHaveBeenCalledWith("filecoin", RUN_DATE, false);
+    expect(mockDraft).toHaveBeenCalledWith("filecoin", RUN_DATE, false, undefined);
   });
 
   it("surfaces the error state (not 'no report') when the admin draft lookup fails", () => {
@@ -147,6 +147,34 @@ describe("PublicReportViewPage (DEV-496 unified report URL)", () => {
 
     expect(mockPublished).toHaveBeenCalledWith("filecoin", RUN_DATE, "portfolio-health");
     expect(screen.getByTestId("doc-view")).toHaveTextContent("report:r-health");
+  });
+
+  it("scopes the admin draft preview to the config in the URL", () => {
+    // Two configs can have a draft on one date; the draft shown must be the
+    // one the URL names, not whichever comes back first.
+    mockPublished.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    } as any);
+    mockAdmin.mockReturnValue({ isCommunityAdmin: true, isLoading: false } as any);
+    mockDraft.mockReturnValue({
+      data: { id: "draft-health", publishedAt: null },
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    } as any);
+
+    render(
+      <PublicReportViewPage
+        community={community}
+        runDate={RUN_DATE}
+        configSlug="portfolio-health"
+      />
+    );
+
+    expect(mockDraft).toHaveBeenCalledWith("filecoin", RUN_DATE, true, "portfolio-health");
   });
 
   it("omits the config slug on the legacy run-date-only URL", () => {

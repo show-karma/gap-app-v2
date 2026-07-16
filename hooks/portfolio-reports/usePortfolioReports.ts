@@ -321,14 +321,27 @@ export function usePublishedReport(
  * surface a failed/generating/published row and expose it to the document view
  * as a draft preview.
  */
-export function useAdminReportByRunDate(communitySlug: string, runDate: string, enabled: boolean) {
+/**
+ * Finds the draft an admin can preview at a report URL. `configSlug` narrows to
+ * a specific config: matching on `runDate` alone returns whichever draft comes
+ * first when two configs ran the same day, which is not necessarily the one the
+ * URL points at.
+ */
+export function useAdminReportByRunDate(
+  communitySlug: string,
+  runDate: string,
+  enabled: boolean,
+  configSlug?: string
+) {
   return useQuery({
-    queryKey: [...QUERY_KEYS.reports(communitySlug), "by-run-date", runDate],
+    queryKey: [...QUERY_KEYS.reports(communitySlug), "by-run-date", runDate, configSlug ?? null],
     queryFn: async () => {
       const reports = await portfolioService.listReports(communitySlug);
-      return (
-        reports.find((report) => report.runDate === runDate && report.status === "draft") ?? null
+      const drafts = reports.filter(
+        (report) => report.runDate === runDate && report.status === "draft"
       );
+      if (!configSlug) return drafts[0] ?? null;
+      return drafts.find((report) => report.reportConfigSlug === configSlug) ?? null;
     },
     enabled: Boolean(communitySlug && runDate) && enabled,
   });
