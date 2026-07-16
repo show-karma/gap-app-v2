@@ -75,15 +75,11 @@ describe("MultiSelectDropdown", () => {
         />
       );
 
-      const orphanChip = screen.getByText(orphanId).closest("div");
-      expect(orphanChip).not.toBeNull();
-      // The chip renders a leading warning icon and a trailing remove (X) icon;
-      // the remove control is the last svg.
-      const icons = orphanChip?.querySelectorAll("svg");
-      const removeIcon = icons?.[icons.length - 1];
-      expect(removeIcon).not.toBeUndefined();
+      const removeButton = screen.getByRole("button", {
+        name: `Remove ${orphanId}`,
+      });
 
-      fireEvent.click(removeIcon as SVGElement);
+      fireEvent.click(removeButton);
 
       expect(onChange).toHaveBeenCalledWith(["0x1111"]);
     });

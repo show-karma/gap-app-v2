@@ -64,16 +64,22 @@ const SelectedChip = memo(function SelectedChip({
         <span className="h-2 w-2 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
       )}
       <span className="truncate max-w-[200px]">{label}</span>
-      <XMarkIcon
+      <button
+        type="button"
+        aria-label={`Remove ${label}`}
+        disabled={disabled}
+        onClick={handleRemove}
+        onKeyDown={(e) => e.stopPropagation()}
         className={cn(
-          "h-3 w-3 flex-shrink-0",
+          "flex flex-shrink-0 items-center rounded",
           isUnknown ? "text-amber-600 dark:text-amber-300" : "text-gray-500 dark:text-zinc-400",
           disabled
             ? "cursor-not-allowed opacity-50"
             : "cursor-pointer hover:text-gray-700 dark:hover:text-zinc-200"
         )}
-        onClick={handleRemove}
-      />
+      >
+        <XMarkIcon className="h-3 w-3" aria-hidden="true" />
+      </button>
     </div>
   );
 });
