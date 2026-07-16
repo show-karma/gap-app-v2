@@ -10,6 +10,7 @@ import { type DropdownItem, MultiSelectDropdown } from "@/components/Utilities/M
 import { ReviewerType, useReviewerAssignment } from "@/hooks/useReviewerAssignment";
 import type { AddMilestoneReviewerRequest } from "@/services/milestone-reviewers.service";
 import type { AddReviewerRequest } from "@/services/program-reviewers.service";
+import { shortAddress } from "@/utilities/shortAddress";
 
 const ReviewerPickerModal = dynamic(
   () => import("@/components/FundingPlatform/ReviewerPicker/ReviewerPickerModal"),
@@ -147,6 +148,9 @@ export const ReviewerAssignmentDropdown: FC<ReviewerAssignmentDropdownProps> = (
         isLoading={isLoading}
         emptyActionLabel={reviewerActionLabel}
         onEmptyAction={handleEmptyAction}
+        showUnknownSelections
+        formatUnknownLabel={shortAddress}
+        unknownSelectionHint={`Not configured as a ${reviewerType} reviewer for this program`}
       />
       {communityUID ? (
         <ReviewerPickerModal
