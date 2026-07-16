@@ -87,8 +87,11 @@ export interface PortfolioReport {
    * before DEV-520 — readers fall back to `reportConfigName`. Exists because
    * the period a report covers is recorded nowhere: `runDate` is the
    * generation date, not the covered range.
+   *
+   * Optional, not just nullable: until the indexer ships the field, responses
+   * omit it entirely rather than sending `null`, and readers must handle both.
    */
-  title: string | null;
+  title?: string | null;
   /**
    * Rendered report body. New reports are full `<!DOCTYPE html>`
    * documents emitted by the agentic generator's structured-document
