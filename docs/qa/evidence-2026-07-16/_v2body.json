@@ -1,0 +1,74 @@
+{
+  "uid": "0xf606905548513216443116101ed318eba3f23a52cb397cd3af8896fe3248bedb",
+  "chainID": 8453,
+  "owner": "0xde08ef24340870785181fdd136c3e05fcf36bb13",
+  "payoutAddress": "",
+  "chainPayoutAddress": null,
+  "details": {
+    "title": "QA Bug Sweep Project 1752",
+    "description": "A test project created for live QA of PR 1752 bug sweep flows.",
+    "problem": "Testing milestone date and update sharing flows.",
+    "solution": "We build QA fixtures.",
+    "missionSummary": "Mission is to validate bug fixes.",
+    "locationOfImpact": "",
+    "slug": "qa-bug-sweep-project-1752",
+    "logoUrl": "",
+    "businessModel": "",
+    "stageIn": "",
+    "raisedMoney": "",
+    "pathToTake": "",
+    "tags": [],
+    "links": [
+      { "type": "twitter", "url": "" },
+      { "type": "github", "url": "" },
+      { "type": "discord", "url": "" },
+      { "type": "website", "url": "" },
+      { "type": "linkedin", "url": "" },
+      { "type": "pitchDeck", "url": "" },
+      { "type": "demoVideo", "url": "" },
+      { "type": "farcaster", "url": "" }
+    ],
+    "lastDetailsUpdate": "2026-07-08T15:34:59.678Z"
+  },
+  "external": {
+    "gitcoin": [],
+    "oso": [],
+    "divvi_wallets": [],
+    "github": [],
+    "network_addresses": []
+  },
+  "members": [
+    {
+      "address": "0xde08ef24340870785181fdd136c3e05fcf36bb13",
+      "role": "owner",
+      "joinedAt": "2026-07-08T15:34:59.000Z"
+    }
+  ],
+  "endorsements": [],
+  "milestones": [],
+  "impacts": [],
+  "updates": [
+    {
+      "uid": "0xaed26922109499806e6d388ef22dd914baa430d141b455fb365f6bee233a0ca1",
+      "title": "QA Project Activity Update",
+      "text": "QA test project activity for validating the Share flow on ProjectUpdateCard.",
+      "startDate": "2026-07-08T15:44:56.162Z",
+      "endDate": "",
+      "grants": [],
+      "indicators": [],
+      "deliverables": [
+        {
+          "name": "QA Deliverable",
+          "proof": "https://example.com/qa-proof-document",
+          "description": "Proof of QA deliverable completion"
+        }
+      ],
+      "verified": false,
+      "createdAt": "2026-07-08T15:44:55.000Z"
+    }
+  ],
+  "communities": ["0xb752f2ea1e4f067d0f5180cd00f0fff18eafb6346311aaf3a2a62a91fad2fcaa"],
+  "pointers": [],
+  "createdAt": "2026-07-08T15:34:59.663Z",
+  "updatedAt": "2026-07-08T16:19:48.663Z"
+}
