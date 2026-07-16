@@ -13,11 +13,20 @@ import {
   Trash2,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useQueryState } from "nuqs";
+import pluralize from "pluralize";
 import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { DeleteDialog } from "@/components/DeleteDialog";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
 import {
   useDeleteReport,
@@ -41,6 +50,68 @@ import { GenerationStatusBadge } from "./GenerationStatusBadge";
 
 interface Props {
   community: Community;
+}
+
+/** Sentinel for "no type filter"; also the value the URL param is cleared to. */
+const ALL_TYPES = "all";
+
+interface ReportTypeOption {
+  id: string;
+  label: string;
+}
+
+/**
+ * Report types for the admin filter: one per config that has a *generated*
+ * report — draft or published. A report mid-generation (`generating`) or one
+ * whose generation `failed` hasn't produced anything to review, so its config
+ * doesn't count until it does. This is why the admin filter is broader than the
+ * public one (published-only): the admin table shows drafts too.
+ */
+function deriveGeneratedTypes(
+  reports: PortfolioReport[],
+  configById: Map<string, ReportConfig>
+): ReportTypeOption[] {
+  const byId = new Map<string, string>();
+  for (const report of reports) {
+    if (report.status !== "draft" && report.status !== "published") continue;
+    if (byId.has(report.reportConfigId)) continue;
+    byId.set(
+      report.reportConfigId,
+      configById.get(report.reportConfigId)?.name ?? "(deleted config)"
+    );
+  }
+  return Array.from(byId, ([id, label]) => ({ id, label })).sort((a, b) =>
+    a.label.localeCompare(b.label)
+  );
+}
+
+function ReportTypeFilterSelect({
+  types,
+  value,
+  onChange,
+}: {
+  types: ReportTypeOption[];
+  value: string;
+  onChange: (next: string) => void;
+}) {
+  return (
+    <div className="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
+      <span className="font-medium uppercase tracking-wider">Type</span>
+      <Select value={value} onValueChange={onChange}>
+        <SelectTrigger aria-label="Filter reports by type" className="h-8 max-w-[16rem] text-xs">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value={ALL_TYPES}>All report types</SelectItem>
+          {types.map((type) => (
+            <SelectItem key={type.id} value={type.id}>
+              {type.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  );
 }
 
 interface ReportTableRowProps {
@@ -170,6 +241,18 @@ export function PortfolioReportListPage({ community }: Props) {
 
   const activeConfigs = useMemo(() => (configs ?? []).filter((c) => c.isActive), [configs]);
 
+  const [typeFilter, setTypeFilter] = useQueryState("type", { defaultValue: ALL_TYPES });
+
+  const reportTypes = useMemo(
+    () => deriveGeneratedTypes(reports ?? [], configById),
+    [reports, configById]
+  );
+
+  // Clearing to null (not the sentinel) drops `?type=` from the URL.
+  const handleTypeChange = (next: string) => {
+    setTypeFilter(next === ALL_TYPES ? null : next);
+  };
+
   const generatingConfigIds = useMemo(() => {
     const ids = new Set<string>();
     for (const r of reports ?? []) {
@@ -296,6 +379,10 @@ export function PortfolioReportListPage({ community }: Props) {
       deleteMutation.isPending);
 
   const sortedReports = (reports ?? []).slice().sort((a, b) => b.runDate.localeCompare(a.runDate));
+  const visibleReports =
+    typeFilter === ALL_TYPES
+      ? sortedReports
+      : sortedReports.filter((report) => report.reportConfigId === typeFilter);
 
   return (
     <div className="space-y-6">
@@ -421,41 +508,76 @@ export function PortfolioReportListPage({ community }: Props) {
           </p>
         </div>
       ) : (
-        <div className="overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-700">
-          <table className="w-full text-sm">
-            <thead className="bg-zinc-50 dark:bg-zinc-800">
-              <tr>
-                <th className="px-4 py-3 text-left font-medium text-zinc-500">Report</th>
-                <th className="px-4 py-3 text-left font-medium text-zinc-500">Run date</th>
-                <th className="px-4 py-3 text-left font-medium text-zinc-500">Status</th>
-                <th className="px-4 py-3 text-left font-medium text-zinc-500">Model</th>
-                <th className="px-4 py-3 text-left font-medium text-zinc-500">Generated</th>
-                <th className="px-4 py-3 text-right font-medium text-zinc-500">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-zinc-200 dark:divide-zinc-700">
-              {sortedReports.map((report: PortfolioReport) => (
-                <ReportTableRow
-                  key={report.id}
-                  slug={slug}
-                  report={report}
-                  configName={configById.get(report.reportConfigId)?.name ?? "(deleted config)"}
-                  rowPending={isRowPending(report.id)}
-                  activeMutationType={activeMutationType}
-                  onEdit={() => router.push(`${PAGES.ADMIN.PORTFOLIO_REPORTS(slug)}/${report.id}`)}
-                  onPreview={() =>
-                    router.push(
-                      PAGES.COMMUNITY.REPORT_DETAIL(slug, report.runDate, report.reportConfigSlug)
-                    )
-                  }
-                  onPublish={() => handlePublish(report.id)}
-                  onUnpublish={() => handleUnpublish(report.id)}
-                  onRegenerate={() => setRegenerateTargetId(report.id)}
-                  onDelete={() => setDeleteTargetId(report.id)}
-                />
-              ))}
-            </tbody>
-          </table>
+        <div className="space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              {visibleReports.length} {pluralize("report", visibleReports.length)}
+            </p>
+            {reportTypes.length > 1 && (
+              <ReportTypeFilterSelect
+                types={reportTypes}
+                value={typeFilter}
+                onChange={handleTypeChange}
+              />
+            )}
+          </div>
+
+          {visibleReports.length === 0 ? (
+            <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-zinc-300 p-12 text-center dark:border-zinc-600">
+              <FileText className="mb-3 h-8 w-8 text-zinc-400" />
+              <p className="text-sm text-zinc-500">No reports of this type.</p>
+              <button
+                type="button"
+                onClick={() => handleTypeChange(ALL_TYPES)}
+                className="mt-4 text-sm font-medium text-blue-600 hover:underline dark:text-blue-400"
+              >
+                Show all reports
+              </button>
+            </div>
+          ) : (
+            <div className="overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-700">
+              <table className="w-full text-sm">
+                <thead className="bg-zinc-50 dark:bg-zinc-800">
+                  <tr>
+                    <th className="px-4 py-3 text-left font-medium text-zinc-500">Report</th>
+                    <th className="px-4 py-3 text-left font-medium text-zinc-500">Run date</th>
+                    <th className="px-4 py-3 text-left font-medium text-zinc-500">Status</th>
+                    <th className="px-4 py-3 text-left font-medium text-zinc-500">Model</th>
+                    <th className="px-4 py-3 text-left font-medium text-zinc-500">Generated</th>
+                    <th className="px-4 py-3 text-right font-medium text-zinc-500">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-zinc-200 dark:divide-zinc-700">
+                  {visibleReports.map((report: PortfolioReport) => (
+                    <ReportTableRow
+                      key={report.id}
+                      slug={slug}
+                      report={report}
+                      configName={configById.get(report.reportConfigId)?.name ?? "(deleted config)"}
+                      rowPending={isRowPending(report.id)}
+                      activeMutationType={activeMutationType}
+                      onEdit={() =>
+                        router.push(`${PAGES.ADMIN.PORTFOLIO_REPORTS(slug)}/${report.id}`)
+                      }
+                      onPreview={() =>
+                        router.push(
+                          PAGES.COMMUNITY.REPORT_DETAIL(
+                            slug,
+                            report.runDate,
+                            report.reportConfigSlug
+                          )
+                        )
+                      }
+                      onPublish={() => handlePublish(report.id)}
+                      onUnpublish={() => handleUnpublish(report.id)}
+                      onRegenerate={() => setRegenerateTargetId(report.id)}
+                      onDelete={() => setDeleteTargetId(report.id)}
+                    />
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       )}
     </div>
