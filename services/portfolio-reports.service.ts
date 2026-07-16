@@ -100,13 +100,19 @@ export async function getReportCharts(
   return data;
 }
 
+/**
+ * `title` is tri-state: omit it to preserve the stored title, pass a string to
+ * set it, or pass `null` to clear it back to the report config's name.
+ */
 export async function updateReportContent(
   communitySlug: string,
   reportId: string,
-  content: string
+  content: string,
+  title?: string | null
 ): Promise<PortfolioReport> {
   const { data } = await apiClient.put(`/v2/communities/${communitySlug}/reports/${reportId}`, {
     content,
+    ...(title !== undefined && { title }),
   });
   return data;
 }
@@ -169,6 +175,27 @@ export async function getPublishedReportByRunDate(
 ): Promise<PortfolioReport | null> {
   const res = await fetch(
     `${API_URL}/v2/communities/${communitySlug}/reports/published/${encodeURIComponent(runDate)}`
+  );
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(`API error: ${res.status} ${res.statusText}`);
+  return res.json() as Promise<PortfolioReport>;
+}
+
+/**
+ * Fetch the report a specific config published on `runDate`. Preferred over
+ * {@link getPublishedReportByRunDate}: a run date identifies at most one report
+ * *per config*, so the date alone cannot address a report when a community runs
+ * two configs on the same day.
+ */
+export async function getPublishedReportByRunDateAndConfigSlug(
+  communitySlug: string,
+  runDate: string,
+  configSlug: string
+): Promise<PortfolioReport | null> {
+  const res = await fetch(
+    `${API_URL}/v2/communities/${communitySlug}/reports/published/${encodeURIComponent(
+      runDate
+    )}/${encodeURIComponent(configSlug)}`
   );
   if (res.status === 404) return null;
   if (!res.ok) throw new Error(`API error: ${res.status} ${res.statusText}`);

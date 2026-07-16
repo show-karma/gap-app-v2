@@ -38,8 +38,15 @@ export const PAGES = {
     BROWSE_APPLICATIONS: (community: string) => `/community/${community}/browse-applications`,
     CLAIM_FUNDS: (community: string) => `/community/${community}/claim-funds`,
     REPORTS: (community: string) => `/community/${community}/reports`,
-    REPORT_DETAIL: (community: string, runDate: string) =>
-      `/community/${community}/reports/${encodeURIComponent(runDate)}`,
+    /**
+     * `configSlug` disambiguates reports sharing a run date. Omit it only when
+     * the slug is unavailable (deleted config) — the run-date-only URL cannot
+     * address a specific report and resolves to the newest one for that date.
+     */
+    REPORT_DETAIL: (community: string, runDate: string, configSlug?: string | null) =>
+      configSlug
+        ? `/community/${community}/reports/${encodeURIComponent(runDate)}/${encodeURIComponent(configSlug)}`
+        : `/community/${community}/reports/${encodeURIComponent(runDate)}`,
     ASK_KARMA: (community: string) => `/community/${community}/ask-karma`,
   },
   MY_PROJECTS: `/my-projects`,
