@@ -5,7 +5,7 @@ import { useParams } from "next/navigation";
 import { Link } from "@/src/components/navigation/Link";
 import { PAGES } from "@/utilities/pages";
 
-export default function ReportMonthNotFound() {
+export default function ReportNotFound() {
   const params = useParams<{ communityId: string }>();
   const communityId = params?.communityId ?? "";
 
@@ -17,8 +17,8 @@ export default function ReportMonthNotFound() {
         </div>
         <h1 className="text-xl font-semibold text-foreground">Report not found</h1>
         <p className="text-sm text-muted-foreground">
-          We couldn&apos;t find a report at this URL. It may have been removed, or the month format
-          is invalid.
+          We couldn&apos;t find a report at this URL. It may have been removed, or the report may
+          have been renamed.
         </p>
         {communityId ? (
           <Link
