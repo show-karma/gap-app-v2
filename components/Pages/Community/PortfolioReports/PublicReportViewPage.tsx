@@ -42,7 +42,7 @@ export function PublicReportViewPage({ community, runDate, configSlug }: Props) 
     isLoading: draftLoading,
     isError: draftError,
     refetch: refetchDraft,
-  } = useAdminReportByRunDate(slug, runDate, canPreviewDraft);
+  } = useAdminReportByRunDate(slug, runDate, canPreviewDraft, configSlug);
 
   // A disabled React Query still holds its last cached value, so gate the
   // selection (not just the fetch) on the resolved admin state — a stale draft
