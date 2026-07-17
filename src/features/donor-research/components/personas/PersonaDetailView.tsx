@@ -341,7 +341,7 @@ export function PersonaDetailView({ handleId }: PersonaDetailViewProps) {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-[-0.02em] text-sf-heading">
+        <h1 className="text-2xl font-semibold tracking-[-0.02em] text-sf-heading">
           {handle.opaqueLabel}
         </h1>
         <p className="mt-1 text-[13.5px] text-sf-muted">Persona profile</p>

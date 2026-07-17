@@ -54,8 +54,7 @@ export function DisqualificationSummary({ candidates }: DisqualificationSummaryP
         </p>
         <p className="mt-1 max-w-2xl text-[13px] text-sf-muted">
           No qualifying candidates surfaced. Most often the criteria pulled into a stratum the IRS
-          hasn't indexed recently — try broadening geography or cause to draw from a different
-          slice.
+          hasn't indexed recently. Try broadening geography or cause to draw from a different slice.
         </p>
       </div>
 

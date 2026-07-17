@@ -72,7 +72,7 @@ export const RunnerUpCandidate = memo(function RunnerUpCandidate({
 
   return (
     <section
-      className="rounded-sf-card border border-sf-line bg-sf-card px-6 py-6"
+      className="rounded-sf-card border border-sf-line bg-sf-card p-6"
       data-section="runners-up"
       data-candidate-id={candidate.id}
     >

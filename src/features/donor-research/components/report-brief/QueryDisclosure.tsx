@@ -79,16 +79,18 @@ function Row({
   );
 }
 
+const USD_FORMAT = new Intl.NumberFormat("en-US", {
+  style: "currency",
+  currency: "USD",
+  maximumFractionDigits: 0,
+});
+
 function amountLabel(
   min: number | null | undefined,
   max: number | null | undefined
 ): string | null {
   if (!min && !max) return null;
-  const fmt = new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  });
+  const fmt = USD_FORMAT;
   if (min && max) return `${fmt.format(min)}–${fmt.format(max)}`;
   if (min) return `From ${fmt.format(min)}`;
   return `Up to ${fmt.format(max as number)}`;

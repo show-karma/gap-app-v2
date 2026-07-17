@@ -265,7 +265,7 @@ const SampleCandidateCard = memo(function SampleCandidateCard({
 
       <header className="mt-2 flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <h4 className="truncate text-[15px] font-bold tracking-[-0.01em] text-sf-heading">
+          <h4 className="truncate text-[15px] font-semibold tracking-[-0.01em] text-sf-heading">
             {candidate.name}
           </h4>
           <p className="mt-0.5 font-mono text-[11.5px] tabular-nums text-sf-muted">

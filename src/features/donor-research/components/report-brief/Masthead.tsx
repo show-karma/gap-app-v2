@@ -40,7 +40,7 @@ export function Masthead({
       data-section="masthead"
     >
       <div className="min-w-0 flex-1">
-        <h1 className="max-w-[42ch] text-balance text-[1.625rem] font-bold leading-[1.15] tracking-[-0.02em] text-sf-heading sm:text-[1.875rem]">
+        <h1 className="max-w-[42ch] text-balance text-[1.625rem] font-semibold leading-[1.15] tracking-[-0.02em] text-sf-heading sm:text-[1.875rem]">
           {headline({
             considered: candidatesCount,
             surfaced: surfacedCount,

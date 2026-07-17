@@ -314,7 +314,7 @@ export function CommentOverlay({
                     We couldn’t load the comments
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    Something went wrong on our end. Your connection is fine — we’ll keep trying, or
+                    Something went wrong on our end. Your connection is fine. We’ll keep trying, or
                     you can retry now.
                   </p>
                   <Button

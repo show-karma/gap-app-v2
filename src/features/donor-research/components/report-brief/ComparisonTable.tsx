@@ -95,11 +95,11 @@ export function ComparisonTable({ candidates, weights = null }: ComparisonTableP
 
   return (
     <section
-      className="rounded-sf-card border border-sf-line bg-sf-card px-6 py-6"
+      className="rounded-sf-card border border-sf-line bg-sf-card p-6"
       data-section="comparison"
     >
       <header>
-        <h2 className="text-lg font-bold tracking-[-0.01em] text-sf-heading">At a glance</h2>
+        <h2 className="text-lg font-semibold tracking-[-0.01em] text-sf-heading">At a glance</h2>
         <p className="mt-1 text-[13px] text-sf-muted">The candidates, side by side.</p>
       </header>
 

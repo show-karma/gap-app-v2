@@ -108,7 +108,7 @@ function AdvancedDisclosure({
             Advanced: ranking weights &amp; result count
           </span>
           <span className="text-[12px] text-sf-muted">
-            Defaults work well for most searches — you can adjust these again after the report
+            Defaults work well for most searches. You can adjust these again after the report
             renders.
           </span>
         </span>

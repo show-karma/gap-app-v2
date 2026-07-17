@@ -75,7 +75,7 @@ export function DiligenceResponsePage({ token }: DiligenceResponsePageProps) {
   return (
     <Shell>
       <header className="flex flex-col gap-1.5">
-        <h1 className="text-xl font-bold tracking-[-0.01em] text-sf-heading sm:text-2xl">
+        <h1 className="text-xl font-semibold tracking-[-0.01em] text-sf-heading sm:text-2xl">
           You've received a research request
           {data.orgName ? (
             <>
@@ -86,7 +86,7 @@ export function DiligenceResponsePage({ token }: DiligenceResponsePageProps) {
         </h1>
         <p className="text-[13.5px] leading-[1.55] text-sf-muted">
           A donor advisor is researching organizations like yours. Your answers help complete this
-          research — you can answer as many questions as you like.
+          research. You can answer as many questions as you like.
         </p>
       </header>
 

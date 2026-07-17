@@ -28,7 +28,7 @@ export function NewReportView({ initialDonorHandleId }: NewReportViewProps) {
             <ArrowLeft aria-hidden="true" className="h-3.5 w-3.5" />
             Reports
           </Link>
-          <h1 className="text-2xl font-bold tracking-[-0.02em] text-sf-heading">New report</h1>
+          <h1 className="text-2xl font-semibold tracking-[-0.02em] text-sf-heading">New report</h1>
           <p className="mt-1 max-w-xl text-[13.5px] text-sf-muted">
             Describe what you're researching. We'll return ranked nonprofit recommendations with EIN
             and mailing address on every row.

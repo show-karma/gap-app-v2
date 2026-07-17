@@ -1,7 +1,7 @@
 "use client";
 
 import { Share2 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { DeleteDialog } from "@/components/DeleteDialog";
 import {
@@ -50,9 +50,9 @@ export function ShareTokenControls({
     try {
       await copyFn(text);
     } catch {
-      // useCopyToClipboard already surfaces failures via toast/errorManager;
-      // swallow here so a rejected clipboard write can't bubble up as an
-      // unhandled rejection.
+      // SUPPRESSED: useCopyToClipboard already surfaces failures via
+      // toast/errorManager; swallow here so a rejected clipboard write can't
+      // bubble up as an unhandled rejection.
     }
   };
   const generate = useGenerateShareToken();
@@ -62,7 +62,14 @@ export function ShareTokenControls({
   const [regenerateOpen, setRegenerateOpen] = useState(false);
 
   const effectiveToken = generatedToken ?? shareToken;
-  const expiresAt = shareTokenExpiresAt ? new Date(shareTokenExpiresAt) : null;
+  // Locale/timezone formatting must run after mount: `toLocaleString()` renders
+  // with the server's locale during SSR and the browser's on hydration, so
+  // formatting it in render would produce a hydration mismatch. Compute the
+  // label in an effect and render nothing until it resolves client-side.
+  const [expiresLabel, setExpiresLabel] = useState<string | null>(null);
+  useEffect(() => {
+    setExpiresLabel(shareTokenExpiresAt ? new Date(shareTokenExpiresAt).toLocaleString() : null);
+  }, [shareTokenExpiresAt]);
 
   const rotateShareToken = async () => {
     const result = await generate.mutateAsync({
@@ -154,9 +161,7 @@ export function ShareTokenControls({
           Revoke
         </button>
       </div>
-      {expiresAt ? (
-        <p className="text-xs text-sf-muted">Link expires {expiresAt.toLocaleString()}</p>
-      ) : null}
+      {expiresLabel ? <p className="text-xs text-sf-muted">Link expires {expiresLabel}</p> : null}
 
       <DeleteDialog
         title={

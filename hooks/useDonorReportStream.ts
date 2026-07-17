@@ -143,7 +143,7 @@ export function useDonorReportStream(reportId: string | null) {
           return true;
         }
       } catch {
-        // Malformed payload — drop the event but keep the stream open.
+        // SUPPRESSED: malformed payload, drop the event but keep the stream open.
       }
       return false;
     };

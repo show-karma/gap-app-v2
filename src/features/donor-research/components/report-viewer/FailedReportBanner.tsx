@@ -57,8 +57,8 @@ export function FailedReportBanner({ report }: FailedReportBannerProps) {
             </details>
           ) : null}
           <p className="mt-3 text-xs text-red-700 dark:text-red-300">
-            Report id <span className="font-mono">{report.id}</span> — share this with support if
-            you need help.
+            Report id <span className="font-mono">{report.id}</span>. Share this with support if you
+            need help.
           </p>
         </div>
       </div>

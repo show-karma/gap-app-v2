@@ -58,7 +58,7 @@ export function IdentityBadge({
         onClick={onSwitch}
         className="text-[11.5px] text-sf-muted underline-offset-4 hover:text-sf-heading hover:underline focus-visible:outline-none focus-visible:underline"
       >
-        Not me — switch
+        Not me, switch
       </button>
     </div>
   );
