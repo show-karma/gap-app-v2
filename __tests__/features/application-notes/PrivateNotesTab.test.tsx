@@ -19,6 +19,28 @@ vi.mock("@/components/EthereumAddressToProfileName", () => ({
   default: ({ address }: { address: string }) => <span>{address}</span>,
 }));
 
+// The markdown editor lazy-loads md-editor-rt via next/dynamic (ssr: false), which
+// never resolves synchronously under jsdom. Stub it to a controlled textarea that
+// preserves the value/onChange/placeholder contract this suite exercises.
+vi.mock("@/components/Utilities/MarkdownEditor", () => ({
+  MarkdownEditor: ({
+    value,
+    onChange,
+    placeholder,
+  }: {
+    value?: string;
+    onChange?: (value: string) => void;
+    placeholder?: string;
+  }) => (
+    <textarea
+      data-testid="markdown-editor"
+      value={value ?? ""}
+      placeholder={placeholder}
+      onChange={(e) => onChange?.(e.target.value)}
+    />
+  ),
+}));
+
 const mockHook = vi.mocked(useApplicationNote);
 
 type HookReturn = ReturnType<typeof useApplicationNote>;
@@ -118,7 +140,7 @@ describe("PrivateNotesTab", () => {
     render(<PrivateNotesTab referenceNumber="APP-1" canViewNotes />);
 
     // Make the editor dirty so Save is enabled, then click it.
-    fireEvent.change(screen.getByLabelText("Private note"), {
+    fireEvent.change(screen.getByTestId("markdown-editor"), {
       target: { value: "updated note" },
     });
     fireEvent.click(screen.getByRole("button", { name: /save/i }));
