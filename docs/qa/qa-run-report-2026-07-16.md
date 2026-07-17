@@ -91,3 +91,28 @@ The specific regressions the hand-resolved conflicts could have caused were each
 ## Deferred (signature/on-chain tier)
 
 V-106/V-107/V-113 could not reach even the gate (no grant on the owned project) — they are BLOCKED, not DEFERRED. Full attest flows (milestone create → Overview redirect, project edit, donation execution) remain to be run per `docs/qa/onchain-qa-plan.md` once a funded wallet + granted project exist.
+
+## Remediation — 2026-07-16 (commit `47a93877`)
+
+All FAIL findings were subsequently fixed on this branch (or reclassified), each
+re-verified against a fresh production build at localhost:3006:
+
+| Finding | Fix | Live re-verification |
+|---------|-----|----------------------|
+| V-101/V-114 — dashboard 0 h1 | sr-only `h1` on the bento overview route (`app/dashboard/page.tsx`; drill-ins keep their own h1) | authed `/dashboard`: h1s == `["Dashboard"]`, tiles render |
+| V-116 — `/admin` 0 h1 | h1 on the authorized "All/Your Communities" header and on the not-admin denial | `/admin`: h1s == `["Admin access required"]` |
+| V-112 — community page 2 h1s | `PageHero` demoted h1→h2 (community layout header owns the page h1) | `/community/celo/funding-opportunities`: h1 count == 1 |
+| V-204/V-213 — markdown h1s in cards | `MarkdownPreview` demotes user-authored markdown h1→h2 (excerpt variant already demoted to p); regression test added | `abc-da-amazonia-3`: h1s == sr-only title only; `bankless-academy-468/impact`: h1 count 3 → 1 |
+| V-217/V-114 — gone-route empty-body 404 | middleware gone short-circuit now serves a minimal branded HTML body (404/410 + noindex preserved); regression test added | `curl /project/<bogus>`: 404 with 893-byte HTML + "Browse projects" link |
+| V-111 — dead program-filter skeleton | removed dead `FilterByProgramsSkeleton` (no program-filter rail exists on `/projects`); also swapped manual applicant ternary for `pluralize` in `EditorialProgramCard` | lint/typecheck/tests green |
+| V-202 — "/projects pagination broken" | **Reclassified: FALSE POSITIVE.** Load More + Next work; the QA agents' CDP clicks landed below the fold (button at y≈4900 in a 577px viewport, agent-browser does not auto-scroll). Verified: scroll-into-view + click loads 52→102 cards with 2 API calls. No code change. | in-viewport click paginates correctly |
+
+Post-fix verification: `tsc` 0 errors · lint clean · full unit suite 14,288/14,288
+green (incl. 2 new regression tests) · quality gate exit 0 with react-doctor
+errors = 0 and baseline regenerated.
+
+Remaining (not fixed here, filed as follow-ups): the indexer marking the QA
+account's own test project (`qa-bug-sweep-project-1752`) as deindexed/"gone"
+while the dashboard links to it — backend/product decision (gap-indexer scope);
+the 9 BLOCKED checks still need a better-seeded staging admin account; bento
+hash-anchor deep links (V-215) are a product decision for the #1772 authors.
