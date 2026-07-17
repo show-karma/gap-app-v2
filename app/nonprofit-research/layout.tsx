@@ -8,7 +8,7 @@ import { PermissionProvider } from "@/src/core/rbac/context/permission-context";
 import { DonorResearchLoading } from "@/src/features/donor-research/components/common/DonorResearchLoading";
 import { DonorResearchShell } from "@/src/features/donor-research/components/common/DonorResearchShell";
 import { TokenManager } from "@/utilities/auth/token-manager";
-import { PAGES } from "@/utilities/pages";
+import { isDonorResearchTokenRoute, PAGES } from "@/utilities/pages";
 
 const DONOR_RESEARCH_QUERY_ROOT = ["donor-research"] as const;
 
@@ -119,17 +119,24 @@ function DonorResearchSessionBoundary({ children }: { children: React.ReactNode 
  *
  * The navigation shell lives here — not in each page — so the sidebar,
  * header, and breadcrumbs persist across route transitions and only the
- * content pane swaps to the route's `loading.tsx` skeleton. Onboarding is
- * the one full-screen flow rendered without the shell.
+ * content pane swaps to the route's `loading.tsx` skeleton.
+ *
+ * Two flows render full-screen without that shell: onboarding, and the two
+ * anonymous token routes (donor share view + diligence response), which carry
+ * their own `TokenPageShell`. Wrapping those in the advisor shell would flash
+ * the authenticated sidebar/breadcrumb (and its route skeleton) for a beat
+ * before the page resolves to its slim chrome — so they bypass it entirely,
+ * matching the footer suppression keyed on the same `isDonorResearchTokenRoute`.
  */
 export default function DonorResearchLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const isOnboarding = pathname.startsWith(PAGES.DONOR_RESEARCH.ONBOARDING);
+  const isShellless =
+    pathname.startsWith(PAGES.DONOR_RESEARCH.ONBOARDING) || isDonorResearchTokenRoute(pathname);
 
   return (
     <DonorResearchSessionBoundary>
       <PermissionProvider>
-        {isOnboarding ? children : <DonorResearchShell>{children}</DonorResearchShell>}
+        {isShellless ? children : <DonorResearchShell>{children}</DonorResearchShell>}
       </PermissionProvider>
     </DonorResearchSessionBoundary>
   );

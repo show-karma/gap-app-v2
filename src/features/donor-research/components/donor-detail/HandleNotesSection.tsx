@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 import { useUpdateDonorHandle } from "@/hooks/useDonorHandles";
@@ -8,6 +8,12 @@ import type { DonorHandle } from "@/types/donor-research";
 
 interface HandleNotesSectionProps {
   handle: DonorHandle;
+  /**
+   * Reports unsaved-notes state up so the persona page's discard guard covers
+   * this section too — otherwise editing Notes (without saving) and navigating
+   * away drops the edit with no confirmation.
+   */
+  onDirtyChange?: (dirty: boolean) => void;
 }
 
 /**
@@ -15,13 +21,17 @@ interface HandleNotesSectionProps {
  * advisor keeps on the handle that is NOT fed to research (distinct from the
  * persona source). Optimistic save via {@link useUpdateDonorHandle}.
  */
-export function HandleNotesSection({ handle }: HandleNotesSectionProps) {
+export function HandleNotesSection({ handle, onDirtyChange }: HandleNotesSectionProps) {
   const [notes, setNotes] = useState(handle.notes ?? "");
   const update = useUpdateDonorHandle(handle.id);
 
   // After a successful save the handle prop refreshes to the saved notes, so
   // dirty naturally returns to false without resetting local state.
   const isDirty = notes !== (handle.notes ?? "");
+
+  useEffect(() => {
+    onDirtyChange?.(isDirty);
+  }, [isDirty, onDirtyChange]);
 
   const onSave = () => {
     update.mutate(

@@ -270,12 +270,18 @@ export function PersonaDetailView({ handleId }: PersonaDetailViewProps) {
   const router = useRouter();
   const handleQuery = useDonorHandle(handleId);
   const [personaDirty, setPersonaDirty] = useState(false);
+  const [notesDirty, setNotesDirty] = useState(false);
   const [pendingHref, setPendingHref] = useState<string | null>(null);
 
   const onPersonaDirtyChange = useCallback((dirty: boolean) => setPersonaDirty(dirty), []);
+  const onNotesDirtyChange = useCallback((dirty: boolean) => setNotesDirty(dirty), []);
+
+  // The guard covers BOTH editors on the page — the persona refine field and
+  // the private notes — so unsaved edits in either one prompt the confirm.
+  const isDirty = personaDirty || notesDirty;
 
   useEffect(() => {
-    if (!personaDirty) return;
+    if (!isDirty) return;
     const onBeforeUnload = (event: BeforeUnloadEvent) => {
       event.preventDefault();
       // Legacy requirement for the confirmation prompt to appear in some
@@ -284,7 +290,7 @@ export function PersonaDetailView({ handleId }: PersonaDetailViewProps) {
     };
     window.addEventListener("beforeunload", onBeforeUnload);
     return () => window.removeEventListener("beforeunload", onBeforeUnload);
-  }, [personaDirty]);
+  }, [isDirty]);
 
   // §1.2 MUST-preserve, full coverage: while the persona is dirty, intercept
   // every same-origin left-click navigation on the page — not just the links
@@ -294,7 +300,7 @@ export function PersonaDetailView({ handleId }: PersonaDetailViewProps) {
   // here reliably cancels the client-side navigation: `next/link` bails out
   // of its own navigation when `event.defaultPrevented` is already true.
   useEffect(() => {
-    if (!personaDirty) return;
+    if (!isDirty) return;
     const onDocumentClick = (event: MouseEvent) => {
       const href = resolveGuardedNavigationHref(event);
       if (!href) return;
@@ -305,26 +311,29 @@ export function PersonaDetailView({ handleId }: PersonaDetailViewProps) {
     // handlers so the navigation is cancelled before it starts.
     document.addEventListener("click", onDocumentClick, true);
     return () => document.removeEventListener("click", onDocumentClick, true);
-  }, [personaDirty]);
+  }, [isDirty]);
 
   /** Guard for button-triggered navigation (no native `<a href>` for the
    * capture-phase listener above to intercept) — the Reports-card
    * empty-state "New report" CTA pushes the route itself once clear. */
   const guardedPush = useCallback(
     (href: string) => {
-      if (personaDirty) {
+      if (isDirty) {
         setPendingHref(href);
         return;
       }
       router.push(href);
     },
-    [personaDirty, router]
+    [isDirty, router]
   );
 
   const discardAndNavigate = () => {
     const href = pendingHref;
     setPendingHref(null);
+    // Clear both guards so the programmatic push isn't re-intercepted; the page
+    // unmounts on navigation, so the child editors' local state goes with it.
     setPersonaDirty(false);
+    setNotesDirty(false);
     if (href) router.push(href);
   };
 
@@ -362,7 +371,7 @@ export function PersonaDetailView({ handleId }: PersonaDetailViewProps) {
           {/* HandleNotesSection renders its own heading — no DetailCard title
               wrapper here, just the card surface. */}
           <section className="rounded-sf-card border border-sf-line bg-sf-card p-6">
-            <HandleNotesSection handle={handle} />
+            <HandleNotesSection handle={handle} onDirtyChange={onNotesDirtyChange} />
           </section>
           <ReportsCard handleId={handleId} onGuardedPush={guardedPush} />
         </div>
@@ -376,10 +385,10 @@ export function PersonaDetailView({ handleId }: PersonaDetailViewProps) {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Discard profile changes?</DialogTitle>
+            <DialogTitle>Discard unsaved changes?</DialogTitle>
             <DialogDescription>
-              Your unsaved changes to {handle.opaqueLabel}'s profile will be lost. You can edit it
-              again anytime from this page.
+              Your unsaved changes to {handle.opaqueLabel} will be lost. You can edit them again
+              anytime from this page.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
