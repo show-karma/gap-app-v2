@@ -5,12 +5,20 @@ import { useRouter } from "next/navigation";
 import { useEffect, useId, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import {
+  BTN_BASE,
+  BTN_MD,
+  BTN_OUTLINE,
+  BTN_PRIMARY,
+} from "@/components/Pages/Dashboard/v3/soft-classes";
 import { usePrivyBridge } from "@/contexts/privy-bridge-context";
 import { useDonorAdvisor, useOnboardAdvisor } from "@/hooks/useDonorAdvisor";
 import type { WizardStep } from "@/src/components/ui/WizardStepper";
 import { WizardStepper } from "@/src/components/ui/WizardStepper";
 import { PAGES } from "@/utilities/pages";
+import { cn } from "@/utilities/tailwind";
 import { DonorResearchLoading } from "../common/DonorResearchLoading";
+import { TokenPageShell } from "../common/TokenPageShell";
 import { SampleReportPreview } from "./SampleReportPreview";
 
 const TIMEZONE_REGEX = /^[A-Za-z_/+\-0-9]{1,64}$/;
@@ -161,7 +169,7 @@ export function OnboardingFlow() {
   };
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-12">
+    <TokenPageShell maxWidthClassName="max-w-3xl">
       <WizardStepper
         steps={ONBOARDING_STEPS}
         current={step}
@@ -194,17 +202,21 @@ export function OnboardingFlow() {
         <section aria-labelledby={formHeadingId}>
           <form
             onSubmit={form.handleSubmit(onSubmit)}
-            className="rounded-xl border border-border bg-card p-6"
+            // Native constraint validation would swallow the submit before
+            // react-hook-form runs (the inputs carry `required`), replacing
+            // the announced role="alert" errors (#1587) with browser bubbles.
+            noValidate
+            className="rounded-sf-card border border-sf-line bg-sf-card p-6 sm:p-8"
           >
             <h2
               id={formHeadingId}
               ref={headingRef}
               tabIndex={-1}
-              className="mb-2 text-xl font-semibold outline-none"
+              className="mb-2 text-xl font-bold tracking-[-0.01em] text-sf-heading outline-none"
             >
               Get started
             </h2>
-            <p className="mb-4 text-sm text-muted-foreground">
+            <p className="mb-4 text-[13.5px] text-sf-muted">
               We use these to label the reports you share with donors and to display your daily
               limits in your local time.
             </p>
@@ -212,6 +224,7 @@ export function OnboardingFlow() {
               <Field
                 id="onboarding-display-name"
                 label="Display name"
+                required
                 hint="Shown in the header of the reports you share with donors."
                 error={form.formState.errors.displayName?.message}
               >
@@ -219,7 +232,7 @@ export function OnboardingFlow() {
                   <input
                     {...form.register("displayName")}
                     {...field}
-                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                    className="w-full rounded-sf-tile border border-sf-line-strong bg-sf-elev px-3 py-2 text-sm text-sf-ink"
                     placeholder="Avery Boutique"
                   />
                 )}
@@ -227,6 +240,7 @@ export function OnboardingFlow() {
               <Field
                 id="onboarding-email"
                 label="Email"
+                required
                 hint="Where we send notifications about your reports."
                 error={form.formState.errors.email?.message}
               >
@@ -236,7 +250,7 @@ export function OnboardingFlow() {
                     {...field}
                     type="email"
                     autoComplete="email"
-                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                    className="w-full rounded-sf-tile border border-sf-line-strong bg-sf-elev px-3 py-2 text-sm text-sf-ink"
                     placeholder="you@example.com"
                   />
                 )}
@@ -251,7 +265,7 @@ export function OnboardingFlow() {
                   <input
                     {...form.register("orgName")}
                     {...field}
-                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                    className="w-full rounded-sf-tile border border-sf-line-strong bg-sf-elev px-3 py-2 text-sm text-sf-ink"
                     placeholder="Boutique Philanthropy LLC"
                   />
                 )}
@@ -259,6 +273,7 @@ export function OnboardingFlow() {
               <Field
                 id="onboarding-timezone"
                 label="Timezone"
+                required
                 hint="Used to display when your daily rate-limit counters reset."
                 error={form.formState.errors.timezone?.message}
               >
@@ -266,7 +281,7 @@ export function OnboardingFlow() {
                   <input
                     {...form.register("timezone")}
                     {...field}
-                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm font-mono"
+                    className="w-full rounded-sf-tile border border-sf-line-strong bg-sf-elev px-3 py-2 text-sm font-mono text-sf-ink"
                     placeholder="America/Los_Angeles"
                   />
                 )}
@@ -283,7 +298,7 @@ export function OnboardingFlow() {
               <button
                 type="button"
                 onClick={() => setStep("sample")}
-                className="rounded-md border border-border px-4 py-2 text-sm hover:bg-muted"
+                className={cn(BTN_BASE, BTN_MD, BTN_OUTLINE)}
                 disabled={onboard.isPending}
               >
                 Back
@@ -291,7 +306,7 @@ export function OnboardingFlow() {
               <button
                 type="submit"
                 disabled={onboard.isPending}
-                className="rounded-md border border-border bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                className={cn(BTN_BASE, BTN_MD, BTN_PRIMARY, "disabled:opacity-50")}
               >
                 {onboard.isPending ? "Setting up…" : "Continue"}
               </button>
@@ -299,12 +314,13 @@ export function OnboardingFlow() {
           </form>
         </section>
       ) : null}
-    </div>
+    </TokenPageShell>
   );
 }
 
 interface FieldChildProps {
   id: string;
+  required?: boolean;
   "aria-invalid": boolean;
   "aria-describedby"?: string;
 }
@@ -312,12 +328,13 @@ interface FieldChildProps {
 interface FieldProps {
   id: string;
   label: string;
+  required?: boolean;
   hint?: string;
   error?: string;
   children: (props: FieldChildProps) => React.ReactNode;
 }
 
-function Field({ id, label, hint, error, children }: FieldProps) {
+function Field({ id, label, required, hint, error, children }: FieldProps) {
   const hintId = hint ? `${id}-hint` : undefined;
   const errorId = error ? `${id}-error` : undefined;
   const describedBy = [hintId, errorId].filter(Boolean).join(" ") || undefined;
@@ -330,10 +347,22 @@ function Field({ id, label, hint, error, children }: FieldProps) {
   // `role="alert"` live region so it's announced on submit.
   return (
     <label htmlFor={id} className="flex flex-col gap-1.5 text-sm">
-      <span className="font-medium text-foreground">{label}</span>
-      {children({ id, "aria-invalid": Boolean(error), "aria-describedby": describedBy })}
+      <span className="font-medium text-sf-heading">
+        {label}
+        {required ? (
+          <span aria-hidden="true" className="ml-0.5 text-red-600 dark:text-red-400">
+            *
+          </span>
+        ) : null}
+      </span>
+      {children({
+        id,
+        required,
+        "aria-invalid": Boolean(error),
+        "aria-describedby": describedBy,
+      })}
       {hint ? (
-        <span id={hintId} className="text-xs text-muted-foreground">
+        <span id={hintId} className="text-xs text-sf-muted">
           {hint}
         </span>
       ) : null}
@@ -357,42 +386,40 @@ function WelcomeStep({
   onContinue,
 }: StepHeadingProps & { onContinue: () => void }) {
   return (
-    <div className="rounded-xl border border-border bg-card p-6">
+    <div className="rounded-sf-card border border-sf-line bg-sf-card p-6 sm:p-8">
       <h2
         id={headingId}
         ref={headingRef}
         tabIndex={-1}
-        className="mb-2 text-2xl font-semibold outline-none"
+        className="mb-2 text-2xl font-bold tracking-[-0.02em] text-sf-heading outline-none"
       >
-        Defensible philanthropy research for your donor clients.
+        Defensible philanthropy research for your donor personas.
       </h2>
-      <p className="mb-4 text-sm text-muted-foreground">
+      <p className="mb-4 text-[13.5px] leading-[1.55] text-sf-muted">
         Karma Nonprofit Research helps boutique advisors produce current, ranked nonprofit
         recommendations grounded in real-time public data — and reach out to organizations directly
         when public data isn't enough.
       </p>
       <ul className="mb-6 grid grid-cols-1 gap-2 text-sm md:grid-cols-2">
-        <li className="rounded-md border border-border p-3">
-          <strong className="block">Composite ranking</strong>
-          <span className="text-muted-foreground">
+        <li className="rounded-sf-tile border border-sf-line bg-sf-elev p-3">
+          <strong className="block text-sf-heading">Composite ranking</strong>
+          <span className="text-sf-muted">
             Freshness, impact-recency, donor match, compliance — every score visible and defensible.
           </span>
         </li>
-        <li className="rounded-md border border-border p-3">
-          <strong className="block">EIN + mailing address</strong>
-          <span className="text-muted-foreground">
-            On every recommendation, baked into the report.
-          </span>
+        <li className="rounded-sf-tile border border-sf-line bg-sf-elev p-3">
+          <strong className="block text-sf-heading">EIN + mailing address</strong>
+          <span className="text-sf-muted">On every recommendation, baked into the report.</span>
         </li>
-        <li className="rounded-md border border-border p-3">
-          <strong className="block">Fast turnaround</strong>
-          <span className="text-muted-foreground">
+        <li className="rounded-sf-tile border border-sf-line bg-sf-elev p-3">
+          <strong className="block text-sf-heading">Fast turnaround</strong>
+          <span className="text-sf-muted">
             Ranked recommendations with compliance verification in about ten minutes.
           </span>
         </li>
-        <li className="rounded-md border border-border p-3">
-          <strong className="block">Share with donors</strong>
-          <span className="text-muted-foreground">
+        <li className="rounded-sf-tile border border-sf-line bg-sf-elev p-3">
+          <strong className="block text-sf-heading">Share with donors</strong>
+          <span className="text-sf-muted">
             Generate a private, expiring link to share the research with your donor.
           </span>
         </li>
@@ -401,7 +428,7 @@ function WelcomeStep({
         type="button"
         onClick={onContinue}
         aria-label="Continue to sample report"
-        className="rounded-md border border-border bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+        className={cn(BTN_BASE, BTN_MD, BTN_PRIMARY)}
       >
         Continue
       </button>
@@ -416,34 +443,30 @@ function SampleStep({
   onContinue,
 }: StepHeadingProps & { onBack: () => void; onContinue: () => void }) {
   return (
-    <div className="rounded-xl border border-border bg-card p-6">
+    <div className="rounded-sf-card border border-sf-line bg-sf-card p-6 sm:p-8">
       <h2
         id={headingId}
         ref={headingRef}
         tabIndex={-1}
-        className="mb-2 text-xl font-semibold outline-none"
+        className="mb-2 text-xl font-bold tracking-[-0.01em] text-sf-heading outline-none"
       >
         What a report looks like
       </h2>
-      <p className="mb-4 text-sm text-muted-foreground">
+      <p className="mb-4 text-[13.5px] leading-[1.55] text-sf-muted">
         A sample report for the criteria "Pacific Northwest climate nonprofits, $25K". Top 3
         recommendations have a one-pager; the full ranked list sits below with per-candidate score
         breakdowns.
       </p>
       <SampleReportPreview />
       <div className="mt-6 flex justify-between">
-        <button
-          type="button"
-          onClick={onBack}
-          className="rounded-md border border-border px-4 py-2 text-sm hover:bg-muted"
-        >
+        <button type="button" onClick={onBack} className={cn(BTN_BASE, BTN_MD, BTN_OUTLINE)}>
           Back
         </button>
         <button
           type="button"
           onClick={onContinue}
           aria-label="Continue to setup"
-          className="rounded-md border border-border bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+          className={cn(BTN_BASE, BTN_MD, BTN_PRIMARY)}
         >
           Continue
         </button>

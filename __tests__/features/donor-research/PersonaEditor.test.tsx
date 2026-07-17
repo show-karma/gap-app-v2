@@ -351,6 +351,13 @@ describe("PersonaEditor save omits unset chips (S-001 regression)", () => {
 });
 
 describe("PersonaEditor error & empty-refine feedback (S-003)", () => {
+  it("renders an error state with Retry when the persona fetch fails (e.g. 429)", () => {
+    setup({ isError: true });
+    renderWithProviders(<PersonaEditor handleId="h1" />);
+    expect(screen.getByText("Couldn't load the persona.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /retry/i })).toBeInTheDocument();
+  });
+
   it("warns and shows no recommendation when refine extracts nothing", async () => {
     const user = userEvent.setup();
     const { refineMutate } = setup({ persona: makeDonorPersona() });

@@ -52,10 +52,17 @@ describe("DiligenceResponsePage", () => {
     expect(refetch).toHaveBeenCalledTimes(1);
   });
 
-  it("renders the generic invalid-link state when data is null", () => {
+  it("renders the generic invalid-link state when data is null, with a document h1", () => {
     mockState({ data: null });
     render(<DiligenceResponsePage token="tok" />);
-    expect(screen.getByText("This link is no longer valid")).toBeInTheDocument();
+    // The route's only document heading — the visible EmptyState title is an
+    // h3 (see TokenPageShell's sr-only h1 above it).
+    expect(
+      screen.getByRole("heading", { level: 1, name: "This link is no longer valid" })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { level: 3, name: "This link is no longer valid" })
+    ).toBeInTheDocument();
   });
 
   it("renders the thank-you state when already submitted and hides the form", () => {

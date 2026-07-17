@@ -209,18 +209,31 @@ export interface StatItem {
 }
 
 function statSurface(tone: StatItem["tone"]): string {
-  if (tone === "brand") {
-    return "border-sf-ink bg-sf-ink dark:border-brand-500/[.32] dark:bg-brand-500/[.15]";
-  }
+  if (tone === "brand")
+    return "border-brand-200 bg-brand-50 dark:border-brand-500/[.32] dark:bg-brand-500/[.14]";
+  if (tone === "amber")
+    return "border-amber-200 bg-amber-50 dark:border-amber-500/[.32] dark:bg-amber-500/[.12]";
+  if (tone === "blue")
+    return "border-blue-200 bg-blue-50 dark:border-blue-500/[.32] dark:bg-blue-500/[.12]";
+  if (tone === "green")
+    return "border-green-200 bg-green-50 dark:border-green-500/[.32] dark:bg-green-500/[.12]";
   return "border-sf-line bg-sf-elev";
 }
 
 function statNumber(tone: StatItem["tone"]): string {
-  if (tone === "brand") return "text-white";
+  if (tone === "brand") return "text-brand-800 dark:text-brand-300";
   if (tone === "amber") return "text-amber-700 dark:text-amber-400";
   if (tone === "blue") return "text-blue-700 dark:text-blue-400";
   if (tone === "green") return "text-green-700 dark:text-green-400";
   return "text-sf-heading";
+}
+
+function statLabel(tone: StatItem["tone"]): string {
+  if (tone === "brand") return "text-brand-700 dark:text-brand-300";
+  if (tone === "amber") return "text-amber-800 dark:text-amber-300";
+  if (tone === "blue") return "text-blue-800 dark:text-blue-300";
+  if (tone === "green") return "text-green-800 dark:text-green-300";
+  return "text-sf-muted";
 }
 
 export function StatTiles({ items }: { items: StatItem[] }) {
@@ -236,14 +249,7 @@ export function StatTiles({ items }: { items: StatItem[] }) {
           >
             {s.n}
           </div>
-          <div
-            className={cn(
-              "mt-2 text-[13px] font-medium",
-              s.tone === "brand" ? "text-white/[.66]" : "text-sf-muted"
-            )}
-          >
-            {s.l}
-          </div>
+          <div className={cn("mt-2 text-[13px] font-medium", statLabel(s.tone))}>{s.l}</div>
         </div>
       ))}
     </div>

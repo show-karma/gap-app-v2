@@ -1,10 +1,23 @@
 import type { CandidateFinancialYear } from "@/types/donor-research";
 import formatCurrency from "@/utilities/formatCurrency";
-import { briefDisplay } from "./fonts";
+import { cn } from "@/utilities/tailwind";
+import {
+  TABLE_BODY_ROW,
+  TABLE_CAPTION,
+  TABLE_CELL_MONO,
+  TABLE_HEAD_CELL,
+  TABLE_HEAD_ROW,
+  TABLE_WRAP,
+} from "./table-classes";
 
 interface FinancialsTableProps {
   financials: CandidateFinancialYear[];
 }
+
+const HEAD_CELL_LEFT = cn(TABLE_HEAD_CELL, "py-2 pr-4 text-left");
+const HEAD_CELL_RIGHT = cn(TABLE_HEAD_CELL, "py-2 pl-4 text-right");
+const BODY_CELL_LEFT = cn(TABLE_CELL_MONO, "py-2 pr-4 text-left");
+const BODY_CELL_RIGHT = cn(TABLE_CELL_MONO, "py-2 pl-4 text-right");
 
 /**
  * "Financials (last 3 years)" — a compact IRS-990 summary shown on every
@@ -16,59 +29,34 @@ export function FinancialsTable({ financials }: FinancialsTableProps) {
   if (financials.length === 0) return null;
 
   return (
-    <div className="mt-8">
-      <p
-        className={`${briefDisplay.className} text-[10px] font-medium uppercase tracking-[0.28em] text-muted-foreground`}
-      >
-        Financials (last 3 years)
-      </p>
-      <table className={`${briefDisplay.className} mt-3 w-full border-collapse text-sm`}>
+    <div className="mt-6">
+      <p className={TABLE_CAPTION}>Financials (last 3 years)</p>
+      <table className={cn(TABLE_WRAP, "w-full border-collapse text-[13px]")}>
         <thead>
-          <tr className="border-y border-border/50">
-            <th
-              scope="col"
-              className="py-2 pr-4 text-left text-[10px] font-medium uppercase tracking-[0.16em] text-muted-foreground"
-            >
+          <tr className={TABLE_HEAD_ROW}>
+            <th scope="col" className={HEAD_CELL_LEFT}>
               Year
             </th>
-            <th
-              scope="col"
-              className="py-2 pl-4 text-right text-[10px] font-medium uppercase tracking-[0.16em] text-muted-foreground"
-            >
+            <th scope="col" className={HEAD_CELL_RIGHT}>
               Income
             </th>
-            <th
-              scope="col"
-              className="py-2 pl-4 text-right text-[10px] font-medium uppercase tracking-[0.16em] text-muted-foreground"
-            >
+            <th scope="col" className={HEAD_CELL_RIGHT}>
               Expenses
             </th>
-            <th
-              scope="col"
-              className="py-2 pl-4 text-right text-[10px] font-medium uppercase tracking-[0.16em] text-muted-foreground"
-            >
+            <th scope="col" className={HEAD_CELL_RIGHT}>
               Assets
             </th>
           </tr>
         </thead>
         <tbody>
           {financials.map((entry) => (
-            <tr key={entry.year} className="border-b border-border/50 last:border-b-0">
-              <th
-                scope="row"
-                className="py-2 pr-4 text-left font-medium tabular-nums text-foreground/80"
-              >
+            <tr key={entry.year} className={TABLE_BODY_ROW}>
+              <th scope="row" className={BODY_CELL_LEFT}>
                 {entry.year}
               </th>
-              <td className="py-2 pl-4 text-right tabular-nums text-foreground/70">
-                {formatMoney(entry.income)}
-              </td>
-              <td className="py-2 pl-4 text-right tabular-nums text-foreground/70">
-                {formatMoney(entry.expenses)}
-              </td>
-              <td className="py-2 pl-4 text-right tabular-nums text-foreground/70">
-                {formatMoney(entry.assets)}
-              </td>
+              <td className={BODY_CELL_RIGHT}>{formatMoney(entry.income)}</td>
+              <td className={BODY_CELL_RIGHT}>{formatMoney(entry.expenses)}</td>
+              <td className={BODY_CELL_RIGHT}>{formatMoney(entry.assets)}</td>
             </tr>
           ))}
         </tbody>
