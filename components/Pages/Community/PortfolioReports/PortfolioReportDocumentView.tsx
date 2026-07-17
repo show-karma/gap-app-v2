@@ -26,6 +26,12 @@ interface Props {
    * reports require community-admin auth.
    */
   isAdmin?: boolean;
+  /**
+   * `true` when the viewer is a resolved community admin. Gates the raw-data
+   * export affordance, which must never be exposed to the public — including
+   * on published reports, where `isAdmin` (draft-preview) is `false`.
+   */
+  canExportData?: boolean;
 }
 
 function formatDate(iso: string): string {
@@ -44,6 +50,7 @@ export function PortfolioReportDocumentView({
   backLabel = "Reports",
   bannerText,
   isAdmin = false,
+  canExportData = false,
 }: Props) {
   const runDateLabel = formatRunDate(runDate).label;
 
@@ -77,7 +84,7 @@ export function PortfolioReportDocumentView({
             </ol>
           </nav>
           <div className="flex flex-wrap items-center gap-2">
-            {isAdmin ? (
+            {canExportData ? (
               <ExportDataMenu communitySlug={community.details.slug} reportId={report.id} />
             ) : null}
             <Button

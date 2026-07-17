@@ -4,6 +4,7 @@ import { ArrowLeft, Download, Eye, EyeOff, Pencil, RefreshCw } from "lucide-reac
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
+import { ExportDataMenu } from "@/components/Pages/Community/PortfolioReports/ExportDataMenu";
 import { HtmlReportFrame } from "@/components/Pages/Community/PortfolioReports/HtmlReportFrame";
 import { ReportChartsSection } from "@/components/Pages/Community/PortfolioReports/ReportChartsSection";
 import { Spinner } from "@/components/Utilities/Spinner";
@@ -351,6 +352,7 @@ export function PortfolioReportEditorPage({ community, reportId }: Props) {
             <Pencil className="mr-1 h-3 w-3" />
             Edit
           </Button>
+          <ExportDataMenu communitySlug={community.details.slug} reportId={reportId} />
           <Button
             variant="outline"
             size="sm"

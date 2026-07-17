@@ -27,6 +27,12 @@ vi.mock("@/components/Pages/Community/PortfolioReports/ReportChartsSection", () 
   ReportChartsSection: () => <div data-testid="report-charts-section" />,
 }));
 
+vi.mock("@/components/Pages/Community/PortfolioReports/ExportDataMenu", () => ({
+  ExportDataMenu: ({ communitySlug, reportId }: { communitySlug: string; reportId: string }) => (
+    <div data-testid="export-data-menu" data-slug={communitySlug} data-report={reportId} />
+  ),
+}));
+
 vi.mock("@/hooks/communities/useCommunityAdminAccess");
 vi.mock("@/hooks/portfolio-reports/usePortfolioReports");
 
@@ -73,6 +79,18 @@ describe("PortfolioReportEditorPage", () => {
     mockUseUnpublishReport.mockReturnValue({ isPending: false, mutateAsync: vi.fn() } as any);
     mockUseRegenerateReport.mockReturnValue({ isPending: false, mutateAsync: vi.fn() } as any);
     mockUseUpdateReportContent.mockReturnValue({ isPending: false, mutateAsync: vi.fn() } as any);
+  });
+
+  describe("data export", () => {
+    it("renders the export-data menu in the toolbar, wired to this community and report", () => {
+      mockUsePortfolioReport.mockReturnValue({ data: baseReport, isLoading: false } as any);
+
+      render(<PortfolioReportEditorPage community={community} reportId="report-1" />);
+
+      const menu = screen.getByTestId("export-data-menu");
+      expect(menu).toHaveAttribute("data-slug", "filecoin");
+      expect(menu).toHaveAttribute("data-report", "report-1");
+    });
   });
 
   describe("edit textarea seeding", () => {
