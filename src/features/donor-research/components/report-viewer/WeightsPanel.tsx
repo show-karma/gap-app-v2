@@ -21,6 +21,7 @@ import { GripVertical, Minus, Plus, SlidersHorizontal } from "lucide-react";
 import pluralize from "pluralize";
 import { memo, useMemo, useState } from "react";
 import toast from "react-hot-toast";
+import { BTN_BASE, BTN_OUTLINE, BTN_SM } from "@/components/Pages/Dashboard/v3/soft-classes";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -102,10 +103,7 @@ export function WeightsPanel({ report }: WeightsPanelProps) {
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <button
-          type="button"
-          className="inline-flex items-center gap-2 rounded-md border border-border px-3 py-2 text-sm font-medium text-foreground hover:bg-muted"
-        >
+        <button className={`${BTN_BASE} ${BTN_SM} ${BTN_OUTLINE}`} type="button">
           <SlidersHorizontal aria-hidden className="h-4 w-4" />
           Adjust ranking
         </button>

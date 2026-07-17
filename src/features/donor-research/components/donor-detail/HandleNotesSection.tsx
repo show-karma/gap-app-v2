@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import toast from "react-hot-toast";
+import { Button } from "@/components/ui/button";
 import { useUpdateDonorHandle } from "@/hooks/useDonorHandles";
 import type { DonorHandle } from "@/types/donor-research";
 
@@ -47,14 +48,16 @@ export function HandleNotesSection({ handle }: HandleNotesSectionProps) {
         placeholder="e.g. Prefers email; introduced by the board chair."
         className="w-full resize-y rounded-md border border-border bg-background px-3 py-2 text-sm"
       />
-      <button
+      <Button
         type="button"
+        variant="outline"
+        size="sm"
         onClick={onSave}
         disabled={!isDirty || update.isPending}
-        className="self-start rounded-md border border-border px-3 py-1.5 text-sm font-medium hover:bg-muted disabled:opacity-50"
+        className="self-start"
       >
         {update.isPending ? "Saving…" : "Save notes"}
-      </button>
+      </Button>
     </section>
   );
 }

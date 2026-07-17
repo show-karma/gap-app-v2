@@ -5,7 +5,7 @@ import { customMetadata } from "@/utilities/meta";
 export const metadata: Metadata = customMetadata({
   title: "Nonprofit Research",
   description:
-    "Research current, ranked nonprofit recommendations for donor clients with compliance verification and live activity signals.",
+    "Research current, ranked nonprofit recommendations for donor personas with compliance verification and live activity signals.",
   path: "/nonprofit-research",
   robots: { index: false, follow: true },
 });

@@ -14,7 +14,25 @@ import { CriteriaInputPanel } from "@/src/features/donor-research/components/cri
 import { makeDonorHandle, makeDonorPersona } from "../../msw/handlers/donor-research.handlers";
 import { renderWithProviders } from "../../utils/render";
 
-vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
+// jsdom does not implement pointer capture, which Radix Select uses while
+// opening with a pointer. Keep the test interaction aligned with the real
+// shadcn control instead of falling back to its hidden native form element.
+beforeAll(() => {
+  Object.defineProperties(HTMLElement.prototype, {
+    hasPointerCapture: { configurable: true, value: () => false },
+    releasePointerCapture: { configurable: true, value: () => {} },
+    scrollIntoView: { configurable: true, value: () => {} },
+    setPointerCapture: { configurable: true, value: () => {} },
+  });
+});
+
+// The picker's "Add profile" / "Change profile" link (routed through the
+// app's `Link` wrapper) reads `useParams` for whitelabel URL-building —
+// stub it alongside `useRouter` so that render path doesn't throw here.
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: vi.fn() }),
+  useParams: () => ({}),
+}));
 
 vi.mock("@/hooks/useDonorPersona", () => ({ useDonorPersona: vi.fn() }));
 
@@ -24,6 +42,19 @@ vi.mock("@/hooks/useDonorHandles", () => ({
 }));
 
 vi.mock("@/hooks/useDonorReports", () => ({ useCreateDonorReport: vi.fn() }));
+
+vi.mock("@/src/features/donor-research/components/criteria-input/NewDonorHandleModal", () => ({
+  NewDonorHandleModal: ({
+    open,
+    editHandle,
+  }: {
+    open: boolean;
+    editHandle?: { opaqueLabel: string } | null;
+  }) =>
+    open ? (
+      <div role="dialog">Profile modal for {editHandle?.opaqueLabel ?? "new persona"}</div>
+    ) : null,
+}));
 
 const mockUseDonorPersona = vi.mocked(useDonorPersona);
 const mockUseDonorHandles = vi.mocked(useDonorHandles);
@@ -59,6 +90,11 @@ beforeEach(() => {
 
 const badges = () => screen.queryAllByText("Prefilled from persona");
 
+async function selectPersona(user: ReturnType<typeof userEvent.setup>, name: string) {
+  await user.click(screen.getByRole("combobox", { name: "Persona" }));
+  await user.click(await screen.findByRole("option", { name }));
+}
+
 describe("CriteriaInputPanel persona prefill", () => {
   it("prefills fields and shows per-field badges after selecting a handle", async () => {
     const user = userEvent.setup();
@@ -66,7 +102,7 @@ describe("CriteriaInputPanel persona prefill", () => {
 
     expect(badges()).toHaveLength(0);
 
-    await user.selectOptions(screen.getByLabelText("Donor handle"), "h1");
+    await selectPersona(user, "Acme");
 
     // Geography is the persona's extracted place string (not the geoRadius
     // enum). Amounts are NOT derived from the gift size band, so they stay empty.
@@ -84,7 +120,7 @@ describe("CriteriaInputPanel persona prefill", () => {
     const user = userEvent.setup();
     renderWithProviders(<CriteriaInputPanel />);
 
-    await user.selectOptions(screen.getByLabelText("Donor handle"), "h1");
+    await selectPersona(user, "Acme");
 
     await waitFor(() => expect(screen.getByLabelText(/Cause/)).toHaveValue("climate"));
   });
@@ -96,7 +132,7 @@ describe("CriteriaInputPanel persona prefill", () => {
     const user = userEvent.setup();
     renderWithProviders(<CriteriaInputPanel />);
 
-    await user.selectOptions(screen.getByLabelText("Donor handle"), "h1");
+    await selectPersona(user, "Acme");
 
     await waitFor(() => expect(screen.getByLabelText(/Amount min/)).toHaveValue(5000));
     expect(screen.getByLabelText(/Amount max/)).toHaveValue(20000);
@@ -107,7 +143,7 @@ describe("CriteriaInputPanel persona prefill", () => {
   it("dismisses only the edited field's badge", async () => {
     const user = userEvent.setup();
     renderWithProviders(<CriteriaInputPanel />);
-    await user.selectOptions(screen.getByLabelText("Donor handle"), "h1");
+    await selectPersona(user, "Acme");
     await waitFor(() => expect(badges()).toHaveLength(3));
 
     const geography = screen.getByLabelText(/Geography/);
@@ -121,12 +157,12 @@ describe("CriteriaInputPanel persona prefill", () => {
   it("prompts a discard confirmation when changing handle while dirty", async () => {
     const user = userEvent.setup();
     renderWithProviders(<CriteriaInputPanel />);
-    await user.selectOptions(screen.getByLabelText("Donor handle"), "h1");
+    await selectPersona(user, "Acme");
     await waitFor(() => expect(badges()).toHaveLength(3));
 
     // Make the form dirty, then switch handle.
     await user.type(screen.getByLabelText(/Geography/), "X");
-    await user.selectOptions(screen.getByLabelText("Donor handle"), "h2");
+    await selectPersona(user, "Beta");
 
     const dialog = await screen.findByRole("dialog");
     expect(within(dialog).getByText("Discard your changes?")).toBeInTheDocument();
@@ -135,6 +171,16 @@ describe("CriteriaInputPanel persona prefill", () => {
     await waitFor(() =>
       expect(screen.queryByText("Discard your changes?")).not.toBeInTheDocument()
     );
+  });
+
+  it("opens persona editing in place without navigating away from the report form", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<CriteriaInputPanel />);
+
+    await selectPersona(user, "Acme");
+    await user.click(screen.getByRole("button", { name: /change profile for acme/i }));
+
+    expect(await screen.findByRole("dialog")).toHaveTextContent("Profile modal for Acme");
   });
 
   it("falls back to defaults with no badges when the persona fetch errors (5xx)", async () => {
@@ -146,7 +192,7 @@ describe("CriteriaInputPanel persona prefill", () => {
     const user = userEvent.setup();
     renderWithProviders(<CriteriaInputPanel />);
 
-    await user.selectOptions(screen.getByLabelText("Donor handle"), "h1");
+    await selectPersona(user, "Acme");
 
     await waitFor(() => expect(screen.getByLabelText(/Geography/)).toHaveValue(""));
     expect(badges()).toHaveLength(0);

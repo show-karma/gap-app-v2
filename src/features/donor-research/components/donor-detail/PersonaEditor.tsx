@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
+import { Button } from "@/components/ui/button";
 import {
   useDonorPersona,
   useRefineDonorPersona,
@@ -285,13 +286,9 @@ export function PersonaEditor({ handleId, onDirtyChange, onSkip, onSaved }: Pers
     return (
       <div className="rounded-md border border-border p-4 text-sm">
         <p className="mb-2 text-red-600 dark:text-red-400">Couldn't load the persona.</p>
-        <button
-          type="button"
-          onClick={() => personaQuery.refetch()}
-          className="rounded-md border border-border px-3 py-1.5 hover:bg-muted"
-        >
+        <Button type="button" variant="outline" size="sm" onClick={() => personaQuery.refetch()}>
           Retry
-        </button>
+        </Button>
       </div>
     );
   }
@@ -339,20 +336,12 @@ export function PersonaEditor({ handleId, onDirtyChange, onSkip, onSaved }: Pers
                   : "No narrative was generated, but donor details were extracted"}
               </span>
               <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={onRejectRecommendation}
-                  className="rounded-md border border-border bg-background px-3 py-1 text-xs font-medium hover:bg-muted"
-                >
+                <Button type="button" variant="outline" size="sm" onClick={onRejectRecommendation}>
                   Reject
-                </button>
-                <button
-                  type="button"
-                  onClick={onAcceptRecommendation}
-                  className="rounded-md border border-border bg-primary px-3 py-1 text-xs font-medium text-primary-foreground"
-                >
+                </Button>
+                <Button type="button" size="sm" onClick={onAcceptRecommendation}>
                   Accept
-                </button>
+                </Button>
               </div>
             </div>
           ) : null}
@@ -385,13 +374,15 @@ export function PersonaEditor({ handleId, onDirtyChange, onSkip, onSaved }: Pers
         <div className="flex items-center justify-between">
           <span className="text-sm font-medium">Structured profile</span>
           {extractedValues ? (
-            <button
+            <Button
               type="button"
+              variant="link"
+              size="sm"
               onClick={onResetToExtraction}
-              className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground"
+              className="h-auto p-0 text-xs text-muted-foreground hover:text-foreground"
             >
               Reset to AI extraction
-            </button>
+            </Button>
           ) : null}
         </div>
         <PersonaStructuredChips structured={structured} onChange={onChipChange} />
@@ -402,22 +393,18 @@ export function PersonaEditor({ handleId, onDirtyChange, onSkip, onSaved }: Pers
           the persona step as optional. */}
       <div className="sticky bottom-0 z-10 -mx-4 flex flex-col gap-2 border-t border-border bg-card px-4 py-3 sm:static sm:mx-0 sm:flex-row sm:justify-end sm:border-0 sm:bg-transparent sm:p-0">
         {onSkip ? (
-          <button
-            type="button"
-            onClick={onSkip}
-            className="order-2 rounded-md border border-border px-4 py-2 text-sm font-medium hover:bg-muted sm:order-1"
-          >
+          <Button type="button" variant="outline" onClick={onSkip} className="order-2 sm:order-1">
             Skip for now
-          </button>
+          </Button>
         ) : null}
-        <button
+        <Button
           type="button"
           onClick={onSave}
           disabled={!isDirty || isReviewing || update.isPending}
-          className="order-1 w-full rounded-md border border-border bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50 sm:order-2 sm:w-auto"
+          className="order-1 w-full sm:order-2 sm:w-auto"
         >
           {update.isPending ? "Saving persona…" : "Save persona"}
-        </button>
+        </Button>
       </div>
     </div>
   );

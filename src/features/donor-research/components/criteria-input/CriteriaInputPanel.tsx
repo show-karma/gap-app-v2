@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -13,6 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { useDonorAdvisor } from "@/hooks/useDonorAdvisor";
 import { useDonorHandles } from "@/hooks/useDonorHandles";
 import { useDonorPersona } from "@/hooks/useDonorPersona";
 import { useCreateDonorReport } from "@/hooks/useDonorReports";
@@ -42,7 +44,7 @@ const WeightsSchema = z
   );
 
 const CriteriaSchema = z.object({
-  donorHandleId: z.string().min(1, "Pick or create a donor handle"),
+  donorHandleId: z.string().min(1, "Pick or create a persona"),
   criteriaText: z.string().min(1, "Describe what you're researching").max(5000),
   cause: z.string().max(500).optional(),
   geography: z.string().max(500).optional(),
@@ -86,6 +88,16 @@ function prefilledFieldsOf(prefill: PersonaPrefill | null): Set<PersonaPrefillFi
   return fields;
 }
 
+interface CriteriaInputPanelProps {
+  /**
+   * Preselects a donor handle from `/new?handle=<id>` (the Personas-list
+   * "New report for this persona" link, and the report-list empty state).
+   * Read server-side from `searchParams` by the page — never mirrored back
+   * to the URL.
+   */
+  initialDonorHandleId?: string;
+}
+
 /**
  * Top-level container for the criteria input flow (U13a + U8 persona prefill).
  *
@@ -95,14 +107,19 @@ function prefilledFieldsOf(prefill: PersonaPrefill | null): Set<PersonaPrefillFi
  * failures fall back silently to shipped defaults — prefill is best-effort and
  * never blocks report creation. The form never writes back to the persona.
  */
-export function CriteriaInputPanel() {
+export function CriteriaInputPanel({ initialDonorHandleId }: CriteriaInputPanelProps = {}) {
   const router = useRouter();
   const handlesQuery = useDonorHandles({ limit: 200 });
   const createReport = useCreateDonorReport();
+  // Cache-shared with DonorResearchShell's own useDonorAdvisor() call (same
+  // query key, 5-minute staleTime) — by the time this panel mounts the shell
+  // has already resolved it, so this is a free re-subscription, not an extra
+  // request. Used only for the sticky footer's rate-limit hint.
+  const advisorQuery = useDonorAdvisor();
 
   const form = useForm<CriteriaFormValues>({
     resolver: zodResolver(CriteriaSchema),
-    defaultValues: buildCriteriaDefaults("", null),
+    defaultValues: buildCriteriaDefaults(initialDonorHandleId ?? "", null),
   });
 
   const selectedHandleId = form.watch("donorHandleId");
@@ -111,6 +128,22 @@ export function CriteriaInputPanel() {
   const [pendingHandleId, setPendingHandleId] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [editHandleId, setEditHandleId] = useState<string | null>(null);
+
+  // A `/new?handle=<id>` seed that matches no loaded handle (stale link,
+  // deleted handle, wrong tenant) leaves the picker showing its placeholder
+  // while the form still holds the bogus id — that passes Zod validation
+  // (any non-empty string) but only ever fails once submitted to the
+  // backend. Clear it once handles are known so the advisor has to make an
+  // explicit selection instead of hitting a silent late failure.
+  useEffect(() => {
+    if (!initialDonorHandleId) return;
+    if (!handlesQuery.isSuccess) return;
+    if (form.getValues("donorHandleId") !== initialDonorHandleId) return;
+    const seedExists = (handlesQuery.data?.items ?? []).some((h) => h.id === initialDonorHandleId);
+    if (!seedExists) {
+      form.setValue("donorHandleId", "", { shouldDirty: false, shouldValidate: false });
+    }
+  }, [initialDonorHandleId, handlesQuery.isSuccess, handlesQuery.data, form]);
 
   // Apply the selected handle's persona prefill once it resolves — but only
   // while the form is clean, so in-progress edits are never clobbered. A 404
@@ -148,7 +181,10 @@ export function CriteriaInputPanel() {
     form.setValue("donorHandleId", handleId, { shouldDirty: false, shouldValidate: true });
   };
 
-  // The gear edits the selected handle's persona in the same modal, pre-filled.
+  // The picker's inline link reads the selected handle's persona presence
+  // to flip between "Add profile" / "Change profile" — reusing the same
+  // prefill query, not an extra fetch.
+  const personaExists = personaData !== undefined ? personaData !== null : null;
   const editHandle = handlesQuery.data?.items.find((handle) => handle.id === editHandleId) ?? null;
   const personaModalOpen = createOpen || editHandleId !== null;
 
@@ -179,32 +215,25 @@ export function CriteriaInputPanel() {
   };
 
   return (
-    <div className="rounded-xl border border-border bg-card p-6">
-      <header className="mb-4">
-        <h2 className="text-lg font-semibold">New research report</h2>
-        <p className="text-sm text-muted-foreground">
-          Describe what you're researching. We'll return ranked nonprofit recommendations with EIN +
-          mailing address on every row.
-        </p>
-      </header>
-
+    <>
       <CriteriaForm
+        advisor={advisorQuery.data}
         form={form}
-        onSubmit={onSubmit}
         handles={handlesQuery.data?.items ?? []}
         handlesLoading={handlesQuery.isLoading}
-        submitting={createReport.isPending}
-        prefilledFields={prefilledFields}
-        onRequestHandleChange={requestHandleChange}
         onRequestCreate={() => setCreateOpen(true)}
-        onRequestEdit={(handleId) => setEditHandleId(handleId)}
+        onRequestEdit={setEditHandleId}
+        onRequestHandleChange={requestHandleChange}
+        onSubmit={onSubmit}
+        personaExists={personaExists}
+        prefilledFields={prefilledFields}
+        submitError={
+          createReport.isError
+            ? (createReport.error as Error)?.message || "Couldn't start the report. Try again."
+            : null
+        }
+        submitting={createReport.isPending}
       />
-
-      {createReport.isError ? (
-        <p className="mt-3 text-sm text-red-600 dark:text-red-400">
-          {(createReport.error as Error)?.message || "Couldn't start the report. Try again."}
-        </p>
-      ) : null}
 
       <Dialog
         open={pendingHandleId !== null}
@@ -216,39 +245,32 @@ export function CriteriaInputPanel() {
           <DialogHeader>
             <DialogTitle>Discard your changes?</DialogTitle>
             <DialogDescription>
-              Switching donor handles replaces this form with the new handle's persona defaults.
-              Your current edits will be lost.
+              Switching personas replaces this form with the new persona defaults. Your current
+              edits will be lost.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <button
-              type="button"
-              onClick={() => setPendingHandleId(null)}
-              className="rounded-md border border-border px-3 py-1.5 text-sm hover:bg-muted"
-            >
+            <Button type="button" variant="outline" onClick={() => setPendingHandleId(null)}>
               Cancel
-            </button>
-            <button
-              type="button"
-              onClick={confirmDiscard}
-              className="rounded-md border border-border bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground"
-            >
+            </Button>
+            <Button type="button" onClick={confirmDiscard}>
               Discard and switch
-            </button>
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       <NewDonorHandleModal
-        open={personaModalOpen}
         editHandle={editHandle}
-        onOpenChange={(next) => {
-          if (next) return;
+        editPersonaExists={personaExists}
+        onCreated={onHandleCreated}
+        onOpenChange={(open) => {
+          if (open) return;
           setCreateOpen(false);
           setEditHandleId(null);
         }}
-        onCreated={onHandleCreated}
+        open={personaModalOpen}
       />
-    </div>
+    </>
   );
 }

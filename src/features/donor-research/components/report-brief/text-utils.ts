@@ -189,3 +189,18 @@ export function mostRecentMentionDate(
   }
   return best;
 }
+
+/**
+ * "January 12, 2026" — shared by the header's issue/updated line and the
+ * summary strip's "Issued" stat tile so both read the same date the same
+ * way. Returns an em dash for an unparseable ISO string.
+ */
+export function formatIssueDate(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "—";
+  return d.toLocaleDateString("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
+}

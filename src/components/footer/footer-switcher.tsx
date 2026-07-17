@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { NON_PROFITS_PAGES, PAGES } from "@/utilities/pages";
+import { isDonorResearchTokenRoute, NON_PROFITS_PAGES, PAGES } from "@/utilities/pages";
 import { Footer } from "./footer";
 import { WhitelabelFooter } from "./whitelabel-footer";
 
@@ -46,6 +46,8 @@ export function FooterSwitcher({ isWhitelabel }: { isWhitelabel: boolean }) {
 
   if (isWhitelabel) return <WhitelabelFooter />;
   if (pathname.startsWith(NON_PROFITS_PAGES.HOME)) return null;
+  // Anonymous donor-research token pages carry their own slim chrome.
+  if (isDonorResearchTokenRoute(pathname)) return null;
   if (isAppRoute(pathname)) return <MinimalFooter />;
   return <Footer />;
 }

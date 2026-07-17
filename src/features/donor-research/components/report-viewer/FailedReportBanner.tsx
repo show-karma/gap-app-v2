@@ -32,7 +32,7 @@ export function FailedReportBanner({ report }: FailedReportBannerProps) {
 
   return (
     <div
-      className="mb-6 overflow-hidden rounded-xl border border-red-300 bg-red-50 dark:border-red-900 dark:bg-red-950/40"
+      className="overflow-hidden rounded-sf-card border border-red-300 bg-red-50 dark:border-red-900 dark:bg-red-950/40"
       role="alert"
     >
       <div className="flex items-start gap-3 p-5">

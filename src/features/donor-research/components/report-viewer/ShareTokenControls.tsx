@@ -2,9 +2,17 @@
 
 import { Share2 } from "lucide-react";
 import { useState } from "react";
+import toast from "react-hot-toast";
 import { DeleteDialog } from "@/components/DeleteDialog";
+import {
+  BTN_BASE,
+  BTN_OUTLINE,
+  BTN_PRIMARY,
+  BTN_SM,
+} from "@/components/Pages/Dashboard/v3/soft-classes";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { useGenerateShareToken, useRevokeShareToken } from "@/hooks/useShareToken";
+import { markSurfaced } from "@/utilities/errors";
 import { PAGES } from "@/utilities/pages";
 
 interface ShareTokenControlsProps {
@@ -19,9 +27,10 @@ const DEFAULT_TTL_DAYS = 30;
 /**
  * Share-token controls (U13d). Three states the advisor sees:
  *
- *  - No token: "Generate share link" CTA → modal with TTL + advisor
- *    display name + intro text. Submit hits the indexer's POST
- *    /reports/:id/share-token.
+ *  - No token: "Share with donor" CTA generates a link directly — no modal,
+ *    no share personalization (advisor display name / intro text is an
+ *    explicit spec non-goal). It hits the indexer's POST
+ *    /reports/:id/share-token with a fixed `DEFAULT_TTL_DAYS` TTL.
  *  - Has token: copy URL / regenerate / revoke. Both Regenerate (rotates
  *    the token, breaking links already sent) and Revoke are destructive,
  *    so both fire through `DeleteDialog` (CLAUDE.md mandate: never raw
@@ -55,12 +64,42 @@ export function ShareTokenControls({
   const effectiveToken = generatedToken ?? shareToken;
   const expiresAt = shareTokenExpiresAt ? new Date(shareTokenExpiresAt) : null;
 
-  const handleGenerate = async () => {
+  const rotateShareToken = async () => {
     const result = await generate.mutateAsync({
       reportId,
       body: { ttlSeconds: DEFAULT_TTL_DAYS * 24 * 60 * 60 },
     });
     setGeneratedToken(result.shareToken);
+  };
+
+  const handleGenerate = async () => {
+    try {
+      await rotateShareToken();
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Couldn't generate a share link. Try again."
+      );
+    }
+  };
+
+  // Regenerate goes through `DeleteDialog`, whose `deleteFunction` contract
+  // is "throw on failure" — it awaits the function and treats a resolved
+  // promise as success, closing the confirm dialog. Reusing the
+  // toast-and-swallow `handleGenerate` here would let a failed rotation
+  // present as a successful one (the dialog closes as if it worked, and
+  // only the toast reveals otherwise). Rethrow — marked surfaced, since the
+  // toast above already told the user — so `DeleteDialog` keeps the dialog
+  // open and its own catch handles telemetry without stacking a second,
+  // generic toast on top.
+  const handleRegenerateConfirm = async () => {
+    try {
+      await rotateShareToken();
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Couldn't generate a share link. Try again."
+      );
+      throw markSurfaced(error);
+    }
   };
 
   const handleCopy = async () => {
@@ -77,10 +116,10 @@ export function ShareTokenControls({
   if (!hasShareToken && !generatedToken) {
     return (
       <button
-        type="button"
-        onClick={handleGenerate}
+        className={`${BTN_BASE} ${BTN_SM} ${BTN_PRIMARY} disabled:opacity-50`}
         disabled={generate.isPending}
-        className="inline-flex items-center gap-2 rounded-md border border-border bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+        onClick={handleGenerate}
+        type="button"
       >
         <Share2 className="h-4 w-4" />
         {generate.isPending ? "Generating…" : "Share with donor"}
@@ -92,31 +131,31 @@ export function ShareTokenControls({
     <div className="flex flex-col items-end gap-2">
       <div className="flex items-center gap-2">
         <button
-          type="button"
-          onClick={handleCopy}
+          className={`${BTN_BASE} ${BTN_SM} ${BTN_PRIMARY} disabled:opacity-50`}
           disabled={!effectiveToken}
-          className="rounded-md border border-border bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+          onClick={handleCopy}
+          type="button"
         >
           Copy share link
         </button>
         <button
-          type="button"
-          onClick={() => setRegenerateOpen(true)}
+          className={`${BTN_BASE} ${BTN_SM} ${BTN_OUTLINE} disabled:opacity-50`}
           disabled={generate.isPending}
-          className="rounded-md border border-border px-3 py-1.5 text-sm hover:bg-muted disabled:opacity-50"
+          onClick={() => setRegenerateOpen(true)}
+          type="button"
         >
           Regenerate
         </button>
         <button
-          type="button"
+          className={`${BTN_BASE} ${BTN_SM} border-red-300 bg-red-50 text-red-700 hover:bg-red-100 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200`}
           onClick={() => setRevokeOpen(true)}
-          className="rounded-md border border-red-300 bg-red-50 px-3 py-1.5 text-sm text-red-700 hover:bg-red-100 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200"
+          type="button"
         >
           Revoke
         </button>
       </div>
       {expiresAt ? (
-        <p className="text-xs text-muted-foreground">Link expires {expiresAt.toLocaleString()}</p>
+        <p className="text-xs text-sf-muted">Link expires {expiresAt.toLocaleString()}</p>
       ) : null}
 
       <DeleteDialog
@@ -129,7 +168,7 @@ export function ShareTokenControls({
             </span>
           </span>
         }
-        deleteFunction={handleGenerate}
+        deleteFunction={handleRegenerateConfirm}
         isLoading={generate.isPending}
         buttonElement={null}
         externalIsOpen={regenerateOpen}
