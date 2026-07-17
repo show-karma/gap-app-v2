@@ -185,14 +185,37 @@ describe("PersonaDetailView", () => {
       await user.click(await screen.findByRole("button", { name: /simulate unsaved edit/i }));
       await user.click(shellBreadcrumbLink);
 
-      expect(await screen.findByText("Discard profile changes?")).toBeInTheDocument();
+      expect(await screen.findByText("Discard unsaved changes?")).toBeInTheDocument();
       expect(pushMock).not.toHaveBeenCalled();
 
       await user.click(screen.getByRole("button", { name: /keep editing/i }));
-      expect(screen.queryByText("Discard profile changes?")).not.toBeInTheDocument();
+      expect(screen.queryByText("Discard unsaved changes?")).not.toBeInTheDocument();
       expect(pushMock).not.toHaveBeenCalled();
     } finally {
       document.body.removeChild(shellBreadcrumbLink);
+    }
+  });
+
+  it("§1.2: guards navigation while the private notes field is dirty (not just the persona editor)", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<PersonaDetailView handleId="h1" />);
+
+    const shellLink = document.createElement("a");
+    shellLink.href = "/nonprofit-research";
+    shellLink.textContent = "Reports";
+    document.body.appendChild(shellLink);
+
+    try {
+      // Edit ONLY the notes field (the persona editor stays clean) — an unsaved
+      // note must still block navigation.
+      const notes = await screen.findByLabelText("Private handle notes");
+      await user.type(notes, " and follow up in Q3");
+      await user.click(shellLink);
+
+      expect(await screen.findByText("Discard unsaved changes?")).toBeInTheDocument();
+      expect(pushMock).not.toHaveBeenCalled();
+    } finally {
+      document.body.removeChild(shellLink);
     }
   });
 
@@ -214,7 +237,7 @@ describe("PersonaDetailView", () => {
     await user.click(await screen.findByRole("button", { name: /simulate unsaved edit/i }));
     await user.click(screen.getByRole("link", { name: /new report for this persona/i }));
 
-    expect(await screen.findByText("Discard profile changes?")).toBeInTheDocument();
+    expect(await screen.findByText("Discard unsaved changes?")).toBeInTheDocument();
   });
 
   it("§1.2: guards a Reports-card report-row link while the persona editor is dirty", async () => {
@@ -227,7 +250,7 @@ describe("PersonaDetailView", () => {
     await user.click(await screen.findByRole("button", { name: /simulate unsaved edit/i }));
     await user.click(screen.getByText("Climate resilience funders"));
 
-    expect(await screen.findByText("Discard profile changes?")).toBeInTheDocument();
+    expect(await screen.findByText("Discard unsaved changes?")).toBeInTheDocument();
     expect(pushMock).not.toHaveBeenCalled();
 
     await user.click(await screen.findByRole("button", { name: /^discard$/i }));
@@ -244,7 +267,7 @@ describe("PersonaDetailView", () => {
     await user.click(await screen.findByRole("button", { name: /simulate unsaved edit/i }));
     await user.click(screen.getByRole("button", { name: /^new report$/i }));
 
-    expect(await screen.findByText("Discard profile changes?")).toBeInTheDocument();
+    expect(await screen.findByText("Discard unsaved changes?")).toBeInTheDocument();
     expect(pushMock).not.toHaveBeenCalled();
 
     await user.click(await screen.findByRole("button", { name: /^discard$/i }));
@@ -269,7 +292,7 @@ describe("PersonaDetailView", () => {
       await user.click(await screen.findByRole("button", { name: /simulate unsaved edit/i }));
       await user.click(railLink);
 
-      expect(await screen.findByText("Discard profile changes?")).toBeInTheDocument();
+      expect(await screen.findByText("Discard unsaved changes?")).toBeInTheDocument();
       expect(pushMock).not.toHaveBeenCalled();
 
       await user.click(await screen.findByRole("button", { name: /^discard$/i }));
@@ -293,7 +316,7 @@ describe("PersonaDetailView", () => {
     // init, so this one assertion drops to `fireEvent` to set `ctrlKey`.
     fireEvent.click(screen.getByText("Climate resilience funders"), { ctrlKey: true });
 
-    expect(screen.queryByText("Discard profile changes?")).not.toBeInTheDocument();
+    expect(screen.queryByText("Discard unsaved changes?")).not.toBeInTheDocument();
   });
 
   it("§1.2: registers a beforeunload guard only while the persona editor is dirty", async () => {
