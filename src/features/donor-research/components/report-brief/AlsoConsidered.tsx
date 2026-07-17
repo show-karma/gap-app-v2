@@ -37,11 +37,13 @@ export function AlsoConsidered({
 
   return (
     <section
-      className="rounded-sf-card border border-sf-line bg-sf-card px-6 py-6"
+      className="rounded-sf-card border border-sf-line bg-sf-card p-6"
       data-section="also-considered"
     >
       <header>
-        <h2 className="text-lg font-bold tracking-[-0.01em] text-sf-heading">Also considered</h2>
+        <h2 className="text-lg font-semibold tracking-[-0.01em] text-sf-heading">
+          Also considered
+        </h2>
         <p className="mt-1 max-w-[58ch] text-[13px] leading-[1.5] text-sf-muted">
           Surfaced by the same model but ranked below the top {startRank - 1}. Tap any row to read
           the full one-pager and compliance breakdown.

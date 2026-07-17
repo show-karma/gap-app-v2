@@ -35,7 +35,7 @@ export function Methodology({
       data-section="methodology"
     >
       <summary className="flex cursor-pointer list-none items-baseline justify-between gap-4 px-6 py-4">
-        <h2 className="text-lg font-bold tracking-[-0.01em] text-sf-heading">
+        <h2 className="text-lg font-semibold tracking-[-0.01em] text-sf-heading">
           How this brief was assembled
         </h2>
         <span className="inline-flex shrink-0 items-center gap-1.5 self-end text-[11px] font-[650] uppercase tracking-[0.1em] text-sf-muted transition-colors group-hover:text-sf-heading">
@@ -88,7 +88,7 @@ export function Methodology({
 
         <ColophonBlock label="What this is">
           <p>
-            A research aid. The brief surfaces candidates we'd suggest reading further on — it does
+            A research aid. The brief surfaces candidates we'd suggest reading further on. It does
             not vouch for them, and it doesn't replace the diligence calls you'd run before cutting
             a cheque.
           </p>
@@ -119,7 +119,7 @@ function GeographyExplanation({ diagnostic }: { diagnostic: GeographyDiagnostic 
   if (!diagnostic || !diagnostic.inputGeography) {
     return (
       <p>
-        No geography filter was applied — the search drew nationally from across the United States.
+        No geography filter was applied. The search drew nationally from across the United States.
       </p>
     );
   }

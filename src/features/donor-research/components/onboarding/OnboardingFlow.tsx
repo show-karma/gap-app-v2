@@ -212,7 +212,7 @@ export function OnboardingFlow() {
               id={formHeadingId}
               ref={headingRef}
               tabIndex={-1}
-              className="mb-2 text-xl font-bold tracking-[-0.01em] text-sf-heading outline-none"
+              className="mb-2 text-xl font-semibold tracking-[-0.01em] text-sf-heading outline-none"
             >
               Get started
             </h2>
@@ -391,20 +391,20 @@ function WelcomeStep({
         id={headingId}
         ref={headingRef}
         tabIndex={-1}
-        className="mb-2 text-2xl font-bold tracking-[-0.02em] text-sf-heading outline-none"
+        className="mb-2 text-2xl font-semibold tracking-[-0.02em] text-sf-heading outline-none"
       >
         Defensible philanthropy research for your donor personas.
       </h2>
       <p className="mb-4 text-[13.5px] leading-[1.55] text-sf-muted">
         Karma Nonprofit Research helps boutique advisors produce current, ranked nonprofit
-        recommendations grounded in real-time public data — and reach out to organizations directly
+        recommendations grounded in real-time public data, and reach out to organizations directly
         when public data isn't enough.
       </p>
       <ul className="mb-6 grid grid-cols-1 gap-2 text-sm md:grid-cols-2">
         <li className="rounded-sf-tile border border-sf-line bg-sf-elev p-3">
           <strong className="block text-sf-heading">Composite ranking</strong>
           <span className="text-sf-muted">
-            Freshness, impact-recency, donor match, compliance — every score visible and defensible.
+            Freshness, impact-recency, donor match, compliance: every score visible and defensible.
           </span>
         </li>
         <li className="rounded-sf-tile border border-sf-line bg-sf-elev p-3">
@@ -448,7 +448,7 @@ function SampleStep({
         id={headingId}
         ref={headingRef}
         tabIndex={-1}
-        className="mb-2 text-xl font-bold tracking-[-0.01em] text-sf-heading outline-none"
+        className="mb-2 text-xl font-semibold tracking-[-0.01em] text-sf-heading outline-none"
       >
         What a report looks like
       </h2>

@@ -95,7 +95,7 @@ export function ReportBrief({
       {stream && !isTerminal ? (
         <>
           <p className="text-[13.5px] text-sf-muted">
-            The brief is assembling in place — feel free to navigate away and return.
+            The brief is assembling in place. Feel free to navigate away and return.
           </p>
           <ProgressTimeline
             errorCount={stream.errorCount}

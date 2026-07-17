@@ -69,7 +69,7 @@ export function Section({
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-col gap-[3px]">
-          <h2 className="m-0 flex items-center gap-[11px] text-2xl font-bold tracking-[-0.02em] text-sf-heading">
+          <h2 className="m-0 flex items-center gap-[11px] text-2xl font-semibold tracking-[-0.02em] text-sf-heading">
             {icon ? <SoftIcon name={icon} className="h-[22px] w-[22px] text-brand-600" /> : null}
             {title}
           </h2>
@@ -145,7 +145,7 @@ export function EmptyState({
           className={cn("h-[26px] w-[26px]", brand ? "text-brand-600" : "text-sf-muted")}
         />
       </div>
-      <h3 className="m-0 text-lg font-bold tracking-[-0.01em] text-sf-heading">{title}</h3>
+      <h3 className="m-0 text-lg font-semibold tracking-[-0.01em] text-sf-heading">{title}</h3>
       <p className="mx-0 mb-0 mt-1.5 max-w-[390px] text-[13.5px] leading-[1.55] text-sf-muted">
         {body}
       </p>

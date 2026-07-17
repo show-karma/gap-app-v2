@@ -142,7 +142,7 @@ export function DonorResearchHome() {
     <div className="flex flex-col gap-6">
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div className="max-w-xl">
-          <h1 className="text-2xl font-bold tracking-[-0.02em] text-sf-heading">Reports</h1>
+          <h1 className="text-2xl font-semibold tracking-[-0.02em] text-sf-heading">Reports</h1>
           <p className="mt-1 text-[13.5px] text-sf-muted">
             Ranked nonprofit recommendations for your donor personas, sourced from IRS Pub 78,
             recent 990 filings, and live activity signals.

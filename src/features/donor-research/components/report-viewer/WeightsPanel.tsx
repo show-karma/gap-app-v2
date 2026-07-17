@@ -278,7 +278,7 @@ function PanelBody({ report, persistedWeights, onClose }: PanelBodyProps) {
         <SheetTitle>Adjust ranking</SheetTitle>
         <SheetDescription>
           Weight the composite, set how many results are featured, and drag the list for a manual
-          order — all in one place. Changes preview live and apply together when you save.
+          order, all in one place. Changes preview live and apply together when you save.
         </SheetDescription>
       </SheetHeader>
 

@@ -303,7 +303,7 @@ export function PersonaEditor({ handleId, onDirtyChange, onSkip, onSaved }: Pers
           Persona source
         </label>
         <p className="text-xs text-muted-foreground">
-          Paste donor letters, kickoff notes, anything that describes this donor — then click Refine
+          Paste donor letters, kickoff notes, anything that describes this donor, then click Refine
           to get a recommended persona.
         </p>
         <div className="relative">

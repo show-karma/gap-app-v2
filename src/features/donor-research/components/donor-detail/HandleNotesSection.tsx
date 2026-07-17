@@ -36,7 +36,7 @@ export function HandleNotesSection({ handle }: HandleNotesSectionProps) {
 
   return (
     <section className="flex flex-col gap-2">
-      <h2 className="text-base font-semibold">Notes — private, not used by research</h2>
+      <h2 className="text-base font-semibold">Notes: private, not used by research</h2>
       <p className="text-xs text-muted-foreground">
         Your own reminders about this donor. Never sent to the research model.
       </p>
