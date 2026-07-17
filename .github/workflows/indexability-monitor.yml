@@ -2,8 +2,8 @@ name: Indexability Monitor
 
 on:
   schedule:
-    # Daily at 07:15 UTC.
-    - cron: "15 7 * * *"
+    # Every Wednesday at 12:00 UTC.
+    - cron: "0 12 * * 3"
   workflow_dispatch:
     inputs:
       min_leaf_count:
