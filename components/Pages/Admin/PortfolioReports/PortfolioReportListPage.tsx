@@ -114,6 +114,22 @@ function ReportTypeFilterSelect({
   );
 }
 
+/**
+ * Report name cell: the admin-authored title when set, otherwise the report
+ * config's name. When a title is set the config name still shows underneath so
+ * admins can tell which config produced the report.
+ */
+function ReportNameCell({ title, configName }: { title?: string | null; configName: string }) {
+  return (
+    <td className="px-4 py-3">
+      <span className="font-medium text-zinc-900 dark:text-zinc-100">{title ?? configName}</span>
+      {title ? (
+        <span className="mt-0.5 block text-xs font-normal text-zinc-500">{configName}</span>
+      ) : null}
+    </td>
+  );
+}
+
 interface ReportTableRowProps {
   slug: string;
   report: PortfolioReport;
@@ -151,7 +167,7 @@ function ReportTableRow({
   const deletable = report.status === "draft" || failed;
   return (
     <tr className="hover:bg-zinc-50 dark:hover:bg-zinc-800/50">
-      <td className="px-4 py-3 font-medium text-zinc-900 dark:text-zinc-100">{configName}</td>
+      <ReportNameCell title={report.title} configName={configName} />
       <td className="px-4 py-3 text-zinc-500">{fmt.shortLabel}</td>
       <td className="px-4 py-3">
         <GenerationStatusBadge status={report.status} />
@@ -560,13 +576,7 @@ export function PortfolioReportListPage({ community }: Props) {
                         router.push(`${PAGES.ADMIN.PORTFOLIO_REPORTS(slug)}/${report.id}`)
                       }
                       onPreview={() =>
-                        router.push(
-                          PAGES.COMMUNITY.REPORT_DETAIL(
-                            slug,
-                            report.runDate,
-                            report.reportConfigSlug
-                          )
-                        )
+                        router.push(PAGES.ADMIN.PORTFOLIO_REPORTS_PREVIEW(slug, report.id))
                       }
                       onPublish={() => handlePublish(report.id)}
                       onUnpublish={() => handleUnpublish(report.id)}
