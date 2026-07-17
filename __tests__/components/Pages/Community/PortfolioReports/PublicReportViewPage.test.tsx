@@ -15,12 +15,19 @@ vi.mock("@/components/Pages/Community/PortfolioReports/PortfolioReportDocumentVi
     report,
     bannerText,
     isAdmin,
+    canExportData,
   }: {
     report: { id: string };
     bannerText?: string;
     isAdmin?: boolean;
+    canExportData?: boolean;
   }) => (
-    <div data-testid="doc-view" data-banner={bannerText ?? ""} data-admin={String(isAdmin)}>
+    <div
+      data-testid="doc-view"
+      data-banner={bannerText ?? ""}
+      data-admin={String(isAdmin)}
+      data-can-export={String(canExportData)}
+    >
       report:{report?.id}
     </div>
   ),
@@ -68,6 +75,25 @@ describe("PublicReportViewPage (DEV-496 unified report URL)", () => {
     expect(doc).toHaveTextContent("report:pub-1");
     expect(doc).toHaveAttribute("data-banner", "");
     expect(doc).toHaveAttribute("data-admin", "false");
+    // The public must never get the raw-data export.
+    expect(doc).toHaveAttribute("data-can-export", "false");
+  });
+
+  it("gives a community admin the export affordance on a published report", () => {
+    // Regression: export must reach admins on published reports too, where
+    // `isAdmin` (draft-preview) is false. It is gated on admin status, not draft.
+    mockAdmin.mockReturnValue({ isCommunityAdmin: true, isLoading: false } as any);
+    mockPublished.mockReturnValue({
+      data: { id: "pub-1", publishedAt: "2026-01-01T00:00:00Z" },
+      isLoading: false,
+      isError: false,
+    } as any);
+
+    render(<PublicReportViewPage community={community} runDate={RUN_DATE} />);
+
+    const doc = screen.getByTestId("doc-view");
+    expect(doc).toHaveAttribute("data-admin", "false");
+    expect(doc).toHaveAttribute("data-can-export", "true");
   });
 
   it("previews the draft to a community admin, with the admin-only banner", () => {
@@ -86,6 +112,7 @@ describe("PublicReportViewPage (DEV-496 unified report URL)", () => {
       "Preview mode — this draft is only visible to community admins."
     );
     expect(doc).toHaveAttribute("data-admin", "true");
+    expect(doc).toHaveAttribute("data-can-export", "true");
   });
 
   it("shows a not-found message to a non-admin and never fetches the draft", () => {
