@@ -128,6 +128,7 @@ interface PersonaStepProps {
   handle: DonorHandle;
   isEditing: boolean;
   onDirtyChange: (dirty: boolean) => void;
+  onNotesDirtyChange: (dirty: boolean) => void;
   onFinish: () => void;
 }
 
@@ -136,6 +137,7 @@ function PersonaStep({
   handle,
   isEditing,
   onDirtyChange,
+  onNotesDirtyChange,
   onFinish,
 }: PersonaStepProps) {
   const editAction = editPersonaExists ? "Change" : "Add";
@@ -173,7 +175,7 @@ function PersonaStep({
 
       <div className="flex-1 overflow-y-auto px-6 py-5">
         <div className="flex flex-col gap-8">
-          <HandleNotesSection handle={handle} />
+          <HandleNotesSection handle={handle} onDirtyChange={onNotesDirtyChange} />
           <PersonaEditor
             handleId={handle.id}
             key={handle.id}
@@ -245,6 +247,7 @@ export function NewDonorHandleModal({
   const [createError, setCreateError] = useState<string | null>(null);
   const [activeHandle, setActiveHandle] = useState<DonorHandle | null>(null);
   const [personaDirty, setPersonaDirty] = useState(false);
+  const [notesDirty, setNotesDirty] = useState(false);
   const [confirmDiscard, setConfirmDiscard] = useState(false);
 
   useEffect(() => {
@@ -252,6 +255,7 @@ export function NewDonorHandleModal({
     setLabel("");
     setCreateError(null);
     setPersonaDirty(false);
+    setNotesDirty(false);
     setConfirmDiscard(false);
     if (editHandle) {
       setIsEditing(true);
@@ -266,6 +270,7 @@ export function NewDonorHandleModal({
 
   const labelInputRef = useRef<HTMLInputElement>(null);
   const onPersonaDirtyChange = useCallback((dirty: boolean) => setPersonaDirty(dirty), []);
+  const onNotesDirtyChange = useCallback((dirty: boolean) => setNotesDirty(dirty), []);
   const trimmedLabel = label.trim();
 
   const createAndContinue = async (addPersona: boolean) => {
@@ -292,7 +297,7 @@ export function NewDonorHandleModal({
       onOpenChange(true);
       return;
     }
-    if (step === 2 && personaDirty) {
+    if (step === 2 && (personaDirty || notesDirty)) {
       setConfirmDiscard(true);
       return;
     }
@@ -325,6 +330,7 @@ export function NewDonorHandleModal({
         handle={activeHandle}
         isEditing={isEditing}
         onDirtyChange={onPersonaDirtyChange}
+        onNotesDirtyChange={onNotesDirtyChange}
         onFinish={() => onOpenChange(false)}
       />
     );

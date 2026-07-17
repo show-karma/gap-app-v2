@@ -22,7 +22,11 @@ vi.mock("@/src/features/donor-research/components/donor-detail/PersonaEditor", (
 }));
 
 vi.mock("@/src/features/donor-research/components/donor-detail/HandleNotesSection", () => ({
-  HandleNotesSection: () => <div data-testid="handle-notes" />,
+  HandleNotesSection: ({ onDirtyChange }: { onDirtyChange?: (dirty: boolean) => void }) => (
+    <button onClick={() => onDirtyChange?.(true)} type="button">
+      flag notes dirty
+    </button>
+  ),
 }));
 
 const mockUseCreateDonorHandle = vi.mocked(useCreateDonorHandle);
@@ -118,5 +122,17 @@ describe("NewDonorHandleModal", () => {
     const dialog = screen.getByRole("dialog");
     await user.click(within(dialog).getByRole("button", { name: /^discard$/i }));
     await waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false));
+  });
+
+  it("guards dismissal when only the private notes have unsaved edits", async () => {
+    const { user, onOpenChange } = await renderAtProfileStep();
+
+    // The persona editor stays clean; only the notes field is dirty. Closing
+    // must still confirm rather than silently drop the note.
+    await user.click(screen.getByRole("button", { name: /flag notes dirty/i }));
+    await user.keyboard("{Escape}");
+
+    expect(await screen.findByText("Discard profile changes?")).toBeInTheDocument();
+    expect(onOpenChange).not.toHaveBeenCalledWith(false);
   });
 });
