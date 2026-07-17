@@ -10,6 +10,7 @@ import type { FC, ReactNode } from "react";
 import { KycStatusBadge } from "@/components/KycStatusIcon";
 import type { IFundingApplication, ProgramWithFormSchema } from "@/types/funding-platform";
 import type { KycStatusResponse } from "@/types/kyc";
+import { formatApplicationStatus } from "@/utilities/application-status";
 import { formatDate } from "@/utilities/formatDate";
 import { cn } from "@/utilities/tailwind";
 import { getProjectTitle } from "../helper/getProjectTitle";
@@ -36,13 +37,6 @@ const statusIcons: Record<string, typeof ClockIcon> = {
   approved: CheckCircleIcon,
   rejected: XMarkIcon,
   resubmitted: ClockIcon,
-};
-
-const formatStatus = (status: string): string => {
-  return status
-    .split("_")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
 };
 
 export interface ApplicationHeaderProps {
@@ -99,10 +93,10 @@ export const ApplicationHeader: FC<ApplicationHeaderProps> = ({
                 "flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs sm:text-sm font-medium whitespace-nowrap",
                 statusColors[application.status] || "bg-gray-100 text-gray-800 border-gray-200"
               )}
-              aria-label={`Application status: ${formatStatus(application.status)}`}
+              aria-label={`Application status: ${formatApplicationStatus(application.status)}`}
             >
               <StatusIcon className="w-4 h-4" aria-hidden="true" />
-              <span>{formatStatus(application.status)}</span>
+              <span>{formatApplicationStatus(application.status)}</span>
             </output>
 
             {/* More Actions - always visible */}
