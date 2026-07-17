@@ -1,8 +1,11 @@
+import { zodResolver } from "@hookform/resolvers/zod";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { useForm } from "react-hook-form";
-import { beforeAll, describe, expect, it, vi } from "vitest";
+import toast from "react-hot-toast";
+import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { z } from "zod";
 import type { DonorHandle } from "@/types/donor-research";
 import { DEFAULT_WEIGHTS_BASIS_POINTS } from "../report-brief/scoring";
 import { CriteriaForm } from "./CriteriaForm";
@@ -60,6 +63,61 @@ function Harness({
     />
   );
 }
+
+// Minimal resolver-backed harness: an empty `criteriaText` fails validation so
+// `handleSubmit` runs its `onInvalid` branch (the toast under test). Mirrors the
+// real panel's required-criteria rule without importing the full schema.
+const ValidatedSchema = z.object({
+  donorHandleId: z.string().min(1, "Pick or create a persona"),
+  criteriaText: z.string().min(1, "Describe what you're researching"),
+  cause: z.string().optional(),
+  geography: z.string().optional(),
+  weights: z.any(),
+  topCount: z.number(),
+});
+
+function ValidatedHarness({ criteriaText }: { criteriaText: string }) {
+  const form = useForm<CriteriaFormValues>({
+    resolver: zodResolver(ValidatedSchema) as never,
+    defaultValues: {
+      donorHandleId: HANDLE.id,
+      criteriaText,
+      cause: "",
+      geography: "",
+      weights: DEFAULT_WEIGHTS_BASIS_POINTS,
+      topCount: 3,
+    },
+  });
+  return (
+    <CriteriaForm
+      form={form}
+      onSubmit={() => {}}
+      handles={[HANDLE]}
+      handlesLoading={false}
+      submitting={false}
+    />
+  );
+}
+
+describe("CriteriaForm submit feedback", () => {
+  beforeEach(() => {
+    vi.mocked(toast.error).mockClear();
+  });
+
+  it("toasts the first validation error when a blocked submit would otherwise be silent", async () => {
+    render(withQueryClient(<ValidatedHarness criteriaText="" />));
+    fireEvent.click(screen.getByRole("button", { name: /create report/i }));
+    await waitFor(() =>
+      expect(toast.error).toHaveBeenCalledWith("Describe what you're researching")
+    );
+  });
+
+  it("does not toast when the form is valid", async () => {
+    render(withQueryClient(<ValidatedHarness criteriaText="climate orgs in the PNW" />));
+    fireEvent.click(screen.getByRole("button", { name: /create report/i }));
+    await waitFor(() => expect(toast.error).not.toHaveBeenCalled());
+  });
+});
 
 // The weights fieldset lives inside the collapsed-by-default "Advanced"
 // disclosure — open it first, then scope to the fieldset (the form has

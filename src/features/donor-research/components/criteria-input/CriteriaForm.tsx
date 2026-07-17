@@ -3,7 +3,8 @@
 import { ChevronDown } from "lucide-react";
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
-import { type Control, Controller, type UseFormReturn } from "react-hook-form";
+import { type Control, Controller, type FieldErrors, type UseFormReturn } from "react-hook-form";
+import toast from "react-hot-toast";
 import { BTN_BASE, BTN_MD, BTN_PRIMARY } from "@/components/Pages/Dashboard/v3/soft-classes";
 import type { DonorAdvisor, DonorHandle } from "@/types/donor-research";
 import { cn } from "@/utilities/tailwind";
@@ -217,8 +218,22 @@ export function CriteriaForm({
     onRequestHandleChange ??
     ((handleId: string) => setValue("donorHandleId", handleId, { shouldValidate: true }));
 
+  // Validation errors render inline next to each field, but the submit button
+  // sits in a sticky footer that can be far from the first invalid field — so a
+  // blocked submit can read as a silent no-op. Raise a toast naming the first
+  // problem so the advisor always gets feedback next to where they clicked.
+  const onInvalid = (formErrors: FieldErrors<CriteriaFormValues>) => {
+    const firstMessage =
+      formErrors.donorHandleId?.message ||
+      formErrors.criteriaText?.message ||
+      (formErrors.weights?.message as string | undefined) ||
+      (formErrors.topCount?.message as string | undefined) ||
+      "Check the highlighted fields and try again.";
+    toast.error(firstMessage);
+  };
+
   return (
-    <form className="flex flex-col gap-5" onSubmit={handleSubmit(onSubmit)}>
+    <form className="flex flex-col gap-5" onSubmit={handleSubmit(onSubmit, onInvalid)}>
       <FormSection description="Who is this research for?" title="Persona">
         <DonorHandlePicker
           error={errors.donorHandleId?.message}
@@ -303,7 +318,7 @@ export function CriteriaForm({
       </FormSection>
 
       <FormSection
-        description="Defaults work well for most searches — adjust anytime after the report renders too."
+        description="Defaults work well for most searches. Adjust anytime after the report renders too."
         title="Ranking preferences"
       >
         <AdvancedDisclosure onToggle={() => setAdvancedOpen((o) => !o)} open={advancedOpen}>

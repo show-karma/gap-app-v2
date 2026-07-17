@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
+import toast from "react-hot-toast";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import {
@@ -201,17 +202,26 @@ export function CriteriaInputPanel({ initialDonorHandleId }: CriteriaInputPanelP
   };
 
   const onSubmit = async (values: CriteriaFormValues) => {
-    const result = await createReport.mutateAsync({
-      donorHandleId: values.donorHandleId,
-      criteriaText: values.criteriaText,
-      cause: values.cause || null,
-      geography: values.geography || null,
-      amountMin: values.amountMin ?? null,
-      amountMax: values.amountMax ?? null,
-      weights: values.weights,
-      topCount: values.topCount,
-    });
-    router.push(PAGES.DONOR_RESEARCH.REPORT(result.reportId));
+    // The submit button lives in a sticky footer, so a create failure whose
+    // only signal is the inline error banner can land off-screen (e.g. a 429
+    // daily-limit rejection while the advisor is scrolled to the footer). Raise
+    // a toast as well so the failure is always visible next to the cursor, and
+    // catch here so the rejection never escapes as an unhandled promise.
+    try {
+      const result = await createReport.mutateAsync({
+        donorHandleId: values.donorHandleId,
+        criteriaText: values.criteriaText,
+        cause: values.cause || null,
+        geography: values.geography || null,
+        amountMin: values.amountMin ?? null,
+        amountMax: values.amountMax ?? null,
+        weights: values.weights,
+        topCount: values.topCount,
+      });
+      router.push(PAGES.DONOR_RESEARCH.REPORT(result.reportId));
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Couldn't start the report. Try again.");
+    }
   };
 
   return (

@@ -7,6 +7,7 @@
 
 import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import toast from "react-hot-toast";
 import { useDonorHandles } from "@/hooks/useDonorHandles";
 import { useDonorPersona } from "@/hooks/useDonorPersona";
 import { useCreateDonorReport } from "@/hooks/useDonorReports";
@@ -196,5 +197,23 @@ describe("CriteriaInputPanel persona prefill", () => {
 
     await waitFor(() => expect(screen.getByLabelText(/Geography/)).toHaveValue(""));
     expect(badges()).toHaveLength(0);
+  });
+
+  it("toasts when the create request is rejected (e.g. a rate-limit 429)", async () => {
+    const mutateAsync = vi.fn().mockRejectedValue(new Error("Daily fast-report limit reached"));
+    mockUseCreateReport.mockReturnValue({
+      mutateAsync,
+      isPending: false,
+      isError: false,
+    } as unknown as ReturnType<typeof useCreateDonorReport>);
+    const user = userEvent.setup();
+    renderWithProviders(<CriteriaInputPanel />);
+
+    // Select a persona so the form is valid (criteria prefilled), then submit.
+    await selectPersona(user, "Acme");
+    await user.click(screen.getByRole("button", { name: /create report/i }));
+
+    await waitFor(() => expect(mutateAsync).toHaveBeenCalledTimes(1));
+    expect(toast.error).toHaveBeenCalledWith("Daily fast-report limit reached");
   });
 });
