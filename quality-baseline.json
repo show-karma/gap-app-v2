@@ -1,7 +1,7 @@
 {
   "$schema": "./scripts/quality-baseline.schema.json",
-  "generatedAt": "2026-07-16T20:05:51.926Z",
-  "generatedFromCommit": "2e63e35b26acbee4f311075d869ea74b1767264a",
+  "generatedAt": "2026-07-17T11:32:27.780Z",
+  "generatedFromCommit": "c6bc65c66932ccec534513642cc4ab0443f1c30b",
   "coverage": {
     "lines": 71.75,
     "statements": 70.5,
@@ -15,7 +15,7 @@
   "violations": {
     "biome": 186,
     "knipUnusedFiles": 8,
-    "knipUnusedExports": 41,
+    "knipUnusedExports": 40,
     "knipUnusedTypes": 34,
     "knipUnusedDeps": 1,
     "knipDuplicates": 1
@@ -463,10 +463,10 @@
   "reactDoctor": {
     "score": 28,
     "errors": 0,
-    "warnings": 2197,
+    "warnings": 2199,
     "byCategory": {
       "Accessibility": 163,
-      "Architecture": 703,
+      "Architecture": 705,
       "Correctness": 194,
       "Next.js": 94,
       "State & Effects": 647,

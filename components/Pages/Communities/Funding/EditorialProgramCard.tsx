@@ -2,6 +2,7 @@
 
 import { ArrowRight, CalendarClock, Users } from "lucide-react";
 import Link from "next/link";
+import pluralize from "pluralize";
 import type { FundingProgram } from "@/types/whitelabel-entities";
 import formatCurrency from "@/utilities/formatCurrency";
 import { PAGES } from "@/utilities/pages";
@@ -117,7 +118,7 @@ export function EditorialProgramCard({ program, communityId }: EditorialProgramC
           {view.applicants > 0 ? (
             <span className="inline-flex items-center gap-1.5">
               <Users className="h-3.5 w-3.5" aria-hidden />
-              {view.applicants} {view.applicants === 1 ? "applicant" : "applicants"}
+              {view.applicants} {pluralize("applicant", view.applicants)}
             </span>
           ) : (
             <span />

@@ -304,7 +304,7 @@ export default function CommunitiesToAdminPage() {
         <div className="flex flex-col gap-6">
           {/* Header */}
           <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center">
-            <div className="text-2xl font-bold">
+            <h1 className="text-2xl font-bold">
               {isSuperAdminOrOwner ? "All Communities" : "Your Communities"}{" "}
               <span className="text-gray-500 dark:text-gray-400">
                 ({displayedCommunities.length}
@@ -312,7 +312,7 @@ export default function CommunitiesToAdminPage() {
                   ` of ${baseCommunities.length}`}
                 )
               </span>
-            </div>
+            </h1>
             <div className="flex items-center gap-3">
               {isSuperAdmin ? (
                 <Button asChild variant="outline">
@@ -417,6 +417,9 @@ export default function CommunitiesToAdminPage() {
         </div>
       ) : (
         <div className="text-center py-12">
+          <h1 className="text-2xl font-bold mb-2 text-black dark:text-white">
+            Admin access required
+          </h1>
           <p className="text-gray-500 dark:text-gray-400">{MESSAGES.REVIEWS.NOT_ADMIN}</p>
         </div>
       )}

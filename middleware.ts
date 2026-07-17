@@ -34,6 +34,38 @@ function withRobots(response: Response, value: string): Response {
   return response;
 }
 
+// Minimal HTML body for gone project routes. Middleware answers these before
+// the app router runs (to emit a REAL 404/410 status for crawlers — the app's
+// own notFound() renders with HTTP 200), so without a body the browser shows
+// its native error interstitial instead of anything usable. Served inline
+// because middleware cannot render React.
+function goneProjectHtml(status: number): string {
+  const title = status === 410 ? "Project removed" : "Project not found";
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>${title} | Karma</title>
+<style>
+  body{font-family:ui-sans-serif,system-ui,-apple-system,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;background:#fafafa;color:#18181b}
+  @media (prefers-color-scheme:dark){body{background:#18181b;color:#fafafa}}
+  main{text-align:center;padding:2rem;max-width:28rem}
+  h1{font-size:1.5rem;margin:0 0 .5rem}
+  p{color:#71717a;margin:0 0 1.5rem}
+  a{display:inline-block;padding:.6rem 1.2rem;border-radius:.5rem;background:#2563eb;color:#fff;text-decoration:none;font-weight:500}
+</style>
+</head>
+<body>
+<main>
+<h1>${title}</h1>
+<p>This project ${status === 410 ? "has been removed" : "doesn't exist or is no longer available"}.</p>
+<a href="/projects">Browse projects</a>
+</main>
+</body>
+</html>`;
+}
+
 export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
 
@@ -312,7 +344,13 @@ async function handleProjectIndexability(
   // Canonical / non-alias host (Vercel preview, staging, localhost, www) below.
   // Gone routes answer with their exact status and a noindex header — no hop.
   if (decision.outcome === "gone") {
-    return withRobots(new NextResponse(null, { status: decision.status }), NOINDEX_FOLLOW);
+    return withRobots(
+      new NextResponse(goneProjectHtml(decision.status), {
+        status: decision.status,
+        headers: { "content-type": "text/html; charset=utf-8" },
+      }),
+      NOINDEX_FOLLOW
+    );
   }
 
   // Not already at the canonical path (legacy/identifier drift or an indexer

@@ -183,6 +183,13 @@ describe("middleware indexability", () => {
 
       expect(response?.status).toBe(status);
       expect(response?.headers.get("X-Robots-Tag")).toBe("noindex, follow");
+      // The route is answered before the app router runs, so it must carry a
+      // usable HTML body — an empty body leaves the browser on its native
+      // error interstitial with no way back into the app.
+      expect(response?.headers.get("content-type")).toContain("text/html");
+      const body = await response?.text();
+      expect(body).toContain("<html");
+      expect(body).toContain('href="/projects"');
     }
   );
 

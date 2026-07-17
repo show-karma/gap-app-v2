@@ -54,6 +54,7 @@ export function Dashboard() {
 
   return (
     <SoftShell>
+      <h1 className="sr-only">Dashboard</h1>
       {isGuestDueToError ? (
         <WarnBar>
           We couldn&apos;t verify your permissions. Some sections may be hidden — try refreshing.

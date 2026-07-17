@@ -59,7 +59,9 @@ export function PageHero({
             </div>
           ) : null}
 
-          <h1
+          {/* h2, not h1: this hero renders inside community pages whose shared
+              header already owns the page's single h1 (the community name). */}
+          <h2
             id="page-hero-title"
             className={cn(
               "font-semibold leading-[1.05] tracking-[-0.03em] text-foreground",
@@ -67,7 +69,7 @@ export function PageHero({
             )}
           >
             {title}
-          </h1>
+          </h2>
 
           {description ? (
             <p className="mt-4 max-w-prose text-base md:text-[17px] leading-relaxed text-muted-foreground">

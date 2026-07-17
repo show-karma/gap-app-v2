@@ -64,6 +64,19 @@ describe("MarkdownPreview", () => {
   });
 
   describe("streamdown rendering", () => {
+    it("demotes markdown h1 to h2 so embedded previews never mint page headings", async () => {
+      const { container } = render(<MarkdownPreview source={"# Big Title"} />);
+
+      await waitFor(
+        () => {
+          expect(screen.getByText("Big Title")).toBeInTheDocument();
+        },
+        { timeout: 3000 }
+      );
+      expect(container.querySelectorAll("h1")).toHaveLength(0);
+      expect(container.querySelector("h2")?.textContent).toBe("Big Title");
+    });
+
     it("renders markdown content after streamdown loads", async () => {
       render(<MarkdownPreview source="Hello world" />);
 
