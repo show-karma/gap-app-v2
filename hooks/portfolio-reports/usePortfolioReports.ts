@@ -155,6 +155,7 @@ export function useReportRowSync(
           if (r.id !== data.id || r === data) return r;
           if (
             r.status === data.status &&
+            r.title === data.title &&
             r.content === data.content &&
             r.generationError === data.generationError &&
             r.updatedAt === data.updatedAt
@@ -268,6 +269,14 @@ export function useUpdateReportContent(communitySlug: string) {
     }) => portfolioService.updateReportContent(communitySlug, reportId, content, title),
     onSuccess: (data: PortfolioReport) => {
       queryClient.setQueryData(QUERY_KEYS.report(communitySlug, data.id), data);
+      // Reflect the edit on the admin list right away. A draft has no public
+      // surface, so without this a title/content change wouldn't show on the
+      // manage list until the list happened to refetch — reading as "the title
+      // didn't save" for unpublished reports.
+      queryClient.setQueriesData<PortfolioReport[] | undefined>(
+        { queryKey: QUERY_KEYS.reports(communitySlug) },
+        (old) => old?.map((report) => (report.id === data.id ? data : report))
+      );
       if (data.status === "published") {
         queryClient.invalidateQueries({
           queryKey: QUERY_KEYS.published(communitySlug),

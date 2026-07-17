@@ -125,7 +125,7 @@ describe("PortfolioReportListPage", () => {
     mockUseReportRowSync.mockImplementation((_slug, initialReport) => initialReport);
   });
 
-  it("shows a Preview action for draft reports and navigates to the unified public report URL", async () => {
+  it("shows a Preview action for draft reports and navigates to the manage preview page", async () => {
     const user = userEvent.setup();
 
     mockUsePortfolioReports.mockReturnValue({
@@ -159,7 +159,42 @@ describe("PortfolioReportListPage", () => {
 
     await user.click(screen.getByRole("button", { name: /preview/i }));
 
-    expect(mockPush).toHaveBeenCalledWith("/community/filecoin/reports/2026-03-15");
+    expect(mockPush).toHaveBeenCalledWith(
+      "/community/filecoin/manage/portfolio-reports/draft-report/preview"
+    );
+  });
+
+  it("shows the report's custom title with the config name as secondary context", () => {
+    mockUseReportConfigs.mockReturnValue({
+      data: [{ id: "config-1", name: "Monthly Pods Report", isActive: false, programIds: [] }],
+      isLoading: false,
+    } as any);
+    mockUsePortfolioReports.mockReturnValue({
+      data: [reportFixture({ id: "titled-report", title: "Pods Report — June 2026" })],
+      isLoading: false,
+    } as any);
+
+    render(<PortfolioReportListPage community={filecoinCommunity} />);
+
+    expect(screen.getByText("Pods Report — June 2026")).toBeInTheDocument();
+    // Config name stays visible as secondary context so admins know its source.
+    expect(screen.getByText("Monthly Pods Report")).toBeInTheDocument();
+  });
+
+  it("falls back to the config name when a report has no custom title", () => {
+    mockUseReportConfigs.mockReturnValue({
+      data: [{ id: "config-1", name: "Monthly Pods Report", isActive: false, programIds: [] }],
+      isLoading: false,
+    } as any);
+    mockUsePortfolioReports.mockReturnValue({
+      data: [reportFixture({ id: "untitled-report", title: null })],
+      isLoading: false,
+    } as any);
+
+    render(<PortfolioReportListPage community={filecoinCommunity} />);
+
+    // Only one occurrence — the config name stands in for the missing title.
+    expect(screen.getAllByText("Monthly Pods Report")).toHaveLength(1);
   });
 
   it("does not show a Preview action for published reports", () => {
