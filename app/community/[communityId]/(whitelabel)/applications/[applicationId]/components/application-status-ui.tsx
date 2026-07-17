@@ -8,6 +8,7 @@ import {
   RefreshCw,
   XCircle,
 } from "lucide-react";
+import { formatApplicationStatus } from "@/utilities/application-status";
 
 /**
  * Single source of truth for how an application status is rendered across the
@@ -73,20 +74,19 @@ const STATUS_VISUALS: Record<string, StatusVisual> = {
     dotClass: "bg-green-500",
   },
   rejected: {
-    label: "Rejected",
+    label: "Declined",
     Icon: XCircle,
     pillClass: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
     dotClass: "bg-red-500",
   },
 };
 
-function formatStatusLabel(status: string): string {
-  return status.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
-}
-
 export function getStatusVisual(status: string): StatusVisual {
   const normalized = status?.toLowerCase().replace(/-/g, "_");
   const visual = STATUS_VISUALS[normalized];
   if (visual) return visual;
-  return { ...DEFAULT_VISUAL, label: formatStatusLabel(status ?? "") || DEFAULT_VISUAL.label };
+  return {
+    ...DEFAULT_VISUAL,
+    label: formatApplicationStatus(status ?? "") || DEFAULT_VISUAL.label,
+  };
 }

@@ -65,7 +65,7 @@ const STATUS_OPTIONS: Array<{ value: ApplicationStatus | "all"; label: string }>
   { value: "under_review", label: "Under review" },
   { value: "revision_requested", label: "Revision requested" },
   { value: "approved", label: "Approved" },
-  { value: "rejected", label: "Rejected" },
+  { value: "rejected", label: "Declined" },
 ];
 
 const FIELD_CLASS =
