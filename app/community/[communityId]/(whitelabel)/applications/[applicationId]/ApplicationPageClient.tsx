@@ -253,7 +253,6 @@ export function ApplicationPageClient({
 
       <ApplicationHeader
         programName={programName}
-        status={application.status}
         showEditButton={showEditButton}
         editHref={editHref}
         publicHref={PAGES.COMMUNITY.BROWSE_APPLICATIONS(communityId)}

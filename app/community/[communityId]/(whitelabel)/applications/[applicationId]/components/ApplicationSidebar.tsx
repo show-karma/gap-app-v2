@@ -58,7 +58,11 @@ export function ApplicationSidebar({
         onViewActivity={onViewActivity}
       />
 
-      <ApplicationStatusStepper status={application.status} statusHistory={statusHistory || []} />
+      <ApplicationStatusStepper
+        status={application.status}
+        statusHistory={statusHistory || []}
+        currentStatusDate={application.updatedAt}
+      />
 
       <ApplicationInfoCard
         referenceNumber={application.referenceNumber}
