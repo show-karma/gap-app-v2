@@ -125,6 +125,7 @@ export function PublicReportViewPage({ community, runDate, configSlug }: Props) 
       backLabel="Reports"
       bannerText={bannerText}
       isAdmin={isDraftPreview}
+      canExportData={isCommunityAdmin}
     />
   );
 }
