@@ -172,17 +172,22 @@ export function ProgressCell({
   paidMilestoneCount,
   invoiceRequired = true,
 }: ProgressCellProps) {
-  const total = invoices.length;
+  // Cancelled milestones (DEV-523) are neither delivered nor outstanding —
+  // exclude them so the completed/verified/paid pipeline can reach 100%.
+  const activeInvoices = invoices.filter(
+    (inv) => inv.milestoneStatus !== MilestoneLifecycleStatus.CANCELLED
+  );
+  const total = activeInvoices.length;
   const paid = paidMilestoneCount;
-  const received = invoices.filter(
+  const received = activeInvoices.filter(
     (inv) => inv.invoiceStatus === "received" || inv.invoiceStatus === "paid"
   ).length;
-  const done = invoices.filter(
+  const done = activeInvoices.filter(
     (inv) =>
       inv.milestoneStatus === MilestoneLifecycleStatus.COMPLETED ||
       inv.milestoneStatus === MilestoneLifecycleStatus.VERIFIED
   ).length;
-  const verified = invoices.filter(
+  const verified = activeInvoices.filter(
     (inv) => inv.milestoneStatus === MilestoneLifecycleStatus.VERIFIED
   ).length;
 
