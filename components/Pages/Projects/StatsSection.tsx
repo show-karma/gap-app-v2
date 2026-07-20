@@ -80,8 +80,8 @@ export const ProjectsStatsSection = () => {
 
         {/* Stats Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-          {displayStats.map((stat, index) => (
-            <div key={index} className="flex flex-col items-center">
+          {displayStats.map((stat) => (
+            <div key={stat.label} className="flex flex-col items-center">
               <span
                 className={`text-4xl md:text-5xl font-bold text-teal-500 dark:text-teal-400 ${
                   isLoading ? "animate-pulse" : ""

@@ -7,6 +7,7 @@ import type { PortfolioReport } from "@/types/portfolio-report";
 import type { Community } from "@/types/v2/community";
 import { formatRunDate } from "@/utilities/portfolio-reports/period";
 import { BackToTop } from "./BackToTop";
+import { ExportDataMenu } from "./ExportDataMenu";
 import { HtmlReportFrame } from "./HtmlReportFrame";
 import { ReadingProgress } from "./ReadingProgress";
 import { ReportChartsSection } from "./ReportChartsSection";
@@ -25,6 +26,12 @@ interface Props {
    * reports require community-admin auth.
    */
   isAdmin?: boolean;
+  /**
+   * `true` when the viewer is a resolved community admin. Gates the raw-data
+   * export affordance, which must never be exposed to the public — including
+   * on published reports, where `isAdmin` (draft-preview) is `false`.
+   */
+  canExportData?: boolean;
 }
 
 function formatDate(iso: string): string {
@@ -43,6 +50,7 @@ export function PortfolioReportDocumentView({
   backLabel = "Reports",
   bannerText,
   isAdmin = false,
+  canExportData = false,
 }: Props) {
   const runDateLabel = formatRunDate(runDate).label;
 
@@ -75,16 +83,21 @@ export function PortfolioReportDocumentView({
               </li>
             </ol>
           </nav>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => window.print()}
-            disabled={!report.content}
-            title="Tip: turn off 'Headers and footers' in the print dialog for a cleaner PDF"
-          >
-            <Download className="mr-1 h-3 w-3" />
-            Export PDF
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            {canExportData ? (
+              <ExportDataMenu communitySlug={community.details.slug} reportId={report.id} />
+            ) : null}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => window.print()}
+              disabled={!report.content}
+              title="Tip: turn off 'Headers and footers' in the print dialog for a cleaner PDF"
+            >
+              <Download className="mr-1 h-3 w-3" />
+              Export PDF
+            </Button>
+          </div>
         </div>
 
         <div className="report-print-area mx-auto max-w-[1100px] rounded-xl bg-[#f5f6f8] p-4 sm:p-6">

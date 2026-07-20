@@ -17,6 +17,9 @@ export default async function ApplicationEditPage({
   try {
     application = await api.get<Application>(`/v2/funding-applications/${applicationId}`);
   } catch {
+    // SUPPRESSED: SSR degrade-to-null is intentional — a missing/private/
+    // failed application fetch renders the "Not Available" fallback below
+    // instead of crashing the server (matches legacy fetchData behavior).
     application = null;
   }
 

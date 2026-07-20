@@ -68,6 +68,8 @@ export const ActivityStatus = ({ type, milestoneStatus, className }: ActivitySta
           return "text-[#067647] bg-[#ECFDF3] dark:text-green-400 dark:bg-zinc-900";
         case MilestoneLifecycleStatus.PAST_DUE:
           return "bg-red-50 text-red-700 dark:bg-zinc-900 dark:text-red-300";
+        case MilestoneLifecycleStatus.CANCELLED:
+          return "bg-gray-100 text-gray-600 line-through dark:bg-zinc-800 dark:text-gray-400";
         default:
           return "bg-[#FFFAEB] text-[#B54708] dark:bg-zinc-900 dark:text-orange-300";
       }

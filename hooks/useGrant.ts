@@ -46,7 +46,7 @@ export function useGrant() {
    * @param data The updated data
    */
   const updateGrant = async (oldGrant: Grant, data: Partial<typeof formData>) => {
-    if (!address || !oldGrant?.refUID || !selectedProject) return;
+    if (!oldGrant?.refUID || !selectedProject) return;
     try {
       setIsLoading(true);
       startAttestation("Updating grant...");

@@ -22,7 +22,10 @@ const SORT_FIELD: Record<UserApplicationsSortBy, (app: Application) => string> =
   status: (app) => app.status ?? "",
 };
 
-export function useUserApplications(communitySlug?: string): UseUserApplicationsReturn {
+export function useUserApplications(
+  communitySlug?: string,
+  options?: { enabled?: boolean }
+): UseUserApplicationsReturn {
   const queryClient = useQueryClient();
   const { address, authenticated } = useAuth();
 
@@ -73,7 +76,7 @@ export function useUserApplications(communitySlug?: string): UseUserApplications
       );
     },
     staleTime: 1000 * 60 * 2,
-    enabled: !!authenticated,
+    enabled: !!authenticated && (options?.enabled ?? true),
   });
 
   // Update store with query results
@@ -83,7 +86,14 @@ export function useUserApplications(communitySlug?: string): UseUserApplications
 
     if (data) {
       setApplications(data.applications);
-      setPagination(data.pagination);
+      // The endpoint's wire format names this field `totalCount`, not
+      // `total` (see gap-indexer's FundingApplicationApiMapper) — normalize
+      // here so the rest of the app can keep reading the single `total`
+      // field without silently falling back to a stale/zero value.
+      setPagination({
+        ...data.pagination,
+        total: data.pagination.totalCount ?? data.pagination.total ?? 0,
+      });
       setStatusCounts(data.statusCounts ?? {});
     }
   }, [

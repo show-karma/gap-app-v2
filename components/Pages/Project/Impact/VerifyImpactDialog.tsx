@@ -81,7 +81,7 @@ export const VerifyImpactDialog: FC<VerifyImpactDialogProps> = ({
     useAttestationToast();
 
   const onSubmit: SubmitHandler<SchemaType> = async (data) => {
-    if (!address || !project) return;
+    if (!project) return;
     try {
       setIsLoading(true);
       startAttestation("Verifying impact...");

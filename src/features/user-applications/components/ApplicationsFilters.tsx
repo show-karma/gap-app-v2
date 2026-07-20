@@ -20,7 +20,7 @@ const statusOptions: Array<{
   { value: "pending", label: "Pending" },
   { value: "resubmitted", label: "Resubmitted" },
   { value: "approved", label: "Approved" },
-  { value: "rejected", label: "Rejected" },
+  { value: "rejected", label: "Declined" },
   { value: "revision_requested", label: "Revision Requested" },
 ];
 

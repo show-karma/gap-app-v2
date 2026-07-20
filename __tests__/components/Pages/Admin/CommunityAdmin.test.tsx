@@ -33,6 +33,12 @@ vi.mock("@/components/Pages/Admin/RemoveAdminDialog", () => ({
   RemoveAdmin: () => <button type="button">Remove Admin</button>,
 }));
 
+// Stubbed here (it has its own test) so this page test doesn't pull the
+// component's React Query hooks into a tree without a QueryClientProvider.
+vi.mock("@/components/Pages/Admin/CommunityListingControls", () => ({
+  CommunityListingControls: () => <div data-testid="listing-controls" />,
+}));
+
 vi.mock("@/hooks/useAdminCommunities", () => ({
   useAdminCommunities: vi.fn(),
 }));

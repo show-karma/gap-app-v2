@@ -6,9 +6,11 @@
  * through createAuthenticatedApiClient.
  *
  * The legacy fetchData adapter this file used to also cover was removed in
- * #1775 Phase 4 — its token-injection, deduplication, clearCache, and
- * server-side behavior are now exercised against the unified api client in
- * utilities/api/__tests__/client.test.ts (which mocks TokenManager directly).
+ * #1775 Phase 4 — its token-injection and deduplication behavior is now
+ * exercised against the unified api client in
+ * utilities/api/__tests__/client.test.ts (local vi.fn() hooks) and the `api`
+ * singleton's own TokenManager wiring (clearCache-then-getToken on 401) in
+ * utilities/api/__tests__/client-singleton.test.ts (mocked TokenManager).
  * This file keeps the one case that isn't duplicated there: a 401 retry
  * driven by the *real* TokenManager rather than a mock.
  */

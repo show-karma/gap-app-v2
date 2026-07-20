@@ -156,7 +156,6 @@ const ERROR_LEGACY_ALLOWLIST: ReadonlySet<string> = new Set([
   "project/[projectId]/(profile)/impact",
   "project/[projectId]/(profile)/team",
   "project/[projectId]/updates",
-  "projects",
   "seeds",
   "seeds/fund",
   "stats",

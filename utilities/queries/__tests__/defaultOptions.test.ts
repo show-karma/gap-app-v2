@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { HttpError, NetworkError, RequestAborted } from "@/utilities/api/errors";
+import { HttpError, NetworkError, RequestAborted, TimeoutError } from "@/utilities/api/errors";
 import { defaultQueryOptions } from "../defaultOptions";
 
 const retry = defaultQueryOptions.retry as (failureCount: number, error: unknown) => boolean;
@@ -87,6 +87,13 @@ describe("typed ApiError path", () => {
   it("does NOT retry RequestAborted", () => {
     const err = new RequestAborted({ endpoint: "/x", method: "GET" });
     expect(retry(0, err)).toBe(false);
+  });
+
+  it("retries TimeoutError up to 2 times (matches 408's retryable classification, restoring legacy timeout-retry behavior)", () => {
+    const err = new TimeoutError({ endpoint: "/x", method: "GET", timeoutMs: 30_000 });
+    expect(retry(0, err)).toBe(true);
+    expect(retry(1, err)).toBe(true);
+    expect(retry(2, err)).toBe(false);
   });
 
   it("retryDelay honors Retry-After for typed HttpError", () => {

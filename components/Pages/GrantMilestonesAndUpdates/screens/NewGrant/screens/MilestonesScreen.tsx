@@ -91,7 +91,7 @@ export const MilestonesScreen: React.FC = () => {
   };
 
   const createNewGrant = async () => {
-    if (!address || !selectedProject || !gap || isCreating) return;
+    if (!selectedProject || !gap || isCreating) return;
 
     setIsCreating(true);
     try {

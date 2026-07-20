@@ -191,6 +191,7 @@ vi.mock("@/utilities/messages", () => ({
 vi.mock("@/utilities/pages", () => ({
   PAGES: {
     PROJECT: {
+      OVERVIEW: (slug: string) => `/project/${slug}`,
       UPDATES: (slug: string) => `/project/${slug}/updates`,
       SCREENS: {
         NEW_GRANT: (slug: string) => `/project/${slug}/new-grant`,
@@ -292,6 +293,13 @@ vi.mock("@/components/Utilities/errorManager", () => ({
   errorManager: vi.fn(),
 }));
 
+// ProjectUpdate imports OutputsSection from the direct module path (not the
+// barrel), so mock that path; keep the barrel mock for any barrel consumers.
+vi.mock("@/components/Forms/Outputs/OutputsSection", () => ({
+  OutputsSection: ({ labelStyle }: { labelStyle: string; [key: string]: any }) => (
+    <div data-testid="outputs-section">Outputs Section</div>
+  ),
+}));
 vi.mock("@/components/Forms/Outputs", () => ({
   OutputsSection: ({ labelStyle }: { labelStyle: string; [key: string]: any }) => (
     <div data-testid="outputs-section">Outputs Section</div>

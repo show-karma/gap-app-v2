@@ -96,6 +96,8 @@ export async function WhatHappensNext({
       formSchema?: { settings?: { successPageContent?: string } };
     }>(`/v2/funding-program-configs/${programId}`, { isAuthorized: false });
   } catch {
+    // SUPPRESSED: best-effort program-config fetch; the "what happens next"
+    // section falls back to its default copy below when this fails.
     programConfig = null;
   }
 

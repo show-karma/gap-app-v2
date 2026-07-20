@@ -192,6 +192,24 @@ describe("reportApiFailure", () => {
     );
   });
 
+  it("normalizes dashed UUID path ids in the ContractViolation fingerprint", () => {
+    const error = new ContractViolationError({
+      endpoint:
+        "/sessions/123e4567-e89b-12d3-a456-426614174000/bulk/98765432-abcd-4321-9876-abcdefabcdef",
+      method: "get",
+      issues: ["title: Required"],
+    });
+
+    reportApiFailure(error);
+
+    expect(mockCaptureException).toHaveBeenCalledWith(
+      error,
+      expect.objectContaining({
+        fingerprint: ["api-contract-violation", "/sessions/:id/bulk/:id"],
+      })
+    );
+  });
+
   it("reports an unexpected HttpError (e.g. 500) via a normal captureException", () => {
     const error = new HttpError(500, { endpoint: "/v2/projects", method: "post" });
 

@@ -145,15 +145,15 @@ describe("client — 3. timeout", () => {
     vi.clearAllMocks();
   });
 
-  it("passes timeoutMs (default 30000) through to axios and classifies ECONNABORTED as TimeoutError", async () => {
+  it("passes timeoutMs (default 360000 for the default/indexer baseURL) through to axios and classifies ECONNABORTED as TimeoutError", async () => {
     mockedRequest().mockRejectedValue({
       code: "ECONNABORTED",
-      message: "timeout of 30000ms exceeded",
+      message: "timeout of 360000ms exceeded",
     });
     const { client } = buildClient();
 
     await expect(client.get("/things")).rejects.toBeInstanceOf(TimeoutError);
-    expect(mockedRequest().mock.calls[0][0].timeout).toBe(30_000);
+    expect(mockedRequest().mock.calls[0][0].timeout).toBe(360_000);
   });
 
   it("honors a custom timeoutMs", async () => {
@@ -163,6 +163,15 @@ describe("client — 3. timeout", () => {
     await client.get("/things", { timeoutMs: 5_000 });
 
     expect(mockedRequest().mock.calls[0][0].timeout).toBe(5_000);
+  });
+
+  it("defaults to 30000 for a non-default baseURL override (adapter parity for non-indexer calls)", async () => {
+    mockedRequest().mockResolvedValue({ data: { ok: true }, status: 200 });
+    const { client } = buildClient();
+
+    await client.get("/things", { baseURL: "https://other.test" });
+
+    expect(mockedRequest().mock.calls[0][0].timeout).toBe(30_000);
   });
 });
 
@@ -314,6 +323,16 @@ describe("client — 4. retry via executeWithRetry", () => {
       RequestAborted
     );
     expect(mockedRequest()).toHaveBeenCalledTimes(1);
+  });
+
+  it("forwards the caller's AbortSignal to the axios request config so in-flight requests are cancelled on abort", async () => {
+    mockedRequest().mockResolvedValue({ data: { ok: true }, status: 200 });
+    const { client } = buildClient();
+    const controller = new AbortController();
+
+    await client.get("/things", { signal: controller.signal });
+
+    expect(mockedRequest().mock.calls[0][0].signal).toBe(controller.signal);
   });
 });
 
@@ -602,5 +621,53 @@ describe("client — 8. cache query param", () => {
     await client.get("/things", { cache: true, baseURL: "https://other.test" });
 
     expect(mockedRequest().mock.calls[0][0].url).toBe("https://other.test/things");
+  });
+});
+
+describe("client — 9. request shaping", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("sanitizes the request body and sends the sanitized value, not the raw one", async () => {
+    mockedRequest().mockResolvedValue({ data: { ok: true }, status: 200 });
+    const { client } = buildClient();
+
+    await client.post("/things", { name: "  hello  ", nested: { title: "  world  " } });
+
+    const config = mockedRequest().mock.calls[0][0];
+    expect(config.data).toEqual({ name: "hello", nested: { title: "world" } });
+  });
+
+  it("passes opts.params through to the axios request config", async () => {
+    mockedRequest().mockResolvedValue({ data: { ok: true }, status: 200 });
+    const { client } = buildClient();
+
+    await client.get("/things", { params: { page: 2, limit: 10 } });
+
+    const config = mockedRequest().mock.calls[0][0];
+    expect(config.params).toEqual({ page: 2, limit: 10 });
+  });
+
+  it("passes custom headers through to the axios request config", async () => {
+    mockedRequest().mockResolvedValue({ data: { ok: true }, status: 200 });
+    const { client } = buildClient();
+
+    await client.get("/things", { headers: { "X-Custom": "value" } });
+
+    const config = mockedRequest().mock.calls[0][0];
+    expect(config.headers["X-Custom"]).toBe("value");
+  });
+
+  it("fires a header-less request when isAuthorized is true but getAuthToken resolves null (optional-auth routes)", async () => {
+    mockedRequest().mockResolvedValue({ data: { ok: true }, status: 200 });
+    const nullTokenGetter = vi.fn().mockResolvedValue(null);
+    const { client } = buildClient({ getAuthToken: nullTokenGetter });
+
+    await client.get("/things");
+
+    expect(nullTokenGetter).toHaveBeenCalledTimes(1);
+    const config = mockedRequest().mock.calls[0][0];
+    expect(config.headers.Authorization).toBeUndefined();
   });
 });

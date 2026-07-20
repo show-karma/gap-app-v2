@@ -74,7 +74,7 @@ export const VerifyGrantUpdateDialog: FC<VerifyGrantUpdateDialogProps> = ({
     useAttestationToast();
 
   const onSubmit: SubmitHandler<SchemaType> = async (data) => {
-    if (!address || !project) return;
+    if (!project) return;
     try {
       setIsLoading(true);
       startAttestation("Verifying grant update...");

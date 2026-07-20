@@ -1,5 +1,5 @@
 import * as Sentry from "@sentry/nextjs";
-import { isApiError, isTransientApiError } from "@/utilities/api/errors";
+import { type ApiError, isApiError, isTransientApiError } from "@/utilities/api/errors";
 import { reportApiFailure } from "@/utilities/api/report";
 import { isTransientHttpError, isTransientNetworkError } from "@/utilities/sentry/transientErrors";
 
@@ -38,6 +38,37 @@ const errorContains = (error: ErrorLike | null | undefined, needle: string): boo
     !!error?.originalError?.message?.toLowerCase()?.includes(n) ||
     !!error?.message?.toLowerCase()?.includes(n)
   );
+};
+
+// Fires the standard "Try again shortly" failure toast. Shared by the typed
+// ApiError branch and the legacy wallet-error fallback below so both paths
+// give the user the same feedback for a failed action.
+const fireErrorToast = (message: string): void => {
+  getToast()?.error(
+    `${message} Try again shortly. If you continue to have trouble, please message us on Telegram: t.me/karmahq`
+  );
+};
+
+// Handles a typed ApiError (issue #1775): fires the caller's toastError (same
+// as the legacy string-error path below), then either breadcrumbs a
+// transient failure or routes a genuine one through reportApiFailure's
+// per-endpoint fingerprinting. Extracted (rather than inlined in
+// errorManager) to keep the main function under biome's cognitive-complexity
+// ceiling.
+const handleApiError = (
+  error: ApiError,
+  errorMessage: string,
+  extra: any,
+  toastError?: { error?: string }
+): void => {
+  if (toastError?.error) {
+    fireErrorToast(toastError.error);
+  }
+  if (isTransientApiError(error)) {
+    Sentry.addBreadcrumb({ category: "api", message: error.message, level: "warning" });
+    return;
+  }
+  reportApiFailure(error, { errorMessage, extra });
 };
 
 // Handles the "switch chain" wallet error case: toasts a network-switch
@@ -96,11 +127,7 @@ export const errorManager = (
   // checks"; isTransientApiError intentionally broadens the snippet's
   // error.expected to also suppress retryable 5xx).
   if (isApiError(error)) {
-    if (isTransientApiError(error)) {
-      Sentry.addBreadcrumb({ category: "api", message: error.message, level: "warning" });
-      return;
-    }
-    reportApiFailure(error, { errorMessage, extra });
+    handleApiError(error, errorMessage, extra, toastError);
     return;
   }
 

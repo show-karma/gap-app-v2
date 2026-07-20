@@ -12,6 +12,7 @@ import { Permission } from "@/src/core/rbac/types/permission";
 import { Role } from "@/src/core/rbac/types/role";
 import { CommentTimeline } from "@/src/features/application-comments/components/CommentTimeline";
 import { PublicComments } from "@/src/features/application-comments/components/PublicComments";
+import { PrivateNotesTab } from "@/src/features/application-notes/components/PrivateNotesTab";
 import { MilestonesTab } from "@/src/features/applications/components/MilestonesTab";
 import { useApplication } from "@/src/features/applications/hooks/use-application";
 import { useApplicationAccess } from "@/src/features/applications/hooks/use-application-access";
@@ -51,8 +52,19 @@ export function ApplicationPageClient({
 }: ApplicationPageClientProps) {
   const { user, authenticated } = useAuth();
   const isAdmin = useIsFundingPlatformAdmin();
-  const { hasRoleOrHigher, isReviewer, can } = usePermissionContext();
+  const {
+    hasRoleOrHigher,
+    isReviewer,
+    can,
+    isLoading: isPermissionsLoading,
+  } = usePermissionContext();
   const isAdminOrReviewer = hasRoleOrHigher(Role.MILESTONE_REVIEWER) || isReviewer;
+  // Private notes are reviewer/admin-only. Gate FAILS CLOSED: false while
+  // permissions resolve, so on this public/anonymous page the Notes tab never
+  // renders (nor even a frame) for applicants/guests. The backend endpoint is
+  // the real wall — it 403s anyone who isn't a program/milestone reviewer,
+  // community admin, or staff, and the notes query only fires when this is true.
+  const canViewNotes = !isPermissionsLoading && isAdminOrReviewer;
 
   const [selectedTab, setActiveTab] = useUrlTabState();
 
@@ -136,7 +148,7 @@ export function ApplicationPageClient({
   const canViewApplicant = viewerRole !== "guest";
 
   const editHref = PAGES.COMMUNITY.APPLICATION_EDIT(communityId, application.referenceNumber);
-  const reviewHref = PAGES.REVIEWER.APPLICATION_DETAIL(
+  const reviewHref = PAGES.MANAGE.FUNDING_PLATFORM.APPLICATION_DETAIL(
     communityId,
     application.programId,
     application.referenceNumber
@@ -171,8 +183,12 @@ export function ApplicationPageClient({
     if (hasCommentsSurface) {
       list.push({ key: "comments", label: "Comments", Icon: TAB_ICONS.comments });
     }
+    // Reviewer/admin-only — never added for applicants/guests (fail-closed).
+    if (canViewNotes) {
+      list.push({ key: "notes", label: "Notes", Icon: TAB_ICONS.notes });
+    }
     return list;
-  }, [hasMilestones, milestoneCount, showPostApproval, hasCommentsSurface]);
+  }, [hasMilestones, milestoneCount, showPostApproval, hasCommentsSurface, canViewNotes]);
 
   // A lone Details tab isn't worth a switcher — render the card directly.
   const hasTabs = tabs.length > 1;
@@ -237,7 +253,6 @@ export function ApplicationPageClient({
 
       <ApplicationHeader
         programName={programName}
-        status={application.status}
         showEditButton={showEditButton}
         editHref={editHref}
         publicHref={PAGES.COMMUNITY.BROWSE_APPLICATIONS(communityId)}
@@ -271,6 +286,12 @@ export function ApplicationPageClient({
             />
           )}
           {hasTabs && activeTab === "comments" && commentsSection}
+          {hasTabs && activeTab === "notes" && canViewNotes && (
+            <PrivateNotesTab
+              referenceNumber={application.referenceNumber}
+              canViewNotes={canViewNotes}
+            />
+          )}
         </div>
 
         {/* SIDEBAR */}
@@ -279,6 +300,7 @@ export function ApplicationPageClient({
             application={app}
             program={program}
             programName={programName}
+            communityId={communityId}
             viewerRole={viewerRole}
             canViewApplicant={canViewApplicant}
             hasMilestones={hasMilestones}

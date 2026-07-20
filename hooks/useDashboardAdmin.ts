@@ -58,13 +58,13 @@ const fetchCommunityMetrics = async (communityId: string): Promise<CommunityMetr
   return data;
 };
 
-export function useDashboardAdmin() {
+export function useDashboardAdmin(options?: { enabled?: boolean }) {
   const { authenticated, address } = useAuth();
   const { isWhitelabel, communitySlug: whitelabelSlug } = useWhitelabel();
 
   const query = useQuery({
     queryKey: ["dashboardAdmin", address],
-    enabled: Boolean(authenticated),
+    enabled: Boolean(authenticated) && (options?.enabled ?? true),
     staleTime: 5 * 60 * 1000,
     queryFn: async () => {
       const communities = await fetchAdminCommunities();
