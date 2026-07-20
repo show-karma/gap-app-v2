@@ -232,20 +232,20 @@
       "maxBytes": 40000
     },
     "components/Pages/Admin/ControlCenter/ProjectDetailsSidebar.tsx": {
-      "lines": 830,
-      "bytes": 31228,
+      "lines": 834,
+      "bytes": 31420,
       "maxLines": 600,
       "maxBytes": 40000
     },
     "components/Pages/Admin/MilestonesReview/MilestoneCard.tsx": {
-      "lines": 851,
-      "bytes": 34734,
+      "lines": 994,
+      "bytes": 41269,
       "maxLines": 600,
       "maxBytes": 40000
     },
     "components/Pages/Admin/MilestonesReview/index.tsx": {
-      "lines": 1089,
-      "bytes": 42980,
+      "lines": 1111,
+      "bytes": 44178,
       "maxLines": 600,
       "maxBytes": 40000
     },
@@ -274,8 +274,8 @@
       "maxBytes": 40000
     },
     "components/Pages/Communities/Financials/PublicProjectDetailsModal.tsx": {
-      "lines": 607,
-      "bytes": 27089,
+      "lines": 612,
+      "bytes": 27317,
       "maxLines": 600,
       "maxBytes": 40000
     },
@@ -328,8 +328,8 @@
       "maxBytes": 40000
     },
     "components/Shared/ActivityCard/MilestoneCard.tsx": {
-      "lines": 649,
-      "bytes": 25399,
+      "lines": 654,
+      "bytes": 25548,
       "maxLines": 600,
       "maxBytes": 40000
     },
