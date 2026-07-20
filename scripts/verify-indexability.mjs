@@ -67,7 +67,7 @@ export function parseArgs(argv) {
       value = token.slice(eq + 1);
     }
 
-    if (!Object.hasOwn(FLAG_TO_KEY, name)) {
+    if (!Object.prototype.hasOwnProperty.call(FLAG_TO_KEY, name)) {
       throw new Error(`Unknown argument: ${token}`);
     }
 

@@ -236,17 +236,21 @@ export function ProjectDetailsSidebar({
   // ─── Milestone completion summary ─────────────────────────────────────────
 
   const milestoneSummary = useMemo(() => {
-    if (milestoneInvoices.length === 0) return null;
-    const total = milestoneInvoices.length;
-    const received = milestoneInvoices.filter(
+    // Cancelled milestones (DEV-523) are neither delivered nor outstanding.
+    const activeInvoices = milestoneInvoices.filter(
+      (i) => i.milestoneStatus !== MilestoneLifecycleStatus.CANCELLED
+    );
+    if (activeInvoices.length === 0) return null;
+    const total = activeInvoices.length;
+    const received = activeInvoices.filter(
       (i) => i.invoiceStatus === "received" || i.invoiceStatus === "paid"
     ).length;
-    const completed = milestoneInvoices.filter(
+    const completed = activeInvoices.filter(
       (i) =>
         i.milestoneStatus === MilestoneLifecycleStatus.COMPLETED ||
         i.milestoneStatus === MilestoneLifecycleStatus.VERIFIED
     ).length;
-    const paid = milestoneInvoices.filter((i) => i.paymentStatus === "disbursed").length;
+    const paid = activeInvoices.filter((i) => i.paymentStatus === "disbursed").length;
     return { total, received, completed, paid };
   }, [milestoneInvoices]);
 

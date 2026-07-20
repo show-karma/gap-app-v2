@@ -134,7 +134,7 @@ export function NextStepCard(props: NextStepCardProps) {
   const { title, copy, cta } = descriptor;
 
   const ctaClassName =
-    "flex w-full items-center justify-center gap-2 rounded-lg bg-[rgb(var(--color-primary))] px-4 py-2.5 text-sm font-semibold text-brand-950 shadow-sm transition-opacity hover:opacity-90";
+    "flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition-opacity hover:opacity-90";
 
   let ctaNode: ReactNode = null;
   if (cta?.kind === "link") {

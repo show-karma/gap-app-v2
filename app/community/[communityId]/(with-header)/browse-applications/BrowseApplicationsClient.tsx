@@ -25,7 +25,7 @@ const statusOptions: Array<{
   { value: "under_review", label: "Under review" },
   { value: "revision_requested", label: "Needs info" },
   { value: "approved", label: "Approved" },
-  { value: "rejected", label: "Rejected" },
+  { value: "rejected", label: "Declined" },
 ];
 
 interface StatusStyle {
@@ -63,7 +63,7 @@ const STATUS_STYLES: Record<ApplicationStatus, StatusStyle> = {
   rejected: {
     pill: "bg-red-50 text-red-800 dark:bg-red-950/40 dark:text-red-300",
     dot: "bg-red-600",
-    label: "Rejected",
+    label: "Declined",
   },
   draft: {
     pill: "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300",
