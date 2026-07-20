@@ -117,8 +117,14 @@ export const MilestoneCard = ({ milestone, isAuthorized, canEdit }: MilestoneCar
   // "Due by" line so they cannot disagree, and corrupted endsAt degrades to
   // no due date rather than a 1970 date plus a spurious past-due badge.
   const dueMs = normalizeMilestoneDueDateMs(endsAt);
+  // currentStatus lives on the unified milestone (useProjectUpdates path) OR
+  // only on the raw source milestone (grant-store path this page uses), so
+  // check both — otherwise a cancelled milestone falls through to a past-due
+  // badge when the unified field isn't threaded.
+  const rawStatus =
+    milestone.currentStatus ?? milestone.source.grantMilestone?.milestone?.currentStatus;
   const effectiveStatus = getEffectiveMilestoneStatus(
-    isCancelledMilestoneStatus(milestone.currentStatus)
+    isCancelledMilestoneStatus(rawStatus)
       ? MilestoneLifecycleStatus.CANCELLED
       : completed
         ? MilestoneLifecycleStatus.COMPLETED
@@ -138,14 +144,19 @@ export const MilestoneCard = ({ milestone, isAuthorized, canEdit }: MilestoneCar
     return "#FDB022";
   };
 
+  const isCancelled = effectiveStatus === MilestoneLifecycleStatus.CANCELLED;
+
   const getStatusColor = () => {
     if (completed) return "bg-brand-blue text-white";
+    if (isCancelled)
+      return "bg-gray-100 text-gray-600 line-through dark:bg-zinc-800 dark:text-gray-400";
     if (isPastDue) return "bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-300";
     return "bg-[#FFFAEB] text-[#B54708] dark:bg-[#FFFAEB]/10 dark:text-orange-100";
   };
 
   const getStatusBorder = () => {
     if (completed) return "";
+    if (isCancelled) return "border border-gray-200 dark:border-zinc-700";
     if (isPastDue) return "border border-red-200 dark:border-red-900";
     return "border border-[#FEDF89]";
   };
