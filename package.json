@@ -84,7 +84,7 @@
     "@safe-global/api-kit": "^3.0.2",
     "@safe-global/protocol-kit": "^6.0.5",
     "@sentry/nextjs": "^9.31.0",
-    "@show-karma/karma-gap-sdk": "0.4.27",
+    "@show-karma/karma-gap-sdk": "file:vendor/karma-gap-sdk-0.4.28-dev523.tgz",
     "@streamdown/cjk": "^1.0.1",
     "@streamdown/code": "^1.0.1",
     "@streamdown/math": "^1.0.1",
