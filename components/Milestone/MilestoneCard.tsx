@@ -146,17 +146,20 @@ export const MilestoneCard = ({ milestone, isAuthorized, canEdit }: MilestoneCar
 
   const isCancelled = effectiveStatus === MilestoneLifecycleStatus.CANCELLED;
 
+  // Cancelled is terminal and wins over completed — mirror the precedence in
+  // getEffectiveMilestoneStatus so the badge color matches the label when a
+  // milestone is both cancelled and completed.
   const getStatusColor = () => {
-    if (completed) return "bg-brand-blue text-white";
     if (isCancelled)
       return "bg-gray-100 text-gray-600 line-through dark:bg-zinc-800 dark:text-gray-400";
+    if (completed) return "bg-brand-blue text-white";
     if (isPastDue) return "bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-300";
     return "bg-[#FFFAEB] text-[#B54708] dark:bg-[#FFFAEB]/10 dark:text-orange-100";
   };
 
   const getStatusBorder = () => {
-    if (completed) return "";
     if (isCancelled) return "border border-gray-200 dark:border-zinc-700";
+    if (completed) return "";
     if (isPastDue) return "border border-red-200 dark:border-red-900";
     return "border border-[#FEDF89]";
   };
