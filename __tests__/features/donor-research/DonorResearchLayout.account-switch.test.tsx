@@ -1,16 +1,33 @@
 import { QueryClient, QueryClientProvider, useQuery } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import DonorResearchLayout from "@/app/nonprofit-research/layout";
 
 const authState = {
   ready: true,
   authenticated: true,
+  login: vi.fn(),
   user: { id: "user-a" } as { id: string } | null,
 };
 
 vi.mock("@/contexts/privy-bridge-context", () => ({
   usePrivyBridge: () => authState,
+  useLoadPrivy: () => vi.fn(),
+}));
+
+vi.mock("@/src/components/ui/AccessDenied", () => ({
+  AccessDenied: ({ isLoading, title }: { isLoading?: boolean; title?: string }) =>
+    isLoading ? (
+      <p>Checking access…</p>
+    ) : (
+      <>
+        <p>{title}</p>
+        <button onClick={authState.login} type="button">
+          Sign in
+        </button>
+      </>
+    ),
 }));
 
 vi.mock("next/navigation", () => ({
@@ -60,6 +77,7 @@ function TestRoot({ queryClient }: { queryClient: QueryClient }) {
 
 describe("DonorResearchLayout account isolation", () => {
   beforeEach(() => {
+    vi.clearAllMocks();
     authState.ready = true;
     authState.authenticated = true;
     authState.user = { id: "user-a" };
@@ -102,7 +120,8 @@ describe("DonorResearchLayout account isolation", () => {
     authState.authenticated = false;
     authState.user = null;
     view.rerender(<TestRoot queryClient={queryClient} />);
-    expect(await screen.findByText("Signed out")).toBeVisible();
+    expect(await screen.findByText("Sign in to access nonprofit research")).toBeVisible();
+    expect(screen.queryByText("Signed out")).not.toBeInTheDocument();
 
     authState.authenticated = true;
     authState.user = { id: "user-b" };
@@ -110,5 +129,21 @@ describe("DonorResearchLayout account isolation", () => {
 
     await waitFor(() => expect(screen.getByText("Account B report")).toBeVisible());
     expect(screen.queryByText("Account A report")).not.toBeInTheDocument();
+  });
+
+  it("does not mount protected content while signed out and opens sign in", async () => {
+    authState.authenticated = false;
+    authState.user = null;
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    const user = userEvent.setup();
+
+    render(<TestRoot queryClient={queryClient} />);
+
+    expect(screen.getByText("Sign in to access nonprofit research")).toBeVisible();
+    expect(screen.queryByText("Signed out")).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Sign in" }));
+    expect(authState.login).toHaveBeenCalledOnce();
   });
 });

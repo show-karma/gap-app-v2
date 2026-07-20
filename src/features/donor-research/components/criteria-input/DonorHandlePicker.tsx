@@ -56,7 +56,6 @@ export function DonorHandlePicker({
 
   return (
     <div className="flex flex-col gap-1.5 text-sm">
-      <span className="font-medium">Persona</span>
       <p className="text-xs text-muted-foreground">
         Anonymous label you use to track research for this donor.
       </p>

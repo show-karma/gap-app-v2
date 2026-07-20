@@ -199,6 +199,7 @@ export function CriteriaForm({
   const errors = formState.errors;
   const weights = watch("weights");
   const topCount = watch("topCount");
+  const hasPersonaCriteria = Boolean(watch("personaCriteriaText"));
   const weightsBalanced = isValidWeights(weights);
 
   // Opens automatically once the ranking preferences diverge from the
@@ -248,22 +249,26 @@ export function CriteriaForm({
       </FormSection>
 
       <FormSection description="Describe what you're researching." title="Criteria">
-        <label className="flex flex-col gap-1.5 text-sm">
-          <span className="flex items-center gap-2 font-medium text-sf-heading">
-            Criteria {badge("criteriaText")}
-          </span>
-          <textarea
-            {...register("criteriaText")}
-            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-            placeholder="e.g. climate orgs in the Pacific Northwest, $5K-$25K range, with recent impact reporting"
-            rows={4}
-          />
-          {errors.criteriaText ? (
-            <span className="text-xs text-red-600 dark:text-red-400">
-              {errors.criteriaText.message}
-            </span>
-          ) : null}
-        </label>
+        {hasPersonaCriteria ? (
+          <p className="text-[13px] text-sf-muted">
+            This persona&apos;s saved criteria will be included automatically.
+          </p>
+        ) : (
+          <label className="flex flex-col gap-1.5 text-sm">
+            <span className="sr-only">Research criteria</span>
+            <textarea
+              {...register("criteriaText")}
+              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+              placeholder="e.g. climate orgs in the Pacific Northwest, $5K-$25K range, with recent impact reporting"
+              rows={3}
+            />
+            {errors.criteriaText ? (
+              <span className="text-xs text-red-600 dark:text-red-400">
+                {errors.criteriaText.message}
+              </span>
+            ) : null}
+          </label>
+        )}
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <label className="flex flex-col gap-1.5 text-sm">

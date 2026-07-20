@@ -53,7 +53,7 @@ async function renderAtProfileStep() {
     <NewDonorHandleModal onCreated={onCreated} onOpenChange={onOpenChange} open />
   );
   await user.type(screen.getByLabelText("New persona name"), "Smith Family Q3");
-  await user.click(screen.getByRole("button", { name: /create & add profile/i }));
+  await user.click(screen.getByRole("button", { name: /continue to profile/i }));
   await screen.findByText("Set up Smith Family Q3's profile");
   return { user, onCreated, onOpenChange };
 }
@@ -61,8 +61,8 @@ async function renderAtProfileStep() {
 describe("NewDonorHandleModal", () => {
   it("gates both create actions until a persona name is entered", () => {
     renderWithProviders(<NewDonorHandleModal onOpenChange={vi.fn()} open />);
-    expect(screen.getByRole("button", { name: /create & add profile/i })).toBeDisabled();
-    expect(screen.getByRole("button", { name: /create persona only/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /continue to profile/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /save without profile/i })).toBeDisabled();
   });
 
   it("creates and closes without the profile step", async () => {
@@ -75,7 +75,7 @@ describe("NewDonorHandleModal", () => {
     );
 
     await user.type(screen.getByLabelText("New persona name"), "Smith Family Q3");
-    await user.click(screen.getByRole("button", { name: /create persona only/i }));
+    await user.click(screen.getByRole("button", { name: /save without profile/i }));
 
     await waitFor(() => expect(onCreated).toHaveBeenCalledWith("h-new"));
     expect(mutateAsync).toHaveBeenCalledWith({ opaqueLabel: "Smith Family Q3" });

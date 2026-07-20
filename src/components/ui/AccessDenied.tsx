@@ -41,6 +41,7 @@ interface AccessDeniedSecondaryAction {
 
 interface AccessDeniedProps {
   title?: string;
+  compactTitle?: boolean;
   message?: string;
   returnUrl?: string;
   requiredRoles?: ReadonlyArray<Role | string>;
@@ -134,6 +135,7 @@ function DenialBody({ authenticated, message, customMessage, communityName }: De
 
 export function AccessDenied({
   title,
+  compactTitle = false,
   message,
   returnUrl = "/",
   requiredRoles,
@@ -227,7 +229,13 @@ export function AccessDenied({
             </div>
           </div>
 
-          {resolvedTitle ? <h1 className="text-2xl font-bold mb-4">{resolvedTitle}</h1> : null}
+          {resolvedTitle ? (
+            <h1
+              className={compactTitle ? "mb-2 text-base font-semibold" : "mb-4 text-2xl font-bold"}
+            >
+              {resolvedTitle}
+            </h1>
+          ) : null}
           <DenialBody
             authenticated={authenticated}
             message={message}
