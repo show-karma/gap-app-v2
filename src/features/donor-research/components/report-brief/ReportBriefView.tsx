@@ -30,7 +30,7 @@ export function ReportBriefView({ reportId }: ReportBriefViewProps) {
   const stream = useDonorReportStream(isTerminal ? null : reportId);
 
   if (reportQuery.isLoading) {
-    return <DonorResearchLoading label="Loading report…" />;
+    return <DonorResearchLoading label="Loading report…" variant="report" />;
   }
 
   if (reportQuery.isError) {
@@ -41,10 +41,10 @@ export function ReportBriefView({ reportId }: ReportBriefViewProps) {
 
   return (
     <ReportBrief
-      report={reportQuery.data!}
       isTerminal={isTerminal}
-      variant={isOwner ? "advisor" : "staff"}
+      report={reportQuery.data!}
       stream={stream}
+      variant={isOwner ? "advisor" : "staff"}
     />
   );
 }

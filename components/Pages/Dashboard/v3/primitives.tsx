@@ -69,7 +69,7 @@ export function Section({
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-col gap-[3px]">
-          <h2 className="m-0 flex items-center gap-[11px] text-2xl font-bold tracking-[-0.02em] text-sf-heading">
+          <h2 className="m-0 flex items-center gap-[11px] text-2xl font-semibold tracking-[-0.02em] text-sf-heading">
             {icon ? <SoftIcon name={icon} className="h-[22px] w-[22px] text-brand-600" /> : null}
             {title}
           </h2>
@@ -145,7 +145,7 @@ export function EmptyState({
           className={cn("h-[26px] w-[26px]", brand ? "text-brand-600" : "text-sf-muted")}
         />
       </div>
-      <h3 className="m-0 text-lg font-bold tracking-[-0.01em] text-sf-heading">{title}</h3>
+      <h3 className="m-0 text-lg font-semibold tracking-[-0.01em] text-sf-heading">{title}</h3>
       <p className="mx-0 mb-0 mt-1.5 max-w-[390px] text-[13.5px] leading-[1.55] text-sf-muted">
         {body}
       </p>
@@ -209,18 +209,31 @@ export interface StatItem {
 }
 
 function statSurface(tone: StatItem["tone"]): string {
-  if (tone === "brand") {
-    return "border-sf-ink bg-sf-ink dark:border-brand-500/[.32] dark:bg-brand-500/[.15]";
-  }
+  if (tone === "brand")
+    return "border-brand-200 bg-brand-50 dark:border-brand-500/[.32] dark:bg-brand-500/[.14]";
+  if (tone === "amber")
+    return "border-amber-200 bg-amber-50 dark:border-amber-500/[.32] dark:bg-amber-500/[.12]";
+  if (tone === "blue")
+    return "border-blue-200 bg-blue-50 dark:border-blue-500/[.32] dark:bg-blue-500/[.12]";
+  if (tone === "green")
+    return "border-green-200 bg-green-50 dark:border-green-500/[.32] dark:bg-green-500/[.12]";
   return "border-sf-line bg-sf-elev";
 }
 
 function statNumber(tone: StatItem["tone"]): string {
-  if (tone === "brand") return "text-white";
+  if (tone === "brand") return "text-brand-800 dark:text-brand-300";
   if (tone === "amber") return "text-amber-700 dark:text-amber-400";
   if (tone === "blue") return "text-blue-700 dark:text-blue-400";
   if (tone === "green") return "text-green-700 dark:text-green-400";
   return "text-sf-heading";
+}
+
+function statLabel(tone: StatItem["tone"]): string {
+  if (tone === "brand") return "text-brand-700 dark:text-brand-300";
+  if (tone === "amber") return "text-amber-800 dark:text-amber-300";
+  if (tone === "blue") return "text-blue-800 dark:text-blue-300";
+  if (tone === "green") return "text-green-800 dark:text-green-300";
+  return "text-sf-muted";
 }
 
 export function StatTiles({ items }: { items: StatItem[] }) {
@@ -236,14 +249,7 @@ export function StatTiles({ items }: { items: StatItem[] }) {
           >
             {s.n}
           </div>
-          <div
-            className={cn(
-              "mt-2 text-[13px] font-medium",
-              s.tone === "brand" ? "text-white/[.66]" : "text-sf-muted"
-            )}
-          >
-            {s.l}
-          </div>
+          <div className={cn("mt-2 text-[13px] font-medium", statLabel(s.tone))}>{s.l}</div>
         </div>
       ))}
     </div>

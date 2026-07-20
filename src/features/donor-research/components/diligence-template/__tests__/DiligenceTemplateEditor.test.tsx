@@ -63,6 +63,14 @@ afterEach(() => {
 });
 
 describe("DiligenceTemplateEditor", () => {
+  it("uses the advisor workspace header without redundant page chrome", () => {
+    render(<DiligenceTemplateEditor />);
+
+    expect(screen.getByRole("heading", { level: 1, name: "Diligence questions" })).toBeVisible();
+    expect(screen.queryByText("Back to research dashboard")).not.toBeInTheDocument();
+    expect(screen.queryByText("Karma · Nonprofit Research")).not.toBeInTheDocument();
+  });
+
   it("renders the loading skeleton while the template loads", () => {
     templateState = { data: undefined, isLoading: true, isError: false, refetch: mockRefetch };
     render(<DiligenceTemplateEditor />);
@@ -83,7 +91,10 @@ describe("DiligenceTemplateEditor", () => {
 
     expect(screen.getByText("No questions yet")).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: /Add your first question/i }));
+    const addFirstQuestion = screen.getByRole("button", { name: /Add your first question/i });
+    expect(addFirstQuestion).not.toHaveClass("shadow-primary-button", "shadow-outline-button");
+    expect(addFirstQuestion).toHaveClass("rounded-full", "bg-brand-500");
+    fireEvent.click(addFirstQuestion);
 
     expect(screen.getByRole("textbox", { name: "Question 1" })).toBeInTheDocument();
   });
@@ -98,10 +109,15 @@ describe("DiligenceTemplateEditor", () => {
     });
     render(<DiligenceTemplateEditor />);
 
+    const saveQuestions = screen.getByRole("button", { name: "Save questions" });
+    const addQuestion = screen.getByRole("button", { name: "Add question" });
+    expect(saveQuestions).not.toHaveClass("shadow-primary-button", "shadow-outline-button");
+    expect(addQuestion).not.toHaveClass("shadow-primary-button", "shadow-outline-button");
+
     fireEvent.change(screen.getByRole("textbox", { name: "Question 1" }), {
       target: { value: "Updated first question" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Save questions" }));
+    fireEvent.click(saveQuestions);
 
     expect(mockSaveMutate).toHaveBeenCalledTimes(1);
     expect(mockSaveMutate.mock.calls[0][0]).toEqual({
