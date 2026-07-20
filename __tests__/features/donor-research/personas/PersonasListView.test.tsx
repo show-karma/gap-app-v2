@@ -165,8 +165,8 @@ describe("PersonasListView", () => {
 
     await user.click(screen.getAllByRole("button", { name: /new persona/i })[0]);
     await user.type(screen.getByLabelText("New persona name"), "New Fund");
-    expect(screen.getByRole("button", { name: /create & add profile/i })).toBeVisible();
-    await user.click(screen.getByRole("button", { name: /create persona only/i }));
+    expect(screen.getByRole("button", { name: /continue to profile/i })).toBeVisible();
+    await user.click(screen.getByRole("button", { name: /save without profile/i }));
 
     expect(createPersona).toHaveBeenCalledWith({ opaqueLabel: "New Fund" });
     expect(pushMock).not.toHaveBeenCalled();
