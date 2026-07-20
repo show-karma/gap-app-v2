@@ -10,6 +10,7 @@ import type { UnifiedMilestone } from "@/types/v2/roadmap";
 import { formatDate } from "@/utilities/formatDate";
 import {
   getEffectiveMilestoneStatus,
+  isCancelledMilestoneStatus,
   MILESTONE_STATUS_LABEL,
 } from "@/utilities/milestones/getEffectiveMilestoneStatus";
 import { normalizeMilestoneDueDateMs } from "@/utilities/milestones/milestoneDueDate";
@@ -117,7 +118,11 @@ export const MilestoneCard = ({ milestone, isAuthorized, canEdit }: MilestoneCar
   // no due date rather than a 1970 date plus a spurious past-due badge.
   const dueMs = normalizeMilestoneDueDateMs(endsAt);
   const effectiveStatus = getEffectiveMilestoneStatus(
-    completed ? MilestoneLifecycleStatus.COMPLETED : MilestoneLifecycleStatus.PENDING,
+    isCancelledMilestoneStatus(milestone.currentStatus)
+      ? MilestoneLifecycleStatus.CANCELLED
+      : completed
+        ? MilestoneLifecycleStatus.COMPLETED
+        : MilestoneLifecycleStatus.PENDING,
     dueMs
   );
   const isPastDue = effectiveStatus === MilestoneLifecycleStatus.PAST_DUE;

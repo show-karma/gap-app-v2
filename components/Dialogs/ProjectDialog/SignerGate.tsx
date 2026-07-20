@@ -79,7 +79,11 @@ export function ProjectSubmitControls({
     );
   }
 
-  const isSubmitBlocked = hasErrors || isLoading || signerStatus === "initializing";
+  // While the wallet finishes provisioning, keep the button clickable and show a
+  // "Preparing…" state — clicking auto-proceeds (the signer waits) instead of
+  // making the user wait and retry. Only form errors / an in-flight submit block.
+  const preparing = signerStatus === "initializing" && !isLoading;
+  const isSubmitBlocked = hasErrors || isLoading;
 
   return (
     <Tooltip.Provider>
@@ -87,8 +91,8 @@ export function ProjectSubmitControls({
         <Tooltip.Trigger asChild>
           <div className="flex w-max h-max">
             <Button type="submit" className={SUBMIT_BUTTON_CLASSNAME} disabled={isSubmitBlocked}>
-              {isUpdate ? "Update project" : "Create project"}
-              {!isUpdate ? <ChevronRightIcon className="w-4 h-4" /> : null}
+              {preparing ? "Preparing…" : isUpdate ? "Update project" : "Create project"}
+              {!isUpdate && !preparing ? <ChevronRightIcon className="w-4 h-4" /> : null}
             </Button>
           </div>
         </Tooltip.Trigger>

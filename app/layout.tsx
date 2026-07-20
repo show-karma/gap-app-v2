@@ -49,7 +49,8 @@ import { TenantStoreInitializer } from "@/components/Utilities/TenantStoreInitia
 import { FooterSwitcher } from "@/src/components/footer/footer-switcher";
 import { GlobalNavbarSlot } from "@/src/components/navbar/global-navbar-slot";
 import { WhitelabelNavbar } from "@/src/components/navbar/whitelabel-navbar";
-import { toHslToken } from "@/utilities/whitelabel-config";
+import type { TenantConfig } from "@/src/infrastructure/types/tenant";
+import { toHslToken, type WhitelabelDomain } from "@/utilities/whitelabel-config";
 import { WhitelabelProvider } from "@/utilities/whitelabel-context";
 import { getWhitelabelContext } from "@/utilities/whitelabel-server";
 
@@ -88,7 +89,7 @@ export async function generateMetadata(): Promise<Metadata> {
     manifest: "/manifest.json",
     icons: {
       icon: [{ url: "/favicon.ico", sizes: "48x48" }],
-      apple: [{ url: "/images/favicon.png" }],
+      apple: [{ url: "/favicon.ico" }],
     },
   };
 }
@@ -118,21 +119,36 @@ const toasterConfig = {
   containerStyle: { top: 20, right: 20 },
 };
 
-export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const { isWhitelabel, communitySlug, config, tenantConfig } = await getWhitelabelContext();
-
+function getWhitelabelThemeStyle(
+  config: WhitelabelDomain | null,
+  tenantConfig: TenantConfig | null
+): React.CSSProperties | undefined {
   const tenantPrimaryToken = tenantConfig?.theme?.colors?.primary
     ? (toHslToken(tenantConfig.theme.colors.primary) ?? tenantConfig.theme.colors.primary)
     : null;
   const configPrimaryToken = config?.theme?.primaryColor
     ? toHslToken(config.theme.primaryColor)
     : null;
-  const primaryToken = tenantPrimaryToken ?? configPrimaryToken;
+  const primaryToken = configPrimaryToken ?? tenantPrimaryToken;
+  const tenantPrimaryForegroundToken = tenantConfig?.theme?.colors?.buttontext
+    ? toHslToken(tenantConfig.theme.colors.buttontext)
+    : null;
+  const configPrimaryForegroundToken = config?.theme?.buttonTextColor
+    ? toHslToken(config.theme.buttonTextColor)
+    : null;
+  const primaryForegroundToken = configPrimaryForegroundToken ?? tenantPrimaryForegroundToken;
 
-  const themeStyle =
-    isWhitelabel && primaryToken
-      ? ({ "--primary": primaryToken } as React.CSSProperties)
-      : undefined;
+  if (!primaryToken && !primaryForegroundToken) return undefined;
+
+  return {
+    ...(primaryToken ? { "--primary": primaryToken } : {}),
+    ...(primaryForegroundToken ? { "--primary-foreground": primaryForegroundToken } : {}),
+  } as React.CSSProperties;
+}
+
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const { isWhitelabel, communitySlug, config, tenantConfig } = await getWhitelabelContext();
+  const themeStyle = isWhitelabel ? getWhitelabelThemeStyle(config, tenantConfig) : undefined;
 
   return (
     <html

@@ -46,6 +46,14 @@ export interface GrantMilestoneVerificationDetails {
   attestationUID?: string;
 }
 
+// On-chain cancellation overlay (DEV-523). Present only when status === "cancelled".
+export interface MilestoneCancellation {
+  uid: string; // the cancelled attestation, revoked to un-cancel
+  cancelledBy: string;
+  cancelledAt: string | null;
+  reason: string | null;
+}
+
 // Grant milestone with completion data
 export interface GrantMilestoneWithCompletion {
   uid: string;
@@ -60,6 +68,7 @@ export interface GrantMilestoneWithCompletion {
   completionDetails: GrantMilestoneCompletionDetails | null;
   verificationDetails: GrantMilestoneVerificationDetails | null;
   fundingApplicationCompletion: MilestoneCompletionData | null;
+  cancellation?: MilestoneCancellation | null;
 }
 
 // Response from the project updates endpoint
@@ -185,6 +194,7 @@ export async function fetchProjectGrantMilestones(
       completionDetails: milestone.completionDetails,
       verificationDetails: milestone.verificationDetails,
       fundingApplicationCompletion: milestone.fundingApplicationCompletion || null,
+      cancellation: milestone.cancellation ?? null,
     })
   );
 

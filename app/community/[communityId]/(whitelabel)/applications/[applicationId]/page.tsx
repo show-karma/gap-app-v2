@@ -14,6 +14,9 @@ const fetchAppWithProgram = cache(async (applicationId: string) => {
   try {
     app = await api.get<Application>(`/v2/funding-applications/${applicationId}`);
   } catch {
+    // SUPPRESSED: SSR degrade-to-null is intentional — a missing/private/
+    // failed application fetch renders the "Not Available" fallback below
+    // instead of crashing the server (matches legacy fetchData behavior).
     app = null;
   }
   if (!app) return null;
@@ -23,6 +26,8 @@ const fetchAppWithProgram = cache(async (applicationId: string) => {
   try {
     program = await api.get<FundingProgram>(`/v2/funding-program-configs/${app.programId}`);
   } catch {
+    // SUPPRESSED: best-effort program-config fetch; the page still renders
+    // with the application data alone when this fails.
     program = null;
   }
   return { application: app, program };

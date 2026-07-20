@@ -36,7 +36,6 @@ export const ObjectiveSimpleOptionsMenu = ({ objectiveId }: ObjectiveSimpleOptio
   const params = useParams();
   const projectId = params.projectId as string;
   const [isDeleting, setIsDeleting] = useState(false);
-  const { address } = useAccount();
   const { chain } = useAccount();
   const { switchChainAsync } = useWallet();
   const { gap } = useGap();
@@ -55,7 +54,7 @@ export const ObjectiveSimpleOptionsMenu = ({ objectiveId }: ObjectiveSimpleOptio
   });
 
   const deleteFn = async () => {
-    if (!address || !project) return;
+    if (!project) return;
     setIsDeleting(true);
     startAttestation("Deleting milestone...");
     try {

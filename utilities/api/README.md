@@ -1,14 +1,13 @@
-# `utilities/api` — typed API client (Phase 1, issue #1775)
+# `utilities/api` — typed API client (issue #1775)
 
-Self-contained, DAO-of-one typed HTTP client that replaces `utilities/fetchData.ts`
-for new code. It owns its own error taxonomy, retry policy, and Sentry
-reporting policy — see `errors.ts`, `client.ts`, `retry.ts`, `or-else.ts`,
-`report.ts`.
+Self-contained, DAO-of-one typed HTTP client that replaced `utilities/fetchData.ts`.
+It owns its own error taxonomy, retry policy, and Sentry reporting policy — see
+`errors.ts`, `client.ts`, `retry.ts`, `or-else.ts`, `report.ts`.
 
-This is **Phase 1 only**. `components/Utilities/errorManager.tsx` is untouched
-(Phase 2), and the throwing `fetchDataThrow` adapter mentioned in the issue is
-**deferred** — it has no consumer yet, and an unused export fails knip. Add it
-in the PR that introduces its first caller.
+All four #1775 phases are complete: `components/Utilities/errorManager.tsx` and
+React Query `defaultOptions` consume the typed taxonomy (Phase 2), every indexer
+call site uses `api.*` (Phase 3), and `utilities/fetchData.ts` is deleted
+(Phase 4).
 
 There is no barrel `index.ts` — import from the specific source module
 (`./client`, `./errors`, `./or-else`), per the repo's no-barrel convention.
@@ -54,26 +53,18 @@ import { HttpError, isApiError } from "@/utilities/api/errors";
 const projects = await orElse(api.get("/v2/projects", { schema: ProjectListSchema }), []);
 ```
 
-## `fetchData` is now a deprecated adapter
+## `fetchData` is deleted
 
-`utilities/fetchData.ts` still exists and still returns the legacy
-`[data, error, pageInfo, status]` tuple — the ~220 existing call sites are
-unaffected. Internally it now delegates to `api.request(...)` and maps the
-typed `ApiError` back onto the tuple:
+`utilities/fetchData.ts` and its `[data, error, pageInfo, status]` tuple
+contract no longer exist — every call site was migrated to `api.*` and the
+adapter was removed in Phase 4. Do not reintroduce it; new code calls `api.*`
+with a schema.
 
-- `HttpError` → `status = error.status`, tuple error = `error.body.message ??
-  error.message`.
-- Any other `ApiError` (network / timeout / aborted / contract-violation) →
-  `status = 500`, tuple error = the original underlying cause (or the
-  `ApiError` itself if there is no cause) — matching the old behavior of
-  putting the raw error object in the tuple slot.
+## Migration patterns
 
-Do not add new callers of `fetchData`. Prefer `api.*` with a schema.
-
-## Phase-3 codemod patterns
-
-When migrating an existing `fetchData` call site to `api.*`, pick one of
-these three shapes depending on how the call site already handles failure:
+When moving a tuple-style call site (e.g. code merged from a branch that
+predates the migration) to `api.*`, pick one of these three shapes depending
+on how the call site already handles failure:
 
 1. **Degrade** — call site already treats a failed/empty fetch as "no data"
    (renders an empty state). Replace with `orElse(api.get(...), fallback)`.

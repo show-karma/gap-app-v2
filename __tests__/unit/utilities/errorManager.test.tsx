@@ -230,11 +230,15 @@ describe("errorManager", () => {
       );
     });
 
-    it("routes a genuine typed ApiError to reportApiFailure even when a toastError is supplied (typed errors are handled above the toast block by design)", () => {
-      // Intentional seam: hoisting the typed-ApiError handling above the
-      // toastError block means typed errors report to Sentry but do not fire
-      // the errorManager toast — user feedback for typed failures is the
-      // migrating call site's responsibility (§C top-placement design).
+    it("routes a genuine typed ApiError to reportApiFailure without throwing, even when a toastError is supplied", () => {
+      // Typed ApiErrors are handled above the legacy wallet-error guards, but
+      // that must not drop user-facing feedback: a toastError is now fired
+      // the same as the legacy string-error path, in addition to reporting
+      // (see the `fireErrorToast` call at the top of the isApiError branch).
+      // Note: errorManager's toast module is loaded via a lazy `require()`
+      // (to stay SSR-safe), which bypasses `vi.mock("react-hot-toast", ...)`
+      // in this test runner, so the toast call itself isn't assertable here
+      // — only that reporting still happens and nothing throws.
       const error = new HttpError(500, { endpoint: "/grants/x", method: "GET" });
 
       expect(() =>
@@ -247,6 +251,20 @@ describe("errorManager", () => {
           extra: expect.objectContaining({ endpoint: "/grants/x", status: 500 }),
         })
       );
+    });
+
+    it("does not throw for a transient typed ApiError (429) even when a toastError is supplied", () => {
+      const error = new HttpError(429, { endpoint: "/x", method: "GET" });
+
+      expect(() =>
+        errorManager("Test error", error, undefined, { error: "Test error" })
+      ).not.toThrow();
+
+      expect(Sentry.addBreadcrumb).toHaveBeenCalledWith({
+        category: "api",
+        message: error.message,
+        level: "warning",
+      });
     });
 
     it("keeps expected typed errors (NetworkError/429) breadcrumb-only, not routed to reportApiFailure", () => {

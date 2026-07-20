@@ -90,11 +90,16 @@ export class NetworkError extends ApiError {
   }
 }
 
-/** Request exceeded its per-attempt deadline (ECONNABORTED/ETIMEDOUT, no response). */
+/**
+ * Request exceeded its per-attempt deadline (ECONNABORTED/ETIMEDOUT, no
+ * response). Retryable — matches the HTTP 408 (server-reported timeout)
+ * classification below, and mirrors the legacy React Query behavior that
+ * retried timeouts up to 2 times.
+ */
 export class TimeoutError extends ApiError {
   readonly kind = "timeout";
   readonly timeoutMs: number;
-  readonly retryable = false;
+  readonly retryable = true;
   readonly expected = true;
 
   constructor(opts: { endpoint: string; method: string; cause?: unknown; timeoutMs: number }) {

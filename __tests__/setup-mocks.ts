@@ -13,6 +13,11 @@
  *   - @/components/Utilities/errorManager  (was in 31 files)
  *   - react-hot-toast  (was in 29 files)
  *   - next/navigation  (used by components that call useRouter/usePathname)
+ *
+ * NOTE: motion/react (Framer Motion) is deliberately NOT mocked globally — a
+ * suite-wide stub would mask real animation/exit behavior in non-dashboard
+ * tests. The v3 dashboard tests that render motion opt in per-file via
+ * `vi.mock("motion/react", () => import("../helpers/motion-mock"))`.
  */
 
 // ---------------------------------------------------------------------------

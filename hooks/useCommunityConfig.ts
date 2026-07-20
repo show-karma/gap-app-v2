@@ -61,6 +61,9 @@ export const useCommunityConfig = (slug: string, enabled: boolean = true) => {
         });
         return data?.config || null;
       } catch {
+        // SUPPRESSED: matches legacy fetchData semantics (`error ? null :
+        // data?.config`) — a missing/failed community config degrades to
+        // "no config" rather than surfacing a query error to consumers.
         return null;
       }
     },

@@ -73,7 +73,7 @@ export const VerifyMilestoneUpdateDialog: FC<VerifyMilestoneUpdateDialogProps> =
   const { refetch: refetchGrants } = useProjectGrants(project?.uid || "");
 
   const onSubmit: SubmitHandler<SchemaType> = async (data) => {
-    if (!address || !project) return;
+    if (!project) return;
     try {
       setIsLoading(true);
       startAttestation("Verifying milestone update...");

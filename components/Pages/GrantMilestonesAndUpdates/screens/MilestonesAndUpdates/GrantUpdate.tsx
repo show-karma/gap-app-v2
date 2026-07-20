@@ -83,7 +83,7 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({ title, description, index, d
   const refreshGrant = useGrantStore((state) => state.refreshGrant);
 
   const undoGrantUpdate = async () => {
-    if (!address || !project) return;
+    if (!project) return;
     try {
       setIsDeletingGrantUpdate(true);
       startAttestation("Deleting grant update...");

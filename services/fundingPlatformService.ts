@@ -484,11 +484,10 @@ export const fundingApplicationsAPI = {
       return data || null;
     } catch (error) {
       // Return null for 404 (no application found)
-      const errorMessage = httpErrorMessage(error);
-      if (errorMessage.includes("404") || errorMessage.includes("not found")) {
+      if (error instanceof HttpError && error.status === 404) {
         return null;
       }
-      throw new Error(errorMessage);
+      throw new Error(httpErrorMessage(error));
     }
   },
 

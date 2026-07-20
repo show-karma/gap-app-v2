@@ -2,6 +2,7 @@
 
 import type { Application, FundingProgram } from "@/types/whitelabel-entities";
 import { ApplicationInfoCard } from "./ApplicationInfoCard";
+import { ApplicationKycCard } from "./ApplicationKycCard";
 import { ApplicationStatusStepper } from "./ApplicationStatusStepper";
 import { type ApplicationViewerRole, NextStepCard } from "./NextStepCard";
 
@@ -9,6 +10,7 @@ interface ApplicationSidebarProps {
   application: Application;
   program: FundingProgram | null;
   programName: string;
+  communityId: string;
   viewerRole: ApplicationViewerRole;
   canViewApplicant: boolean;
   hasMilestones: boolean;
@@ -30,6 +32,7 @@ export function ApplicationSidebar({
   application,
   program,
   programName,
+  communityId,
   viewerRole,
   canViewApplicant,
   hasMilestones,
@@ -55,7 +58,11 @@ export function ApplicationSidebar({
         onViewActivity={onViewActivity}
       />
 
-      <ApplicationStatusStepper status={application.status} statusHistory={statusHistory || []} />
+      <ApplicationStatusStepper
+        status={application.status}
+        statusHistory={statusHistory || []}
+        currentStatusDate={application.updatedAt}
+      />
 
       <ApplicationInfoCard
         referenceNumber={application.referenceNumber}
@@ -66,6 +73,15 @@ export function ApplicationSidebar({
         ownerAddress={application.ownerAddress}
         canViewApplicant={canViewApplicant}
       />
+
+      {/* KYC/KYB verification is applicant identity data — shown only to the
+          applicant and reviewers/admins, never anonymous public viewers. */}
+      {canViewApplicant && (
+        <ApplicationKycCard
+          communityId={communityId}
+          referenceNumber={application.referenceNumber}
+        />
+      )}
     </aside>
   );
 }

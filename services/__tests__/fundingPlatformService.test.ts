@@ -9,6 +9,7 @@ import type {
   IFundingProgramConfig,
   IPaginatedApplicationsResponse,
 } from "@/types/funding-platform";
+import { HttpError } from "@/utilities/api/errors";
 
 // Mock the typed api client for GET requests (most queries now use `api.get`)
 vi.mock("@/utilities/api/client", () => ({
@@ -729,7 +730,7 @@ describe("fundingPlatformService", () => {
       });
 
       it("should return null for 404 errors", async () => {
-        mockApiGet.mockRejectedValue(new Error("404 not found"));
+        mockApiGet.mockRejectedValue(new HttpError(404, { endpoint: "/by-email", method: "GET" }));
 
         const result = await fundingApplicationsAPI.getApplicationByEmail(
           "program-123",

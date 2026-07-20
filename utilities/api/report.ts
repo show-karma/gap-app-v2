@@ -18,6 +18,10 @@ import {
 function normalizeEndpoint(ep: string): string {
   return ep
     .replace(/0x[0-9a-fA-F]+/g, ":id") // hex/eth addresses & tx hashes
+    .replace(
+      /\b[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\b/g,
+      ":id"
+    ) // uuids
     .replace(/\b[0-9a-fA-F]{16,}\b/g, ":id") // long hex ids
     .replace(/\/\d+(?=\/|$)/g, "/:id"); // numeric path segments
 }

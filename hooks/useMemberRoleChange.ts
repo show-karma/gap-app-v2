@@ -45,7 +45,7 @@ export function useMemberRoleChange(action: RoleAction) {
   const config = ACTION_CONFIG[action];
 
   const execute = async (memberAddress: string, onSuccess?: () => void) => {
-    if (!address || !project) return;
+    if (!project) return;
     try {
       setIsLoading(true);
       startAttestation(config.loadingMessage);

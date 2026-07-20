@@ -28,7 +28,7 @@ export interface PageInfo {
 export interface RequestOptions<T> {
   schema?: ZodType<T>;
   signal?: AbortSignal;
-  timeoutMs?: number; // default 30_000
+  timeoutMs?: number; // default 30_000 (360_000 for default/indexer baseURL — legacy long-poll ceiling)
   headers?: Record<string, string>;
   params?: Record<string, unknown>;
   retryAttempts?: number; // default: GET/HEAD server→3 / browser→1 ; mutations→1
@@ -69,6 +69,12 @@ interface ApiClientConfig {
 const MAX_RETRY_AFTER_MS = 30_000;
 const MAX_JITTER_BASE_MS = 1000;
 const JITTER_STEP_MS = 250;
+const DEFAULT_TIMEOUT_MS = 30_000;
+// Legacy fetchData gave every default-baseURL (indexer) request a 360s
+// ceiling for long-poll endpoints (AI evaluation, bulk jobs, report
+// generation). Preserve that ceiling here so migrated call sites don't need
+// to remember to pass timeoutMs individually.
+const DEFAULT_INDEXER_TIMEOUT_MS = 360_000;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
@@ -157,9 +163,10 @@ export function createApiClient(config: ApiClientConfig): ApiClient {
     const upperMethod = method.toUpperCase();
     const axiosMethod = toAxiosMethod(upperMethod);
     const isAuthorized = opts.isAuthorized ?? true;
-    const timeoutMs = opts.timeoutMs ?? 30_000;
     const effectiveBaseURL = opts.baseURL ?? config.baseURL;
     const isDefaultBaseURL = effectiveBaseURL === config.baseURL;
+    const timeoutMs =
+      opts.timeoutMs ?? (isDefaultBaseURL ? DEFAULT_INDEXER_TIMEOUT_MS : DEFAULT_TIMEOUT_MS);
     const endpoint = stripQuery(path);
     const ctx: ApiErrorContext = {
       endpoint,

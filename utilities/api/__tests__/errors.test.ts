@@ -189,9 +189,9 @@ describe("NetworkError", () => {
 });
 
 describe("TimeoutError", () => {
-  it("is never retryable but is expected", () => {
+  it("is retryable (matches 408's classification) and expected", () => {
     const err = new TimeoutError({ endpoint: "/x", method: "get", timeoutMs: 30_000 });
-    expect(err.retryable).toBe(false);
+    expect(err.retryable).toBe(true);
     expect(err.expected).toBe(true);
     expect(err.kind).toBe("timeout");
     expect(err.timeoutMs).toBe(30_000);
