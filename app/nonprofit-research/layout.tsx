@@ -3,7 +3,8 @@
 import { type QueryClient, useQueryClient } from "@tanstack/react-query";
 import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { usePrivyBridge } from "@/contexts/privy-bridge-context";
+import { useLoadPrivy, usePrivyBridge } from "@/contexts/privy-bridge-context";
+import { AccessDenied } from "@/src/components/ui/AccessDenied";
 import { PermissionProvider } from "@/src/core/rbac/context/permission-context";
 import { DonorResearchLoading } from "@/src/features/donor-research/components/common/DonorResearchLoading";
 import { DonorResearchShell } from "@/src/features/donor-research/components/common/DonorResearchShell";
@@ -37,9 +38,18 @@ const tokenClearedForClient = new WeakSet<QueryClient>();
  * was last used. A first visit or a same-account re-entry renders children
  * in the same pass — no "switching" flash before the route skeletons.
  */
-function DonorResearchSessionBoundary({ children }: { children: React.ReactNode }) {
+interface DonorResearchSessionBoundaryProps {
+  children: React.ReactNode;
+  requiresAuth: boolean;
+}
+
+function DonorResearchSessionBoundary({
+  children,
+  requiresAuth,
+}: DonorResearchSessionBoundaryProps) {
   const queryClient = useQueryClient();
   const { ready, authenticated, user } = usePrivyBridge();
+  const loadPrivy = useLoadPrivy();
   const userId = user?.id;
   const sessionIdentity = useMemo(() => {
     if (!ready) return null;
@@ -47,6 +57,12 @@ function DonorResearchSessionBoundary({ children }: { children: React.ReactNode 
     return userId ? `user:${userId}` : null;
   }, [ready, authenticated, userId]);
   const [, setPreparedTick] = useState(0);
+
+  useEffect(() => {
+    if (requiresAuth) {
+      loadPrivy();
+    }
+  }, [loadPrivy, requiresAuth]);
 
   // Drop any short-lived JWT left in the token cache before the first
   // donor-research query can mount (they only render under this boundary).
@@ -104,6 +120,20 @@ function DonorResearchSessionBoundary({ children }: { children: React.ReactNode 
     );
   }
 
+  if (requiresAuth && !ready) {
+    return <AccessDenied isLoading />;
+  }
+
+  if (requiresAuth && !authenticated) {
+    return (
+      <AccessDenied
+        compactTitle
+        title="Sign in to access nonprofit research"
+        message="Sign in to create research reports, build donor personas, and return to your saved work."
+      />
+    );
+  }
+
   return children;
 }
 
@@ -134,7 +164,7 @@ export default function DonorResearchLayout({ children }: { children: React.Reac
     pathname.startsWith(PAGES.DONOR_RESEARCH.ONBOARDING) || isDonorResearchTokenRoute(pathname);
 
   return (
-    <DonorResearchSessionBoundary>
+    <DonorResearchSessionBoundary requiresAuth={!isShellless}>
       <PermissionProvider>
         {isShellless ? children : <DonorResearchShell>{children}</DonorResearchShell>}
       </PermissionProvider>

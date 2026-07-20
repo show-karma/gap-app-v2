@@ -44,16 +44,42 @@ const WeightsSchema = z
     { message: "Weights must add up to 100%." }
   );
 
-const CriteriaSchema = z.object({
-  donorHandleId: z.string().min(1, "Pick or create a persona"),
-  criteriaText: z.string().min(1, "Describe what you're researching").max(5000),
-  cause: z.string().max(500).optional(),
-  geography: z.string().max(500).optional(),
-  amountMin: z.number().nonnegative().optional(),
-  amountMax: z.number().nonnegative().optional(),
-  weights: WeightsSchema,
-  topCount: z.number().int().min(1).max(25),
-});
+function composeCriteriaText(personaCriteriaText?: string, criteriaText?: string): string {
+  return [personaCriteriaText, criteriaText]
+    .map((value) => value?.trim())
+    .filter(Boolean)
+    .join("\n\n");
+}
+
+const CriteriaSchema = z
+  .object({
+    donorHandleId: z.string().min(1, "Pick or create a persona"),
+    /** Hidden persona narrative, combined with the report-specific criteria on submit. */
+    personaCriteriaText: z.string().max(5000).optional(),
+    criteriaText: z.string().max(5000),
+    cause: z.string().max(500).optional(),
+    geography: z.string().max(500).optional(),
+    amountMin: z.number().nonnegative().optional(),
+    amountMax: z.number().nonnegative().optional(),
+    weights: WeightsSchema,
+    topCount: z.number().int().min(1).max(25),
+  })
+  .superRefine((values, context) => {
+    const combinedCriteria = composeCriteriaText(values.personaCriteriaText, values.criteriaText);
+    if (!combinedCriteria) {
+      context.addIssue({
+        code: "custom",
+        message: "Describe what you're researching",
+        path: ["criteriaText"],
+      });
+    } else if (combinedCriteria.length > 5000) {
+      context.addIssue({
+        code: "custom",
+        message: "Persona and additional criteria must be 5,000 characters or fewer",
+        path: ["criteriaText"],
+      });
+    }
+  });
 
 export type CriteriaFormValues = z.infer<typeof CriteriaSchema>;
 
@@ -64,7 +90,8 @@ function buildCriteriaDefaults(
 ): CriteriaFormValues {
   return {
     donorHandleId: handleId,
-    criteriaText: prefill?.criteriaTextAppendix ? prefill.criteriaTextAppendix.trimStart() : "",
+    personaCriteriaText: prefill?.criteriaTextAppendix?.trim() || undefined,
+    criteriaText: "",
     cause: prefill?.cause ?? "",
     geography: prefill?.geography ?? "",
     // Amounts come from the persona's explicit extracted figures (when present).
@@ -79,7 +106,6 @@ function buildCriteriaDefaults(
 function prefilledFieldsOf(prefill: PersonaPrefill | null): Set<PersonaPrefillField> {
   const fields = new Set<PersonaPrefillField>();
   if (!prefill) return fields;
-  if (prefill.criteriaTextAppendix) fields.add("criteriaText");
   if (prefill.cause) fields.add("cause");
   if (prefill.geography) fields.add("geography");
   if (prefill.amountMin !== undefined) fields.add("amountMin");
@@ -210,7 +236,7 @@ export function CriteriaInputPanel({ initialDonorHandleId }: CriteriaInputPanelP
     try {
       const result = await createReport.mutateAsync({
         donorHandleId: values.donorHandleId,
-        criteriaText: values.criteriaText,
+        criteriaText: composeCriteriaText(values.personaCriteriaText, values.criteriaText),
         cause: values.cause || null,
         geography: values.geography || null,
         amountMin: values.amountMin ?? null,

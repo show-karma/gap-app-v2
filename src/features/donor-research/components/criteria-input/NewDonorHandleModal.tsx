@@ -106,6 +106,10 @@ function PersonaNameStep({
         ) : null}
       </div>
 
+      <p className="text-xs text-muted-foreground">
+        A profile can prefill future research. You can add one now or come back to it later.
+      </p>
+
       <DialogFooter>
         <Button
           disabled={!canCreate || pending}
@@ -113,10 +117,10 @@ function PersonaNameStep({
           type="button"
           variant="outline"
         >
-          Create persona only
+          Save without profile
         </Button>
         <Button disabled={!canCreate || pending} onClick={onCreateWithPersona} type="button">
-          {pending ? "Creating…" : "Create & add profile"}
+          {pending ? "Creating…" : "Continue to profile"}
         </Button>
       </DialogFooter>
     </DialogContent>

@@ -84,7 +84,10 @@ describe("ISSUE-002 repro: Advanced disclosure on the /new composition", () => {
     const user = userEvent.setup();
     renderWithProviders(<CriteriaInputPanel />);
     await selectPersona(user);
-    await user.type(screen.getByRole("textbox", { name: /criteria/i }), "Education nonprofits");
+    await user.type(
+      screen.getByRole("textbox", { name: /research criteria|additional criteria/i }),
+      "Education nonprofits"
+    );
     fireEvent.click(advancedTrigger());
     await waitFor(() => expect(advancedTrigger()).toHaveAttribute("aria-expanded", "true"));
     expect(screen.getByText("Scoring weights")).toBeInTheDocument();

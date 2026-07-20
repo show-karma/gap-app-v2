@@ -110,8 +110,13 @@ describe("CriteriaInputPanel persona prefill", () => {
     await waitFor(() => expect(screen.getByLabelText(/Geography/)).toHaveValue("Greater Boston"));
     expect(screen.getByLabelText(/Amount min/)).toHaveValue(null);
     expect(screen.getByLabelText(/Amount max/)).toHaveValue(null);
-    // criteriaText, geography, weights.
-    expect(badges()).toHaveLength(3);
+    // Persona criteria are applied behind the scenes instead of filling the
+    // report-specific textarea; geography and weights remain visible prefills.
+    expect(
+      screen.getByText("This persona's saved criteria will be included automatically.")
+    ).toBeVisible();
+    expect(screen.queryByLabelText("Research criteria")).not.toBeInTheDocument();
+    expect(badges()).toHaveLength(2);
   });
 
   it("prefills the Cause field when the persona carries a focus area", async () => {
@@ -137,29 +142,29 @@ describe("CriteriaInputPanel persona prefill", () => {
 
     await waitFor(() => expect(screen.getByLabelText(/Amount min/)).toHaveValue(5000));
     expect(screen.getByLabelText(/Amount max/)).toHaveValue(20000);
-    // criteriaText, geography, amountMin, amountMax, weights.
-    expect(badges()).toHaveLength(5);
+    // geography, amountMin, amountMax, weights.
+    expect(badges()).toHaveLength(4);
   });
 
   it("dismisses only the edited field's badge", async () => {
     const user = userEvent.setup();
     renderWithProviders(<CriteriaInputPanel />);
     await selectPersona(user, "Acme");
-    await waitFor(() => expect(badges()).toHaveLength(3));
+    await waitFor(() => expect(badges()).toHaveLength(2));
 
     const geography = screen.getByLabelText(/Geography/);
     await user.clear(geography);
     await user.type(geography, "California");
 
-    // The geography badge drops; criteriaText + weights remain.
-    await waitFor(() => expect(badges()).toHaveLength(2));
+    // The geography badge drops; weights remains.
+    await waitFor(() => expect(badges()).toHaveLength(1));
   });
 
   it("prompts a discard confirmation when changing handle while dirty", async () => {
     const user = userEvent.setup();
     renderWithProviders(<CriteriaInputPanel />);
     await selectPersona(user, "Acme");
-    await waitFor(() => expect(badges()).toHaveLength(3));
+    await waitFor(() => expect(badges()).toHaveLength(2));
 
     // Make the form dirty, then switch handle.
     await user.type(screen.getByLabelText(/Geography/), "X");
@@ -215,5 +220,28 @@ describe("CriteriaInputPanel persona prefill", () => {
 
     await waitFor(() => expect(mutateAsync).toHaveBeenCalledTimes(1));
     expect(toast.error).toHaveBeenCalledWith("Daily fast-report limit reached");
+  });
+
+  it("submits hidden persona criteria without rendering a criteria input", async () => {
+    const mutateAsync = vi.fn().mockResolvedValue({ reportId: "report-1" });
+    mockUseCreateReport.mockReturnValue({
+      mutateAsync,
+      isPending: false,
+      isError: false,
+    } as unknown as ReturnType<typeof useCreateDonorReport>);
+    const user = userEvent.setup();
+    renderWithProviders(<CriteriaInputPanel />);
+
+    await selectPersona(user, "Acme");
+    expect(screen.queryByLabelText("Research criteria")).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /create report/i }));
+
+    await waitFor(() =>
+      expect(mutateAsync).toHaveBeenCalledWith(
+        expect.objectContaining({
+          criteriaText: expect.stringMatching(/established local funder/i),
+        })
+      )
+    );
   });
 });
