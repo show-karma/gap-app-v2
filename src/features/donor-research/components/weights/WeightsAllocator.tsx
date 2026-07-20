@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import type { CompositeWeights } from "@/types/donor-research";
 import { cn } from "@/utilities/tailwind";
@@ -160,14 +161,16 @@ export function WeightsAllocator({
         >
           Total {formattedTotal}%
         </span>
-        <button
+        <Button
           type="button"
+          variant="link"
+          size="sm"
           onClick={reset}
           disabled={disabled}
-          className="text-xs font-medium uppercase tracking-wide text-muted-foreground hover:text-foreground disabled:opacity-50"
+          className="h-auto p-0 text-xs font-medium uppercase tracking-wide text-muted-foreground hover:text-foreground"
         >
           Reset
-        </button>
+        </Button>
       </div>
     </div>
   );

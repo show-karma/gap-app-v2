@@ -1,8 +1,11 @@
+import { zodResolver } from "@hookform/resolvers/zod";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { useForm } from "react-hook-form";
-import { describe, expect, it, vi } from "vitest";
+import toast from "react-hot-toast";
+import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { z } from "zod";
 import type { DonorHandle } from "@/types/donor-research";
 import { DEFAULT_WEIGHTS_BASIS_POINTS } from "../report-brief/scoring";
 import { CriteriaForm } from "./CriteriaForm";
@@ -22,7 +25,22 @@ const HANDLE: DonorHandle = {
   updatedAt: "2026-01-01T00:00:00.000Z",
 };
 
-function Harness({ onSubmit }: { onSubmit: (values: CriteriaFormValues) => void }) {
+beforeAll(() => {
+  Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
+    configurable: true,
+    value: () => {},
+  });
+});
+
+function Harness({
+  onSubmit,
+  personaExists,
+  onRequestEdit,
+}: {
+  onSubmit: (values: CriteriaFormValues) => void;
+  personaExists?: boolean;
+  onRequestEdit?: (handleId: string) => void;
+}) {
   const form = useForm<CriteriaFormValues>({
     defaultValues: {
       donorHandleId: HANDLE.id,
@@ -30,6 +48,7 @@ function Harness({ onSubmit }: { onSubmit: (values: CriteriaFormValues) => void 
       cause: "",
       geography: "",
       weights: DEFAULT_WEIGHTS_BASIS_POINTS,
+      topCount: 3,
     },
   });
   return (
@@ -38,17 +57,133 @@ function Harness({ onSubmit }: { onSubmit: (values: CriteriaFormValues) => void 
       onSubmit={onSubmit}
       handles={[HANDLE]}
       handlesLoading={false}
+      onRequestEdit={onRequestEdit}
+      personaExists={personaExists}
       submitting={false}
     />
   );
 }
 
-// Scope to the weights fieldset — the form has other number inputs (amounts, topCount).
+// Minimal resolver-backed harness: an empty `criteriaText` fails validation so
+// `handleSubmit` runs its `onInvalid` branch (the toast under test). Mirrors the
+// real panel's required-criteria rule without importing the full schema.
+const ValidatedSchema = z.object({
+  donorHandleId: z.string().min(1, "Pick or create a persona"),
+  criteriaText: z.string().min(1, "Describe what you're researching"),
+  cause: z.string().optional(),
+  geography: z.string().optional(),
+  weights: z.any(),
+  topCount: z.number(),
+});
+
+function ValidatedHarness({ criteriaText }: { criteriaText: string }) {
+  const form = useForm<CriteriaFormValues>({
+    resolver: zodResolver(ValidatedSchema) as never,
+    defaultValues: {
+      donorHandleId: HANDLE.id,
+      criteriaText,
+      cause: "",
+      geography: "",
+      weights: DEFAULT_WEIGHTS_BASIS_POINTS,
+      topCount: 3,
+    },
+  });
+  return (
+    <CriteriaForm
+      form={form}
+      onSubmit={() => {}}
+      handles={[HANDLE]}
+      handlesLoading={false}
+      submitting={false}
+    />
+  );
+}
+
+describe("CriteriaForm submit feedback", () => {
+  beforeEach(() => {
+    vi.mocked(toast.error).mockClear();
+  });
+
+  it("toasts the first validation error when a blocked submit would otherwise be silent", async () => {
+    render(withQueryClient(<ValidatedHarness criteriaText="" />));
+    fireEvent.click(screen.getByRole("button", { name: /create report/i }));
+    await waitFor(() =>
+      expect(toast.error).toHaveBeenCalledWith("Describe what you're researching")
+    );
+  });
+
+  it("does not toast when the form is valid", async () => {
+    render(withQueryClient(<ValidatedHarness criteriaText="climate orgs in the PNW" />));
+    fireEvent.click(screen.getByRole("button", { name: /create report/i }));
+    await waitFor(() => expect(toast.error).not.toHaveBeenCalled());
+  });
+});
+
+// The weights fieldset lives inside the collapsed-by-default "Advanced"
+// disclosure — open it first, then scope to the fieldset (the form has
+// other number inputs: amounts, topCount).
 function weightsFieldset(): HTMLElement {
+  const trigger = screen.getByRole("button", { name: /advanced/i });
+  if (trigger.getAttribute("aria-expanded") !== "true") {
+    fireEvent.click(trigger);
+  }
   return screen.getByText("Scoring weights").closest("fieldset") as HTMLElement;
 }
 
 describe("CriteriaForm weights", () => {
+  it("uses the shadcn persona picker and keeps adjacent actions on the same control height", () => {
+    render(withQueryClient(<Harness onSubmit={() => {}} />));
+
+    const picker = screen.getByRole("combobox", { name: "Persona" });
+    expect(picker).toHaveClass("h-[42px]");
+    expect(picker.tagName).toBe("BUTTON");
+    expect(screen.getByRole("button", { name: /new persona/i })).toHaveClass("h-[42px]");
+    expect(screen.getByRole("button", { name: /add profile/i })).toHaveClass("h-[42px]");
+  });
+
+  it("keeps the persona options inside the themed picker row", async () => {
+    render(withQueryClient(<Harness onSubmit={() => {}} />));
+
+    const picker = screen.getByRole("combobox", { name: "Persona" });
+    fireEvent.keyDown(picker, { key: "ArrowDown" });
+
+    expect(picker.parentElement).toContainElement(await screen.findByRole("listbox"));
+  });
+
+  it("renders an icon-only accessible action when changing an existing persona", () => {
+    const onRequestEdit = vi.fn();
+    render(
+      withQueryClient(<Harness onSubmit={() => {}} onRequestEdit={onRequestEdit} personaExists />)
+    );
+
+    const action = screen.getByRole("button", { name: "Change profile for Smith Family" });
+    const newPersona = screen.getByRole("button", { name: /new persona/i });
+    expect(action).toHaveClass("h-[42px]", "w-[42px]", "px-0");
+    expect(action).toHaveTextContent("");
+    expect(action.querySelector("svg")).toBeInTheDocument();
+    expect(action.nextElementSibling).toBe(newPersona);
+    fireEvent.click(action);
+    expect(onRequestEdit).toHaveBeenCalledWith(HANDLE.id);
+  });
+
+  it("animates the advanced disclosure while removing closed controls from focus navigation", () => {
+    render(withQueryClient(<Harness onSubmit={() => {}} />));
+
+    const trigger = screen.getByRole("button", { name: /advanced/i });
+    const panel = document.getElementById("criteria-advanced-panel");
+    const animatedGrid = panel?.parentElement?.parentElement;
+    expect(animatedGrid).toHaveClass("grid-rows-[0fr]", "motion-reduce:transition-none");
+    expect(animatedGrid).toHaveAttribute("inert");
+    expect(panel).toHaveAttribute("aria-hidden", "true");
+
+    fireEvent.click(trigger);
+
+    expect(animatedGrid).toHaveClass("grid-rows-[1fr]");
+    expect(animatedGrid).not.toHaveAttribute("inert");
+    expect(panel).toHaveAttribute("aria-hidden", "false");
+    expect(trigger).toHaveAttribute("aria-expanded", "true");
+  });
+
   it("renders a slider and a percentage input per factor", () => {
     render(withQueryClient(<Harness onSubmit={() => {}} />));
     const fieldset = weightsFieldset();
@@ -59,7 +194,7 @@ describe("CriteriaForm weights", () => {
   it("submits the default weights when untouched", async () => {
     const onSubmit = vi.fn();
     render(withQueryClient(<Harness onSubmit={onSubmit} />));
-    fireEvent.click(screen.getByRole("button", { name: /start report/i }));
+    fireEvent.click(screen.getByRole("button", { name: /create report/i }));
     await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
     expect(onSubmit.mock.calls[0][0].weights).toEqual(DEFAULT_WEIGHTS_BASIS_POINTS);
   });
@@ -73,13 +208,13 @@ describe("CriteriaForm weights", () => {
     // total 115% and the form can't be submitted.
     fireEvent.change(inputs[0], { target: { value: "40" } });
     fireEvent.blur(inputs[0]);
-    fireEvent.click(screen.getByRole("button", { name: /start report/i }));
+    fireEvent.click(screen.getByRole("button", { name: /create report/i }));
     expect(onSubmit).not.toHaveBeenCalled();
 
     // Drop Mission match 25→10 to bring the total back to 100%, then submit.
     fireEvent.change(inputs[3], { target: { value: "10" } });
     fireEvent.blur(inputs[3]);
-    fireEvent.click(screen.getByRole("button", { name: /start report/i }));
+    fireEvent.click(screen.getByRole("button", { name: /create report/i }));
     await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
     // Only the two edited factors changed; the untouched three are intact and
     // the five total 100% (4000+1000+2500+1000+1500 = 10000).

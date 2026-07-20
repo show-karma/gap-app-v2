@@ -1,8 +1,9 @@
 "use client";
 
-import { AlertTriangle, CheckCircle2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { KarmaLogo } from "@/components/Icons/Karma";
+import { EmptyState, ErrorState } from "@/components/Pages/Dashboard/v3/primitives";
 import { useDiligenceResponseContext } from "@/hooks/useDiligence";
+import { TokenPageShell } from "@/src/features/donor-research/components/common/TokenPageShell";
 import { formatDate } from "@/utilities/formatDate";
 import { DiligenceResponseForm } from "./DiligenceResponseForm";
 
@@ -34,10 +35,10 @@ export function DiligenceResponsePage({ token }: DiligenceResponsePageProps) {
     return (
       <Shell>
         <div className="flex flex-col gap-4">
-          <div className="h-7 w-2/3 animate-pulse rounded bg-muted" />
-          <div className="h-4 w-1/2 animate-pulse rounded bg-muted" />
-          <div className="mt-4 h-32 animate-pulse rounded-xl bg-muted" />
-          <div className="h-32 animate-pulse rounded-xl bg-muted" />
+          <div className="h-7 w-2/3 animate-pulse rounded-sf-tile bg-sf-skeleton" />
+          <div className="h-4 w-1/2 animate-pulse rounded-sf-tile bg-sf-skeleton" />
+          <div className="mt-4 h-32 animate-pulse rounded-sf-tile bg-sf-skeleton" />
+          <div className="h-32 animate-pulse rounded-sf-tile bg-sf-skeleton" />
         </div>
       </Shell>
     );
@@ -46,18 +47,7 @@ export function DiligenceResponsePage({ token }: DiligenceResponsePageProps) {
   if (isError) {
     return (
       <Shell>
-        <div className="flex flex-col items-center gap-4 rounded-xl border border-border p-8 text-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/30">
-            <AlertTriangle className="h-6 w-6 text-amber-600 dark:text-amber-400" />
-          </div>
-          <h1 className="text-xl font-semibold text-foreground">Couldn't load this request</h1>
-          <p className="text-sm text-muted-foreground">
-            Something went wrong loading this research request. Please try again.
-          </p>
-          <Button type="button" variant="outline" onClick={() => void refetch()}>
-            Try again
-          </Button>
-        </div>
+        <ErrorState message="Couldn't load this request" onRetry={() => void refetch()} />
       </Shell>
     );
   }
@@ -67,16 +57,15 @@ export function DiligenceResponsePage({ token }: DiligenceResponsePageProps) {
   if (!data) {
     return (
       <Shell>
-        <div className="flex flex-col items-center gap-4 rounded-xl border border-border p-8 text-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/30">
-            <AlertTriangle className="h-6 w-6 text-amber-600 dark:text-amber-400" />
-          </div>
-          <h1 className="text-xl font-semibold text-foreground">This link is no longer valid</h1>
-          <p className="text-sm text-muted-foreground">
-            This research request link is no longer available. If you still need to respond, please
-            ask whoever sent it for an updated link.
-          </p>
-        </div>
+        {/* EmptyState's title is an h3 (it's reused inside sectioned pages
+         * that supply their own h1/h2) — this route has no other document
+         * heading, so give it one here, matching the visible copy. */}
+        <h1 className="sr-only">This link is no longer valid</h1>
+        <EmptyState
+          icon="alert"
+          title="This link is no longer valid"
+          body="This research request link is no longer available. If you still need to respond, please ask whoever sent it for an updated link."
+        />
       </Shell>
     );
   }
@@ -85,8 +74,8 @@ export function DiligenceResponsePage({ token }: DiligenceResponsePageProps) {
 
   return (
     <Shell>
-      <header className="flex flex-col gap-2">
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+      <header className="flex flex-col gap-1.5">
+        <h1 className="text-xl font-semibold tracking-[-0.01em] text-sf-heading sm:text-2xl">
           You've received a research request
           {data.orgName ? (
             <>
@@ -95,29 +84,25 @@ export function DiligenceResponsePage({ token }: DiligenceResponsePageProps) {
             </>
           ) : null}
         </h1>
-        <p className="text-sm text-muted-foreground">
-          Your answers help complete this research. You can answer as many questions as you like.
+        <p className="text-[13.5px] leading-[1.55] text-sf-muted">
+          A donor advisor is researching organizations like yours. Your answers help complete this
+          research. You can answer as many questions as you like.
         </p>
       </header>
 
       {data.alreadySubmitted ? (
-        <div className="flex flex-col items-center gap-4 rounded-xl border border-border bg-card p-8 text-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand/10">
-            <CheckCircle2 className="h-6 w-6 text-brand-emphasis dark:text-brand-subtle" />
-          </div>
-          <h2 className="text-lg font-semibold text-foreground">
-            Thanks — your answers were received
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            We've already recorded a response for this request. There's nothing more you need to do.
-          </p>
-        </div>
+        <EmptyState
+          brand
+          icon="check"
+          title="Thanks — your answers were received"
+          body="We've already recorded a response for this request. There's nothing more you need to do."
+        />
       ) : (
         <DiligenceResponseForm token={token} questions={data.questions} />
       )}
 
       {expiresLabel ? (
-        <p className="text-center text-xs text-muted-foreground">
+        <p className="text-center text-[12px] text-sf-muted">
           This link expires on {expiresLabel}.
         </p>
       ) : null}
@@ -125,7 +110,24 @@ export function DiligenceResponsePage({ token }: DiligenceResponsePageProps) {
   );
 }
 
-/** Self-contained, centered container — rendered outside the advisor chrome. */
+/**
+ * Self-contained, centered single card (spec 2.3) — rendered outside the
+ * advisor chrome. `TokenPageShell` scopes the `--sf-*` tokens the card and
+ * its states below read; the Karma mark sits above the card, matching the
+ * donor share view's top bar treatment.
+ */
 function Shell({ children }: { children: React.ReactNode }) {
-  return <main className="mx-auto flex max-w-2xl flex-col gap-6 px-4 py-12">{children}</main>;
+  return (
+    <TokenPageShell maxWidthClassName="max-w-2xl">
+      <div className="flex flex-col gap-6">
+        <div className="flex items-center gap-2">
+          <KarmaLogo className="h-6 w-6 text-sf-ink" />
+          <span className="text-[13.5px] font-[650] tracking-[-0.01em] text-sf-heading">Karma</span>
+        </div>
+        <div className="rounded-sf-card border border-sf-line bg-sf-card p-6 sm:p-8">
+          <div className="flex flex-col gap-6">{children}</div>
+        </div>
+      </div>
+    </TokenPageShell>
+  );
 }

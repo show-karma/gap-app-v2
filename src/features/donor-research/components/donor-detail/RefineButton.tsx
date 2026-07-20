@@ -1,5 +1,7 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
+
 /** Minimum non-whitespace source length before refine is allowed. */
 const MIN_REFINE_LENGTH = 10;
 
@@ -18,13 +20,8 @@ export function RefineButton({ sourceText, isRefining, onRefine }: RefineButtonP
   const disabled = sourceText.trim().length < MIN_REFINE_LENGTH || isRefining;
 
   return (
-    <button
-      type="button"
-      onClick={onRefine}
-      disabled={disabled}
-      className="self-start rounded-md border border-border bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground disabled:opacity-50"
-    >
+    <Button type="button" size="sm" onClick={onRefine} disabled={disabled} className="self-start">
       {isRefining ? "Refining…" : "Refine"}
-    </button>
+    </Button>
   );
 }

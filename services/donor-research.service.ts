@@ -325,7 +325,13 @@ export interface ListReportsOptions {
    * report for the current advisor (default behavior).
    */
   donorHandleId?: string;
+  /** Restrict the list to a user-facing report outcome group. */
+  status?: ReportListStatusFilter;
 }
+
+export const REPORT_LIST_STATUS_FILTERS = ["in_progress", "complete", "failed"] as const;
+
+export type ReportListStatusFilter = (typeof REPORT_LIST_STATUS_FILTERS)[number];
 
 export const listResearchReports = async (
   options: ListReportsOptions = {}
@@ -334,6 +340,7 @@ export const listResearchReports = async (
   if (options.limit !== undefined) params.limit = options.limit;
   if (options.offset !== undefined) params.offset = options.offset;
   if (options.donorHandleId) params.donorHandleId = options.donorHandleId;
+  if (options.status) params.status = options.status;
   const [data, error] = await fetchData<ResearchReportList>(
     INDEXER.DONOR_RESEARCH.REPORTS,
     "GET",
