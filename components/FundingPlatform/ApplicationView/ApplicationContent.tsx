@@ -20,6 +20,7 @@ import {
 } from "@/src/features/applications/lib/milestone-status";
 import { useApplicationVersionsStore } from "@/store/applicationVersions";
 import type { IFundingApplication, ProgramWithFormSchema } from "@/types/funding-platform";
+import { formatApplicationStatus } from "@/utilities/application-status";
 import { createFieldLabelsMap, createFieldTypeMap } from "@/utilities/form-schema-helpers";
 import { formatDate } from "@/utilities/formatDate";
 import { cn } from "@/utilities/tailwind";
@@ -72,13 +73,6 @@ const statusIcons = {
   revision_requested: ExclamationTriangleIcon,
   approved: CheckCircleIcon,
   rejected: XMarkIcon,
-};
-
-const formatStatus = (status: string): string => {
-  return status
-    .split("_")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
 };
 
 const ApplicationContent: FC<ApplicationContentProps> = ({
@@ -162,7 +156,7 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
         if (pendingStatus === "approved") {
           toast.success("Application approved successfully!");
         } else {
-          toast.success(`Application status updated to ${formatStatus(pendingStatus)}`);
+          toast.success(`Application status updated to ${formatApplicationStatus(pendingStatus)}`);
         }
       } catch (error) {
         console.error("Failed to update status:", error);
@@ -485,7 +479,7 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
                 )}
               >
                 <StatusIcon className="w-4 h-4" />
-                <span>{formatStatus(application.status)}</span>
+                <span>{formatApplicationStatus(application.status)}</span>
               </div>
               <div className="flex flex-col gap-1">
                 <h2 className="text-xl font-semibold text-gray-900 dark:text-white">

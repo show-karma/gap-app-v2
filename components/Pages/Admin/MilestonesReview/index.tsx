@@ -20,6 +20,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useMilestoneAllocationsByGrants } from "@/hooks/useCommunityMilestoneAllocations";
 import { useDeleteMilestone } from "@/hooks/useDeleteMilestone";
 import { useFundingApplicationByProjectUID } from "@/hooks/useFundingApplicationByProjectUID";
+import { useMilestoneCancellation } from "@/hooks/useMilestoneCancellation";
 import { useMilestoneCompletionVerification } from "@/hooks/useMilestoneCompletionVerification";
 import { useMilestoneEvaluation } from "@/hooks/useMilestoneEvaluation";
 import { useProjectGrantMilestones } from "@/hooks/useProjectGrantMilestones";
@@ -150,8 +151,16 @@ function statusToBucket(status: MilestoneReviewStatus): ProgressBucket {
 function MilestoneProgressStepper({ milestones }: { milestones: GrantMilestoneWithCompletion[] }) {
   const { total, counts } = useMemo(() => {
     const counts: Record<ProgressBucket, number> = { verified: 0, pending: 0, not_started: 0 };
-    for (const m of milestones) counts[statusToBucket(getMilestoneStatus(m))]++;
-    return { total: milestones.length, counts };
+    let total = 0;
+    for (const m of milestones) {
+      const status = getMilestoneStatus(m);
+      // Cancelled milestones (DEV-523) are neither delivered nor outstanding —
+      // exclude them from the progress bar entirely.
+      if (status === MilestoneReviewStatus.Cancelled) continue;
+      counts[statusToBucket(status)]++;
+      total++;
+    }
+    return { total, counts };
   }, [milestones]);
 
   if (total === 0) return null;
@@ -513,6 +522,30 @@ function MilestonesReviewPageContent({
     },
   });
 
+  const { cancelMilestone, uncancelMilestone, isCancelling, isUncancelling } =
+    useMilestoneCancellation({
+      projectId,
+      programId,
+      onSuccess: async () => {
+        await refetch();
+      },
+    });
+
+  const handleCancelMilestone = useCallback(
+    async (milestone: GrantMilestoneWithCompletion, reason?: string) => {
+      if (!data) return;
+      await cancelMilestone({ milestone, data, reason });
+    },
+    [cancelMilestone, data]
+  );
+
+  const handleUncancelMilestone = useCallback(
+    async (milestone: GrantMilestoneWithCompletion) => {
+      await uncancelMilestone({ milestone });
+    },
+    [uncancelMilestone]
+  );
+
   // Get the actual project UID from the data (projectId might be a slug)
   const projectUID = data?.project?.uid;
 
@@ -727,6 +760,7 @@ function MilestonesReviewPageContent({
       [MilestoneReviewStatus.Late]: grouped.get(MilestoneReviewStatus.Late)?.length ?? 0,
       [MilestoneReviewStatus.NotStarted]:
         grouped.get(MilestoneReviewStatus.NotStarted)?.length ?? 0,
+      [MilestoneReviewStatus.Cancelled]: grouped.get(MilestoneReviewStatus.Cancelled)?.length ?? 0,
     };
 
     const filtered = activeFilter === "all" ? milestones : (grouped.get(activeFilter) ?? []);
@@ -751,7 +785,7 @@ function MilestonesReviewPageContent({
   }
 
   // Check authorization: user must be logged in AND (community admin OR contract owner OR program reviewer OR staff)
-  const isAuthorized = address && (hasAdminAccess || isReviewer);
+  const isAuthorized = address && (hasAdminAccess || isReviewer || isStaff);
 
   if (!isAuthorized) {
     return (
@@ -846,7 +880,9 @@ function MilestonesReviewPageContent({
 
               {milestones.length > 0 && (
                 <div className="mb-4 flex flex-wrap gap-2">
-                  {FILTER_TABS.map((tab) => {
+                  {FILTER_TABS.filter(
+                    (tab) => tab.key === "all" || counts[tab.key] > 0 || activeFilter === tab.key
+                  ).map((tab) => {
                     const isActive = activeFilter === tab.key;
                     return (
                       <Badge
@@ -987,6 +1023,11 @@ function MilestonesReviewPageContent({
                       onRequestChanges={handleRequestChanges}
                       onDeleteMilestone={handleDeleteMilestone}
                       isDeleting={isDeleting && deletingMilestoneId === selectedMilestone.uid}
+                      canCancelMilestones={canEditOrDeleteMilestones}
+                      onCancelMilestone={handleCancelMilestone}
+                      onUncancelMilestone={handleUncancelMilestone}
+                      isCancelling={isCancelling}
+                      isUncancelling={isUncancelling}
                       allocationAmount={
                         allocationMap.get(selectedMilestone.uid) ??
                         allocationMap.get(selectedMilestone.uid.toLowerCase())
