@@ -589,7 +589,7 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
   const milestoneActions =
     isAuthorized && (type === "milestone" || type === "grant") ? (
       <>
-        {!completed && (
+        {!completed && effectiveStatus !== MilestoneLifecycleStatus.CANCELLED && (
           <Button
             className="flex flex-row gap-1 border border-brand-blue text-brand-blue text-sm font-semibold bg-white hover:bg-white dark:bg-transparent dark:hover:bg-transparent p-3 rounded-md max-sm:px-2 max-sm:py-1"
             onClick={() => handleCompleting(true)}
