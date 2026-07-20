@@ -16,10 +16,11 @@ export function transformFormSchemaToQuestions(formSchema: IFormSchema): Applica
       description: field.description,
       required: field.required || false,
       placeholder: field.placeholder,
-      options: field.options?.map((option) => ({
-        value: option,
-        label: option,
-      })),
+      options: field.options?.map((option) =>
+        typeof option === "object" && option !== null
+          ? { value: String(option.value), label: String(option.label ?? option.value) }
+          : { value: option, label: option }
+      ),
       validation: {
         min: field.validation?.min,
         max: field.validation?.max,
