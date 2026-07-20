@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
-import type { ApplicationQuestion } from "@/types/whitelabel-entities";
-import { transformDataForDisplay, transformDataForSubmission } from "../form-utils";
+import type { ApplicationQuestion, IFormSchema } from "@/types/whitelabel-entities";
+import {
+  transformDataForDisplay,
+  transformDataForSubmission,
+  transformFormSchemaToQuestions,
+} from "../form-utils";
 
 const projectNameQuestion: ApplicationQuestion = {
   id: "field_1",
@@ -120,5 +124,56 @@ describe("transformDataForSubmission", () => {
     });
 
     expect(result).toEqual({ field_1: "My Awesome Project" });
+  });
+});
+
+describe("transformFormSchemaToQuestions option normalization", () => {
+  it("normalizes {value, label} object options (form-builder format) so labels are strings, never objects", () => {
+    const schema: IFormSchema = {
+      fields: [
+        {
+          id: "field_cat",
+          type: "select",
+          label: "Category",
+          required: false,
+          options: [
+            { value: "infrastructure", label: "Infrastructure" },
+            { value: "tooling", label: "Developer Tooling" },
+          ],
+        },
+      ],
+    } as IFormSchema;
+
+    const [question] = transformFormSchemaToQuestions(schema);
+
+    expect(question.options).toEqual([
+      { value: "infrastructure", label: "Infrastructure" },
+      { value: "tooling", label: "Developer Tooling" },
+    ]);
+    for (const option of question.options ?? []) {
+      expect(typeof option.label).toBe("string");
+      expect(typeof option.value).toBe("string");
+    }
+  });
+
+  it("keeps supporting legacy plain-string options", () => {
+    const schema: IFormSchema = {
+      fields: [
+        {
+          id: "field_cat",
+          type: "select",
+          label: "Category",
+          required: false,
+          options: ["Infrastructure", "Tooling"],
+        },
+      ],
+    } as IFormSchema;
+
+    const [question] = transformFormSchemaToQuestions(schema);
+
+    expect(question.options).toEqual([
+      { value: "Infrastructure", label: "Infrastructure" },
+      { value: "Tooling", label: "Tooling" },
+    ]);
   });
 });
