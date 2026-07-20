@@ -142,7 +142,7 @@ describe("ApplicationHeader", () => {
       const application = createMockApplication({ status: "rejected" });
       renderWithProviders(<ApplicationHeader application={application} />);
 
-      expect(screen.getByText("Rejected")).toBeInTheDocument();
+      expect(screen.getByText("Declined")).toBeInTheDocument();
       expect(screen.getByTestId("x-icon")).toBeInTheDocument();
     });
 

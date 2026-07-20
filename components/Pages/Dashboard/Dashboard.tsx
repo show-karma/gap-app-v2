@@ -1,156 +1,70 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
-import { AlertTriangle } from "lucide-react";
-import { useRouter } from "next/navigation";
-import type React from "react";
-import { useEffect } from "react";
-import type { Hex } from "viem";
-import { useProgramsWithConfig } from "@/features/programs/hooks/use-programs-with-config";
-import { useUserApplications } from "@/features/user-applications/hooks/use-user-applications";
-import { setPostLoginRedirect, useAuth } from "@/hooks/useAuth";
-import { useDashboardAdmin } from "@/hooks/useDashboardAdmin";
-import { useReviewerPrograms } from "@/hooks/usePermissions";
-import { usePermissionContext } from "@/src/core/rbac/context/permission-context";
-import { useStaff } from "@/src/core/rbac/hooks/use-staff-bridge";
-import { layoutTheme } from "@/src/helper/theme";
-import { PAGES } from "@/utilities/pages";
-import { fetchMyProjects } from "@/utilities/sdk/projects/fetchMyProjects";
-import { useWhitelabel } from "@/utilities/whitelabel-context";
-import { AdminSection } from "./AdminSection/AdminSection";
-import { ApplicationsSection } from "./ApplicationsSection/ApplicationsSection";
-import { DashboardHeader } from "./DashboardHeader";
+import { type ReactNode, useState } from "react";
 import { DashboardLoading } from "./DashboardLoading";
-import { ProjectsSection } from "./ProjectsSection/ProjectsSection";
-import { ReviewsSection } from "./ReviewsSection/ReviewsSection";
 import { SuperAdminSection } from "./SuperAdminSection/SuperAdminSection";
+import { useDashboardModules } from "./useDashboardModules";
+import { BentoOverview } from "./v3/BentoOverview";
+import "./v3/dashboard-soft.css";
+import { GettingStartedView } from "./v3/GettingStartedView";
+import { SkeletonList, WarnBar } from "./v3/primitives";
+import { SoftShell } from "./v3/SoftShell";
 
+/**
+ * In-place bento dashboard: the overview and each drill-in live in one
+ * component tree, so the tile morphs into its full view via a shared framer
+ * `layoutId` (see BentoOverview).
+ *
+ * NOTE: the `/dashboard` route now renders the route-based variant instead
+ * (app/dashboard/{layout,page,[module]/page}.tsx via DashboardProvider), which
+ * gives native browser Back/Forward per drill-in. This component is retained as
+ * the in-place reference (and for the shared `useDashboardModules` coverage in
+ * Dashboard.test) until the route migration is finalized and the morph
+ * animation is ported to a cross-route View Transition.
+ */
 export function Dashboard() {
-  const router = useRouter();
-  const { authenticated, address, ready } = useAuth();
-  const { isWhitelabel, communitySlug } = useWhitelabel();
-  const {
-    isRegistryAdmin,
-    isLoading: isPermissionsLoading,
-    isGuestDueToError,
-  } = usePermissionContext();
-  const { isStaff, isLoading: isStaffLoading } = useStaff();
-  const { hasPrograms: hasReviewerPrograms, isLoading: isReviewerProgramsLoading } =
-    useReviewerPrograms();
+  const { modules, isLoading, authenticated, showSuperAdmin, isGuestDueToError, advisorLoading } =
+    useDashboardModules();
 
-  const userAddress = address as Hex | undefined;
-
-  // Start all data fetches eagerly — don't wait for RBAC to finish.
-  // These hooks use `enabled` guards internally so they're safe to call early.
-  const {
-    data: projects = [],
-    isLoading: isLoadingProjects,
-    isError: isProjectsError,
-    refetch: refetchProjects,
-  } = useQuery({
-    queryKey: ["myProjects", userAddress],
-    queryFn: () => fetchMyProjects(userAddress),
-    enabled: Boolean(authenticated),
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const {
-    communities: adminCommunities,
-    isLoading: isAdminLoading,
-    isError: isAdminError,
-  } = useDashboardAdmin();
-
-  // Fetch applications + programs eagerly so they start in parallel with RBAC
-  const applicationsHook = useUserApplications(communitySlug ?? undefined);
-  const { programs } = useProgramsWithConfig(communitySlug ?? "");
-
-  const hasProjects = projects.length > 0;
-  const showReviews = hasReviewerPrograms;
-  const hasAdminCommunities = adminCommunities.length > 0;
-  const showAdmin = hasAdminCommunities || isAdminLoading || isAdminError;
-  const showSuperAdmin = isRegistryAdmin || isStaff;
-  const isLoading =
-    !ready ||
-    (authenticated && (isPermissionsLoading || isStaffLoading || isReviewerProgramsLoading));
-
-  useEffect(() => {
-    if (!ready || authenticated) return;
-    // In whitelabel mode, "/" is the community homepage — not a login page.
-    // Don't redirect; let the dashboard show its own unauthenticated state.
-    if (isWhitelabel) return;
-
-    setPostLoginRedirect(`${PAGES.DASHBOARD}${window.location.hash}`);
-    router.replace(PAGES.HOME);
-  }, [authenticated, ready, router, isWhitelabel]);
-
-  useEffect(() => {
-    if (!ready || isLoading || !window.location.hash) return;
-
-    const element = document.getElementById(window.location.hash.slice(1));
-    element?.scrollIntoView({ behavior: "smooth" });
-  }, [isLoading, ready, showReviews, showAdmin, showSuperAdmin]);
+  // Tracks whether a bento tile is drilled into, so the admin panel banner
+  // (a bento-overview affordance) hides while a module's full view is open.
+  const [isDrilledIn, setIsDrilledIn] = useState(false);
 
   if (!authenticated || isLoading) {
     return <DashboardLoading />;
   }
 
-  const hasApplications = applicationsHook.statusCounts
-    ? Object.values(applicationsHook.statusCounts).reduce((sum, c) => sum + c, 0) > 0
-    : false;
-
-  const applicationsSection = (
-    <ApplicationsSection
-      key="applications"
-      communitySlug={communitySlug ?? undefined}
-      applicationsHook={applicationsHook}
-      programs={programs}
-    />
-  );
-
-  const projectsSection = (
-    <ProjectsSection
-      key="projects"
-      projects={projects}
-      isLoading={isLoadingProjects}
-      isError={isProjectsError}
-      refetch={refetchProjects}
-    />
-  );
-
-  const hasApplicationsContent = Boolean(
-    hasApplications || applicationsHook.isLoading || applicationsHook.error
-  );
-  const hasProjectsContent = hasProjects || isLoadingProjects || isProjectsError;
-
-  const contentSections: React.ReactNode[] = [
-    showReviews && <ReviewsSection key="reviews" />,
-    showAdmin && <AdminSection key="admin" />,
-    showSuperAdmin && <SuperAdminSection key="super-admin" />,
-    hasApplicationsContent && applicationsSection,
-    hasProjectsContent && projectsSection,
-  ].filter(Boolean);
-
-  const emptySections: React.ReactNode[] = [
-    !hasApplicationsContent && applicationsSection,
-    !hasProjectsContent && projectsSection,
-  ].filter(Boolean);
+  let mainContent: ReactNode;
+  if (modules.length > 0) {
+    mainContent = (
+      <div className="flex flex-col gap-[18px]">
+        <BentoOverview modules={modules} onFocusChange={(key) => setIsDrilledIn(key != null)} />
+        {/* Getting-started cards for the starting points the user hasn't set up
+            yet, shown beneath their active modules — hidden while drilled in. */}
+        {!isDrilledIn ? (
+          <GettingStartedView activeModuleKeys={modules.map((m) => m.key)} variant="secondary" />
+        ) : null}
+      </div>
+    );
+  } else if (advisorLoading) {
+    mainContent = <SkeletonList count={3} />;
+  } else {
+    mainContent = <GettingStartedView />;
+  }
 
   return (
-    <div className={layoutTheme.padding}>
-      <div className="flex flex-col gap-8">
-        <DashboardHeader address={userAddress} />
-        {isGuestDueToError ? (
-          <div className="flex items-center gap-3 rounded-lg border border-amber-300 bg-amber-50 p-4 dark:border-amber-700 dark:bg-amber-900/20">
-            <AlertTriangle className="h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />
-            <p className="text-sm text-amber-800 dark:text-amber-200">
-              We couldn&apos;t verify your permissions. Some sections may be hidden. Try refreshing
-              the page.
-            </p>
-          </div>
-        ) : null}
-        {contentSections}
-        {emptySections}
-      </div>
-    </div>
+    <SoftShell>
+      {isGuestDueToError ? (
+        <WarnBar>
+          We couldn&apos;t verify your permissions. Some sections may be hidden — try refreshing.
+        </WarnBar>
+      ) : null}
+      {mainContent}
+      {showSuperAdmin && !isDrilledIn ? (
+        <div className="mt-[18px]">
+          <SuperAdminSection />
+        </div>
+      ) : null}
+    </SoftShell>
   );
 }

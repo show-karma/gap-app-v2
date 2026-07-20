@@ -7,9 +7,11 @@ import {
   chunkCountFromTotal,
   countForKind,
   fetchAllSitemapKindUrls,
+  fetchSitemapCounts,
   fetchSitemapKindPage,
   formatSitemapLastmod,
   INDEXER_FETCH_PAGE_SIZE,
+  SITEMAP_FETCH_CACHE_VERSION,
   type SitemapCounts,
 } from "@/utilities/sitemap";
 
@@ -138,7 +140,7 @@ describe("countForKind", () => {
 });
 
 describe("fetchSitemapKindPage", () => {
-  it("requests the right kind/page and canonicalizes the returned URLs", async () => {
+  it("requests the right kind/page/version and canonicalizes the returned URLs", async () => {
     const fetchMock = vi.fn(async () =>
       jsonResponse({ urls: ["https://staging.karmahq.xyz/project/a"] })
     );
@@ -148,7 +150,7 @@ describe("fetchSitemapKindPage", () => {
 
     expect(urls).toEqual([`${SITE}/project/a`]);
     expect(fetchMock).toHaveBeenCalledWith(
-      "http://localhost:4000/v2/sitemap?kind=projects&page=2&pageSize=1000",
+      `http://localhost:4000/v2/sitemap?kind=projects&page=2&pageSize=1000&v=${SITEMAP_FETCH_CACHE_VERSION}`,
       expect.objectContaining({ next: { revalidate: 86400 } })
     );
   });
@@ -159,6 +161,36 @@ describe("fetchSitemapKindPage", () => {
       vi.fn(async () => jsonResponse({}, false, 503))
     );
     await expect(fetchSitemapKindPage("grants", 1)).rejects.toThrow("HTTP 503");
+  });
+});
+
+describe("fetchSitemapCounts", () => {
+  it("requests the counts endpoint with the sitemap data-cache version and the 24h revalidate policy unchanged", async () => {
+    const counts: SitemapCounts = {
+      projects: 1,
+      impacts: 2,
+      grants: 3,
+      milestones: 4,
+      fundingPrograms: 5,
+    };
+    const fetchMock = vi.fn(async () => jsonResponse(counts));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await fetchSitemapCounts();
+
+    expect(result).toEqual(counts);
+    expect(fetchMock).toHaveBeenCalledWith(
+      `http://localhost:4000/v2/sitemap/counts?v=${SITEMAP_FETCH_CACHE_VERSION}`,
+      expect.objectContaining({ next: { revalidate: 86400 } })
+    );
+  });
+
+  it("throws on a non-ok response so SWR keeps the last good counts", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => jsonResponse({}, false, 500))
+    );
+    await expect(fetchSitemapCounts()).rejects.toThrow("HTTP 500");
   });
 });
 

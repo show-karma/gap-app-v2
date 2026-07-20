@@ -86,7 +86,7 @@ describe("Resubmitted Status in Admin UI", () => {
         { value: "under_review", label: "Under Review" },
         { value: "revision_requested", label: "Revision Requested" },
         { value: "approved", label: "Approved" },
-        { value: "rejected", label: "Rejected" },
+        { value: "rejected", label: "Declined" },
       ];
 
       const resubmittedOption = filterOptions.find((opt) => opt.value === "resubmitted");
@@ -102,7 +102,7 @@ describe("Resubmitted Status in Admin UI", () => {
         { value: "under_review", label: "Under Review" },
         { value: "revision_requested", label: "Revision Requested" },
         { value: "approved", label: "Approved" },
-        { value: "rejected", label: "Rejected" },
+        { value: "rejected", label: "Declined" },
       ];
 
       const pendingIndex = filterOptions.findIndex((opt) => opt.value === "pending");

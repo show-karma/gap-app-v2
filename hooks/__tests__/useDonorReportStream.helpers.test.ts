@@ -87,6 +87,29 @@ describe("mergeStreamEvents", () => {
   });
 });
 
+describe("mergeStreamEvents with contact_discovery_progress", () => {
+  it("should_dedupe_repeated_progress_events_to_one_entry_holding_the_latest_payload", () => {
+    const existing = [
+      makeEvent("snapshot"),
+      makeEvent("pool_loaded"),
+      makeEvent("contact_discovery_progress", { done: 1, total: 5 }),
+    ];
+    const next = makeEvent("contact_discovery_progress", { done: 3, total: 5 });
+
+    const result = mergeStreamEvents(existing, next);
+
+    // No growth — the progress event is replaced in place, not appended.
+    expect(result).toHaveLength(3);
+    // First-seen position preserved (PIPE-08 / P1-2 AC6).
+    expect(result.map((e) => e.name)).toEqual([
+      "snapshot",
+      "pool_loaded",
+      "contact_discovery_progress",
+    ]);
+    expect(result[2].data.done).toBe(3);
+  });
+});
+
 describe("MAX_STREAM_RETRIES", () => {
   it("should_be_a_positive_finite_reconnect_cap", () => {
     expect(MAX_STREAM_RETRIES).toBe(5);

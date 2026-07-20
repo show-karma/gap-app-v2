@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/Utilities/Button";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
@@ -17,6 +17,7 @@ import ApplicationDetailView from "../FundingPlatform/ApplicationView/Applicatio
 import { InboxHeader } from "./InboxHeader";
 import { type InboxKindFilter, InboxList } from "./InboxList";
 import { InboxMilestoneDetail } from "./InboxMilestoneDetail";
+import { BUCKET_RANK } from "./statusToBucket";
 import type { InboxItem } from "./types";
 import { useInboxFeed } from "./useInboxFeed";
 
@@ -31,9 +32,27 @@ function getSelectedIdFromHash(): string | null {
 
 interface ReviewerInboxPageProps {
   community: Community;
+  /**
+   * Optional placeholder shown while permissions resolve, in place of the
+   * default centered spinner. Lets a host (e.g. the dashboard drill-in) supply
+   * a themed skeleton so the loading state doesn't jump.
+   */
+  loadingSlot?: ReactNode;
+  /**
+   * Mirror the selected item into the URL hash (`#review-<id>`) for deep links.
+   * Disable when embedded in a host that already owns the hash — e.g. the
+   * dashboard drill-in, which navigates via `#reviews`; two writers of the same
+   * hash collide (selection resets, back-to-overview breaks). Off → selection is
+   * pure component state.
+   */
+  syncSelectionToHash?: boolean;
 }
 
-export function ReviewerInboxPage({ community }: ReviewerInboxPageProps) {
+export function ReviewerInboxPage({
+  community,
+  loadingSlot,
+  syncSelectionToHash = true,
+}: ReviewerInboxPageProps) {
   const communityId = community?.details?.slug || community?.uid || "";
   const { authenticated, ready } = useAuth();
   const { isLoading: isRbacLoading } = usePermissionContext();
@@ -54,29 +73,69 @@ export function ReviewerInboxPage({ community }: ReviewerInboxPageProps) {
   });
 
   const hasBothRoles = includeApplications && includeMilestones;
-  const roleLabel = useMemo(() => {
-    if (hasAccess && !isProgramReviewer && !isMilestoneReviewer) return "Community admin";
-    if (includeApplications && includeMilestones) return "Application + Milestone reviewer";
-    if (includeApplications) return "Application reviewer";
-    return "Milestone reviewer";
-  }, [hasAccess, isProgramReviewer, isMilestoneReviewer, includeApplications, includeMilestones]);
 
-  // Selection synced to the URL hash so detail views are shareable / survive back-forward.
-  const [selectedId, setSelectedId] = useState<string | null>(() => getSelectedIdFromHash());
+  // Selection synced to the URL hash so detail views are shareable / survive
+  // back-forward — unless the host owns the hash (see syncSelectionToHash).
+  const [selectedId, setSelectedId] = useState<string | null>(() =>
+    syncSelectionToHash ? getSelectedIdFromHash() : null
+  );
   const [kindFilter, setKindFilter] = useState<InboxKindFilter>("all");
 
-  const handleSelect = useCallback((id: string) => {
-    setSelectedId(id);
-    const url = new URL(window.location.href);
-    url.hash = `${HASH_PREFIX}${encodeURIComponent(id)}`;
-    window.history.replaceState({}, "", url.toString());
-  }, []);
+  const handleSelect = useCallback(
+    (id: string) => {
+      if (syncSelectionToHash) {
+        const url = new URL(window.location.href);
+        url.hash = `${HASH_PREFIX}${encodeURIComponent(id)}`;
+        // Opening a detail from the list (no prior selection) pushes a history
+        // entry so the browser Back button returns to the list — the hashchange
+        // listener below clears the selection — instead of navigating off the
+        // page entirely. Switching between items replaces the entry so we don't
+        // spam the history stack. pushState runs in a click handler (not a
+        // useEffect), so it never dispatches an App Router navigation (#1547).
+        if (selectedId == null) {
+          window.history.pushState({}, "", url.toString());
+        } else {
+          window.history.replaceState({}, "", url.toString());
+        }
+      }
+      setSelectedId(id);
+    },
+    [syncSelectionToHash, selectedId]
+  );
 
   useEffect(() => {
+    if (!syncSelectionToHash) return;
     const sync = () => setSelectedId(getSelectedIdFromHash());
     window.addEventListener("hashchange", sync);
     return () => window.removeEventListener("hashchange", sync);
-  }, []);
+  }, [syncSelectionToHash]);
+
+  // Auto-select the first item once the feed loads, so the detail pane isn't
+  // stuck on the "select an item" placeholder. Picks the first item in the
+  // currently visible (kind-filtered) list, ordered the same way InboxList
+  // groups them — by bucket rank, then feed order within a bucket.
+  //
+  // ONLY in the embedded dashboard drill-in (syncSelectionToHash === false).
+  // On the standalone action-items page the URL hash drives selection AND its
+  // history (pushState on the first selection so browser Back returns to the
+  // list); auto-selecting there would make that first selection a "switch"
+  // (replaceState) and Back would eject off-page. Selection there stays
+  // hash-driven, so a fresh load shows the list until the user picks an item.
+  //
+  // Runs once: after the selection is later cleared, this must NOT jump back
+  // into a detail, or the surrounding Back gesture would be inert.
+  const hasAutoSelected = useRef(false);
+  useEffect(() => {
+    if (syncSelectionToHash) return;
+    if (hasAutoSelected.current || selectedId != null || items.length === 0) return;
+    const visible = kindFilter === "all" ? items : items.filter((i) => i.kind === kindFilter);
+    if (visible.length === 0) return;
+    const first = visible.reduce((best, current) =>
+      BUCKET_RANK[current.bucket] < BUCKET_RANK[best.bucket] ? current : best
+    );
+    hasAutoSelected.current = true;
+    setSelectedId(first.id);
+  }, [items, selectedId, kindFilter, syncSelectionToHash]);
 
   const selectedItem: InboxItem | undefined = useMemo(
     () => items.find((i) => i.id === selectedId),
@@ -84,6 +143,7 @@ export function ReviewerInboxPage({ community }: ReviewerInboxPageProps) {
   );
 
   if (isCheckingPermissions) {
+    if (loadingSlot) return <>{loadingSlot}</>;
     return (
       <div className="flex w-full items-center justify-center py-24">
         <Spinner />
@@ -102,8 +162,8 @@ export function ReviewerInboxPage({ community }: ReviewerInboxPageProps) {
   }
 
   return (
-    <div className="w-full space-y-6">
-      <InboxHeader role={roleLabel} stats={stats} />
+    <div className="w-full space-y-4">
+      <InboxHeader stats={stats} />
 
       {error ? (
         <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-gray-200 bg-white p-12 text-center dark:border-zinc-700 dark:bg-zinc-900">
