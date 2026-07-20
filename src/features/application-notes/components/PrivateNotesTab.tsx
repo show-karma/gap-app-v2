@@ -4,10 +4,10 @@ import { AlertCircle, Lock, RefreshCw, Save } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import EthereumAddressToProfileName from "@/components/EthereumAddressToProfileName";
+import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Spinner } from "@/components/ui/spinner";
-import { Textarea } from "@/components/ui/textarea";
 import { useApplicationNote } from "../hooks/use-application-note";
 import type { ApplicationNote } from "../types";
 
@@ -18,6 +18,8 @@ interface PrivateNotesTabProps {
 }
 
 const MAX_NOTE_LENGTH = 10000;
+// Only surface the character counter as the note nears the limit — short notes stay clean.
+const NOTE_COUNTER_THRESHOLD = 8000;
 
 // Deterministic date display from the ISO timestamp — no locale/timezone
 // formatting APIs, so it is hydration-safe and renders identically everywhere.
@@ -133,14 +135,14 @@ function NoteEditor({
       </div>
 
       <div className="space-y-3 px-5 py-4">
-        <Textarea
-          aria-label="Private note"
+        <MarkdownEditor
           value={draft}
-          onChange={(e) => setDraft(e.target.value)}
+          onChange={setDraft}
           placeholder="Add a private note visible only to reviewers…"
-          rows={8}
           maxLength={MAX_NOTE_LENGTH}
-          disabled={isSaving}
+          isDisabled={isSaving}
+          showCharacterCount
+          characterCountThreshold={NOTE_COUNTER_THRESHOLD}
         />
         <div className="flex flex-wrap items-center justify-between gap-2">
           <p className="text-[12.5px] text-muted-foreground">{metaLine}</p>
