@@ -14,6 +14,7 @@ import { formatDate } from "@/utilities/formatDate";
 import { INDEXER } from "@/utilities/indexer";
 import { useSubmitMilestoneCompletion } from "../hooks/use-submit-milestone-completion";
 import {
+  isMilestoneCancelled,
   isMilestoneCompleted,
   isMilestoneLate,
   isMilestoneVerified,
@@ -76,12 +77,14 @@ export function OffChainMilestoneRow({
   const [isUploading, setIsUploading] = useState(false);
   const pendingFileNameRef = useRef<string | undefined>(undefined);
 
+  const isCancelled = isMilestoneCancelled(entry);
   const isCompletionVerified = isMilestoneVerified(entry);
   const isCompletionSubmitted = isMilestoneCompleted(entry) && !isCompletionVerified;
   const isLate = isMilestoneLate(entry);
   // Submission requires a milestoneUID (refUID for the on-chain attestation).
-  // Slots that haven't been anchored on-chain yet stay read-only.
-  const canEdit = isEditable && !isCompletionVerified && !!entry.milestoneUID;
+  // Slots that haven't been anchored on-chain yet stay read-only. A cancelled
+  // milestone is terminal — no completion can be submitted against it.
+  const canEdit = isEditable && !isCompletionVerified && !isCancelled && !!entry.milestoneUID;
   const isWaitingForIndexer = isSubmittingTitle(entry.milestoneUID, entry.title);
 
   const completionEntry = entry.completed ?? null;
@@ -174,7 +177,11 @@ export function OffChainMilestoneRow({
         <div className="flex justify-between items-start">
           <h4 className="font-medium">{entry.title}</h4>
           <div className="flex items-center gap-2">
-            {isCompletionVerified ? (
+            {isCancelled ? (
+              <span className="text-xs px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-600 line-through dark:bg-zinc-700 dark:text-zinc-400">
+                Cancelled
+              </span>
+            ) : isCompletionVerified ? (
               <span className="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700">
                 Verified
               </span>
