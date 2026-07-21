@@ -15,7 +15,7 @@ vi.mock("next/navigation", () => ({
 
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { KARMA_ASSISTANT_PANEL_ID } from "@/components/AgentChat/panel-id";
+import { KARMA_ASSISTANT_PANEL_ID } from "@/components/AgentChat/panel-dom";
 import { NavbarAssistantButton } from "@/src/components/navbar/navbar-assistant-button";
 import { useAgentChatStore } from "@/store/agentChat";
 

@@ -22,7 +22,7 @@ import {
 import { Message, MessageContent } from "@/src/components/ai-elements/message";
 import type { ChatMessage } from "@/store/agentChat";
 import { renderWithMentionPills } from "@/widget/mention-token";
-import { KARMA_ASSISTANT_PANEL_ID } from "./panel-id";
+import { CHAT_COMPOSER_SELECTOR, KARMA_ASSISTANT_PANEL_ID } from "./panel-dom";
 
 function ScrollOnNewMessage({ lastMessageContent }: { lastMessageContent: string | undefined }) {
   const { scrollToBottom } = useStickToBottomContext();
@@ -132,10 +132,13 @@ export function ChatBubbleShell({
     if (!isAnchored || !isOpen) return;
 
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        event.stopPropagation();
-        onToggle();
-      }
+      if (event.key !== "Escape") return;
+      // Only claim Escape while focus is actually inside the panel. This is a
+      // non-modal dialog, so anything can be stacked on top of it — without
+      // this guard, dismissing an overlaid dialog would close the assistant
+      // underneath it at the same time.
+      if (!panelRef.current?.contains(document.activeElement)) return;
+      onToggle();
     };
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
@@ -148,9 +151,7 @@ export function ChatBubbleShell({
     let secondFrame = 0;
     const firstFrame = requestAnimationFrame(() => {
       secondFrame = requestAnimationFrame(() => {
-        panelRef.current
-          ?.querySelector<HTMLElement>('[role="textbox"][aria-label="Chat message"]')
-          ?.focus();
+        panelRef.current?.querySelector<HTMLElement>(CHAT_COMPOSER_SELECTOR)?.focus();
       });
     });
     return () => {
