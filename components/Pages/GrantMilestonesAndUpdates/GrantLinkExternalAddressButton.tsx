@@ -9,7 +9,7 @@ import { PROJECT_NAME } from "@/constants/brand";
 import { useIsCommunityAdmin } from "@/src/core/rbac/context/permission-context";
 import { useOwnerStore, useProjectStore } from "@/store";
 import type { Grant } from "@/types/v2/grant";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 
 interface GrantLinkExternalAddressButtonProps {
@@ -39,22 +39,15 @@ export const GrantLinkExternalAddressButton: FC<GrantLinkExternalAddressButtonPr
     setIsLoading(true);
     setError(null);
     try {
-      const [data, error] = await fetchData(
-        INDEXER.GRANTS.EXTERNAL_ADDRESS.UPDATE(grant.uid),
-        "PUT",
-        {
-          target: "octant",
-          address: address,
-        }
-      );
+      // TODO(#1775): add zod schema
+      const data = await api.put(INDEXER.GRANTS.EXTERNAL_ADDRESS.UPDATE(grant.uid), {
+        target: "octant",
+        address: address,
+      });
 
       if (data) {
         // Update the local state to reflect the change
         setEditedAddress(address);
-      }
-
-      if (error) {
-        setError(`Failed to update Octant address. Please try again.`);
       }
     } catch (err) {
       setError(`Failed to update Octant address. Please try again.`);

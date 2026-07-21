@@ -9,7 +9,7 @@ import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useGap } from "@/hooks/useGap";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useProjectStore } from "@/store";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { getProjectObjectives } from "@/utilities/gapIndexerApi/getProjectObjectives";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
@@ -87,15 +87,10 @@ export function useProjectMilestoneForm({
           const _fetchedMilestones = null;
           const txHash = res?.tx[0]?.hash;
           if (txHash) {
-            await fetchData(
-              INDEXER.ATTESTATION_LISTENER(txHash, project?.chainID as number),
-              "POST",
-              {}
-            );
+            await api.post(INDEXER.ATTESTATION_LISTENER(txHash, project?.chainID as number), {});
           } else {
-            await fetchData(
+            await api.post(
               INDEXER.ATTESTATION_LISTENER(newMilestone.uid, project?.chainID as number),
-              "POST",
               {}
             );
           }
@@ -192,15 +187,10 @@ export function useProjectMilestoneForm({
           const txHash = res?.tx[0]?.hash;
 
           if (txHash) {
-            await fetchData(
-              INDEXER.ATTESTATION_LISTENER(txHash, project?.chainID as number),
-              "POST",
-              {}
-            );
+            await api.post(INDEXER.ATTESTATION_LISTENER(txHash, project?.chainID as number), {});
           } else {
-            await fetchData(
+            await api.post(
               INDEXER.ATTESTATION_LISTENER(milestoneInstance.uid, project?.chainID as number),
-              "POST",
               {}
             );
           }

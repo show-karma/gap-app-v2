@@ -56,10 +56,10 @@ import { useSimilarProjectsModalStore } from "@/store/modals/similarProjects";
 import { useOwnerStore } from "@/store/owner";
 import type { Contact } from "@/types/project";
 import type { Project as ProjectResponse } from "@/types/v2/project";
+import { api } from "@/utilities/api/client";
 import { attestWithRetry } from "@/utilities/attestWithRetry";
 import { type CustomLink, isCustomLink } from "@/utilities/customLink";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import fetchData from "@/utilities/fetchData";
 import { validateGithubInput } from "@/utilities/github";
 import { INDEXER } from "@/utilities/indexer";
 import { isRetryableChainError } from "@/utilities/isRetryableChainError";
@@ -582,19 +582,15 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         try {
           const projectIdentifier = `${slug}-${chainSelected}`;
 
-          const [promoteData, promoteError] = await fetchData(
+          // TODO(#1775): add zod schema
+          const promoteData = await api.post<{ permanentUrl: string }>(
             INDEXER.PROJECT.LOGOS.PROMOTE_TO_PERMANENT(),
-            "POST",
             {
               tempKey: tempLogoKey,
               projectId: projectIdentifier,
             }
           );
-
-          if (!promoteError) {
-            const { permanentUrl } = promoteData;
-            finalImageURL = permanentUrl;
-          }
+          finalImageURL = promoteData.permanentUrl;
           // If promotion fails, continue with temp URL
         } catch {
           // Continue with temp URL if promotion fails
@@ -675,7 +671,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       // project regardless of which send actually landed it.
       const txHash = recoveredByIdempotencyGuard ? undefined : res?.tx[0]?.hash;
       if (txHash) {
-        await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, chainId), "POST", {});
+        await api.post(INDEXER.ATTESTATION_LISTENER(txHash, chainId), {});
       }
 
       let retries = 1000;
@@ -698,16 +694,10 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       }
 
       if (fetchedProject?.uid && fetchedProject.uid !== zeroHash) {
-        const [, subscriptionError] = await fetchData(
-          INDEXER.SUBSCRIPTION.CREATE(fetchedProject.uid),
-          "POST",
-          { contacts },
-          {},
-          {},
-          true
-        );
-
-        if (subscriptionError) {
+        try {
+          // TODO(#1775): add zod schema
+          await api.post(INDEXER.SUBSCRIPTION.CREATE(fetchedProject.uid), { contacts });
+        } catch {
           showError("Something went wrong with contact info save. Please try again later.");
         }
 
@@ -793,19 +783,15 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       let finalImageURL = data.profilePicture || "";
       if (tempLogoKey) {
         try {
-          const [promoteData, promoteError] = await fetchData(
+          // TODO(#1775): add zod schema
+          const promoteData = await api.post<{ permanentUrl: string }>(
             INDEXER.PROJECT.LOGOS.PROMOTE_TO_PERMANENT(),
-            "POST",
             {
               tempKey: tempLogoKey,
               projectId: fetchedProject.uid,
             }
           );
-
-          if (!promoteError) {
-            const { permanentUrl } = promoteData;
-            finalImageURL = permanentUrl;
-          }
+          finalImageURL = promoteData.permanentUrl;
           // If promotion fails, continue with temp URL
         } catch {
           // Continue with temp URL if promotion fails

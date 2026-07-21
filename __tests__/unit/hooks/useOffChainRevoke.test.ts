@@ -1,16 +1,16 @@
 /**
  * @file Tests for useOffChainRevoke
  * @description The off-chain revoke primitive throws on failure (no boolean to
- * ignore). These tests pin the failure-mode-to-error mapping derived from
- * fetchData's tuple shape, the internal request timeout, the injected-poll
- * outcomes, and the success path.
+ * ignore). These tests pin the failure-mode-to-error mapping derived from the
+ * `api` client's typed `ApiError`s, the internal request timeout, the
+ * injected-poll outcomes, and the success path.
  */
 
 import { renderHook } from "@testing-library/react";
 
-const { mockFetchData, mockShowLoading, mockShowSuccess, mockShowError, mockDismiss } = vi.hoisted(
+const { mockApiPost, mockShowLoading, mockShowSuccess, mockShowError, mockDismiss } = vi.hoisted(
   () => ({
-    mockFetchData: vi.fn(),
+    mockApiPost: vi.fn(),
     mockShowLoading: vi.fn(),
     mockShowSuccess: vi.fn(),
     mockShowError: vi.fn(),
@@ -18,9 +18,8 @@ const { mockFetchData, mockShowLoading, mockShowSuccess, mockShowError, mockDism
   })
 );
 
-vi.mock("@/utilities/fetchData", () => ({
-  __esModule: true,
-  default: mockFetchData,
+vi.mock("@/utilities/api/client", () => ({
+  api: { post: mockApiPost },
 }));
 
 vi.mock("@/hooks/useAttestationToast", () => ({
@@ -33,6 +32,7 @@ vi.mock("@/hooks/useAttestationToast", () => ({
 }));
 
 import { useOffChainRevoke } from "@/hooks/useOffChainRevoke";
+import { HttpError, NetworkError, RequestAborted } from "@/utilities/api/errors";
 import { IndexingTimeoutError, OffChainRevokeError } from "@/utilities/errors";
 import { RetryAbortedError, RetryConditionNotMetError } from "@/utilities/retries";
 
@@ -49,9 +49,13 @@ describe("useOffChainRevoke - performOffChainRevoke", () => {
     vi.clearAllMocks();
   });
 
+  const endpointOpts = { endpoint: "/attestations/revoke", method: "POST" as const };
+
   it("throws API_ERROR with the server status and toasts the string message", async () => {
-    // fetchData server-error tuple: [null, "Forbidden", null, 403]
-    mockFetchData.mockResolvedValue([null, "Forbidden", null, 403]);
+    // Server responded with an error status -> classified as HttpError.
+    mockApiPost.mockRejectedValue(
+      new HttpError(403, { ...endpointOpts, body: { message: "Forbidden" } })
+    );
     const performOffChainRevoke = setup();
 
     await expect(performOffChainRevoke({ uid: UID, chainID: CHAIN_ID })).rejects.toMatchObject({
@@ -63,9 +67,11 @@ describe("useOffChainRevoke - performOffChainRevoke", () => {
     expect(mockShowError).toHaveBeenCalledWith("Forbidden");
   });
 
-  it("throws REQUEST_FAILED and toasts the NORMALIZED string for a no-response Error tuple", async () => {
-    // fetchData no-response tuple puts the raw Error OBJECT in res[1].
-    mockFetchData.mockResolvedValue([null, new Error("Network Error"), null, 500]);
+  it("throws REQUEST_FAILED and toasts the NORMALIZED string for a no-response network error", async () => {
+    // No response: classified as NetworkError, original Error preserved on `cause`.
+    mockApiPost.mockRejectedValue(
+      new NetworkError({ ...endpointOpts, cause: new Error("Network Error") })
+    );
     const performOffChainRevoke = setup();
 
     await expect(performOffChainRevoke({ uid: UID, chainID: CHAIN_ID })).rejects.toMatchObject({
@@ -80,16 +86,17 @@ describe("useOffChainRevoke - performOffChainRevoke", () => {
     }
   });
 
-  it("maps an internal timeout abort in the tuple to a REQUEST_FAILED 'timed out' error", async () => {
+  it("maps an internal timeout abort to a REQUEST_FAILED 'timed out' error", async () => {
     // AbortSignal.timeout fires -> axios re-wraps the external-signal abort as a
-    // CanceledError (name "CanceledError", code "ERR_CANCELED"), which lands in
-    // the tuple. Because this hook owns the only signal, that is the internal
-    // request timeout, never user cancellation.
+    // CanceledError (name "CanceledError", code "ERR_CANCELED"), classified as
+    // RequestAborted with the original error preserved on `cause`. Because this
+    // hook owns the only signal, that is the internal request timeout, never
+    // user cancellation.
     const abortError = Object.assign(new Error("canceled"), {
       name: "CanceledError",
       code: "ERR_CANCELED",
     });
-    mockFetchData.mockResolvedValue([null, abortError, null, 500]);
+    mockApiPost.mockRejectedValue(new RequestAborted({ ...endpointOpts, cause: abortError }));
     const performOffChainRevoke = setup();
 
     await expect(performOffChainRevoke({ uid: UID, chainID: CHAIN_ID })).rejects.toMatchObject({
@@ -100,18 +107,18 @@ describe("useOffChainRevoke - performOffChainRevoke", () => {
     expect(mockShowError).toHaveBeenCalledWith(expect.stringContaining("timed out"));
   });
 
-  it("passes an AbortSignal as fetchData's 9th argument to bound the request", async () => {
-    mockFetchData.mockResolvedValue([{ ok: true }, null, null, 200]);
+  it("passes an AbortSignal bound to the request timeout", async () => {
+    mockApiPost.mockResolvedValue({ ok: true });
     const performOffChainRevoke = setup();
 
     await performOffChainRevoke({ uid: UID, chainID: CHAIN_ID });
 
-    const args = mockFetchData.mock.calls[0];
-    expect(args[8]).toBeInstanceOf(AbortSignal);
+    const args = mockApiPost.mock.calls[0];
+    expect(args[2]?.signal).toBeInstanceOf(AbortSignal);
   });
 
   it("maps injected-poll RetryConditionNotMetError to an IndexingTimeoutError with an actionable toast", async () => {
-    mockFetchData.mockResolvedValue([{ ok: true }, null, null, 200]);
+    mockApiPost.mockResolvedValue({ ok: true });
     const performOffChainRevoke = setup();
 
     await expect(
@@ -126,7 +133,7 @@ describe("useOffChainRevoke - performOffChainRevoke", () => {
   });
 
   it("rethrows a caller-owned poll cancellation untouched with NO toast", async () => {
-    mockFetchData.mockResolvedValue([{ ok: true }, null, null, 200]);
+    mockApiPost.mockResolvedValue({ ok: true });
     const performOffChainRevoke = setup();
 
     const abort = new RetryAbortedError();
@@ -143,7 +150,7 @@ describe("useOffChainRevoke - performOffChainRevoke", () => {
   });
 
   it("resolves and shows the success toast on the happy path", async () => {
-    mockFetchData.mockResolvedValue([{ ok: true }, null, null, 200]);
+    mockApiPost.mockResolvedValue({ ok: true });
     const performOffChainRevoke = setup();
 
     await expect(
@@ -161,7 +168,7 @@ describe("useOffChainRevoke - performOffChainRevoke", () => {
   });
 
   it("dismisses (no success toast) when no success message is provided", async () => {
-    mockFetchData.mockResolvedValue([{ ok: true }, null, null, 200]);
+    mockApiPost.mockResolvedValue({ ok: true });
     const performOffChainRevoke = setup();
 
     await performOffChainRevoke({ uid: UID, chainID: CHAIN_ID });
@@ -171,7 +178,7 @@ describe("useOffChainRevoke - performOffChainRevoke", () => {
   });
 
   it("uses an injected toast instance instead of its own when provided", async () => {
-    mockFetchData.mockResolvedValue([{ ok: true }, null, null, 200]);
+    mockApiPost.mockResolvedValue({ ok: true });
     const injectedShowLoading = vi.fn();
     const injectedToast = {
       showLoading: injectedShowLoading,
@@ -188,7 +195,9 @@ describe("useOffChainRevoke - performOffChainRevoke", () => {
   });
 
   it("throws an OffChainRevokeError instance (not a plain Error) on API failure", async () => {
-    mockFetchData.mockResolvedValue([null, "Bad Request", null, 400]);
+    mockApiPost.mockRejectedValue(
+      new HttpError(400, { ...endpointOpts, body: { message: "Bad Request" } })
+    );
     const performOffChainRevoke = setup();
 
     await expect(performOffChainRevoke({ uid: UID, chainID: CHAIN_ID })).rejects.toBeInstanceOf(

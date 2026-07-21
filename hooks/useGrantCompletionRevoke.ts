@@ -12,7 +12,7 @@ import { useOwnerStore, useProjectStore } from "@/store";
 import { useGrantStore } from "@/store/grant";
 import type { Grant } from "@/types/v2/grant";
 import type { Project as ProjectResponse } from "@/types/v2/project";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import {
   buildRevocationPayload,
   createCheckIfCompletionExists,
@@ -146,7 +146,7 @@ export const useGrantCompletionRevoke = ({ grant, project }: UseGrantCompletionR
 
         const txHash = res?.transactionHash as `0x${string}`;
         if (txHash) {
-          await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, grantInstance.chainID), "POST", {});
+          await api.post(INDEXER.ATTESTATION_LISTENER(txHash, grantInstance.chainID), {});
         }
         changeStepperStep("indexing");
 

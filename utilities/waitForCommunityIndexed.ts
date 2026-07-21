@@ -1,4 +1,4 @@
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 
 export const COMMUNITY_INDEX_POLL_ATTEMPTS = 12;
@@ -10,8 +10,14 @@ export const COMMUNITY_INDEX_POLL_DELAY_MS = 2500;
 // false if it never appears within the window (caller navigates anyway).
 export const waitForCommunityIndexed = async (idOrSlug: string): Promise<boolean> => {
   for (let attempt = 0; attempt < COMMUNITY_INDEX_POLL_ATTEMPTS; attempt++) {
-    const [community] = await fetchData(INDEXER.COMMUNITY.V2.GET(idOrSlug), "GET");
-    if (community?.uid) return true;
+    try {
+      // TODO(#1775): add zod schema
+      const community = await api.get<{ uid?: string }>(INDEXER.COMMUNITY.V2.GET(idOrSlug));
+      if (community?.uid) return true;
+    } catch {
+      // SUPPRESSED: 404/transient while the community is still being indexed —
+      // that is the very state this helper polls through; keep waiting.
+    }
     await new Promise((resolve) => setTimeout(resolve, COMMUNITY_INDEX_POLL_DELAY_MS));
   }
   return false;

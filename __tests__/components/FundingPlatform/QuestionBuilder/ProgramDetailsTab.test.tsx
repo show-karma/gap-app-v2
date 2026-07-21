@@ -53,9 +53,8 @@ vi.mock("@/services/fundingPlatformService", async (importOriginal) => {
   };
 });
 
-vi.mock("@/utilities/fetchData", () => ({
-  __esModule: true,
-  default: vi.fn(),
+vi.mock("@/utilities/api/client", () => ({
+  api: { get: vi.fn(), post: vi.fn(), put: vi.fn(), patch: vi.fn(), delete: vi.fn() },
 }));
 
 vi.mock("@/utilities/indexer", () => ({
@@ -220,7 +219,7 @@ import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { useAuth } from "@/hooks/useAuth";
 import { fundingPlatformService } from "@/services/fundingPlatformService";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 
 // Test data
 const mockProgramId = "program-123";
@@ -316,11 +315,11 @@ describe("ProgramDetailsTab", () => {
     // Default: no separate config data — form sources emails from `program`.
     vi.mocked(fundingPlatformService.programs.getProgramConfiguration).mockResolvedValue(null);
 
-    vi.mocked(fetchData).mockImplementation(async (url: string) => {
+    vi.mocked(api.get).mockImplementation(async (url: string) => {
       if (url.includes("find")) {
-        return [mockProgram, null];
+        return mockProgram;
       }
-      return [null, null];
+      return null;
     });
   });
 
@@ -357,22 +356,22 @@ describe("ProgramDetailsTab", () => {
     });
 
     it("should show error state when program fails to load", async () => {
-      vi.mocked(fetchData).mockImplementation(async () => {
-        return [null, "Failed to load program"];
+      vi.mocked(api.get).mockImplementation(async () => {
+        throw new Error("Failed to load program");
       });
 
       renderWithProviders(<ProgramDetailsTab programId={mockProgramId} chainId={mockChainId} />);
 
       await waitFor(() => {
-        // The error message comes from the error string passed to fetchData
+        // The error message comes from the Error thrown by api.get
         expect(screen.getByText("Failed to load program")).toBeInTheDocument();
         expect(screen.getByRole("button", { name: /retry/i })).toBeInTheDocument();
       });
     });
 
     it("should show 'Program not found' when program is null", async () => {
-      vi.mocked(fetchData).mockImplementation(async () => {
-        return [null, null];
+      vi.mocked(api.get).mockImplementation(async () => {
+        return null;
       });
 
       renderWithProviders(<ProgramDetailsTab programId={mockProgramId} chainId={mockChainId} />);
@@ -383,8 +382,8 @@ describe("ProgramDetailsTab", () => {
     });
 
     it("should handle array response from API", async () => {
-      vi.mocked(fetchData).mockImplementation(async () => {
-        return [[mockProgram], null];
+      vi.mocked(api.get).mockImplementation(async () => {
+        return [mockProgram];
       });
 
       renderWithProviders(<ProgramDetailsTab programId={mockProgramId} chainId={mockChainId} />);
@@ -697,12 +696,12 @@ describe("ProgramDetailsTab", () => {
 
       await waitFor(
         () => {
-          // Should call fetchData for initial load, then refetch after update
+          // Should call api.get for initial load, then refetch after update
           // Update now uses ProgramRegistryService.updateProgram
           expect(ProgramRegistryService.updateProgram).toHaveBeenCalled();
-          // fetchData should be called at least twice (initial load + refetch)
-          expect(fetchData).toHaveBeenCalledTimes(2);
-          const calls = vi.mocked(fetchData).mock.calls;
+          // api.get should be called at least twice (initial load + refetch)
+          expect(api.get).toHaveBeenCalledTimes(2);
+          const calls = vi.mocked(api.get).mock.calls;
           const lastCall = calls[calls.length - 1];
           expect(lastCall[0]).toContain("find");
         },
@@ -864,13 +863,13 @@ describe("ProgramDetailsTab", () => {
     it("should allow retry when program fails to load", async () => {
       const user = userEvent.setup();
       let fetchAttempt = 0;
-      vi.mocked(fetchData).mockImplementation(async () => {
+      vi.mocked(api.get).mockImplementation(async () => {
         fetchAttempt++;
         if (fetchAttempt === 1) {
-          return [null, "Failed to load program"];
+          throw new Error("Failed to load program");
         }
         // On retry, return success
-        return [mockProgram, null];
+        return mockProgram;
       });
 
       renderWithProviders(<ProgramDetailsTab programId={mockProgramId} chainId={mockChainId} />);
@@ -916,11 +915,11 @@ describe("ProgramDetailsTab", () => {
     };
 
     beforeEach(() => {
-      vi.mocked(fetchData).mockImplementation(async (url: string) => {
+      vi.mocked(api.get).mockImplementation(async (url: string) => {
         if (url.includes("find")) {
-          return [strippedProgram, null];
+          return strippedProgram;
         }
-        return [null, null];
+        return null;
       });
       vi.mocked(fundingPlatformService.programs.getProgramConfiguration).mockResolvedValue(
         configWithEmails as Awaited<
@@ -1019,8 +1018,8 @@ describe("ProgramDetailsTab", () => {
         },
       };
 
-      vi.mocked(fetchData).mockImplementation(async () => {
-        return [programWithoutDates, null];
+      vi.mocked(api.get).mockImplementation(async () => {
+        return programWithoutDates;
       });
 
       renderWithProviders(<ProgramDetailsTab programId={mockProgramId} chainId={mockChainId} />);
@@ -1043,8 +1042,8 @@ describe("ProgramDetailsTab", () => {
         },
       };
 
-      vi.mocked(fetchData).mockImplementation(async () => {
-        return [programWithoutBudget, null];
+      vi.mocked(api.get).mockImplementation(async () => {
+        return programWithoutBudget;
       });
 
       renderWithProviders(<ProgramDetailsTab programId={mockProgramId} chainId={mockChainId} />);

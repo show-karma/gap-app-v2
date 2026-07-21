@@ -3,10 +3,23 @@ import { render, screen, waitFor } from "@testing-library/react";
 import type { PropsWithChildren, ReactNode } from "react";
 import type { MockedFunction } from "vitest";
 import { TelegramPairChatModal } from "@/components/Pages/Admin/TelegramPairChatModal";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
+import { HttpError } from "@/utilities/api/errors";
 import "@testing-library/jest-dom";
 
-vi.mock("@/utilities/fetchData");
+// useTelegramPairing (#1775 Phase 3) now calls api.request instead of the
+// legacy fetchData tuple adapter.
+vi.mock("@/utilities/api/client", () => ({
+  api: {
+    get: vi.fn(),
+    post: vi.fn(),
+    put: vi.fn(),
+    patch: vi.fn(),
+    delete: vi.fn(),
+    request: vi.fn(),
+    getPaginated: vi.fn(),
+  },
+}));
 
 // Flatten Radix Dialog so children render straight into the DOM. Props are
 // PropsWithChildren rather than `any`, with className narrowed where Radix
@@ -36,7 +49,7 @@ vi.mock("react-hot-toast", () => ({
   },
 }));
 
-const mockFetchData = fetchData as MockedFunction<typeof fetchData>;
+const mockApiRequest = api.request as MockedFunction<typeof api.request>;
 
 describe("TelegramPairChatModal", () => {
   let queryClient: QueryClient;
@@ -68,13 +81,21 @@ describe("TelegramPairChatModal", () => {
 
   it("starts a pairing session and displays the /karma_pair command + countdown when opened", async () => {
     const futureIso = new Date(Date.now() + 5 * 60 * 1000).toISOString();
-    // `/start` returns the token; any subsequent `/verify` poll returns 422
-    // (pending — bot hasn't claimed yet) so the polling loop stays quiet.
-    mockFetchData.mockImplementation(async (url: string) => {
+    // `/start` returns the token; any subsequent `/verify` poll rejects with
+    // a 422 (pending — bot hasn't claimed yet) so the polling loop stays quiet.
+    mockApiRequest.mockImplementation(async (_method: string, url: string) => {
       if (url.includes("/telegram-pair/start")) {
-        return [{ token: "KARMA-PAIR-ab3f9k", expiresAt: futureIso }, null, null, 200];
+        return {
+          data: { token: "KARMA-PAIR-ab3f9k", expiresAt: futureIso },
+          status: 200,
+          pageInfo: null,
+        };
       }
-      return [null, "pending", null, 422];
+      throw new HttpError(422, {
+        endpoint: url,
+        method: "POST",
+        body: { message: "pending" },
+      });
     });
 
     render(<TelegramPairChatModal communitySlug="filecoin" open={true} onOpenChange={vi.fn()} />, {
@@ -97,13 +118,10 @@ describe("TelegramPairChatModal", () => {
     expect(screen.getByRole("status")).toHaveTextContent(/Waiting for the bot/i);
 
     // Pairing /start was hit
-    expect(mockFetchData).toHaveBeenCalledWith(
-      expect.stringContaining("/v2/community-configs/filecoin/telegram-pair/start"),
+    expect(mockApiRequest).toHaveBeenCalledWith(
       "POST",
-      {},
-      {},
-      {},
-      true
+      expect.stringContaining("/v2/community-configs/filecoin/telegram-pair/start"),
+      {}
     );
   });
 });

@@ -75,9 +75,16 @@ vi.mock("@/hooks/v2/useProjectUpdates", () => ({
   }),
 }));
 
-vi.mock("@/utilities/fetchData", () => ({
-  __esModule: true,
-  default: vi.fn().mockResolvedValue({}),
+vi.mock("@/utilities/api/client", () => ({
+  api: {
+    get: vi.fn().mockResolvedValue({}),
+    post: vi.fn().mockResolvedValue({}),
+    put: vi.fn().mockResolvedValue({}),
+    patch: vi.fn().mockResolvedValue({}),
+    delete: vi.fn().mockResolvedValue({}),
+    request: vi.fn().mockResolvedValue({}),
+    getPaginated: vi.fn().mockResolvedValue({ data: [], pageInfo: null }),
+  },
 }));
 
 vi.mock("@/utilities/retries", () => ({

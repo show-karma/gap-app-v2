@@ -1,10 +1,19 @@
 import { waitFor } from "@testing-library/react";
 import { renderHookWithProviders } from "@/__tests__/utils/render";
 import type { Application } from "@/types/whitelabel-entities";
+import { HttpError } from "@/utilities/api/errors";
 
-const mockFetchData = vi.fn();
-vi.mock("@/utilities/fetchData", () => ({
-  default: (...args: unknown[]) => mockFetchData(...args),
+const mockApiGet = vi.fn();
+vi.mock("@/utilities/api/client", () => ({
+  api: {
+    get: (...args: unknown[]) => mockApiGet(...args),
+    post: vi.fn(),
+    put: vi.fn(),
+    patch: vi.fn(),
+    delete: vi.fn(),
+    request: vi.fn(),
+    getPaginated: vi.fn(),
+  },
 }));
 
 vi.mock("@/utilities/chosenCommunities", () => ({
@@ -34,40 +43,42 @@ describe("useEnrichedApplications", () => {
     const { result } = renderHookWithProviders(() => useEnrichedApplications(apps, "gitcoin"));
 
     expect(result.current).toBe(apps);
-    expect(mockFetchData).not.toHaveBeenCalled();
+    expect(mockApiGet).not.toHaveBeenCalled();
   });
 
   it("resolves community name + slug from the program config when unscoped", async () => {
-    mockFetchData.mockResolvedValue([{ communitySlug: "arbitrum" }, null]);
+    mockApiGet.mockResolvedValue({ communitySlug: "arbitrum" });
 
     const apps = [app({ communitySlug: undefined, communityName: undefined })];
     const { result } = renderHookWithProviders(() => useEnrichedApplications(apps, undefined));
 
     await waitFor(() => expect(result.current[0].communityName).toBe("Arbitrum"));
     expect(result.current[0].communitySlug).toBe("arbitrum");
-    expect(mockFetchData).toHaveBeenCalledTimes(1);
+    expect(mockApiGet).toHaveBeenCalledTimes(1);
   });
 
   it("leaves an application untouched when its program config fails to load", async () => {
-    mockFetchData.mockResolvedValue([null, "boom"]);
+    mockApiGet.mockRejectedValue(
+      new HttpError(500, { endpoint: "/v2/funding-programs/p1", method: "GET" })
+    );
 
     const apps = [app({ communitySlug: undefined, communityName: undefined })];
     const { result } = renderHookWithProviders(() => useEnrichedApplications(apps, undefined));
 
-    await waitFor(() => expect(mockFetchData).toHaveBeenCalled());
+    await waitFor(() => expect(mockApiGet).toHaveBeenCalled());
     expect(result.current[0].communityName).toBeUndefined();
     expect(result.current[0].communitySlug).toBeUndefined();
   });
 
   it("deduplicates the program-config fetch across applications sharing a program", async () => {
-    mockFetchData.mockResolvedValue([{ communitySlug: "arbitrum" }, null]);
+    mockApiGet.mockResolvedValue({ communitySlug: "arbitrum" });
 
     const apps = [app({ id: "a1", programId: "p1" }), app({ id: "a2", programId: "p1" })];
     const { result } = renderHookWithProviders(() => useEnrichedApplications(apps, undefined));
 
     await waitFor(() => expect(result.current[0].communityName).toBe("Arbitrum"));
     // One shared programId → one fetch, both rows enriched.
-    expect(mockFetchData).toHaveBeenCalledTimes(1);
+    expect(mockApiGet).toHaveBeenCalledTimes(1);
     expect(result.current[1].communityName).toBe("Arbitrum");
   });
 });

@@ -1,24 +1,33 @@
+import { z } from "zod";
 import type {
   CreateKnowledgeSourceInput,
   KnowledgeSource,
   UpdateKnowledgeSourceInput,
 } from "@/types/v2/knowledge-base";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
+import { HttpError, isApiError } from "@/utilities/api/errors";
 import { INDEXER } from "@/utilities/indexer";
 
-interface ListSourcesResponse {
-  data: KnowledgeSource[];
-}
+// The nested `KnowledgeSource` shape is validated by its consumers today
+// (fetchData applied zero runtime validation) — keep it untyped at the
+// envelope level rather than inventing a stricter shape than reality.
+const ListSourcesResponseSchema = z
+  .object({
+    data: z.array(z.unknown()),
+  })
+  .passthrough();
 
-interface SingleSourceResponse {
-  data: KnowledgeSource;
-}
+const SingleSourceResponseSchema = z
+  .object({
+    data: z.unknown(),
+  })
+  .passthrough();
 
 /**
  * DEV-202: structured error thrown by the knowledge-base service so
  * callers can branch on HTTP status (e.g., 409 → duplicate externalId)
- * rather than text-matching the server message. fetchData returns the
- * status code as the 4th tuple element; we preserve it on this class so
+ * rather than text-matching the server message. The `api` client throws
+ * a typed `HttpError` carrying the status; we preserve it on this class so
  * dialogs can handle the conflict path without parsing English copy.
  */
 export class KnowledgeBaseApiError extends Error {
@@ -47,33 +56,36 @@ export class KnowledgeBaseApiError extends Error {
  */
 
 export async function listKnowledgeSources(communityIdOrSlug: string): Promise<KnowledgeSource[]> {
-  const [data, error] = await fetchData<ListSourcesResponse>(
+  const data = await api.get<z.infer<typeof ListSourcesResponseSchema>>(
     INDEXER.KNOWLEDGE_BASE.LIST_SOURCES(communityIdOrSlug),
-    "GET",
-    undefined,
-    {},
-    {},
-    true
+    { schema: ListSourcesResponseSchema }
   );
-  if (error) throw new Error(error);
-  return data?.data ?? [];
+  return (data?.data ?? []) as KnowledgeSource[];
 }
 
 export async function createKnowledgeSource(
   communityIdOrSlug: string,
   input: CreateKnowledgeSourceInput
 ): Promise<KnowledgeSource> {
-  const [data, error] = await fetchData<SingleSourceResponse>(
+  const data = await api.post<z.infer<typeof SingleSourceResponseSchema>>(
     INDEXER.KNOWLEDGE_BASE.CREATE_SOURCE(communityIdOrSlug),
-    "POST",
     input,
-    {},
-    {},
-    true
+    { schema: SingleSourceResponseSchema }
   );
-  if (error) throw new Error(error);
   if (!data?.data) throw new Error("Empty response from server");
-  return data.data;
+  return data.data as KnowledgeSource;
+}
+
+/**
+ * Extracts the same human-readable error message the legacy `fetchData`
+ * adapter surfaced for an `HttpError`: prefer the server response body's
+ * `message`, then the original axios error's message, then the client's
+ * synthetic "HTTP <status> <method> <path>" message.
+ */
+function httpErrorMessage(error: HttpError): string {
+  const bodyMessage = (error.body as { message?: string } | undefined)?.message;
+  const causeMessage = (error.cause as { message?: string } | undefined)?.message;
+  return bodyMessage || causeMessage || error.message;
 }
 
 export async function updateKnowledgeSource(
@@ -81,48 +93,37 @@ export async function updateKnowledgeSource(
   sourceId: string,
   patch: UpdateKnowledgeSourceInput
 ): Promise<KnowledgeSource> {
-  // The 4th tuple element is the HTTP status — preserve it on the
-  // thrown error so callers (e.g., EditSourceDialog) can branch on
-  // 409 → duplicate externalId without parsing the server's message.
-  const [data, error, , status] = await fetchData<SingleSourceResponse>(
-    INDEXER.KNOWLEDGE_BASE.UPDATE_SOURCE(communityIdOrSlug, sourceId),
-    "PATCH",
-    patch,
-    {},
-    {},
-    true
-  );
-  if (error) throw new KnowledgeBaseApiError(error, status);
+  // The status is preserved on the thrown KnowledgeBaseApiError so callers
+  // (e.g., EditSourceDialog) can branch on 409 → duplicate externalId
+  // without parsing the server's message.
+  let data: z.infer<typeof SingleSourceResponseSchema>;
+  try {
+    data = await api.patch<z.infer<typeof SingleSourceResponseSchema>>(
+      INDEXER.KNOWLEDGE_BASE.UPDATE_SOURCE(communityIdOrSlug, sourceId),
+      patch,
+      { schema: SingleSourceResponseSchema }
+    );
+  } catch (error) {
+    if (isApiError(error) && error instanceof HttpError) {
+      throw new KnowledgeBaseApiError(httpErrorMessage(error), error.status);
+    }
+    const message = error instanceof Error ? error.message : String(error);
+    throw new KnowledgeBaseApiError(message, 500);
+  }
   if (!data?.data) throw new Error("Empty response from server");
-  return data.data;
+  return data.data as KnowledgeSource;
 }
 
 export async function deleteKnowledgeSource(
   communityIdOrSlug: string,
   sourceId: string
 ): Promise<void> {
-  const [, error] = await fetchData(
-    INDEXER.KNOWLEDGE_BASE.DELETE_SOURCE(communityIdOrSlug, sourceId),
-    "DELETE",
-    undefined,
-    {},
-    {},
-    true
-  );
-  if (error) throw new Error(error);
+  await api.delete(INDEXER.KNOWLEDGE_BASE.DELETE_SOURCE(communityIdOrSlug, sourceId));
 }
 
 export async function triggerKnowledgeSourceResync(
   communityIdOrSlug: string,
   sourceId: string
 ): Promise<void> {
-  const [, error] = await fetchData(
-    INDEXER.KNOWLEDGE_BASE.RESYNC_SOURCE(communityIdOrSlug, sourceId),
-    "POST",
-    {},
-    {},
-    {},
-    true
-  );
-  if (error) throw new Error(error);
+  await api.post(INDEXER.KNOWLEDGE_BASE.RESYNC_SOURCE(communityIdOrSlug, sourceId), {});
 }

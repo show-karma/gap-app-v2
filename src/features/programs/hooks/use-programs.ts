@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo } from "react";
 import type { FundingProgram, ProgramFilters, ProgramStatus } from "@/types/whitelabel-entities";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { useProgramsStore } from "../lib/store";
 import type { UseProgramsReturn } from "../types";
 
@@ -49,15 +49,10 @@ export function usePrograms(
     queryKey: ["wl-programs", communityId],
     queryFn: async () => {
       const limit = filters.limit || 20;
-      const [res, err] = await fetchData<FundingProgram[]>(
-        `/v2/funding-program-configs/community/${communityId}`,
-        "GET",
-        {},
-        {},
-        {},
-        true
+      // TODO(#1775): add zod schema
+      const res = await api.get<FundingProgram[]>(
+        `/v2/funding-program-configs/community/${communityId}`
       );
-      if (err) throw new Error(err);
       return { programs: res ?? [], limit };
     },
     staleTime: 5 * 60 * 1000,

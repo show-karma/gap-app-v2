@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { useIsCommunityAdmin } from "@/src/core/rbac/context/permission-context";
 import { useOwnerStore, useProjectStore } from "@/store";
 import type { Project as ProjectResponse } from "@/types/v2/project";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 
 interface LinkDivviWalletButtonProps {
@@ -98,7 +98,8 @@ export const LinkDivviWalletButton: FC<LinkDivviWalletButtonProps> = ({
     setIsLoading(true);
     const ids = walletAddress.trim() ? [walletAddress.trim()] : [];
     try {
-      const [data, error] = await fetchData(INDEXER.PROJECT.EXTERNAL.UPDATE(project.uid), "PUT", {
+      // TODO(#1775): add zod schema
+      const data = await api.put(INDEXER.PROJECT.EXTERNAL.UPDATE(project.uid), {
         target: "divvi_wallets",
         ids: ids,
       });
@@ -110,11 +111,6 @@ export const LinkDivviWalletButton: FC<LinkDivviWalletButtonProps> = ({
           onClose();
         }
         refreshProject();
-      }
-
-      if (error) {
-        setError("Failed to Link Divvi Identifier address.");
-        throw new Error("Failed to Link Divvi Identifier address");
       }
     } catch (err) {
       setError("Failed to Link Divvi Identifier address.");

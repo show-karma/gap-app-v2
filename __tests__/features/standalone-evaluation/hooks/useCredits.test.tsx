@@ -5,9 +5,16 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
 import type React from "react";
 
-vi.mock("@/utilities/fetchData", () => ({
-  __esModule: true,
-  default: vi.fn(),
+vi.mock("@/utilities/api/client", () => ({
+  api: {
+    get: vi.fn(),
+    post: vi.fn(),
+    put: vi.fn(),
+    patch: vi.fn(),
+    delete: vi.fn(),
+    request: vi.fn(),
+    getPaginated: vi.fn(),
+  },
 }));
 
 vi.mock("@/hooks/useAuth", () => ({
@@ -18,7 +25,7 @@ import {
   useCredits,
   usePurchaseCredits,
 } from "@/src/features/standalone-evaluation/hooks/useCredits";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 
 const buildClient = () =>
   new QueryClient({
@@ -43,18 +50,18 @@ describe("useCredits", () => {
   afterEach(() => qc.clear());
 
   it("fetches the credit balance", async () => {
-    (fetchData as vi.Mock).mockResolvedValueOnce([
-      { balance: 42, totalPurchased: 100, totalUsed: 58, recentTransactions: [] },
-      null,
-      null,
-      200,
-    ]);
+    (api.get as vi.Mock).mockResolvedValueOnce({
+      balance: 42,
+      totalPurchased: 100,
+      totalUsed: 58,
+      recentTransactions: [],
+    });
 
     const { result } = renderHook(() => useCredits(), { wrapper: wrapper(qc) });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(result.current.data?.balance).toBe(42);
-    expect(fetchData).toHaveBeenCalledWith("/v2/evaluate/credits", "GET");
+    expect(api.get).toHaveBeenCalledWith("/v2/evaluate/credits");
   });
 });
 
@@ -83,12 +90,10 @@ describe("usePurchaseCredits", () => {
   });
 
   it("redirects the browser to the Stripe checkout URL", async () => {
-    (fetchData as vi.Mock).mockResolvedValueOnce([
-      { url: "https://checkout.stripe.com/abc", sessionId: "cs_123" },
-      null,
-      null,
-      201,
-    ]);
+    (api.post as vi.Mock).mockResolvedValueOnce({
+      url: "https://checkout.stripe.com/abc",
+      sessionId: "cs_123",
+    });
 
     const { result } = renderHook(() => usePurchaseCredits(), {
       wrapper: wrapper(qc),
@@ -98,9 +103,8 @@ describe("usePurchaseCredits", () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-    expect(fetchData).toHaveBeenCalledWith(
+    expect(api.post).toHaveBeenCalledWith(
       "/v2/evaluate/credits/purchase",
-      "POST",
       expect.objectContaining({
         pack: "PACK_100",
         successUrl: expect.stringContaining("/evaluate"),

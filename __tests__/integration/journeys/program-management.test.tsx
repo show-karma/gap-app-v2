@@ -96,11 +96,19 @@ vi.mock("@/src/core/rbac/hooks/use-permissions", () => ({
   })),
 }));
 
-// Mock fetchData - use a shared reference accessible after mock hoisting
-vi.mock("@/utilities/fetchData", () => {
-  const fn = vi.fn();
-  return { __esModule: true, default: fn, _mockFn: fn };
-});
+// Mock the unified API client - ManagePrograms now calls api.get() directly
+// (issue #1775 Phase 3 migration) instead of the legacy fetchData tuple.
+vi.mock("@/utilities/api/client", () => ({
+  api: {
+    get: vi.fn(),
+    post: vi.fn(),
+    put: vi.fn(),
+    patch: vi.fn(),
+    delete: vi.fn(),
+    request: vi.fn(),
+    getPaginated: vi.fn(),
+  },
+}));
 
 // Mock ProgramRegistryService
 vi.mock("@/services/programRegistry.service", () => ({
@@ -185,10 +193,10 @@ vi.mock("@/components/Pages/ProgramRegistry/programUtils", () => ({
 // Import component under test and get mock references
 // ---------------------------------------------------------------------------
 import { ManagePrograms } from "@/components/Pages/ProgramRegistry/ManagePrograms";
-import * as fetchDataModule from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
+import { HttpError } from "@/utilities/api/errors";
 
-// Get the mock function reference after vi.mock hoisting
-const mockFetchData = (fetchDataModule as any)._mockFn as vi.Mock;
+const mockApiGet = api.get as unknown as vi.Mock;
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -252,13 +260,12 @@ describe("ManagePrograms - Program management journey", () => {
       isProgramCreator: true,
     };
 
-    // Default: fetchData returns programs list in [data, error] tuple format
-    mockFetchData.mockResolvedValue([
-      { payload: mockPrograms, pagination: { totalCount: 2, page: 1, limit: 10 } },
-      null,
-      null,
-      200,
-    ]);
+    // Default: api.get resolves the raw payload directly (unified API client
+    // returns the payload, not a [data, error] tuple).
+    mockApiGet.mockResolvedValue({
+      payload: mockPrograms,
+      pagination: { totalCount: 2, page: 1, limit: 10 },
+    });
   });
 
   // -------------------------------------------------------------------------
@@ -350,8 +357,8 @@ describe("ManagePrograms - Program management journey", () => {
 
   describe("loading state", () => {
     it("shows loading indicator while fetching programs", () => {
-      // fetchData never resolves
-      mockFetchData.mockReturnValue(new Promise(() => {}));
+      // api.get never resolves
+      mockApiGet.mockReturnValue(new Promise(() => {}));
 
       renderManagePrograms();
 
@@ -389,12 +396,10 @@ describe("ManagePrograms - Program management journey", () => {
 
   describe("empty state", () => {
     it("handles empty program list", async () => {
-      mockFetchData.mockResolvedValue([
-        { payload: [], pagination: { totalCount: 0, page: 1, limit: 10 } },
-        null,
-        null,
-        200,
-      ]);
+      mockApiGet.mockResolvedValue({
+        payload: [],
+        pagination: { totalCount: 0, page: 1, limit: 10 },
+      });
 
       renderManagePrograms();
 
@@ -416,7 +421,13 @@ describe("ManagePrograms - Program management journey", () => {
 
   describe("error state", () => {
     it("shows empty state message when API returns error", async () => {
-      mockFetchData.mockResolvedValue([null, "Server error", null, 500]);
+      mockApiGet.mockRejectedValue(
+        new HttpError(500, {
+          endpoint: "/registry/programs",
+          method: "GET",
+          body: { message: "Server error" },
+        })
+      );
 
       renderManagePrograms();
 

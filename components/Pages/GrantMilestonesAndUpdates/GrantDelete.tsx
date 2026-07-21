@@ -12,7 +12,7 @@ import { useWallet } from "@/hooks/useWallet";
 import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { useOwnerStore, useProjectStore } from "@/store";
 import type { Grant } from "@/types/v2/grant";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
@@ -113,7 +113,7 @@ export const GrantDelete: FC<GrantDeleteProps> = ({ grant }) => {
           changeStepperStep("indexing");
           const txHash = res?.tx[0]?.hash;
           if (txHash) {
-            await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, grant.chainID), "POST", {});
+            await api.post(INDEXER.ATTESTATION_LISTENER(txHash, grant.chainID), {});
           }
           await checkIfAttestationExists(() => {
             changeStepperStep("indexed");

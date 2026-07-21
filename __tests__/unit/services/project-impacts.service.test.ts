@@ -6,6 +6,7 @@
  */
 
 import type { ProjectImpact } from "@/services/project-impacts.service";
+import { HttpError } from "@/utilities/api/errors";
 
 // Mock environment variables
 vi.mock("@/utilities/enviromentVars", () => ({
@@ -19,17 +20,32 @@ vi.mock("@/components/Utilities/errorManager", () => ({
   errorManager: vi.fn(),
 }));
 
-// Mock fetchData utility
-vi.mock("@/utilities/fetchData");
+// Mock the typed api client (impacts migrated off fetchData in #1775)
+const mockApiGet = vi.fn();
+vi.mock("@/utilities/api/client", () => ({
+  api: {
+    get: (...args: unknown[]) => mockApiGet(...args),
+    post: vi.fn(),
+    put: vi.fn(),
+    patch: vi.fn(),
+    delete: vi.fn(),
+    request: vi.fn(),
+    getPaginated: vi.fn(),
+  },
+}));
 
 import { errorManager } from "@/components/Utilities/errorManager";
 // Import the service AFTER all mocks are set up
 import { getProjectImpacts } from "@/services/project-impacts.service";
-// Import the mocked module to get access to the mock function
-import fetchData from "@/utilities/fetchData";
 
-const mockFetchData = fetchData as ReturnType<typeof vi.fn>;
 const mockErrorManager = errorManager as ReturnType<typeof vi.fn>;
+
+const httpError = (status: number, message: string) =>
+  new HttpError(status, {
+    endpoint: "/projects/test-project/impacts",
+    method: "GET",
+    body: { message },
+  });
 
 describe("project-impacts.service", () => {
   beforeEach(() => {
@@ -54,7 +70,7 @@ describe("project-impacts.service", () => {
     ];
 
     it("should return the impacts array on success", async () => {
-      mockFetchData.mockResolvedValueOnce([mockImpacts, null, null, 200]);
+      mockApiGet.mockResolvedValueOnce(mockImpacts);
 
       const result = await getProjectImpacts("test-project");
 
@@ -63,12 +79,7 @@ describe("project-impacts.service", () => {
     });
 
     it("regression GAP-FRONTEND-24Z: returns [] and does NOT report to Sentry on 404", async () => {
-      mockFetchData.mockResolvedValueOnce([
-        null,
-        "Route GET:/projects/test-project/impacts not found",
-        null,
-        404,
-      ]);
+      mockApiGet.mockRejectedValueOnce(httpError(404, "Route not found"));
 
       const result = await getProjectImpacts("test-project");
 
@@ -77,23 +88,21 @@ describe("project-impacts.service", () => {
     });
 
     it("reports genuinely unexpected errors (5xx) to Sentry", async () => {
-      mockFetchData.mockResolvedValueOnce([null, "Internal Server Error", null, 500]);
+      const error = httpError(500, "Internal Server Error");
+      mockApiGet.mockRejectedValueOnce(error);
 
       const result = await getProjectImpacts("test-project");
 
       expect(result).toEqual([]);
       expect(mockErrorManager).toHaveBeenCalledTimes(1);
-      expect(mockErrorManager).toHaveBeenCalledWith(
-        "Project Impacts API Error: Internal Server Error",
-        "Internal Server Error",
-        {
-          context: "project-impacts.service",
-        }
-      );
+      const [message, errArg, opts] = mockErrorManager.mock.calls[0];
+      expect(message).toContain("Project Impacts API Error");
+      expect(errArg).toBe(error);
+      expect(opts).toEqual({ context: "project-impacts.service" });
     });
 
-    it("returns [] when the V1 endpoint responds 200 with a null body (unknown slug)", async () => {
-      mockFetchData.mockResolvedValueOnce([null as unknown as ProjectImpact[], null, null, 200]);
+    it("returns [] when the endpoint responds with a null body (unknown slug)", async () => {
+      mockApiGet.mockResolvedValueOnce(null as unknown as ProjectImpact[]);
 
       const result = await getProjectImpacts("unknown-slug");
 
@@ -102,15 +111,15 @@ describe("project-impacts.service", () => {
     });
 
     it("calls the V1 impacts endpoint (locks the wire contract)", async () => {
-      mockFetchData.mockResolvedValueOnce([mockImpacts, null, null, 200]);
+      mockApiGet.mockResolvedValueOnce(mockImpacts);
 
       await getProjectImpacts("my-project-slug");
 
-      expect(mockFetchData.mock.calls[0][0]).toBe("/projects/my-project-slug/impacts");
+      expect(mockApiGet.mock.calls[0][0]).toBe("/projects/my-project-slug/impacts");
     });
 
-    it("forwards isAuthorized and signal positionally", async () => {
-      mockFetchData.mockResolvedValueOnce([mockImpacts, null, null, 200]);
+    it("forwards isAuthorized and signal via the options object", async () => {
+      mockApiGet.mockResolvedValueOnce(mockImpacts);
       const controller = new AbortController();
 
       await getProjectImpacts("test-project", {
@@ -118,9 +127,9 @@ describe("project-impacts.service", () => {
         signal: controller.signal,
       });
 
-      const call = mockFetchData.mock.calls[0];
-      expect(call[5]).toBe(false);
-      expect(call[8]).toBe(controller.signal);
+      const opts = mockApiGet.mock.calls[0][1];
+      expect(opts?.isAuthorized).toBe(false);
+      expect(opts?.signal).toBe(controller.signal);
     });
   });
 });

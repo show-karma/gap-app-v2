@@ -12,6 +12,7 @@ import type {
   GrantMilestoneWithCompletion,
   ProjectGrantMilestonesResponse,
 } from "@/services/milestones";
+import { HttpError } from "@/utilities/api/errors";
 import { renderHookWithProviders } from "../../utils/render";
 
 const MILESTONE_UID = "0x" + "a".repeat(64);
@@ -66,11 +67,21 @@ vi.mock("@show-karma/karma-gap-sdk/core/class/types/attestations", () => ({
   },
 }));
 
-const { mockFetchData } = vi.hoisted(() => ({
-  mockFetchData: vi.fn().mockResolvedValue([null, null]),
+const { mockApiPost } = vi.hoisted(() => ({
+  mockApiPost: vi.fn().mockResolvedValue({}),
 }));
 
-vi.mock("@/utilities/fetchData", () => ({ default: mockFetchData }));
+vi.mock("@/utilities/api/client", () => ({
+  api: {
+    get: vi.fn(),
+    post: (...args: unknown[]) => mockApiPost(...args),
+    put: vi.fn(),
+    patch: vi.fn(),
+    delete: vi.fn(),
+    request: vi.fn(),
+    getPaginated: vi.fn(),
+  },
+}));
 
 vi.mock("@/hooks/useAttestationToast", () => ({
   useAttestationToast: () => ({
@@ -137,7 +148,7 @@ describe("useMilestoneCancellation", () => {
     await waitFor(() => expect(mockMultiAttest).toHaveBeenCalledTimes(1));
     expect(mockPayloadFor).toHaveBeenCalledWith(0);
     // Indexer notified with the attestation tx hash.
-    expect(mockFetchData).toHaveBeenCalledWith(expect.stringContaining("0xattesttx"), "POST", {});
+    expect(mockApiPost).toHaveBeenCalledWith(expect.stringContaining("0xattesttx"), {});
   });
 
   it("blocks cancelling a completed milestone", async () => {
@@ -233,5 +244,18 @@ describe("useMilestoneCancellation", () => {
       })
     ).rejects.toThrow(/No active cancellation/);
     expect(mockMultiRevoke).not.toHaveBeenCalled();
+  });
+
+  it("still succeeds when the indexer nudge fails", async () => {
+    mockApiPost.mockRejectedValueOnce(
+      new HttpError(500, { endpoint: "/attestations/index", method: "POST" })
+    );
+    const { result } = renderCancellationHook();
+
+    await act(async () => {
+      await result.current.cancelMilestone({ milestone: baseMilestone(), data });
+    });
+
+    expect(mockMultiAttest).toHaveBeenCalledTimes(1);
   });
 });

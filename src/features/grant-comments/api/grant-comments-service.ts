@@ -1,17 +1,34 @@
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
+import { HttpError } from "@/utilities/api/errors";
 import type { GrantComment } from "../types";
+
+// TODO(#1775): add zod schema — response shape not yet verified against the
+// live BE contract; migrated with the client's untyped escape hatch.
+
+/** Extracts the backend's `message` field (mirrors the legacy fetchData adapter). */
+function toErrorMessage(error: unknown): string {
+  if (error instanceof HttpError) {
+    const bodyMessage = (error.body as { message?: string } | undefined)?.message;
+    const causeMessage = (error.cause as { message?: string } | undefined)?.message;
+    return bodyMessage || causeMessage || error.message;
+  }
+  if (error instanceof Error) return error.message;
+  return String(error);
+}
 
 export class GrantCommentsService {
   /**
    * Get comments for a grant (authenticated)
    */
   static async getComments(projectUID: string, programId: string): Promise<GrantComment[]> {
-    const [data, error] = await fetchData<{ comments: GrantComment[] }>(
-      `/v2/grants/${projectUID}/${programId}/comments`,
-      "GET"
-    );
-    if (error) throw new Error(error);
-    return data?.comments ?? [];
+    try {
+      const data = await api.get<{ comments: GrantComment[] }>(
+        `/v2/grants/${projectUID}/${programId}/comments`
+      );
+      return data?.comments ?? [];
+    } catch (error) {
+      throw new Error(toErrorMessage(error));
+    }
   }
 
   /**
@@ -22,35 +39,47 @@ export class GrantCommentsService {
     programId: string,
     content: string
   ): Promise<GrantComment> {
-    const [data, error] = await fetchData<{ comment: GrantComment }>(
-      `/v2/grants/${projectUID}/${programId}/comments`,
-      "POST",
-      { content }
-    );
-    if (error) throw new Error(error);
-    if (!data?.comment) throw new Error("Unexpected API response: missing comment");
-    return data.comment;
+    try {
+      const data = await api.post<{ comment: GrantComment }>(
+        `/v2/grants/${projectUID}/${programId}/comments`,
+        { content }
+      );
+      if (!data?.comment) throw new Error("Unexpected API response: missing comment");
+      return data.comment;
+    } catch (error) {
+      if (error instanceof Error && error.message === "Unexpected API response: missing comment") {
+        throw error;
+      }
+      throw new Error(toErrorMessage(error));
+    }
   }
 
   /**
    * Edit an existing grant comment
    */
   static async editComment(commentId: string, content: string): Promise<GrantComment> {
-    const [data, error] = await fetchData<{ comment: GrantComment }>(
-      `/v2/grant-comments/${commentId}`,
-      "PUT",
-      { content }
-    );
-    if (error) throw new Error(error);
-    if (!data?.comment) throw new Error("Unexpected API response: missing comment");
-    return data.comment;
+    try {
+      const data = await api.put<{ comment: GrantComment }>(`/v2/grant-comments/${commentId}`, {
+        content,
+      });
+      if (!data?.comment) throw new Error("Unexpected API response: missing comment");
+      return data.comment;
+    } catch (error) {
+      if (error instanceof Error && error.message === "Unexpected API response: missing comment") {
+        throw error;
+      }
+      throw new Error(toErrorMessage(error));
+    }
   }
 
   /**
    * Delete a grant comment
    */
   static async deleteComment(commentId: string): Promise<void> {
-    const [, error] = await fetchData(`/v2/grant-comments/${commentId}`, "DELETE");
-    if (error) throw new Error(error);
+    try {
+      await api.delete(`/v2/grant-comments/${commentId}`);
+    } catch (error) {
+      throw new Error(toErrorMessage(error));
+    }
   }
 }

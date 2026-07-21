@@ -7,7 +7,7 @@ import type { FundingProgram } from "@/services/fundingPlatformService";
 import { Link } from "@/src/components/navigation/Link";
 import { PermissionProvider } from "@/src/core/rbac/context/permission-context";
 import { transformFormSchemaToQuestions } from "@/src/features/applications/lib/form-utils";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { isProgramEnabled } from "@/utilities/funding-programs";
 import { PAGES } from "@/utilities/pages";
 import { ApplicationFormClient } from "./ApplicationFormClient";
@@ -22,15 +22,10 @@ interface PageProps {
 // React.cache() deduplicates the fetch across generateMetadata and the page component
 const getProgramDetails = cache(async (programId: string): Promise<FundingProgram | null> => {
   try {
-    const [data] = await fetchData<FundingProgram>(
-      `/v2/funding-program-configs/${programId}`,
-      "GET",
-      {},
-      {},
-      {},
-      false // public endpoint — no auth required
-    );
-    return data;
+    // TODO(#1775): add zod schema
+    return await api.get<FundingProgram>(`/v2/funding-program-configs/${programId}`, {
+      isAuthorized: false, // public endpoint — no auth required
+    });
   } catch {
     return null;
   }
