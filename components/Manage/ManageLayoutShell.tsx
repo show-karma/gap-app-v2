@@ -89,7 +89,9 @@ export function ManageLayoutShell({ children }: { children: React.ReactNode }) {
   const slug = community.details?.slug || communityId;
 
   return (
-    <SidebarProvider>
+    // `relative` anchors the rail's absolute positioning (see
+    // SIDEBAR_BELOW_NAVBAR_CLASSES) so the body-level footer stays clear.
+    <SidebarProvider className="relative">
       <ManageSidebar communityId={communityId} community={community} />
       <SidebarInset>
         <header className="flex h-12 shrink-0 items-center gap-2 border-b px-4">

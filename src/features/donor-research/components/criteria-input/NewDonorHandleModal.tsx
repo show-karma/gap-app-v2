@@ -75,19 +75,19 @@ function PersonaNameStep({
       }}
     >
       <DialogHeader>
-        <DialogTitle>New persona</DialogTitle>
+        <DialogTitle>New donor</DialogTitle>
         <DialogDescription>
-          Add an anonymous persona label, then optionally create the profile that will prefill
-          future research.
+          Add an anonymous donor label, then optionally create the profile that will prefill future
+          research.
         </DialogDescription>
       </DialogHeader>
 
       <div className="flex flex-col gap-1.5">
         <label className="text-sm font-medium" htmlFor="new-handle-label">
-          Persona name
+          Donor name
         </label>
         <input
-          aria-label="New persona name"
+          aria-label="New donor name"
           className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
           id="new-handle-label"
           maxLength={MAX_LABEL_LENGTH}
@@ -212,8 +212,8 @@ function DiscardPersonaDialog({
         <DialogHeader>
           <DialogTitle>Discard profile changes?</DialogTitle>
           <DialogDescription>
-            Your unsaved changes to {personaName ?? "this persona"} will be lost. You can edit them
-            again from this report or the persona page.
+            Your unsaved changes to {personaName ?? "this donor"} will be lost. You can edit them
+            again from this report or the donor page.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
@@ -232,7 +232,7 @@ function DiscardPersonaDialog({
 /**
  * Persona creation and profile authoring in one dialog.
  *
- * Create mode starts with the anonymous persona label, then lets the advisor
+ * Create mode starts with the anonymous donor label, then lets the advisor
  * either finish immediately or continue into the optional profile editor.
  * Edit mode opens the same editor in place, preserving report-form progress.
  */
@@ -291,7 +291,7 @@ export function NewDonorHandleModal({
       }
     } catch (error) {
       setCreateError(
-        error instanceof Error ? error.message : "Couldn't create the persona. Try again."
+        error instanceof Error ? error.message : "Couldn't create the donor. Try again."
       );
     }
   };

@@ -53,7 +53,7 @@ function composeCriteriaText(personaCriteriaText?: string, criteriaText?: string
 
 const CriteriaSchema = z
   .object({
-    donorHandleId: z.string().min(1, "Pick or create a persona"),
+    donorHandleId: z.string().min(1, "Pick or create a donor"),
     /** Hidden persona narrative, combined with the report-specific criteria on submit. */
     personaCriteriaText: z.string().max(5000).optional(),
     criteriaText: z.string().max(5000),
@@ -75,7 +75,7 @@ const CriteriaSchema = z
     } else if (combinedCriteria.length > 5000) {
       context.addIssue({
         code: "custom",
-        message: "Persona and additional criteria must be 5,000 characters or fewer",
+        message: "Donor preferences and additional criteria must be 5,000 characters or fewer",
         path: ["criteriaText"],
       });
     }
@@ -117,8 +117,8 @@ function prefilledFieldsOf(prefill: PersonaPrefill | null): Set<PersonaPrefillFi
 
 interface CriteriaInputPanelProps {
   /**
-   * Preselects a donor handle from `/new?handle=<id>` (the Personas-list
-   * "New report for this persona" link, and the report-list empty state).
+   * Preselects a donor handle from `/new?handle=<id>` (the Donors-list
+   * "New report for this donor" link, and the report-list empty state).
    * Read server-side from `searchParams` by the page — never mirrored back
    * to the URL.
    */

@@ -32,6 +32,7 @@ import {
   SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { SIDEBAR_BELOW_NAVBAR_CLASSES } from "@/components/ui/sidebar-below-navbar";
 import { useDonorAdvisor } from "@/hooks/useDonorAdvisor";
 import { useDonorHandle } from "@/hooks/useDonorHandles";
 import { Link } from "@/src/components/navigation/Link";
@@ -50,7 +51,7 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { href: PAGES.DONOR_RESEARCH.NEW, label: "New report", icon: Plus },
   { href: PAGES.DONOR_RESEARCH.INDEX, label: "Reports", icon: FileText },
-  { href: PAGES.DONOR_RESEARCH.PERSONAS, label: "Personas", icon: UsersRound },
+  { href: PAGES.DONOR_RESEARCH.PERSONAS, label: "Donors", icon: UsersRound },
   {
     href: PAGES.DONOR_RESEARCH.DILIGENCE_TEMPLATE,
     label: "Diligence questions",
@@ -111,7 +112,7 @@ function DonorResearchSidebar({
   pathname: string;
 }) {
   return (
-    <Sidebar collapsible="icon" style={{ top: "var(--navbar-height)", bottom: 0, height: "auto" }}>
+    <Sidebar collapsible="icon" className={SIDEBAR_BELOW_NAVBAR_CLASSES}>
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel>Research</SidebarGroupLabel>
@@ -183,9 +184,9 @@ function DonorResearchBreadcrumbs({ pathname }: { pathname: string }) {
   let detailLabel: ReactNode = null;
   if (personaId) {
     if (personaQuery.isLoading) {
-      detailLabel = <output aria-label="Loading persona" className={cn(SK, "h-4 w-10 rounded")} />;
+      detailLabel = <output aria-label="Loading donor" className={cn(SK, "h-4 w-10 rounded")} />;
     } else if (personaQuery.isError || !personaQuery.data) {
-      detailLabel = "Persona";
+      detailLabel = "Donor";
     } else {
       detailLabel = personaQuery.data.opaqueLabel;
     }
@@ -248,7 +249,7 @@ function DonorResearchAppShell({
   pathname: string;
 }) {
   return (
-    <SidebarProvider className="dashv3 min-h-[calc(100vh-var(--navbar-height,64px))] bg-sf-panel">
+    <SidebarProvider className="dashv3 relative min-h-[calc(100vh-var(--navbar-height,64px))] bg-sf-panel">
       <DonorResearchSidebar advisor={advisor} pathname={pathname} />
       <SidebarInset className="bg-sf-panel">
         <header className="flex h-12 shrink-0 items-center gap-2 border-b border-border bg-background px-4">

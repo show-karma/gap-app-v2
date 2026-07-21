@@ -44,22 +44,17 @@ const PersonaEditor = dynamic(
 
 function DetailCard({
   title,
-  description,
   action,
   children,
 }: {
   title: string;
-  description?: string;
   action?: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
     <section className="flex flex-col gap-4 rounded-sf-card border border-sf-line bg-sf-card p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-col gap-[3px]">
-          <h2 className="m-0 text-[15px] font-[650] tracking-[-0.01em] text-sf-heading">{title}</h2>
-          {description ? <p className="m-0 text-[13px] text-sf-muted">{description}</p> : null}
-        </div>
+        <h2 className="m-0 text-[15px] font-[650] tracking-[-0.01em] text-sf-heading">{title}</h2>
         {action ?? null}
       </div>
       {children}
@@ -123,9 +118,7 @@ function ReportsCard({ handleId, onGuardedPush }: ReportsCardProps) {
   } else if (reportsQuery.isError) {
     body = (
       <ErrorState
-        message={
-          (reportsQuery.error as Error)?.message || "Couldn't load reports for this persona."
-        }
+        message={(reportsQuery.error as Error)?.message || "Couldn't load reports for this donor."}
         onRetry={() => reportsQuery.refetch()}
       />
     );
@@ -134,14 +127,14 @@ function ReportsCard({ handleId, onGuardedPush }: ReportsCardProps) {
     if (reports.length === 0) {
       body = (
         <EmptyState
-          body="Start a research report scoped to this persona."
+          body="Start a research report scoped to this donor."
           icon="compass"
           primary={{
             label: "New report",
             icon: "plus",
             onClick: () => onGuardedPush(newReportHref),
           }}
-          title="No reports for this persona yet"
+          title="No reports for this donor yet"
         />
       );
     } else {
@@ -174,7 +167,7 @@ function ReportsCard({ handleId, onGuardedPush }: ReportsCardProps) {
           className="text-[12.5px] font-medium text-sf-heading underline underline-offset-2 hover:no-underline"
           href={newReportHref}
         >
-          New report for this persona
+          New report for this donor
         </Link>
       }
       title="Reports"
@@ -353,19 +346,18 @@ export function PersonaDetailView({ handleId }: PersonaDetailViewProps) {
         <h1 className="text-2xl font-semibold tracking-[-0.02em] text-sf-heading">
           {handle.opaqueLabel}
         </h1>
-        <p className="mt-1 text-[13.5px] text-sf-muted">Persona profile</p>
+        <p className="mt-1 text-[13.5px] text-sf-muted">Donor profile</p>
       </div>
 
       <div
         className="grid gap-6 lg:[grid-template-columns:minmax(0,3fr)_minmax(18rem,2fr)]"
         data-persona-detail-columns
       >
-        <DetailCard
-          description="Refine writes a recommended persona into the field below — accept or reject it, then save."
-          title="Research profile"
-        >
+        {/* No card header here (design request) — the editor's own "Donor
+            preferences" label leads the card. */}
+        <section className="rounded-sf-card border border-sf-line bg-sf-card p-6">
           <PersonaEditor handleId={handleId} onDirtyChange={onPersonaDirtyChange} />
-        </DetailCard>
+        </section>
 
         <div className="flex flex-col gap-6">
           {/* HandleNotesSection renders its own heading — no DetailCard title

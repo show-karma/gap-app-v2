@@ -219,10 +219,10 @@ function DonorFilterSelect({ handles, value, onChange }: DonorFilterSelectProps)
   const [portalContainer, setPortalContainer] = useState<HTMLDivElement | null>(null);
   return (
     <div className="flex items-center gap-2 text-[12px] text-sf-muted" ref={setPortalContainer}>
-      <span className="font-medium uppercase tracking-[0.1em]">Persona</span>
+      <span className="font-medium uppercase tracking-[0.1em]">Donor</span>
       <Select disabled={disabled} onValueChange={onChange} value={value}>
         <SelectTrigger
-          aria-label="Filter reports by persona"
+          aria-label="Filter reports by donor"
           className="h-8 max-w-[14rem] rounded-full border-sf-line-strong bg-sf-card text-[12.5px] text-sf-heading"
         >
           <SelectValue />
@@ -232,7 +232,7 @@ function DonorFilterSelect({ handles, value, onChange }: DonorFilterSelectProps)
           container={portalContainer}
         >
           <SelectItem className="rounded-md text-[13px] focus:bg-sf-elev" value={ALL_DONORS}>
-            All personas
+            All donors
           </SelectItem>
           {handles.map((h) => (
             <SelectItem className="rounded-md text-[13px] focus:bg-sf-elev" key={h.id} value={h.id}>
