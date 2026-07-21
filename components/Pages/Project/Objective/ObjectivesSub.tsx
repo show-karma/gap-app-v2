@@ -2,6 +2,7 @@
 import { useParams } from "next/navigation";
 import pluralize from "pluralize";
 import { useProjectUpdates } from "@/hooks/v2/useProjectUpdates";
+import { isCancelledMilestoneStatus } from "@/utilities/milestones/getEffectiveMilestoneStatus";
 
 export const ObjectivesSub = () => {
   const { projectId } = useParams();
@@ -13,9 +14,13 @@ export const ObjectivesSub = () => {
     (item) => item.type === "milestone" || item.type === "grant"
   );
 
+  // Cancelled milestones (DEV-523) are excluded from the milestone summary.
+  const nonCancelledMilestones = actualMilestones?.filter(
+    (milestone) => !isCancelledMilestoneStatus(milestone.currentStatus)
+  );
   const completedMilestones =
-    actualMilestones?.filter((milestone) => milestone.completed)?.length || 0;
-  const totalMilestones = actualMilestones?.length || 0;
+    nonCancelledMilestones?.filter((milestone) => milestone.completed)?.length || 0;
+  const totalMilestones = nonCancelledMilestones?.length || 0;
 
   if (totalMilestones === 0) return null;
 

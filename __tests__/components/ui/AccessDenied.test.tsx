@@ -46,6 +46,14 @@ vi.mock("lucide-react", () => ({
   LogIn: (props: React.SVGProps<SVGSVGElement>) => <svg data-testid="login-icon" {...props} />,
 }));
 
+// The shared Link wrapper pulls in whitelabel + url-builder context; stub it to
+// a plain anchor so the secondaryAction tests don't need those providers.
+vi.mock("@/src/components/navigation/Link", () => ({
+  Link: ({ href, children }: { href: string; children: React.ReactNode }) => (
+    <a href={href}>{children}</a>
+  ),
+}));
+
 import { useAuth } from "@/hooks/useAuth";
 import { AccessDenied } from "@/src/components/ui/AccessDenied";
 
@@ -151,6 +159,59 @@ describe("AccessDenied", () => {
       await user.click(screen.getByRole("button", { name: /go to home/i }));
       expect(locationSpy).not.toHaveBeenCalled();
       locationSpy.mockRestore();
+    });
+  });
+
+  describe("secondaryAction (complementary CTA)", () => {
+    const action = {
+      label: "View your application",
+      href: "/community/octant/applications/REF-1",
+      message: "Looking for **your application**?",
+    };
+
+    it("renders the complementary message + link when authenticated", () => {
+      mockUseAuth.mockReturnValue({
+        authenticated: true,
+        login: mockLogin,
+      } as ReturnType<typeof useAuth>);
+
+      render(<AccessDenied secondaryAction={action} />);
+
+      // Denial CTA still present (not replaced)...
+      expect(screen.getByRole("button", { name: /go to home/i })).toBeInTheDocument();
+      // ...plus the complementary link + its Markdown message.
+      const link = screen.getByRole("link", { name: /view your application/i });
+      expect(link).toHaveAttribute("href", "/community/octant/applications/REF-1");
+      expect(screen.getByText("Looking for **your application**?")).toBeInTheDocument();
+    });
+
+    it("renders an absolute URL as a plain anchor", () => {
+      mockUseAuth.mockReturnValue({
+        authenticated: true,
+        login: mockLogin,
+      } as ReturnType<typeof useAuth>);
+
+      render(
+        <AccessDenied
+          secondaryAction={{ ...action, href: "https://grants.optimism.io/applications/REF-9" }}
+        />
+      );
+
+      expect(screen.getByRole("link", { name: /view your application/i })).toHaveAttribute(
+        "href",
+        "https://grants.optimism.io/applications/REF-9"
+      );
+    });
+
+    it("hides the complementary action for an unauthenticated visitor", () => {
+      mockUseAuth.mockReturnValue({
+        authenticated: false,
+        login: mockLogin,
+      } as ReturnType<typeof useAuth>);
+
+      render(<AccessDenied secondaryAction={action} />);
+
+      expect(screen.queryByRole("link", { name: /view your application/i })).toBeNull();
     });
   });
 

@@ -4,18 +4,21 @@ import {
   XMarkIcon,
 } from "@heroicons/react/24/outline";
 import { memo } from "react";
+import EthereumAddressToProfileName from "@/components/EthereumAddressToProfileName";
 import { KycStatusBadge } from "@/components/KycStatusIcon";
 import { DatePicker } from "@/components/Utilities/DatePicker";
 import { Button } from "@/components/ui/button";
+import { TokenBreakdown } from "@/src/features/payout-disbursement/components/TokenBreakdown";
+import type { useToggleAgreement } from "@/src/features/payout-disbursement/hooks/use-payout-disbursement";
+import type {
+  CommunityPayoutAgreementInfo,
+  PayoutDisbursement,
+  TokenTotal,
+} from "@/src/features/payout-disbursement/types/payout-disbursement";
 import {
-  type CommunityPayoutAgreementInfo,
   formatDisplayAmount,
   fromSmallestUnit,
-  type PayoutDisbursement,
-  TokenBreakdown,
-  type TokenTotal,
-  type useToggleAgreement,
-} from "@/src/features/payout-disbursement";
+} from "@/src/features/payout-disbursement/utils/format-token-amount";
 import type { KycStatusResponse } from "@/types/kyc";
 import { formatAddressForDisplay } from "@/utilities/donations/helpers";
 import { formatDate } from "@/utilities/formatDate";
@@ -115,7 +118,7 @@ export const DetailsSection = memo(function DetailsSection({
                     className="text-[10px] text-gray-400 dark:text-zinc-500"
                     title={agreement.signedBy}
                   >
-                    by {formatAddressForDisplay(agreement.signedBy)}
+                    by <EthereumAddressToProfileName address={agreement.signedBy} />
                   </span>
                 )}
                 <button

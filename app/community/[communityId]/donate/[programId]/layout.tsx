@@ -1,3 +1,4 @@
+import { notFound } from "next/navigation";
 import { registryService } from "@/services/registry.service";
 import { pagesOnRoot } from "@/utilities/pagesOnRoot";
 import { getCommunityDetails } from "@/utilities/queries/v2/getCommunityData";
@@ -13,14 +14,14 @@ export default async function Layout(props: { children: React.ReactNode; params:
   const { children } = props;
 
   if (pagesOnRoot.includes(communityId)) {
-    return undefined;
+    notFound();
   }
 
   const community = await getCommunityDetails(communityId);
-  if (!community) return undefined;
+  if (!community) notFound();
 
   const program = await registryService.searchProgramById(programId);
-  if (!program) return undefined;
+  if (!program) notFound();
 
   return (
     <div className="flex w-full h-full max-w-full flex-col justify-start max-lg:flex-col">

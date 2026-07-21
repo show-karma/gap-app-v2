@@ -201,12 +201,35 @@ describe("Lazy import enforcement for heavy libraries", () => {
     expect(content).not.toMatch(/^import\s+(?!type\s)\w+\s+from\s+['"]streamdown['"]/m);
   });
 
-  it("verifies that MarkdownEditor uses dynamic() for the editor library", () => {
-    const filePath = path.join(COMPONENTS_DIR, "Utilities", "MarkdownEditor.tsx");
+  it("verifies that SafeMdEditor uses dynamic() for the editor library", () => {
+    // md-editor-rt is dynamically imported exactly once, in the shared
+    // SafeMdEditor boundary (Sentry GAP-FRONTEND-1WY / GAP-FRONTEND-24S) --
+    // every consumer (MarkdownEditor, CommentMarkdownInput) renders through
+    // it instead of calling dynamic()/import() on md-editor-rt itself.
+    const filePath = path.join(COMPONENTS_DIR, "Utilities", "SafeMdEditor.tsx");
     const content = fs.readFileSync(filePath, "utf-8");
 
     // Should use dynamic import
     expect(content).toMatch(/dynamic\(/);
+  });
+
+  it("verifies that MarkdownEditor and CommentMarkdownInput consume SafeMdEditor, not md-editor-rt directly", () => {
+    const consumerPaths = [
+      path.join(COMPONENTS_DIR, "Utilities", "MarkdownEditor.tsx"),
+      path.join(
+        SRC_DIR,
+        "features",
+        "application-comments",
+        "components",
+        "CommentMarkdownInput.tsx"
+      ),
+    ];
+
+    for (const filePath of consumerPaths) {
+      const content = fs.readFileSync(filePath, "utf-8");
+      expect(content).toMatch(/SafeMdEditor/);
+      expect(content).not.toMatch(/dynamic\(\(\)\s*=>\s*import\(["']md-editor-rt["']\)/);
+    }
   });
 
   it("verifies that Stats chart files use dynamic() for heavy Tremor chart components", () => {

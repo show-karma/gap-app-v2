@@ -79,6 +79,14 @@ export const QUERY_KEYS = {
     CONTRACT_OWNER_BASE: ["contract-owner"] as const,
     PERMISSIONS_BASE: ["permissions"] as const,
   },
+  /**
+   * Platform-wide (cross-community) aggregate stats. Kept under a distinct prefix so it
+   * never collides with per-community stats (QUERY_KEYS.COMMUNITY.STATS), which previously
+   * shared the bare ["community-stats"] key and risked cross-contaminating invalidations.
+   */
+  PLATFORM: {
+    GLOBAL_STATS: ["platform-global-stats"] as const,
+  },
   MILESTONES: {
     PROJECT_GRANT_MILESTONES: (projectId: string, programId: string) =>
       ["project-grant-milestones", projectId, programId] as const,
@@ -86,6 +94,26 @@ export const QUERY_KEYS = {
   },
   APPLICATIONS: {
     BY_PROJECT_UID: (projectUID: string) => ["application-by-project-uid", projectUID] as const,
+    GRANTEE_ACCESS: (address?: string, communitySlug?: string, programId?: string) =>
+      [
+        "application-grantee-access",
+        address ?? null,
+        communitySlug ?? null,
+        programId ?? null,
+      ] as const,
+    GRANTEE_MILESTONE_ACCESS: (
+      address?: string,
+      communitySlug?: string,
+      programId?: string,
+      projectUid?: string
+    ) =>
+      [
+        "application-grantee-milestone-access",
+        address ?? null,
+        communitySlug ?? null,
+        programId ?? null,
+        projectUid ?? null,
+      ] as const,
     COMMENTS: (referenceNumber: string) => ["application-comments", referenceNumber] as const,
     INVOICE_CONFIG: (referenceNumber: string) =>
       ["applicationInvoiceConfig", referenceNumber] as const,
@@ -113,6 +141,7 @@ export const QUERY_KEYS = {
     DETAILS: (communityUIDorSlug?: string) => ["communityDetails", communityUIDorSlug] as const,
     DETAILS_V2: (communityUIDorSlug?: string) =>
       ["community-details-v2", communityUIDorSlug] as const,
+    STATS: (communityUIDorSlug?: string) => ["community-stats", communityUIDorSlug] as const,
     PROJECTS: (slug: string, options?: unknown) =>
       ["community-projects-v2", slug, options] as const,
     GRANTS: (communitySlug: string) => ["community-grants", communitySlug] as const,
@@ -230,6 +259,7 @@ export const QUERY_KEYS = {
       sortOrder?: string;
       limit?: number;
       hasPayoutAddress?: boolean;
+      page?: number;
     }) =>
       [
         "projects-explorer-infinite",
@@ -238,6 +268,7 @@ export const QUERY_KEYS = {
         params.sortOrder || "desc",
         params.limit ?? 50,
         params.hasPayoutAddress ?? false,
+        params.page ?? 1,
       ] as const,
   },
   INDICATORS: {

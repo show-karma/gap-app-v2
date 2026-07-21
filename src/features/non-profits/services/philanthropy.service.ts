@@ -46,7 +46,29 @@ function buildSortQs(sort?: SortOption): string {
   return qs ? `?${qs}` : "";
 }
 
+export interface DeepResearchRequestInput {
+  email: string;
+  query: string;
+}
+
+const DeepResearchResponseSchema = z.object({ success: z.boolean() });
+
 export const philanthropyService = {
+  /**
+   * Submits a free-text deep-research brief plus the requester's email to the
+   * indexer, which emails the Karma team for manual follow-up.
+   */
+  submitDeepResearchRequest(
+    input: DeepResearchRequestInput
+  ): ResultAsync<{ success: boolean }, AppError> {
+    return apiFetch(
+      NON_PROFITS_API.PHILANTHROPY.DEEP_RESEARCH,
+      DeepResearchResponseSchema,
+      "POST",
+      input
+    );
+  },
+
   getFoundation(id: string): ResultAsync<Foundation, AppError> {
     return apiFetch(NON_PROFITS_API.PHILANTHROPY.FOUNDATIONS.GET(id), FoundationSchema);
   },

@@ -10,13 +10,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { Link } from "@/src/components/navigation/Link";
-import type { ApplicationStatus } from "@/types/whitelabel-entities";
-import { cn } from "@/utilities/tailwind";
-import { getStatusVisual } from "./application-status-ui";
 
 interface ApplicationHeaderProps {
   programName: string;
-  status: ApplicationStatus;
   showEditButton: boolean;
   editHref: string;
   publicHref: string;
@@ -27,14 +23,12 @@ interface ApplicationHeaderProps {
 
 export function ApplicationHeader({
   programName,
-  status,
   showEditButton,
   editHref,
   publicHref,
   canReviewInAdmin,
   reviewHref,
 }: ApplicationHeaderProps) {
-  const visual = getStatusVisual(status);
   const [, copy] = useCopyToClipboard();
 
   const handleCopyLink = () => {
@@ -50,16 +44,6 @@ export function ApplicationHeader({
       </h1>
 
       <div className="flex items-center gap-2.5">
-        <span
-          className={cn(
-            "inline-flex h-9 items-center gap-2 rounded-full px-4 text-sm font-semibold",
-            visual.pillClass
-          )}
-        >
-          <span className={cn("h-2 w-2 rounded-full", visual.dotClass)} />
-          {visual.label}
-        </span>
-
         {showEditButton && (
           <Link
             href={editHref}

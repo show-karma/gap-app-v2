@@ -3,14 +3,33 @@
 // https://docs.sentry.io/platforms/javascript/guides/nextjs/
 
 import * as Sentry from "@sentry/nextjs";
+import { isAttestRetryExhaustedError } from "./utilities/attestWithRetry";
+import {
+  installChunkRecoveryListeners,
+  shouldDropChunkErrorEvent,
+} from "./utilities/chunkRecovery";
+import { isChunkLoadError } from "./utilities/isChunkLoadError";
 import { sentryIgnoreErrors } from "./utilities/sentry/ignoreErrors";
-import { isTransientHttpError, isTransientNetworkError } from "./utilities/sentry/transientErrors";
+import {
+  isTransientHttpError,
+  isTransientNetworkError,
+  isTransientWalletTimeoutError,
+} from "./utilities/sentry/transientErrors";
 import { isIndexedDbInternalError } from "./utilities/sentry/walletStorageErrors";
 
 Sentry.init({
   enabled: process.env.NEXT_PUBLIC_VERCEL_ENV === "production",
   dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
   ignoreErrors: sentryIgnoreErrors,
+  // Browser-extension content scripts (wallet extensions and similar) inject
+  // `injectedScript.bundle.js` into every page and throw against it — most
+  // commonly `Cannot read properties of undefined (reading 'sendMessage')`
+  // when their `chrome.runtime` handle is invalidated. We never ship a file by
+  // that name, so drop any event whose crash frame is that injected bundle.
+  // Sibling to the chrome.runtime.sendMessage signature already in
+  // utilities/sentry/ignoreErrors.ts (browserExtensionErrors).
+  // See https://karma-crypto-inc.sentry.io/issues/GAP-FRONTEND-257
+  denyUrls: [/injectedScript\.bundle\.js/],
   integrations: [],
   // Defence in depth for transient Axios "Network Error" events that
   // bubble through code paths bypassing `errorManager` (raw React errors,
@@ -19,9 +38,36 @@ Sentry.init({
   // DEV-271 / GAP-FRONTEND-1R1.
   beforeSend(event, hint) {
     const original = hint?.originalException;
+    // The exhausted-retry wrapper is actionable and MUST report, even though
+    // its `.cause` is a transient wallet timeout that would otherwise be
+    // dropped below. Key off the structural flag, not message wording. See
+    // GAP-FRONTEND-1Y2 and ./utilities/attestWithRetry.ts
+    if (isAttestRetryExhaustedError(original)) {
+      return event;
+    }
+    // Stale-deploy chunk failures: drop while one-time reload recovery is
+    // possible/in flight; report only when recovery is exhausted. See
+    // GAP-FRONTEND-20T / utilities/chunkRecovery.ts. Deliberately NOT in
+    // `sentryIgnoreErrors` — see the note in utilities/sentry/ignoreErrors.ts.
+    if (shouldDropChunkErrorEvent(original)) {
+      return null;
+    }
+    if (isChunkLoadError(original)) {
+      // Recovery already ran once this session and the chunk still failed —
+      // tag as exhausted so surviving events are triage-ready (offline
+      // client, blocked chunk, genuine 404 in the new build).
+      event.tags = { ...event.tags, chunk_recovery: "exhausted" };
+    }
     if (
       isTransientNetworkError(original) ||
       isTransientHttpError(original) ||
+      // ethers "could not coalesce error" / "Wallet timeout" surfaced by a
+      // transient wallet/bundler blip during attestation. Retried at the send
+      // layer, so a recovered timeout never reaches here; this drops the raw
+      // signature that leaks through paths bypassing the retry (an un-awaited
+      // rejection from an abandoned attempt, a third-party SDK fetch). See
+      // GAP-FRONTEND-1Y2 and ./utilities/sentry/transientErrors.ts
+      isTransientWalletTimeoutError(original) ||
       // Wallet SDKs (WalletConnect/Coinbase/base-account) leak an un-awaited
       // IndexedDB read rejection on startup when the browser's IDB store is
       // corrupted/unavailable. Environmental and not actionable from our code.
@@ -47,6 +93,11 @@ Sentry.init({
   // Setting this option to true will print useful information to the console while you're setting up Sentry.
   debug: false,
 });
+
+// Runs as early as possible on the client (before the app's own chunks
+// evaluate), so it catches a chunk-load rejection even during initial
+// hydration. See GAP-FRONTEND-20T / utilities/chunkRecovery.ts.
+installChunkRecoveryListeners();
 
 // Lazy-load Replay after init — keeps ~400KB out of the shared bundle.
 // The Replay SDK is fetched on-demand and added to the existing Sentry client.

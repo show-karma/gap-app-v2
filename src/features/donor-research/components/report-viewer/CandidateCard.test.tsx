@@ -1,14 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { ResearchReportCandidate } from "@/types/donor-research";
-
-// FinancialsTable (rendered by CandidateCard) pulls in the brief fonts, which
-// load next/font/google — unavailable in the unit runtime. Stub it.
-vi.mock("../report-brief/fonts", () => ({
-  briefDisplay: { className: "brief-display" },
-  briefProse: { className: "brief-prose" },
-}));
-
 import { CandidateCard } from "./CandidateCard";
 
 function buildCandidate(overrides: Partial<ResearchReportCandidate> = {}): ResearchReportCandidate {
@@ -28,7 +20,8 @@ function buildCandidate(overrides: Partial<ResearchReportCandidate> = {}): Resea
       donorMatch: 0.8,
       compliance: 1,
     },
-    topThreeFlag: true,
+    featuredFlag: true,
+    manualPosition: null,
     complianceVerdict: "verified",
     disqualificationReasons: [],
     complianceChecks: [

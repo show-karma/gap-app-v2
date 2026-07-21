@@ -1,0 +1,23 @@
+{
+  "install": {
+    "targets": {
+      ".taskless": {
+        "skills": ["taskless"],
+        "commands": ["tskl.md"],
+        "mode": "canonical"
+      },
+      ".claude": {
+        "skills": ["taskless"],
+        "commands": ["tskl.md"],
+        "mode": "reference"
+      },
+      ".cursor": {
+        "skills": ["taskless"],
+        "commands": ["tskl.md"],
+        "mode": "reference"
+      }
+    },
+    "cliVersion": "0.9.0"
+  },
+  "version": 3
+}

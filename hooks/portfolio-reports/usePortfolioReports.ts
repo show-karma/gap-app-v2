@@ -7,7 +7,6 @@ import {
   type CreateReportConfigRequest,
   type GenerateReportRequest,
   type PortfolioReport,
-  type ReportConfig,
   reportPollIntervalMs,
   type UpdateReportConfigRequest,
 } from "@/types/portfolio-report";
@@ -21,6 +20,12 @@ const QUERY_KEYS = {
   published: (slug: string) => ["portfolio-reports-published", slug] as const,
   publishedRunDate: (slug: string, runDate: string) =>
     ["portfolio-report-published", slug, runDate] as const,
+  /**
+   * Deliberately nested under `publishedRunDate` so the existing
+   * publish/unpublish invalidations prefix-match and clear this too.
+   */
+  publishedRunDateConfig: (slug: string, runDate: string, configSlug: string) =>
+    ["portfolio-report-published", slug, runDate, configSlug] as const,
 };
 
 // ── Config queries ───────────────────────────────────────────
@@ -150,6 +155,7 @@ export function useReportRowSync(
           if (r.id !== data.id || r === data) return r;
           if (
             r.status === data.status &&
+            r.title === data.title &&
             r.content === data.content &&
             r.generationError === data.generationError &&
             r.updatedAt === data.updatedAt
@@ -189,6 +195,21 @@ export function useRegenerateReport(communitySlug: string) {
     mutationFn: (reportId: string) => portfolioService.regenerateReport(communitySlug, reportId),
     onSuccess: (data) => {
       queryClient.setQueryData(QUERY_KEYS.report(communitySlug, data.id), data);
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.reports(communitySlug),
+      });
+    },
+  });
+}
+
+export function useDeleteReport(communitySlug: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (reportId: string) => portfolioService.deleteReport(communitySlug, reportId),
+    onSuccess: (_data, reportId) => {
+      queryClient.removeQueries({
+        queryKey: QUERY_KEYS.report(communitySlug, reportId),
+      });
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.reports(communitySlug),
       });
@@ -237,10 +258,25 @@ export function useUnpublishReport(communitySlug: string) {
 export function useUpdateReportContent(communitySlug: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ reportId, content }: { reportId: string; content: string }) =>
-      portfolioService.updateReportContent(communitySlug, reportId, content),
+    mutationFn: ({
+      reportId,
+      content,
+      title,
+    }: {
+      reportId: string;
+      content: string;
+      title?: string | null;
+    }) => portfolioService.updateReportContent(communitySlug, reportId, content, title),
     onSuccess: (data: PortfolioReport) => {
       queryClient.setQueryData(QUERY_KEYS.report(communitySlug, data.id), data);
+      // Reflect the edit on the admin list right away. A draft has no public
+      // surface, so without this a title/content change wouldn't show on the
+      // manage list until the list happened to refetch — reading as "the title
+      // didn't save" for unpublished reports.
+      queryClient.setQueriesData<PortfolioReport[] | undefined>(
+        { queryKey: QUERY_KEYS.reports(communitySlug) },
+        (old) => old?.map((report) => (report.id === data.id ? data : report))
+      );
       if (data.status === "published") {
         queryClient.invalidateQueries({
           queryKey: QUERY_KEYS.published(communitySlug),
@@ -263,11 +299,67 @@ export function usePublishedReports(communitySlug: string) {
   });
 }
 
-export function usePublishedReport(communitySlug: string, runDate: string) {
+/**
+ * Fetches the published report for a run date. Pass `configSlug` to address a
+ * specific report — without it, a date shared by two configs resolves to the
+ * most recently published one.
+ */
+export function usePublishedReport(
+  communitySlug: string,
+  runDate: string,
+  configSlug?: string | null
+) {
   return useQuery({
-    queryKey: QUERY_KEYS.publishedRunDate(communitySlug, runDate),
-    queryFn: () => portfolioService.getPublishedReportByRunDate(communitySlug, runDate),
+    queryKey: configSlug
+      ? QUERY_KEYS.publishedRunDateConfig(communitySlug, runDate, configSlug)
+      : QUERY_KEYS.publishedRunDate(communitySlug, runDate),
+    queryFn: () =>
+      configSlug
+        ? portfolioService.getPublishedReportByRunDateAndConfigSlug(
+            communitySlug,
+            runDate,
+            configSlug
+          )
+        : portfolioService.getPublishedReportByRunDate(communitySlug, runDate),
     enabled: Boolean(communitySlug && runDate),
+  });
+}
+
+/**
+ * Admin-only fallback for the unified report URL (DEV-496): when the public
+ * `/reports/:runDate` page finds no published report, a community admin can
+ * still preview the draft at the same URL. Resolves the report for the run date
+ * from the admin list (auth-gated server-side, so non-admins never see drafts).
+ * Only fires when `enabled` — i.e. published lookup came back empty AND the
+ * viewer is a resolved community admin.
+ *
+ * Restricted to `draft` reports: matching only on `runDate` could otherwise
+ * surface a failed/generating/published row and expose it to the document view
+ * as a draft preview.
+ */
+/**
+ * Finds the draft an admin can preview at a report URL. `configSlug` narrows to
+ * a specific config: matching on `runDate` alone returns whichever draft comes
+ * first when two configs ran the same day, which is not necessarily the one the
+ * URL points at.
+ */
+export function useAdminReportByRunDate(
+  communitySlug: string,
+  runDate: string,
+  enabled: boolean,
+  configSlug?: string
+) {
+  return useQuery({
+    queryKey: [...QUERY_KEYS.reports(communitySlug), "by-run-date", runDate, configSlug ?? null],
+    queryFn: async () => {
+      const reports = await portfolioService.listReports(communitySlug);
+      const drafts = reports.filter(
+        (report) => report.runDate === runDate && report.status === "draft"
+      );
+      if (!configSlug) return drafts[0] ?? null;
+      return drafts.find((report) => report.reportConfigSlug === configSlug) ?? null;
+    },
+    enabled: Boolean(communitySlug && runDate) && enabled,
   });
 }
 

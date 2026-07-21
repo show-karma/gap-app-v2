@@ -39,7 +39,7 @@ export const MilestoneDelete: FC<MilestoneDeleteProps> = ({ milestone }) => {
   const { performOffChainRevoke } = useOffChainRevoke();
 
   const deleteFn = async () => {
-    if (!address || !project) return;
+    if (!project) return;
     setIsDeletingMilestone(true);
     startAttestation("Deleting milestone...");
     try {
@@ -95,31 +95,15 @@ export const MilestoneDelete: FC<MilestoneDeleteProps> = ({ milestone }) => {
         await performOffChainRevoke({
           uid: milestoneInstance.uid,
           chainID: milestoneInstance.chainID,
-          onError: (error) => {
-            errorManager(
-              MESSAGES.MILESTONES.DELETE.ERROR(milestone.title || "Milestone"),
-              error,
-              {
-                milestone: milestone.uid,
-                grant: milestone.refUID,
-                address: address,
-              },
-              {
-                error: MESSAGES.MILESTONES.DELETE.ERROR(milestone.title || "Milestone"),
-              }
-            );
-          },
-          onSuccess: async () => {
-            changeStepperStep("indexed");
-            // Refresh the grant store to update the UI
-            await refreshGrant();
-          },
           toastMessages: {
             success: MESSAGES.MILESTONES.DELETE.SUCCESS,
             loading: MESSAGES.MILESTONES.DELETE.LOADING,
           },
           checkIfExists: checkIfAttestationExists,
         });
+        changeStepperStep("indexed");
+        // Refresh the grant store to update the UI
+        await refreshGrant();
       } else {
         try {
           const res = await milestoneInstance.revoke(walletSigner, changeStepperStep);
@@ -142,22 +126,21 @@ export const MilestoneDelete: FC<MilestoneDeleteProps> = ({ milestone }) => {
           // Silently fallback to off-chain revoke
           setIsStepper(false); // Reset stepper since we're falling back
 
-          const success = await performOffChainRevoke({
-            uid: milestoneInstance.uid as `0x${string}`,
-            chainID: milestoneInstance.chainID,
-            checkIfExists: checkIfAttestationExists,
-            onSuccess: async () => {
-              // Refresh the grant store to update the UI
-              await refreshGrant();
-            },
-            toastMessages: {
-              success: MESSAGES.MILESTONES.DELETE.SUCCESS,
-              loading: MESSAGES.MILESTONES.DELETE.LOADING,
-            },
-          });
-
-          if (!success) {
-            // Both methods failed - throw the original error to maintain expected behavior
+          try {
+            await performOffChainRevoke({
+              uid: milestoneInstance.uid as `0x${string}`,
+              chainID: milestoneInstance.chainID,
+              checkIfExists: checkIfAttestationExists,
+              toastMessages: {
+                success: MESSAGES.MILESTONES.DELETE.SUCCESS,
+                loading: MESSAGES.MILESTONES.DELETE.LOADING,
+              },
+            });
+            // Refresh the grant store to update the UI
+            await refreshGrant();
+          } catch {
+            // Both methods failed - throw the original on-chain error to
+            // preserve its context.
             throw onChainError;
           }
         }

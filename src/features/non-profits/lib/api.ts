@@ -12,6 +12,7 @@ export const NON_PROFITS_API = {
     LIST: "/v2/search-history",
     GET: (id: string) => `/v2/search-history/${id}`,
     CREATE: "/v2/search-history",
+    APPEND_TURN: (id: string) => `/v2/search-history/${id}/turns`,
     DELETE: (id: string) => `/v2/search-history/${id}`,
     CLEAR: "/v2/search-history",
   },
@@ -24,6 +25,7 @@ export const NON_PROFITS_API = {
   PHILANTHROPY: {
     QUERY: "/v2/philanthropy/agent-query",
     QUERY_STREAM: "/v2/philanthropy/agent-query/stream",
+    DEEP_RESEARCH: "/v2/philanthropy/deep-research-request",
     FEEDBACK: "/v2/agent/rating",
     FOUNDATIONS: {
       GET: (id: string) => `/v2/philanthropy/foundations/${id}`,

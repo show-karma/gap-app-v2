@@ -245,8 +245,8 @@ export const useIsReviewer = (programId?: string) => {
  * });
  * ```
  */
-export const useReviewerPrograms = () => {
-  const result = usePermissions({ role: "reviewer" });
+export const useReviewerPrograms = (options?: { enabled?: boolean }) => {
+  const result = usePermissions({ role: "reviewer", enabled: options?.enabled });
 
   return {
     programs: result.programs,

@@ -1,4 +1,4 @@
-import { MilestoneLifecycleStatus } from "@/src/features/payout-disbursement";
+import { MilestoneLifecycleStatus } from "@/src/features/payout-disbursement/types/payout-disbursement";
 import { formatDate } from "@/utilities/formatDate";
 import { MILESTONE_STATUS_LABEL } from "@/utilities/milestones/getEffectiveMilestoneStatus";
 
@@ -38,6 +38,10 @@ export function getMilestoneStatusTooltip(
         ? parts.join(" · ")
         : MILESTONE_STATUS_LABEL[MilestoneLifecycleStatus.PENDING];
     }
+    case MilestoneLifecycleStatus.CANCELLED:
+      return statusUpdatedAt
+        ? `Cancelled on ${fmtDate(statusUpdatedAt)}`
+        : MILESTONE_STATUS_LABEL[MilestoneLifecycleStatus.CANCELLED];
     default:
       return effectiveStatus;
   }

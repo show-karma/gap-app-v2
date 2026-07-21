@@ -1,3 +1,4 @@
+import { notFound } from "next/navigation";
 import { CommunityGrantsDonate } from "@/components/CommunityGrantsDonate";
 import { pagesOnRoot } from "@/utilities/pagesOnRoot";
 import { getCommunityProjects } from "@/utilities/queries/v2/getCommunityData";
@@ -13,7 +14,7 @@ export default async function Page(props: Props) {
   const { communityId, programId } = await props.params;
 
   if (pagesOnRoot.includes(communityId)) {
-    return undefined;
+    notFound();
   }
 
   const initialProjects = await getCommunityProjects(communityId, {

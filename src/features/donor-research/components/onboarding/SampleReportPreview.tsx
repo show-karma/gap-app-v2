@@ -7,10 +7,17 @@
  * inline fixture data. No API calls.
  *
  * Intentionally not connected to PAGES or any real candidate — this is
- * marketing-shape content.
+ * marketing-shape content. Visually it reuses the report brief's Soft
+ * building blocks (`RankBadge`, `OurTake`, `badgeClasses`) so the sample
+ * matches the P3 report redesign (spec 2.3) rather than drifting into its
+ * own bespoke look.
  */
 
+import { memo } from "react";
+import type { BadgeTone } from "@/components/Pages/Dashboard/v3/primitives";
+import { badgeClasses } from "@/components/Pages/Dashboard/v3/soft-classes";
 import type { SocialMetrics } from "@/types/donor-research";
+import { OurTake, RankBadge } from "../report-brief/CandidateChrome";
 import { compositeBand } from "../report-brief/scoring";
 import { SocialPresence } from "../report-viewer/SocialPresence";
 
@@ -186,27 +193,38 @@ const SUPPORTING: SampleCandidate = {
   social: null,
 };
 
+// Mirrors the real report's `labelForRank` (ReportBrief.tsx): rank 2/3 get
+// editorial labels, rank 4+ (the "Other candidates" card below) is "Alternate".
+const RANK_LABEL = ["Lead", "Runner-up", "Third look", "Alternate"];
+
 export function SampleReportPreview() {
   return (
-    <div className="rounded-md border border-dashed border-border bg-muted/20 p-4">
-      <div className="mb-3 flex items-center justify-between">
-        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-          Sample report
-        </p>
-        <p className="text-xs text-muted-foreground">Criteria: Pacific NW climate, $25K</p>
+    <div className="rounded-sf-card border border-sf-line bg-sf-elev p-4 sm:p-5">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+        <span className={badgeClasses("gray")}>Sample report</span>
+        <span className="text-[12px] text-sf-muted">Criteria: Pacific NW climate, $25K</span>
       </div>
 
-      <h3 className="mb-3 text-sm font-semibold text-foreground">Top recommendations</h3>
-      <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
-        {TOP_THREE.map((candidate) => (
-          <SampleCandidateCard key={candidate.ein} candidate={candidate} variant="one-pager" />
+      <p className="mb-3 text-[10.5px] font-[650] uppercase tracking-[0.14em] text-sf-muted">
+        Top recommendations
+      </p>
+      <div className="grid grid-cols-1 gap-3">
+        {TOP_THREE.map((candidate, i) => (
+          <SampleCandidateCard
+            candidate={candidate}
+            key={candidate.ein}
+            rank={i + 1}
+            variant="one-pager"
+          />
         ))}
       </div>
 
-      <h3 className="mb-3 mt-6 text-sm font-semibold text-foreground">Other candidates</h3>
-      <SampleCandidateCard candidate={SUPPORTING} variant="detail" />
+      <p className="mb-3 mt-6 text-[10.5px] font-[650] uppercase tracking-[0.14em] text-sf-muted">
+        Other candidates
+      </p>
+      <SampleCandidateCard candidate={SUPPORTING} rank={TOP_THREE.length + 1} variant="detail" />
 
-      <p className="mt-4 text-xs text-muted-foreground">
+      <p className="mt-4 text-[12px] leading-[1.55] text-sf-muted">
         This is an illustrative example. Real reports include the EIN + mailing address on every
         recommendation and a transparent scoring matrix.
       </p>
@@ -216,38 +234,66 @@ export function SampleReportPreview() {
 
 interface SampleCardProps {
   candidate: SampleCandidate;
+  rank: number;
   variant: "one-pager" | "detail";
 }
 
-function SampleCandidateCard({ candidate, variant }: SampleCardProps) {
+function verdictTone(verdict: SampleCandidate["verdict"]): BadgeTone {
+  if (verdict === "verified") return "green";
+  if (verdict === "partial") return "amber";
+  return "red";
+}
+
+const SampleCandidateCard = memo(function SampleCandidateCard({
+  candidate,
+  rank,
+  variant,
+}: SampleCardProps) {
   const band = compositeBand(candidate.composite, false);
+  const composite100 = Math.round(candidate.composite * 100);
+
   return (
-    <article className="rounded-lg border border-border bg-card p-3">
-      <header className="mb-2 flex items-start justify-between gap-2">
+    // min-w-0 lets the card shrink inside the grid (grid items default to
+    // min-width:auto, which otherwise forces the wide social table to
+    // overflow the narrow lg:grid-cols-3 columns).
+    <article className="min-w-0 rounded-sf-card border border-sf-line bg-sf-card p-3.5">
+      <RankBadge
+        emphasis={rank === 1 ? "lead" : "runner-up"}
+        label={RANK_LABEL[rank - 1]}
+        rank={rank}
+      />
+
+      <header className="mt-2 flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <h4 className="truncate text-sm font-semibold">{candidate.name}</h4>
-          <p className="text-xs text-muted-foreground">
-            EIN {candidate.ein} · Verdict: <span className="capitalize">{candidate.verdict}</span>
+          <h4 className="truncate text-[15px] font-semibold tracking-[-0.01em] text-sf-heading">
+            {candidate.name}
+          </h4>
+          <p className="mt-0.5 font-mono text-[11.5px] tabular-nums text-sf-muted">
+            EIN {candidate.ein}
           </p>
         </div>
-        <div className="text-right">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-brand-emphasis dark:text-brand-subtle">
-            {band}
-          </p>
-          <p className="font-mono text-lg leading-none tabular-nums">
-            {Math.round(candidate.composite * 100)}
-            <span className="text-xs text-muted-foreground">{" / 100"}</span>
-          </p>
-        </div>
+        <span className={badgeClasses(verdictTone(candidate.verdict))}>{candidate.verdict}</span>
       </header>
+
+      <div className="mt-2.5 flex items-baseline gap-2">
+        <span className="font-mono text-2xl font-[750] leading-none tabular-nums text-sf-heading">
+          {composite100}
+          <span className="ml-0.5 text-xs font-normal text-sf-muted">/100</span>
+        </span>
+        <span className={badgeClasses(composite100 >= 40 ? "brand" : "amber")}>{band}</span>
+      </div>
+
       {variant === "one-pager" && candidate.onePager ? (
-        <p className="mt-2 rounded-md bg-muted/40 p-2 text-xs">{candidate.onePager}</p>
-      ) : null}
-      {candidate.social ? (
         <div className="mt-3">
+          <OurTake text={candidate.onePager} />
+        </div>
+      ) : null}
+
+      {candidate.social ? (
+        <div className="mt-3 overflow-x-auto">
           <SocialPresence metrics={candidate.social} />
         </div>
       ) : null}
     </article>
   );
-}
+});

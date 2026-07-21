@@ -1,0 +1,28 @@
+id: radix-use-client
+language: tsx
+severity: warning
+message: Files importing @radix-ui/* must have a top-of-file "use client" directive.
+note: |
+  CLAUDE.md gap-app-v2: '"use client" — Required on any file importing
+  @radix-ui/*.' Radix primitives are interactive/client-only; without the
+  directive the file is treated as a server component and breaks at runtime.
+ignores:
+  - "**/__tests__/**"
+  - "**/*.test.ts"
+  - "**/*.test.tsx"
+  - "**/*.spec.ts"
+  - "**/*.spec.tsx"
+  - "scripts/**"
+rule:
+  kind: import_statement
+  has:
+    kind: string
+    regex: '@radix-ui/'
+    stopBy: end
+  inside:
+    kind: program
+    not:
+      has:
+        kind: expression_statement
+        regex: 'use client'
+        stopBy: end

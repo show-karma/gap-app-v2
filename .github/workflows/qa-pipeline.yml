@@ -417,8 +417,6 @@ jobs:
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v5
-        with:
-          version: 10
 
       - name: Setup Node.js
         uses: actions/setup-node@v5
@@ -568,8 +566,6 @@ jobs:
       - name: Setup pnpm
         if: steps.shard-count.outputs.shard_count != '0'
         uses: pnpm/action-setup@v5
-        with:
-          version: 10
 
       - name: Setup Node.js
         if: steps.shard-count.outputs.shard_count != '0'
@@ -911,8 +907,6 @@ jobs:
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v5
-        with:
-          version: 10
 
       - name: Setup Node.js
         uses: actions/setup-node@v5
@@ -992,6 +986,20 @@ jobs:
           QA_TEST_OTP: ${{ secrets.QA_TEST_OTP }}
           CI: 'true'
         run: pnpm exec playwright test --config=e2e/playwright.config.ts --project=setup
+
+      # When the Privy login hangs, the screenshots + Playwright trace are the
+      # only way to see where. The setup project retains a trace on failure;
+      # surface it (and the HTML report) as an artifact for diagnosis.
+      - name: Upload auth setup trace on failure
+        if: failure()
+        uses: actions/upload-artifact@v5
+        with:
+          name: dogfood-auth-prep-trace
+          path: |
+            e2e/test-results/
+            e2e/playwright-report/
+          retention-days: 3
+          if-no-files-found: ignore
 
       - name: Verify storage state was saved
         run: |
@@ -1088,8 +1096,6 @@ jobs:
       - name: Setup pnpm
         if: steps.scope.outputs.scope_pages != ''
         uses: pnpm/action-setup@v5
-        with:
-          version: 10
 
       - name: Setup Node.js
         if: steps.scope.outputs.scope_pages != ''
@@ -1268,13 +1274,30 @@ jobs:
                entries, infer the SINGLE most likely URL the component affects and visit that.
             2. On each page: load via state, take ONE screenshot, scan console errors, interact briefly.
             3. Do NOT repeat scenarios already covered by qa-plan.md (if present).
-            4. CLASSIFY EVERY ISSUE: 'pr-caused' (file in git diff) or 'pre-existing' (not in diff).
+            4. CLASSIFY EVERY ISSUE 'pr-caused' or 'pre-existing' — each needs its OWN evidence. A changed/touched
+               file establishes SCOPE (what to inspect), NOT causation. Mark 'pr-caused' ONLY with an observed
+               before/after regression or direct causal evidence. Mark 'pre-existing' ONLY with evidence it predates
+               the PR (baseline/existing behavior). Lack of PR causation does NOT prove pre-existing; if neither is
+               established, gather evidence or do NOT report it (not a blocking finding).
             5. Do NOT call 'gh issue create'. Write findings to dogfood-findings-\$SHARD_ID.json per the
                skill's CI Pipeline Mode schema (includes fingerprint field).
             6. Also write dogfood-results.json: {\"total\":N,\"critical\":N,\"high\":N,\"medium\":N,\"low\":N,\"preexisting\":N,\"blocking\":bool}
                where critical/high counts = PR-caused only.
             7. Do NOT post a separate PR comment.
-            8. If you hit the 6-min mark with 0 findings, write empty results JSON and exit cleanly — that is success."
+            8. If you hit the 6-min mark with 0 findings, write empty results JSON and exit cleanly — that is success.
+            9. INTERACTION VALIDITY — clearing inputs: never clear a React/controlled input with an empty fill
+               (agent-browser fill @ref with an empty value). An empty fill emits a single untrusted event that
+               React's value-tracker ignores, so the field and any derived URL/results do NOT change — a false
+               stale-state finding. To clear: focus (or click) the field, then 'press Control+a' and 'press Backspace',
+               and wait for the debounce before asserting URL/state/results. Prefer 'type' over 'fill' for entering text.
+            10. INTERACTION VALIDITY — click/navigation: before reporting a click or navigation failure, run
+               'scrollintoview @ref', wait for layout to settle, take a fresh snapshot for a current ref, and click that.
+               If it still does not navigate, confirm the trusted event targeted the intended element (not <html> or an
+               overlay from a layout shift / off-screen coordinate). If the target was wrong, classify it as a driver/harness
+               miss, NOT an app bug.
+            11. EVIDENCE — duplicates: repeated labels/titles are NOT duplicate records. Before reporting duplicate or
+               repeated items (cards/rows/list entries), compare a stable identity (href/slug/id). Distinct identities =
+               distinct records (usually seeded data) — no finding. Report a duplicate only when the stable identity itself repeats."
         timeout-minutes: 10
 
       - name: Upload dogfood shard artifacts

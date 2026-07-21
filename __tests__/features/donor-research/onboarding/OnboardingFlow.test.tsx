@@ -33,6 +33,19 @@ vi.mock("@/services/donor-research.service", () => ({
   fetchMyCounters: vi.fn(),
 }));
 
+// Controllable Privy bridge so we can simulate a logged-in email/Google
+// session. Defaults to an unresolved session (no pre-fill).
+interface MockPrivyValue {
+  ready: boolean;
+  authenticated: boolean;
+  user: { email?: { address: string }; google?: { email: string } } | null;
+}
+const DEFAULT_PRIVY: MockPrivyValue = { ready: false, authenticated: false, user: null };
+let mockPrivyValue: MockPrivyValue = DEFAULT_PRIVY;
+vi.mock("@/contexts/privy-bridge-context", () => ({
+  usePrivyBridge: () => mockPrivyValue,
+}));
+
 // SampleReportPreview pulls in unrelated fixture content; keep the wizard
 // test focused on step semantics.
 vi.mock("@/src/features/donor-research/components/onboarding/SampleReportPreview", () => ({
@@ -71,6 +84,7 @@ function getCurrentStepLabel(): string | null {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  mockPrivyValue = DEFAULT_PRIVY;
 });
 
 describe("OnboardingFlow — loading state", () => {
@@ -191,6 +205,7 @@ describe("OnboardingFlow — form submission", () => {
     await advanceToForm(user);
 
     await user.type(screen.getByLabelText(/display name/i), "Avery Boutique");
+    await user.type(screen.getByLabelText(/email/i), "avery@example.com");
     await user.click(screen.getByRole("button", { name: /^continue$/i }));
 
     await waitFor(() => {
@@ -211,11 +226,115 @@ describe("OnboardingFlow — form submission", () => {
     await advanceToForm(user);
 
     await user.type(screen.getByLabelText(/display name/i), "Avery Boutique");
+    await user.type(screen.getByLabelText(/email/i), "avery@example.com");
     await user.click(screen.getByRole("button", { name: /^continue$/i }));
 
     const alert = await screen.findByText(/boom from server/i);
     expect(alert).toHaveAttribute("role", "alert");
     expect(mockReplace).not.toHaveBeenCalledWith(PAGES.DONOR_RESEARCH.INDEX);
+  });
+});
+
+describe("OnboardingFlow — email pre-fill from session", () => {
+  beforeEach(() => {
+    mockFetchCurrentAdvisor.mockResolvedValue(null);
+  });
+
+  async function advanceToForm(user: ReturnType<typeof userEvent.setup>) {
+    await user.click(await screen.findByRole("button", { name: /continue to sample report/i }));
+    await user.click(await screen.findByRole("button", { name: /continue to setup/i }));
+    await screen.findByRole("heading", { name: /get started/i });
+  }
+
+  it("pre-fills the email from a Privy email login", async () => {
+    mockPrivyValue = {
+      ready: true,
+      authenticated: true,
+      user: { email: { address: "advisor@example.com" } },
+    };
+    const user = userEvent.setup();
+    renderFlow();
+    await advanceToForm(user);
+
+    expect(screen.getByLabelText(/email/i)).toHaveValue("advisor@example.com");
+  });
+
+  it("pre-fills the email from a Google OAuth login", async () => {
+    mockPrivyValue = {
+      ready: true,
+      authenticated: true,
+      user: { google: { email: "advisor@gmail.com" } },
+    };
+    const user = userEvent.setup();
+    renderFlow();
+    await advanceToForm(user);
+
+    expect(screen.getByLabelText(/email/i)).toHaveValue("advisor@gmail.com");
+  });
+
+  it("leaves the email empty when the session has no email (wallet login)", async () => {
+    mockPrivyValue = { ready: true, authenticated: true, user: {} };
+    const user = userEvent.setup();
+    renderFlow();
+    await advanceToForm(user);
+
+    expect(screen.getByLabelText(/email/i)).toHaveValue("");
+  });
+
+  it("leaves the email empty until Privy resolves an authenticated session", async () => {
+    mockPrivyValue = {
+      ready: false,
+      authenticated: false,
+      user: { email: { address: "advisor@example.com" } },
+    };
+    const user = userEvent.setup();
+    renderFlow();
+    await advanceToForm(user);
+
+    expect(screen.getByLabelText(/email/i)).toHaveValue("");
+  });
+
+  it("submits the pre-filled email without the advisor retyping it", async () => {
+    mockOnboardAdvisor.mockResolvedValue(ADVISOR);
+    mockPrivyValue = {
+      ready: true,
+      authenticated: true,
+      user: { email: { address: "advisor@example.com" } },
+    };
+    const user = userEvent.setup();
+    renderFlow();
+    await advanceToForm(user);
+
+    await user.type(screen.getByLabelText(/display name/i), "Avery Boutique");
+    await user.click(screen.getByRole("button", { name: /^continue$/i }));
+
+    await waitFor(() => {
+      expect(mockOnboardAdvisor).toHaveBeenCalledWith(
+        expect.objectContaining({ email: "advisor@example.com" })
+      );
+    });
+  });
+
+  it("does not clobber an email the advisor has already typed", async () => {
+    const user = userEvent.setup();
+    // Session resolves with no email at first.
+    const { rerender } = renderFlow();
+    await advanceToForm(user);
+
+    await user.type(screen.getByLabelText(/email/i), "typed@example.com");
+
+    // Session resolves an email afterwards. Drive the re-render explicitly so
+    // the regression coverage doesn't depend on an incidental re-render from a
+    // later form interaction — the prefill effect must re-run and still leave
+    // the advisor's typed value untouched.
+    mockPrivyValue = {
+      ready: true,
+      authenticated: true,
+      user: { email: { address: "session@example.com" } },
+    };
+    rerender(<OnboardingFlow />);
+
+    expect(screen.getByLabelText(/email/i)).toHaveValue("typed@example.com");
   });
 });
 

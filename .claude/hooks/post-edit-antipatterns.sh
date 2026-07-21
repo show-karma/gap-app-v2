@@ -1,6 +1,12 @@
 #!/bin/bash
 # PostToolUse hook: Check for anti-patterns after Write/Edit
-# Catches patterns that Biome doesn't enforce
+# Catches patterns that Biome doesn't enforce.
+#
+# NOTE: The syntactic checks (Radix "use client", hardcoded routes, hardcoded
+# colors, raw confirm(), barrel exports, heavy eager imports) have migrated to
+# Taskless ast-grep rules in .taskless/rules/ — enforced at pre-commit and CI.
+# Only the semantic / absence-based checks that ast-grep can't express well
+# remain here.
 
 set -e
 
@@ -44,35 +50,28 @@ case "$FILE_PATH" in
       fi
     fi
 
-    # 3. Radix imports without "use client"
-    if grep -q "@radix-ui" "$FILE_PATH" 2>/dev/null; then
-      if ! head -5 "$FILE_PATH" | grep -q '"use client"' 2>/dev/null; then
-        ISSUES="${ISSUES}\n- MISSING_USE_CLIENT: Radix UI import without \"use client\" directive."
-      fi
-    fi
+    # (Radix "use client" and hardcoded routes migrated to Taskless rules
+    #  radix-use-client / no-hardcoded-route.)
 
-    # 4. Hardcoded route strings
-    HARDCODED_ROUTES=$(grep -nE "href=[\"']/[a-z]|push\([\"']/[a-z]|replace\([\"']/[a-z]" "$FILE_PATH" 2>/dev/null | grep -v "http" | grep -v "PAGES" | head -5 || true)
-    if [ -n "$HARDCODED_ROUTES" ]; then
-      ISSUES="${ISSUES}\n- HARDCODED_ROUTES: Use PAGES constants from utilities/pages.ts."
-    fi
-
-    # 5. useRouter/useParams in useEffect deps
-    ROUTER_IN_DEPS=$(grep -nE "useEffect\(.*\[.*router|useEffect\(.*\[.*params" "$FILE_PATH" 2>/dev/null || true)
+    # 5. useRouter/useParams in useEffect deps (single-line and multi-line arrays)
+    # Matches both inline deps (useEffect(..., [..., router])) and the closing
+    # line of a multi-line dependency array such as `}, [searchTerm, router]);`.
+    ROUTER_IN_DEPS=$(grep -nE "useEffect\(.*\[.*\b(router|params|searchParams|pathname)\b|^\s*\},\s*\[[^]]*\b(router|params|searchParams|pathname)\b" "$FILE_PATH" 2>/dev/null || true)
     if [ -n "$ROUTER_IN_DEPS" ]; then
-      ISSUES="${ISSUES}\n- ROUTER_IN_DEPS: Destructure router/params to primitives before useEffect deps."
+      ISSUES="${ISSUES}\n- ROUTER_IN_DEPS: Destructure router/params to primitives before useEffect deps, or use nuqs useQueryState for URL-synced state."
     fi
 
-    # 6. Hardcoded colors
-    HARDCODED_COLORS=$(grep -nE "style=.*#[0-9a-fA-F]{3,8}|className=.*#[0-9a-fA-F]{3,8}|color:[[:space:]]*[\"']#" "$FILE_PATH" 2>/dev/null | head -3 || true)
-    if [ -n "$HARDCODED_COLORS" ]; then
-      ISSUES="${ISSUES}\n- HARDCODED_COLORS: Use Tailwind theme classes or CSS variables."
+    # 5b. URL-synced state mirrored via router.push/replace inside an effect.
+    # Flags files that build a URLSearchParams AND call router.push/replace —
+    # the issue #1547 anti-pattern. Use nuqs useQueryState instead (see
+    # hooks/useProjectFilters.ts) so the URL is the source of truth.
+    if grep -qE "new URLSearchParams" "$FILE_PATH" 2>/dev/null &&
+      grep -qE "router\.(push|replace)\(" "$FILE_PATH" 2>/dev/null; then
+      ISSUES="${ISSUES}\n- URL_SYNC_EFFECT: Mirroring state to the URL with router.push/replace races and cancels Link navigations. Use nuqs useQueryState (hooks/useProjectFilters.ts)."
     fi
 
-    # 7. Raw confirm() instead of DeleteDialog
-    if grep -qE "\bconfirm\(" "$FILE_PATH" 2>/dev/null; then
-      ISSUES="${ISSUES}\n- RAW_CONFIRM: Use <DeleteDialog> from components/DeleteDialog.tsx instead of confirm()."
-    fi
+    # (Hardcoded colors and raw confirm() migrated to Taskless rules
+    #  no-hardcoded-color / no-raw-confirm.)
 
     # 8. Raw navigator.clipboard instead of useCopyToClipboard
     if grep -q "navigator\.clipboard" "$FILE_PATH" 2>/dev/null; then
@@ -83,24 +82,8 @@ case "$FILE_PATH" in
     ;;
 esac
 
-# === Checks for all TS/TSX files ===
-case "$FILE_PATH" in
-  *.ts|*.tsx)
-    # 9. New barrel exports (index.ts creating re-exports)
-    if [ "$(basename "$FILE_PATH")" = "index.ts" ] || [ "$(basename "$FILE_PATH")" = "index.tsx" ]; then
-      EXPORT_STAR=$(grep -c "export \*" "$FILE_PATH" 2>/dev/null || echo "0")
-      if [ "$EXPORT_STAR" -gt 0 ]; then
-        ISSUES="${ISSUES}\n- BARREL_EXPORT: Don't create barrel exports (export * from). Import directly from source files."
-      fi
-    fi
-
-    # 10. Heavy library eager imports (should be dynamic/lazy)
-    HEAVY_IMPORTS=$(grep -nE "^import.*from [\"']((@uiw|@streamdown|recharts|chart\.js|react-chartjs|d3|mermaid|katex|react-pdf|@monaco-editor|monaco-editor|react-quill|draft-js|slate-react|react-markdown|@codemirror))" "$FILE_PATH" 2>/dev/null || true)
-    if [ -n "$HEAVY_IMPORTS" ]; then
-      ISSUES="${ISSUES}\n- HEAVY_IMPORT: Heavy library imported eagerly. Use dynamic() or lazy import()."
-    fi
-    ;;
-esac
+# (Barrel exports and heavy eager imports migrated to Taskless rules
+#  no-barrel-export / no-heavy-eager-import.)
 
 if [ -n "$ISSUES" ]; then
   jq -n --arg fp "$FILE_PATH" --arg issues "$ISSUES" \

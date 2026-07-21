@@ -1,11 +1,21 @@
 "use client";
 
-import type { ResearchReportCandidate } from "@/types/donor-research";
-import { briefDisplay } from "./fonts";
+import type { CompositeWeights, ResearchReportCandidate } from "@/types/donor-research";
+import { cn } from "@/utilities/tailwind";
+import { onlinePresenceScore, socialPresenceScore } from "./scoring";
+import {
+  TABLE_BODY_ROW,
+  TABLE_CELL_EMPHASIS,
+  TABLE_CELL_MONO,
+  TABLE_HEAD_CELL,
+  TABLE_HEAD_ROW,
+} from "./table-classes";
 import { formatLocale, humanizeCase, mostRecentMentionDate, relativeDays } from "./text-utils";
 
 interface ComparisonTableProps {
   candidates: readonly ResearchReportCandidate[];
+  /** Persisted report weights; when present a "Social presence" row is shown. */
+  weights?: CompositeWeights | null;
 }
 
 interface MetricRow {
@@ -15,49 +25,62 @@ interface MetricRow {
   emphasis?: boolean;
 }
 
-const METRICS: readonly MetricRow[] = [
-  {
-    key: "composite",
-    label: "Composite",
-    value: (c) => `${Math.round(c.composite * 100)}`,
-    emphasis: true,
-  },
-  {
-    key: "missionMatch",
-    label: "Mission match",
-    value: (c) => `${Math.round(c.components.donorMatch * 100)}`,
-  },
-  {
-    key: "freshness",
-    label: "Online presence",
-    value: (c) => `${Math.round(c.components.freshness * 100)}`,
-  },
-  {
-    key: "impactRecency",
-    label: "IRS 990 recency",
-    value: (c) => `${Math.round(c.components.impactRecency * 100)}`,
-  },
-  {
-    key: "compliance",
-    label: "Compliance",
-    value: (c) => describeCompliance(c),
-  },
-  {
-    key: "lastMention",
-    label: "Last public mention",
-    value: (c) => relativeDays(mostRecentMentionDate(c.recentMentions)) ?? "—",
-  },
-  {
-    key: "stateRegistration",
-    label: "State registration",
-    value: (c) => describeStateRegistration(c.stateRegistrationStatus),
-  },
-  {
-    key: "location",
-    label: "Location",
-    value: (c) => formatLocale(c.organizationCity, c.organizationState) ?? "—",
-  },
-];
+function buildMetrics(weights: CompositeWeights | null): readonly MetricRow[] {
+  return [
+    {
+      key: "composite",
+      label: "Composite",
+      value: (c) => `${Math.round(c.composite * 100)}`,
+      emphasis: true,
+    },
+    {
+      key: "missionMatch",
+      label: "Mission match",
+      value: (c) => `${Math.round(c.components.donorMatch * 100)}`,
+    },
+    {
+      key: "onlinePresence",
+      label: "Online presence",
+      value: (c) => `${Math.round(onlinePresenceScore(c) * 100)}`,
+    },
+    // Social presence is a DEV-418 five-dimension axis; legacy reports bundle
+    // it into online presence, so the row only appears when weights exist.
+    ...(weights
+      ? [
+          {
+            key: "socialPresence",
+            label: "Social presence",
+            value: (c: ResearchReportCandidate) => `${Math.round(socialPresenceScore(c) * 100)}`,
+          },
+        ]
+      : []),
+    {
+      key: "impactRecency",
+      label: "IRS 990 recency",
+      value: (c) => `${Math.round(c.components.impactRecency * 100)}`,
+    },
+    {
+      key: "compliance",
+      label: "Compliance",
+      value: (c) => describeCompliance(c),
+    },
+    {
+      key: "lastMention",
+      label: "Last public mention",
+      value: (c) => relativeDays(mostRecentMentionDate(c.recentMentions)) ?? "—",
+    },
+    {
+      key: "stateRegistration",
+      label: "State registration",
+      value: (c) => describeStateRegistration(c.stateRegistrationStatus),
+    },
+    {
+      key: "location",
+      label: "Location",
+      value: (c) => formatLocale(c.organizationCity, c.organizationState) ?? "—",
+    },
+  ];
+}
 
 /**
  * At-a-glance comparison of the surfaced candidates. Renders as a
@@ -65,40 +88,34 @@ const METRICS: readonly MetricRow[] = [
  * advisor can keep "composite" in view while scanning across columns
  * on a phone.
  */
-export function ComparisonTable({ candidates }: ComparisonTableProps) {
+export function ComparisonTable({ candidates, weights = null }: ComparisonTableProps) {
   if (candidates.length < 2) return null;
 
+  const metrics = buildMetrics(weights);
+
   return (
-    <section className="mb-20 sm:mb-24">
-      <header className="mb-6 sm:mb-8">
-        <p
-          className={`${briefDisplay.className} text-[10px] font-medium uppercase tracking-[0.32em] text-muted-foreground`}
-        >
-          At a glance
-        </p>
-        <h2
-          className={`${briefDisplay.className} mt-2 text-balance text-[clamp(1.5rem,3vw,2rem)] font-medium leading-[1.1] tracking-[-0.018em] text-foreground`}
-        >
-          The candidates, side by side.
-        </h2>
+    <section
+      className="rounded-sf-card border border-sf-line bg-sf-card p-6"
+      data-section="comparison"
+    >
+      <header>
+        <h2 className="text-lg font-semibold tracking-[-0.01em] text-sf-heading">At a glance</h2>
+        <p className="mt-1 text-[13px] text-sf-muted">The candidates, side by side.</p>
       </header>
 
-      <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
-        <table className={`${briefDisplay.className} w-full min-w-[640px] border-collapse text-sm`}>
+      <div className="-mx-4 mt-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
+        <table className="w-full min-w-[640px] border-collapse text-[13px]">
           <thead>
-            <tr className="border-y border-border">
-              <th
-                scope="col"
-                className="w-[34%] py-3 pr-4 text-left text-[10px] font-medium uppercase tracking-[0.22em] text-muted-foreground"
-              >
+            <tr className={TABLE_HEAD_ROW}>
+              <th scope="col" className={cn(TABLE_HEAD_CELL, "w-[34%] py-3 pr-4 text-left")}>
                 Metric
               </th>
               {candidates.map((candidate, i) => (
-                <th key={candidate.id} scope="col" className="py-3 pl-4 text-left align-bottom">
-                  <span className="block text-[10px] font-medium uppercase tracking-[0.22em] tabular-nums text-brand-emphasis dark:text-brand-subtle">
-                    Rank {String(i + 1).padStart(2, "0")}
+                <th className="py-3 pl-4 text-left align-bottom" key={candidate.id} scope="col">
+                  <span className="block font-mono text-[10px] uppercase tracking-[0.1em] tabular-nums text-brand-emphasis dark:text-brand-subtle">
+                    Rank #{i + 1}
                   </span>
-                  <span className="mt-1 block text-[0.9375rem] font-medium leading-snug text-foreground">
+                  <span className="mt-1 block text-[13.5px] font-[600] leading-snug text-sf-heading">
                     {humanizeCase(candidate.organizationName ?? "Unidentified", "title")}
                   </span>
                 </th>
@@ -106,24 +123,20 @@ export function ComparisonTable({ candidates }: ComparisonTableProps) {
             </tr>
           </thead>
           <tbody>
-            {METRICS.map((metric) => (
-              <tr key={metric.key} className="border-b border-border/50">
-                <th
-                  scope="row"
-                  className="py-3 pr-4 text-left text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground"
-                >
+            {metrics.map((metric) => (
+              <tr className={TABLE_BODY_ROW} key={metric.key}>
+                <th className={cn(TABLE_HEAD_CELL, "py-3 pr-4 text-left")} scope="row">
                   {metric.label}
                 </th>
                 {candidates.map((candidate) => {
                   const value = metric.value(candidate);
                   return (
                     <td
+                      className={cn(
+                        "py-3 pl-4 align-baseline",
+                        metric.emphasis ? cn(TABLE_CELL_EMPHASIS, "text-base") : TABLE_CELL_MONO
+                      )}
                       key={`${candidate.id}-${metric.key}`}
-                      className={`py-3 pl-4 align-baseline tabular-nums ${
-                        metric.emphasis
-                          ? "text-foreground text-base font-medium"
-                          : "text-foreground/80"
-                      }`}
                     >
                       {value}
                     </td>

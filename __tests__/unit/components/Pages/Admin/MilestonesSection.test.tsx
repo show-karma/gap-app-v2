@@ -8,7 +8,7 @@ import type { ProjectDetailsSidebarGrant } from "@/components/Pages/Admin/Contro
 import {
   type CommunityPayoutInvoiceInfo,
   MilestoneLifecycleStatus,
-} from "@/src/features/payout-disbursement";
+} from "@/src/features/payout-disbursement/types/payout-disbursement";
 
 // Mock heavy dependencies
 const { captureFileUploadProps } = vi.hoisted(() => ({
@@ -33,18 +33,20 @@ vi.mock("@/utilities/indexer", () => ({
   },
 }));
 
-vi.mock("@/src/features/payout-disbursement", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@/src/features/payout-disbursement")>();
-  return {
-    ...actual,
-    getInvoiceDownloadUrl: vi.fn().mockResolvedValue("https://s3.example.com/invoice.pdf"),
-    formatDisplayAmount: (amount: string) => amount,
-    useUpdateMilestonePaymentStatus: () => ({
-      mutate: vi.fn(),
-      isPending: false,
-    }),
-  };
-});
+vi.mock("@/src/features/payout-disbursement/services/payout-disbursement.service", () => ({
+  getInvoiceDownloadUrl: vi.fn().mockResolvedValue("https://s3.example.com/invoice.pdf"),
+}));
+
+vi.mock("@/src/features/payout-disbursement/utils/format-token-amount", () => ({
+  formatDisplayAmount: (amount: string) => amount,
+}));
+
+vi.mock("@/src/features/payout-disbursement/hooks/use-payout-disbursement", () => ({
+  useUpdateMilestonePaymentStatus: () => ({
+    mutate: vi.fn(),
+    isPending: false,
+  }),
+}));
 
 vi.mock("@/components/Pages/Admin/ControlCenter/PaymentStatusDropdown", () => ({
   PaymentStatusDropdown: ({ status }: { status: string }) => (
@@ -243,7 +245,9 @@ describe("MilestonesSection", () => {
   });
 
   it("should call getInvoiceDownloadUrl with grantUid when View invoice is clicked", async () => {
-    const { getInvoiceDownloadUrl } = await import("@/src/features/payout-disbursement");
+    const { getInvoiceDownloadUrl } = await import(
+      "@/src/features/payout-disbursement/services/payout-disbursement.service"
+    );
     const mockDownload = vi.mocked(getInvoiceDownloadUrl);
 
     const invoice = createMockInvoice({

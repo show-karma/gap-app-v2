@@ -51,7 +51,7 @@ export function useGrantMilestoneForm({
   const { grants, refetch: refetchGrants } = useProjectGrants(projectIdOrSlug);
 
   const createMilestoneForGrants = async (data: GrantMilestoneFormData, grantUIDs: string[]) => {
-    if (!gap || !address || grantUIDs.length === 0) return;
+    if (!gap || grantUIDs.length === 0) return;
     setIsLoading(true);
     startAttestation("Creating milestone...");
 

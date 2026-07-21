@@ -1,0 +1,19 @@
+id: no-raw-confirm
+language: tsx
+severity: warning
+message: Use <DeleteDialog> from components/DeleteDialog.tsx, not raw confirm().
+note: |
+  CLAUDE.md gap-app-v2: "Deletions — Use <DeleteDialog> from
+  components/DeleteDialog.tsx, never raw confirm()." Destructive actions need a
+  styled confirmation dialog, not a native browser confirm().
+ignores:
+  - "**/__tests__/**"
+  - "**/*.test.ts"
+  - "**/*.test.tsx"
+  - "**/*.spec.ts"
+  - "**/*.spec.tsx"
+  - "scripts/**"
+rule:
+  any:
+    - pattern: confirm($$$A)
+    - pattern: window.confirm($$$A)

@@ -38,6 +38,22 @@ const errorContains = (error: ErrorLike | null | undefined, needle: string): boo
   );
 };
 
+// Expected user/lifecycle states (e.g. SignerUnavailableError for a wallet
+// that hasn't connected/hydrated yet) are guidance, not defects — never
+// report them to Sentry. Duck-typed on `expected` to avoid an import cycle
+// with the ~40 attestation flows that call errorManager in their catches.
+// Extracted (rather than inlined in errorManager) to keep the main
+// function under biome's cognitive-complexity ceiling.
+const handleExpectedError = (error: unknown, toastError?: { error?: string }): boolean => {
+  if ((error as { expected?: boolean } | null)?.expected !== true) {
+    return false;
+  }
+  if (toastError?.error) {
+    getToast()?.error(toastError.error);
+  }
+  return true;
+};
+
 export const errorManager = (
   errorMessage: string,
   error: any,
@@ -60,6 +76,9 @@ export const errorManager = (
       }
       return;
     }
+  }
+  if (handleExpectedError(error, toastError)) {
+    return;
   }
   if (toastError?.error) {
     const wasRPCIssue = errorContains(error, "rpc error");

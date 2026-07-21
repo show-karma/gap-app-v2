@@ -1,0 +1,7 @@
+id: no-heavy-eager-import
+valid:
+  - "import { useState } from 'react';"
+  - "const Chart = dynamic(() => import('recharts').then((m) => m.LineChart));"
+invalid:
+  - "import { LineChart } from 'recharts';"
+  - "import katex from 'katex';"

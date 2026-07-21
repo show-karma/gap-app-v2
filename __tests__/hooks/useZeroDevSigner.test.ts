@@ -2,7 +2,7 @@ import { renderHook } from "@testing-library/react";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 // Import the real implementation directly (bypassing the unit-test alias that
 // redirects @/hooks/useZeroDevSigner to the __mocks__ stub)
-import { EmbeddedWalletNotReadyError, useZeroDevSigner } from "../../hooks/useZeroDevSigner";
+import { useZeroDevSigner, WALLET_READY_TIMEOUT_MS } from "../../hooks/useZeroDevSigner";
 
 // Mock bridge
 const mockUser: any = { linkedAccounts: [] };
@@ -10,6 +10,7 @@ let mockWallets: any[] = [];
 vi.mock("@/contexts/privy-bridge-context", () => ({
   usePrivyBridge: () => ({
     ready: true,
+    walletsReady: true,
     user: mockUser,
     wallets: mockWallets,
     smartWalletClient: null,
@@ -133,22 +134,29 @@ describe("useZeroDevSigner", () => {
       await expect(result.current.getAttestationSigner(10)).resolves.toBe(fakeSigner);
     });
 
-    it("still throws EmbeddedWalletNotReadyError when only a foreign wallet is connected", async () => {
+    it("still refuses to sign when only a foreign wallet is connected (typed provisioning error after the bounded wait)", async () => {
+      vi.useFakeTimers();
       mockUser.linkedAccounts = [{ type: "email", address: "test@example.com" }];
-      mockWallets = [
-        {
-          walletClientType: "metamask",
-          address: FOREIGN_ADDRESS,
-          switchChain: vi.fn(),
-          getEthereumProvider: vi.fn(),
-        },
-      ];
+      const foreign = {
+        walletClientType: "metamask",
+        address: FOREIGN_ADDRESS,
+        switchChain: vi.fn(),
+        getEthereumProvider: vi.fn(),
+      };
+      mockWallets = [foreign];
 
       const { result } = renderHook(() => useZeroDevSigner());
 
-      await expect(result.current.getAttestationSigner(10)).rejects.toBeInstanceOf(
-        EmbeddedWalletNotReadyError
-      );
+      const assertion = expect(result.current.getAttestationSigner(10)).rejects.toMatchObject({
+        name: "SignerUnavailableError",
+        reason: "embedded-wallet-provisioning",
+        expected: true,
+      });
+      await vi.advanceTimersByTimeAsync(WALLET_READY_TIMEOUT_MS + 500);
+      await assertion;
+
+      expect(foreign.getEthereumProvider).not.toHaveBeenCalled();
+      vi.useRealTimers();
     });
   });
 

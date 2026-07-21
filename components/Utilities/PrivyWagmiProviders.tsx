@@ -36,7 +36,7 @@ const WALLET_LIST = [
 function PrivyBridgeUpdater() {
   const setBridge = usePrivyBridgeSetter();
   const privy = usePrivy();
-  const { wallets } = useWallets();
+  const { wallets, ready: walletsReady } = useWallets();
   const { client: smartWalletClient } = useSmartWallets();
   const { isConnected, chainId } = useAccount();
   const { setActiveWallet } = useSetActiveWallet();
@@ -78,6 +78,7 @@ function PrivyBridgeUpdater() {
       getAccessToken: p.getAccessToken,
       connectWallet: p.connectWallet,
       wallets: w,
+      walletsReady,
       smartWalletClient: smartWalletClientRef.current,
       isConnected,
     });
@@ -87,6 +88,7 @@ function PrivyBridgeUpdater() {
     privy.authenticated,
     userId,
     walletCount,
+    walletsReady,
     smartWalletClient,
     isConnected,
   ]);

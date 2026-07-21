@@ -17,7 +17,19 @@
  * client, surface an error UI to the user, and keep Sentry signal clean.
  */
 
-const TRANSIENT_MESSAGE_FRAGMENTS = ["network error", "failed to fetch", "load failed"];
+const TRANSIENT_MESSAGE_FRAGMENTS = [
+  "network error",
+  "failed to fetch",
+  "load failed",
+  // Node/undici socket blips that crash SSR fetches. The dominant signature
+  // is "Client network socket disconnected before secure TLS connection was
+  // established" (matched by the fragment below) plus bare "socket hang up".
+  // These are transient upstream/socket resets during a server render with no
+  // actionable first-party frame. See GAP-FRONTEND-1Y9 (and siblings -1YD /
+  // -1YA / -1YB / -1YP).
+  "socket hang up",
+  "socket disconnected before secure tls",
+];
 
 const TRANSIENT_AXIOS_CODES = new Set([
   "ERR_NETWORK",
@@ -25,6 +37,22 @@ const TRANSIENT_AXIOS_CODES = new Set([
   "ERR_CONNECTION_RESET",
   "ECONNABORTED",
   "ETIMEDOUT",
+]);
+
+// Node/undici socket-level error codes that surface during SSR when the
+// connection to the indexer is reset/dropped before (or mid) a response.
+// Native `fetch` wraps these as `TypeError: fetch failed` with the coded
+// error on `.cause`, so classification also walks `error.cause` one level.
+// These are environmental and unactionable from a frontend Sentry event —
+// the right behavior is to retry the idempotent request on the server and
+// keep the signal clean. See GAP-FRONTEND-1Y9 (siblings -1YD/-1YA/-1YB/-1YP).
+const TRANSIENT_SOCKET_CODES = new Set([
+  "ECONNRESET",
+  "EPIPE",
+  "EAI_AGAIN",
+  "ECONNREFUSED",
+  "UND_ERR_SOCKET",
+  "UND_ERR_CONNECT_TIMEOUT",
 ]);
 
 const ABORT_CODES = new Set(["ERR_CANCELED", "ABORT_ERR"]);
@@ -38,7 +66,18 @@ const ABORT_CODES = new Set(["ERR_CANCELED", "ABORT_ERR"]);
 // See DEV-271 / GAP-FRONTEND-1R1.
 const TRANSIENT_HTTP_STATUS = new Set([408, 502, 503, 504]);
 
-function getErrorMessage(error: unknown): string {
+// Native `fetch` (undici) reports connection failures as
+// `TypeError: fetch failed` with the coded socket error hidden on `.cause`.
+// Return that nested cause so code/message extraction can walk one level
+// down. See GAP-FRONTEND-1Y9.
+function getErrorCause(error: unknown): unknown {
+  if (error && typeof error === "object" && "cause" in error) {
+    return (error as { cause?: unknown }).cause;
+  }
+  return undefined;
+}
+
+function getOwnMessage(error: unknown): string {
   if (!error) return "";
   if (typeof error === "string") return error;
   if (typeof error === "object" && "message" in error) {
@@ -48,12 +87,32 @@ function getErrorMessage(error: unknown): string {
   return "";
 }
 
-function getErrorCode(error: unknown): string | undefined {
+// Combines the error's own message with its `.cause` message (one level) so
+// undici's opaque `fetch failed` wrapper still exposes the underlying socket
+// signature to fragment matching. See GAP-FRONTEND-1Y9.
+function getErrorMessage(error: unknown): string {
+  const own = getOwnMessage(error);
+  const causeMsg = getOwnMessage(getErrorCause(error));
+  if (own && causeMsg) return `${own} ${causeMsg}`;
+  return own || causeMsg;
+}
+
+function getOwnCode(error: unknown): string | undefined {
   if (error && typeof error === "object" && "code" in error) {
     const code = (error as { code?: unknown }).code;
     if (typeof code === "string") return code;
   }
   return undefined;
+}
+
+/**
+ * Reads the error's own `code`, falling back to `error.cause.code` (one
+ * level) for undici's `fetch failed` wrapper. Exported so the exhausted-retry
+ * reporter (`reportTransientFetchFailure.ts`) fingerprints by the same code
+ * classification used here. See GAP-FRONTEND-1Y9.
+ */
+export function getErrorCode(error: unknown): string | undefined {
+  return getOwnCode(error) ?? getOwnCode(getErrorCause(error));
 }
 
 function hasHttpResponse(error: unknown): boolean {
@@ -90,6 +149,35 @@ export function isAxiosAbortError(error: unknown): boolean {
 }
 
 /**
+ * True when the error is a transient Node/undici socket failure with no HTTP
+ * response attached — a connection reset/hang-up/DNS blip that crashes an SSR
+ * fetch. Matches by socket error code (`ECONNRESET`, `EPIPE`, `EAI_AGAIN`,
+ * `ECONNREFUSED`, `UND_ERR_SOCKET`, `UND_ERR_CONNECT_TIMEOUT`) — including
+ * codes hidden on `error.cause` behind undici's `TypeError: fetch failed`
+ * wrapper — or by message fragment ("socket hang up", the TLS-handshake reset
+ * "Client network socket disconnected before secure TLS connection was
+ * established"). Folded into `isTransientNetworkError` so both Sentry
+ * `beforeSend` hooks and `errorManager` suppress it automatically. Accepted
+ * observability blind spot: server-side POST socket failures are suppressed
+ * with no retry and no exhaustion warning (only idempotent GET/HEAD retries
+ * exist — see `utilities/fetchRetry.ts`), and an `ECONNREFUSED` raised by a
+ * code path that doesn't go through `fetchData` is dropped without any
+ * exhausted-retry signal. See GAP-FRONTEND-1Y9 (siblings -1YD/-1YA/-1YB/-1YP).
+ */
+export function isTransientSocketError(error: unknown): boolean {
+  if (!error) return false;
+  if (hasHttpResponse(error)) return false;
+
+  const code = getErrorCode(error);
+  if (code && TRANSIENT_SOCKET_CODES.has(code)) return true;
+
+  const message = getErrorMessage(error).toLowerCase();
+  return (
+    message.includes("socket hang up") || message.includes("socket disconnected before secure tls")
+  );
+}
+
+/**
  * True when the error is a transient network failure that has no HTTP
  * response attached. Used to (a) suppress Sentry noise and (b) opt in to
  * additional React Query retries.
@@ -102,8 +190,65 @@ export function isTransientNetworkError(error: unknown): boolean {
   const code = getErrorCode(error);
   if (code && TRANSIENT_AXIOS_CODES.has(code)) return true;
 
+  // Node/undici socket resets/hang-ups that crash SSR fetches. See
+  // GAP-FRONTEND-1Y9.
+  if (isTransientSocketError(error)) return true;
+
   const message = getErrorMessage(error).toLowerCase();
   return TRANSIENT_MESSAGE_FRAGMENTS.some((fragment) => message.includes(fragment));
+}
+
+/**
+ * True when a failed *idempotent* fetch should be retried on the server. This
+ * is deliberately NARROWER than `isTransientNetworkError`:
+ *
+ *   - NOT an abort (a cancelled request must never be retried), AND
+ *   - a transient upstream HTTP error (502/503/504/408), OR
+ *   - no HTTP response AND a transient socket error (`ECONNRESET`, TLS
+ *     handshake reset, "socket hang up", etc.).
+ *
+ * Deliberately EXCLUDES the axios timeout codes `ECONNABORTED` / `ETIMEDOUT`:
+ * the per-attempt indexer timeout is already 360s, so there is no time budget
+ * to retry a timed-out request within a Vercel function. Also excludes 429
+ * (rate limiting — retrying makes it worse). See GAP-FRONTEND-1Y9.
+ */
+export function isRetryableIdempotentFetchError(error: unknown): boolean {
+  if (!error) return false;
+  if (isAxiosAbortError(error)) return false;
+
+  // Transient upstream gateway failure (502/503/504/408) — retryable
+  // regardless of whether the status is on `.response.status` or only in the
+  // re-thrown axios message.
+  if (isTransientHttpError(error)) return true;
+
+  // Otherwise only socket-level resets with no HTTP response qualify. Axios
+  // timeout codes (`ECONNABORTED`/`ETIMEDOUT`) and 429 are intentionally
+  // excluded (see doc comment).
+  return !hasHttpResponse(error) && isTransientSocketError(error);
+}
+
+// ethers v6 wraps a momentary wallet/bundler timeout into a "could not coalesce
+// error" with code UNKNOWN_ERROR whose nested payload is `{ "message": "Wallet
+// timeout" }`. During project creation we retry the send (see
+// utilities/attestWithRetry.ts), so a RECOVERED timeout never reaches Sentry —
+// but the raw signature can still leak through code paths that bypass
+// errorManager (an un-awaited rejection from an abandoned attempt, a third-party
+// SDK fetch). It's environmental and non-actionable, so drop it. Only the
+// exhausted-retry case reports, and it does so as a distinct wrapped error that
+// no longer matches this signature. See GAP-FRONTEND-1Y2.
+const TRANSIENT_WALLET_TIMEOUT_FRAGMENTS = ["could not coalesce", "wallet timeout"] as const;
+
+/**
+ * True when the error is a transient wallet/bundler timeout surfaced by ethers
+ * ("could not coalesce error" / "Wallet timeout"). These are retried at the
+ * send layer and are unactionable from a Sentry event; the exhausted-retry
+ * failure reports separately as a distinct wrapped error.
+ */
+export function isTransientWalletTimeoutError(error: unknown): boolean {
+  if (!error) return false;
+  const message = getErrorMessage(error).toLowerCase();
+  if (!message) return false;
+  return TRANSIENT_WALLET_TIMEOUT_FRAGMENTS.some((fragment) => message.includes(fragment));
 }
 
 /**

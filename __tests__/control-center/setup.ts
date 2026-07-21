@@ -96,39 +96,50 @@ vi.mock("@/hooks/useKycStatus", () => ({
   })),
 }));
 
-// Mock the payout-disbursement hooks but keep types
-vi.mock("@/src/features/payout-disbursement", async () => {
-  const actual = await import("@/src/features/payout-disbursement/types/payout-disbursement");
-  return {
-    ...actual,
-    useCommunityPayouts: vi.fn(() => ({
-      data: null,
-      isLoading: false,
-      invalidate: vi.fn(),
-    })),
-    usePayoutConfigsByCommunity: vi.fn(() => ({
-      data: [],
-    })),
-    useToggleAgreement: vi.fn(() => ({
-      mutate: vi.fn(),
-      isPending: false,
-    })),
-    useSaveMilestoneInvoices: vi.fn(() => ({
-      mutate: vi.fn(),
-      isPending: false,
-    })),
-    getPaidAllocationIds: vi.fn(() => []),
-    CreateDisbursementModal: () => null,
-    PayoutConfigurationModal: () => null,
-    PayoutHistoryDrawer: () => null,
-    TokenBreakdown: ({ totalsByToken }: { totalsByToken: unknown[] }) =>
-      React.createElement(
-        "span",
-        { "data-testid": "token-breakdown" },
-        `${totalsByToken.length} tokens`
-      ),
-  };
-});
+// Mock the payout-disbursement hooks and components but keep the real types module.
+vi.mock("@/src/features/payout-disbursement/hooks/use-payout-disbursement", () => ({
+  useCommunityPayouts: vi.fn(() => ({
+    data: null,
+    isLoading: false,
+    invalidate: vi.fn(),
+  })),
+  usePayoutConfigsByCommunity: vi.fn(() => ({
+    data: [],
+  })),
+  useToggleAgreement: vi.fn(() => ({
+    mutate: vi.fn(),
+    isPending: false,
+  })),
+  useSaveMilestoneInvoices: vi.fn(() => ({
+    mutate: vi.fn(),
+    isPending: false,
+  })),
+}));
+
+vi.mock("@/src/features/payout-disbursement/components/MilestoneSelectionStep", () => ({
+  getPaidAllocationIds: vi.fn(() => []),
+}));
+
+vi.mock("@/src/features/payout-disbursement/components/CreateDisbursementModal", () => ({
+  CreateDisbursementModal: () => null,
+}));
+
+vi.mock("@/src/features/payout-disbursement/components/PayoutConfigurationModal", () => ({
+  PayoutConfigurationModal: () => null,
+}));
+
+vi.mock("@/src/features/payout-disbursement/components/PayoutHistoryDrawer", () => ({
+  PayoutHistoryDrawer: () => null,
+}));
+
+vi.mock("@/src/features/payout-disbursement/components/TokenBreakdown", () => ({
+  TokenBreakdown: ({ totalsByToken }: { totalsByToken: unknown[] }) =>
+    React.createElement(
+      "span",
+      { "data-testid": "token-breakdown" },
+      `${totalsByToken.length} tokens`
+    ),
+}));
 
 // Mock components that aren't needed in control-center tests
 vi.mock("@/components/Pages/Communities/Impact/ProgramFilter", () => ({
