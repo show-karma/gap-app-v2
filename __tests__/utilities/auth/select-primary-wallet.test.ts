@@ -63,11 +63,31 @@ describe("selectPrimaryWallet", () => {
     });
   });
 
-  it("falls back to wallets[0] when no connected wallet is linked yet", () => {
+  it("falls back to wallets[0] when the user has no linked wallet addresses yet", () => {
     // linkedAccounts not populated during hydration — keep something rather than
-    // flipping to undefined.
+    // flipping to undefined. This preserves wallet-login connect flows.
     const user = makeUser([]);
     const wallets = [wallet(ADDR.stale)];
     expect(selectPrimaryWallet(user, wallets)?.address).toBe(ADDR.stale);
+  });
+
+  it("falls back to wallets[0] when the user only has a non-wallet linked account", () => {
+    // Email user mid-hydration: an email account is linked but no wallet address
+    // is yet known, so there is nothing to compare against — keep wallets[0].
+    const user = makeUser([{ type: "email", address: "user@example.com" }]);
+    const wallets = [wallet(ADDR.stale)];
+    expect(selectPrimaryWallet(user, wallets)?.address).toBe(ADDR.stale);
+  });
+
+  it("returns undefined when the user has linked wallets but none are connected (issue #1574)", () => {
+    // Email/Google user with a linked embedded wallet, but only a foreign MetaMask
+    // is physically connected. Withhold identity rather than leak the foreign
+    // address — this is the ownership-flicker fix.
+    const user = makeUser([
+      { type: "email", address: "user@example.com" },
+      { type: "wallet", address: ADDR.embedded, walletClientType: "privy" },
+    ]);
+    const wallets = [wallet(ADDR.stale)];
+    expect(selectPrimaryWallet(user, wallets)).toBeUndefined();
   });
 });
