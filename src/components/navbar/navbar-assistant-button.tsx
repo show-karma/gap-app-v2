@@ -2,7 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
-import { KARMA_ASSISTANT_PANEL_ID } from "@/components/AgentChat/panel-id";
+import { KARMA_ASSISTANT_PANEL_ID } from "@/components/AgentChat/panel-dom";
 // Deliberately NOT SparklesIcon: sparkles is the app-wide marker for
 // AI-*generated content* (AI evaluation, analysis tabs, inbox scores), so it
 // reads as "AI touched this" rather than "talk to me".
@@ -43,7 +43,12 @@ export function NavbarAssistantButton({ compact = false, className }: NavbarAssi
   useEffect(() => {
     if (wasOpen.current && !isOpen) {
       const panel = document.getElementById(KARMA_ASSISTANT_PANEL_ID);
-      if (panel?.contains(document.activeElement)) {
+      // The desktop and mobile navbars are both always mounted and merely
+      // hidden from each other with `lg:` classes, so two triggers exist at
+      // once. Without this check the hidden one also tries to take focus, and
+      // which instance wins comes down to effect ordering.
+      const isVisible = (buttonRef.current?.getClientRects().length ?? 0) > 0;
+      if (isVisible && panel?.contains(document.activeElement)) {
         buttonRef.current?.focus();
       }
     }
