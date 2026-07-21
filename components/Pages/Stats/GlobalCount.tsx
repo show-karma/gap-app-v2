@@ -7,13 +7,16 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 
+// `_id` is the attestation schema name, but legacy/unnamed rows come back as
+// `_id: null` in production — the schema must tolerate them or the whole
+// widget errors on one bad row.
 const GlobalStatSchema = z.object({
-  _id: z.string(),
+  _id: z.string().nullable(),
   count: z.number(),
 });
 const GlobalStatArraySchema = z.array(GlobalStatSchema);
 
-type GlobalStat = z.infer<typeof GlobalStatSchema>;
+type GlobalStat = { _id: string; count: number };
 
 export function GlobalCount() {
   const {
@@ -26,8 +29,12 @@ export function GlobalCount() {
     queryKey: ["global-stats"],
     queryFn: async () => {
       try {
-        const data = await api.get(INDEXER.GAP.GLOBAL_COUNT, { schema: GlobalStatArraySchema });
+        const raw = await api.get(INDEXER.GAP.GLOBAL_COUNT, { schema: GlobalStatArraySchema });
 
+        const data: GlobalStat[] = raw.map((item) => ({
+          _id: item._id ?? "Unknown",
+          count: item.count,
+        }));
         const total = data.reduce((acc: number, item: GlobalStat) => acc + item.count, 0);
 
         return [
