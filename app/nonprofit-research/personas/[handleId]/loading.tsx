@@ -1,5 +1,5 @@
 import { DonorResearchLoading } from "@/src/features/donor-research/components/common/DonorResearchLoading";
 
 export default function Loading() {
-  return <DonorResearchLoading label="Loading persona…" variant="report" />;
+  return <DonorResearchLoading label="Loading donor…" variant="report" />;
 }

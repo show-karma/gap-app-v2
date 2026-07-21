@@ -68,7 +68,7 @@ function Harness({
 // `handleSubmit` runs its `onInvalid` branch (the toast under test). Mirrors the
 // real panel's required-criteria rule without importing the full schema.
 const ValidatedSchema = z.object({
-  donorHandleId: z.string().min(1, "Pick or create a persona"),
+  donorHandleId: z.string().min(1, "Pick or create a donor"),
   criteriaText: z.string().min(1, "Describe what you're researching"),
   cause: z.string().optional(),
   geography: z.string().optional(),
@@ -134,17 +134,17 @@ describe("CriteriaForm weights", () => {
   it("uses the shadcn persona picker and keeps adjacent actions on the same control height", () => {
     render(withQueryClient(<Harness onSubmit={() => {}} />));
 
-    const picker = screen.getByRole("combobox", { name: "Persona" });
+    const picker = screen.getByRole("combobox", { name: "Donor" });
     expect(picker).toHaveClass("h-[42px]");
     expect(picker.tagName).toBe("BUTTON");
-    expect(screen.getByRole("button", { name: /new persona/i })).toHaveClass("h-[42px]");
+    expect(screen.getByRole("button", { name: /new donor/i })).toHaveClass("h-[42px]");
     expect(screen.getByRole("button", { name: /add profile/i })).toHaveClass("h-[42px]");
   });
 
   it("keeps the persona options inside the themed picker row", async () => {
     render(withQueryClient(<Harness onSubmit={() => {}} />));
 
-    const picker = screen.getByRole("combobox", { name: "Persona" });
+    const picker = screen.getByRole("combobox", { name: "Donor" });
     fireEvent.keyDown(picker, { key: "ArrowDown" });
 
     expect(picker.parentElement).toContainElement(await screen.findByRole("listbox"));
@@ -157,7 +157,7 @@ describe("CriteriaForm weights", () => {
     );
 
     const action = screen.getByRole("button", { name: "Change profile for Smith Family" });
-    const newPersona = screen.getByRole("button", { name: /new persona/i });
+    const newPersona = screen.getByRole("button", { name: /new donor/i });
     expect(action).toHaveClass("h-[42px]", "w-[42px]", "px-0");
     expect(action).toHaveTextContent("");
     expect(action.querySelector("svg")).toBeInTheDocument();

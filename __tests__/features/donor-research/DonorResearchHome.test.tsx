@@ -76,7 +76,7 @@ describe("DonorResearchHome", () => {
     expect(within(overview).getByText("Reports")).toBeVisible();
     expect(within(overview).getByText("Completed")).toBeVisible();
     expect(within(overview).getByText("Shared")).toBeVisible();
-    expect(within(overview).getByText("Personas")).toBeVisible();
+    expect(within(overview).getByText("Donors")).toBeVisible();
     expect(overview.querySelectorAll(":scope > div")).toHaveLength(4);
     expect(overview.querySelectorAll("svg")).toHaveLength(4);
     expect(overview.querySelector(".lucide-file-text")).toBeInTheDocument();

@@ -31,6 +31,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
+  SIDEBAR_BELOW_NAVBAR_CLASSES,
   Sidebar,
   SidebarContent,
   SidebarFooter,
@@ -349,7 +350,7 @@ export function ManageSidebar({ communityId, community }: ManageSidebarProps) {
   const isDashboard = isDashboardRoute(pathname, slug);
 
   return (
-    <Sidebar collapsible="icon" style={{ top: "var(--navbar-height)", bottom: 0, height: "auto" }}>
+    <Sidebar collapsible="icon" className={SIDEBAR_BELOW_NAVBAR_CLASSES}>
       {/* Community identity + switcher */}
       <SidebarHeader className="pt-3">
         <CommunitySwitcher

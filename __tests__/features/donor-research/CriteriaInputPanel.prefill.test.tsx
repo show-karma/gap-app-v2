@@ -89,10 +89,10 @@ beforeEach(() => {
   mockUseDonorPersona.mockReturnValue(personaResult());
 });
 
-const badges = () => screen.queryAllByText("Prefilled from persona");
+const badges = () => screen.queryAllByText("Prefilled from donor profile");
 
 async function selectPersona(user: ReturnType<typeof userEvent.setup>, name: string) {
-  await user.click(screen.getByRole("combobox", { name: "Persona" }));
+  await user.click(screen.getByRole("combobox", { name: "Donor" }));
   await user.click(await screen.findByRole("option", { name }));
 }
 
