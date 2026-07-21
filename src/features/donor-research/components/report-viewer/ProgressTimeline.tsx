@@ -50,8 +50,8 @@ const STAGE_ORDER: Array<{
   },
   {
     name: "report_finalized",
-    label: "Report finalized",
-    caption: "Synthesizing one-pager prose and assembling the featured set.",
+    label: "Report synthesis",
+    caption: "Preparing candidate summaries and assembling the featured set.",
   },
 ];
 
@@ -126,10 +126,16 @@ function getStageDetailText(
  */
 function getActiveStageCaption(
   stage: { name: FastReportEvent["name"]; caption: string },
-  progressEvent: FastReportEvent | undefined
+  progressEvent: FastReportEvent | undefined,
+  synthesisEvent: FastReportEvent | undefined
 ): string {
-  if (stage.name !== "contact_discovery_complete") return stage.caption;
-  return formatContactDiscoveryProgressCaption(progressEvent?.data) ?? stage.caption;
+  if (stage.name === "contact_discovery_complete") {
+    return formatContactDiscoveryProgressCaption(progressEvent?.data) ?? stage.caption;
+  }
+  if (stage.name === "report_finalized") {
+    return formatSynthesisStartedCaption(synthesisEvent?.data) ?? stage.caption;
+  }
+  return stage.caption;
 }
 
 const STAGE_DETAIL_FORMATTERS: Partial<Record<FastReportEvent["name"], StageDetailFormatter>> = {
@@ -138,6 +144,7 @@ const STAGE_DETAIL_FORMATTERS: Partial<Record<FastReportEvent["name"], StageDeta
   contact_discovery_complete: formatContactDiscoveryCompleteDetail,
   ranking_complete: formatRankingCompleteDetail,
   activity_complete: formatActivityCompleteDetail,
+  report_finalized: () => "Report ready",
 };
 
 /**
@@ -157,6 +164,29 @@ function formatContactDiscoveryProgressCaption(
   if (typeof done !== "number" || typeof total !== "number" || total <= 0) return null;
   const current = Math.min(done + 1, total);
   return `Researching ${current} of ${total} ${pluralize("candidate", total)}…`;
+}
+
+function formatSynthesisStartedCaption(data: Record<string, unknown> | undefined): string | null {
+  if (!data) return null;
+  const candidateCount = data.candidateCount;
+  if (typeof candidateCount !== "number" || candidateCount <= 0) {
+    return "Writing candidate summaries…";
+  }
+  return `Writing summaries for ${candidateCount} ${pluralize("candidate", candidateCount)}…`;
+}
+
+function latestAnnouncement(latest: FastReportEvent | null): string {
+  if (!latest) return "Awaiting pipeline events.";
+  if (latest.name === "candidate_stage_complete" && typeof latest.data.detail === "string") {
+    return `Candidate update: ${latest.data.detail}`;
+  }
+  if (latest.name === "candidates_identified" && typeof latest.data.count === "number") {
+    return `${latest.data.count} ${pluralize("candidate", latest.data.count)} identified.`;
+  }
+  if (latest.name === "synthesis_started") {
+    return formatSynthesisStartedCaption(latest.data) ?? "Writing candidate summaries…";
+  }
+  return `Latest stage: ${STAGE_ORDER.find((stage) => stage.name === latest.name)?.label ?? latest.name}`;
 }
 
 interface StageRowProps {
@@ -189,7 +219,7 @@ const StageRow = memo(function StageRow({
           aria-hidden
           data-connector={seen ? "traveled" : "pending"}
           className={`absolute -bottom-3.5 left-[0.6rem] top-5 w-px transition-colors duration-700 ease-out ${
-            seen ? "bg-brand" : "bg-border"
+            seen ? "bg-brand" : "bg-sf-line"
           }`}
         />
       ) : null}
@@ -197,10 +227,10 @@ const StageRow = memo(function StageRow({
         aria-hidden
         className={`relative z-10 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
           seen
-            ? "border-brand bg-brand text-card"
+            ? "border-brand bg-brand text-sf-card"
             : isActive
-              ? "border-brand bg-card"
-              : "border-border bg-card"
+              ? "border-brand bg-sf-card"
+              : "border-sf-line-strong bg-sf-card"
         }`}
       >
         {seen ? (
@@ -212,13 +242,13 @@ const StageRow = memo(function StageRow({
       <div className="flex-1 pt-px">
         <p
           className={`text-sm leading-tight ${
-            seen || isActive ? "font-medium text-foreground" : "text-muted-foreground"
+            seen || isActive ? "font-medium text-sf-heading" : "text-sf-muted"
           }`}
         >
           {label}
         </p>
         {captionText ? (
-          <p className="mt-0.5 text-xs leading-snug text-muted-foreground">{captionText}</p>
+          <p className="mt-0.5 text-xs leading-snug text-sf-muted">{captionText}</p>
         ) : null}
       </div>
     </li>
@@ -242,6 +272,7 @@ export function ProgressTimeline({ events, latest, errorCount }: ProgressTimelin
   const eventByName = new Map(events.map((e) => [e.name, e] as const));
   const failed = events.some((e) => e.name === "report_failed");
   const progressEvent = eventByName.get("contact_discovery_progress");
+  const synthesisEvent = eventByName.get("synthesis_started");
 
   // Find the active stage: the first one we haven't seen yet (or null
   // if everything is complete).
@@ -249,20 +280,18 @@ export function ProgressTimeline({ events, latest, errorCount }: ProgressTimelin
 
   return (
     <section
-      className="overflow-hidden rounded-lg border border-border bg-card"
+      className="overflow-hidden rounded-sf-card border border-sf-line bg-sf-card"
       aria-label="Pipeline progress"
     >
-      <header className="flex items-baseline justify-between gap-3 border-b border-border/60 px-5 py-3">
+      <header className="flex items-baseline justify-between gap-3 border-b border-sf-line px-5 py-3">
         <div>
-          <h3 className="text-xs font-medium uppercase tracking-[0.1em] text-muted-foreground">
-            Pipeline
-          </h3>
+          <h3 className="text-xs font-medium uppercase tracking-[0.1em] text-sf-muted">Pipeline</h3>
           {activeIndex !== -1 ? (
-            <p className="mt-0.5 text-sm font-medium text-foreground">
+            <p className="mt-0.5 text-sm font-medium text-sf-heading">
               {STAGE_ORDER[activeIndex].label}
             </p>
           ) : (
-            <p className="mt-0.5 text-sm font-medium text-foreground">All stages complete</p>
+            <p className="mt-0.5 text-sm font-medium text-sf-heading">All stages complete</p>
           )}
         </div>
         {errorCount > 0 ? (
@@ -293,7 +322,9 @@ export function ProgressTimeline({ events, latest, errorCount }: ProgressTimelin
                 seen={seen}
                 isActive={isActive}
                 isLast={index === STAGE_ORDER.length - 1}
-                captionText={isActive ? getActiveStageCaption(stage, progressEvent) : detail}
+                captionText={
+                  isActive ? getActiveStageCaption(stage, progressEvent, synthesisEvent) : detail
+                }
               />
             );
           })}
@@ -301,15 +332,13 @@ export function ProgressTimeline({ events, latest, errorCount }: ProgressTimelin
       </div>
 
       {failed ? (
-        <p className="border-t border-border/60 bg-amber-50 px-5 py-3 text-xs text-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
+        <p className="border-t border-sf-line bg-amber-50 px-5 py-3 text-xs text-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
           Pipeline reported a failure. Refresh once the report status settles to see error details.
         </p>
       ) : null}
 
       <p className="sr-only" aria-live="polite">
-        {latest
-          ? `Latest stage: ${STAGE_ORDER.find((s) => s.name === latest.name)?.label ?? latest.name}`
-          : "Awaiting pipeline events."}
+        {latestAnnouncement(latest)}
       </p>
     </section>
   );

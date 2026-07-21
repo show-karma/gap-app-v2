@@ -78,7 +78,7 @@ const APPLICATION_BADGE: Partial<Record<ApplicationStatus, { tone: BadgeTone; la
   under_review: { tone: "amber", label: "Under review" },
   revision_requested: { tone: "amber", label: "Revision" },
   approved: { tone: "green", label: "Approved" },
-  rejected: { tone: "red", label: "Declined" },
+  rejected: { tone: "red", label: "Rejected" },
 };
 
 /**

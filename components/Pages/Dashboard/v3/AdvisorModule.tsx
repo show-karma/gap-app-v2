@@ -4,7 +4,6 @@ import pluralize from "pluralize";
 import { type ReactNode, useState } from "react";
 import { useDonorHandles } from "@/hooks/useDonorHandles";
 import { Link } from "@/src/components/navigation/Link";
-import { NewDonorHandleModal } from "@/src/features/donor-research/components/criteria-input/NewDonorHandleModal";
 import { useResearchTray } from "@/src/features/non-profits/hooks/use-research-tray";
 import type { ResearchTrayEntry } from "@/src/features/non-profits/services/research-tray.service";
 import type { DonorHandle, ResearchReportListItem } from "@/types/donor-research";
@@ -184,10 +183,10 @@ function ReportCardSkeleton() {
   );
 }
 
-/** "New report" — redirects to the full /nonprofit-research builder. */
+/** "New report" — redirects to the full /nonprofit-research/new builder. */
 function NewReportButton() {
   return (
-    <Link className={cn(BTN_BASE, BTN_SM, BTN_PRIMARY)} href={PAGES.DONOR_RESEARCH.INDEX}>
+    <Link className={cn(BTN_BASE, BTN_SM, BTN_PRIMARY)} href={PAGES.DONOR_RESEARCH.NEW}>
       <SoftIcon name="plus" className="h-4 w-4" />
       New report
     </Link>
@@ -221,7 +220,7 @@ function ReportsView({
         brand
         body="Ask an agent to find foundations and grantmaking nonprofits aligned to a mission — every answer cited to a 990 filing."
         icon="compass"
-        primary={{ label: "New research report", icon: "search", href: PAGES.DONOR_RESEARCH.INDEX }}
+        primary={{ label: "New research report", icon: "search", href: PAGES.DONOR_RESEARCH.NEW }}
         title="No research reports yet"
       />
     );
@@ -328,21 +327,24 @@ function SavedView({
   );
 }
 
-/** Soft "New handle" trigger — opens the create-handle modal. */
-function NewHandleButton({ onClick }: { onClick: () => void }) {
+/** Soft "New handle" trigger — links out to the full Personas page, where
+ *  creation (and persona authoring) now lives (redesign P2). */
+function NewHandleButton() {
   return (
-    <button
+    <Link
       className={cn(BTN_BASE, BTN_SM, BTN_OUTLINE, "!shadow-none")}
-      onClick={onClick}
-      type="button"
+      href={PAGES.DONOR_RESEARCH.PERSONAS}
     >
       <SoftIcon name="plus" className="h-4 w-4" />
       New handle
-    </button>
+    </Link>
   );
 }
 
-/** "Donor handles" tab — create a handle, or click one to edit its persona. */
+/** "Donor handles" tab — cross-links to the full Personas section (redesign
+ *  P5): creation and persona editing both live on `/nonprofit-research/personas`
+ *  now, so this tab is read-only in-dashboard and hands off via links instead
+ *  of hosting the create/edit modal inline. */
 function HandlesView({
   handles,
   isLoading,
@@ -354,14 +356,6 @@ function HandlesView({
   isError: boolean;
   onRetry: () => void;
 }) {
-  const [createOpen, setCreateOpen] = useState(false);
-  const [editHandle, setEditHandle] = useState<DonorHandle | null>(null);
-
-  const closeModal = () => {
-    setCreateOpen(false);
-    setEditHandle(null);
-  };
-
   let body: ReactNode;
   if (isError) {
     body = <ErrorState message="Unable to load your donor handles." onRetry={onRetry} />;
@@ -370,7 +364,7 @@ function HandlesView({
   } else if (handles.length === 0) {
     body = (
       <EmptyState
-        action={<NewHandleButton onClick={() => setCreateOpen(true)} />}
+        action={<NewHandleButton />}
         body="Donor handles are anonymous labels you use to track research for each donor."
         icon="users"
         title="No donor handles yet"
@@ -380,11 +374,10 @@ function HandlesView({
     body = (
       <div className="flex flex-col overflow-hidden rounded-sf-tile border border-sf-line bg-sf-card">
         {handles.map((handle) => (
-          <button
+          <Link
             className="flex items-center gap-[14px] px-4 py-[15px] text-left transition-colors hover:bg-sf-elev [&+&]:border-t [&+&]:border-sf-line"
+            href={PAGES.DONOR_RESEARCH.PERSONA(handle.id)}
             key={handle.id}
-            onClick={() => setEditHandle(handle)}
-            type="button"
           >
             <div className={cn(THUMB_BASE, "h-9 w-9 rounded-[9px]")}>
               <SoftIcon name="users" className="h-4 w-4" />
@@ -398,16 +391,13 @@ function HandlesView({
               </div>
             </div>
             <SoftIcon name="arrow" className="h-4 w-4 flex-none text-sf-muted" />
-          </button>
+          </Link>
         ))}
       </div>
     );
   }
 
-  const action =
-    !isLoading && !isError && handles.length > 0 ? (
-      <NewHandleButton onClick={() => setCreateOpen(true)} />
-    ) : null;
+  const action = !isLoading && !isError && handles.length > 0 ? <NewHandleButton /> : null;
 
   return (
     <Section
@@ -419,17 +409,6 @@ function HandlesView({
       title="Donor handles"
     >
       {body}
-      <NewDonorHandleModal
-        editHandle={editHandle}
-        onCreated={() => {
-          closeModal();
-          onRetry();
-        }}
-        onOpenChange={(next) => {
-          if (!next) closeModal();
-        }}
-        open={createOpen || editHandle !== null}
-      />
     </Section>
   );
 }

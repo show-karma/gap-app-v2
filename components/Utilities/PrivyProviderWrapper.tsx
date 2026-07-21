@@ -10,6 +10,7 @@ import {
   usePrivyLoadRequested,
 } from "@/contexts/privy-bridge-context";
 import type { TenantConfig } from "@/src/infrastructure/types/tenant";
+import { ensureCryptoRandomUUID } from "@/utilities/auth/ensure-crypto-random-uuid";
 import { queryClient } from "@/utilities/query-client";
 import { minimalWagmiConfig } from "@/utilities/wagmi/privy-config";
 
@@ -46,6 +47,7 @@ function PrivyLoader({
 
   useEffect(() => {
     const doLoad = () => {
+      ensureCryptoRandomUUID();
       import("./PrivyWagmiProviders").then(setPrivy).catch((err) => {
         console.error("[PrivyProviderWrapper] Failed to load Privy SDK:", err);
         setBridge({ ...PRIVY_BRIDGE_DEFAULTS, ready: true });

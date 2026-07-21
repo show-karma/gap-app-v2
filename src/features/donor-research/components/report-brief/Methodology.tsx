@@ -1,8 +1,8 @@
 "use client";
 
 import { ChevronDown } from "lucide-react";
+import pluralize from "pluralize";
 import type { CompositeWeights, GeographyDiagnostic } from "@/types/donor-research";
-import { briefDisplay, briefProse } from "./fonts";
 import { methodologyWeightRows } from "./scoring";
 
 interface MethodologyProps {
@@ -18,11 +18,9 @@ interface MethodologyProps {
 }
 
 /**
- * Editorial colophon. Closes the brief with a short, collapsed
- * statement of how the recommendation was assembled. Stays out of
- * the reader's way until they ask for it; the chapter mark
- * deliberately matches the rest of the document so the footer
- * feels like a final chapter, not a tooltip.
+ * Collapsed-by-default methodology section closing the brief: how the
+ * pool was built, how the composite is scored, and what the brief is
+ * (and isn't).
  */
 export function Methodology({
   candidatesCount,
@@ -32,106 +30,87 @@ export function Methodology({
 }: MethodologyProps) {
   const weightRows = methodologyWeightRows(weights);
   return (
-    <section className="mt-8 border-t border-border/70 pt-10" data-section="methodology">
-      <details className="group">
-        <summary className="flex cursor-pointer list-none items-baseline justify-between gap-4">
-          <div className="min-w-0">
-            <p
-              className={`${briefDisplay.className} text-[10px] font-medium uppercase tracking-[0.32em] text-muted-foreground`}
-            >
-              Colophon
-            </p>
-            <h2
-              className={`${briefDisplay.className} mt-2 text-[clamp(1.25rem,2.4vw,1.5rem)] font-medium leading-tight tracking-[-0.012em] text-foreground`}
-            >
-              How this brief was assembled.
-            </h2>
-          </div>
-          <span
-            className={`${briefDisplay.className} inline-flex shrink-0 items-center gap-1.5 self-end text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground transition-colors group-hover:text-foreground`}
-          >
-            <span className="group-open:hidden">Read more</span>
-            <span className="hidden group-open:inline">Hide</span>
-            <ChevronDown
-              aria-hidden
-              className="h-3.5 w-3.5 transition-transform group-open:rotate-180"
-            />
-          </span>
-        </summary>
+    <details
+      className="group rounded-sf-card border border-sf-line bg-sf-card"
+      data-section="methodology"
+    >
+      <summary className="flex cursor-pointer list-none items-baseline justify-between gap-4 px-6 py-4">
+        <h2 className="text-lg font-semibold tracking-[-0.01em] text-sf-heading">
+          How this brief was assembled
+        </h2>
+        <span className="inline-flex shrink-0 items-center gap-1.5 self-end text-[11px] font-[650] uppercase tracking-[0.1em] text-sf-muted transition-colors group-hover:text-sf-heading">
+          <span className="group-open:hidden">Read more</span>
+          <span className="hidden group-open:inline">Hide</span>
+          <ChevronDown
+            aria-hidden
+            className="h-3.5 w-3.5 transition-transform group-open:rotate-180"
+          />
+        </span>
+      </summary>
 
-        <div className="mt-8 grid grid-cols-1 gap-x-12 gap-y-10 sm:grid-cols-2">
-          <ColophonBlock label="Pool">
-            <p>
-              We started from {candidatesCount.toLocaleString()}{" "}
-              {candidatesCount === 1 ? "organization" : "organizations"} the model surfaced against
-              your cause, geography, and amount criteria. {surfacedCount} cleared compliance,
-              recency, and mission match to reach this brief.
-            </p>
-          </ColophonBlock>
+      <div className="grid grid-cols-1 gap-x-10 gap-y-8 border-t border-sf-line px-6 pb-6 pt-6 sm:grid-cols-2">
+        <ColophonBlock label="Pool">
+          <p>
+            We started from {candidatesCount.toLocaleString()}{" "}
+            {pluralize("organization", candidatesCount)} the model surfaced against your cause,
+            geography, and amount criteria. {surfacedCount} cleared compliance, recency, and mission
+            match to reach this brief.
+          </p>
+        </ColophonBlock>
 
-          <ColophonBlock label="Scoring">
-            <p>
-              {weights
-                ? "The composite is a weighted sum of these dimensions, at the weights set for this report:"
-                : "The composite is a fixed weighted sum, in this order of priority:"}
-            </p>
-            <ul className="mt-3 flex flex-col gap-1 tabular-nums text-foreground/85">
-              {weightRows.map((row) => (
-                <li key={row.label} className="flex items-baseline justify-between gap-3">
-                  <span>{row.label}</span>
-                  <span className="text-muted-foreground">{row.percent}%</span>
-                </li>
-              ))}
-            </ul>
-          </ColophonBlock>
+        <ColophonBlock label="Scoring">
+          <p>
+            {weights
+              ? "The composite is a weighted sum of these dimensions, at the weights set for this report:"
+              : "The composite is a fixed weighted sum, in this order of priority:"}
+          </p>
+          <ul className="mt-3 flex flex-col gap-1 font-mono tabular-nums text-sf-ink">
+            {weightRows.map((row) => (
+              <li className="flex items-baseline justify-between gap-3" key={row.label}>
+                <span>{row.label}</span>
+                <span className="text-sf-muted">{row.percent}%</span>
+              </li>
+            ))}
+          </ul>
+        </ColophonBlock>
 
-          <ColophonBlock label="Sources">
-            <p>
-              IRS Publication 78 (active 501(c)(3) status), most recent indexed IRS Form 990, the
-              California Registry of Charitable Trusts where applicable, and a multi-signal web
-              search disambiguated against each nonprofit's name, EIN, locale, and primary contact
-              phone.
-            </p>
-          </ColophonBlock>
+        <ColophonBlock label="Sources">
+          <p>
+            IRS Publication 78 (active 501(c)(3) status), most recent indexed IRS Form 990, the
+            California Registry of Charitable Trusts where applicable, and a multi-signal web search
+            disambiguated against each nonprofit's name, EIN, locale, and primary contact phone.
+          </p>
+        </ColophonBlock>
 
-          <ColophonBlock label="Geography">
-            <GeographyExplanation diagnostic={geographyDiagnostic} />
-          </ColophonBlock>
+        <ColophonBlock label="Geography">
+          <GeographyExplanation diagnostic={geographyDiagnostic} />
+        </ColophonBlock>
 
-          <ColophonBlock label="What this is">
-            <p>
-              A research aid. The brief surfaces candidates we'd suggest reading further on — it
-              does not vouch for them, and it doesn't replace the diligence calls you'd run before
-              cutting a cheque.
-            </p>
-          </ColophonBlock>
+        <ColophonBlock label="What this is">
+          <p>
+            A research aid. The brief surfaces candidates we'd suggest reading further on. It does
+            not vouch for them, and it doesn't replace the diligence calls you'd run before cutting
+            a cheque.
+          </p>
+        </ColophonBlock>
 
-          <ColophonBlock label="What it isn't">
-            <p>
-              A rating, a tax-deductibility guarantee, or an exhaustive list of every aligned
-              organization. Filings lag, and quiet nonprofits will look quieter here than they are
-              in real life.
-            </p>
-          </ColophonBlock>
-        </div>
-      </details>
-    </section>
+        <ColophonBlock label="What it isn't">
+          <p>
+            A rating, a tax-deductibility guarantee, or an exhaustive list of every aligned
+            organization. Filings lag, and quiet nonprofits will look quieter here than they are in
+            real life.
+          </p>
+        </ColophonBlock>
+      </div>
+    </details>
   );
 }
 
 function ColophonBlock({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="max-w-[44ch]">
-      <p
-        className={`${briefDisplay.className} text-[10px] font-medium uppercase tracking-[0.28em] text-muted-foreground`}
-      >
-        {label}
-      </p>
-      <div
-        className={`${briefProse.className} mt-2 text-[0.9375rem] leading-[1.6] text-foreground/80`}
-      >
-        {children}
-      </div>
+      <p className="text-[10.5px] font-[650] uppercase tracking-[0.14em] text-sf-muted">{label}</p>
+      <div className="mt-2 text-[13.5px] leading-[1.6] text-sf-ink">{children}</div>
     </div>
   );
 }
@@ -140,7 +119,7 @@ function GeographyExplanation({ diagnostic }: { diagnostic: GeographyDiagnostic 
   if (!diagnostic || !diagnostic.inputGeography) {
     return (
       <p>
-        No geography filter was applied — the search drew nationally from across the United States.
+        No geography filter was applied. The search drew nationally from across the United States.
       </p>
     );
   }

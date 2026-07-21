@@ -41,10 +41,9 @@ import { INDEXER } from "@/utilities/indexer";
  * Returns `null` only when the advisor hasn't onboarded yet — `GET /me`
  * returns 404 in exactly that one case (missing/invalid auth surfaces as
  * 401 earlier, and the route always exists), so a 404 is the unambiguous
- * "route to onboarding" signal. `fetchData` exposes only `response.data
- * .message`, not the structured error code, so we key off the status.
- * Any other error is thrown so React Query can retry / surface an error
- * state rather than silently sending the user to onboarding.
+ * "route to onboarding" signal — keyed off `HttpError.status`. Any other
+ * error is thrown so React Query can retry / surface an error state
+ * rather than silently sending the user to onboarding.
  */
 export const fetchCurrentAdvisor = async (): Promise<DonorAdvisor | null> => {
   try {
@@ -317,7 +316,13 @@ export interface ListReportsOptions {
    * report for the current advisor (default behavior).
    */
   donorHandleId?: string;
+  /** Restrict the list to a user-facing report outcome group. */
+  status?: ReportListStatusFilter;
 }
+
+export const REPORT_LIST_STATUS_FILTERS = ["in_progress", "complete", "failed"] as const;
+
+export type ReportListStatusFilter = (typeof REPORT_LIST_STATUS_FILTERS)[number];
 
 export const listResearchReports = async (
   options: ListReportsOptions = {}
@@ -326,6 +331,7 @@ export const listResearchReports = async (
   if (options.limit !== undefined) params.limit = options.limit;
   if (options.offset !== undefined) params.offset = options.offset;
   if (options.donorHandleId) params.donorHandleId = options.donorHandleId;
+  if (options.status) params.status = options.status;
   // TODO(#1775): add zod schema
   const data = await api.get<ResearchReportList>(INDEXER.DONOR_RESEARCH.REPORTS, { params });
   if (!data) throw new Error("Failed to load research reports");

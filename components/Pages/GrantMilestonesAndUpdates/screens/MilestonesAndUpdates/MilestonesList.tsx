@@ -163,7 +163,8 @@ export const MilestonesList: FC<MilestonesListProps> = ({ grant }) => {
       (item) =>
         !isCompleted(item) &&
         item.type !== "update" &&
-        !isCancelledMilestoneStatus(item.currentStatus)
+        // status lives on the wrapped milestone (item.object), not the item
+        !isCancelledMilestoneStatus(item.object?.currentStatus)
     );
 
     // For completed items: use completion date or creation date, descending (newest first)

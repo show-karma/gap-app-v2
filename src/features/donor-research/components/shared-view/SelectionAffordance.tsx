@@ -29,7 +29,7 @@ export function SelectionAffordance({ position, onClick }: SelectionAffordancePr
         top: `${position.top}px`,
         left: `${position.left}px`,
       }}
-      className="z-30 inline-flex items-center gap-1 rounded-md border border-border bg-background px-2 py-1 text-xs font-medium shadow-md hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      className="z-30 inline-flex items-center gap-1.5 rounded-full border border-sf-line-strong bg-sf-card px-2.5 py-1.5 text-[12px] font-medium text-sf-heading shadow-md hover:bg-sf-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
     >
       <MessageSquarePlusIcon className="h-3.5 w-3.5" aria-hidden />
       Comment

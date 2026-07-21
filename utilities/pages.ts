@@ -55,6 +55,14 @@ export const PAGES = {
   DONATIONS: `/donations`,
   DONOR_RESEARCH: {
     INDEX: `/nonprofit-research`,
+    // Dedicated report-creation page (redesign P1) — the criteria form moved
+    // off the section home so the home page can be list-first.
+    NEW: `/nonprofit-research/new`,
+    // Donor-handle management, presented to advisors as "Personas" (redesign
+    // P2). Code/API identifiers stay "donor handle" — only the UI copy
+    // renames.
+    PERSONAS: `/nonprofit-research/personas`,
+    PERSONA: (handleId: string) => `/nonprofit-research/personas/${handleId}`,
     ONBOARDING: `/nonprofit-research/onboarding`,
     REPORT: (reportId: string) => `/nonprofit-research/${reportId}`,
     SHARED: (token: string) => `/nonprofit-research/shared/${token}`,
@@ -197,6 +205,20 @@ export const PAGES = {
 const ASK_KARMA_COMMUNITY_PATTERN = /^\/community\/[^/]+\/ask-karma$/;
 export function isAskKarmaPathname(pathname: string): boolean {
   return pathname === PAGES.ASK_KARMA || ASK_KARMA_COMMUNITY_PATTERN.test(pathname);
+}
+
+/**
+ * Detects the two anonymous token-capability routes of the donor-research
+ * feature (donor share view + nonprofit diligence response). These pages
+ * carry their own standalone chrome (`TokenPageShell`) — the global navbar
+ * and marketing footer are suppressed for them (redesign spec 2.3). Lives
+ * next to the route constants so a rename updates the detection too.
+ */
+export function isDonorResearchTokenRoute(pathname: string): boolean {
+  return (
+    pathname.startsWith("/nonprofit-research/shared/") ||
+    pathname.startsWith("/nonprofit-research/diligence/")
+  );
 }
 
 /**

@@ -98,13 +98,15 @@ describe("AdminAdvisorsList", () => {
     expect(useAdminAdvisorsMock).toHaveBeenCalledWith(expect.objectContaining({ search: "smith" }));
   });
 
-  it("renders global stat cards", () => {
+  it("renders global stat tiles", () => {
     useAdminAdvisorsMock.mockReturnValue(withData([buildAdvisor()]));
 
     render(<AdminAdvisorsList />);
 
-    expect(screen.getByText("Reports generated")).toBeInTheDocument();
-    expect(screen.getByText("1 in beta")).toBeInTheDocument();
+    expect(screen.getByText("Reports · 6 completed")).toBeInTheDocument();
+    expect(screen.getByText("Advisors · 1 in beta")).toBeInTheDocument();
+    expect(screen.getByText("Donors tracked")).toBeInTheDocument();
+    expect(screen.getByText("Shared with donors")).toBeInTheDocument();
   });
 
   it("renders a retry affordance on error", () => {

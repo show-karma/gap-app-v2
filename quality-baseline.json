@@ -1,7 +1,7 @@
 {
   "$schema": "./scripts/quality-baseline.schema.json",
-  "generatedAt": "2026-07-21T18:56:54.233Z",
-  "generatedFromCommit": "fff93e261f0770bf9a1c4a9bab4180c0e8d66cf2",
+  "generatedAt": "2026-07-21T19:45:10.626Z",
+  "generatedFromCommit": "54b64eb6b5b4662ab1073f54e168d1d345b312a1",
   "coverage": {
     "lines": 0,
     "statements": 0,
@@ -9,14 +9,14 @@
     "branches": 0
   },
   "duplication": {
-    "percent": 1.17,
+    "percent": 1.16,
     "fragments": 75
   },
   "violations": {
-    "biome": 1212,
-    "knipUnusedFiles": 210,
+    "biome": 1207,
+    "knipUnusedFiles": 209,
     "knipUnusedExports": 415,
-    "knipUnusedTypes": 363,
+    "knipUnusedTypes": 362,
     "knipUnusedDeps": 19,
     "knipDuplicates": 33
   },
@@ -54,12 +54,6 @@
     "__tests__/components/FundingPlatform/QuestionBuilder/ProgramDetailsTab.test.tsx": {
       "lines": 1059,
       "bytes": 37057,
-      "maxLines": 800,
-      "maxBytes": 60000
-    },
-    "__tests__/components/Milestone/MilestoneCard.test.tsx": {
-      "lines": 918,
-      "bytes": 29690,
       "maxLines": 800,
       "maxBytes": 60000
     },
@@ -329,7 +323,7 @@
     },
     "components/Shared/ActivityCard/MilestoneCard.tsx": {
       "lines": 654,
-      "bytes": 25548,
+      "bytes": 25606,
       "maxLines": 600,
       "maxBytes": 40000
     },
@@ -457,16 +451,16 @@
   "reactDoctor": {
     "score": 0,
     "errors": 64,
-    "warnings": 3335,
+    "warnings": 3330,
     "byCategory": {
-      "Accessibility": 286,
-      "Architecture": 1188,
-      "Correctness": 393,
-      "Next.js": 145,
-      "Server": 9,
-      "Performance": 631,
-      "State & Effects": 695,
+      "Accessibility": 288,
+      "Architecture": 1173,
+      "Correctness": 391,
+      "Next.js": 144,
+      "State & Effects": 704,
+      "Performance": 633,
       "TanStack Query": 40,
+      "Server": 9,
       "Bundle Size": 9,
       "Security": 3
     }
