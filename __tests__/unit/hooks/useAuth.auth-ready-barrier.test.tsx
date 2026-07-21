@@ -36,9 +36,13 @@ vi.mock("@/store/modals/projectCreate", () => ({
   },
 }));
 
-vi.mock("@/utilities/auth/compare-all-wallets", () => ({
-  compareAllWallets: vi.fn(() => true),
-}));
+vi.mock("@/utilities/auth/compare-all-wallets", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/utilities/auth/compare-all-wallets")>();
+  return {
+    ...actual,
+    compareAllWallets: vi.fn(() => true),
+  };
+});
 
 vi.mock("@/utilities/pages", () => ({
   PAGES: { DASHBOARD: "/dashboard" },
