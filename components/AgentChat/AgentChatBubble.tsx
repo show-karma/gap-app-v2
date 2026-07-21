@@ -7,6 +7,7 @@ import {
   MessageRatingButtons,
   MessageRatingCommentBox,
 } from "@/components/AgentChat/MessageRating";
+import { KarmaLogo } from "@/components/Icons/Karma";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -57,6 +58,8 @@ export function AgentChatBubble() {
 
   return (
     <ChatBubbleShell
+      placement="anchored"
+      renderBrandIcon={({ className }) => <KarmaLogo className={className} />}
       isOpen={isOpen}
       onToggle={toggleOpen}
       onClear={() => {
