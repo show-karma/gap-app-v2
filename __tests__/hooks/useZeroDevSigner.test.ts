@@ -2,7 +2,8 @@ import { renderHook } from "@testing-library/react";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 // Import the real implementation directly (bypassing the unit-test alias that
 // redirects @/hooks/useZeroDevSigner to the __mocks__ stub)
-import { useZeroDevSigner, WALLET_READY_TIMEOUT_MS } from "../../hooks/useZeroDevSigner";
+import { useZeroDevSigner } from "../../hooks/useZeroDevSigner";
+import { WALLET_READY_TIMEOUT_MS } from "../../utilities/wallet/waitForUsableWallet";
 
 // Mock bridge
 const mockUser: any = { linkedAccounts: [] };

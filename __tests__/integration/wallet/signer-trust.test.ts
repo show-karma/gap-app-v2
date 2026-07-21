@@ -71,7 +71,8 @@ import {
   getGaslessSigner,
   isChainSupportedForGasless,
 } from "@/utilities/gasless";
-import { useZeroDevSigner, WALLET_READY_TIMEOUT_MS } from "../../../hooks/useZeroDevSigner";
+import { useZeroDevSigner } from "../../../hooks/useZeroDevSigner";
+import { WALLET_READY_TIMEOUT_MS } from "../../../utilities/wallet/waitForUsableWallet";
 
 const EMBEDDED = "0xEmbedded1111111111111111111111111111111111";
 const FOREIGN_METAMASK = "0x9b75AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
