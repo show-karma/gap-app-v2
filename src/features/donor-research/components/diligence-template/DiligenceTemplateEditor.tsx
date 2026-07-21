@@ -17,11 +17,18 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { ArrowLeft, GripVertical, Plus, Trash2 } from "lucide-react";
+import { GripVertical, Plus, Trash2 } from "lucide-react";
 import pluralize from "pluralize";
 import * as React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
+import { EmptyState, ErrorState, SkeletonList } from "@/components/Pages/Dashboard/v3/primitives";
+import {
+  BTN_BASE,
+  BTN_MD,
+  BTN_OUTLINE,
+  BTN_PRIMARY,
+} from "@/components/Pages/Dashboard/v3/soft-classes";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -33,10 +40,8 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { useDiligenceTemplate, useSaveDiligenceTemplate } from "@/hooks/useDiligence";
-import { Link } from "@/src/components/navigation/Link";
-import { DonorResearchLoading } from "@/src/features/donor-research/components/common/DonorResearchLoading";
 import { DILIGENCE_TEMPLATE_LIMITS, type DiligenceQuestion } from "@/types/diligence";
-import { PAGES } from "@/utilities/pages";
+import { cn } from "@/utilities/tailwind";
 import { makeQuestionId } from "../diligence/question-id";
 
 const { MAX_QUESTIONS, QUESTION_TEXT_MAX } = DILIGENCE_TEMPLATE_LIMITS;
@@ -97,9 +102,10 @@ const QuestionRow = React.memo(function QuestionRow({
     <li
       ref={setNodeRef}
       style={style}
-      className={`flex flex-col gap-2 rounded-xl border bg-card p-4 ${
-        isDragging ? "z-10 border-brand/40 shadow-lg" : "border-border"
-      }`}
+      className={cn(
+        "flex flex-col gap-2 bg-sf-card p-4 [&+&]:border-t [&+&]:border-sf-line sm:p-5",
+        isDragging && "relative z-10 bg-sf-elev shadow-sm"
+      )}
     >
       <div className="flex items-start gap-3">
         <button
@@ -108,14 +114,14 @@ const QuestionRow = React.memo(function QuestionRow({
           {...listeners}
           disabled={disabled}
           aria-label={`Drag to reorder ${label.toLowerCase()}`}
-          className="mt-1.5 shrink-0 cursor-grab touch-none rounded p-1 text-muted-foreground/60 transition-colors hover:text-foreground focus:outline-none focus:ring-1 focus:ring-brand/40 active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-40"
+          className="mt-1.5 shrink-0 cursor-grab touch-none rounded-sf-tile p-1 text-sf-muted transition-colors hover:bg-sf-chip hover:text-sf-heading focus:outline-none focus:ring-2 focus:ring-brand-500/30 active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-40"
         >
           <GripVertical className="h-4 w-4" aria-hidden />
         </button>
-        <span className="mt-2 w-5 shrink-0 text-sm font-medium text-muted-foreground" aria-hidden>
+        <span className="mt-2 w-5 shrink-0 text-sm font-semibold text-sf-muted" aria-hidden>
           {index + 1}.
         </span>
-        <div className="flex-1">
+        <div className="min-w-0 flex-1">
           <Textarea
             aria-label={label}
             value={question.text}
@@ -123,18 +129,19 @@ const QuestionRow = React.memo(function QuestionRow({
             maxLength={QUESTION_TEXT_MAX + 100}
             placeholder="e.g. How do you measure the impact of this program?"
             onChange={(event) => onChangeText(question.id, event.target.value)}
+            className="min-h-[92px] resize-y rounded-sf-tile border-sf-line-strong bg-sf-elev text-[13.5px] leading-[1.55] text-sf-heading shadow-none placeholder:text-sf-muted focus-visible:border-brand-500 focus-visible:ring-brand-500/30"
           />
           <div className="mt-1 flex items-center justify-between gap-3">
             {showError && error ? (
-              <p className="text-xs text-destructive">{error.message}</p>
+              <p className="text-xs text-red-600 dark:text-red-400">{error.message}</p>
             ) : (
               <span />
             )}
             <span
               className={
                 length > QUESTION_TEXT_MAX
-                  ? "text-xs text-destructive"
-                  : "text-xs text-muted-foreground"
+                  ? "text-xs text-red-600 dark:text-red-400"
+                  : "text-xs text-sf-muted"
               }
             >
               {length.toLocaleString()}/{QUESTION_TEXT_MAX.toLocaleString()}
@@ -148,13 +155,42 @@ const QuestionRow = React.memo(function QuestionRow({
           aria-label={`Remove ${label.toLowerCase()}`}
           disabled={disabled}
           onClick={() => onRemove(question.id)}
+          className="text-sf-muted hover:bg-sf-chip hover:text-red-600 dark:hover:text-red-400"
         >
-          <Trash2 className="h-4 w-4 text-muted-foreground" />
+          <Trash2 className="h-4 w-4" />
         </Button>
       </div>
     </li>
   );
 });
+
+function PageHeader({
+  updatedAt,
+  action,
+}: {
+  updatedAt?: string | null;
+  action?: React.ReactNode;
+}) {
+  return (
+    <header className="flex flex-wrap items-start justify-between gap-4">
+      <div className="max-w-xl">
+        <h1 className="text-2xl font-semibold tracking-[-0.02em] text-sf-heading">
+          Diligence questions
+        </h1>
+        <p className="mt-1 text-[13.5px] leading-[1.55] text-sf-muted">
+          Set the questions sent anonymously to nonprofits when you request diligence. Existing
+          requests keep their original questions; changes apply to future requests.
+        </p>
+        {updatedAt ? (
+          <p className="mt-2 text-[12px] text-sf-muted">
+            Last saved {new Date(updatedAt).toLocaleString()}
+          </p>
+        ) : null}
+      </div>
+      {action ?? null}
+    </header>
+  );
+}
 
 /**
  * Advisor diligence-question template editor (DEV-428).
@@ -242,23 +278,25 @@ export function DiligenceTemplateEditor() {
   // -- Load states -----------------------------------------------------------
 
   if (templateQuery.isLoading) {
-    return <DonorResearchLoading label="Loading your diligence questions…" />;
+    return (
+      <div className="flex flex-col gap-6">
+        <PageHeader />
+        <SkeletonList count={3} />
+        <p aria-live="polite" className="sr-only">
+          Loading your diligence questions…
+        </p>
+      </div>
+    );
   }
 
   if (templateQuery.isError) {
     return (
-      <div className="mx-auto max-w-3xl px-4 py-12">
-        <div className="flex flex-col items-center gap-4 rounded-xl border border-border p-8 text-center">
-          <h1 className="text-xl font-semibold text-foreground">
-            Couldn&apos;t load your questions
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            We couldn&apos;t load your diligence questions. Please try again.
-          </p>
-          <Button type="button" variant="outline" onClick={() => templateQuery.refetch()}>
-            Try again
-          </Button>
-        </div>
+      <div className="flex flex-col gap-6">
+        <PageHeader />
+        <ErrorState
+          message="We couldn't load your diligence questions. Please try again."
+          onRetry={() => templateQuery.refetch()}
+        />
       </div>
     );
   }
@@ -294,45 +332,43 @@ export function DiligenceTemplateEditor() {
   };
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-10 sm:py-14">
-      <Link
-        href={PAGES.DONOR_RESEARCH.INDEX}
-        className="mb-6 inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
-      >
-        <ArrowLeft className="h-3.5 w-3.5" aria-hidden />
-        Back to research dashboard
-      </Link>
-      <header className="mb-8 border-b border-border/60 pb-6">
-        <p className="mb-1 text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
-          Karma · Nonprofit Research
-        </p>
-        <h1 className="text-balance text-2xl font-medium tracking-tight text-foreground sm:text-3xl">
-          Diligence questions
-        </h1>
-        <p className="mt-2 max-w-xl text-pretty text-sm leading-relaxed text-muted-foreground">
-          These questions are sent anonymously to nonprofits when you request diligence. Each
-          request keeps its own snapshot, so editing here only affects future requests.
-        </p>
-        {updatedAt ? (
-          <p className="mt-3 text-xs text-muted-foreground">
-            Last saved {new Date(updatedAt).toLocaleString()}
-          </p>
-        ) : null}
-      </header>
+    <div className="flex flex-col gap-6">
+      <PageHeader
+        updatedAt={updatedAt}
+        action={
+          !isEmpty || serverHasQuestions ? (
+            <button
+              type="button"
+              onClick={handleSaveClick}
+              disabled={saveDisabled}
+              className={cn(
+                BTN_BASE,
+                BTN_MD,
+                BTN_PRIMARY,
+                "disabled:cursor-not-allowed disabled:opacity-50"
+              )}
+            >
+              {save.isPending ? "Saving…" : "Save questions"}
+            </button>
+          ) : undefined
+        }
+      />
 
       {isEmpty ? (
-        <div className="flex flex-col items-center gap-4 rounded-xl border border-dashed border-border bg-muted/30 px-6 py-12 text-center">
-          <h2 className="text-base font-medium text-foreground">No questions yet</h2>
-          <p className="max-w-sm text-sm text-muted-foreground">
-            Add the questions you want every nonprofit to answer before you decide to connect.
-          </p>
-          <Button type="button" onClick={handleAdd}>
-            <Plus className="h-4 w-4" />
-            Add your first question
-          </Button>
-        </div>
+        <EmptyState
+          action={
+            <button className={cn(BTN_BASE, BTN_MD, BTN_PRIMARY)} onClick={handleAdd} type="button">
+              <Plus className="h-4 w-4" />
+              Add your first question
+            </button>
+          }
+          body="Add the questions you want every nonprofit to answer before you decide to connect."
+          brand
+          icon="file"
+          title="No questions yet"
+        />
       ) : (
-        <>
+        <section aria-label="Question template" className="flex flex-col gap-4">
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
@@ -342,7 +378,7 @@ export function DiligenceTemplateEditor() {
               items={rows.map((row) => row.id)}
               strategy={verticalListSortingStrategy}
             >
-              <ul className="flex flex-col gap-3">
+              <ul className="flex flex-col overflow-hidden rounded-sf-tile border border-sf-line bg-sf-card">
                 {rows.map((row, index) => (
                   <QuestionRow
                     key={row.id}
@@ -359,30 +395,29 @@ export function DiligenceTemplateEditor() {
             </SortableContext>
           </DndContext>
 
-          <div className="mt-4 flex flex-wrap items-center gap-3">
-            <Button
+          <div className="flex flex-wrap items-center gap-3">
+            <button
               type="button"
-              variant="outline"
               onClick={handleAdd}
               disabled={atCap || save.isPending}
+              className={cn(
+                BTN_BASE,
+                BTN_MD,
+                BTN_OUTLINE,
+                "disabled:cursor-not-allowed disabled:opacity-50"
+              )}
             >
               <Plus className="h-4 w-4" />
               Add question
-            </Button>
-            <p className="text-xs text-muted-foreground">
+            </button>
+            <p className="text-xs text-sf-muted">
               {atCap
                 ? `You've reached the ${MAX_QUESTIONS}-question limit.`
                 : `${remaining} ${pluralize("question", remaining)} remaining.`}
             </p>
           </div>
-        </>
+        </section>
       )}
-
-      <div className="mt-8 flex items-center justify-end gap-3 border-t border-border/60 pt-6">
-        <Button type="button" onClick={handleSaveClick} disabled={saveDisabled}>
-          {save.isPending ? "Saving…" : "Save questions"}
-        </Button>
-      </div>
 
       <Dialog open={clearConfirmOpen} onOpenChange={setClearConfirmOpen}>
         <DialogContent>

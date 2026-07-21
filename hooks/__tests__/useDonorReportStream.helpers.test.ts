@@ -110,6 +110,59 @@ describe("mergeStreamEvents with contact_discovery_progress", () => {
   });
 });
 
+describe("mergeStreamEvents with granular candidate progress", () => {
+  const candidateStage = (
+    fundingOrganizationId: string,
+    stage: "compliance" | "contacts" | "news" | "social",
+    status: "ok" | "skipped" | "failed" = "ok"
+  ) =>
+    makeEvent("candidate_stage_complete", {
+      fundingOrganizationId,
+      stage,
+      status,
+      detail: `${stage} ${status}`,
+    });
+
+  it("should_retain_distinct_candidates_and_stages_instead_of_deduping_by_event_name", () => {
+    let events: FastReportEvent[] = [];
+    events = mergeStreamEvents(events, candidateStage("org-1", "compliance"));
+    events = mergeStreamEvents(events, candidateStage("org-1", "contacts"));
+    events = mergeStreamEvents(events, candidateStage("org-2", "compliance"));
+
+    expect(events).toHaveLength(3);
+    expect(events.map((event) => [event.data.fundingOrganizationId, event.data.stage])).toEqual([
+      ["org-1", "compliance"],
+      ["org-1", "contacts"],
+      ["org-2", "compliance"],
+    ]);
+  });
+
+  it("should_apply_last_write_wins_for_the_same_candidate_and_stage", () => {
+    const skipped = candidateStage("org-1", "social", "skipped");
+    const completed = candidateStage("org-1", "social", "ok");
+
+    const events = mergeStreamEvents([skipped], completed);
+
+    expect(events).toHaveLength(1);
+    expect(events[0]).toBe(completed);
+    expect(events[0].data.status).toBe("ok");
+  });
+
+  it("should_stay_bounded_when_the_backend_replays_candidate_history", () => {
+    const history = [
+      candidateStage("org-1", "compliance"),
+      candidateStage("org-1", "contacts"),
+      candidateStage("org-2", "compliance"),
+      candidateStage("org-2", "contacts"),
+    ];
+    let events: FastReportEvent[] = [];
+    for (const event of history) events = mergeStreamEvents(events, event);
+    for (const event of history) events = mergeStreamEvents(events, event);
+
+    expect(events).toHaveLength(history.length);
+  });
+});
+
 describe("MAX_STREAM_RETRIES", () => {
   it("should_be_a_positive_finite_reconnect_cap", () => {
     expect(MAX_STREAM_RETRIES).toBe(5);

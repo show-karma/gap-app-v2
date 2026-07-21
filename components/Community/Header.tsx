@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useParams, usePathname } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
+import { CHAT_COMPOSER_SELECTOR } from "@/components/AgentChat/panel-dom";
 import { HeaderStatsCards } from "@/components/Community/HeaderStatsCards";
 import { CommunityPageNavigator } from "@/components/Pages/Communities/CommunityPageNavigator";
 import { BorderBeam } from "@/components/ui/border-beam";
@@ -100,9 +101,7 @@ const NormalCommunityHeader = ({ community }: { community: Community }) => {
     // Wait for the chat shell + input to mount before focusing.
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
-        const editor = document.querySelector<HTMLElement>(
-          '[role="textbox"][aria-label="Chat message"]'
-        );
+        const editor = document.querySelector<HTMLElement>(CHAT_COMPOSER_SELECTOR);
         editor?.focus();
       });
     });

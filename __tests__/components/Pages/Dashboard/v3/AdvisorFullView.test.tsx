@@ -4,22 +4,6 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AdvisorFullView } from "@/components/Pages/Dashboard/v3/AdvisorModule";
 import type { ResearchReportListItem } from "@/types/donor-research";
 
-// Create/edit handle modal — stub to a marker reflecting create vs edit.
-vi.mock("@/src/features/donor-research/components/criteria-input/NewDonorHandleModal", () => ({
-  NewDonorHandleModal: ({
-    open,
-    editHandle,
-  }: {
-    open: boolean;
-    editHandle: { opaqueLabel: string } | null;
-  }) =>
-    open ? (
-      <div data-testid="handle-modal">
-        {editHandle ? `edit:${editHandle.opaqueLabel}` : "create"}
-      </div>
-    ) : null,
-}));
-
 // Rail's "Saved nonprofits" tab is backed by the research tray.
 const savedMock = vi.fn();
 vi.mock("@/src/features/non-profits/hooks/use-research-tray", () => ({
@@ -162,7 +146,7 @@ describe("AdvisorFullView", () => {
     );
   });
 
-  it("switches the Donor handles tab and opens the modal to create or edit", async () => {
+  it("switches the Donor handles tab and cross-links to the Personas section", async () => {
     handlesMock.mockReturnValue({
       data: {
         items: [
@@ -183,14 +167,17 @@ describe("AdvisorFullView", () => {
     renderView();
 
     fireEvent.click(screen.getByRole("button", { name: /donor handles/i }));
-    const row = await screen.findByRole("button", { name: /Coastal Trust/ });
+    const row = await screen.findByRole("link", { name: /Coastal Trust/ });
 
-    // Header button opens the modal in create mode.
-    fireEvent.click(screen.getByRole("button", { name: "New handle" }));
-    expect(screen.getByTestId("handle-modal")).toHaveTextContent("create");
+    // Header "New handle" links out to the full Personas page (redesign P5) —
+    // creation no longer happens inline in the dashboard.
+    expect(screen.getByRole("link", { name: "New handle" })).toHaveAttribute(
+      "href",
+      expect.stringContaining("nonprofit-research/personas")
+    );
 
-    // Clicking an existing handle opens the modal in edit mode.
-    fireEvent.click(row);
-    expect(screen.getByTestId("handle-modal")).toHaveTextContent("edit:Coastal Trust");
+    // Clicking an existing handle opens its persona detail page (profile
+    // editing lives there now, not in a dashboard modal).
+    expect(row).toHaveAttribute("href", expect.stringContaining("nonprofit-research/personas/h1"));
   });
 });

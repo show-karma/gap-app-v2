@@ -1,4 +1,5 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import toast from "react-hot-toast";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 const mockCopy = vi.fn(() => Promise.resolve(true));
@@ -18,6 +19,10 @@ vi.mock("@/hooks/useShareToken", () => ({
     mutateAsync: mockRevokeMutateAsync,
     isPending: false,
   }),
+}));
+
+vi.mock("react-hot-toast", () => ({
+  default: { success: vi.fn(), error: vi.fn() },
 }));
 
 import { ShareTokenControls } from "../ShareTokenControls";
@@ -97,5 +102,46 @@ describe("ShareTokenControls", () => {
     expect(mockGenerateMutateAsync).toHaveBeenCalledWith(
       expect.objectContaining({ reportId: "report-1" })
     );
+  });
+
+  it("keeps the confirm dialog open when Regenerate fails, instead of presenting failure as success", async () => {
+    mockGenerateMutateAsync.mockRejectedValueOnce(new Error("Rotate failed"));
+
+    render(
+      <ShareTokenControls
+        reportId="report-1"
+        hasShareToken
+        shareToken="existing-token"
+        shareTokenExpiresAt={null}
+      />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Regenerate" }));
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Rotate failed"));
+    // A rejected deleteFunction must keep DeleteDialog's confirmation open —
+    // closing it here would present the failed rotation as a success.
+    expect(screen.getByText("Regenerate share link?")).toBeInTheDocument();
+  });
+
+  it("shows a toast instead of failing silently when 'Share with donor' fails", async () => {
+    mockGenerateMutateAsync.mockRejectedValueOnce(new Error("Network down"));
+
+    render(
+      <ShareTokenControls
+        reportId="report-1"
+        hasShareToken={false}
+        shareToken={null}
+        shareTokenExpiresAt={null}
+      />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Share with donor" }));
+
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Network down"));
+    // No token was minted, so the generate CTA — not the copy/regenerate
+    // controls — is still what's on screen.
+    expect(screen.getByRole("button", { name: "Share with donor" })).toBeInTheDocument();
   });
 });

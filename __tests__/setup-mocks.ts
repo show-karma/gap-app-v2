@@ -38,8 +38,7 @@
 // the PR that introduces the font.
 //
 // Fonts currently used in source:
-//   - Spectral            (app/layout.tsx, donor-research report-brief/fonts.ts)
-//   - Bricolage_Grotesque (donor-research report-brief/fonts.ts)
+//   - Spectral (app/layout.tsx)
 //
 // Individual test files may still override these with their own vi.mock().
 // ---------------------------------------------------------------------------
@@ -51,7 +50,6 @@ const mockFontLoader = () => ({
 
 vi.mock("next/font/google", () => ({
   Spectral: mockFontLoader,
-  Bricolage_Grotesque: mockFontLoader,
   JetBrains_Mono: mockFontLoader,
 }));
 

@@ -1,14 +1,6 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import type { CandidateFinancialYear } from "@/types/donor-research";
-
-// `next/font/google` is unavailable in the unit test runtime; the brief's
-// font module loads it at import time, so stub the classNames it exposes.
-vi.mock("./fonts", () => ({
-  briefDisplay: { className: "brief-display" },
-  briefProse: { className: "brief-prose" },
-}));
-
 import { FinancialsTable } from "./FinancialsTable";
 
 function makeYear(overrides: Partial<CandidateFinancialYear> = {}): CandidateFinancialYear {

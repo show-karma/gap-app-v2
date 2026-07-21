@@ -74,6 +74,17 @@ export function lookupMilestoneStatus(
  * on-chain yet — treat as Pending.
  */
 
+/**
+ * A milestone is Cancelled when the on-chain status was set to `cancelled`
+ * (DEV-523). Cancelled is terminal — it takes precedence over every other
+ * display state (completed, verified, late, pending), so callers must check
+ * this first.
+ */
+export function isMilestoneCancelled(statusEntry?: MilestoneStatusEntry): boolean {
+  if (!statusEntry) return false;
+  return statusEntry.currentStatus === "cancelled";
+}
+
 export function isMilestoneVerified(statusEntry?: MilestoneStatusEntry): boolean {
   if (!statusEntry) return false;
   return statusEntry.currentStatus === "verified" || !!statusEntry.verified;
@@ -92,7 +103,12 @@ export function isMilestoneCompleted(statusEntry?: MilestoneStatusEntry): boolea
  */
 export function isMilestoneLate(statusEntry?: MilestoneStatusEntry): boolean {
   if (!statusEntry) return false;
-  if (isMilestoneCompleted(statusEntry) || isMilestoneVerified(statusEntry)) return false;
+  if (
+    isMilestoneCompleted(statusEntry) ||
+    isMilestoneVerified(statusEntry) ||
+    isMilestoneCancelled(statusEntry)
+  )
+    return false;
   if (!statusEntry.dueDate) return false;
   const dueMs = new Date(statusEntry.dueDate).getTime();
   return Number.isFinite(dueMs) && dueMs < Date.now();
