@@ -143,7 +143,7 @@ function PersonaListBody({ handlesQuery, onRequestCreate }: PersonaListBodyProps
     return (
       <EmptyState
         action={<NewPersonaButton onClick={onRequestCreate} />}
-        body="Create a donor to research on their behalf. Each donor can hold a profile, a description, and their own reports."
+        body="Create a donor to research on their behalf. Each donor can hold a profile, private notes, and their own reports."
         icon="users"
         title="No donors yet"
       />
@@ -174,7 +174,7 @@ export function PersonasListView() {
         <div className="max-w-xl">
           <h1 className="text-2xl font-semibold tracking-[-0.02em] text-sf-heading">Donors</h1>
           <p className="mt-1 text-[13.5px] text-sf-muted">
-            Anonymous profiles for the donors you advise. Each one can hold a description and its
+            Anonymous profiles for the donors you advise. Each one can hold private notes and its
             own research reports.
           </p>
         </div>

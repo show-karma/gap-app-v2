@@ -11,7 +11,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const { handleId } = await params;
   return customMetadata({
     title: "Nonprofit Research — Donor",
-    description: "Research profile, description, and reports for a donor.",
+    description: "Research profile, private notes, and reports for a donor.",
     path: PAGES.DONOR_RESEARCH.PERSONA(handleId),
     robots: { index: false, follow: false },
   });
