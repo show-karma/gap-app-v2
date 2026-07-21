@@ -2,6 +2,7 @@
 
 import { memo } from "react";
 import {
+  isMilestoneCancelled,
   isMilestoneCompleted,
   isMilestoneLate,
   isMilestoneVerified,
@@ -23,6 +24,7 @@ type Tone = "success" | "warning" | "danger" | "neutral";
 interface BadgeSpec {
   label: string;
   tone: Tone;
+  strikethrough?: boolean;
 }
 
 const TONE_CLASSES: Record<Tone, string> = {
@@ -41,9 +43,11 @@ const TONE_CLASSES: Record<Tone, string> = {
 };
 
 function resolveSpec(entry?: MilestoneStatusEntry): BadgeSpec {
-  // Order matters: Verified wins over Completed (a verified milestone
-  // is by definition also completed); Late only applies when not yet
-  // completed/verified.
+  // Order matters: Cancelled is terminal and wins over everything; Verified
+  // wins over Completed (a verified milestone is by definition also
+  // completed); Late only applies when not yet completed/verified.
+  if (isMilestoneCancelled(entry))
+    return { label: "Cancelled", tone: "neutral", strikethrough: true };
   if (isMilestoneVerified(entry)) return { label: "Verified", tone: "success" };
   if (isMilestoneCompleted(entry)) return { label: "Pending Verification", tone: "warning" };
   if (isMilestoneLate(entry)) return { label: "Past Due", tone: "danger" };
@@ -72,12 +76,13 @@ export const MilestoneStatusBadge = memo(function MilestoneStatusBadge({
   entry,
   className,
 }: MilestoneStatusBadgeProps) {
-  const { label, tone } = resolveSpec(entry);
+  const { label, tone, strikethrough } = resolveSpec(entry);
   return (
     <span
       className={cn(
         "inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium",
         TONE_CLASSES[tone],
+        strikethrough && "line-through",
         className
       )}
     >
