@@ -132,7 +132,8 @@ import {
 // ---------------------------------------------------------------------------
 // Import the REAL hook using a relative path to bypass the @/ alias mock
 // ---------------------------------------------------------------------------
-import { useZeroDevSigner, WALLET_READY_TIMEOUT_MS } from "../../../hooks/useZeroDevSigner";
+import { useZeroDevSigner } from "../../../hooks/useZeroDevSigner";
+import { WALLET_READY_TIMEOUT_MS } from "../../../utilities/wallet/waitForUsableWallet";
 
 // ---------------------------------------------------------------------------
 // Shared chain-aware fixtures (see zerodev-signer-test-utils.ts)
