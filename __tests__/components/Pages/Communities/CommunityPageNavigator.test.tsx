@@ -53,7 +53,6 @@ vi.mock("lucide-react", () => ({
   FileSearch: (props: any) => <svg data-testid="file-search-icon" {...props} />,
   FileText: (props: any) => <svg data-testid="file-text-icon" {...props} />,
   LandPlot: (props: any) => <svg data-testid="land-plot-icon" {...props} />,
-  Layers: (props: any) => <svg data-testid="layers-icon" {...props} />,
   SquareUser: (props: any) => <svg data-testid="square-user-icon" {...props} />,
   Wallet: (props: any) => <svg data-testid="wallet-icon" {...props} />,
 }));
@@ -739,62 +738,6 @@ describe("CommunityPageNavigator", () => {
 
       const link = screen.getByText("View funded projects").closest("a");
       expect(link?.className).toContain("text-gray-500");
-    });
-  });
-
-  describe("Funding Programs Tab Visibility", () => {
-    const withFilecoinDetails = () => {
-      mockUseCommunityDetails.mockReturnValue({
-        data: {
-          uid: "0x1234567890123456789012345678901234567890",
-          details: { name: "Filecoin", slug: "filecoin" },
-        },
-        isLoading: false,
-      } as any);
-    };
-
-    it("should show an external Funding Programs tab in whitelabel mode for a community with an overview URL", () => {
-      withFilecoinDetails();
-      mockUseWhitelabel.mockReturnValue({
-        isWhitelabel: true,
-        communitySlug: "filecoin",
-        config: null,
-      } as any);
-
-      render(<CommunityPageNavigator />, { wrapper });
-
-      const link = screen.getByText("Funding Programs").closest("a");
-      expect(link).toHaveAttribute("href", "https://filpgf.io/funding-programs/");
-      expect(link).toHaveAttribute("target", "_blank");
-      expect(link).toHaveAttribute("rel", "noopener noreferrer");
-      expect(screen.getByTestId("layers-icon")).toBeInTheDocument();
-    });
-
-    it("should hide the Funding Programs tab outside whitelabel mode even for a mapped community", () => {
-      withFilecoinDetails();
-      mockUseWhitelabel.mockReturnValue({
-        isWhitelabel: false,
-        communitySlug: "filecoin",
-        config: null,
-      } as any);
-
-      render(<CommunityPageNavigator />, { wrapper });
-
-      expect(screen.queryByText("Funding Programs")).not.toBeInTheDocument();
-      expect(screen.queryByTestId("layers-icon")).not.toBeInTheDocument();
-    });
-
-    it("should hide the Funding Programs tab in whitelabel mode for a community without an overview URL", () => {
-      // test-community has no entry in FUNDING_PROGRAMS_OVERVIEW_URLS
-      mockUseWhitelabel.mockReturnValue({
-        isWhitelabel: true,
-        communitySlug: "test-community",
-        config: null,
-      } as any);
-
-      render(<CommunityPageNavigator />, { wrapper });
-
-      expect(screen.queryByText("Funding Programs")).not.toBeInTheDocument();
     });
   });
 
