@@ -290,7 +290,7 @@ describe("ProjectsExplorer - Project browsing & search", () => {
         name: /Search projects/i,
       });
       expect(searchInput).toBeInTheDocument();
-      expect(searchInput).toHaveAttribute("placeholder", "Search projects...");
+      expect(searchInput).toHaveAttribute("placeholder", "Search projects…");
     });
 
     it("allows user to type in search input", async () => {

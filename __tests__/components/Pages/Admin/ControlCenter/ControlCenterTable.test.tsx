@@ -51,8 +51,11 @@ vi.mock("@/components/KycStatusIcon", () => ({
   KycStatusBadge: () => <div data-testid="kyc-badge">KYC</div>,
 }));
 
-vi.mock("@/src/features/payout-disbursement", () => ({
+vi.mock("@/src/features/payout-disbursement/utils/format-token-amount", () => ({
   formatDisplayAmount: (val: string) => val,
+}));
+
+vi.mock("@/src/features/payout-disbursement/components/TokenBreakdown", () => ({
   TokenBreakdown: ({ totalsByToken }: any) => (
     <div data-testid="token-breakdown">{totalsByToken?.length ?? 0} tokens</div>
   ),

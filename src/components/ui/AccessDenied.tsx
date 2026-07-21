@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useAccessDeniedMessages } from "@/hooks/useAccessDeniedMessages";
 import { useAuth } from "@/hooks/useAuth";
+import { Link } from "@/src/components/navigation/Link";
 import { usePermissionContext } from "@/src/core/rbac/context/permission-context";
 import { isValidRole, ROLE_LABELS, Role } from "@/src/core/rbac/types";
 import {
@@ -26,14 +27,28 @@ interface AccessDeniedCta {
   href: string;
 }
 
+/**
+ * A complementary action shown below the primary CTA — e.g. an applicant who
+ * lacks a manage role but can still view their own application. The optional
+ * `message` is rendered as Markdown above the link. Only shown to signed-in
+ * users (it is a destination, not a sign-in prompt).
+ */
+interface AccessDeniedSecondaryAction {
+  label: string;
+  href: string;
+  message?: string;
+}
+
 interface AccessDeniedProps {
   title?: string;
+  compactTitle?: boolean;
   message?: string;
   returnUrl?: string;
   requiredRoles?: ReadonlyArray<Role | string>;
   currentRolesOverride?: ReadonlyArray<Role>;
   isLoading?: boolean;
   cta?: AccessDeniedCta;
+  secondaryAction?: AccessDeniedSecondaryAction;
   /**
    * When provided, fetch the per-community Markdown overrides for the
    * AccessDenied body (public endpoint) and render the matching
@@ -120,12 +135,14 @@ function DenialBody({ authenticated, message, customMessage, communityName }: De
 
 export function AccessDenied({
   title,
+  compactTitle = false,
   message,
   returnUrl = "/",
   requiredRoles,
   currentRolesOverride,
   isLoading,
   cta,
+  secondaryAction,
   communitySlug,
   communityName,
 }: AccessDeniedProps) {
@@ -212,7 +229,13 @@ export function AccessDenied({
             </div>
           </div>
 
-          {resolvedTitle ? <h1 className="text-2xl font-bold mb-4">{resolvedTitle}</h1> : null}
+          {resolvedTitle ? (
+            <h1
+              className={compactTitle ? "mb-2 text-base font-semibold" : "mb-4 text-2xl font-bold"}
+            >
+              {resolvedTitle}
+            </h1>
+          ) : null}
           <DenialBody
             authenticated={authenticated}
             message={message}
@@ -224,6 +247,25 @@ export function AccessDenied({
             <LogIn className="w-4 h-4 mr-2" />
             {buttonLabel}
           </Button>
+
+          {authenticated && secondaryAction ? (
+            <div className="mt-8 w-full border-t border-gray-200 dark:border-zinc-700 pt-6">
+              {secondaryAction.message ? (
+                <div className="text-muted-foreground mb-4 text-left">
+                  <MarkdownPreview source={secondaryAction.message} variant="inline" />
+                </div>
+              ) : null}
+              <Button asChild variant="secondary">
+                {secondaryAction.href.startsWith("http") ? (
+                  <a href={secondaryAction.href}>{secondaryAction.label}</a>
+                ) : (
+                  <Link href={secondaryAction.href} useBuilder={false}>
+                    {secondaryAction.label}
+                  </Link>
+                )}
+              </Button>
+            </div>
+          ) : null}
         </CardContent>
       </Card>
     </div>

@@ -30,6 +30,7 @@ pnpm lint:fix           # Biome lint + format
 ## Non-Obvious Rules (will cause bugs if ignored)
 
 - **Mutations**: Always `useMutation` with optimistic updates — never `useState` + direct service calls.
+- **Attestation gating**: wagmi `useAccount().address` is **display/recipient-only** — it lags the Privy signer behind the dual-`WagmiProvider` bridge, so gating a write on it (`if (!address) return`) silently no-ops (issue #1821). Gate attestation submits on `signerStatus`/`attestationAddress` from `useSetupChainAndWallet`. Use `useAttestation()` (hooks/useAttestation.ts) + `<AttestationSubmit>` (components/ui/AttestationSubmit.tsx): they throw a typed `SignerUnavailableError` (routed to guidance, kept out of Sentry) and render a Connect-wallet CTA / disabled+tooltip instead of failing silently. Enforced by the `no-account-address-write-guard` taskless rule.
 - **Three States**: Every data component renders loading (skeleton), empty (CTA), error (retry). Never `return null`.
 - **Routes**: `PAGES` constants from `utilities/pages.ts` — never hardcode strings.
 - **New routes**: Every `app/` route needs `page.tsx` + `loading.tsx` + `error.tsx`.
@@ -39,6 +40,7 @@ pnpm lint:fix           # Biome lint + format
 - **Zustand resets**: When adding state properties, update `initialState` too — `reset()` spreads it and will miss new fields.
 - **Pluralization**: Any dynamic count rendered next to a noun MUST use the `pluralize` library (`pluralize("team", count)`). No manual ternaries, no hardcoded plural-only nouns. Strings like `"1 teams"`, `"0 apply"`, `"1 days left"` are bugs.
 - **Empty-state conditional rendering**: UI blocks tied to a count or array (e.g. "Closing this week — N apply before deadline") must be hidden entirely when the count is 0. Don't render "0 …" copy.
+- **URL-synced filter state**: Must use nuqs `useQueryState` (see `hooks/useProjectFilters.ts` / `hooks/useFundingProgramFilters.ts`). NEVER mirror component state into the URL with `router.push`/`router.replace` inside a `useEffect` — it dispatches App Router navigations that race and cancel in-flight `<Link>` clicks (issue #1547) and spams the history stack.
 - **Authorization is tri-state, not boolean**: Gate auth-sensitive UI through a tri-state hook that returns `{ isAuthorized, isLoading }` (e.g. `useProjectAuthorization`). Render a skeleton while `isLoading`, never the authorized controls or a denial. Specifically:
   - Never read `useOwnerStore.isOwner` without `isOwnerLoading`.
   - For authorization-resolved decisions, never use a query's `isLoading` when that query can be disabled — a disabled React Query v5 query reports `isLoading=false` while still undecided. Use `isPending`-aware composition (`isResolving`).
@@ -61,13 +63,19 @@ Cross-community pages: detect roles from data (`useReviewerPrograms()`, `useDash
 
 ## Testing Patterns
 
-Tests use Jest + RTL. Follow these established patterns (see `__tests__/` for examples):
+Tests use Vitest + RTL. Follow these established patterns (see `__tests__/` for examples):
 - Mock factories with override support: `createMockProgram(overrides)`
-- `jest.clearAllMocks()` in `beforeEach`, `queryClient.clear()` in `afterEach`
+- `vi.clearAllMocks()` in `beforeEach`, `queryClient.clear()` in `afterEach`
 - Wrap hooks in `QueryClientProvider` via `renderHook`
 - `waitFor(() => expect(...))` for async
 - Separate `describe` blocks for loading, success, empty, and error states
 
 ## Enforcement (automated — don't repeat in code review)
 
-Hooks auto-check on every file edit: Biome lint, `return null` in data components, missing `useMutation`, Radix without `"use client"`, hardcoded routes/colors, barrel exports, heavy imports. Pre-commit hook runs tests. CI bot comments anti-pattern violations on PRs.
+Enforcement is layered:
+
+- **Taskless rules** (`.taskless/rules/`, ast-grep) — syntactic guardrails, run at pre-commit (staged files) and CI (PR diff): Radix without `"use client"`, hardcoded routes/colors/URLs, raw `confirm()`, barrel exports, heavy eager imports. Tool-agnostic (any editor/agent), single source of truth.
+- **Claude edit hook** (`.claude/hooks/post-edit-antipatterns.sh`) — semantic/absence checks ast-grep can't express, on every agent edit: `return null` in data components, missing `useMutation`, `useRouter`/`useParams` in `useEffect` deps, raw `navigator.clipboard`.
+- **Biome** — lint/format. **Pre-commit** also runs tests. **CI bot** comments anti-pattern violations on PRs.
+
+Don't repeat any of the above in code review — it's automated.

@@ -2,6 +2,7 @@
   "name": "gap-app-v2",
   "version": "2.0.1",
   "private": true,
+  "packageManager": "pnpm@10.34.3",
   "scripts": {
     "dev": "next dev --turbopack",
     "dev:wl": "next dev --turbopack --experimental-https --experimental-https-key ./test-wl.local+2-key.pem --experimental-https-cert ./test-wl.local+2.pem",
@@ -83,7 +84,7 @@
     "@safe-global/api-kit": "^3.0.2",
     "@safe-global/protocol-kit": "^6.0.5",
     "@sentry/nextjs": "^9.31.0",
-    "@show-karma/karma-gap-sdk": "0.4.27",
+    "@show-karma/karma-gap-sdk": "0.4.29",
     "@streamdown/cjk": "^1.0.1",
     "@streamdown/code": "^1.0.1",
     "@streamdown/math": "^1.0.1",

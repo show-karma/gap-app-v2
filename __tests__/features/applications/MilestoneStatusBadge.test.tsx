@@ -90,6 +90,23 @@ describe("MilestoneStatusBadge", () => {
     expect(screen.queryByText("Past Due")).not.toBeInTheDocument();
   });
 
+  it("should_render_Cancelled_when_currentStatus_is_cancelled", () => {
+    render(<MilestoneStatusBadge entry={makeEntry({ currentStatus: "cancelled" })} />);
+    expect(screen.getByText("Cancelled")).toBeInTheDocument();
+  });
+
+  it("should_render_Cancelled_over_PastDue_when_cancelled_and_dueDate_is_past", () => {
+    // Cancelled is terminal and wins over every other state — a cancelled
+    // milestone past its due date must read "Cancelled", not "Past Due".
+    render(
+      <MilestoneStatusBadge
+        entry={makeEntry({ currentStatus: "cancelled", dueDate: "2020-01-01" })}
+      />
+    );
+    expect(screen.getByText("Cancelled")).toBeInTheDocument();
+    expect(screen.queryByText("Past Due")).not.toBeInTheDocument();
+  });
+
   it("should_render_Pending_when_entry_is_undefined", () => {
     // Missing entry means the milestone hasn't been linked on-chain
     // yet — treat as Pending (the indexer's default).

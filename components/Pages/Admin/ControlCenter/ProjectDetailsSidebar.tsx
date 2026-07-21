@@ -25,22 +25,26 @@ import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { useCan } from "@/src/core/rbac/context/permission-context";
 import { Permission } from "@/src/core/rbac/types";
 import {
-  type CommunityPayoutAgreementInfo,
-  type CommunityPayoutInvoiceInfo,
-  fromSmallestUnit,
-  type MilestoneAllocation,
-  MilestoneLifecycleStatus,
   PayoutConfigurationContent,
   type PayoutConfigurationContentRef,
-  type PayoutDisbursement,
-  PayoutDisbursementStatus,
-  PayoutHistoryContent,
-  RecordPaymentDialog,
-  type TokenTotal,
+} from "@/src/features/payout-disbursement/components/PayoutConfigurationContent";
+import { PayoutHistoryContent } from "@/src/features/payout-disbursement/components/PayoutHistoryContent";
+import { RecordPaymentDialog } from "@/src/features/payout-disbursement/components/RecordPaymentDialog";
+import {
   useDeleteDisbursementByMilestone,
   useSaveMilestoneInvoices,
   useToggleAgreement,
-} from "@/src/features/payout-disbursement";
+} from "@/src/features/payout-disbursement/hooks/use-payout-disbursement";
+import {
+  type CommunityPayoutAgreementInfo,
+  type CommunityPayoutInvoiceInfo,
+  type MilestoneAllocation,
+  MilestoneLifecycleStatus,
+  type PayoutDisbursement,
+  PayoutDisbursementStatus,
+  type TokenTotal,
+} from "@/src/features/payout-disbursement/types/payout-disbursement";
+import { fromSmallestUnit } from "@/src/features/payout-disbursement/utils/format-token-amount";
 import type { KycStatusResponse } from "@/types/kyc";
 import { getChainNameById } from "@/utilities/network";
 import { PAGES } from "@/utilities/pages";
@@ -232,28 +236,28 @@ export function ProjectDetailsSidebar({
   // ─── Milestone completion summary ─────────────────────────────────────────
 
   const milestoneSummary = useMemo(() => {
-    if (milestoneInvoices.length === 0) return null;
-    const total = milestoneInvoices.length;
-    const received = milestoneInvoices.filter(
+    // Cancelled milestones (DEV-523) are neither delivered nor outstanding.
+    const activeInvoices = milestoneInvoices.filter(
+      (i) => i.milestoneStatus !== MilestoneLifecycleStatus.CANCELLED
+    );
+    if (activeInvoices.length === 0) return null;
+    const total = activeInvoices.length;
+    const received = activeInvoices.filter(
       (i) => i.invoiceStatus === "received" || i.invoiceStatus === "paid"
     ).length;
-    const completed = milestoneInvoices.filter(
+    const completed = activeInvoices.filter(
       (i) =>
         i.milestoneStatus === MilestoneLifecycleStatus.COMPLETED ||
         i.milestoneStatus === MilestoneLifecycleStatus.VERIFIED
     ).length;
-    const paid = milestoneInvoices.filter((i) => i.paymentStatus === "disbursed").length;
+    const paid = activeInvoices.filter((i) => i.paymentStatus === "disbursed").length;
     return { total, received, completed, paid };
   }, [milestoneInvoices]);
 
   const allocationByUID = useMemo(() => {
     const map = new Map<string, string>();
-    if (milestoneAllocations) {
-      for (const alloc of milestoneAllocations) {
-        if (alloc.milestoneUID) {
-          map.set(alloc.milestoneUID, alloc.amount);
-        }
-      }
+    for (const alloc of milestoneAllocations ?? []) {
+      if (alloc.milestoneUID) map.set(alloc.milestoneUID, alloc.amount);
     }
     return map;
   }, [milestoneAllocations]);

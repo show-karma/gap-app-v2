@@ -81,7 +81,7 @@ export const ObjectiveOptionsMenu = ({
   });
 
   const deleteFn = async () => {
-    if (!address || !project) return;
+    if (!project) return;
     setIsDeleting(true);
     startAttestation("Deleting milestone...");
     try {
@@ -165,18 +165,19 @@ export const ObjectiveOptionsMenu = ({
           // Silently fallback to off-chain revoke
           setIsStepper(false); // Reset stepper since we're falling back
 
-          const success = await performOffChainRevoke({
-            uid: objectiveInstance?.uid as `0x${string}`,
-            chainID: objectiveInstance.chainID,
-            checkIfExists: checkIfAttestationExists,
-            toastMessages: {
-              success: MESSAGES.PROJECT_OBJECTIVE_FORM.DELETE.SUCCESS,
-              loading: MESSAGES.PROJECT_OBJECTIVE_FORM.DELETE.LOADING,
-            },
-          });
-
-          if (!success) {
-            // Both methods failed - throw the original error to maintain expected behavior
+          try {
+            await performOffChainRevoke({
+              uid: objectiveInstance?.uid as `0x${string}`,
+              chainID: objectiveInstance.chainID,
+              checkIfExists: checkIfAttestationExists,
+              toastMessages: {
+                success: MESSAGES.PROJECT_OBJECTIVE_FORM.DELETE.SUCCESS,
+                loading: MESSAGES.PROJECT_OBJECTIVE_FORM.DELETE.LOADING,
+              },
+            });
+          } catch {
+            // Both methods failed - throw the original on-chain error to
+            // preserve its context.
             throw onChainError;
           }
         }

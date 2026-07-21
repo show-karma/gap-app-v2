@@ -1,4 +1,4 @@
-import { MilestoneLifecycleStatus } from "@/src/features/payout-disbursement";
+import { MilestoneLifecycleStatus } from "@/src/features/payout-disbursement/types/payout-disbursement";
 
 /**
  * Tailwind class map for milestone status pills.
@@ -12,4 +12,6 @@ export const STATUS_BADGE_CLASSES: Record<MilestoneLifecycleStatus, string> = {
   [MilestoneLifecycleStatus.PAST_DUE]: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
   [MilestoneLifecycleStatus.PENDING]:
     "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
+  [MilestoneLifecycleStatus.CANCELLED]:
+    "bg-gray-200 text-gray-600 line-through dark:bg-zinc-800 dark:text-gray-400",
 };

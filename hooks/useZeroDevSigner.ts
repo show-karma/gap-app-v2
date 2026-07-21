@@ -1,8 +1,9 @@
 "use client";
 
+import type { ConnectedWallet, User } from "@privy-io/react-auth";
 import type { Signer } from "ethers";
 import { BrowserProvider } from "ethers";
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useRef } from "react";
 import { createWalletClient, custom } from "viem";
 import type { Chain } from "viem/chains";
 import {
@@ -32,6 +33,7 @@ import {
 } from "@/utilities/gasless";
 import { appNetwork } from "@/utilities/network";
 import { wait } from "@/utilities/wait";
+import { SignerUnavailableError } from "@/utilities/wallet/signerReadiness";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 
 /**
@@ -182,21 +184,80 @@ async function switchEmbeddedWalletChain(
   return provider;
 }
 
+/** Snapshot of the auth/wallet state, kept fresh via a ref so a wait loop that
+ *  started during hydration can observe wallets that arrive later. */
+interface WalletStateSnapshot {
+  privyReady: boolean;
+  walletsReady: boolean;
+  user: User | null;
+  wallets: ConnectedWallet[];
+}
+
+interface UsableWalletState {
+  embeddedWallet: ConnectedWallet | null;
+  externalWallet: ConnectedWallet | null;
+  signingMode: "embedded" | "external" | "none";
+}
+
 /**
- * Thrown when the user logged in via email/Google/Farcaster (signingMode
- * "embedded") but the embedded wallet has not yet appeared in useWallets().
- *
- * This is the sub-second hydration window the issue exploited: previously the
- * signer fell through to whatever external wallet was connected — often a stale
- * MetaMask belonging to a different account — and prompted a signature for the
- * wrong address. Failing with an explicit, retryable error instead is strictly
- * safer than silently signing as someone else. Matches the file's existing
- * error philosophy (chainMismatchError, GaslessProviderError re-throw).
+ * Which of the resolved (linked-only) wallets can actually produce a signer
+ * for the given signing mode. Embedded-mode users prefer the embedded wallet
+ * but may fall back to a LINKED external wallet (Farcaster users never get an
+ * embedded wallet; hybrid email+wallet accounts may sign with their own
+ * MetaMask). External-mode users need their linked external wallet — an
+ * embedded wallet can't sign for them (Cases 1-2 require embedded mode).
  */
-export class EmbeddedWalletNotReadyError extends Error {
-  constructor() {
-    super("Your wallet is still initializing. Please try again in a moment.");
-    this.name = "EmbeddedWalletNotReadyError";
+function selectUsableWallet({
+  embeddedWallet,
+  externalWallet,
+  signingMode,
+}: UsableWalletState): ConnectedWallet | null {
+  if (signingMode === "embedded") return embeddedWallet ?? externalWallet;
+  if (signingMode === "external") return externalWallet;
+  return null;
+}
+
+// Covers the wallet-hydration race (~1-2s) plus the embedded-wallet settle
+// window (2.5s, see useEnsureEmbeddedWallet.SETTLE_BEFORE_CREATE_MS) and its
+// first creation attempt. Runs under the "Creating project..." attestation
+// toast, so the user sees progress rather than a hang. Do not go below ~5s
+// or fresh-signup flows (new email/social users) regress.
+export const WALLET_READY_TIMEOUT_MS = 8_000;
+const WALLET_READY_POLL_MS = 250;
+
+/**
+ * Waits for a usable wallet to appear, polling the live (ref-backed) auth
+ * state so a call that starts mid-hydration can still resolve once Privy
+ * finishes. Classifies the reason if the wait times out instead of throwing
+ * a generic "no wallet" error.
+ *
+ * Wallet selection goes through resolveSigningWallets, so only wallets LINKED
+ * to the authenticated user are ever considered usable — a stale foreign
+ * MetaMask can never satisfy this wait, no matter how long it stays connected
+ * (issue #1574 invariant).
+ */
+async function waitForUsableWallet(stateRef: {
+  current: WalletStateSnapshot;
+}): Promise<UsableWalletState> {
+  const deadline = Date.now() + WALLET_READY_TIMEOUT_MS;
+
+  while (true) {
+    const { walletsReady, user, wallets } = stateRef.current;
+    const resolved = resolveSigningWallets(user, wallets);
+
+    if (selectUsableWallet(resolved)) {
+      return resolved;
+    }
+
+    if (Date.now() >= deadline) {
+      if (!walletsReady) throw new SignerUnavailableError("wallets-hydrating");
+      if (resolved.signingMode === "embedded") {
+        throw new SignerUnavailableError("embedded-wallet-provisioning");
+      }
+      throw new SignerUnavailableError("no-wallet-connected");
+    }
+
+    await wait(WALLET_READY_POLL_MS);
   }
 }
 
@@ -219,6 +280,17 @@ interface UseZeroDevSignerResult {
 
   /** Whether the user has an external wallet (MetaMask, etc.) */
   hasExternalWallet: boolean;
+
+  /**
+   * Signing readiness for UI gating:
+   * - "initializing": Privy/wallets are still hydrating, or an email/social
+   *   user's embedded wallet is still being provisioned.
+   * - "ready": a usable wallet exists — the submit action can call
+   *   `getAttestationSigner` and expect it to resolve promptly.
+   * - "no-wallet": wallets are hydrated and the user has none connected —
+   *   the caller should prompt to connect rather than attempt to sign.
+   */
+  signerStatus: "initializing" | "ready" | "no-wallet";
 }
 
 /**
@@ -236,22 +308,51 @@ interface UseZeroDevSignerResult {
  * - For external wallet users (MetaMask, etc.): User always pays gas
  */
 export function useZeroDevSigner(): UseZeroDevSignerResult {
-  const { ready: privyReady, user, wallets } = usePrivyBridge();
+  const { ready: privyReady, walletsReady, user, wallets } = usePrivyBridge();
   const chainId = useChainId();
+
+  // Fresh-state ref so a getAttestationSigner call that starts mid-hydration
+  // can observe wallets that arrive later (the callback closure would
+  // otherwise be stuck with the render-time snapshot it started with).
+  const walletStateRef = useRef<WalletStateSnapshot>({
+    privyReady,
+    walletsReady,
+    user,
+    wallets,
+  });
+  walletStateRef.current = { privyReady, walletsReady, user, wallets };
 
   // Single source of truth for which connected wallet may sign for this user.
   // An unlinked/stale external wallet (e.g. a lingering MetaMask from a previous
   // session) is excluded here, so it can never reach signer construction.
   const { embeddedWallet, externalWallet, signingMode } = useMemo(() => {
-    if (!privyReady || !wallets.length) {
+    if (!privyReady) {
       return { embeddedWallet: null, externalWallet: null, signingMode: "none" as const };
     }
+    // Empty wallet lists still go through the resolver: signingMode derives
+    // from the login method, so an email user mid-hydration reads as
+    // "embedded" (signerStatus "initializing"), never as "no-wallet".
     return resolveSigningWallets(user, wallets);
   }, [privyReady, user, wallets]);
 
   const isEmailOrSocialLogin = signingMode === "embedded";
   const hasEmbeddedWallet = !!embeddedWallet;
   const hasExternalWallet = !!externalWallet;
+
+  // Signing readiness for UI gating (§3.2.6). Both wallets here are LINKED to
+  // the authenticated user by construction (resolveSigningWallets), so the same
+  // selection rule the signing wait uses applies: embedded-mode users are ready
+  // with the embedded wallet OR a linked external fallback; a foreign unlinked
+  // wallet was already excluded and can never make the status "ready".
+  const usableWalletExists = !!selectUsableWallet({ embeddedWallet, externalWallet, signingMode });
+  const signerStatus: UseZeroDevSignerResult["signerStatus"] =
+    !privyReady || !walletsReady
+      ? "initializing"
+      : usableWalletExists
+        ? "ready"
+        : isEmailOrSocialLogin
+          ? "initializing" // embedded wallet still being provisioned
+          : "no-wallet";
 
   // Gasless is available for email/Google users with embedded wallet
   const isGaslessAvailable = useMemo(() => {
@@ -284,6 +385,17 @@ export function useZeroDevSigner(): UseZeroDevSignerResult {
       if (!Number.isFinite(targetChainId)) {
         throw new Error(`Invalid chain ID: ${rawTargetChainId}`);
       }
+
+      // Wait for a usable LINKED wallet, reading the live (ref-backed) state
+      // so a call that starts mid-hydration still resolves once Privy
+      // finishes. Throws a typed, classified SignerUnavailableError if none
+      // appears within WALLET_READY_TIMEOUT_MS. These locals shadow the
+      // render-scoped values on purpose: everything below must use the same
+      // post-wait snapshot.
+      const { embeddedWallet, externalWallet, signingMode } =
+        await waitForUsableWallet(walletStateRef);
+      const isEmailOrSocialLogin = signingMode === "embedded";
+
       // Track the most recent diagnostic so the final throw can surface the
       // real cause instead of a generic "No wallet available" — silently
       // falling through after a catch hid the real Privy/embedded-wallet
@@ -389,9 +501,10 @@ export function useZeroDevSigner(): UseZeroDevSignerResult {
       // email+wallet accounts.
       if (signingMode === "embedded" && !externalWallet) {
         if (!embeddedWallet) {
-          // Embedded wallet hasn't hydrated into useWallets() yet. Truthful,
-          // retryable error rather than a foreign MetaMask prompt.
-          throw new EmbeddedWalletNotReadyError();
+          // Defensive: waitForUsableWallet only returns once a usable wallet
+          // exists, so an embedded-mode user without a linked external must
+          // have had an embedded wallet. Classify rather than fall through.
+          throw new SignerUnavailableError("embedded-wallet-provisioning");
         }
         // Embedded wallet was present but its signer construction failed above —
         // surface that real error; do not silently reroute to an external wallet.
@@ -471,9 +584,17 @@ export function useZeroDevSigner(): UseZeroDevSignerResult {
         throw wrapped;
       }
 
-      throw new Error("No wallet available for signing");
+      // Defensive fallback — waitForUsableWallet only returns once a usable
+      // wallet exists, so every ordinary path above returns or sets
+      // lastError. The one case that can still fall through is a user NOT
+      // classified as email/social who somehow has only an embedded wallet
+      // (no external wallet) — Case 3 requires an external wallet and
+      // Cases 1-2 require the email/social classification. Typed and
+      // classified rather than resurrecting the generic, un-actionable
+      // "No wallet available for signing" string.
+      throw new SignerUnavailableError("no-wallet-connected");
     },
-    [isEmailOrSocialLogin, signingMode, embeddedWallet, externalWallet]
+    []
   );
 
   return {
@@ -482,5 +603,6 @@ export function useZeroDevSigner(): UseZeroDevSignerResult {
     attestationAddress,
     hasEmbeddedWallet,
     hasExternalWallet,
+    signerStatus,
   };
 }

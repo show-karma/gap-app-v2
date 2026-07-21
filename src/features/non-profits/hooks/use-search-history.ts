@@ -11,7 +11,11 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { resultToPromise } from "../lib/result-to-promise";
-import { type SearchHistoryEntry, searchHistoryService } from "../services/search-history.service";
+import {
+  type SearchHistoryEntry,
+  type SearchTurnPayload,
+  searchHistoryService,
+} from "../services/search-history.service";
 
 const SEARCH_HISTORY_KEY = ["non-profits-search-history"] as const;
 
@@ -39,13 +43,32 @@ export function useAddSearchHistory() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (query: string) => resultToPromise(searchHistoryService.create(query)),
+    // `id` is the conversation id (the /search/[id] URL UUID) so turns
+    // appended later attach to the URL the user is already on.
+    mutationFn: ({ query, id }: { query: string; id?: string }) =>
+      resultToPromise(searchHistoryService.create(query, id)),
     onSuccess: (newEntry) => {
       queryClient.setQueriesData<SearchHistoryEntry[]>({ queryKey: SEARCH_HISTORY_KEY }, (old) => {
-        if (!old) return [newEntry];
+        // The key prefix also matches detail entries ([key, id]) which hold
+        // objects, not lists — leave those untouched.
+        if (!Array.isArray(old)) return old;
         const filtered = old.filter((e) => e.query.toLowerCase() !== newEntry.query.toLowerCase());
         return [newEntry, ...filtered].slice(0, 50);
       });
+      queryClient.invalidateQueries({ queryKey: [...SEARCH_HISTORY_KEY, "list"] });
+    },
+  });
+}
+
+export function useAppendSearchTurn() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ searchId, turn }: { searchId: string; turn: SearchTurnPayload }) =>
+      resultToPromise(searchHistoryService.appendTurn(searchId, turn)),
+    onSuccess: (_turn, { searchId }) => {
+      // Refresh the cached detail so a later revisit hydrates the new turn.
+      queryClient.invalidateQueries({ queryKey: [...SEARCH_HISTORY_KEY, searchId] });
     },
   });
 }

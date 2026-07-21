@@ -6,7 +6,7 @@ import {
 import type {
   CommunityPayoutAgreementInfo,
   CommunityPayoutInvoiceInfo,
-} from "@/src/features/payout-disbursement";
+} from "@/src/features/payout-disbursement/types/payout-disbursement";
 import { MilestoneLifecycleStatus } from "@/src/features/payout-disbursement/types/payout-disbursement";
 
 // ─── Mock Radix dialog: always render content ─────────────────────────────────
@@ -55,12 +55,18 @@ vi.mock("@/hooks/useCopyToClipboard", () => ({
   useCopyToClipboard: () => [null, vi.fn()],
 }));
 
-vi.mock("@/src/features/payout-disbursement", () => ({
+vi.mock("@/src/features/payout-disbursement/utils/format-token-amount", () => ({
   formatDisplayAmount: (val: string) => val,
   fromSmallestUnit: (val: string, decimals: number) => parseFloat(val) / 10 ** decimals,
+}));
+
+vi.mock("@/src/features/payout-disbursement/components/TokenBreakdown", () => ({
   TokenBreakdown: ({ totalsByToken }: any) => (
     <span data-testid="token-breakdown">{totalsByToken?.length ?? 0} tokens</span>
   ),
+}));
+
+vi.mock("@/src/features/payout-disbursement/types/payout-disbursement", () => ({
   MilestoneLifecycleStatus: {
     PENDING: "pending",
     COMPLETED: "completed",

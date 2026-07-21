@@ -1,0 +1,22 @@
+id: no-hardcoded-url
+language: typescript
+severity: warning
+message: No hardcoded URLs — use envVars, INDEXER constants, or PAGES route constants.
+note: |
+  CLAUDE.md Pre-PR checklist: "No hardcoded URLs — use envVars, INDEXER
+  constants, or PAGES route constants." Not covered by Biome/ESLint defaults.
+  W3C / schema namespace URLs (SVG xmlns, JSON-LD) are excluded because they
+  are fixed identifiers, not configurable endpoints.
+ignores:
+  - "**/__tests__/**"
+  - "**/*.test.ts"
+  - "**/*.test.tsx"
+  - "**/*.spec.ts"
+  - "**/*.spec.tsx"
+  - "scripts/**"
+rule:
+  kind: string
+  regex: 'https?://'
+  not:
+    kind: string
+    regex: 'w3\.org|schema\.org'

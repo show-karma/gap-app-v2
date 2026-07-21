@@ -121,6 +121,52 @@ check_file() {
         FILE_ISSUES="${FILE_ISSUES}\n  [COLORS] L:${LINES} - Hardcoded color values"
         ISSUES=$((ISSUES + 1))
       fi
+
+      # Empty catch block with no Sentry/logger/suppression comment
+      # Matches `catch (...) {}` or `catch {}` where the body has no `Sentry`, no `logger`, no `console`, and no `// SUPPRESSED:` justification
+      EMPTY_CATCH=$(awk '
+        /catch[[:space:]]*(\(|\{)/ {
+          # Look at next ~3 lines for a non-empty body containing Sentry/logger/console/SUPPRESSED
+          start = NR
+          line = $0
+          # Single-line catch (...) {} or catch {}
+          if (match(line, /catch[[:space:]]*(\([^)]*\))?[[:space:]]*\{[[:space:]]*\}/)) {
+            print start
+            next
+          }
+          # Multi-line: peek up to 5 lines for content
+          body = ""
+          for (i = 1; i <= 5 && (getline next_line) > 0; i++) {
+            body = body next_line
+            if (match(next_line, /\}/)) break
+          }
+          if (body !~ /Sentry|logger|console|SUPPRESSED|throw|return/) {
+            print start
+          }
+        }
+      ' "$FILE" 2>/dev/null | head -3 || true)
+      if [ -n "$EMPTY_CATCH" ]; then
+        LINES=$(echo "$EMPTY_CATCH" | tr '\n' ',' | sed 's/,$//')
+        FILE_ISSUES="${FILE_ISSUES}\n  [EMPTY_CATCH] L:${LINES} - Empty catch swallows errors. Add Sentry.captureException, logger.warn, throw, or // SUPPRESSED: <reason>"
+        ISSUES=$((ISSUES + 1))
+      fi
+
+      # Structural cast on optional method — e.g. `as { findByIdAny?: (...) => ... }` or `as unknown as { foo?: ... }`
+      # This is the "duck-type a method that may not exist" pattern. Add the method to the interface instead.
+      STRUCT_CAST=$(grep -nE 'as[[:space:]]+(unknown[[:space:]]+as[[:space:]]+)?\{[^}]*\?[[:space:]]*:[[:space:]]*\(' "$FILE" 2>/dev/null | head -3 || true)
+      if [ -n "$STRUCT_CAST" ]; then
+        LINES=$(echo "$STRUCT_CAST" | awk -F: '{print $1}' | tr '\n' ',' | sed 's/,$//')
+        FILE_ISSUES="${FILE_ISSUES}\n  [STRUCT_CAST] L:${LINES} - Structural cast on optional method. Add the method to the interface, don't duck-type."
+        ISSUES=$((ISSUES + 1))
+      fi
+
+      # Underscore-prefixed export — usually a hack to silence an unused-import warning
+      UNDER_EXPORT=$(grep -nE '^export[[:space:]]+(const|let|var|function|type|interface|class)[[:space:]]+_[A-Za-z]' "$FILE" 2>/dev/null | head -3 || true)
+      if [ -n "$UNDER_EXPORT" ]; then
+        LINES=$(echo "$UNDER_EXPORT" | awk -F: '{print $1}' | tr '\n' ',' | sed 's/,$//')
+        FILE_ISSUES="${FILE_ISSUES}\n  [UNDER_EXPORT] L:${LINES} - Underscore-prefixed export. If the import is unused, remove it; don't leak _SYMBOL as a public API."
+        ISSUES=$((ISSUES + 1))
+      fi
       ;;
   esac
 

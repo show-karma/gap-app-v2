@@ -7,14 +7,14 @@ import toast from "react-hot-toast";
 import { Skeleton } from "@/components/Utilities/Skeleton";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
-import {
-  type CommunityPayoutsSorting,
-  CreateDisbursementModal,
-  type GrantDisbursementInfo,
-  getPaidAllocationIds,
-  type PayoutConfigItem,
-  useSavePayoutConfig,
-} from "@/src/features/payout-disbursement";
+import { CreateDisbursementModal } from "@/src/features/payout-disbursement/components/CreateDisbursementModal";
+import { getPaidAllocationIds } from "@/src/features/payout-disbursement/components/MilestoneSelectionStep";
+import { useSavePayoutConfig } from "@/src/features/payout-disbursement/hooks/use-payout-disbursement";
+import type {
+  CommunityPayoutsSorting,
+  GrantDisbursementInfo,
+  PayoutConfigItem,
+} from "@/src/features/payout-disbursement/types/payout-disbursement";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";

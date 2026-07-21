@@ -1,7 +1,9 @@
 "use client";
 
 import { AlertTriangle, RefreshCw } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Link } from "@/src/components/navigation/Link";
+import { attemptChunkReload, isChunkLoadError } from "@/utilities/isChunkLoadError";
 
 export default function RootError({
   error,
@@ -10,6 +12,32 @@ export default function RootError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  // Stale-deploy recovery: a ChunkLoadError means the user is on an old build
+  // whose hashed chunks were purged. `reset()` would re-request the same
+  // missing chunk and fail again, so instead force a one-time hard reload to
+  // pull the fresh build manifest. The guard inside `attemptChunkReload`
+  // prevents an infinite loop when the chunk is genuinely unreachable — when
+  // it returns false (reload already attempted this session) we fall through
+  // to the normal error UI instead of getting stuck on the updating state.
+  const isChunkError = isChunkLoadError(error);
+  const [recovering, setRecovering] = useState(isChunkError);
+  useEffect(() => {
+    if (isChunkError) {
+      setRecovering(attemptChunkReload());
+    }
+  }, [isChunkError]);
+
+  if (recovering) {
+    return (
+      <div className="mx-auto max-w-xl px-4 py-12">
+        <div className="flex flex-col items-center gap-4 rounded-xl border border-border p-8 text-center">
+          <RefreshCw className="h-6 w-6 animate-spin text-muted-foreground" />
+          <p className="text-sm text-muted-foreground">Updating to the latest version…</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="mx-auto max-w-xl px-4 py-12">
       <div className="flex flex-col items-center gap-4 rounded-xl border border-border p-8 text-center">

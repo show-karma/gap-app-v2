@@ -1,0 +1,38 @@
+id: no-hardcoded-route
+language: tsx
+severity: warning
+message: No hardcoded internal route strings — use PAGES constants from utilities/pages.ts.
+note: |
+  CLAUDE.md gap-app-v2: "Routes — PAGES constants from utilities/pages.ts, never
+  hardcode strings." Flags router.push/router.replace and JSX href with a literal
+  internal path ("/lowercase..."). External URLs (http...) and PAGES references
+  are not matched.
+ignores:
+  - "**/__tests__/**"
+  - "**/*.test.ts"
+  - "**/*.test.tsx"
+  - "**/*.spec.ts"
+  - "**/*.spec.tsx"
+  - "scripts/**"
+rule:
+  any:
+    # router.push / router.replace / router.prefetch with a literal internal path
+    - all:
+        - any:
+            - pattern: $R.push($P)
+            - pattern: $R.replace($P)
+            - pattern: $R.prefetch($P)
+        - has:
+            kind: string
+            regex: '^["'']/[a-z]'
+            stopBy: end
+    # JSX href="/..." with a literal internal path
+    - all:
+        - kind: jsx_attribute
+        - has:
+            regex: '^href$'
+            kind: property_identifier
+        - has:
+            kind: string
+            regex: '^["'']/[a-z]'
+            stopBy: end

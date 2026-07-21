@@ -1,9 +1,8 @@
-import SafeApiKit from "@safe-global/api-kit";
-import Safe from "@safe-global/protocol-kit";
 import { encodeFunctionData, erc20Abi, formatUnits, parseUnits, type WalletClient } from "viem";
 import { NATIVE_TOKENS, NETWORKS, type SupportedChainId } from "../config/tokens";
 import type { DisbursementRecipient } from "../types/disbursement";
 import { getRPCClient, getRPCUrlByChainId } from "./rpcClient";
+import { loadSafeApiKit, loadSafeProtocolKit } from "./safe-sdk-loader";
 
 /**
  * Transaction status returned from Safe Transaction Service
@@ -73,7 +72,7 @@ export async function isSafeOwner(
     const rpcUrl = getRpcUrl(chainId);
 
     // Initialize Safe SDK with RPC URL
-    const safe = await Safe.init({
+    const safe = await (await loadSafeProtocolKit()).init({
       provider: rpcUrl,
       safeAddress,
     });
@@ -167,7 +166,7 @@ export async function isSafeIndexed(
   }
 
   try {
-    const apiKit = new SafeApiKit({
+    const apiKit = new (await loadSafeApiKit())({
       chainId: BigInt(chainId),
       txServiceUrl,
     });
@@ -289,7 +288,7 @@ export async function getSafeInfo(
   try {
     const rpcUrl = getRpcUrl(chainId);
 
-    const safe = await Safe.init({
+    const safe = await (await loadSafeProtocolKit()).init({
       provider: rpcUrl,
       safeAddress,
     });
@@ -330,7 +329,7 @@ export async function prepareDisbursementTransaction(
     const rpcUrl = getRpcUrl(chainId);
 
     // Initialize Safe SDK
-    const safe = await Safe.init({
+    const safe = await (await loadSafeProtocolKit()).init({
       provider: rpcUrl,
       safeAddress,
     });
@@ -546,13 +545,13 @@ export async function signAndProposeDisbursement(
     const provider = createEthereumProvider(walletClient, chainId);
     const signerAddress = walletClient.account.address;
 
-    const safe = await Safe.init({
+    const safe = await (await loadSafeProtocolKit()).init({
       provider,
       signer: signerAddress,
       safeAddress,
     });
 
-    const apiKit = new SafeApiKit({
+    const apiKit = new (await loadSafeApiKit())({
       chainId: BigInt(chainId),
       txServiceUrl,
     });
@@ -743,7 +742,7 @@ export async function getTransactionStatus(
   }
 
   try {
-    const apiKit = new SafeApiKit({
+    const apiKit = new (await loadSafeApiKit())({
       chainId: BigInt(chainId),
       txServiceUrl,
     });
@@ -855,7 +854,7 @@ export async function estimateGasFee(
   }
 
   // Initialize Safe SDK for transaction preparation
-  const safe = await Safe.init({
+  const safe = await (await loadSafeProtocolKit()).init({
     provider: rpcUrl,
     safeAddress,
   });

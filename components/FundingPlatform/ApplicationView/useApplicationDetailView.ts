@@ -15,7 +15,11 @@ import {
   useProgramConfig,
 } from "@/hooks/useFundingPlatform";
 import { useKycConfig, useKycStatus } from "@/hooks/useKycStatus";
-import { Permission, useIsFundingPlatformAdmin } from "@/src/core/rbac";
+import {
+  Permission,
+  useIsFundingPlatformAdmin,
+  useIsFundingPlatformReviewer,
+} from "@/src/core/rbac";
 import { usePermissionContext } from "@/src/core/rbac/context/permission-context";
 import { useMilestonesAdminRefetch } from "@/src/features/applications/hooks/use-milestones-admin-refetch";
 import { useApplicationVersionsStore } from "@/store/applicationVersions";
@@ -25,7 +29,7 @@ import { PAGES } from "@/utilities/pages";
 // Whitelist used when seeding activeTabId from the `?tab=` query
 // param. Keeps unknown values from drifting the polling-gate state
 // away from the actually-rendered tab.
-const KNOWN_TAB_IDS = ["application", "milestones", "ai-analysis", "comments"] as const;
+const KNOWN_TAB_IDS = ["application", "milestones", "ai-analysis", "comments", "notes"] as const;
 type KnownTabId = (typeof KNOWN_TAB_IDS)[number];
 
 export function isKnownTabId(value: string | null): value is KnownTabId {
@@ -59,6 +63,11 @@ export function useApplicationDetailView({
   const router = useRouter();
 
   const isAdmin = useIsFundingPlatformAdmin();
+  const isReviewer = useIsFundingPlatformReviewer();
+  // Private notes are reviewer/admin-only. Both hooks are `!isLoading && …`, so
+  // this is FALSE while permissions resolve — the Notes tab fails closed and
+  // never flashes for an applicant (DEV-515 no-glimpse requirement).
+  const canViewNotes = isAdmin || isReviewer;
   const { isLoading: isLoadingPermissions, can } = usePermissionContext();
 
   const searchParams = useSearchParams();
@@ -110,6 +119,9 @@ export function useApplicationDetailView({
     if (activeTabId === "milestones" && !isApprovedApplication) {
       setActiveTabId("application");
     }
+    // No reconcile needed for a stale ?tab=notes on a non-reviewer: the notes
+    // tab simply isn't in `tabs`, so the render's Math.max(0, findIndex(-1))
+    // falls back to the Application tab. (No side effect is keyed on "notes".)
   }, [application, activeTabId, isApprovedApplication]);
 
   const { data: program, config } = useProgramConfig(programId);
@@ -177,11 +189,8 @@ export function useApplicationDetailView({
       } else {
         toast.success(`Application status updated to ${selectedStatus}`);
       }
-    } catch (error) {
-      // Keep the form open so the user can retry.
-      const errorMessage =
-        error instanceof Error ? error.message : "Failed to update application status";
-      toast.error(errorMessage);
+    } catch {
+      // SUPPRESSED: the status mutation's onError owns the failure toast; keep the form open to retry.
     }
   };
 
@@ -312,6 +321,7 @@ export function useApplicationDetailView({
     isLoadingComments,
     // Permissions / derived flags
     isAdmin,
+    canViewNotes,
     canEditApplication,
     canEditPostApproval,
     showStatusActions,

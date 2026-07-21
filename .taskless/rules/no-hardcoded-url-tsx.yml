@@ -1,0 +1,21 @@
+id: no-hardcoded-url-tsx
+language: tsx
+severity: warning
+message: No hardcoded URLs — use envVars, INDEXER constants, or PAGES route constants.
+note: |
+  TSX (React component) variant of `no-hardcoded-url`. ast-grep scopes a rule
+  to a single language, and `.tsx` files are parsed as `tsx`, not `typescript`.
+  W3C / schema namespace URLs (SVG xmlns, JSON-LD) are excluded.
+ignores:
+  - "**/__tests__/**"
+  - "**/*.test.ts"
+  - "**/*.test.tsx"
+  - "**/*.spec.ts"
+  - "**/*.spec.tsx"
+  - "scripts/**"
+rule:
+  kind: string
+  regex: 'https?://'
+  not:
+    kind: string
+    regex: 'w3\.org|schema\.org'

@@ -12,6 +12,7 @@
 import { ResultAsync } from "neverthrow";
 import { useCallback, useRef } from "react";
 import { z } from "zod";
+import { useAuth } from "@/hooks/useAuth";
 import { TokenManager } from "@/utilities/auth/token-manager";
 import { envVars } from "@/utilities/enviromentVars";
 import {
@@ -21,8 +22,10 @@ import {
   type SearchSortKey,
 } from "../lib/agentic-philanthropy";
 import { NON_PROFITS_API } from "../lib/api";
+import { buildConversationMessages, type ConversationMessage } from "../lib/conversation-messages";
 import type { AppError } from "../lib/errors";
-import { type ChatTurn, usePhilanthropyStore } from "../store/philanthropy";
+import { chatTurnToTurnPayload } from "../lib/saved-conversation";
+import { usePhilanthropyStore } from "../store/philanthropy";
 import { useSearchSessionStore } from "../store/search-session";
 import type {
   QueryIntent,
@@ -30,7 +33,7 @@ import type {
   QueryResponse,
   RankedEntity,
 } from "../types/philanthropy";
-import { useAddSearchHistory } from "./use-search-history";
+import { useAddSearchHistory, useAppendSearchTurn } from "./use-search-history";
 
 const DEFAULT_PAGE_SIZE = 500;
 
@@ -149,17 +152,6 @@ interface StreamCallbacks {
   onNarrative: (text: string) => void;
   /** Called for every progress event emitted before final_answer. */
   onProgress: (event: StreamProgressEvent) => void;
-}
-
-/**
- * Conversation message for multi-turn chat history.
- *
- * The indexer accepts the full `messages` array so it can resolve follow-up
- * references ("narrow that to Texas") against prior assistant outputs.
- */
-interface ConversationMessage {
-  role: "user" | "assistant";
-  content: string;
 }
 
 export function streamPhilanthropyQuery(
@@ -368,32 +360,11 @@ export function streamPhilanthropyQuery(
   );
 }
 
-/**
- * Builds the conversation array sent to the indexer for a chat-mode turn.
- *
- * Includes all completed prior turns as alternating user/assistant messages,
- * then appends the new user query as the final message. Streaming and errored
- * turns are skipped — they'd give the indexer half-formed context.
- */
-function buildConversationMessages(
-  priorTurns: ReadonlyArray<ChatTurn>,
-  newUserQuery: string
-): ConversationMessage[] {
-  const completed = priorTurns.filter((t) => t.status === "done");
-  const history: ConversationMessage[] = [];
-  for (const turn of completed) {
-    history.push({ role: "user", content: turn.userQuery });
-    if (turn.narrative.trim()) {
-      history.push({ role: "assistant", content: turn.narrative });
-    }
-  }
-  history.push({ role: "user", content: newUserQuery });
-  return history;
-}
-
 export function usePhilanthropySearch() {
   const abortRef = useRef<AbortController | null>(null);
   const addHistory = useAddSearchHistory();
+  const appendTurn = useAppendSearchTurn();
+  const { authenticated } = useAuth();
 
   const search = useCallback(
     async (
@@ -594,23 +565,106 @@ export function usePhilanthropySearch() {
               status: "done",
               progress: null,
             });
+
+            // Persist the completed turn so revisiting the URL replays the
+            // conversation instead of re-running the search. The first turn
+            // creates the history entry under the thread/URL id; follow-ups
+            // append to it. Anonymous and authenticated users both persist —
+            // the endpoints accept ownerless chats, and a chat is claimed on
+            // the first request that carries a JWT.
+            const state = usePhilanthropyStore.getState();
+            const threadId = state.threadId;
+            const completedTurn = state.messages[state.messages.length - 1];
+            if (threadId && completedTurn?.status === "done") {
+              const turnPayload = chatTurnToTurnPayload(completedTurn);
+              const doneCount = state.messages.filter((t) => t.status === "done").length;
+              // Surface persistence rejections that should stop further input:
+              // 403 → owned by another account (read-only); 409 → turn cap; 401
+              // → bad/expired token. Never silently drop the write.
+              const handlePersistError = (err: unknown) => {
+                const e = err as AppError;
+                if (e?.type !== "ApiError") return;
+                if (e.status === 403) {
+                  usePhilanthropyStore.getState().setReadOnly(true);
+                } else if (e.status === 409) {
+                  usePhilanthropyStore.getState().setConversationFull(true);
+                } else if (e.status === 401) {
+                  // Drop the stale cached token so the next request fetches a
+                  // fresh one; prompt sign-in for logged-out users.
+                  TokenManager.clearCache();
+                  if (!authenticated) {
+                    usePhilanthropyStore.getState().setLoginRequired(true);
+                  }
+                }
+              };
+              if (doneCount === 1) {
+                // Create the entry under the URL id, then append the first turn
+                // on success.
+                addHistory.mutate(
+                  { query: normalizedQuery, id: threadId },
+                  {
+                    onSuccess: (entry) => {
+                      useSearchSessionStore.getState().setSession(entry.id, normalizedQuery);
+                      options?.onSearchId?.(entry.id);
+                      appendTurn.mutate(
+                        { searchId: entry.id, turn: turnPayload },
+                        { onError: handlePersistError }
+                      );
+                    },
+                    onError: (err) => {
+                      handlePersistError(err);
+                      // Otherwise (offline/server error): keep the local session
+                      // so the page keeps working without persistence.
+                      useSearchSessionStore.getState().setSession(threadId, normalizedQuery);
+                      options?.onSearchId?.(threadId);
+                    },
+                  }
+                );
+              } else {
+                appendTurn.mutate(
+                  { searchId: threadId, turn: turnPayload },
+                  { onError: handlePersistError }
+                );
+              }
+            }
+            return;
           }
 
           if (!isPagination) {
-            addHistory.mutate(normalizedQuery, {
-              onSuccess: (entry) => {
-                useSearchSessionStore.getState().setSession(entry.id, normalizedQuery);
-                options?.onSearchId?.(entry.id);
-              },
-              onError: () => {
-                const sessionId = useSearchSessionStore.getState().createSession(normalizedQuery);
-                options?.onSearchId?.(sessionId);
-              },
-            });
+            addHistory.mutate(
+              { query: normalizedQuery },
+              {
+                onSuccess: (entry) => {
+                  useSearchSessionStore.getState().setSession(entry.id, normalizedQuery);
+                  options?.onSearchId?.(entry.id);
+                },
+                onError: () => {
+                  const sessionId = useSearchSessionStore.getState().createSession(normalizedQuery);
+                  options?.onSearchId?.(sessionId);
+                },
+              }
+            );
           }
         },
         (appErr) => {
           if (appErr.type === "AbortError") return; // silently swallow
+          // 401 from the agent endpoint: an anonymous user hit the free limit
+          // (login_required), or an authenticated token expired. Drop the
+          // cached token; prompt sign-in for logged-out users. Either way the
+          // turn ends with a clear, non-scary message.
+          if (appErr.type === "ApiError" && appErr.status === 401) {
+            TokenManager.clearCache();
+            if (!authenticated) usePhilanthropyStore.getState().setLoginRequired(true);
+            const msg = authenticated
+              ? "Your session expired. Please try again."
+              : "Sign in to continue your search.";
+            if (isChat) {
+              usePhilanthropyStore.getState().updateLastTurn({ status: "error", error: msg });
+            } else {
+              usePhilanthropyStore.getState().setError(msg);
+            }
+            return;
+          }
           const msg =
             appErr.type === "NetworkError" ||
             appErr.type === "StreamError" ||
@@ -627,7 +681,7 @@ export function usePhilanthropySearch() {
 
       usePhilanthropyStore.getState().setSearching(false);
     },
-    [addHistory]
+    [addHistory, appendTurn, authenticated]
   );
 
   const abort = useCallback(() => {

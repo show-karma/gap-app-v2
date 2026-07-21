@@ -1,4 +1,5 @@
 import { render } from "@testing-library/react";
+import remarkGfm from "remark-gfm";
 import { describe, expect, it, vi } from "vitest";
 import { MessageResponse } from "@/src/components/ai-elements/message-response";
 
@@ -20,7 +21,7 @@ vi.mock("streamdown", () => ({
 // effect resolves synchronously enough for the test and doesn't throw.
 vi.mock("@streamdown/math", () => ({ math: {} }));
 vi.mock("@streamdown/mermaid", () => ({ mermaid: {} }));
-vi.mock("@streamdown/cjk", () => ({ cjk: {} }));
+vi.mock("@streamdown/cjk", () => ({ cjk: { remarkPluginsAfter: [] } }));
 vi.mock("@streamdown/code", () => ({ code: {} }));
 
 describe("MessageResponse memo comparator", () => {
@@ -56,5 +57,48 @@ describe("MessageResponse memo comparator", () => {
     expect(streamdownSpy).toHaveBeenLastCalledWith(
       expect.objectContaining({ className: expect.stringContaining("second") })
     );
+  });
+});
+
+describe("MessageResponse remark-gfm", () => {
+  // remark-gfm is forwarded as a `[plugin, options]` tuple so we can pass
+  // `singleTilde: false`. Pull it back out of the forwarded remarkPlugins array.
+  const findGfm = (remarkPlugins: unknown[]) =>
+    remarkPlugins.find((p) => p === remarkGfm || (Array.isArray(p) && p[0] === remarkGfm));
+
+  // Streamdown enables remark-gfm by default, but a custom `remarkPlugins` array
+  // REPLACES that default — which silently dropped GFM table rendering for
+  // consumers passing their own plugins (find-funders narratives rendered tables
+  // as raw `| pipes |`). MessageResponse must always merge remark-gfm back in.
+  it("forwards remark-gfm even when no remarkPlugins are passed", () => {
+    streamdownSpy.mockClear();
+
+    render(<MessageResponse>{"| a | b |\n|---|---|\n| 1 | 2 |"}</MessageResponse>);
+
+    const props = streamdownSpy.mock.calls.at(-1)?.[0];
+    expect(findGfm(props.remarkPlugins)).toBeDefined();
+  });
+
+  // A single `~` means "approximately" in AI narratives ("~$182K ... ~$20K");
+  // default GFM pairs those two tildes and strikes through everything between.
+  it("disables single-tilde strikethrough so `~` reads as 'approximately'", () => {
+    streamdownSpy.mockClear();
+
+    render(<MessageResponse>{"~$182K"}</MessageResponse>);
+
+    const props = streamdownSpy.mock.calls.at(-1)?.[0];
+    const gfm = findGfm(props.remarkPlugins);
+    expect(gfm).toEqual([remarkGfm, { singleTilde: false }]);
+  });
+
+  it("preserves consumer remarkPlugins AND keeps remark-gfm", () => {
+    streamdownSpy.mockClear();
+    const customPlugin = () => {};
+
+    render(<MessageResponse remarkPlugins={[customPlugin]}>{"text"}</MessageResponse>);
+
+    const props = streamdownSpy.mock.calls.at(-1)?.[0];
+    expect(findGfm(props.remarkPlugins)).toBeDefined();
+    expect(props.remarkPlugins).toContain(customPlugin);
   });
 });

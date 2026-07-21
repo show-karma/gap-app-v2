@@ -241,6 +241,7 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
         <ApplicationList
           programId={programId}
           communityUID={communityUID}
+          communityId={communityId}
           applications={applications}
           isLoading={isLoading && applications.length === 0}
           onApplicationSelect={onApplicationSelect}

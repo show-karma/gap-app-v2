@@ -299,4 +299,37 @@ describe("useEnsureEmbeddedWallet", () => {
       vi.useRealTimers();
     }
   });
+
+  it("stops and stays silent when Privy throws the structured already-exists code", async () => {
+    vi.useFakeTimers();
+    try {
+      const err = Object.assign(new Error("Some opaque message"), {
+        code: "embedded_wallet_already_exists",
+      });
+      mockCreateWallet.mockRejectedValueOnce(err);
+
+      renderHook(() => useEnsureEmbeddedWallet(true, true, makeUser("u-code"), 0, false));
+      await vi.advanceTimersByTimeAsync(SETTLE_BEFORE_CREATE_MS);
+
+      expect(mockCreateWallet).toHaveBeenCalledTimes(1);
+      expect(mockErrorManager).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("stops and stays silent on the human-readable already-exists message (production shape)", async () => {
+    vi.useFakeTimers();
+    try {
+      mockCreateWallet.mockRejectedValueOnce(new Error("User already has an embedded wallet."));
+
+      renderHook(() => useEnsureEmbeddedWallet(true, true, makeUser("u-human"), 0, false));
+      await vi.advanceTimersByTimeAsync(SETTLE_BEFORE_CREATE_MS);
+
+      expect(mockCreateWallet).toHaveBeenCalledTimes(1);
+      expect(mockErrorManager).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });

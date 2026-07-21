@@ -170,4 +170,49 @@ describe("useAuth - auth-ready refetch barrier", () => {
 
     expect(mockQueryClientInvalidate).not.toHaveBeenCalled();
   });
+
+  it("invalidates only ONCE when many useAuth instances observe the same address hydrate", async () => {
+    // useAuth has ~100+ call sites; each runs the barrier effect. A module-level
+    // guard must ensure only one instance invalidates per address, or every
+    // mounted instance fires a full invalidation in the same commit — GAP A11.
+    const addr = "0xaaaa000000000000000000000000000000000001";
+    setBridgeState({ ready: true, authenticated: true, user: mockPrivyUser, wallets: [] });
+
+    const instances = [
+      renderHook(() => useAuth(), { wrapper }),
+      renderHook(() => useAuth(), { wrapper }),
+      renderHook(() => useAuth(), { wrapper }),
+    ];
+    expect(mockQueryClientInvalidate).not.toHaveBeenCalled();
+
+    setBridgeState({ wallets: [{ address: addr, chainId: "eip155:10" }], isConnected: true });
+    await act(async () => {
+      for (const i of instances) i.rerender();
+    });
+
+    expect(mockQueryClientInvalidate).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not re-invalidate when the address flickers undefined→defined repeatedly", async () => {
+    // The wagmi address blips undefined↔defined during the sync. Each reappearance
+    // must not re-invalidate once the barrier has already run for that address.
+    const addr = "0xbbbb000000000000000000000000000000000002";
+    const wallet = { address: addr, chainId: "eip155:10" };
+    setBridgeState({ ready: true, authenticated: true, user: mockPrivyUser, wallets: [] });
+    const { rerender } = renderHook(() => useAuth(), { wrapper });
+
+    // First hydrate → one invalidation.
+    setBridgeState({ wallets: [wallet], isConnected: true });
+    await act(async () => rerender());
+    expect(mockQueryClientInvalidate).toHaveBeenCalledTimes(1);
+
+    // Flicker back to no address, then to the same address again — no new fire.
+    for (let i = 0; i < 5; i++) {
+      setBridgeState({ wallets: [], isConnected: false });
+      await act(async () => rerender());
+      setBridgeState({ wallets: [wallet], isConnected: true });
+      await act(async () => rerender());
+    }
+    expect(mockQueryClientInvalidate).toHaveBeenCalledTimes(1);
+  });
 });

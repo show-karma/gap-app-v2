@@ -6,6 +6,7 @@ import type { FC } from "react";
 import { useEffect, useState } from "react";
 import type { Hex } from "viem";
 import { useAccount } from "wagmi";
+import { ProjectGrantsCompleteGrantLoading } from "@/components/Pages/Project/Loading/Grants/CompleteGrantLoading";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { Button } from "@/components/ui/button";
@@ -334,15 +335,7 @@ export const GrantCompletion: FC = () => {
   };
 
   if (isAuthLoading) {
-    return (
-      <div className="mt-9 flex flex-1">
-        <div className="flex w-full max-w-3xl flex-col gap-6 rounded-md bg-gray-200 dark:bg-zinc-800 px-4 py-6 max-lg:max-w-full">
-          <div className="animate-pulse h-8 w-64 bg-gray-300 dark:bg-zinc-700 rounded" />
-          <div className="animate-pulse h-40 w-full bg-gray-300 dark:bg-zinc-700 rounded" />
-          <div className="animate-pulse h-11 w-48 bg-gray-300 dark:bg-zinc-700 rounded self-end" />
-        </div>
-      </div>
-    );
+    return <ProjectGrantsCompleteGrantLoading />;
   }
 
   if (!isAuthorized) {

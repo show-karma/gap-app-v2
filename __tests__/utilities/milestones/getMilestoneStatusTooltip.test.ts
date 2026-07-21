@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { MilestoneLifecycleStatus } from "@/src/features/payout-disbursement";
+import { MilestoneLifecycleStatus } from "@/src/features/payout-disbursement/types/payout-disbursement";
 import { getMilestoneStatusTooltip } from "@/utilities/milestones/getMilestoneStatusTooltip";
 
 describe("getMilestoneStatusTooltip", () => {

@@ -20,6 +20,7 @@ export class TokenManager {
   private static cachedToken: string | null = null;
   private static cacheExpiry = 0;
   private static pendingRequest: Promise<string | null> | null = null;
+  private static cacheGeneration = 0;
   private static instanceReadyResolvers: Array<() => void> = [];
 
   /**
@@ -63,6 +64,10 @@ export class TokenManager {
    * to force fresh token retrieval on next request.
    */
   static clearCache(): void {
+    // In-flight getAccessToken calls cannot be cancelled. Advancing the
+    // generation makes their eventual result ineligible to repopulate the
+    // cache after logout/account switch.
+    TokenManager.cacheGeneration += 1;
     TokenManager.cachedToken = null;
     TokenManager.cacheExpiry = 0;
     TokenManager.pendingRequest = null;
@@ -153,20 +158,28 @@ export class TokenManager {
 
     // Client-side: Use Privy instance
     if (TokenManager.privyInstance?.getAccessToken) {
-      TokenManager.pendingRequest = (async () => {
+      const requestGeneration = TokenManager.cacheGeneration;
+      const request = (async () => {
         try {
           const token = await TokenManager.privyInstance!.getAccessToken!();
-          TokenManager.cachedToken = token;
-          TokenManager.cacheExpiry = Date.now() + TOKEN_CACHE_TTL_MS;
+          if (requestGeneration === TokenManager.cacheGeneration) {
+            TokenManager.cachedToken = token;
+            TokenManager.cacheExpiry = Date.now() + TOKEN_CACHE_TTL_MS;
+          }
           return token;
         } catch (error) {
           console.error("Failed to get Privy access token:", error);
           return null;
         } finally {
-          TokenManager.pendingRequest = null;
+          // A cleared cache may already have started a replacement request.
+          // Only the request that currently owns the slot may release it.
+          if (requestGeneration === TokenManager.cacheGeneration) {
+            TokenManager.pendingRequest = null;
+          }
         }
       })();
-      return TokenManager.pendingRequest;
+      TokenManager.pendingRequest = request;
+      return request;
     }
 
     // Fallback: Try to get from cookies if Privy stores there

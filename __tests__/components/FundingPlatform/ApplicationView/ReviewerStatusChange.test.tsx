@@ -82,24 +82,6 @@ vi.mock("@/utilities/type-guards", () => ({
   isFundingProgramConfig: vi.fn(() => true),
 }));
 
-// Mock pages
-vi.mock("@/utilities/pages", () => ({
-  PAGES: {
-    REVIEWER: {
-      APPLICATIONS: (communityId: string, programId: string) =>
-        `/community/${communityId}/manage/funding-platform/${programId}/applications`,
-    },
-    MANAGE: {
-      FUNDING_PLATFORM: {
-        APPLICATIONS: (communityId: string, programId: string) =>
-          `/community/${communityId}/manage/funding-platform/${programId}/applications`,
-        MILESTONES: (communityId: string, programId: string, projectId: string) =>
-          `/community/${communityId}/manage/funding-platform/${programId}/milestones/${projectId}`,
-      },
-    },
-  },
-}));
-
 // Mock theme
 vi.mock("@/src/helper/theme", () => ({
   layoutTheme: {
@@ -375,7 +357,7 @@ import toast from "react-hot-toast";
 // Import the page component after mocks (now uses unified manage route)
 import ReviewerApplicationDetailPage from "@/app/community/[communityId]/manage/funding-platform/[programId]/applications/[applicationId]/page";
 // Import mocked modules for vi.mocked() usage
-import { useApplication, useApplicationStatus } from "@/hooks/useFundingPlatform";
+import { useApplication } from "@/hooks/useFundingPlatform";
 import { usePermissions } from "@/hooks/usePermissions";
 import {
   useCan,
@@ -569,7 +551,7 @@ describe("Reviewer Status Change Functionality", () => {
       });
     });
 
-    it("should show error toast when status change fails", async () => {
+    it("keeps the inline form open and shows no success toast when status change fails", async () => {
       mockUpdateStatusAsync.mockRejectedValue(new Error("API Error"));
 
       const user = userEvent.setup();
@@ -581,9 +563,14 @@ describe("Reviewer Status Change Functionality", () => {
       // Click confirm
       await user.click(screen.getByTestId("confirm-btn"));
 
+      // The failed mutation is swallowed by the confirm handler so the form stays
+      // open to retry; the error toast is owned by the mutation's onError (see
+      // application-status.mutation.test.tsx).
       await waitFor(() => {
-        expect(toast.error).toHaveBeenCalledWith("API Error");
+        expect(mockUpdateStatusAsync).toHaveBeenCalled();
       });
+      expect(toast.success).not.toHaveBeenCalled();
+      expect(screen.getByTestId("status-change-inline")).toBeInTheDocument();
     });
   });
 

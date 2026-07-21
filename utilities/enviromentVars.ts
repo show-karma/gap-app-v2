@@ -4,6 +4,11 @@ export const envVars = {
   isDev,
   VERCEL_ENV: process.env.NEXT_PUBLIC_VERCEL_ENV,
   NEXT_PUBLIC_ENV: process.env.NEXT_PUBLIC_ENV,
+  // Optional override for funding-platform link targets: "true" forces external tenant
+  // domains, "false" forces same-origin links. Unset = runtime-host heuristic
+  // (same-origin on localhost, external when deployed). See utilities/fundingPlatformUrls.ts.
+  NEXT_PUBLIC_FUNDING_PLATFORM_EXTERNAL_LINKS:
+    process.env.NEXT_PUBLIC_FUNDING_PLATFORM_EXTERNAL_LINKS,
   NEXT_PUBLIC_KARMA_API: "https://api.karmahq.xyz/api",
   NEXT_PUBLIC_GAP_INDEXER_URL: process.env.NEXT_PUBLIC_GAP_INDEXER_URL as string,
   // gap-oauth (the OAuth 2.1 / oidc-provider service) lives next to

@@ -3,6 +3,7 @@
 import { Loader2, Zap } from "lucide-react";
 import dynamic from "next/dynamic";
 import React, { useCallback, useMemo } from "react";
+import EthereumAddressToProfileName from "@/components/EthereumAddressToProfileName";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -177,7 +178,13 @@ export const SingleProjectDonateModal = React.memo<SingleProjectDonateModalProps
                           " and " +
                           configuredChainNames[configuredChainNames.length - 1]}{" "}
                       {configuredChainNames.length === 1 ? "network" : "networks"}. We couldn&apos;t
-                      find any tokens in your wallet account {address ? shortAddress(address) : ""}.
+                      find any tokens in your wallet account{" "}
+                      {address ? (
+                        <EthereumAddressToProfileName address={address} shouldTruncate />
+                      ) : (
+                        ""
+                      )}
+                      .
                     </p>
                     <Button onClick={connectWallet} variant="outline" className="w-full">
                       Connect Different Wallet

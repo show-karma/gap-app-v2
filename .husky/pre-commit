@@ -1,1 +1,15 @@
 pnpm tsc --noEmit && pnpm lint-staged
+
+# Taskless: deterministic guardrails on staged files (error findings block the
+# commit; warnings just print). Runs only when rules exist.
+# Skipped locally on Node <22.22 (the CLI's requirement) to avoid EBADENGINE
+# noise — CI runs it on Node 22, so PRs are still gated regardless.
+# Bypass like any hook with: HUSKY=0 git commit ...  (or git commit --no-verify)
+if node -e 'const [a,b]=process.versions.node.split(".").map(Number);process.exit(a>22||(a===22&&b>=22)?0:1)' 2>/dev/null; then
+  STAGED=$(git diff --cached --name-only --diff-filter=ACMR)
+  if [ -n "$STAGED" ] && ls .taskless/rules/*.yml >/dev/null 2>&1; then
+    echo "$STAGED" | tr '\n' '\0' | xargs -0 npx -y @taskless/cli@0.9.0 check
+  fi
+else
+  echo "taskless: skipped locally (needs Node >=22.22); CI enforces on PRs." >&2
+fi

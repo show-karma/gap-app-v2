@@ -3,11 +3,21 @@
 import * as Sentry from "@sentry/nextjs";
 import NextError from "next/error";
 import { useEffect } from "react";
+import { attemptChunkReload, isChunkLoadError } from "@/utilities/isChunkLoadError";
 
 export default function GlobalError({ error }: { error: Error & { digest?: string } }) {
+  const recovering = isChunkLoadError(error);
+
   useEffect(() => {
+    // Stale-deploy chunk failures are recoverable via a one-time hard reload
+    // that pulls the fresh build manifest. Attempt that first; only report to
+    // Sentry when recovery is not applicable (or already exhausted) so the
+    // dashboard reflects non-recoverable failures.
+    if (recovering && attemptChunkReload()) {
+      return;
+    }
     Sentry.captureException(error);
-  }, [error]);
+  }, [error, recovering]);
 
   return (
     <html lang="en">

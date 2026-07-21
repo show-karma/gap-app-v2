@@ -33,6 +33,7 @@ vi.mock("wagmi", () => ({ useChainId: () => mockUseChainId() }));
 vi.mock("@/contexts/privy-bridge-context", () => ({
   usePrivyBridge: () => ({
     ready: mockPrivyState.ready,
+    walletsReady: true,
     user: mockPrivyState.user,
     wallets: mockPrivyState.wallets,
   }),
@@ -70,7 +71,7 @@ import {
   getGaslessSigner,
   isChainSupportedForGasless,
 } from "@/utilities/gasless";
-import { EmbeddedWalletNotReadyError, useZeroDevSigner } from "../../../hooks/useZeroDevSigner";
+import { useZeroDevSigner, WALLET_READY_TIMEOUT_MS } from "../../../hooks/useZeroDevSigner";
 
 const EMBEDDED = "0xEmbedded1111111111111111111111111111111111";
 const FOREIGN_METAMASK = "0x9b75AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
@@ -107,10 +108,14 @@ describe("useZeroDevSigner — linked-wallet signing trust (issue #1574)", () =>
   });
 
   afterEach(() => {
+    // Two tests fast-forward the bounded wallet wait with fake timers — always
+    // restore real timers so they can't leak into a later test.
+    vi.useRealTimers();
     vi.restoreAllMocks();
   });
 
-  it("email user + stale unlinked MetaMask, embedded not hydrated: throws EmbeddedWalletNotReadyError and never touches the foreign wallet", async () => {
+  it("email user + stale unlinked MetaMask, embedded not hydrated: throws SignerUnavailableError after the bounded wait and never touches the foreign wallet", async () => {
+    vi.useFakeTimers();
     const foreign = foreignMetaMask();
     mockPrivyState.user = { linkedAccounts: [{ type: "email" }] };
     mockPrivyState.wallets = [foreign];
@@ -121,11 +126,18 @@ describe("useZeroDevSigner — linked-wallet signing trust (issue #1574)", () =>
     expect(result.current.attestationAddress).toBeNull();
     expect(result.current.hasExternalWallet).toBe(false);
 
-    await act(async () => {
-      await expect(result.current.getAttestationSigner(10)).rejects.toBeInstanceOf(
-        EmbeddedWalletNotReadyError
-      );
+    // The foreign wallet never becomes usable, so the bounded wallet wait runs
+    // its full course and classifies the failure as provisioning — it must NOT
+    // resolve by falling back to the unlinked MetaMask.
+    const assertion = expect(result.current.getAttestationSigner(10)).rejects.toMatchObject({
+      name: "SignerUnavailableError",
+      reason: "embedded-wallet-provisioning",
+      expected: true,
     });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(WALLET_READY_TIMEOUT_MS + 500);
+    });
+    await assertion;
 
     // The regression guard: the foreign wallet's provider is NEVER requested.
     expect(foreign.getEthereumProvider).not.toHaveBeenCalled();
@@ -182,6 +194,7 @@ describe("useZeroDevSigner — linked-wallet signing trust (issue #1574)", () =>
   });
 
   it("only an unlinked wallet connected for a wallet-login user: no foreign signing", async () => {
+    vi.useFakeTimers();
     const foreign = foreignMetaMask();
     mockPrivyState.user = {
       // The user logged in with a DIFFERENT wallet than the one now connected.
@@ -193,11 +206,16 @@ describe("useZeroDevSigner — linked-wallet signing trust (issue #1574)", () =>
 
     expect(result.current.attestationAddress).toBeNull();
 
-    await act(async () => {
-      await expect(result.current.getAttestationSigner(10)).rejects.toThrow(
-        "No wallet available for signing"
-      );
+    // The unlinked wallet never counts as usable — the bounded wait times out
+    // with the typed "no wallet" classification instead of foreign signing.
+    const assertion = expect(result.current.getAttestationSigner(10)).rejects.toMatchObject({
+      name: "SignerUnavailableError",
+      reason: "no-wallet-connected",
     });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(WALLET_READY_TIMEOUT_MS + 500);
+    });
+    await assertion;
 
     expect(foreign.getEthereumProvider).not.toHaveBeenCalled();
   });

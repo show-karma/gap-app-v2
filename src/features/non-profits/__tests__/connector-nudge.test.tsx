@@ -1,23 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { ConnectorNudge } from "../components/connector-nudge";
-
-vi.mock("@/src/components/navigation/Link", () => ({
-  Link: ({
-    children,
-    href,
-    ...props
-  }: {
-    children: React.ReactNode;
-    href: string;
-    className?: string;
-  }) => (
-    <a href={href} {...props}>
-      {children}
-    </a>
-  ),
-}));
 
 describe("ConnectorNudge", () => {
   beforeEach(() => {
@@ -36,6 +20,16 @@ describe("ConnectorNudge", () => {
 
     expect(claudeLink).toHaveAttribute("href", "/nonprofits/find-funders/connect/claude");
     expect(chatgptLink).toHaveAttribute("href", "/nonprofits/find-funders/connect/chatgpt");
+  });
+
+  it("opens the setup guides in a new tab so the conversation is never left", () => {
+    render(<ConnectorNudge />);
+
+    for (const name of [/Add to Claude/i, /Add to ChatGPT/i]) {
+      const link = screen.getByRole("link", { name });
+      expect(link).toHaveAttribute("target", "_blank");
+      expect(link).toHaveAttribute("rel", expect.stringContaining("noopener"));
+    }
   });
 
   it("hides the banner once dismissed and remembers the dismissal via sessionStorage", () => {

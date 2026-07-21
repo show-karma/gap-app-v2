@@ -8,10 +8,15 @@ vi.mock("@show-karma/karma-gap-sdk", () => ({
   GapSchema: vi.fn(),
 }));
 
-// Mock the ActivityCard component to avoid SDK dependency chain
+// Mock the ActivityCard component to avoid SDK dependency chain. Expose the
+// unified milestone's currentStatus so we can assert it is threaded through
+// (the card itself derives the Cancelled badge from this field).
 vi.mock("@/components/Shared/ActivityCard", () => ({
   ActivityCard: ({ activity }: any) => (
-    <div data-testid="activity-card">{activity?.data?.title || "Activity"}</div>
+    <div data-testid="activity-card">
+      {activity?.data?.title || "Activity"}
+      <span data-testid="unified-current-status">{activity?.data?.currentStatus ?? ""}</span>
+    </div>
   ),
 }));
 
@@ -77,5 +82,14 @@ describe("MilestoneDetails", () => {
   it("does not render amount badge when allocationAmount is empty string", () => {
     render(<MilestoneDetails milestone={baseMilestone} index={1} allocationAmount="" />);
     expect(screen.queryByTestId("milestone-allocation-amount")).not.toBeInTheDocument();
+  });
+
+  it("threads the raw currentStatus onto the unified milestone (DEV-523 cancelled)", () => {
+    // Without this the grant-store data path never sets currentStatus, so a
+    // cancelled milestone falls through to a pending/past-due badge.
+    render(
+      <MilestoneDetails milestone={{ ...baseMilestone, currentStatus: "cancelled" }} index={1} />
+    );
+    expect(screen.getByTestId("unified-current-status")).toHaveTextContent("cancelled");
   });
 });
