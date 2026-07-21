@@ -57,7 +57,7 @@ const WeeklyActiveUsersStatSchema = z
   .passthrough();
 const WeeklyActiveUsersSchema = z.array(WeeklyActiveUsersStatSchema);
 
-export type WeeklyActiveUsersStat = z.infer<typeof WeeklyActiveUsersStatSchema>;
+type WeeklyActiveUsersStat = z.infer<typeof WeeklyActiveUsersStatSchema>;
 
 export const getGAPWeeklyActiveUsers = async (): Promise<WeeklyActiveUsersStat[]> => {
   try {
