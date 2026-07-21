@@ -108,7 +108,7 @@ describe("PersonaDetailView", () => {
     // The persona editor is dynamic()-imported (ssr:false) — its stub resolves
     // asynchronously, after the wrapper's own loading fallback paints once.
     expect(await screen.findByTestId("persona-editor")).toHaveTextContent("persona editor for h1");
-    expect(screen.getByLabelText("Donor description")).toHaveValue("Met at gala");
+    expect(screen.getByLabelText("Private notes")).toHaveValue("Met at gala");
     expect(container.querySelector("[data-persona-detail-columns]")).toHaveClass(
       "lg:[grid-template-columns:minmax(0,3fr)_minmax(18rem,2fr)]"
     );
@@ -208,7 +208,7 @@ describe("PersonaDetailView", () => {
     try {
       // Edit ONLY the notes field (the persona editor stays clean) — an unsaved
       // note must still block navigation.
-      const notes = await screen.findByLabelText("Donor description");
+      const notes = await screen.findByLabelText("Private notes");
       await user.type(notes, " and follow up in Q3");
       await user.click(shellLink);
 
