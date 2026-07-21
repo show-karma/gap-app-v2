@@ -15,6 +15,7 @@ import { MESSAGES } from "@/utilities/messages";
 import { gapSupportedNetworks } from "@/utilities/network";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
+import { waitForCommunityIndexed } from "@/utilities/waitForCommunityIndexed";
 import { errorManager } from "../Utilities/errorManager";
 import { MarkdownEditor } from "../Utilities/MarkdownEditor";
 import { Button } from "../ui/button";
@@ -36,6 +37,8 @@ type SchemaType = z.infer<typeof schema>;
 interface CreateCommunityResponse {
   slug: string;
   uid: string;
+  status?: "pending" | "indexed";
+  message?: string;
 }
 
 const sanitizeSlug = (slug: string) => slug.toLowerCase().replace(/[^a-z0-9-]/g, "-");
@@ -167,12 +170,20 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
         toast.error("Community created but could not determine its URL. Check your dashboard.");
         return;
       }
-      toast.success("Community created successfully!");
+      const isPending = result?.status === "pending";
+      toast.success(
+        isPending
+          ? "Community created on-chain — finalizing indexing, this can take a moment…"
+          : "Community created successfully!"
+      );
       closeModal();
       try {
         await refreshCommunities();
       } catch {
         // Non-critical — community was already created
+      }
+      if (isPending) {
+        await waitForCommunityIndexed(communitySlug);
       }
       router.push(PAGES.COMMUNITY.ALL_GRANTS(communitySlug));
     } catch (error: unknown) {
