@@ -31,7 +31,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  SIDEBAR_BELOW_NAVBAR_CLASSES,
   Sidebar,
   SidebarContent,
   SidebarFooter,
@@ -45,6 +44,7 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar";
+import { SIDEBAR_BELOW_NAVBAR_CLASSES } from "@/components/ui/sidebar-below-navbar";
 import { useDashboardAdmin } from "@/hooks/useDashboardAdmin";
 import { useFundingPrograms } from "@/hooks/useFundingPlatform";
 import { Link } from "@/src/components/navigation/Link";

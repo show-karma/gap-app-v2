@@ -17,7 +17,6 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import {
-  SIDEBAR_BELOW_NAVBAR_CLASSES,
   Sidebar,
   SidebarContent,
   SidebarFooter,
@@ -33,6 +32,7 @@ import {
   SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { SIDEBAR_BELOW_NAVBAR_CLASSES } from "@/components/ui/sidebar-below-navbar";
 import { useDonorAdvisor } from "@/hooks/useDonorAdvisor";
 import { useDonorHandle } from "@/hooks/useDonorHandles";
 import { Link } from "@/src/components/navigation/Link";
