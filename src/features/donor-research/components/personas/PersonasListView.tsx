@@ -19,7 +19,7 @@ import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 import { NewDonorHandleModal } from "../criteria-input/NewDonorHandleModal";
 
-/** Header "New persona" trigger — opens the quick-create dialog. */
+/** Header "New donor" trigger — opens the quick-create dialog. */
 function NewPersonaButton({ onClick, className }: { onClick: () => void; className?: string }) {
   return (
     <button
@@ -28,7 +28,7 @@ function NewPersonaButton({ onClick, className }: { onClick: () => void; classNa
       type="button"
     >
       <SoftIcon className="h-4 w-4" name="plus" />
-      New persona
+      New donor
     </button>
   );
 }
@@ -132,9 +132,7 @@ function PersonaListBody({ handlesQuery, onRequestCreate }: PersonaListBodyProps
   if (handlesQuery.isError) {
     return (
       <ErrorState
-        message={
-          (handlesQuery.error as Error)?.message || "Couldn't load your personas. Try again."
-        }
+        message={(handlesQuery.error as Error)?.message || "Couldn't load your donors. Try again."}
         onRetry={() => handlesQuery.refetch()}
       />
     );
@@ -145,9 +143,9 @@ function PersonaListBody({ handlesQuery, onRequestCreate }: PersonaListBodyProps
     return (
       <EmptyState
         action={<NewPersonaButton onClick={onRequestCreate} />}
-        body="Create a persona to research on a donor's behalf. Each persona can hold a profile, private notes, and its own reports."
+        body="Create a donor to research on their behalf. Each donor can hold a profile, a description, and their own reports."
         icon="users"
-        title="No personas yet"
+        title="No donors yet"
       />
     );
   }
@@ -174,9 +172,9 @@ export function PersonasListView() {
     <div className="flex flex-col gap-6">
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div className="max-w-xl">
-          <h1 className="text-2xl font-semibold tracking-[-0.02em] text-sf-heading">Personas</h1>
+          <h1 className="text-2xl font-semibold tracking-[-0.02em] text-sf-heading">Donors</h1>
           <p className="mt-1 text-[13.5px] text-sf-muted">
-            Anonymous profiles for the donors you advise. Each one can hold private notes and its
+            Anonymous profiles for the donors you advise. Each one can hold a description and its
             own research reports.
           </p>
         </div>

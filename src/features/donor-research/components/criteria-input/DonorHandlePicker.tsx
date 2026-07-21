@@ -21,7 +21,7 @@ interface DonorHandlePickerProps {
   onChange: (handleId: string) => void;
   /**
    * Opens the create flow (the quick-create dialog, owned by the parent).
-   * Both the first-run CTA and the "+ New persona" shortcut delegate here so
+   * Both the first-run CTA and the "+ New donor" shortcut delegate here so
    * creation lives in one place and the new handle can be auto-selected.
    */
   onRequestCreate: () => void;
@@ -39,7 +39,7 @@ interface DonorHandlePickerProps {
  *
  * Three states honored:
  *  - loading: skeleton
- *  - empty: explicit "create your first persona" CTA → opens the dialog
+ *  - empty: explicit "create your first donor" CTA → opens the dialog
  *  - error: surfaced inline via the parent's `error` prop
  */
 export function DonorHandlePicker({
@@ -65,10 +65,10 @@ export function DonorHandlePicker({
       ) : empty ? (
         <div className="rounded-md border border-dashed border-border p-4 text-center">
           <p className="mb-2 text-sm text-muted-foreground">
-            No personas yet. Create one to scope your research.
+            No donors yet. Create one to scope your research.
           </p>
           <Button size="sm" onClick={onRequestCreate} type="button">
-            Create your first persona
+            Create your first donor
           </Button>
         </div>
       ) : (
@@ -97,7 +97,7 @@ interface ExistingHandlesRowProps {
 }
 
 /**
- * The populated-state row: a shadcn/Radix Select, a "+ New persona" shortcut,
+ * The populated-state row: a shadcn/Radix Select, a "+ New donor" shortcut,
  * and (when a handle is selected) an in-place profile action. Every control
  * shares the Soft dashboard's 42px control height.
  */
@@ -111,16 +111,16 @@ function ExistingHandlesRow({
 }: ExistingHandlesRowProps) {
   const [portalContainer, setPortalContainer] = useState<HTMLDivElement | null>(null);
   const selectedLabel =
-    handles.find((handle) => handle.id === value)?.opaqueLabel ?? "selected persona";
+    handles.find((handle) => handle.id === value)?.opaqueLabel ?? "selected donor";
 
   return (
     <div className="flex flex-col gap-2 sm:flex-row" ref={setPortalContainer}>
       <Select onValueChange={onChange} value={value}>
         <SelectTrigger
-          aria-label="Persona"
+          aria-label="Donor"
           className="h-[42px] min-w-0 flex-1 rounded-sf-tile border-sf-line-strong bg-sf-elev px-3 text-[13.5px] text-sf-heading shadow-none focus:ring-brand-500/20"
         >
-          <SelectValue placeholder="Select a persona…" />
+          <SelectValue placeholder="Select a donor…" />
         </SelectTrigger>
         <SelectContent
           className="rounded-sf-tile border-sf-line bg-sf-card text-sf-heading shadow-sf-card"
@@ -158,7 +158,7 @@ function ExistingHandlesRow({
         onClick={onCreate}
         type="button"
       >
-        + New persona
+        + New donor
       </button>
     </div>
   );

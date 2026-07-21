@@ -190,9 +190,9 @@ export function PersonaEditor({ handleId, onDirtyChange, onSkip, onSaved }: Pers
         // effect from clobbering the in-field suggestion on a background
         // refetch, and arms the host's discard guard against dismissal.
         setIsDirty(true);
-        setAnnouncement("Recommended persona written to the input — accept or reject below");
+        setAnnouncement("Recommended profile written to the input — accept or reject below");
       },
-      onError: (err) => toastError(err, "Couldn't refine the persona. Try again."),
+      onError: (err) => toastError(err, "Couldn't refine the profile. Try again."),
     });
   };
 
@@ -209,7 +209,7 @@ export function PersonaEditor({ handleId, onDirtyChange, onSkip, onSaved }: Pers
     setGeography(recommendation.geography ?? null);
     setRecommendation(null);
     setIsDirty(true);
-    setAnnouncement("Recommended persona accepted");
+    setAnnouncement("Recommended profile accepted");
   };
 
   const onRejectRecommendation = () => {
@@ -263,12 +263,12 @@ export function PersonaEditor({ handleId, onDirtyChange, onSkip, onSaved }: Pers
       onSuccess: (saved) => {
         hydrate(saved);
         setIsDirty(false);
-        toast.success("Persona saved");
+        toast.success("Profile saved");
         onSaved?.();
       },
       // Rollback is handled by the mutation hook; isDirty stays true so the
       // Save button remains an actionable retry.
-      onError: (err) => toastError(err, "Couldn't save the persona. Try again."),
+      onError: (err) => toastError(err, "Couldn't save the profile. Try again."),
     });
   };
 
@@ -285,7 +285,7 @@ export function PersonaEditor({ handleId, onDirtyChange, onSkip, onSaved }: Pers
   if (personaQuery.isError) {
     return (
       <div className="rounded-md border border-border p-4 text-sm">
-        <p className="mb-2 text-red-600 dark:text-red-400">Couldn't load the persona.</p>
+        <p className="mb-2 text-red-600 dark:text-red-400">Couldn't load the profile.</p>
         <Button type="button" variant="outline" size="sm" onClick={() => personaQuery.refetch()}>
           Retry
         </Button>
@@ -300,11 +300,11 @@ export function PersonaEditor({ handleId, onDirtyChange, onSkip, onSaved }: Pers
       {/* Persona text — the one input. Locked while a recommendation awaits a decision. */}
       <div className="flex flex-col gap-1.5">
         <label htmlFor="persona-source" className="text-sm font-medium">
-          Persona source
+          Donor preferences
         </label>
         <p className="text-xs text-muted-foreground">
           Paste donor letters, kickoff notes, anything that describes this donor, then click Refine
-          to get a recommended persona.
+          to get a recommended profile.
         </p>
         <div className="relative">
           <textarea
@@ -332,7 +332,7 @@ export function PersonaEditor({ handleId, onDirtyChange, onSkip, onSaved }: Pers
             <div className="absolute inset-x-px bottom-px flex flex-wrap items-center justify-between gap-2 rounded-b-md bg-background/90 px-3 py-2">
               <span className="text-xs font-medium text-primary">
                 {recommendation.narrative
-                  ? "Recommended persona"
+                  ? "Recommended profile"
                   : "No narrative was generated, but donor details were extracted"}
               </span>
               <div className="flex gap-2">
@@ -403,7 +403,7 @@ export function PersonaEditor({ handleId, onDirtyChange, onSkip, onSaved }: Pers
           disabled={!isDirty || isReviewing || update.isPending}
           className="order-1 w-full sm:order-2 sm:w-auto"
         >
-          {update.isPending ? "Saving persona…" : "Save persona"}
+          {update.isPending ? "Saving profile…" : "Save profile"}
         </Button>
       </div>
     </div>

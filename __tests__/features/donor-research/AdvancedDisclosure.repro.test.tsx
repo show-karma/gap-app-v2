@@ -64,7 +64,7 @@ function advancedTrigger() {
 }
 
 async function selectPersona(user: ReturnType<typeof userEvent.setup>) {
-  await user.click(screen.getByRole("combobox", { name: /persona/i }));
+  await user.click(screen.getByRole("combobox", { name: /donor/i }));
   await user.click(await screen.findByRole("option", { name: "Hartwell" }));
 }
 
