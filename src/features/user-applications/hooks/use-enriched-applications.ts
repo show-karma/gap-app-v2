@@ -1,8 +1,8 @@
 import { useQueries } from "@tanstack/react-query";
 import { useMemo } from "react";
 import type { Application, FundingProgram } from "@/types/whitelabel-entities";
+import { api } from "@/utilities/api/client";
 import { chosenCommunities } from "@/utilities/chosenCommunities";
-import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
 interface CommunityInfo {
@@ -32,16 +32,15 @@ export function useEnrichedApplications(
     queries: uniqueProgramIds.map((programId) => ({
       queryKey: ["funding-program-config", programId],
       queryFn: async () => {
-        const [res, err] = await fetchData<FundingProgram>(
-          INDEXER.V2.FUNDING_PROGRAMS.GET(programId),
-          "GET",
-          {},
-          {},
-          {},
-          true
-        );
-        if (err) return null;
-        return res;
+        try {
+          // TODO(#1775): add zod schema
+          return await api.get<FundingProgram>(INDEXER.V2.FUNDING_PROGRAMS.GET(programId));
+        } catch {
+          // Program config fetch is best-effort here — it only enriches
+          // applications with community info; a failure degrades to null
+          // and the application still renders without that enrichment.
+          return null;
+        }
       },
       staleTime: 10 * 60 * 1000,
     })),

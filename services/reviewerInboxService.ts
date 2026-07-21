@@ -1,6 +1,6 @@
 import type { IApplicationFilters } from "@/services/fundingPlatformService";
 import type { IReviewerInboxResponse } from "@/types/funding-platform";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 import { buildApplicationQueryParams } from "./fundingApplicationParams";
 
@@ -20,12 +20,13 @@ export async function getReviewerInbox(
   if (filters.limit) params.append("limit", filters.limit.toString());
   if (filters.reviewerAddress) params.append("reviewerAddress", filters.reviewerAddress);
 
-  const [data, error] = await fetchData<IReviewerInboxResponse>(
+  // TODO(#1775): add zod schema
+  const data = await api.get<IReviewerInboxResponse>(
     INDEXER.V2.FUNDING_APPLICATIONS.REVIEWER_INBOX(communityId, params.toString())
   );
 
-  if (error || !data) {
-    throw new Error(error || "Failed to fetch reviewer inbox");
+  if (!data) {
+    throw new Error("Failed to fetch reviewer inbox");
   }
 
   return {

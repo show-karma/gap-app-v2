@@ -1,7 +1,7 @@
 {
   "$schema": "./scripts/quality-baseline.schema.json",
-  "generatedAt": "2026-07-08T20:13:23.316Z",
-  "generatedFromCommit": "a04dd3937025acf50a4278a4bd1be4579364e822",
+  "generatedAt": "2026-07-21T19:45:10.626Z",
+  "generatedFromCommit": "54b64eb6b5b4662ab1073f54e168d1d345b312a1",
   "coverage": {
     "lines": 0,
     "statements": 0,
@@ -9,14 +9,14 @@
     "branches": 0
   },
   "duplication": {
-    "percent": 1.2,
-    "fragments": 73
+    "percent": 1.16,
+    "fragments": 75
   },
   "violations": {
-    "biome": 1238,
-    "knipUnusedFiles": 210,
-    "knipUnusedExports": 418,
-    "knipUnusedTypes": 363,
+    "biome": 1207,
+    "knipUnusedFiles": 209,
+    "knipUnusedExports": 415,
+    "knipUnusedTypes": 362,
     "knipUnusedDeps": 19,
     "knipDuplicates": 33
   },
@@ -29,7 +29,7 @@
     },
     "__tests__/components/Community/CommunityMilestoneCard.test.tsx": {
       "lines": 827,
-      "bytes": 26988,
+      "bytes": 26972,
       "maxLines": 800,
       "maxBytes": 60000
     },
@@ -52,14 +52,8 @@
       "maxBytes": 60000
     },
     "__tests__/components/FundingPlatform/QuestionBuilder/ProgramDetailsTab.test.tsx": {
-      "lines": 1060,
-      "bytes": 37111,
-      "maxLines": 800,
-      "maxBytes": 60000
-    },
-    "__tests__/components/Milestone/MilestoneCard.test.tsx": {
-      "lines": 918,
-      "bytes": 29690,
+      "lines": 1059,
+      "bytes": 37057,
       "maxLines": 800,
       "maxBytes": 60000
     },
@@ -82,8 +76,8 @@
       "maxBytes": 60000
     },
     "__tests__/integration/features/grant-completion-revocation-flow.test.tsx": {
-      "lines": 1102,
-      "bytes": 37074,
+      "lines": 1099,
+      "bytes": 37041,
       "maxLines": 800,
       "maxBytes": 60000
     },
@@ -130,8 +124,8 @@
       "maxBytes": 60000
     },
     "__tests__/unit/hooks/useGrantCompletionRevoke.test.ts": {
-      "lines": 1039,
-      "bytes": 33324,
+      "lines": 1034,
+      "bytes": 33259,
       "maxLines": 800,
       "maxBytes": 60000
     },
@@ -154,8 +148,8 @@
       "maxBytes": 60000
     },
     "app/community/[communityId]/(with-header)/browse-applications/BrowseApplicationsClient.tsx": {
-      "lines": 640,
-      "bytes": 24339,
+      "lines": 635,
+      "bytes": 24239,
       "maxLines": 600,
       "maxBytes": 40000
     },
@@ -172,14 +166,14 @@
       "maxBytes": 40000
     },
     "components/Dialogs/ProgressDialog/UnifiedMilestoneScreen.tsx": {
-      "lines": 660,
-      "bytes": 23612,
+      "lines": 648,
+      "bytes": 24325,
       "maxLines": 600,
       "maxBytes": 40000
     },
     "components/Dialogs/ProjectDialog/index.tsx": {
-      "lines": 1729,
-      "bytes": 65889,
+      "lines": 1708,
+      "bytes": 64662,
       "maxLines": 600,
       "maxBytes": 40000
     },
@@ -190,26 +184,26 @@
       "maxBytes": 40000
     },
     "components/Forms/MilestoneUpdate.tsx": {
-      "lines": 766,
-      "bytes": 28471,
+      "lines": 764,
+      "bytes": 28424,
       "maxLines": 600,
       "maxBytes": 40000
     },
     "components/Forms/ProjectUpdate.tsx": {
-      "lines": 989,
-      "bytes": 36248,
+      "lines": 987,
+      "bytes": 36212,
       "maxLines": 600,
       "maxBytes": 40000
     },
     "components/FundingPlatform/ApplicationView/ApplicationContent.tsx": {
-      "lines": 705,
-      "bytes": 28771,
+      "lines": 699,
+      "bytes": 28699,
       "maxLines": 600,
       "maxBytes": 40000
     },
     "components/FundingPlatform/ApplicationView/ApplicationSubmission.tsx": {
       "lines": 979,
-      "bytes": 36667,
+      "bytes": 36642,
       "maxLines": 600,
       "maxBytes": 40000
     },
@@ -268,8 +262,8 @@
       "maxBytes": 40000
     },
     "components/Pages/Communities/CommunityProjectEvaluatorPage.tsx": {
-      "lines": 1019,
-      "bytes": 36076,
+      "lines": 1014,
+      "bytes": 35877,
       "maxLines": 600,
       "maxBytes": 40000
     },
@@ -329,7 +323,7 @@
     },
     "components/Shared/ActivityCard/MilestoneCard.tsx": {
       "lines": 654,
-      "bytes": 25548,
+      "bytes": 25606,
       "maxLines": 600,
       "maxBytes": 40000
     },
@@ -352,26 +346,26 @@
       "maxBytes": 40000
     },
     "hooks/useMilestone.ts": {
-      "lines": 1148,
-      "bytes": 41594,
+      "lines": 1138,
+      "bytes": 41352,
       "maxLines": 600,
       "maxBytes": 40000
     },
     "hooks/useMilestoneCompletionVerification.ts": {
-      "lines": 667,
-      "bytes": 20369,
+      "lines": 666,
+      "bytes": 20448,
       "maxLines": 600,
       "maxBytes": 40000
     },
     "services/__tests__/fundingPlatformService.test.ts": {
       "lines": 976,
-      "bytes": 33292,
+      "bytes": 32808,
       "maxLines": 800,
       "maxBytes": 60000
     },
     "services/fundingPlatformService.ts": {
-      "lines": 694,
-      "bytes": 20175,
+      "lines": 645,
+      "bytes": 21436,
       "maxLines": 600,
       "maxBytes": 40000
     },
@@ -436,20 +430,14 @@
       "maxBytes": 40000
     },
     "src/features/payout-disbursement/services/payout-disbursement.service.ts": {
-      "lines": 922,
-      "bytes": 23959,
-      "maxLines": 600,
-      "maxBytes": 40000
-    },
-    "utilities/faucet/faucetService.ts": {
-      "lines": 758,
-      "bytes": 15687,
+      "lines": 754,
+      "bytes": 22150,
       "maxLines": 600,
       "maxBytes": 40000
     },
     "utilities/indexer.ts": {
       "lines": 826,
-      "bytes": 40539,
+      "bytes": 40633,
       "maxLines": 600,
       "maxBytes": 40000
     },
@@ -463,16 +451,16 @@
   "reactDoctor": {
     "score": 0,
     "errors": 64,
-    "warnings": 3337,
+    "warnings": 3330,
     "byCategory": {
-      "Architecture": 1184,
-      "Accessibility": 285,
-      "Correctness": 399,
-      "Next.js": 145,
+      "Accessibility": 288,
+      "Architecture": 1173,
+      "Correctness": 391,
+      "Next.js": 144,
+      "State & Effects": 704,
+      "Performance": 633,
+      "TanStack Query": 40,
       "Server": 9,
-      "Performance": 631,
-      "State & Effects": 698,
-      "TanStack Query": 38,
       "Bundle Size": 9,
       "Security": 3
     }

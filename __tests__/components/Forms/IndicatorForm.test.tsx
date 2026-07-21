@@ -6,12 +6,17 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { IndicatorForm, type IndicatorFormData } from "@/components/Forms/IndicatorForm";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 
-// Mock fetchData
-vi.mock("@/utilities/fetchData");
-const mockFetchData = fetchData as vi.MockedFunction<typeof fetchData>;
+// Mock the typed api client
+vi.mock("@/utilities/api/client", () => ({
+  api: {
+    get: vi.fn().mockResolvedValue([]),
+    post: vi.fn(),
+  },
+}));
+const mockApiPost = api.post as vi.Mock;
 
 // Mock errorManager
 vi.mock("@/components/Utilities/errorManager", () => ({
@@ -171,7 +176,7 @@ describe("IndicatorForm", () => {
   describe("Form Submission - Create Mode", () => {
     it("should submit form with valid data", async () => {
       const user = userEvent.setup();
-      mockFetchData.mockResolvedValueOnce([mockIndicatorResponse, null]);
+      mockApiPost.mockResolvedValueOnce(mockIndicatorResponse);
 
       render(<IndicatorForm onSuccess={mockOnSuccess} />);
 
@@ -195,9 +200,8 @@ describe("IndicatorForm", () => {
       await user.click(submitButton);
 
       await waitFor(() => {
-        expect(mockFetchData).toHaveBeenCalledWith(
+        expect(mockApiPost).toHaveBeenCalledWith(
           INDEXER.INDICATORS.V2.CREATE_OR_UPDATE(),
-          "POST",
           expect.objectContaining({
             name: "Test Indicator",
             description: "Test Description",
@@ -212,7 +216,7 @@ describe("IndicatorForm", () => {
 
     it("should call onSuccess callback after successful creation", async () => {
       const user = userEvent.setup();
-      mockFetchData.mockResolvedValueOnce([mockIndicatorResponse, null]);
+      mockApiPost.mockResolvedValueOnce(mockIndicatorResponse);
 
       render(<IndicatorForm onSuccess={mockOnSuccess} />);
 
@@ -239,7 +243,7 @@ describe("IndicatorForm", () => {
 
     it("should reset form after successful creation (not update)", async () => {
       const user = userEvent.setup();
-      mockFetchData.mockResolvedValueOnce([mockIndicatorResponse, null]);
+      mockApiPost.mockResolvedValueOnce(mockIndicatorResponse);
 
       render(<IndicatorForm onSuccess={mockOnSuccess} />);
 
@@ -276,7 +280,7 @@ describe("IndicatorForm", () => {
   describe("Form Submission - Update Mode", () => {
     it("should submit form in update mode with indicatorId", async () => {
       const user = userEvent.setup();
-      mockFetchData.mockResolvedValueOnce([mockIndicatorResponse, null]);
+      mockApiPost.mockResolvedValueOnce(mockIndicatorResponse);
 
       render(
         <IndicatorForm
@@ -299,9 +303,8 @@ describe("IndicatorForm", () => {
       await user.click(submitButton);
 
       await waitFor(() => {
-        expect(mockFetchData).toHaveBeenCalledWith(
+        expect(mockApiPost).toHaveBeenCalledWith(
           INDEXER.INDICATORS.V2.CREATE_OR_UPDATE(),
-          "POST",
           expect.objectContaining({
             indicatorId: "indicator-123",
             name: "Updated Indicator",
@@ -312,7 +315,7 @@ describe("IndicatorForm", () => {
 
     it("should not reset form after successful update", async () => {
       const user = userEvent.setup();
-      mockFetchData.mockResolvedValueOnce([mockIndicatorResponse, null]);
+      mockApiPost.mockResolvedValueOnce(mockIndicatorResponse);
 
       render(
         <IndicatorForm
@@ -343,7 +346,7 @@ describe("IndicatorForm", () => {
     it("should call onError callback on submission failure", async () => {
       const user = userEvent.setup();
       const error = new Error("API Error");
-      mockFetchData.mockResolvedValueOnce([null, error]);
+      mockApiPost.mockRejectedValueOnce(error);
 
       render(<IndicatorForm onError={mockOnError} />);
 
@@ -370,7 +373,7 @@ describe("IndicatorForm", () => {
 
     it("should handle invalid response format", async () => {
       const user = userEvent.setup();
-      mockFetchData.mockResolvedValueOnce([null, null]); // Invalid response
+      mockApiPost.mockResolvedValueOnce(null); // Invalid response
 
       render(<IndicatorForm onError={mockOnError} />);
 
@@ -397,7 +400,7 @@ describe("IndicatorForm", () => {
 
     it("should handle response without id", async () => {
       const user = userEvent.setup();
-      mockFetchData.mockResolvedValueOnce([{ name: "Test" }, null]); // No id
+      mockApiPost.mockResolvedValueOnce({ name: "Test" }); // No id
 
       render(<IndicatorForm onError={mockOnError} />);
 
@@ -433,9 +436,8 @@ describe("IndicatorForm", () => {
 
     it("should show loading state during submission", async () => {
       const user = userEvent.setup();
-      mockFetchData.mockImplementation(
-        () =>
-          new Promise((resolve) => setTimeout(() => resolve([mockIndicatorResponse, null]), 100))
+      mockApiPost.mockImplementation(
+        () => new Promise((resolve) => setTimeout(() => resolve(mockIndicatorResponse), 100))
       );
 
       render(<IndicatorForm />);
@@ -534,7 +536,7 @@ describe("IndicatorForm", () => {
 
     it("should submit with pre-selected programs", async () => {
       const user = userEvent.setup();
-      mockFetchData.mockResolvedValueOnce([mockIndicatorResponse, null]);
+      mockApiPost.mockResolvedValueOnce(mockIndicatorResponse);
 
       const preSelectedPrograms = [{ programId: "program-1", title: "Program 1", chainID: 1 }];
 
@@ -557,9 +559,8 @@ describe("IndicatorForm", () => {
       await user.click(submitButton);
 
       await waitFor(() => {
-        expect(mockFetchData).toHaveBeenCalledWith(
+        expect(mockApiPost).toHaveBeenCalledWith(
           INDEXER.INDICATORS.V2.CREATE_OR_UPDATE(),
-          "POST",
           expect.objectContaining({
             programs: [{ programId: "program-1", chainID: 1 }],
           })
@@ -694,7 +695,7 @@ describe("IndicatorForm", () => {
   describe("Community ID Integration", () => {
     it("should include communityUID in submission when provided", async () => {
       const user = userEvent.setup();
-      mockFetchData.mockResolvedValueOnce([mockIndicatorResponse, null]);
+      mockApiPost.mockResolvedValueOnce(mockIndicatorResponse);
 
       render(<IndicatorForm communityId="community-123" onSuccess={mockOnSuccess} />);
 
@@ -715,9 +716,8 @@ describe("IndicatorForm", () => {
       await user.click(submitButton);
 
       await waitFor(() => {
-        expect(mockFetchData).toHaveBeenCalledWith(
+        expect(mockApiPost).toHaveBeenCalledWith(
           INDEXER.INDICATORS.V2.CREATE_OR_UPDATE(),
-          "POST",
           expect.objectContaining({
             communityUID: "community-123",
           })

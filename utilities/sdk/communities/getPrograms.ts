@@ -1,16 +1,14 @@
 import type { Hex } from "@show-karma/karma-gap-sdk";
 import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
 import { errorManager } from "@/components/Utilities/errorManager";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 
 export const getPrograms = async (uid: Hex): Promise<GrantProgram[]> => {
   try {
-    const [programs] = await fetchData(INDEXER.COMMUNITY.PROGRAMS(uid));
-    if (!programs || programs.length === 0) return [];
-
-    return programs;
-  } catch (error: any) {
+    // TODO(#1775): add zod schema
+    return await api.get<GrantProgram[]>(INDEXER.COMMUNITY.PROGRAMS(uid));
+  } catch (error: unknown) {
     errorManager(`Error getting programs of community: ${uid}`, error);
     return [];
   }

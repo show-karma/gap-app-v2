@@ -8,7 +8,7 @@ import { useProgramsWithConfig } from "@/features/programs/hooks/use-programs-wi
 import { useBrowseApplicationFilters } from "@/hooks/useBrowseApplicationFilters";
 import { Link } from "@/src/components/navigation/Link";
 import type { Application, ApplicationStatus } from "@/types/whitelabel-entities";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { renderRelativeTime } from "@/utilities/formatRelativeTime";
 import { cn } from "@/utilities/tailwind";
 
@@ -381,16 +381,11 @@ export function BrowseApplicationsClient({ communityId }: BrowseApplicationsClie
         const statusParam = statusFilter === "all" ? "" : `&status=${statusFilter}`;
         const searchParam = debouncedSearch ? `&search=${encodeURIComponent(debouncedSearch)}` : "";
 
-        const [res, err] = await fetchData<ApplicationsPageData>(
+        // TODO(#1775): add zod schema
+        return await api.get<ApplicationsPageData>(
           `/v2/funding-applications/program/${selectedProgramId}?page=${page}&limit=100${statusParam}${searchParam}`,
-          "GET",
-          {},
-          {},
-          {},
-          false
+          { isAuthorized: false }
         );
-        if (err) throw new Error(err);
-        return res as ApplicationsPageData;
       },
       initialPageParam: 1,
       getNextPageParam: (lastPage) => {

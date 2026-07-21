@@ -1,6 +1,7 @@
 import { errorManager } from "@/components/Utilities/errorManager";
 import type { Grant } from "@/types/v2/grant";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
+import { HttpError } from "@/utilities/api/errors";
 import { INDEXER } from "@/utilities/indexer";
 
 interface GetProjectGrantsOptions {
@@ -32,25 +33,28 @@ export const getProjectGrants = async (
   options: GetProjectGrantsOptions = {}
 ): Promise<Grant[]> => {
   const { isAuthorized = true, signal } = options;
-  const [data, error, , status] = await fetchData<Grant | Grant[]>(
-    INDEXER.V2.PROJECTS.GRANTS(projectIdOrSlug),
-    "GET",
-    {},
-    {},
-    {},
-    isAuthorized,
-    false,
-    undefined,
-    signal
-  );
 
-  if (error || !data) {
+  let data: Grant | Grant[] | null;
+  try {
+    // TODO(#1775): add zod schema
+    data = await api.get<Grant | Grant[]>(INDEXER.V2.PROJECTS.GRANTS(projectIdOrSlug), {
+      isAuthorized,
+      signal,
+    });
+  } catch (error) {
     // Missing project routes are expected for unknown slugs and should not be sent to Sentry.
-    if (status === 404) {
+    if (error instanceof HttpError && error.status === 404) {
       return [];
     }
 
     errorManager(`Project Grants API Error: ${error}`, error, {
+      context: "project-grants.service",
+    });
+    return [];
+  }
+
+  if (!data) {
+    errorManager("Project Grants API Error: empty response", null, {
       context: "project-grants.service",
     });
     return [];

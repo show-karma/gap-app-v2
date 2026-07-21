@@ -3,7 +3,8 @@
  * @description Tests indexer notification and cache invalidation utilities
  */
 
-import * as fetchDataModule from "@/utilities/fetchData";
+import { errorManager } from "@/components/Utilities/errorManager";
+import { api } from "@/utilities/api/client";
 import {
   notifyIndexer,
   notifyIndexerForGrant,
@@ -12,14 +13,19 @@ import {
 import * as queryKeysModule from "@/utilities/queryKeys";
 
 // Mock dependencies
-vi.mock("@/utilities/fetchData");
+vi.mock("@/utilities/api/client", () => ({
+  api: {
+    post: vi.fn(),
+  },
+}));
+vi.mock("@/components/Utilities/errorManager");
 vi.mock("@/utilities/query-client", () => ({
   queryClient: {
     invalidateQueries: vi.fn(),
   },
 }));
 
-const mockFetchData = fetchDataModule.default as vi.MockedFunction<typeof fetchDataModule.default>;
+const mockApiPost = api.post as vi.MockedFunction<typeof api.post>;
 
 // Import queryClient after mocking
 import { queryClient } from "@/utilities/query-client";
@@ -35,14 +41,14 @@ describe("notifyIndexer", () => {
 
   describe("Basic Notification", () => {
     it("should notify indexer with transaction hash", async () => {
-      mockFetchData.mockResolvedValue([{}, null]);
+      mockApiPost.mockResolvedValue({});
 
       await notifyIndexer({
         txHash: "0x123abc",
         chainId: 42161,
       });
 
-      expect(mockFetchData).toHaveBeenCalledWith(expect.stringContaining("0x123abc"), "POST", {});
+      expect(mockApiPost).toHaveBeenCalledWith(expect.stringContaining("0x123abc"), {});
     });
 
     it("should not notify when txHash is undefined", async () => {
@@ -51,13 +57,32 @@ describe("notifyIndexer", () => {
         chainId: 42161,
       });
 
-      expect(mockFetchData).not.toHaveBeenCalled();
+      expect(mockApiPost).not.toHaveBeenCalled();
+    });
+
+    it("should swallow a failed notification and still invalidate queries", async () => {
+      const apiError = new Error("indexer unavailable");
+      mockApiPost.mockRejectedValue(apiError);
+      const invalidateCallback = vi.fn();
+
+      await notifyIndexer({
+        txHash: "0x123abc",
+        chainId: 42161,
+        invalidateQueries: invalidateCallback,
+      });
+
+      expect(errorManager).toHaveBeenCalledWith(
+        "Failed to notify indexer of new attestation",
+        apiError,
+        { txHash: "0x123abc", chainId: 42161 }
+      );
+      expect(invalidateCallback).toHaveBeenCalled();
     });
   });
 
   describe("With Query Invalidation", () => {
     it("should invalidate queries when callback provided", async () => {
-      mockFetchData.mockResolvedValue([{}, null]);
+      mockApiPost.mockResolvedValue({});
 
       const invalidateCallback = vi.fn();
 
@@ -67,19 +92,19 @@ describe("notifyIndexer", () => {
         invalidateQueries: invalidateCallback,
       });
 
-      expect(mockFetchData).toHaveBeenCalled();
+      expect(mockApiPost).toHaveBeenCalled();
       expect(invalidateCallback).toHaveBeenCalled();
     });
 
     it("should work without invalidation callback", async () => {
-      mockFetchData.mockResolvedValue([{}, null]);
+      mockApiPost.mockResolvedValue({});
 
       await notifyIndexer({
         txHash: "0x123abc",
         chainId: 42161,
       });
 
-      expect(mockFetchData).toHaveBeenCalled();
+      expect(mockApiPost).toHaveBeenCalled();
     });
   });
 
@@ -88,18 +113,14 @@ describe("notifyIndexer", () => {
 
     chainIds.forEach((chainId) => {
       it(`should work with chain ID ${chainId}`, async () => {
-        mockFetchData.mockResolvedValue([{}, null]);
+        mockApiPost.mockResolvedValue({});
 
         await notifyIndexer({
           txHash: "0x123abc",
           chainId,
         });
 
-        expect(mockFetchData).toHaveBeenCalledWith(
-          expect.stringContaining(chainId.toString()),
-          "POST",
-          {}
-        );
+        expect(mockApiPost).toHaveBeenCalledWith(expect.stringContaining(chainId.toString()), {});
       });
     });
   });
@@ -112,18 +133,18 @@ describe("notifyIndexerForGrant", () => {
 
   describe("Grant Notification with Cache Invalidation", () => {
     it("should notify indexer and invalidate project queries", async () => {
-      mockFetchData.mockResolvedValue([{}, null]);
+      mockApiPost.mockResolvedValue({});
 
       await notifyIndexerForGrant("0x123abc", 42161, "project-123");
 
-      expect(mockFetchData).toHaveBeenCalled();
+      expect(mockApiPost).toHaveBeenCalled();
       expect(mockInvalidateQueries).toHaveBeenCalledWith({
         queryKey: queryKeysModule.QUERY_KEYS.PROJECT.DETAILS("project-123"),
       });
     });
 
     it("should invalidate milestone queries when programId provided", async () => {
-      mockFetchData.mockResolvedValue([{}, null]);
+      mockApiPost.mockResolvedValue({});
 
       // Mock QUERY_KEYS
       const mockQueryKey = ["projectGrantMilestones", "project-123", "program-1"];
@@ -145,14 +166,14 @@ describe("notifyIndexerForGrant", () => {
     it("should work without txHash", async () => {
       await notifyIndexerForGrant(undefined, 42161, "project-123");
 
-      expect(mockFetchData).not.toHaveBeenCalled();
+      expect(mockApiPost).not.toHaveBeenCalled();
       expect(mockInvalidateQueries).toHaveBeenCalledWith({
         queryKey: queryKeysModule.QUERY_KEYS.PROJECT.DETAILS("project-123"),
       });
     });
 
     it("should work without programId", async () => {
-      mockFetchData.mockResolvedValue([{}, null]);
+      mockApiPost.mockResolvedValue({});
 
       await notifyIndexerForGrant("0x123abc", 42161, "project-123");
 
@@ -171,7 +192,7 @@ describe("notifyIndexerForMilestone", () => {
 
   describe("Milestone Notification with Cache Invalidation", () => {
     it("should notify indexer and invalidate milestone queries", async () => {
-      mockFetchData.mockResolvedValue([{}, null]);
+      mockApiPost.mockResolvedValue({});
 
       const mockQueryKey = ["projectGrantMilestones", "project-123", "program-1"];
       vi.spyOn(queryKeysModule.QUERY_KEYS.MILESTONES, "PROJECT_GRANT_MILESTONES").mockReturnValue(
@@ -180,14 +201,14 @@ describe("notifyIndexerForMilestone", () => {
 
       await notifyIndexerForMilestone("0x123abc", 42161, "project-123", "program-1");
 
-      expect(mockFetchData).toHaveBeenCalled();
+      expect(mockApiPost).toHaveBeenCalled();
       expect(mockInvalidateQueries).toHaveBeenCalledWith({
         queryKey: mockQueryKey,
       });
     });
 
     it("should invalidate community queries when communityUID provided", async () => {
-      mockFetchData.mockResolvedValue([{}, null]);
+      mockApiPost.mockResolvedValue({});
 
       const mockQueryKey = ["projectGrantMilestones", "project-123", "program-1"];
       vi.spyOn(queryKeysModule.QUERY_KEYS.MILESTONES, "PROJECT_GRANT_MILESTONES").mockReturnValue(
@@ -219,14 +240,14 @@ describe("notifyIndexerForMilestone", () => {
 
       await notifyIndexerForMilestone(undefined, 42161, "project-123", "program-1");
 
-      expect(mockFetchData).not.toHaveBeenCalled();
+      expect(mockApiPost).not.toHaveBeenCalled();
       expect(mockInvalidateQueries).toHaveBeenCalledWith({
         queryKey: mockQueryKey,
       });
     });
 
     it("should work without communityUID", async () => {
-      mockFetchData.mockResolvedValue([{}, null]);
+      mockApiPost.mockResolvedValue({});
 
       const mockQueryKey = ["projectGrantMilestones", "project-123", "program-1"];
       vi.spyOn(queryKeysModule.QUERY_KEYS.MILESTONES, "PROJECT_GRANT_MILESTONES").mockReturnValue(

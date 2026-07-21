@@ -3,19 +3,28 @@ import { renderHook, waitFor } from "@testing-library/react";
 import { useAuth } from "@/hooks/useAuth";
 import { useDashboardAdmin } from "@/hooks/useDashboardAdmin";
 import type { Community } from "@/types/v2/community";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 
 vi.mock("@/hooks/useAuth", () => ({
   useAuth: vi.fn(),
 }));
 
-vi.mock("@/utilities/fetchData", () => ({
-  __esModule: true,
-  default: vi.fn(),
+// useDashboardAdmin (#1775 Phase 3) now calls api.get instead of the legacy
+// fetchData tuple adapter.
+vi.mock("@/utilities/api/client", () => ({
+  api: {
+    get: vi.fn(),
+    post: vi.fn(),
+    put: vi.fn(),
+    patch: vi.fn(),
+    delete: vi.fn(),
+    request: vi.fn(),
+    getPaginated: vi.fn(),
+  },
 }));
 
 const mockUseAuth = useAuth as unknown as vi.Mock;
-const mockFetchData = fetchData as unknown as vi.Mock;
+const mockApiGet = api.get as unknown as vi.Mock;
 
 // Fresh QueryClient per render — no afterEach cleanup required
 const createWrapper = () => {
@@ -50,40 +59,30 @@ describe("useDashboardAdmin", () => {
       },
     ];
 
-    mockFetchData
-      .mockResolvedValueOnce([{ communities }, null, null, 200])
-      .mockResolvedValueOnce([
-        {
-          communityUID: "0xcommunity1",
-          totalPrograms: 4,
-          enabledPrograms: 2,
-          totalApplications: 10,
-          approvedApplications: 2,
-          rejectedApplications: 1,
-          pendingApplications: 7,
-          revisionRequestedApplications: 0,
-          underReviewApplications: 0,
-        },
-        null,
-        null,
-        200,
-      ])
-      .mockResolvedValueOnce([
-        {
-          communityUID: "0xcommunity2",
-          totalPrograms: 3,
-          enabledPrograms: 0,
-          totalApplications: 5,
-          approvedApplications: 1,
-          rejectedApplications: 1,
-          pendingApplications: 3,
-          revisionRequestedApplications: 0,
-          underReviewApplications: 0,
-        },
-        null,
-        null,
-        200,
-      ]);
+    mockApiGet
+      .mockResolvedValueOnce({ communities })
+      .mockResolvedValueOnce({
+        communityUID: "0xcommunity1",
+        totalPrograms: 4,
+        enabledPrograms: 2,
+        totalApplications: 10,
+        approvedApplications: 2,
+        rejectedApplications: 1,
+        pendingApplications: 7,
+        revisionRequestedApplications: 0,
+        underReviewApplications: 0,
+      })
+      .mockResolvedValueOnce({
+        communityUID: "0xcommunity2",
+        totalPrograms: 3,
+        enabledPrograms: 0,
+        totalApplications: 5,
+        approvedApplications: 1,
+        rejectedApplications: 1,
+        pendingApplications: 3,
+        revisionRequestedApplications: 0,
+        underReviewApplications: 0,
+      });
 
     const { result } = renderHook(() => useDashboardAdmin(), { wrapper: createWrapper() });
 
@@ -119,22 +118,17 @@ describe("useDashboardAdmin", () => {
       },
     ];
 
-    mockFetchData.mockResolvedValueOnce([{ communities }, null, null, 200]).mockResolvedValueOnce([
-      {
-        communityUID: "0xcommunity1",
-        totalPrograms: 1,
-        enabledPrograms: 1,
-        totalApplications: 1,
-        approvedApplications: 0,
-        rejectedApplications: 0,
-        pendingApplications: 1,
-        revisionRequestedApplications: 0,
-        underReviewApplications: 0,
-      },
-      null,
-      null,
-      200,
-    ]);
+    mockApiGet.mockResolvedValueOnce({ communities }).mockResolvedValueOnce({
+      communityUID: "0xcommunity1",
+      totalPrograms: 1,
+      enabledPrograms: 1,
+      totalApplications: 1,
+      approvedApplications: 0,
+      rejectedApplications: 0,
+      pendingApplications: 1,
+      revisionRequestedApplications: 0,
+      underReviewApplications: 0,
+    });
 
     const { result } = renderHook(() => useDashboardAdmin(), { wrapper: createWrapper() });
 
@@ -144,7 +138,7 @@ describe("useDashboardAdmin", () => {
       expect(result.current.communities.length).toBe(1);
     });
 
-    expect(mockFetchData).toHaveBeenCalled();
+    expect(mockApiGet).toHaveBeenCalled();
   });
 
   it("deduplicates communities on multiple chains by slug and aggregates metrics", async () => {
@@ -161,40 +155,30 @@ describe("useDashboardAdmin", () => {
       },
     ];
 
-    mockFetchData
-      .mockResolvedValueOnce([{ communities }, null, null, 200])
-      .mockResolvedValueOnce([
-        {
-          communityUID: "0xfilecoin-op",
-          totalPrograms: 2,
-          enabledPrograms: 1,
-          totalApplications: 5,
-          approvedApplications: 1,
-          rejectedApplications: 0,
-          pendingApplications: 4,
-          revisionRequestedApplications: 0,
-          underReviewApplications: 0,
-        },
-        null,
-        null,
-        200,
-      ])
-      .mockResolvedValueOnce([
-        {
-          communityUID: "0xfilecoin-arb",
-          totalPrograms: 3,
-          enabledPrograms: 2,
-          totalApplications: 8,
-          approvedApplications: 2,
-          rejectedApplications: 1,
-          pendingApplications: 5,
-          revisionRequestedApplications: 0,
-          underReviewApplications: 0,
-        },
-        null,
-        null,
-        200,
-      ]);
+    mockApiGet
+      .mockResolvedValueOnce({ communities })
+      .mockResolvedValueOnce({
+        communityUID: "0xfilecoin-op",
+        totalPrograms: 2,
+        enabledPrograms: 1,
+        totalApplications: 5,
+        approvedApplications: 1,
+        rejectedApplications: 0,
+        pendingApplications: 4,
+        revisionRequestedApplications: 0,
+        underReviewApplications: 0,
+      })
+      .mockResolvedValueOnce({
+        communityUID: "0xfilecoin-arb",
+        totalPrograms: 3,
+        enabledPrograms: 2,
+        totalApplications: 8,
+        approvedApplications: 2,
+        rejectedApplications: 1,
+        pendingApplications: 5,
+        revisionRequestedApplications: 0,
+        underReviewApplications: 0,
+      });
 
     const { result } = renderHook(() => useDashboardAdmin(), { wrapper: createWrapper() });
 

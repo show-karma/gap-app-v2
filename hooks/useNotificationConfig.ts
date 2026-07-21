@@ -1,5 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 
 // ── Types ──
@@ -29,21 +29,11 @@ export const useTestNotificationConfig = (communityIdOrSlug: string | undefined)
         throw new Error("Community ID is required");
       }
 
-      // fetchData signature is positional across the codebase:
-      // (endpoint, method, axiosData, params, headers, isAuthorized).
-      // We pass empty objects for params/headers and `true` for isAuthorized.
-      const [data, error] = await fetchData<TestNotificationConfigResponse>(
+      // TODO(#1775): add zod schema
+      const data = await api.post<TestNotificationConfigResponse>(
         INDEXER.NOTIFICATION_CONFIG.TEST_CONFIG(communityIdOrSlug),
-        "POST",
-        config,
-        {},
-        {},
-        true
+        config
       );
-
-      if (error) {
-        throw new Error(error);
-      }
 
       // Treat a missing/null response as a hard error so the calling
       // mutation lands in onError. Returning `{ success: false }` here would

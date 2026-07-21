@@ -5,8 +5,18 @@ const { mockApiPost, mockApiDelete } = vi.hoisted(() => ({
   mockApiDelete: vi.fn(),
 }));
 
-vi.mock("@/utilities/fetchData", () => ({
-  default: vi.fn(),
+// ProgramRegistryService and programReviewersService.getReviewers are both
+// migrated off fetchData onto the typed `api` client (issue #1775) — mocked
+// separately from the legacy createAuthenticatedApiClient still used by
+// programReviewersService's mutations below.
+vi.mock("@/utilities/api/client", () => ({
+  api: {
+    get: vi.fn(),
+    post: vi.fn(),
+    put: vi.fn(),
+    patch: vi.fn(),
+    delete: vi.fn(),
+  },
 }));
 
 vi.mock("@/utilities/auth/api-client", () => ({
@@ -55,9 +65,12 @@ vi.mock("axios", () => ({
 
 import { programReviewersService } from "@/services/program-reviewers.service";
 import { ProgramRegistryService } from "@/src/features/program-registry/services/program-registry.service";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
+import { HttpError, NetworkError } from "@/utilities/api/errors";
 
-const mockFetchData = fetchData as ReturnType<typeof vi.fn>;
+const mockGet = api.get as ReturnType<typeof vi.fn>;
+const mockRegistryPost = api.post as ReturnType<typeof vi.fn>;
+const mockRegistryPut = api.put as ReturnType<typeof vi.fn>;
 
 describe("ProgramRegistryService trust tests", () => {
   beforeEach(() => {
@@ -67,28 +80,24 @@ describe("ProgramRegistryService trust tests", () => {
   // --- createProgram ---
 
   describe("createProgram", () => {
-    it("calls fetchData with POST to V2 create endpoint", async () => {
-      mockFetchData.mockResolvedValue([{ programId: "new-123", isValid: true }, null, null, 201]);
+    it("calls api.post with POST to V2 create endpoint", async () => {
+      mockRegistryPost.mockResolvedValue({ programId: "new-123", isValid: true });
 
       await ProgramRegistryService.createProgram("0xowner", 1, {
         title: "Test Program",
       } as Record<string, unknown>);
 
-      expect(mockFetchData).toHaveBeenCalledWith(
+      expect(mockRegistryPost).toHaveBeenCalledWith(
         "/v2/program-registry",
-        "POST",
         expect.objectContaining({
           chainId: 1,
           metadata: expect.objectContaining({ title: "Test Program" }),
-        }),
-        {},
-        {},
-        true
+        })
       );
     });
 
     it("returns programId and success status", async () => {
-      mockFetchData.mockResolvedValue([{ programId: "new-123", isValid: true }, null, null, 201]);
+      mockRegistryPost.mockResolvedValue({ programId: "new-123", isValid: true });
 
       const result = await ProgramRegistryService.createProgram("0xowner", 1, {
         title: "Test",
@@ -100,7 +109,7 @@ describe("ProgramRegistryService trust tests", () => {
     });
 
     it("sets requiresManualApproval=true when isValid is not true", async () => {
-      mockFetchData.mockResolvedValue([{ programId: "new-123" }, null, null, 201]);
+      mockRegistryPost.mockResolvedValue({ programId: "new-123" });
 
       const result = await ProgramRegistryService.createProgram("0xowner", 1, {
         title: "Test",
@@ -109,8 +118,8 @@ describe("ProgramRegistryService trust tests", () => {
       expect(result.requiresManualApproval).toBe(true);
     });
 
-    it("throws on fetchData error", async () => {
-      mockFetchData.mockResolvedValue([null, "Validation Error", null, 400]);
+    it("throws on api.post error", async () => {
+      mockRegistryPost.mockRejectedValue(new Error("Validation Error"));
 
       await expect(
         ProgramRegistryService.createProgram("0xowner", 1, {} as Record<string, unknown>)
@@ -121,27 +130,23 @@ describe("ProgramRegistryService trust tests", () => {
   // --- updateProgram ---
 
   describe("updateProgram", () => {
-    it("calls fetchData with PUT method", async () => {
-      mockFetchData.mockResolvedValue([{}, null, null, 200]);
+    it("calls api.put with PUT method", async () => {
+      mockRegistryPut.mockResolvedValue({});
 
       await ProgramRegistryService.updateProgram("p1", {
         title: "Updated",
       } as Record<string, unknown>);
 
-      expect(mockFetchData).toHaveBeenCalledWith(
+      expect(mockRegistryPut).toHaveBeenCalledWith(
         "/v2/program-registry/p1",
-        "PUT",
         expect.objectContaining({
           metadata: expect.objectContaining({ title: "Updated" }),
-        }),
-        {},
-        {},
-        true
+        })
       );
     });
 
     it("throws on error", async () => {
-      mockFetchData.mockResolvedValue([null, "Not Found", null, 404]);
+      mockRegistryPut.mockRejectedValue(new Error("Not Found"));
 
       await expect(
         ProgramRegistryService.updateProgram("p1", {} as Record<string, unknown>)
@@ -153,35 +158,27 @@ describe("ProgramRegistryService trust tests", () => {
 
   describe("approveProgram", () => {
     it("calls POST with programId and isValid status", async () => {
-      mockFetchData.mockResolvedValue([{}, null, null, 200]);
+      mockRegistryPost.mockResolvedValue({});
 
       await ProgramRegistryService.approveProgram("p1", "accepted");
 
-      expect(mockFetchData).toHaveBeenCalledWith(
+      expect(mockRegistryPost).toHaveBeenCalledWith(
         "/v2/program-registry/approve",
-        "POST",
         expect.objectContaining({
           programId: "p1",
           isValid: "accepted",
-        }),
-        {},
-        {},
-        true
+        })
       );
     });
 
     it("defaults to accepted when no status provided", async () => {
-      mockFetchData.mockResolvedValue([{}, null, null, 200]);
+      mockRegistryPost.mockResolvedValue({});
 
       await ProgramRegistryService.approveProgram("p1");
 
-      expect(mockFetchData).toHaveBeenCalledWith(
+      expect(mockRegistryPost).toHaveBeenCalledWith(
         expect.any(String),
-        "POST",
-        expect.objectContaining({ isValid: "accepted" }),
-        {},
-        {},
-        true
+        expect.objectContaining({ isValid: "accepted" })
       );
     });
   });
@@ -221,27 +218,22 @@ describe("programReviewersService trust tests", () => {
 
   describe("getReviewers", () => {
     it("maps API response to ProgramReviewer format", async () => {
-      mockFetchData.mockResolvedValue([
-        {
-          reviewers: [
-            {
-              publicAddress: "0x123",
-              programId: "p1",
-              chainID: 1,
-              userProfile: {
-                name: "Alice",
-                email: "alice@example.com",
-                telegram: "@alice",
-              },
-              assignedAt: "2024-01-01",
-              assignedBy: "0xadmin",
+      mockGet.mockResolvedValue({
+        reviewers: [
+          {
+            publicAddress: "0x123",
+            programId: "p1",
+            chainID: 1,
+            userProfile: {
+              name: "Alice",
+              email: "alice@example.com",
+              telegram: "@alice",
             },
-          ],
-        },
-        null,
-        null,
-        200,
-      ]);
+            assignedAt: "2024-01-01",
+            assignedBy: "0xadmin",
+          },
+        ],
+      });
 
       const result = await programReviewersService.getReviewers("p1");
 
@@ -259,7 +251,13 @@ describe("programReviewersService trust tests", () => {
     });
 
     it("returns empty array when 'No reviewers found' error", async () => {
-      mockFetchData.mockResolvedValue([null, "No reviewers found", null, 404]);
+      mockGet.mockRejectedValue(
+        new HttpError(404, {
+          endpoint: "/v2/funding-program-configs/p1/reviewers",
+          method: "GET",
+          body: { message: "No reviewers found" },
+        })
+      );
 
       const result = await programReviewersService.getReviewers("p1");
 
@@ -267,7 +265,13 @@ describe("programReviewersService trust tests", () => {
     });
 
     it("returns empty array when 'Program Reviewer Not Found' error", async () => {
-      mockFetchData.mockResolvedValue([null, "Program Reviewer Not Found", null, 404]);
+      mockGet.mockRejectedValue(
+        new HttpError(404, {
+          endpoint: "/v2/funding-program-configs/p1/reviewers",
+          method: "GET",
+          body: { message: "Program Reviewer Not Found" },
+        })
+      );
 
       const result = await programReviewersService.getReviewers("p1");
 
@@ -275,7 +279,13 @@ describe("programReviewersService trust tests", () => {
     });
 
     it("throws on other errors", async () => {
-      mockFetchData.mockResolvedValue([null, "Internal server error", null, 500]);
+      mockGet.mockRejectedValue(
+        new HttpError(500, {
+          endpoint: "/v2/funding-program-configs/p1/reviewers",
+          method: "GET",
+          body: { message: "Internal server error" },
+        })
+      );
 
       await expect(programReviewersService.getReviewers("p1")).rejects.toThrow(
         "Internal server error"
@@ -394,12 +404,16 @@ describe("programReviewersService trust tests", () => {
   // --- Fixed Bug: error.includes() crash (was TypeError, now properly coerced) ---
 
   describe("FIXED: error.includes() no longer crashes on Error objects", () => {
-    it("handles Error objects from fetchData without crashing", async () => {
-      // fetchData returns Error objects for network errors (no response).
-      // Previously this threw TypeError because Error.includes is not a function.
-      // Now the error is coerced to string before calling .includes().
-      const networkError = new Error("Network Error");
-      mockFetchData.mockResolvedValue([null, networkError, null, 500]);
+    it("handles non-HttpError ApiErrors from api.get without crashing", async () => {
+      // A connection failure with no HTTP response classifies as a NetworkError,
+      // not an HttpError. Previously this threw TypeError because Error.includes
+      // is not a function. Now the error is coerced to string before .includes().
+      const networkError = new NetworkError({
+        endpoint: "/v2/funding-program-configs/p1/reviewers",
+        method: "GET",
+        message: "Network Error",
+      });
+      mockGet.mockRejectedValue(networkError);
 
       await expect(programReviewersService.getReviewers("p1")).rejects.toThrow("Network Error");
     });

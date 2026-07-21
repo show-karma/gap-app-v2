@@ -1,15 +1,19 @@
 import { useQuery } from "@tanstack/react-query";
+import { z } from "zod";
 import { errorManager } from "@/components/Utilities/errorManager";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
 
-interface CommunityStatsResponse {
-  activeCommunities: number;
-  totalProjectUpdates: number;
-  totalProjects: number;
-  totalGrants: number;
-}
+const CommunityStatsResponseSchema = z
+  .object({
+    activeCommunities: z.number(),
+    totalProjectUpdates: z.number(),
+    totalProjects: z.number(),
+    totalGrants: z.number(),
+  })
+  .passthrough();
+type CommunityStatsResponse = z.infer<typeof CommunityStatsResponseSchema>;
 
 interface SummaryStats {
   title: string;
@@ -23,17 +27,10 @@ export const useCommunityStats = () => {
     queryFn: async (): Promise<SummaryStats[]> => {
       try {
         const endpoint = INDEXER.COMMUNITY.GLOBAL_STATS();
-        const [response, error] = await fetchData(endpoint, "GET", {}, {}, {}, false);
-
-        if (error) {
-          throw new Error(error);
-        }
-
-        if (!response) {
-          throw new Error("No response received");
-        }
-
-        const data = response as CommunityStatsResponse;
+        const data = await api.get<CommunityStatsResponse>(endpoint, {
+          isAuthorized: false,
+          schema: CommunityStatsResponseSchema,
+        });
 
         // Transform the API response to match the expected format
         return [

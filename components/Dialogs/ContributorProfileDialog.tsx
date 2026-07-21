@@ -21,8 +21,8 @@ import { useTeamProfiles } from "@/hooks/useTeamProfiles";
 import { useWallet } from "@/hooks/useWallet";
 import { useProjectStore } from "@/store";
 import { useContributorProfileModalStore } from "@/store/modals/contributorProfile";
+import { api } from "@/utilities/api/client";
 import { compareAllWallets } from "@/utilities/auth/compare-all-wallets";
-import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { gapSupportedNetworks, getChainIdByName } from "@/utilities/network";
 import { urlRegex } from "@/utilities/regexs/urlRegex";
@@ -184,25 +184,17 @@ export const ContributorProfileDialog: FC = () => {
       showLoading("Indexing profile...");
 
       if (!isProjectMember && !isGlobal && inviteCodeParam) {
-        const [_data, error] = await fetchData(
-          INDEXER.PROJECT.INVITATION.ACCEPT_LINK(project?.uid as string),
-          "POST",
-          {
-            hash: inviteCodeParam,
-          }
-        );
-        if (error) throw error;
+        // TODO(#1775): add zod schema
+        await api.post(INDEXER.PROJECT.INVITATION.ACCEPT_LINK(project?.uid as string), {
+          hash: inviteCodeParam,
+        });
       }
 
       const txHash = res?.tx[0]?.hash;
       if (txHash) {
-        await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, targetChainId), "POST", {});
+        await api.post(INDEXER.ATTESTATION_LISTENER(txHash, targetChainId), {});
       } else {
-        await fetchData(
-          INDEXER.ATTESTATION_LISTENER(contributorProfile.uid, targetChainId),
-          "POST",
-          {}
-        );
+        await api.post(INDEXER.ATTESTATION_LISTENER(contributorProfile.uid, targetChainId), {});
       }
 
       for (let attempt = 0; attempt < 20; attempt++) {

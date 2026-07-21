@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import fetchData from "@/utilities/fetchData";
+import { z } from "zod";
+import { api } from "@/utilities/api/client";
 
 // Public endpoint — no auth header. Returns per-community Markdown
 // overrides for the AccessDenied page body. Lives here (not in
@@ -14,11 +15,25 @@ const ACCESS_DENIED_MESSAGES_URL = (s: string) =>
  * the hard-coded fallback in that case. See
  * gap-indexer/docs/adr/0001-per-community-access-denied-messages.md.
  */
+const AccessDeniedMessagesResponseSchema = z
+  .object({
+    unauthenticatedMessage: z.string().nullable().optional(),
+    forbiddenMessage: z.string().nullable().optional(),
+    applicantMessage: z.string().nullable().optional(),
+  })
+  .passthrough();
+
 interface AccessDeniedMessages {
   unauthenticatedMessage: string | null;
   forbiddenMessage: string | null;
   applicantMessage: string | null;
 }
+
+const NULL_ACCESS_DENIED_MESSAGES: AccessDeniedMessages = {
+  unauthenticatedMessage: null,
+  forbiddenMessage: null,
+  applicantMessage: null,
+};
 
 /**
  * PUBLIC read — distinct from `useCommunityConfig` because the latter
@@ -36,24 +51,27 @@ export const useAccessDeniedMessages = (
     queryKey: ["access-denied-messages", slugOrUid ?? ""],
     queryFn: async () => {
       if (!slugOrUid) {
-        return { unauthenticatedMessage: null, forbiddenMessage: null, applicantMessage: null };
+        return NULL_ACCESS_DENIED_MESSAGES;
       }
-      const [data, error] = await fetchData(
-        ACCESS_DENIED_MESSAGES_URL(slugOrUid),
-        "GET",
-        {},
-        {},
-        {},
-        false // public — no auth header
-      );
-      if (error || !data) {
-        return { unauthenticatedMessage: null, forbiddenMessage: null, applicantMessage: null };
+      // Any failure (network, 404, contract violation, ...) degrades to the
+      // hard-coded fallback — this endpoint is best-effort copy, never a hard
+      // dependency for rendering the AccessDenied page.
+      try {
+        const data = await api.get(ACCESS_DENIED_MESSAGES_URL(slugOrUid), {
+          isAuthorized: false, // public — no auth header
+          schema: AccessDeniedMessagesResponseSchema,
+        });
+        if (!data) {
+          return NULL_ACCESS_DENIED_MESSAGES;
+        }
+        return {
+          unauthenticatedMessage: data.unauthenticatedMessage ?? null,
+          forbiddenMessage: data.forbiddenMessage ?? null,
+          applicantMessage: data.applicantMessage ?? null,
+        };
+      } catch {
+        return NULL_ACCESS_DENIED_MESSAGES;
       }
-      return {
-        unauthenticatedMessage: data.unauthenticatedMessage ?? null,
-        forbiddenMessage: data.forbiddenMessage ?? null,
-        applicantMessage: data.applicantMessage ?? null,
-      };
     },
     enabled,
     // Static-ish copy — admins change it rarely, anonymous visitors

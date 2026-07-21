@@ -7,8 +7,8 @@
 
 import { getProjectUpdates } from "../project-updates.service";
 
-vi.mock("@/utilities/fetchData", () => ({
-  default: vi.fn(),
+vi.mock("@/utilities/api/client", () => ({
+  api: { get: vi.fn() },
 }));
 
 vi.mock("@/utilities/indexer", () => ({
@@ -25,9 +25,10 @@ vi.mock("@/components/Utilities/errorManager", () => ({
   errorManager: vi.fn(),
 }));
 
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
+import { HttpError } from "@/utilities/api/errors";
 
-const mockFetchData = fetchData as ReturnType<typeof vi.fn>;
+const mockApiGet = api.get as ReturnType<typeof vi.fn>;
 
 const emptyResponse = {
   projectUpdates: [],
@@ -36,38 +37,41 @@ const emptyResponse = {
   grantUpdates: [],
 };
 
+const httpError = (status: number) =>
+  new HttpError(status, { endpoint: "/v2/projects/x/updates", method: "GET" });
+
 beforeEach(() => {
   vi.clearAllMocks();
-  mockFetchData.mockResolvedValue([emptyResponse, null, null, 200]);
+  mockApiGet.mockResolvedValue(emptyResponse);
 });
 
 describe("getProjectUpdates — URL construction", () => {
   it("calls the base URL when no options are given", async () => {
     await getProjectUpdates("my-project");
-    expect(mockFetchData.mock.calls[0][0]).toBe("/v2/projects/my-project/updates");
+    expect(mockApiGet.mock.calls[0][0]).toBe("/v2/projects/my-project/updates");
   });
 
   it("appends milestoneStatus to the query string", async () => {
     await getProjectUpdates("my-project", "completed");
-    expect(mockFetchData.mock.calls[0][0]).toBe(
+    expect(mockApiGet.mock.calls[0][0]).toBe(
       "/v2/projects/my-project/updates?milestoneStatus=completed"
     );
   });
 
-  it("defaults to isAuthorized=true on the fetchData call", async () => {
+  it("defaults to isAuthorized=true on the api.get call", async () => {
     await getProjectUpdates("my-project");
-    expect(mockFetchData.mock.calls[0][5]).toBe(true);
+    expect(mockApiGet.mock.calls[0][1]).toMatchObject({ isAuthorized: true });
   });
 
-  it("forwards isAuthorized=false to fetchData when callers opt out", async () => {
+  it("forwards isAuthorized=false to api.get when callers opt out", async () => {
     await getProjectUpdates("my-project", undefined, { isAuthorized: false });
-    expect(mockFetchData.mock.calls[0][5]).toBe(false);
+    expect(mockApiGet.mock.calls[0][1]).toMatchObject({ isAuthorized: false });
   });
 
-  it("forwards an AbortSignal to fetchData when provided", async () => {
+  it("forwards an AbortSignal to api.get when provided", async () => {
     const controller = new AbortController();
     await getProjectUpdates("my-project", undefined, { signal: controller.signal });
-    expect(mockFetchData.mock.calls[0][8]).toBe(controller.signal);
+    expect(mockApiGet.mock.calls[0][1]).toMatchObject({ signal: controller.signal });
   });
 
   it("appends dateFrom and dateTo to the query string", async () => {
@@ -75,7 +79,7 @@ describe("getProjectUpdates — URL construction", () => {
       dateFrom: "2024-01-01",
       dateTo: "2024-12-31",
     });
-    const url = mockFetchData.mock.calls[0][0] as string;
+    const url = mockApiGet.mock.calls[0][0] as string;
     const params = new URLSearchParams(url.split("?")[1]);
     expect(params.get("dateFrom")).toBe("2024-01-01");
     expect(params.get("dateTo")).toBe("2024-12-31");
@@ -86,7 +90,7 @@ describe("getProjectUpdates — URL construction", () => {
       dateFrom: "2024-12-31",
       dateTo: "2024-01-01",
     });
-    const url = mockFetchData.mock.calls[0][0] as string;
+    const url = mockApiGet.mock.calls[0][0] as string;
     const params = new URLSearchParams(url.split("?")[1]);
     expect(params.get("dateFrom")).toBe("2024-01-01");
     expect(params.get("dateTo")).toBe("2024-12-31");
@@ -94,14 +98,14 @@ describe("getProjectUpdates — URL construction", () => {
 
   it("appends hasAIEvaluation=true when set", async () => {
     await getProjectUpdates("my-project", undefined, { hasAIEvaluation: true });
-    const url = mockFetchData.mock.calls[0][0] as string;
+    const url = mockApiGet.mock.calls[0][0] as string;
     const params = new URLSearchParams(url.split("?")[1]);
     expect(params.get("hasAIEvaluation")).toBe("true");
   });
 
   it("appends hasAIEvaluation=false when explicitly false and no aiScoreMin", async () => {
     await getProjectUpdates("my-project", undefined, { hasAIEvaluation: false });
-    const url = mockFetchData.mock.calls[0][0] as string;
+    const url = mockApiGet.mock.calls[0][0] as string;
     const params = new URLSearchParams(url.split("?")[1]);
     expect(params.get("hasAIEvaluation")).toBe("false");
     expect(params.get("aiScoreMin")).toBeNull();
@@ -112,7 +116,7 @@ describe("getProjectUpdates — URL construction", () => {
       hasAIEvaluation: false,
       aiScoreMin: 7,
     });
-    const url = mockFetchData.mock.calls[0][0] as string;
+    const url = mockApiGet.mock.calls[0][0] as string;
     const params = new URLSearchParams(url.split("?")[1]);
     // aiScoreMin must be present
     expect(params.get("aiScoreMin")).toBe("7");
@@ -125,7 +129,7 @@ describe("getProjectUpdates — URL construction", () => {
       hasAIEvaluation: true,
       aiScoreMin: 5,
     });
-    const url = mockFetchData.mock.calls[0][0] as string;
+    const url = mockApiGet.mock.calls[0][0] as string;
     const params = new URLSearchParams(url.split("?")[1]);
     expect(params.get("hasAIEvaluation")).toBe("true");
     expect(params.get("aiScoreMin")).toBe("5");
@@ -133,7 +137,7 @@ describe("getProjectUpdates — URL construction", () => {
 
   it("omits empty string dateFrom", async () => {
     await getProjectUpdates("my-project", undefined, { dateFrom: "" });
-    const url = mockFetchData.mock.calls[0][0] as string;
+    const url = mockApiGet.mock.calls[0][0] as string;
     expect(url).toBe("/v2/projects/my-project/updates");
   });
 
@@ -142,7 +146,7 @@ describe("getProjectUpdates — URL construction", () => {
       dateFrom: "2024-06-01",
       aiScoreMin: 3,
     });
-    const url = mockFetchData.mock.calls[0][0] as string;
+    const url = mockApiGet.mock.calls[0][0] as string;
     const params = new URLSearchParams(url.split("?")[1]);
     expect(params.get("milestoneStatus")).toBe("pending");
     expect(params.get("dateFrom")).toBe("2024-06-01");
@@ -151,14 +155,14 @@ describe("getProjectUpdates — URL construction", () => {
 
   it("appends aiScoreMax when set", async () => {
     await getProjectUpdates("my-project", undefined, { aiScoreMax: 8 });
-    const url = mockFetchData.mock.calls[0][0] as string;
+    const url = mockApiGet.mock.calls[0][0] as string;
     const params = new URLSearchParams(url.split("?")[1]);
     expect(params.get("aiScoreMax")).toBe("8");
   });
 
   it("appends both aiScoreMin and aiScoreMax when both set", async () => {
     await getProjectUpdates("my-project", undefined, { aiScoreMin: 3, aiScoreMax: 8 });
-    const url = mockFetchData.mock.calls[0][0] as string;
+    const url = mockApiGet.mock.calls[0][0] as string;
     const params = new URLSearchParams(url.split("?")[1]);
     expect(params.get("aiScoreMin")).toBe("3");
     expect(params.get("aiScoreMax")).toBe("8");
@@ -166,7 +170,7 @@ describe("getProjectUpdates — URL construction", () => {
 
   it("swaps aiScoreMin and aiScoreMax when min > max (defensive)", async () => {
     await getProjectUpdates("my-project", undefined, { aiScoreMin: 8, aiScoreMax: 3 });
-    const url = mockFetchData.mock.calls[0][0] as string;
+    const url = mockApiGet.mock.calls[0][0] as string;
     const params = new URLSearchParams(url.split("?")[1]);
     expect(params.get("aiScoreMin")).toBe("3");
     expect(params.get("aiScoreMax")).toBe("8");
@@ -177,7 +181,7 @@ describe("getProjectUpdates — URL construction", () => {
       hasAIEvaluation: false,
       aiScoreMax: 7,
     });
-    const url = mockFetchData.mock.calls[0][0] as string;
+    const url = mockApiGet.mock.calls[0][0] as string;
     const params = new URLSearchParams(url.split("?")[1]);
     expect(params.get("aiScoreMax")).toBe("7");
     expect(params.get("hasAIEvaluation")).toBeNull();
@@ -188,20 +192,20 @@ describe("getProjectUpdates — URL construction", () => {
       hasAIEvaluation: true,
       aiScoreMax: 9,
     });
-    const url = mockFetchData.mock.calls[0][0] as string;
+    const url = mockApiGet.mock.calls[0][0] as string;
     const params = new URLSearchParams(url.split("?")[1]);
     expect(params.get("hasAIEvaluation")).toBe("true");
     expect(params.get("aiScoreMax")).toBe("9");
   });
 
   it("returns empty response on 404 without calling errorManager", async () => {
-    mockFetchData.mockResolvedValueOnce([null, "not found", null, 404]);
+    mockApiGet.mockRejectedValueOnce(httpError(404));
     const result = await getProjectUpdates("unknown-project");
     expect(result).toEqual(emptyResponse);
   });
 
   it("returns empty response on generic error", async () => {
-    mockFetchData.mockResolvedValueOnce([null, "server error", null, 500]);
+    mockApiGet.mockRejectedValueOnce(httpError(500));
     const result = await getProjectUpdates("my-project");
     expect(result).toEqual(emptyResponse);
   });

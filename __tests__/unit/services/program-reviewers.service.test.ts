@@ -10,8 +10,18 @@ vi.mock("@/utilities/enviromentVars", () => ({
   },
 }));
 
-// Mock fetchData for GET requests
-vi.mock("@/utilities/fetchData");
+// Mock the unified api client for GET requests
+vi.mock("@/utilities/api/client", () => ({
+  api: {
+    get: vi.fn(),
+    post: vi.fn(),
+    put: vi.fn(),
+    patch: vi.fn(),
+    delete: vi.fn(),
+    request: vi.fn(),
+    getPaginated: vi.fn(),
+  },
+}));
 
 // Create a persistent mock instance using var (hoisted) so it's available in vi.mock factory
 var mockAxiosInstance: vi.Mocked<AxiosInstance>;
@@ -48,11 +58,12 @@ import {
   type AddReviewerRequest,
   programReviewersService,
 } from "@/services/program-reviewers.service";
-// Import fetchData mock
-import fetchData from "@/utilities/fetchData";
+// Import the mocked unified api client
+import { api } from "@/utilities/api/client";
+import { HttpError } from "@/utilities/api/errors";
 
 const mockedAxios = axios as vi.Mocked<typeof axios>;
-const mockFetchData = fetchData as vi.MockedFunction<typeof fetchData>;
+const mockApiGet = api.get as vi.Mock;
 
 describe("programReviewersService", () => {
   beforeEach(() => {
@@ -86,11 +97,11 @@ describe("programReviewersService", () => {
         ],
       };
 
-      mockFetchData.mockResolvedValue([mockApiResponse, null, null, 200]);
+      mockApiGet.mockResolvedValue(mockApiResponse);
 
       const result = await programReviewersService.getReviewers("program-1");
 
-      expect(mockFetchData).toHaveBeenCalledWith(expect.stringContaining("program-1"));
+      expect(mockApiGet).toHaveBeenCalledWith(expect.stringContaining("program-1"));
       expect(result).toEqual([
         {
           publicAddress: "0x1234567890123456789012345678901234567890",
@@ -105,7 +116,13 @@ describe("programReviewersService", () => {
     });
 
     it("should return empty array when no reviewers found error", async () => {
-      mockFetchData.mockResolvedValue([null, "Program Reviewer Not Found", null, 404]);
+      mockApiGet.mockRejectedValue(
+        new HttpError(404, {
+          endpoint: "/v2/funding-program-configs/program-1/reviewers",
+          method: "GET",
+          body: { message: "Program Reviewer Not Found" },
+        })
+      );
 
       const result = await programReviewersService.getReviewers("program-1");
 
@@ -113,7 +130,7 @@ describe("programReviewersService", () => {
     });
 
     it("should handle missing reviewers array in response", async () => {
-      mockFetchData.mockResolvedValue([{}, null, null, 200]);
+      mockApiGet.mockResolvedValue({});
 
       const result = await programReviewersService.getReviewers("program-1");
 
@@ -121,7 +138,13 @@ describe("programReviewersService", () => {
     });
 
     it("should throw error for server errors", async () => {
-      mockFetchData.mockResolvedValue([null, "Internal Server Error", null, 500]);
+      mockApiGet.mockRejectedValue(
+        new HttpError(500, {
+          endpoint: "/v2/funding-program-configs/program-1/reviewers",
+          method: "GET",
+          body: { message: "Internal Server Error" },
+        })
+      );
 
       await expect(programReviewersService.getReviewers("program-1")).rejects.toThrow(
         "Internal Server Error"

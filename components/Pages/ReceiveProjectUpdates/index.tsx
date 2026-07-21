@@ -9,7 +9,7 @@ import { z } from "zod";
 import { Button } from "@/components/Utilities/Button";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { errorManager } from "@/components/Utilities/errorManager";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 
 const lookupSchema = z.object({
@@ -46,13 +46,10 @@ const SubscribeForm = ({ address, changeIsSubscribed }: SubscribeFormProps) => {
   const onSubmit: SubmitHandler<SubscribeFormType> = async (data) => {
     setIsLoading(true);
     try {
-      const [_res, error] = await fetchData(INDEXER.COMMUNITY.SUBSCRIBE.BULK, "POST", {
+      await api.post(INDEXER.COMMUNITY.SUBSCRIBE.BULK, {
         publicAddress: address.toLowerCase(),
         email: data.email,
       });
-      if (error) {
-        throw error;
-      }
       changeIsSubscribed(true);
       toast.success("You have subscribed to all the projects funded by your wallet");
     } catch (error: any) {
@@ -127,10 +124,8 @@ export const ReceiveProjectUpdates = ({ communityName }: { communityName: string
     setIsLoading(true);
     changeIsSubscribed(false);
     try {
-      const [res, error] = await fetchData(INDEXER.PROJECT.FUNDEDBY(data.address.toLowerCase()));
-      if (error) {
-        throw error;
-      }
+      // TODO(#1775): add zod schema
+      const res = await api.get<unknown[]>(INDEXER.PROJECT.FUNDEDBY(data.address.toLowerCase()));
       if (res.length > 0) {
         setProjectsFunded(res.length);
         setStep("subscribe");
