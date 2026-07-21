@@ -123,11 +123,26 @@ describe("DonorResearchShell", () => {
       "href",
       PAGES.DONOR_RESEARCH.INDEX
     );
-    expect(within(breadcrumb).getByRole("link", { name: "Personas" })).toHaveAttribute(
+    expect(within(breadcrumb).getByRole("link", { name: "Donors" })).toHaveAttribute(
       "href",
       PAGES.DONOR_RESEARCH.PERSONAS
     );
     expect(within(breadcrumb).getByText("Q1")).toHaveAttribute("aria-current", "page");
+  });
+
+  it("scopes the sidebar rail to the shell so the body-level footer is never overlaid", () => {
+    // The rail is absolute within the (relative) provider rather than fixed
+    // to the viewport — the platform footer rendered below the shell by the
+    // root layout must stay clear of it.
+    renderWithProviders(
+      <DonorResearchShell>
+        <div>Report content</div>
+      </DonorResearchShell>
+    );
+
+    const rail = document.querySelector('[data-sidebar="sidebar"]')?.parentElement;
+    expect(rail?.className).toContain("md:!absolute");
+    expect(screen.queryByText(/All rights reserved/)).not.toBeInTheDocument();
   });
 
   it("shows the report number as the current shell breadcrumb", () => {

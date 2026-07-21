@@ -108,7 +108,7 @@ describe("PersonaDetailView", () => {
     // The persona editor is dynamic()-imported (ssr:false) — its stub resolves
     // asynchronously, after the wrapper's own loading fallback paints once.
     expect(await screen.findByTestId("persona-editor")).toHaveTextContent("persona editor for h1");
-    expect(screen.getByLabelText("Private handle notes")).toHaveValue("Met at gala");
+    expect(screen.getByLabelText("Donor description")).toHaveValue("Met at gala");
     expect(container.querySelector("[data-persona-detail-columns]")).toHaveClass(
       "lg:[grid-template-columns:minmax(0,3fr)_minmax(18rem,2fr)]"
     );
@@ -133,7 +133,7 @@ describe("PersonaDetailView", () => {
   it("Reports card: shows an empty state with a New report link when there are none", () => {
     renderWithProviders(<PersonaDetailView handleId="h1" />);
 
-    expect(screen.getByText("No reports for this persona yet")).toBeInTheDocument();
+    expect(screen.getByText("No reports for this donor yet")).toBeInTheDocument();
     expect(screen.getAllByRole("link", { name: /new report/i })[0]).toHaveAttribute(
       "href",
       "/nonprofit-research/new?handle=h1"
@@ -208,7 +208,7 @@ describe("PersonaDetailView", () => {
     try {
       // Edit ONLY the notes field (the persona editor stays clean) — an unsaved
       // note must still block navigation.
-      const notes = await screen.findByLabelText("Private handle notes");
+      const notes = await screen.findByLabelText("Donor description");
       await user.type(notes, " and follow up in Q3");
       await user.click(shellLink);
 
@@ -224,7 +224,7 @@ describe("PersonaDetailView", () => {
     renderWithProviders(<PersonaDetailView handleId="h1" />);
 
     await user.click(await screen.findByRole("button", { name: /simulate unsaved edit/i }));
-    await user.click(screen.getByRole("link", { name: /new report for this persona/i }));
+    await user.click(screen.getByRole("link", { name: /new report for this donor/i }));
     await user.click(await screen.findByRole("button", { name: /^discard$/i }));
 
     await waitFor(() => expect(pushMock).toHaveBeenCalledWith("/nonprofit-research/new?handle=h1"));
@@ -235,7 +235,7 @@ describe("PersonaDetailView", () => {
     renderWithProviders(<PersonaDetailView handleId="h1" />);
 
     await user.click(await screen.findByRole("button", { name: /simulate unsaved edit/i }));
-    await user.click(screen.getByRole("link", { name: /new report for this persona/i }));
+    await user.click(screen.getByRole("link", { name: /new report for this donor/i }));
 
     expect(await screen.findByText("Discard unsaved changes?")).toBeInTheDocument();
   });
@@ -331,7 +331,7 @@ describe("PersonaDetailView", () => {
     expect(addSpy).toHaveBeenCalledWith("beforeunload", expect.any(Function));
 
     // Discarding clears the dirty flag, which tears the listener back down.
-    await user.click(screen.getByRole("link", { name: /new report for this persona/i }));
+    await user.click(screen.getByRole("link", { name: /new report for this donor/i }));
     await user.click(await screen.findByRole("button", { name: /^discard$/i }));
     await waitFor(() =>
       expect(removeSpy).toHaveBeenCalledWith("beforeunload", expect.any(Function))

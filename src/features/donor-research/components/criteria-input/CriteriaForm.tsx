@@ -235,7 +235,7 @@ export function CriteriaForm({
 
   return (
     <form className="flex flex-col gap-5" onSubmit={handleSubmit(onSubmit, onInvalid)}>
-      <FormSection description="Who is this research for?" title="Persona">
+      <FormSection description="Who is this research for?" title="Donor">
         <DonorHandlePicker
           error={errors.donorHandleId?.message}
           handles={handles}

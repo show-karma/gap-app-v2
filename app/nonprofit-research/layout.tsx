@@ -129,7 +129,7 @@ function DonorResearchSessionBoundary({
       <AccessDenied
         compactTitle
         title="Sign in to access nonprofit research"
-        message="Sign in to create research reports, build donor personas, and return to your saved work."
+        message="Sign in to create research reports, build donor profiles, and return to your saved work."
       />
     );
   }

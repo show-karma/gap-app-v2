@@ -2,7 +2,7 @@
  * Personas list (redesign P2, spec 2.3 "Personas list"). Verifies the three
  * states, the per-row persona chip driven by `useDonorPersona`, the
  * per-row "New report" link (`/new?handle=<id>` preselect), and the
- * header "New persona" quick-create flow.
+ * header "New donor" quick-create flow.
  */
 
 import { fireEvent, screen } from "@testing-library/react";
@@ -108,11 +108,9 @@ describe("PersonasListView", () => {
     );
     renderWithProviders(<PersonasListView />);
 
-    expect(screen.getByText("No personas yet")).toBeInTheDocument();
-    // Two "New persona" triggers exist (header + empty-state CTA).
-    expect(screen.getAllByRole("button", { name: /new persona/i }).length).toBeGreaterThanOrEqual(
-      2
-    );
+    expect(screen.getByText("No donors yet")).toBeInTheDocument();
+    // Two "New donor" triggers exist (header + empty-state CTA).
+    expect(screen.getAllByRole("button", { name: /new donor/i }).length).toBeGreaterThanOrEqual(2);
   });
 
   it("renders persona rows with the profile chip, notes preview, and a per-row New report link", () => {
@@ -163,8 +161,8 @@ describe("PersonasListView", () => {
 
     renderWithProviders(<PersonasListView />);
 
-    await user.click(screen.getAllByRole("button", { name: /new persona/i })[0]);
-    await user.type(screen.getByLabelText("New persona name"), "New Fund");
+    await user.click(screen.getAllByRole("button", { name: /new donor/i })[0]);
+    await user.type(screen.getByLabelText("New donor name"), "New Fund");
     expect(screen.getByRole("button", { name: /continue to profile/i })).toBeVisible();
     await user.click(screen.getByRole("button", { name: /save without profile/i }));
 

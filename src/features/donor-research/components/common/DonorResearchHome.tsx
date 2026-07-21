@@ -92,7 +92,7 @@ function ReportsStats() {
     (r) => r.status === "complete" || r.status === "fast_complete"
   ).length;
   const shared = reports.filter((r) => r.hasShareToken).length;
-  // Handles ("Personas" in the UI) degrade to "—" rather than blocking the
+  // Handles ("Donors" in the UI) degrade to "—" rather than blocking the
   // whole stat strip — the same graceful-degrade posture as RateLimitCounter.
   const personas = handlesQuery.isSuccess ? (handlesQuery.data?.items.length ?? 0) : null;
 
@@ -121,7 +121,7 @@ function ReportsStats() {
       iconClassName: "bg-violet-50 text-violet-600 dark:bg-violet-500/[.14] dark:text-violet-300",
     },
     {
-      label: "Personas",
+      label: "Donors",
       value: personas ?? "—",
       icon: <Users className="h-5 w-5" />,
       iconClassName: "bg-brand-50 text-brand-700 dark:bg-brand-500/[.14] dark:text-brand-300",
