@@ -5,14 +5,9 @@ import {
   COMMUNITY_INDEX_POLL_ATTEMPTS,
   COMMUNITY_INDEX_POLL_DELAY_MS,
   waitForCommunityIndexed,
-} from "../CommunityDialog";
+} from "../waitForCommunityIndexed";
 
 vi.mock("@/utilities/fetchData");
-// The dialog imports the markdown editor eagerly; stub it so the unit test for
-// the polling helper doesn't drag in the md-editor-rt/CSS chain.
-vi.mock("@/components/Utilities/MarkdownEditor", () => ({
-  MarkdownEditor: () => null,
-}));
 
 const mockFetchData = fetchData as unknown as ReturnType<typeof vi.fn>;
 
