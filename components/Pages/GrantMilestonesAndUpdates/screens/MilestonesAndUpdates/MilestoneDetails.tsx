@@ -80,6 +80,11 @@ function toUnifiedMilestone(milestone: GrantMilestone, grant: GrantContext): Uni
     title: milestone.title,
     description: milestone.description,
     completed,
+    // Thread the raw on-chain status so the card can detect a terminal
+    // cancelled milestone (DEV-523) — `completed` is a delivered-only boolean
+    // and can't represent cancellation, and this grant-store data path (unlike
+    // useProjectUpdates) is the only place currentStatus gets set.
+    currentStatus: milestone.currentStatus,
     createdAt: (milestone as any).createdAt || "",
     startsAt: milestone.startsAt,
     endsAt: milestone.endsAt,
