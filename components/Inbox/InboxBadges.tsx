@@ -59,7 +59,7 @@ const STATUS_LABEL: Record<string, string> = {
   under_review: "Under review",
   revision_requested: "Revision requested",
   approved: "Approved",
-  rejected: "Rejected",
+  rejected: "Declined",
   withdrawn: "Withdrawn",
   completed: "Pending Verification",
   pending_verification: "Pending Verification",

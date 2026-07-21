@@ -35,13 +35,17 @@ export function computeProgramView(program: FundingProgram): ProgramComputed {
   const startsAt = program.metadata?.startsAt ? new Date(program.metadata.startsAt) : null;
   const endsAt = program.metadata?.endsAt ? new Date(program.metadata.endsAt) : null;
 
+  // Applications disabled (isEnabled=false) counts as closed, matching the
+  // list filter's `matchesStatus`/canonical `getProgramStatusInfo` — otherwise a
+  // disabled program lands in the "Ended" tab but the card still reads "Open".
+  const applicationsEnabled = program.applicationConfig?.isEnabled ?? false;
   let status: ProgramComputed["status"] = "open";
   if (endsAt && now > endsAt) status = "deadline-passed";
   else if (startsAt && now < startsAt) status = "coming-soon";
-  else if (program.metadata?.status === "inactive") status = "closed";
+  else if (program.metadata?.status === "inactive" || !applicationsEnabled) status = "closed";
 
   const daysLeft = endsAt
-    ? Math.max(0, Math.round((endsAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)))
+    ? Math.max(0, Math.ceil((endsAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)))
     : null;
 
   let urgency: Urgency = "open";

@@ -39,7 +39,7 @@ export const MilestoneDelete: FC<MilestoneDeleteProps> = ({ milestone }) => {
   const { performOffChainRevoke } = useOffChainRevoke();
 
   const deleteFn = async () => {
-    if (!address || !project) return;
+    if (!project) return;
     setIsDeletingMilestone(true);
     startAttestation("Deleting milestone...");
     try {

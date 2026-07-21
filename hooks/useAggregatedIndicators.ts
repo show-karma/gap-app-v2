@@ -78,10 +78,12 @@ export function useAggregatedIndicators(
       // For monthly granularity, snap to full month boundaries
       // "1 Month" = current month, "3 Months" = current + 2 previous months
       const startDateObj = new Date();
+      // Snap to first day of the month BEFORE shifting months — with the
+      // day-of-month still set, a 29th–31st overflows shorter target months
+      // (e.g. Mar 31 - 1 month → "Feb 31" → Mar 3) and lands in the wrong month
+      startDateObj.setDate(1);
       // Go back (timeframeMonths - 1) to include current month in the count
       startDateObj.setMonth(startDateObj.getMonth() - (timeframeMonths - 1));
-      // Snap to first day of the month
-      startDateObj.setDate(1);
       startDateObj.setHours(0, 0, 0, 0);
       startDate = startDateObj.toISOString();
       endDate = new Date().toISOString();

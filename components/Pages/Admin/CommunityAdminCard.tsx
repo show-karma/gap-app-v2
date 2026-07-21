@@ -2,9 +2,12 @@
 import { ChevronDownIcon, ChevronUpIcon, LinkIcon } from "@heroicons/react/24/solid";
 import { blo } from "blo";
 import Image from "next/image";
+import { memo } from "react";
 import { isAddress } from "viem";
 import CommunityStats from "@/components/CommunityStats";
+import EthereumAddressToProfileName from "@/components/EthereumAddressToProfileName";
 import { AddAdmin } from "@/components/Pages/Admin/AddAdminDialog";
+import { CommunityListingControls } from "@/components/Pages/Admin/CommunityListingControls";
 import { RemoveAdmin } from "@/components/Pages/Admin/RemoveAdminDialog";
 import type { CommunityAdmin, CommunityAdminsBatchStatus } from "@/services/communities.service";
 import type { UserProfileInfo } from "@/services/community-admins.service";
@@ -42,16 +45,18 @@ interface CommunityAdminCardProps {
   community: Community;
   matchingCommunityAdmin: CommunityAdmin | undefined;
   canManageAdmins: boolean;
+  canManageConfig: boolean;
   isExpanded: boolean;
-  onToggleExpansion: () => void;
+  onToggleExpansion: (communityUid: string) => void;
   adminProfiles: Map<string, UserProfileInfo> | undefined;
   onRefetch: () => void;
 }
 
-export function CommunityAdminCard({
+function CommunityAdminCardComponent({
   community,
   matchingCommunityAdmin,
   canManageAdmins,
+  canManageConfig,
   isExpanded,
   onToggleExpansion,
   adminProfiles,
@@ -60,6 +65,8 @@ export function CommunityAdminCard({
   const adminBatchStatus = matchingCommunityAdmin?.status;
   // Safely format community UID as hex address
   const communityId = formatAdminAddress(community.uid);
+  const slug = community.details?.slug || community.uid;
+  const communityLabel = community.details?.name || community.uid;
 
   return (
     <div className="border border-zinc-300 rounded-lg p-6 bg-white dark:bg-zinc-900 shadow-sm hover:shadow-md transition-shadow">
@@ -87,7 +94,7 @@ export function CommunityAdminCard({
           width={64}
           height={64}
           className="h-16 w-16 rounded-lg object-cover flex-shrink-0"
-          alt={community.details?.name || community.uid}
+          alt={communityLabel}
           unoptimized
         />
         <div className="flex-1 min-w-0">
@@ -113,14 +120,14 @@ export function CommunityAdminCard({
         <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Quick Links</p>
         <div className="flex flex-col gap-2">
           <Link
-            href={PAGES.COMMUNITY.ALL_GRANTS(community.details?.slug || community.uid)}
+            href={PAGES.COMMUNITY.ALL_GRANTS(slug)}
             className="flex flex-row items-center gap-2 text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 text-sm"
           >
             <LinkIcon className="w-4 h-4" />
             <span>Community Page</span>
           </Link>
           <Link
-            href={PAGES.ADMIN.ROOT(community.details?.slug || community.uid)}
+            href={PAGES.ADMIN.ROOT(slug)}
             className="flex flex-row items-center gap-2 text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 text-sm"
           >
             <LinkIcon className="w-4 h-4" />
@@ -178,7 +185,7 @@ export function CommunityAdminCard({
                         </>
                       ) : null}
                       <span className="text-xs font-mono text-gray-500 dark:text-gray-500 break-all">
-                        {admin.user.id}
+                        <EthereumAddressToProfileName address={admin.user.id} shouldTruncate />
                       </span>
                     </div>
                     {canManageAdmins && (
@@ -197,11 +204,9 @@ export function CommunityAdminCard({
               {matchingCommunityAdmin.admins.length > ADMINS_COLLAPSED_COUNT && (
                 <button
                   type="button"
-                  onClick={onToggleExpansion}
+                  onClick={() => onToggleExpansion(community.uid)}
                   aria-expanded={isExpanded}
-                  aria-label={`${isExpanded ? "Collapse" : "Expand"} admin list for ${
-                    community.details?.name || community.uid
-                  }`}
+                  aria-label={`${isExpanded ? "Collapse" : "Expand"} admin list for ${communityLabel}`}
                   className="flex items-center gap-1 text-xs text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 mt-1"
                 >
                   {isExpanded ? (
@@ -223,6 +228,16 @@ export function CommunityAdminCard({
           )}
         </div>
       </div>
+
+      {/* Listing (public directory visibility + rank) — platform-owner only */}
+      {canManageConfig && (
+        <div className="pt-4 border-t border-zinc-200 dark:border-zinc-700">
+          <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Listing</p>
+          <CommunityListingControls slug={slug} communityName={communityLabel} />
+        </div>
+      )}
     </div>
   );
 }
+
+export const CommunityAdminCard = memo(CommunityAdminCardComponent);

@@ -145,6 +145,106 @@ export function getBrowseApplicationsUrl(
 }
 
 /**
+ * Same-origin browse-applications URL, for use as an in-app **redirect** target
+ * (a non-reviewer handed a `/manage` review-queue link is sent to the public
+ * browse list for the same program).
+ *
+ * Unlike {@link getBrowseApplicationsUrl} — which intentionally emits the external
+ * tenant domain so admins can copy a shareable public link — a redirect must keep
+ * the visitor on the current deployment. Emitting the external domain here would
+ * bounce staging → production for tenants whose dev domain equals their prod
+ * domain (e.g. filecoin, scroll).
+ *
+ * @param communityId - The community slug
+ * @param programId - The program ID
+ * @param whitelabelOrigin - Current origin when running in whitelabel mode
+ * @returns The same-origin URL to the browse-applications list
+ */
+export function getBrowseApplicationsRedirectUrl(
+  communityId: string,
+  programId: string,
+  whitelabelOrigin?: string
+): string {
+  if (whitelabelOrigin) {
+    return `${whitelabelOrigin}/browse-applications?programId=${programId}`;
+  }
+  return `${PAGES.COMMUNITY.BROWSE_APPLICATIONS(communityId)}?programId=${programId}`;
+}
+
+/**
+ * Optional context appended to an application detail URL.
+ *
+ * The reference number alone identifies the application (globally unique —
+ * enforced at generation + a DB `@unique` index, DEV-496), so `/applications/:ref`
+ * is the single canonical URL for every role and no `programId` is carried.
+ * `tab` deep-links a tab (e.g. `milestones`), honored by `useUrlTabState` on the
+ * detail page.
+ */
+export type ApplicationDetailUrlContext = { tab?: string };
+
+function buildApplicationDetailQuery(context?: ApplicationDetailUrlContext): string {
+  if (!context?.tab) return "";
+  return `?${new URLSearchParams({ tab: context.tab }).toString()}`;
+}
+
+/**
+ * Generate the applicant-facing application detail URL.
+ *
+ * This is the same route that serves both the public and the private (owner)
+ * view — `ApplicationPageClient` resolves the viewer role client-side, so an
+ * authenticated grantee lands on their private view. The route is keyed by
+ * `referenceNumber`, not the application's internal id.
+ *
+ * Always resolves to a **same-origin** target: this URL is only ever used as an
+ * in-app redirect destination (a visitor handed a `/manage` reviewer link is sent
+ * here), so it must keep them on the current deployment. Emitting the external
+ * tenant domain would bounce staging → production for tenants whose dev domain
+ * equals their prod domain (e.g. filecoin `app.filpgf.io`, scroll
+ * `grantsapp.scroll.io`), which is why the external-domain branch is not used here.
+ *
+ * @param communityId - The community slug
+ * @param referenceNumber - The application's reference number
+ * @param whitelabelOrigin - Current origin when running in whitelabel mode
+ * @param context - Optional `tab` query context (DEV-496)
+ * @returns The same-origin URL to the application detail page
+ */
+export function getApplicationDetailUrl(
+  communityId: string,
+  referenceNumber: string,
+  whitelabelOrigin?: string,
+  context?: ApplicationDetailUrlContext
+): string {
+  const query = buildApplicationDetailQuery(context);
+  if (whitelabelOrigin) {
+    return `${whitelabelOrigin}/applications/${referenceNumber}${query}`;
+  }
+  return `${PAGES.COMMUNITY.APPLICATION_DETAIL(communityId, referenceNumber)}${query}`;
+}
+
+export type GranteeRedirect = { kind: "application" | "dashboard"; url: string };
+
+/**
+ * Resolve where to send a denied grantee, pairing the destination with its kind
+ * so the CTA label and href share a single source of truth: a single resolvable
+ * application links to that application; anything else falls back to the dashboard.
+ */
+export function buildGranteeRedirect(params: {
+  communityId?: string;
+  referenceNumber?: string;
+  applicationCount: number;
+  whitelabelOrigin?: string;
+}): GranteeRedirect {
+  const { communityId, referenceNumber, applicationCount, whitelabelOrigin } = params;
+  if (applicationCount === 1 && referenceNumber && communityId) {
+    return {
+      kind: "application",
+      url: getApplicationDetailUrl(communityId, referenceNumber, whitelabelOrigin),
+    };
+  }
+  return { kind: "dashboard", url: PAGES.DASHBOARD };
+}
+
+/**
  * Generate the program details page URL
  *
  * @param communityId - The community slug

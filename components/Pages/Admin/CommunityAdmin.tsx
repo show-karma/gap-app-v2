@@ -1,5 +1,9 @@
 "use client";
-import { MagnifyingGlassIcon, XMarkIcon } from "@heroicons/react/24/solid";
+import {
+  DocumentMagnifyingGlassIcon,
+  MagnifyingGlassIcon,
+  XMarkIcon,
+} from "@heroicons/react/24/solid";
 import { useQuery } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { CommunityDialog } from "@/components/Dialogs/CommunityDialog";
@@ -7,6 +11,7 @@ import { CommunityAdminCard } from "@/components/Pages/Admin/CommunityAdminCard"
 import { CommunityAdminLoadingSkeleton } from "@/components/Pages/Admin/CommunityAdminLoadingSkeleton";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { Skeleton } from "@/components/Utilities/Skeleton";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -23,6 +28,7 @@ import {
   getCommunityAdminsBatch,
 } from "@/services/communities.service";
 import { communityAdminsService } from "@/services/community-admins.service";
+import { Link } from "@/src/components/navigation/Link";
 import { AccessDenied } from "@/src/components/ui/AccessDenied";
 import { communityAdminDenial } from "@/src/components/ui/access-denied-presets";
 import { usePermissionsQuery } from "@/src/core/rbac/hooks/use-permissions";
@@ -308,7 +314,17 @@ export default function CommunitiesToAdminPage() {
                 )
               </span>
             </div>
-            <CommunityDialog refreshCommunities={handleRefetch} />
+            <div className="flex items-center gap-3">
+              {isSuperAdmin ? (
+                <Button asChild variant="outline">
+                  <Link href={PAGES.DONOR_RESEARCH.ADMIN}>
+                    <DocumentMagnifyingGlassIcon className="h-4 w-4" />
+                    Nonprofit research
+                  </Link>
+                </Button>
+              ) : null}
+              <CommunityDialog refreshCommunities={handleRefetch} />
+            </div>
           </div>
 
           {/* Search and Filter Bar */}
@@ -364,8 +380,9 @@ export default function CommunitiesToAdminPage() {
                       community={community}
                       matchingCommunityAdmin={communityAdminsById.get(community.uid)}
                       canManageAdmins={isSuperAdminOrOwner || isAdminOfThisCommunity}
+                      canManageConfig={isSuperAdminOrOwner}
                       isExpanded={expandedAdmins.has(community.uid)}
-                      onToggleExpansion={() => toggleAdminExpansion(community.uid)}
+                      onToggleExpansion={toggleAdminExpansion}
                       adminProfiles={adminProfiles}
                       onRefetch={handleRefetch}
                     />

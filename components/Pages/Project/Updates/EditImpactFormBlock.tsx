@@ -105,7 +105,7 @@ const EditImpactFormBlock: FC<EditImpactFormBlockProps> = ({ onClose, impactId }
   const isDescriptionValid = impact.length >= 3;
 
   const onSubmit: SubmitHandler<UpdateType> = async (data) => {
-    if (!address || !project || !impactToEdit) return;
+    if (!project || !impactToEdit) return;
 
     try {
       setIsLoading(true);

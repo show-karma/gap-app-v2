@@ -31,7 +31,7 @@ export interface GrantInfo {
 export interface CommunityMilestoneUpdate {
   uid: string;
   communityUID: string;
-  status: "pending" | "completed";
+  status: "pending" | "completed" | "verified" | "cancelled";
   details: MilestoneDetails;
   project: ProjectInfo;
   grant?: GrantInfo;

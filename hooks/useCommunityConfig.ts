@@ -35,6 +35,7 @@ export interface CommunityConfig {
    */
   accessDeniedUnauthenticatedMessage?: string | null;
   accessDeniedForbiddenMessage?: string | null;
+  accessDeniedApplicantMessage?: string | null;
 }
 
 export const useCommunityConfig = (slug: string, enabled: boolean = true) => {

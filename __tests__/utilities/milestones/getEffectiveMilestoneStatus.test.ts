@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import { MilestoneLifecycleStatus } from "@/src/features/payout-disbursement/types/payout-disbursement";
 import {
   getEffectiveMilestoneStatus,
+  isCancelledMilestoneStatus,
+  MILESTONE_STATUS_BADGE_CLASS,
   MILESTONE_STATUS_LABEL,
 } from "@/utilities/milestones/getEffectiveMilestoneStatus";
 
@@ -103,6 +105,33 @@ describe("getEffectiveMilestoneStatus", () => {
 
     it("ignores a zero due date", () => {
       expect(getEffectiveMilestoneStatus("pending", 0, NOW)).toBe(MilestoneLifecycleStatus.PENDING);
+    });
+  });
+
+  describe("cancelled (DEV-523)", () => {
+    it("returns CANCELLED for a cancelled status", () => {
+      expect(getEffectiveMilestoneStatus("cancelled", null, NOW)).toBe(
+        MilestoneLifecycleStatus.CANCELLED
+      );
+    });
+
+    it("never upgrades a past-due cancelled milestone to PAST_DUE", () => {
+      expect(getEffectiveMilestoneStatus("cancelled", PAST_ISO, NOW)).toBe(
+        MilestoneLifecycleStatus.CANCELLED
+      );
+    });
+
+    it("has a non-empty label and badge class for cancelled", () => {
+      expect(MILESTONE_STATUS_LABEL[MilestoneLifecycleStatus.CANCELLED]).toBe("Cancelled");
+      expect(MILESTONE_STATUS_BADGE_CLASS[MilestoneLifecycleStatus.CANCELLED]).toBeTruthy();
+    });
+
+    it("isCancelledMilestoneStatus is case-insensitive and null-safe", () => {
+      expect(isCancelledMilestoneStatus("cancelled")).toBe(true);
+      expect(isCancelledMilestoneStatus("CANCELLED")).toBe(true);
+      expect(isCancelledMilestoneStatus("completed")).toBe(false);
+      expect(isCancelledMilestoneStatus(null)).toBe(false);
+      expect(isCancelledMilestoneStatus(undefined)).toBe(false);
     });
   });
 });

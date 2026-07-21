@@ -4,12 +4,10 @@ import { useParams } from "next/navigation";
 import { Skeleton } from "@/components/Utilities/Skeleton";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { useCommunityDetails } from "@/hooks/communities/useCommunityDetails";
-import { AccessDenied } from "@/src/components/ui/AccessDenied";
-import { manageLayoutDenial } from "@/src/components/ui/access-denied-presets";
 import { usePermissionContext } from "@/src/core/rbac/context/permission-context";
 import { useOwnerStore } from "@/store/owner";
-import { PAGES } from "@/utilities/pages";
 import { ManageBreadcrumbs } from "./ManageBreadcrumbs";
+import { ManageDeniedView } from "./ManageDeniedView";
 import { ManageSidebar } from "./ManageSidebar";
 
 export function ManageLayoutShell({ children }: { children: React.ReactNode }) {
@@ -81,14 +79,7 @@ export function ManageLayoutShell({ children }: { children: React.ReactNode }) {
   }
 
   if (!hasManageAccess) {
-    return (
-      <AccessDenied
-        {...manageLayoutDenial(community?.details?.name)}
-        communitySlug={communityId}
-        communityName={community?.details?.name}
-        cta={{ label: "Go to Community", href: PAGES.COMMUNITY.ALL_GRANTS(communityId) }}
-      />
-    );
+    return <ManageDeniedView communityId={communityId} communityName={community?.details?.name} />;
   }
 
   if (!community) {
@@ -98,7 +89,9 @@ export function ManageLayoutShell({ children }: { children: React.ReactNode }) {
   const slug = community.details?.slug || communityId;
 
   return (
-    <SidebarProvider>
+    // `relative` anchors the rail's absolute positioning (see
+    // SIDEBAR_BELOW_NAVBAR_CLASSES) so the body-level footer stays clear.
+    <SidebarProvider className="relative">
       <ManageSidebar communityId={communityId} community={community} />
       <SidebarInset>
         <header className="flex h-12 shrink-0 items-center gap-2 border-b px-4">

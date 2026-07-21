@@ -121,17 +121,19 @@ const nextConfig: NextConfig = {
     ],
   },
   async headers() {
-    return [
+    const headerRules = [
       {
         source: "/(.*)",
         headers: securityHeaders,
       },
-      {
-        // Content-hashed build assets are safe to cache forever: a new deploy
-        // emits new filenames, so a stale cache entry is never served for new
-        // code. This is Next's default for `/_next/static/*`; we declare it
-        // explicitly so the stale-deploy chunk recovery contract is documented
-        // and survives any future header changes.
+    ];
+    // Content-hashed build assets are safe to cache forever: a new deploy emits
+    // new filenames, so a stale cache entry is never served for new code. This
+    // ONLY holds in production. In dev, Turbopack reuses stable chunk
+    // filenames, so an immutable cache pins stale code in the browser and edits
+    // never appear without a hard refresh — so we apply it in production only.
+    if (process.env.NODE_ENV === "production") {
+      headerRules.push({
         source: "/_next/static/:path*",
         headers: [
           {
@@ -139,11 +141,27 @@ const nextConfig: NextConfig = {
             value: "public, max-age=31536000, immutable",
           },
         ],
-      },
-    ];
+      });
+    }
+    return headerRules;
   },
   async redirects() {
     return [
+      // Donor research renamed the advisor-facing "Clients" concept to
+      // "Personas". Keep existing bookmarks and shared internal links valid.
+      {
+        source: "/nonprofit-research/clients/:path*",
+        destination: "/nonprofit-research/personas/:path*",
+        permanent: true,
+      },
+      // The AI-readiness checker moved from /scanner to /nonprofits/is-ai-ready.
+      // The wildcard covers both the landing page and the /scans/:id report so
+      // old links (including v1.7.74 shares) keep working.
+      {
+        source: "/scanner/:path*",
+        destination: "/nonprofits/is-ai-ready/:path*",
+        permanent: true,
+      },
       // Bare /community has no content of its own — the listing lives at /communities.
       // Redirecting at the edge (vs. a page that calls permanentRedirect) keeps the bare
       // path from 404'ing without shipping a route bundle. Closes #1312.
@@ -193,7 +211,12 @@ const nextConfig: NextConfig = {
         destination: "/community/:communityId/funding-opportunities",
         permanent: true,
       },
-      // Redirect old project update routes
+      // The project Updates view is consolidated into the project root
+      // (/project/:projectId now renders the v2 UpdatesContent). Redirect the
+      // legacy singular /update AND plural /updates paths there so old links,
+      // bookmarks, and shared update URLs land on the canonical page. The
+      // separate Updates tab has been removed and share links now point to the
+      // root, so this no longer bounces the tab (the earlier breakage).
       {
         source: "/project/:projectId/update",
         destination: "/project/:projectId",

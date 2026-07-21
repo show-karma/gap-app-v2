@@ -52,6 +52,11 @@ describe("PrivyBridgeContext — Defaults before SDK loads", () => {
     expect(result.current.wallets).toEqual([]);
   });
 
+  it("walletsReady defaults to false", () => {
+    const { result } = renderHook(() => usePrivyBridge(), { wrapper: BridgeWrapper });
+    expect(result.current.walletsReady).toBe(false);
+  });
+
   it("login is a noop function", () => {
     const { result } = renderHook(() => usePrivyBridge(), { wrapper: BridgeWrapper });
     expect(() => result.current.login()).not.toThrow();
@@ -142,6 +147,7 @@ describe("PrivyBridgeContext — Hook return types", () => {
     expect(typeof value.getAccessToken).toBe("function");
     expect(typeof value.connectWallet).toBe("function");
     expect(Array.isArray(value.wallets)).toBe(true);
+    expect(typeof value.walletsReady).toBe("boolean");
     expect(typeof value.isConnected).toBe("boolean");
   });
 
@@ -155,6 +161,7 @@ describe("PrivyBridgeContext — Hook return types", () => {
       getAccessToken: expect.any(Function),
       connectWallet: expect.any(Function),
       wallets: [],
+      walletsReady: false,
       smartWalletClient: null,
       isConnected: false,
     });
