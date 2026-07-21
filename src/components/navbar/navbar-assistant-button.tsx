@@ -85,10 +85,15 @@ export function NavbarAssistantButton({ compact = false, className }: NavbarAssi
       onClick={toggleOpen}
       aria-expanded={isOpen}
       aria-controls={KARMA_ASSISTANT_PANEL_ID}
-      aria-label={compact ? "Ask Karma" : undefined}
+      aria-label="Ask Karma"
       className={cn(
-        "inline-flex items-center justify-center gap-1.5 rounded-full border font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-        compact ? "h-9 w-9" : "h-9 px-3 text-sm",
+        "inline-flex h-9 items-center justify-center rounded-full border font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+        // Icon-only until there is room for the label. At the `lg` breakpoint
+        // the desktop navbar is already at its natural minimum width, so a
+        // labelled button here overflows the row and pushes the whole
+        // right-hand cluster — theme toggle and account menu included — off
+        // screen, where it cannot be clicked at all.
+        compact ? "w-9" : "w-9 xl:w-auto xl:gap-1.5 xl:px-3 xl:text-sm",
         isOpen
           ? "border-brand-blue bg-brand-blue text-white hover:bg-brand-blue/90"
           : "border-brand-blue/30 bg-brand-blue/5 text-brand-blue hover:bg-brand-blue/10",
@@ -99,9 +104,11 @@ export function NavbarAssistantButton({ compact = false, className }: NavbarAssi
           button from brand-blue at rest to white when open. The SVGs under
           `public/logo/` cannot: they bake in #1de9b6 and white. */}
       <span aria-hidden="true" className="flex items-center justify-center">
-        <KarmaLogo className={compact ? "h-4 w-4" : "h-3.5 w-3.5"} />
+        <KarmaLogo className={compact ? "h-4 w-4" : "h-4 w-4 xl:h-3.5 xl:w-3.5"} />
       </span>
-      {!compact && "Ask Karma"}
+      {/* The button keeps its `aria-label` at every width, so hiding the text
+          below `xl` costs nothing for assistive tech. */}
+      {!compact && <span className="hidden xl:inline">Ask Karma</span>}
     </button>
   );
 }
