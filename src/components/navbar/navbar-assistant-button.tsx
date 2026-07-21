@@ -35,22 +35,41 @@ export function NavbarAssistantButton({ compact = false, className }: NavbarAssi
   const pathname = usePathname();
   const buttonRef = useRef<HTMLButtonElement>(null);
   const wasOpen = useRef(isOpen);
+  const focusWasInsidePanel = useRef(false);
 
-  // The panel lives outside this subtree and becomes `inert` when it closes,
-  // which would orphan the focus ring. Pull focus back to the trigger, but
-  // only when it was still inside the panel — never steal it from wherever the
-  // user has already moved on to.
+  // Track where focus lives *while the panel is open*, rather than reading it
+  // back after the close. By then the panel is already `inert`, the browser has
+  // moved focus off it, and `document.activeElement` is whatever the blur
+  // landed on — so the check would depend on whether this effect happens to run
+  // before that blur is processed. It does in Chrome today; that is timing, not
+  // a guarantee.
+  useEffect(() => {
+    if (!isOpen) return;
+    const panel = document.getElementById(KARMA_ASSISTANT_PANEL_ID);
+    if (!panel) return;
+
+    const sync = () => {
+      focusWasInsidePanel.current = panel.contains(document.activeElement);
+    };
+    sync();
+    document.addEventListener("focusin", sync);
+    return () => document.removeEventListener("focusin", sync);
+  }, [isOpen]);
+
+  // The panel becomes `inert` when it closes, which would orphan the focus
+  // ring. Pull focus back to the trigger, but only when it was still inside the
+  // panel — never steal it from wherever the user has already moved on to.
   useEffect(() => {
     if (wasOpen.current && !isOpen) {
-      const panel = document.getElementById(KARMA_ASSISTANT_PANEL_ID);
       // The desktop and mobile navbars are both always mounted and merely
       // hidden from each other with `lg:` classes, so two triggers exist at
       // once. Without this check the hidden one also tries to take focus, and
       // which instance wins comes down to effect ordering.
       const isVisible = (buttonRef.current?.getClientRects().length ?? 0) > 0;
-      if (isVisible && panel?.contains(document.activeElement)) {
+      if (isVisible && focusWasInsidePanel.current) {
         buttonRef.current?.focus();
       }
+      focusWasInsidePanel.current = false;
     }
     wasOpen.current = isOpen;
   }, [isOpen]);
