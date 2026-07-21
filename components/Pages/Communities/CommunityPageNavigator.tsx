@@ -5,6 +5,7 @@ import {
   FileSearch,
   FileText,
   LandPlot,
+  Layers,
   SquareUser,
   Wallet,
 } from "lucide-react";
@@ -14,7 +15,10 @@ import { useCommunityDetails } from "@/hooks/communities/useCommunityDetails";
 import { usePublishedReports } from "@/hooks/portfolio-reports/usePortfolioReports";
 import { useCommunityPrograms } from "@/hooks/usePrograms";
 import { Link } from "@/src/components/navigation/Link";
-import { FINANCIALS_ENABLED_COMMUNITIES } from "@/utilities/community-flags";
+import {
+  FINANCIALS_ENABLED_COMMUNITIES,
+  FUNDING_PROGRAMS_OVERVIEW_URLS,
+} from "@/utilities/community-flags";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 import { useWhitelabel } from "@/utilities/whitelabel-context";
@@ -136,6 +140,12 @@ export const CommunityPageNavigator = () => {
 
   const isFinancialsEnabled = FINANCIALS_ENABLED_COMMUNITIES.includes(communityId);
 
+  // "Funding Programs" overview lives on the community's marketing site, not
+  // in-app — only surface it on the whitelabel domain (e.g. app.filpgf.io).
+  const fundingProgramsOverviewUrl = isWhitelabel
+    ? FUNDING_PROGRAMS_OVERVIEW_URLS[community?.details?.slug ?? ""]
+    : undefined;
+
   const visibleNavigationItems = useMemo(() => {
     return NAVIGATION_ITEMS.filter((item) => {
       // In whitelabel mode, always show funding opportunities (it's the landing page).
@@ -190,6 +200,17 @@ export const CommunityPageNavigator = () => {
           </Link>
         );
       })}
+      {fundingProgramsOverviewUrl ? (
+        <a
+          href={fundingProgramsOverviewUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={cn(baseLinkStyle, inactiveLinkStyle)}
+        >
+          <Layers className="w-6 h-6 text-gray-500 dark:text-zinc-400" />
+          Funding Programs
+        </a>
+      ) : null}
     </div>
   );
 };
