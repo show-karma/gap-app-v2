@@ -26,7 +26,7 @@ Contact info@karmahq.xyz for ecosystem pricing.
 
 ## API access
 
-All API endpoints under https://gapapi.karmahq.xyz/v2/* and the MCP server at https://gapapi.karmahq.xyz/v2/mcp are free to use under fair-use rate limits. Rate limit headers are returned on every response. Heavy programmatic access should contact info@karmahq.xyz for a dedicated tier.
+All API endpoints under https://gapapi.karmahq.xyz/v2/* and the MCP server at https://gapapi.karmahq.xyz/mcp are free to use under fair-use rate limits. Rate limit headers are returned on every response. Heavy programmatic access should contact info@karmahq.xyz for a dedicated tier.
 
 ## Last updated
 
