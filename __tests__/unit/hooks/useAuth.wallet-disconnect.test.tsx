@@ -10,6 +10,7 @@
 
 import type { ConnectedWallet, User } from "@privy-io/react-auth";
 import { act, renderHook } from "@testing-library/react";
+import type { ReactNode } from "react";
 import { useAuth } from "@/hooks/useAuth";
 
 // Undo the global mock of useAuth so we exercise the real hook
@@ -56,7 +57,7 @@ const mockBridgeState = {
 
 vi.mock("@/contexts/privy-bridge-context", () => ({
   usePrivyBridge: () => mockBridgeState,
-  PrivyBridgeContext: { Provider: ({ children }: { children: any }) => children },
+  PrivyBridgeContext: { Provider: ({ children }: { children: ReactNode }) => children },
   PRIVY_BRIDGE_DEFAULTS: {},
 }));
 
@@ -100,9 +101,9 @@ const setBridge = (overrides: Partial<typeof mockBridgeState>) =>
   Object.assign(mockBridgeState, overrides);
 
 /**
- * Render useAuth in the CONNECTED state first, then disconnect. This mirrors
- * the real sequence and, because useAuth's fired-guard is module-level (shared
- * across all mounted instances), it also re-arms that guard between tests.
+ * Render useAuth in the CONNECTED state first, then disconnect — the real
+ * sequence. Starting connected also clears any logout the previous test left
+ * pending on the module-level shared timer.
  */
 function renderConnectedThenDisconnect(
   user: User,
@@ -132,6 +133,32 @@ describe("useAuth — wallet-disconnect logout", () => {
 
     // Not immediate — a transient empty list must not sign anyone out.
     expect(mockLogout).not.toHaveBeenCalled();
+
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
+
+    expect(mockLogout).toHaveBeenCalledTimes(1);
+  });
+
+  it("logs out exactly once when many useAuth instances are mounted", () => {
+    // useAuth has ~100+ call sites. A per-instance timer would let every
+    // mounted instance schedule and fire its own logout() for one disconnect.
+    setBridge({
+      user: walletOnlyUser,
+      wallets: [WALLET],
+      walletsReady: true,
+      authenticated: true,
+    });
+    const views = [
+      renderHook(() => useAuth()),
+      renderHook(() => useAuth()),
+      renderHook(() => useAuth()),
+    ];
+    setBridge({ wallets: [] });
+    act(() => {
+      for (const view of views) view.rerender();
+    });
 
     act(() => {
       vi.advanceTimersByTime(1000);

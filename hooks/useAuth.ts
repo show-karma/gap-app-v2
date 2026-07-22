@@ -19,11 +19,19 @@ import { useWhitelabel } from "@/utilities/whitelabel-context";
 // inside a useEffect), so there is no SSR request bleed.
 let authReadyBarrierAddress: Hex | undefined;
 
-// Guards the wallet-disconnect logout below. useAuth is mounted by many
-// components at once, so a per-hook ref would let every instance fire its own
-// logout() for the same disconnect. Client-only (written inside a useEffect),
-// so there is no SSR request bleed.
-let walletDisconnectLogoutFired = false;
+// The single pending wallet-disconnect logout, shared across every mounted
+// useAuth instance. It must be module-level, not a per-hook ref: useAuth has
+// ~100+ call sites, so a per-hook timer would let every mounted instance
+// schedule and fire its own logout() for the same disconnect. Client-only
+// (only ever written inside a useEffect), so there is no SSR request bleed.
+let walletDisconnectLogoutTimer: ReturnType<typeof setTimeout> | null = null;
+
+const clearWalletDisconnectLogout = () => {
+  if (walletDisconnectLogoutTimer !== null) {
+    clearTimeout(walletDisconnectLogoutTimer);
+    walletDisconnectLogoutTimer = null;
+  }
+};
 
 /**
  * How long the wallet list must stay empty before a wallet-only session is
@@ -159,8 +167,13 @@ export const useAuth = () => {
   const isE2EMockAuthenticated = Boolean(e2eMockAuthState?.authenticated);
   const e2eMockAddress = e2eMockAuthState?.user?.wallet?.address as Hex | undefined;
   const address = (primaryWallet?.address as Hex | undefined) || e2eMockAddress;
+  // Does the session outlive losing every wallet? Derived as a boolean so the
+  // disconnect effect below doesn't re-run on every new Privy `user` identity.
+  const hasSurvivingIdentity = useMemo(() => hasNonWalletIdentity(user), [user]);
 
   const shouldLoginAfterLogout = useRef(false);
+  // Marks the instance that scheduled the shared wallet-disconnect logout timer.
+  const ownsDisconnectLogoutRef = useRef(false);
   const prevAuthRef = useRef(authenticated);
   const prevUserIdRef = useRef<string | undefined>(user?.id);
   const authFailureCount = useRef(0);
@@ -310,20 +323,29 @@ export const useAuth = () => {
    */
   useEffect(() => {
     if (!ready || !walletsReady || !authenticated) return;
-    if (wallets.length > 0 || hasNonWalletIdentity(user)) {
-      // Recovered (or never applicable) — re-arm for a later disconnect.
-      walletDisconnectLogoutFired = false;
+    if (wallets.length > 0 || hasSurvivingIdentity) {
+      // Reconnected, or never applicable — cancel any logout still pending.
+      clearWalletDisconnectLogout();
       return;
     }
-    if (walletDisconnectLogoutFired) return;
+    // Another mounted instance already scheduled this disconnect's logout.
+    if (walletDisconnectLogoutTimer !== null) return;
 
-    const timer = setTimeout(() => {
-      walletDisconnectLogoutFired = true;
+    ownsDisconnectLogoutRef.current = true;
+    walletDisconnectLogoutTimer = setTimeout(() => {
+      walletDisconnectLogoutTimer = null;
       logout();
     }, WALLET_DISCONNECT_LOGOUT_DELAY_MS);
 
-    return () => clearTimeout(timer);
-  }, [ready, walletsReady, authenticated, wallets.length, user, logout]);
+    // Only the instance that scheduled the timer may cancel it on teardown —
+    // otherwise an unrelated instance unmounting would silently drop the logout.
+    return () => {
+      if (ownsDisconnectLogoutRef.current) {
+        ownsDisconnectLogoutRef.current = false;
+        clearWalletDisconnectLogout();
+      }
+    };
+  }, [ready, walletsReady, authenticated, wallets.length, hasSurvivingIdentity, logout]);
 
   // Auto-login after logout completes
   useEffect(() => {
