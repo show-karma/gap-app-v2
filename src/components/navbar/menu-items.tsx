@@ -77,7 +77,7 @@ export const forNonprofitsItems: MenuItem[] = [
 
 export const forFundersItems: ForFundersItems = {
   main: {
-    href: PAGES.HOME,
+    href: PAGES.FOUNDATIONS,
     icon: GoalIcon,
     title: "Launch a program",
     description: "Setup and start funding in 2 days",
