@@ -82,7 +82,7 @@ describe("/.well-known/mcp.json route handler", () => {
     const res = GET();
     const body = await res.json();
     expect(body.mcpServers.karma.transport).toBe("http");
-    expect(body.mcpServers.karma.url).toBe(`${INDEXER_URL}/v2/mcp`);
+    expect(body.mcpServers.karma.url).toBe(`${INDEXER_URL}/mcp`);
   });
 
   it("advertises oauth2 auth with the indexer's protected-resource metadata", async () => {
@@ -91,7 +91,7 @@ describe("/.well-known/mcp.json route handler", () => {
     const body = await res.json();
     expect(body.mcpServers.karma.auth.type).toBe("oauth2");
     expect(body.mcpServers.karma.auth.metadata).toBe(
-      `${INDEXER_URL}/.well-known/oauth-protected-resource/v2/mcp`
+      `${INDEXER_URL}/.well-known/oauth-protected-resource/mcp`
     );
   });
 
@@ -130,7 +130,7 @@ describe("/.well-known/mcp-tools.json route handler", () => {
     vi.clearAllMocks();
   });
 
-  it("proxies the upstream /v2/mcp/tools response when it succeeds", async () => {
+  it("proxies the upstream /mcp/tools response when it succeeds", async () => {
     const upstream = { tools: [{ name: "get_project_details" }] };
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: async () => upstream }));
 
@@ -217,7 +217,7 @@ describe("/.well-known/mcp-tools.json route handler", () => {
     await GET();
 
     expect(Sentry.captureException).toHaveBeenCalledWith(
-      expect.objectContaining({ message: "Upstream /v2/mcp/tools returned 503" }),
+      expect.objectContaining({ message: "Upstream /mcp/tools returned 503" }),
       expect.objectContaining({
         tags: { route: "well-known/mcp-tools" },
         extra: { status: 503 },

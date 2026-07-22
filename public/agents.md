@@ -1,6 +1,6 @@
 # Karma — agent instructions
 
-Karma is a platform for funding programs: ecosystems run grants, builders apply, milestones get tracked, and impact gets measured on-chain. Connect via MCP at https://gapapi.karmahq.xyz/v2/mcp.
+Karma is a platform for funding programs: ecosystems run grants, builders apply, milestones get tracked, and impact gets measured on-chain. Connect via MCP at https://gapapi.karmahq.xyz/mcp.
 
 ## When to use Karma tools
 
