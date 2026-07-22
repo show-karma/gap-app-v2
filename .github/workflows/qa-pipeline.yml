@@ -1536,7 +1536,7 @@ jobs:
     # rejected — gate-check already set a pending 'qa-pipeline' commit
     # status, and this is the only job that can overwrite it so it never
     # dangles as "pending — do not merge".
-    needs: [gate-check, review-gate, qa-execution, dogfood-plan, dogfood-aggregate]
+    needs: [gate-check, review-gate, qa-execution, dogfood-plan, dogfood, dogfood-aggregate]
     if: always() && needs.gate-check.outputs.should_run == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -1565,7 +1565,9 @@ jobs:
           RUN_ID: ${{ github.run_id }}
           REVIEW_APPROVED: ${{ needs.review-gate.outputs.approved }}
           QA_EXEC_RESULT: ${{ needs.qa-execution.result }}
-          DOGFOOD_RESULT: ${{ needs.dogfood-aggregate.result }}
+          DOGFOOD_EXEC_RESULT: ${{ needs.dogfood.result }}
+          DOGFOOD_AGG_RESULT: ${{ needs.dogfood-aggregate.result }}
+          DOGFOOD_PLAN_RESULT: ${{ needs.dogfood-plan.result }}
           DOGFOOD_SKIPPED: ${{ needs.dogfood-plan.outputs.should_run != 'true' }}
         with:
           script: |
@@ -1575,8 +1577,16 @@ jobs:
             const sha = process.env.HEAD_SHA;
             const runUrl = `https://github.com/${owner}/${repo}/actions/runs/${process.env.RUN_ID}`;
             const execResult = process.env.QA_EXEC_RESULT;
-            const dogfoodResult = process.env.DOGFOOD_RESULT;
-            const dogfoodSkipped = process.env.DOGFOOD_SKIPPED === 'true';
+            const dogfoodExecResult = process.env.DOGFOOD_EXEC_RESULT;
+            const dogfoodAggResult = process.env.DOGFOOD_AGG_RESULT;
+            // A "skipped" dogfood chain only counts as legitimate when
+            // dogfood-plan itself succeeded and opted out; a failed plan is
+            // lost coverage, not a skip.
+            const dogfoodSkipped = process.env.DOGFOOD_SKIPPED === 'true' &&
+              process.env.DOGFOOD_PLAN_RESULT === 'success';
+            // Display value for the comment table / description: surface the
+            // shard result first (shards fail before the aggregate can).
+            const dogfoodResult = dogfoodExecResult !== 'success' ? dogfoodExecResult : dogfoodAggResult;
 
             // review-gate rejected (Claude review failed or verdict was
             // REQUEST CHANGES): QA never ran, so overwrite the pending
@@ -1595,9 +1605,12 @@ jobs:
               return;
             }
 
-            // dogfood-aggregate is 'skipped' when dogfood-plan emitted should_run=false
-            // (CI-only PR with no changed UI pages). That is not a failure.
-            const dogfoodFailed = !dogfoodSkipped && dogfoodResult !== 'success';
+            // Unless dogfood-plan legitimately opted out, BOTH dogfood legs
+            // must succeed: dogfood-aggregate runs under always() and can go
+            // green even when the dogfood shard jobs failed, so checking the
+            // aggregate alone would be a false green.
+            const dogfoodFailed = !dogfoodSkipped &&
+              (dogfoodExecResult !== 'success' || dogfoodAggResult !== 'success');
             // exec 'skipped'/'cancelled' with an approved review means QA
             // should have run but didn't (e.g. build failure) — that must
             // not produce a green status.
