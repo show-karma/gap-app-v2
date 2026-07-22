@@ -158,6 +158,42 @@ describe("ExportDataMenu", () => {
     expect(await screen.findByText(/predates data snapshots/i)).toBeInTheDocument();
   });
 
+  it("keeps the legacy warning when refresh is enabled", async () => {
+    // A refreshed manifest reports `live-refresh` for EVERY report, so legacy
+    // status must come from the snapshot manifest, not the active one.
+    vi.mocked(portfolioService.getReportExportManifest).mockImplementation(
+      async (_slug: string, _id: string, refresh?: boolean) => ({
+        snapshotSource: refresh ? "live-refresh" : "live-recompute",
+        sections: [{ key: "aging_analysis", title: "Milestone/Payment Age", rowCount: 5 }],
+      })
+    );
+    const user = userEvent.setup();
+    renderMenu();
+
+    await user.click(screen.getByRole("button", { name: /export data/i }));
+    expect(await screen.findByText(/predates data snapshots/i)).toBeInTheDocument();
+
+    await user.click(screen.getByText("Use current data instead"));
+
+    await screen.findByText("Using current data");
+    expect(screen.getByText(/predates data snapshots/i)).toBeInTheDocument();
+  });
+
+  it("exposes the refresh toggle as a checkbox with its state", async () => {
+    const user = userEvent.setup();
+    renderMenu();
+
+    await user.click(screen.getByRole("button", { name: /export data/i }));
+    await screen.findByText("Milestone/Payment Age — 5 rows");
+
+    const toggle = screen.getByRole("menuitemcheckbox");
+    expect(toggle).toHaveAttribute("aria-checked", "false");
+
+    await user.click(toggle);
+
+    expect(await screen.findByRole("menuitemcheckbox")).toHaveAttribute("aria-checked", "true");
+  });
+
   it("does not warn for a snapshot-backed report", async () => {
     const user = userEvent.setup();
     renderMenu();

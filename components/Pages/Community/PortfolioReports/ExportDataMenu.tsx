@@ -1,11 +1,12 @@
 "use client";
 
-import { AlertTriangle, ChevronDown, Download, RefreshCw, Table2 } from "lucide-react";
+import { AlertTriangle, ChevronDown, Download, Table2 } from "lucide-react";
 import pluralize from "pluralize";
 import { type FC, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
+  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
@@ -18,6 +19,7 @@ import {
   useReportExportManifest,
 } from "@/hooks/portfolio-reports/useReportExport";
 import type { ReportExportManifestEntry } from "@/types/portfolio-report";
+import { cn } from "@/utilities/tailwind";
 
 interface ExportDataMenuProps {
   communitySlug: string;
@@ -41,17 +43,20 @@ export const ExportDataMenu: FC<ExportDataMenuProps> = ({ communitySlug, reportI
   // recompute upstream.
   const [refresh, setRefresh] = useState(false);
 
-  const manifest = useReportExportManifest(communitySlug, reportId, open, refresh);
+  // Two manifests, because they answer different questions. The snapshot one
+  // always loads and is the only authority on whether the report is legacy —
+  // a refreshed manifest reports `live-refresh` for every report, which would
+  // otherwise make a legacy report look snapshot-backed and hide its warning.
+  const snapshotManifest = useReportExportManifest(communitySlug, reportId, open, false);
+  const refreshedManifest = useReportExportManifest(communitySlug, reportId, open && refresh, true);
+  const manifest = refresh ? refreshedManifest : snapshotManifest;
+
   const exportSection = useExportReportSection(communitySlug, reportId, refresh);
   const exportWorkbook = useExportReportWorkbook(communitySlug, reportId, refresh);
 
   const isExporting = exportSection.isPending || exportWorkbook.isPending;
   const sections = orderSections(manifest.data?.sections ?? []);
-  const isLegacyReport = manifest.data?.snapshotSource === "live-recompute";
-
-  const handleToggleRefresh = () => {
-    setRefresh((current) => !current);
-  };
+  const isLegacyReport = snapshotManifest.data?.snapshotSource === "live-recompute";
 
   const renderSections = () => {
     if (manifest.isLoading) {
@@ -131,21 +136,18 @@ export const ExportDataMenu: FC<ExportDataMenuProps> = ({ communitySlug, reportI
             </span>
           </div>
         ) : null}
-        <DropdownMenuItem
+        <DropdownMenuCheckboxItem
+          checked={refresh}
+          onCheckedChange={setRefresh}
           onSelect={(e) => {
             // Toggling re-fetches the manifest; keep the menu open to show it.
             e.preventDefault();
-            handleToggleRefresh();
           }}
           disabled={isExporting}
-          aria-pressed={refresh}
-          className="flex items-start gap-2 text-sm cursor-pointer"
+          className="cursor-pointer text-sm"
         >
-          <RefreshCw
-            className={`mt-0.5 h-3.5 w-3.5 shrink-0 ${refresh ? "text-blue-600 dark:text-blue-400" : ""}`}
-          />
           <span className="flex flex-col">
-            <span className={refresh ? "font-medium text-blue-700 dark:text-blue-400" : ""}>
+            <span className={cn(refresh && "font-medium text-blue-700 dark:text-blue-400")}>
               {refresh ? "Using current data" : "Use current data instead"}
             </span>
             <span className="text-xs text-zinc-500 dark:text-zinc-400">
@@ -154,7 +156,7 @@ export const ExportDataMenu: FC<ExportDataMenuProps> = ({ communitySlug, reportI
                 : "Report data is frozen at generation. Rebuild it from today’s records."}
             </span>
           </span>
-        </DropdownMenuItem>
+        </DropdownMenuCheckboxItem>
         <DropdownMenuSeparator />
         {renderSections()}
       </DropdownMenuContent>
