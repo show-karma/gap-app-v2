@@ -1,6 +1,6 @@
 /**
  * Mirrors the `PublicToolMetadata` shape exposed by gap-indexer's
- * `/v2/mcp/tools` discovery endpoint. The frontend re-declares the type
+ * `/mcp/tools` discovery endpoint. The frontend re-declares the type
  * (rather than depending on @show-karma/shared-types) because the catalog
  * is a fully decoupled, fetch-with-fallback surface — the indexer is the
  * source of truth at runtime, not at build time.

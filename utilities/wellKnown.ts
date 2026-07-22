@@ -59,17 +59,59 @@ export const WELL_KNOWN_PREFLIGHT_HEADERS = {
 export const MCP_PROTOCOL_VERSION = "2025-11-25";
 
 /**
+ * Strips a trailing query string and/or fragment, then trailing whitespace
+ * and slash(es), from a URL string. Pure and non-throwing, so it is safe to
+ * call on client components that must degrade gracefully when the env var
+ * is missing or malformed (e.g. `McpConnectPage`), not just from
+ * `getIndexerBaseUrl()`.
+ *
+ * RFC 8707 resource indicators are exact-match: a trailing slash on the
+ * indexer base URL would produce `.../mcp/` where `.../mcp` is expected,
+ * recreating the OAuth audience mismatch this module exists to prevent. A
+ * query string or fragment is worse — interpolating `${base}/mcp` into
+ * `https://host/?tenant=x` yields `https://host/?tenant=x/mcp`, landing
+ * `/mcp` inside the query component instead of the path.
+ *
+ * The query/fragment is cut first (everything from the first `?` or `#`
+ * onward), then whitespace is trimmed, then any trailing run of whitespace
+ * and/or slashes is stripped in a single pass — a misconfigured env var
+ * like `"https://host// "` (slash, then space, then nothing after) would
+ * otherwise leave a dangling space or slash behind a naive single-pass
+ * trim/replace. `URL.canParse` in `getIndexerBaseUrl()` tolerates
+ * leading/trailing whitespace (the `URL` constructor trims before parsing)
+ * and does not reject a query string or fragment, so a value can pass
+ * validation while still carrying content this function must remove before
+ * the string is used to build a `/mcp` URL. `getIndexerBaseUrl()` itself
+ * throws on a query/fragment-bearing value (fail loud, server-side); this
+ * function's stripping keeps client-side normalization coherent with that
+ * same value even when no exception can be raised (fail safe, client-side).
+ */
+export function normalizeBaseUrl(url: string): string {
+  if (typeof url !== "string") return url;
+  return url
+    .split(/[?#]/)[0]
+    .trim()
+    .replace(/[\s/]+$/, "");
+}
+
+/**
  * Returns the indexer base URL or throws if it is unset or malformed.
  *
  * The /.well-known/* route handlers depend on this URL at build time
  * (`force-static` + ISR). A misconfigured deploy without
- * NEXT_PUBLIC_GAP_INDEXER_URL would otherwise ship `undefined/v2/...` to
+ * NEXT_PUBLIC_GAP_INDEXER_URL would otherwise ship `undefined/mcp` to
  * production. This helper makes that fail loudly during `next build`.
  *
  * Format validation via `URL.canParse` catches missing schemes
  * (`gapapi.karmahq.xyz` instead of `https://gapapi.karmahq.xyz`) and
  * structurally invalid URLs. It does NOT catch typos with a valid scheme
  * (e.g. `https://gapap.karmahq.xyz`) — those still ship.
+ *
+ * A query string or fragment also passes `URL.canParse` (it's a valid URL),
+ * but a base URL must not carry one: interpolating `${base}/mcp` into
+ * `https://host/?tenant=x` lands `/mcp` inside the query component instead
+ * of the path, silently corrupting every downstream MCP URL. This is
+ * checked explicitly and rejected below.
  */
 export function getIndexerBaseUrl(): string {
   const url = envVars.NEXT_PUBLIC_GAP_INDEXER_URL;
@@ -81,5 +123,11 @@ export function getIndexerBaseUrl(): string {
       `NEXT_PUBLIC_GAP_INDEXER_URL is not a valid URL: "${url}". Expected a fully-qualified URL like https://gapapi.karmahq.xyz.`
     );
   }
-  return url;
+  const parsed = new URL(url);
+  if (parsed.search || parsed.hash) {
+    throw new Error(
+      `NEXT_PUBLIC_GAP_INDEXER_URL must not contain a query string or fragment: "${url}". Expected a bare base URL like https://gapapi.karmahq.xyz.`
+    );
+  }
+  return normalizeBaseUrl(url);
 }

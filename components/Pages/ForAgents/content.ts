@@ -3,7 +3,7 @@
  * structured data (FAQPage). Co-located with the page sections so the
  * schema and the page never drift apart.
  *
- * The tool catalog is fetched live from gap-indexer's `/v2/mcp/tools`
+ * The tool catalog is fetched live from gap-indexer's `/mcp/tools`
  * endpoint at request time (1h ISR). `STATIC_FALLBACK_TOOLS` below is the
  * fallback the page renders only when that upstream is down at build or
  * revalidation time.
@@ -70,7 +70,7 @@ export const USE_CASES: UseCaseCard[] = [
 ];
 
 /**
- * Fallback only — rendered when the live `/v2/mcp/tools` fetch fails at
+ * Fallback only — rendered when the live `/mcp/tools` fetch fails at
  * build or revalidation time. Keep small and representative across the
  * main categories. The full live list comes from the indexer.
  */
