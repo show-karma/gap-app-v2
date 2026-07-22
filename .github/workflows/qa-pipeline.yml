@@ -1549,9 +1549,15 @@ jobs:
   verdict:
     # Runs whenever gate-check ran (always()), INCLUDING when review-gate
     # rejected — gate-check already set a pending 'qa-pipeline' commit
-    # status, and this is the only job that can overwrite it so it never
-    # dangles as "pending — do not merge".
-    needs: [gate-check, review-gate, qa-execution, dogfood-plan, dogfood, dogfood-aggregate]
+    # status, and this is the job that overwrites it. Caveat: a cancelled
+    # run (manual cancel or concurrency cancel-in-progress) kills this job
+    # too, so the pending status can still dangle on that SHA until a later
+    # run overwrites it.
+    # qa-plan and build are direct needs solely so their results are readable
+    # for the comment table (needs.X.result exists only for DIRECT needs).
+    # Timing-neutral: qa-execution already transitively waits on both, and
+    # the always()-guarded `if:` below keeps verdict running when they fail.
+    needs: [gate-check, review-gate, qa-plan, build, qa-execution, dogfood-plan, dogfood, dogfood-aggregate]
     if: always() && needs.gate-check.outputs.should_run == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -1579,6 +1585,8 @@ jobs:
           PR_NUMBER: ${{ needs.gate-check.outputs.pr_number }}
           RUN_ID: ${{ github.run_id }}
           REVIEW_APPROVED: ${{ needs.review-gate.outputs.approved }}
+          QA_PLAN_RESULT: ${{ needs.qa-plan.result }}
+          BUILD_RESULT: ${{ needs.build.result }}
           QA_EXEC_RESULT: ${{ needs.qa-execution.result }}
           DOGFOOD_EXEC_RESULT: ${{ needs.dogfood.result }}
           DOGFOOD_AGG_RESULT: ${{ needs.dogfood-aggregate.result }}
@@ -1592,6 +1600,8 @@ jobs:
             const sha = process.env.HEAD_SHA;
             const runUrl = `https://github.com/${owner}/${repo}/actions/runs/${process.env.RUN_ID}`;
             const execResult = process.env.QA_EXEC_RESULT;
+            const qaPlanResult = process.env.QA_PLAN_RESULT;
+            const buildResult = process.env.BUILD_RESULT;
             const dogfoodExecResult = process.env.DOGFOOD_EXEC_RESULT;
             const dogfoodAggResult = process.env.DOGFOOD_AGG_RESULT;
             // A "skipped" dogfood chain only counts as legitimate when
@@ -1602,6 +1612,15 @@ jobs:
             // Display value for the comment table / description: surface the
             // shard result first (shards fail before the aggregate can).
             const dogfoodResult = dogfoodExecResult !== 'success' ? dogfoodExecResult : dogfoodAggResult;
+
+            // Shared pieces of the consolidated PR comment — used by both
+            // the review-rejected early return below and the final verdict.
+            const prNumber = parseInt(process.env.PR_NUMBER, 10);
+            const marker = '<!-- qa-pipeline-status -->';
+            const icon = (r, skipped) => {
+              if (skipped) return '⏭️ Skipped (no UI changes)';
+              return r === 'success' ? '✅ Done' : r === 'skipped' ? '⏭️ Skipped' : '❌ Failed';
+            };
 
             // review-gate rejected (Claude review failed or verdict was
             // REQUEST CHANGES): QA never ran, so overwrite the pending
@@ -1616,6 +1635,31 @@ jobs:
                 context: 'qa-pipeline',
                 target_url: runUrl
               });
+              // Finalize the progress comment too — without this it shows
+              // '⏳ Running... / Waiting' forever on rejected reviews.
+              const { data: rejCmts } = await github.rest.issues.listComments({
+                owner, repo, issue_number: prNumber, per_page: 100
+              });
+              const rejPc = rejCmts.find(c => c.body.includes(marker));
+              if (rejPc) {
+                await github.rest.issues.updateComment({
+                  owner, repo, comment_id: rejPc.id,
+                  body: [
+                    marker,
+                    '## QA Pipeline',
+                    '',
+                    '| Stage | Status |',
+                    '|-------|--------|',
+                    `| QA Plan | ${icon(qaPlanResult, false)} |`,
+                    `| Build | ${icon(buildResult, false)} |`,
+                    '| QA Execution | ⏭️ Skipped (review gate) |',
+                    '| Dogfood | ⏭️ Skipped (review gate) |',
+                    '| **Verdict** | **❌ FAIL — QA skipped, code review gate did not pass** |',
+                    '',
+                    `[View workflow run](${runUrl})`
+                  ].join('\n')
+                });
+              }
               core.setFailed(description + ' (fix review findings; the next push re-runs QA)');
               return;
             }
@@ -1697,14 +1741,8 @@ jobs:
             });
 
             // Update the single consolidated pipeline comment with final verdict
-            const prNumber = parseInt(process.env.PR_NUMBER, 10);
-            const icon = (r, skipped) => {
-              if (skipped) return '⏭️ Skipped (no UI changes)';
-              return r === 'success' ? '✅ Done' : r === 'skipped' ? '⏭️ Skipped' : '❌ Failed';
-            };
             const verdictIcon = hasBlockingIssues ? '❌' : '✅';
             const verdictText = hasBlockingIssues ? `FAIL — ${description}` : 'PASS — no blocking issues';
-            const marker = '<!-- qa-pipeline-status -->';
 
             const { data: cmts } = await github.rest.issues.listComments({
               owner, repo, issue_number: prNumber, per_page: 100
@@ -1719,8 +1757,8 @@ jobs:
                   '',
                   '| Stage | Status |',
                   '|-------|--------|',
-                  '| QA Plan | ✅ Done |',
-                  '| Build | ✅ Done |',
+                  `| QA Plan | ${icon(qaPlanResult, false)} |`,
+                  `| Build | ${icon(buildResult, false)} |`,
                   `| QA Execution | ${icon(execResult, false)} |`,
                   `| Dogfood | ${icon(dogfoodResult, dogfoodSkipped)} |`,
                   `| **Verdict** | **${verdictIcon} ${verdictText}** |`,
