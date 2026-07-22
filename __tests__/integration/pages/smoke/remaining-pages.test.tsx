@@ -144,12 +144,6 @@ vi.mock("@/src/core/rbac/context/permission-context", () => ({
 }));
 
 // Inner UI mocks
-vi.mock("@/components/Pages/Communities/CommunityProjectEvaluatorPage", () => ({
-  CommunityProjectEvaluatorPage: () => (
-    <div data-testid="karma-ai-evaluator">CommunityProjectEvaluator</div>
-  ),
-}));
-
 vi.mock("@/components/Utilities/Spinner", () => ({
   Spinner: () => <div data-testid="spinner">Spinner</div>,
 }));
@@ -336,15 +330,6 @@ describe("/community/[communityId]/(with-header)/updates page", () => {
     const possibleTexts = [/pending/i, /completed/i, /past due/i, /no updates/i, /loading/i];
     const found = possibleTexts.some((re) => screen.queryByText(re));
     expect(found).toBe(true);
-  });
-});
-
-describe("/community/[communityId]/karma-ai async page", () => {
-  it("renders CommunityProjectEvaluatorPage", async () => {
-    const { default: Page } = await import("@/app/community/[communityId]/karma-ai/page");
-    const result = await Page({ params: Promise.resolve({ communityId: "c1" }) });
-    render(result);
-    expect(screen.getByTestId("karma-ai-evaluator")).toBeInTheDocument();
   });
 });
 

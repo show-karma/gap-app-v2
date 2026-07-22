@@ -173,15 +173,6 @@ export const PAGES = {
   MCP_CONNECT: `/mcp/connect`,
   SEEDS: `/seeds`,
   SEEDS_FUND: `/seeds/fund`,
-  TEAM: {
-    LIST: `/ai-teams`,
-    ONBOARDING: `/ai-teams/onboarding`,
-    DIRECTORY: (slug: string) => `/ai-teams/${slug}/team`,
-    MEMBER: (slug: string, role: string) => `/ai-teams/${slug}/team/${role}`,
-  },
-  ORG: (slug: string) => `/ai-teams/${slug}/org`,
-  WORK: (slug: string) => `/ai-teams/${slug}/work`,
-  SKILLS: (slug: string) => `/ai-teams/${slug}/skills`,
   ASK_KARMA: `/ask-karma`,
   SCANNER: {
     ROOT: `/nonprofits/is-ai-ready`,
@@ -243,7 +234,6 @@ export const COMMUNITY_SUB_ROUTE_SEGMENTS: ReadonlySet<string> = new Set([
   // Direct route directories under /community/[communityId]/
   "admin",
   "ask-karma",
-  "karma-ai",
   "manage",
 ]);
 
