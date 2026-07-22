@@ -19,19 +19,14 @@ import { useWhitelabel } from "@/utilities/whitelabel-context";
 // inside a useEffect), so there is no SSR request bleed.
 let authReadyBarrierAddress: Hex | undefined;
 
-// The single pending wallet-disconnect logout, shared across every mounted
-// useAuth instance. It must be module-level, not a per-hook ref: useAuth has
-// ~100+ call sites, so a per-hook timer would let every mounted instance
-// schedule and fire its own logout() for the same disconnect. Client-only
-// (only ever written inside a useEffect), so there is no SSR request bleed.
-let walletDisconnectLogoutTimer: ReturnType<typeof setTimeout> | null = null;
-
-const clearWalletDisconnectLogout = () => {
-  if (walletDisconnectLogoutTimer !== null) {
-    clearTimeout(walletDisconnectLogoutTimer);
-    walletDisconnectLogoutTimer = null;
-  }
-};
+// Has the current disconnect already been acted on? useAuth has ~100+ call
+// sites, so every mounted instance schedules its own timer — they must collapse
+// to a single logout(). Deduplicating here, when the timer FIRES, rather than
+// when it is scheduled, is what lets each instance keep ownership of (and clean
+// up) its own timer while still yielding exactly one logout. Reset whenever the
+// wallet state recovers. Client-only (only ever written inside an effect or its
+// timer), so there is no SSR request bleed.
+let walletDisconnectLogoutFired = false;
 
 /**
  * How long the wallet list must stay empty before a wallet-only session is
@@ -324,24 +319,25 @@ export const useAuth = () => {
   useEffect(() => {
     if (!ready || !walletsReady || !authenticated) return;
     if (wallets.length > 0 || hasSurvivingIdentity) {
-      // Reconnected, or never applicable — cancel any logout still pending.
-      clearWalletDisconnectLogout();
+      // Reconnected, or never applicable — re-arm for a future disconnect. Any
+      // timers still pending are cleared by their own instance's cleanup when
+      // this effect re-runs.
+      walletDisconnectLogoutFired = false;
       return;
     }
-    // Another mounted instance already scheduled this disconnect's logout.
-    if (walletDisconnectLogoutTimer !== null) return;
 
-    walletDisconnectLogoutTimer = setTimeout(() => {
-      walletDisconnectLogoutTimer = null;
+    // Every mounted instance schedules its own timer and cleans up its own
+    // timer. That is deliberate: a shared timer owned by one instance would be
+    // cancelled when that instance unmounts, and no other instance would
+    // reschedule — stranding the session authenticated forever. The
+    // module-level flag collapses the resulting N timers into one logout.
+    const timer = setTimeout(() => {
+      if (walletDisconnectLogoutFired) return;
+      walletDisconnectLogoutFired = true;
       logout();
     }, WALLET_DISCONNECT_LOGOUT_DELAY_MS);
 
-    // Deliberately no teardown cancel. The timer belongs to the disconnected
-    // *session*, not to the instance that happened to schedule it: unmounting a
-    // component does not reconnect the wallet. Cancelling here would strand the
-    // session — every other instance has already returned at the guard above and
-    // would not schedule a replacement. Cancellation happens only when the state
-    // genuinely recovers (branch above) or the session ends.
+    return () => clearTimeout(timer);
   }, [ready, walletsReady, authenticated, wallets.length, hasSurvivingIdentity, logout]);
 
   // Auto-login after logout completes
