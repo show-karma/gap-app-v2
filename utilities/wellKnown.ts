@@ -78,7 +78,7 @@ export function normalizeBaseUrl(url: string): string {
  *
  * The /.well-known/* route handlers depend on this URL at build time
  * (`force-static` + ISR). A misconfigured deploy without
- * NEXT_PUBLIC_GAP_INDEXER_URL would otherwise ship `undefined/v2/...` to
+ * NEXT_PUBLIC_GAP_INDEXER_URL would otherwise ship `undefined/mcp` to
  * production. This helper makes that fail loudly during `next build`.
  *
  * Format validation via `URL.canParse` catches missing schemes
