@@ -60,7 +60,7 @@ describe("ExportDataMenu", () => {
     const invoicesItem = screen.getByText("Pending Invoices — 2 rows");
     expect(agingItem).toBeInTheDocument();
     expect(invoicesItem).toBeInTheDocument();
-    expect(screen.getByText("All sections (Excel) — 2 sheets")).toBeInTheDocument();
+    expect(screen.getByText("All sections (Excel): 2 sheets")).toBeInTheDocument();
 
     // Aging section is ordered before the others.
     expect(agingItem.compareDocumentPosition(invoicesItem)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
@@ -100,7 +100,7 @@ describe("ExportDataMenu", () => {
     renderMenu();
 
     await user.click(screen.getByRole("button", { name: /export data/i }));
-    await user.click(await screen.findByText("All sections (Excel) — 2 sheets"));
+    await user.click(await screen.findByText("All sections (Excel): 2 sheets"));
 
     await waitFor(() =>
       expect(portfolioService.exportReportWorkbook).toHaveBeenCalledWith("filecoin", "r-1", false)

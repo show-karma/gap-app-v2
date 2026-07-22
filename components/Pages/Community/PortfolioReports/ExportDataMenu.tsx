@@ -95,7 +95,7 @@ export const ExportDataMenu: FC<ExportDataMenuProps> = ({ communitySlug, reportI
           className="flex items-center gap-2 text-sm cursor-pointer font-medium"
         >
           <Table2 className="h-3.5 w-3.5" />
-          All sections (Excel) — {pluralize("sheet", sections.length, true)}
+          All sections (Excel): {pluralize("sheet", sections.length, true)}
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         {sections.map((section) => (
