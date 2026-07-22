@@ -7,7 +7,7 @@ const UPSTREAM_TIMEOUT_MS = 5000;
 const REVALIDATE_SECONDS = 3600;
 
 /**
- * Fetches the live MCP tool catalog from gap-indexer's `/v2/mcp/tools`
+ * Fetches the live MCP tool catalog from gap-indexer's `/mcp/tools`
  * discovery endpoint. Cached at the Next.js data layer for one hour so
  * the build never blocks on a slow indexer and cold renders are cheap.
  *
@@ -28,7 +28,7 @@ const REVALIDATE_SECONDS = 3600;
  */
 export async function fetchToolCatalog(): Promise<PublicToolMetadata[]> {
   try {
-    const res = await fetch(`${getIndexerBaseUrl()}/v2/mcp/tools`, {
+    const res = await fetch(`${getIndexerBaseUrl()}/mcp/tools`, {
       next: { revalidate: REVALIDATE_SECONDS },
       signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
     });

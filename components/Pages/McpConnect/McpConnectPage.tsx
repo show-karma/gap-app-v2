@@ -68,7 +68,7 @@ const SUPPORTED_CLIENTS: SupportedClient[] = [
 
 export function McpConnectPage() {
   const [, copy] = useCopyToClipboard();
-  const mcpUrl = `${envVars.NEXT_PUBLIC_GAP_INDEXER_URL}/v2/mcp`;
+  const mcpUrl = `${envVars.NEXT_PUBLIC_GAP_INDEXER_URL}/mcp`;
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-col gap-10 px-4 py-12">
