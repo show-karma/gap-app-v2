@@ -29,18 +29,20 @@ export function safeZodResolver<TInput extends FieldValues>(
     const errors: FieldErrors<TInput> = {};
 
     for (const issue of result.error.issues) {
-      if (issue.path.length === 0) continue;
+      const { path } = issue;
+      const depth = path.length;
+      if (depth === 0) continue;
 
       let node = errors as Record<string, unknown>;
-      for (let i = 0; i < issue.path.length - 1; i += 1) {
-        const key = String(issue.path[i]);
+      for (let i = 0; i < depth - 1; i += 1) {
+        const key = String(path[i]);
         if (typeof node[key] !== "object" || node[key] === null) {
           node[key] = {};
         }
         node = node[key] as Record<string, unknown>;
       }
 
-      const leaf = String(issue.path[issue.path.length - 1]);
+      const leaf = String(path[depth - 1]);
       if (node[leaf] === undefined) {
         const fieldError: FieldError = {
           type: String(issue.code),
