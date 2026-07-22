@@ -2,7 +2,7 @@ import type { ProjectWithGrantsResponse } from "@/types/v2/project";
 import { isCancelledMilestoneStatus } from "@/utilities/milestones/getEffectiveMilestoneStatus";
 import { PAGES } from "@/utilities/pages";
 
-export interface PendingActions {
+interface PendingActions {
   milestonesNeedingSubmission: number;
   grantsInProgress: number;
   /** uids of incomplete grants that have ≥1 milestone still needing submission. */
