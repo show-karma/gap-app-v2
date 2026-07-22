@@ -1,7 +1,7 @@
 {
   "$schema": "./scripts/quality-baseline.schema.json",
-  "generatedAt": "2026-07-22T19:07:26.433Z",
-  "generatedFromCommit": "890e63ab3d12184c2f9589828d05fbc23a664fe7",
+  "generatedAt": "2026-07-22T19:27:27.415Z",
+  "generatedFromCommit": "125f158fb3c2533696ba07a5382a67cfccc840d7",
   "coverage": {
     "lines": 0,
     "statements": 0,
@@ -444,7 +444,7 @@
   },
   "reactDoctor": {
     "score": 0,
-    "errors": 64,
+    "errors": 65,
     "warnings": 3270,
     "byCategory": {
       "Accessibility": 284,
@@ -453,7 +453,7 @@
       "Next.js": 134,
       "Server": 8,
       "Performance": 620,
-      "State & Effects": 698,
+      "State & Effects": 699,
       "TanStack Query": 40,
       "Bundle Size": 9,
       "Security": 3
