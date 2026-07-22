@@ -59,18 +59,33 @@ export const WELL_KNOWN_PREFLIGHT_HEADERS = {
 export const MCP_PROTOCOL_VERSION = "2025-11-25";
 
 /**
- * Strips trailing slash(es) from a URL string. Pure and non-throwing, so it
- * is safe to call on client components that must degrade gracefully when
- * the env var is missing (e.g. `McpConnectPage`), not just from
- * `getIndexerBaseUrl()`.
+ * Strips trailing whitespace and slash(es) from a URL string. Pure and
+ * non-throwing, so it is safe to call on client components that must
+ * degrade gracefully when the env var is missing (e.g. `McpConnectPage`),
+ * not just from `getIndexerBaseUrl()`.
  *
  * RFC 8707 resource indicators are exact-match: a trailing slash on the
  * indexer base URL would produce `.../mcp/` where `.../mcp` is expected,
  * recreating the OAuth audience mismatch this module exists to prevent.
+ *
+ * Whitespace is trimmed first, then trailing slashes are stripped, in a
+ * loop — a misconfigured env var like `"https://host// "` (slash, then
+ * space, then nothing after) would otherwise leave a dangling space or
+ * slash behind a single-pass trim/replace. `URL.canParse` in
+ * `getIndexerBaseUrl()` tolerates leading/trailing whitespace (the `URL`
+ * constructor trims before parsing), so a value can pass validation while
+ * still carrying whitespace this function must remove before the string is
+ * used to build a `/mcp` URL.
  */
 export function normalizeBaseUrl(url: string): string {
   if (typeof url !== "string") return url;
-  return url.replace(/\/+$/, "");
+  let result = url;
+  let previous: string;
+  do {
+    previous = result;
+    result = result.trim().replace(/\/+$/, "");
+  } while (result !== previous);
+  return result;
 }
 
 /**

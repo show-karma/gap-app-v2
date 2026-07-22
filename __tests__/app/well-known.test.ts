@@ -364,4 +364,24 @@ describe("normalizeBaseUrl helper", () => {
     const { normalizeBaseUrl } = await import("@/utilities/wellKnown");
     expect(() => normalizeBaseUrl(undefined as unknown as string)).not.toThrow();
   });
+
+  it("strips trailing whitespace", async () => {
+    const { normalizeBaseUrl } = await import("@/utilities/wellKnown");
+    expect(normalizeBaseUrl("https://gapapi.karmahq.xyz ")).toBe("https://gapapi.karmahq.xyz");
+  });
+
+  it("strips trailing whitespace after a trailing slash", async () => {
+    const { normalizeBaseUrl } = await import("@/utilities/wellKnown");
+    expect(normalizeBaseUrl("https://gapapi.karmahq.xyz/ ")).toBe("https://gapapi.karmahq.xyz");
+  });
+
+  it("strips a trailing slash-then-whitespace-then-slash mix", async () => {
+    const { normalizeBaseUrl } = await import("@/utilities/wellKnown");
+    expect(normalizeBaseUrl("https://gapapi.karmahq.xyz// ")).toBe("https://gapapi.karmahq.xyz");
+  });
+
+  it("strips repeated whitespace/slash combinations", async () => {
+    const { normalizeBaseUrl } = await import("@/utilities/wellKnown");
+    expect(normalizeBaseUrl("https://gapapi.karmahq.xyz /  / ")).toBe("https://gapapi.karmahq.xyz");
+  });
 });
