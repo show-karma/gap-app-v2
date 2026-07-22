@@ -1,7 +1,7 @@
 {
   "$schema": "./scripts/quality-baseline.schema.json",
-  "generatedAt": "2026-07-21T19:45:10.626Z",
-  "generatedFromCommit": "54b64eb6b5b4662ab1073f54e168d1d345b312a1",
+  "generatedAt": "2026-07-22T19:07:26.433Z",
+  "generatedFromCommit": "890e63ab3d12184c2f9589828d05fbc23a664fe7",
   "coverage": {
     "lines": 0,
     "statements": 0,
@@ -9,14 +9,14 @@
     "branches": 0
   },
   "duplication": {
-    "percent": 1.16,
+    "percent": 1.18,
     "fragments": 75
   },
   "violations": {
-    "biome": 1207,
+    "biome": 1187,
     "knipUnusedFiles": 209,
     "knipUnusedExports": 415,
-    "knipUnusedTypes": 362,
+    "knipUnusedTypes": 361,
     "knipUnusedDeps": 19,
     "knipDuplicates": 33
   },
@@ -113,7 +113,7 @@
     },
     "__tests__/unit/hooks/useAuth.test.tsx": {
       "lines": 985,
-      "bytes": 28837,
+      "bytes": 28889,
       "maxLines": 800,
       "maxBytes": 60000
     },
@@ -258,12 +258,6 @@
     "components/Pages/Admin/PortfolioReports/ReportConfigPage.tsx": {
       "lines": 907,
       "bytes": 33292,
-      "maxLines": 600,
-      "maxBytes": 40000
-    },
-    "components/Pages/Communities/CommunityProjectEvaluatorPage.tsx": {
-      "lines": 1014,
-      "bytes": 35877,
       "maxLines": 600,
       "maxBytes": 40000
     },
@@ -436,8 +430,8 @@
       "maxBytes": 40000
     },
     "utilities/indexer.ts": {
-      "lines": 826,
-      "bytes": 40633,
+      "lines": 824,
+      "bytes": 40457,
       "maxLines": 600,
       "maxBytes": 40000
     },
@@ -451,16 +445,16 @@
   "reactDoctor": {
     "score": 0,
     "errors": 64,
-    "warnings": 3330,
+    "warnings": 3270,
     "byCategory": {
-      "Accessibility": 288,
-      "Architecture": 1173,
-      "Correctness": 391,
-      "Next.js": 144,
-      "State & Effects": 704,
-      "Performance": 633,
+      "Accessibility": 284,
+      "Architecture": 1155,
+      "Correctness": 383,
+      "Next.js": 134,
+      "Server": 8,
+      "Performance": 620,
+      "State & Effects": 698,
       "TanStack Query": 40,
-      "Server": 9,
       "Bundle Size": 9,
       "Security": 3
     }
