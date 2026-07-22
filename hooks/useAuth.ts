@@ -7,6 +7,7 @@ import { usePrivyBridge } from "@/contexts/privy-bridge-context";
 import { useProjectCreateModalStore } from "@/store/modals/projectCreate";
 import { compareAllWallets } from "@/utilities/auth/compare-all-wallets";
 import { getE2EMockAuthState } from "@/utilities/auth/e2e-auth";
+import { hasNonWalletIdentity } from "@/utilities/auth/has-non-wallet-identity";
 import { selectPrimaryWallet } from "@/utilities/auth/select-primary-wallet";
 import { TokenManager } from "@/utilities/auth/token-manager";
 import { queryClient } from "@/utilities/query-client";
@@ -17,6 +18,20 @@ import { useWhitelabel } from "@/utilities/whitelabel-context";
 // must be module-level and not a per-hook ref). Client-only (only ever written
 // inside a useEffect), so there is no SSR request bleed.
 let authReadyBarrierAddress: Hex | undefined;
+
+// Guards the wallet-disconnect logout below. useAuth is mounted by many
+// components at once, so a per-hook ref would let every instance fire its own
+// logout() for the same disconnect. Client-only (written inside a useEffect),
+// so there is no SSR request bleed.
+let walletDisconnectLogoutFired = false;
+
+/**
+ * How long the wallet list must stay empty before a wallet-only session is
+ * logged out. Privy can briefly report zero wallets while re-hydrating even
+ * after `walletsReady` flips true; logging out on that transient blip is the
+ * sign-out loop this delay exists to prevent.
+ */
+const WALLET_DISCONNECT_LOGOUT_DELAY_MS = 1000;
 
 /**
  * Initial delay (in ms) before first auth status check.
@@ -122,6 +137,7 @@ export const useAuth = () => {
     getAccessToken,
     connectWallet,
     wallets,
+    walletsReady,
     isConnected,
   } = usePrivyBridge();
 
@@ -267,6 +283,47 @@ export const useAuth = () => {
       queryClient.invalidateQueries();
     }
   }, [authenticated, address]);
+
+  /**
+   * WALLET-DISCONNECT LOGOUT
+   *
+   * Disconnecting the site inside the wallet extension (MetaMask ▸ Connected
+   * sites ▸ Disconnect) empties Privy's wallet list but leaves the Privy session
+   * authenticated. For a wallet-only session that is a dead end: `address` goes
+   * undefined, so the navbar has no address, no avatar and no name to render,
+   * while `authenticated` stays true so the Sign-in button never comes back —
+   * and the Log out item lives inside the menu that can no longer render. The
+   * user is locked out until they clear site data.
+   *
+   * The session is also functionally useless: every authenticated write is keyed
+   * on the signer that just went away. So end it — this mirrors the existing
+   * wallet-*switch* logout above, which already treats a change of wallet
+   * identity as the end of the session.
+   *
+   * Three guards keep this from becoming the sign-out loop CLAUDE.md warns
+   * about:
+   *  - `walletsReady`: `wallets` is legitimately empty while Privy hydrates.
+   *  - `hasNonWalletIdentity`: an email/Google/Farcaster user who merely linked
+   *    a wallet keeps their session when they disconnect it.
+   *  - the delay + cleanup: a transient empty list cancels the pending logout
+   *    instead of signing the user out.
+   */
+  useEffect(() => {
+    if (!ready || !walletsReady || !authenticated) return;
+    if (wallets.length > 0 || hasNonWalletIdentity(user)) {
+      // Recovered (or never applicable) — re-arm for a later disconnect.
+      walletDisconnectLogoutFired = false;
+      return;
+    }
+    if (walletDisconnectLogoutFired) return;
+
+    const timer = setTimeout(() => {
+      walletDisconnectLogoutFired = true;
+      logout();
+    }, WALLET_DISCONNECT_LOGOUT_DELAY_MS);
+
+    return () => clearTimeout(timer);
+  }, [ready, walletsReady, authenticated, wallets.length, user, logout]);
 
   // Auto-login after logout completes
   useEffect(() => {
@@ -448,6 +505,7 @@ export const useAuth = () => {
     address,
     primaryWallet,
     wallets,
+    walletsReady,
 
     // Privy methods
     login: adaptedLogin,

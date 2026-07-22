@@ -14,6 +14,7 @@ const _localRefs = vi.hoisted(() => {
         isLoggedIn: false,
         address: undefined as string | undefined,
         ready: true,
+        walletsReady: true,
         isStaff: false,
         isStaffLoading: false,
         isOwner: false,
@@ -125,6 +126,7 @@ const setLocalRefsFromFixture = (fixtureName: string) => {
     isLoggedIn,
     address: authState.address,
     ready: authState.ready ?? true,
+    walletsReady: authState.walletsReady ?? true,
     isStaff: permissions.isStaff,
     isStaffLoading: false,
     isOwner: permissions.isOwner,
@@ -145,6 +147,7 @@ const resetLocalRefs = () => {
     isLoggedIn: false,
     address: undefined,
     ready: true,
+    walletsReady: true,
     isStaff: false,
     isStaffLoading: false,
     isOwner: false,
@@ -638,6 +641,7 @@ describe("NavbarUserMenu", () => {
       _localRefs.navPermsState.current.isLoggedIn = true;
       _localRefs.navPermsState.current.address = undefined;
       _localRefs.navPermsState.current.ready = true;
+      _localRefs.navPermsState.current.walletsReady = false;
       _localRefs.authState.current.authenticated = true;
       _localRefs.authState.current.address = undefined;
       _localRefs.authState.current.user = null;
@@ -650,6 +654,26 @@ describe("NavbarUserMenu", () => {
       // The skeleton replaces the menu entirely — no menubar or avatar yet.
       expect(screen.queryByRole("menubar")).not.toBeInTheDocument();
       expect(screen.queryByRole("img")).not.toBeInTheDocument();
+    });
+
+    it("renders the menu once wallets are resolved even with no identity, so the user is never trapped", () => {
+      // Disconnecting the site inside the wallet extension leaves an
+      // authenticated session with no address, forever. Gating the skeleton on
+      // "did an identity resolve?" made it permanent and took the Log out item
+      // down with it — the user could only escape by clearing site data.
+      _localRefs.navPermsState.current.isLoggedIn = true;
+      _localRefs.navPermsState.current.address = undefined;
+      _localRefs.navPermsState.current.ready = true;
+      _localRefs.navPermsState.current.walletsReady = true;
+      _localRefs.authState.current.authenticated = true;
+      _localRefs.authState.current.address = undefined;
+      _localRefs.authState.current.user = null;
+
+      renderWithProviders(<NavbarUserMenu />, {
+        mockUseAuth: createMockUseAuth(_localRefs.authState.current),
+      });
+
+      expect(screen.queryByRole("menubar")).toBeInTheDocument();
     });
   });
 });
