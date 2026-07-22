@@ -60,6 +60,45 @@ describe("computeProjectPendingActions", () => {
     expect(result.grantsInProgress).toBe(1);
   });
 
+  it("does not count cancelled milestones as needing submission", () => {
+    // A cancelled milestone is terminal — it must not inflate the pending
+    // badge/count or flag the grant as having pending work (DEV-523).
+    const project = {
+      grants: [
+        {
+          uid: "0xg",
+          completed: null,
+          milestones: [
+            { completed: null, currentStatus: "cancelled", verified: [] },
+            { completed: null, currentStatus: "pending", verified: [] },
+          ],
+        },
+      ],
+    } as ProjectWithGrantsResponse;
+
+    const result = computeProjectPendingActions(project);
+
+    expect(result.milestonesNeedingSubmission).toBe(1);
+    expect(result.grantsWithPendingMilestones).toEqual(["0xg"]);
+  });
+
+  it("does not flag a grant whose only outstanding milestone is cancelled", () => {
+    const project = {
+      grants: [
+        {
+          uid: "0xg",
+          completed: null,
+          milestones: [{ completed: null, currentStatus: "cancelled", verified: [] }],
+        },
+      ],
+    } as ProjectWithGrantsResponse;
+
+    const result = computeProjectPendingActions(project);
+
+    expect(result.milestonesNeedingSubmission).toBe(0);
+    expect(result.grantsWithPendingMilestones).toEqual([]);
+  });
+
   it("does not count incomplete milestones from completed grants", () => {
     const project = {
       grants: [
