@@ -174,8 +174,6 @@ export const useAuth = () => {
   const hasSurvivingIdentity = useMemo(() => hasNonWalletIdentity(user), [user]);
 
   const shouldLoginAfterLogout = useRef(false);
-  // Marks the instance that scheduled the shared wallet-disconnect logout timer.
-  const ownsDisconnectLogoutRef = useRef(false);
   const prevAuthRef = useRef(authenticated);
   const prevUserIdRef = useRef<string | undefined>(user?.id);
   const authFailureCount = useRef(0);
@@ -333,20 +331,17 @@ export const useAuth = () => {
     // Another mounted instance already scheduled this disconnect's logout.
     if (walletDisconnectLogoutTimer !== null) return;
 
-    ownsDisconnectLogoutRef.current = true;
     walletDisconnectLogoutTimer = setTimeout(() => {
       walletDisconnectLogoutTimer = null;
       logout();
     }, WALLET_DISCONNECT_LOGOUT_DELAY_MS);
 
-    // Only the instance that scheduled the timer may cancel it on teardown —
-    // otherwise an unrelated instance unmounting would silently drop the logout.
-    return () => {
-      if (ownsDisconnectLogoutRef.current) {
-        ownsDisconnectLogoutRef.current = false;
-        clearWalletDisconnectLogout();
-      }
-    };
+    // Deliberately no teardown cancel. The timer belongs to the disconnected
+    // *session*, not to the instance that happened to schedule it: unmounting a
+    // component does not reconnect the wallet. Cancelling here would strand the
+    // session — every other instance has already returned at the guard above and
+    // would not schedule a replacement. Cancellation happens only when the state
+    // genuinely recovers (branch above) or the session ends.
   }, [ready, walletsReady, authenticated, wallets.length, hasSurvivingIdentity, logout]);
 
   // Auto-login after logout completes
