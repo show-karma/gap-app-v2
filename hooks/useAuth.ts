@@ -124,7 +124,9 @@ const clearWagmiState = () => {
       localStorage.removeItem(key);
     }
   } catch {
-    // Ignore localStorage errors (e.g., private browsing, storage full)
+    // SUPPRESSED: clearing stale wagmi keys is best-effort housekeeping.
+    // localStorage throws in private browsing and when the quota is full;
+    // neither is actionable here, and failing would block logout.
   }
 };
 
@@ -386,7 +388,9 @@ export const useAuth = () => {
         // - Privy initialization timing
         handleAuthFailure();
       } catch {
-        // Token check failed (network error, etc.) - treat as a failure
+        // SUPPRESSED: not swallowed — a failed token check (network error, etc.)
+        // is deliberately routed into the consecutive-failure counter below, so
+        // a transient hiccup can't log the user out on its own.
         handleAuthFailure();
       }
     };
