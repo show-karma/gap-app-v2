@@ -1,5 +1,9 @@
 import type { MilestoneCompletedFormData } from "@/components/Forms/GrantMilestoneCompletion";
-import { INDEXING_TIMEOUT_MESSAGE, IndexingTimeoutError } from "@/utilities/errors";
+import {
+  COMPLETION_INDEXING_TIMEOUT_MESSAGE,
+  INDEXING_TIMEOUT_MESSAGE,
+  IndexingTimeoutError,
+} from "@/utilities/errors";
 import { sendMilestoneImpactAnswers } from "@/utilities/impact/milestoneImpactAnswers";
 import { isRetryConditionNotMetError } from "@/utilities/retries";
 
@@ -12,6 +16,19 @@ import { isRetryConditionNotMetError } from "@/utilities/retries";
  */
 export const mapPollExhaustion = (error: unknown): unknown =>
   isRetryConditionNotMetError(error) ? new IndexingTimeoutError(INDEXING_TIMEOUT_MESSAGE) : error;
+
+/**
+ * Completion counterpart of {@link mapPollExhaustion}. Budget exhaustion after
+ * a completion attestation means the indexer never recorded it — either lag or
+ * a silent authorization rejection — so it becomes an `IndexingTimeoutError`
+ * carrying {@link COMPLETION_INDEXING_TIMEOUT_MESSAGE} instead of the generic
+ * "there was an error completing the milestone", which told the user nothing
+ * after they had already signed and paid gas.
+ */
+export const mapCompletionPollExhaustion = (error: unknown): unknown =>
+  isRetryConditionNotMetError(error)
+    ? new IndexingTimeoutError(COMPLETION_INDEXING_TIMEOUT_MESSAGE)
+    : error;
 
 // Helper function to send outputs and deliverables data
 export const sendOutputsAndDeliverables = async (
