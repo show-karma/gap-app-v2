@@ -1,7 +1,6 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
 import { Dialog, Transition } from "@headlessui/react";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { ContributorProfile } from "@show-karma/karma-gap-sdk";
 import { X } from "lucide-react";
 import { useSearchParams } from "next/navigation";
@@ -27,6 +26,7 @@ import { INDEXER } from "@/utilities/indexer";
 import { gapSupportedNetworks, getChainIdByName } from "@/utilities/network";
 import { urlRegex } from "@/utilities/regexs/urlRegex";
 import { cn } from "@/utilities/tailwind";
+import { safeZodResolver } from "@/utilities/validation/safe-zod-resolver";
 import { requiredString } from "@/utilities/validation/zod-primitives";
 
 const profileSchema = z.object({
@@ -108,7 +108,7 @@ export const ContributorProfileDialog: FC = () => {
     reset,
     formState: { errors, isValid },
   } = useForm<SchemaType>({
-    resolver: zodResolver(profileSchema),
+    resolver: safeZodResolver(profileSchema),
     reValidateMode: "onChange",
     mode: "onChange",
     defaultValues: {
