@@ -39,6 +39,7 @@ const _localRefs = vi.hoisted(() => {
         logout: _vi.fn(),
         authenticate: _vi.fn(),
         disconnect: _vi.fn(),
+        connectWallet: _vi.fn(),
         getAccessToken: _vi.fn().mockResolvedValue("mock-token"),
       },
     },
@@ -111,6 +112,7 @@ const setLocalRefsFromFixture = (fixtureName: string) => {
     logout: vi.fn(),
     authenticate: vi.fn(),
     disconnect: vi.fn(),
+    connectWallet: vi.fn(),
     getAccessToken: vi.fn().mockResolvedValue("mock-token"),
   };
 
@@ -170,6 +172,7 @@ const resetLocalRefs = () => {
     logout: vi.fn(),
     authenticate: vi.fn(),
     disconnect: vi.fn(),
+    connectWallet: vi.fn(),
     getAccessToken: vi.fn().mockResolvedValue("mock-token"),
   };
   _localRefs.modalState.current = {
@@ -674,6 +677,29 @@ describe("NavbarUserMenu", () => {
       });
 
       expect(screen.queryByRole("menubar")).toBeInTheDocument();
+    });
+
+    it("offers Connect wallet as the recovery action when no wallet is resolved", async () => {
+      const user = userEvent.setup();
+      const connectWallet = vi.fn();
+      _localRefs.navPermsState.current.isLoggedIn = true;
+      _localRefs.navPermsState.current.address = undefined;
+      _localRefs.navPermsState.current.ready = true;
+      _localRefs.navPermsState.current.walletsReady = true;
+      _localRefs.authState.current.authenticated = true;
+      _localRefs.authState.current.address = undefined;
+      _localRefs.authState.current.user = null;
+      _localRefs.authState.current.connectWallet = connectWallet;
+
+      renderWithProviders(<NavbarUserMenu />, {
+        mockUseAuth: createMockUseAuth(_localRefs.authState.current),
+      });
+
+      await user.click(screen.getByRole("menuitem"));
+      const connectItem = await screen.findByText("Connect wallet");
+      await user.click(connectItem);
+
+      expect(connectWallet).toHaveBeenCalled();
     });
   });
 });

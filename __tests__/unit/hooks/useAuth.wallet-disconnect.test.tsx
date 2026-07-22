@@ -125,6 +125,12 @@ describe("useAuth — wallet-disconnect logout", () => {
   });
 
   afterEach(() => {
+    // The shared disconnect timer is module-level and intentionally survives
+    // unmount, so drain it here or a logout scheduled by one test could fire
+    // inside the next one. mockLogout is cleared in beforeEach.
+    act(() => {
+      vi.runOnlyPendingTimers();
+    });
     vi.useRealTimers();
   });
 
@@ -160,6 +166,36 @@ describe("useAuth — wallet-disconnect logout", () => {
       for (const view of views) view.rerender();
     });
 
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
+
+    expect(mockLogout).toHaveBeenCalledTimes(1);
+  });
+
+  it("still logs out when the instance that scheduled the logout unmounts", () => {
+    // The pending logout belongs to the disconnected session, not to whichever
+    // component happened to schedule it — unmounting does not reconnect the
+    // wallet. If teardown cancelled the shared timer, every other instance has
+    // already returned at the guard and would never schedule a replacement,
+    // stranding the session authenticated forever.
+    setBridge({
+      user: walletOnlyUser,
+      wallets: [WALLET],
+      walletsReady: true,
+      authenticated: true,
+    });
+    const scheduler = renderHook(() => useAuth());
+    const survivor = renderHook(() => useAuth());
+    setBridge({ wallets: [] });
+    act(() => {
+      scheduler.rerender();
+      survivor.rerender();
+    });
+
+    act(() => {
+      scheduler.unmount();
+    });
     act(() => {
       vi.advanceTimersByTime(1000);
     });
