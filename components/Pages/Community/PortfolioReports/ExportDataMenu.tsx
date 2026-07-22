@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, ChevronDown, Download } from "lucide-react";
+import { AlertTriangle, ChevronDown, Download, RefreshCw, Table2 } from "lucide-react";
 import pluralize from "pluralize";
 import { type FC, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -13,8 +13,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  useExportReportAll,
   useExportReportSection,
+  useExportReportWorkbook,
   useReportExportManifest,
 } from "@/hooks/portfolio-reports/useReportExport";
 import type { ReportExportManifestEntry } from "@/types/portfolio-report";
@@ -35,19 +35,29 @@ function orderSections(sections: ReportExportManifestEntry[]): ReportExportManif
 
 export const ExportDataMenu: FC<ExportDataMenuProps> = ({ communitySlug, reportId }) => {
   const [open, setOpen] = useState(false);
-  const manifest = useReportExportManifest(communitySlug, reportId, open);
-  const exportSection = useExportReportSection(communitySlug, reportId);
-  const exportAll = useExportReportAll(communitySlug, reportId);
+  // A report's data is frozen when it is generated, so a report published two
+  // weeks ago exports two-week-old numbers. Off by default: the snapshot is the
+  // only source that matches the published report, and a refresh costs a full
+  // recompute upstream.
+  const [refresh, setRefresh] = useState(false);
 
-  const isExporting = exportSection.isPending || exportAll.isPending;
+  const manifest = useReportExportManifest(communitySlug, reportId, open, refresh);
+  const exportSection = useExportReportSection(communitySlug, reportId, refresh);
+  const exportWorkbook = useExportReportWorkbook(communitySlug, reportId, refresh);
+
+  const isExporting = exportSection.isPending || exportWorkbook.isPending;
   const sections = orderSections(manifest.data?.sections ?? []);
   const isLegacyReport = manifest.data?.snapshotSource === "live-recompute";
+
+  const handleToggleRefresh = () => {
+    setRefresh((current) => !current);
+  };
 
   const renderSections = () => {
     if (manifest.isLoading) {
       return (
         <DropdownMenuItem disabled className="text-sm text-zinc-500">
-          Loading sections…
+          {refresh ? "Rebuilding from current data…" : "Loading sections…"}
         </DropdownMenuItem>
       );
     }
@@ -74,6 +84,15 @@ export const ExportDataMenu: FC<ExportDataMenuProps> = ({ communitySlug, reportI
     }
     return (
       <>
+        <DropdownMenuItem
+          disabled={isExporting}
+          onClick={() => exportWorkbook.mutate()}
+          className="flex items-center gap-2 text-sm cursor-pointer font-medium"
+        >
+          <Table2 className="h-3.5 w-3.5" />
+          All sections (Excel) — {pluralize("sheet", sections.length, true)}
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
         {sections.map((section) => (
           <DropdownMenuItem
             key={section.key}
@@ -85,15 +104,6 @@ export const ExportDataMenu: FC<ExportDataMenuProps> = ({ communitySlug, reportI
             {section.title} — {pluralize("row", section.rowCount, true)}
           </DropdownMenuItem>
         ))}
-        <DropdownMenuSeparator />
-        <DropdownMenuItem
-          disabled={isExporting}
-          onClick={() => exportAll.mutate()}
-          className="flex items-center gap-2 text-sm cursor-pointer"
-        >
-          <Download className="h-3.5 w-3.5" />
-          All sections (JSON)
-        </DropdownMenuItem>
       </>
     );
   };
@@ -107,7 +117,7 @@ export const ExportDataMenu: FC<ExportDataMenuProps> = ({ communitySlug, reportI
           <ChevronDown className="ml-1 h-3 w-3" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-72">
+      <DropdownMenuContent align="end" className="w-80">
         <DropdownMenuLabel>Export raw data</DropdownMenuLabel>
         {isLegacyReport ? (
           <div
@@ -121,6 +131,30 @@ export const ExportDataMenu: FC<ExportDataMenuProps> = ({ communitySlug, reportI
             </span>
           </div>
         ) : null}
+        <DropdownMenuItem
+          onSelect={(e) => {
+            // Toggling re-fetches the manifest; keep the menu open to show it.
+            e.preventDefault();
+            handleToggleRefresh();
+          }}
+          disabled={isExporting}
+          aria-pressed={refresh}
+          className="flex items-start gap-2 text-sm cursor-pointer"
+        >
+          <RefreshCw
+            className={`mt-0.5 h-3.5 w-3.5 shrink-0 ${refresh ? "text-blue-600 dark:text-blue-400" : ""}`}
+          />
+          <span className="flex flex-col">
+            <span className={refresh ? "font-medium text-blue-700 dark:text-blue-400" : ""}>
+              {refresh ? "Using current data" : "Use current data instead"}
+            </span>
+            <span className="text-xs text-zinc-500 dark:text-zinc-400">
+              {refresh
+                ? "Rebuilt from source records — newer than the published report."
+                : "Report data is frozen at generation. Rebuild it from today’s records."}
+            </span>
+          </span>
+        </DropdownMenuItem>
         <DropdownMenuSeparator />
         {renderSections()}
       </DropdownMenuContent>

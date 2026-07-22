@@ -147,14 +147,18 @@ export interface GenerateReportRequest {
 
 // ── Data export ──────────────────────────────────────────────
 
-export type ReportExportFormat = "manifest" | "csv" | "json";
+export type ReportExportFormat = "manifest" | "csv" | "json" | "xlsx";
 
 /**
- * Whether an export came from the report's generation-time snapshot
- * (`generation`) or a live recompute for a legacy report predating snapshots
- * (`live-recompute` — reflects current data, not the data at generation time).
+ * Where an export's numbers came from:
+ * - `generation` — the snapshot frozen when the report was generated; matches
+ *   the published report exactly.
+ * - `live-recompute` — no snapshot existed (legacy report), so it was
+ *   reconstructed as of the report's run date. Best-effort, not requested.
+ * - `live-refresh` — the viewer asked for current data, so every section was
+ *   rebuilt from source records as of now. Deliberately newer than the report.
  */
-export type ReportSnapshotSource = "generation" | "live-recompute";
+export type ReportSnapshotSource = "generation" | "live-recompute" | "live-refresh";
 
 export interface ReportExportManifestEntry {
   key: string;
