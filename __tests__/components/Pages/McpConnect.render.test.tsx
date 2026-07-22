@@ -35,4 +35,17 @@ describe("McpConnectPage mcpUrl construction", () => {
 
     expect(screen.getByText("https://gapapi.karmahq.xyz/mcp")).toBeInTheDocument();
   });
+
+  it("renders the MCP server URL without the query string when the indexer URL carries one", async () => {
+    vi.doMock("@/utilities/enviromentVars", () => ({
+      envVars: { NEXT_PUBLIC_GAP_INDEXER_URL: "https://gapapi.karmahq.xyz/?tenant=x" },
+    }));
+
+    const { McpConnectPage } = await import("@/components/Pages/McpConnect/McpConnectPage");
+    render(<McpConnectPage />);
+
+    const mcpUrl = screen.getByText("https://gapapi.karmahq.xyz/mcp");
+    expect(mcpUrl).toBeInTheDocument();
+    expect(mcpUrl.textContent).not.toContain("tenant=x");
+  });
 });
