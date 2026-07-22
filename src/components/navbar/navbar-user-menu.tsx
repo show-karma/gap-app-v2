@@ -8,6 +8,7 @@ import {
   KeyRound,
   LogOutIcon,
   Settings,
+  Wallet,
 } from "lucide-react";
 import Link from "next/link";
 import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
@@ -82,10 +83,10 @@ const getUserEmail = (
 
 export function NavbarUserMenu() {
   // Get permission state from context (prevents duplicate hook calls across navbar)
-  const { isLoggedIn, address, ready, isRegistryAllowed } = useNavbarPermissions();
+  const { isLoggedIn, address, ready, walletsReady, isRegistryAllowed } = useNavbarPermissions();
 
-  // useAuth only needed for logout function
-  const { logout, user } = useAuth();
+  // useAuth only needed for logout / connect-wallet actions
+  const { logout, user, connectWallet } = useAuth();
 
   const { profile } = useContributorProfile(address);
 
@@ -105,11 +106,16 @@ export function NavbarUserMenu() {
   // hydration gap `authenticated` is true while `user` and `wallets[0].address`
   // are still loading, so the trigger would render a blank avatar and the
   // dropdown would say "No wallet connected" for an actually-connected user.
-  // Show the skeleton instead — a wallet user always resolves an address and a
-  // social user always resolves a farcaster/email identity, so this only covers
-  // the transient loading window.
+  //
+  // Gate this on `walletsReady` — the signal that Privy has finished hydrating
+  // wallets — NOT on "did an identity resolve?". The latter has no upper bound:
+  // when the user disconnects the site inside their wallet extension, a
+  // wallet-only session resolves no identity for the rest of its life, so the
+  // skeleton became permanent and took the Log out item down with it. Once
+  // wallets are resolved, always render the menu: it degrades to "No wallet
+  // connected" plus Connect wallet / Log out, so there is always a way out.
   const hasResolvedIdentity = Boolean(user?.farcaster || getUserEmail(user) || address);
-  if (!hasResolvedIdentity) {
+  if (!walletsReady && !hasResolvedIdentity) {
     return <NavbarUserSkeleton />;
   }
 
@@ -179,6 +185,18 @@ export function NavbarUserMenu() {
                 )}
               </div>
             </MenubarItem>
+            {/* Recovery path for a session whose wallet was disconnected from
+                the extension side. useAuth logs wallet-only sessions out, but a
+                social user who unlinked their wallet stays signed in and needs a
+                way to reconnect one. */}
+            {!address && (
+              <MenubarItem className="w-full cursor-pointer" onClick={connectWallet}>
+                <div className="flex flex-row items-center gap-2 w-full">
+                  <Wallet className={menuStyles.itemIcon} />
+                  <span className={menuStyles.itemText}>Connect wallet</span>
+                </div>
+              </MenubarItem>
+            )}
           </div>
           <hr className="h-[1px] w-full border-border" />
           <div className="flex flex-col w-full">
