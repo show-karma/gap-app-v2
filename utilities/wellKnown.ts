@@ -68,24 +68,18 @@ export const MCP_PROTOCOL_VERSION = "2025-11-25";
  * indexer base URL would produce `.../mcp/` where `.../mcp` is expected,
  * recreating the OAuth audience mismatch this module exists to prevent.
  *
- * Whitespace is trimmed first, then trailing slashes are stripped, in a
- * loop — a misconfigured env var like `"https://host// "` (slash, then
- * space, then nothing after) would otherwise leave a dangling space or
- * slash behind a single-pass trim/replace. `URL.canParse` in
- * `getIndexerBaseUrl()` tolerates leading/trailing whitespace (the `URL`
- * constructor trims before parsing), so a value can pass validation while
- * still carrying whitespace this function must remove before the string is
- * used to build a `/mcp` URL.
+ * Whitespace is trimmed first, then any trailing run of whitespace and/or
+ * slashes is stripped in a single pass — a misconfigured env var like
+ * `"https://host// "` (slash, then space, then nothing after) would
+ * otherwise leave a dangling space or slash behind a naive single-pass
+ * trim/replace. `URL.canParse` in `getIndexerBaseUrl()` tolerates
+ * leading/trailing whitespace (the `URL` constructor trims before parsing),
+ * so a value can pass validation while still carrying whitespace this
+ * function must remove before the string is used to build a `/mcp` URL.
  */
 export function normalizeBaseUrl(url: string): string {
   if (typeof url !== "string") return url;
-  let result = url;
-  let previous: string;
-  do {
-    previous = result;
-    result = result.trim().replace(/\/+$/, "");
-  } while (result !== previous);
-  return result;
+  return url.trim().replace(/[\s/]+$/, "");
 }
 
 /**
