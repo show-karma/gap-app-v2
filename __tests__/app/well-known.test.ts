@@ -292,4 +292,76 @@ describe("getIndexerBaseUrl helper", () => {
     const { getIndexerBaseUrl } = await import("@/utilities/wellKnown");
     expect(() => getIndexerBaseUrl()).toThrow(/is not a valid URL/);
   });
+
+  it("strips a trailing slash so downstream /mcp URLs don't get a double slash", async () => {
+    vi.doMock("@/utilities/enviromentVars", () => ({
+      envVars: { NEXT_PUBLIC_GAP_INDEXER_URL: "https://gapapi.karmahq.xyz/" },
+    }));
+    const { getIndexerBaseUrl } = await import("@/utilities/wellKnown");
+    expect(getIndexerBaseUrl()).toBe("https://gapapi.karmahq.xyz");
+    expect(`${getIndexerBaseUrl()}/mcp`).toBe("https://gapapi.karmahq.xyz/mcp");
+  });
+
+  it("strips multiple trailing slashes", async () => {
+    vi.doMock("@/utilities/enviromentVars", () => ({
+      envVars: { NEXT_PUBLIC_GAP_INDEXER_URL: "https://gapapi.karmahq.xyz///" },
+    }));
+    const { getIndexerBaseUrl } = await import("@/utilities/wellKnown");
+    expect(getIndexerBaseUrl()).toBe("https://gapapi.karmahq.xyz");
+  });
+});
+
+describe("/.well-known/mcp.json route handler with a trailing slash in the env var", () => {
+  beforeEach(() => {
+    vi.resetModules();
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    vi.doUnmock("@/utilities/enviromentVars");
+    vi.resetModules();
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
+  });
+
+  it("normalizes NEXT_PUBLIC_GAP_INDEXER_URL to a single slash before /mcp", async () => {
+    vi.doMock("@/utilities/enviromentVars", () => ({
+      envVars: { NEXT_PUBLIC_GAP_INDEXER_URL: "https://gapapi.karmahq.xyz/" },
+    }));
+    const { GET } = await import("@/app/.well-known/mcp.json/route");
+    const res = GET();
+    const body = await res.json();
+    expect(body.mcpServers.karma.url).toBe("https://gapapi.karmahq.xyz/mcp");
+    expect(body.mcpServers.karma.url).not.toContain("//mcp");
+  });
+});
+
+describe("normalizeBaseUrl helper", () => {
+  it("strips a single trailing slash", async () => {
+    const { normalizeBaseUrl } = await import("@/utilities/wellKnown");
+    expect(normalizeBaseUrl("https://gapapi.karmahq.xyz/")).toBe("https://gapapi.karmahq.xyz");
+  });
+
+  it("strips multiple trailing slashes", async () => {
+    const { normalizeBaseUrl } = await import("@/utilities/wellKnown");
+    expect(normalizeBaseUrl("https://gapapi.karmahq.xyz///")).toBe("https://gapapi.karmahq.xyz");
+  });
+
+  it("leaves a URL with no trailing slash unchanged", async () => {
+    const { normalizeBaseUrl } = await import("@/utilities/wellKnown");
+    expect(normalizeBaseUrl("https://gapapi.karmahq.xyz")).toBe("https://gapapi.karmahq.xyz");
+  });
+
+  it("does not strip an internal slash, only trailing ones", async () => {
+    const { normalizeBaseUrl } = await import("@/utilities/wellKnown");
+    expect(normalizeBaseUrl("https://gapapi.karmahq.xyz/mcp/")).toBe(
+      "https://gapapi.karmahq.xyz/mcp"
+    );
+  });
+
+  it("does not throw on a non-string input", async () => {
+    const { normalizeBaseUrl } = await import("@/utilities/wellKnown");
+    expect(() => normalizeBaseUrl(undefined as unknown as string)).not.toThrow();
+  });
 });

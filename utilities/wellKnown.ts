@@ -59,6 +59,21 @@ export const WELL_KNOWN_PREFLIGHT_HEADERS = {
 export const MCP_PROTOCOL_VERSION = "2025-11-25";
 
 /**
+ * Strips trailing slash(es) from a URL string. Pure and non-throwing, so it
+ * is safe to call on client components that must degrade gracefully when
+ * the env var is missing (e.g. `McpConnectPage`), not just from
+ * `getIndexerBaseUrl()`.
+ *
+ * RFC 8707 resource indicators are exact-match: a trailing slash on the
+ * indexer base URL would produce `.../mcp/` where `.../mcp` is expected,
+ * recreating the OAuth audience mismatch this module exists to prevent.
+ */
+export function normalizeBaseUrl(url: string): string {
+  if (typeof url !== "string") return url;
+  return url.replace(/\/+$/, "");
+}
+
+/**
  * Returns the indexer base URL or throws if it is unset or malformed.
  *
  * The /.well-known/* route handlers depend on this URL at build time
@@ -81,5 +96,5 @@ export function getIndexerBaseUrl(): string {
       `NEXT_PUBLIC_GAP_INDEXER_URL is not a valid URL: "${url}". Expected a fully-qualified URL like https://gapapi.karmahq.xyz.`
     );
   }
-  return url;
+  return normalizeBaseUrl(url);
 }
