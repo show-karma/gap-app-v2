@@ -243,7 +243,6 @@ export const COMMUNITY_SUB_ROUTE_SEGMENTS: ReadonlySet<string> = new Set([
   // Direct route directories under /community/[communityId]/
   "admin",
   "ask-karma",
-  "karma-ai",
   "manage",
 ]);
 
