@@ -956,9 +956,14 @@ jobs:
       needs.dogfood-plan.outputs.should_run == 'true' &&
       needs.review-gate.outputs.approved == 'true'
     runs-on: ubuntu-latest
-    # 18 min covers the worst case: ~2 min setup + waiting out the build's
-    # full 15-minute timeout + ~1 min login. Median is ~6 min.
-    timeout-minutes: 18
+    # 22 min covers the worst case: ~5 min cold-cache setup (pnpm install +
+    # Playwright) + the artifact wait's ~17.5-min budget (in practice the
+    # wait fail-fasts once the build job concludes, i.e. by the build's
+    # 15-min timeout) + ~1 min login. Median is ~6 min. Keeping the job
+    # timeout above the wait budget lets the poll loop report its own clear
+    # '::error::Timed out waiting for the qa-build artifact' instead of
+    # being killed mid-loop by the job-level timeout.
+    timeout-minutes: 22
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
@@ -1002,21 +1007,26 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          for i in $(seq 1 190); do
+          # 105 polls x 10s = 17.5 min — comfortably past the build job's
+          # 15-minute timeout, at half the API rate of the old 5s loop.
+          for i in $(seq 1 105); do
             if gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/artifacts" \
                  --jq '.artifacts[].name' | grep -qx 'qa-build'; then
-              echo "qa-build artifact available after ~$(( (i - 1) * 5 ))s of polling"
+              echo "qa-build artifact available after ~$(( (i - 1) * 10 ))s of polling"
               exit 0
             fi
+            # `|| true` guard: this substitution runs under bash -e, so a
+            # transient gh/API error (5xx, secondary rate limit) must not
+            # kill the step — an empty CONCLUSION just keeps polling.
             CONCLUSION=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/jobs?per_page=100" \
-              --jq '[.jobs[] | select(.name == "build")][0].conclusion // empty')
+              --jq '[.jobs[] | select(.name == "build")][0].conclusion // empty' || true)
             if [ -n "$CONCLUSION" ] && [ "$CONCLUSION" != "success" ]; then
               echo "::error::build job concluded '$CONCLUSION' — qa-build artifact will never arrive"
               exit 1
             fi
-            sleep 5
+            sleep 10
           done
-          echo "::error::Timed out waiting for the qa-build artifact (~16 min)"
+          echo "::error::Timed out waiting for the qa-build artifact (~17.5 min)"
           exit 1
 
       - name: Download prebuilt .next
