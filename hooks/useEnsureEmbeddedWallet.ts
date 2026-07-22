@@ -1,4 +1,4 @@
-import { type User, useCreateWallet } from "@privy-io/react-auth";
+import { type User, useCreateWallet, useUser } from "@privy-io/react-auth";
 import { useEffect, useRef } from "react";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { getLinkedWalletAddresses } from "@/utilities/auth/compare-all-wallets";
@@ -34,6 +34,76 @@ const isEmbeddedWalletAlreadyExistsError = (error: unknown): boolean => {
  */
 const creationAttemptedUserIds = new Set<string>();
 
+/** Test seam: simulate the page reload that wipes the in-memory guard. */
+export const resetInMemoryClaimsForTest = () => creationAttemptedUserIds.clear();
+
+export const embeddedWalletClaimKey = (userId: string) => `karma:ew-claim:${userId}`;
+
+/**
+ * How long a durable claim suppresses another creation attempt. Long enough to
+ * cover an OAuth redirect plus the settle window and the create round-trip;
+ * short enough that a tab closed mid-creation can't lock a genuinely walletless
+ * user out of ever getting one.
+ */
+export const CLAIM_TTL_MS = 60_000;
+
+/**
+ * Durable creation claim, keyed by Privy user id.
+ *
+ * The in-memory Set above is per-JS-context, so it cannot survive Google's
+ * OAuth redirect (a full page reload) and is not shared across tabs.
+ * localStorage is both, which is what makes the claim hold where the Set
+ * cannot. Returns true when this caller won the claim.
+ *
+ * Any storage failure (private mode, quota, disabled cookies) returns true —
+ * fail open. A user who genuinely has no wallet must still get one; the claim
+ * is a duplicate guard, not a gate.
+ */
+const claimCreationSlot = (userId: string): boolean => {
+  try {
+    const key = embeddedWalletClaimKey(userId);
+    const existing = window.localStorage.getItem(key);
+    if (existing) {
+      const claimedAt = Number(existing);
+      if (Number.isFinite(claimedAt) && Date.now() - claimedAt < CLAIM_TTL_MS) {
+        return false;
+      }
+    }
+    window.localStorage.setItem(key, String(Date.now()));
+    return true;
+  } catch {
+    // SUPPRESSED: storage unavailable — fall back to the in-memory guard alone.
+    return true;
+  }
+};
+
+const releaseCreationSlot = (userId: string): void => {
+  creationAttemptedUserIds.delete(userId);
+  try {
+    window.localStorage.removeItem(embeddedWalletClaimKey(userId));
+  } catch {
+    // SUPPRESSED: storage unavailable — the in-memory release above still applies.
+  }
+};
+
+/**
+ * True when Privy's SERVER copy of the user already carries an embedded wallet.
+ *
+ * This is the check that `hasEmbeddedWallet` cannot make. Our own backend
+ * creates an embedded wallet as a side effect of authenticating a request
+ * (`privyAuth` -> `getIdentityFromJWT` -> `createWallets`) for any social-login
+ * user who doesn't have one, so a new signup's very first API call can mint a
+ * wallet that client-side `useWallets()` knows nothing about. Creating on top
+ * of that is what still produced duplicates after the settle window landed.
+ */
+const serverUserHasEmbeddedWallet = (user: User | null): boolean =>
+  !!user?.linkedAccounts?.some(
+    (account) =>
+      account.type === "wallet" &&
+      ((account as { walletClientType?: string }).walletClientType === "privy" ||
+        (account as { connectorType?: string }).connectorType === "embedded")
+  );
+
 const MAX_CREATE_ATTEMPTS = 3;
 export const RETRY_BASE_DELAY_MS = 1000;
 
@@ -65,7 +135,7 @@ const createEmbeddedWalletWithRetry = async (
       if (isEmbeddedWalletAlreadyExistsError(error)) return;
 
       if (attempt === MAX_CREATE_ATTEMPTS) {
-        creationAttemptedUserIds.delete(userId);
+        releaseCreationSlot(userId);
         errorManager("Failed to create embedded wallet on login", error, {
           userId,
           attempts: attempt,
@@ -94,7 +164,8 @@ const settleThenCreate = async (
   createWallet: () => Promise<unknown>,
   userId: string,
   hasEmbeddedWalletRef: { current: boolean },
-  userRef: { current: User | null }
+  userRef: { current: User | null },
+  refreshUser: () => Promise<User>
 ): Promise<void> => {
   await wait(SETTLE_BEFORE_CREATE_MS);
 
@@ -103,14 +174,24 @@ const settleThenCreate = async (
   // longer active — release the slot so the genuine user can be reconsidered.
   const currentUser = userRef.current;
   if (!currentUser || currentUser.id !== userId) {
-    creationAttemptedUserIds.delete(userId);
+    releaseCreationSlot(userId);
     return;
   }
 
   if (hasEmbeddedWalletRef.current || userHasLinkedWallet(currentUser)) {
-    // A wallet (Privy's auto-created one or another path's) showed up — don't
-    // add a second. Slot stays claimed so we never reconsider for this user.
+    // A wallet showed up in client state — don't add a second. Slot stays
+    // claimed so we never reconsider for this user.
     return;
+  }
+
+  // Last word before creating: ask Privy's server. Client state cannot see a
+  // wallet our own backend created out-of-band while we were settling, and
+  // that blind spot is what kept minting duplicates. Fails open — a refresh
+  // that errors must not leave a genuinely walletless user unable to transact.
+  try {
+    if (serverUserHasEmbeddedWallet(await refreshUser())) return;
+  } catch {
+    // SUPPRESSED: see above — proceed to create rather than strand the user.
   }
 
   await createEmbeddedWalletWithRetry(createWallet, userId);
@@ -139,6 +220,7 @@ export const useEnsureEmbeddedWallet = (
   hasEmbeddedWallet: boolean
 ) => {
   const { createWallet } = useCreateWallet();
+  const { refreshUser } = useUser();
 
   // Latest live values, read inside the deferred create after the settle window.
   // Synced in an effect (not during render) so we never mutate a ref mid-render —
@@ -164,9 +246,12 @@ export const useEnsureEmbeddedWallet = (
     }
 
     // Claim the slot BEFORE awaiting so a second effect run (Strict Mode,
-    // remount, rapid re-render) cannot launch a parallel createWallet().
+    // remount, rapid re-render) cannot launch a parallel createWallet(). The
+    // durable half of the claim additionally survives the OAuth redirect and is
+    // shared across tabs, where the in-memory Set is not.
     creationAttemptedUserIds.add(userId);
+    if (!claimCreationSlot(userId)) return;
 
-    void settleThenCreate(createWallet, userId, hasEmbeddedWalletRef, userRef);
-  }, [ready, authenticated, user, walletCount, hasEmbeddedWallet, createWallet]);
+    void settleThenCreate(createWallet, userId, hasEmbeddedWalletRef, userRef, refreshUser);
+  }, [ready, authenticated, user, walletCount, hasEmbeddedWallet, createWallet, refreshUser]);
 };
