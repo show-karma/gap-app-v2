@@ -309,6 +309,22 @@ describe("getIndexerBaseUrl helper", () => {
     const { getIndexerBaseUrl } = await import("@/utilities/wellKnown");
     expect(getIndexerBaseUrl()).toBe("https://gapapi.karmahq.xyz");
   });
+
+  it("throws when NEXT_PUBLIC_GAP_INDEXER_URL carries a query string", async () => {
+    vi.doMock("@/utilities/enviromentVars", () => ({
+      envVars: { NEXT_PUBLIC_GAP_INDEXER_URL: "https://gapapi.karmahq.xyz/?tenant=x" },
+    }));
+    const { getIndexerBaseUrl } = await import("@/utilities/wellKnown");
+    expect(() => getIndexerBaseUrl()).toThrow(/must not contain a query string or fragment/);
+  });
+
+  it("throws when NEXT_PUBLIC_GAP_INDEXER_URL carries a fragment", async () => {
+    vi.doMock("@/utilities/enviromentVars", () => ({
+      envVars: { NEXT_PUBLIC_GAP_INDEXER_URL: "https://gapapi.karmahq.xyz/#preview" },
+    }));
+    const { getIndexerBaseUrl } = await import("@/utilities/wellKnown");
+    expect(() => getIndexerBaseUrl()).toThrow(/must not contain a query string or fragment/);
+  });
 });
 
 describe("/.well-known/mcp.json route handler with a trailing slash in the env var", () => {
@@ -383,5 +399,40 @@ describe("normalizeBaseUrl helper", () => {
   it("strips repeated whitespace/slash combinations", async () => {
     const { normalizeBaseUrl } = await import("@/utilities/wellKnown");
     expect(normalizeBaseUrl("https://gapapi.karmahq.xyz /  / ")).toBe("https://gapapi.karmahq.xyz");
+  });
+
+  it("strips a trailing query string", async () => {
+    const { normalizeBaseUrl } = await import("@/utilities/wellKnown");
+    expect(normalizeBaseUrl("https://gapapi.karmahq.xyz/?tenant=x")).toBe(
+      "https://gapapi.karmahq.xyz"
+    );
+  });
+
+  it("strips a trailing fragment", async () => {
+    const { normalizeBaseUrl } = await import("@/utilities/wellKnown");
+    expect(normalizeBaseUrl("https://gapapi.karmahq.xyz/#preview")).toBe(
+      "https://gapapi.karmahq.xyz"
+    );
+  });
+
+  it("strips a combined query string and fragment", async () => {
+    const { normalizeBaseUrl } = await import("@/utilities/wellKnown");
+    expect(normalizeBaseUrl("https://gapapi.karmahq.xyz/?tenant=x#preview")).toBe(
+      "https://gapapi.karmahq.xyz"
+    );
+  });
+
+  it("strips a query string with trailing whitespace/slashes after it", async () => {
+    const { normalizeBaseUrl } = await import("@/utilities/wellKnown");
+    expect(normalizeBaseUrl("https://gapapi.karmahq.xyz?tenant=x// ")).toBe(
+      "https://gapapi.karmahq.xyz"
+    );
+  });
+
+  it("strips a fragment with trailing whitespace/slashes after it", async () => {
+    const { normalizeBaseUrl } = await import("@/utilities/wellKnown");
+    expect(normalizeBaseUrl("https://gapapi.karmahq.xyz#preview// ")).toBe(
+      "https://gapapi.karmahq.xyz"
+    );
   });
 });
