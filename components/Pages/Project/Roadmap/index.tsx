@@ -13,6 +13,7 @@ import { useProgressModalStore } from "@/store/modals/progress";
 import type { Project as ProjectResponse } from "@/types/v2/project";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
 import { MESSAGES } from "@/utilities/messages";
+import { isCancelledMilestoneStatus } from "@/utilities/milestones/getEffectiveMilestoneStatus";
 import { RoadmapListLoading } from "../Loading/Roadmap";
 
 interface ProjectRoadmapProps {
@@ -86,8 +87,9 @@ export const ProjectRoadmap = ({ project: propProject }: ProjectRoadmapProps) =>
 
       // ===== PENDING MILESTONES =====
       if (activeFilters.includes("pending")) {
-        // Using a direct approach - looking at the 'completed' flag directly
-        if (item.completed === false) {
+        // Using a direct approach - looking at the 'completed' flag directly.
+        // A cancelled milestone is terminal, not pending — exclude it (DEV-523).
+        if (item.completed === false && !isCancelledMilestoneStatus(item.currentStatus)) {
           // For pending, check the underlying schema matches a milestone type
           const isMilestoneType =
             item.type === "milestone" || item.type === "grant" || item.type === "project";
