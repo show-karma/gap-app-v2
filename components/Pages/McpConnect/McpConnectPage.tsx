@@ -5,6 +5,7 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { envVars } from "@/utilities/enviromentVars";
+import { normalizeBaseUrl } from "@/utilities/wellKnown";
 import { CONNECT_STEPS, MCP_FAQS } from "./content";
 
 interface SupportedClient {
@@ -68,7 +69,7 @@ const SUPPORTED_CLIENTS: SupportedClient[] = [
 
 export function McpConnectPage() {
   const [, copy] = useCopyToClipboard();
-  const mcpUrl = `${envVars.NEXT_PUBLIC_GAP_INDEXER_URL}/v2/mcp`;
+  const mcpUrl = `${normalizeBaseUrl(envVars.NEXT_PUBLIC_GAP_INDEXER_URL)}/mcp`;
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-col gap-10 px-4 py-12">

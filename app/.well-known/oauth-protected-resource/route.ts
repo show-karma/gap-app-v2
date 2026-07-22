@@ -41,7 +41,7 @@ export function GET() {
     });
     throw err;
   }
-  const resource = `${getIndexerBaseUrl()}/v2/mcp`;
+  const resource = `${getIndexerBaseUrl()}/mcp`;
 
   const body = {
     resource,

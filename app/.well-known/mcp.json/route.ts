@@ -15,12 +15,12 @@ export function GET() {
   const body = {
     mcpServers: {
       karma: {
-        url: `${apiUrl}/v2/mcp`,
+        url: `${apiUrl}/mcp`,
         transport: "http",
         description: "Karma — funding programs, projects, milestones, and impact data.",
         auth: {
           type: "oauth2",
-          metadata: `${apiUrl}/.well-known/oauth-protected-resource/v2/mcp`,
+          metadata: `${apiUrl}/.well-known/oauth-protected-resource/mcp`,
         },
         documentation: `${SITE_URL}/mcp/connect`,
       },

@@ -20,8 +20,14 @@ export default function Index() {
   // (the WorkflowSection alternates row bands). No outer gap or HR — the
   // editorial rhythm carries the visual transition between hero and
   // workflow.
+  //
+  // `overflow-x-clip` rather than `overflow-x-hidden`: `hidden` on one axis
+  // forces the other axis to compute as `auto`, and the layout's `h-full`
+  // chain gives <main> a definite height — that produced a second, inner
+  // scrollbar alongside the window one. `clip` leaves overflow-y `visible`
+  // while still clipping horizontal bleed.
   return (
-    <main className="flex w-full flex-col flex-1 items-center bg-background overflow-x-hidden">
+    <main className="flex w-full flex-col flex-1 items-center bg-background overflow-x-clip">
       <div className="flex w-full max-w-[1920px] flex-1 flex-col">
         <Hero />
         <WorkflowSection />
