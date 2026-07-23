@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
 import type { Grant } from "@/types/v2/grant";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 import { GrantTitleDropdown } from "./GrantTitleDropdown";
 import { useGrantFormStore } from "./store";
@@ -48,12 +48,8 @@ export function SearchGrantProgram({
       if (!communityUID) return [];
 
       try {
-        const [result, error] = await fetchData(INDEXER.COMMUNITY.PROGRAMS(communityUID));
-
-        if (error) {
-          console.error("Error fetching programs:", error);
-          return [];
-        }
+        // TODO(#1775): add zod schema
+        const result = await api.get<GrantProgram[]>(INDEXER.COMMUNITY.PROGRAMS(communityUID));
 
         const filteredResult = result.filter((program: GrantProgram) => {
           if (!program.metadata?.endsAt || flowType !== "program") return true;

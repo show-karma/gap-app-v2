@@ -82,24 +82,6 @@ vi.mock("@/utilities/type-guards", () => ({
   isFundingProgramConfig: vi.fn(() => true),
 }));
 
-// Mock pages
-vi.mock("@/utilities/pages", () => ({
-  PAGES: {
-    REVIEWER: {
-      APPLICATIONS: (communityId: string, programId: string) =>
-        `/community/${communityId}/manage/funding-platform/${programId}/applications`,
-    },
-    MANAGE: {
-      FUNDING_PLATFORM: {
-        APPLICATIONS: (communityId: string, programId: string) =>
-          `/community/${communityId}/manage/funding-platform/${programId}/applications`,
-        MILESTONES: (communityId: string, programId: string, projectId: string) =>
-          `/community/${communityId}/manage/funding-platform/${programId}/milestones/${projectId}`,
-      },
-    },
-  },
-}));
-
 // Mock theme
 vi.mock("@/src/helper/theme", () => ({
   layoutTheme: {

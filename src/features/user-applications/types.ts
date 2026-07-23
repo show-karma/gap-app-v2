@@ -27,6 +27,11 @@ export interface UserApplicationsPagination {
   limit: number;
   total: number;
   totalPages: number;
+  // The wire response actually names this field `totalCount` (see
+  // gap-indexer's FundingApplicationApiMapper), not `total`. Declared here
+  // (optional) purely so the raw fetch payload type-checks; use-user-applications
+  // normalizes it into `total` before it reaches the store/UI.
+  totalCount?: number;
 }
 
 // Store state

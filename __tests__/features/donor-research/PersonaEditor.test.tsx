@@ -3,7 +3,8 @@
  *
  * The persona hooks, toast, and the Radix-based chips are mocked so the test
  * exercises the editor's local state machine (hydration, dirty gating,
- * refine→edit→save, aria-live) without Radix Select interaction in jsdom.
+ * refine→accept/reject→save, aria-live) without Radix Select interaction in
+ * jsdom.
  */
 
 import { screen, waitFor } from "@testing-library/react";
@@ -86,19 +87,23 @@ function setup(options: SetupOptions = {}) {
 
 beforeEach(() => vi.clearAllMocks());
 
-const saveButton = () => screen.getByRole("button", { name: /save persona/i });
+const NARRATIVE = "An established local funder with a multi-decade focus on education access.";
+
+const saveButton = () => screen.getByRole("button", { name: /save profile/i });
+// The Accept button only exists while a refine suggestion awaits a decision.
+const acceptButton = () => screen.queryByRole("button", { name: /^accept$/i });
 
 describe("PersonaEditor cold-mount states", () => {
-  it("1) no persona: empty textarea, narrative placeholder, Save disabled", () => {
+  it("1) no persona: empty field, no recommendation card, Save disabled", () => {
     setup({ persona: null });
     renderWithProviders(<PersonaEditor handleId="h1" />);
 
-    expect(screen.getByLabelText("Persona source")).toHaveValue("");
-    expect(screen.getByText(/No narrative yet/i)).toBeInTheDocument();
+    expect(screen.getByLabelText("Donor preferences")).toHaveValue("");
+    expect(acceptButton()).not.toBeInTheDocument();
     expect(saveButton()).toBeDisabled();
   });
 
-  it("2) exists but never refined: source populated, narrative placeholder, Save disabled", () => {
+  it("2) exists but never refined: field shows the raw source, Save disabled", () => {
     setup({
       persona: makeDonorPersona({
         narrative: null,
@@ -108,18 +113,18 @@ describe("PersonaEditor cold-mount states", () => {
     });
     renderWithProviders(<PersonaEditor handleId="h1" />);
 
-    expect(screen.getByLabelText("Persona source")).toHaveValue("kickoff notes about this donor");
-    expect(screen.getByText(/No narrative yet/i)).toBeInTheDocument();
+    expect(screen.getByLabelText("Donor preferences")).toHaveValue(
+      "kickoff notes about this donor"
+    );
     expect(saveButton()).toBeDisabled();
   });
 
-  it("3) refined and untouched: narrative shown, Save disabled (not dirty)", () => {
+  it("3) refined and untouched: the single field shows the narrative, Save disabled (not dirty)", () => {
     setup({ persona: makeDonorPersona() });
     renderWithProviders(<PersonaEditor handleId="h1" />);
 
-    expect(
-      screen.getByText(/An established local funder with a multi-decade focus/i)
-    ).toBeInTheDocument();
+    expect(screen.getByLabelText("Donor preferences")).toHaveValue(NARRATIVE);
+    expect(acceptButton()).not.toBeInTheDocument();
     expect(saveButton()).toBeDisabled();
   });
 });
@@ -141,8 +146,8 @@ describe("PersonaEditor isDirty gating", () => {
   });
 });
 
-describe("PersonaEditor refine → edit → save round-trip", () => {
-  it("refines, announces, enables Save, and saves the full shape", async () => {
+describe("PersonaEditor refine → accept → save round-trip", () => {
+  it("shows the recommendation for review, applies it on Accept, and saves the full shape", async () => {
     const user = userEvent.setup();
     const { refineMutate, updateMutate } = setup({ persona: null });
     refineMutate.mockImplementation((_src: string, opts: { onSuccess: (r: unknown) => void }) =>
@@ -157,31 +162,49 @@ describe("PersonaEditor refine → edit → save round-trip", () => {
     const refineBtn = screen.getByRole("button", { name: /^refine$/i });
     expect(refineBtn).toBeDisabled(); // empty source < 10 chars
 
-    await user.type(screen.getByLabelText("Persona source"), "Donor funds local education");
+    await user.type(screen.getByLabelText("Donor preferences"), "Donor funds local education");
     expect(refineBtn).toBeEnabled();
 
     await user.click(refineBtn);
 
-    // Narrative hydrated + polite announcement fired.
+    // Refine writes the suggestion straight into the (still editable) field;
+    // chips/scalars wait for the Accept decision.
+    expect(screen.getByLabelText("Donor preferences")).toHaveValue(NARRATIVE);
+    expect(screen.getByLabelText("Donor preferences")).not.toHaveAttribute("readonly");
+    expect(acceptButton()).toBeInTheDocument();
     expect(
-      screen.getByText(/An established local funder with a multi-decade focus/i)
+      screen.getByText("Recommended profile written to the input — accept or reject below")
     ).toBeInTheDocument();
-    expect(screen.getByText("Persona narrative updated")).toBeInTheDocument();
+    const chipsBefore = JSON.parse(screen.getByTestId("chips-json").textContent ?? "{}");
+    expect(chipsBefore.orgMaturity.value).toBeNull();
+    // Refine and Save yield to the decision bar while it's pending.
+    expect(screen.queryByRole("button", { name: /^refine$/i })).not.toBeInTheDocument();
+    expect(saveButton()).toBeDisabled();
 
-    // Refine made the editor dirty → Save enabled even with no manual edit.
+    await user.click(screen.getByRole("button", { name: /^accept$/i }));
+
+    // Accept keeps the field text, applies chips, enables Save.
+    expect(acceptButton()).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Donor preferences")).toHaveValue(NARRATIVE);
+    const chipsAfter = JSON.parse(screen.getByTestId("chips-json").textContent ?? "{}");
+    expect(chipsAfter.orgMaturity).toEqual({ value: "established", source: "extracted" });
     expect(saveButton()).toBeEnabled();
+
     await user.click(saveButton());
 
     expect(updateMutate).toHaveBeenCalledTimes(1);
     const input = updateMutate.mock.calls[0][0] as {
       sourceText: string | null;
+      narrative: string | null;
       structured: Record<string, unknown>;
       amountMin: number | null;
       amountMax: number | null;
       cause: string | null;
       geography: string | null;
     };
-    expect(input.sourceText).toBe("Donor funds local education");
+    // The single field is the persona: it persists as both source and narrative.
+    expect(input.sourceText).toBe(NARRATIVE);
+    expect(input.narrative).toBe(NARRATIVE);
     // Only the chips the refine actually filled are sent. makeRefinementResult
     // sets orgMaturity + geoRadius and leaves the other three null; the unset
     // chips must be OMITTED (the backend's PUT rejects a null chip value).
@@ -194,7 +217,100 @@ describe("PersonaEditor refine → edit → save round-trip", () => {
     expect(input.amountMax).toBe(20000);
     expect(input.cause).toBe("education");
     expect(input.geography).toBe("Greater Boston");
-    await waitFor(() => expect(toast.success).toHaveBeenCalledWith("Persona saved"));
+    await waitFor(() => expect(toast.success).toHaveBeenCalledWith("Profile saved"));
+  });
+
+  it("restores the pre-refine text on Reject and leaves the chips untouched", async () => {
+    const user = userEvent.setup();
+    const { refineMutate, updateMutate } = setup({ persona: null });
+    refineMutate.mockImplementation((_src: string, opts: { onSuccess: (r: unknown) => void }) =>
+      opts.onSuccess(makeRefinementResult())
+    );
+    renderWithProviders(<PersonaEditor handleId="h1" />);
+
+    await user.type(screen.getByLabelText("Donor preferences"), "Donor funds local education");
+    await user.click(screen.getByRole("button", { name: /^refine$/i }));
+    // The suggestion replaced the field text…
+    expect(screen.getByLabelText("Donor preferences")).toHaveValue(NARRATIVE);
+
+    await user.click(screen.getByRole("button", { name: /^reject$/i }));
+
+    // …and Reject puts the original text back.
+    expect(acceptButton()).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Donor preferences")).toHaveValue("Donor funds local education");
+    const chips = JSON.parse(screen.getByTestId("chips-json").textContent ?? "{}");
+    expect(chips.orgMaturity.value).toBeNull();
+    // Back to the input state: Refine returns, ready to try again.
+    expect(screen.getByRole("button", { name: /^refine$/i })).toBeEnabled();
+    expect(updateMutate).not.toHaveBeenCalled();
+  });
+
+  it("marks the editor dirty while a suggestion is pending (guards refetch clobber + host dismissal)", async () => {
+    const user = userEvent.setup();
+    const { refineMutate } = setup({ persona: makeDonorPersona() });
+    refineMutate.mockImplementation((_src: string, opts: { onSuccess: (r: unknown) => void }) =>
+      opts.onSuccess(makeRefinementResult())
+    );
+    const onDirtyChange = vi.fn();
+    renderWithProviders(<PersonaEditor handleId="h1" onDirtyChange={onDirtyChange} />);
+
+    // Refine without typing first — the suggestion alone must flip dirty so a
+    // background refetch can't clobber the in-field suggestion and the host
+    // modal guards against accidental dismissal mid-review.
+    await user.click(screen.getByRole("button", { name: /^refine$/i }));
+
+    expect(onDirtyChange).toHaveBeenLastCalledWith(true);
+
+    // Rejecting restores the pre-refine dirty state: the editor was clean, so
+    // no phantom dirty flag lingers to enable a no-op Save or trip the guard.
+    await user.click(screen.getByRole("button", { name: /^reject$/i }));
+
+    expect(onDirtyChange).toHaveBeenLastCalledWith(false);
+  });
+
+  it("saves hand-tweaks made to the suggestion before Accept", async () => {
+    const user = userEvent.setup();
+    const { refineMutate, updateMutate } = setup({ persona: null });
+    refineMutate.mockImplementation((_src: string, opts: { onSuccess: (r: unknown) => void }) =>
+      opts.onSuccess(makeRefinementResult())
+    );
+    updateMutate.mockImplementation((_input: unknown, opts: { onSuccess: (p: unknown) => void }) =>
+      opts.onSuccess(makeDonorPersona())
+    );
+    renderWithProviders(<PersonaEditor handleId="h1" />);
+
+    await user.type(screen.getByLabelText("Donor preferences"), "Donor funds local education");
+    await user.click(screen.getByRole("button", { name: /^refine$/i }));
+    // The suggestion is editable in place — tweak it before accepting.
+    await user.type(screen.getByLabelText("Donor preferences"), " Prefers spring grants.");
+    await user.click(screen.getByRole("button", { name: /^accept$/i }));
+    await user.click(saveButton());
+
+    const input = updateMutate.mock.calls[0][0] as {
+      sourceText: string | null;
+      narrative: string | null;
+    };
+    expect(input.sourceText).toBe(`${NARRATIVE} Prefers spring grants.`);
+    expect(input.narrative).toBe(`${NARRATIVE} Prefers spring grants.`);
+  });
+
+  it("saves narrative: null when the source was typed but never refined", async () => {
+    const user = userEvent.setup();
+    const { updateMutate } = setup({ persona: null });
+    updateMutate.mockImplementation((_input: unknown, opts: { onSuccess: (p: unknown) => void }) =>
+      opts.onSuccess(makeDonorPersona())
+    );
+    renderWithProviders(<PersonaEditor handleId="h1" />);
+
+    await user.type(screen.getByLabelText("Donor preferences"), "Raw notes, never refined");
+    await user.click(saveButton());
+
+    const input = updateMutate.mock.calls[0][0] as {
+      sourceText: string | null;
+      narrative: string | null;
+    };
+    expect(input.sourceText).toBe("Raw notes, never refined");
+    expect(input.narrative).toBeNull();
   });
 });
 
@@ -208,7 +324,7 @@ describe("PersonaEditor save omits unset chips (S-001 regression)", () => {
     renderWithProviders(<PersonaEditor handleId="h1" />);
 
     // Typing source makes the editor dirty without touching any chip.
-    await user.type(screen.getByLabelText("Persona source"), "Donor notes with no chips set");
+    await user.type(screen.getByLabelText("Donor preferences"), "Donor notes with no chips set");
     await user.click(saveButton());
 
     expect(updateMutate).toHaveBeenCalledTimes(1);
@@ -237,7 +353,14 @@ describe("PersonaEditor save omits unset chips (S-001 regression)", () => {
 });
 
 describe("PersonaEditor error & empty-refine feedback (S-003)", () => {
-  it("warns and leaves the editor untouched when refine extracts nothing", async () => {
+  it("renders an error state with Retry when the persona fetch fails (e.g. 429)", () => {
+    setup({ isError: true });
+    renderWithProviders(<PersonaEditor handleId="h1" />);
+    expect(screen.getByText("Couldn't load the profile.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /retry/i })).toBeInTheDocument();
+  });
+
+  it("warns and shows no recommendation when refine extracts nothing", async () => {
     const user = userEvent.setup();
     const { refineMutate } = setup({ persona: makeDonorPersona() });
     refineMutate.mockImplementation((_src: string, opts: { onSuccess: (r: unknown) => void }) =>
@@ -254,15 +377,21 @@ describe("PersonaEditor error & empty-refine feedback (S-003)", () => {
     );
     renderWithProviders(<PersonaEditor handleId="h1" />);
 
-    // The existing narrative shows before refine.
-    expect(screen.getByText(/An established local funder/i)).toBeInTheDocument();
+    // The existing persona shows in the field before refine.
+    expect(screen.getByLabelText("Donor preferences")).toHaveValue(NARRATIVE);
 
     await user.click(screen.getByRole("button", { name: /^refine$/i }));
 
-    expect(toast.error).toHaveBeenCalledWith(expect.stringMatching(/couldn't pull anything/i));
-    // The empty result must NOT clobber the existing narrative or announce success.
-    expect(screen.getByText(/An established local funder/i)).toBeInTheDocument();
-    expect(screen.queryByText("Persona narrative updated")).not.toBeInTheDocument();
+    // The feedback is a PERSISTENT inline notice (a toast alone auto-dismisses
+    // and leaves the button looking like a silent no-op).
+    expect(screen.getByText(/add more detail and try again/i)).toBeInTheDocument();
+    // The empty result must NOT open a review card or touch the field.
+    expect(acceptButton()).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Donor preferences")).toHaveValue(NARRATIVE);
+
+    // Typing clears the notice.
+    await user.type(screen.getByLabelText("Donor preferences"), " more detail");
+    expect(screen.queryByText(/add more detail and try again/i)).not.toBeInTheDocument();
   });
 
   it("shows a friendly message (not the raw backend error) when save fails", async () => {
@@ -280,7 +409,7 @@ describe("PersonaEditor error & empty-refine feedback (S-003)", () => {
     await user.click(screen.getByText("edit-chip")); // dirty → enable Save
     await user.click(saveButton());
 
-    expect(toast.error).toHaveBeenCalledWith("Couldn't save the persona. Try again.");
+    expect(toast.error).toHaveBeenCalledWith("Couldn't save the profile. Try again.");
     expect(toast.error).not.toHaveBeenCalledWith(expect.stringMatching(/allowed values/i));
   });
 });

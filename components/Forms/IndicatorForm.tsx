@@ -9,7 +9,7 @@ import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramLis
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import type { ImpactIndicatorWithData } from "@/types/impactMeasurement";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 
 const UNIT_TYPES = ["int", "float"] as const;
@@ -98,8 +98,8 @@ export const IndicatorForm: React.FC<IndicatorFormProps> = ({
       if (!communityId) return;
 
       try {
-        const [result, error] = await fetchData(INDEXER.COMMUNITY.PROGRAMS(communityId));
-        if (error) throw error;
+        // TODO(#1775): add zod schema
+        const result = await api.get<GrantProgram[]>(INDEXER.COMMUNITY.PROGRAMS(communityId));
 
         const sortedPrograms = result.sort((a: GrantProgram, b: GrantProgram) => {
           const aTitle = a.metadata?.title || "";
@@ -125,24 +125,26 @@ export const IndicatorForm: React.FC<IndicatorFormProps> = ({
 
     setIsLoading(true);
     try {
-      const [response, error] = await fetchData(INDEXER.INDICATORS.V2.CREATE_OR_UPDATE(), "POST", {
-        indicatorId: indicatorId,
-        name: data.name,
-        description: data.description,
-        unitOfMeasure: data.unitOfMeasure,
-        communityUID: communityId,
-        programs:
-          preSelectedPrograms?.map((item) => {
-            return {
-              programId: item.programId,
-              chainID: item.chainID,
-            };
-          }) ||
-          data.programs ||
-          [],
-      });
-
-      if (error) throw error;
+      // TODO(#1775): add zod schema
+      const response = await api.post<ImpactIndicatorWithData | null>(
+        INDEXER.INDICATORS.V2.CREATE_OR_UPDATE(),
+        {
+          indicatorId: indicatorId,
+          name: data.name,
+          description: data.description,
+          unitOfMeasure: data.unitOfMeasure,
+          communityUID: communityId,
+          programs:
+            preSelectedPrograms?.map((item) => {
+              return {
+                programId: item.programId,
+                chainID: item.chainID,
+              };
+            }) ||
+            data.programs ||
+            [],
+        }
+      );
 
       // Check if response exists and is an array
       if (!response) {

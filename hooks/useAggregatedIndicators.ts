@@ -2,7 +2,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useParams, useSearchParams } from "next/navigation";
 import type { CommunityAggregateResponse } from "@/types/indicator";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 import { getCommunityDetails } from "@/utilities/queries/v2/getCommunityData";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
@@ -78,17 +78,20 @@ export function useAggregatedIndicators(
       // For monthly granularity, snap to full month boundaries
       // "1 Month" = current month, "3 Months" = current + 2 previous months
       const startDateObj = new Date();
+      // Snap to first day of the month BEFORE shifting months — with the
+      // day-of-month still set, a 29th–31st overflows shorter target months
+      // (e.g. Mar 31 - 1 month → "Feb 31" → Mar 3) and lands in the wrong month
+      startDateObj.setDate(1);
       // Go back (timeframeMonths - 1) to include current month in the count
       startDateObj.setMonth(startDateObj.getMonth() - (timeframeMonths - 1));
-      // Snap to first day of the month
-      startDateObj.setDate(1);
       startDateObj.setHours(0, 0, 0, 0);
       startDate = startDateObj.toISOString();
       endDate = new Date().toISOString();
     }
 
     // Fetch community aggregate indicators
-    const [data, error] = await fetchData(
+    // TODO(#1775): add zod schema (CommunityAggregateResponse is declared in @/types/indicator)
+    const data = await api.get<CommunityAggregateResponse>(
       INDEXER.INDICATORS.V2.COMMUNITY_AGGREGATE(communityDetails.uid, {
         indicatorIds: indicatorIds.join(","),
         programId: parsedProgramId,
@@ -99,12 +102,8 @@ export function useAggregatedIndicators(
       })
     );
 
-    if (error) {
-      throw error;
-    }
-
     // Transform response to match existing interface
-    return transformResponse(data as CommunityAggregateResponse);
+    return transformResponse(data);
   };
 
   return useQuery({

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
+import { Button } from "@/components/ui/button";
 import {
   useDonorPersona,
   useRefineDonorPersona,
@@ -15,13 +16,13 @@ import type {
   DonorPersona,
   PersonaStructured,
   PersonaStructuredField,
+  RefinementResult,
 } from "@/types/donor-research";
-import { PersonaNarrativePane } from "./PersonaNarrativePane";
+import { cn } from "@/utilities/tailwind";
 import { PersonaStructuredChips } from "./PersonaStructuredChips";
 import { RefineButton } from "./RefineButton";
 
 const MAX_SOURCE_LENGTH = 20000;
-const REFINED_INDICATOR_MS = 5000;
 
 const EMPTY_STRUCTURED: PersonaStructured = {
   orgMaturity: { value: null, source: null },
@@ -72,27 +73,49 @@ interface PersonaEditorProps {
 }
 
 /**
- * The persona authoring surface (U7). Owns the local editor state machine:
- * source text + read-only narrative + five structured chips with provenance,
- * a snapshot of the last refine extraction, and an `isDirty` flag gating Save.
+ * The persona authoring surface (U7). A single persona text field drives the
+ * whole flow: the advisor writes what they know and Refine writes the
+ * recommended narrative straight INTO the field (still editable), with an
+ * Accept/Reject bar attached under it. Accept keeps the field text (including
+ * any hand-tweaks to the suggestion) and applies the extracted chips/scalars;
+ * Reject restores the pre-refine text and discards the extraction. While the
+ * decision is pending, Refine and Save are hidden/disabled but the field stays
+ * editable so the suggestion can be tweaked in place.
+ *
+ * Because the field is the persona (not just raw notes), hydration prefers the
+ * saved narrative over the raw source, and Save persists the field text as
+ * BOTH `sourceText` and — once a narrative has ever been accepted — `narrative`,
+ * so hand-tweaks after accepting flow through to research.
  *
  * Hydration rules: hydrate from the fetched persona on mount and on any
  * background refetch — but only while NOT dirty, so an in-progress edit is
- * never clobbered. A refine writes its result into local state (chips →
- * `extracted`) and marks dirty so Save is enabled even with no manual edit.
+ * never clobbered.
  */
 export function PersonaEditor({ handleId, onDirtyChange, onSkip, onSaved }: PersonaEditorProps) {
   const personaQuery = useDonorPersona(handleId);
   const refine = useRefineDonorPersona(handleId);
   const update = useUpdateDonorPersona(handleId);
 
-  const [sourceText, setSourceText] = useState("");
-  const [narrative, setNarrative] = useState<string | null>(null);
+  const [personaText, setPersonaText] = useState("");
+  // True once the persona has an accepted/saved narrative — gates whether Save
+  // writes the field text into `narrative` too (raw never-refined notes stay
+  // sourceText-only so research doesn't treat them as a finished persona).
+  const [hasNarrative, setHasNarrative] = useState(false);
+  const [recommendation, setRecommendation] = useState<RefinementResult | null>(null);
+  // What the field held before Refine wrote the suggestion into it — restored
+  // verbatim on Reject, along with the dirty flag from that moment (so
+  // rejecting on an otherwise-clean editor doesn't leave a phantom dirty state
+  // that enables a no-op Save and trips the host's discard guard).
+  const [preRefine, setPreRefine] = useState({ text: "", wasDirty: false });
   const [structured, setStructured] = useState<PersonaStructured>(EMPTY_STRUCTURED);
   const [extractedValues, setExtractedValues] = useState<PersonaStructured | null>(null);
   const [isDirty, setIsDirty] = useState(false);
   const [announcement, setAnnouncement] = useState("");
-  const [justRefined, setJustRefined] = useState(false);
+  // Persistent inline feedback for a refine that extracted nothing. A toast
+  // alone proved too transient here — it auto-dismisses in seconds and the
+  // button then looks like a silent no-op. Cleared on typing or the next
+  // refine attempt.
+  const [refineNotice, setRefineNotice] = useState<string | null>(null);
   // Refine-extracted scalars. Not edited here — carried through so they persist
   // on save and then prefill the report form (amounts/cause/geography).
   const [amountMin, setAmountMin] = useState<number | null>(null);
@@ -106,8 +129,10 @@ export function PersonaEditor({ handleId, onDirtyChange, onSkip, onSaved }: Pers
   isDirtyRef.current = isDirty;
 
   const hydrate = useCallback((persona: DonorPersona | null | undefined) => {
-    setSourceText(persona?.sourceText ?? "");
-    setNarrative(persona?.narrative ?? null);
+    // The single field shows the persona itself: the accepted narrative when
+    // one exists, otherwise the raw source notes.
+    setPersonaText(persona?.narrative ?? persona?.sourceText ?? "");
+    setHasNarrative(persona?.narrative != null);
     setStructured(persona?.structured ?? EMPTY_STRUCTURED);
     setAmountMin(persona?.amountMin ?? null);
     setAmountMax(persona?.amountMax ?? null);
@@ -129,24 +154,19 @@ export function PersonaEditor({ handleId, onDirtyChange, onSkip, onSaved }: Pers
     onDirtyChange?.(isDirty);
   }, [isDirty, onDirtyChange]);
 
-  // Fade the "Refined just now" indicator after a few seconds.
-  useEffect(() => {
-    if (!justRefined) return;
-    const timer = setTimeout(() => setJustRefined(false), REFINED_INDICATOR_MS);
-    return () => clearTimeout(timer);
-  }, [justRefined]);
-
-  const onSourceChange = (value: string) => {
-    setSourceText(value);
+  const onPersonaTextChange = (value: string) => {
+    setPersonaText(value);
     setIsDirty(true);
+    setRefineNotice(null);
   };
 
   const onRefine = () => {
-    refine.mutate(sourceText, {
+    setRefineNotice(null);
+    refine.mutate(personaText, {
       onSuccess: (result) => {
         // A refine that extracts nothing (no narrative, no chips, no scalars)
-        // must not clobber whatever the editor already shows — leave the
-        // existing state untouched and tell the user to add more detail.
+        // has nothing to recommend — leave the editor untouched and tell the
+        // user to add more detail.
         const extractedNothing =
           !result.narrative &&
           result.amountMin == null &&
@@ -155,24 +175,48 @@ export function PersonaEditor({ handleId, onDirtyChange, onSkip, onSaved }: Pers
           !result.geography &&
           Object.values(result.structured).every((chip) => chip.value === null);
         if (extractedNothing) {
-          toast.error(
+          setRefineNotice(
             "Refine couldn't pull anything from these notes. Add more detail and try again."
           );
+          setAnnouncement("Refine couldn't pull anything from these notes");
           return;
         }
-        setNarrative(result.narrative);
-        setStructured(result.structured);
-        setExtractedValues(result.structured);
-        setAmountMin(result.amountMin ?? null);
-        setAmountMax(result.amountMax ?? null);
-        setCause(result.cause ?? null);
-        setGeography(result.geography ?? null);
+        // Write the suggestion straight into the field (kept editable) and
+        // remember what it replaced so Reject can restore it.
+        setPreRefine({ text: personaText, wasDirty: isDirty });
+        if (result.narrative) setPersonaText(result.narrative);
+        setRecommendation(result);
+        // Mark dirty while the suggestion is pending: it blocks the hydration
+        // effect from clobbering the in-field suggestion on a background
+        // refetch, and arms the host's discard guard against dismissal.
         setIsDirty(true);
-        setAnnouncement("Persona narrative updated");
-        setJustRefined(true);
+        setAnnouncement("Recommended profile written to the input — accept or reject below");
       },
-      onError: (err) => toastError(err, "Couldn't refine the persona. Try again."),
+      onError: (err) => toastError(err, "Couldn't refine the profile. Try again."),
     });
+  };
+
+  const onAcceptRecommendation = () => {
+    if (!recommendation) return;
+    // The field already holds the suggestion (possibly hand-tweaked) — keep it
+    // as-is and apply the extracted chips/scalars.
+    if (recommendation.narrative) setHasNarrative(true);
+    setStructured(recommendation.structured);
+    setExtractedValues(recommendation.structured);
+    setAmountMin(recommendation.amountMin ?? null);
+    setAmountMax(recommendation.amountMax ?? null);
+    setCause(recommendation.cause ?? null);
+    setGeography(recommendation.geography ?? null);
+    setRecommendation(null);
+    setIsDirty(true);
+    setAnnouncement("Recommended profile accepted");
+  };
+
+  const onRejectRecommendation = () => {
+    setPersonaText(preRefine.text);
+    setIsDirty(preRefine.wasDirty);
+    setRecommendation(null);
+    setAnnouncement("Recommendation discarded — your original text was restored");
   };
 
   // Stable identity so the memoized chip rows aren't redrawn every render.
@@ -202,9 +246,10 @@ export function PersonaEditor({ handleId, onDirtyChange, onSkip, onSaved }: Pers
       if (field.value !== null) structuredInput[key] = toChipInput(field);
     }
 
+    const text = personaText.length ? personaText : null;
     const input: UpdateDonorPersonaInput = {
-      sourceText: sourceText.length ? sourceText : null,
-      narrative,
+      sourceText: text,
+      narrative: hasNarrative ? text : null,
       // Persist the refine-extracted scalars so they survive the save and
       // prefill the report form (this was the missing link: refine returned
       // them but the PUT dropped them, so the GET came back null).
@@ -218,12 +263,12 @@ export function PersonaEditor({ handleId, onDirtyChange, onSkip, onSaved }: Pers
       onSuccess: (saved) => {
         hydrate(saved);
         setIsDirty(false);
-        toast.success("Persona saved");
+        toast.success("Profile saved");
         onSaved?.();
       },
       // Rollback is handled by the mutation hook; isDirty stays true so the
       // Save button remains an actionable retry.
-      onError: (err) => toastError(err, "Couldn't save the persona. Try again."),
+      onError: (err) => toastError(err, "Couldn't save the profile. Try again."),
     });
   };
 
@@ -240,63 +285,104 @@ export function PersonaEditor({ handleId, onDirtyChange, onSkip, onSaved }: Pers
   if (personaQuery.isError) {
     return (
       <div className="rounded-md border border-border p-4 text-sm">
-        <p className="mb-2 text-red-600 dark:text-red-400">Couldn't load the persona.</p>
-        <button
-          type="button"
-          onClick={() => personaQuery.refetch()}
-          className="rounded-md border border-border px-3 py-1.5 hover:bg-muted"
-        >
+        <p className="mb-2 text-red-600 dark:text-red-400">Couldn't load the profile.</p>
+        <Button type="button" variant="outline" size="sm" onClick={() => personaQuery.refetch()}>
           Retry
-        </button>
+        </Button>
       </div>
     );
   }
 
+  const isReviewing = recommendation !== null;
+
   return (
     <div className="flex flex-col gap-5">
-      {/* Source text */}
+      {/* Persona text — the one input. Locked while a recommendation awaits a decision. */}
       <div className="flex flex-col gap-1.5">
         <label htmlFor="persona-source" className="text-sm font-medium">
-          Persona source
+          Donor preferences
         </label>
         <p className="text-xs text-muted-foreground">
-          Paste donor letters, kickoff notes, anything that describes this donor. Refined and used
-          by research.
+          Paste donor letters, kickoff notes, anything that describes this donor, then click Refine
+          to get a recommended profile.
         </p>
-        <textarea
-          id="persona-source"
-          value={sourceText}
-          onChange={(e) => onSourceChange(e.target.value)}
-          maxLength={MAX_SOURCE_LENGTH}
-          rows={8}
-          placeholder="What do you know about this donor?"
-          className="max-h-[60vh] w-full resize-y overflow-y-auto rounded-md border border-border bg-background px-3 py-2 text-sm"
-        />
-        <span className="self-end text-xs text-muted-foreground">
-          {sourceText.length} / {MAX_SOURCE_LENGTH}
-        </span>
+        <div className="relative">
+          <textarea
+            id="persona-source"
+            value={personaText}
+            onChange={(e) => onPersonaTextChange(e.target.value)}
+            maxLength={MAX_SOURCE_LENGTH}
+            rows={8}
+            placeholder="What do you know about this donor?"
+            className={cn(
+              // The forms-plugin ring is suppressed on pointer focus (design
+              // request), but keyboard focus keeps a visible indicator.
+              "block max-h-[60vh] w-full overflow-y-auto rounded-md border border-border bg-background px-3 py-2 text-sm",
+              "focus:border-border focus:outline-none focus:ring-0",
+              "focus-visible:ring-1 focus-visible:ring-ring",
+              isReviewing ? "resize-none pb-14" : "resize-y"
+            )}
+          />
+          {/* While a suggestion sits in the field, the decision bar floats
+              INSIDE the input, anchored to its bottom edge (the textarea gets
+              matching bottom padding and its resize handle is disabled so the
+              buttons never overlap content or the grip). Accept keeps the
+              (editable) text, Reject restores what was there before. */}
+          {isReviewing ? (
+            <div className="absolute inset-x-px bottom-px flex flex-wrap items-center justify-between gap-2 rounded-b-md bg-background/90 px-3 py-2">
+              <span className="text-xs font-medium text-primary">
+                {recommendation.narrative
+                  ? "Recommended profile"
+                  : "No narrative was generated, but donor details were extracted"}
+              </span>
+              <div className="flex gap-2">
+                <Button type="button" variant="outline" size="sm" onClick={onRejectRecommendation}>
+                  Reject
+                </Button>
+                <Button type="button" size="sm" onClick={onAcceptRecommendation}>
+                  Accept
+                </Button>
+              </div>
+            </div>
+          ) : null}
+        </div>
+        {/* Char counter (left) and Refine (right) share one row under the input. */}
+        {isReviewing ? null : (
+          <>
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs text-muted-foreground">
+                {personaText.length} / {MAX_SOURCE_LENGTH}
+              </span>
+              <RefineButton
+                sourceText={personaText}
+                isRefining={refine.isPending}
+                onRefine={onRefine}
+              />
+            </div>
+            {refineNotice ? (
+              <p className="text-xs text-red-600 dark:text-red-400">{refineNotice}</p>
+            ) : null}
+          </>
+        )}
       </div>
 
-      <div className="flex items-center gap-3">
-        <RefineButton sourceText={sourceText} isRefining={refine.isPending} onRefine={onRefine} />
-        {justRefined ? (
-          <span className="text-xs text-muted-foreground transition-opacity">Refined just now</span>
-        ) : null}
-      </div>
-
-      <PersonaNarrativePane narrative={narrative} announcement={announcement} />
+      <output className="sr-only" aria-live="polite">
+        {announcement}
+      </output>
 
       <div className="flex flex-col gap-3">
         <div className="flex items-center justify-between">
           <span className="text-sm font-medium">Structured profile</span>
           {extractedValues ? (
-            <button
+            <Button
               type="button"
+              variant="link"
+              size="sm"
               onClick={onResetToExtraction}
-              className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground"
+              className="h-auto p-0 text-xs text-muted-foreground hover:text-foreground"
             >
               Reset to AI extraction
-            </button>
+            </Button>
           ) : null}
         </div>
         <PersonaStructuredChips structured={structured} onChange={onChipChange} />
@@ -307,22 +393,18 @@ export function PersonaEditor({ handleId, onDirtyChange, onSkip, onSaved }: Pers
           the persona step as optional. */}
       <div className="sticky bottom-0 z-10 -mx-4 flex flex-col gap-2 border-t border-border bg-card px-4 py-3 sm:static sm:mx-0 sm:flex-row sm:justify-end sm:border-0 sm:bg-transparent sm:p-0">
         {onSkip ? (
-          <button
-            type="button"
-            onClick={onSkip}
-            className="order-2 rounded-md border border-border px-4 py-2 text-sm font-medium hover:bg-muted sm:order-1"
-          >
+          <Button type="button" variant="outline" onClick={onSkip} className="order-2 sm:order-1">
             Skip for now
-          </button>
+          </Button>
         ) : null}
-        <button
+        <Button
           type="button"
           onClick={onSave}
-          disabled={!isDirty || update.isPending}
-          className="order-1 w-full rounded-md border border-border bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50 sm:order-2 sm:w-auto"
+          disabled={!isDirty || isReviewing || update.isPending}
+          className="order-1 w-full sm:order-2 sm:w-auto"
         >
-          {update.isPending ? "Saving persona…" : "Save persona"}
-        </button>
+          {update.isPending ? "Saving profile…" : "Save profile"}
+        </Button>
       </div>
     </div>
   );

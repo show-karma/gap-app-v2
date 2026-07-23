@@ -184,6 +184,39 @@ describe("TokenManager", () => {
       expect(token).toBe("fresh-token");
       expect(mockGetAccessToken).toHaveBeenCalledTimes(1);
     });
+
+    it("should not let an older in-flight request overwrite the refreshed token", async () => {
+      let resolveOld: (token: string | null) => void = () => {};
+      let resolveFresh: (token: string | null) => void = () => {};
+      mockGetAccessToken
+        .mockImplementationOnce(
+          () =>
+            new Promise<string | null>((resolve) => {
+              resolveOld = resolve;
+            })
+        )
+        .mockImplementationOnce(
+          () =>
+            new Promise<string | null>((resolve) => {
+              resolveFresh = resolve;
+            })
+        );
+
+      const oldRequest = TokenManager.getToken();
+      TokenManager.clearCache();
+      const freshRequest = TokenManager.getToken();
+
+      resolveFresh("fresh-account-token");
+      expect(await freshRequest).toBe("fresh-account-token");
+
+      // The previous account's slower request resolves last. Its caller may
+      // finish, but it must not replace the fresh account's cached token.
+      resolveOld("old-account-token");
+      expect(await oldRequest).toBe("old-account-token");
+
+      expect(await TokenManager.getToken()).toBe("fresh-account-token");
+      expect(mockGetAccessToken).toHaveBeenCalledTimes(2);
+    });
   });
 
   // =========================================================================

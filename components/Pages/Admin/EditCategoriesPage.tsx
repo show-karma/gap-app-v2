@@ -11,7 +11,7 @@ import { useCategories } from "@/hooks/useCategories";
 import { useCommunityGrants } from "@/hooks/useCommunityGrants";
 import type { SimplifiedGrant } from "@/hooks/useGrants";
 import { useGrantsTable } from "@/hooks/useGrantsTable";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { defaultMetadata } from "@/utilities/meta";
@@ -108,13 +108,15 @@ export default function EditCategoriesPage() {
     try {
       let hasError = false;
       const promises = Object.entries(selectedCategories).map(([uid, categories]) => {
-        return fetchData(INDEXER.PROJECT.CATEGORIES.UPDATE(uid), "PUT", {
-          categories,
-          communityUID: community?.uid,
-        }).catch((error) => {
-          console.error(error);
-          hasError = true;
-        });
+        return api
+          .put(INDEXER.PROJECT.CATEGORIES.UPDATE(uid), {
+            categories,
+            communityUID: community?.uid,
+          })
+          .catch((error) => {
+            console.error(error);
+            hasError = true;
+          });
       });
       await Promise.all(promises);
 

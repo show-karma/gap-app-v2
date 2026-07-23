@@ -5,14 +5,16 @@ import type {
   PaginatedFundingProgramsResponse,
 } from "../types/funding-program";
 
-// Mock fetchData
-vi.mock("@/utilities/fetchData");
+// Mock the typed api client
+vi.mock("@/utilities/api/client", () => ({
+  api: { get: vi.fn() },
+}));
 
 // Import after mock
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { fundingProgramsService } from "../services/funding-programs.service";
 
-const mockFetchData = fetchData as vi.MockedFunction<typeof fetchData>;
+const mockApiGet = api.get as vi.MockedFunction<typeof api.get>;
 
 describe("fundingProgramsService", () => {
   beforeEach(() => {
@@ -57,13 +59,11 @@ describe("fundingProgramsService", () => {
     it("should fetch programs with default parameters", async () => {
       const mockPrograms = [createMockProgram()];
       const mockResponse = createMockPaginatedResponse(mockPrograms);
-      mockFetchData.mockResolvedValue([mockResponse, null, null, 200]);
+      mockApiGet.mockResolvedValue(mockResponse);
 
       const result = await fundingProgramsService.getAll();
 
-      expect(mockFetchData).toHaveBeenCalledWith(
-        expect.stringContaining(INDEXER.V2.REGISTRY.GET_ALL)
-      );
+      expect(mockApiGet).toHaveBeenCalledWith(expect.stringContaining(INDEXER.V2.REGISTRY.GET_ALL));
       expect(result.programs).toEqual(mockPrograms);
       expect(result.count).toBe(1);
       expect(result.totalPages).toBe(1);
@@ -71,11 +71,11 @@ describe("fundingProgramsService", () => {
 
     it("should use V2 program-registry/search endpoint", async () => {
       const mockResponse = createMockPaginatedResponse([]);
-      mockFetchData.mockResolvedValue([mockResponse, null, null, 200]);
+      mockApiGet.mockResolvedValue(mockResponse);
 
       await fundingProgramsService.getAll();
 
-      expect(mockFetchData).toHaveBeenCalledWith(
+      expect(mockApiGet).toHaveBeenCalledWith(
         expect.stringContaining("/v2/program-registry/search")
       );
     });
@@ -85,85 +85,85 @@ describe("fundingProgramsService", () => {
         currentPage: 3,
         totalPages: 5,
       });
-      mockFetchData.mockResolvedValue([mockResponse, null, null, 200]);
+      mockApiGet.mockResolvedValue(mockResponse);
 
       await fundingProgramsService.getAll({ page: 3 });
 
-      expect(mockFetchData).toHaveBeenCalledWith(expect.stringContaining("page=3"));
+      expect(mockApiGet).toHaveBeenCalledWith(expect.stringContaining("page=3"));
     });
 
     it("should pass pageSize as limit parameter", async () => {
       const mockResponse = createMockPaginatedResponse([]);
-      mockFetchData.mockResolvedValue([mockResponse, null, null, 200]);
+      mockApiGet.mockResolvedValue(mockResponse);
 
       await fundingProgramsService.getAll({ pageSize: 20 });
 
-      expect(mockFetchData).toHaveBeenCalledWith(expect.stringContaining("limit=20"));
+      expect(mockApiGet).toHaveBeenCalledWith(expect.stringContaining("limit=20"));
     });
 
     it("should use default pageSize when not provided", async () => {
       const mockResponse = createMockPaginatedResponse([]);
-      mockFetchData.mockResolvedValue([mockResponse, null, null, 200]);
+      mockApiGet.mockResolvedValue(mockResponse);
 
       await fundingProgramsService.getAll();
 
-      expect(mockFetchData).toHaveBeenCalledWith(
+      expect(mockApiGet).toHaveBeenCalledWith(
         expect.stringContaining(`limit=${FUNDING_MAP_PAGE_SIZE}`)
       );
     });
 
     it("should pass search parameter as name", async () => {
       const mockResponse = createMockPaginatedResponse([]);
-      mockFetchData.mockResolvedValue([mockResponse, null, null, 200]);
+      mockApiGet.mockResolvedValue(mockResponse);
 
       await fundingProgramsService.getAll({ search: "optimism" });
 
-      expect(mockFetchData).toHaveBeenCalledWith(expect.stringContaining("name=optimism"));
+      expect(mockApiGet).toHaveBeenCalledWith(expect.stringContaining("name=optimism"));
     });
 
     it("should pass status filter", async () => {
       const mockResponse = createMockPaginatedResponse([]);
-      mockFetchData.mockResolvedValue([mockResponse, null, null, 200]);
+      mockApiGet.mockResolvedValue(mockResponse);
 
       await fundingProgramsService.getAll({ status: "active" });
 
-      expect(mockFetchData).toHaveBeenCalledWith(expect.stringContaining("status=active"));
+      expect(mockApiGet).toHaveBeenCalledWith(expect.stringContaining("status=active"));
     });
 
     it("should pass categories filter", async () => {
       const mockResponse = createMockPaginatedResponse([]);
-      mockFetchData.mockResolvedValue([mockResponse, null, null, 200]);
+      mockApiGet.mockResolvedValue(mockResponse);
 
       await fundingProgramsService.getAll({ categories: ["DeFi", "NFT"] });
 
-      expect(mockFetchData).toHaveBeenCalledWith(expect.stringContaining("categories="));
+      expect(mockApiGet).toHaveBeenCalledWith(expect.stringContaining("categories="));
     });
 
     it("should pass ecosystems filter", async () => {
       const mockResponse = createMockPaginatedResponse([]);
-      mockFetchData.mockResolvedValue([mockResponse, null, null, 200]);
+      mockApiGet.mockResolvedValue(mockResponse);
 
       await fundingProgramsService.getAll({ ecosystems: ["Optimism"] });
 
-      expect(mockFetchData).toHaveBeenCalledWith(expect.stringContaining("ecosystems=Optimism"));
+      expect(mockApiGet).toHaveBeenCalledWith(expect.stringContaining("ecosystems=Optimism"));
     });
 
     it("should pass networks filter", async () => {
       const mockResponse = createMockPaginatedResponse([]);
-      mockFetchData.mockResolvedValue([mockResponse, null, null, 200]);
+      mockApiGet.mockResolvedValue(mockResponse);
 
       await fundingProgramsService.getAll({ networks: ["Ethereum"] });
 
-      expect(mockFetchData).toHaveBeenCalledWith(expect.stringContaining("networks=Ethereum"));
+      expect(mockApiGet).toHaveBeenCalledWith(expect.stringContaining("networks=Ethereum"));
     });
 
     it("should pass grantTypes filter", async () => {
       const mockResponse = createMockPaginatedResponse([]);
-      mockFetchData.mockResolvedValue([mockResponse, null, null, 200]);
+      mockApiGet.mockResolvedValue(mockResponse);
 
       await fundingProgramsService.getAll({ grantTypes: ["Direct Funding"] });
 
-      expect(mockFetchData).toHaveBeenCalledWith(expect.stringContaining("grantTypes="));
+      expect(mockApiGet).toHaveBeenCalledWith(expect.stringContaining("grantTypes="));
     });
 
     it("should use totalPages from V2 response directly", async () => {
@@ -172,7 +172,7 @@ describe("fundingProgramsService", () => {
         count: 50,
         totalPages: 5,
       });
-      mockFetchData.mockResolvedValue([mockResponse, null, null, 200]);
+      mockApiGet.mockResolvedValue(mockResponse);
 
       const result = await fundingProgramsService.getAll();
 
@@ -181,7 +181,7 @@ describe("fundingProgramsService", () => {
     });
 
     it("should return empty result when response is null", async () => {
-      mockFetchData.mockResolvedValue([null, null, null, 200]);
+      mockApiGet.mockResolvedValue(null as unknown as PaginatedFundingProgramsResponse);
 
       const result = await fundingProgramsService.getAll();
 
@@ -191,14 +191,14 @@ describe("fundingProgramsService", () => {
     });
 
     it("should throw error when API returns error", async () => {
-      mockFetchData.mockResolvedValue([null, "API Error", null, 500]);
+      mockApiGet.mockRejectedValue(new Error("API Error"));
 
       await expect(fundingProgramsService.getAll()).rejects.toThrow("API Error");
     });
 
     it("should handle multiple filters combined", async () => {
       const mockResponse = createMockPaginatedResponse([]);
-      mockFetchData.mockResolvedValue([mockResponse, null, null, 200]);
+      mockApiGet.mockResolvedValue(mockResponse);
 
       await fundingProgramsService.getAll({
         page: 2,
@@ -209,7 +209,7 @@ describe("fundingProgramsService", () => {
         ecosystems: ["Optimism"],
       });
 
-      const calledUrl = mockFetchData.mock.calls[0][0] as string;
+      const calledUrl = mockApiGet.mock.calls[0][0] as string;
       expect(calledUrl).toContain("page=2");
       expect(calledUrl).toContain("limit=10");
       expect(calledUrl).toContain("name=test");
@@ -222,36 +222,36 @@ describe("fundingProgramsService", () => {
   describe("getById", () => {
     it("should fetch single program by ID", async () => {
       const mockProgram = createMockProgram();
-      mockFetchData.mockResolvedValue([mockProgram, null, null, 200]);
+      mockApiGet.mockResolvedValue(mockProgram);
 
       const result = await fundingProgramsService.getById("program-1");
 
       expect(result).toEqual(mockProgram);
-      expect(mockFetchData).toHaveBeenCalledWith(INDEXER.V2.REGISTRY.GET_BY_ID("program-1"));
+      expect(mockApiGet).toHaveBeenCalledWith(INDEXER.V2.REGISTRY.GET_BY_ID("program-1"));
     });
 
     it("should use V2 program-registry endpoint for single program", async () => {
       const mockProgram = createMockProgram();
-      mockFetchData.mockResolvedValue([mockProgram, null, null, 200]);
+      mockApiGet.mockResolvedValue(mockProgram);
 
       await fundingProgramsService.getById("program-1");
 
-      expect(mockFetchData).toHaveBeenCalledWith("/v2/program-registry/program-1");
+      expect(mockApiGet).toHaveBeenCalledWith("/v2/program-registry/program-1");
     });
 
     it("should pass composite programId format through to API", async () => {
       // Note: getById passes programId directly - callers should use parseProgramIdAndChainId
       // to extract the normalized programId if they have a composite format
       const mockProgram = createMockProgram();
-      mockFetchData.mockResolvedValue([mockProgram, null, null, 200]);
+      mockApiGet.mockResolvedValue(mockProgram);
 
       await fundingProgramsService.getById("program-1_42161");
 
-      expect(mockFetchData).toHaveBeenCalledWith("/v2/program-registry/program-1_42161");
+      expect(mockApiGet).toHaveBeenCalledWith("/v2/program-registry/program-1_42161");
     });
 
     it("should return null when program not found", async () => {
-      mockFetchData.mockResolvedValue([null, "Not found", null, 404]);
+      mockApiGet.mockRejectedValue(new Error("Not found"));
 
       const result = await fundingProgramsService.getById("nonexistent");
 
@@ -259,7 +259,7 @@ describe("fundingProgramsService", () => {
     });
 
     it("should return null when error occurs", async () => {
-      mockFetchData.mockResolvedValue([null, "Server error", null, 500]);
+      mockApiGet.mockRejectedValue(new Error("Server error"));
 
       const result = await fundingProgramsService.getById("program-1");
 

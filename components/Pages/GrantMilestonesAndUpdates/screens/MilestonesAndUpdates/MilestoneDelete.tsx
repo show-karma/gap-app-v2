@@ -11,7 +11,7 @@ import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useGrantStore } from "@/store/grant";
 import type { GrantMilestone } from "@/types/v2/grant";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { retryUntilConditionMet } from "@/utilities/retries";
@@ -39,7 +39,7 @@ export const MilestoneDelete: FC<MilestoneDeleteProps> = ({ milestone }) => {
   const { performOffChainRevoke } = useOffChainRevoke();
 
   const deleteFn = async () => {
-    if (!address || !project) return;
+    if (!project) return;
     setIsDeletingMilestone(true);
     startAttestation("Deleting milestone...");
     try {
@@ -110,11 +110,7 @@ export const MilestoneDelete: FC<MilestoneDeleteProps> = ({ milestone }) => {
           changeStepperStep("indexing");
           const txHash = res?.tx[0]?.hash;
           if (txHash) {
-            await fetchData(
-              INDEXER.ATTESTATION_LISTENER(txHash, milestoneInstance.chainID),
-              "POST",
-              {}
-            );
+            await api.post(INDEXER.ATTESTATION_LISTENER(txHash, milestoneInstance.chainID), {});
           }
           await checkIfAttestationExists(async () => {
             changeStepperStep("indexed");

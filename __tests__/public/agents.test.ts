@@ -57,6 +57,6 @@ describe("public/agents.md", () => {
 
   it("points at the canonical MCP endpoint on the indexer", () => {
     const contents = fs.readFileSync(AGENTS_MD_PATH, "utf-8");
-    expect(contents).toContain("https://gapapi.karmahq.xyz/v2/mcp");
+    expect(contents).toContain("https://gapapi.karmahq.xyz/mcp");
   });
 });

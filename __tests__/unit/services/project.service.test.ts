@@ -15,14 +15,23 @@ vi.mock("@/components/Utilities/errorManager", () => ({
   errorManager: vi.fn(),
 }));
 
-// Mock fetchData utility
-vi.mock("@/utilities/fetchData");
+// Mock the typed api client
+vi.mock("@/utilities/api/client", () => ({
+  api: {
+    get: vi.fn(),
+    post: vi.fn(),
+    put: vi.fn(),
+    patch: vi.fn(),
+    delete: vi.fn(),
+  },
+}));
 
 import { errorManager } from "@/components/Utilities/errorManager";
 import { getProject } from "@/services/project.service";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
+import { HttpError } from "@/utilities/api/errors";
 
-const mockFetchData = fetchData as vi.MockedFunction<typeof fetchData>;
+const mockApiGet = api.get as vi.MockedFunction<typeof api.get>;
 const mockErrorManager = errorManager as vi.MockedFunction<typeof errorManager>;
 
 describe("project.service", () => {
@@ -37,16 +46,22 @@ describe("project.service", () => {
         slug: "project-slug",
       } as any;
 
-      mockFetchData.mockResolvedValueOnce([mockProject, null, null, 200]);
+      mockApiGet.mockResolvedValueOnce(mockProject);
 
       const result = await getProject("project-slug");
 
       expect(result).toEqual(mockProject);
-      expect(mockFetchData).toHaveBeenCalledWith(expect.stringContaining("project-slug"));
+      expect(mockApiGet).toHaveBeenCalledWith(expect.stringContaining("project-slug"));
     });
 
     it("should return null without reporting on 404", async () => {
-      mockFetchData.mockResolvedValueOnce([null, "Project with slug unknown not found", null, 404]);
+      mockApiGet.mockRejectedValueOnce(
+        new HttpError(404, {
+          endpoint: "/v2/projects/unknown",
+          method: "GET",
+          body: { message: "Project with slug unknown not found" },
+        })
+      );
 
       const result = await getProject("unknown");
 
@@ -55,14 +70,19 @@ describe("project.service", () => {
     });
 
     it("should report non-404 errors", async () => {
-      mockFetchData.mockResolvedValueOnce([null, "Server error", null, 500]);
+      const error = new HttpError(500, {
+        endpoint: "/v2/projects/project-slug",
+        method: "GET",
+        body: { message: "Server error" },
+      });
+      mockApiGet.mockRejectedValueOnce(error);
 
       const result = await getProject("project-slug");
 
       expect(result).toBeNull();
       expect(mockErrorManager).toHaveBeenCalledWith(
-        "Project API Error: Server error",
-        "Server error",
+        expect.stringContaining("Project API Error:"),
+        error,
         {
           context: "project.service",
         }

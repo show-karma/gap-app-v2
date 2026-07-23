@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { ReportMilestonePage } from "@/components/Pages/Admin/ReportMilestonePage";
 import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
 import { errorManager } from "@/components/Utilities/errorManager";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 import { defaultMetadata } from "@/utilities/meta";
 import { getCommunityDetails } from "@/utilities/queries/v2/community";
@@ -15,11 +15,8 @@ interface Props {
 
 const getGrantPrograms = async (communityId: string): Promise<GrantProgram[]> => {
   try {
-    const [result, error] = await fetchData(INDEXER.COMMUNITY.PROGRAMS(communityId));
-    if (error) {
-      errorManager(`Error with fetching grant programs for community ${communityId}`, error);
-    }
-    return result as GrantProgram[];
+    // TODO(#1775): add zod schema
+    return await api.get<GrantProgram[]>(INDEXER.COMMUNITY.PROGRAMS(communityId));
   } catch (error: unknown) {
     errorManager(`Error while fetching grant programs of community ${communityId}`, error);
     return [];

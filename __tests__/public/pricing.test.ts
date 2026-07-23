@@ -29,7 +29,7 @@ describe("public/pricing.md", () => {
     const contents = fs.readFileSync(PRICING_MD_PATH, "utf-8");
     expect(contents).toContain("## API access");
     expect(contents).toContain("fair-use rate limits");
-    expect(contents).toContain("https://gapapi.karmahq.xyz/v2/mcp");
+    expect(contents).toContain("https://gapapi.karmahq.xyz/mcp");
   });
 
   it("includes a Last updated section pointing back to the apex marketing URL", () => {

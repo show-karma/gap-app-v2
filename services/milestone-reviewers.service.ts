@@ -1,7 +1,8 @@
 import axios from "axios";
+import { api } from "@/utilities/api/client";
+import { HttpError } from "@/utilities/api/errors";
 import { createAuthenticatedApiClient } from "@/utilities/auth/api-client";
 import { envVars } from "@/utilities/enviromentVars";
-import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import {
   validateEmail,
@@ -13,6 +14,22 @@ const API_URL = envVars.NEXT_PUBLIC_GAP_INDEXER_URL;
 
 // Keep apiClient for mutations (POST, DELETE)
 const apiClient = createAuthenticatedApiClient(API_URL, 30000);
+
+/**
+ * Extracts the same human-readable error message the legacy `fetchData`
+ * adapter surfaced for an `HttpError`: prefer the server response body's
+ * `message`, then the original axios error's message, then the client's
+ * synthetic message. Falls back to a plain `Error.message` (or
+ * `String(error)`) for non-HTTP `ApiError`s.
+ */
+function httpErrorMessage(error: unknown): string {
+  if (error instanceof HttpError) {
+    const bodyMessage = (error.body as { message?: string } | undefined)?.message;
+    const causeMessage = (error.cause as { message?: string } | undefined)?.message;
+    return bodyMessage || causeMessage || error.message;
+  }
+  return error instanceof Error ? error.message : String(error);
+}
 
 /**
  * User profile information
@@ -80,14 +97,22 @@ export const milestoneReviewersService = {
    * Get all milestone reviewers for a program
    */
   async getReviewers(programId: string): Promise<MilestoneReviewer[]> {
-    const [data, error] = await fetchData<MilestoneReviewerResponse[]>(
-      INDEXER.V2.MILESTONE_REVIEWERS.LIST(programId)
-    );
-
-    if (error) {
-      // Handle "No reviewers found" as an empty list, not an error
-      const errorMessage = String(error);
+    let data: MilestoneReviewerResponse[] | null;
+    try {
+      // TODO(#1775): add zod schema
+      data = await api.get<MilestoneReviewerResponse[]>(
+        INDEXER.V2.MILESTONE_REVIEWERS.LIST(programId)
+      );
+    } catch (error) {
+      // A program with no reviewers is an empty list, not a failure. The
+      // backend signals this with a 404 (list resource not found); some
+      // deployments also phrase it in the body message. Match on the status
+      // first so we don't depend on exact copy, then keep the message checks
+      // for backends that return a non-404 "not found". Only a genuine error
+      // (500, network, etc.) surfaces to the caller.
+      const errorMessage = httpErrorMessage(error);
       if (
+        (error instanceof HttpError && error.status === 404) ||
         errorMessage.includes("Milestone Reviewer Not Found") ||
         errorMessage.includes("No reviewers found")
       ) {

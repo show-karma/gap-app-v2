@@ -1,66 +1,48 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { ResearchReportDetail } from "@/types/donor-research";
 
-const fetchDataMock = vi.fn();
+const mockApiGet = vi.fn();
 
-vi.mock("@/utilities/fetchData", () => ({
-  default: (...args: unknown[]) => fetchDataMock(...args),
+vi.mock("@/utilities/api/client", () => ({
+  api: {
+    get: (...args: unknown[]) => mockApiGet(...args),
+    post: vi.fn(),
+    put: vi.fn(),
+    patch: vi.fn(),
+    delete: vi.fn(),
+    request: vi.fn(),
+    getPaginated: vi.fn(),
+  },
 }));
 
-import { getAdminReport, listAdvisors } from "@/services/donor-research-admin.service";
+import { listAdvisors } from "@/services/donor-research-admin.service";
+import { HttpError } from "@/utilities/api/errors";
 
 describe("donor-research admin service", () => {
   beforeEach(() => {
-    fetchDataMock.mockReset();
+    mockApiGet.mockReset();
   });
 
   describe("listAdvisors", () => {
     it("hits the admin advisors endpoint with page + limit params", async () => {
-      fetchDataMock.mockResolvedValue([{ items: [], total: 0, page: 2, limit: 20 }, null]);
+      mockApiGet.mockResolvedValue({ items: [], total: 0, page: 2, limit: 20 });
 
       await listAdvisors({ page: 2, limit: 20 });
 
-      const [url, method, , params] = fetchDataMock.mock.calls[0];
+      const [url, opts] = mockApiGet.mock.calls[0];
       expect(url).toBe("/v2/admin/donor-research/advisors");
-      expect(method).toBe("GET");
-      expect(params).toEqual({ page: 2, limit: 20 });
+      expect(opts.params).toEqual({ page: 2, limit: 20 });
     });
 
     it("throws when the request fails", async () => {
-      fetchDataMock.mockResolvedValue([null, "forbidden"]);
+      mockApiGet.mockRejectedValue(
+        new HttpError(403, {
+          endpoint: "/v2/admin/donor-research/advisors",
+          method: "GET",
+          body: { message: "forbidden" },
+        })
+      );
 
       await expect(listAdvisors()).rejects.toThrow("forbidden");
-    });
-  });
-
-  describe("getAdminReport", () => {
-    function reportWithBareCandidate(): ResearchReportDetail {
-      return {
-        id: "r1",
-        candidates: [{ id: "c1", socialMetrics: null }],
-      } as unknown as ResearchReportDetail;
-    }
-
-    it("hits the admin report endpoint by id", async () => {
-      fetchDataMock.mockResolvedValue([reportWithBareCandidate(), null]);
-
-      await getAdminReport("r1");
-
-      expect(fetchDataMock.mock.calls[0][0]).toBe("/v2/admin/donor-research/reports/r1");
-    });
-
-    it("returns the report untouched (no fabricated social metrics)", async () => {
-      fetchDataMock.mockResolvedValue([reportWithBareCandidate(), null]);
-
-      const report = await getAdminReport("r1");
-
-      expect(report.candidates[0].socialMetrics).toBeNull();
-    });
-
-    it("throws when the report cannot be loaded", async () => {
-      fetchDataMock.mockResolvedValue([null, "not found"]);
-
-      await expect(getAdminReport("missing")).rejects.toThrow("not found");
     });
   });
 });

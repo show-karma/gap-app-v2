@@ -23,7 +23,6 @@ export const PAGES = {
     PROJECT_DISCOVERY: (community: string) => `/community/${community}/impact/project-discovery`,
     UPDATES: (community: string) => `/community/${community}/updates`,
     FINANCIALS: (community: string) => `/community/${community}/financials`,
-    RECEIVEPROJECTUPDATES: (community: string) => `/community/${community}/receive-project-updates`,
     PROGRAMS: (community: string) => `/community/${community}/funding-opportunities`,
     PROGRAM_DETAIL: (community: string, programId: string) =>
       `/community/${community}/programs/${programId}`,
@@ -39,8 +38,15 @@ export const PAGES = {
     BROWSE_APPLICATIONS: (community: string) => `/community/${community}/browse-applications`,
     CLAIM_FUNDS: (community: string) => `/community/${community}/claim-funds`,
     REPORTS: (community: string) => `/community/${community}/reports`,
-    REPORT_DETAIL: (community: string, runDate: string) =>
-      `/community/${community}/reports/${encodeURIComponent(runDate)}`,
+    /**
+     * `configSlug` disambiguates reports sharing a run date. Omit it only when
+     * the slug is unavailable (deleted config) — the run-date-only URL cannot
+     * address a specific report and resolves to the newest one for that date.
+     */
+    REPORT_DETAIL: (community: string, runDate: string, configSlug?: string | null) =>
+      configSlug
+        ? `/community/${community}/reports/${encodeURIComponent(runDate)}/${encodeURIComponent(configSlug)}`
+        : `/community/${community}/reports/${encodeURIComponent(runDate)}`,
     ASK_KARMA: (community: string) => `/community/${community}/ask-karma`,
   },
   MY_PROJECTS: `/my-projects`,
@@ -49,12 +55,21 @@ export const PAGES = {
   DONATIONS: `/donations`,
   DONOR_RESEARCH: {
     INDEX: `/nonprofit-research`,
+    // Dedicated report-creation page (redesign P1) — the criteria form moved
+    // off the section home so the home page can be list-first.
+    NEW: `/nonprofit-research/new`,
+    // Donor-handle management, presented to advisors as "Personas" (redesign
+    // P2). Code/API identifiers stay "donor handle" — only the UI copy
+    // renames.
+    PERSONAS: `/nonprofit-research/personas`,
+    PERSONA: (handleId: string) => `/nonprofit-research/personas/${handleId}`,
     ONBOARDING: `/nonprofit-research/onboarding`,
     REPORT: (reportId: string) => `/nonprofit-research/${reportId}`,
     SHARED: (token: string) => `/nonprofit-research/shared/${token}`,
-    // Staff-only admin overview (DEV-467).
+    // Staff-only admin overview. Reports have no admin route — staff open
+    // the regular REPORT page; the API grants staff an unscoped read on
+    // the same endpoint.
     ADMIN: `/admin/nonprofit-research`,
-    ADMIN_REPORT: (reportId: string) => `/admin/nonprofit-research/${reportId}`,
     // Advisor's one-per-advisor diligence question template editor (DEV-428).
     DILIGENCE_TEMPLATE: `/nonprofit-research/diligence-template`,
     // Public nonprofit response page — the secure email link opens this.
@@ -62,27 +77,6 @@ export const PAGES = {
     DILIGENCE_RESPONSE: (token: string) => `/nonprofit-research/diligence/${token}`,
   },
   EVALUATE: `/evaluate`,
-  // REVIEWER routes now point to MANAGE (unified RBAC-based routes)
-  REVIEWER: {
-    DASHBOARD: (community: string) => `/community/${community}/manage/funding-platform`,
-    APPLICATIONS: (community: string, programId: string) =>
-      `/community/${community}/manage/funding-platform/${programId}/applications`,
-    APPLICATION_DETAIL: (community: string, programId: string, applicationId: string) =>
-      `/community/${community}/manage/funding-platform/${programId}/applications/${applicationId}`,
-    QUESTION_BUILDER: (community: string, programId: string) =>
-      `/community/${community}/manage/funding-platform/${programId}/question-builder`,
-    FUNDING_PLATFORM: {
-      MILESTONES: (
-        community: string,
-        programId: string,
-        projectId: string,
-        milestoneUid?: string
-      ) =>
-        `/community/${community}/manage/funding-platform/${programId}/milestones/${projectId}${
-          milestoneUid ? `#milestone-${encodeURIComponent(milestoneUid)}` : ""
-        }`,
-    },
-  },
   MANAGE: {
     ROOT: (community: string) => `/community/${community}/manage`,
     ACTION_ITEMS: (community: string) => `/community/${community}/manage/action-items`,
@@ -138,12 +132,10 @@ export const PAGES = {
       `/community/${community}/manage/portfolio-reports/${reportId}/preview`,
     PORTFOLIO_REPORTS_CONFIG: (community: string) =>
       `/community/${community}/manage/portfolio-reports/config`,
-    PROJECT_MILESTONES: (community: string, projectId: string, programId: string) =>
-      `/community/${community}/manage/${projectId}/milestones?programIds=${programId}`,
   },
   PROJECT: {
     OVERVIEW: (project: string) => `/project/${project}`,
-    UPDATES: (project: string) => `/project/${project}`,
+    UPDATES: (project: string) => `/project/${project}/updates`,
     ABOUT: (project: string) => `/project/${project}/about`,
     GRANTS: (project: string) => `/project/${project}/funding`,
 
@@ -176,23 +168,20 @@ export const PAGES = {
   FOR_AGENTS: `/for-agents`,
   NONPROFITS: `/nonprofits`,
   DONOR_ADVISORS: `/donor-advisors`,
+  DONOR_REWARDS: `/donor-rewards`,
   CREATE_PROJECT_PROFILE: `/create-project-profile`,
   MCP_CONNECT: `/mcp/connect`,
   SEEDS: `/seeds`,
   SEEDS_FUND: `/seeds/fund`,
-  TEAM: {
-    LIST: `/ai-teams`,
-    ONBOARDING: `/ai-teams/onboarding`,
-    DIRECTORY: (slug: string) => `/ai-teams/${slug}/team`,
-    MEMBER: (slug: string, role: string) => `/ai-teams/${slug}/team/${role}`,
-  },
-  ORG: (slug: string) => `/ai-teams/${slug}/org`,
-  WORK: (slug: string) => `/ai-teams/${slug}/work`,
-  SKILLS: (slug: string) => `/ai-teams/${slug}/skills`,
   ASK_KARMA: `/ask-karma`,
   SCANNER: {
     ROOT: `/nonprofits/is-ai-ready`,
     SCAN_DETAIL: (id: string) => `/nonprofits/is-ai-ready/scans/${id}`,
+    // Website-keyed report URL (ora.ai model): the scanned domain is the path,
+    // so a link is constructible from scratch (e.g. /nonprofits/is-ai-ready/
+    // karmahq.xyz). Served by the `[site]` dynamic segment, which coexists with
+    // the static `scans/` folder (static wins in the App Router).
+    SITE: (domain: string) => `/nonprofits/is-ai-ready/${domain}`,
     PUBLIC_SCORECARD: (slug: string) => `/s/${slug}`,
     OG_IMAGE: (slug: string) => `/api/scanner/og/${slug}`,
   },
@@ -207,6 +196,20 @@ export const PAGES = {
 const ASK_KARMA_COMMUNITY_PATTERN = /^\/community\/[^/]+\/ask-karma$/;
 export function isAskKarmaPathname(pathname: string): boolean {
   return pathname === PAGES.ASK_KARMA || ASK_KARMA_COMMUNITY_PATTERN.test(pathname);
+}
+
+/**
+ * Detects the two anonymous token-capability routes of the donor-research
+ * feature (donor share view + nonprofit diligence response). These pages
+ * carry their own standalone chrome (`TokenPageShell`) — the global navbar
+ * and marketing footer are suppressed for them (redesign spec 2.3). Lives
+ * next to the route constants so a rename updates the detection too.
+ */
+export function isDonorResearchTokenRoute(pathname: string): boolean {
+  return (
+    pathname.startsWith("/nonprofit-research/shared/") ||
+    pathname.startsWith("/nonprofit-research/diligence/")
+  );
 }
 
 /**
@@ -231,7 +234,6 @@ export const COMMUNITY_SUB_ROUTE_SEGMENTS: ReadonlySet<string> = new Set([
   // Direct route directories under /community/[communityId]/
   "admin",
   "ask-karma",
-  "karma-ai",
   "manage",
 ]);
 

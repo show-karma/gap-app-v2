@@ -9,7 +9,8 @@ import { z } from "zod";
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import type { Project as ProjectResponse } from "@/types/v2/project";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
+import { HttpError } from "@/utilities/api/errors";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { cn } from "@/utilities/tailwind";
@@ -51,17 +52,12 @@ export const ProjectSubscription: FC<ProjectSubscriptionProps> = ({ project }) =
   const onSubmit = async (data: SchemaType) => {
     try {
       setIsLoading(true);
-      const [_res, error] = await fetchData(
-        INDEXER.PROJECT.SUBSCRIBE(project?.uid as `0x${string}`),
-        "POST",
-        data
-      );
-      if (error) throw error;
+      await api.post(INDEXER.PROJECT.SUBSCRIBE(project?.uid as `0x${string}`), data);
       toast.success(
         `You have successfully subscribed to ${project?.details?.title || "this project"}.`
       );
-    } catch (error: any) {
-      const isAlreadySubscribed = error?.includes("422");
+    } catch (error: unknown) {
+      const isAlreadySubscribed = error instanceof HttpError && error.status === 422;
       if (isAlreadySubscribed) {
         setError("email", {
           type: "manual",

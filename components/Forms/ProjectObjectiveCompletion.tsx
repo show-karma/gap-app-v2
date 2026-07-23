@@ -18,7 +18,7 @@ import { useWallet } from "@/hooks/useWallet";
 import { useProjectUpdates } from "@/hooks/v2/useProjectUpdates";
 import { useProjectStore } from "@/store";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { getProjectObjectives } from "@/utilities/gapIndexerApi/getProjectObjectives";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
@@ -78,8 +78,8 @@ export const ProjectObjectiveCompletionForm = ({
   const { refetch } = useProjectUpdates(projectId as string);
 
   const onSubmit = async (data: SchemaType) => {
-    if (!address || !project) {
-      showError("Please connect your wallet to complete the milestone.");
+    if (!project) {
+      showError("This project is still loading. Please try again.");
       return;
     }
     setIsCompleting(true);
@@ -92,7 +92,7 @@ export const ProjectObjectiveCompletionForm = ({
       });
 
       if (!setup) {
-        showError("Failed to set up wallet connection. Please try again.");
+        // setupChainAndWallet surfaces its own toast on failure (#1821).
         setIsCompleting(false);
         setIsStepper(false);
         return;
@@ -144,11 +144,7 @@ export const ProjectObjectiveCompletionForm = ({
           let fetchedObjectives = null;
           const txHash = res?.tx[0]?.hash;
           if (txHash) {
-            await fetchData(
-              INDEXER.ATTESTATION_LISTENER(txHash, objectiveInstance.chainID),
-              "POST",
-              {}
-            );
+            await api.post(INDEXER.ATTESTATION_LISTENER(txHash, objectiveInstance.chainID), {});
           }
           while (retries > 0) {
             fetchedObjectives = await getProjectObjectives(projectId);
@@ -174,7 +170,7 @@ export const ProjectObjectiveCompletionForm = ({
               });
 
               setTimeout(() => {
-                router.push(PAGES.PROJECT.UPDATES(slugOrUid));
+                router.push(PAGES.PROJECT.OVERVIEW(slugOrUid));
               }, 250);
               return;
             }

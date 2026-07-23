@@ -29,7 +29,7 @@ import { submitGranteeInvoice } from "@/src/features/payout-disbursement/service
 import { useProjectStore } from "@/store";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
 import type { GrantMilestone } from "@/types/v2/grant";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { hasAnyDirtyField } from "@/utilities/hasAnyDirtyField";
 import {
   deleteMilestoneImpactAnswers,
@@ -73,7 +73,9 @@ const schema = z.object({
   description: z.string().optional(),
   completionPercentage: z.string().refine(
     (value) => {
-      if (value === "") return false; // Empty string is not valid
+      // Number("") === 0 and Number(" ") === 0, so an empty or whitespace-only
+      // string would slip through as 0%
+      if (value.trim() === "") return false;
       const num = Number(value);
       return !Number.isNaN(num) && num >= 0 && num <= 100;
     },
@@ -331,9 +333,8 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
           changeStepperStep("indexing");
           const txHash = res?.tx[0]?.hash;
           if (txHash) {
-            await fetchData(
+            await api.post(
               INDEXER.ATTESTATION_LISTENER(txHash, milestoneInstance?.chainID as number),
-              "POST",
               {}
             );
           }
@@ -452,9 +453,8 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
           changeStepperStep("indexing");
           const txHash = res?.tx[0]?.hash;
           if (txHash) {
-            await fetchData(
+            await api.post(
               INDEXER.ATTESTATION_LISTENER(txHash, milestoneInstance?.chainID as number),
-              "POST",
               {}
             );
           }

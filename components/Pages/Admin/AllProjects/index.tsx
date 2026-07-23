@@ -9,7 +9,7 @@ import { layoutTheme } from "@/src/helper/theme";
 import { useOwnerStore } from "@/store";
 import type { PageInfo } from "@/types/pagination";
 import type { ProjectReport } from "@/types/project";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { formatDate } from "@/utilities/formatDate";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
@@ -23,27 +23,21 @@ const getAllProjects = async (
   offset: number,
   limit: number
 ): Promise<{ data: ProjectReport[]; pageInfo: PageInfo }> => {
-  const response = await fetchData(
-    INDEXER.PROJECT.ALL_REPORT(offset, limit),
-    "GET",
-    undefined,
-    undefined,
-    undefined,
-    true
-  ).then(([res, error]) => {
-    if (!error) {
-      return res;
-    }
+  try {
+    // TODO(#1775): add zod schema
+    const { data, pageInfo } = await api.getPaginated<ProjectReport[]>(
+      INDEXER.PROJECT.ALL_REPORT(offset, limit)
+    );
+    return { data, pageInfo: (pageInfo ?? {}) as PageInfo };
+  } catch (error) {
     errorManager(
       MESSAGES.PROJECT.ALL_REPORT.ERROR,
       error,
       {},
       { error: MESSAGES.PROJECT.ALL_REPORT.ERROR }
     );
-    return [];
-  });
-
-  return response;
+    return { data: [], pageInfo: {} as PageInfo };
+  }
 };
 
 const rowClass =

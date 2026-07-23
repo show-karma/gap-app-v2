@@ -82,7 +82,7 @@ const statusConfig = {
   rejected: {
     icon: XCircleIcon,
     color: "text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900",
-    label: "Rejected",
+    label: "Declined",
   },
 };
 const labelMap = {
@@ -90,7 +90,7 @@ const labelMap = {
   under_review: "Under Review",
   revision_requested: "Revision Requested",
   approved: "Approved",
-  rejected: "Rejected",
+  rejected: "Declined",
 };
 
 // Helper function to determine edit type

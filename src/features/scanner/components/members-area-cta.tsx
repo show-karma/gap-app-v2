@@ -6,6 +6,7 @@ import { setPostLoginRedirect, useAuth } from "@/hooks/useAuth";
 import { PAGES } from "@/utilities/pages";
 import { useScorecardBySlug } from "../hooks/use-scorecard-by-slug";
 import type { PublicScorecardPayload } from "../types";
+import { hostnameOf } from "../utils/site";
 
 interface MembersAreaCtaProps {
   readonly slug: string;
@@ -29,7 +30,12 @@ export function MembersAreaCta({ slug, initialData }: MembersAreaCtaProps) {
 
   function openReport() {
     if (!scanId) return;
-    const detailHref = PAGES.SCANNER.SCAN_DETAIL(scanId);
+    // Prefer the canonical domain URL so the report is reachable by website
+    // (ora.ai model); it resolves the latest scan and renders the detail tier
+    // for an authed viewer. Fall back to the scan-id permalink only when the
+    // report's URL is missing/unparseable.
+    const host = hostnameOf(scorecard?.url);
+    const detailHref = host ? PAGES.SCANNER.SITE(host) : PAGES.SCANNER.SCAN_DETAIL(scanId);
     if (authenticated) {
       push(detailHref);
       return;

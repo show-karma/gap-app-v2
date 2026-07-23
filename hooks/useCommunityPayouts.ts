@@ -2,7 +2,8 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
-import fetchData from "@/utilities/fetchData";
+import { z } from "zod";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 
 // Types based on backend implementation
@@ -14,13 +15,20 @@ export interface AttestationBatchUpdateItem {
   amount?: string; // Only for Grant type
 }
 
-export interface BatchUpdateResponse {
-  success: string[];
-  failed: Array<{
-    uid: string;
-    error: string;
-  }>;
-}
+const BatchUpdateResponseSchema = z
+  .object({
+    success: z.array(z.string()),
+    failed: z.array(
+      z
+        .object({
+          uid: z.string(),
+          error: z.string(),
+        })
+        .passthrough()
+    ),
+  })
+  .passthrough();
+export type BatchUpdateResponse = z.infer<typeof BatchUpdateResponseSchema>;
 
 // Query keys
 export const PAYOUT_QUERY_KEYS = {
@@ -43,20 +51,11 @@ export const useBatchUpdatePayouts = () => {
     }
   >({
     mutationFn: async ({ communityIdOrSlug, updates }) => {
-      const [data, error] = await fetchData(
+      return api.patch<BatchUpdateResponse>(
         INDEXER.COMMUNITY.BATCH_UPDATE(communityIdOrSlug),
-        "PATCH",
         { updates },
-        {},
-        {},
-        true
+        { schema: BatchUpdateResponseSchema }
       );
-
-      if (error) {
-        throw new Error(error);
-      }
-
-      return data as BatchUpdateResponse;
     },
     onSuccess: (data, variables) => {
       const { success, failed } = data;

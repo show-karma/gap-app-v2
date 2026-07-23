@@ -2,7 +2,7 @@
 
 import { PrivyProvider, usePrivy, useWallets } from "@privy-io/react-auth";
 import { useSmartWallets } from "@privy-io/react-auth/smart-wallets";
-import { WagmiProvider } from "@privy-io/wagmi";
+import { useSetActiveWallet, WagmiProvider } from "@privy-io/wagmi";
 import { connect as wagmiCoreConnect, disconnect as wagmiCoreDisconnect } from "@wagmi/core";
 import { useEffect, useMemo, useRef } from "react";
 import { useAccount } from "wagmi";
@@ -36,9 +36,10 @@ const WALLET_LIST = [
 function PrivyBridgeUpdater() {
   const setBridge = usePrivyBridgeSetter();
   const privy = usePrivy();
-  const { wallets } = useWallets();
+  const { wallets, ready: walletsReady } = useWallets();
   const { client: smartWalletClient } = useSmartWallets();
   const { isConnected, chainId } = useAccount();
+  const { setActiveWallet } = useSetActiveWallet();
 
   // Store latest values in refs so the effect always has fresh data.
   // Depend on primitives only (stable across renders when unchanged).
@@ -77,6 +78,7 @@ function PrivyBridgeUpdater() {
       getAccessToken: p.getAccessToken,
       connectWallet: p.connectWallet,
       wallets: w,
+      walletsReady,
       smartWalletClient: smartWalletClientRef.current,
       isConnected,
     });
@@ -86,6 +88,7 @@ function PrivyBridgeUpdater() {
     privy.authenticated,
     userId,
     walletCount,
+    walletsReady,
     smartWalletClient,
     isConnected,
   ]);
@@ -139,6 +142,59 @@ function PrivyBridgeUpdater() {
 
     syncOuterConfig();
   }, [primaryWallet, primaryWalletAddress, chainId]);
+
+  // Withhold a foreign identity from the outer config. When the authenticated
+  // user has linked wallets but none are currently connected (e.g. only a stale
+  // foreign MetaMask is connected while the embedded wallet is still hydrating),
+  // selectPrimaryWallet returns undefined. The sync effect above early-returns in
+  // that case, which would otherwise leave useAccount() pinned to a previously
+  // synced wallet — including a foreign one synced pre-auth as wallets[0]. That
+  // is exactly the "leftover external wallet drives ownership/identity" failure
+  // from issue #1574, so disconnect the outer config until a LINKED wallet
+  // appears (the sync effect reconnects then).
+  useEffect(() => {
+    if (!privy.authenticated || primaryWallet || !syncedAddressRef.current) return;
+    const disconnectStaleOuter = async () => {
+      try {
+        const { minimalWagmiConfig } = await import("@/utilities/wagmi/privy-config");
+        await wagmiCoreDisconnect(minimalWagmiConfig);
+      } catch {
+        // Ignore disconnect errors
+      }
+      syncedAddressRef.current = undefined;
+    };
+    disconnectStaleOuter();
+  }, [privy.authenticated, primaryWallet]);
+
+  // Reconcile Privy's persisted active wallet with the authenticated identity.
+  // Privy persists the last active wallet in localStorage
+  // (privy:<app>:active-wallet-connection) and restores it on every load — so a
+  // stale MetaMask from a previous session reconnects as wallets[0] even after an
+  // email/Google login (issue #1574). When the linked primaryWallet differs from
+  // Privy's current active wallet, push the linked wallet back as active. This
+  // rewrites the persisted entry so Privy's own SDK paths and dialogs agree with
+  // the app after reload. Guarded by a ref to prevent re-fire loops if Privy
+  // re-emits the same wallet (mirrors the syncedAddressRef pattern above).
+  const reconciledActiveAddressRef = useRef<string | undefined>(undefined);
+  const privyActiveAddress = wallets[0]?.address;
+  useEffect(() => {
+    if (!primaryWallet || !primaryWalletAddress) return;
+    // Privy's active wallet already matches the linked identity — nothing to do.
+    if (privyActiveAddress === primaryWalletAddress) {
+      reconciledActiveAddressRef.current = primaryWalletAddress;
+      return;
+    }
+    // Already attempted reconciliation to this exact wallet — don't loop.
+    if (reconciledActiveAddressRef.current === primaryWalletAddress) return;
+    reconciledActiveAddressRef.current = primaryWalletAddress;
+    // setActiveWallet expects a ConnectedWallet; primaryWallet is selected from
+    // the useWallets() list, so it is one.
+    setActiveWallet(primaryWallet).catch(() => {
+      // Non-fatal: the outer-config sync above still keeps useAccount()/useAuth()
+      // on the linked wallet even if Privy's active-wallet rewrite fails.
+      reconciledActiveAddressRef.current = undefined;
+    });
+  }, [primaryWallet, primaryWalletAddress, privyActiveAddress, setActiveWallet]);
 
   // Disconnect outer config when user logs out
   useEffect(() => {

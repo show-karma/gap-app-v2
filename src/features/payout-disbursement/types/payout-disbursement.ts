@@ -246,6 +246,8 @@ export enum MilestoneLifecycleStatus {
   VERIFIED = "verified",
   /** Computed client-side when pending + past due date; never from API */
   PAST_DUE = "past_due",
+  /** Admin cancelled the milestone (DEV-523): terminal, neither delivered nor outstanding */
+  CANCELLED = "cancelled",
 }
 
 export interface CommunityPayoutInvoiceInfo {

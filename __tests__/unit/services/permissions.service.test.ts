@@ -9,8 +9,18 @@ vi.mock("@/utilities/enviromentVars", () => ({
   },
 }));
 
-// Mock fetchData for GET requests
-vi.mock("@/utilities/fetchData");
+// Mock the unified api client for GET requests
+vi.mock("@/utilities/api/client", () => ({
+  api: {
+    get: vi.fn(),
+    post: vi.fn(),
+    put: vi.fn(),
+    patch: vi.fn(),
+    delete: vi.fn(),
+    request: vi.fn(),
+    getPaginated: vi.fn(),
+  },
+}));
 
 // Create a persistent mock instance using var (hoisted) so it's available in vi.mock factory
 var mockAxiosInstance: vi.Mocked<AxiosInstance>;
@@ -44,10 +54,11 @@ vi.mock("@/utilities/auth/api-client", () => {
 
 // Import the service AFTER all mocks are set up
 import { type PermissionCheckOptions, PermissionsService } from "@/services/permissions.service";
-// Import fetchData mock
-import fetchData from "@/utilities/fetchData";
+// Import the mocked unified api client
+import { api } from "@/utilities/api/client";
+import { HttpError } from "@/utilities/api/errors";
 
-const mockFetchData = fetchData as vi.MockedFunction<typeof fetchData>;
+const mockApiGet = api.get as vi.Mock;
 
 describe("PermissionsService", () => {
   let service: PermissionsService;
@@ -75,11 +86,11 @@ describe("PermissionsService", () => {
         permissions: ["review_applications", "update_application_status"],
       };
 
-      mockFetchData.mockResolvedValue([mockResponse, null, null, 200]);
+      mockApiGet.mockResolvedValue(mockResponse);
 
       const result = await service.checkPermission(options);
 
-      expect(mockFetchData).toHaveBeenCalledWith(expect.stringContaining("program-1"));
+      expect(mockApiGet).toHaveBeenCalledWith(expect.stringContaining("program-1"));
       expect(result).toEqual(mockResponse);
     });
 
@@ -94,11 +105,11 @@ describe("PermissionsService", () => {
         permissions: ["view", "read"],
       };
 
-      mockFetchData.mockResolvedValue([mockResponse, null, null, 200]);
+      mockApiGet.mockResolvedValue(mockResponse);
 
       const result = await service.checkPermission(options);
 
-      expect(mockFetchData).toHaveBeenCalledWith(expect.stringContaining("check-permission"));
+      expect(mockApiGet).toHaveBeenCalledWith(expect.stringContaining("check-permission"));
       expect(result).toEqual(mockResponse);
     });
 
@@ -120,7 +131,7 @@ describe("PermissionsService", () => {
         permissions: ["view", "read"],
       };
 
-      mockFetchData.mockResolvedValue([mockResponse, null, null, 200]);
+      mockApiGet.mockResolvedValue(mockResponse);
 
       const result = await service.checkPermission(options);
 
@@ -139,7 +150,7 @@ describe("PermissionsService", () => {
         permissions: [],
       };
 
-      mockFetchData.mockResolvedValue([mockResponse, null, null, 200]);
+      mockApiGet.mockResolvedValue(mockResponse);
 
       const result = await service.checkPermission(options);
 
@@ -165,11 +176,11 @@ describe("PermissionsService", () => {
         ],
       };
 
-      mockFetchData.mockResolvedValue([mockResponse, null, null, 200]);
+      mockApiGet.mockResolvedValue(mockResponse);
 
       const result = await service.getUserPermissions();
 
-      expect(mockFetchData).toHaveBeenCalledWith(expect.stringContaining("permissions"));
+      expect(mockApiGet).toHaveBeenCalledWith(expect.stringContaining("permissions"));
       expect(result).toEqual(mockResponse);
     });
 
@@ -184,11 +195,11 @@ describe("PermissionsService", () => {
         ],
       };
 
-      mockFetchData.mockResolvedValue([mockResponse, null, null, 200]);
+      mockApiGet.mockResolvedValue(mockResponse);
 
       const result = await service.getUserPermissions("program-1");
 
-      expect(mockFetchData).toHaveBeenCalledWith(expect.stringContaining("resource=program-1"));
+      expect(mockApiGet).toHaveBeenCalledWith(expect.stringContaining("resource=program-1"));
       expect(result).toEqual(mockResponse);
     });
 
@@ -197,7 +208,7 @@ describe("PermissionsService", () => {
         permissions: [],
       };
 
-      mockFetchData.mockResolvedValue([mockResponse, null, null, 200]);
+      mockApiGet.mockResolvedValue(mockResponse);
 
       const result = await service.getUserPermissions();
 
@@ -228,16 +239,16 @@ describe("PermissionsService", () => {
         },
       ];
 
-      mockFetchData.mockResolvedValue([mockPrograms, null, null, 200]);
+      mockApiGet.mockResolvedValue(mockPrograms);
 
       const result = await service.getReviewerPrograms();
 
-      expect(mockFetchData).toHaveBeenCalledWith(expect.stringContaining("my-reviewer-programs"));
+      expect(mockApiGet).toHaveBeenCalledWith(expect.stringContaining("my-reviewer-programs"));
       expect(result).toEqual(mockPrograms);
     });
 
     it("should return empty array when user is not a reviewer", async () => {
-      mockFetchData.mockResolvedValue([[], null, null, 200]);
+      mockApiGet.mockResolvedValue([]);
 
       const result = await service.getReviewerPrograms();
 
@@ -257,7 +268,7 @@ describe("PermissionsService", () => {
         },
       ];
 
-      mockFetchData.mockResolvedValue([mockPrograms, null, null, 200]);
+      mockApiGet.mockResolvedValue(mockPrograms);
 
       const result = await service.hasRole("reviewer");
 
@@ -265,7 +276,7 @@ describe("PermissionsService", () => {
     });
 
     it("should return false if user has no reviewer programs", async () => {
-      mockFetchData.mockResolvedValue([[], null, null, 200]);
+      mockApiGet.mockResolvedValue([]);
 
       const result = await service.hasRole("reviewer");
 
@@ -283,7 +294,7 @@ describe("PermissionsService", () => {
         ],
       };
 
-      mockFetchData.mockResolvedValue([mockResponse, null, null, 200]);
+      mockApiGet.mockResolvedValue(mockResponse);
 
       const result = await service.hasRole("admin", "program-1");
 
@@ -301,7 +312,7 @@ describe("PermissionsService", () => {
         ],
       };
 
-      mockFetchData.mockResolvedValue([mockResponse, null, null, 200]);
+      mockApiGet.mockResolvedValue(mockResponse);
 
       const result = await service.hasRole("admin", "program-1");
 
@@ -327,7 +338,7 @@ describe("PermissionsService", () => {
         ],
       };
 
-      mockFetchData.mockResolvedValue([mockResponse, null, null, 200]);
+      mockApiGet.mockResolvedValue(mockResponse);
 
       const result = await service.canPerformAction("program-1", "approve");
 
@@ -345,7 +356,7 @@ describe("PermissionsService", () => {
         ],
       };
 
-      mockFetchData.mockResolvedValue([mockResponse, null, null, 200]);
+      mockApiGet.mockResolvedValue(mockResponse);
 
       const result = await service.canPerformAction("program-1", "delete");
 
@@ -363,7 +374,7 @@ describe("PermissionsService", () => {
         ],
       };
 
-      mockFetchData.mockResolvedValue([mockResponse, null, null, 200]);
+      mockApiGet.mockResolvedValue(mockResponse);
 
       const result = await service.canPerformAction("program-1", "view");
 
@@ -418,14 +429,14 @@ describe("PermissionsService", () => {
       // Batch endpoint fails
       mockAxiosInstance.post.mockRejectedValue(new Error("Batch endpoint not available"));
 
-      // Individual calls succeed via fetchData
-      mockFetchData
-        .mockResolvedValueOnce([{ hasPermission: true, permissions: ["review"] }, null, null, 200])
-        .mockResolvedValueOnce([{ hasPermission: false, permissions: [] }, null, null, 200]);
+      // Individual calls succeed via api.get
+      mockApiGet
+        .mockResolvedValueOnce({ hasPermission: true, permissions: ["review"] })
+        .mockResolvedValueOnce({ hasPermission: false, permissions: [] });
 
       const result = await service.checkMultiplePermissions(programIds);
 
-      expect(mockFetchData).toHaveBeenCalledTimes(2);
+      expect(mockApiGet).toHaveBeenCalledTimes(2);
       expect(result.size).toBe(2);
     });
 
@@ -436,9 +447,15 @@ describe("PermissionsService", () => {
       mockAxiosInstance.post.mockRejectedValue(new Error("Not available"));
 
       // First call succeeds, second fails
-      mockFetchData
-        .mockResolvedValueOnce([{ hasPermission: true, permissions: ["review"] }, null, null, 200])
-        .mockResolvedValueOnce([null, "Permission check failed", null, 500]);
+      mockApiGet
+        .mockResolvedValueOnce({ hasPermission: true, permissions: ["review"] })
+        .mockRejectedValueOnce(
+          new HttpError(500, {
+            endpoint: "/v2/funding-program-configs/program-2/check-permission",
+            method: "GET",
+            body: { message: "Permission check failed" },
+          })
+        );
 
       const result = await service.checkMultiplePermissions(programIds);
 

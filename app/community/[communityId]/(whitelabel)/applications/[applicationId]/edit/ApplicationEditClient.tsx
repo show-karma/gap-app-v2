@@ -7,6 +7,7 @@ import toast from "react-hot-toast";
 import { Link } from "@/src/components/navigation/Link";
 import { useIsFundingPlatformAdmin } from "@/src/core/rbac";
 import { ApplicationForm } from "@/src/features/applications/components/ApplicationForm";
+import { useApplicationStatusHistory } from "@/src/features/applications/hooks/use-application-status-history";
 import {
   transformDataForDisplay,
   transformDataForSubmission,
@@ -14,7 +15,7 @@ import {
 } from "@/src/features/applications/lib/form-utils";
 import type { ApplicationFormData } from "@/src/features/applications/types";
 import type { Application, FundingProgram } from "@/types/whitelabel-entities";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 
 interface ApplicationEditClientProps {
   communityId: string;
@@ -26,6 +27,18 @@ export function ApplicationEditClient({ communityId, application }: ApplicationE
   const queryClient = useQueryClient();
   const isAdmin = useIsFundingPlatformAdmin();
 
+  // The SSR fetch is tokenless, so the backend strips the private revision
+  // reason. Re-fetch with the viewer's token; the backend returns it only to
+  // the applicant and admins — the backend is the guard.
+  const { statusHistory: authedStatusHistory } = useApplicationStatusHistory(
+    application.referenceNumber
+  );
+  // Latest revision request wins — after multiple revision cycles there can be
+  // several `revision_requested` entries and the applicant needs the newest.
+  const revisionReason = (authedStatusHistory ?? application.statusHistory ?? [])
+    .filter((entry) => entry.status === "revision_requested")
+    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())[0]?.reason;
+
   // Fetch program details
   const {
     data: program,
@@ -34,14 +47,9 @@ export function ApplicationEditClient({ communityId, application }: ApplicationE
     refetch,
   } = useQuery({
     queryKey: ["application", "program", application.programId],
-    queryFn: async () => {
-      const [res, err] = await fetchData<FundingProgram>(
-        `/v2/funding-program-configs/${application.programId}`,
-        "GET"
-      );
-      if (err) throw new Error(err);
-      return res as FundingProgram;
-    },
+    queryFn: () =>
+      // TODO(#1775): add zod schema
+      api.get<FundingProgram>(`/v2/funding-program-configs/${application.programId}`),
     staleTime: 1000 * 60 * 10,
   });
 
@@ -54,15 +62,11 @@ export function ApplicationEditClient({ communityId, application }: ApplicationE
     !isAdmin && (!program?.applicationConfig?.isEnabled || (isDeadlinePassed && !isRevision));
 
   const updateMutation = useMutation({
-    mutationFn: async (applicationData: Record<string, unknown>) => {
-      const [res, err] = await fetchData<Application>(
-        `/v2/funding-applications/${application.referenceNumber}`,
-        "PUT",
-        { applicationData }
-      );
-      if (err) throw new Error(err);
-      return res;
-    },
+    mutationFn: (applicationData: Record<string, unknown>) =>
+      // TODO(#1775): add zod schema
+      api.put<Application>(`/v2/funding-applications/${application.referenceNumber}`, {
+        applicationData,
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["application", application.referenceNumber],
@@ -88,7 +92,7 @@ export function ApplicationEditClient({ communityId, application }: ApplicationE
     : undefined;
 
   const handleSubmit = async (data: ApplicationFormData) => {
-    const submissionData = transformDataForSubmission(data, questions);
+    const submissionData = transformDataForSubmission(data);
     await updateMutation.mutateAsync(submissionData);
   };
 
@@ -184,12 +188,10 @@ export function ApplicationEditClient({ communityId, application }: ApplicationE
           <p className="mb-1 font-semibold text-orange-700 dark:text-orange-400">
             Revision Required
           </p>
-          {application.statusHistory?.find((s) => s.status === "revision_requested")?.reason && (
+          {revisionReason && (
             <div className="space-y-1 text-sm text-orange-600 dark:text-orange-500">
               <p className="font-medium">Reason for revision:</p>
-              <p>
-                {application.statusHistory.find((s) => s.status === "revision_requested")?.reason}
-              </p>
+              <p>{revisionReason}</p>
             </div>
           )}
         </div>

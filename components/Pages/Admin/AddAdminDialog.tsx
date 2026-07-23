@@ -13,7 +13,7 @@ import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
 import { communityAdminsService } from "@/services/community-admins.service";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 import { cn } from "@/utilities/tailwind";
 import { Button } from "../../ui/button";
@@ -107,22 +107,29 @@ export const AddAdmin: FC<AddAdminDialogProps> = ({
       const { hash } = communityResponse;
       await communityResponse.wait().then(async () => {
         if (hash) {
-          await fetchData(INDEXER.ATTESTATION_LISTENER(hash, chainid), "POST", {});
+          try {
+            await api.post(INDEXER.ATTESTATION_LISTENER(hash, chainid), {});
+          } catch (listenerError) {
+            // SUPPRESSED: best-effort attestation-listener notification; the
+            // indexing retry loop below polls the admins list independently,
+            // matching the legacy fetchData behavior which never surfaced
+            // errors from this call.
+            errorManager("Failed to notify attestation listener", listenerError, {
+              community: UUID,
+              hash,
+            });
+          }
         }
         changeStepperStep("indexing");
         let retries = 1000;
         let addressAdded = false;
         while (retries > 0) {
           try {
-            const [response, error] = await fetchData(
-              INDEXER.COMMUNITY.ADMINS(UUID),
-              "GET",
-              {},
-              {},
-              {},
-              false
-            );
-            if (!response || error) {
+            // TODO(#1775): add zod schema
+            const response = await api.get<{ admins: unknown[] }>(INDEXER.COMMUNITY.ADMINS(UUID), {
+              isAuthorized: false,
+            });
+            if (!response) {
               throw new Error(`Error fetching admins for community ${UUID}`);
             }
 

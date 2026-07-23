@@ -53,6 +53,7 @@ However, the duplication should be resolved.
 
 ## Category 5: Mock boundary violations
 
-76+ test files directly mock `@/utilities/fetchData` or `@/utilities/indexer`.
+Some test files directly mock `@/utilities/indexer` (fetchData was removed in
+#1775; its former mocks now target the typed api client at the same seam).
 This is tracked by `scripts/check-mock-boundaries.sh` and will be addressed
 incrementally by migrating to service-layer mocks or MSW.

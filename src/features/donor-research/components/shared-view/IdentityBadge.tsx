@@ -28,9 +28,9 @@ export function IdentityBadge({
 }: IdentityBadgeProps) {
   if (isAdvisor) {
     return (
-      <div className="inline-flex items-center gap-2 rounded-md border border-border bg-muted/40 px-3 py-1.5 text-sm">
-        <UserRoundIcon className="h-3.5 w-3.5 text-muted-foreground" aria-hidden />
-        <span>Commenting as Advisor</span>
+      <div className="inline-flex items-center gap-2 rounded-full border border-sf-line-strong bg-sf-card px-3 py-1.5 text-[12.5px] text-sf-ink">
+        <UserRoundIcon className="h-3.5 w-3.5 text-sf-muted" aria-hidden />
+        <span className="font-medium">Commenting as Advisor</span>
       </div>
     );
   }
@@ -38,16 +38,16 @@ export function IdentityBadge({
   if (!displayName) return null;
 
   return (
-    <div className="inline-flex items-center gap-2 rounded-md border border-border bg-muted/40 px-3 py-1.5 text-sm">
-      <UserRoundIcon className="h-3.5 w-3.5 text-muted-foreground" aria-hidden />
+    <div className="inline-flex items-center gap-2 rounded-full border border-sf-line-strong bg-sf-card px-3 py-1.5 text-[12.5px] text-sf-ink">
+      <UserRoundIcon className="h-3.5 w-3.5 text-sf-muted" aria-hidden />
       <span>
-        Commenting as <strong className="font-medium">{displayName}</strong>
+        Commenting as <strong className="font-semibold text-sf-heading">{displayName}</strong>
       </span>
       <Button
         type="button"
         variant="ghost"
         size="sm"
-        className="h-auto px-1 py-0.5"
+        className="h-auto px-1 py-0.5 text-sf-muted hover:text-sf-heading"
         onClick={onEditName}
         aria-label="Edit display name"
       >
@@ -56,9 +56,9 @@ export function IdentityBadge({
       <button
         type="button"
         onClick={onSwitch}
-        className="text-xs text-muted-foreground underline-offset-4 hover:underline focus-visible:outline-none focus-visible:underline"
+        className="text-[11.5px] text-sf-muted underline-offset-4 hover:text-sf-heading hover:underline focus-visible:outline-none focus-visible:underline"
       >
-        Not me — switch
+        Not me, switch
       </button>
     </div>
   );

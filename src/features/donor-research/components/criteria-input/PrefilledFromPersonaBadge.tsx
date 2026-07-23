@@ -30,7 +30,7 @@ export function PrefilledFromPersonaBadge({ control, name }: PrefilledFromPerson
 
   return (
     <span className="inline-flex items-center rounded-full border border-border bg-muted px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-      Prefilled from persona
+      Prefilled from donor profile
     </span>
   );
 }
