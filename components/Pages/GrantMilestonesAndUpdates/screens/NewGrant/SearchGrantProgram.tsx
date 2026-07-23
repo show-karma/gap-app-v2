@@ -49,7 +49,7 @@ export function SearchGrantProgram({
 
       try {
         // TODO(#1775): add zod schema
-        const result = await api.get<GrantProgram[]>(INDEXER.COMMUNITY.PROGRAMS(communityUID));
+        const result = await api.get<GrantProgram[]>(INDEXER.V2.COMMUNITIES.PROGRAMS(communityUID));
 
         const filteredResult = result.filter((program: GrantProgram) => {
           if (!program.metadata?.endsAt || flowType !== "program") return true;

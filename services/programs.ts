@@ -8,7 +8,7 @@ export const programService = {
   getCommunityPrograms: async (communityId: string): Promise<GrantProgram[]> => {
     try {
       // TODO(#1775): add zod schema
-      return await api.get<GrantProgram[]>(INDEXER.PROGRAMS.COMMUNITY(communityId));
+      return await api.get<GrantProgram[]>(INDEXER.V2.COMMUNITIES.PROGRAMS(communityId));
     } catch (error: any) {
       errorManager(`Error fetching programs for community ${communityId}`, error);
       throw error;

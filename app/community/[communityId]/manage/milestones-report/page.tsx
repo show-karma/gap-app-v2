@@ -16,7 +16,7 @@ interface Props {
 const getGrantPrograms = async (communityId: string): Promise<GrantProgram[]> => {
   try {
     // TODO(#1775): add zod schema
-    return await api.get<GrantProgram[]>(INDEXER.COMMUNITY.PROGRAMS(communityId));
+    return await api.get<GrantProgram[]>(INDEXER.V2.COMMUNITIES.PROGRAMS(communityId));
   } catch (error: unknown) {
     errorManager(`Error while fetching grant programs of community ${communityId}`, error);
     return [];
