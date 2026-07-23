@@ -146,6 +146,22 @@ describe("useMilestoneAllocationsByGrants — batched (communityUID supplied)", 
     expect(mockByGrant).not.toHaveBeenCalled();
     expect(result.current.allocationMap.size).toBe(0);
   });
+
+  it("exposes a refetch that recovers after a failed batch", async () => {
+    mockByCommunity.mockRejectedValueOnce(new Error("rate limited"));
+
+    const { result } = renderHook(
+      () => useMilestoneAllocationsByGrants(GRANT_UIDS, undefined, { communityUID: COMMUNITY_UID }),
+      { wrapper }
+    );
+    await waitFor(() => expect(result.current.isError).toBe(true));
+
+    mockByCommunity.mockResolvedValue(CONFIGS);
+    await result.current.refetch();
+
+    await waitFor(() => expect(result.current.allocationMap.size).toBe(CONFIGS.length));
+    expect(mockByGrant).not.toHaveBeenCalled();
+  });
 });
 
 describe("useMilestoneAllocationsByGrants — per-grant (no communityUID)", () => {
