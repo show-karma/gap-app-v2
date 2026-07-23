@@ -137,7 +137,13 @@ export const ReportMilestonePage = ({ community, grantPrograms }: ReportMileston
     return Array.from(uids);
   }, [reportData.pendingMilestones, reportData.reports]);
 
-  const { allocationMap, grantTotalMap } = useMilestoneAllocationsByGrants(allGrantUIDs);
+  // Batch into a single community-wide request — this page fans out 50–200+
+  // grants and per-grant fetches burst past the indexer rate limit (GAP-FRONTEND-245).
+  const { allocationMap, grantTotalMap } = useMilestoneAllocationsByGrants(
+    allGrantUIDs,
+    undefined,
+    { communityUID: community?.uid }
+  );
 
   useEffect(() => {
     if (isReviewersError) {
