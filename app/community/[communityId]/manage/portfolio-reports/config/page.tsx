@@ -22,7 +22,7 @@ async function getGrantPrograms(communityId: string): Promise<GrantProgram[]> {
   // route's error.tsx surfaces a retry CTA.
   try {
     // TODO(#1775): add zod schema
-    const result = await api.get<GrantProgram[]>(INDEXER.COMMUNITY.PROGRAMS(communityId));
+    const result = await api.get<GrantProgram[]>(INDEXER.V2.COMMUNITIES.PROGRAMS(communityId));
     return result ?? [];
   } catch (error) {
     errorManager(`Error fetching grant programs for community ${communityId}`, error);

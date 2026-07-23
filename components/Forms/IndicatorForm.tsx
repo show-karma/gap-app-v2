@@ -99,7 +99,7 @@ export const IndicatorForm: React.FC<IndicatorFormProps> = ({
 
       try {
         // TODO(#1775): add zod schema
-        const result = await api.get<GrantProgram[]>(INDEXER.COMMUNITY.PROGRAMS(communityId));
+        const result = await api.get<GrantProgram[]>(INDEXER.V2.COMMUNITIES.PROGRAMS(communityId));
 
         const sortedPrograms = result.sort((a: GrantProgram, b: GrantProgram) => {
           const aTitle = a.metadata?.title || "";

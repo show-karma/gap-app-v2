@@ -17,7 +17,7 @@ export function SearchGrantProgram({
     (async () => {
       setIsLoading(true);
       // TODO(#1775): add zod schema
-      const result = await api.get<GrantProgram[]>(INDEXER.COMMUNITY.PROGRAMS(communityUID));
+      const result = await api.get<GrantProgram[]>(INDEXER.V2.COMMUNITIES.PROGRAMS(communityUID));
       const sortedAlphabetically = result.sort((a: GrantProgram, b: GrantProgram) => {
         const aTitle = a.metadata?.title || "";
         const bTitle = b.metadata?.title || "";

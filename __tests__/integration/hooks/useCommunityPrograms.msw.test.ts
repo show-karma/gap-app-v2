@@ -2,7 +2,8 @@
  * MSW integration tests for useCommunityPrograms hook (exported from usePrograms.ts).
  *
  * The hook fetches programs via programService.getCommunityPrograms which
- * calls fetchData (axios) against /communities/:communityId/programs.
+ * calls the API against /v2/communities/:uidOrSlug/programs (bare array of
+ * whitelisted program objects).
  */
 
 import { waitFor } from "@testing-library/react";
@@ -27,19 +28,27 @@ describe("useCommunityPrograms (MSW integration)", () => {
 
   it("returns programs on success", async () => {
     server.use(
-      http.get("*/communities/:id/programs", () =>
+      http.get("*/v2/communities/:id/programs", () =>
         HttpResponse.json([
           {
-            uid: "prog-001",
+            programId: "prog-001",
+            chainID: 42161,
             name: "Open Source Grants",
-            description: "Funding open source projects",
-            status: "active",
+            metadata: {
+              title: "Open Source Grants",
+              description: "Funding open source projects",
+              status: "active",
+            },
           },
           {
-            uid: "prog-002",
+            programId: "prog-002",
+            chainID: null,
             name: "Research Grants",
-            description: "Funding research",
-            status: "active",
+            metadata: {
+              title: "Research Grants",
+              description: "Funding research",
+              status: "active",
+            },
           },
         ])
       )
@@ -58,7 +67,7 @@ describe("useCommunityPrograms (MSW integration)", () => {
 
   it("returns error on 500", async () => {
     server.use(
-      http.get("*/communities/:id/programs", () =>
+      http.get("*/v2/communities/:id/programs", () =>
         HttpResponse.json({ message: "Internal Server Error" }, { status: 500 })
       )
     );
@@ -71,7 +80,7 @@ describe("useCommunityPrograms (MSW integration)", () => {
   });
 
   it("handles empty programs list", async () => {
-    server.use(http.get("*/communities/:id/programs", () => HttpResponse.json([])));
+    server.use(http.get("*/v2/communities/:id/programs", () => HttpResponse.json([])));
 
     const { result } = renderHookWithProviders(() => useCommunityPrograms(COMMUNITY_ID));
 
