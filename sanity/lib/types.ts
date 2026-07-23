@@ -66,6 +66,11 @@ export interface BlogPost extends BlogPostSummary {
   body?: BlogBodyBlock[];
   author: BlogAuthor | null;
   seo?: SeoOverride;
+  // Sanity's document-level last-modified timestamp (`_updatedAt`), surfaced so
+  // JSON-LD `dateModified` reflects real edits instead of duplicating
+  // `publishedAt`. Optional to keep the gateway contract resilient to older
+  // cached shapes; callers fall back to `publishedAt`.
+  updatedAt?: string;
 }
 
 /** Slug + lastmod pair used by the sitemap (M6). */

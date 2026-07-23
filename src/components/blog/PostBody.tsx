@@ -17,8 +17,12 @@ const BODY_IMAGE_WIDTH = 1200;
 const portableTextComponents: PortableTextComponents = {
   block: {
     normal: ({ children }) => <p className="mb-4 text-gray-700 dark:text-gray-300">{children}</p>,
+    // The post page already owns the single <h1> (the title). Body H1 is no
+    // longer offered in the schema, but any imported/legacy H1 block still
+    // renders as an <h2> so it never competes with the page title and the
+    // document outline stays valid.
     h1: ({ children }) => (
-      <h1 className="mb-4 mt-8 text-3xl font-bold text-zinc-900 dark:text-zinc-100">{children}</h1>
+      <h2 className="mb-4 mt-8 text-2xl font-bold text-zinc-900 dark:text-zinc-100">{children}</h2>
     ),
     h2: ({ children }) => (
       <h2 className="mb-4 mt-8 text-2xl font-bold text-zinc-900 dark:text-zinc-100">{children}</h2>

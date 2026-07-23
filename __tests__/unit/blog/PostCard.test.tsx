@@ -1,8 +1,8 @@
 import { render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import { describe, expect, it } from "vitest";
+import { createMockBlogPostSummary } from "@/__tests__/factories/blogPost.factory";
 import { PostCard } from "@/src/components/blog/PostCard";
-import { createMockBlogPostSummary } from "../../factories/blogPost.factory";
 
 /**
  * Regression: a published post can have a cover with alt text but no uploaded

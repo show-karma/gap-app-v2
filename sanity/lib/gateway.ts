@@ -42,6 +42,7 @@ function postDetailProjection() {
     title,
     excerpt,
     publishedAt,
+    "updatedAt": _updatedAt,
     "tags": coalesce(tags, []),
     "coverImage": coalesce(coverImage, null),
     body,
