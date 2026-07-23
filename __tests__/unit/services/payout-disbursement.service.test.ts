@@ -98,6 +98,7 @@ import type {
   UpdateStatusRequest,
 } from "@/features/payout-disbursement/types/payout-disbursement";
 import { api } from "@/utilities/api/client";
+import { HttpError, isApiError } from "@/utilities/api/errors";
 
 const mockApiGet = api.get as ReturnType<typeof vi.fn>;
 const mockApiPost = api.post as ReturnType<typeof vi.fn>;
@@ -360,6 +361,22 @@ describe("payout-disbursement.service", () => {
       const result = await getPayoutConfigsByCommunityPublic("community-1");
       expect(result).toEqual(configs);
     });
+
+    it("re-throws a typed 429 unchanged so React Query can retry it", async () => {
+      const rateLimited = new HttpError(429, {
+        endpoint: "/v2/payout-config/community/community-1/public",
+        method: "GET",
+        retryAfterMs: 2000,
+      });
+      mockApiGet.mockRejectedValue(rateLimited);
+
+      const rejection = await getPayoutConfigsByCommunityPublic("community-1").catch((e) => e);
+      expect(rejection).toBe(rateLimited);
+      expect(isApiError(rejection)).toBe(true);
+      expect(rejection.status).toBe(429);
+      expect(rejection.retryable).toBe(true);
+      expect(rejection.retryAfterMs).toBe(2000);
+    });
   });
 
   describe("getPayoutConfigByGrant", () => {
@@ -410,6 +427,22 @@ describe("payout-disbursement.service", () => {
       await expect(getPayoutConfigByGrantPublic("g1")).rejects.toThrow(
         /Failed to fetch payout config/
       );
+    });
+
+    it("re-throws a typed 429 unchanged so React Query can retry it", async () => {
+      const rateLimited = new HttpError(429, {
+        endpoint: "/v2/payout-config/grant/g1/public",
+        method: "GET",
+        retryAfterMs: 1500,
+      });
+      mockApiGet.mockRejectedValue(rateLimited);
+
+      const rejection = await getPayoutConfigByGrantPublic("g1").catch((e) => e);
+      expect(rejection).toBe(rateLimited);
+      expect(isApiError(rejection)).toBe(true);
+      expect(rejection.status).toBe(429);
+      expect(rejection.retryable).toBe(true);
+      expect(rejection.retryAfterMs).toBe(1500);
     });
   });
 

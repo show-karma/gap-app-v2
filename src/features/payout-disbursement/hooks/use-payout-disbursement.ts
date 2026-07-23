@@ -48,8 +48,12 @@ export const payoutDisbursementKeys = {
     all: ["payoutConfig"] as const,
     byCommunity: (communityUID: string) =>
       [...payoutDisbursementKeys.payoutConfigs.all, "community", communityUID] as const,
+    byCommunityPublic: (communityUID: string) =>
+      [...payoutDisbursementKeys.payoutConfigs.all, "communityPublic", communityUID] as const,
     byGrant: (grantUID: string) =>
       [...payoutDisbursementKeys.payoutConfigs.all, "grant", grantUID] as const,
+    byGrantPublic: (grantUID: string) =>
+      [...payoutDisbursementKeys.payoutConfigs.byGrant(grantUID), "public"] as const,
   },
   granteeInvoiceCheck: (grantUID: string) =>
     [...payoutDisbursementKeys.all, "granteeInvoiceCheck", grantUID] as const,
@@ -383,11 +387,7 @@ export function usePayoutConfigsByCommunityPublic(
   options?: { enabled?: boolean }
 ) {
   return useQuery<PayoutGrantConfig[], Error>({
-    queryKey: [
-      ...payoutDisbursementKeys.payoutConfigs.all,
-      "communityPublic",
-      communityUID,
-    ] as const,
+    queryKey: payoutDisbursementKeys.payoutConfigs.byCommunityPublic(communityUID),
     queryFn: () => payoutService.getPayoutConfigsByCommunityPublic(communityUID),
     enabled: options?.enabled ?? !!communityUID,
     staleTime: 1000 * 60 * 5,
@@ -487,7 +487,7 @@ export function usePayoutConfigByGrant(grantUID: string, options?: { enabled?: b
  */
 export function usePayoutConfigByGrantPublic(grantUID: string, options?: { enabled?: boolean }) {
   return useQuery<PayoutGrantConfig | null, Error>({
-    queryKey: [...payoutDisbursementKeys.payoutConfigs.byGrant(grantUID), "public"] as const,
+    queryKey: payoutDisbursementKeys.payoutConfigs.byGrantPublic(grantUID),
     queryFn: () => payoutService.getPayoutConfigByGrantPublic(grantUID),
     enabled: options?.enabled ?? !!grantUID,
     staleTime: 1000 * 60 * 5, // 5 minutes
