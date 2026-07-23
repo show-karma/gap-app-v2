@@ -235,6 +235,7 @@ function usePayoutConfigsForGrants(grantUIDs: string[], options?: PayoutConfigsF
       isLoading: communityQuery.isLoading,
       isError: communityQuery.isError,
       error: communityQuery.error ?? null,
+      refetch: communityQuery.refetch,
     };
   }
 
@@ -243,6 +244,7 @@ function usePayoutConfigsForGrants(grantUIDs: string[], options?: PayoutConfigsF
     isLoading: queries.some((q) => q.isLoading),
     isError: queries.some((q) => q.isError),
     error: queries.find((q) => q.error)?.error ?? null,
+    refetch: () => Promise.all(queries.map((q) => q.refetch())),
   };
 }
 
@@ -258,7 +260,10 @@ export function useMilestoneAllocationsByGrants(
   currencyByGrant?: Map<string, string>,
   options?: PayoutConfigsForGrantsOptions
 ) {
-  const { configs, isLoading, isError, error } = usePayoutConfigsForGrants(grantUIDs, options);
+  const { configs, isLoading, isError, error, refetch } = usePayoutConfigsForGrants(
+    grantUIDs,
+    options
+  );
 
   const allocationMap = useMemo(
     () => buildMilestoneAllocationMap(configs, currencyByGrant),
@@ -270,7 +275,7 @@ export function useMilestoneAllocationsByGrants(
     [configs, currencyByGrant]
   );
 
-  return { allocationMap, grantTotalMap, isLoading, isError, error };
+  return { allocationMap, grantTotalMap, isLoading, isError, error, refetch };
 }
 
 /**
