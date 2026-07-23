@@ -3,6 +3,7 @@
 import { useDonorAdvisor } from "@/hooks/useDonorAdvisor";
 import { useDonorReportStream } from "@/hooks/useDonorReportStream";
 import { useDonorReport } from "@/hooks/useDonorReports";
+import { useStaff } from "@/src/core/rbac/hooks/use-staff-bridge";
 import { DonorResearchLoading } from "../common/DonorResearchLoading";
 import { ReportBrief } from "./ReportBrief";
 
@@ -16,14 +17,17 @@ interface ReportBriefViewProps {
  * all rendering to {@link ReportBrief}, the same presentational component the
  * donor share view uses — so the surfaces stay visually identical.
  *
- * Owner-only write controls (share, weights, diligence actions) render only
- * once the viewer is CONFIRMED as the report's advisor — a resolving or
- * absent advisor row gets the read-only staff variant, never a flash of
- * controls that would only error for a non-owner.
+ * Write controls render only once the viewer is CONFIRMED as either the
+ * report's advisor or staff — a resolving or absent advisor row gets the
+ * read-only staff variant, never a flash of controls that would only error
+ * for a non-owner. Staff get the ranking + share controls (the BE write
+ * routes resolve staff to the report owner), but not the advisor-scoped
+ * diligence actions.
  */
 export function ReportBriefView({ reportId }: ReportBriefViewProps) {
   const reportQuery = useDonorReport(reportId);
   const advisorQuery = useDonorAdvisor();
+  const { isStaff } = useStaff();
   const reportStatus = reportQuery.data?.status;
   const isTerminal =
     reportStatus === "complete" || reportStatus === "fast_complete" || reportStatus === "failed";
@@ -41,6 +45,7 @@ export function ReportBriefView({ reportId }: ReportBriefViewProps) {
 
   return (
     <ReportBrief
+      canManageReport={isOwner || isStaff}
       isTerminal={isTerminal}
       report={reportQuery.data!}
       stream={stream}

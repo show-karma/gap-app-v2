@@ -31,6 +31,13 @@ interface ReportBriefProps {
    */
   variant?: "advisor" | "shared" | "staff";
   /**
+   * Shows the ranking-weights + share-token controls. Defaults to the owner
+   * (`variant === "advisor"`); the authenticated view also passes `true` for
+   * staff, whose writes the BE resolves to the report owner. Never set on the
+   * donor share view.
+   */
+  canManageReport?: boolean;
+  /**
    * Live SSE stream — advisor view only. Omitted on the unauthenticated share
    * view (which refreshes via polling instead), so the running panel is hidden.
    */
@@ -53,6 +60,7 @@ export function ReportBrief({
   report,
   isTerminal,
   variant = "advisor",
+  canManageReport,
   stream = null,
 }: ReportBriefProps) {
   const candidates = report.candidates ?? [];
@@ -68,6 +76,7 @@ export function ReportBrief({
     <div className="flex flex-col gap-6" data-brief>
       <Masthead
         candidatesCount={candidates.length}
+        canManageReport={canManageReport}
         isTerminal={isTerminal}
         report={report}
         surfacedCount={featured.length}
