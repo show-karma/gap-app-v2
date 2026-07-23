@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import toast from "react-hot-toast";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
+import { HttpError } from "@/utilities/api/errors";
 import { INDEXER } from "@/utilities/indexer";
 import { cn } from "@/utilities/tailwind";
 
@@ -30,6 +31,23 @@ interface FileUploadProps {
 interface ImageDimensions {
   width: number;
   height: number;
+}
+
+interface PresignedUrlResponse {
+  uploadUrl: string;
+  finalUrl: string;
+  key: string;
+}
+
+/** Extracts the backend's `message` field (mirrors the legacy fetchData adapter). */
+function toErrorMessage(error: unknown): string {
+  if (error instanceof HttpError) {
+    const bodyMessage = (error.body as { message?: string } | undefined)?.message;
+    const causeMessage = (error.cause as { message?: string } | undefined)?.message;
+    return bodyMessage || causeMessage || error.message;
+  }
+  if (error instanceof Error) return error.message;
+  return "Failed to upload file";
 }
 
 export function FileUpload({
@@ -128,11 +146,8 @@ export function FileUpload({
         onUploadProgress?.(10);
 
         const endpoint = presignedUrlEndpoint || INDEXER.PROJECT.LOGOS.PRESIGNED_URL();
-        const [data, error] = await fetchData(endpoint, "POST", payload);
-
-        if (error) {
-          throw new Error(error || "Failed to get upload URL");
-        }
+        // TODO(#1775): add zod schema
+        const data = await api.post<PresignedUrlResponse>(endpoint, payload);
 
         const { uploadUrl, finalUrl, key } = data;
 
@@ -160,7 +175,7 @@ export function FileUpload({
         );
         onS3UploadComplete?.(finalUrl, key);
       } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? error.message : "Failed to upload file";
+        const errorMessage = toErrorMessage(error);
         setValidationError(errorMessage);
         toast.error(errorMessage);
         onS3UploadError?.(errorMessage);

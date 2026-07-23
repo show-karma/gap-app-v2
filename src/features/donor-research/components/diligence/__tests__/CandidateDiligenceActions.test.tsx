@@ -28,7 +28,14 @@ const emptyTemplate: DiligenceTemplate = { questions: [], updatedAt: null };
 vi.mock("@/hooks/useDiligence", () => ({
   useCandidateDiligence: (...args: unknown[]) => mockUseCandidateDiligence(...args),
   useDiligenceTemplate: () => ({ data: emptyTemplate, isLoading: false, isError: false }),
+  useOutreachPreview: () => ({
+    data: undefined,
+    isLoading: true,
+    isError: false,
+    refetch: vi.fn(),
+  }),
   useAskQuestions: () => ({ mutate: vi.fn(), isPending: false }),
+  useSaveDiligenceTemplate: () => ({ mutate: vi.fn(), isPending: false }),
   useRequestIntro: () => ({ mutate: vi.fn(), isPending: false }),
   useUpdateAdvisorEmail: () => ({ mutate: vi.fn(), isPending: false }),
 }));
@@ -102,6 +109,42 @@ describe("CandidateDiligenceActions", () => {
     render(<CandidateDiligenceActions reportId="report-1" candidateId="candidate-1" />);
 
     expect(screen.getByText("Intro sent")).toBeInTheDocument();
+  });
+
+  it("labels a queued intro 'Intro queued', never 'Intro sent'", () => {
+    mockUseCandidateDiligence.mockReturnValue({
+      isLoading: false,
+      isError: false,
+      data: buildView({
+        coarseStatus: "intro_sent",
+        intro: { introRequestId: "i1", requestedAt: "2026-07-07T00:00:00Z", sentAt: null },
+      }),
+    });
+
+    render(<CandidateDiligenceActions reportId="report-1" candidateId="candidate-1" />);
+
+    expect(screen.getByText("Intro queued")).toBeInTheDocument();
+    expect(screen.queryByText(/Intro sent/)).not.toBeInTheDocument();
+  });
+
+  it("labels a delivered intro 'Intro sent' with the relative time detail", () => {
+    mockUseCandidateDiligence.mockReturnValue({
+      isLoading: false,
+      isError: false,
+      data: buildView({
+        coarseStatus: "intro_sent",
+        intro: {
+          introRequestId: "i1",
+          requestedAt: "2026-07-01T00:00:00Z",
+          sentAt: "2026-07-06T00:00:00Z",
+        },
+      }),
+    });
+
+    render(<CandidateDiligenceActions reportId="report-1" candidateId="candidate-1" />);
+
+    expect(screen.getAllByText(/Intro sent/).length).toBeGreaterThanOrEqual(1);
+    expect(screen.queryByText("Intro queued")).not.toBeInTheDocument();
   });
 
   it("renders no badge for not_requested", () => {

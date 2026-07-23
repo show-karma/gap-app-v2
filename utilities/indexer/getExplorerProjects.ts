@@ -1,6 +1,6 @@
 import type { PageInfo } from "@/types/pagination";
 import type { ProjectFromList } from "@/types/project";
-import fetchData from "../fetchData";
+import { api } from "../api/client";
 import { INDEXER } from "../indexer";
 
 export const getExplorerProjects = async (
@@ -14,21 +14,18 @@ export const getExplorerProjects = async (
   nextOffset: number;
 }> => {
   try {
-    const [data, error, pageInfo] = await fetchData(
+    // TODO(#1775): add zod schema
+    const { data, pageInfo } = await api.getPaginated<ProjectFromList[]>(
       INDEXER.PROJECTS.GET_ALL(page * pageSize, pageSize, sortBy, sortOrder),
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      true
+      { cache: true }
     );
-    if (error) {
-      throw new Error("Something went wrong while fetching new projects");
-    }
     return {
-      projects: data?.data as ProjectFromList[],
-      pageInfo: pageInfo,
+      projects: data,
+      pageInfo: {
+        totalItems: pageInfo?.totalItems ?? 0,
+        page: pageInfo?.page ?? page,
+        pageLimit: pageInfo?.pageLimit ?? pageSize,
+      },
       nextOffset: page + 1,
     };
   } catch (_e) {

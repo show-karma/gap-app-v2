@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { ApplicationFormClient } from "../ApplicationFormClient";
 
 const mocks = vi.hoisted(() => ({
@@ -24,9 +24,8 @@ const mocks = vi.hoisted(() => ({
   modalState: null as { isOpen: boolean; error: string | null } | null,
 }));
 
-vi.mock("@/utilities/fetchData", () => ({
-  __esModule: true,
-  default: vi.fn(),
+vi.mock("@/utilities/api/client", () => ({
+  api: { post: vi.fn() },
 }));
 
 vi.mock("next/navigation", () => ({
@@ -80,7 +79,7 @@ vi.mock("react-hot-toast", () => ({
   default: { error: (msg: string) => mocks.toastError(msg) },
 }));
 
-const mockFetchData = fetchData as unknown as ReturnType<typeof vi.fn>;
+const mockApiPost = api.post as unknown as ReturnType<typeof vi.fn>;
 
 function Wrapper({ children }: { children: ReactNode }) {
   const queryClient = new QueryClient({
@@ -146,7 +145,7 @@ describe("ApplicationFormClient", () => {
       // Regression: the endpoint returns { valid: boolean }. The previous
       // implementation typed the response as boolean and used Boolean(result),
       // so Boolean({ valid: false }) === true unlocked the form on wrong codes.
-      mockFetchData.mockResolvedValue([{ valid: false }, null, null, 200]);
+      mockApiPost.mockResolvedValue({ valid: false });
 
       render(
         <Wrapper>
@@ -161,9 +160,8 @@ describe("ApplicationFormClient", () => {
       });
 
       await waitFor(() => {
-        expect(mockFetchData).toHaveBeenCalledWith(
+        expect(mockApiPost).toHaveBeenCalledWith(
           `/v2/funding-applications/${PROGRAM_ID}/validate-access-code`,
-          "POST",
           { accessCode: "wrong-code" }
         );
       });
@@ -174,7 +172,7 @@ describe("ApplicationFormClient", () => {
     });
 
     it("should_unlock_form_when_validation_response_is_valid_true", async () => {
-      mockFetchData.mockResolvedValue([{ valid: true }, null, null, 200]);
+      mockApiPost.mockResolvedValue({ valid: true });
 
       render(
         <Wrapper>
@@ -194,8 +192,8 @@ describe("ApplicationFormClient", () => {
       expect(screen.queryByPlaceholderText("Enter your access code")).not.toBeInTheDocument();
     });
 
-    it("should_keep_form_locked_when_fetchData_returns_error", async () => {
-      mockFetchData.mockResolvedValue([null, "network error", null, 500]);
+    it("should_keep_form_locked_when_api_post_rejects", async () => {
+      mockApiPost.mockRejectedValue(new Error("network error"));
 
       render(
         <Wrapper>
@@ -224,7 +222,7 @@ describe("ApplicationFormClient", () => {
 
       expect(screen.getByTestId("application-form")).toBeInTheDocument();
       expect(screen.queryByPlaceholderText("Enter your access code")).not.toBeInTheDocument();
-      expect(mockFetchData).not.toHaveBeenCalled();
+      expect(mockApiPost).not.toHaveBeenCalled();
     });
 
     it("should_render_form_when_formSchema_is_undefined", () => {
@@ -235,7 +233,7 @@ describe("ApplicationFormClient", () => {
       );
 
       expect(screen.getByTestId("application-form")).toBeInTheDocument();
-      expect(mockFetchData).not.toHaveBeenCalled();
+      expect(mockApiPost).not.toHaveBeenCalled();
     });
   });
 
@@ -252,11 +250,11 @@ describe("ApplicationFormClient", () => {
       await waitFor(() => {
         expect(screen.getByTestId("application-form")).toBeInTheDocument();
       });
-      expect(mockFetchData).not.toHaveBeenCalled();
+      expect(mockApiPost).not.toHaveBeenCalled();
     });
 
     it("should_persist_access_code_to_session_storage_after_successful_unlock", async () => {
-      mockFetchData.mockResolvedValue([{ valid: true }, null, null, 200]);
+      mockApiPost.mockResolvedValue({ valid: true });
 
       render(
         <Wrapper>
@@ -281,7 +279,7 @@ describe("ApplicationFormClient", () => {
       mocks.searchParams = new URLSearchParams("?accessCode=url-code");
 
       // Pending promise that never resolves — we only care about the loading state
-      mockFetchData.mockReturnValue(new Promise(() => undefined));
+      mockApiPost.mockReturnValue(new Promise(() => undefined));
 
       render(
         <Wrapper>
@@ -296,7 +294,7 @@ describe("ApplicationFormClient", () => {
 
     it("should_unlock_form_and_persist_code_when_url_access_code_is_valid", async () => {
       mocks.searchParams = new URLSearchParams("?accessCode=url-code");
-      mockFetchData.mockResolvedValue([{ valid: true }, null, null, 200]);
+      mockApiPost.mockResolvedValue({ valid: true });
 
       render(
         <Wrapper>
@@ -308,16 +306,15 @@ describe("ApplicationFormClient", () => {
         expect(screen.getByTestId("application-form")).toBeInTheDocument();
       });
       expect(window.sessionStorage.getItem(STORAGE_KEY)).toBe("url-code");
-      expect(mockFetchData).toHaveBeenCalledWith(
+      expect(mockApiPost).toHaveBeenCalledWith(
         `/v2/funding-applications/${PROGRAM_ID}/validate-access-code`,
-        "POST",
         { accessCode: "url-code" }
       );
     });
 
     it("should_open_access_code_modal_when_url_access_code_is_invalid", async () => {
       mocks.searchParams = new URLSearchParams("?accessCode=bad-url-code");
-      mockFetchData.mockResolvedValue([{ valid: false }, null, null, 200]);
+      mockApiPost.mockResolvedValue({ valid: false });
 
       render(
         <Wrapper>
@@ -339,7 +336,7 @@ describe("ApplicationFormClient", () => {
 
   describe("submit flow", () => {
     async function unlockAndCaptureSubmit() {
-      mockFetchData.mockResolvedValue([{ valid: true }, null, null, 200]);
+      mockApiPost.mockResolvedValue({ valid: true });
       render(
         <Wrapper>
           <ApplicationFormClient
@@ -465,7 +462,7 @@ describe("ApplicationFormClient", () => {
     });
 
     it("should_resolve_email_from_label_when_no_email_typed_question_exists", async () => {
-      mockFetchData.mockResolvedValue([{ valid: true }, null, null, 200]);
+      mockApiPost.mockResolvedValue({ valid: true });
       render(
         <Wrapper>
           <ApplicationFormClient

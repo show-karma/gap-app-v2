@@ -4,11 +4,12 @@ import { Dialog, Transition } from "@headlessui/react";
 import { XMarkIcon } from "@heroicons/react/24/solid";
 import { type FC, Fragment, useEffect, useMemo, useState } from "react";
 import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
+import EthereumAddressToProfileName from "@/components/EthereumAddressToProfileName";
 import { useGrant } from "@/components/Pages/GrantMilestonesAndUpdates/GrantContext";
 import { TabContent, Tabs, TabTrigger } from "@/components/Utilities/Tabs";
 import { useENS } from "@/store/ens";
 import { useProjectStore } from "@/store/project";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { formatDate } from "@/utilities/formatDate";
 import { INDEXER } from "@/utilities/indexer";
 import type { VerificationRecord } from "./VerifiedBadge";
@@ -25,13 +26,6 @@ interface VerificationsItemProps {
 }
 
 const VerificationItem = ({ verification }: VerificationsItemProps) => {
-  const { ensData } = useENS();
-  const populateEns = useENS((state) => state.populateEns);
-
-  useEffect(() => {
-    populateEns([verification.attester]);
-  }, [verification.attester, populateEns]);
-
   return (
     <div className="flex flex-col items-start gap-1.5 p-4">
       <div className="flex flex-row gap-3 items-center">
@@ -40,7 +34,7 @@ const VerificationItem = ({ verification }: VerificationsItemProps) => {
           className="h-8 w-8 min-h-8 min-w-8 rounded-full"
         />
         <p className="text-sm font-bold text-brand-darkblue font-body dark:text-zinc-200">
-          {ensData[verification.attester as `0x${string}`]?.name || verification.attester}
+          <EthereumAddressToProfileName address={verification.attester} />
           <span className="ml-1 font-normal font-body text-brand-gray dark:text-zinc-300">
             reviewed on {formatDate(verification.createdAt)}
           </span>
@@ -74,13 +68,20 @@ export const VerificationsDialog: FC<VerificationsDialogProps> = ({
     const fetchCommunityAdmins = async () => {
       if (!communityUid) return;
 
-      const [data, error] = await fetchData<{
-        id: string;
-        admins: Array<{ user: { id: string } }>;
-      }>(INDEXER.COMMUNITY.ADMINS(communityUid), "GET", {}, {}, {}, false);
+      try {
+        // TODO(#1775): add zod schema
+        const data = await api.get<{
+          id: string;
+          admins: Array<{ user: { id: string } }>;
+        }>(INDEXER.COMMUNITY.ADMINS(communityUid), { isAuthorized: false });
 
-      if (!error && data?.admins) {
-        setCommunityAdmins(data.admins.map((admin) => admin.user.id.toLowerCase()));
+        if (data?.admins) {
+          setCommunityAdmins(data.admins.map((admin) => admin.user.id.toLowerCase()));
+        }
+      } catch {
+        // Community admins list is best-effort here — the verifications
+        // dialog still renders (falls back to a single "members" tab)
+        // without the admin/member split.
       }
     };
 

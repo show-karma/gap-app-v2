@@ -1,5 +1,6 @@
+import { z } from "zod";
 import { errorManager } from "@/components/Utilities/errorManager";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 
 /**
@@ -50,9 +51,16 @@ export interface ProjectDiscoveryResult {
   }[];
 }
 
-interface ProjectDiscoveryResponse {
-  data: ProjectDiscoveryResult[];
-}
+// The nested item shape (`ProjectDiscoveryResult`) isn't validated here —
+// fetchData applied zero runtime validation to it, so we only guard the
+// envelope shape rather than inventing a stricter contract than reality.
+// TODO(#1775): add a full zod schema for ProjectDiscoveryResult once the
+// real response shape has been confirmed against production payloads.
+const ProjectDiscoveryResponseSchema = z
+  .object({
+    data: z.array(z.unknown()).nullable().optional(),
+  })
+  .passthrough();
 
 /**
  * Runs a project-discovery search for a community.
@@ -66,16 +74,16 @@ export const discoverProjects = async (
   communityId: string,
   payload: DiscoverProjectsPayload
 ): Promise<ProjectDiscoveryResult[]> => {
-  const [response, error] = await fetchData(
-    INDEXER.COMMUNITY.PROJECT_DISCOVERY(communityId),
-    "POST",
-    payload
-  );
+  try {
+    const response = await api.post<z.infer<typeof ProjectDiscoveryResponseSchema>>(
+      INDEXER.COMMUNITY.PROJECT_DISCOVERY(communityId),
+      payload,
+      { schema: ProjectDiscoveryResponseSchema }
+    );
 
-  if (error) {
+    return (response?.data as ProjectDiscoveryResult[] | null | undefined) ?? [];
+  } catch (error) {
     errorManager(`Error discovering projects for community ${communityId}`, error);
-    throw new Error(error);
+    throw error;
   }
-
-  return (response as ProjectDiscoveryResponse | null)?.data ?? [];
 };

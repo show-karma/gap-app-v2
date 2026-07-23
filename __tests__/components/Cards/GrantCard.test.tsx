@@ -262,7 +262,7 @@ describe("GrantCard", () => {
       expect(screen.getByText("grant-123")).toBeInTheDocument();
     });
 
-    it("should handle grant without milestones", () => {
+    it("should hide the milestone count pill when there are 0 active milestones", () => {
       const grantWithoutMilestones = {
         ...mockGrant,
         milestones: [],
@@ -270,7 +270,7 @@ describe("GrantCard", () => {
 
       render(<GrantCard grant={grantWithoutMilestones} index={0} />);
 
-      expect(screen.getByText(/0\/0.*Milestones/i)).toBeInTheDocument();
+      expect(screen.queryByText(/0\/0.*Milestones/i)).not.toBeInTheDocument();
     });
 
     it("should hide updates badge when there are 0 updates", () => {

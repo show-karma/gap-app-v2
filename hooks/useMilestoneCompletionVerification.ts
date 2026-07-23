@@ -14,7 +14,7 @@ import {
   type GrantMilestoneWithCompletion,
   type ProjectGrantMilestonesResponse,
 } from "@/services/milestones";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 import { queryClient } from "@/utilities/query-client";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
@@ -71,11 +71,9 @@ export const useMilestoneCompletionVerification = ({
     useAttestationToast();
   const { setupChainAndWallet } = useSetupChainAndWallet();
 
-  // AbortController owns the in-flight verification's polling loop.
-  // React state updates and `onSuccess` callbacks that fire after the
-  // component unmounts trigger React's "state update on unmounted
-  // component" warning and waste network calls. The controller is
-  // refreshed at every `verifyMilestone` call and aborted on cleanup.
+  // AbortController owns the in-flight verification's polling loop (refreshed at
+  // every verifyMilestone call, aborted on cleanup) so post-unmount state updates
+  // don't warn or waste network calls.
   const controllerRef = useRef<AbortController | null>(null);
   useEffect(() => {
     return () => {
@@ -199,9 +197,10 @@ export const useMilestoneCompletionVerification = ({
     communityUID: string
   ) => {
     if (txHash) {
-      await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, chainId), "POST", {});
-
-      // If multiple attestations, wait for indexer to process all
+      // Best-effort indexer nudge; it also catches this via its own chain listener,
+      // so a failure must not abort the flow. Legacy fetchData discarded the error.
+      await api.post(INDEXER.ATTESTATION_LISTENER(txHash, chainId), {}).catch(() => undefined);
+      // If multiple attestations, wait for the indexer to process all of them.
       if (attestationCount > 1) {
         await new Promise((resolve) => setTimeout(resolve, INDEXER_PROCESSING_DELAY_MS));
       }
@@ -211,8 +210,14 @@ export const useMilestoneCompletionVerification = ({
       queryKey: QUERY_KEYS.MILESTONES.PROJECT_GRANT_MILESTONES(projectId, programId),
     });
 
+    // Invalidate by prefix: the report queries are keyed by the community SLUG
+    // from the URL, not the on-chain communityUID we have here, so appending
+    // communityUID would never match and the invalidation would be a no-op.
     await queryClient.invalidateQueries({
-      queryKey: ["reportMilestones", communityUID],
+      queryKey: ["reportMilestones"],
+    });
+    await queryClient.invalidateQueries({
+      queryKey: ["pendingVerificationMilestones"],
     });
 
     // Let consumers refresh cross-cutting feeds (e.g. the Reviewer Inbox) now
@@ -432,8 +437,8 @@ export const useMilestoneCompletionVerification = ({
     verificationComment: string
   ) => {
     // Validation
-    if (!address || !data) {
-      showError("Please connect your wallet");
+    if (!data) {
+      showError("This milestone is still loading. Please try again.");
       return;
     }
 
@@ -561,8 +566,8 @@ export const useMilestoneCompletionVerification = ({
     data: ProjectGrantMilestonesResponse,
     completionComment: string
   ) => {
-    if (!address || !data) {
-      showError("Please connect your wallet");
+    if (!data) {
+      showError("This milestone is still loading. Please try again.");
       return;
     }
 

@@ -56,10 +56,10 @@ import { useSimilarProjectsModalStore } from "@/store/modals/similarProjects";
 import { useOwnerStore } from "@/store/owner";
 import type { Contact } from "@/types/project";
 import type { Project as ProjectResponse } from "@/types/v2/project";
+import { api } from "@/utilities/api/client";
 import { attestWithRetry } from "@/utilities/attestWithRetry";
 import { type CustomLink, isCustomLink } from "@/utilities/customLink";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import fetchData from "@/utilities/fetchData";
 import { validateGithubInput } from "@/utilities/github";
 import { INDEXER } from "@/utilities/indexer";
 import { isRetryableChainError } from "@/utilities/isRetryableChainError";
@@ -78,6 +78,7 @@ import { cn } from "@/utilities/tailwind";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { SimilarProjectsDialog } from "../SimilarProjectsDialog";
 import { ContactInfoSection } from "./ContactInfoSection";
+import { ProjectSubmitControls, useSignerErrorHandler } from "./SignerGate";
 
 const inputStyle = "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";
 const socialMediaInputStyle =
@@ -178,6 +179,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
     login,
     isConnected: authIsConnected,
     address: authAddress,
+    connectWallet,
   } = useAuth();
   const { chain } = useAccount();
   const { switchChainAsync } = useWallet();
@@ -185,7 +187,8 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   const router = useRouter();
   const { gap } = useGap();
   const { openSimilarProjectsModal, isSimilarProjectsModalOpen } = useSimilarProjectsModalStore();
-  const { setupChainAndWallet, smartWalletAddress, hasEmbeddedWallet } = useSetupChainAndWallet();
+  const { setupChainAndWallet, smartWalletAddress, hasEmbeddedWallet, signerStatus } =
+    useSetupChainAndWallet();
   // Resolve address: wagmi (external wallet) > useAuth (Privy wallets) > smartWalletAddress (embedded wallet for social login)
   const address = wagmiAddress || authAddress || (smartWalletAddress as `0x${string}` | undefined);
   const isConnected = wagmiIsConnected || authIsConnected || !!smartWalletAddress;
@@ -343,6 +346,14 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   function openModal() {
     setIsOpen(true);
   }
+
+  // Recognises the expected "no wallet ready to sign" state (GAP-FRONTEND-24N)
+  // and reopens the dialog with actionable guidance instead of reporting a bug.
+  const handleSignerError = useSignerErrorHandler({
+    showError,
+    setShouldResetOnOpen,
+    openModal,
+  });
 
   // Handle unauthenticated user trying to open modal
   useEffect(() => {
@@ -571,19 +582,15 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         try {
           const projectIdentifier = `${slug}-${chainSelected}`;
 
-          const [promoteData, promoteError] = await fetchData(
+          // TODO(#1775): add zod schema
+          const promoteData = await api.post<{ permanentUrl: string }>(
             INDEXER.PROJECT.LOGOS.PROMOTE_TO_PERMANENT(),
-            "POST",
             {
               tempKey: tempLogoKey,
               projectId: projectIdentifier,
             }
           );
-
-          if (!promoteError) {
-            const { permanentUrl } = promoteData;
-            finalImageURL = permanentUrl;
-          }
+          finalImageURL = promoteData.permanentUrl;
           // If promotion fails, continue with temp URL
         } catch {
           // Continue with temp URL if promotion fails
@@ -664,7 +671,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       // project regardless of which send actually landed it.
       const txHash = recoveredByIdempotencyGuard ? undefined : res?.tx[0]?.hash;
       if (txHash) {
-        await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, chainId), "POST", {});
+        await api.post(INDEXER.ATTESTATION_LISTENER(txHash, chainId), {});
       }
 
       let retries = 1000;
@@ -687,16 +694,10 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       }
 
       if (fetchedProject?.uid && fetchedProject.uid !== zeroHash) {
-        const [, subscriptionError] = await fetchData(
-          INDEXER.SUBSCRIPTION.CREATE(fetchedProject.uid),
-          "POST",
-          { contacts },
-          {},
-          {},
-          true
-        );
-
-        if (subscriptionError) {
+        try {
+          // TODO(#1775): add zod schema
+          await api.post(INDEXER.SUBSCRIPTION.CREATE(fetchedProject.uid), { contacts });
+        } catch {
           showError("Something went wrong with contact info save. Please try again later.");
         }
 
@@ -714,6 +715,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       setContacts([]);
       setCustomLinks([]);
     } catch (error: any) {
+      if (handleSignerError(error)) return;
       // A transient chain-switch / bundler-RPC hiccup (GAP-FRONTEND-23C) is
       // recoverable by retrying — tell the user that instead of a dead-end
       // generic error. The form data is preserved either way.
@@ -781,19 +783,15 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       let finalImageURL = data.profilePicture || "";
       if (tempLogoKey) {
         try {
-          const [promoteData, promoteError] = await fetchData(
+          // TODO(#1775): add zod schema
+          const promoteData = await api.post<{ permanentUrl: string }>(
             INDEXER.PROJECT.LOGOS.PROMOTE_TO_PERMANENT(),
-            "POST",
             {
               tempKey: tempLogoKey,
               projectId: fetchedProject.uid,
             }
           );
-
-          if (!promoteError) {
-            const { permanentUrl } = promoteData;
-            finalImageURL = permanentUrl;
-          }
+          finalImageURL = promoteData.permanentUrl;
           // If promotion fails, continue with temp URL
         } catch {
           // Continue with temp URL if promotion fails
@@ -853,6 +851,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         }, 1500);
       });
     } catch (error: any) {
+      if (handleSignerError(error)) return;
       const userMessage = isRetryableChainError(error)
         ? MESSAGES.PROJECT.UPDATE.RETRYABLE_ERROR
         : MESSAGES.PROJECT.UPDATE.ERROR;
@@ -895,6 +894,9 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
     const errors = hasErrors();
     if (isLoading) {
       return <p>Loading...</p>;
+    }
+    if (signerStatus === "initializing") {
+      return <p>{MESSAGES.PROJECT.CREATE.WALLET_PREPARING}</p>;
     }
     if (!errors) {
       return;
@@ -1683,38 +1685,15 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                           </Tooltip.Provider>
                         )}
 
-                        {step === categories.length - 1 && (
-                          <Tooltip.Provider>
-                            <Tooltip.Root delayDuration={0}>
-                              <Tooltip.Trigger asChild>
-                                <div className="flex w-max h-max">
-                                  <Button
-                                    type={"submit"}
-                                    className="flex disabled:opacity-50 flex-row dark:bg-zinc-900 hover:text-white dark:text-white gap-2 items-center justify-center rounded-md border border-transparent bg-black px-6 py-2 text-md font-medium text-white hover:opacity-70 hover:bg-black focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
-                                    disabled={hasErrors() || isLoading}
-                                  >
-                                    {projectToUpdate ? "Update project" : "Create project"}
-                                    {!projectToUpdate ? (
-                                      <ChevronRightIcon className="w-4 h-4" />
-                                    ) : null}
-                                  </Button>
-                                </div>
-                              </Tooltip.Trigger>
-                              <Tooltip.Portal>
-                                {hasErrors() || isLoading ? (
-                                  <Tooltip.Content
-                                    className="TooltipContent bg-brand-darkblue rounded-lg text-white p-3 z-[1000]"
-                                    sideOffset={5}
-                                    side="bottom"
-                                  >
-                                    {tooltipText()}
-                                    <Tooltip.Arrow className="TooltipArrow" />
-                                  </Tooltip.Content>
-                                ) : null}
-                              </Tooltip.Portal>
-                            </Tooltip.Root>
-                          </Tooltip.Provider>
-                        )}
+                        <ProjectSubmitControls
+                          isLastStep={step === categories.length - 1}
+                          signerStatus={signerStatus}
+                          hasErrors={hasErrors()}
+                          isLoading={isLoading}
+                          isUpdate={!!projectToUpdate}
+                          onConnectWallet={connectWallet}
+                          tooltipContent={tooltipText()}
+                        />
                       </div>
                     </form>
                   </Dialog.Panel>

@@ -1,7 +1,7 @@
 import type { ApplicationComment } from "@/types/funding-platform";
+import { api } from "@/utilities/api/client";
 import { createAuthenticatedApiClient } from "@/utilities/auth/api-client";
 import { envVars } from "@/utilities/enviromentVars";
-import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
 const API_URL = envVars.NEXT_PUBLIC_GAP_INDEXER_URL;
@@ -19,19 +19,22 @@ export const applicationCommentsService = {
       params.admin = "true";
     }
 
-    const [data, error] = await fetchData<{ comments: ApplicationComment[] }>(
-      INDEXER.V2.APPLICATIONS.COMMENTS(applicationId),
-      "GET",
-      {},
-      params
-    );
+    try {
+      // TODO(#1775): add zod schema
+      const data = await api.get<{ comments: ApplicationComment[] }>(
+        INDEXER.V2.APPLICATIONS.COMMENTS(applicationId),
+        { params }
+      );
 
-    if (error || !data) {
+      if (!data) {
+        throw new Error("Failed to fetch comments");
+      }
+
+      return data.comments;
+    } catch (error) {
       console.error("Comment API Error:", error);
-      throw new Error(error || "Failed to fetch comments");
+      throw error;
     }
-
-    return data.comments;
   },
 
   /**

@@ -1,4 +1,6 @@
 import * as Sentry from "@sentry/nextjs";
+import { type ApiError, isApiError, isTransientApiError } from "@/utilities/api/errors";
+import { reportApiFailure } from "@/utilities/api/report";
 import { isTransientHttpError, isTransientNetworkError } from "@/utilities/sentry/transientErrors";
 
 // Lazy import toast to avoid issues in server components
@@ -38,6 +40,73 @@ const errorContains = (error: ErrorLike | null | undefined, needle: string): boo
   );
 };
 
+// Fires the standard "Try again shortly" failure toast. Shared by the typed
+// ApiError branch and the legacy wallet-error fallback below so both paths
+// give the user the same feedback for a failed action.
+const fireErrorToast = (message: string): void => {
+  getToast()?.error(
+    `${message} Try again shortly. If you continue to have trouble, please message us on Telegram: t.me/karmahq`
+  );
+};
+
+// Handles a typed ApiError (issue #1775): fires the caller's toastError (same
+// as the legacy string-error path below), then either breadcrumbs a
+// transient failure or routes a genuine one through reportApiFailure's
+// per-endpoint fingerprinting. Extracted (rather than inlined in
+// errorManager) to keep the main function under biome's cognitive-complexity
+// ceiling.
+const handleApiError = (
+  error: ApiError,
+  errorMessage: string,
+  extra: any,
+  toastError?: { error?: string }
+): void => {
+  if (toastError?.error) {
+    fireErrorToast(toastError.error);
+  }
+  if (isTransientApiError(error)) {
+    Sentry.addBreadcrumb({ category: "api", message: error.message, level: "warning" });
+    return;
+  }
+  reportApiFailure(error, { errorMessage, extra });
+};
+
+// Handles the "switch chain" wallet error case: toasts a network-switch
+// hint and reports whether the caller should return early. Extracted
+// (alongside errorContains) to keep errorManager under biome's
+// cognitive-complexity ceiling.
+const handleSwitchChainError = (
+  error: ErrorLike | null | undefined,
+  extra?: { targetNetwork?: string }
+): boolean => {
+  if (!errorContains(error, "switch chain")) {
+    return false;
+  }
+  const toastInstance = getToast();
+  if (toastInstance) {
+    toastInstance.error(
+      `we couldn't switch to "${extra?.targetNetwork}" network in your wallet. Please manually switch network and try again`
+    );
+  }
+  return true;
+};
+
+// Expected user/lifecycle states (e.g. SignerUnavailableError for a wallet
+// that hasn't connected/hydrated yet) are guidance, not defects — never
+// report them to Sentry. Duck-typed on `expected` to avoid an import cycle
+// with the ~40 attestation flows that call errorManager in their catches.
+// Extracted (rather than inlined in errorManager) to keep the main
+// function under biome's cognitive-complexity ceiling.
+const handleExpectedError = (error: unknown, toastError?: { error?: string }): boolean => {
+  if ((error as { expected?: boolean } | null)?.expected !== true) {
+    return false;
+  }
+  if (toastError?.error) {
+    getToast()?.error(toastError.error);
+  }
+  return true;
+};
+
 export const errorManager = (
   errorMessage: string,
   error: any,
@@ -46,20 +115,32 @@ export const errorManager = (
     error?: string;
   }
 ) => {
+  // Typed ApiErrors (issue #1775) are handled FIRST — above the legacy wallet-
+  // error string heuristics below — because an ApiError's message embeds the
+  // endpoint path, so a route containing "reject"/"switch chain" (e.g. "HTTP
+  // 500 POST /communities/x/reject") would otherwise match the wallet guards
+  // and be silently swallowed. Transient failures (network/timeout/abort/429,
+  // or a retryable upstream 502/503/504) suppress to a breadcrumb — matching
+  // the historical isTransientNetworkError/isTransientHttpError posture below;
+  // genuine failures (ContractViolation, non-retryable 4xx/5xx) get
+  // reportApiFailure's per-endpoint fingerprinting (§C: "above the existing
+  // checks"; isTransientApiError intentionally broadens the snippet's
+  // error.expected to also suppress retryable 5xx).
+  if (isApiError(error)) {
+    handleApiError(error, errorMessage, extra, toastError);
+    return;
+  }
+
   if (error?.originalError || error?.message) {
     if (errorContains(error, "reject")) {
       return;
     }
-    const targetNetwork = extra?.targetNetwork;
-    if (errorContains(error, "switch chain")) {
-      const toastInstance = getToast();
-      if (toastInstance) {
-        toastInstance.error(
-          `we couldn't switch to "${targetNetwork}" network in your wallet. Please manually switch network and try again`
-        );
-      }
+    if (handleSwitchChainError(error, extra)) {
       return;
     }
+  }
+  if (handleExpectedError(error, toastError)) {
+    return;
   }
   if (toastError?.error) {
     const wasRPCIssue = errorContains(error, "rpc error");

@@ -37,7 +37,7 @@ export const TotalGrantsCounter = (props: TotalGrantsCounterProps) => {
     >
       Total Grants {grants ? `(${grants})` : null}
       {` `}
-      {!isLoading ? `across ${projects} ${pluralize("projects", projects)}` : null}
+      {!isLoading ? `across ${projects} ${pluralize("projects", Number(projects))}` : null}
     </div>
   );
 };

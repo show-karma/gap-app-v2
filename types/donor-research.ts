@@ -403,14 +403,29 @@ export interface FastReportEvent {
   name:
     | "snapshot"
     | "pool_loaded"
+    | "candidates_identified"
     | "compliance_complete"
+    | "contact_discovery_progress"
     | "contact_discovery_complete"
+    | "candidate_stage_complete"
     | "activity_complete"
     | "ranking_complete"
+    | "synthesis_started"
     | "report_finalized"
     | "report_failed";
   reportId: string;
   data: Record<string, unknown>;
+}
+
+export type CandidateEnrichmentStage = "compliance" | "contacts" | "news" | "social";
+
+export type CandidateStageStatus = "ok" | "skipped" | "failed";
+
+export interface IdentifiedReportCandidate {
+  fundingOrganizationId: string;
+  name: string;
+  city: string | null;
+  state: string | null;
 }
 
 // -- Donor persona (DEV-431) -------------------------------------------

@@ -21,7 +21,7 @@ import { useProjectImpacts } from "@/hooks/v2/useProjectImpacts";
 import type { ProjectImpactVerification } from "@/services/project-impacts.service";
 import { getProjectImpacts } from "@/services/project-impacts.service";
 import { useProjectStore } from "@/store";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { sanitizeObject } from "@/utilities/sanitize";
@@ -81,7 +81,7 @@ export const VerifyImpactDialog: FC<VerifyImpactDialogProps> = ({
     useAttestationToast();
 
   const onSubmit: SubmitHandler<SchemaType> = async (data) => {
-    if (!address || !project) return;
+    if (!project) return;
     try {
       setIsLoading(true);
       startAttestation("Verifying impact...");
@@ -113,7 +113,7 @@ export const VerifyImpactDialog: FC<VerifyImpactDialogProps> = ({
           if (!project) return;
           const txHash = res?.tx[0]?.hash;
           if (txHash) {
-            await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, findImpact.chainID), "POST", {});
+            await api.post(INDEXER.ATTESTATION_LISTENER(txHash, findImpact.chainID), {});
           }
           let retries = 1000;
           changeStepperStep("indexing");

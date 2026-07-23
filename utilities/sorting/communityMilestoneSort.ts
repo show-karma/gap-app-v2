@@ -8,7 +8,10 @@ export function isValidMilestone(item: unknown): item is CommunityMilestoneUpdat
   if (!item || typeof item !== "object") return false;
   const milestone = item as Record<string, unknown>;
   if (typeof milestone.uid !== "string" || milestone.uid.trim() === "") return false;
-  if (milestone.status !== "pending" && milestone.status !== "completed") return false;
+  // Accept the known milestone statuses (DEV-523 added "cancelled"); reject junk.
+  const VALID_STATUSES = ["pending", "completed", "verified", "cancelled"];
+  if (typeof milestone.status !== "string" || !VALID_STATUSES.includes(milestone.status))
+    return false;
   const details = milestone.details as Record<string, unknown> | undefined;
   const title = details?.title;
   if (typeof title !== "string" || title.trim() === "") return false;

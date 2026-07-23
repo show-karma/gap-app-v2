@@ -6,9 +6,26 @@ import { getCommunities } from "@/services/communities.service";
 import { layoutTheme } from "@/src/helper/theme";
 import { useOwnerStore } from "@/store/owner";
 import type { Community } from "@/types/v2/community";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
+
+interface RawCommunityStats {
+  projects?: number;
+  ProjectEdits?: number;
+  ProjectEndorsements?: number;
+  ProjectImpacts?: number;
+  ProjectImpactVerifieds?: number;
+  grants?: number;
+  GrantEdits?: number;
+  GrantUpdates?: number;
+  GrantUpdateStatuses?: number;
+  GrantCompleted?: number;
+  Milestones?: number;
+  MilestoneCompleted?: number;
+  MilestoneVerified?: number;
+  MemberOf?: number;
+}
 
 interface CommunityStatsData {
   projects: number;
@@ -52,13 +69,15 @@ export default function CommunityStats() {
   const fetchCommunityStats = useCallback(async (communities: Community[]) => {
     try {
       const statsPromises = communities.map(async (community) => {
-        const [data, error]: any = await fetchData(
-          INDEXER.COMMUNITY.STATS(community.uid as string)
-        );
-        if (error) {
-          return { uid: community.uid, stats: {} };
+        try {
+          // TODO(#1775): add zod schema
+          const data = await api.get<RawCommunityStats>(
+            INDEXER.COMMUNITY.STATS(community.uid as string)
+          );
+          return { uid: community.uid, stats: data };
+        } catch {
+          return { uid: community.uid, stats: {} as RawCommunityStats };
         }
-        return { uid: community.uid, stats: data };
       });
 
       const statsResults = await Promise.all(statsPromises);

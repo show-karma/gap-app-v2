@@ -8,7 +8,7 @@ const {
   mockEnsureCorrectChain,
   mockSafeGetWalletClient,
   mockWalletClientToSigner,
-  mockFetchData,
+  mockApiPost,
   mockPerformOffChainRevoke,
   mockCreateCheckIfCompletionExists,
   mockValidateGrantCompletion,
@@ -34,7 +34,7 @@ const {
   mockEnsureCorrectChain: vi.fn(),
   mockSafeGetWalletClient: vi.fn(),
   mockWalletClientToSigner: vi.fn(),
-  mockFetchData: vi.fn(),
+  mockApiPost: vi.fn(),
   mockPerformOffChainRevoke: vi.fn(),
   mockCreateCheckIfCompletionExists: vi.fn(),
   mockValidateGrantCompletion: vi.fn(),
@@ -106,9 +106,8 @@ vi.mock("@/utilities/eas-wagmi-utils", () => ({
   walletClientToSigner: mockWalletClientToSigner,
 }));
 
-vi.mock("@/utilities/fetchData", () => ({
-  __esModule: true,
-  default: mockFetchData,
+vi.mock("@/utilities/api/client", () => ({
+  api: { post: mockApiPost },
 }));
 
 vi.mock("@/hooks/useOffChainRevoke", () => ({
@@ -537,7 +536,7 @@ describe("useGrantCompletionRevoke", () => {
         { schema: "0xschema123", data: [{ uid: "0xcompletion123", value: 0n }] },
       ]);
       expect(mockChangeStepperStep).toHaveBeenCalledWith("confirmed");
-      expect(mockFetchData).toHaveBeenCalled();
+      expect(mockApiPost).toHaveBeenCalled();
       expect(mockChangeStepperStep).toHaveBeenCalledWith("indexing");
       expect(mockCheckIfCompletionExists).toHaveBeenCalled();
       expect(mockRefreshGrant).toHaveBeenCalled();
@@ -554,11 +553,7 @@ describe("useGrantCompletionRevoke", () => {
         await result.current.revokeCompletion();
       });
 
-      expect(mockFetchData).toHaveBeenCalledWith(
-        expect.stringContaining("0xtxhash123"),
-        "POST",
-        {}
-      );
+      expect(mockApiPost).toHaveBeenCalledWith(expect.stringContaining("0xtxhash123"), {});
     });
 
     it("should handle missing transaction hash", async () => {
@@ -574,7 +569,7 @@ describe("useGrantCompletionRevoke", () => {
         await result.current.revokeCompletion();
       });
 
-      expect(mockFetchData).not.toHaveBeenCalled();
+      expect(mockApiPost).not.toHaveBeenCalled();
       expect(mockChangeStepperStep).toHaveBeenCalledWith("indexing");
     });
 

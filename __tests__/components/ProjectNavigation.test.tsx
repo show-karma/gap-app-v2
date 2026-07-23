@@ -154,7 +154,6 @@ describe("ProjectNavigation", () => {
       render(<ProjectNavigation {...defaultProps} />);
 
       expect(screen.getByRole("link", { name: /project/i })).toBeInTheDocument();
-      expect(screen.getByRole("link", { name: /updates/i })).toBeInTheDocument();
       expect(screen.getByRole("link", { name: /funding/i })).toBeInTheDocument();
       expect(screen.getByRole("link", { name: /impact/i })).toBeInTheDocument();
       expect(screen.getByRole("link", { name: /team/i })).toBeInTheDocument();
@@ -166,8 +165,8 @@ describe("ProjectNavigation", () => {
       const projectLink = screen.getByRole("link", { name: /project/i });
       expect(projectLink).toHaveAttribute("href", "/project/test-project");
 
-      const updatesLink = screen.getByRole("link", { name: /updates/i });
-      expect(updatesLink).toHaveAttribute("href", "/project/test-project/updates");
+      const fundingLink = screen.getByRole("link", { name: /funding/i });
+      expect(fundingLink).toHaveAttribute("href", "/project/test-project/grants");
     });
 
     it("should fall back to projectId when slug is not available", () => {
@@ -244,8 +243,8 @@ describe("ProjectNavigation", () => {
     it("should apply inactive styles to non-current tabs", () => {
       render(<ProjectNavigation {...defaultProps} />);
 
-      const updatesLink = screen.getByRole("link", { name: /updates/i });
-      expect(updatesLink.className).toContain("border-transparent");
+      const fundingLink = screen.getByRole("link", { name: /funding/i });
+      expect(fundingLink.className).toContain("border-transparent");
     });
 
     it("should have prefetch attribute on links", () => {
@@ -315,14 +314,13 @@ describe("ProjectNavigation", () => {
       render(<ProjectNavigation {...defaultProps} />);
 
       const links = screen.getAllByRole("link");
-      expect(links.length).toBeGreaterThanOrEqual(5); // At least 5 public tabs
+      expect(links.length).toBeGreaterThanOrEqual(4); // At least 4 public tabs
     });
 
     it("should have proper text content on all tabs", () => {
       render(<ProjectNavigation {...defaultProps} />);
 
       expect(screen.getByText("Project")).toBeInTheDocument();
-      expect(screen.getByText("Updates")).toBeInTheDocument();
       expect(screen.getByText("Funding")).toBeInTheDocument();
       expect(screen.getByText("Impact")).toBeInTheDocument();
       expect(screen.getByText("Team")).toBeInTheDocument();

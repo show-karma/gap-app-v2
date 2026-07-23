@@ -5,8 +5,7 @@ import * as Tooltip from "@radix-ui/react-tooltip";
 import { type IProjectUpdate, ProjectUpdate } from "@show-karma/karma-gap-sdk";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import type { FC } from "react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { type FC, useEffect, useMemo, useRef, useState } from "react";
 import type { SubmitHandler } from "react-hook-form";
 import { Controller, useForm } from "react-hook-form";
 import { useAccount } from "wagmi";
@@ -33,7 +32,7 @@ import { useProjectStore } from "@/store";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
 import type { ImpactIndicatorWithData } from "@/types/impactMeasurement";
 import type { Project as ProjectResponse } from "@/types/v2/project";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { formatDate } from "@/utilities/formatDate";
 import { sendImpactAnswers } from "@/utilities/impact";
 import { INDEXER } from "@/utilities/indexer";
@@ -44,7 +43,8 @@ import { SHARE_TEXTS } from "@/utilities/share/text";
 import { cn } from "@/utilities/tailwind";
 import { ExternalLink } from "../Utilities/ExternalLink";
 import { errorManager } from "../Utilities/errorManager";
-import { type CategorizedIndicator, OutputsSection } from "./Outputs";
+import { OutputsSection } from "./Outputs/OutputsSection";
+import type { CategorizedIndicator } from "./Outputs/types";
 
 interface GrantOption {
   title: string;
@@ -170,7 +170,6 @@ const GrantSearchDropdown: FC<{
 const getFormErrorMessage = (errors: any, formValues: any) => {
   const errorMessages = [];
 
-  // Check for validation errors first
   if (errors.title?.message) {
     errorMessages.push(errors.title.message);
   } else if (!formValues.title) {
@@ -183,7 +182,6 @@ const getFormErrorMessage = (errors: any, formValues: any) => {
     errorMessages.push("Description is required");
   }
 
-  // Check outputs
   if (errors.outputs?.message) {
     errorMessages.push("Please check your metrics values");
   } else if (formValues.outputs?.length > 0) {
@@ -195,7 +193,6 @@ const getFormErrorMessage = (errors: any, formValues: any) => {
     }
   }
 
-  // Check deliverables
   if (errors.deliverables) {
     const hasDeliverableErrors = errors.deliverables.some((d: any) => d?.name || d?.proof);
     if (hasDeliverableErrors) {
@@ -229,13 +226,11 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
   const [isEditMode, setIsEditMode] = useState(false);
   const queryClient = useQueryClient();
 
-  // Fetch updates using dedicated hook
   const { rawData: projectUpdatesData, refetch: refetchUpdates } = useProjectUpdates(
     project?.uid || ""
   );
   const projectUpdates = projectUpdatesData?.projectUpdates || [];
 
-  // Fetch grants using dedicated hook
   const { grants: projectGrants } = useProjectGrants(project?.uid || "");
 
   const { register, handleSubmit, watch, control, setValue, formState, reset, setError } =
@@ -260,10 +255,8 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
     projectIdentifier: project?.uid,
   });
 
-  // Fetch auto-synced indicators from API
   const { data: autosyncedIndicators = [] } = useAutosyncedIndicators();
 
-  // Get communities from selected grants
   const watchedGrantIds = watch("grants") || [];
   const selectedCommunities = useMemo(() => {
     const communities = new Map<string, { uid: string; name: string }>();
@@ -283,7 +276,6 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
     return Array.from(communities.values());
   }, [watchedGrantIds, grants, projectGrants]);
 
-  // Fetch community indicators for all selected communities
   const _communityIndicatorQueries = selectedCommunities.map((community) => ({
     queryKey: ["communityIndicators", community.uid],
     queryFn: () => getIndicatorsByCommunity(community.uid),
@@ -314,10 +306,8 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
     enabled: selectedCommunities.length > 0,
   });
 
-  // Fetch unlinked indicators
   const { data: unlinkedIndicatorsData = [] } = useUnlinkedIndicators();
 
-  // Categorized indicators combining project, community, and unlinked indicators
   const categorizedIndicators = useMemo((): CategorizedIndicator[] => {
     const projectIndicators: CategorizedIndicator[] = (indicatorsData || []).map((indicator) => ({
       ...indicator,
@@ -507,7 +497,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
   }));
 
   const createProjectUpdate = async (data: UpdateType) => {
-    if (!address || !project) return;
+    if (!project) return;
 
     startAttestation(isEditMode ? "Updating activity..." : "Posting activity...");
     try {
@@ -614,7 +604,15 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
         let retries = 1000;
         const txHash = res?.tx[0]?.hash;
         if (txHash) {
-          await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, projectUpdate.chainID), "POST", {});
+          try {
+            await api.post(INDEXER.ATTESTATION_LISTENER(txHash, projectUpdate.chainID), {});
+          } catch (listenerError) {
+            // SUPPRESSED: best-effort notify; indexing poll below retries regardless (matches legacy fetchData, which never surfaced errors here).
+            errorManager("Failed to notify attestation listener", listenerError, {
+              projectUID: projectUpdate.uid,
+              txHash,
+            });
+          }
         }
         updateStep("indexing");
         while (retries > 0) {
@@ -630,7 +628,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
               );
               afterSubmit?.();
               setTimeout(() => {
-                const updatesPath = PAGES.PROJECT.UPDATES(projectSlug || projectUid);
+                const updatesPath = PAGES.PROJECT.OVERVIEW(projectSlug || projectUid);
                 dismiss();
 
                 // Only show share dialog for new activities, not edits

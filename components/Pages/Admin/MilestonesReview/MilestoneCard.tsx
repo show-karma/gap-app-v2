@@ -1,12 +1,14 @@
 "use client";
 
 import {
+  ArrowUturnLeftIcon,
   AtSymbolIcon,
   CheckCircleIcon,
   ChevronDownIcon,
   ChevronUpIcon,
   EllipsisVerticalIcon,
   LinkIcon,
+  NoSymbolIcon,
   SparklesIcon,
   TrashIcon,
 } from "@heroicons/react/20/solid";
@@ -173,6 +175,15 @@ interface MilestoneCardProps {
   onRequestChanges?: () => void;
   onDeleteMilestone: (milestone: GrantMilestoneWithCompletion) => Promise<void>;
   isDeleting?: boolean;
+  /**
+   * Cancellation (DEV-523) is opt-in per surface, gated to the same admins/staff
+   * who can edit/delete. When omitted the Cancel/Un-cancel actions never render.
+   */
+  canCancelMilestones?: boolean;
+  onCancelMilestone?: (milestone: GrantMilestoneWithCompletion, reason?: string) => Promise<void>;
+  onUncancelMilestone?: (milestone: GrantMilestoneWithCompletion) => Promise<void>;
+  isCancelling?: boolean;
+  isUncancelling?: boolean;
   allocationAmount?: string;
   showAIEvaluationButton?: boolean;
   quietSurface?: boolean;
@@ -209,6 +220,11 @@ export function MilestoneCard({
   onRequestChanges,
   onDeleteMilestone,
   isDeleting = false,
+  canCancelMilestones = false,
+  onCancelMilestone,
+  onUncancelMilestone,
+  isCancelling = false,
+  isUncancelling = false,
   allocationAmount,
   showAIEvaluationButton = true,
   quietSurface = false,
@@ -248,6 +264,10 @@ export function MilestoneCard({
     () => milestone.verificationDetails !== null,
     [milestone.verificationDetails]
   );
+  const isCancelled = useMemo(
+    () => milestone.status === "cancelled" || milestone.cancellation != null,
+    [milestone.status, milestone.cancellation]
+  );
 
   const completionDeliverables = useMemo(
     () => (useOnChainData ? (milestone.completionDetails?.deliverables ?? []) : []),
@@ -268,6 +288,8 @@ export function MilestoneCard({
     const config = MILESTONE_STATUS_CONFIG[status];
     return { status: config.label, statusColor: config.badgeColor };
   }, [
+    milestone.status,
+    milestone.cancellation,
     milestone.verificationDetails,
     milestone.completionDetails,
     milestone.fundingApplicationCompletion,
@@ -277,6 +299,8 @@ export function MilestoneCard({
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const [isOverflowOpen, setIsOverflowOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
+  const [cancelReason, setCancelReason] = useState("");
   const [hasLongDescription, setHasLongDescription] = useState(false);
   const [hasLongCompletion, setHasLongCompletion] = useState(false);
   const [isCompletionExpanded, setIsCompletionExpanded] = useState(false);
@@ -306,6 +330,26 @@ export function MilestoneCard({
     setIsOverflowOpen(false);
     setIsDeleteDialogOpen(true);
   }, []);
+
+  const handleCancelMenuClick = useCallback(() => {
+    setIsOverflowOpen(false);
+    setIsCancelDialogOpen(true);
+  }, []);
+
+  const handleConfirmCancel = useCallback(async () => {
+    await onCancelMilestone?.(milestone, cancelReason.trim() || undefined);
+    setCancelReason("");
+  }, [onCancelMilestone, milestone, cancelReason]);
+
+  const handleUncancelMenuClick = useCallback(async () => {
+    setIsOverflowOpen(false);
+    try {
+      await onUncancelMilestone?.(milestone);
+    } catch {
+      // SUPPRESSED: the un-cancel mutation's onError already surfaces + reports
+      // the failure; we swallow here only to avoid an unhandled promise rejection.
+    }
+  }, [onUncancelMilestone, milestone]);
 
   const handleOverflowBlur = useCallback((e: React.FocusEvent) => {
     if (overflowRef.current && !overflowRef.current.contains(e.relatedTarget as Node)) {
@@ -415,7 +459,7 @@ export function MilestoneCard({
             projectTitle={projectTitle}
             projectSlug={projectSlug}
           />
-          {unifiedMilestone && !isVerified && !hasCompletion && (
+          {unifiedMilestone && !isVerified && !hasCompletion && !isCancelled && (
             <Button
               onClick={handleEditOpen}
               className="bg-transparent p-1 w-max h-max hover:bg-gray-100 dark:hover:bg-zinc-700 rounded"
@@ -425,54 +469,135 @@ export function MilestoneCard({
               <PencilSquareIcon className="w-5 h-5 text-gray-500 dark:text-gray-400" />
             </Button>
           )}
-          {canDeleteMilestones && !hasCompletion && (
-            <>
-              {/* biome-ignore lint/a11y/noStaticElementInteractions: wrapper needs onBlur to detect focus leaving the menu group; the interactive child is the trigger button below. */}
-              <div className="relative" ref={overflowRef} onBlur={handleOverflowBlur}>
-                <button
-                  type="button"
-                  onClick={handleToggleOverflow}
-                  onKeyDown={handleOverflowKeyDown}
-                  className="p-1 rounded hover:bg-gray-100 dark:hover:bg-zinc-700 transition-colors"
-                  aria-label="More actions"
-                  aria-haspopup="menu"
-                  aria-expanded={isOverflowOpen}
-                >
-                  <EllipsisVerticalIcon className="w-5 h-5 text-gray-500 dark:text-gray-400" />
-                </button>
-                {isOverflowOpen && (
-                  <div
-                    role="menu"
+          {(() => {
+            const showDeleteAction = canDeleteMilestones && !hasCompletion && !isCancelled;
+            const showCancelAction =
+              canCancelMilestones &&
+              !!onCancelMilestone &&
+              !isCancelled &&
+              !hasCompletion &&
+              !isVerified;
+            // Only offer restore once a revocable UID exists — during the optimistic
+            // cancel window `cancellation.uid` is "" and there is nothing to revoke.
+            const showUncancelAction =
+              canCancelMilestones &&
+              !!onUncancelMilestone &&
+              isCancelled &&
+              !!milestone.cancellation?.uid;
+            if (!showDeleteAction && !showCancelAction && !showUncancelAction) {
+              return null;
+            }
+            return (
+              <>
+                {/* biome-ignore lint/a11y/noStaticElementInteractions: wrapper needs onBlur to detect focus leaving the menu group; the interactive child is the trigger button below. */}
+                <div className="relative" ref={overflowRef} onBlur={handleOverflowBlur}>
+                  <button
+                    type="button"
+                    onClick={handleToggleOverflow}
                     onKeyDown={handleOverflowKeyDown}
-                    className="absolute right-0 top-full mt-1 z-10 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-md shadow-lg py-1 min-w-[140px]"
+                    className="p-1 rounded hover:bg-gray-100 dark:hover:bg-zinc-700 transition-colors"
+                    aria-label="More actions"
+                    aria-haspopup="menu"
+                    aria-expanded={isOverflowOpen}
                   >
-                    <button
-                      type="button"
-                      role="menuitem"
-                      onClick={handleDeleteMenuClick}
-                      className="flex items-center gap-2 w-full px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 text-left"
+                    <EllipsisVerticalIcon className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+                  </button>
+                  {isOverflowOpen && (
+                    <div
+                      role="menu"
+                      onKeyDown={handleOverflowKeyDown}
+                      className="absolute right-0 top-full mt-1 z-10 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-md shadow-lg py-1 min-w-[160px]"
                     >
-                      <TrashIcon className="w-4 h-4" />
-                      Delete
-                    </button>
-                  </div>
+                      {showCancelAction && (
+                        <button
+                          type="button"
+                          role="menuitem"
+                          onClick={handleCancelMenuClick}
+                          className="flex items-center gap-2 w-full px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-zinc-700 text-left"
+                        >
+                          <NoSymbolIcon className="w-4 h-4" />
+                          Cancel milestone
+                        </button>
+                      )}
+                      {showUncancelAction && (
+                        <button
+                          type="button"
+                          role="menuitem"
+                          onClick={handleUncancelMenuClick}
+                          disabled={isUncancelling}
+                          className="flex items-center gap-2 w-full px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-zinc-700 text-left disabled:opacity-50"
+                        >
+                          <ArrowUturnLeftIcon className="w-4 h-4" />
+                          {isUncancelling ? "Restoring…" : "Un-cancel milestone"}
+                        </button>
+                      )}
+                      {showDeleteAction && (
+                        <button
+                          type="button"
+                          role="menuitem"
+                          onClick={handleDeleteMenuClick}
+                          className="flex items-center gap-2 w-full px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 text-left"
+                        >
+                          <TrashIcon className="w-4 h-4" />
+                          Delete
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+                {/* Rendered outside the overflow menu so closing the menu doesn't unmount the dialog mid-open. */}
+                {showDeleteAction && (
+                  <DeleteDialog
+                    deleteFunction={() => onDeleteMilestone(milestone)}
+                    isLoading={isDeleting}
+                    title={
+                      <p className="font-normal">
+                        Are you sure you want to delete <b>{milestone.title}</b> milestone?
+                      </p>
+                    }
+                    buttonElement={null}
+                    externalIsOpen={isDeleteDialogOpen}
+                    externalSetIsOpen={setIsDeleteDialogOpen}
+                  />
                 )}
-              </div>
-              {/* Rendered outside the overflow menu so closing the menu doesn't unmount the dialog mid-open. */}
-              <DeleteDialog
-                deleteFunction={() => onDeleteMilestone(milestone)}
-                isLoading={isDeleting}
-                title={
-                  <p className="font-normal">
-                    Are you sure you want to delete <b>{milestone.title}</b> milestone?
-                  </p>
-                }
-                buttonElement={null}
-                externalIsOpen={isDeleteDialogOpen}
-                externalSetIsOpen={setIsDeleteDialogOpen}
-              />
-            </>
-          )}
+                {showCancelAction && (
+                  <DeleteDialog
+                    deleteFunction={handleConfirmCancel}
+                    isLoading={isCancelling}
+                    title={
+                      <div className="font-normal space-y-3">
+                        <p>
+                          Cancel <b>{milestone.title}</b>? It will be kept and badged{" "}
+                          <b>Cancelled</b> for your records, and drop out of past-due counts.
+                        </p>
+                        <label
+                          htmlFor={`cancel-reason-${milestone.uid}`}
+                          className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                        >
+                          Reason (optional)
+                        </label>
+                        <textarea
+                          id={`cancel-reason-${milestone.uid}`}
+                          value={cancelReason}
+                          onChange={(e) => setCancelReason(e.target.value)}
+                          rows={3}
+                          maxLength={1000}
+                          placeholder="Why is this milestone being cancelled?"
+                          className="w-full rounded-md border border-gray-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 p-2 text-sm text-gray-900 dark:text-gray-100"
+                        />
+                      </div>
+                    }
+                    buttonElement={null}
+                    externalIsOpen={isCancelDialogOpen}
+                    externalSetIsOpen={(open) => {
+                      setIsCancelDialogOpen(open);
+                      if (!open) setCancelReason("");
+                    }}
+                  />
+                )}
+              </>
+            );
+          })()}
         </div>
       </div>
 
@@ -487,6 +612,24 @@ export function MilestoneCard({
           </span>
         ) : null}
       </div>
+
+      {/* Cancellation banner (DEV-523) */}
+      {isCancelled && milestone.cancellation && (
+        <div className="mb-3 rounded-md border border-gray-200 bg-gray-50 p-3 text-sm dark:border-zinc-700 dark:bg-zinc-800/50">
+          <p className="text-gray-700 dark:text-gray-300">
+            <span className="font-medium">Cancelled</span>
+            {milestone.cancellation.cancelledBy ? (
+              <>
+                {" by "}
+                <EthereumAddressToProfileName address={milestone.cancellation.cancelledBy} />
+              </>
+            ) : null}
+          </p>
+          {milestone.cancellation.reason ? (
+            <p className="mt-1 text-gray-600 dark:text-gray-400">{milestone.cancellation.reason}</p>
+          ) : null}
+        </div>
+      )}
 
       {/* Collapsible description */}
       <div className="mb-3">
@@ -779,7 +922,7 @@ export function MilestoneCard({
       {/* Complete on behalf of grantee — community admins only, for milestones
           with no completion yet. The attestation is signed by and attributed to
           the admin's wallet. */}
-      {!hasCompletion && canCompleteMilestones && (
+      {!hasCompletion && !isCancelled && canCompleteMilestones && (
         <div className="mb-3">
           {completingMilestoneId === milestone.uid ? (
             <div className="p-3 bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800 rounded-md space-y-2">

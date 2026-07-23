@@ -43,10 +43,16 @@ vi.mock("@/store/modals/projectCreate", () => ({
   },
 }));
 
-// Mock compareAllWallets — overridden per-test to model which wallets are linked
-vi.mock("@/utilities/auth/compare-all-wallets", () => ({
-  compareAllWallets: vi.fn(() => true),
-}));
+// Mock compareAllWallets — overridden per-test to model which wallets are linked.
+// getLinkedWalletAddresses stays real: selectPrimaryWallet uses it to decide
+// whether the user has any linked wallets at all (the undefined-vs-fallback rule).
+vi.mock("@/utilities/auth/compare-all-wallets", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/utilities/auth/compare-all-wallets")>();
+  return {
+    ...actual,
+    compareAllWallets: vi.fn(() => true),
+  };
+});
 
 // Mock PAGES constants
 vi.mock("@/utilities/pages", () => ({
@@ -209,10 +215,28 @@ describe("useAuth - stale connected wallet after switching login method", () => 
     expect(result.current.primaryWallet?.address).toBe(EMAIL_EMBEDDED_ADDRESS);
   });
 
-  it("falls back to the first connected wallet when none are linked to the user (hydration gap)", () => {
-    // No wallet is linked yet (e.g. linkedAccounts not populated during hydration).
+  it("withholds the address when the user has linked wallets but only a foreign one is connected", () => {
+    // The email user HAS a linked wallet, but the sole connected wallet is the
+    // stale MetaMask that belongs to a previous session. Identity must NOT leak
+    // the foreign address — it resolves to undefined until the linked wallet
+    // connects (issue #1574).
     mockCompareAllWallets.mockImplementation(() => false);
     setBridgeState({ wallets: [staleMetaMaskWallet] });
+
+    const { result } = renderHook(() => useAuth(), { wrapper });
+
+    expect(result.current.address).toBeUndefined();
+    expect(result.current.address).not.toBe(STALE_METAMASK_ADDRESS);
+  });
+
+  it("falls back to the first connected wallet during true hydration (no linked wallets yet)", () => {
+    // linkedAccounts genuinely not populated yet — keep a wallet rather than
+    // flipping to undefined, preserving wallet-login connect flows.
+    mockCompareAllWallets.mockImplementation(() => false);
+    setBridgeState({
+      user: { ...emailUser, linkedAccounts: [{ type: "email", address: "user@example.com" }] },
+      wallets: [staleMetaMaskWallet],
+    });
 
     const { result } = renderHook(() => useAuth(), { wrapper });
 

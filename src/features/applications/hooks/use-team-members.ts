@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { useApplicationAccess } from "./use-application-access";
 
 interface ApplicationTeamMember {
@@ -40,10 +40,10 @@ export function useTeamMembers(
       if (!referenceNumber) {
         throw new Error("Reference number is required");
       }
-      const [response, fetchError] = await fetchData<ApplicationTeamMember[]>(
+      // TODO(#1775): add zod schema
+      const response = await api.get<ApplicationTeamMember[]>(
         `/v2/funding-applications/${referenceNumber}/team-members`
       );
-      if (fetchError) throw new Error(fetchError);
       return response ?? [];
     },
     enabled: !!referenceNumber && isOwner,
@@ -62,13 +62,11 @@ export function useTeamMembers(
       if (!referenceNumber) {
         throw new Error("Reference number is required");
       }
-      const [response, fetchError] = await fetchData<ApplicationTeamMember>(
+      // TODO(#1775): add zod schema
+      return api.post<ApplicationTeamMember>(
         `/v2/funding-applications/${referenceNumber}/team-members`,
-        "POST",
         { memberEmail, memberName }
       );
-      if (fetchError || !response) throw new Error(fetchError ?? "Failed to add team member");
-      return response;
     },
     onSuccess: (newMember) => {
       queryClient.setQueryData<ApplicationTeamMember[]>(queryKey, (old) => [
@@ -83,11 +81,7 @@ export function useTeamMembers(
       if (!referenceNumber) {
         throw new Error("Reference number is required");
       }
-      const [, fetchError] = await fetchData(
-        `/v2/funding-applications/${referenceNumber}/team-members/${memberAddress}`,
-        "DELETE"
-      );
-      if (fetchError) throw new Error(fetchError);
+      await api.delete(`/v2/funding-applications/${referenceNumber}/team-members/${memberAddress}`);
     },
     onSuccess: (_, memberAddress) => {
       queryClient.setQueryData<ApplicationTeamMember[]>(
