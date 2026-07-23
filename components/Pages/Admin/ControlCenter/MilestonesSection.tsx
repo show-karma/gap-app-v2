@@ -125,10 +125,11 @@ export interface MilestonesSectionProps {
   removedFiles: Set<string>;
   onFileRemoved: (mKey: string) => void;
   onRequestRecordPayment?: (
+    milestoneUID: string | null,
     milestoneLabel: string,
     targetStatus: "awaiting_signatures" | "disbursed"
   ) => void;
-  onRequestDeleteDisbursement?: (milestoneLabel: string) => void;
+  onRequestDeleteDisbursement?: (milestoneUID: string | null) => void;
 }
 
 export const MilestonesSection = memo(function MilestonesSection({

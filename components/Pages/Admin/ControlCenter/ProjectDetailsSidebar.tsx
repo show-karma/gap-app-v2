@@ -142,6 +142,7 @@ export function ProjectDetailsSidebar({
 
   const [recordPaymentOpen, setRecordPaymentOpen] = useState(false);
   const [initialPaymentMilestone, setInitialPaymentMilestone] = useState<{
+    milestoneUID: string | null;
     milestoneLabel: string;
     status: "awaiting_signatures" | "disbursed";
     amount: string | null;
@@ -516,32 +517,37 @@ export function ProjectDetailsSidebar({
   }, []);
 
   const handleRequestRecordPayment = useCallback(
-    (milestoneLabel: string, targetStatus: "awaiting_signatures" | "disbursed") => {
-      const invoice = milestoneInvoices.find((inv) => inv.milestoneLabel === milestoneLabel);
+    (
+      milestoneUID: string | null,
+      milestoneLabel: string,
+      targetStatus: "awaiting_signatures" | "disbursed"
+    ) => {
+      const invoice = milestoneUID
+        ? milestoneInvoices.find((inv) => inv.milestoneUID === milestoneUID)
+        : undefined;
       const amount =
         invoice?.allocatedAmount ??
-        (invoice?.milestoneUID ? allocationByUID.get(invoice.milestoneUID) : undefined) ??
+        (milestoneUID ? allocationByUID.get(milestoneUID) : undefined) ??
         null;
-      setInitialPaymentMilestone({ milestoneLabel, status: targetStatus, amount });
+      setInitialPaymentMilestone({ milestoneUID, milestoneLabel, status: targetStatus, amount });
       guardAction(() => setRecordPaymentOpen(true));
     },
     [guardAction, milestoneInvoices, allocationByUID]
   );
 
   const handleRequestDeleteDisbursement = useCallback(
-    (milestoneLabel: string) => {
+    (milestoneUID: string | null) => {
       if (!grant) return;
-      const invoice = milestoneInvoices.find((inv) => inv.milestoneLabel === milestoneLabel);
-      if (!invoice?.milestoneUID) {
+      if (!milestoneUID) {
         toast.error("Cannot delete: milestone UID not found");
         return;
       }
       deleteDisbursementMutation.mutate({
         grantUID: grant.grantUid,
-        milestoneUID: invoice.milestoneUID,
+        milestoneUID,
       });
     },
-    [grant, milestoneInvoices, deleteDisbursementMutation]
+    [grant, deleteDisbursementMutation]
   );
 
   const handleRequestClose = useCallback(() => {
@@ -818,6 +824,7 @@ export function ProjectDetailsSidebar({
           milestoneInvoices={milestoneInvoices}
           todayLocal={todayLocal}
           onSuccess={onConfigSuccess}
+          initialMilestoneUID={initialPaymentMilestone?.milestoneUID}
           initialMilestoneLabel={initialPaymentMilestone?.milestoneLabel}
           initialAmount={initialPaymentMilestone?.amount}
           initialStatus={
