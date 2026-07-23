@@ -64,10 +64,11 @@ interface PaymentStatusDropdownProps {
   communityUID: string;
   paymentStatusDate?: string | null;
   onRequestRecordPayment?: (
+    milestoneUID: string | null,
     milestoneLabel: string,
     targetStatus: "awaiting_signatures" | "disbursed"
   ) => void;
-  onRequestDeleteDisbursement?: (milestoneLabel: string) => void;
+  onRequestDeleteDisbursement?: (milestoneUID: string | null) => void;
 }
 
 export const PaymentStatusDropdown = memo(function PaymentStatusDropdown({
@@ -94,7 +95,7 @@ export const PaymentStatusDropdown = memo(function PaymentStatusDropdown({
 
       // "Awaiting sigs" and "Disbursed" open the Record Payment dialog
       if (status === "awaiting_signatures" || status === "disbursed") {
-        onRequestRecordPayment?.(milestoneLabel, status);
+        onRequestRecordPayment?.(milestoneUID, milestoneLabel, status);
         return;
       }
 
@@ -130,8 +131,8 @@ export const PaymentStatusDropdown = memo(function PaymentStatusDropdown({
 
   const handleConfirmUnpaid = useCallback(() => {
     setConfirmingUnpaid(false);
-    onRequestDeleteDisbursement?.(milestoneLabel);
-  }, [milestoneLabel, onRequestDeleteDisbursement]);
+    onRequestDeleteDisbursement?.(milestoneUID);
+  }, [milestoneUID, onRequestDeleteDisbursement]);
 
   return (
     <>
