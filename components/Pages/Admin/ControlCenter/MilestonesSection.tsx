@@ -39,6 +39,7 @@ import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 import { PaymentStatusDropdown } from "./PaymentStatusDropdown";
 import type { ProjectDetailsSidebarGrant } from "./ProjectDetailsSidebar";
+import type { OnRequestDeleteDisbursement, OnRequestRecordPayment } from "./paymentRequestTypes";
 
 const MilestoneAIEvaluationBadge = dynamic(
   () =>
@@ -124,11 +125,8 @@ export interface MilestonesSectionProps {
   ) => void;
   removedFiles: Set<string>;
   onFileRemoved: (mKey: string) => void;
-  onRequestRecordPayment?: (
-    milestoneLabel: string,
-    targetStatus: "awaiting_signatures" | "disbursed"
-  ) => void;
-  onRequestDeleteDisbursement?: (milestoneLabel: string) => void;
+  onRequestRecordPayment?: OnRequestRecordPayment;
+  onRequestDeleteDisbursement?: OnRequestDeleteDisbursement;
 }
 
 export const MilestonesSection = memo(function MilestonesSection({
@@ -168,6 +166,7 @@ export const MilestonesSection = memo(function MilestonesSection({
         const downloadUrl = await getInvoiceDownloadUrl(grant.grantUid, fileKey);
         window.open(downloadUrl, "_blank", "noopener,noreferrer");
       } catch {
+        // SUPPRESSED: getInvoiceDownloadUrl already reports to Sentry via errorManager
         toast.error("Failed to get download link");
       } finally {
         setLoadingFileKeys((prev) => {
