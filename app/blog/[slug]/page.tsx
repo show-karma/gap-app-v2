@@ -104,7 +104,7 @@ export default async function BlogPostPage({ params }: PageProps) {
         description={post.excerpt}
         url={PAGES.BLOG_POST(post.slug)}
         datePublished={post.publishedAt}
-        dateModified={post.publishedAt}
+        dateModified={post.updatedAt ?? post.publishedAt}
         author={post.author?.name ?? "Karma"}
         image={resolveOgImage(post)?.url}
       />

@@ -108,13 +108,21 @@ describe("PostBody", () => {
     );
   });
 
-  // Resilience against partial/unexpected editor data — none of these may throw.
-  it("renders nothing (no throw) when body is undefined", () => {
-    expect(() => render(<PostBody body={undefined} />)).not.toThrow();
+  // Resilience against partial/unexpected editor data — these must not throw
+  // AND must actually render nothing (an empty body container), not silently
+  // emit unexpected content.
+  it("renders nothing when body is undefined", () => {
+    const { container } = render(<PostBody body={undefined} />);
+    const wrapper = container.querySelector(".blog-post-body");
+    expect(wrapper).not.toBeNull();
+    expect(wrapper).toBeEmptyDOMElement();
   });
 
-  it("renders nothing (no throw) for an empty body", () => {
-    expect(() => render(<PostBody body={[]} />)).not.toThrow();
+  it("renders nothing for an empty body", () => {
+    const { container } = render(<PostBody body={[]} />);
+    const wrapper = container.querySelector(".blog-post-body");
+    expect(wrapper).not.toBeNull();
+    expect(wrapper).toBeEmptyDOMElement();
   });
 
   it("skips a block image that has no uploaded asset", () => {

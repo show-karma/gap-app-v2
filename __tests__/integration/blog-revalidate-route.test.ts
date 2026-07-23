@@ -110,4 +110,25 @@ describe("POST /api/blog/revalidate", () => {
     expect(sentryCaptureMock).toHaveBeenCalled();
     expect(revalidatePathMock).not.toHaveBeenCalled();
   });
+
+  it("returns 500 and reports to Sentry when revalidatePath throws (server-side failure)", async () => {
+    // A valid, authenticated payload whose revalidation fails server-side must
+    // surface as 5xx — not be masked as a 4xx "Invalid payload" — so the bug is
+    // observable instead of looking like caller error.
+    getServerEnvMock.mockReturnValue({ SANITY_WEBHOOK_SECRET: "correct-secret" });
+    parseBodyMock.mockResolvedValue({
+      isValidSignature: true,
+      body: { _type: "post", slug: { current: "hello-world" } },
+    });
+    revalidatePathMock.mockImplementation(() => {
+      throw new Error("revalidation backend unavailable");
+    });
+
+    const response = await POST(makeRequest());
+    const json = await response.json();
+
+    expect(response.status).toBe(500);
+    expect(json.error).toBe("Revalidation failed");
+    expect(sentryCaptureMock).toHaveBeenCalled();
+  });
 });

@@ -82,12 +82,17 @@ export const post = defineType({
       title: "Body",
       type: "array",
       group: "content",
+      // A post must have body content — an empty body is thin content that
+      // undermines the whole point of hosting the post on-site.
+      validation: (Rule) => Rule.required().min(1),
       of: [
         defineArrayMember({
           type: "block",
+          // No H1: the post page renders the title as the page's single <h1>
+          // (see app/blog/[slug]/page.tsx). Body headings start at H2 so the
+          // document outline stays valid and accessible.
           styles: [
             { title: "Normal", value: "normal" },
-            { title: "H1", value: "h1" },
             { title: "H2", value: "h2" },
             { title: "H3", value: "h3" },
             { title: "H4", value: "h4" },

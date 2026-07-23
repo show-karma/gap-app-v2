@@ -21,22 +21,31 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ ok: false, error: "Webhook not configured" }, { status: 401 });
   }
 
+  // Body parsing / signature verification is caller-controlled input: a failure
+  // here is a bad request (4xx), not a server fault, so it must not be conflated
+  // with revalidation errors below.
+  let body: SanityRevalidatePayload | undefined;
   try {
-    const { isValidSignature, body } = await parseBody<SanityRevalidatePayload>(
-      request,
-      SANITY_WEBHOOK_SECRET
-    );
-
-    if (!isValidSignature) {
+    const parsed = await parseBody<SanityRevalidatePayload>(request, SANITY_WEBHOOK_SECRET);
+    if (!parsed.isValidSignature) {
       return NextResponse.json({ ok: false, error: "Invalid signature" }, { status: 401 });
     }
+    body = parsed.body ?? undefined;
+  } catch (error) {
+    Sentry.captureException(error, { tags: { route: "/api/blog/revalidate" } });
+    return NextResponse.json({ ok: false, error: "Invalid payload" }, { status: 400 });
+  }
 
+  // Revalidation is server-side work: if `revalidatePath()` (or path mapping)
+  // throws, that is a genuine server failure and must surface as 5xx so the
+  // bug is visible instead of masquerading as a client "Invalid payload".
+  try {
     const paths = mapPayloadToPaths(body);
     for (const path of paths) revalidatePath(path);
 
     return NextResponse.json({ ok: true, revalidated: paths }, { status: 200 });
   } catch (error) {
     Sentry.captureException(error, { tags: { route: "/api/blog/revalidate" } });
-    return NextResponse.json({ ok: false, error: "Invalid payload" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "Revalidation failed" }, { status: 500 });
   }
 }
