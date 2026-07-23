@@ -1,4 +1,5 @@
-import fetchData from "@/utilities/fetchData";
+import { errorManager } from "@/components/Utilities/errorManager";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 import { queryClient } from "@/utilities/query-client";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
@@ -32,7 +33,16 @@ export const notifyIndexer = async ({
   invalidateQueries,
 }: NotifyIndexerParams): Promise<void> => {
   if (txHash) {
-    await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, chainId), "POST", {});
+    try {
+      // TODO(#1775): add zod schema
+      await api.post(INDEXER.ATTESTATION_LISTENER(txHash, chainId), {});
+    } catch (error) {
+      // Best-effort notification: the indexer's own blockchain listener will
+      // eventually catch up, so a failed HTTP nudge here must not block the
+      // caller's cache invalidation below (matches legacy fetchData behavior,
+      // which never surfaced this error to the caller).
+      errorManager("Failed to notify indexer of new attestation", error, { txHash, chainId });
+    }
   }
 
   // Optional: caller can provide custom cache invalidation

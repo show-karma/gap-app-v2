@@ -10,7 +10,7 @@ import { useProgramConfig } from "@/hooks/useFundingPlatform";
 import { AdminProgramFormFields } from "@/src/features/program-registry/components/admin-program-form-fields";
 import { useAdminProgramForm } from "@/src/features/program-registry/hooks/use-admin-program-form";
 import { ProgramRegistryService } from "@/src/features/program-registry/services/program-registry.service";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 import { PAGE_HEADER_CONTENT, PageHeader } from "../PageHeader";
 
@@ -51,11 +51,11 @@ export function ProgramDetailsTab({
     try {
       setIsLoadingProgram(true);
       setProgramError(null);
-      const [data, error] = await fetchData(
+      // TODO(#1775): add zod schema
+      const data = await api.get<GrantProgram | GrantProgram[]>(
         INDEXER.REGISTRY.FIND_BY_ID(programId, effectiveChainId)
       );
       if (nonce !== fetchNonceRef.current) return;
-      if (error) throw new Error(error);
       const programData = data ? (Array.isArray(data) ? data[0] : data) : null;
       setProgram(programData as GrantProgram | null);
     } catch (error: unknown) {
@@ -91,14 +91,13 @@ export function ProgramDetailsTab({
     if (!effectiveChainId) return;
     const nonce = ++fetchNonceRef.current;
     try {
-      const [data, error] = await fetchData(
+      // TODO(#1775): add zod schema
+      const data = await api.get<GrantProgram | GrantProgram[]>(
         INDEXER.REGISTRY.FIND_BY_ID(programId, effectiveChainId)
       );
       if (nonce !== fetchNonceRef.current) return;
-      if (!error) {
-        const programData = data ? (Array.isArray(data) ? data[0] : data) : null;
-        setProgram(programData as GrantProgram | null);
-      }
+      const programData = data ? (Array.isArray(data) ? data[0] : data) : null;
+      setProgram(programData as GrantProgram | null);
     } catch {
       // SUPPRESSED: best-effort refetch after a successful save; the stored data
       // is already updated and the stale view self-heals on the next load.

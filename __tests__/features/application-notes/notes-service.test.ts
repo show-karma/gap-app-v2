@@ -1,13 +1,21 @@
 import { getNote, saveNote } from "@/src/features/application-notes/api/notes-service";
 import type { ApplicationNote } from "@/src/features/application-notes/types";
-import fetchData from "@/utilities/fetchData";
+import { HttpError } from "@/utilities/api/errors";
 
-vi.mock("@/utilities/fetchData", () => ({
-  __esModule: true,
-  default: vi.fn(),
+const mockApiGet = vi.fn();
+const mockApiPut = vi.fn();
+
+vi.mock("@/utilities/api/client", () => ({
+  api: {
+    get: (...args: unknown[]) => mockApiGet(...args),
+    put: (...args: unknown[]) => mockApiPut(...args),
+    post: vi.fn(),
+    patch: vi.fn(),
+    delete: vi.fn(),
+    request: vi.fn(),
+    getPaginated: vi.fn(),
+  },
 }));
-
-const mockFetchData = fetchData as vi.MockedFunction<typeof fetchData>;
 
 function createMockNote(overrides: Partial<ApplicationNote> = {}): ApplicationNote {
   return {
@@ -31,16 +39,16 @@ describe("NotesService", () => {
   describe("getNote", () => {
     it("should return the note on success", async () => {
       const note = createMockNote();
-      mockFetchData.mockResolvedValue([{ note }, null, null, 200] as any);
+      mockApiGet.mockResolvedValue({ note });
 
       const result = await getNote("APP-1");
 
       expect(result).toEqual(note);
-      expect(mockFetchData).toHaveBeenCalledWith("/v2/applications/APP-1/notes", "GET");
+      expect(mockApiGet).toHaveBeenCalledWith("/v2/applications/APP-1/notes");
     });
 
     it("should return null when no note exists yet (200 note:null)", async () => {
-      mockFetchData.mockResolvedValue([{ note: null }, null, null, 200] as any);
+      mockApiGet.mockResolvedValue({ note: null });
 
       const result = await getNote("APP-1");
 
@@ -48,29 +56,41 @@ describe("NotesService", () => {
     });
 
     it("should throw on error instead of swallowing to null", async () => {
-      mockFetchData.mockResolvedValue([null, "Forbidden", null, 403] as any);
+      mockApiGet.mockRejectedValue(
+        new HttpError(403, {
+          endpoint: "/v2/applications/APP-1/notes",
+          method: "GET",
+          body: { message: "Forbidden" },
+        })
+      );
 
-      await expect(getNote("APP-1")).rejects.toThrow("Forbidden");
+      await expect(getNote("APP-1")).rejects.toThrow(HttpError);
     });
   });
 
   describe("saveNote", () => {
     it("should PUT the content and return the saved note", async () => {
       const note = createMockNote({ content: "updated" });
-      mockFetchData.mockResolvedValue([{ note }, null, null, 200] as any);
+      mockApiPut.mockResolvedValue({ note });
 
       const result = await saveNote("APP-1", "updated");
 
       expect(result).toEqual(note);
-      expect(mockFetchData).toHaveBeenCalledWith("/v2/applications/APP-1/notes", "PUT", {
+      expect(mockApiPut).toHaveBeenCalledWith("/v2/applications/APP-1/notes", {
         content: "updated",
       });
     });
 
     it("should throw on error", async () => {
-      mockFetchData.mockResolvedValue([null, "Forbidden", null, 403] as any);
+      mockApiPut.mockRejectedValue(
+        new HttpError(403, {
+          endpoint: "/v2/applications/APP-1/notes",
+          method: "PUT",
+          body: { message: "Forbidden" },
+        })
+      );
 
-      await expect(saveNote("APP-1", "x")).rejects.toThrow("Forbidden");
+      await expect(saveNote("APP-1", "x")).rejects.toThrow(HttpError);
     });
   });
 });

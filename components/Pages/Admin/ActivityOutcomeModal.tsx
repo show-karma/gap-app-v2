@@ -11,7 +11,7 @@ import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useAutosyncedIndicators } from "@/hooks/useAutosyncedIndicators";
 import type { Category, ImpactIndicator, ImpactSegment } from "@/types/impactMeasurement";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 import { IndicatorsDropdown } from "./IndicatorsDropdown";
 
@@ -143,19 +143,13 @@ export const ActivityOutcomeModal = ({
   const handleAddOutput = async (data: ImpactSegmentFormData) => {
     try {
       setIsSaving(true);
-      const [, error] = await fetchData(
-        INDEXER.CATEGORIES.IMPACT_SEGMENTS.CREATE_OR_UPDATE(category.id),
-        "POST",
-        {
-          id: editingSegment?.id,
-          name: data.name,
-          type: data.type,
-          description: data.description,
-          impactIndicators: data.impact_indicators,
-        }
-      );
-
-      if (error) throw error;
+      await api.post(INDEXER.CATEGORIES.IMPACT_SEGMENTS.CREATE_OR_UPDATE(category.id), {
+        id: editingSegment?.id,
+        name: data.name,
+        type: data.type,
+        description: data.description,
+        impactIndicators: data.impact_indicators,
+      });
 
       const action = editingSegment ? "updated" : "created";
       toast.success(`${OUTPUT_TYPE_DISPLAY[data.type]} ${action} successfully`);

@@ -31,9 +31,11 @@ vi.mock("@/utilities/chosenCommunities", () => ({
   chosenCommunities: () => [],
 }));
 
-// Use a non-whitelabel host for standard middleware tests.
-// "localhost" is a whitelabel domain, so it would be caught by whitelabel logic.
-const STANDARD_HOST = "karmahq.xyz";
+// Use the canonical serving host for standard middleware tests. The apex
+// (karmahq.xyz) and gap.karmahq.xyz are now alias hosts that 308 to www under
+// the ADR 0001 canonical-host policy, so exercising the dashboard/whitelabel
+// behavior requires a request that is already on the canonical host.
+const STANDARD_HOST = "www.karmahq.xyz";
 
 const createRequest = (path: string) => createRequestWithHost(path, STANDARD_HOST);
 const primaryWhitelabel = WHITELABEL_DOMAINS[0];
@@ -54,16 +56,16 @@ const createRequestWithHost = (path: string, host: string) => {
 };
 
 describe("middleware dashboard redirects", () => {
-  it("redirects /my-projects to /dashboard#projects", async () => {
+  it("redirects /my-projects to /dashboard/projects", async () => {
     const response = await proxy(createRequest("/my-projects"));
 
-    expect(response?.headers.get("location")).toBe(`http://${STANDARD_HOST}/dashboard#projects`);
+    expect(response?.headers.get("location")).toBe(`http://${STANDARD_HOST}/dashboard/projects`);
   });
 
-  it("redirects /my-reviews to /dashboard#reviews", async () => {
+  it("redirects /my-reviews to /dashboard/reviews", async () => {
     const response = await proxy(createRequest("/my-reviews"));
 
-    expect(response?.headers.get("location")).toBe(`http://${STANDARD_HOST}/dashboard#reviews`);
+    expect(response?.headers.get("location")).toBe(`http://${STANDARD_HOST}/dashboard/reviews`);
   });
 
   it("does not redirect /my-projects/:slug", async () => {
@@ -167,37 +169,8 @@ describe("middleware blog whitelabel redirect", () => {
   });
 });
 
-describe("middleware project URL-structure redirects", () => {
-  const uid = `0x${"a".repeat(64)}`;
-
-  it("permanently (308) redirects legacy /grants/:uid to /funding/:uid", async () => {
-    const response = await proxy(createRequest(`/project/karma/grants/${uid}`));
-
-    expect(response?.headers.get("location")).toBe(
-      `http://${STANDARD_HOST}/project/karma/funding/${uid}`
-    );
-    expect(response?.status).toBe(308);
-  });
-
-  it("permanently (308) redirects /funding/create-grant to /funding/new", async () => {
-    const response = await proxy(createRequest("/project/karma/funding/create-grant"));
-
-    expect(response?.headers.get("location")).toBe(
-      `http://${STANDARD_HOST}/project/karma/funding/new`
-    );
-    expect(response?.status).toBe(308);
-  });
-
-  it("redirects legacy /roadmap straight to the project overview (no chain) with 308", async () => {
-    const response = await proxy(createRequest("/project/karma/roadmap"));
-
-    expect(response?.headers.get("location")).toBe(`http://${STANDARD_HOST}/project/karma`);
-    expect(response?.status).toBe(308);
-  });
-
-  it("does not redirect a project literally named 'grants'", async () => {
-    const response = await proxy(createRequest("/project/grants"));
-
-    expect(response?.headers.get("location")).toBeNull();
-  });
-});
+// Legacy /project URL-structure normalization (grants → funding,
+// create-grant → new, roadmap collapse) is now driven by the authoritative
+// indexer decision and lives in middleware-indexability.test.ts, which stubs the
+// indexer fetch. The old standalone redirect block was removed so it can no
+// longer create redirect chains.

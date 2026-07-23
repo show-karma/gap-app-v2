@@ -10,10 +10,10 @@ import type { CommunityProjects } from "@/types/v2/community";
 import { CategoryFilter } from "./CommunityGrants/CategoryFilter";
 import { MaturityStageFilter } from "./CommunityGrants/MaturityStageFilter";
 import { ProjectsGrid } from "./CommunityGrants/ProjectsGrid";
+import { ProjectsGridSkeleton } from "./CommunityGrants/ProjectsGridSkeleton";
 import { SortFilter } from "./CommunityGrants/SortFilter";
 import { ProgramFilter } from "./Pages/Communities/Impact/ProgramFilter";
 import { TrackFilter } from "./Pages/Communities/Impact/TrackFilter";
-import { CardListSkeleton } from "./Pages/Communities/Loading";
 import { ProgramBanner } from "./ProgramBanner";
 import { errorManager } from "./Utilities/errorManager";
 
@@ -225,7 +225,7 @@ export const CommunityGrants = ({
 
           {(isFilterLoading || isFetchingNextPage) && (
             <div className="w-full flex items-center justify-center">
-              <CardListSkeleton />
+              <ProjectsGridSkeleton />
             </div>
           )}
 

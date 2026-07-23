@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 
 export function SearchGrantProgram({
@@ -16,9 +16,8 @@ export function SearchGrantProgram({
   useEffect(() => {
     (async () => {
       setIsLoading(true);
-      const [result, error] = await fetchData(INDEXER.COMMUNITY.PROGRAMS(communityUID));
-      if (error) {
-      }
+      // TODO(#1775): add zod schema
+      const result = await api.get<GrantProgram[]>(INDEXER.COMMUNITY.PROGRAMS(communityUID));
       const sortedAlphabetically = result.sort((a: GrantProgram, b: GrantProgram) => {
         const aTitle = a.metadata?.title || "";
         const bTitle = b.metadata?.title || "";

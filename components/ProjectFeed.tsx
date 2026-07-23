@@ -4,8 +4,8 @@ import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 /* eslint-disable @next/next/no-img-element */
 import type { Feed } from "@/types";
+import { api } from "@/utilities/api/client";
 import { feedIconDictionary, getFeedHref } from "@/utilities/feed";
-import fetchData from "@/utilities/fetchData";
 import { formatDate } from "@/utilities/formatDate";
 import { INDEXER } from "@/utilities/indexer";
 import { cn } from "@/utilities/tailwind";
@@ -37,7 +37,8 @@ export const ProjectFeed = ({ initialFeed = [] }: ProjectFeedProps) => {
     const callFeedAPI = async () => {
       setFeedLoading(true);
       try {
-        const [data, _error, _pageInfo]: any = await fetchData(
+        // TODO(#1775): add zod schema
+        const data = await api.get<Feed[]>(
           `${INDEXER.PROJECT.FEED(projectId as string)}?limit=${itemsPerPage}`
         );
         if (!data || !data.length) return;

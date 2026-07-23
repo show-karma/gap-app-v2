@@ -1,4 +1,4 @@
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 import { FUNDING_MAP_DEFAULT_CHAIN_ID, FUNDING_MAP_PAGE_SIZE } from "../constants/filter-options";
 import type {
@@ -28,13 +28,10 @@ export const fundingProgramsService = {
       pageSize,
     });
 
-    const [response, error] = await fetchData<PaginatedFundingProgramsResponse>(
+    // TODO(#1775): add zod schema
+    const response = await api.get<PaginatedFundingProgramsResponse>(
       `${INDEXER.V2.REGISTRY.GET_ALL}${queryString}`
     );
-
-    if (error) {
-      throw new Error(error);
-    }
 
     if (!response) {
       return {
@@ -55,15 +52,15 @@ export const fundingProgramsService = {
    * Fetch a single funding program by ID
    */
   async getById(programId: string): Promise<FundingProgramResponse | null> {
-    const [data, error] = await fetchData<FundingProgramResponse>(
-      INDEXER.V2.REGISTRY.GET_BY_ID(programId)
-    );
-
-    if (error || !data) {
+    try {
+      // TODO(#1775): add zod schema
+      const data = await api.get<FundingProgramResponse>(INDEXER.V2.REGISTRY.GET_BY_ID(programId));
+      return data ?? null;
+    } catch {
+      // Preserves legacy fetchData behavior: any fetch failure (network,
+      // 404, 500, ...) degrades to null for this lookup.
       return null;
     }
-
-    return data;
   },
 
   /**
@@ -107,11 +104,8 @@ export const fundingProgramsService = {
     const qs = params.toString();
     const url = qs ? `${INDEXER.V2.REGISTRY.GET_TYPES}?${qs}` : INDEXER.V2.REGISTRY.GET_TYPES;
 
-    const [response, error] = await fetchData<TypeCount[]>(url);
-
-    if (error) {
-      throw new Error(error);
-    }
+    // TODO(#1775): add zod schema
+    const response = await api.get<TypeCount[]>(url);
 
     if (!response) {
       throw new Error("Failed to fetch type counts");
@@ -125,13 +119,8 @@ export const fundingProgramsService = {
    * Returns organizations and communities that have programs, sorted by program count
    */
   async getOrganizationFilters(): Promise<OrganizationFiltersResponse> {
-    const [response, error] = await fetchData<OrganizationFiltersResponse>(
-      INDEXER.V2.REGISTRY.GET_FILTERS
-    );
-
-    if (error) {
-      throw new Error(error);
-    }
+    // TODO(#1775): add zod schema
+    const response = await api.get<OrganizationFiltersResponse>(INDEXER.V2.REGISTRY.GET_FILTERS);
 
     return response || { options: [] };
   },

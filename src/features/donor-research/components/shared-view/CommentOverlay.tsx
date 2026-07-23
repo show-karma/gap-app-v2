@@ -2,10 +2,13 @@
 
 import pluralize from "pluralize";
 import { useEffect, useMemo, useRef } from "react";
+import { createPortal } from "react-dom";
 
+import { BTN_BASE, BTN_MD, BTN_PRIMARY } from "@/components/Pages/Dashboard/v3/soft-classes";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import type { SharedReportCommentNode } from "@/types/donor-research-comments";
+import { cn } from "@/utilities/tailwind";
 
 import { AnchoredAffordances } from "./AnchoredAffordances";
 import { CommentComposer } from "./CommentComposer";
@@ -41,6 +44,30 @@ interface CommentOverlayProps {
    * logins with no email.
    */
   viewerEmail?: string | null;
+  /**
+   * DOM node to portal the `IdentityBadge` into — the standalone share
+   * view's slim top bar (spec 2.3: "IdentityBadge right"). Falls back to
+   * rendering it inline in the floating corner stack (its original
+   * position) when unset, so this stays optional for any other host.
+   */
+  identityPortalTarget?: HTMLDivElement | null;
+}
+
+/**
+ * Portals `children` into `target` when set (the share view's top-bar slot);
+ * otherwise renders them in place (the floating corner stack's original
+ * position). Isolated from `CommentOverlay` itself purely to keep that
+ * component's branching — already high, given how much state it wires
+ * together — from creeping over the lint complexity budget.
+ */
+function PortalOrInline({
+  target,
+  children,
+}: {
+  target: HTMLDivElement | null;
+  children: React.ReactNode;
+}) {
+  return target ? createPortal(children, target) : children;
 }
 
 function totalCount(tree: SharedReportCommentNode[]): number {
@@ -77,6 +104,7 @@ export function CommentOverlay({
   isAuthenticated = false,
   isAdvisorResolving = false,
   viewerEmail = null,
+  identityPortalTarget = null,
 }: CommentOverlayProps) {
   const commenting = useCommenting(token, {
     enabled: !reportRevoked,
@@ -217,6 +245,15 @@ export function CommentOverlay({
 
   const orphanRoots = counts.orphanRoots;
 
+  const identityBadgeNode = (
+    <IdentityBadge
+      displayName={identity.displayName}
+      isAdvisor={identity.isAdvisor}
+      onEditName={() => setIdentityModalMode("edit-name")}
+      onSwitch={() => void identity.clearIdentity()}
+    />
+  );
+
   return (
     <>
       <AnchoredAffordances
@@ -240,12 +277,7 @@ export function CommentOverlay({
       )}
 
       <div className="fixed bottom-24 right-6 z-40 flex flex-col items-end gap-2">
-        <IdentityBadge
-          displayName={identity.displayName}
-          isAdvisor={identity.isAdvisor}
-          onEditName={() => setIdentityModalMode("edit-name")}
-          onSwitch={() => void identity.clearIdentity()}
-        />
+        <PortalOrInline target={identityPortalTarget}>{identityBadgeNode}</PortalOrInline>
         <Sheet
           open={sheetOpen}
           onOpenChange={(open) => {
@@ -257,9 +289,9 @@ export function CommentOverlay({
           }}
         >
           <SheetTrigger asChild>
-            <Button variant="default" className="shadow-lg">
+            <button type="button" className={cn(BTN_BASE, BTN_MD, BTN_PRIMARY, "shadow-lg")}>
               {total === 0 ? "Comments" : pluralize("comment", total, true)}
-            </Button>
+            </button>
           </SheetTrigger>
           <SheetContent side="right" className="flex w-full flex-col gap-4 sm:max-w-md">
             <SheetHeader>
@@ -282,7 +314,7 @@ export function CommentOverlay({
                     We couldn’t load the comments
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    Something went wrong on our end. Your connection is fine — we’ll keep trying, or
+                    Something went wrong on our end. Your connection is fine. We’ll keep trying, or
                     you can retry now.
                   </p>
                   <Button

@@ -34,7 +34,7 @@ export function GeographyWarning({ diagnostic }: GeographyWarningProps) {
   if (!lowConfidence && !unknownRadius && !emptyStates) return null;
 
   return (
-    <output className="mb-6 flex items-start gap-3 rounded-lg border border-amber-300/60 bg-amber-50 px-4 py-3 text-sm dark:border-amber-700/60 dark:bg-amber-950/40">
+    <output className="flex items-start gap-3 rounded-sf-card border border-amber-300/60 bg-amber-50 px-4 py-3 text-sm dark:border-amber-700/60 dark:bg-amber-950/40">
       <AlertCircle
         className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400"
         aria-hidden

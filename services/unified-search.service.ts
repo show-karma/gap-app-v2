@@ -6,7 +6,7 @@
 import { errorManager } from "@/components/Utilities/errorManager";
 import type { Community } from "@/types/v2/community";
 import type { Project as ProjectResponse } from "@/types/v2/project";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 
 /**
@@ -106,13 +106,16 @@ export const unifiedSearch = async (
     return { projects: [], communities: [] };
   }
 
-  const [data, error] = await fetchData<UnifiedSearchApiResponse>(INDEXER.V2.SEARCH(query, limit));
-
-  if (error || !data) {
+  try {
+    // TODO(#1775): add zod schema
+    const data = await api.get<UnifiedSearchApiResponse>(INDEXER.V2.SEARCH(query, limit));
+    if (!data) {
+      throw new Error("Empty response");
+    }
+    return transformSearchResponse(data);
+  } catch (error) {
     const errorMessage = `Error in unified search for query "${query}" with limit ${limit}: ${error}`;
     errorManager(errorMessage, error);
     throw new Error(errorMessage);
   }
-
-  return transformSearchResponse(data);
 };

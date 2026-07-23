@@ -5,10 +5,14 @@
 
 import { errorManager } from "@/components/Utilities/errorManager";
 import type { ProgramImpactData } from "@/types/programs";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { getProgramsImpact } from "@/utilities/registry/getProgramsImpact";
 
-vi.mock("@/utilities/fetchData");
+vi.mock("@/utilities/api/client", () => ({
+  api: {
+    get: vi.fn(),
+  },
+}));
 vi.mock("@/components/Utilities/errorManager");
 vi.mock("@/utilities/indexer", () => ({
   INDEXER: {
@@ -28,7 +32,7 @@ vi.mock("@/utilities/indexer", () => ({
   },
 }));
 
-const mockFetchData = fetchData as vi.MockedFunction<typeof fetchData>;
+const mockApiGet = api.get as vi.MockedFunction<typeof api.get>;
 const mockErrorManager = errorManager as vi.MockedFunction<typeof errorManager>;
 
 describe("getProgramsImpact", () => {
@@ -94,18 +98,18 @@ describe("getProgramsImpact", () => {
     };
 
     it("should fetch program impact data successfully", async () => {
-      mockFetchData.mockResolvedValue([mockApiResponse, null, null, 200]);
+      mockApiGet.mockResolvedValue(mockApiResponse);
 
       const result = await getProgramsImpact("test-community");
 
-      expect(mockFetchData).toHaveBeenCalledWith("/v2/communities/test-community/impact");
+      expect(mockApiGet).toHaveBeenCalledWith("/v2/communities/test-community/impact");
       expect(result.stats.totalCategories).toBe(3);
       expect(result.stats.totalProjects).toBe(15);
       expect(result.stats.totalFundingAllocated).toBe("1000000");
     });
 
     it("should transform categories correctly", async () => {
-      mockFetchData.mockResolvedValue([mockApiResponse, null, null, 200]);
+      mockApiGet.mockResolvedValue(mockApiResponse);
 
       const result = await getProgramsImpact("test-community");
 
@@ -115,7 +119,7 @@ describe("getProgramsImpact", () => {
     });
 
     it("should transform impacts correctly with all fields mapped", async () => {
-      mockFetchData.mockResolvedValue([mockApiResponse, null, null, 200]);
+      mockApiGet.mockResolvedValue(mockApiResponse);
 
       const result = await getProgramsImpact("test-community");
 
@@ -130,7 +134,7 @@ describe("getProgramsImpact", () => {
     });
 
     it("should handle multiple impacts within a category", async () => {
-      mockFetchData.mockResolvedValue([mockApiResponse, null, null, 200]);
+      mockApiGet.mockResolvedValue(mockApiResponse);
 
       const result = await getProgramsImpact("test-community");
 
@@ -140,7 +144,7 @@ describe("getProgramsImpact", () => {
     });
 
     it("should handle empty indicator IDs array", async () => {
-      mockFetchData.mockResolvedValue([mockApiResponse, null, null, 200]);
+      mockApiGet.mockResolvedValue(mockApiResponse);
 
       const result = await getProgramsImpact("test-community");
 
@@ -156,7 +160,7 @@ describe("getProgramsImpact", () => {
           totalFundingAllocated: null,
         },
       };
-      mockFetchData.mockResolvedValue([responseWithNoFunding, null, null, 200]);
+      mockApiGet.mockResolvedValue(responseWithNoFunding);
 
       const result = await getProgramsImpact("test-community");
 
@@ -171,7 +175,7 @@ describe("getProgramsImpact", () => {
           totalFundingAllocated: "",
         },
       };
-      mockFetchData.mockResolvedValue([responseWithEmptyFunding, null, null, 200]);
+      mockApiGet.mockResolvedValue(responseWithEmptyFunding);
 
       const result = await getProgramsImpact("test-community");
 
@@ -188,7 +192,7 @@ describe("getProgramsImpact", () => {
         },
         categories: [],
       };
-      mockFetchData.mockResolvedValue([responseWithNoCategories, null, null, 200]);
+      mockApiGet.mockResolvedValue(responseWithNoCategories);
 
       const result = await getProgramsImpact("test-community");
 
@@ -197,77 +201,53 @@ describe("getProgramsImpact", () => {
     });
   });
 
-  describe("API error handling", () => {
-    it("should return fallback response when API returns an error", async () => {
-      const error = new Error("Server Error");
-      mockFetchData.mockResolvedValue([null, error, null, 500]);
+  describe("null-data handling", () => {
+    it("should return fallback response when the API resolves with no data", async () => {
+      mockApiGet.mockResolvedValue(null as never);
 
       const result = await getProgramsImpact("test-community");
 
       expect(result).toEqual(emptyFallbackResponse);
-      expect(console.warn).toHaveBeenCalledWith("Impact fetch error:", error);
-      expect(mockErrorManager).toHaveBeenCalledWith("Impact fetch error", error);
-    });
-
-    it("should return fallback response when API returns null data", async () => {
-      mockFetchData.mockResolvedValue([null, null, null, 200]);
-
-      const result = await getProgramsImpact("test-community");
-
-      expect(result).toEqual(emptyFallbackResponse);
-    });
-
-    it("should return fallback response when API returns undefined data", async () => {
-      mockFetchData.mockResolvedValue([undefined, null, null, 200]);
-
-      const result = await getProgramsImpact("test-community");
-
-      expect(result).toEqual(emptyFallbackResponse);
-    });
-
-    it("should handle 404 errors gracefully", async () => {
-      mockFetchData.mockResolvedValue([null, "Not Found", null, 404]);
-
-      const result = await getProgramsImpact("nonexistent-community");
-
-      expect(result).toEqual(emptyFallbackResponse);
-      expect(console.warn).toHaveBeenCalledWith("Impact fetch error:", "Not Found");
-      expect(mockErrorManager).toHaveBeenCalledWith("Impact fetch error", "Not Found");
-    });
-
-    it("should call errorManager for API errors for consistent error reporting", async () => {
-      mockFetchData.mockResolvedValue([null, "API Error", null, 500]);
-
-      await getProgramsImpact("test-community");
-
-      // errorManager is called for all errors (API errors and exceptions)
-      expect(mockErrorManager).toHaveBeenCalledWith("Impact fetch error", "API Error");
+      expect(console.warn).toHaveBeenCalledWith("Impact fetch error:", null);
+      expect(mockErrorManager).toHaveBeenCalledWith("Impact fetch error", null);
     });
   });
 
   describe("exception handling", () => {
-    it("should return fallback response when fetchData throws an exception", async () => {
-      const error = new Error("Network error");
-      mockFetchData.mockRejectedValue(error);
+    it("should return fallback response when the api client throws", async () => {
+      const error = new Error("Server Error");
+      mockApiGet.mockRejectedValue(error);
 
       const result = await getProgramsImpact("test-community");
 
       expect(result).toEqual(emptyFallbackResponse);
       expect(console.error).toHaveBeenCalledWith("Error fetching program impact:", error);
+      expect(mockErrorManager).toHaveBeenCalledWith("Error fetching program impact", error);
     });
 
-    it("should call errorManager when an exception is thrown", async () => {
-      const error = new Error("Unexpected error");
-      mockFetchData.mockRejectedValue(error);
+    it("should handle a 404 error thrown by the api client", async () => {
+      const error = Object.assign(new Error("Not Found"), { status: 404 });
+      mockApiGet.mockRejectedValue(error);
+
+      const result = await getProgramsImpact("nonexistent-community");
+
+      expect(result).toEqual(emptyFallbackResponse);
+      expect(console.error).toHaveBeenCalledWith("Error fetching program impact:", error);
+      expect(mockErrorManager).toHaveBeenCalledWith("Error fetching program impact", error);
+    });
+
+    it("should call errorManager for consistent error reporting", async () => {
+      const error = new Error("API Error");
+      mockApiGet.mockRejectedValue(error);
 
       await getProgramsImpact("test-community");
 
       expect(mockErrorManager).toHaveBeenCalledWith("Error fetching program impact", error);
     });
 
-    it("should handle non-Error exceptions", async () => {
+    it("should handle non-Error rejections", async () => {
       const error = "String error message";
-      mockFetchData.mockRejectedValue(error);
+      mockApiGet.mockRejectedValue(error);
 
       const result = await getProgramsImpact("test-community");
 
@@ -292,7 +272,7 @@ describe("getProgramsImpact", () => {
           },
         ],
       };
-      mockFetchData.mockResolvedValue([responseWithEmptyImpacts, null, null, 200]);
+      mockApiGet.mockResolvedValue(responseWithEmptyImpacts);
 
       const result = await getProgramsImpact("test-community");
 
@@ -306,11 +286,11 @@ describe("getProgramsImpact", () => {
         stats: { totalCategories: 0, totalProjects: 0, totalFundingAllocated: undefined },
         categories: [],
       };
-      mockFetchData.mockResolvedValue([mockResponse, null, null, 200]);
+      mockApiGet.mockResolvedValue(mockResponse);
 
       await getProgramsImpact("community-with-special-chars_123");
 
-      expect(mockFetchData).toHaveBeenCalledWith(
+      expect(mockApiGet).toHaveBeenCalledWith(
         "/v2/communities/community-with-special-chars_123/impact"
       );
     });
@@ -334,7 +314,7 @@ describe("getProgramsImpact", () => {
           },
         ],
       };
-      mockFetchData.mockResolvedValue([responseWithBothTypes, null, null, 200]);
+      mockApiGet.mockResolvedValue(responseWithBothTypes);
 
       const result = await getProgramsImpact("test-community");
 
@@ -360,7 +340,7 @@ describe("getProgramsImpact", () => {
           },
         ],
       };
-      mockFetchData.mockResolvedValue([mockResponse, null, null, 200]);
+      mockApiGet.mockResolvedValue(mockResponse);
 
       const result = await getProgramsImpact("test-community");
 
@@ -383,52 +363,52 @@ describe("getProgramsImpact", () => {
     };
 
     it("should pass programId filter to the API endpoint", async () => {
-      mockFetchData.mockResolvedValue([mockResponse, null, null, 200]);
+      mockApiGet.mockResolvedValue(mockResponse);
 
       await getProgramsImpact("test-community", { programId: "program-123" });
 
-      expect(mockFetchData).toHaveBeenCalledWith(
+      expect(mockApiGet).toHaveBeenCalledWith(
         "/v2/communities/test-community/impact?programId=program-123"
       );
     });
 
     it("should pass projectId filter to the API endpoint", async () => {
-      mockFetchData.mockResolvedValue([mockResponse, null, null, 200]);
+      mockApiGet.mockResolvedValue(mockResponse);
 
       await getProgramsImpact("test-community", { projectId: "project-456" });
 
-      expect(mockFetchData).toHaveBeenCalledWith(
+      expect(mockApiGet).toHaveBeenCalledWith(
         "/v2/communities/test-community/impact?projectId=project-456"
       );
     });
 
     it("should pass both programId and projectId filters", async () => {
-      mockFetchData.mockResolvedValue([mockResponse, null, null, 200]);
+      mockApiGet.mockResolvedValue(mockResponse);
 
       await getProgramsImpact("test-community", {
         programId: "program-123",
         projectId: "project-456",
       });
 
-      expect(mockFetchData).toHaveBeenCalledWith(
+      expect(mockApiGet).toHaveBeenCalledWith(
         "/v2/communities/test-community/impact?programId=program-123&projectId=project-456"
       );
     });
 
     it("should work without filters (backward compatibility)", async () => {
-      mockFetchData.mockResolvedValue([mockResponse, null, null, 200]);
+      mockApiGet.mockResolvedValue(mockResponse);
 
       await getProgramsImpact("test-community");
 
-      expect(mockFetchData).toHaveBeenCalledWith("/v2/communities/test-community/impact");
+      expect(mockApiGet).toHaveBeenCalledWith("/v2/communities/test-community/impact");
     });
 
     it("should work with empty filters object", async () => {
-      mockFetchData.mockResolvedValue([mockResponse, null, null, 200]);
+      mockApiGet.mockResolvedValue(mockResponse);
 
       await getProgramsImpact("test-community", {});
 
-      expect(mockFetchData).toHaveBeenCalledWith("/v2/communities/test-community/impact");
+      expect(mockApiGet).toHaveBeenCalledWith("/v2/communities/test-community/impact");
     });
   });
 });

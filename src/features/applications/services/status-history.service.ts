@@ -1,5 +1,5 @@
 import type { Application } from "@/types/whitelabel-entities";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 
 /**
@@ -12,22 +12,19 @@ import { INDEXER } from "@/utilities/indexer";
  * return the reasons to the applicant, reviewers, and admins, and to no one
  * else. This only re-requests the authenticated view; it makes no access
  * decision of its own.
+ *
+ * `api.get` throws on failure (network, timeout, 4xx/5xx) so React Query keeps
+ * `data` undefined and callers fall back to the sanitized SSR
+ * `application.statusHistory`. Resolving to `[]` here would win the `?? `
+ * fallback and blank the timeline for authorized viewers on a transient
+ * re-fetch failure.
  */
 export async function getApplicationStatusHistory(
   referenceNumber: string
 ): Promise<Application["statusHistory"]> {
-  const [application, error] = await fetchData<Application>(
-    INDEXER.V2.FUNDING_APPLICATIONS.GET(referenceNumber),
-    "GET"
+  // TODO(#1775): add zod schema
+  const application = await api.get<Application>(
+    INDEXER.V2.FUNDING_APPLICATIONS.GET(referenceNumber)
   );
-  // Throw on failure (network, timeout, 4xx/5xx) so React Query keeps `data`
-  // undefined and callers fall back to the sanitized SSR `application.statusHistory`.
-  // Resolving to `[]` here would win the `?? ` fallback and blank the timeline
-  // for authorized viewers on a transient re-fetch failure.
-  if (error) {
-    throw new Error(
-      typeof error === "string" ? error : "Failed to load application status history"
-    );
-  }
   return application?.statusHistory ?? [];
 }

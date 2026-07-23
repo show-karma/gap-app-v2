@@ -33,6 +33,7 @@ import { useTenantSafe } from "@/store/tenant";
 import { karmaLinks } from "@/utilities/karma/karma";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
+import { NavbarAssistantButton } from "./navbar-assistant-button";
 import { NavbarAuthButtons } from "./navbar-auth-buttons";
 import { NavbarPermissionsProvider } from "./navbar-permissions-context";
 import { NavbarSearch } from "./navbar-search";
@@ -474,6 +475,9 @@ export function WhitelabelNavbar() {
               </DropdownMenu>
             )}
 
+            {/* Karma Assistant */}
+            <NavbarAssistantButton className="mr-1" />
+
             {/* Theme toggle */}
             <ThemeToggleButton />
 
@@ -486,6 +490,7 @@ export function WhitelabelNavbar() {
 
           {/* Mobile: menu toggle */}
           <div className="flex items-center gap-2 lg:hidden">
+            <NavbarAssistantButton compact />
             <ThemeToggleButton />
             <button
               type="button"

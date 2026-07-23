@@ -149,6 +149,13 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
+      // Donor research renamed the advisor-facing "Clients" concept to
+      // "Personas". Keep existing bookmarks and shared internal links valid.
+      {
+        source: "/nonprofit-research/clients/:path*",
+        destination: "/nonprofit-research/personas/:path*",
+        permanent: true,
+      },
       // The AI-readiness checker moved from /scanner to /nonprofits/is-ai-ready.
       // The wildcard covers both the landing page and the /scans/:id report so
       // old links (including v1.7.74 shares) keep working.

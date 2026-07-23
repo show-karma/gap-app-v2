@@ -71,9 +71,27 @@ export interface PortfolioReport {
    * has been deleted.
    */
   reportConfigName?: string | null;
+  /**
+   * URL segment identifying the originating ReportConfig. Needed because
+   * `runDate` alone is ambiguous — two configs can publish on the same day.
+   * Populated by the public list endpoint only; `null` when the config has
+   * been deleted, in which case callers fall back to the run-date-only URL.
+   */
+  reportConfigSlug?: string | null;
   communityId: string;
   runDate: string;
   status: PortfolioReportStatus;
+  /**
+   * Admin-authored title for this specific report (e.g. "Monthly Pods Report
+   * — June 2026"). `null` when untitled, which is every report generated
+   * before DEV-520 — readers fall back to `reportConfigName`. Exists because
+   * the period a report covers is recorded nowhere: `runDate` is the
+   * generation date, not the covered range.
+   *
+   * Optional, not just nullable: until the indexer ships the field, responses
+   * omit it entirely rather than sending `null`, and readers must handle both.
+   */
+  title?: string | null;
   /**
    * Rendered report body. New reports are full `<!DOCTYPE html>`
    * documents emitted by the agentic generator's structured-document
@@ -125,4 +143,32 @@ export interface UpdateReportConfigRequest {
 
 export interface GenerateReportRequest {
   configId: string;
+}
+
+// ── Data export ──────────────────────────────────────────────
+
+export type ReportExportFormat = "manifest" | "csv" | "json";
+
+/**
+ * Whether an export came from the report's generation-time snapshot
+ * (`generation`) or a live recompute for a legacy report predating snapshots
+ * (`live-recompute` — reflects current data, not the data at generation time).
+ */
+export type ReportSnapshotSource = "generation" | "live-recompute";
+
+export interface ReportExportManifestEntry {
+  key: string;
+  title: string;
+  rowCount: number;
+}
+
+export interface ReportExportManifest {
+  snapshotSource: ReportSnapshotSource;
+  sections: ReportExportManifestEntry[];
+}
+
+export interface ReportExportDownload {
+  blob: Blob;
+  filename: string;
+  snapshotSource: ReportSnapshotSource | null;
 }

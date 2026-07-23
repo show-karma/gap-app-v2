@@ -1,4 +1,4 @@
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 
 export type MilestoneInvoice = {
@@ -20,21 +20,23 @@ export type ApplicationInvoiceConfig = {
 /**
  * Fetches invoice configuration for a grant application.
  *
- * `fetchData` returns `[data, error, pageInfo, status]` (see
- * utilities/fetchData.ts). The earlier code skipped position 0 (the
- * actual payload) and read position 1 (the error string), so the
- * happy path silently returned `null` and the invoice UI never
- * appeared. We accept both wrapped (`{ data: ... }`) and unwrapped
- * payload shapes for resilience against indexer envelope changes.
+ * We accept both wrapped (`{ data: ... }`) and unwrapped payload shapes for
+ * resilience against indexer envelope changes. Any failure (network, auth,
+ * 4xx/5xx) degrades to `null` rather than surfacing a React Query error —
+ * the invoice UI simply doesn't render, matching the historical fetchData
+ * behavior of this call site.
  */
 export async function getApplicationInvoiceConfig(
   referenceNumber: string
 ): Promise<ApplicationInvoiceConfig | null> {
-  const [data, error] = await fetchData<
-    ApplicationInvoiceConfig | { data: ApplicationInvoiceConfig }
-  >(INDEXER.V2.FUNDING_APPLICATIONS.INVOICE_CONFIG(referenceNumber), "GET");
+  // TODO(#1775): add zod schema
+  const data = await api
+    .get<ApplicationInvoiceConfig | { data: ApplicationInvoiceConfig }>(
+      INDEXER.V2.FUNDING_APPLICATIONS.INVOICE_CONFIG(referenceNumber)
+    )
+    .catch(() => null);
 
-  if (error || !data) return null;
+  if (!data) return null;
 
   const config =
     typeof data === "object" && data !== null && "data" in data

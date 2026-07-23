@@ -132,7 +132,8 @@ import {
 // ---------------------------------------------------------------------------
 // Import the REAL hook using a relative path to bypass the @/ alias mock
 // ---------------------------------------------------------------------------
-import { useZeroDevSigner, WALLET_READY_TIMEOUT_MS } from "../../../hooks/useZeroDevSigner";
+import { useZeroDevSigner } from "../../../hooks/useZeroDevSigner";
+import { WALLET_READY_TIMEOUT_MS } from "../../../utilities/wallet/waitForUsableWallet";
 
 // ---------------------------------------------------------------------------
 // Shared chain-aware fixtures (see zerodev-signer-test-utils.ts)
@@ -157,7 +158,16 @@ import {
 function setupEmailUser(
   opts: { embedded?: boolean; external?: boolean; embeddedOpts?: EmbeddedWalletOptions } = {}
 ) {
-  mockPrivyState.user = { linkedAccounts: [{ type: "email" }] };
+  // A linked external wallet (opts.external) represents a hybrid user who logged
+  // in via email and ALSO linked their own MetaMask — so the address is in
+  // linkedAccounts and passes the resolver's linkage check.
+  mockPrivyState.user = {
+    linkedAccounts: [
+      { type: "email" },
+      { type: "wallet", address: EMBEDDED_WALLET_ADDRESS },
+      ...(opts.external ? [{ type: "wallet", address: EXTERNAL_WALLET_ADDRESS }] : []),
+    ],
+  };
   mockPrivyState.wallets = [];
   if (opts.embedded !== false)
     mockPrivyState.wallets.push(createEmbeddedWallet(EMBEDDED_WALLET_ADDRESS, opts.embeddedOpts));
@@ -165,14 +175,22 @@ function setupEmailUser(
 }
 
 function setupGoogleUser(opts: { embedded?: boolean; external?: boolean } = {}) {
-  mockPrivyState.user = { linkedAccounts: [{ type: "google_oauth" }] };
+  mockPrivyState.user = {
+    linkedAccounts: [
+      { type: "google_oauth" },
+      { type: "wallet", address: EMBEDDED_WALLET_ADDRESS },
+      ...(opts.external ? [{ type: "wallet", address: EXTERNAL_WALLET_ADDRESS }] : []),
+    ],
+  };
   mockPrivyState.wallets = [];
   if (opts.embedded !== false) mockPrivyState.wallets.push(createEmbeddedWallet());
   if (opts.external) mockPrivyState.wallets.push(createExternalWallet());
 }
 
 function setupExternalWalletUser() {
-  mockPrivyState.user = { linkedAccounts: [{ type: "wallet" }] };
+  mockPrivyState.user = {
+    linkedAccounts: [{ type: "wallet", address: EXTERNAL_WALLET_ADDRESS }],
+  };
   mockPrivyState.wallets = [createExternalWallet()];
 }
 
@@ -394,7 +412,9 @@ describe("useZeroDevSigner (real hook) — hydration & status", () => {
     it("resolves with a signer once an external wallet appears during the wait", async () => {
       vi.useFakeTimers();
       mockPrivyState.walletsReady = false;
-      mockPrivyState.user = { linkedAccounts: [{ type: "wallet" }] };
+      mockPrivyState.user = {
+        linkedAccounts: [{ type: "wallet", address: EXTERNAL_WALLET_ADDRESS }],
+      };
       mockPrivyState.wallets = [];
       mockViemCreateWalletClient.mockReturnValue({ account: { address: EXTERNAL_WALLET_ADDRESS } });
       mockWalletClientToSigner.mockResolvedValue({

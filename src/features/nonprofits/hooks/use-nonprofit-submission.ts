@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation } from "@tanstack/react-query";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 
 interface NonprofitSubmissionPayload {
@@ -25,19 +25,10 @@ interface NonprofitSubmissionResponse {
  */
 export function useNonprofitSubmission() {
   return useMutation({
-    mutationFn: async (payload: NonprofitSubmissionPayload) => {
-      const [data, error, , status] = await fetchData<NonprofitSubmissionResponse>(
-        INDEXER.NONPROFITS.SUBMIT,
-        "POST",
-        payload,
-        {},
-        {},
-        false
-      );
-      if (error || !data) {
-        throw new Error(error ?? `Submission failed with status ${status}`);
-      }
-      return data;
-    },
+    mutationFn: (payload: NonprofitSubmissionPayload) =>
+      // TODO(#1775): add zod schema
+      api.post<NonprofitSubmissionResponse>(INDEXER.NONPROFITS.SUBMIT, payload, {
+        isAuthorized: false,
+      }),
   });
 }

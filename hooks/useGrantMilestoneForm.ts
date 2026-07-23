@@ -9,7 +9,7 @@ import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { getProjectGrants } from "@/services/project-grants.service";
 import { useOwnerStore, useProjectStore } from "@/store";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { sanitizeObject } from "@/utilities/sanitize";
@@ -100,11 +100,7 @@ export function useGrantMilestoneForm({
           const txHash = res?.tx[0]?.hash;
 
           if (txHash) {
-            await fetchData(
-              INDEXER.ATTESTATION_LISTENER(txHash, milestoneToAttest.chainID),
-              "POST",
-              {}
-            );
+            await api.post(INDEXER.ATTESTATION_LISTENER(txHash, milestoneToAttest.chainID), {});
           }
 
           changeStepperStep("indexing");

@@ -4,7 +4,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
 import { applicationKeys } from "@/src/lib/query-keys";
 import type { Application } from "@/types/whitelabel-entities";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import type { ApplicationFormData, UseApplicationDraftReturn } from "../types";
 
 export function useApplicationDraft(communityId: string): UseApplicationDraftReturn {
@@ -22,22 +22,15 @@ export function useApplicationDraft(communityId: string): UseApplicationDraftRet
       data: ApplicationFormData;
       applicantEmail: string;
     }) => {
+      // TODO(#1775): add zod schema
       if (applicationId) {
-        const [response, error] = await fetchData<Application>(
-          `/v2/funding-applications/${applicationId}`,
-          "PUT",
-          { data }
-        );
-        if (error || !response) throw new Error(error ?? "Failed to update draft");
-        return response;
+        return api.put<Application>(`/v2/funding-applications/${applicationId}`, { data });
       }
-      const [response, error] = await fetchData<Application>(
-        `/v2/funding-applications/${programId}`,
-        "POST",
-        { programId, data, applicantEmail }
-      );
-      if (error || !response) throw new Error(error ?? "Failed to create draft");
-      return response;
+      return api.post<Application>(`/v2/funding-applications/${programId}`, {
+        programId,
+        data,
+        applicantEmail,
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: applicationKeys.all });
@@ -46,8 +39,7 @@ export function useApplicationDraft(communityId: string): UseApplicationDraftRet
 
   const deleteDraftMutation = useMutation({
     mutationFn: async (applicationId: string) => {
-      const [, error] = await fetchData(`/v2/funding-applications/${applicationId}`, "DELETE");
-      if (error) throw new Error(error);
+      await api.delete(`/v2/funding-applications/${applicationId}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["applications"] });

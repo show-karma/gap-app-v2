@@ -34,6 +34,7 @@ vi.mock("@privy-io/react-auth/smart-wallets", () => ({
 
 vi.mock("@privy-io/wagmi", () => ({
   WagmiProvider: ({ children }: { children: React.ReactNode }) => children,
+  useSetActiveWallet: () => ({ setActiveWallet: vi.fn() }),
 }));
 
 vi.mock("wagmi", () => ({

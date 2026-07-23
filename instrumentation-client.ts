@@ -21,6 +21,15 @@ Sentry.init({
   enabled: process.env.NEXT_PUBLIC_VERCEL_ENV === "production",
   dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
   ignoreErrors: sentryIgnoreErrors,
+  // Browser-extension content scripts (wallet extensions and similar) inject
+  // `injectedScript.bundle.js` into every page and throw against it — most
+  // commonly `Cannot read properties of undefined (reading 'sendMessage')`
+  // when their `chrome.runtime` handle is invalidated. We never ship a file by
+  // that name, so drop any event whose crash frame is that injected bundle.
+  // Sibling to the chrome.runtime.sendMessage signature already in
+  // utilities/sentry/ignoreErrors.ts (browserExtensionErrors).
+  // See https://karma-crypto-inc.sentry.io/issues/GAP-FRONTEND-257
+  denyUrls: [/injectedScript\.bundle\.js/],
   integrations: [],
   // Defence in depth for transient Axios "Network Error" events that
   // bubble through code paths bypassing `errorManager` (raw React errors,

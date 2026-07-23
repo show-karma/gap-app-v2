@@ -1,7 +1,7 @@
 import { errorManager } from "@/components/Utilities/errorManager";
 import type { ImpactIndicatorWithData } from "@/types/impactMeasurement";
 import type { ProjectIndicatorsResponse } from "@/types/indicator";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 
 /**
@@ -42,13 +42,8 @@ export const getImpactAnswers = async (
   projectIdentifier: string
 ): Promise<ImpactIndicatorWithData[]> => {
   try {
-    const [data, error] = await fetchData(
-      INDEXER.INDICATORS.V2.PROJECT_INDICATORS(projectIdentifier)
-    );
-
-    if (error) {
-      throw new Error(error);
-    }
+    // TODO(#1775): add zod schema
+    const data = await api.get(INDEXER.INDICATORS.V2.PROJECT_INDICATORS(projectIdentifier));
 
     return transformProjectIndicators(data as ProjectIndicatorsResponse);
   } catch (error: unknown) {
@@ -77,23 +72,15 @@ export const sendImpactAnswers = async (
 ): Promise<boolean> => {
   try {
     // Write operations use the original endpoint (dual-write to MongoDB and PostgreSQL)
-    const [, error] = await fetchData(
-      INDEXER.PROJECT.IMPACT_INDICATORS.SEND(projectIdentifier),
-      "POST",
-      {
-        indicatorId,
-        data: datapoints.map((item) => ({
-          value: String(item.value),
-          proof: item.proof,
-          startDate: item.startDate,
-          endDate: item.endDate,
-        })),
-      }
-    );
-
-    if (error) {
-      throw new Error(error);
-    }
+    await api.post(INDEXER.PROJECT.IMPACT_INDICATORS.SEND(projectIdentifier), {
+      indicatorId,
+      data: datapoints.map((item) => ({
+        value: String(item.value),
+        proof: item.proof,
+        startDate: item.startDate,
+        endDate: item.endDate,
+      })),
+    });
 
     return true;
   } catch (error) {

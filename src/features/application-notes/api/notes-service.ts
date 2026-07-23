@@ -1,18 +1,17 @@
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import type { ApplicationNote } from "../types";
 
 /**
  * Get the private reviewer/admin note for an application.
  * Returns null when no note exists yet (a 200 { note: null }).
  * THROWS on error (403/500) so the tab can render an error/retry state —
- * deliberately does NOT swallow to null.
+ * deliberately does NOT swallow to null (api.get throws the typed ApiError).
  */
 export async function getNote(referenceNumber: string): Promise<ApplicationNote | null> {
-  const [data, error] = await fetchData<{ note: ApplicationNote | null }>(
-    `/v2/applications/${referenceNumber}/notes`,
-    "GET"
+  // TODO(#1775): add zod schema
+  const data = await api.get<{ note: ApplicationNote | null }>(
+    `/v2/applications/${referenceNumber}/notes`
   );
-  if (error) throw new Error(error);
   return data?.note ?? null;
 }
 
@@ -21,11 +20,11 @@ export async function getNote(referenceNumber: string): Promise<ApplicationNote 
  * isAuthorized=false) so the backend can verify reviewer/admin.
  */
 export async function saveNote(referenceNumber: string, content: string): Promise<ApplicationNote> {
-  const [data, error] = await fetchData<{ note: ApplicationNote }>(
+  // TODO(#1775): add zod schema
+  const data = await api.put<{ note: ApplicationNote }>(
     `/v2/applications/${referenceNumber}/notes`,
-    "PUT",
     { content }
   );
-  if (error || !data) throw new Error(error ?? "Failed to save note");
+  if (!data) throw new Error("Failed to save note");
   return data.note;
 }

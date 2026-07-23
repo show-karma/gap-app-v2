@@ -2,7 +2,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import type { Application } from "@/types/whitelabel-entities";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { useUserApplicationsStore } from "../lib/store";
 import type {
   UserApplicationsResponse,
@@ -22,7 +22,10 @@ const SORT_FIELD: Record<UserApplicationsSortBy, (app: Application) => string> =
   status: (app) => app.status ?? "",
 };
 
-export function useUserApplications(communitySlug?: string): UseUserApplicationsReturn {
+export function useUserApplications(
+  communitySlug?: string,
+  options?: { enabled?: boolean }
+): UseUserApplicationsReturn {
   const queryClient = useQueryClient();
   const { address, authenticated } = useAuth();
 
@@ -67,15 +70,13 @@ export function useUserApplications(communitySlug?: string): UseUserApplications
 
       const communityParam = communitySlug ? `&communitySlug=${communitySlug}` : "";
 
-      const [res, err] = await fetchData<UserApplicationsResponse>(
-        `/v2/funding-applications/user/my-applications?page=${pagination.page}&limit=${pagination.limit}${communityParam}${statusParam}${searchParam}${programParam}`,
-        "GET"
+      // TODO(#1775): add zod schema
+      return api.get<UserApplicationsResponse>(
+        `/v2/funding-applications/user/my-applications?page=${pagination.page}&limit=${pagination.limit}${communityParam}${statusParam}${searchParam}${programParam}`
       );
-      if (err) throw new Error(err);
-      return res as UserApplicationsResponse;
     },
     staleTime: 1000 * 60 * 2,
-    enabled: !!authenticated,
+    enabled: !!authenticated && (options?.enabled ?? true),
   });
 
   // Update store with query results
@@ -85,7 +86,14 @@ export function useUserApplications(communitySlug?: string): UseUserApplications
 
     if (data) {
       setApplications(data.applications);
-      setPagination(data.pagination);
+      // The endpoint's wire format names this field `totalCount`, not
+      // `total` (see gap-indexer's FundingApplicationApiMapper) — normalize
+      // here so the rest of the app can keep reading the single `total`
+      // field without silently falling back to a stale/zero value.
+      setPagination({
+        ...data.pagination,
+        total: data.pagination.totalCount ?? data.pagination.total ?? 0,
+      });
       setStatusCounts(data.statusCounts ?? {});
     }
   }, [
@@ -121,14 +129,11 @@ export function useUserApplications(communitySlug?: string): UseUserApplications
 
       queryClient.prefetchQuery({
         queryKey: nextPageKey,
-        queryFn: async () => {
-          const [res, err] = await fetchData<UserApplicationsResponse>(
-            `/v2/funding-applications/user/my-applications?page=${pagination.page + 1}&limit=${pagination.limit}${communityParam}${statusParam}${searchParam}${programParam}`,
-            "GET"
-          );
-          if (err) throw new Error(err);
-          return res;
-        },
+        queryFn: () =>
+          // TODO(#1775): add zod schema
+          api.get<UserApplicationsResponse>(
+            `/v2/funding-applications/user/my-applications?page=${pagination.page + 1}&limit=${pagination.limit}${communityParam}${statusParam}${searchParam}${programParam}`
+          ),
         staleTime: 1000 * 60 * 2,
       });
     }

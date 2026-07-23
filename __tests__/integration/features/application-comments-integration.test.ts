@@ -13,8 +13,18 @@ vi.mock("@/utilities/enviromentVars", () => ({
   },
 }));
 
-// Mock fetchData for getComments method (which uses fetchData)
-vi.mock("@/utilities/fetchData");
+// getComments is migrated off fetchData onto the typed `api` client (issue #1775).
+vi.mock("@/utilities/api/client", () => ({
+  api: {
+    get: vi.fn(),
+    post: vi.fn(),
+    put: vi.fn(),
+    patch: vi.fn(),
+    delete: vi.fn(),
+    request: vi.fn(),
+    getPaginated: vi.fn(),
+  },
+}));
 
 // Create a persistent mock instance using var (hoisted) so it's available in vi.mock factory
 var mockAxiosInstance: vi.Mocked<AxiosInstance>;
@@ -52,10 +62,9 @@ vi.mock("@/utilities/getWalletFromWagmiStore", () => ({
 
 // NOW import the service after mocks are configured
 import { applicationCommentsService } from "@/services/application-comments.service";
-// Import fetchData mock
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 
-const mockFetchData = fetchData as vi.MockedFunction<typeof fetchData>;
+const mockGet = api.get as vi.MockedFunction<typeof api.get>;
 
 describe("Application Comments Integration", () => {
   const mockToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.mocktoken";
@@ -63,7 +72,7 @@ describe("Application Comments Integration", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mockFetchData.mockClear();
+    mockGet.mockClear();
     if (mockAxiosInstance) {
       mockAxiosInstance.get?.mockClear();
       mockAxiosInstance.post?.mockClear();
@@ -109,17 +118,15 @@ describe("Application Comments Integration", () => {
         })
       );
 
-      // Step 2: Get comments (uses fetchData)
-      mockFetchData.mockResolvedValueOnce([{ comments: [mockComment] }, null, null, 200]);
+      // Step 2: Get comments (uses api.get)
+      mockGet.mockResolvedValueOnce({ comments: [mockComment] });
 
       const comments = await applicationCommentsService.getComments(applicationId);
 
       expect(comments).toEqual([mockComment]);
-      expect(mockFetchData).toHaveBeenCalledWith(
+      expect(mockGet).toHaveBeenCalledWith(
         expect.stringContaining(applicationId),
-        "GET",
-        {},
-        {}
+        expect.anything()
       );
 
       // Step 3: Edit the comment (uses apiClient.put)
@@ -221,35 +228,31 @@ describe("Application Comments Integration", () => {
       const initialToken = "initial-token";
       const refreshedToken = "refreshed-token";
 
-      // First call with initial token (getComments uses fetchData)
+      // First call with initial token (getComments uses api.get)
       (TokenManager.getToken as vi.Mock).mockResolvedValueOnce(initialToken);
 
-      mockFetchData.mockResolvedValueOnce([{ comments: [] }, null, null, 200]);
+      mockGet.mockResolvedValueOnce({ comments: [] });
 
       await applicationCommentsService.getComments(applicationId);
 
-      expect(mockFetchData).toHaveBeenCalledWith(
+      expect(mockGet).toHaveBeenCalledWith(
         expect.stringContaining(applicationId),
-        "GET",
-        {},
-        {}
+        expect.anything()
       );
 
       // Second call with refreshed token
       (TokenManager.getToken as vi.Mock).mockResolvedValueOnce(refreshedToken);
 
-      mockFetchData.mockResolvedValueOnce([{ comments: [] }, null, null, 200]);
+      mockGet.mockResolvedValueOnce({ comments: [] });
 
       await applicationCommentsService.getComments(applicationId);
 
-      expect(mockFetchData).toHaveBeenLastCalledWith(
+      expect(mockGet).toHaveBeenLastCalledWith(
         expect.stringContaining(applicationId),
-        "GET",
-        {},
-        {}
+        expect.anything()
       );
 
-      // The token is fetched fresh each time via fetchData
+      // The token is fetched fresh each time via the api client's getAuthToken hook
       // So the second call will use the refreshed token
     });
   });

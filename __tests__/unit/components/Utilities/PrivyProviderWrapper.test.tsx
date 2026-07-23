@@ -67,6 +67,33 @@ describe("PrivyProviderWrapper", () => {
     expect(mockGetItem).toHaveBeenCalledWith("privy:token");
   });
 
+  it("should not crash the boot path when localStorage access throws (QA A6)", async () => {
+    // Privacy mode / blocked storage / enterprise policy: any access throws.
+    // This effect runs on every page — an unguarded read crashed the whole app
+    // to the error boundary before login was reachable. Unreadable storage must
+    // mean "anonymous user", never a crash.
+    mockGetItem.mockImplementation(() => {
+      throw new Error("SecurityError: access denied");
+    });
+
+    const PrivyProviderWrapper = (await import("@/components/Utilities/PrivyProviderWrapper"))
+      .default;
+
+    let rendered: ReturnType<typeof render> | undefined;
+    await act(async () => {
+      rendered = render(
+        <PrivyProviderWrapper>
+          <div>child-under-blocked-storage</div>
+        </PrivyProviderWrapper>
+      );
+    });
+
+    // The app renders, children included — no error boundary.
+    expect(rendered?.getByText("child-under-blocked-storage")).toBeTruthy();
+    // And the anonymous deferred-load path was taken, not the token path.
+    expect(mockPrivyComponent).not.toHaveBeenCalled();
+  });
+
   it("should defer Privy loading for anonymous users (no token)", async () => {
     mockGetItem.mockReturnValue(null);
 
