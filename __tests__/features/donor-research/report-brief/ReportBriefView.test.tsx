@@ -79,4 +79,25 @@ describe("ReportBriefView", () => {
       canManageReport: false,
     });
   });
+
+  it("holds the skeleton while staff authorization is resolving", () => {
+    mockUseStaff.mockReturnValue({ isStaff: false, isLoading: true });
+
+    renderWithProviders(<ReportBriefView reportId="fb95f6f5-1630-4f72-a8b9-d052030d9c3d" />);
+
+    expect(screen.getByText("Loading report…")).toBeInTheDocument();
+    expect(mockReportBrief).not.toHaveBeenCalled();
+  });
+
+  it("holds the skeleton while the advisor row is resolving", () => {
+    mockUseDonorAdvisor.mockReturnValue({
+      data: undefined,
+      isPending: true,
+    } as unknown as ReturnType<typeof useDonorAdvisor>);
+
+    renderWithProviders(<ReportBriefView reportId="fb95f6f5-1630-4f72-a8b9-d052030d9c3d" />);
+
+    expect(screen.getByText("Loading report…")).toBeInTheDocument();
+    expect(mockReportBrief).not.toHaveBeenCalled();
+  });
 });
