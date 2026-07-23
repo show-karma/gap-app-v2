@@ -210,21 +210,50 @@ function parseFilename(contentDisposition: string | undefined, fallback: string)
   return match?.[1] ? match[1].replace(/['"]/g, "") : fallback;
 }
 
+const SNAPSHOT_SOURCES: readonly ReportSnapshotSource[] = [
+  "generation",
+  "live-recompute",
+  "live-refresh",
+];
+
 function readSnapshotSource(headers: Record<string, unknown>): ReportSnapshotSource | null {
   const raw = headers["x-snapshot-source"];
-  return raw === "generation" || raw === "live-recompute" ? raw : null;
+  return SNAPSHOT_SOURCES.includes(raw as ReportSnapshotSource)
+    ? (raw as ReportSnapshotSource)
+    : null;
 }
 
-function exportPath(communitySlug: string, reportId: string): string {
-  return `/v2/communities/${encodeURIComponent(communitySlug)}/reports/${encodeURIComponent(reportId)}/export`;
+function exportPath(
+  communitySlug: string,
+  reportId: string,
+  params: Record<string, string | undefined>
+): string {
+  const query = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (value !== undefined) query.set(key, value);
+  }
+  return `/v2/communities/${encodeURIComponent(communitySlug)}/reports/${encodeURIComponent(reportId)}/export?${query.toString()}`;
 }
+
+/**
+ * A report's data is frozen when it is generated, so exports of a report
+ * published weeks ago carry weeks-old numbers. Passing `refresh` rebuilds every
+ * section from current source records instead.
+ */
+const refreshParam = (refresh?: boolean) => (refresh ? "true" : undefined);
 
 /** List the data-bearing sections of a report — drives the export menu. */
 export async function getReportExportManifest(
   communitySlug: string,
-  reportId: string
+  reportId: string,
+  refresh?: boolean
 ): Promise<ReportExportManifest> {
-  const { data } = await apiClient.get(`${exportPath(communitySlug, reportId)}?format=manifest`);
+  const { data } = await apiClient.get(
+    exportPath(communitySlug, reportId, {
+      format: "manifest",
+      refresh: refreshParam(refresh),
+    })
+  );
   return data;
 }
 
@@ -232,10 +261,15 @@ export async function getReportExportManifest(
 export async function exportReportSection(
   communitySlug: string,
   reportId: string,
-  section: string
+  section: string,
+  refresh?: boolean
 ): Promise<ReportExportDownload> {
   const response = await apiClient.get(
-    `${exportPath(communitySlug, reportId)}?format=csv&section=${encodeURIComponent(section)}`,
+    exportPath(communitySlug, reportId, {
+      format: "csv",
+      section,
+      refresh: refreshParam(refresh),
+    }),
     { responseType: "blob" }
   );
   return {
@@ -245,19 +279,24 @@ export async function exportReportSection(
   };
 }
 
-/** Download every section's raw rows as a single JSON file. */
-export async function exportReportAll(
+/** Download every section as one Excel workbook — a worksheet per section. */
+export async function exportReportWorkbook(
   communitySlug: string,
-  reportId: string
+  reportId: string,
+  refresh?: boolean
 ): Promise<ReportExportDownload> {
-  const response = await apiClient.get(`${exportPath(communitySlug, reportId)}?format=json`, {
-    responseType: "blob",
-  });
+  const response = await apiClient.get(
+    exportPath(communitySlug, reportId, {
+      format: "xlsx",
+      refresh: refreshParam(refresh),
+    }),
+    { responseType: "blob" }
+  );
   return {
     blob: response.data,
     filename: parseFilename(
       response.headers["content-disposition"],
-      `report-data_${reportId}.json`
+      `report-data_${reportId}.xlsx`
     ),
     snapshotSource: readSnapshotSource(response.headers),
   };

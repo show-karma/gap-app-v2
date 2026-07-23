@@ -60,7 +60,7 @@ describe("ExportDataMenu", () => {
     const invoicesItem = screen.getByText("Pending Invoices — 2 rows");
     expect(agingItem).toBeInTheDocument();
     expect(invoicesItem).toBeInTheDocument();
-    expect(screen.getByText("All sections (JSON)")).toBeInTheDocument();
+    expect(screen.getByText("All sections (Excel): 2 sheets")).toBeInTheDocument();
 
     // Aging section is ordered before the others.
     expect(agingItem.compareDocumentPosition(invoicesItem)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
@@ -82,7 +82,65 @@ describe("ExportDataMenu", () => {
       expect(portfolioService.exportReportSection).toHaveBeenCalledWith(
         "filecoin",
         "r-1",
-        "aging_analysis"
+        "aging_analysis",
+        false
+      )
+    );
+  });
+
+  it("downloads a workbook when the all-sections item is clicked", async () => {
+    vi.mocked(portfolioService.exportReportWorkbook).mockResolvedValue({
+      blob: new Blob(["PK"], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      }),
+      filename: "report-data.xlsx",
+      snapshotSource: "generation",
+    });
+    const user = userEvent.setup();
+    renderMenu();
+
+    await user.click(screen.getByRole("button", { name: /export data/i }));
+    await user.click(await screen.findByText("All sections (Excel): 2 sheets"));
+
+    await waitFor(() =>
+      expect(portfolioService.exportReportWorkbook).toHaveBeenCalledWith("filecoin", "r-1", false)
+    );
+  });
+
+  it("refetches the manifest with current data when refresh is toggled on", async () => {
+    const user = userEvent.setup();
+    renderMenu();
+
+    await user.click(screen.getByRole("button", { name: /export data/i }));
+    await screen.findByText("Milestone/Payment Age — 5 rows");
+    await user.click(screen.getByText("Use current data instead"));
+
+    await waitFor(() =>
+      expect(portfolioService.getReportExportManifest).toHaveBeenCalledWith("filecoin", "r-1", true)
+    );
+    expect(await screen.findByText("Using current data")).toBeInTheDocument();
+  });
+
+  it("carries the refresh choice into the section download", async () => {
+    vi.mocked(portfolioService.exportReportSection).mockResolvedValue({
+      blob: new Blob(["a,b"], { type: "text/csv" }),
+      filename: "report-data.csv",
+      snapshotSource: "live-refresh",
+    });
+    const user = userEvent.setup();
+    renderMenu();
+
+    await user.click(screen.getByRole("button", { name: /export data/i }));
+    await screen.findByText("Milestone/Payment Age — 5 rows");
+    await user.click(screen.getByText("Use current data instead"));
+    await user.click(await screen.findByText("Milestone/Payment Age — 5 rows"));
+
+    await waitFor(() =>
+      expect(portfolioService.exportReportSection).toHaveBeenCalledWith(
+        "filecoin",
+        "r-1",
+        "aging_analysis",
+        true
       )
     );
   });
@@ -98,6 +156,42 @@ describe("ExportDataMenu", () => {
     await user.click(screen.getByRole("button", { name: /export data/i }));
 
     expect(await screen.findByText(/predates data snapshots/i)).toBeInTheDocument();
+  });
+
+  it("keeps the legacy warning when refresh is enabled", async () => {
+    // A refreshed manifest reports `live-refresh` for EVERY report, so legacy
+    // status must come from the snapshot manifest, not the active one.
+    vi.mocked(portfolioService.getReportExportManifest).mockImplementation(
+      async (_slug: string, _id: string, refresh?: boolean) => ({
+        snapshotSource: refresh ? "live-refresh" : "live-recompute",
+        sections: [{ key: "aging_analysis", title: "Milestone/Payment Age", rowCount: 5 }],
+      })
+    );
+    const user = userEvent.setup();
+    renderMenu();
+
+    await user.click(screen.getByRole("button", { name: /export data/i }));
+    expect(await screen.findByText(/predates data snapshots/i)).toBeInTheDocument();
+
+    await user.click(screen.getByText("Use current data instead"));
+
+    await screen.findByText("Using current data");
+    expect(screen.getByText(/predates data snapshots/i)).toBeInTheDocument();
+  });
+
+  it("exposes the refresh toggle as a checkbox with its state", async () => {
+    const user = userEvent.setup();
+    renderMenu();
+
+    await user.click(screen.getByRole("button", { name: /export data/i }));
+    await screen.findByText("Milestone/Payment Age — 5 rows");
+
+    const toggle = screen.getByRole("menuitemcheckbox");
+    expect(toggle).toHaveAttribute("aria-checked", "false");
+
+    await user.click(toggle);
+
+    expect(await screen.findByRole("menuitemcheckbox")).toHaveAttribute("aria-checked", "true");
   });
 
   it("does not warn for a snapshot-backed report", async () => {

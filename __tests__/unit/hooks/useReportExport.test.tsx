@@ -4,8 +4,8 @@ import { createElement, type ReactNode } from "react";
 import toast from "react-hot-toast";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  useExportReportAll,
   useExportReportSection,
+  useExportReportWorkbook,
   useReportExportManifest,
 } from "@/hooks/portfolio-reports/useReportExport";
 import * as portfolioService from "@/services/portfolio-reports.service";
@@ -69,7 +69,7 @@ describe("useReportExportManifest", () => {
     });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(portfolioService.getReportExportManifest).toHaveBeenCalledWith(SLUG, REPORT_ID);
+    expect(portfolioService.getReportExportManifest).toHaveBeenCalledWith(SLUG, REPORT_ID, false);
     expect(result.current.data?.sections[0].key).toBe("aging_analysis");
   });
 });
@@ -87,7 +87,8 @@ describe("useExportReportSection", () => {
     expect(portfolioService.exportReportSection).toHaveBeenCalledWith(
       SLUG,
       REPORT_ID,
-      "aging_analysis"
+      "aging_analysis",
+      false
     );
     expect(window.URL.createObjectURL).toHaveBeenCalledTimes(1);
     expect(clickSpy).toHaveBeenCalledTimes(1);
@@ -127,19 +128,37 @@ describe("useExportReportSection", () => {
   });
 });
 
-describe("useExportReportAll", () => {
-  it("downloads the all-sections JSON", async () => {
-    vi.mocked(portfolioService.exportReportAll).mockResolvedValue(
-      makeDownload({ filename: "report-data_r-1.json" })
+describe("useExportReportWorkbook", () => {
+  it("downloads the all-sections workbook", async () => {
+    vi.mocked(portfolioService.exportReportWorkbook).mockResolvedValue(
+      makeDownload({ filename: "report-data_r-1.xlsx" })
     );
 
-    const { result } = renderHook(() => useExportReportAll(SLUG, REPORT_ID), {
+    const { result } = renderHook(() => useExportReportWorkbook(SLUG, REPORT_ID), {
       wrapper: createWrapper(),
     });
     result.current.mutate();
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(portfolioService.exportReportAll).toHaveBeenCalledWith(SLUG, REPORT_ID);
+    expect(portfolioService.exportReportWorkbook).toHaveBeenCalledWith(SLUG, REPORT_ID, false);
     expect(clickSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it("passes the refresh choice through to the service", async () => {
+    vi.mocked(portfolioService.exportReportWorkbook).mockResolvedValue(
+      makeDownload({ filename: "report-data_r-1.xlsx", snapshotSource: "live-refresh" })
+    );
+
+    const { result } = renderHook(() => useExportReportWorkbook(SLUG, REPORT_ID, true), {
+      wrapper: createWrapper(),
+    });
+    result.current.mutate();
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(portfolioService.exportReportWorkbook).toHaveBeenCalledWith(SLUG, REPORT_ID, true);
+    expect(toast.success).toHaveBeenCalledWith(
+      expect.stringContaining("newer than the published report"),
+      expect.objectContaining({ icon: "ℹ️" })
+    );
   });
 });
