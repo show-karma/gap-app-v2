@@ -185,6 +185,11 @@ export const PAGES = {
     PUBLIC_SCORECARD: (slug: string) => `/s/${slug}`,
     OG_IMAGE: (slug: string) => `/api/scanner/og/${slug}`,
   },
+  BLOG: `/blog`,
+  BLOG_POST: (slug: string) => `/blog/${slug}`,
+  BLOG_PREVIEW_EXIT: `/api/blog/preview/exit`,
+  // Embedded Sanity Studio (noindex) — see app/admin/studio/[[...tool]]/.
+  ADMIN_STUDIO: `/admin/studio`,
 };
 
 /**
