@@ -51,6 +51,11 @@ import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 import { DetailsSection } from "./DetailsSection";
 import { MilestonesSection } from "./MilestonesSection";
+import type {
+  InitialPaymentMilestone,
+  OnRequestDeleteDisbursement,
+  OnRequestRecordPayment,
+} from "./paymentRequestTypes";
 
 // ─── Props ──────────────────────────────────────────────────────────────────
 
@@ -141,12 +146,8 @@ export function ProjectDetailsSidebar({
   const [confirmingUnsign, setConfirmingUnsign] = useState(false);
 
   const [recordPaymentOpen, setRecordPaymentOpen] = useState(false);
-  const [initialPaymentMilestone, setInitialPaymentMilestone] = useState<{
-    milestoneUID: string | null;
-    milestoneLabel: string;
-    status: "awaiting_signatures" | "disbursed";
-    amount: string | null;
-  } | null>(null);
+  const [initialPaymentMilestone, setInitialPaymentMilestone] =
+    useState<InitialPaymentMilestone | null>(null);
   const configRef = useRef<PayoutConfigurationContentRef>(null);
   const [configIsDirty, setConfigIsDirty] = useState(false);
   const [configIsSaving, setConfigIsSaving] = useState(false);
@@ -516,36 +517,27 @@ export function ProjectDetailsSidebar({
     pendingActionRef.current = null;
   }, []);
 
-  const handleRequestRecordPayment = useCallback(
-    (
-      milestoneUID: string | null,
-      milestoneLabel: string,
-      targetStatus: "awaiting_signatures" | "disbursed"
-    ) => {
+  const handleRequestRecordPayment = useCallback<OnRequestRecordPayment>(
+    (milestoneUID, milestoneLabel, targetStatus) => {
       const invoice = milestoneUID
         ? milestoneInvoices.find((inv) => inv.milestoneUID === milestoneUID)
-        : undefined;
-      const amount =
-        invoice?.allocatedAmount ??
-        (milestoneUID ? allocationByUID.get(milestoneUID) : undefined) ??
-        null;
+        : milestoneInvoices.find((inv) => inv.milestoneLabel === milestoneLabel);
+      const allocated = milestoneUID ? allocationByUID.get(milestoneUID) : undefined;
+      const amount = invoice?.allocatedAmount ?? allocated ?? null;
       setInitialPaymentMilestone({ milestoneUID, milestoneLabel, status: targetStatus, amount });
       guardAction(() => setRecordPaymentOpen(true));
     },
     [guardAction, milestoneInvoices, allocationByUID]
   );
 
-  const handleRequestDeleteDisbursement = useCallback(
-    (milestoneUID: string | null) => {
+  const handleRequestDeleteDisbursement = useCallback<OnRequestDeleteDisbursement>(
+    (milestoneUID) => {
       if (!grant) return;
       if (!milestoneUID) {
         toast.error("Cannot delete: milestone UID not found");
         return;
       }
-      deleteDisbursementMutation.mutate({
-        grantUID: grant.grantUid,
-        milestoneUID,
-      });
+      deleteDisbursementMutation.mutate({ grantUID: grant.grantUid, milestoneUID });
     },
     [grant, deleteDisbursementMutation]
   );

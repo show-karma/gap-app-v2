@@ -23,6 +23,7 @@ import {
 import { useUpdateMilestonePaymentStatus } from "@/src/features/payout-disbursement/hooks/use-payout-disbursement";
 import type { MilestonePaymentStatus } from "@/src/features/payout-disbursement/types/payout-disbursement";
 import { cn } from "@/utilities/tailwind";
+import type { OnRequestDeleteDisbursement, OnRequestRecordPayment } from "./paymentRequestTypes";
 
 const STATUS_OPTIONS: {
   value: MilestonePaymentStatus;
@@ -63,12 +64,8 @@ interface PaymentStatusDropdownProps {
   grantUID: string;
   communityUID: string;
   paymentStatusDate?: string | null;
-  onRequestRecordPayment?: (
-    milestoneUID: string | null,
-    milestoneLabel: string,
-    targetStatus: "awaiting_signatures" | "disbursed"
-  ) => void;
-  onRequestDeleteDisbursement?: (milestoneUID: string | null) => void;
+  onRequestRecordPayment?: OnRequestRecordPayment;
+  onRequestDeleteDisbursement?: OnRequestDeleteDisbursement;
 }
 
 export const PaymentStatusDropdown = memo(function PaymentStatusDropdown({
