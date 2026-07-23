@@ -44,7 +44,7 @@ vi.mock("@/utilities/chosenCommunities", () => ({
   chosenCommunities: () => [],
 }));
 
-import { middleware } from "@/middleware";
+import { proxy } from "@/proxy";
 
 const INDEXER_BASE = "https://indexer.test";
 
@@ -86,7 +86,7 @@ afterEach(() => {
 
 describe("middleware indexability", () => {
   it("308s an apex non-project request to www once, preserving path and query, without fetching", async () => {
-    const response = await middleware(createRequest("karmahq.xyz", "/about", "utm_source=x"));
+    const response = await proxy(createRequest("karmahq.xyz", "/about", "utm_source=x"));
 
     expect(response?.status).toBe(308);
     expect(response?.headers.get("location")).toBe("https://www.karmahq.xyz/about?utm_source=x");
@@ -94,7 +94,7 @@ describe("middleware indexability", () => {
   });
 
   it("308s a gap.karmahq.xyz non-project request to www, preserving the path", async () => {
-    const response = await middleware(createRequest("gap.karmahq.xyz", "/funding-map"));
+    const response = await proxy(createRequest("gap.karmahq.xyz", "/funding-map"));
 
     expect(response?.status).toBe(308);
     expect(response?.headers.get("location")).toBe("https://www.karmahq.xyz/funding-map");
@@ -102,7 +102,7 @@ describe("middleware indexability", () => {
   });
 
   it("treats a fully-qualified apex host with a trailing DNS dot (karmahq.xyz.) as an alias", async () => {
-    const response = await middleware(createRequest("karmahq.xyz.", "/about", "utm_source=x"));
+    const response = await proxy(createRequest("karmahq.xyz.", "/about", "utm_source=x"));
 
     expect(response?.status).toBe(308);
     expect(response?.headers.get("location")).toBe("https://www.karmahq.xyz/about?utm_source=x");
@@ -110,7 +110,7 @@ describe("middleware indexability", () => {
   });
 
   it("treats a trailing-dot gap host (gap.karmahq.xyz.) as an alias", async () => {
-    const response = await middleware(createRequest("gap.karmahq.xyz.", "/funding-map"));
+    const response = await proxy(createRequest("gap.karmahq.xyz.", "/funding-map"));
 
     expect(response?.status).toBe(308);
     expect(response?.headers.get("location")).toBe("https://www.karmahq.xyz/funding-map");
@@ -122,7 +122,7 @@ describe("middleware indexability", () => {
       decisionResponse({ outcome: "canonical-indexable", url: "/project/paraswap" })
     );
 
-    const response = await middleware(createRequest("www.karmahq.xyz", "/project/paraswap"));
+    const response = await proxy(createRequest("www.karmahq.xyz", "/project/paraswap"));
 
     expect(response?.status).toBe(200);
     expect(response?.headers.get("X-Robots-Tag")).toBeNull();
@@ -144,7 +144,7 @@ describe("middleware indexability", () => {
       decisionResponse({ outcome: "noindex-follow", url: "/project/paraswap/team" })
     );
 
-    const response = await middleware(createRequest("www.karmahq.xyz", "/project/paraswap/team"));
+    const response = await proxy(createRequest("www.karmahq.xyz", "/project/paraswap/team"));
 
     expect(response?.status).toBe(200);
     expect(response?.headers.get("X-Robots-Tag")).toBe("noindex, follow");
@@ -155,7 +155,7 @@ describe("middleware indexability", () => {
       decisionResponse({ outcome: "canonical-indexable", url: "/project/paraswap" })
     );
 
-    const response = await middleware(
+    const response = await proxy(
       createRequest("www.karmahq.xyz", "/project/paraswap", "programId=531")
     );
 
@@ -167,7 +167,7 @@ describe("middleware indexability", () => {
       decisionResponse({ outcome: "canonical-indexable", url: "/project/paraswap" })
     );
 
-    const response = await middleware(
+    const response = await proxy(
       createRequest("www.karmahq.xyz", "/project/paraswap", "utm_source=x")
     );
 
@@ -179,7 +179,7 @@ describe("middleware indexability", () => {
     async (status) => {
       fetchMock.mockResolvedValue(new Response("gone", { status }));
 
-      const response = await middleware(createRequest("www.karmahq.xyz", "/project/paraswap"));
+      const response = await proxy(createRequest("www.karmahq.xyz", "/project/paraswap"));
 
       expect(response?.status).toBe(status);
       expect(response?.headers.get("X-Robots-Tag")).toBe("noindex, follow");
@@ -195,7 +195,7 @@ describe("middleware indexability", () => {
       // a duplicate host).
       fetchMock.mockResolvedValue(new Response("gone", { status }));
 
-      const response = await middleware(createRequest("karmahq.xyz", "/project/paraswap"));
+      const response = await proxy(createRequest("karmahq.xyz", "/project/paraswap"));
 
       expect(response?.status).toBe(308);
       expect(response?.headers.get("location")).toBe("https://www.karmahq.xyz/project/paraswap");
@@ -205,7 +205,7 @@ describe("middleware indexability", () => {
   it("308s a gap-alias gone route to www, preserving the path and query", async () => {
     fetchMock.mockResolvedValue(new Response("gone", { status: 410 }));
 
-    const response = await middleware(
+    const response = await proxy(
       createRequest("gap.karmahq.xyz", "/project/paraswap/team", "utm_source=x")
     );
 
@@ -224,7 +224,7 @@ describe("middleware indexability", () => {
       })
     );
 
-    const response = await middleware(
+    const response = await proxy(
       createRequest("www.karmahq.xyz", "/project/old-paraswap", "utm_source=x")
     );
 
@@ -243,9 +243,7 @@ describe("middleware indexability", () => {
       })
     );
 
-    const response = await middleware(
-      createRequest("karmahq.xyz", "/project/old-paraswap/roadmap")
-    );
+    const response = await proxy(createRequest("karmahq.xyz", "/project/old-paraswap/roadmap"));
 
     expect(response?.status).toBe(308);
     expect(response?.headers.get("location")).toBe("https://www.karmahq.xyz/project/paraswap");
@@ -260,9 +258,7 @@ describe("middleware indexability", () => {
       })
     );
 
-    const response = await middleware(
-      createRequest("gap.karmahq.xyz", "/project/old-paraswap/grants")
-    );
+    const response = await proxy(createRequest("gap.karmahq.xyz", "/project/old-paraswap/grants"));
 
     expect(response?.status).toBe(308);
     expect(response?.headers.get("location")).toBe(
@@ -278,7 +274,7 @@ describe("middleware indexability", () => {
       })
     );
 
-    const response = await middleware(
+    const response = await proxy(
       createRequest("www.karmahq.xyz", "/project/paraswap/funding/create-grant")
     );
 
@@ -297,7 +293,7 @@ describe("middleware indexability", () => {
       })
     );
 
-    const response = await middleware(createRequest("www.karmahq.xyz", "/project/paraswap/about"));
+    const response = await proxy(createRequest("www.karmahq.xyz", "/project/paraswap/about"));
 
     expect(response?.status).toBe(200);
     expect(response?.headers.get("X-Robots-Tag")).toBeNull();
@@ -308,7 +304,7 @@ describe("middleware indexability", () => {
       decisionResponse({ outcome: "canonical-indexable", url: "/project/grants" })
     );
 
-    const response = await middleware(createRequest("www.karmahq.xyz", "/project/grants"));
+    const response = await proxy(createRequest("www.karmahq.xyz", "/project/grants"));
 
     expect(response?.status).toBe(200);
     expect(response?.headers.get("location")).toBeNull();
@@ -323,14 +319,14 @@ describe("middleware indexability", () => {
   it("fails closed with a noindex header when the indexer returns 5xx", async () => {
     fetchMock.mockResolvedValue(new Response("boom", { status: 500 }));
 
-    const response = await middleware(createRequest("www.karmahq.xyz", "/project/paraswap/team"));
+    const response = await proxy(createRequest("www.karmahq.xyz", "/project/paraswap/team"));
 
     expect(response?.status).toBe(200);
     expect(response?.headers.get("X-Robots-Tag")).toBe("noindex, follow");
   });
 
   it("marks the canonical /projects listing noindex, follow for a stateful query without fetching", async () => {
-    const response = await middleware(createRequest("www.karmahq.xyz", "/projects", "page=2"));
+    const response = await proxy(createRequest("www.karmahq.xyz", "/projects", "page=2"));
 
     expect(response?.status).toBe(200);
     expect(response?.headers.get("X-Robots-Tag")).toBe("noindex, follow");
@@ -338,9 +334,7 @@ describe("middleware indexability", () => {
   });
 
   it("keeps the canonical /projects listing indexable for a tracking-only query without fetching", async () => {
-    const response = await middleware(
-      createRequest("www.karmahq.xyz", "/projects", "utm_source=x")
-    );
+    const response = await proxy(createRequest("www.karmahq.xyz", "/projects", "utm_source=x"));
 
     expect(response?.status).toBe(200);
     expect(response?.headers.get("X-Robots-Tag")).toBeNull();
@@ -348,7 +342,7 @@ describe("middleware indexability", () => {
   });
 
   it("leaves the clean canonical /projects listing indexable without fetching", async () => {
-    const response = await middleware(createRequest("www.karmahq.xyz", "/projects"));
+    const response = await proxy(createRequest("www.karmahq.xyz", "/projects"));
 
     expect(response?.status).toBe(200);
     expect(response?.headers.get("X-Robots-Tag")).toBeNull();
@@ -356,9 +350,7 @@ describe("middleware indexability", () => {
   });
 
   it("fails closed without fetching for an unknown project route", async () => {
-    const response = await middleware(
-      createRequest("www.karmahq.xyz", "/project/paraswap/unknown-tab")
-    );
+    const response = await proxy(createRequest("www.karmahq.xyz", "/project/paraswap/unknown-tab"));
 
     expect(response?.status).toBe(200);
     expect(response?.headers.get("X-Robots-Tag")).toBe("noindex, follow");
@@ -366,7 +358,7 @@ describe("middleware indexability", () => {
   });
 
   it("collapses an unknown project route on an alias host into one 308 to www without fetching", async () => {
-    const response = await middleware(
+    const response = await proxy(
       createRequest("gap.karmahq.xyz", "/project/paraswap/unknown-tab", "utm_source=x")
     );
 
@@ -397,7 +389,7 @@ describe("middleware canonical-host origin policy", () => {
   it("redirects a Vercel-preview roadmap collapse on the request's own origin, not production www", async () => {
     fetchMock.mockResolvedValue(decisionResponse(roadmapCollapse));
 
-    const response = await middleware(
+    const response = await proxy(
       createRequest("gap-app-v2-git-preview.vercel.app", "/project/abc123-1/roadmap")
     );
 
@@ -410,7 +402,7 @@ describe("middleware canonical-host origin policy", () => {
   it("redirects a staging roadmap collapse on the staging origin, preserving the query", async () => {
     fetchMock.mockResolvedValue(decisionResponse(roadmapCollapse));
 
-    const response = await middleware(
+    const response = await proxy(
       createRequest("staging.karmahq.xyz", "/project/abc123-1/roadmap", "utm_source=x")
     );
 
@@ -423,7 +415,7 @@ describe("middleware canonical-host origin policy", () => {
   it("collapses an alias-host roadmap normalization into one hop to production www", async () => {
     fetchMock.mockResolvedValue(decisionResponse(roadmapCollapse));
 
-    const response = await middleware(createRequest("karmahq.xyz", "/project/abc123-1/roadmap"));
+    const response = await proxy(createRequest("karmahq.xyz", "/project/abc123-1/roadmap"));
 
     expect(response?.status).toBe(308);
     expect(response?.headers.get("location")).toBe("https://www.karmahq.xyz/project/abc123-1");
@@ -432,9 +424,7 @@ describe("middleware canonical-host origin policy", () => {
   it("keeps a canonical-www roadmap normalization on www", async () => {
     fetchMock.mockResolvedValue(decisionResponse(roadmapCollapse));
 
-    const response = await middleware(
-      createRequest("www.karmahq.xyz", "/project/abc123-1/roadmap")
-    );
+    const response = await proxy(createRequest("www.karmahq.xyz", "/project/abc123-1/roadmap"));
 
     expect(response?.status).toBe(308);
     expect(response?.headers.get("location")).toBe("https://www.karmahq.xyz/project/abc123-1");
@@ -443,7 +433,7 @@ describe("middleware canonical-host origin policy", () => {
   it("normalizes a localhost:port roadmap collapse on its own origin, preserving scheme, host, and port", async () => {
     fetchMock.mockResolvedValue(decisionResponse(roadmapCollapse));
 
-    const response = await middleware(
+    const response = await proxy(
       createRequest("localhost:3000", "/project/abc123-1/roadmap", "utm_source=x", "http")
     );
 
