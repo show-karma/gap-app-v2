@@ -27,11 +27,18 @@ interface ReportBriefViewProps {
 export function ReportBriefView({ reportId }: ReportBriefViewProps) {
   const reportQuery = useDonorReport(reportId);
   const advisorQuery = useDonorAdvisor();
-  const { isStaff } = useStaff();
+  const { isStaff, isLoading: isStaffLoading } = useStaff();
   const reportStatus = reportQuery.data?.status;
   const isTerminal =
     reportStatus === "complete" || reportStatus === "fast_complete" || reportStatus === "failed";
   const stream = useDonorReportStream(isTerminal ? null : reportId);
+
+  // Management authorization (owner OR staff) must fully resolve before we pick
+  // a variant or expose write controls. While RBAC or the advisor row is still
+  // pending both `isStaff` and `isOwner` read `false`, so rendering here would
+  // flash the read-only staff variant and then pop the controls in once it
+  // settles — hold the skeleton until authorization is decided instead.
+  const isManageAuthPending = isStaffLoading || advisorQuery.isPending;
 
   if (reportQuery.isLoading) {
     return <DonorResearchLoading label="Loading report…" variant="report" />;
@@ -39,6 +46,10 @@ export function ReportBriefView({ reportId }: ReportBriefViewProps) {
 
   if (reportQuery.isError) {
     throw reportQuery.error;
+  }
+
+  if (isManageAuthPending) {
+    return <DonorResearchLoading label="Loading report…" variant="report" />;
   }
 
   const isOwner = !!advisorQuery.data && advisorQuery.data.id === reportQuery.data!.advisorId;
