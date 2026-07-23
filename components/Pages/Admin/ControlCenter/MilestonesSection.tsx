@@ -39,6 +39,7 @@ import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 import { PaymentStatusDropdown } from "./PaymentStatusDropdown";
 import type { ProjectDetailsSidebarGrant } from "./ProjectDetailsSidebar";
+import type { OnRequestDeleteDisbursement, OnRequestRecordPayment } from "./paymentRequestTypes";
 
 const MilestoneAIEvaluationBadge = dynamic(
   () =>
@@ -124,12 +125,8 @@ export interface MilestonesSectionProps {
   ) => void;
   removedFiles: Set<string>;
   onFileRemoved: (mKey: string) => void;
-  onRequestRecordPayment?: (
-    milestoneUID: string | null,
-    milestoneLabel: string,
-    targetStatus: "awaiting_signatures" | "disbursed"
-  ) => void;
-  onRequestDeleteDisbursement?: (milestoneUID: string | null) => void;
+  onRequestRecordPayment?: OnRequestRecordPayment;
+  onRequestDeleteDisbursement?: OnRequestDeleteDisbursement;
 }
 
 export const MilestonesSection = memo(function MilestonesSection({
