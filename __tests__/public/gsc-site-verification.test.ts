@@ -42,7 +42,7 @@ vi.mock("@/utilities/chosenCommunities", () => ({
   chosenCommunities: () => [],
 }));
 
-import { config } from "@/middleware";
+import { config } from "@/proxy";
 
 const VERIFICATION_FILENAME = "googleb231020e03517669.html";
 const VERIFICATION_PATH = path.resolve(__dirname, "../../public", VERIFICATION_FILENAME);

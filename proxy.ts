@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { getDomainInfo } from "./src/infrastructure/config/domain-constants";
 import { isKnownTenant } from "./src/infrastructure/types/tenant";
 import { chosenCommunities } from "./utilities/chosenCommunities";
-import { COMMUNITY_SUB_ROUTE_SEGMENTS } from "./utilities/pages";
+import { COMMUNITY_SUB_ROUTE_SEGMENTS, PAGES } from "./utilities/pages";
 import {
   classifyProjectQuery,
   parseProjectIndexabilityRequest,
@@ -34,7 +34,7 @@ function withRobots(response: Response, value: string): Response {
   return response;
 }
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const path = request.nextUrl.pathname;
 
   // --- Whitelabel domain handling (must run before all other logic) ---
@@ -49,7 +49,33 @@ export async function middleware(request: NextRequest) {
       return NextResponse.next();
     }
 
+    // The embedded Sanity Studio must stay at the top-level /admin/studio
+    // path on every domain. "admin" is a COMMUNITY_SUB_ROUTE_SEGMENTS entry
+    // (for /community/<slug>/admin/*), so without this guard the rewrite
+    // below would send it to /community/<slug>/admin/studio instead.
+    if (path === PAGES.ADMIN_STUDIO || path.startsWith(`${PAGES.ADMIN_STUDIO}/`)) {
+      return NextResponse.next();
+    }
+
     const { communitySlug, tenantId } = whitelabel;
+
+    // The blog is a shared Karma content surface, not tenant content — send
+    // whitelabel readers to the main site so `/blog` and `/blog/<slug>`
+    // always resolve to the canonical post instead of a 404 under the
+    // tenant's community rewrite.
+    if (path === PAGES.BLOG || path.startsWith(`${PAGES.BLOG}/`)) {
+      // Built-in whitelabel domains carry an explicit isProduction flag in
+      // DOMAIN_CONFIGS. Whitelabel domains injected via WHITELABEL_EXTRA_DOMAINS_JSON
+      // are absent from DOMAIN_CONFIGS, so getDomainInfo() returns undefined for
+      // them — falling back to the deployment environment keeps their /blog
+      // redirect on the right tier instead of always dropping to staging.
+      const isProductionHost =
+        getDomainInfo(hostname)?.isProduction ?? process.env.NEXT_PUBLIC_ENV === "production";
+      const mainDomain = isProductionHost ? "karmahq.xyz" : "staging.karmahq.xyz";
+      const protocol = request.nextUrl.protocol;
+      const search = request.nextUrl.search;
+      return NextResponse.redirect(new URL(`${protocol}//${mainDomain}${path}${search}`), 301);
+    }
 
     // In whitelabel mode, URLs should never show /community/<slug> in the browser.
     // If a component generates an href like `/community/optimism/programs/123`,
