@@ -13,6 +13,7 @@ import { useProgressModalStore } from "@/store/modals/progress";
 import type { Project as ProjectResponse } from "@/types/v2/project";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
 import { MESSAGES } from "@/utilities/messages";
+import { isCancelledMilestoneStatus } from "@/utilities/milestones/getEffectiveMilestoneStatus";
 import { RoadmapListLoading } from "../Loading/Roadmap";
 
 interface ProjectRoadmapProps {
@@ -24,6 +25,21 @@ interface ProjectRoadmapProps {
 const isItemCompleted = (item: UnifiedMilestone): boolean =>
   item.completed === true ||
   (typeof item.completed === "object" && item.completed !== null && "createdAt" in item.completed);
+
+const isMilestoneTypeItem = (item: UnifiedMilestone): boolean =>
+  item.type === "milestone" || item.type === "grant" || item.type === "project";
+
+// A milestone counts as pending only when it is not delivered AND not cancelled
+// (cancelled is terminal, not pending — DEV-523).
+const isPendingMilestoneItem = (item: UnifiedMilestone): boolean =>
+  item.completed === false &&
+  !isCancelledMilestoneStatus(item.currentStatus) &&
+  isMilestoneTypeItem(item);
+
+// Both boolean `true` and a completion object count as completed.
+const isCompletedMilestoneItem = (item: UnifiedMilestone): boolean =>
+  (item.completed === true || (typeof item.completed === "object" && item.completed !== null)) &&
+  isMilestoneTypeItem(item);
 
 const getSortTimestamp = (item: UnifiedMilestone): number => {
   if (item.completed && typeof item.completed === "object" && "createdAt" in item.completed) {
@@ -80,61 +96,23 @@ export const ProjectRoadmap = ({ project: propProject }: ProjectRoadmapProps) =>
       return combinedUpdatesAndMilestones;
     }
 
-    // Core filtering function
+    // Core filtering function — each selected filter matches the item against
+    // its own predicate; the item is kept if any active filter matches.
     return combinedUpdatesAndMilestones.filter((item) => {
-      // We'll thoroughly examine each item and check against all selected filters
-
-      // ===== PENDING MILESTONES =====
-      if (activeFilters.includes("pending")) {
-        // Using a direct approach - looking at the 'completed' flag directly
-        if (item.completed === false) {
-          // For pending, check the underlying schema matches a milestone type
-          const isMilestoneType =
-            item.type === "milestone" || item.type === "grant" || item.type === "project";
-
-          if (isMilestoneType) {
-            return true;
-          }
-        }
+      if (activeFilters.includes("pending") && isPendingMilestoneItem(item)) {
+        return true;
       }
-
-      // ===== COMPLETED MILESTONES =====
-      if (activeFilters.includes("completed")) {
-        // Both boolean true and object {"createdAt": ...} should be treated as completed
-        const isItemCompleted =
-          item.completed === true || (item.completed && typeof item.completed === "object");
-
-        // Check if it's a milestone or grant type
-        const isMilestoneType =
-          item.type === "milestone" || item.type === "grant" || item.type === "project";
-
-        if (isItemCompleted && isMilestoneType) {
-          return true;
-        }
+      if (activeFilters.includes("completed") && isCompletedMilestoneItem(item)) {
+        return true;
       }
-
-      // ===== IMPACT FILTER =====
-      if (activeFilters.includes("impacts")) {
-        // Simply check the type - we've improved the type detection
-        if (item.type === "impact") {
-          return true;
-        }
+      if (activeFilters.includes("impacts") && item.type === "impact") {
+        return true;
       }
-
-      // ===== ACTIVITIES FILTER =====
-      if (activeFilters.includes("activities")) {
-        // Activities should only be items explicitly marked as activities
-        if (item.type === "activity") {
-          return true;
-        }
+      if (activeFilters.includes("activities") && item.type === "activity") {
+        return true;
       }
-
-      // ===== GRANT UPDATES FILTER =====
-      if (activeFilters.includes("updates")) {
-        // Simply check the type - we've improved the type detection
-        if (item.type === "grant_update") {
-          return true;
-        }
+      if (activeFilters.includes("updates") && item.type === "grant_update") {
+        return true;
       }
 
       // If none of the filters matched, don't include this item

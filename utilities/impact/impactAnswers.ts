@@ -1,5 +1,5 @@
 import toast from "react-hot-toast";
-import fetchData from "../fetchData";
+import { api } from "../api/client";
 import { INDEXER } from "../indexer";
 import { MESSAGES } from "../messages";
 
@@ -26,35 +26,22 @@ export const sendImpactAnswers = async (
   onError?: (error: string) => void
 ): Promise<boolean> => {
   try {
-    const [, error] = await fetchData(
-      INDEXER.PROJECT.IMPACT_INDICATORS.SEND(projectIdentifier),
-      "POST",
-      {
-        indicatorId,
-        data: datapoints.map((item) => ({
-          value: String(item.value),
-          proof: item.proof,
-          startDate: item.startDate,
-          endDate: item.endDate,
-        })),
-      }
-    );
+    await api.post(INDEXER.PROJECT.IMPACT_INDICATORS.SEND(projectIdentifier), {
+      indicatorId,
+      data: datapoints.map((item) => ({
+        value: String(item.value),
+        proof: item.proof,
+        startDate: item.startDate,
+        endDate: item.endDate,
+      })),
+    });
 
-    if (error) {
-      if (onError) {
-        onError(error);
-      } else {
-        toast.error(MESSAGES.GRANT.OUTPUTS.ERROR);
-      }
-      return false;
+    if (onSuccess) {
+      onSuccess();
     } else {
-      if (onSuccess) {
-        onSuccess();
-      } else {
-        toast.success(MESSAGES.GRANT.OUTPUTS.SUCCESS);
-      }
-      return true;
+      toast.success(MESSAGES.GRANT.OUTPUTS.SUCCESS);
     }
+    return true;
   } catch (error) {
     if (onError) {
       onError(error instanceof Error ? error.message : String(error));

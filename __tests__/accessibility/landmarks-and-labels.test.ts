@@ -34,7 +34,9 @@ function countMainLandmarks(source: string): number {
 describe("landmark regions (#1309)", () => {
   const routesWithOwnMain = [
     "app/projects/page.tsx",
-    "app/dashboard/page.tsx",
+    // The dashboard's <main> lives in the layout so it wraps both the overview
+    // (/dashboard) and each drill-in segment (/dashboard/[module]).
+    "app/dashboard/layout.tsx",
     "app/donations/layout.tsx",
     "app/community/[communityId]/(with-header)/layout.tsx",
     "app/community/[communityId]/donate/page.tsx",

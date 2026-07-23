@@ -258,6 +258,12 @@ export type UnifiedMilestone = {
   source: UnifiedMilestoneSource;
   chainID: number;
   refUID: string;
+  /**
+   * Raw on-chain milestone status (e.g. "cancelled") when known (DEV-523).
+   * `completed` is a delivered-only boolean and cannot represent cancellation,
+   * so consumers must check this to detect a terminal cancelled milestone.
+   */
+  currentStatus?: string;
   projectUpdate?: ProjectUpdate;
   /** Grant update for display - uses conversion type for flexibility, or SDK type */
   grantUpdate?: ConversionGrantUpdate | IGrantUpdate;

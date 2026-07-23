@@ -10,6 +10,12 @@ import type { DonorPersona, PersonaProvenance, PersonaStructured } from "@/types
 
 export const donorPersonaQueryKey = (handleId: string) => ["donor-persona", handleId] as const;
 
+// Bounds re-fetch cadence for read-only consumers (e.g. the clients list's
+// per-row "Persona ready" chip) that mount/unmount this query on every page
+// visit. Mutations (`useUpdateDonorPersona`) explicitly invalidate this key
+// on settle, so an edit is never masked by this window.
+const PERSONA_STALE_TIME_MS = 60 * 1000;
+
 /**
  * Fetches the persona for a donor handle. A handle with no persona yet
  * resolves to `null` (the service maps the 404 → `null`), which the editor
@@ -20,6 +26,7 @@ export function useDonorPersona(handleId: string | null | undefined) {
     queryKey: donorPersonaQueryKey(handleId ?? ""),
     queryFn: () => getDonorPersona(handleId as string),
     enabled: !!handleId,
+    staleTime: PERSONA_STALE_TIME_MS,
   });
 }
 

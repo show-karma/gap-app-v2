@@ -1,10 +1,19 @@
 import { headers } from "next/headers";
 import React from "react";
-import fetchData from "@/utilities/fetchData";
+import { errorManager } from "@/components/Utilities/errorManager";
+import { api } from "@/utilities/api/client";
+import { HttpError } from "@/utilities/api/errors";
 import { getWhitelabelByDomain } from "@/utilities/whitelabel-config";
 import { getTenantConfig } from "../config/tenant-config";
 import type { TenantConfig } from "../types/tenant";
 import { isKnownTenant } from "../types/tenant";
+
+// TODO(#1775): add zod schema
+interface CommunityApiResponse {
+  name?: string;
+  uid?: string;
+  imageURL?: string;
+}
 
 export interface TenantServerResult {
   tenant: TenantConfig;
@@ -40,15 +49,20 @@ export const getTenantServer = serverCache(async (): Promise<GetTenantServerResu
   const effectiveSlug = communitySlug || tenantIdHeader;
   const config = getTenantConfig("karma", effectiveSlug);
 
-  // Fetch community data from API
-  const [communityData] = await fetchData(
-    `/v2/communities/${effectiveSlug}`,
-    "GET",
-    undefined,
-    undefined,
-    undefined,
-    true
-  );
+  // Fetch community data from API. Any failure (including 404) degrades to
+  // communityNotFound, matching the previous fetchData behavior which never
+  // threw and only checked for a falsy payload.
+  let communityData: CommunityApiResponse | undefined;
+  try {
+    communityData = await api.get<CommunityApiResponse>(`/v2/communities/${effectiveSlug}`);
+  } catch (error) {
+    // A 404 here just means the slug doesn't match a known community —
+    // the expected `communityNotFound` outcome, not a failure to report.
+    if (!(error instanceof HttpError && error.status === 404)) {
+      errorManager(`Error fetching community data for tenant slug: ${effectiveSlug}`, error);
+    }
+    communityData = undefined;
+  }
 
   if (!communityData) {
     return { tenant: null, communityNotFound: true, communitySlug: effectiveSlug };

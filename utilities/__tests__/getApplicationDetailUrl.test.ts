@@ -32,4 +32,26 @@ describe("getApplicationDetailUrl", () => {
       "/applications/ABC-123"
     );
   });
+
+  // DEV-496: the reference number alone is canonical (globally unique); only a
+  // view `tab` may ride along — never a programId.
+  it("appends a tab when provided (same-origin)", () => {
+    expect(getApplicationDetailUrl("optimism", "REF-1", undefined, { tab: "milestones" })).toBe(
+      "/community/optimism/applications/REF-1?tab=milestones"
+    );
+  });
+
+  it("appends the tab on the tenant domain", () => {
+    expect(
+      getApplicationDetailUrl("filecoin", "ABC-123", "https://app.filpgf.io", {
+        tab: "milestones",
+      })
+    ).toBe("https://app.filpgf.io/applications/ABC-123?tab=milestones");
+  });
+
+  it("omits the query when context is empty", () => {
+    expect(getApplicationDetailUrl("optimism", "REF-1", undefined, {})).toBe(
+      "/community/optimism/applications/REF-1"
+    );
+  });
 });

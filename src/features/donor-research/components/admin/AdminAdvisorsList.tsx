@@ -4,7 +4,9 @@ import { ChevronDown, Eye, Mail, RefreshCw, Search, Share2 } from "lucide-react"
 import { useQueryState } from "nuqs";
 import pluralize from "pluralize";
 import { memo, useMemo, useState } from "react";
+import { StatTiles } from "@/components/Pages/Dashboard/v3/primitives";
 import TablePagination from "@/components/Utilities/TablePagination";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useAdminAdvisors } from "@/hooks/useAdminDonorResearch";
@@ -186,34 +188,30 @@ export function AdminAdvisorsList() {
       {isLoading ? <AdvisorsSkeleton /> : null}
 
       {isError ? (
-        <div className="flex flex-col items-center gap-4 rounded-2xl border border-border p-10 text-center">
-          <p className="text-sm text-muted-foreground">
+        <div className="flex flex-col items-center gap-4 rounded-sf-card border border-sf-line p-10 text-center">
+          <p className="text-sm text-sf-muted">
             We couldn&apos;t load the advisors. Please try again.
           </p>
-          <button
-            type="button"
-            onClick={() => refetch()}
-            className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-          >
+          <Button type="button" onClick={() => refetch()}>
             <RefreshCw className="h-4 w-4" />
             Try again
-          </button>
+          </Button>
         </div>
       ) : null}
 
       {!isLoading && !isError && data ? (
         visible.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-border p-16 text-center">
-            <p className="text-sm font-semibold text-foreground">No advisors match your search</p>
-            <p className="mt-1.5 text-sm text-muted-foreground">
+          <div className="rounded-sf-card border border-dashed border-sf-line-strong p-16 text-center">
+            <p className="text-sm font-semibold text-sf-heading">No advisors match your search</p>
+            <p className="mt-1.5 text-sm text-sf-muted">
               Try a different wallet, email, name, or donor.
             </p>
           </div>
         ) : (
           <>
             <div className="mb-3.5 flex items-center justify-between">
-              <p className="text-sm text-muted-foreground" aria-live="polite">
-                <span className="font-semibold text-foreground">{visible.length}</span>{" "}
+              <p className="text-sm text-sf-muted" aria-live="polite">
+                <span className="font-semibold text-sf-heading">{visible.length}</span>{" "}
                 {pluralize("advisor", visible.length)}
                 {isFetching ? " · refreshing…" : ""}
               </p>
@@ -253,36 +251,16 @@ export function AdminAdvisorsList() {
 }
 
 function StatCards({ stats }: { stats: AdminAdvisorStats }) {
-  const cards = [
-    { label: "Advisors", value: stats.advisors, hint: `${stats.betaAdvisors} in beta` },
-    { label: "Donors tracked", value: stats.donors, hint: "across all advisors" },
-    {
-      label: "Reports generated",
-      value: stats.reports,
-      hint: `${stats.completedReports} completed`,
-    },
-    {
-      label: "Shared reports",
-      value: stats.sharedReports,
-      hint: "visible to donors",
-      accent: true,
-    },
-  ];
   return (
-    <section className="mb-7 grid grid-cols-2 gap-3 lg:grid-cols-4">
-      {cards.map((c) => (
-        <div key={c.label} className="rounded-2xl border border-border bg-card p-4 shadow-sm">
-          <div className="text-xs font-medium text-muted-foreground">{c.label}</div>
-          <div
-            className={`mt-1.5 text-2xl font-semibold tracking-tight ${
-              c.accent ? "text-indigo-500 dark:text-indigo-400" : "text-foreground"
-            }`}
-          >
-            {c.value}
-          </div>
-          <div className="text-xs text-muted-foreground">{c.hint}</div>
-        </div>
-      ))}
+    <section className="mb-7">
+      <StatTiles
+        items={[
+          { n: stats.advisors, l: `Advisors · ${stats.betaAdvisors} in beta` },
+          { n: stats.donors, l: "Donors tracked" },
+          { n: stats.reports, l: `Reports · ${stats.completedReports} completed` },
+          { n: stats.sharedReports, l: "Shared with donors", tone: "brand" },
+        ]}
+      />
     </section>
   );
 }
@@ -299,7 +277,7 @@ const AdvisorCard = memo(function AdvisorCard({
   const name = advisor.name || advisor.displayName;
   const gradient = AVATAR_GRADIENTS[hashIndex(advisor.id, AVATAR_GRADIENTS.length)];
   return (
-    <article className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+    <article className="overflow-hidden rounded-sf-card border border-sf-line bg-sf-card shadow-sm">
       <button
         type="button"
         onClick={onToggle}
@@ -313,29 +291,29 @@ const AdvisorCard = memo(function AdvisorCard({
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <span className="truncate text-base font-semibold text-foreground" title={name}>
+            <span className="truncate text-base font-semibold text-sf-heading" title={name}>
               {name}
             </span>
             {advisor.rateLimitTier === "beta" ? (
-              <span className="flex-shrink-0 rounded-full bg-muted px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+              <span className="flex-shrink-0 rounded-full bg-sf-chip px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-sf-muted">
                 Beta
               </span>
             ) : null}
           </div>
-          <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-            <span className="inline-flex min-w-0 items-center gap-1.5 text-foreground/80">
-              <Mail className="h-3.5 w-3.5 flex-shrink-0 text-muted-foreground" />
+          <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs text-sf-muted">
+            <span className="inline-flex min-w-0 items-center gap-1.5 text-sf-heading/80">
+              <Mail className="h-3.5 w-3.5 flex-shrink-0 text-sf-muted" />
               <span className="truncate">{advisor.email || "No email on file"}</span>
             </span>
             {advisor.orgName ? (
               <>
                 <span aria-hidden>·</span>
-                <span className="truncate text-foreground/80">{advisor.orgName}</span>
+                <span className="truncate text-sf-heading/80">{advisor.orgName}</span>
               </>
             ) : null}
             <span aria-hidden>·</span>
             <span
-              className="rounded-md bg-muted px-2 py-0.5 font-mono text-[11px]"
+              className="rounded-md bg-sf-chip px-2 py-0.5 font-mono text-[11px]"
               title={advisor.walletAddress}
             >
               {truncateAddress(advisor.walletAddress)}
@@ -345,26 +323,24 @@ const AdvisorCard = memo(function AdvisorCard({
         <div className="flex flex-shrink-0 items-center gap-5">
           <StatColumn value={advisor.donorCount} label="donors" />
           <StatColumn value={advisor.reportCount} label="reports" />
-          <div className="hidden h-8 w-px bg-border sm:block" />
+          <div className="hidden h-8 w-px bg-sf-line sm:block" />
           <div className="hidden text-right sm:block">
-            <div className="text-xs text-foreground/80">{formatDate(advisor.createdAt)}</div>
-            <div className="mt-0.5 text-[11px] text-muted-foreground">joined</div>
+            <div className="text-xs text-sf-heading/80">{formatDate(advisor.createdAt)}</div>
+            <div className="mt-0.5 text-[11px] text-sf-muted">joined</div>
           </div>
           <ChevronDown
-            className={`h-4 w-4 text-muted-foreground transition-transform ${
-              expanded ? "rotate-180" : ""
-            }`}
+            className={`h-4 w-4 text-sf-muted transition-transform ${expanded ? "rotate-180" : ""}`}
           />
         </div>
       </button>
 
       {expanded ? (
-        <div className="border-t border-border px-5 pb-5 pt-1">
-          <div className="mb-2.5 mt-4 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+        <div className="border-t border-sf-line px-5 pb-5 pt-1">
+          <div className="mb-2.5 mt-4 text-[11px] font-semibold uppercase tracking-wider text-sf-muted">
             {advisor.donorCount} {pluralize("donor", advisor.donorCount)}
           </div>
           {advisor.donors.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No donors yet.</p>
+            <p className="text-sm text-sf-muted">No donors yet.</p>
           ) : (
             <div className="flex flex-col gap-2">
               {advisor.donors.map((donor) => (
@@ -381,32 +357,30 @@ const AdvisorCard = memo(function AdvisorCard({
 function StatColumn({ value, label }: { value: number; label: string }) {
   return (
     <div className="text-right">
-      <div className="text-[15px] font-semibold leading-none text-foreground">{value}</div>
-      <div className="mt-1 text-[11px] text-muted-foreground">{label}</div>
+      <div className="text-[15px] font-semibold leading-none text-sf-heading">{value}</div>
+      <div className="mt-1 text-[11px] text-sf-muted">{label}</div>
     </div>
   );
 }
 
 const DonorCard = memo(function DonorCard({ donor }: { donor: AdminAdvisorDonor }) {
   return (
-    <div className="overflow-hidden rounded-xl border border-border bg-muted/40">
+    <div className="overflow-hidden rounded-xl border border-sf-line bg-sf-elev">
       <div className="flex items-center gap-2.5 px-3.5 py-2.5">
-        <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-md border border-border bg-background text-[11px] font-semibold text-foreground/80">
+        <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-md border border-sf-line bg-sf-card text-[11px] font-semibold text-sf-heading/80">
           {initials(donor.opaqueLabel).slice(0, 1)}
         </div>
-        <span className="truncate text-sm font-semibold text-foreground" title={donor.opaqueLabel}>
+        <span className="truncate text-sm font-semibold text-sf-heading" title={donor.opaqueLabel}>
           {donor.opaqueLabel}
         </span>
         {donor.reportCount > 0 ? (
-          <span className="flex-shrink-0 text-xs text-muted-foreground">
+          <span className="flex-shrink-0 text-xs text-sf-muted">
             {donor.reportCount} {pluralize("report", donor.reportCount)}
           </span>
         ) : null}
       </div>
       {donor.reports.length === 0 ? (
-        <div className="px-3.5 pb-3 pl-12 text-xs italic text-muted-foreground">
-          No reports yet.
-        </div>
+        <div className="px-3.5 pb-3 pl-12 text-xs italic text-sf-muted">No reports yet.</div>
       ) : (
         <div className="flex flex-col">
           {donor.reports.map((report) => (
@@ -422,16 +396,16 @@ const ReportRow = memo(function ReportRow({ report }: { report: AdminAdvisorRepo
   const status = reportStatusMeta(report.status);
   const isDeep = report.mode === "deep";
   return (
-    <div className="flex items-center gap-3 border-t border-border px-3.5 py-2.5">
+    <div className="flex items-center gap-3 border-t border-sf-line px-3.5 py-2.5">
       <span className={`h-1.5 w-1.5 flex-shrink-0 rounded-full ${status.dot}`} />
       <span
         className={`inline-flex h-5 flex-shrink-0 items-center rounded-md px-2 text-[11px] font-semibold ${
-          isDeep ? "bg-muted text-muted-foreground" : "bg-primary/10 text-primary"
+          isDeep ? "bg-sf-chip text-sf-muted" : "bg-primary/10 text-primary"
         }`}
       >
         {isDeep ? "Deep" : "Fast"}
       </span>
-      <span className="text-[13px] text-foreground/80">{status.label}</span>
+      <span className="text-[13px] text-sf-heading/80">{status.label}</span>
       <div className="flex-1" />
       {report.hasShareToken ? (
         <span className="inline-flex flex-shrink-0 items-center gap-1 rounded-full bg-indigo-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-300">
@@ -439,12 +413,12 @@ const ReportRow = memo(function ReportRow({ report }: { report: AdminAdvisorRepo
           Shared
         </span>
       ) : null}
-      <span className="flex-shrink-0 text-right text-xs text-muted-foreground">
+      <span className="flex-shrink-0 text-right text-xs text-sf-muted">
         {formatDate(report.createdAt)}
       </span>
       <Link
         href={PAGES.DONOR_RESEARCH.REPORT(report.id)}
-        className="inline-flex h-7 flex-shrink-0 items-center gap-1.5 rounded-lg border border-border bg-background px-3 text-xs font-medium text-foreground/80 transition-colors hover:border-primary hover:text-primary"
+        className="inline-flex h-7 flex-shrink-0 items-center gap-1.5 rounded-lg border border-sf-line bg-sf-card px-3 text-xs font-medium text-sf-heading/80 transition-colors hover:border-primary hover:text-primary"
       >
         <Eye className="h-3 w-3" />
         View
@@ -457,7 +431,7 @@ function AdvisorsSkeleton() {
   return (
     <div className="flex flex-col gap-3">
       {[0, 1, 2, 3].map((i) => (
-        <div key={i} className="rounded-2xl border border-border bg-card p-5">
+        <div key={i} className="rounded-sf-card border border-sf-line bg-sf-card p-5">
           <div className="flex items-center gap-4">
             <Skeleton className="h-11 w-11 rounded-xl" />
             <div className="flex-1">

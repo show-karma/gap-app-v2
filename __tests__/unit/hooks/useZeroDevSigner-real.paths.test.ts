@@ -157,7 +157,16 @@ import {
 function setupEmailUser(
   opts: { embedded?: boolean; external?: boolean; embeddedOpts?: EmbeddedWalletOptions } = {}
 ) {
-  mockPrivyState.user = { linkedAccounts: [{ type: "email" }] };
+  // A linked external wallet (opts.external) represents a hybrid user who logged
+  // in via email and ALSO linked their own MetaMask — so the address is in
+  // linkedAccounts and passes the resolver's linkage check.
+  mockPrivyState.user = {
+    linkedAccounts: [
+      { type: "email" },
+      { type: "wallet", address: EMBEDDED_WALLET_ADDRESS },
+      ...(opts.external ? [{ type: "wallet", address: EXTERNAL_WALLET_ADDRESS }] : []),
+    ],
+  };
   mockPrivyState.wallets = [];
   if (opts.embedded !== false)
     mockPrivyState.wallets.push(createEmbeddedWallet(EMBEDDED_WALLET_ADDRESS, opts.embeddedOpts));
@@ -165,20 +174,30 @@ function setupEmailUser(
 }
 
 function setupGoogleUser(opts: { embedded?: boolean; external?: boolean } = {}) {
-  mockPrivyState.user = { linkedAccounts: [{ type: "google_oauth" }] };
+  mockPrivyState.user = {
+    linkedAccounts: [
+      { type: "google_oauth" },
+      { type: "wallet", address: EMBEDDED_WALLET_ADDRESS },
+      ...(opts.external ? [{ type: "wallet", address: EXTERNAL_WALLET_ADDRESS }] : []),
+    ],
+  };
   mockPrivyState.wallets = [];
   if (opts.embedded !== false) mockPrivyState.wallets.push(createEmbeddedWallet());
   if (opts.external) mockPrivyState.wallets.push(createExternalWallet());
 }
 
 function setupFarcasterUser(opts: { embedded?: boolean } = {}) {
-  mockPrivyState.user = { linkedAccounts: [{ type: "farcaster" }] };
+  mockPrivyState.user = {
+    linkedAccounts: [{ type: "farcaster" }, { type: "wallet", address: EMBEDDED_WALLET_ADDRESS }],
+  };
   mockPrivyState.wallets = [];
   if (opts.embedded !== false) mockPrivyState.wallets.push(createEmbeddedWallet());
 }
 
 function setupExternalWalletUser() {
-  mockPrivyState.user = { linkedAccounts: [{ type: "wallet" }] };
+  mockPrivyState.user = {
+    linkedAccounts: [{ type: "wallet", address: EXTERNAL_WALLET_ADDRESS }],
+  };
   mockPrivyState.wallets = [createExternalWallet()];
 }
 

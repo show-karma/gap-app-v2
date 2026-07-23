@@ -4,7 +4,7 @@ import { ReportConfigPage } from "@/components/Pages/Admin/PortfolioReports/Repo
 import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { Spinner } from "@/components/Utilities/Spinner";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 import { defaultMetadata } from "@/utilities/meta";
 import { getCommunityDetails } from "@/utilities/queries/v2/community";
@@ -20,16 +20,14 @@ async function getGrantPrograms(communityId: string): Promise<GrantProgram[]> {
   // makes a fetch outage indistinguishable from "this community has no
   // programs", which lets admins save configs with no programIds. The
   // route's error.tsx surfaces a retry CTA.
-  const [result, error] = await fetchData(INDEXER.COMMUNITY.PROGRAMS(communityId));
-  if (error) {
+  try {
+    // TODO(#1775): add zod schema
+    const result = await api.get<GrantProgram[]>(INDEXER.COMMUNITY.PROGRAMS(communityId));
+    return result ?? [];
+  } catch (error) {
     errorManager(`Error fetching grant programs for community ${communityId}`, error);
-    throw new Error(
-      typeof error === "string" && error.length > 0
-        ? error
-        : `Failed to fetch grant programs for ${communityId}`
-    );
+    throw error;
   }
-  return (result as GrantProgram[]) ?? [];
 }
 
 export default async function Page(props: Props) {

@@ -5,8 +5,8 @@ import type { NetworkAddressPair } from "@/components/Pages/Project/types";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { validateNetworkAddressPair } from "@/schemas/contractAddress";
 import { useProjectStore } from "@/store";
+import { api } from "@/utilities/api/client";
 import { getContractKey } from "@/utilities/contractKey";
-import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { useContractAddressValidation } from "./useContractAddressValidation";
@@ -30,15 +30,11 @@ export const useContractAddressSave = ({ projectUid, onSuccess }: UseContractAdd
       const formattedAddresses = pairs.map((pair) => `${pair.network}:${pair.address}`);
 
       try {
-        const [data, error] = await fetchData(INDEXER.PROJECT.EXTERNAL.UPDATE(projectUid), "PUT", {
+        // TODO(#1775): add zod schema — response is only used for truthiness here.
+        const data = await api.put(INDEXER.PROJECT.EXTERNAL.UPDATE(projectUid), {
           target: "network_addresses",
           ids: formattedAddresses,
         });
-
-        if (error) {
-          setError(MESSAGES.PROJECT.LINK_CONTRACT_ADDRESSES.ERROR);
-          throw new Error(MESSAGES.PROJECT.LINK_CONTRACT_ADDRESSES.ERROR);
-        }
 
         if (data) {
           toast.success(MESSAGES.PROJECT.LINK_CONTRACT_ADDRESSES.SUCCESS);

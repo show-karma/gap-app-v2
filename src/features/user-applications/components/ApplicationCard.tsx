@@ -5,6 +5,7 @@ import Image from "next/image";
 import { getProjectTitle } from "@/components/FundingPlatform/helper/getProjectTitle";
 import { Link } from "@/src/components/navigation/Link";
 import type { Application, ApplicationStatus } from "@/types/whitelabel-entities";
+import { formatApplicationStatus } from "@/utilities/application-status";
 import { formatDate } from "@/utilities/formatDate";
 import { cn } from "@/utilities/tailwind";
 
@@ -26,10 +27,6 @@ function getStatusColor(status: ApplicationStatus): string {
     default:
       return "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400";
   }
-}
-
-function formatStatusLabel(status: ApplicationStatus): string {
-  return status.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
 }
 
 interface ApplicationCardProps {
@@ -89,7 +86,7 @@ export function ApplicationCard({
               getStatusColor(application.status)
             )}
           >
-            {formatStatusLabel(application.status)}
+            {formatApplicationStatus(application.status)}
           </span>
         </div>
 

@@ -1,7 +1,8 @@
 import { errorManager } from "@/components/Utilities/errorManager";
 import type { UpdatesFeedFilters } from "@/types/v2/project-profile.types";
 import type { UpdatesApiResponse } from "@/types/v2/roadmap";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
+import { HttpError, isApiError } from "@/utilities/api/errors";
 import { INDEXER } from "@/utilities/indexer";
 
 /**
@@ -101,21 +102,19 @@ export const getProjectUpdates = async (
   const qs = buildUpdatesQueryString({ milestoneStatus, ...queryFilters });
   const url = `${baseUrl}${qs}`;
 
-  const [data, error, , status] = await fetchData<UpdatesApiResponse>(
-    url,
-    "GET",
-    {},
-    {},
-    {},
-    isAuthorized,
-    false,
-    undefined,
-    signal
-  );
-
-  if (error || !data) {
+  try {
+    // TODO(#1775): add zod schema
+    const data = await api.get<UpdatesApiResponse>(url, { isAuthorized, signal });
+    if (!data) {
+      errorManager("Project Updates API Error: empty response", undefined, {
+        context: "project-updates.service",
+      });
+      return emptyResponse;
+    }
+    return data;
+  } catch (error) {
     // Missing project routes are expected for unknown slugs and should not be sent to Sentry.
-    if (status === 404) {
+    if (isApiError(error) && error instanceof HttpError && error.status === 404) {
       return emptyResponse;
     }
 
@@ -124,6 +123,4 @@ export const getProjectUpdates = async (
     });
     return emptyResponse;
   }
-
-  return data;
 };

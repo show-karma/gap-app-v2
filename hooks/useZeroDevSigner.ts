@@ -1,6 +1,5 @@
 "use client";
 
-import type { ConnectedWallet, User } from "@privy-io/react-auth";
 import type { Signer } from "ethers";
 import { BrowserProvider } from "ethers";
 import { useCallback, useMemo, useRef } from "react";
@@ -22,6 +21,7 @@ import {
 } from "viem/chains";
 import { useChainId } from "wagmi";
 import { usePrivyBridge } from "@/contexts/privy-bridge-context";
+import { resolveSigningWallets } from "@/utilities/auth/resolve-signing-wallets";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import {
   createGaslessClient,
@@ -33,6 +33,11 @@ import {
 import { appNetwork } from "@/utilities/network";
 import { wait } from "@/utilities/wait";
 import { SignerUnavailableError } from "@/utilities/wallet/signerReadiness";
+import {
+  selectUsableWallet,
+  waitForUsableWallet,
+  type WalletStateSnapshot,
+} from "@/utilities/wallet/waitForUsableWallet";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 
 /**
@@ -183,89 +188,6 @@ async function switchEmbeddedWalletChain(
   return provider;
 }
 
-/**
- * Check if user logged in with email/Google (not wallet).
- * These users should use embedded wallet with gasless transactions.
- */
-function didUserLoginWithEmailOrSocial(user: User | null): boolean {
-  if (!user) return false;
-  // Check linked accounts for email, Google OAuth, or Farcaster
-  // Farcaster users get an embedded wallet via createOnLogin: "users-without-wallets"
-  return user.linkedAccounts.some(
-    (account) =>
-      account.type === "email" || account.type === "google_oauth" || account.type === "farcaster"
-  );
-}
-
-/** Find the Privy-managed embedded wallet (email/Google/passkey users). */
-function findEmbeddedWallet(wallets: ConnectedWallet[]): ConnectedWallet | null {
-  return wallets.find((wallet) => wallet.walletClientType === "privy") ?? null;
-}
-
-/** Find a non-Privy external wallet (MetaMask, Coinbase, etc.). */
-function findExternalWallet(wallets: ConnectedWallet[]): ConnectedWallet | null {
-  return wallets.find((wallet) => wallet.walletClientType !== "privy") ?? null;
-}
-
-/** Snapshot of the auth/wallet state, kept fresh via a ref so a wait loop that
- *  started during hydration can observe wallets that arrive later. */
-interface WalletStateSnapshot {
-  privyReady: boolean;
-  walletsReady: boolean;
-  user: User | null;
-  wallets: ConnectedWallet[];
-}
-
-interface UsableWalletState {
-  embeddedWallet: ConnectedWallet | null;
-  externalWallet: ConnectedWallet | null;
-  isEmailOrSocialLogin: boolean;
-}
-
-// Covers the wallet-hydration race (~1-2s) plus the embedded-wallet settle
-// window (2.5s, see useEnsureEmbeddedWallet.SETTLE_BEFORE_CREATE_MS) and its
-// first creation attempt. Runs under the "Creating project..." attestation
-// toast, so the user sees progress rather than a hang. Do not go below ~5s
-// or fresh-signup flows (new email/social users) regress.
-export const WALLET_READY_TIMEOUT_MS = 8_000;
-const WALLET_READY_POLL_MS = 250;
-
-/**
- * Waits for a usable wallet to appear, polling the live (ref-backed) auth
- * state so a call that starts mid-hydration can still resolve once Privy
- * finishes. Classifies the reason if the wait times out instead of throwing
- * a generic "no wallet" error.
- *
- * Email/social users need the embedded wallet specifically — the Case-3
- * identity guard below forbids falling back to an unlinked external wallet,
- * so this selection intentionally preserves that rule.
- */
-async function waitForUsableWallet(stateRef: {
-  current: WalletStateSnapshot;
-}): Promise<UsableWalletState> {
-  const deadline = Date.now() + WALLET_READY_TIMEOUT_MS;
-
-  while (true) {
-    const { walletsReady, user, wallets } = stateRef.current;
-    const isEmailOrSocialLogin = didUserLoginWithEmailOrSocial(user);
-    const embeddedWallet = findEmbeddedWallet(wallets);
-    const externalWallet = findExternalWallet(wallets);
-    const usable = isEmailOrSocialLogin ? embeddedWallet : embeddedWallet || externalWallet;
-
-    if (usable) {
-      return { embeddedWallet, externalWallet, isEmailOrSocialLogin };
-    }
-
-    if (Date.now() >= deadline) {
-      if (!walletsReady) throw new SignerUnavailableError("wallets-hydrating");
-      if (isEmailOrSocialLogin) throw new SignerUnavailableError("embedded-wallet-provisioning");
-      throw new SignerUnavailableError("no-wallet-connected");
-    }
-
-    await wait(WALLET_READY_POLL_MS);
-  }
-}
-
 interface UseZeroDevSignerResult {
   /**
    * Gets a signer for attestations.
@@ -327,32 +249,29 @@ export function useZeroDevSigner(): UseZeroDevSignerResult {
   });
   walletStateRef.current = { privyReady, walletsReady, user, wallets };
 
-  // Check if user logged in with email/Google (should use embedded wallet)
-  const isEmailOrSocialLogin = useMemo(() => {
-    return didUserLoginWithEmailOrSocial(user);
-  }, [user]);
+  // Single source of truth for which connected wallet may sign for this user.
+  // An unlinked/stale external wallet (e.g. a lingering MetaMask from a previous
+  // session) is excluded here, so it can never reach signer construction.
+  const { embeddedWallet, externalWallet, signingMode } = useMemo(() => {
+    if (!privyReady) {
+      return { embeddedWallet: null, externalWallet: null, signingMode: "none" as const };
+    }
+    // Empty wallet lists still go through the resolver: signingMode derives
+    // from the login method, so an email user mid-hydration reads as
+    // "embedded" (signerStatus "initializing"), never as "no-wallet".
+    return resolveSigningWallets(user, wallets);
+  }, [privyReady, user, wallets]);
 
-  // Find embedded wallet (Privy-managed wallet for email/Google/passkey users)
-  const embeddedWallet = useMemo(() => {
-    if (!privyReady || !wallets.length) return null;
-    return findEmbeddedWallet(wallets);
-  }, [privyReady, wallets]);
-
-  // Find external wallet (MetaMask, Coinbase, etc.)
-  const externalWallet = useMemo(() => {
-    if (!privyReady || !wallets.length) return null;
-    return findExternalWallet(wallets);
-  }, [privyReady, wallets]);
-
+  const isEmailOrSocialLogin = signingMode === "embedded";
   const hasEmbeddedWallet = !!embeddedWallet;
   const hasExternalWallet = !!externalWallet;
 
-  // Signing readiness for UI gating (§3.2.6). Email/social users specifically
-  // need the embedded wallet — an unlinked external wallet must never be
-  // treated as "ready" for them (same rule the Case-3 guard enforces below).
-  const usableWalletExists = isEmailOrSocialLogin
-    ? hasEmbeddedWallet
-    : hasEmbeddedWallet || hasExternalWallet;
+  // Signing readiness for UI gating (§3.2.6). Both wallets here are LINKED to
+  // the authenticated user by construction (resolveSigningWallets), so the same
+  // selection rule the signing wait uses applies: embedded-mode users are ready
+  // with the embedded wallet OR a linked external fallback; a foreign unlinked
+  // wallet was already excluded and can never make the status "ready".
+  const usableWalletExists = !!selectUsableWallet({ embeddedWallet, externalWallet, signingMode });
   const signerStatus: UseZeroDevSignerResult["signerStatus"] =
     !privyReady || !walletsReady
       ? "initializing"
@@ -367,17 +286,21 @@ export function useZeroDevSigner(): UseZeroDevSignerResult {
     return isEmailOrSocialLogin && hasEmbeddedWallet && isChainSupportedForGasless(chainId);
   }, [isEmailOrSocialLogin, hasEmbeddedWallet, chainId]);
 
-  // Get the address that will be used for attestations
-  // Email/Google users use embedded wallet, others use external wallet
+  // Get the address that will be used for attestations.
+  // Email/Google/Farcaster users use the embedded wallet; wallet-login users use
+  // their linked external wallet. Embedded-mode users without an embedded wallet
+  // (Farcaster / hybrid accounts) fall back to their LINKED external wallet,
+  // mirroring getAttestationSigner. During hydration this is null (never a
+  // foreign address) because resolveSigningWallets only returns linked wallets.
   const attestationAddress = useMemo(() => {
-    if (isEmailOrSocialLogin && embeddedWallet) {
-      return embeddedWallet.address;
+    if (signingMode === "embedded") {
+      return embeddedWallet?.address ?? externalWallet?.address ?? null;
     }
-    if (externalWallet) {
-      return externalWallet.address;
+    if (signingMode === "external") {
+      return externalWallet?.address ?? null;
     }
     return null;
-  }, [isEmailOrSocialLogin, embeddedWallet, externalWallet]);
+  }, [signingMode, embeddedWallet, externalWallet]);
 
   const getAttestationSigner = useCallback(
     async (rawTargetChainId: number | string): Promise<Signer> => {
@@ -390,12 +313,15 @@ export function useZeroDevSigner(): UseZeroDevSignerResult {
         throw new Error(`Invalid chain ID: ${rawTargetChainId}`);
       }
 
-      // Wait for a usable wallet, reading the live (ref-backed) state so a
-      // call that starts mid-hydration still resolves once Privy finishes.
-      // Throws a typed, classified SignerUnavailableError if none appears
-      // within WALLET_READY_TIMEOUT_MS.
-      const { embeddedWallet, externalWallet, isEmailOrSocialLogin } =
+      // Wait for a usable LINKED wallet, reading the live (ref-backed) state
+      // so a call that starts mid-hydration still resolves once Privy
+      // finishes. Throws a typed, classified SignerUnavailableError if none
+      // appears within WALLET_READY_TIMEOUT_MS. These locals shadow the
+      // render-scoped values on purpose: everything below must use the same
+      // post-wait snapshot.
+      const { embeddedWallet, externalWallet, signingMode } =
         await waitForUsableWallet(walletStateRef);
+      const isEmailOrSocialLogin = signingMode === "embedded";
 
       // Track the most recent diagnostic so the final throw can surface the
       // real cause instead of a generic "No wallet available" — silently
@@ -490,19 +416,50 @@ export function useZeroDevSigner(): UseZeroDevSignerResult {
         }
       }
 
+      // Hard gate: an embedded-mode user (email/Google/Farcaster login) must
+      // NEVER reach the external-wallet path with an UNLINKED wallet — signing
+      // with a stale foreign MetaMask would prompt for someone else's account
+      // (issue #1574). A non-null `externalWallet` here is, by construction of
+      // resolveSigningWallets, LINKED to the authenticated user, so letting it
+      // fall through to Case 3 still satisfies the invariant. This keeps
+      // signing possible for embedded-mode users who have no embedded wallet
+      // at all: Farcaster users (their linked ownerAddress suppresses
+      // embedded-wallet creation in useEnsureEmbeddedWallet) and hybrid
+      // email+wallet accounts.
+      if (signingMode === "embedded" && !externalWallet) {
+        if (!embeddedWallet) {
+          // Defensive: waitForUsableWallet only returns once a usable wallet
+          // exists, so an embedded-mode user without a linked external must
+          // have had an embedded wallet. Classify rather than fall through.
+          throw new SignerUnavailableError("embedded-wallet-provisioning");
+        }
+        // Embedded wallet was present but its signer construction failed above —
+        // surface that real error; do not silently reroute to an external wallet.
+        const message = lastError instanceof Error ? lastError.message : String(lastError);
+        const wrapped = new Error(`Failed to obtain signer from embedded wallet: ${message}`);
+        if (lastError instanceof Error && lastError.stack) {
+          wrapped.stack = lastError.stack;
+        }
+        throw wrapped;
+      }
+
       // Case 3: Wallet login (MetaMask) - use external wallet directly, user pays gas.
       // Primary path: create a viem WalletClient from Privy's provider to avoid wagmi
       // state desync (chain?.id can be undefined during startup, causing wagmi's
       // getWalletClient to fail). This follows the same pattern used in claim-funds.
       // Fallback: wagmi's getWalletClient for environments where Privy provider isn't available.
       //
-      // An email/Google user with an embedded wallet must NEVER reach here, even if
-      // the embedded path above failed: useWallets() also lists browser-connected
-      // wallets that are NOT linked to the account (e.g. an injected MetaMask/Rabby),
-      // and signing an attestation with one would use the wrong identity and prompt
-      // an unexpected wallet popup. For those users we surface the embedded error
-      // below instead of silently falling back.
-      if (externalWallet && !(isEmailOrSocialLogin && embeddedWallet)) {
+      // Foreign-wallet safety is enforced UPSTREAM: `externalWallet` comes from
+      // resolveSigningWallets, which only ever returns a wallet LINKED to the
+      // authenticated user — a stale/unlinked MetaMask is already excluded and is
+      // null here. So reaching this path means signing with the user's OWN linked
+      // wallet, which is correct even for an embedded-mode user whose embedded
+      // path failed or who never had an embedded wallet (Farcaster / hybrid
+      // email+wallet accounts). The hard gate above already throws for
+      // embedded-mode users that have NO linked external wallet, so the previous
+      // `!(isEmailOrSocialLogin && embeddedWallet)` clause is now redundant and was
+      // dropped — it only suppressed this legitimate linked-wallet fallback.
+      if (externalWallet) {
         try {
           await externalWallet.switchChain(targetChainId);
           const provider = await externalWallet.getEthereumProvider();

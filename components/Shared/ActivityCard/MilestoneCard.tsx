@@ -29,6 +29,7 @@ import type { UnifiedMilestone } from "@/types/v2/roadmap";
 import { formatDate } from "@/utilities/formatDate";
 import {
   getEffectiveMilestoneStatus,
+  isCancelledMilestoneStatus,
   MILESTONE_STATUS_BADGE_CLASS,
   MILESTONE_STATUS_LABEL,
 } from "@/utilities/milestones/getEffectiveMilestoneStatus";
@@ -529,7 +530,11 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
   // values resolve to null and degrade to no due date instead of a 1970 badge.
   const dueMs = normalizeMilestoneDueDateMs(endsAt);
   const effectiveStatus = getEffectiveMilestoneStatus(
-    completed ? MilestoneLifecycleStatus.COMPLETED : MilestoneLifecycleStatus.PENDING,
+    isCancelledMilestoneStatus(milestone.currentStatus)
+      ? MilestoneLifecycleStatus.CANCELLED
+      : completed
+        ? MilestoneLifecycleStatus.COMPLETED
+        : MilestoneLifecycleStatus.PENDING,
     dueMs
   );
   const showOrderBadge = type === "grant" && Boolean(milestone.grantMilestoneOrder);
@@ -584,7 +589,7 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
   const milestoneActions =
     isAuthorized && (type === "milestone" || type === "grant") ? (
       <>
-        {!completed && (
+        {!completed && effectiveStatus !== MilestoneLifecycleStatus.CANCELLED && (
           <Button
             className="flex flex-row gap-1 border border-brand-blue text-brand-blue text-sm font-semibold bg-white hover:bg-white dark:bg-transparent dark:hover:bg-transparent p-3 rounded-md max-sm:px-2 max-sm:py-1"
             onClick={() => handleCompleting(true)}

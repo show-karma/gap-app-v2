@@ -37,7 +37,7 @@ export function ApplicationTabBar({ tabs, activeTab, onTabChange }: ApplicationT
             className={cn(
               "inline-flex items-center gap-2 whitespace-nowrap rounded-lg px-3.5 py-2 text-sm font-medium transition-colors",
               isActive
-                ? "bg-[rgb(var(--color-primary))] text-brand-950 shadow-sm"
+                ? "bg-primary text-primary-foreground shadow-sm"
                 : "text-muted-foreground hover:bg-muted hover:text-foreground"
             )}
           >
@@ -47,7 +47,9 @@ export function ApplicationTabBar({ tabs, activeTab, onTabChange }: ApplicationT
               <span
                 className={cn(
                   "rounded-full px-1.5 py-px text-[11px] font-semibold",
-                  isActive ? "bg-brand-950/15 text-brand-950" : "bg-muted text-muted-foreground"
+                  isActive
+                    ? "bg-primary-foreground/15 text-primary-foreground"
+                    : "bg-muted text-muted-foreground"
                 )}
               >
                 {count}

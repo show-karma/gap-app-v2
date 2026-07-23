@@ -12,6 +12,9 @@ vi.mock("@/components/Pages/Community/PortfolioReports/HtmlReportFrame", () => (
 vi.mock("@/components/Pages/Community/PortfolioReports/ReportChartsSection", () => ({
   ReportChartsSection: () => <div data-testid="report-charts-section" />,
 }));
+vi.mock("@/components/Pages/Community/PortfolioReports/ExportDataMenu", () => ({
+  ExportDataMenu: () => <div data-testid="export-data-menu" />,
+}));
 
 const mockUsePortfolioReport = vi.mocked(usePortfolioReport);
 

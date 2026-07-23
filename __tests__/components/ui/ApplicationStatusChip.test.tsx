@@ -41,9 +41,9 @@ describe("ApplicationStatusChip", () => {
       expect(screen.getByText("Approved")).toBeInTheDocument();
     });
 
-    it("renders 'Rejected' for status='rejected'", () => {
+    it("renders 'Declined' for status='rejected'", () => {
       render(<ApplicationStatusChip status="rejected" />);
-      expect(screen.getByText("Rejected")).toBeInTheDocument();
+      expect(screen.getByText("Declined")).toBeInTheDocument();
     });
 
     it("renders 'Cancelled' for status='canceled'", () => {

@@ -23,7 +23,6 @@ export const PAGES = {
     PROJECT_DISCOVERY: (community: string) => `/community/${community}/impact/project-discovery`,
     UPDATES: (community: string) => `/community/${community}/updates`,
     FINANCIALS: (community: string) => `/community/${community}/financials`,
-    RECEIVEPROJECTUPDATES: (community: string) => `/community/${community}/receive-project-updates`,
     PROGRAMS: (community: string) => `/community/${community}/funding-opportunities`,
     PROGRAM_DETAIL: (community: string, programId: string) =>
       `/community/${community}/programs/${programId}`,
@@ -39,8 +38,15 @@ export const PAGES = {
     BROWSE_APPLICATIONS: (community: string) => `/community/${community}/browse-applications`,
     CLAIM_FUNDS: (community: string) => `/community/${community}/claim-funds`,
     REPORTS: (community: string) => `/community/${community}/reports`,
-    REPORT_DETAIL: (community: string, runDate: string) =>
-      `/community/${community}/reports/${encodeURIComponent(runDate)}`,
+    /**
+     * `configSlug` disambiguates reports sharing a run date. Omit it only when
+     * the slug is unavailable (deleted config) — the run-date-only URL cannot
+     * address a specific report and resolves to the newest one for that date.
+     */
+    REPORT_DETAIL: (community: string, runDate: string, configSlug?: string | null) =>
+      configSlug
+        ? `/community/${community}/reports/${encodeURIComponent(runDate)}/${encodeURIComponent(configSlug)}`
+        : `/community/${community}/reports/${encodeURIComponent(runDate)}`,
     ASK_KARMA: (community: string) => `/community/${community}/ask-karma`,
   },
   MY_PROJECTS: `/my-projects`,
@@ -49,6 +55,14 @@ export const PAGES = {
   DONATIONS: `/donations`,
   DONOR_RESEARCH: {
     INDEX: `/nonprofit-research`,
+    // Dedicated report-creation page (redesign P1) — the criteria form moved
+    // off the section home so the home page can be list-first.
+    NEW: `/nonprofit-research/new`,
+    // Donor-handle management, presented to advisors as "Personas" (redesign
+    // P2). Code/API identifiers stay "donor handle" — only the UI copy
+    // renames.
+    PERSONAS: `/nonprofit-research/personas`,
+    PERSONA: (handleId: string) => `/nonprofit-research/personas/${handleId}`,
     ONBOARDING: `/nonprofit-research/onboarding`,
     REPORT: (reportId: string) => `/nonprofit-research/${reportId}`,
     SHARED: (token: string) => `/nonprofit-research/shared/${token}`,
@@ -63,27 +77,6 @@ export const PAGES = {
     DILIGENCE_RESPONSE: (token: string) => `/nonprofit-research/diligence/${token}`,
   },
   EVALUATE: `/evaluate`,
-  // REVIEWER routes now point to MANAGE (unified RBAC-based routes)
-  REVIEWER: {
-    DASHBOARD: (community: string) => `/community/${community}/manage/funding-platform`,
-    APPLICATIONS: (community: string, programId: string) =>
-      `/community/${community}/manage/funding-platform/${programId}/applications`,
-    APPLICATION_DETAIL: (community: string, programId: string, applicationId: string) =>
-      `/community/${community}/manage/funding-platform/${programId}/applications/${applicationId}`,
-    QUESTION_BUILDER: (community: string, programId: string) =>
-      `/community/${community}/manage/funding-platform/${programId}/question-builder`,
-    FUNDING_PLATFORM: {
-      MILESTONES: (
-        community: string,
-        programId: string,
-        projectId: string,
-        milestoneUid?: string
-      ) =>
-        `/community/${community}/manage/funding-platform/${programId}/milestones/${projectId}${
-          milestoneUid ? `#milestone-${encodeURIComponent(milestoneUid)}` : ""
-        }`,
-    },
-  },
   MANAGE: {
     ROOT: (community: string) => `/community/${community}/manage`,
     ACTION_ITEMS: (community: string) => `/community/${community}/manage/action-items`,
@@ -139,8 +132,6 @@ export const PAGES = {
       `/community/${community}/manage/portfolio-reports/${reportId}/preview`,
     PORTFOLIO_REPORTS_CONFIG: (community: string) =>
       `/community/${community}/manage/portfolio-reports/config`,
-    PROJECT_MILESTONES: (community: string, projectId: string, programId: string) =>
-      `/community/${community}/manage/${projectId}/milestones?programIds=${programId}`,
   },
   PROJECT: {
     OVERVIEW: (project: string) => `/project/${project}`,
@@ -182,15 +173,6 @@ export const PAGES = {
   MCP_CONNECT: `/mcp/connect`,
   SEEDS: `/seeds`,
   SEEDS_FUND: `/seeds/fund`,
-  TEAM: {
-    LIST: `/ai-teams`,
-    ONBOARDING: `/ai-teams/onboarding`,
-    DIRECTORY: (slug: string) => `/ai-teams/${slug}/team`,
-    MEMBER: (slug: string, role: string) => `/ai-teams/${slug}/team/${role}`,
-  },
-  ORG: (slug: string) => `/ai-teams/${slug}/org`,
-  WORK: (slug: string) => `/ai-teams/${slug}/work`,
-  SKILLS: (slug: string) => `/ai-teams/${slug}/skills`,
   ASK_KARMA: `/ask-karma`,
   SCANNER: {
     ROOT: `/nonprofits/is-ai-ready`,
@@ -222,6 +204,20 @@ export function isAskKarmaPathname(pathname: string): boolean {
 }
 
 /**
+ * Detects the two anonymous token-capability routes of the donor-research
+ * feature (donor share view + nonprofit diligence response). These pages
+ * carry their own standalone chrome (`TokenPageShell`) — the global navbar
+ * and marketing footer are suppressed for them (redesign spec 2.3). Lives
+ * next to the route constants so a rename updates the detection too.
+ */
+export function isDonorResearchTokenRoute(pathname: string): boolean {
+  return (
+    pathname.startsWith("/nonprofit-research/shared/") ||
+    pathname.startsWith("/nonprofit-research/diligence/")
+  );
+}
+
+/**
  * First path segments under /community/[communityId]/ that should be rewritten
  * in whitelabel mode. Derived from PAGES.COMMUNITY route definitions and
  * filesystem route directories. This is the single source of truth — used by
@@ -243,7 +239,6 @@ export const COMMUNITY_SUB_ROUTE_SEGMENTS: ReadonlySet<string> = new Set([
   // Direct route directories under /community/[communityId]/
   "admin",
   "ask-karma",
-  "karma-ai",
   "manage",
 ]);
 

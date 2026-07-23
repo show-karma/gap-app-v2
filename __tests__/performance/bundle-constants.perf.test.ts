@@ -158,17 +158,19 @@ describe("Bundle constants -- module-level extraction", () => {
     expect(statusColorsIndex).toBeLessThan(componentIndex);
   });
 
-  it("ApplicationStatusBadge defines the status formatter at module level", () => {
-    // The snake_case -> Title Case status formatter was extracted out of
-    // ApplicationTableRow into the shared ApplicationStatusBadge component and
-    // must stay module-level so it is not re-created on every render.
+  it("ApplicationStatusBadge imports the shared status formatter at module level", () => {
+    // Application status labels are centralized so every application surface
+    // uses the same user-facing terminology. The formatter must remain a
+    // module-level import so it is not re-created on every render.
     const file = path.join(
       ROOT,
       "components/FundingPlatform/ApplicationList/applicationStatusBadge.tsx"
     );
     const content = fs.readFileSync(file, "utf-8");
 
-    const formatStatusIndex = content.indexOf("const formatApplicationStatus");
+    const formatStatusIndex = content.indexOf(
+      'import { formatApplicationStatus } from "@/utilities/application-status"'
+    );
     const componentIndex = content.indexOf("export const ApplicationStatusBadge");
 
     expect(formatStatusIndex).toBeGreaterThan(-1);

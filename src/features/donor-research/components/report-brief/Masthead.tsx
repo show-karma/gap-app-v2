@@ -1,14 +1,9 @@
 "use client";
 
-import { ArrowLeft } from "lucide-react";
 import pluralize from "pluralize";
-import { Link } from "@/src/components/navigation/Link";
 import type { ResearchReportDetail } from "@/types/donor-research";
-import { PAGES } from "@/utilities/pages";
-import { StatusBadge } from "../report-list/StatusBadge";
 import { ShareTokenControls } from "../report-viewer/ShareTokenControls";
 import { WeightsPanel } from "../report-viewer/WeightsPanel";
-import { briefDisplay, briefProse } from "./fonts";
 
 interface MastheadProps {
   report: ResearchReportDetail;
@@ -16,20 +11,26 @@ interface MastheadProps {
   surfacedCount: number;
   isTerminal: boolean;
   /**
-   * Only "advisor" (the report owner) gets the dashboard back-link and the
-   * weights/share-token controls — those are owner-only writes. "staff" and
-   * "shared" keep the masthead visually identical otherwise.
+   * "advisor" (the report owner) renders in-shell — `DonorResearchShell`'s
+   * left rail already carries the "Reports" back-link, so the header
+   * itself needs none — plus the weights/share-token controls (owner-only
+   * writes). Navigation breadcrumbs live in the authenticated view wrapper;
+   * the shared document gets none.
    */
   variant?: "advisor" | "shared" | "staff";
+  /**
+   * Shows the weights/share-token controls. Defaults to owner-only
+   * (`variant === "advisor"`); the authenticated view passes `true` for
+   * staff as well.
+   */
+  canManageReport?: boolean;
 }
 
 /**
- * The brief's masthead. Reads as the cover of a research memo: a
- * Karma · Research Brief eyebrow, a serif-spaced issue identifier
- * and date on the same line, the headline at editorial scale, and
- * a single byline sentence beneath. Share controls hang off the
- * right edge so the share affordance is the first thing a sender
- * sees.
+ * Report header (redesign spec 2.3): the dynamic headline/byline (kept
+ * verbatim from the editorial brief — `headline()` / `byline()` below) and
+ * the Adjust ranking + Share actions (owner and staff). Report number,
+ * status, mode, and issue date live in the summary immediately below.
  */
 export function Masthead({
   report,
@@ -37,52 +38,16 @@ export function Masthead({
   surfacedCount,
   isTerminal,
   variant = "advisor",
+  canManageReport,
 }: MastheadProps) {
-  const isOwner = variant === "advisor";
-  const issuedAt = report.fastCompletedAt ?? report.completedAt ?? report.createdAt;
-  const issuedLabel = formatIssueDate(issuedAt);
-  const updatedAt = report.completedAt ?? report.fastCompletedAt ?? report.createdAt;
-  // Only surface "Updated" when a later completion (e.g. deep enrichment) moved the
-  // date past the issue date — otherwise the same day would render twice.
-  const updatedLabel = formatIssueDate(updatedAt);
-  const showUpdated = updatedLabel !== "—" && updatedLabel !== issuedLabel;
-  const issueNumber = `No. ${report.id.slice(0, 6).toUpperCase()}`;
-
+  const showManageControls = canManageReport ?? variant === "advisor";
   return (
     <header
-      className="mb-14 grid grid-cols-1 gap-8 sm:mb-20 sm:grid-cols-[1fr_auto] sm:gap-12"
+      className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:gap-8"
       data-section="masthead"
     >
-      <div className="min-w-0">
-        {isOwner ? (
-          <Link
-            href={PAGES.DONOR_RESEARCH.INDEX}
-            className={`${briefDisplay.className} inline-flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-[0.28em] text-muted-foreground transition-colors hover:text-foreground`}
-          >
-            <ArrowLeft className="h-3 w-3" aria-hidden />
-            Research dashboard
-          </Link>
-        ) : null}
-
-        <div
-          className={`${briefDisplay.className} mt-10 flex flex-wrap items-baseline gap-x-3 gap-y-1 text-[10px] uppercase tracking-[0.34em] text-muted-foreground`}
-        >
-          <span className="text-foreground/80">Karma · Research Brief</span>
-          <Bullet />
-          <span className="tabular-nums">{issueNumber}</span>
-          <Bullet />
-          <span className="text-brand-emphasis dark:text-brand-subtle">Issued {issuedLabel}</span>
-          {showUpdated ? (
-            <>
-              <Bullet />
-              <span>Updated {updatedLabel}</span>
-            </>
-          ) : null}
-        </div>
-
-        <h1
-          className={`${briefDisplay.className} mt-5 max-w-[18ch] text-balance text-[clamp(2.25rem,5.2vw,3.75rem)] font-medium leading-[1.02] tracking-[-0.025em] text-foreground`}
-        >
+      <div className="min-w-0 flex-1">
+        <h1 className="max-w-[42ch] text-balance text-[1.625rem] font-semibold leading-[1.15] tracking-[-0.02em] text-sf-heading sm:text-[1.875rem]">
           {headline({
             considered: candidatesCount,
             surfaced: surfacedCount,
@@ -91,9 +56,7 @@ export function Masthead({
           })}
         </h1>
 
-        <p
-          className={`${briefProse.className} mt-6 max-w-[58ch] text-[1.0625rem] leading-[1.55] text-foreground/80`}
-        >
+        <p className="mt-2 max-w-[62ch] text-[13.5px] leading-[1.55] text-sf-muted">
           {byline({
             considered: candidatesCount,
             surfaced: surfacedCount,
@@ -101,18 +64,14 @@ export function Masthead({
             status: report.status,
           })}
         </p>
-
-        <div className="mt-6 inline-flex items-center gap-3">
-          <StatusBadge status={report.status} />
-        </div>
       </div>
 
-      {isTerminal && isOwner ? (
-        <div className="flex flex-wrap items-start justify-end gap-2 sm:justify-self-end">
+      {isTerminal && showManageControls ? (
+        <div className="flex flex-none flex-wrap items-start gap-2">
           {report.weights && report.candidates.length > 0 ? <WeightsPanel report={report} /> : null}
           <ShareTokenControls
-            reportId={report.id}
             hasShareToken={report.hasShareToken}
+            reportId={report.id}
             shareToken={report.shareToken}
             shareTokenExpiresAt={report.shareTokenExpiresAt}
           />
@@ -120,24 +79,6 @@ export function Masthead({
       ) : null}
     </header>
   );
-}
-
-function Bullet() {
-  return (
-    <span aria-hidden className="text-muted-foreground/50">
-      ·
-    </span>
-  );
-}
-
-function formatIssueDate(iso: string): string {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "—";
-  return d.toLocaleDateString("en-US", {
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  });
 }
 
 interface HeadlineInputs {

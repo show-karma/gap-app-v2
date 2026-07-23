@@ -8,9 +8,9 @@ import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
+import { api } from "@/utilities/api/client";
 import { chainNameDictionary } from "@/utilities/chainNameDictionary";
 import { IndexingTimeoutError, isSurfacedError, markSurfaced } from "@/utilities/errors";
-import fetchData from "@/utilities/fetchData";
 import { getProjectObjectives } from "@/utilities/gapIndexerApi/getProjectObjectives";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
@@ -19,7 +19,11 @@ import { INTERACTIVE_INDEXING_POLL, retryUntilConditionMet } from "@/utilities/r
 import { sanitizeInput, sanitizeObject } from "@/utilities/sanitize";
 import { getProjectById } from "@/utilities/sdk";
 import { SHARE_TEXTS } from "@/utilities/share/text";
-import { mapPollExhaustion, sendOutputsAndDeliverables } from "./useMilestone.helpers";
+import {
+  mapCompletionPollExhaustion,
+  mapPollExhaustion,
+  sendOutputsAndDeliverables,
+} from "./useMilestone.helpers";
 import { useOffChainRevoke } from "./useOffChainRevoke";
 import { useSetupChainAndWallet } from "./useSetupChainAndWallet";
 import { useWallet } from "./useWallet";
@@ -160,7 +164,7 @@ export const useMilestone = () => {
               if (res.tx.length > 0) {
                 const txPromises = res.tx.map((tx: any) =>
                   tx.hash
-                    ? fetchData(INDEXER.ATTESTATION_LISTENER(tx.hash, chainId), "POST", {})
+                    ? api.post(INDEXER.ATTESTATION_LISTENER(tx.hash, chainId), {})
                     : Promise.resolve()
                 );
                 await Promise.all(txPromises);
@@ -246,7 +250,7 @@ export const useMilestone = () => {
             // Notify indexer
             const txHash = result?.tx[0]?.hash;
             if (txHash) {
-              await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, milestone.chainID), "POST", {});
+              await api.post(INDEXER.ATTESTATION_LISTENER(txHash, milestone.chainID), {});
             }
 
             // Poll for indexing completion
@@ -583,58 +587,73 @@ export const useMilestone = () => {
           // Notify indexer
           const txHash = result?.tx[0]?.hash;
           if (txHash) {
-            await fetchData(
+            await api.post(
               INDEXER.ATTESTATION_LISTENER(txHash, milestoneInstance?.chainID as number),
-              "POST",
               {}
             );
           }
 
-          // Wait for indexer to process
-          await retryUntilConditionMet(
-            async () => {
-              const { data: fetchedGrants } = await refetchGrants();
-              // Check if any of the milestones have been completed
-              const areMilestonesCompleted = (fetchedGrants || []).some((grant) =>
-                grant.milestones?.some(
-                  (m) =>
-                    m.uid.toLowerCase() === milestoneInstance.uid.toLowerCase() && !!m.completed
-                )
-              );
-              return areMilestonesCompleted || false;
-            },
-            async () => {
-              changeStepperStep("indexed");
-            }
-          ).then(async () => {
-            showSuccess(`Completed ${milestone.title} milestone successfully!`);
+          // Wait for indexer to process. Bounded by the INTERACTIVE budget
+          // (~60s): the user is staring at the stepper, and a completion the
+          // indexer refused to record will never satisfy this condition, so the
+          // default ~5min budget just spun with no signal.
+          try {
+            await retryUntilConditionMet(
+              async () => {
+                const { data: fetchedGrants } = await refetchGrants();
+                // Check if any of the milestones have been completed
+                const areMilestonesCompleted = (fetchedGrants || []).some((grant) =>
+                  grant.milestones?.some(
+                    (m) =>
+                      m.uid.toLowerCase() === milestoneInstance.uid.toLowerCase() && !!m.completed
+                  )
+                );
+                return areMilestonesCompleted || false;
+              },
+              async () => {
+                changeStepperStep("indexed");
+              },
+              INTERACTIVE_INDEXING_POLL.maxRetries,
+              INTERACTIVE_INDEXING_POLL.delay
+            );
+          } catch (pollError) {
+            throw mapCompletionPollExhaustion(pollError);
+          }
 
-            // Open the share dialog with confetti FIRST, before any async work
-            const grantTitle = grantInstance?.details?.title || milestone.title;
-            const slugOrUid = (project?.details?.slug || project?.uid) as string;
-            openShareDialog({
-              modalShareText:
-                "You did it! Another milestone down, more impact ahead. Your onchain trail is growing — keep stacking progress.",
-              modalShareSecondText: " ",
-              shareText: SHARE_TEXTS.MILESTONE_COMPLETED(grantTitle, slugOrUid, grantInstance.uid),
-            });
+          showSuccess(`Completed ${milestone.title} milestone successfully!`);
 
-            // Send outputs and deliverables data (fire-and-forget, swallows errors)
-            await sendOutputsAndDeliverables(milestone.uid, data);
-
-            refetch();
-
-            // Let the share dialog render before any route transition
-            setTimeout(() => {
-              router.push(PAGES.PROJECT.OVERVIEW(slugOrUid));
-            }, 250);
+          // Open the share dialog with confetti FIRST, before any async work
+          const grantTitle = grantInstance?.details?.title || milestone.title;
+          const slugOrUid = (project?.details?.slug || project?.uid) as string;
+          openShareDialog({
+            modalShareText:
+              "You did it! Another milestone down, more impact ahead. Your onchain trail is growing — keep stacking progress.",
+            modalShareSecondText: " ",
+            shareText: SHARE_TEXTS.MILESTONE_COMPLETED(grantTitle, slugOrUid, grantInstance.uid),
           });
+
+          // Send outputs and deliverables data (fire-and-forget, swallows errors)
+          await sendOutputsAndDeliverables(milestone.uid, data);
+
+          refetch();
+
+          // Let the share dialog render before any route transition
+          setTimeout(() => {
+            router.push(PAGES.PROJECT.OVERVIEW(slugOrUid));
+          }, 250);
         });
     } catch (error: any) {
       // errorManager filters "reject" / transient errors, so log raw cause first.
       console.error("[completeSingleMilestone] failed:", error);
-      if (error?.message !== "WALLET_SETUP_FAILED") {
-        showError("There was an error completing the milestone");
+      if (error?.message !== "WALLET_SETUP_FAILED" && !isSurfacedError(error)) {
+        // An indexing timeout carries its own actionable message; the generic
+        // one hid the only detail the user could act on.
+        showError(
+          error instanceof IndexingTimeoutError
+            ? error.message
+            : "There was an error completing the milestone"
+        );
+        markSurfaced(error);
         errorManager("Error completing milestone.", error, { milestoneData: milestone });
       }
       throw error;
@@ -739,7 +758,7 @@ export const useMilestone = () => {
             if (result.tx?.length > 0) {
               const txPromises = result.tx.map((tx: any) =>
                 tx.hash
-                  ? fetchData(INDEXER.ATTESTATION_LISTENER(tx.hash, chainId), "POST", {})
+                  ? api.post(INDEXER.ATTESTATION_LISTENER(tx.hash, chainId), {})
                   : Promise.resolve()
               );
               await Promise.all(txPromises);
@@ -747,30 +766,38 @@ export const useMilestone = () => {
 
             changeStepperStep("indexing");
 
-            // Wait for indexer to process
-            await retryUntilConditionMet(
-              async () => {
-                const { data: fetchedGrants } = await refetchGrants();
-                if (!fetchedGrants?.length) return false;
-                // Check if any of the milestones have been completed
-                const areMilestonesCompleted = fetchedGrants.some((grant) =>
-                  grant.milestones?.some(
-                    (m) => milestoneUIDs.includes(m.uid as `0x${string}`) && !!m.completed
-                  )
-                );
-                return areMilestonesCompleted || false;
-              },
-              async () => {
-                changeStepperStep("indexed");
-              }
-            ).then(async () => {
-              // Send outputs and deliverables for each milestone
-              for (const milestoneUID of milestonesOfChain) {
-                await sendOutputsAndDeliverables(milestoneUID, data);
-              }
+            // Wait for indexer to process. Same INTERACTIVE budget as the
+            // single-milestone path — an unindexable completion must fail fast
+            // and say why, not spin out the default ~5min budget.
+            try {
+              await retryUntilConditionMet(
+                async () => {
+                  const { data: fetchedGrants } = await refetchGrants();
+                  if (!fetchedGrants?.length) return false;
+                  // Check if any of the milestones have been completed
+                  const areMilestonesCompleted = fetchedGrants.some((grant) =>
+                    grant.milestones?.some(
+                      (m) => milestoneUIDs.includes(m.uid as `0x${string}`) && !!m.completed
+                    )
+                  );
+                  return areMilestonesCompleted || false;
+                },
+                async () => {
+                  changeStepperStep("indexed");
+                },
+                INTERACTIVE_INDEXING_POLL.maxRetries,
+                INTERACTIVE_INDEXING_POLL.delay
+              );
+            } catch (pollError) {
+              throw mapCompletionPollExhaustion(pollError);
+            }
 
-              refetch();
-            });
+            // Send outputs and deliverables for each milestone
+            for (const milestoneUID of milestonesOfChain) {
+              await sendOutputsAndDeliverables(milestoneUID, data);
+            }
+
+            refetch();
           });
       }
       // Show final success message after all chains processed
@@ -793,10 +820,20 @@ export const useMilestone = () => {
       }, 250);
     } catch (error) {
       console.error("[completeMilestone] failed:", error);
-      showError("There was an error completing the milestone");
-      errorManager("Error completing milestone", error, {
-        milestoneData: milestone,
-      });
+      // Single-grant milestones are delegated to completeSingleMilestone, which
+      // already toasted and reported; re-handling a surfaced error here would
+      // stack a second toast and a duplicate Sentry event for one failure.
+      if (!isSurfacedError(error)) {
+        showError(
+          error instanceof IndexingTimeoutError
+            ? error.message
+            : "There was an error completing the milestone"
+        );
+        markSurfaced(error);
+        errorManager("Error completing milestone", error, {
+          milestoneData: milestone,
+        });
+      }
       throw error;
     } finally {
       dismiss();
@@ -936,9 +973,8 @@ export const useMilestone = () => {
                   changeStepperStep("indexing");
                   const txHash = res?.tx[0]?.hash;
                   if (txHash) {
-                    await fetchData(
+                    await api.post(
                       INDEXER.ATTESTATION_LISTENER(txHash, milestoneInstance.chainID),
-                      "POST",
                       {}
                     );
                   }
@@ -1035,11 +1071,7 @@ export const useMilestone = () => {
               changeStepperStep("indexing");
               const txHash = res?.tx[0]?.hash;
               if (txHash) {
-                await fetchData(
-                  INDEXER.ATTESTATION_LISTENER(txHash, milestoneInstance.chainID),
-                  "POST",
-                  {}
-                );
+                await api.post(INDEXER.ATTESTATION_LISTENER(txHash, milestoneInstance.chainID), {});
               }
 
               await checkIfCompletionUpdated(() => {
@@ -1111,11 +1143,7 @@ export const useMilestone = () => {
               changeStepperStep("indexing");
               const txHash = res?.tx[0]?.hash;
               if (txHash) {
-                await fetchData(
-                  INDEXER.ATTESTATION_LISTENER(txHash, objectiveInstance.chainID),
-                  "POST",
-                  {}
-                );
+                await api.post(INDEXER.ATTESTATION_LISTENER(txHash, objectiveInstance.chainID), {});
               }
 
               await checkIfCompletionUpdated(() => {

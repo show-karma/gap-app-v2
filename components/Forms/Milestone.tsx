@@ -23,7 +23,7 @@ import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { useIsCommunityAdmin } from "@/src/core/rbac/context/permission-context";
 import { useOwnerStore, useProjectStore } from "@/store";
 import type { Grant } from "@/types/v2/grant";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { formatDate } from "@/utilities/formatDate";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
@@ -157,11 +157,18 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
         let retries = 1000;
         const txHash = res?.tx[0]?.hash;
         if (txHash) {
-          await fetchData(
-            INDEXER.ATTESTATION_LISTENER(txHash, milestoneToAttest.chainID),
-            "POST",
-            {}
-          );
+          try {
+            await api.post(INDEXER.ATTESTATION_LISTENER(txHash, milestoneToAttest.chainID), {});
+          } catch (error) {
+            // Best-effort notification: the indexer's own blockchain listener
+            // will eventually catch up, so a failed HTTP nudge here must not
+            // block the success/indexing flow below (matches legacy
+            // fetchData behavior — see utilities/indexer-notification.ts).
+            errorManager("Failed to notify indexer of new attestation", error, {
+              txHash,
+              chainId: milestoneToAttest.chainID,
+            });
+          }
         }
         updateStep("indexing");
         while (retries > 0) {

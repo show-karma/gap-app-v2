@@ -89,17 +89,15 @@ vi.mock("@/features/programs/hooks/use-programs-with-config", () => ({
   })),
 }));
 
-vi.mock("@/utilities/fetchData", () => ({
-  __esModule: true,
-  default: vi.fn(() =>
-    Promise.resolve([
-      {
+vi.mock("@/utilities/api/client", () => ({
+  api: {
+    get: vi.fn(() =>
+      Promise.resolve({
         applications: [],
         pagination: { total: 0, page: 1, limit: 100, totalPages: 0 },
-      },
-      null,
-    ])
-  ),
+      })
+    ),
+  },
 }));
 
 vi.mock("@/components/FundingPlatform/helper/getProjectTitle", () => ({

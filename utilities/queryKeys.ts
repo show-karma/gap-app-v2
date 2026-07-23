@@ -101,6 +101,19 @@ export const QUERY_KEYS = {
         communitySlug ?? null,
         programId ?? null,
       ] as const,
+    GRANTEE_MILESTONE_ACCESS: (
+      address?: string,
+      communitySlug?: string,
+      programId?: string,
+      projectUid?: string
+    ) =>
+      [
+        "application-grantee-milestone-access",
+        address ?? null,
+        communitySlug ?? null,
+        programId ?? null,
+        projectUid ?? null,
+      ] as const,
     COMMENTS: (referenceNumber: string) => ["application-comments", referenceNumber] as const,
     INVOICE_CONFIG: (referenceNumber: string) =>
       ["applicationInvoiceConfig", referenceNumber] as const,
@@ -246,6 +259,7 @@ export const QUERY_KEYS = {
       sortOrder?: string;
       limit?: number;
       hasPayoutAddress?: boolean;
+      page?: number;
     }) =>
       [
         "projects-explorer-infinite",
@@ -254,6 +268,7 @@ export const QUERY_KEYS = {
         params.sortOrder || "desc",
         params.limit ?? 50,
         params.hasPayoutAddress ?? false,
+        params.page ?? 1,
       ] as const,
   },
   INDICATORS: {

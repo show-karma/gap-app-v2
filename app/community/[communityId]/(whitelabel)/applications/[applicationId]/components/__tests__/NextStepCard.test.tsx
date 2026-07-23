@@ -1,12 +1,10 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import type { ReactNode } from "react";
+import type { ComponentProps } from "react";
 import type { ApplicationStatus } from "@/types/whitelabel-entities";
 import { type ApplicationViewerRole, NextStepCard } from "../NextStepCard";
 
 vi.mock("@/src/components/navigation/Link", () => ({
-  Link: ({ href, children }: { href: string; children: ReactNode }) => (
-    <a href={href}>{children}</a>
-  ),
+  Link: ({ children, ...props }: ComponentProps<"a">) => <a {...props}>{children}</a>,
 }));
 
 interface Overrides {
@@ -46,6 +44,7 @@ describe("NextStepCard", () => {
     expect(screen.getByText("Review this application")).toBeInTheDocument();
     const link = screen.getByRole("link", { name: /go to admin panel/i });
     expect(link).toHaveAttribute("href", "/review");
+    expect(link).toHaveClass("bg-primary", "text-primary-foreground");
   });
 
   it.each<[ApplicationStatus, string]>([

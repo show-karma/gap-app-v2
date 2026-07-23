@@ -15,14 +15,25 @@ vi.mock("@/components/Utilities/errorManager", () => ({
   errorManager: vi.fn(),
 }));
 
-// Mock fetchData utility
-vi.mock("@/utilities/fetchData");
+// Mock the unified api client
+vi.mock("@/utilities/api/client", () => ({
+  api: {
+    get: vi.fn(),
+    post: vi.fn(),
+    put: vi.fn(),
+    patch: vi.fn(),
+    delete: vi.fn(),
+    request: vi.fn(),
+    getPaginated: vi.fn(),
+  },
+}));
 
 import { errorManager } from "@/components/Utilities/errorManager";
 import { getProjectUpdates } from "@/services/project-updates.service";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
+import { HttpError } from "@/utilities/api/errors";
 
-const mockFetchData = fetchData as vi.MockedFunction<typeof fetchData>;
+const mockApiGet = api.get as vi.Mock;
 const mockErrorManager = errorManager as vi.MockedFunction<typeof errorManager>;
 
 describe("project-updates.service", () => {
@@ -46,51 +57,50 @@ describe("project-updates.service", () => {
         grantUpdates: [],
       } as any;
 
-      mockFetchData.mockResolvedValueOnce([mockResponse, null, null, 200]);
+      mockApiGet.mockResolvedValueOnce(mockResponse);
 
       const result = await getProjectUpdates("project-slug");
 
       expect(result).toEqual(mockResponse);
-      expect(mockFetchData.mock.calls[0][0]).toEqual(expect.stringContaining("project-slug"));
+      expect(mockApiGet.mock.calls[0][0]).toEqual(expect.stringContaining("project-slug"));
     });
 
     it("should append milestoneStatus query param when provided", async () => {
-      mockFetchData.mockResolvedValueOnce([
-        { projectUpdates: [], projectMilestones: [], grantMilestones: [], grantUpdates: [] },
-        null,
-        null,
-        200,
-      ]);
+      mockApiGet.mockResolvedValueOnce({
+        projectUpdates: [],
+        projectMilestones: [],
+        grantMilestones: [],
+        grantUpdates: [],
+      });
 
       await getProjectUpdates("project-slug", "completed");
 
-      expect(mockFetchData.mock.calls[0][0]).toEqual(
+      expect(mockApiGet.mock.calls[0][0]).toEqual(
         expect.stringContaining("milestoneStatus=completed")
       );
     });
 
     it("should not append milestoneStatus when not provided", async () => {
-      mockFetchData.mockResolvedValueOnce([
-        { projectUpdates: [], projectMilestones: [], grantMilestones: [], grantUpdates: [] },
-        null,
-        null,
-        200,
-      ]);
+      mockApiGet.mockResolvedValueOnce({
+        projectUpdates: [],
+        projectMilestones: [],
+        grantMilestones: [],
+        grantUpdates: [],
+      });
 
       await getProjectUpdates("project-slug");
 
-      expect(mockFetchData.mock.calls[0][0]).toEqual(
-        expect.not.stringContaining("milestoneStatus")
-      );
+      expect(mockApiGet.mock.calls[0][0]).toEqual(expect.not.stringContaining("milestoneStatus"));
     });
 
     it("should return empty response without reporting on 404", async () => {
-      mockFetchData.mockResolvedValueOnce([
-        null,
-        "Project with identifier unknown not found",
-        null,
-        404,
-      ]);
+      mockApiGet.mockRejectedValueOnce(
+        new HttpError(404, {
+          endpoint: "/v2/projects/unknown/updates",
+          method: "GET",
+          body: { message: "Project with identifier unknown not found" },
+        })
+      );
 
       const result = await getProjectUpdates("unknown");
 
@@ -99,14 +109,20 @@ describe("project-updates.service", () => {
     });
 
     it("should report non-404 errors", async () => {
-      mockFetchData.mockResolvedValueOnce([null, "Server error", null, 500]);
+      mockApiGet.mockRejectedValueOnce(
+        new HttpError(500, {
+          endpoint: "/v2/projects/project-slug/updates",
+          method: "GET",
+          body: { message: "Server error" },
+        })
+      );
 
       const result = await getProjectUpdates("project-slug");
 
       expect(result).toEqual(emptyResponse);
       expect(mockErrorManager).toHaveBeenCalledWith(
-        "Project Updates API Error: Server error",
-        "Server error",
+        expect.stringContaining("Project Updates API Error:"),
+        expect.any(HttpError),
         {
           context: "project-updates.service",
         }

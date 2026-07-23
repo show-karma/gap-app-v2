@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { DOMAIN_MAPPINGS } from "@/src/infrastructure/config/domain-mapping";
 import type { FundingProgram } from "@/types/whitelabel-entities";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 
 export interface CommunityPrograms {
   communityId: string;
@@ -15,17 +15,15 @@ export function useAllCommunitiesPrograms() {
     queryKey: ["all-communities-programs"],
     queryFn: async () => {
       const programsPromises = DOMAIN_MAPPINGS.map(async (community) => {
-        const [res, err] = await fetchData<FundingProgram[]>(
-          `/v2/funding-program-configs/community/${community.id}?status=active&limit=100`,
-          "GET",
-          {},
-          {},
-          {},
-          true
-        );
-
-        if (err) {
-          throw new Error(`Failed to fetch programs for ${community.name}: ${err}`);
+        let res: FundingProgram[] | undefined;
+        try {
+          // TODO(#1775): add zod schema
+          res = await api.get<FundingProgram[]>(
+            `/v2/funding-program-configs/community/${community.id}?status=active&limit=100`
+          );
+        } catch (err) {
+          const message = err instanceof Error ? err.message : String(err);
+          throw new Error(`Failed to fetch programs for ${community.name}: ${message}`);
         }
 
         const programs = res || [];
