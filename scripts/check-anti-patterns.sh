@@ -39,7 +39,8 @@ check_file() {
 
       # useState + service call without useMutation
       if grep -q "useState" "$FILE" 2>/dev/null; then
-        if grep -qE "await.*Service\.|\.post\(|\.put\(|\.patch\(|\.delete\(" "$FILE" 2>/dev/null; then
+        # ".delete(" is receiver-qualified: bare matches false-positive on Set/Map#delete
+        if grep -qE "await.*Service\.|\.post\(|\.put\(|\.patch\(|(api|axios|[A-Za-z]*[Ss]ervice)\.delete\(" "$FILE" 2>/dev/null; then
           if ! grep -q "useMutation" "$FILE" 2>/dev/null; then
             FILE_ISSUES="${FILE_ISSUES}\n  [MUTATION] useState + service call without useMutation"
             ISSUES=$((ISSUES + 1))

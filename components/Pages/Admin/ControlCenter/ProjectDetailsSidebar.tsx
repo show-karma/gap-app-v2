@@ -468,6 +468,7 @@ export function ProjectDetailsSidebar({
       setRemovedFiles(new Set());
       toast.success(`Saved ${editCount} ${editCount === 1 ? "change" : "changes"}`);
     } catch {
+      // SUPPRESSED: saveMilestoneInvoices already reports to Sentry via errorManager
       toast.error("Failed to save changes");
     }
   }, [

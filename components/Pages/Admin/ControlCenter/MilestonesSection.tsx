@@ -166,6 +166,7 @@ export const MilestonesSection = memo(function MilestonesSection({
         const downloadUrl = await getInvoiceDownloadUrl(grant.grantUid, fileKey);
         window.open(downloadUrl, "_blank", "noopener,noreferrer");
       } catch {
+        // SUPPRESSED: getInvoiceDownloadUrl already reports to Sentry via errorManager
         toast.error("Failed to get download link");
       } finally {
         setLoadingFileKeys((prev) => {
