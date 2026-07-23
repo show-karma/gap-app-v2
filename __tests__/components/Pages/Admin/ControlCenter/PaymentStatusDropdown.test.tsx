@@ -274,7 +274,43 @@ describe("PaymentStatusDropdown", () => {
 
     // Should NOT call mutate directly — delegates to onRequestRecordPayment
     expect(mockMutate).not.toHaveBeenCalled();
-    expect(mockOnRequestRecordPayment).toHaveBeenCalledWith("Milestone 1", "disbursed");
+    // Passes the row's own milestoneUID (not just the free-text label) so that
+    // duplicate labels resolve to the correct milestone downstream.
+    expect(mockOnRequestRecordPayment).toHaveBeenCalledWith(
+      "milestone-uid-789",
+      "Milestone 1",
+      "disbursed"
+    );
+  });
+
+  it("should call onRequestDeleteDisbursement with the row's milestoneUID, not the label", async () => {
+    const user = userEvent.setup();
+    const mockOnRequestDeleteDisbursement = vi.fn();
+    renderWithProviders(
+      <PaymentStatusDropdown
+        {...defaultProps}
+        currentStatus="disbursed"
+        onRequestDeleteDisbursement={mockOnRequestDeleteDisbursement}
+      />
+    );
+
+    await user.click(screen.getByTestId("dropdown-trigger"));
+
+    await waitFor(() => {
+      expect(screen.getByRole("menu")).toBeInTheDocument();
+    });
+
+    await user.click(screen.getByRole("menuitem", { name: /Unpaid/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText(/Mark as unpaid/i)).toBeInTheDocument();
+    });
+
+    await user.click(screen.getByRole("button", { name: /Delete disbursement/i }));
+
+    // Regression (GAP-FRONTEND-25M): must forward the row UID, never the label.
+    expect(mockOnRequestDeleteDisbursement).toHaveBeenCalledWith("milestone-uid-789");
+    expect(mockOnRequestDeleteDisbursement).not.toHaveBeenCalledWith("Milestone 1");
   });
 
   it("should show confirmation dialog for unpaid status when disbursement exists", async () => {
