@@ -1,6 +1,6 @@
 import { errorManager } from "@/components/Utilities/errorManager";
 import { api } from "@/utilities/api/client";
-import { HttpError, isApiError } from "@/utilities/api/errors";
+import { HttpError } from "@/utilities/api/errors";
 import { INDEXER } from "@/utilities/indexer";
 import type {
   CommunityPayoutAgreementInfo,
@@ -9,7 +9,6 @@ import type {
   CommunityPayoutsResponse,
   CreateDisbursementsRequest,
   CreateDisbursementsResponse,
-  MilestonePaymentStatus,
   PaginatedDisbursementsResponse,
   PayoutDisbursement,
   PayoutGrantConfig,
@@ -20,6 +19,7 @@ import type {
   TotalDisbursedResponse,
   UpdateStatusRequest,
 } from "../types/payout-disbursement";
+import { rethrowFetchError } from "./rethrow-fetch-error";
 
 // NOTE(#1775): responses in this file are migrated with NO zod schema (the
 // `api` client's untyped escape hatch) to avoid introducing new
@@ -37,18 +37,6 @@ function getErrorMessage(error: unknown): string {
   }
   if (error instanceof Error) return error.message;
   return String(error);
-}
-
-// Rethrows a failed payout-config fetch. A typed `ApiError` (issue #1775) is
-// re-thrown as-is so React Query's retry policy can still see the HTTP status —
-// a public-endpoint 429 stays `retryable` and gets the bounded Retry-After
-// backoff instead of collapsing to the legacy single-retry path when the burst
-// of per-grant requests on the milestone-report page trips the rate limit.
-// Non-API failures keep the caller-friendly wrapped message. See
-// GAP-FRONTEND-245.
-function rethrowFetchError(error: unknown, prefix: string): never {
-  if (isApiError(error)) throw error;
-  throw new Error(`${prefix}: ${getErrorMessage(error)}`);
 }
 
 /**
