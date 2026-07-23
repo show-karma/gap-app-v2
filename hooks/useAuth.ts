@@ -7,6 +7,7 @@ import { usePrivyBridge } from "@/contexts/privy-bridge-context";
 import { useProjectCreateModalStore } from "@/store/modals/projectCreate";
 import { compareAllWallets } from "@/utilities/auth/compare-all-wallets";
 import { getE2EMockAuthState } from "@/utilities/auth/e2e-auth";
+import { hasNonWalletIdentity } from "@/utilities/auth/has-non-wallet-identity";
 import { selectPrimaryWallet } from "@/utilities/auth/select-primary-wallet";
 import { TokenManager } from "@/utilities/auth/token-manager";
 import { queryClient } from "@/utilities/query-client";
@@ -17,6 +18,23 @@ import { useWhitelabel } from "@/utilities/whitelabel-context";
 // must be module-level and not a per-hook ref). Client-only (only ever written
 // inside a useEffect), so there is no SSR request bleed.
 let authReadyBarrierAddress: Hex | undefined;
+
+// Has the current disconnect already been acted on? useAuth has ~100+ call
+// sites, so every mounted instance schedules its own timer — they must collapse
+// to a single logout(). Deduplicating here, when the timer FIRES, rather than
+// when it is scheduled, is what lets each instance keep ownership of (and clean
+// up) its own timer while still yielding exactly one logout. Reset whenever the
+// wallet state recovers. Client-only (only ever written inside an effect or its
+// timer), so there is no SSR request bleed.
+let walletDisconnectLogoutFired = false;
+
+/**
+ * How long the wallet list must stay empty before a wallet-only session is
+ * logged out. Privy can briefly report zero wallets while re-hydrating even
+ * after `walletsReady` flips true; logging out on that transient blip is the
+ * sign-out loop this delay exists to prevent.
+ */
+const WALLET_DISCONNECT_LOGOUT_DELAY_MS = 1000;
 
 /**
  * Initial delay (in ms) before first auth status check.
@@ -108,7 +126,9 @@ const clearWagmiState = () => {
       localStorage.removeItem(key);
     }
   } catch {
-    // Ignore localStorage errors (e.g., private browsing, storage full)
+    // SUPPRESSED: clearing stale wagmi keys is best-effort housekeeping.
+    // localStorage throws in private browsing and when the quota is full;
+    // neither is actionable here, and failing would block logout.
   }
 };
 
@@ -129,6 +149,7 @@ export const useAuth = () => {
     getAccessToken,
     connectWallet,
     wallets,
+    walletsReady,
     isConnected,
   } = usePrivyBridge();
 
@@ -150,6 +171,9 @@ export const useAuth = () => {
   const isE2EMockAuthenticated = Boolean(e2eMockAuthState?.authenticated);
   const e2eMockAddress = e2eMockAuthState?.user?.wallet?.address as Hex | undefined;
   const address = (primaryWallet?.address as Hex | undefined) || e2eMockAddress;
+  // Does the session outlive losing every wallet? Derived as a boolean so the
+  // disconnect effect below doesn't re-run on every new Privy `user` identity.
+  const hasSurvivingIdentity = useMemo(() => hasNonWalletIdentity(user), [user]);
 
   const shouldLoginAfterLogout = useRef(false);
   const prevAuthRef = useRef(authenticated);
@@ -274,6 +298,54 @@ export const useAuth = () => {
     }
   }, [authenticated, address]);
 
+  /**
+   * WALLET-DISCONNECT LOGOUT
+   *
+   * Disconnecting the site inside the wallet extension (MetaMask ▸ Connected
+   * sites ▸ Disconnect) empties Privy's wallet list but leaves the Privy session
+   * authenticated. For a wallet-only session that is a dead end: `address` goes
+   * undefined, so the navbar has no address, no avatar and no name to render,
+   * while `authenticated` stays true so the Sign-in button never comes back —
+   * and the Log out item lives inside the menu that can no longer render. The
+   * user is locked out until they clear site data.
+   *
+   * The session is also functionally useless: every authenticated write is keyed
+   * on the signer that just went away. So end it — this mirrors the existing
+   * wallet-*switch* logout above, which already treats a change of wallet
+   * identity as the end of the session.
+   *
+   * Three guards keep this from becoming the sign-out loop CLAUDE.md warns
+   * about:
+   *  - `walletsReady`: `wallets` is legitimately empty while Privy hydrates.
+   *  - `hasNonWalletIdentity`: an email/Google/Farcaster user who merely linked
+   *    a wallet keeps their session when they disconnect it.
+   *  - the delay + cleanup: a transient empty list cancels the pending logout
+   *    instead of signing the user out.
+   */
+  useEffect(() => {
+    if (!ready || !walletsReady || !authenticated) return;
+    if (wallets.length > 0 || hasSurvivingIdentity) {
+      // Reconnected, or never applicable — re-arm for a future disconnect. Any
+      // timers still pending are cleared by their own instance's cleanup when
+      // this effect re-runs.
+      walletDisconnectLogoutFired = false;
+      return;
+    }
+
+    // Every mounted instance schedules its own timer and cleans up its own
+    // timer. That is deliberate: a shared timer owned by one instance would be
+    // cancelled when that instance unmounts, and no other instance would
+    // reschedule — stranding the session authenticated forever. The
+    // module-level flag collapses the resulting N timers into one logout.
+    const timer = setTimeout(() => {
+      if (walletDisconnectLogoutFired) return;
+      walletDisconnectLogoutFired = true;
+      logout();
+    }, WALLET_DISCONNECT_LOGOUT_DELAY_MS);
+
+    return () => clearTimeout(timer);
+  }, [ready, walletsReady, authenticated, wallets.length, hasSurvivingIdentity, logout]);
+
   // Auto-login after logout completes
   useEffect(() => {
     if (shouldLoginAfterLogout.current && !authenticated && ready) {
@@ -313,7 +385,9 @@ export const useAuth = () => {
         // - Privy initialization timing
         handleAuthFailure();
       } catch {
-        // Token check failed (network error, etc.) - treat as a failure
+        // SUPPRESSED: not swallowed — a failed token check (network error, etc.)
+        // is deliberately routed into the consecutive-failure counter below, so
+        // a transient hiccup can't log the user out on its own.
         handleAuthFailure();
       }
     };
@@ -454,6 +528,7 @@ export const useAuth = () => {
     address,
     primaryWallet,
     wallets,
+    walletsReady,
 
     // Privy methods
     login: adaptedLogin,

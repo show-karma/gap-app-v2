@@ -1,9 +1,12 @@
-import fetchData from "@/utilities/fetchData";
 import { authorizationService } from "../services/authorization.service";
 
-vi.mock("@/utilities/fetchData");
+vi.mock("@/utilities/api/client", () => ({
+  api: { get: vi.fn() },
+}));
 
-const mockFetchData = fetchData as vi.MockedFunction<typeof fetchData>;
+import { api } from "@/utilities/api/client";
+
+const mockApiGet = api.get as vi.MockedFunction<typeof api.get>;
 
 describe("authorizationService", () => {
   beforeEach(() => {
@@ -12,13 +15,14 @@ describe("authorizationService", () => {
 
   describe("getPermissions", () => {
     it("should throw on API error so React Query can retry", async () => {
-      mockFetchData.mockResolvedValue([null, "Error", null, 500]);
+      const apiError = new Error("Error");
+      mockApiGet.mockRejectedValue(apiError);
 
-      await expect(authorizationService.getPermissions()).rejects.toBe("Error");
+      await expect(authorizationService.getPermissions()).rejects.toBe(apiError);
     });
 
     it("should throw on empty response", async () => {
-      mockFetchData.mockResolvedValue([null, null, null, 200]);
+      mockApiGet.mockResolvedValue(null);
 
       await expect(authorizationService.getPermissions()).rejects.toThrow(
         "Failed to fetch permissions: empty response"
@@ -26,27 +30,22 @@ describe("authorizationService", () => {
     });
 
     it("should return parsed permissions from API response", async () => {
-      mockFetchData.mockResolvedValue([
-        {
-          roles: {
-            primaryRole: "PROGRAM_ADMIN",
-            roles: ["PROGRAM_ADMIN", "APPLICANT"],
-            reviewerTypes: [],
-          },
-          permissions: ["program:view", "program:edit", "application:view_all"],
-          resourceContext: {
-            programId: "program-123",
-          },
-          isCommunityAdmin: false,
-          isProgramAdmin: true,
-          isReviewer: false,
-          isRegistryAdmin: false,
-          isProgramCreator: false,
+      mockApiGet.mockResolvedValue({
+        roles: {
+          primaryRole: "PROGRAM_ADMIN",
+          roles: ["PROGRAM_ADMIN", "APPLICANT"],
+          reviewerTypes: [],
         },
-        null,
-        null,
-        200,
-      ]);
+        permissions: ["program:view", "program:edit", "application:view_all"],
+        resourceContext: {
+          programId: "program-123",
+        },
+        isCommunityAdmin: false,
+        isProgramAdmin: true,
+        isReviewer: false,
+        isRegistryAdmin: false,
+        isProgramCreator: false,
+      });
 
       const result = await authorizationService.getPermissions({
         programId: "program-123",
@@ -61,27 +60,22 @@ describe("authorizationService", () => {
     });
 
     it("should include reviewer types when present", async () => {
-      mockFetchData.mockResolvedValue([
-        {
-          roles: {
-            primaryRole: "PROGRAM_REVIEWER",
-            roles: ["PROGRAM_REVIEWER"],
-            reviewerTypes: ["PROGRAM"],
-          },
-          permissions: ["application:review", "application:view_assigned"],
-          resourceContext: {
-            programId: "program-123",
-          },
-          isCommunityAdmin: false,
-          isProgramAdmin: false,
-          isReviewer: true,
-          isRegistryAdmin: false,
-          isProgramCreator: false,
+      mockApiGet.mockResolvedValue({
+        roles: {
+          primaryRole: "PROGRAM_REVIEWER",
+          roles: ["PROGRAM_REVIEWER"],
+          reviewerTypes: ["PROGRAM"],
         },
-        null,
-        null,
-        200,
-      ]);
+        permissions: ["application:review", "application:view_assigned"],
+        resourceContext: {
+          programId: "program-123",
+        },
+        isCommunityAdmin: false,
+        isProgramAdmin: false,
+        isReviewer: true,
+        isRegistryAdmin: false,
+        isProgramCreator: false,
+      });
 
       const result = await authorizationService.getPermissions({
         programId: "program-123",
@@ -91,21 +85,16 @@ describe("authorizationService", () => {
     });
 
     it("should pass query parameters to API", async () => {
-      mockFetchData.mockResolvedValue([
-        {
-          roles: { primaryRole: "GUEST", roles: ["GUEST"], reviewerTypes: [] },
-          permissions: [],
-          resourceContext: {},
-          isCommunityAdmin: false,
-          isProgramAdmin: false,
-          isReviewer: false,
-          isRegistryAdmin: false,
-          isProgramCreator: false,
-        },
-        null,
-        null,
-        200,
-      ]);
+      mockApiGet.mockResolvedValue({
+        roles: { primaryRole: "GUEST", roles: ["GUEST"], reviewerTypes: [] },
+        permissions: [],
+        resourceContext: {},
+        isCommunityAdmin: false,
+        isProgramAdmin: false,
+        isReviewer: false,
+        isRegistryAdmin: false,
+        isProgramCreator: false,
+      });
 
       await authorizationService.getPermissions({
         communityId: "community-123",
@@ -115,56 +104,42 @@ describe("authorizationService", () => {
         chainId: 10,
       });
 
-      expect(mockFetchData).toHaveBeenCalledWith(
-        expect.stringContaining("communityId=community-123")
-      );
-      expect(mockFetchData).toHaveBeenCalledWith(expect.stringContaining("programId=program-456"));
-      expect(mockFetchData).toHaveBeenCalledWith(expect.stringContaining("applicationId=app-789"));
-      expect(mockFetchData).toHaveBeenCalledWith(
-        expect.stringContaining("milestoneId=milestone-012")
-      );
-      expect(mockFetchData).toHaveBeenCalledWith(expect.stringContaining("chainId=10"));
+      expect(mockApiGet).toHaveBeenCalledWith(expect.stringContaining("communityId=community-123"));
+      expect(mockApiGet).toHaveBeenCalledWith(expect.stringContaining("programId=program-456"));
+      expect(mockApiGet).toHaveBeenCalledWith(expect.stringContaining("applicationId=app-789"));
+      expect(mockApiGet).toHaveBeenCalledWith(expect.stringContaining("milestoneId=milestone-012"));
+      expect(mockApiGet).toHaveBeenCalledWith(expect.stringContaining("chainId=10"));
     });
 
     it("should handle empty params", async () => {
-      mockFetchData.mockResolvedValue([
-        {
-          roles: { primaryRole: "GUEST", roles: ["GUEST"], reviewerTypes: [] },
-          permissions: ["community:view", "program:view"],
-          resourceContext: {},
-          isCommunityAdmin: false,
-          isProgramAdmin: false,
-          isReviewer: false,
-          isRegistryAdmin: false,
-          isProgramCreator: false,
-        },
-        null,
-        null,
-        200,
-      ]);
+      mockApiGet.mockResolvedValue({
+        roles: { primaryRole: "GUEST", roles: ["GUEST"], reviewerTypes: [] },
+        permissions: ["community:view", "program:view"],
+        resourceContext: {},
+        isCommunityAdmin: false,
+        isProgramAdmin: false,
+        isReviewer: false,
+        isRegistryAdmin: false,
+        isProgramCreator: false,
+      });
 
       const result = await authorizationService.getPermissions();
 
       expect(result.roles.primaryRole).toBe("GUEST");
-      expect(mockFetchData).toHaveBeenCalledWith("/v2/auth/permissions");
+      expect(mockApiGet).toHaveBeenCalledWith("/v2/auth/permissions");
     });
 
     it("should return isReviewer flag from API response", async () => {
-      mockFetchData.mockResolvedValue([
-        {
-          roles: { primaryRole: "GUEST", roles: ["GUEST"], reviewerTypes: [] },
-          permissions: ["community:view", "program:view"],
-          resourceContext: { communityId: "optimism" },
-          isCommunityAdmin: false,
-          isProgramAdmin: false,
-          isReviewer: true,
-          isRegistryAdmin: false,
-          isProgramCreator: false,
-        },
-        null,
-        null,
-        200,
-      ]);
+      mockApiGet.mockResolvedValue({
+        roles: { primaryRole: "GUEST", roles: ["GUEST"], reviewerTypes: [] },
+        permissions: ["community:view", "program:view"],
+        resourceContext: { communityId: "optimism" },
+        isCommunityAdmin: false,
+        isProgramAdmin: false,
+        isReviewer: true,
+        isRegistryAdmin: false,
+        isProgramCreator: false,
+      });
 
       const result = await authorizationService.getPermissions({
         communityId: "optimism",
@@ -175,25 +150,20 @@ describe("authorizationService", () => {
     });
 
     it("should return boolean flags from API response", async () => {
-      mockFetchData.mockResolvedValue([
-        {
-          roles: {
-            primaryRole: "COMMUNITY_ADMIN",
-            roles: ["COMMUNITY_ADMIN"],
-            reviewerTypes: [],
-          },
-          permissions: ["community:view", "community:edit"],
-          resourceContext: { communityId: "optimism" },
-          isCommunityAdmin: true,
-          isProgramAdmin: false,
-          isReviewer: false,
-          isRegistryAdmin: false,
-          isProgramCreator: false,
+      mockApiGet.mockResolvedValue({
+        roles: {
+          primaryRole: "COMMUNITY_ADMIN",
+          roles: ["COMMUNITY_ADMIN"],
+          reviewerTypes: [],
         },
-        null,
-        null,
-        200,
-      ]);
+        permissions: ["community:view", "community:edit"],
+        resourceContext: { communityId: "optimism" },
+        isCommunityAdmin: true,
+        isProgramAdmin: false,
+        isReviewer: false,
+        isRegistryAdmin: false,
+        isProgramCreator: false,
+      });
 
       const result = await authorizationService.getPermissions({
         communityId: "optimism",
@@ -206,17 +176,12 @@ describe("authorizationService", () => {
     });
 
     it("should coerce missing boolean flags to false", async () => {
-      mockFetchData.mockResolvedValue([
-        {
-          roles: { primaryRole: "GUEST", roles: ["GUEST"], reviewerTypes: [] },
-          permissions: [],
-          resourceContext: {},
-          // Intentionally omit boolean flags to test strict coercion
-        },
-        null,
-        null,
-        200,
-      ]);
+      mockApiGet.mockResolvedValue({
+        roles: { primaryRole: "GUEST", roles: ["GUEST"], reviewerTypes: [] },
+        permissions: [],
+        resourceContext: {},
+        // Intentionally omit boolean flags to test strict coercion
+      });
 
       const result = await authorizationService.getPermissions();
 
@@ -228,21 +193,16 @@ describe("authorizationService", () => {
     });
 
     it("should coerce truthy non-boolean values to false", async () => {
-      mockFetchData.mockResolvedValue([
-        {
-          roles: { primaryRole: "GUEST", roles: ["GUEST"], reviewerTypes: [] },
-          permissions: [],
-          resourceContext: {},
-          isCommunityAdmin: "yes" as unknown as boolean,
-          isProgramAdmin: 1 as unknown as boolean,
-          isReviewer: {} as unknown as boolean,
-          isRegistryAdmin: null as unknown as boolean,
-          isProgramCreator: undefined as unknown as boolean,
-        },
-        null,
-        null,
-        200,
-      ]);
+      mockApiGet.mockResolvedValue({
+        roles: { primaryRole: "GUEST", roles: ["GUEST"], reviewerTypes: [] },
+        permissions: [],
+        resourceContext: {},
+        isCommunityAdmin: "yes" as unknown as boolean,
+        isProgramAdmin: 1 as unknown as boolean,
+        isReviewer: {} as unknown as boolean,
+        isRegistryAdmin: null as unknown as boolean,
+        isProgramCreator: undefined as unknown as boolean,
+      });
 
       const result = await authorizationService.getPermissions();
 

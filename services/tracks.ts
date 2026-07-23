@@ -1,5 +1,6 @@
+import { z } from "zod";
 import { errorManager } from "@/components/Utilities/errorManager";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 
 export interface Track {
@@ -25,29 +26,55 @@ interface ProjectTrack {
 }
 
 // API response types (dates are strings from API)
-interface TrackAPIResponse {
-  id: string;
-  name: string;
-  description?: string | null;
-  communityUID: string;
-  isArchived: boolean;
-  createdAt: string;
-  updatedAt: string;
-  programId?: string;
-  isActive?: boolean;
-}
+const TrackAPIResponseSchema = z
+  .object({
+    id: z.string(),
+    name: z.string(),
+    description: z.string().nullable().optional(),
+    communityUID: z.string(),
+    isArchived: z.boolean(),
+    createdAt: z.string(),
+    updatedAt: z.string(),
+    programId: z.string().optional(),
+    isActive: z.boolean().optional(),
+  })
+  .passthrough();
+type TrackAPIResponse = z.infer<typeof TrackAPIResponseSchema>;
 
-interface GetTracksV2Response {
-  tracks: TrackAPIResponse[];
-}
+const GetTracksV2ResponseSchema = z
+  .object({
+    tracks: z.array(TrackAPIResponseSchema).optional(),
+  })
+  .passthrough();
+type GetTracksV2Response = z.infer<typeof GetTracksV2ResponseSchema>;
 
-interface GetProjectTracksV2Response {
-  tracks: ProjectTrack[];
-}
+// Nested `track` shape isn't transformed/consumed further by this service —
+// keep it untyped rather than inventing a stricter shape than reality.
+const ProjectTrackResponseSchema = z
+  .object({
+    id: z.string(),
+    projectUID: z.string(),
+    trackId: z.string(),
+    programId: z.string(),
+    isActive: z.boolean(),
+    track: z.unknown().optional(),
+    createdAt: z.string(),
+  })
+  .passthrough();
 
-interface ProjectByTrackAPIResponse {
-  projects: unknown[];
-}
+const GetProjectTracksV2ResponseSchema = z
+  .object({
+    tracks: z.array(ProjectTrackResponseSchema).optional(),
+  })
+  .passthrough();
+type GetProjectTracksV2Response = z.infer<typeof GetProjectTracksV2ResponseSchema>;
+
+const ProjectByTrackAPIResponseSchema = z
+  .object({
+    projects: z.array(z.unknown()).optional(),
+  })
+  .passthrough();
+type ProjectByTrackAPIResponse = z.infer<typeof ProjectByTrackAPIResponseSchema>;
 
 // Helper to map track from API response
 const mapTrackResponse = (track: TrackAPIResponse): Track => ({
@@ -63,19 +90,10 @@ export const trackService = {
     includeArchived: boolean = false
   ): Promise<Track[]> => {
     try {
-      const [data, error] = await fetchData<GetTracksV2Response>(
+      const data = await api.get<GetTracksV2Response>(
         INDEXER.V2.TRACKS.LIST(communityUID, includeArchived),
-        "GET",
-        {},
-        {},
-        {},
-        false,
-        false
+        { isAuthorized: false, schema: GetTracksV2ResponseSchema }
       );
-
-      if (error || !data) {
-        throw new Error(error || "Failed to fetch tracks");
-      }
 
       return (data.tracks || []).map(mapTrackResponse);
     } catch (error: unknown) {
@@ -89,19 +107,10 @@ export const trackService = {
     try {
       // Normalize programId (remove chainId suffix if present) before sending to API
       const normalizedProgramId = programId.includes("_") ? programId.split("_")[0] : programId;
-      const [data, error] = await fetchData<GetTracksV2Response>(
+      const data = await api.get<GetTracksV2Response>(
         INDEXER.V2.TRACKS.PROGRAM_TRACKS(normalizedProgramId),
-        "GET",
-        {},
-        {},
-        {},
-        false,
-        false
+        { isAuthorized: false, schema: GetTracksV2ResponseSchema }
       );
-
-      if (error || !data) {
-        throw new Error(error || "Failed to fetch program tracks");
-      }
 
       return (data.tracks || []).map(mapTrackResponse);
     } catch (error: unknown) {
@@ -113,23 +122,15 @@ export const trackService = {
   // Create a new track (V2)
   createTrack: async (name: string, description: string, communityUID: string): Promise<Track> => {
     try {
-      const [data, error] = await fetchData<TrackAPIResponse>(
+      const data = await api.post<TrackAPIResponse>(
         INDEXER.V2.TRACKS.CREATE(),
-        "POST",
         {
           name,
           description,
           communityUID,
         },
-        {},
-        {},
-        true,
-        false
+        { schema: TrackAPIResponseSchema }
       );
-
-      if (error || !data) {
-        throw new Error(error || "Failed to create track");
-      }
 
       return mapTrackResponse(data);
     } catch (error: unknown) {
@@ -146,22 +147,14 @@ export const trackService = {
     _communityUID?: string // Not needed for V2
   ): Promise<Track> => {
     try {
-      const [data, error] = await fetchData<TrackAPIResponse>(
+      const data = await api.put<TrackAPIResponse>(
         INDEXER.V2.TRACKS.UPDATE(id),
-        "PUT",
         {
           name,
           description,
         },
-        {},
-        {},
-        true,
-        false
+        { schema: TrackAPIResponseSchema }
       );
-
-      if (error || !data) {
-        throw new Error(error || "Failed to update track");
-      }
 
       return mapTrackResponse(data);
     } catch (error: unknown) {
@@ -173,19 +166,9 @@ export const trackService = {
   // Archive a track (V2)
   archiveTrack: async (id: string, _communityUID?: string): Promise<Track> => {
     try {
-      const [data, error] = await fetchData<TrackAPIResponse>(
-        INDEXER.V2.TRACKS.ARCHIVE(id),
-        "DELETE",
-        {},
-        {},
-        {},
-        true,
-        false
-      );
-
-      if (error || !data) {
-        throw new Error(error || "Failed to archive track");
-      }
+      const data = await api.delete<TrackAPIResponse>(INDEXER.V2.TRACKS.ARCHIVE(id), {
+        schema: TrackAPIResponseSchema,
+      });
 
       return mapTrackResponse(data);
     } catch (error: unknown) {
@@ -203,19 +186,7 @@ export const trackService = {
     try {
       // Normalize programId (remove chainId suffix if present) before sending to API
       const normalizedProgramId = programId.includes("_") ? programId.split("_")[0] : programId;
-      const [, error] = await fetchData(
-        INDEXER.V2.TRACKS.ASSIGN_TO_PROGRAM(normalizedProgramId),
-        "POST",
-        { trackIds },
-        {},
-        {},
-        true,
-        false
-      );
-
-      if (error) {
-        throw new Error(error);
-      }
+      await api.post(INDEXER.V2.TRACKS.ASSIGN_TO_PROGRAM(normalizedProgramId), { trackIds });
     } catch (error: unknown) {
       errorManager("Error assigning tracks to program", error);
       throw error;
@@ -231,19 +202,7 @@ export const trackService = {
     try {
       // Normalize programId (remove chainId suffix if present) before sending to API
       const normalizedProgramId = programId.includes("_") ? programId.split("_")[0] : programId;
-      const [, error] = await fetchData(
-        INDEXER.V2.TRACKS.UNASSIGN_FROM_PROGRAM(normalizedProgramId, trackId),
-        "DELETE",
-        {},
-        {},
-        {},
-        true,
-        false
-      );
-
-      if (error) {
-        throw new Error(error);
-      }
+      await api.delete(INDEXER.V2.TRACKS.UNASSIGN_FROM_PROGRAM(normalizedProgramId, trackId));
     } catch (error: unknown) {
       errorManager("Error removing track from program", error);
       throw error;
@@ -262,15 +221,7 @@ export const trackService = {
       const normalizedProgramId = programId.includes("_") ? programId.split("_")[0] : programId;
       await Promise.all(
         trackIds.map((trackId) =>
-          fetchData(
-            INDEXER.V2.TRACKS.UNASSIGN_FROM_PROGRAM(normalizedProgramId, trackId),
-            "DELETE",
-            {},
-            {},
-            {},
-            true,
-            false
-          )
+          api.delete(INDEXER.V2.TRACKS.UNASSIGN_FROM_PROGRAM(normalizedProgramId, trackId))
         )
       );
     } catch (error: unknown) {
@@ -284,21 +235,12 @@ export const trackService = {
     try {
       // Normalize programId (remove chainId suffix if present) before sending to API
       const normalizedProgramId = programId.includes("_") ? programId.split("_")[0] : programId;
-      const [data, error] = await fetchData<GetProjectTracksV2Response>(
+      const data = await api.get<GetProjectTracksV2Response>(
         INDEXER.V2.TRACKS.PROJECT_TRACKS(projectId, normalizedProgramId),
-        "GET",
-        {},
-        {},
-        {},
-        false,
-        false
+        { isAuthorized: false, schema: GetProjectTracksV2ResponseSchema }
       );
 
-      if (error || !data) {
-        throw new Error(error || "Failed to fetch project tracks");
-      }
-
-      return data.tracks || [];
+      return (data.tracks || []) as ProjectTrack[];
     } catch (error: unknown) {
       errorManager(`Error fetching tracks for project ${projectId}`, error);
       throw error;
@@ -315,19 +257,10 @@ export const trackService = {
     try {
       // Normalize programId (remove chainId suffix if present) before sending to API
       const normalizedProgramId = programId.includes("_") ? programId.split("_")[0] : programId;
-      const [, error] = await fetchData(
-        INDEXER.V2.TRACKS.ASSIGN_TO_PROJECT(projectId),
-        "POST",
-        { trackIds, programId: normalizedProgramId },
-        {},
-        {},
-        true,
-        false
-      );
-
-      if (error) {
-        throw new Error(error);
-      }
+      await api.post(INDEXER.V2.TRACKS.ASSIGN_TO_PROJECT(projectId), {
+        trackIds,
+        programId: normalizedProgramId,
+      });
     } catch (error: unknown) {
       errorManager("Error assigning tracks to project", error);
       throw error;
@@ -343,19 +276,13 @@ export const trackService = {
     try {
       // Normalize programId (remove chainId suffix if present) before sending to API
       const normalizedProgramId = programId.includes("_") ? programId.split("_")[0] : programId;
-      const [, error] = await fetchData(
-        INDEXER.V2.TRACKS.UNASSIGN_FROM_PROJECT(normalizedProgramId, projectId),
+      // DELETE with a body isn't exposed on api.delete(); use the low-level
+      // request() escape hatch (still throws on failure like the rest of the client).
+      await api.request(
         "DELETE",
-        { trackIds },
-        {},
-        {},
-        true,
-        false
+        INDEXER.V2.TRACKS.UNASSIGN_FROM_PROJECT(normalizedProgramId, projectId),
+        { trackIds }
       );
-
-      if (error) {
-        throw new Error(error);
-      }
     } catch (error: unknown) {
       errorManager("Error unassigning tracks from project", error);
       throw error;
@@ -371,19 +298,10 @@ export const trackService = {
     try {
       // Normalize programId (remove chainId suffix if present) before sending to API
       const normalizedProgramId = programId.includes("_") ? programId.split("_")[0] : programId;
-      const [data, error] = await fetchData<ProjectByTrackAPIResponse>(
+      const data = await api.get<ProjectByTrackAPIResponse>(
         INDEXER.V2.TRACKS.PROJECTS_BY_TRACK(communityId, normalizedProgramId, trackId),
-        "GET",
-        {},
-        {},
-        {},
-        false,
-        false
+        { isAuthorized: false, schema: ProjectByTrackAPIResponseSchema }
       );
-
-      if (error || !data) {
-        throw new Error(error || "Failed to fetch projects by track");
-      }
 
       return data.projects || [];
     } catch (error: unknown) {

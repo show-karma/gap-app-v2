@@ -1,5 +1,5 @@
 import { errorManager } from "@/components/Utilities/errorManager";
-import fetchData from "../fetchData";
+import { api } from "../api/client";
 import { INDEXER } from "../indexer";
 
 export interface ProgramReference {
@@ -19,7 +19,7 @@ export interface Indicator {
   updatedAt?: string;
 }
 
-interface PaginatedResponse<T> {
+export interface PaginatedResponse<T> {
   payload: T[];
   pagination: {
     totalCount: number;
@@ -87,15 +87,12 @@ async function fetchAllIndicatorPages(
   let hasMore = true;
 
   while (hasMore && currentPage <= maxPages) {
-    const [data, error] = await fetchData(
+    // TODO(#1775): add zod schema — PaginatedResponse<V2Indicator> is a
+    // generic envelope; not safe to re-derive strictly for every param shape.
+    const paginatedData = await api.get<PaginatedResponse<V2Indicator>>(
       INDEXER.INDICATORS.V2.LIST({ ...params, page: currentPage, limit: pageSize })
     );
 
-    if (error) {
-      throw error;
-    }
-
-    const paginatedData = data as PaginatedResponse<V2Indicator>;
     const indicators = (paginatedData.payload || []).map(transformIndicator);
     allIndicators.push(...indicators);
 
@@ -139,6 +136,59 @@ export const getGroupedIndicatorsByCommunity = async (communityId: string) => {
       communityAdminCreated: [],
       projectOwnerCreated: [],
     };
+  }
+};
+
+/**
+ * Get all indicators with pagination using V2 API
+ */
+export const getIndicatorsV2 = async (params?: {
+  communityUID?: string;
+  programId?: number;
+  chainId?: number;
+  syncType?: "auto" | "manual";
+  page?: number;
+  limit?: number;
+}): Promise<PaginatedResponse<Indicator>> => {
+  try {
+    // TODO(#1775): add zod schema — PaginatedResponse<V2Indicator> is a
+    // generic envelope; not safe to re-derive strictly for every param shape.
+    const paginatedData = await api.get<PaginatedResponse<V2Indicator>>(
+      INDEXER.INDICATORS.V2.LIST(params)
+    );
+    return {
+      payload: (paginatedData.payload || []).map(transformIndicator),
+      pagination: paginatedData.pagination,
+    };
+  } catch (error) {
+    errorManager("Error fetching indicators", error);
+    return {
+      payload: [],
+      pagination: {
+        totalCount: 0,
+        page: 1,
+        limit: 20,
+        totalPages: 0,
+        nextPage: null,
+        prevPage: null,
+        hasNextPage: false,
+        hasPrevPage: false,
+      },
+    };
+  }
+};
+
+/**
+ * Get a single indicator by ID using V2 API
+ */
+export const getIndicatorById = async (indicatorId: string): Promise<Indicator | null> => {
+  try {
+    // TODO(#1775): add zod schema for V2Indicator
+    const data = await api.get<V2Indicator>(INDEXER.INDICATORS.V2.GET_BY_ID(indicatorId));
+    return transformIndicator(data);
+  } catch (error) {
+    errorManager("Error fetching indicator by ID", error);
+    return null;
   }
 };
 

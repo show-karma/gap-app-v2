@@ -241,7 +241,7 @@ function FundingPlatformContent() {
       alwaysShow: false,
     },
     {
-      title: "Rejected",
+      title: "Declined",
       value: formatCurrency(statistics.rejected),
       rawValue: statistics.rejected,
       color: "text-red-600",
@@ -302,7 +302,7 @@ function FundingPlatformContent() {
         bgColor: "bg-green-500",
       },
       {
-        title: "Rejected",
+        title: "Declined",
         value: rejectedApplications,
         color: "text-red-600",
         bgColor: "bg-red-500",

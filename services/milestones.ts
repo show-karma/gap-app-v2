@@ -2,9 +2,9 @@ import type { IProjectDetails } from "@show-karma/karma-gap-sdk";
 import { errorManager } from "@/components/Utilities/errorManager";
 import type { Grant } from "@/types/v2/grant";
 import type { ProjectUpdateDeliverable } from "@/types/v2/roadmap";
+import { api } from "@/utilities/api/client";
 import { createAuthenticatedApiClient } from "@/utilities/auth/api-client";
 import { envVars } from "@/utilities/enviromentVars";
-import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
 const API_URL = envVars.NEXT_PUBLIC_GAP_INDEXER_URL;
@@ -46,6 +46,14 @@ export interface GrantMilestoneVerificationDetails {
   attestationUID?: string;
 }
 
+// On-chain cancellation overlay (DEV-523). Present only when status === "cancelled".
+export interface MilestoneCancellation {
+  uid: string; // the cancelled attestation, revoked to un-cancel
+  cancelledBy: string;
+  cancelledAt: string | null;
+  reason: string | null;
+}
+
 // Grant milestone with completion data
 export interface GrantMilestoneWithCompletion {
   uid: string;
@@ -60,6 +68,7 @@ export interface GrantMilestoneWithCompletion {
   completionDetails: GrantMilestoneCompletionDetails | null;
   verificationDetails: GrantMilestoneVerificationDetails | null;
   fundingApplicationCompletion: MilestoneCompletionData | null;
+  cancellation?: MilestoneCancellation | null;
 }
 
 // Response from the project updates endpoint
@@ -100,13 +109,10 @@ interface MilestoneEvaluationResponse {
 export async function fetchMilestoneEvaluation(
   milestoneUID: string
 ): Promise<MilestoneEvaluationResponse> {
-  const [data, error] = await fetchData<MilestoneEvaluationResponse>(
+  // TODO(#1775): add zod schema
+  const data = await api.get<MilestoneEvaluationResponse>(
     INDEXER.MILESTONE.EVALUATION(milestoneUID)
   );
-
-  if (error) {
-    throw new Error(`Failed to fetch milestone evaluation: ${error}`);
-  }
 
   return data ?? { evaluations: [] };
 }
@@ -115,13 +121,10 @@ export async function fetchApplicationMilestoneEvaluation(
   referenceNumber: string,
   milestoneTitle: string
 ): Promise<MilestoneEvaluationResponse> {
-  const [data, error] = await fetchData<MilestoneEvaluationResponse>(
+  // TODO(#1775): add zod schema
+  const data = await api.get<MilestoneEvaluationResponse>(
     INDEXER.V2.FUNDING_APPLICATIONS.MILESTONE_EVALUATION(referenceNumber, milestoneTitle)
   );
-
-  if (error) {
-    throw new Error(`Failed to fetch application milestone evaluation: ${error}`);
-  }
 
   return data ?? { evaluations: [] };
 }
@@ -136,18 +139,19 @@ async function fetchGrantByProgramId(
   programId: string
 ): Promise<Grant | undefined> {
   const grantsEndpoint = INDEXER.V2.PROJECTS.GRANTS(projectUid);
-  const [grants, error] = await fetchData<Grant[]>(grantsEndpoint);
+  try {
+    // TODO(#1775): add zod schema
+    const grants = await api.get<Grant[]>(grantsEndpoint);
 
-  if (error || !grants) {
+    // Compare in normalized form: grant.details.programId may be stored as
+    // either "1013" or "1013_42161" depending on when the grant was created,
+    // while the caller always passes the chain-stripped form.
+    const normalizedTarget = stripChainSuffix(programId);
+    return grants.find((g) => stripChainSuffix(g.details?.programId) === normalizedTarget);
+  } catch (error) {
     errorManager("Error fetching grant", error, { projectUid, programId });
     return undefined;
   }
-
-  // Compare in normalized form: grant.details.programId may be stored as
-  // either "1013" or "1013_42161" depending on when the grant was created,
-  // while the caller always passes the chain-stripped form.
-  const normalizedTarget = stripChainSuffix(programId);
-  return grants.find((g) => stripChainSuffix(g.details?.programId) === normalizedTarget);
 }
 
 export async function fetchProjectGrantMilestones(
@@ -156,28 +160,25 @@ export async function fetchProjectGrantMilestones(
 ): Promise<ProjectGrantMilestonesResponse> {
   // Normalize programId (remove chainId suffix if present) before sending to API
   const normalizedProgramId = programId.includes("_") ? programId.split("_")[0] : programId;
-  const [projectResponse, milestonesResponse, grant] = await Promise.all([
-    fetchData(INDEXER.V2.PROJECTS.GET(projectUid), "GET"),
-    fetchData(
-      `${INDEXER.V2.PROJECTS.UPDATES(projectUid)}?programIds=${normalizedProgramId}&includeFundingApplicationData=true`,
-      "GET"
-    ),
+  const [project, updatesResponse, grant] = await Promise.all([
+    // TODO(#1775): add zod schema
+    api
+      .get<ProjectData>(INDEXER.V2.PROJECTS.GET(projectUid))
+      .catch((error: unknown) => {
+        const message = error instanceof Error ? error.message : String(error);
+        throw new Error(`Failed to fetch project: ${message}`);
+      }),
+    // TODO(#1775): add zod schema
+    api
+      .get<ProjectUpdatesResponse>(
+        `${INDEXER.V2.PROJECTS.UPDATES(projectUid)}?programIds=${normalizedProgramId}&includeFundingApplicationData=true`
+      )
+      .catch((error: unknown) => {
+        const message = error instanceof Error ? error.message : String(error);
+        throw new Error(`Failed to fetch milestones: ${message}`);
+      }),
     fetchGrantByProgramId(projectUid, normalizedProgramId),
   ]);
-
-  const [projectData, projectError] = projectResponse;
-  const [milestonesData, milestonesError] = milestonesResponse;
-
-  if (projectError || !projectData) {
-    throw new Error(`Failed to fetch project: ${projectError || "No data returned"}`);
-  }
-
-  if (milestonesError || !milestonesData) {
-    throw new Error(`Failed to fetch milestones: ${milestonesError || "No data returned"}`);
-  }
-
-  const project = projectData as ProjectData;
-  const updatesResponse = milestonesData as ProjectUpdatesResponse;
 
   const grantMilestones: GrantMilestoneWithCompletion[] = updatesResponse.grantMilestones.map(
     (milestone) => ({
@@ -193,6 +194,7 @@ export async function fetchProjectGrantMilestones(
       completionDetails: milestone.completionDetails,
       verificationDetails: milestone.verificationDetails,
       fundingApplicationCompletion: milestone.fundingApplicationCompletion || null,
+      cancellation: milestone.cancellation ?? null,
     })
   );
 

@@ -117,9 +117,8 @@ vi.mock("@/utilities/sanitize", () => ({
   sanitizeObject: vi.fn((obj) => obj),
 }));
 
-vi.mock("@/utilities/fetchData", () => ({
-  __esModule: true,
-  default: vi.fn().mockResolvedValue(undefined),
+vi.mock("@/utilities/api/client", () => ({
+  api: { post: vi.fn().mockResolvedValue(undefined) },
 }));
 
 vi.mock("@/utilities/funding-programs", () => ({

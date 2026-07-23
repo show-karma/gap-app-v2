@@ -1,24 +1,24 @@
 {
   "$schema": "./scripts/quality-baseline.schema.json",
-  "generatedAt": "2026-07-17T11:32:27.780Z",
-  "generatedFromCommit": "c6bc65c66932ccec534513642cc4ab0443f1c30b",
+  "generatedAt": "2026-07-23T17:15:17.875Z",
+  "generatedFromCommit": "989571165248e892b4dd3e1a1769dc0b58510048",
   "coverage": {
-    "lines": 71.75,
-    "statements": 70.5,
-    "functions": 65.57,
-    "branches": 62.75
+    "lines": 73.8,
+    "statements": 72.42,
+    "functions": 67.96,
+    "branches": 64.33
   },
   "duplication": {
-    "percent": 0.99,
-    "fragments": 61
+    "percent": 1.01,
+    "fragments": 64
   },
   "violations": {
-    "biome": 186,
-    "knipUnusedFiles": 8,
-    "knipUnusedExports": 40,
-    "knipUnusedTypes": 34,
+    "biome": 290,
+    "knipUnusedFiles": 38,
+    "knipUnusedExports": 44,
+    "knipUnusedTypes": 56,
     "knipUnusedDeps": 1,
-    "knipDuplicates": 1
+    "knipDuplicates": 2
   },
   "oversizedFiles": {
     "__tests__/components/Admin/NotificationSettingsPage.test.tsx": {
@@ -52,14 +52,8 @@
       "maxBytes": 60000
     },
     "__tests__/components/FundingPlatform/QuestionBuilder/ProgramDetailsTab.test.tsx": {
-      "lines": 1060,
-      "bytes": 37111,
-      "maxLines": 800,
-      "maxBytes": 60000
-    },
-    "__tests__/components/Milestone/MilestoneCard.test.tsx": {
-      "lines": 918,
-      "bytes": 29668,
+      "lines": 1059,
+      "bytes": 37057,
       "maxLines": 800,
       "maxBytes": 60000
     },
@@ -82,8 +76,8 @@
       "maxBytes": 60000
     },
     "__tests__/integration/features/grant-completion-revocation-flow.test.tsx": {
-      "lines": 1102,
-      "bytes": 37074,
+      "lines": 1099,
+      "bytes": 37041,
       "maxLines": 800,
       "maxBytes": 60000
     },
@@ -119,7 +113,7 @@
     },
     "__tests__/unit/hooks/useAuth.test.tsx": {
       "lines": 987,
-      "bytes": 29096,
+      "bytes": 29148,
       "maxLines": 800,
       "maxBytes": 60000
     },
@@ -130,8 +124,8 @@
       "maxBytes": 60000
     },
     "__tests__/unit/hooks/useGrantCompletionRevoke.test.ts": {
-      "lines": 1019,
-      "bytes": 32819,
+      "lines": 1014,
+      "bytes": 32754,
       "maxLines": 800,
       "maxBytes": 60000
     },
@@ -154,8 +148,8 @@
       "maxBytes": 60000
     },
     "app/community/[communityId]/(with-header)/browse-applications/BrowseApplicationsClient.tsx": {
-      "lines": 647,
-      "bytes": 24535,
+      "lines": 642,
+      "bytes": 24435,
       "maxLines": 600,
       "maxBytes": 40000
     },
@@ -172,14 +166,14 @@
       "maxBytes": 40000
     },
     "components/Dialogs/ProgressDialog/UnifiedMilestoneScreen.tsx": {
-      "lines": 662,
-      "bytes": 24678,
+      "lines": 650,
+      "bytes": 24449,
       "maxLines": 600,
       "maxBytes": 40000
     },
     "components/Dialogs/ProjectDialog/index.tsx": {
-      "lines": 1728,
-      "bytes": 65023,
+      "lines": 1714,
+      "bytes": 64823,
       "maxLines": 600,
       "maxBytes": 40000
     },
@@ -190,20 +184,20 @@
       "maxBytes": 40000
     },
     "components/Forms/MilestoneUpdate.tsx": {
-      "lines": 772,
-      "bytes": 28459,
+      "lines": 770,
+      "bytes": 28412,
       "maxLines": 600,
       "maxBytes": 40000
     },
     "components/Forms/ProjectUpdate.tsx": {
-      "lines": 978,
-      "bytes": 36354,
+      "lines": 976,
+      "bytes": 36304,
       "maxLines": 600,
       "maxBytes": 40000
     },
     "components/FundingPlatform/ApplicationView/ApplicationContent.tsx": {
-      "lines": 733,
-      "bytes": 29511,
+      "lines": 699,
+      "bytes": 28699,
       "maxLines": 600,
       "maxBytes": 40000
     },
@@ -232,20 +226,20 @@
       "maxBytes": 40000
     },
     "components/Pages/Admin/ControlCenter/ProjectDetailsSidebar.tsx": {
-      "lines": 835,
-      "bytes": 31500,
+      "lines": 839,
+      "bytes": 31692,
       "maxLines": 600,
       "maxBytes": 40000
     },
     "components/Pages/Admin/MilestonesReview/MilestoneCard.tsx": {
-      "lines": 852,
-      "bytes": 34790,
+      "lines": 995,
+      "bytes": 41325,
       "maxLines": 600,
       "maxBytes": 40000
     },
     "components/Pages/Admin/MilestonesReview/index.tsx": {
-      "lines": 1070,
-      "bytes": 42652,
+      "lines": 1111,
+      "bytes": 44178,
       "maxLines": 600,
       "maxBytes": 40000
     },
@@ -267,15 +261,9 @@
       "maxLines": 600,
       "maxBytes": 40000
     },
-    "components/Pages/Communities/CommunityProjectEvaluatorPage.tsx": {
-      "lines": 1013,
-      "bytes": 35939,
-      "maxLines": 600,
-      "maxBytes": 40000
-    },
     "components/Pages/Communities/Financials/PublicProjectDetailsModal.tsx": {
-      "lines": 607,
-      "bytes": 27017,
+      "lines": 612,
+      "bytes": 27245,
       "maxLines": 600,
       "maxBytes": 40000
     },
@@ -328,14 +316,14 @@
       "maxBytes": 40000
     },
     "components/Shared/ActivityCard/MilestoneCard.tsx": {
-      "lines": 653,
-      "bytes": 25759,
+      "lines": 658,
+      "bytes": 25966,
       "maxLines": 600,
       "maxBytes": 40000
     },
     "components/ui/sidebar.tsx": {
-      "lines": 753,
-      "bytes": 24368,
+      "lines": 754,
+      "bytes": 24382,
       "maxLines": 600,
       "maxBytes": 40000
     },
@@ -352,26 +340,26 @@
       "maxBytes": 40000
     },
     "hooks/useMilestone.ts": {
-      "lines": 1156,
-      "bytes": 42210,
+      "lines": 1176,
+      "bytes": 42936,
       "maxLines": 600,
       "maxBytes": 40000
     },
     "hooks/useMilestoneCompletionVerification.ts": {
-      "lines": 672,
-      "bytes": 20669,
+      "lines": 671,
+      "bytes": 20724,
       "maxLines": 600,
       "maxBytes": 40000
     },
     "services/__tests__/fundingPlatformService.test.ts": {
       "lines": 969,
-      "bytes": 32963,
+      "bytes": 32479,
       "maxLines": 800,
       "maxBytes": 60000
     },
     "services/fundingPlatformService.ts": {
-      "lines": 696,
-      "bytes": 20296,
+      "lines": 647,
+      "bytes": 21557,
       "maxLines": 600,
       "maxBytes": 40000
     },
@@ -436,20 +424,14 @@
       "maxBytes": 40000
     },
     "src/features/payout-disbursement/services/payout-disbursement.service.ts": {
-      "lines": 921,
-      "bytes": 23933,
-      "maxLines": 600,
-      "maxBytes": 40000
-    },
-    "utilities/faucet/faucetService.ts": {
-      "lines": 758,
-      "bytes": 15836,
+      "lines": 753,
+      "bytes": 22124,
       "maxLines": 600,
       "maxBytes": 40000
     },
     "utilities/indexer.ts": {
-      "lines": 826,
-      "bytes": 40633,
+      "lines": 824,
+      "bytes": 40457,
       "maxLines": 600,
       "maxBytes": 40000
     },
@@ -463,15 +445,15 @@
   "reactDoctor": {
     "score": 28,
     "errors": 0,
-    "warnings": 2199,
+    "warnings": 2254,
     "byCategory": {
-      "Accessibility": 163,
-      "Architecture": 705,
+      "Accessibility": 166,
+      "Architecture": 730,
       "Correctness": 194,
-      "Next.js": 94,
-      "State & Effects": 647,
-      "Server": 9,
-      "Performance": 335,
+      "Server": 8,
+      "Performance": 369,
+      "Next.js": 85,
+      "State & Effects": 650,
       "TanStack Query": 40,
       "Bundle Size": 9,
       "Security": 3

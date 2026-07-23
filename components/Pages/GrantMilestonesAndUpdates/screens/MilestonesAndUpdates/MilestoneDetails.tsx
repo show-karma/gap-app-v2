@@ -11,9 +11,7 @@ import type { UnifiedMilestone } from "@/types/v2/roadmap";
  * Helper to get the completion object from a milestone.
  * API may return completion as an object or an array.
  */
-const getCompletionData = (
-  milestone: GrantMilestone
-): NonNullable<GrantMilestone["completed"]> | null => {
+const getCompletionData = (milestone: GrantMilestone) => {
   const completed = milestone.completed;
   if (!completed) return null;
 
@@ -22,8 +20,8 @@ const getCompletionData = (
     const firstItem = completed[0];
     return {
       ...firstItem,
-      createdAt: firstItem?.createdAt ?? completed.createdAt,
-      updatedAt: firstItem?.updatedAt ?? completed.updatedAt,
+      createdAt: firstItem?.createdAt ?? (completed as any).createdAt,
+      updatedAt: firstItem?.updatedAt ?? (completed as any).updatedAt,
     };
   }
 
@@ -49,16 +47,14 @@ function toUnifiedMilestone(milestone: GrantMilestone, grant: GrantContext): Uni
     ? {
         uid: completion.uid,
         chainID: completion.chainID,
-        createdAt: completion.createdAt || milestone.updatedAt || "",
+        createdAt: completion.createdAt || (milestone as any).updatedAt || "",
         updatedAt: completion.updatedAt,
         attester: completion.attester,
         data: {
           proofOfWork: completion.data?.proofOfWork,
           reason: completion.data?.reason,
           completionPercentage: completion.data?.completionPercentage,
-          deliverables: Array.isArray(completion.data?.deliverables)
-            ? completion.data.deliverables
-            : undefined,
+          deliverables: (completion.data as any)?.deliverables,
         },
       }
     : null;
@@ -81,7 +77,12 @@ function toUnifiedMilestone(milestone: GrantMilestone, grant: GrantContext): Uni
     title: milestone.title,
     description: milestone.description,
     completed,
-    createdAt: milestone.createdAt || "",
+    // Thread the raw on-chain status so the card can detect a terminal
+    // cancelled milestone (DEV-523) — `completed` is a delivered-only boolean
+    // and can't represent cancellation, and this grant-store data path (unlike
+    // useProjectUpdates) is the only place currentStatus gets set.
+    currentStatus: milestone.currentStatus,
+    createdAt: (milestone as any).createdAt || "",
     startsAt: milestone.startsAt,
     endsAt: milestone.endsAt,
     chainID,

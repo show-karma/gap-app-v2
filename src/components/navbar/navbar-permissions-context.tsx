@@ -19,6 +19,8 @@ interface NavbarPermissionsContextValue {
   isLoggedIn: boolean;
   address: Hex | undefined;
   ready: boolean;
+  /** False until Privy finishes hydrating connected wallets. */
+  walletsReady: boolean;
 
   // Staff permissions
   isStaff: boolean;
@@ -48,6 +50,7 @@ const defaultContextValue: NavbarPermissionsContextValue = {
   isLoggedIn: false,
   address: undefined,
   ready: false,
+  walletsReady: false,
   isStaff: false,
   isStaffLoading: true,
   isOwner: false,
@@ -72,7 +75,7 @@ interface NavbarPermissionsProviderProps {
  * values to all child components through context.
  */
 export function NavbarPermissionsProvider({ children }: NavbarPermissionsProviderProps) {
-  const { authenticated: isLoggedIn, address, ready } = useAuth();
+  const { authenticated: isLoggedIn, address, ready, walletsReady } = useAuth();
 
   // RBAC permissions (global context - no specific community/program)
   const { data: permissions, isLoading: isPermissionsLoading } = usePermissionsQuery(
@@ -97,6 +100,7 @@ export function NavbarPermissionsProvider({ children }: NavbarPermissionsProvide
       isLoggedIn,
       address,
       ready,
+      walletsReady,
       isStaff,
       isStaffLoading: isPermissionsLoading,
       isOwner,
@@ -107,7 +111,7 @@ export function NavbarPermissionsProvider({ children }: NavbarPermissionsProvide
       hasAdminAccess,
       isRegistryAllowed,
     };
-  }, [isLoggedIn, address, ready, permissions, isPermissionsLoading, isOwner]);
+  }, [isLoggedIn, address, ready, walletsReady, permissions, isPermissionsLoading, isOwner]);
 
   return (
     <NavbarPermissionsContext.Provider value={value}>{children}</NavbarPermissionsContext.Provider>

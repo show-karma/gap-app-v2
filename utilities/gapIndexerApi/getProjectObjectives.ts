@@ -1,6 +1,6 @@
 import type { IProjectMilestoneResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { errorManager } from "@/components/Utilities/errorManager";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 
 export type StatusOptions = "all" | "completed" | "pending";
@@ -79,17 +79,13 @@ export async function getProjectObjectives(
   chainID?: number
 ): Promise<IProjectMilestoneResponse[]> {
   try {
-    const [data, error] = await fetchData<GetMilestonesV2Response>(
-      INDEXER.V2.PROJECTS.MILESTONES(uidOrSlug),
-      "GET",
-      {},
-      {},
-      {},
-      false
-    );
+    // TODO(#1775): add zod schema
+    const data = await api.get<GetMilestonesV2Response>(INDEXER.V2.PROJECTS.MILESTONES(uidOrSlug), {
+      isAuthorized: false,
+    });
 
-    if (error || !data) {
-      errorManager("Error fetching project objectives", error, {
+    if (!data) {
+      errorManager("Error fetching project objectives", null, {
         projectId: uidOrSlug,
       });
       return [];

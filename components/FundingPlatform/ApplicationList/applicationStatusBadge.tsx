@@ -1,3 +1,4 @@
+import { formatApplicationStatus } from "@/utilities/application-status";
 import { cn } from "@/utilities/tailwind";
 
 /**
@@ -12,13 +13,6 @@ const applicationStatusColors: Record<string, string> = {
   approved: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
   rejected: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300",
 };
-
-/** Humanize a snake_case status (e.g. `under_review` -> `Under Review`). */
-const formatApplicationStatus = (status: string): string =>
-  status
-    .split("_")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
 
 /** Rounded status pill used in the applications table and inbox. */
 export const ApplicationStatusBadge = ({

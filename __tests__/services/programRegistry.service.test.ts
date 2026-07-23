@@ -7,14 +7,23 @@
 import { ProgramRegistryService } from "@/src/features/program-registry/services/program-registry.service";
 import type { CreateProgramFormData, GrantProgram } from "@/src/features/program-registry/types";
 import type { CommunityDetails } from "@/types/community";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 
-// Mock fetchData utility
-vi.mock("@/utilities/fetchData", () => ({
-  __esModule: true,
-  default: vi.fn(),
+// Mock the typed api client (ProgramRegistryService is migrated off the
+// legacy fetchData tuple onto `api`, see issue #1775).
+vi.mock("@/utilities/api/client", () => ({
+  api: {
+    get: vi.fn(),
+    post: vi.fn(),
+    put: vi.fn(),
+    patch: vi.fn(),
+    delete: vi.fn(),
+  },
 }));
+
+const mockApiPost = api.post as ReturnType<typeof vi.fn>;
+const mockApiPut = api.put as ReturnType<typeof vi.fn>;
 
 describe("ProgramRegistryService", () => {
   const mockCommunity: CommunityDetails = {
@@ -228,7 +237,7 @@ describe("ProgramRegistryService", () => {
         isValid: true,
       };
 
-      (fetchData as vi.Mock).mockResolvedValue([mockResponse, null]);
+      mockApiPost.mockResolvedValue(mockResponse);
 
       const result = await ProgramRegistryService.createProgram(
         mockOwner,
@@ -236,17 +245,10 @@ describe("ProgramRegistryService", () => {
         mockMetadata
       );
 
-      expect(fetchData).toHaveBeenCalledWith(
-        INDEXER.REGISTRY.V2.CREATE,
-        "POST",
-        {
-          chainId: mockChainId,
-          metadata: mockMetadata,
-        },
-        {},
-        {},
-        true
-      );
+      expect(mockApiPost).toHaveBeenCalledWith(INDEXER.REGISTRY.V2.CREATE, {
+        chainId: mockChainId,
+        metadata: mockMetadata,
+      });
 
       expect(result).toEqual({
         programId: "program-123",
@@ -273,7 +275,7 @@ describe("ProgramRegistryService", () => {
       ];
 
       for (const testCase of testCases) {
-        (fetchData as vi.Mock).mockResolvedValue([testCase.response, null]);
+        mockApiPost.mockResolvedValue(testCase.response);
 
         const result = await ProgramRegistryService.createProgram(
           mockOwner,
@@ -288,7 +290,7 @@ describe("ProgramRegistryService", () => {
     });
 
     it("should handle missing program ID in response", async () => {
-      (fetchData as vi.Mock).mockResolvedValue([{}, null]);
+      mockApiPost.mockResolvedValue({});
 
       const result = await ProgramRegistryService.createProgram(
         mockOwner,
@@ -303,18 +305,18 @@ describe("ProgramRegistryService", () => {
       });
     });
 
-    it("should throw error when fetchData returns error", async () => {
-      const mockError = "Creation failed";
-      (fetchData as vi.Mock).mockResolvedValue([null, mockError]);
+    it("should throw error when api.post returns error", async () => {
+      const mockError = new Error("Creation failed");
+      mockApiPost.mockRejectedValue(mockError);
 
       await expect(
         ProgramRegistryService.createProgram(mockOwner, mockChainId, mockMetadata)
       ).rejects.toThrow("Creation failed");
     });
 
-    it("should throw error when fetchData throws", async () => {
+    it("should throw error when api.post throws", async () => {
       const mockError = new Error("Network error");
-      (fetchData as vi.Mock).mockRejectedValue(mockError);
+      mockApiPost.mockRejectedValue(mockError);
 
       await expect(
         ProgramRegistryService.createProgram(mockOwner, mockChainId, mockMetadata)
@@ -326,35 +328,28 @@ describe("ProgramRegistryService", () => {
     const mockProgramId = "program-123";
 
     it("should approve program successfully", async () => {
-      (fetchData as vi.Mock).mockResolvedValue([{ success: true }, null]);
+      mockApiPost.mockResolvedValue({ success: true });
 
       await ProgramRegistryService.approveProgram(mockProgramId);
 
-      expect(fetchData).toHaveBeenCalledWith(
-        INDEXER.REGISTRY.V2.APPROVE,
-        "POST",
-        {
-          programId: mockProgramId,
-          isValid: "accepted",
-        },
-        {},
-        {},
-        true
-      );
+      expect(mockApiPost).toHaveBeenCalledWith(INDEXER.REGISTRY.V2.APPROVE, {
+        programId: mockProgramId,
+        isValid: "accepted",
+      });
     });
 
-    it("should throw error when fetchData returns error", async () => {
-      const mockError = "Approval failed";
-      (fetchData as vi.Mock).mockResolvedValue([null, mockError]);
+    it("should throw error when api.post returns error", async () => {
+      const mockError = new Error("Approval failed");
+      mockApiPost.mockRejectedValue(mockError);
 
       await expect(ProgramRegistryService.approveProgram(mockProgramId)).rejects.toThrow(
         "Approval failed"
       );
     });
 
-    it("should throw error when fetchData throws", async () => {
+    it("should throw error when api.post throws", async () => {
       const mockError = new Error("Network error");
-      (fetchData as vi.Mock).mockRejectedValue(mockError);
+      mockApiPost.mockRejectedValue(mockError);
 
       await expect(ProgramRegistryService.approveProgram(mockProgramId)).rejects.toThrow(
         "Network error"
@@ -434,7 +429,7 @@ describe("ProgramRegistryService", () => {
 
     it("should include topLevelFields in request body", async () => {
       const mockResponse = { programId: "program-123", isValid: true };
-      (fetchData as vi.Mock).mockResolvedValue([mockResponse, null]);
+      mockApiPost.mockResolvedValue(mockResponse);
 
       const topLevelFields = { type: "hackathon", deadline: "2025-06-01T00:00:00.000Z" };
       await ProgramRegistryService.createProgram(
@@ -444,24 +439,17 @@ describe("ProgramRegistryService", () => {
         topLevelFields
       );
 
-      expect(fetchData).toHaveBeenCalledWith(
-        INDEXER.REGISTRY.V2.CREATE,
-        "POST",
-        {
-          chainId: mockChainId,
-          metadata: mockMetadata,
-          type: "hackathon",
-          deadline: "2025-06-01T00:00:00.000Z",
-        },
-        {},
-        {},
-        true
-      );
+      expect(mockApiPost).toHaveBeenCalledWith(INDEXER.REGISTRY.V2.CREATE, {
+        chainId: mockChainId,
+        metadata: mockMetadata,
+        type: "hackathon",
+        deadline: "2025-06-01T00:00:00.000Z",
+      });
     });
 
     it("should not allow topLevelFields to overwrite chainId or metadata", async () => {
       const mockResponse = { programId: "program-789", isValid: true };
-      (fetchData as vi.Mock).mockResolvedValue([mockResponse, null]);
+      mockApiPost.mockResolvedValue(mockResponse);
 
       const maliciousTopLevelFields = {
         chainId: 9999,
@@ -475,37 +463,23 @@ describe("ProgramRegistryService", () => {
         maliciousTopLevelFields
       );
 
-      expect(fetchData).toHaveBeenCalledWith(
-        INDEXER.REGISTRY.V2.CREATE,
-        "POST",
-        {
-          chainId: mockChainId,
-          metadata: mockMetadata,
-          type: "hackathon",
-        },
-        {},
-        {},
-        true
-      );
+      expect(mockApiPost).toHaveBeenCalledWith(INDEXER.REGISTRY.V2.CREATE, {
+        chainId: mockChainId,
+        metadata: mockMetadata,
+        type: "hackathon",
+      });
     });
 
     it("should work without topLevelFields", async () => {
       const mockResponse = { programId: "program-456", isValid: true };
-      (fetchData as vi.Mock).mockResolvedValue([mockResponse, null]);
+      mockApiPost.mockResolvedValue(mockResponse);
 
       await ProgramRegistryService.createProgram(mockOwner, mockChainId, mockMetadata);
 
-      expect(fetchData).toHaveBeenCalledWith(
-        INDEXER.REGISTRY.V2.CREATE,
-        "POST",
-        {
-          chainId: mockChainId,
-          metadata: mockMetadata,
-        },
-        {},
-        {},
-        true
-      );
+      expect(mockApiPost).toHaveBeenCalledWith(INDEXER.REGISTRY.V2.CREATE, {
+        chainId: mockChainId,
+        metadata: mockMetadata,
+      });
     });
   });
 
@@ -516,9 +490,9 @@ describe("ProgramRegistryService", () => {
       const mockMetadata = ProgramRegistryService.buildProgramMetadata(mockFormData, mockCommunity);
 
       // Mock V2 creation response
-      (fetchData as vi.Mock)
-        .mockResolvedValueOnce([{ programId: "program-123", isValid: null }, null])
-        .mockResolvedValueOnce([{ success: true }, null]);
+      mockApiPost
+        .mockResolvedValueOnce({ programId: "program-123", isValid: null })
+        .mockResolvedValueOnce({ success: true });
 
       const createResult = await ProgramRegistryService.createProgram(
         mockOwner,
@@ -531,31 +505,19 @@ describe("ProgramRegistryService", () => {
 
       await ProgramRegistryService.approveProgram(createResult.programId);
 
-      expect(fetchData).toHaveBeenCalledTimes(2);
-      expect(fetchData).toHaveBeenNthCalledWith(
+      expect(mockApiPost).toHaveBeenCalledTimes(2);
+      expect(mockApiPost).toHaveBeenNthCalledWith(
         1,
         INDEXER.REGISTRY.V2.CREATE,
-        "POST",
         expect.objectContaining({
           chainId: mockChainId,
           metadata: expect.any(Object),
-        }),
-        {},
-        {},
-        true
+        })
       );
-      expect(fetchData).toHaveBeenNthCalledWith(
-        2,
-        INDEXER.REGISTRY.V2.APPROVE,
-        "POST",
-        {
-          programId: "program-123",
-          isValid: "accepted",
-        },
-        {},
-        {},
-        true
-      );
+      expect(mockApiPost).toHaveBeenNthCalledWith(2, INDEXER.REGISTRY.V2.APPROVE, {
+        programId: "program-123",
+        isValid: "accepted",
+      });
     });
   });
 });

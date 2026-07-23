@@ -750,4 +750,5 @@ export {
   SidebarProvider,
   SidebarRail,
   SidebarTrigger,
+  useSidebar,
 };

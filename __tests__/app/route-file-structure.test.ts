@@ -100,7 +100,6 @@ const ERROR_LEGACY_ALLOWLIST: ReadonlySet<string> = new Set([
   "community/[communityId]/(with-header)/projects",
   "community/[communityId]/admin/kyc-settings",
   "community/[communityId]/donate",
-  "community/[communityId]/karma-ai",
   "community/[communityId]/manage/edit-categories",
   "community/[communityId]/manage/edit-projects",
   "community/[communityId]/manage/funding-platform",

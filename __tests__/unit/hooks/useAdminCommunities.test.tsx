@@ -7,13 +7,22 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
 import type React from "react";
 import { useAdminCommunities } from "@/hooks/useAdminCommunities";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
+import { HttpError } from "@/utilities/api/errors";
 import { INDEXER } from "@/utilities/indexer";
 
-// Mock fetchData utility
-vi.mock("@/utilities/fetchData", () => ({
-  __esModule: true,
-  default: vi.fn(),
+// useAdminCommunities (#1775 Phase 3) now calls api.get instead of the
+// legacy fetchData tuple adapter.
+vi.mock("@/utilities/api/client", () => ({
+  api: {
+    get: vi.fn(),
+    post: vi.fn(),
+    put: vi.fn(),
+    patch: vi.fn(),
+    delete: vi.fn(),
+    request: vi.fn(),
+    getPaginated: vi.fn(),
+  },
 }));
 
 // Mock errorManager
@@ -51,6 +60,7 @@ import { useAuth } from "@/hooks/useAuth";
 
 const mockUseAuth = useAuth as vi.MockedFunction<typeof useAuth>;
 const mockErrorManager = errorManager as vi.Mock;
+const mockApiGet = api.get as vi.Mock;
 
 describe("useAdminCommunities (V2)", () => {
   const mockCommunities = [
@@ -113,7 +123,7 @@ describe("useAdminCommunities (V2)", () => {
 
   describe("Successful fetch", () => {
     it("should fetch admin communities when authenticated", async () => {
-      (fetchData as vi.Mock).mockResolvedValue([mockV2Response, null]);
+      mockApiGet.mockResolvedValue(mockV2Response);
 
       const { result } = renderHook(() => useAdminCommunities("0xtest-address"), {
         wrapper: createWrapper(queryClient),
@@ -123,19 +133,11 @@ describe("useAdminCommunities (V2)", () => {
         expect(result.current.isSuccess).toBe(true);
       });
 
-      expect(fetchData).toHaveBeenCalledWith(
-        INDEXER.V2.USER.ADMIN_COMMUNITIES(),
-        "GET",
-        {},
-        {},
-        {},
-        true,
-        false
-      );
+      expect(mockApiGet).toHaveBeenCalledWith(INDEXER.V2.USER.ADMIN_COMMUNITIES());
     });
 
     it("should update zustand store with fetched communities", async () => {
-      (fetchData as vi.Mock).mockResolvedValue([mockV2Response, null]);
+      mockApiGet.mockResolvedValue(mockV2Response);
 
       const { result } = renderHook(() => useAdminCommunities("0xtest-address"), {
         wrapper: createWrapper(queryClient),
@@ -164,15 +166,21 @@ describe("useAdminCommunities (V2)", () => {
     });
 
     it("should clear communities on fetch error", async () => {
-      (fetchData as vi.Mock).mockResolvedValue([null, "Server error"]);
+      mockApiGet.mockRejectedValue(
+        new HttpError(500, {
+          endpoint: INDEXER.V2.USER.ADMIN_COMMUNITIES(),
+          method: "GET",
+          body: { message: "Server error" },
+        })
+      );
 
       renderHook(() => useAdminCommunities("0xtest-address"), {
         wrapper: createWrapper(queryClient),
       });
 
-      // Wait for fetchData to be called
+      // Wait for api.get to be called
       await waitFor(() => {
-        expect(fetchData).toHaveBeenCalled();
+        expect(mockApiGet).toHaveBeenCalled();
       });
 
       // Give React Query time to process the error through retries
@@ -202,7 +210,7 @@ describe("useAdminCommunities (V2)", () => {
         wrapper: createWrapper(queryClient),
       });
 
-      expect(fetchData).not.toHaveBeenCalled();
+      expect(mockApiGet).not.toHaveBeenCalled();
     });
 
     it("should not fetch when no address provided and not authenticated", async () => {
@@ -212,26 +220,26 @@ describe("useAdminCommunities (V2)", () => {
         wrapper: createWrapper(queryClient),
       });
 
-      expect(fetchData).not.toHaveBeenCalled();
+      expect(mockApiGet).not.toHaveBeenCalled();
     });
 
     it("should fetch for Farcaster users with no wallet address", async () => {
       // Farcaster users are authenticated via JWT but have no wallet address.
       // The API uses JWT auth, not wallet address, so the query should fire.
       mockUseAuth.mockReturnValue({ authenticated: true } as ReturnType<typeof useAuth>);
-      (fetchData as vi.Mock).mockResolvedValue([{ communities: [] }, null]);
+      mockApiGet.mockResolvedValue({ communities: [] });
 
       renderHook(() => useAdminCommunities(undefined), {
         wrapper: createWrapper(queryClient),
       });
 
       await waitFor(() => {
-        expect(fetchData).toHaveBeenCalled();
+        expect(mockApiGet).toHaveBeenCalled();
       });
     });
 
     it("should refetch communities when address is removed (JWT auth still valid)", async () => {
-      (fetchData as vi.Mock).mockResolvedValue([mockV2Response, null]);
+      mockApiGet.mockResolvedValue(mockV2Response);
 
       const { rerender } = renderHook(({ address }) => useAdminCommunities(address), {
         wrapper: createWrapper(queryClient),
@@ -243,21 +251,21 @@ describe("useAdminCommunities (V2)", () => {
       });
 
       vi.clearAllMocks();
-      (fetchData as vi.Mock).mockResolvedValue([{ communities: [] }, null]);
+      mockApiGet.mockResolvedValue({ communities: [] });
 
       // Re-render without address — query still fires because auth is JWT-based
       rerender({ address: undefined });
 
       await waitFor(() => {
-        expect(fetchData).toHaveBeenCalled();
+        expect(mockApiGet).toHaveBeenCalled();
       });
     });
   });
 
   describe("Loading state", () => {
     it("should sync loading state with zustand store", async () => {
-      (fetchData as vi.Mock).mockImplementation(
-        () => new Promise((resolve) => setTimeout(() => resolve([mockV2Response, null]), 100))
+      mockApiGet.mockImplementation(
+        () => new Promise((resolve) => setTimeout(() => resolve(mockV2Response), 100))
       );
 
       renderHook(() => useAdminCommunities("0xtest-address"), {
@@ -274,7 +282,7 @@ describe("useAdminCommunities (V2)", () => {
 
   describe("Return value", () => {
     it("should return refetch function", async () => {
-      (fetchData as vi.Mock).mockResolvedValue([mockV2Response, null]);
+      mockApiGet.mockResolvedValue(mockV2Response);
 
       const { result } = renderHook(() => useAdminCommunities("0xtest-address"), {
         wrapper: createWrapper(queryClient),

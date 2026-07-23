@@ -1,4 +1,5 @@
 import type { ProjectWithGrantsResponse } from "@/types/v2/project";
+import { isCancelledMilestoneStatus } from "@/utilities/milestones/getEffectiveMilestoneStatus";
 import { PAGES } from "@/utilities/pages";
 
 interface PendingActions {
@@ -25,6 +26,9 @@ export function computeProjectPendingActions(project: ProjectWithGrantsResponse)
 
     let grantHasPendingMilestone = false;
     for (const milestone of grant.milestones ?? []) {
+      // A cancelled milestone is terminal — it needs no submission and must not
+      // inflate the "pending" count/badge or the dashboard sort (DEV-523).
+      if (isCancelledMilestoneStatus(milestone.currentStatus)) continue;
       if (!milestone.completed) {
         milestonesNeedingSubmission += 1;
         grantHasPendingMilestone = true;

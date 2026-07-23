@@ -148,6 +148,9 @@ export const ReviewerAssignmentDropdown: FC<ReviewerAssignmentDropdownProps> = (
         isLoading={isLoading}
         emptyActionLabel={reviewerActionLabel}
         onEmptyAction={handleEmptyAction}
+        showUnknownSelections
+        formatUnknownLabel={shortAddress}
+        unknownSelectionHint={`Not configured as a ${reviewerType} reviewer for this program`}
       />
       {communityUID ? (
         <ReviewerPickerModal

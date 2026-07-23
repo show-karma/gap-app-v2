@@ -11,6 +11,7 @@ export enum MilestoneReviewStatus {
   Pending = "pending",
   Late = "late",
   NotStarted = "not_started",
+  Cancelled = "cancelled",
 }
 
 export type MilestoneFilterKey = MilestoneReviewStatus | "all";
@@ -88,6 +89,13 @@ export const MILESTONE_STATUS_CONFIG: Record<
     icon: "circle",
     stepperColor: "bg-gray-300 dark:bg-gray-600",
   },
+  [MilestoneReviewStatus.Cancelled]: {
+    label: "Cancelled",
+    badgeColor: "bg-gray-200 text-gray-600 line-through dark:bg-zinc-800 dark:text-gray-400",
+    filterLabel: "Cancelled",
+    icon: "circle",
+    stepperColor: "bg-gray-400 dark:bg-gray-500",
+  },
 };
 
 export const FILTER_TABS: {
@@ -104,6 +112,10 @@ export const FILTER_TABS: {
 ];
 
 export function getMilestoneStatus(milestone: GrantMilestoneWithCompletion): MilestoneReviewStatus {
+  // Cancelled is terminal (DEV-523): the on-chain cancellation status takes
+  // priority over any completion/verification, matching the backend derivation.
+  if (milestone.status === "cancelled" || milestone.cancellation != null)
+    return MilestoneReviewStatus.Cancelled;
   // Status hierarchy sourced from on-chain attestation chain only
   if (milestone.verificationDetails !== null) return MilestoneReviewStatus.Verified;
   if (milestone.completionDetails !== null) return MilestoneReviewStatus.PendingVerification;
@@ -126,10 +138,17 @@ export function sortMilestones(
   milestones: GrantMilestoneWithCompletion[],
   statusFn: (m: GrantMilestoneWithCompletion) => MilestoneReviewStatus = getMilestoneStatus
 ): GrantMilestoneWithCompletion[] {
-  return milestones.toSorted((a, b) => {
-    const aVerified = statusFn(a) === MilestoneReviewStatus.Verified ? 1 : 0;
-    const bVerified = statusFn(b) === MilestoneReviewStatus.Verified ? 1 : 0;
-    if (aVerified !== bVerified) return aVerified - bVerified;
+  // Verified and cancelled milestones are terminal — sort them to the bottom.
+  const isTerminal = (m: GrantMilestoneWithCompletion) => {
+    const status = statusFn(m);
+    return status === MilestoneReviewStatus.Verified || status === MilestoneReviewStatus.Cancelled
+      ? 1
+      : 0;
+  };
+  return [...milestones].sort((a, b) => {
+    const aTerminal = isTerminal(a);
+    const bTerminal = isTerminal(b);
+    if (aTerminal !== bTerminal) return aTerminal - bTerminal;
     return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
   });
 }

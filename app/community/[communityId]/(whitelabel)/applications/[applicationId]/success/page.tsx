@@ -1,10 +1,11 @@
 import { CheckCircle } from "lucide-react";
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { cache, Suspense } from "react";
 import { Link } from "@/src/components/navigation/Link";
 import { ApplicationStatusChip } from "@/src/components/ui/ApplicationStatusChip";
 import type { Application } from "@/types/whitelabel-entities";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { PAGES } from "@/utilities/pages";
 import { WhatHappensNext } from "./WhatHappensNext";
 import { extractApplicantName } from "./WhatHappensNext.helpers";
@@ -19,9 +20,9 @@ interface PageProps {
 
 // P1-09: React.cache() deduplicates the fetch between generateMetadata and the page component
 const getApplicationDetails = cache(async (applicationId: string): Promise<Application | null> => {
+  // TODO(#1775): add zod schema
   try {
-    const [data] = await fetchData<Application>(`/v2/funding-applications/${applicationId}`, "GET");
-    return data;
+    return await api.get<Application>(`/v2/funding-applications/${applicationId}`);
   } catch {
     return null;
   }
@@ -44,7 +45,14 @@ export default async function ApplicationSuccessPage({ params }: PageProps) {
   const { communityId, applicationId } = await params;
   const application = await getApplicationDetails(applicationId); // cache HIT — no second fetch
 
-  const referenceNumber = application?.referenceNumber ?? applicationId;
+  // An unknown/invalid applicationId must not render a fabricated "success"
+  // confirmation (which would echo the raw URL param as the reference number).
+  // Show the not-found state instead — never a fake success (three-states rule).
+  if (!application) {
+    notFound();
+  }
+
+  const referenceNumber = application.referenceNumber ?? applicationId;
 
   const templateVariables: Record<string, string> = { applicationId };
   if (application) {

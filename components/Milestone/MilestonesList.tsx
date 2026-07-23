@@ -12,6 +12,7 @@ import { useMilestoneAllocationsByGrants } from "@/hooks/useCommunityMilestoneAl
 import { useProjectAuthorization } from "@/hooks/useProjectAuthorization";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
 import type { StatusOptions } from "@/utilities/gapIndexerApi/getProjectObjectives";
+import { isCancelledMilestoneStatus } from "@/utilities/milestones/getEffectiveMilestoneStatus";
 import { mergeDuplicateMilestones } from "@/utilities/milestones/mergeDuplicateMilestones";
 import { cn } from "@/utilities/tailwind";
 import { ObjectivesSub } from "../Pages/Project/Objective/ObjectivesSub";
@@ -153,14 +154,17 @@ export const MilestonesList = ({
         if (!isCompleted) return false;
       }
       if (status === "pending") {
-        if (milestone.completed) return false;
+        // Cancelled milestones (DEV-523) are terminal, not pending.
+        if (milestone.completed || isCancelledMilestoneStatus(milestone.currentStatus))
+          return false;
       }
 
       // Apply content type filter
       if (selectedContentType !== "all") {
         switch (selectedContentType) {
           case "pending": {
-            const isPending = milestone.completed === false;
+            const isPending =
+              milestone.completed === false && !isCancelledMilestoneStatus(milestone.currentStatus);
             const isMilestoneType =
               milestone.type === "milestone" ||
               milestone.type === "grant" ||

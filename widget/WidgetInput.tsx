@@ -2,6 +2,7 @@
 
 import { CornerDownLeftIcon, SquareIcon } from "lucide-react";
 import { type KeyboardEvent, memo, useCallback, useEffect, useRef, useState } from "react";
+import { CHAT_COMPOSER_LABEL } from "@/components/AgentChat/panel-dom";
 import { Button } from "@/components/ui/button";
 import type { ChatMention } from "@/store/agentChat";
 import { cn } from "@/utilities/tailwind";
@@ -131,7 +132,7 @@ export const WidgetInput = memo(function WidgetInput({
           role="textbox"
           tabIndex={0}
           aria-multiline="true"
-          aria-label="Chat message"
+          aria-label={CHAT_COMPOSER_LABEL}
           aria-disabled={isStreaming}
           contentEditable={!isStreaming}
           suppressContentEditableWarning

@@ -1,7 +1,7 @@
 // P2-22: gap-app-v2 is single-indexer by design — all tenants share
 // envVars.NEXT_PUBLIC_GAP_INDEXER_URL. No per-tenant indexerUrl override
 // is needed. If this changes, implement getIndexerUrl(tenantId) here and
-// thread it as the 8th param of fetchData() in affected hooks.
+// thread it as `opts.baseURL` on the affected `api.*` calls.
 import { getHedgeyContractAddress } from "@/src/features/claim-funds/lib/hedgey-contract";
 import { getTenantTheme } from "../theme/config";
 import type {

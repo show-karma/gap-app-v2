@@ -45,6 +45,7 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar";
+import { SIDEBAR_BELOW_NAVBAR_CLASSES } from "@/components/ui/sidebar-below-navbar";
 import { useDashboardAdmin } from "@/hooks/useDashboardAdmin";
 import { useFundingPrograms } from "@/hooks/useFundingPlatform";
 import { Link } from "@/src/components/navigation/Link";
@@ -362,7 +363,7 @@ export function ManageSidebar({ communityId, community }: ManageSidebarProps) {
   const isDashboard = isDashboardRoute(pathname, slug);
 
   return (
-    <Sidebar collapsible="icon" style={{ top: "var(--navbar-height)", bottom: 0, height: "auto" }}>
+    <Sidebar collapsible="icon" className={SIDEBAR_BELOW_NAVBAR_CLASSES}>
       {/* Community identity + switcher */}
       <SidebarHeader className="pt-3">
         <CommunitySwitcher

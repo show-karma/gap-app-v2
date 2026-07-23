@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { AgentChatBubble } from "@/components/AgentChat/AgentChatBubble";
 import { useAgentChatStore } from "@/store/agentChat";
@@ -212,15 +212,23 @@ describe("AgentChatBubble", () => {
     });
   });
 
-  it("should still render toggle when unauthenticated", () => {
+  // The floating bubble was replaced by a top-level navbar trigger
+  // (NavbarAssistantButton). AgentChatBubble now renders the panel only —
+  // it must NOT bring its own floating button back, or both would show.
+  it("should not render a floating toggle button when unauthenticated", () => {
     mockAuthenticated.mockReturnValue(false);
     render(<AgentChatBubble />);
-    expect(screen.getByLabelText("Open chat")).toBeInTheDocument();
+    expect(screen.queryByLabelText("Open chat")).not.toBeInTheDocument();
   });
 
-  it("should render toggle button when authenticated", () => {
+  it("should not render a floating toggle button when authenticated", () => {
     render(<AgentChatBubble />);
-    expect(screen.getByLabelText("Open chat")).toBeInTheDocument();
+    expect(screen.queryByLabelText("Open chat")).not.toBeInTheDocument();
+  });
+
+  it("should still render the panel even though it owns no trigger", () => {
+    render(<AgentChatBubble />);
+    expect(screen.getByRole("dialog", { hidden: true })).toBeInTheDocument();
   });
 
   it("should have panel hidden (aria-hidden) when closed", () => {
@@ -240,12 +248,18 @@ describe("AgentChatBubble", () => {
     expect(screen.getByTestId("conversation")).toBeInTheDocument();
   });
 
-  it("should toggle chat on button click", async () => {
-    const user = userEvent.setup();
-    render(<AgentChatBubble />);
-    await user.click(screen.getByLabelText("Open chat"));
-    // After click, store.toggleOpen is called → isOpen becomes true
-    expect(useAgentChatStore.getState().isOpen).toBe(true);
+  // Opening is now driven externally (navbar button, community header ⌘K,
+  // milestone @mention buttons) — all of which write the same store flag.
+  it("should open the panel when the shared store flag is set externally", () => {
+    const { rerender } = render(<AgentChatBubble />);
+    expect(screen.getByRole("dialog", { hidden: true })).toHaveAttribute("aria-hidden", "true");
+
+    act(() => {
+      useAgentChatStore.getState().setOpen(true);
+    });
+    rerender(<AgentChatBubble />);
+
+    expect(screen.getByRole("dialog")).toHaveAttribute("aria-hidden", "false");
   });
 
   it("should show empty state when no messages", () => {

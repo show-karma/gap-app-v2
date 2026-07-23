@@ -11,6 +11,7 @@ import type {
   UpdatesApiResponse,
 } from "@/types/v2/roadmap";
 import { assignGrantMilestoneOrder } from "@/utilities/milestones/assignGrantMilestoneOrder";
+import { isCancelledMilestoneStatus } from "@/utilities/milestones/getEffectiveMilestoneStatus";
 import {
   type MilestoneDueDateInput,
   normalizeMilestoneDueDateMs,
@@ -109,6 +110,7 @@ export const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMil
       type: "milestone",
       title: milestone.title,
       description: milestone.description,
+      currentStatus: milestone.status,
       completed: isCompleted
         ? {
             createdAt: milestone.completionDetails?.completedAt || milestone.createdAt || "",
@@ -193,6 +195,7 @@ export const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMil
       type: "grant",
       title: milestone.title,
       description: milestone.description,
+      currentStatus: milestone.status,
       grantMilestoneOrder: serverOrder,
       completed: isCompleted
         ? {
@@ -471,7 +474,10 @@ export function useProjectUpdates(
   );
 
   // Filter pending milestones (not completed)
-  const pendingMilestones = useMemo(() => milestones.filter((m) => !m.completed), [milestones]);
+  const pendingMilestones = useMemo(
+    () => milestones.filter((m) => !m.completed && !isCancelledMilestoneStatus(m.currentStatus)),
+    [milestones]
+  );
 
   // Provide raw data for components that want to use it directly
   const rawData = data;

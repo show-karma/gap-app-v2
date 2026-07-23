@@ -25,8 +25,8 @@ import {
   getProgramIdForUrl,
   normalizeGrantTypesArray,
 } from "@/src/features/program-registry/utils/program-utils";
+import { api } from "@/utilities/api/client";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
-import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
@@ -142,8 +142,8 @@ export const ManagePrograms = () => {
   useEffect(() => {
     const searchProgramById = async (id: string) => {
       try {
-        const [res, error] = await fetchData(INDEXER.REGISTRY.V2.GET_BY_ID(id));
-        if (error) throw Error(error);
+        // TODO(#1775): add zod schema
+        const res = await api.get<GrantProgram | GrantProgram[]>(INDEXER.REGISTRY.V2.GET_BY_ID(id));
         if (res) {
           const programs = Array.isArray(res) ? res : [res];
           const normalizedPrograms = normalizeGrantTypesArray(programs as GrantProgram[]);
@@ -185,15 +185,19 @@ export const ManagePrograms = () => {
         owners: address && !(isRegistryAdmin || isStaff) ? address : undefined,
       });
 
-      const [res, error] = await fetchData(url);
-      if (!error && res?.payload) {
+      // TODO(#1775): add zod schema
+      const res = await api.get<{
+        payload?: GrantProgram[];
+        pagination?: { totalCount?: number };
+      }>(url);
+      if (res?.payload) {
         const normalizedPrograms = normalizeGrantTypesArray(res.payload as GrantProgram[]);
         return {
           programs: normalizedPrograms,
           count: res.pagination?.totalCount as number,
         };
       } else {
-        throw Error(error || "Unknown error");
+        throw Error("Unknown error");
       }
     } catch (error) {
       errorManager(`Error while fetching grant programs`, error);

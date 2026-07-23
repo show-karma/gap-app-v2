@@ -102,9 +102,13 @@ vi.mock("@/utilities/pages", () => ({
   PAGES: { DASHBOARD: "/dashboard", HOME: "/" },
 }));
 
-vi.mock("@/utilities/auth/compare-all-wallets", () => ({
-  compareAllWallets: vi.fn().mockReturnValue(true),
-}));
+vi.mock("@/utilities/auth/compare-all-wallets", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/utilities/auth/compare-all-wallets")>();
+  return {
+    ...actual,
+    compareAllWallets: vi.fn().mockReturnValue(true),
+  };
+});
 
 // Mock @wagmi/core for dynamic import in watchAccount effect
 const mockUnwatch = vi.fn();

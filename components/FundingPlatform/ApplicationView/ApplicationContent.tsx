@@ -8,7 +8,7 @@ import {
   ExclamationTriangleIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
-import { type FC, type ReactNode, useEffect, useMemo, useState } from "react";
+import { type FC, type JSX, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { KarmaProjectLink } from "@/components/FundingPlatform/shared/KarmaProjectLink";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
@@ -19,11 +19,8 @@ import {
   lookupMilestoneStatus,
 } from "@/src/features/applications/lib/milestone-status";
 import { useApplicationVersionsStore } from "@/store/applicationVersions";
-import type {
-  IFormSchema,
-  IFundingApplication,
-  ProgramWithFormSchema,
-} from "@/types/funding-platform";
+import type { IFundingApplication, ProgramWithFormSchema } from "@/types/funding-platform";
+import { formatApplicationStatus } from "@/utilities/application-status";
 import { createFieldLabelsMap, createFieldTypeMap } from "@/utilities/form-schema-helpers";
 import { formatDate } from "@/utilities/formatDate";
 import { cn } from "@/utilities/tailwind";
@@ -78,21 +75,6 @@ const statusIcons = {
   rejected: XMarkIcon,
 };
 
-const formatStatus = (status: string): string => {
-  return status
-    .split("_")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
-};
-
-/** Form schema as stored on program configs, which may carry AI settings. */
-type ApplicationFormSchema = IFormSchema & {
-  aiConfig?: {
-    internalLangfusePromptId?: string;
-    langfusePromptId?: string;
-  };
-};
-
 const ApplicationContent: FC<ApplicationContentProps> = ({
   application,
   program,
@@ -108,22 +90,13 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
   hideHeader = false,
 }) => {
   // Resolve form schema from program object (handling both FundingProgram and IFundingProgramConfig structures)
-  const formSchema =
-    (
-      program as
-        | { applicationConfig?: { formSchema?: ApplicationFormSchema } | null }
-        | null
-        | undefined
-    )?.applicationConfig?.formSchema || (program?.formSchema as ApplicationFormSchema | undefined);
+  const formSchema = (program as any)?.applicationConfig?.formSchema || program?.formSchema;
 
   // Show internal evaluation section if user has access (don't require config check)
   const shouldShowInternalEvaluation = showInternalEvaluation ?? showAIEvaluationButton;
 
   // Check if internal evaluation is configured (for button functionality)
-  const canRunInternalEvaluation = Boolean(
-    (formSchema as { aiConfig?: { internalLangfusePromptId?: string } } | undefined)?.aiConfig
-      ?.internalLangfusePromptId
-  );
+  const canRunInternalEvaluation = Boolean(formSchema?.aiConfig?.internalLangfusePromptId);
   const showMissingInternalPromptWarning = showAIEvaluationButton && !canRunInternalEvaluation;
   const internalPromptHelpText =
     "Configure the internal Langfuse prompt under the program's AI Evaluation settings to enable manual runs.";
@@ -183,7 +156,7 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
         if (pendingStatus === "approved") {
           toast.success("Application approved successfully!");
         } else {
-          toast.success(`Application status updated to ${formatStatus(pendingStatus)}`);
+          toast.success(`Application status updated to ${formatApplicationStatus(pendingStatus)}`);
         }
       } catch (error) {
         console.error("Failed to update status:", error);
@@ -218,7 +191,7 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
     return null;
   };
 
-  const renderFieldValue = (value: unknown, fieldKey?: string): ReactNode => {
+  const renderFieldValue = (value: any, fieldKey?: string): JSX.Element => {
     if (Array.isArray(value)) {
       // Check if it's an array of milestones
       const isMilestoneArray =
@@ -251,7 +224,7 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
 
         return (
           <div className="space-y-2">
-            {value.map((milestone) => {
+            {value.map((milestone: any, index) => {
               // Get additional fields (excluding core fields)
               const additionalFields = Object.keys(milestone).filter(
                 (key) => !coreFields.includes(key) && milestone[key]
@@ -266,7 +239,7 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
 
               return (
                 <div
-                  key={milestone.milestoneUID || milestone.title}
+                  key={index}
                   className="bg-zinc-50 dark:bg-zinc-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700"
                 >
                   <div className="space-y-2">
@@ -339,9 +312,9 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
       // Regular array - render as tags
       return (
         <div className="flex flex-wrap gap-1">
-          {value.map((item) => (
+          {value.map((item, index) => (
             <span
-              key={String(item)}
+              key={index}
               className="inline-block bg-zinc-100 dark:bg-zinc-700 text-gray-800 dark:text-gray-200 px-2 py-1 rounded text-xs"
             >
               {String(item)}
@@ -377,7 +350,7 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
     );
   };
 
-  const renderApplicationData = (): ReactNode => {
+  const renderApplicationData = (): JSX.Element => {
     const dataToRender = application.applicationData;
 
     if (!dataToRender || Object.keys(dataToRender).length === 0) {
@@ -506,7 +479,7 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
                 )}
               >
                 <StatusIcon className="w-4 h-4" />
-                <span>{formatStatus(application.status)}</span>
+                <span>{formatApplicationStatus(application.status)}</span>
               </div>
               <div className="flex flex-col gap-1">
                 <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
@@ -541,7 +514,7 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
               onStatusChange && (
                 <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
                   <StatusActionButtons
-                    currentStatus={application.status}
+                    currentStatus={application.status as any}
                     onStatusChange={handleStatusChangeClick}
                     isUpdating={isUpdatingStatus}
                   />
@@ -564,12 +537,7 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
 
         {application.status === "approved" &&
           (!!(
-            (
-              program as
-                | { applicationConfig?: { postApprovalFormSchema?: IFormSchema } | null }
-                | null
-                | undefined
-            )?.applicationConfig?.postApprovalFormSchema?.fields?.length ||
+            (program as any)?.applicationConfig?.postApprovalFormSchema?.fields?.length ||
             program?.postApprovalFormSchema?.fields?.length
           ) ||
             (application?.postApprovalData &&
@@ -593,7 +561,6 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
             {versions.length > 0 && (
               <div className="flex items-center bg-gray-100 dark:bg-zinc-700 rounded-lg p-1">
                 <button
-                  type="button"
                   onClick={() => setViewMode("details")}
                   className={cn(
                     "flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all",
@@ -606,7 +573,6 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
                   Details
                 </button>
                 <button
-                  type="button"
                   onClick={() => setViewMode("changes")}
                   className={cn(
                     "flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all",

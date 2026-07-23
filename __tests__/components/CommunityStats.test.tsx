@@ -1,10 +1,14 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import CommunityStats from "@/components/CommunityStats";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 
-// Mock fetchData
-vi.mock("@/utilities/fetchData");
+// Mock the typed api client
+vi.mock("@/utilities/api/client", () => ({
+  api: {
+    get: vi.fn(),
+  },
+}));
 
 // Mock Headless UI Dialog
 vi.mock("@headlessui/react", () => {
@@ -119,7 +123,7 @@ describe("CommunityStats", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    (fetchData as vi.Mock).mockResolvedValue([mockStatsData, null]);
+    (api.get as vi.Mock).mockResolvedValue(mockStatsData);
   });
 
   describe("Rendering", () => {
@@ -171,7 +175,7 @@ describe("CommunityStats", () => {
       await user.click(statsButton);
 
       await waitFor(() => {
-        expect(fetchData).toHaveBeenCalledWith(expect.stringContaining(mockCommunityId));
+        expect(api.get).toHaveBeenCalledWith(expect.stringContaining(mockCommunityId));
       });
     });
 
@@ -180,8 +184,8 @@ describe("CommunityStats", () => {
       // Never-settling promise keeps the component in its loading state for the
       // whole assertion window. A timer-based resolve (e.g. setTimeout 100ms) is
       // flaky: under load the click + waitFor can overrun the delay, the data
-      // arrives, and "Loading stats…" is already gone before we look.
-      (fetchData as vi.Mock).mockImplementation(() => new Promise<never>(() => {}));
+      // arrives, and "Loading stats..." is already gone before we look.
+      (api.get as vi.Mock).mockImplementation(() => new Promise<never>(() => {}));
 
       render(<CommunityStats communityId={mockCommunityId} />);
 
@@ -189,7 +193,7 @@ describe("CommunityStats", () => {
       await user.click(statsButton);
 
       await waitFor(() => {
-        expect(screen.getByText("Loading stats…")).toBeInTheDocument();
+        expect(screen.getByText("Loading stats...")).toBeInTheDocument();
       });
     });
   });
@@ -304,7 +308,7 @@ describe("CommunityStats", () => {
       if (refreshButton) await user.click(refreshButton);
 
       await waitFor(() => {
-        expect(fetchData).toHaveBeenCalledTimes(2);
+        expect(api.get).toHaveBeenCalledTimes(2);
       });
     });
   });
@@ -313,7 +317,7 @@ describe("CommunityStats", () => {
     it("should display error message when fetch fails", async () => {
       const user = userEvent.setup();
       const errorMessage = "Failed to fetch stats";
-      (fetchData as vi.Mock).mockResolvedValue([null, errorMessage]);
+      (api.get as vi.Mock).mockRejectedValue(new Error(errorMessage));
 
       render(<CommunityStats communityId={mockCommunityId} />);
 
@@ -327,7 +331,7 @@ describe("CommunityStats", () => {
 
     it("should display error when no stats found", async () => {
       const user = userEvent.setup();
-      (fetchData as vi.Mock).mockResolvedValue([{}, null]);
+      (api.get as vi.Mock).mockResolvedValue({});
 
       render(<CommunityStats communityId={mockCommunityId} />);
 
@@ -341,7 +345,7 @@ describe("CommunityStats", () => {
 
     it("should display error when projects data is missing", async () => {
       const user = userEvent.setup();
-      (fetchData as vi.Mock).mockResolvedValue([{ grants: 10 }, null]);
+      (api.get as vi.Mock).mockResolvedValue({ grants: 10 });
 
       render(<CommunityStats communityId={mockCommunityId} />);
 
@@ -357,7 +361,7 @@ describe("CommunityStats", () => {
       const user = userEvent.setup();
       const { errorManager } = await import("@/components/Utilities/errorManager");
       const error = new Error("Network error");
-      (fetchData as vi.Mock).mockRejectedValue(error);
+      (api.get as vi.Mock).mockRejectedValue(error);
 
       render(<CommunityStats communityId={mockCommunityId} />);
 
@@ -492,7 +496,7 @@ describe("CommunityStats", () => {
         ProjectEdits: 0,
         ProjectEndorsements: 0,
       };
-      (fetchData as vi.Mock).mockResolvedValue([zeroStats, null]);
+      (api.get as vi.Mock).mockResolvedValue(zeroStats);
 
       render(<CommunityStats communityId={mockCommunityId} />);
 
@@ -512,7 +516,7 @@ describe("CommunityStats", () => {
         ...mockStatsData,
         projects: 999999,
       };
-      (fetchData as vi.Mock).mockResolvedValue([largeStats, null]);
+      (api.get as vi.Mock).mockResolvedValue(largeStats);
 
       render(<CommunityStats communityId={mockCommunityId} />);
 
@@ -530,7 +534,7 @@ describe("CommunityStats", () => {
         projects: 10,
         grants: 5,
       };
-      (fetchData as vi.Mock).mockResolvedValue([partialStats, null]);
+      (api.get as vi.Mock).mockResolvedValue(partialStats);
 
       render(<CommunityStats communityId={mockCommunityId} />);
 
@@ -550,7 +554,7 @@ describe("CommunityStats", () => {
       await user.click(statsButton);
 
       await waitFor(() => {
-        expect(fetchData).toHaveBeenCalled();
+        expect(api.get).toHaveBeenCalled();
       });
     });
   });
@@ -558,8 +562,8 @@ describe("CommunityStats", () => {
   describe("Loading States", () => {
     it("should show loading initially after opening modal", async () => {
       const user = userEvent.setup();
-      (fetchData as vi.Mock).mockImplementation(
-        () => new Promise((resolve) => setTimeout(() => resolve([mockStatsData, null]), 500))
+      (api.get as vi.Mock).mockImplementation(
+        () => new Promise((resolve) => setTimeout(() => resolve(mockStatsData), 500))
       );
 
       render(<CommunityStats communityId={mockCommunityId} />);
@@ -567,7 +571,7 @@ describe("CommunityStats", () => {
       const statsButton = screen.getByText("Stats");
       await user.click(statsButton);
 
-      expect(await screen.findByText("Loading stats…")).toBeInTheDocument();
+      expect(await screen.findByText("Loading stats...")).toBeInTheDocument();
     });
 
     it("should hide loading after stats are fetched", async () => {
@@ -578,14 +582,14 @@ describe("CommunityStats", () => {
       await user.click(statsButton);
 
       await waitFor(() => {
-        expect(screen.queryByText("Loading stats…")).not.toBeInTheDocument();
+        expect(screen.queryByText("Loading stats...")).not.toBeInTheDocument();
       });
     });
 
     it("should show loading when refreshing stats", async () => {
       const user = userEvent.setup();
-      (fetchData as vi.Mock).mockImplementation(
-        () => new Promise((resolve) => setTimeout(() => resolve([mockStatsData, null]), 100))
+      (api.get as vi.Mock).mockImplementation(
+        () => new Promise((resolve) => setTimeout(() => resolve(mockStatsData), 100))
       );
 
       render(<CommunityStats communityId={mockCommunityId} />);
@@ -600,7 +604,7 @@ describe("CommunityStats", () => {
       const refreshButton = screen.getByTestId("refresh-icon").closest("button");
       if (refreshButton) await user.click(refreshButton);
 
-      expect(await screen.findByText("Loading stats…")).toBeInTheDocument();
+      expect(await screen.findByText("Loading stats...")).toBeInTheDocument();
     });
   });
 });

@@ -1,6 +1,7 @@
+import { api } from "@/utilities/api/client";
+import { HttpError } from "@/utilities/api/errors";
 import { TokenManager } from "@/utilities/auth/token-manager";
 import { envVars } from "@/utilities/enviromentVars";
-import fetchData from "@/utilities/fetchData";
 import type {
   CreditPack,
   CreditsResponse,
@@ -46,13 +47,32 @@ const ENDPOINTS = {
   creditsPurchase: () => `${BASE}/credits/purchase`,
 } as const;
 
-function unwrap<T>(
-  result: [T, null, unknown, number] | [null, string, null, number],
-  fallbackMsg: string
-): T {
-  const [data, error] = result;
-  if (error || !data) {
-    throw new Error(error || fallbackMsg);
+// NOTE(#1775): responses in this file are migrated with NO zod schema (the
+// `api` client's untyped escape hatch) — the TS interfaces in ../schemas/*
+// describe response shapes we haven't verified against the live BE contract.
+// Add schemas incrementally per-endpoint in a follow-up.
+
+/** Extracts the backend's `message` field (mirrors the legacy fetchData adapter). */
+function toErrorMessage(error: unknown): string {
+  if (error instanceof HttpError) {
+    const bodyMessage = (error.body as { message?: string } | undefined)?.message;
+    const causeMessage = (error.cause as { message?: string } | undefined)?.message;
+    return bodyMessage || causeMessage || error.message;
+  }
+  if (error instanceof Error) return error.message;
+  return String(error);
+}
+
+/** Awaits `promise`, normalizing a rejection or an empty payload into a single `Error`. */
+async function unwrap<T>(promise: Promise<T>, fallbackMsg: string): Promise<T> {
+  let data: T;
+  try {
+    data = await promise;
+  } catch (error) {
+    throw new Error(toErrorMessage(error) || fallbackMsg);
+  }
+  if (data === null || data === undefined) {
+    throw new Error(fallbackMsg);
   }
   return data;
 }
@@ -60,8 +80,10 @@ function unwrap<T>(
 export const standaloneEvaluationService = {
   // ─── Sessions ─────────────────────────────────────────────────────────────
   createSession: async (input: SessionCreateInput): Promise<SessionResponse> => {
-    const result = await fetchData<SessionResponse>(ENDPOINTS.sessions(), "POST", input);
-    return unwrap(result, "Failed to create session");
+    return unwrap(
+      api.post<SessionResponse>(ENDPOINTS.sessions(), input),
+      "Failed to create session"
+    );
   },
 
   listSessions: async (
@@ -69,64 +91,63 @@ export const standaloneEvaluationService = {
   ): Promise<{ items: SessionResponse[]; total: number }> => {
     const limit = params.limit ?? 20;
     const offset = params.offset ?? 0;
-    const result = await fetchData<{ items: SessionResponse[]; total: number }>(
-      ENDPOINTS.sessionList(limit, offset),
-      "GET"
+    return unwrap(
+      api.get<{ items: SessionResponse[]; total: number }>(ENDPOINTS.sessionList(limit, offset)),
+      "Failed to list sessions"
     );
-    return unwrap(result, "Failed to list sessions");
   },
 
   getSession: async (id: string): Promise<SessionResponse> => {
-    const result = await fetchData<SessionResponse>(ENDPOINTS.session(id), "GET");
-    return unwrap(result, "Failed to fetch session");
+    return unwrap(api.get<SessionResponse>(ENDPOINTS.session(id)), "Failed to fetch session");
   },
 
   deleteSession: async (id: string): Promise<void> => {
-    const [, error] = await fetchData(ENDPOINTS.session(id), "DELETE");
-    if (error) throw new Error(error);
+    try {
+      await api.delete(ENDPOINTS.session(id));
+    } catch (error) {
+      throw new Error(toErrorMessage(error));
+    }
   },
 
   evaluateApplication: async (
     sessionId: string,
     applicationText: string
   ): Promise<EvaluationResultResponse> => {
-    const result = await fetchData<EvaluationResultResponse>(
-      ENDPOINTS.evaluate(sessionId),
-      "POST",
-      { applicationText }
+    return unwrap(
+      api.post<EvaluationResultResponse>(ENDPOINTS.evaluate(sessionId), { applicationText }),
+      "Failed to evaluate application"
     );
-    return unwrap(result, "Failed to evaluate application");
   },
 
   submitFeedback: async (
     sessionId: string,
     feedback: string
   ): Promise<EvaluationResultResponse> => {
-    const result = await fetchData<EvaluationResultResponse>(
-      ENDPOINTS.feedback(sessionId),
-      "POST",
-      { feedback }
+    return unwrap(
+      api.post<EvaluationResultResponse>(ENDPOINTS.feedback(sessionId), { feedback }),
+      "Failed to submit feedback"
     );
-    return unwrap(result, "Failed to submit feedback");
   },
 
   setSample: async (sessionId: string, sampleApplication: string): Promise<SessionResponse> => {
-    const result = await fetchData<SessionResponse>(ENDPOINTS.sample(sessionId), "POST", {
-      sampleApplication,
-    });
-    return unwrap(result, "Failed to set sample");
+    return unwrap(
+      api.post<SessionResponse>(ENDPOINTS.sample(sessionId), { sampleApplication }),
+      "Failed to set sample"
+    );
   },
 
   markReadyForBulk: async (sessionId: string): Promise<SessionResponse> => {
-    const result = await fetchData<SessionResponse>(ENDPOINTS.readyForBulk(sessionId), "POST");
-    return unwrap(result, "Failed to mark session ready for bulk");
+    return unwrap(
+      api.post<SessionResponse>(ENDPOINTS.readyForBulk(sessionId)),
+      "Failed to mark session ready for bulk"
+    );
   },
 
   updatePrompt: async (sessionId: string, prompt: string): Promise<SessionResponse> => {
-    const result = await fetchData<SessionResponse>(ENDPOINTS.prompt(sessionId), "PATCH", {
-      prompt,
-    });
-    return unwrap(result, "Failed to update prompt");
+    return unwrap(
+      api.patch<SessionResponse>(ENDPOINTS.prompt(sessionId), { prompt }),
+      "Failed to update prompt"
+    );
   },
 
   // ─── Bulk ─────────────────────────────────────────────────────────────────
@@ -142,13 +163,17 @@ export const standaloneEvaluationService = {
     const csvContent = await file.text();
     const body: { csvContent: string; notificationEmail?: string } = { csvContent };
     if (notificationEmail) body.notificationEmail = notificationEmail;
-    const result = await fetchData<BulkJobResponse>(ENDPOINTS.bulk(sessionId), "POST", body);
-    return unwrap(result, "Failed to start bulk job");
+    return unwrap(
+      api.post<BulkJobResponse>(ENDPOINTS.bulk(sessionId), body),
+      "Failed to start bulk job"
+    );
   },
 
   getBulkJob: async (sessionId: string, jobId: string): Promise<BulkJobResponse> => {
-    const result = await fetchData<BulkJobResponse>(ENDPOINTS.bulkJob(sessionId, jobId), "GET");
-    return unwrap(result, "Failed to fetch bulk job");
+    return unwrap(
+      api.get<BulkJobResponse>(ENDPOINTS.bulkJob(sessionId, jobId)),
+      "Failed to fetch bulk job"
+    );
   },
 
   /**
@@ -156,8 +181,10 @@ export const standaloneEvaluationService = {
    * a history panel so past bulks survive refresh / cross-device.
    */
   listBulkJobs: async (sessionId: string): Promise<BulkJobResponse[]> => {
-    const result = await fetchData<BulkJobResponse[]>(ENDPOINTS.bulksList(sessionId), "GET");
-    return unwrap(result, "Failed to list bulk jobs");
+    return unwrap(
+      api.get<BulkJobResponse[]>(ENDPOINTS.bulksList(sessionId)),
+      "Failed to list bulk jobs"
+    );
   },
 
   /**
@@ -169,17 +196,18 @@ export const standaloneEvaluationService = {
     sessionId: string,
     jobId: string
   ): Promise<{ columns: string[]; rows: Record<string, unknown>[] }> => {
-    const result = await fetchData<{
-      columns: string[];
-      rows: Record<string, unknown>[];
-    }>(ENDPOINTS.bulkResult(sessionId, jobId), "GET");
-    return unwrap(result, "Failed to fetch bulk result");
+    return unwrap(
+      api.get<{ columns: string[]; rows: Record<string, unknown>[] }>(
+        ENDPOINTS.bulkResult(sessionId, jobId)
+      ),
+      "Failed to fetch bulk result"
+    );
   },
 
   /**
    * Fetches the bulk-job result CSV. The BE serializes from DB-stored
    * `{ columns, rows }` and streams `text/csv`. We use raw fetch + Privy token
-   * (instead of the JSON-oriented `fetchData`) so we can read the response as
+   * (instead of the JSON-oriented `api` client) so we can read the response as
    * a Blob and trigger a browser download via an anchor click.
    */
   downloadBulkResultCsv: async (sessionId: string, jobId: string): Promise<Blob> => {
@@ -210,38 +238,35 @@ export const standaloneEvaluationService = {
 
   // ─── Templates ────────────────────────────────────────────────────────────
   createTemplate: async (input: TemplateCreateInput): Promise<TemplateResponse> => {
-    const result = await fetchData<TemplateResponse>(ENDPOINTS.templates(), "POST", input);
-    return unwrap(result, "Failed to create template");
+    return unwrap(
+      api.post<TemplateResponse>(ENDPOINTS.templates(), input),
+      "Failed to create template"
+    );
   },
 
   listTemplates: async (): Promise<TemplateResponse[]> => {
-    const result = await fetchData<TemplateResponse[]>(ENDPOINTS.templates(), "GET");
-    return unwrap(result, "Failed to list templates");
+    return unwrap(api.get<TemplateResponse[]>(ENDPOINTS.templates()), "Failed to list templates");
   },
 
   deleteTemplate: async (id: string): Promise<void> => {
-    const [, error] = await fetchData(ENDPOINTS.template(id), "DELETE");
-    if (error) throw new Error(error);
+    try {
+      await api.delete(ENDPOINTS.template(id));
+    } catch (error) {
+      throw new Error(toErrorMessage(error));
+    }
   },
 
   listBuiltInTemplates: async (): Promise<BuiltInTemplate[]> => {
-    // Public endpoint — no auth needed. fetchData still injects the token if available;
-    // BE ignores it so this works for both anonymous and authenticated callers.
-    const result = await fetchData<BuiltInTemplate[]>(
-      ENDPOINTS.templatesBuiltIn(),
-      "GET",
-      {},
-      {},
-      {},
-      false
+    // Public endpoint — no auth required.
+    return unwrap(
+      api.get<BuiltInTemplate[]>(ENDPOINTS.templatesBuiltIn(), { isAuthorized: false }),
+      "Failed to list built-in templates"
     );
-    return unwrap(result, "Failed to list built-in templates");
   },
 
   // ─── Credits ──────────────────────────────────────────────────────────────
   getCredits: async (): Promise<CreditsResponse> => {
-    const result = await fetchData<CreditsResponse>(ENDPOINTS.credits(), "GET");
-    return unwrap(result, "Failed to fetch credits");
+    return unwrap(api.get<CreditsResponse>(ENDPOINTS.credits()), "Failed to fetch credits");
   },
 
   createPurchaseSession: async (
@@ -249,11 +274,13 @@ export const standaloneEvaluationService = {
     successUrl: string,
     cancelUrl: string
   ): Promise<PurchaseSessionResponse> => {
-    const result = await fetchData<PurchaseSessionResponse>(ENDPOINTS.creditsPurchase(), "POST", {
-      pack,
-      successUrl,
-      cancelUrl,
-    });
-    return unwrap(result, "Failed to create purchase session");
+    return unwrap(
+      api.post<PurchaseSessionResponse>(ENDPOINTS.creditsPurchase(), {
+        pack,
+        successUrl,
+        cancelUrl,
+      }),
+      "Failed to create purchase session"
+    );
   },
 };

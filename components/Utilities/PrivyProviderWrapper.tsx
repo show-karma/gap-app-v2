@@ -10,6 +10,7 @@ import {
 } from "@/contexts/privy-bridge-context";
 import { PRIVY_BRIDGE_DEFAULTS } from "@/contexts/privy-bridge-defaults";
 import type { TenantConfig } from "@/src/infrastructure/types/tenant";
+import { ensureCryptoRandomUUID } from "@/utilities/auth/ensure-crypto-random-uuid";
 import { queryClient } from "@/utilities/query-client";
 import { minimalWagmiConfig } from "@/utilities/wagmi/privy-config";
 
@@ -45,14 +46,25 @@ function PrivyLoader({
 
   useEffect(() => {
     const doLoad = () => {
+      ensureCryptoRandomUUID();
       import("./PrivyWagmiProviders").then(setPrivy).catch((err) => {
         console.error("[PrivyProviderWrapper] Failed to load Privy SDK:", err);
         setBridge({ ...PRIVY_BRIDGE_DEFAULTS, ready: true });
       });
     };
 
-    // Returning user (has privy token) or explicit load request — load immediately
-    const hasToken = typeof window !== "undefined" && localStorage.getItem("privy:token");
+    // Returning user (has privy token) or explicit load request — load immediately.
+    // Storage can be unavailable outright (privacy mode, blocked third-party
+    // storage, enterprise policy) and then ANY access throws — and since this
+    // effect runs on every page at boot, an unguarded read here crashed the
+    // whole app to the error boundary before login was even reachable (QA A6).
+    // Unreadable storage means "no token": take the anonymous deferred path.
+    let hasToken: string | null = null;
+    try {
+      hasToken = typeof window !== "undefined" ? localStorage.getItem("privy:token") : null;
+    } catch {
+      // SUPPRESSED: storage unavailable — treat as anonymous; Privy still lazy-loads.
+    }
     if (hasToken || loadRequested) {
       doLoad();
       return;

@@ -17,15 +17,21 @@ vi.mock("@/components/Utilities/errorManager", () => ({
   errorManager: vi.fn(),
 }));
 
-// Mock fetchData utility - the service now uses fetchData instead of api-client directly
-vi.mock("@/utilities/fetchData");
+// Mock the typed api client — the service now uses api.get instead of fetchData directly
+vi.mock("@/utilities/api/client", () => ({
+  api: { get: vi.fn() },
+}));
 
 // Import the service AFTER all mocks are set up
 import { searchProjects } from "@/services/project-search.service";
 // Import the mocked module to get access to the mock function
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
+import { HttpError } from "@/utilities/api/errors";
 
-const mockFetchData = fetchData as vi.MockedFunction<typeof fetchData>;
+const mockApiGet = api.get as vi.MockedFunction<typeof api.get>;
+
+const httpError = (status: number) =>
+  new HttpError(status, { endpoint: "/v2/projects/search", method: "GET" });
 
 describe("project-search.service", () => {
   beforeEach(() => {
@@ -64,35 +70,35 @@ describe("project-search.service", () => {
       const result = await searchProjects("ab");
 
       expect(result).toEqual([]);
-      expect(mockFetchData).not.toHaveBeenCalled();
+      expect(mockApiGet).not.toHaveBeenCalled();
     });
 
     it("should return empty array for empty query", async () => {
       const result = await searchProjects("");
 
       expect(result).toEqual([]);
-      expect(mockFetchData).not.toHaveBeenCalled();
+      expect(mockApiGet).not.toHaveBeenCalled();
     });
 
     it("should return projects for valid queries", async () => {
-      mockFetchData.mockResolvedValueOnce([mockProjects, null, null, 200]);
+      mockApiGet.mockResolvedValueOnce(mockProjects);
 
       const result = await searchProjects("test");
 
       expect(result).toEqual(mockProjects);
-      expect(mockFetchData).toHaveBeenCalledWith(expect.stringContaining("test"));
+      expect(mockApiGet).toHaveBeenCalledWith(expect.stringContaining("test"));
     });
 
     it("should include limit parameter when provided", async () => {
-      mockFetchData.mockResolvedValueOnce([mockProjects, null, null, 200]);
+      mockApiGet.mockResolvedValueOnce(mockProjects);
 
       await searchProjects("test", 5);
 
-      expect(mockFetchData).toHaveBeenCalledWith(expect.stringContaining("limit=5"));
+      expect(mockApiGet).toHaveBeenCalledWith(expect.stringContaining("limit=5"));
     });
 
     it("should return empty array on error", async () => {
-      mockFetchData.mockResolvedValueOnce([null, "Not found", null, 404]);
+      mockApiGet.mockRejectedValueOnce(httpError(404));
 
       const result = await searchProjects("nonexistent");
 
@@ -100,7 +106,7 @@ describe("project-search.service", () => {
     });
 
     it("should return empty array on API error", async () => {
-      mockFetchData.mockResolvedValueOnce([null, "Server error", null, 500]);
+      mockApiGet.mockRejectedValueOnce(httpError(500));
 
       const result = await searchProjects("test");
 
@@ -108,22 +114,20 @@ describe("project-search.service", () => {
     });
 
     it("should encode special characters in query", async () => {
-      mockFetchData.mockResolvedValueOnce([[], null, null, 200]);
+      mockApiGet.mockResolvedValueOnce([]);
 
       await searchProjects("test & project");
 
-      expect(mockFetchData).toHaveBeenCalledWith(
+      expect(mockApiGet).toHaveBeenCalledWith(
         expect.stringContaining(encodeURIComponent("test & project"))
       );
     });
 
     it("should unwrap paginated envelope { payload, pagination }", async () => {
-      mockFetchData.mockResolvedValueOnce([
-        { payload: mockProjects, pagination: { total: 2, page: 1, limit: 10 } },
-        null,
-        null,
-        200,
-      ]);
+      mockApiGet.mockResolvedValueOnce({
+        payload: mockProjects,
+        pagination: { total: 2, page: 1, limit: 10 },
+      });
 
       const result = await searchProjects("test");
 
@@ -131,7 +135,7 @@ describe("project-search.service", () => {
     });
 
     it("should return empty array when response has unexpected shape", async () => {
-      mockFetchData.mockResolvedValueOnce([{ unexpected: "shape" }, null, null, 200]);
+      mockApiGet.mockResolvedValueOnce({ unexpected: "shape" });
 
       const result = await searchProjects("test");
 

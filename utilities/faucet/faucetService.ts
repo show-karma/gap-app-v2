@@ -1,7 +1,9 @@
-import fetchData from "../fetchData";
+import { z } from "zod";
+import { api } from "@/utilities/api/client";
+import { HttpError } from "@/utilities/api/errors";
 
 // Types
-interface FaucetEligibilityResponse {
+export interface FaucetEligibilityResponse {
   eligible: boolean;
   reason?: string;
   gasUnits?: string;
@@ -13,19 +15,7 @@ interface FaucetEligibilityResponse {
   currentBalance?: string;
 }
 
-interface ChainResponse {
-  chainId: number;
-  createdAt: string;
-  decimals: number;
-  explorerUrl?: string;
-  id: string;
-  metadata: Record<string, unknown> | null;
-  name: string;
-  rpcUrl?: string;
-  symbol: string;
-  updatedAt: string;
-}
-interface FaucetRequestResponse {
+export interface FaucetRequestResponse {
   requestId: string;
   eligible: boolean;
   gasUnits: string;
@@ -35,15 +25,20 @@ interface FaucetRequestResponse {
   faucetAddress: string;
 }
 
-interface FaucetClaimResponse {
-  requestId: string;
-  transactionHash: string;
-  status: string;
-  blockNumber?: string;
-  gasUsed?: string;
-}
+// FaucetClaimResponse has no ambiguous Date-typed fields, so it is safe to
+// validate at runtime.
+const FaucetClaimResponseSchema = z
+  .object({
+    requestId: z.string(),
+    transactionHash: z.string(),
+    status: z.string(),
+    blockNumber: z.string().optional(),
+    gasUsed: z.string().optional(),
+  })
+  .passthrough();
+export type FaucetClaimResponse = z.infer<typeof FaucetClaimResponseSchema>;
 
-interface FaucetRequest {
+export interface FaucetRequest {
   id: string;
   chainId: number;
   walletAddress: string;
@@ -60,7 +55,7 @@ interface FaucetRequest {
   updatedAt: Date;
 }
 
-interface PaginatedResponse {
+export interface PaginatedResponse {
   totalCount: number;
   page: number;
   limit: number;
@@ -70,37 +65,49 @@ interface PaginatedResponse {
   hasNextPage: boolean;
   hasPrevPage: boolean;
 }
-interface FaucetRequests {
+export interface FaucetRequests {
   payload: FaucetRequest[];
   pagination: PaginatedResponse;
 }
 
-interface WhitelistedPaginatedResponse {
+export interface WhitelistedPaginatedResponse {
   data: WhitelistedContract[];
   pagination: PaginatedResponse;
 }
 
-interface BlockedPaginatedResponse {
+export interface BlockedPaginatedResponse {
   data: BlockedAddress[];
   pagination: PaginatedResponse;
 }
 
-interface FaucetBalance {
-  chainId: number;
-  chainName: string;
-  balance: string;
-  symbol: string;
-  isLow: boolean;
-  threshold: string;
-}
+// FaucetBalance has no ambiguous Date-typed fields, so it is safe to
+// validate at runtime.
+const FaucetBalanceSchema = z
+  .object({
+    chainId: z.number(),
+    chainName: z.string(),
+    balance: z.string(),
+    symbol: z.string(),
+    isLow: z.boolean(),
+    threshold: z.string(),
+  })
+  .passthrough();
+export type FaucetBalance = z.infer<typeof FaucetBalanceSchema>;
 
-interface FaucetStats {
-  totalRequests: number;
-  successfulClaims: number;
-  failedClaims: number;
-  totalAmountDistributed: string;
-  uniqueAddresses: number;
-}
+const AllFaucetBalancesResponseSchema = z
+  .object({ balances: z.array(FaucetBalanceSchema) })
+  .passthrough();
+
+const FaucetStatsSchema = z
+  .object({
+    totalRequests: z.number(),
+    successfulClaims: z.number(),
+    failedClaims: z.number(),
+    totalAmountDistributed: z.string(),
+    uniqueAddresses: z.number(),
+  })
+  .passthrough();
+export type FaucetStats = z.infer<typeof FaucetStatsSchema>;
 
 export interface FaucetTransaction {
   to: string;
@@ -120,7 +127,7 @@ export interface FaucetChainSettings {
   updatedAt?: Date;
 }
 
-interface FaucetGlobalConfig {
+export interface FaucetGlobalConfig {
   id?: string;
   defaultRateLimitHours: number;
   defaultBufferPercentage: number;
@@ -130,7 +137,7 @@ interface FaucetGlobalConfig {
   updatedAt?: Date;
 }
 
-interface WhitelistedContract {
+export interface WhitelistedContract {
   id?: string;
   chainId: number;
   contractAddress: string;
@@ -142,7 +149,7 @@ interface WhitelistedContract {
   updatedAt?: Date;
 }
 
-interface BlockedAddress {
+export interface BlockedAddress {
   id?: string;
   address: string;
   chainId?: number;
@@ -150,6 +157,28 @@ interface BlockedAddress {
   expiresAt?: Date;
   blockedAt?: Date;
 }
+
+// ChainResponse has no ambiguous Date-typed fields (createdAt/updatedAt are
+// already strings), so it is safe to validate at runtime.
+const ChainResponseSchema = z
+  .object({
+    chainId: z.number(),
+    createdAt: z.string(),
+    decimals: z.number(),
+    explorerUrl: z.string().optional(),
+    id: z.string(),
+    metadata: z.any(),
+    name: z.string(),
+    rpcUrl: z.string().optional(),
+    symbol: z.string(),
+    updatedAt: z.string(),
+  })
+  .passthrough();
+export type ChainResponse = z.infer<typeof ChainResponseSchema>;
+
+const AllChainsResponseSchema = z.object({ chains: z.array(ChainResponseSchema) }).passthrough();
+
+const ExpireOldRequestsResponseSchema = z.object({ count: z.number() }).passthrough();
 
 class FaucetService {
   // ============================================
@@ -164,23 +193,12 @@ class FaucetService {
     walletAddress: string,
     transaction: FaucetTransaction
   ): Promise<FaucetEligibilityResponse> {
-    const [data, error] = await fetchData(
+    // TODO(#1775): add zod schema
+    return api.post<FaucetEligibilityResponse>(
       `/v2/faucet/check-eligibility/${chainId}`,
-      "POST",
-      {
-        walletAddress,
-        transaction,
-      },
-      {},
-      {},
-      false
+      { walletAddress, transaction },
+      { isAuthorized: false }
     );
-
-    if (error) {
-      throw new Error(`Failed to check eligibility: ${error}`);
-    }
-
-    return data;
   }
 
   /**
@@ -191,46 +209,23 @@ class FaucetService {
     walletAddress: string,
     transaction: FaucetTransaction
   ): Promise<FaucetRequestResponse> {
-    const [data, error] = await fetchData(
+    // TODO(#1775): add zod schema
+    return api.post<FaucetRequestResponse>(
       `/v2/faucet/request`,
-      "POST",
-      {
-        chainId,
-        walletAddress,
-        transaction,
-      },
-      {},
-      {},
-      false
+      { chainId, walletAddress, transaction },
+      { isAuthorized: false }
     );
-
-    if (error) {
-      throw new Error(`Failed to create faucet request: ${error}`);
-    }
-
-    return data;
   }
 
   /**
    * Claim faucet funds for a pending request
    */
   async claimFaucet(requestId: string): Promise<FaucetClaimResponse> {
-    const [data, error] = await fetchData(
+    return api.post<FaucetClaimResponse>(
       `/v2/faucet/claim`,
-      "POST",
-      {
-        requestId,
-      },
-      {},
-      {},
-      false
+      { requestId },
+      { isAuthorized: false, schema: FaucetClaimResponseSchema }
     );
-
-    if (error) {
-      throw new Error(`Failed to claim faucet`);
-    }
-
-    return data;
   }
 
   /**
@@ -241,8 +236,8 @@ class FaucetService {
     chainId?: number,
     page: number = 1,
     limit: number = 10
-  ): Promise<{ requests: FaucetRequest[]; pageInfo: unknown }> {
-    const params: { address: string; page: number; limit: number; chainId?: number } = {
+  ): Promise<{ requests: FaucetRequest[]; pageInfo: any }> {
+    const params: Record<string, unknown> = {
       address,
       page,
       limit,
@@ -252,20 +247,18 @@ class FaucetService {
       params.chainId = chainId;
     }
 
-    const [data, error] = await fetchData(`/v2/faucet/history`, "GET", {}, params, {}, false);
-
-    if (error) {
-      throw new Error(`Failed to get history: ${error}`);
-    }
-
-    return data;
+    // TODO(#1775): add zod schema
+    return api.get<{ requests: FaucetRequest[]; pageInfo: any }>(`/v2/faucet/history`, {
+      params,
+      isAuthorized: false,
+    });
   }
 
   /**
    * Get faucet statistics
    */
   async getStats(chainId?: number, days: number = 7): Promise<FaucetStats> {
-    const params: { days: number; chainId?: number } = {
+    const params: Record<string, unknown> = {
       days,
     };
 
@@ -273,70 +266,49 @@ class FaucetService {
       params.chainId = chainId;
     }
 
-    const [data, error] = await fetchData(`/v2/faucet/stats`, "GET", {}, params, {}, false);
-
-    if (error) {
-      throw new Error(`Failed to get stats: ${error}`);
-    }
-
-    return data;
+    return api.get<FaucetStats>(`/v2/faucet/stats`, {
+      params,
+      isAuthorized: false,
+      schema: FaucetStatsSchema,
+    });
   }
 
   /**
    * Get faucet balance for a specific chain
    */
   async getBalance(chainId: number): Promise<FaucetBalance> {
-    const [data, error] = await fetchData(
-      `/v2/faucet/balance/${chainId}`,
-      "GET",
-      {},
-      {},
-      {},
-      false
-    );
-
-    if (error) {
-      throw new Error(`Failed to get balance: ${error}`);
-    }
-
-    return data;
+    return api.get<FaucetBalance>(`/v2/faucet/balance/${chainId}`, {
+      isAuthorized: false,
+      schema: FaucetBalanceSchema,
+    });
   }
 
   /**
    * Get faucet balances for all chains
    */
   async getAllBalances(): Promise<{ balances: FaucetBalance[] }> {
-    const [data, error] = await fetchData(`/v2/faucet/balances`, "GET", {}, {}, {}, false);
-
-    if (error) {
-      throw new Error(`Failed to get all balances: ${error}`);
-    }
-
-    return data;
+    return api.get<{ balances: FaucetBalance[] }>(`/v2/faucet/balances`, {
+      isAuthorized: false,
+      schema: AllFaucetBalancesResponseSchema,
+    });
   }
 
   /**
    * Get a specific faucet request by ID
    */
   async getRequest(requestId: string): Promise<FaucetRequest | null> {
-    const [data, error] = await fetchData(
-      `/v2/faucet/request/${requestId}`,
-      "GET",
-      {},
-      {},
-      {},
-      false
-    );
-
-    if (error) {
+    try {
+      // TODO(#1775): add zod schema
+      return await api.get<FaucetRequest>(`/v2/faucet/request/${requestId}`, {
+        isAuthorized: false,
+      });
+    } catch (e) {
       // 404 means request not found
-      if (error.includes("404") || error.includes("Not Found")) {
+      if (e instanceof HttpError && e.status === 404) {
         return null;
       }
-      throw new Error(`Failed to get request: ${error}`);
+      throw e;
     }
-
-    return data;
   }
 
   // ============================================
@@ -355,13 +327,8 @@ class FaucetService {
     totalChains: string;
     enabledChains: string;
   }> {
-    const [data, error] = await fetchData(`/v2/admin/faucet/config`, "GET", {}, {}, {}, true);
-
-    if (error) {
-      throw new Error(`Failed to get configuration: ${error}`);
-    }
-
-    return data;
+    // TODO(#1775): add zod schema
+    return api.get(`/v2/admin/faucet/config`);
   }
 
   /**
@@ -371,74 +338,29 @@ class FaucetService {
     chainId: number,
     settings: Partial<FaucetChainSettings>
   ): Promise<void> {
-    const [_, error] = await fetchData(
-      `/v2/admin/faucet/settings/${chainId}`,
-      "PUT",
-      settings,
-      {},
-      {},
-      true
-    );
-
-    if (error) {
-      throw new Error(`Failed to update chain settings: ${error}`);
-    }
+    await api.put(`/v2/admin/faucet/settings/${chainId}`, settings);
   }
 
   /**
    * Create faucet settings for a chain (admin only)
    */
   async createChainSettings(settings: FaucetChainSettings): Promise<FaucetChainSettings> {
-    const [data, error] = await fetchData(
-      `/v2/admin/faucet/settings`,
-      "POST",
-      settings,
-      {},
-      {},
-      true
-    );
-
-    if (error) {
-      throw new Error(`Failed to create chain settings: ${error}`);
-    }
-
-    return data;
+    // TODO(#1775): add zod schema
+    return api.post<FaucetChainSettings>(`/v2/admin/faucet/settings`, settings);
   }
 
   /**
    * Delete faucet settings for a chain (admin only)
    */
   async deleteChainSettings(chainId: number): Promise<void> {
-    const [_, error] = await fetchData(
-      `/v2/admin/faucet/settings/${chainId}`,
-      "DELETE",
-      {},
-      {},
-      {},
-      true
-    );
-
-    if (error) {
-      throw new Error(`Failed to delete chain settings: ${error}`);
-    }
+    await api.delete(`/v2/admin/faucet/settings/${chainId}`);
   }
 
   /**
    * Update global faucet configuration (admin only)
    */
   async updateGlobalConfig(config: Partial<FaucetGlobalConfig>): Promise<void> {
-    const [_, error] = await fetchData(
-      `/v2/admin/faucet/global-config`,
-      "PUT",
-      config,
-      {},
-      {},
-      true
-    );
-
-    if (error) {
-      throw new Error(`Failed to update global config: ${error}`);
-    }
+    await api.put(`/v2/admin/faucet/global-config`, config);
   }
 
   /**
@@ -451,61 +373,27 @@ class FaucetService {
     description?: string;
     maxGasLimit?: string;
   }): Promise<void> {
-    const [_, error] = await fetchData(
-      `/v2/admin/faucet/whitelist`,
-      "POST",
-      contract,
-      {},
-      {},
-      true
-    );
-
-    if (error) {
-      throw new Error(`Failed to whitelist contract: ${error}`);
-    }
+    await api.post(`/v2/admin/faucet/whitelist`, contract);
   }
 
   /**
    * Remove contract from whitelist (admin only)
    */
   async removeFromWhitelist(chainId: number, contractAddress: string): Promise<void> {
-    const [_, error] = await fetchData(
-      `/v2/admin/faucet/whitelist/${chainId}/${contractAddress}`,
-      "DELETE",
-      {},
-      {},
-      {},
-      true
-    );
-
-    if (error) {
-      throw new Error(`Failed to remove from whitelist: ${error}`);
-    }
+    await api.delete(`/v2/admin/faucet/whitelist/${chainId}/${contractAddress}`);
   }
 
   /**
    * Get whitelisted contracts (admin only)
    */
   async getWhitelistedContracts(chainId?: number): Promise<WhitelistedPaginatedResponse> {
-    const params: { chainId?: number } = {};
+    const params: Record<string, unknown> = {};
     if (chainId !== undefined) {
       params.chainId = chainId;
     }
 
-    const [data, error] = await fetchData(
-      `/v2/admin/faucet/whitelist`,
-      "GET",
-      {},
-      params,
-      {},
-      true
-    );
-
-    if (error) {
-      throw new Error(`Failed to get whitelisted contracts: ${error}`);
-    }
-
-    return data;
+    // TODO(#1775): add zod schema
+    return api.get<WhitelistedPaginatedResponse>(`/v2/admin/faucet/whitelist`, { params });
   }
 
   /**
@@ -517,7 +405,7 @@ class FaucetService {
     chainId?: number,
     expiresAt?: string
   ): Promise<void> {
-    const payload: { address: string; reason: string; chainId?: number; expiresAt?: string } = {
+    const payload: Record<string, unknown> = {
       address,
       reason,
     };
@@ -530,96 +418,52 @@ class FaucetService {
       payload.expiresAt = expiresAt;
     }
 
-    const [_, error] = await fetchData(`/v2/admin/faucet/block`, "POST", payload, {}, {}, true);
-
-    if (error) {
-      throw new Error(`Failed to block address: ${error}`);
-    }
+    await api.post(`/v2/admin/faucet/block`, payload);
   }
 
   /**
    * Unblock an address (admin only)
    */
   async unblockAddress(address: string, chainId?: number): Promise<void> {
-    const params: { chainId?: number } = {};
+    const params: Record<string, unknown> = {};
     if (chainId !== undefined) {
       params.chainId = chainId;
     }
 
-    const [_, error] = await fetchData(
-      `/v2/admin/faucet/block/${address}`,
-      "DELETE",
-      {},
-      params,
-      {},
-      true
-    );
-
-    if (error) {
-      throw new Error(`Failed to unblock address: ${error}`);
-    }
+    await api.delete(`/v2/admin/faucet/block/${address}`, { params });
   }
 
   /**
    * Get blocked addresses (admin only)
    */
   async getBlockedAddresses(): Promise<BlockedPaginatedResponse> {
-    const [data, error] = await fetchData(`/v2/admin/faucet/blocked`, "GET", {}, {}, {}, true);
-
-    if (error) {
-      throw new Error(`Failed to get blocked addresses: ${error}`);
-    }
-
-    return data;
+    // TODO(#1775): add zod schema
+    return api.get<BlockedPaginatedResponse>(`/v2/admin/faucet/blocked`);
   }
 
   /**
    * Emergency stop - disable faucet for a chain (admin only)
    */
   async emergencyStop(chainId: number): Promise<void> {
-    const [_, error] = await fetchData(
-      `/v2/admin/faucet/emergency-stop/${chainId}`,
-      "POST",
-      {},
-      {},
-      {},
-      true
-    );
-
-    if (error) {
-      throw new Error(`Failed to emergency stop: ${error}`);
-    }
+    await api.post(`/v2/admin/faucet/emergency-stop/${chainId}`);
   }
 
   /**
    * Resume faucet operations for a chain (admin only)
    */
   async resumeOperations(chainId: number): Promise<void> {
-    const [_, error] = await fetchData(
-      `/v2/admin/faucet/resume/${chainId}`,
-      "POST",
-      {},
-      {},
-      {},
-      true
-    );
-
-    if (error) {
-      throw new Error(`Failed to resume operations: ${error}`);
-    }
+    await api.post(`/v2/admin/faucet/resume/${chainId}`);
   }
 
   /**
    * Expire old pending requests (admin only)
    */
   async expireOldRequests(): Promise<{ count: number }> {
-    const [data, error] = await fetchData(`/v2/admin/faucet/expire`, "POST", {}, {}, {}, true);
-
-    if (error) {
-      throw new Error(`Failed to expire old requests: ${error}`);
-    }
-
-    return data;
+    return api.post<{ count: number }>(
+      `/v2/admin/faucet/expire`,
+      {},
+      { schema: ExpireOldRequestsResponseSchema }
+    );
   }
 
   /**
@@ -638,26 +482,16 @@ class FaucetService {
     offset?: number;
     chainId?: number;
   }): Promise<FaucetRequests> {
-    const [data, error] = await fetchData(
-      `/v2/admin/faucet/requests`,
-      "GET",
-      {},
-      {
+    // TODO(#1775): add zod schema
+    return api.get<FaucetRequests>(`/v2/admin/faucet/requests`, {
+      params: {
         page,
         limit,
         status,
         offset,
         chainId,
       },
-      {},
-      true
-    );
-
-    if (error) {
-      throw new Error(`Failed to get requests: ${error}`);
-    }
-
-    return data;
+    });
   }
 
   // ============================================
@@ -668,26 +502,18 @@ class FaucetService {
    * Get all chains (admin only)
    */
   async getAllChains(): Promise<{ chains: ChainResponse[] }> {
-    const [data, error] = await fetchData(`/v2/admin/chains`, "GET", {}, {}, {}, true);
-
-    if (error) {
-      throw new Error(`Failed to get chains: ${error}`);
-    }
-
-    return data;
+    return api.get<{ chains: ChainResponse[] }>(`/v2/admin/chains`, {
+      schema: AllChainsResponseSchema,
+    });
   }
 
   /**
    * Get a specific chain by ID (admin only)
    */
   async getChain(chainId: number): Promise<ChainResponse> {
-    const [data, error] = await fetchData(`/v2/admin/chains/${chainId}`, "GET", {}, {}, {}, true);
-
-    if (error) {
-      throw new Error(`Failed to get chain: ${error}`);
-    }
-
-    return data;
+    return api.get<ChainResponse>(`/v2/admin/chains/${chainId}`, {
+      schema: ChainResponseSchema,
+    });
   }
 
   /**
@@ -701,15 +527,11 @@ class FaucetService {
     explorerUrl?: string;
     decimals: number;
     enabled?: boolean;
-    metadata?: Record<string, unknown>;
+    metadata?: Record<string, any>;
   }): Promise<ChainResponse> {
-    const [data, error] = await fetchData(`/v2/admin/chains`, "POST", chainData, {}, {}, true);
-
-    if (error) {
-      throw new Error(`Failed to create chain: ${error}`);
-    }
-
-    return data;
+    return api.post<ChainResponse>(`/v2/admin/chains`, chainData, {
+      schema: ChainResponseSchema,
+    });
   }
 
   /**
@@ -724,34 +546,18 @@ class FaucetService {
       explorerUrl?: string;
       decimals?: number;
       enabled?: boolean;
-      metadata?: Record<string, unknown>;
+      metadata?: Record<string, any>;
     }
-  ): Promise<ChainResponse> {
-    const [data, error] = await fetchData(
-      `/v2/admin/chains/${chainId}`,
-      "PUT",
-      updates,
-      {},
-      {},
-      true
-    );
-
-    if (error) {
-      throw new Error(`Failed to update chain: ${error}`);
-    }
-
-    return data;
+  ): Promise<any> {
+    // TODO(#1775): add zod schema
+    return api.put<any>(`/v2/admin/chains/${chainId}`, updates);
   }
 
   /**
    * Delete a chain configuration (admin only)
    */
   async deleteChain(chainId: number): Promise<void> {
-    const [_, error] = await fetchData(`/v2/admin/chains/${chainId}`, "DELETE", {}, {}, {}, true);
-
-    if (error) {
-      throw new Error(`Failed to delete chain: ${error}`);
-    }
+    await api.delete(`/v2/admin/chains/${chainId}`);
   }
 }
 

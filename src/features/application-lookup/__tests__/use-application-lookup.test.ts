@@ -1,13 +1,13 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
+import { HttpError } from "@/utilities/api/errors";
 import { useApplicationLookup } from "../hooks/use-application-lookup";
 
-vi.mock("@/utilities/fetchData", () => ({
-  __esModule: true,
-  default: vi.fn(),
+vi.mock("@/utilities/api/client", () => ({
+  api: { get: vi.fn() },
 }));
 
-const mockFetchData = fetchData as unknown as vi.Mock;
+const mockApiGet = api.get as unknown as vi.Mock;
 
 const VALID_REFERENCE = "APP-ABCD1234-XYZ789";
 
@@ -19,6 +19,13 @@ const SUCCESS_PAYLOAD = {
   communitySlug: "optimism",
 };
 
+const httpError = (status: number, message?: string) =>
+  new HttpError(status, {
+    endpoint: `/v2/funding-applications/lookup-credential/${VALID_REFERENCE}`,
+    method: "GET",
+    body: message ? { message } : undefined,
+  });
+
 describe("useApplicationLookup", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -29,8 +36,8 @@ describe("useApplicationLookup", () => {
     // isAuthorized=false in the 6th positional arg to fetchData. The backend
     // route requires authentication, so logged-in users hit a JWT error. If
     // anyone flips this back to false, this test must fail loudly.
-    it("forwards the JWT by calling fetchData with isAuthorized=true", async () => {
-      mockFetchData.mockResolvedValue([SUCCESS_PAYLOAD, null]);
+    it("forwards the JWT by calling api.get with isAuthorized=true", async () => {
+      mockApiGet.mockResolvedValue(SUCCESS_PAYLOAD);
 
       const { result } = renderHook(() => useApplicationLookup());
 
@@ -38,14 +45,14 @@ describe("useApplicationLookup", () => {
         await result.current.lookupApplication(VALID_REFERENCE);
       });
 
-      expect(mockFetchData).toHaveBeenCalledTimes(1);
-      const callArgs = mockFetchData.mock.calls[0];
-      expect(callArgs[5]).toBe(true);
-      expect(callArgs[5]).not.toBe(false);
+      expect(mockApiGet).toHaveBeenCalledTimes(1);
+      const callArgs = mockApiGet.mock.calls[0];
+      expect(callArgs[1]?.isAuthorized).toBe(true);
+      expect(callArgs[1]?.isAuthorized).not.toBe(false);
     });
 
     it("calls the v2 lookup-credential endpoint with the reference number", async () => {
-      mockFetchData.mockResolvedValue([SUCCESS_PAYLOAD, null]);
+      mockApiGet.mockResolvedValue(SUCCESS_PAYLOAD);
 
       const { result } = renderHook(() => useApplicationLookup());
 
@@ -53,13 +60,9 @@ describe("useApplicationLookup", () => {
         await result.current.lookupApplication(VALID_REFERENCE);
       });
 
-      expect(mockFetchData).toHaveBeenCalledWith(
+      expect(mockApiGet).toHaveBeenCalledWith(
         `/v2/funding-applications/lookup-credential/${VALID_REFERENCE}`,
-        "GET",
-        {},
-        {},
-        {},
-        true
+        { isAuthorized: true }
       );
     });
   });
@@ -78,7 +81,7 @@ describe("useApplicationLookup", () => {
         await result.current.lookupApplication(badInput);
       });
 
-      expect(mockFetchData).not.toHaveBeenCalled();
+      expect(mockApiGet).not.toHaveBeenCalled();
       expect(result.current.error).toEqual({
         type: "invalid_format",
         message: expect.stringContaining("Invalid reference number format"),
@@ -90,7 +93,7 @@ describe("useApplicationLookup", () => {
 
   describe("result handling", () => {
     it("populates result on success", async () => {
-      mockFetchData.mockResolvedValue([SUCCESS_PAYLOAD, null]);
+      mockApiGet.mockResolvedValue(SUCCESS_PAYLOAD);
 
       const { result } = renderHook(() => useApplicationLookup());
 
@@ -105,8 +108,8 @@ describe("useApplicationLookup", () => {
       expect(result.current.isLoading).toBe(false);
     });
 
-    it("maps a backend error string into a not_found error", async () => {
-      mockFetchData.mockResolvedValue([null, "Application not found"]);
+    it("maps a backend HTTP error into a not_found error", async () => {
+      mockApiGet.mockRejectedValue(httpError(404, "Application not found"));
 
       const { result } = renderHook(() => useApplicationLookup());
 
@@ -122,8 +125,8 @@ describe("useApplicationLookup", () => {
       expect(result.current.isLoading).toBe(false);
     });
 
-    it("falls back to a generic not_found message when fetchError is not a string", async () => {
-      mockFetchData.mockResolvedValue([null, null]);
+    it("falls back to a generic not_found message when the response is empty", async () => {
+      mockApiGet.mockResolvedValue(null);
 
       const { result } = renderHook(() => useApplicationLookup());
 
@@ -137,8 +140,8 @@ describe("useApplicationLookup", () => {
       });
     });
 
-    it("surfaces a network_error when fetchData throws", async () => {
-      mockFetchData.mockRejectedValue(new Error("boom"));
+    it("surfaces a network_error when api.get throws a non-HTTP error", async () => {
+      mockApiGet.mockRejectedValue(new Error("boom"));
 
       const { result } = renderHook(() => useApplicationLookup());
 
@@ -156,7 +159,7 @@ describe("useApplicationLookup", () => {
 
   describe("reset", () => {
     it("clears result, error, and loading state", async () => {
-      mockFetchData.mockResolvedValue([SUCCESS_PAYLOAD, null]);
+      mockApiGet.mockResolvedValue(SUCCESS_PAYLOAD);
 
       const { result } = renderHook(() => useApplicationLookup());
 

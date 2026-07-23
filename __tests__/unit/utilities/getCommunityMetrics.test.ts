@@ -4,10 +4,15 @@
  */
 
 import { errorManager } from "@/components/Utilities/errorManager";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
+import { HttpError } from "@/utilities/api/errors";
 import { getCommunityMetrics } from "@/utilities/registry/getCommunityMetrics";
 
-vi.mock("@/utilities/fetchData");
+vi.mock("@/utilities/api/client", () => ({
+  api: {
+    get: vi.fn(),
+  },
+}));
 vi.mock("@/components/Utilities/errorManager");
 vi.mock("@/utilities/indexer", () => ({
   INDEXER: {
@@ -26,8 +31,15 @@ vi.mock("@/utilities/indexer", () => ({
   },
 }));
 
-const mockFetchData = fetchData as vi.MockedFunction<typeof fetchData>;
+const mockApiGet = api.get as vi.MockedFunction<typeof api.get>;
 const mockErrorManager = errorManager as vi.MockedFunction<typeof errorManager>;
+
+function makeHttpError(status: number): HttpError {
+  return new HttpError(status, {
+    endpoint: "/v2/communities/filecoin/community-metrics",
+    method: "GET",
+  });
+}
 
 describe("getCommunityMetrics", () => {
   beforeEach(() => {
@@ -64,16 +76,16 @@ describe("getCommunityMetrics", () => {
   };
 
   it("should fetch community metrics successfully", async () => {
-    mockFetchData.mockResolvedValue([mockValidResponse, null, null, 200]);
+    mockApiGet.mockResolvedValue(mockValidResponse);
 
     const result = await getCommunityMetrics("filecoin");
 
     expect(result).toEqual(mockValidResponse);
-    expect(mockFetchData).toHaveBeenCalledWith("/v2/communities/filecoin/community-metrics");
+    expect(mockApiGet).toHaveBeenCalledWith("/v2/communities/filecoin/community-metrics");
   });
 
   it("should include query parameters when provided", async () => {
-    mockFetchData.mockResolvedValue([mockValidResponse, null, null, 200]);
+    mockApiGet.mockResolvedValue(mockValidResponse);
 
     const params = {
       startDate: "2024-01-01",
@@ -83,13 +95,13 @@ describe("getCommunityMetrics", () => {
 
     await getCommunityMetrics("filecoin", params);
 
-    expect(mockFetchData).toHaveBeenCalledWith(
+    expect(mockApiGet).toHaveBeenCalledWith(
       "/v2/communities/filecoin/community-metrics?startDate=2024-01-01&endDate=2024-01-31&metricNames=Storage+Capacity"
     );
   });
 
   it("should return null for 404 errors", async () => {
-    mockFetchData.mockResolvedValue([null, new Error("Not Found"), null, 404]);
+    mockApiGet.mockRejectedValue(makeHttpError(404));
 
     const result = await getCommunityMetrics("filecoin");
 
@@ -101,8 +113,8 @@ describe("getCommunityMetrics", () => {
   });
 
   it("should return null and log error for non-404 errors", async () => {
-    const error = new Error("Server Error");
-    mockFetchData.mockResolvedValue([null, error, null, 500]);
+    const error = makeHttpError(500);
+    mockApiGet.mockRejectedValue(error);
 
     const result = await getCommunityMetrics("filecoin");
 
@@ -117,7 +129,7 @@ describe("getCommunityMetrics", () => {
   });
 
   it("should return null when data is null", async () => {
-    mockFetchData.mockResolvedValue([null, null, null, 200]);
+    mockApiGet.mockResolvedValue(null);
 
     const result = await getCommunityMetrics("filecoin");
 
@@ -125,7 +137,7 @@ describe("getCommunityMetrics", () => {
   });
 
   it("should return null when data is undefined", async () => {
-    mockFetchData.mockResolvedValue([undefined, null, null, 200]);
+    mockApiGet.mockResolvedValue(undefined);
 
     const result = await getCommunityMetrics("filecoin");
 
@@ -134,7 +146,7 @@ describe("getCommunityMetrics", () => {
 
   it("should handle exceptions and return null", async () => {
     const error = new Error("Network error");
-    mockFetchData.mockRejectedValue(error);
+    mockApiGet.mockRejectedValue(error);
 
     const result = await getCommunityMetrics("filecoin");
 
@@ -144,19 +156,19 @@ describe("getCommunityMetrics", () => {
   });
 
   it("should handle empty params object", async () => {
-    mockFetchData.mockResolvedValue([mockValidResponse, null, null, 200]);
+    mockApiGet.mockResolvedValue(mockValidResponse);
 
     await getCommunityMetrics("filecoin", {});
 
-    expect(mockFetchData).toHaveBeenCalledWith("/v2/communities/filecoin/community-metrics");
+    expect(mockApiGet).toHaveBeenCalledWith("/v2/communities/filecoin/community-metrics");
   });
 
   it("should handle partial params", async () => {
-    mockFetchData.mockResolvedValue([mockValidResponse, null, null, 200]);
+    mockApiGet.mockResolvedValue(mockValidResponse);
 
     await getCommunityMetrics("filecoin", { startDate: "2024-01-01" });
 
-    expect(mockFetchData).toHaveBeenCalledWith(
+    expect(mockApiGet).toHaveBeenCalledWith(
       "/v2/communities/filecoin/community-metrics?startDate=2024-01-01"
     );
   });

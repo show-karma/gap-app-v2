@@ -1,5 +1,6 @@
 import { errorManager } from "@/components/Utilities/errorManager";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
+import { HttpError } from "@/utilities/api/errors";
 import { INDEXER } from "@/utilities/indexer";
 import type {
   CommunityPayoutAgreementInfo,
@@ -19,7 +20,20 @@ import type {
   UpdateStatusRequest,
 } from "../types/payout-disbursement";
 
+// NOTE(#1775): responses in this file are migrated with NO zod schema (the
+// `api` client's untyped escape hatch) to avoid introducing new
+// ContractViolationErrors against BE shapes we can't verify here. Add
+// schemas incrementally per-endpoint in a follow-up.
+
 function getErrorMessage(error: unknown): string {
+  if (error instanceof HttpError) {
+    // Mirrors the legacy fetchData extraction: prefer the backend's
+    // `message` field so callers see the specific reason (e.g. a 409
+    // conflict) instead of the generic "HTTP 409 ..." synthetic message.
+    const bodyMessage = (error.body as { message?: string } | undefined)?.message;
+    const causeMessage = (error.cause as { message?: string } | undefined)?.message;
+    return bodyMessage || causeMessage || error.message;
+  }
   if (error instanceof Error) return error.message;
   return String(error);
 }
@@ -31,18 +45,10 @@ export const createDisbursements = async (
   request: CreateDisbursementsRequest
 ): Promise<PayoutDisbursement[]> => {
   try {
-    const [data, error] = await fetchData<CreateDisbursementsResponse>(
-      INDEXER.V2.PAYOUTS.CREATE,
-      "POST",
-      request,
-      {},
-      {},
-      true,
-      false
-    );
+    const data = await api.post<CreateDisbursementsResponse>(INDEXER.V2.PAYOUTS.CREATE, request);
 
-    if (error || !data) {
-      throw new Error(error || "Failed to create disbursements");
+    if (!data) {
+      throw new Error("Failed to create disbursements");
     }
 
     return data.disbursements;
@@ -57,18 +63,10 @@ export const createDisbursements = async (
  */
 export const recordPayment = async (request: RecordPaymentRequest): Promise<PayoutDisbursement> => {
   try {
-    const [data, error] = await fetchData<PayoutDisbursement>(
-      INDEXER.V2.PAYOUTS.RECORD_PAYMENT,
-      "POST",
-      request,
-      {},
-      {},
-      true,
-      false
-    );
+    const data = await api.post<PayoutDisbursement>(INDEXER.V2.PAYOUTS.RECORD_PAYMENT, request);
 
-    if (error || !data) {
-      throw new Error(error || "Failed to record payment");
+    if (!data) {
+      throw new Error("Failed to record payment");
     }
 
     return data;
@@ -86,18 +84,13 @@ export const recordSafeTransaction = async (
   request: RecordSafeTransactionRequest
 ): Promise<PayoutDisbursement> => {
   try {
-    const [data, error] = await fetchData<PayoutDisbursement>(
+    const data = await api.post<PayoutDisbursement>(
       INDEXER.V2.PAYOUTS.RECORD_SAFE_TX(disbursementId),
-      "POST",
-      request,
-      {},
-      {},
-      true,
-      false
+      request
     );
 
-    if (error || !data) {
-      throw new Error(error || "Failed to record Safe transaction");
+    if (!data) {
+      throw new Error("Failed to record Safe transaction");
     }
 
     return data;
@@ -116,18 +109,12 @@ export const getPayoutHistory = async (
   limit?: number
 ): Promise<PaginatedDisbursementsResponse> => {
   try {
-    const [data, error] = await fetchData<PaginatedDisbursementsResponse>(
-      INDEXER.V2.PAYOUTS.GRANT_HISTORY(grantUID, page, limit),
-      "GET",
-      {},
-      {},
-      {},
-      true,
-      false
+    const data = await api.get<PaginatedDisbursementsResponse>(
+      INDEXER.V2.PAYOUTS.GRANT_HISTORY(grantUID, page, limit)
     );
 
-    if (error || !data) {
-      throw new Error(error || "Failed to fetch payout history");
+    if (!data) {
+      throw new Error("Failed to fetch payout history");
     }
 
     return data;
@@ -142,18 +129,12 @@ export const getPayoutHistory = async (
  */
 export const getTotalDisbursed = async (grantUID: string): Promise<string> => {
   try {
-    const [data, error] = await fetchData<TotalDisbursedResponse>(
-      INDEXER.V2.PAYOUTS.GRANT_TOTAL_DISBURSED(grantUID),
-      "GET",
-      {},
-      {},
-      {},
-      true,
-      false
+    const data = await api.get<TotalDisbursedResponse>(
+      INDEXER.V2.PAYOUTS.GRANT_TOTAL_DISBURSED(grantUID)
     );
 
-    if (error || !data) {
-      throw new Error(error || "Failed to fetch total disbursed");
+    if (!data) {
+      throw new Error("Failed to fetch total disbursed");
     }
 
     return data.totalDisbursed;
@@ -172,18 +153,12 @@ export const getPendingDisbursements = async (
   limit?: number
 ): Promise<PaginatedDisbursementsResponse> => {
   try {
-    const [data, error] = await fetchData<PaginatedDisbursementsResponse>(
-      INDEXER.V2.PAYOUTS.COMMUNITY_PENDING(communityUID, page, limit),
-      "GET",
-      {},
-      {},
-      {},
-      true,
-      false
+    const data = await api.get<PaginatedDisbursementsResponse>(
+      INDEXER.V2.PAYOUTS.COMMUNITY_PENDING(communityUID, page, limit)
     );
 
-    if (error || !data) {
-      throw new Error(error || "Failed to fetch pending disbursements");
+    if (!data) {
+      throw new Error("Failed to fetch pending disbursements");
     }
 
     return data;
@@ -201,18 +176,13 @@ export const updateDisbursementStatus = async (
   request: UpdateStatusRequest
 ): Promise<PayoutDisbursement> => {
   try {
-    const [data, error] = await fetchData<PayoutDisbursement>(
+    const data = await api.patch<PayoutDisbursement>(
       INDEXER.V2.PAYOUTS.UPDATE_STATUS(disbursementId),
-      "PATCH",
-      request,
-      {},
-      {},
-      true,
-      false
+      request
     );
 
-    if (error || !data) {
-      throw new Error(error || "Failed to update disbursement status");
+    if (!data) {
+      throw new Error("Failed to update disbursement status");
     }
 
     return data;
@@ -235,19 +205,7 @@ export const updateMilestonePaymentStatus = async (
   }
 ): Promise<void> => {
   try {
-    const [, error] = await fetchData(
-      INDEXER.V2.MILESTONE_INVOICES.UPDATE_PAYMENT_STATUS(grantUID),
-      "PATCH",
-      request,
-      {},
-      {},
-      true,
-      false
-    );
-
-    if (error) {
-      throw new Error(error);
-    }
+    await api.patch(INDEXER.V2.MILESTONE_INVOICES.UPDATE_PAYMENT_STATUS(grantUID), request);
   } catch (error: unknown) {
     errorManager(`Error updating payment status for grant ${grantUID}`, error);
     throw new Error(`Failed to update payment status: ${getErrorMessage(error)}`);
@@ -263,18 +221,12 @@ export const getAwaitingSignaturesDisbursements = async (
   limit?: number
 ): Promise<PaginatedDisbursementsResponse> => {
   try {
-    const [data, error] = await fetchData<PaginatedDisbursementsResponse>(
-      INDEXER.V2.PAYOUTS.SAFE_AWAITING(safeAddress, page, limit),
-      "GET",
-      {},
-      {},
-      {},
-      true,
-      false
+    const data = await api.get<PaginatedDisbursementsResponse>(
+      INDEXER.V2.PAYOUTS.SAFE_AWAITING(safeAddress, page, limit)
     );
 
-    if (error || !data) {
-      throw new Error(error || "Failed to fetch awaiting signatures disbursements");
+    if (!data) {
+      throw new Error("Failed to fetch awaiting signatures disbursements");
     }
 
     return data;
@@ -294,18 +246,12 @@ export const getRecentCommunityDisbursements = async (
   status?: string
 ): Promise<PaginatedDisbursementsResponse> => {
   try {
-    const [data, error] = await fetchData<PaginatedDisbursementsResponse>(
-      INDEXER.V2.PAYOUTS.COMMUNITY_RECENT(communityUID, page, limit, status),
-      "GET",
-      {},
-      {},
-      {},
-      true,
-      false
+    const data = await api.get<PaginatedDisbursementsResponse>(
+      INDEXER.V2.PAYOUTS.COMMUNITY_RECENT(communityUID, page, limit, status)
     );
 
-    if (error || !data) {
-      throw new Error(error || "Failed to fetch recent community disbursements");
+    if (!data) {
+      throw new Error("Failed to fetch recent community disbursements");
     }
 
     return data;
@@ -324,7 +270,7 @@ export const getCommunityPayouts = async (
   options?: CommunityPayoutsOptions
 ): Promise<CommunityPayoutsResponse> => {
   try {
-    const [data, error] = await fetchData<CommunityPayoutsResponse>(
+    const data = await api.get<CommunityPayoutsResponse>(
       INDEXER.V2.PAYOUTS.COMMUNITY_PAYOUTS(communityUID, {
         page: options?.page,
         limit: options?.limit,
@@ -335,17 +281,11 @@ export const getCommunityPayouts = async (
         search: options?.filters?.search,
         sortBy: options?.sorting?.sortBy,
         sortOrder: options?.sorting?.sortOrder,
-      }),
-      "GET",
-      {},
-      {},
-      {},
-      true,
-      false
+      })
     );
 
-    if (error || !data) {
-      throw new Error(error || "Failed to fetch community payouts");
+    if (!data) {
+      throw new Error("Failed to fetch community payouts");
     }
 
     return data;
@@ -363,7 +303,7 @@ export const getCommunityPayoutsPublic = async (
   options?: CommunityPayoutsOptions
 ): Promise<CommunityPayoutsResponse> => {
   try {
-    const [data, error] = await fetchData<CommunityPayoutsResponse>(
+    const data = await api.get<CommunityPayoutsResponse>(
       INDEXER.V2.PAYOUTS.COMMUNITY_PAYOUTS_PUBLIC(communityUID, {
         page: options?.page,
         limit: options?.limit,
@@ -375,16 +315,11 @@ export const getCommunityPayoutsPublic = async (
         sortBy: options?.sorting?.sortBy,
         sortOrder: options?.sorting?.sortOrder,
       }),
-      "GET",
-      {},
-      {},
-      {},
-      false,
-      false
+      { isAuthorized: false }
     );
 
-    if (error || !data) {
-      throw new Error(error || "Failed to fetch community payouts");
+    if (!data) {
+      throw new Error("Failed to fetch community payouts");
     }
 
     return data;
@@ -401,18 +336,13 @@ export const getPayoutConfigsByCommunityPublic = async (
   communityUID: string
 ): Promise<PayoutGrantConfig[]> => {
   try {
-    const [data, error] = await fetchData<{ configs: PayoutGrantConfig[] }>(
+    const data = await api.get<{ configs: PayoutGrantConfig[] }>(
       INDEXER.V2.PAYOUT_CONFIG.BY_COMMUNITY_PUBLIC(communityUID),
-      "GET",
-      {},
-      {},
-      {},
-      false,
-      false
+      { isAuthorized: false }
     );
 
-    if (error || !data) {
-      throw new Error(error || "Failed to fetch payout configs");
+    if (!data) {
+      throw new Error("Failed to fetch payout configs");
     }
 
     return data.configs;
@@ -429,18 +359,10 @@ export const savePayoutConfigs = async (
   request: SavePayoutConfigRequest
 ): Promise<SavePayoutConfigResponse> => {
   try {
-    const [data, error] = await fetchData<SavePayoutConfigResponse>(
-      INDEXER.V2.PAYOUT_CONFIG.SAVE,
-      "POST",
-      request,
-      {},
-      {},
-      true,
-      false
-    );
+    const data = await api.post<SavePayoutConfigResponse>(INDEXER.V2.PAYOUT_CONFIG.SAVE, request);
 
-    if (error || !data) {
-      throw new Error(error || "Failed to save payout configs");
+    if (!data) {
+      throw new Error("Failed to save payout configs");
     }
 
     return data;
@@ -457,18 +379,12 @@ export const getPayoutConfigsByCommunity = async (
   communityUID: string
 ): Promise<PayoutGrantConfig[]> => {
   try {
-    const [data, error] = await fetchData<{ configs: PayoutGrantConfig[] }>(
-      INDEXER.V2.PAYOUT_CONFIG.BY_COMMUNITY(communityUID),
-      "GET",
-      {},
-      {},
-      {},
-      true,
-      false
+    const data = await api.get<{ configs: PayoutGrantConfig[] }>(
+      INDEXER.V2.PAYOUT_CONFIG.BY_COMMUNITY(communityUID)
     );
 
-    if (error || !data) {
-      throw new Error(error || "Failed to fetch payout configs");
+    if (!data) {
+      throw new Error("Failed to fetch payout configs");
     }
 
     return data.configs;
@@ -485,18 +401,12 @@ export const getPayoutConfigByGrant = async (
   grantUID: string
 ): Promise<PayoutGrantConfig | null> => {
   try {
-    const [data, error] = await fetchData<{ config: PayoutGrantConfig | null }>(
-      INDEXER.V2.PAYOUT_CONFIG.BY_GRANT(grantUID),
-      "GET",
-      {},
-      {},
-      {},
-      true,
-      false
+    const data = await api.get<{ config: PayoutGrantConfig | null }>(
+      INDEXER.V2.PAYOUT_CONFIG.BY_GRANT(grantUID)
     );
 
-    if (error || !data) {
-      throw new Error(error || "Failed to fetch payout config");
+    if (!data) {
+      throw new Error("Failed to fetch payout config");
     }
 
     return data.config;
@@ -513,18 +423,13 @@ export const getPayoutConfigByGrantPublic = async (
   grantUID: string
 ): Promise<PayoutGrantConfig | null> => {
   try {
-    const [data, error] = await fetchData<{ config: PayoutGrantConfig | null }>(
+    const data = await api.get<{ config: PayoutGrantConfig | null }>(
       INDEXER.V2.PAYOUT_CONFIG.BY_GRANT_PUBLIC(grantUID),
-      "GET",
-      {},
-      {},
-      {},
-      false,
-      false
+      { isAuthorized: false }
     );
 
-    if (error || !data) {
-      throw new Error(error || "Failed to fetch payout config");
+    if (!data) {
+      throw new Error("Failed to fetch payout config");
     }
 
     return data.config;
@@ -567,7 +472,7 @@ export const validateBulkImportRows = async (
   }>
 > => {
   try {
-    const [data, error] = await fetchData<{
+    const data = await api.post<{
       rows: Array<{
         rowNumber: number;
         grantUID: string;
@@ -584,18 +489,10 @@ export const validateBulkImportRows = async (
           matchedBy: string;
         } | null;
       }>;
-    }>(
-      INDEXER.V2.PAYOUT_CONFIG.VALIDATE_BULK_IMPORT,
-      "POST",
-      { communityUID, rows },
-      {},
-      {},
-      true,
-      false
-    );
+    }>(INDEXER.V2.PAYOUT_CONFIG.VALIDATE_BULK_IMPORT, { communityUID, rows });
 
-    if (error || !data) {
-      throw new Error(error || "Failed to validate bulk import");
+    if (!data) {
+      throw new Error("Failed to validate bulk import");
     }
 
     return data.rows;
@@ -610,19 +507,7 @@ export const validateBulkImportRows = async (
  */
 export const deletePayoutConfig = async (grantUID: string): Promise<void> => {
   try {
-    const [, error] = await fetchData(
-      INDEXER.V2.PAYOUT_CONFIG.DELETE(grantUID),
-      "DELETE",
-      {},
-      {},
-      {},
-      true,
-      false
-    );
-
-    if (error) {
-      throw new Error(error);
-    }
+    await api.delete(INDEXER.V2.PAYOUT_CONFIG.DELETE(grantUID));
   } catch (error: unknown) {
     errorManager(`Error deleting payout config for grant ${grantUID}`, error);
     throw new Error(`Failed to delete payout config: ${getErrorMessage(error)}`);
@@ -642,18 +527,13 @@ export const toggleGrantAgreement = async (
     const body: Record<string, unknown> = { signed, communityUID };
     if (signedAt) body.signedAt = signedAt;
 
-    const [data, error] = await fetchData<CommunityPayoutAgreementInfo>(
+    const data = await api.post<CommunityPayoutAgreementInfo>(
       INDEXER.V2.GRANT_AGREEMENTS.TOGGLE(grantUID),
-      "POST",
-      body,
-      {},
-      {},
-      true,
-      false
+      body
     );
 
-    if (error || !data) {
-      throw new Error(error || "Failed to toggle agreement");
+    if (!data) {
+      throw new Error("Failed to toggle agreement");
     }
 
     return data;
@@ -678,18 +558,13 @@ export const saveMilestoneInvoices = async (
   }>
 ): Promise<{ invoices: CommunityPayoutInvoiceInfo[] }> => {
   try {
-    const [data, error] = await fetchData<{ invoices: CommunityPayoutInvoiceInfo[] }>(
+    const data = await api.put<{ invoices: CommunityPayoutInvoiceInfo[] }>(
       INDEXER.V2.MILESTONE_INVOICES.BATCH_SAVE(grantUID),
-      "PUT",
-      { communityUID, invoices },
-      {},
-      {},
-      true,
-      false
+      { communityUID, invoices }
     );
 
-    if (error || !data) {
-      throw new Error(error || "Failed to save invoices");
+    if (!data) {
+      throw new Error("Failed to save invoices");
     }
 
     return data;
@@ -704,18 +579,12 @@ export const saveMilestoneInvoices = async (
  */
 export const getInvoiceDownloadUrl = async (grantUID: string, fileKey: string): Promise<string> => {
   try {
-    const [data, error] = await fetchData<{ downloadUrl: string }>(
-      INDEXER.V2.MILESTONE_INVOICES.DOWNLOAD(grantUID, fileKey),
-      "GET",
-      {},
-      {},
-      {},
-      true,
-      false
+    const data = await api.get<{ downloadUrl: string }>(
+      INDEXER.V2.MILESTONE_INVOICES.DOWNLOAD(grantUID, fileKey)
     );
 
-    if (error || !data?.downloadUrl) {
-      throw new Error(error || "Failed to get download URL");
+    if (!data?.downloadUrl) {
+      throw new Error("Failed to get download URL");
     }
 
     return data.downloadUrl;
@@ -734,18 +603,13 @@ export const updateLineItem = async (
   updates: { label?: string; amount?: string }
 ): Promise<PayoutGrantConfig> => {
   try {
-    const [data, error] = await fetchData<{ config: PayoutGrantConfig }>(
+    const data = await api.put<{ config: PayoutGrantConfig }>(
       INDEXER.V2.PAYOUT_CONFIG.UPDATE_LINE_ITEM(grantUID, allocationId),
-      "PUT",
-      updates,
-      {},
-      {},
-      true,
-      false
+      updates
     );
 
-    if (error || !data) {
-      throw new Error(error || "Failed to update line item");
+    if (!data) {
+      throw new Error("Failed to update line item");
     }
 
     return data.config;
@@ -763,18 +627,12 @@ export const deleteLineItem = async (
   allocationId: string
 ): Promise<PayoutGrantConfig> => {
   try {
-    const [data, error] = await fetchData<{ config: PayoutGrantConfig }>(
-      INDEXER.V2.PAYOUT_CONFIG.DELETE_LINE_ITEM(grantUID, allocationId),
-      "DELETE",
-      {},
-      {},
-      {},
-      true,
-      false
+    const data = await api.delete<{ config: PayoutGrantConfig }>(
+      INDEXER.V2.PAYOUT_CONFIG.DELETE_LINE_ITEM(grantUID, allocationId)
     );
 
-    if (error || !data) {
-      throw new Error(error || "Failed to delete line item");
+    if (!data) {
+      throw new Error("Failed to delete line item");
     }
 
     return data.config;
@@ -793,19 +651,12 @@ export const deleteDisbursementByMilestone = async (
   milestoneUID: string
 ): Promise<void> => {
   try {
-    const [, error] = await fetchData(
-      INDEXER.V2.PAYOUTS.DELETE_BY_MILESTONE(grantUID),
-      "DELETE",
-      { communityUID, milestoneUID },
-      {},
-      {},
-      true,
-      false
-    );
-
-    if (error) {
-      throw new Error(error);
-    }
+    // DELETE with a body — the typed client's `delete()` convenience method
+    // never sends one, so use the low-level `request()` escape hatch.
+    await api.request("DELETE", INDEXER.V2.PAYOUTS.DELETE_BY_MILESTONE(grantUID), {
+      communityUID,
+      milestoneUID,
+    });
   } catch (error: unknown) {
     errorManager(
       `Error deleting disbursement for grant ${grantUID} milestone ${milestoneUID}`,
@@ -832,17 +683,9 @@ export const checkGrantInvoiceRequired = async (
   try {
     const url = INDEXER.V2.GRANTS.INVOICE_REQUIREMENT(grantUID);
 
-    const [data, error] = await fetchData<{ data: GranteeInvoiceCheckResult }>(
-      url,
-      "GET",
-      {},
-      {},
-      {},
-      true,
-      false
-    );
+    const data = await api.get<{ data: GranteeInvoiceCheckResult }>(url);
 
-    if (error || !data?.data) {
+    if (!data?.data) {
       return { invoiceRequired: false };
     }
 
@@ -865,21 +708,16 @@ export const submitGranteeInvoice = async (
   }
 ): Promise<CommunityPayoutInvoiceInfo | null> => {
   try {
-    const [data, error] = await fetchData<{ data: { invoice: CommunityPayoutInvoiceInfo } }>(
+    const data = await api.put<{ data: { invoice: CommunityPayoutInvoiceInfo } }>(
       INDEXER.V2.GRANTS.INVOICE_SUBMIT(grantUID),
-      "PUT",
-      invoice,
-      {},
-      {},
-      true,
-      false
+      invoice
     );
 
-    if (error || !data?.data) {
-      // `fetchData` already extracts the backend `message` field into
-      // `error`, so propagate it verbatim — the UI surfaces this string
-      // (e.g. a 409 conflict reason) instead of a generic fallback.
-      throw new Error(error || "Failed to submit invoice");
+    if (!data?.data) {
+      // The `getErrorMessage` helper above already extracts the backend
+      // `message` field, so callers see the specific reason (e.g. a 409
+      // conflict) instead of a generic fallback.
+      throw new Error("Failed to submit invoice");
     }
 
     return data.data.invoice;
@@ -899,18 +737,12 @@ export const getGrantInvoiceDownloadUrl = async (
   fileKey: string
 ): Promise<string> => {
   try {
-    const [data, error] = await fetchData<{ data: { downloadUrl: string } }>(
-      INDEXER.V2.GRANTS.INVOICE_DOWNLOAD(grantUID, fileKey),
-      "GET",
-      {},
-      {},
-      {},
-      true,
-      false
+    const data = await api.get<{ data: { downloadUrl: string } }>(
+      INDEXER.V2.GRANTS.INVOICE_DOWNLOAD(grantUID, fileKey)
     );
 
-    if (error || !data?.data?.downloadUrl) {
-      throw new Error(error || "Failed to get download URL");
+    if (!data?.data?.downloadUrl) {
+      throw new Error("Failed to get download URL");
     }
 
     return data.data.downloadUrl;

@@ -61,11 +61,13 @@ describe("useZeroDevSigner", () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    // Default: external wallet user (MetaMask), NOT email/social login
+    // Default: external wallet user (MetaMask), NOT email/social login.
+    // The linked wallet address must match the connected wallet so it passes
+    // resolveSigningWallets' trust check (compareAllWallets) and is eligible to sign.
     mockUsePrivyBridge.mockReturnValue({
       ready: true,
       user: {
-        linkedAccounts: [{ type: "wallet" }],
+        linkedAccounts: [{ type: "wallet", address: mockExternalWallet.address }],
       },
       wallets: [mockExternalWallet],
     });

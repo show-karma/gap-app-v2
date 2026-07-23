@@ -11,7 +11,7 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import { useContactInfo } from "@/hooks/useContactInfo";
 import { useProjectStore } from "@/store";
 import type { Contact } from "@/types/project";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { generateRandomString } from "@/utilities/generateRandomString";
 import { INDEXER } from "@/utilities/indexer";
 import { telegramUsernameSchema } from "@/utilities/validation/telegram-username";
@@ -236,47 +236,35 @@ export const ContactInfoSection: FC<ContactInfoSectionProps> = ({
       }
       const idAlreadyExists = existingContacts?.find((contact) => contact.id === data.id);
       if (!idAlreadyExists) {
-        await fetchData(
-          INDEXER.SUBSCRIPTION.CREATE(project?.details?.slug || (project?.uid as string)),
-          "POST",
-          { contacts: [data] },
-          {},
-          {},
-          true
-        ).then(([_res, error]) => {
-          if (!error) {
-            refreshList();
-            refreshProject();
-            clear();
-            toast.success("Contact info created successfully", {
-              className: "z-[9999]",
-            });
-          } else {
-            toast.error("Something went wrong. Please try again later.", {
-              className: "z-[9999]",
-            });
-          }
-        });
+        try {
+          // TODO(#1775): add zod schema
+          await api.post(
+            INDEXER.SUBSCRIPTION.CREATE(project?.details?.slug || (project?.uid as string)),
+            { contacts: [data] }
+          );
+          refreshList();
+          refreshProject();
+          clear();
+          toast.success("Contact info created successfully", {
+            className: "z-[9999]",
+          });
+        } catch {
+          toast.error("Something went wrong. Please try again later.", {
+            className: "z-[9999]",
+          });
+        }
       } else {
-        await fetchData(
+        // TODO(#1775): add zod schema
+        await api.put(
           INDEXER.SUBSCRIPTION.UPDATE(project?.details?.slug || (project?.uid as string), data.id),
-          "PUT",
-          data,
-          {},
-          {},
-          true
-        ).then(async ([_res, error]) => {
-          if (!error) {
-            toast.success("Contact info updated successfully");
-            clear();
-            refreshList();
-            refreshProject();
-          } else {
-            throw Error(error);
-          }
-        });
+          data
+        );
+        toast.success("Contact info updated successfully");
+        clear();
+        refreshList();
+        refreshProject();
       }
-    } catch (error) {
+    } catch (error: any) {
       errorManager(
         `Error creating contact`,
         error,
@@ -307,24 +295,18 @@ export const ContactInfoSection: FC<ContactInfoSectionProps> = ({
         });
         return;
       }
-      await fetchData(
-        INDEXER.SUBSCRIPTION.DELETE(project?.details?.slug || (project?.uid as string)),
+      // DELETE with a body — the typed client's `delete()` convenience method
+      // never sends one, so use the low-level `request()` escape hatch.
+      await api.request(
         "DELETE",
-        { contacts: [contactId] },
-        {},
-        {},
-        true
-      ).then(([_res, error]) => {
-        if (!error) {
-          toast.success("Contact info deleted successfully", {
-            className: "z-[9999]",
-          });
-          refreshList();
-        } else {
-          throw Error(error);
-        }
+        INDEXER.SUBSCRIPTION.DELETE(project?.details?.slug || (project?.uid as string)),
+        { contacts: [contactId] }
+      );
+      toast.success("Contact info deleted successfully", {
+        className: "z-[9999]",
       });
-    } catch (error) {
+      refreshList();
+    } catch (error: any) {
       errorManager(
         `Error deleting contact ${contactId} from project ${
           project?.details?.slug || project?.uid

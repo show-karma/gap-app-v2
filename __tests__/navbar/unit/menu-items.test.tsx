@@ -76,7 +76,7 @@ describe("Menu Items Configuration", () => {
       expect(main).toHaveProperty("icon");
       expect(main).toHaveProperty("title");
       expect(main.title).toBe("Launch a program");
-      expect(main.href).toBe(PAGES.HOME);
+      expect(main.href).toBe(PAGES.FOUNDATIONS);
     });
 
     it("should have valid secondary items array", () => {

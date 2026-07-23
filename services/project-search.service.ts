@@ -1,6 +1,6 @@
 import { errorManager } from "@/components/Utilities/errorManager";
 import type { Project as ProjectResponse } from "@/types/v2/project";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 
 type SearchProjectsApiResponse =
@@ -21,26 +21,32 @@ export const searchProjects = async (query: string, limit?: number): Promise<Pro
     return [];
   }
 
-  const [data, error] = await fetchData<SearchProjectsApiResponse>(
-    INDEXER.V2.PROJECTS.SEARCH(query, limit)
-  );
+  try {
+    // TODO(#1775): add zod schema
+    const data = await api.get<SearchProjectsApiResponse>(INDEXER.V2.PROJECTS.SEARCH(query, limit));
 
-  if (error || !data) {
+    if (!data) {
+      errorManager("Project Search API Error: empty response", undefined, {
+        context: "project-search.service",
+      });
+      return [];
+    }
+
+    // Backend switched from a flat array to a paginated envelope ({ payload, pagination }).
+    // Handle both shapes so older deployments and tests keep working.
+    if (Array.isArray(data)) return data;
+    if (Array.isArray(data.payload)) return data.payload;
+
+    errorManager(
+      "Project Search API returned unexpected shape",
+      new Error("Unexpected response shape"),
+      { context: "project-search.service", responseKeys: Object.keys(data) }
+    );
+    return [];
+  } catch (error) {
     errorManager(`Project Search API Error: ${error}`, error, {
       context: "project-search.service",
     });
     return [];
   }
-
-  // Backend switched from a flat array to a paginated envelope ({ payload, pagination }).
-  // Handle both shapes so older deployments and tests keep working.
-  if (Array.isArray(data)) return data;
-  if (Array.isArray(data.payload)) return data.payload;
-
-  errorManager(
-    "Project Search API returned unexpected shape",
-    new Error("Unexpected response shape"),
-    { context: "project-search.service", responseKeys: Object.keys(data) }
-  );
-  return [];
 };

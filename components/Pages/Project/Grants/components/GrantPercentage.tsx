@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import type { Grant } from "@/types/v2/grant";
 import { formatPercentage } from "@/utilities/formatNumber";
+import { isCancelledMilestoneStatus } from "@/utilities/milestones/getEffectiveMilestoneStatus";
 
 type TProps = {
   // TODO: this should be refactored in the source components to pass Grant only
@@ -27,7 +28,10 @@ export const GrantPercentage: React.FC<TProps> = ({ grant, className }) => {
       }
     }
 
-    const milestones = grant.milestones;
+    // Cancelled milestones (DEV-523) are excluded from the completion-% denominator.
+    const milestones = grant.milestones?.filter(
+      (milestone) => !isCancelledMilestoneStatus(milestone.currentStatus)
+    );
 
     if (milestones && milestones.length > 0) {
       const total = milestones.length;

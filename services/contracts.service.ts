@@ -1,12 +1,29 @@
+import { api } from "@/utilities/api/client";
+import { HttpError } from "@/utilities/api/errors";
 import { createAuthenticatedApiClient } from "@/utilities/auth/api-client";
 import { envVars } from "@/utilities/enviromentVars";
-import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
 const API_URL = envVars.NEXT_PUBLIC_GAP_INDEXER_URL;
 
 // Keep apiClient for POST operations
 const apiClient = createAuthenticatedApiClient(API_URL, 30000);
+
+/**
+ * Extracts the same human-readable error message the legacy `fetchData`
+ * adapter surfaced for an `HttpError`: prefer the server response body's
+ * `message`, then the original axios error's message, then the client's
+ * synthetic message. Falls back to a plain `Error.message` (or
+ * `String(error)`) for non-HTTP `ApiError`s.
+ */
+function httpErrorMessage(error: unknown): string {
+  if (error instanceof HttpError) {
+    const bodyMessage = (error.body as { message?: string } | undefined)?.message;
+    const causeMessage = (error.cause as { message?: string } | undefined)?.message;
+    return bodyMessage || causeMessage || error.message;
+  }
+  return error instanceof Error ? error.message : String(error);
+}
 
 // Add response interceptor for error handling
 apiClient.interceptors.response.use(
@@ -90,13 +107,20 @@ class ContractsService {
    * @returns Deployer information
    */
   async lookupDeployer(network: string, contractAddress: string): Promise<DeployerInfo> {
-    const [data, error] = await fetchData<DeployerInfo>(
-      INDEXER.PROJECT.CONTRACTS.DEPLOYER(network, contractAddress)
-    );
-
-    if (error || !data) {
+    let data: DeployerInfo | null;
+    try {
+      // TODO(#1775): add zod schema
+      data = await api.get<DeployerInfo>(
+        INDEXER.PROJECT.CONTRACTS.DEPLOYER(network, contractAddress)
+      );
+    } catch (error) {
       console.error("Contract API Error:", error);
-      throw new Error(error || "Failed to lookup deployer");
+      throw new Error(httpErrorMessage(error) || "Failed to lookup deployer");
+    }
+
+    if (!data) {
+      console.error("Contract API Error:", "empty response");
+      throw new Error("Failed to lookup deployer");
     }
 
     return data;

@@ -13,7 +13,7 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { Button } from "../../Utilities/Button";
@@ -29,6 +29,24 @@ const schema = z.object({
 });
 
 type SchemaType = z.infer<typeof schema>;
+
+// Only the fields this dialog actually reads are required; everything else
+// on the envelope/nested objects is allowed to pass through unvalidated —
+// fetchData applied zero runtime validation for this endpoint previously.
+const communityAdminSchema = z
+  .object({
+    id: z.string(),
+    admins: z.array(
+      z
+        .object({
+          user: z.object({ id: z.string() }).passthrough(),
+        })
+        .passthrough()
+    ),
+  })
+  .passthrough();
+
+type CommunityAdmin = z.infer<typeof communityAdminSchema>;
 
 type RemoveAdminDialogProps = {
   UUID: `0x${string}`;
@@ -57,7 +75,10 @@ export const RemoveAdmin: FC<RemoveAdminDialogProps> = ({
     setIsOpen(true);
   }
 
-  const { handleSubmit } = useForm<SchemaType>({
+  const {
+    handleSubmit,
+    formState: { errors },
+  } = useForm<SchemaType>({
     resolver: zodResolver(schema),
     mode: "onChange",
   });
@@ -86,29 +107,30 @@ export const RemoveAdmin: FC<RemoveAdminDialogProps> = ({
     const { walletSigner } = setup;
     try {
       startAttestation("Removing admin...");
-      const communityResolver = await GAP.getCommunityResolver(walletSigner);
+      const communityResolver = (await GAP.getCommunityResolver(walletSigner)) as any;
       const communityResponse = await communityResolver.delist(UUID, Admin);
 
       changeStepperStep("pending");
       const { hash } = communityResponse;
       await communityResponse.wait().then(async () => {
         if (hash) {
-          await fetchData(INDEXER.ATTESTATION_LISTENER(hash, chainid), "POST", {});
+          await api.post(INDEXER.ATTESTATION_LISTENER(hash, chainid), {});
         }
         changeStepperStep("indexing");
         let retries = 1000;
         let addressRemoved = false;
         while (retries > 0) {
           try {
-            const [response, error] = await fetchData<{
-              admins: Array<{ user: { id: string } }>;
-            }>(INDEXER.COMMUNITY.ADMINS(UUID), "GET", {}, {}, {}, false);
-            if (!response || error) {
+            const response = await api.get<CommunityAdmin>(INDEXER.COMMUNITY.ADMINS(UUID), {
+              isAuthorized: false,
+              schema: communityAdminSchema,
+            });
+            if (!response) {
               throw new Error(`Error fetching admins for community ${UUID}`);
             }
 
             addressRemoved = !response.admins.some(
-              (admin) => admin.user.id.toLowerCase() === Admin.toLowerCase()
+              (admin: any) => admin.user.id.toLowerCase() === Admin.toLowerCase()
             );
 
             if (addressRemoved) {
@@ -118,14 +140,14 @@ export const RemoveAdmin: FC<RemoveAdminDialogProps> = ({
               closeModal(); // Close the dialog upon successful submission
               break;
             }
-          } catch (_error) {}
+          } catch (_error: any) {}
 
           retries -= 1;
           // eslint-disable-next-line no-await-in-loop
           await new Promise((resolve) => setTimeout(resolve, 1500));
         }
       });
-    } catch (error) {
+    } catch (error: any) {
       showError("Failed to remove admin. Please try again.");
       errorManager(`Error removing admin of ${UUID}`, error, {
         removingAdmin: Admin,
@@ -140,7 +162,7 @@ export const RemoveAdmin: FC<RemoveAdminDialogProps> = ({
 
   return (
     <>
-      <button type="button" className="bg-transparent" onClick={openModal}>
+      <button className="bg-transparent" onClick={openModal}>
         <TrashIcon width={20} color="red" />
       </button>
       <Transition appear show={isOpen} as={Fragment}>

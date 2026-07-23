@@ -1,5 +1,6 @@
 import { errorManager } from "@/components/Utilities/errorManager";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
+import { HttpError } from "@/utilities/api/errors";
 import { INDEXER } from "@/utilities/indexer";
 
 export interface ProjectImpactVerification {
@@ -45,26 +46,22 @@ export const getProjectImpacts = async (
   options: GetProjectImpactsOptions = {}
 ): Promise<ProjectImpact[]> => {
   const { isAuthorized = true, signal } = options;
-  // TEMP: use the V1 impacts route until the V2 endpoint ships (gap-indexer#2178),
-  // then switch back to INDEXER.V2.PROJECTS.IMPACTS.
-  const [data, error, , status] = await fetchData<ProjectImpact[]>(
-    INDEXER.PROJECT.IMPACTS(projectIdOrSlug),
-    "GET",
-    {},
-    {},
-    {},
-    isAuthorized,
-    false,
-    undefined,
-    signal
-  );
 
-  if (error) {
+  let data: ProjectImpact[] | null;
+  try {
+    // TEMP: use the V1 impacts route until the V2 endpoint ships (gap-indexer#2178),
+    // then switch back to INDEXER.V2.PROJECTS.IMPACTS.
+    // TODO(#1775): add zod schema
+    data = await api.get<ProjectImpact[]>(INDEXER.PROJECT.IMPACTS(projectIdOrSlug), {
+      isAuthorized,
+      signal,
+    });
+  } catch (error) {
     // A 404 means the project/slug has no impacts (unknown slug, crawler
     // traffic, or a project with none yet) — an expected empty result, not a
     // reportable error. Mirrors project-grants.service / project-updates.service.
     // See GAP-FRONTEND-24Z.
-    if (status === 404) {
+    if (error instanceof HttpError && error.status === 404) {
       return [];
     }
 

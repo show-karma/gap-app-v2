@@ -10,8 +10,21 @@ import type {
   KycStatusResponse,
   KycVerificationType,
 } from "@/types/kyc";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
+import { HttpError, isApiError } from "@/utilities/api/errors";
 import { INDEXER } from "@/utilities/indexer";
+
+/**
+ * Extracts the same human-readable error message the legacy `fetchData`
+ * adapter surfaced for an `HttpError`: prefer the server response body's
+ * `message`, then the original axios error's message, then the client's
+ * synthetic "HTTP <status> <method> <path>" message.
+ */
+function httpErrorMessage(error: HttpError): string {
+  const bodyMessage = (error.body as { message?: string } | undefined)?.message;
+  const causeMessage = (error.cause as { message?: string } | undefined)?.message;
+  return bodyMessage || causeMessage || error.message;
+}
 
 // Cache duration constants
 const KYC_STATUS_STALE_TIME = 5 * 60 * 1000; // 5 minutes
@@ -71,47 +84,29 @@ export const useKycStatus = (
 
       // Use application-specific endpoint for APP- references
       if (isAppRef) {
-        const [data, error, _pageInfo, statusCode] = await fetchData<KycStatusResponse>(
-          INDEXER.KYC.GET_STATUS_BY_APP_REF(identifier),
-          "GET",
-          {},
-          {},
-          {},
-          true
-        );
-
-        if (statusCode === 404) {
-          return null;
+        try {
+          // TODO(#1775): add zod schema
+          return await api.get<KycStatusResponse>(INDEXER.KYC.GET_STATUS_BY_APP_REF(identifier));
+        } catch (error) {
+          if (isApiError(error) && error instanceof HttpError && error.status === 404) {
+            return null;
+          }
+          throw error instanceof HttpError ? new Error(httpErrorMessage(error)) : error;
         }
-
-        if (error) {
-          throw new Error(error);
-        }
-
-        return data;
       }
 
       // Use project endpoint for 0x... identifiers (requires communityUID)
       if (!communityUID) return null;
 
-      const [data, error, _pageInfo, statusCode] = await fetchData<KycStatusResponse>(
-        INDEXER.KYC.GET_STATUS(identifier, communityUID),
-        "GET",
-        {},
-        {},
-        {},
-        true
-      );
-
-      if (statusCode === 404) {
-        return null;
+      try {
+        // TODO(#1775): add zod schema
+        return await api.get<KycStatusResponse>(INDEXER.KYC.GET_STATUS(identifier, communityUID));
+      } catch (error) {
+        if (isApiError(error) && error instanceof HttpError && error.status === 404) {
+          return null;
+        }
+        throw error instanceof HttpError ? new Error(httpErrorMessage(error)) : error;
       }
-
-      if (error) {
-        throw new Error(error);
-      }
-
-      return data;
     },
     enabled: options?.enabled !== false && !!identifier && (isAppRef || !!communityUID),
     staleTime: KYC_STATUS_STALE_TIME,
@@ -139,26 +134,24 @@ export const useKycConfig = (
     queryFn: async () => {
       if (!communityIdOrSlug) return null;
 
-      const [data, error] = await fetchData<KycConfigResponse>(
-        INDEXER.KYC.GET_CONFIG(communityIdOrSlug),
-        "GET",
-        {},
-        {},
-        {},
-        false
-      );
-
-      // Treat "not found" as "not configured yet" - return null instead of throwing
-      // This allows admin pages to show empty form for initial setup
-      if (error) {
-        const errorLower = error.toLowerCase();
-        if (errorLower.includes("not found") || errorLower.includes("not configured")) {
-          return null;
+      try {
+        // TODO(#1775): add zod schema
+        const data = await api.get<KycConfigResponse>(INDEXER.KYC.GET_CONFIG(communityIdOrSlug), {
+          isAuthorized: false,
+        });
+        return data ?? null;
+      } catch (error) {
+        // Treat "not found" as "not configured yet" - return null instead of throwing
+        // This allows admin pages to show empty form for initial setup
+        if (isApiError(error) && error instanceof HttpError) {
+          const message = httpErrorMessage(error).toLowerCase();
+          if (message.includes("not found") || message.includes("not configured")) {
+            return null;
+          }
+          throw new Error(httpErrorMessage(error));
         }
-        throw new Error(error);
+        throw error;
       }
-
-      return data ?? null;
     },
     enabled: options?.enabled !== false && !!communityIdOrSlug,
     staleTime: KYC_CONFIG_STALE_TIME,
@@ -190,18 +183,11 @@ export const useKycBatchStatuses = (
         return new Map();
       }
 
-      const [data, error] = await fetchData<KycBatchStatusResponse>(
+      // TODO(#1775): add zod schema
+      const data = await api.post<KycBatchStatusResponse>(
         INDEXER.KYC.GET_BATCH_STATUSES(communityUID),
-        "POST",
-        { projectUIDs },
-        {},
-        {},
-        true
+        { projectUIDs }
       );
-
-      if (error) {
-        throw new Error(error);
-      }
 
       const statusMap = new Map<string, KycStatusResponse | null>();
       if (data?.statuses) {
@@ -242,18 +228,12 @@ export const useKycBatchStatusesPublic = (
         return new Map();
       }
 
-      const [data, error] = await fetchData<KycBatchStatusResponse>(
+      // TODO(#1775): add zod schema
+      const data = await api.post<KycBatchStatusResponse>(
         INDEXER.KYC.GET_BATCH_STATUSES_PUBLIC(communityUID),
-        "POST",
         { projectUIDs },
-        {},
-        {},
-        false
+        { isAuthorized: false }
       );
-
-      if (error) {
-        throw new Error(error);
-      }
 
       const statusMap = new Map<string, KycStatusResponse | null>();
       if (data?.statuses) {
@@ -325,18 +305,11 @@ export const useKycBatchStatusesByAppRef = (
       }
 
       if (refsToFetch.length > 0) {
-        const [data, error] = await fetchData<KycBatchStatusResponse>(
+        // TODO(#1775): add zod schema
+        const data = await api.post<KycBatchStatusResponse>(
           INDEXER.KYC.GET_BATCH_STATUSES_BY_APP_REF(communityUID),
-          "POST",
-          { applicationReferences: refsToFetch },
-          {},
-          {},
-          true
+          { applicationReferences: refsToFetch }
         );
-
-        if (error) {
-          throw new Error(error);
-        }
 
         if (data?.statuses) {
           Object.entries(data.statuses).forEach(([appRef, status]) => {
@@ -391,18 +364,11 @@ export const useKycFormUrl = () => {
         walletAddress,
       };
 
-      const [data, error] = await fetchData<KycFormUrlResponse>(
+      // TODO(#1775): add zod schema
+      const data = await api.post<KycFormUrlResponse>(
         INDEXER.KYC.GET_FORM_URL(communityIdOrSlug),
-        "POST",
-        requestBody,
-        {},
-        {},
-        true
+        requestBody
       );
-
-      if (error) {
-        throw new Error(error);
-      }
 
       if (!data) {
         throw new Error("No data returned from KYC form URL request");
@@ -451,18 +417,11 @@ export const useSaveKycConfig = (communityIdOrSlug: string | undefined) => {
         throw new Error("Community ID is required");
       }
 
-      const [data, error] = await fetchData<KycConfigResponse>(
+      // TODO(#1775): add zod schema
+      const data = await api.put<KycConfigResponse>(
         INDEXER.KYC.GET_CONFIG(communityIdOrSlug),
-        "PUT",
-        config,
-        {},
-        {},
-        true
+        config
       );
-
-      if (error) {
-        throw new Error(error);
-      }
 
       if (!data) {
         throw new Error("No data returned from save KYC config request");

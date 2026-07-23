@@ -13,9 +13,10 @@ import type {
   IFundingProgramConfig,
   IPaginatedApplicationsResponse,
 } from "@/types/funding-platform";
+import { api } from "@/utilities/api/client";
+import { HttpError } from "@/utilities/api/errors";
 import { createAuthenticatedApiClient } from "@/utilities/auth/api-client";
 import { envVars } from "@/utilities/enviromentVars";
-import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import {
   appendMergedReviewerAddresses,
@@ -27,6 +28,16 @@ const API_BASE = envVars.NEXT_PUBLIC_GAP_INDEXER_URL || "http://localhost:4000";
 
 // Keep apiClient for mutations and special cases (blob downloads)
 const apiClient = createAuthenticatedApiClient(API_BASE, 30000);
+
+// Mirrors legacy fetchData's error extraction: HttpError body.message > cause.message > error.message; else Error.message/String(error).
+function httpErrorMessage(error: unknown): string {
+  if (error instanceof HttpError) {
+    const bodyMessage = (error.body as { message?: string } | undefined)?.message;
+    const causeMessage = (error.cause as { message?: string } | undefined)?.message;
+    return bodyMessage || causeMessage || error.message;
+  }
+  return error instanceof Error ? error.message : String(error);
+}
 
 /**
  * Remove lone UTF-16 surrogate code units that can trigger UTF-8 serialization failures downstream.
@@ -130,41 +141,30 @@ export type FundingProgram = {
 
 // Funding Programs API (V2)
 export const fundingProgramsAPI = {
-  /**
-   * Get all grant programs for a community
-   */
+  // Get all grant programs for a community
   async getProgramsByCommunity(communityId: string): Promise<FundingProgram[]> {
-    const [configs, error] = await fetchData<FundingProgram[]>(
-      INDEXER.V2.FUNDING_PROGRAMS.BY_COMMUNITY(communityId)
-    );
-
-    if (error || !configs) {
-      console.error("API Error:", error);
-      throw new Error(error || "Failed to fetch programs");
+    let configs: FundingProgram[];
+    try {
+      // TODO(#1775): add zod schema
+      const url = INDEXER.V2.FUNDING_PROGRAMS.BY_COMMUNITY(communityId);
+      configs = await api.get<FundingProgram[]>(url);
+    } catch (error) {
+      const message = httpErrorMessage(error);
+      console.error("API Error:", message);
+      throw new Error(message || "Failed to fetch programs");
     }
-
-    // Transform to FundingProgram format for backward compatibility
+    if (!configs) {
+      console.error("API Error:", undefined);
+      throw new Error("Failed to fetch programs");
+    }
+    // Transform to FundingProgram format for backward compatibility (stats already on backend response)
     const programs = await Promise.all(
-      configs.map(async (config) => {
-        // Check if stats already exist from backend
-        if (config.metrics) {
-          // Stats already provided by backend, no need to fetch separately
-          return config;
-        }
-
-        return {
-          ...config,
-          // stats,
-        };
-      })
+      configs.map(async (config) => (config.metrics ? config : { ...config }))
     );
-
     return programs;
   },
 
-  /**
-   * Get funding details for a program
-   */
+  // Get funding details for a program
   async getFundingDetails(
     programId: string,
     chainId: number
@@ -174,19 +174,16 @@ export const fundingProgramsAPI = {
     fundingDetails?: { currency?: string };
     details?: { currency?: string };
   }> {
-    const [data, error] = await fetchData(INDEXER.V2.FUNDING_DETAILS(programId, chainId));
-
-    if (error) {
-      throw new Error(error);
+    try {
+      // TODO(#1775): add zod schema
+      return await api.get(INDEXER.V2.FUNDING_DETAILS(programId, chainId));
+    } catch (error) {
+      throw new Error(httpErrorMessage(error));
     }
-
-    return data;
   },
 
-  /**
-   * Get program configuration including form schema
-   * Uses apiClient for authenticated requests (admins get full config with accessCode)
-   */
+  // Get program configuration including form schema. Uses apiClient for authenticated
+  // requests (admins get full config with accessCode).
   async getProgramConfiguration(programId: string): Promise<FundingProgram | null> {
     try {
       const response = await apiClient.get<FundingProgram>(
@@ -207,39 +204,33 @@ export const fundingProgramsAPI = {
     }
   },
 
-  /**
-   * Get all program configurations with optional community filter
-   */
+  // Get all program configurations with optional community filter
   async getAllProgramConfigs(community?: string): Promise<IFundingProgramConfig[]> {
-    const [data, error] = await fetchData<IFundingProgramConfig[]>(
-      INDEXER.V2.FUNDING_PROGRAMS.LIST(community)
-    );
-
-    if (error || !data) {
-      throw new Error(error || "Failed to fetch program configs");
+    let data: IFundingProgramConfig[];
+    try {
+      // TODO(#1775): add zod schema
+      data = await api.get<IFundingProgramConfig[]>(INDEXER.V2.FUNDING_PROGRAMS.LIST(community));
+    } catch (error) {
+      throw new Error(httpErrorMessage(error) || "Failed to fetch program configs");
     }
-
+    if (!data) throw new Error("Failed to fetch program configs");
     return data;
   },
 
-  /**
-   * Get only enabled programs
-   */
+  // Get only enabled programs
   async getEnabledPrograms(): Promise<IFundingProgramConfig[]> {
-    const [data, error] = await fetchData<IFundingProgramConfig[]>(
-      INDEXER.V2.FUNDING_PROGRAMS.ENABLED()
-    );
-
-    if (error || !data) {
-      throw new Error(error || "Failed to fetch enabled programs");
+    let data: IFundingProgramConfig[];
+    try {
+      // TODO(#1775): add zod schema
+      data = await api.get<IFundingProgramConfig[]>(INDEXER.V2.FUNDING_PROGRAMS.ENABLED());
+    } catch (error) {
+      throw new Error(httpErrorMessage(error) || "Failed to fetch enabled programs");
     }
-
+    if (!data) throw new Error("Failed to fetch enabled programs");
     return data;
   },
 
-  /**
-   * Get only enabled programs (server-side version with Next.js caching)
-   */
+  // Get only enabled programs (server-side version with Next.js caching)
   async getEnabledProgramsServer(): Promise<FundingProgram[]> {
     const response = await fetch(`${API_BASE}${INDEXER.V2.FUNDING_PROGRAMS.ENABLED()}`, {
       next: { revalidate: 300 },
@@ -255,9 +246,7 @@ export const fundingProgramsAPI = {
     return Array.isArray(programs) ? programs : [];
   },
 
-  /**
-   * Update program configuration (uses POST for new configs, PUT for updates)
-   */
+  // Update program configuration (uses POST for new configs, PUT for updates)
   async createProgramConfiguration(
     programId: string,
     config: Partial<IFundingProgramConfig | null>
@@ -271,9 +260,7 @@ export const fundingProgramsAPI = {
     return response.data;
   },
 
-  /**
-   * Update program configuration (uses POST for new configs, PUT for updates)
-   */
+  // Update program configuration (uses POST for new configs, PUT for updates)
   async updateProgramConfiguration(
     programId: string,
     config: Partial<IFundingProgramConfig | null>
@@ -287,9 +274,7 @@ export const fundingProgramsAPI = {
     return response.data;
   },
 
-  /**
-   * Update form schema for a program
-   */
+  // Update form schema for a program
   async updateFormSchema(
     programId: string,
     formSchema: IFormSchema
@@ -312,9 +297,7 @@ export const fundingProgramsAPI = {
     }
   },
 
-  /**
-   * Toggle program status (enabled/disabled)
-   */
+  // Toggle program status (enabled/disabled)
   async toggleProgramStatus(programId: string, enabled: boolean): Promise<IFundingProgramConfig> {
     // getProgramConfiguration returns null for 404, throws for other errors
     const existingConfig = await this.getProgramConfiguration(programId);
@@ -333,9 +316,7 @@ export const fundingProgramsAPI = {
     }
   },
 
-  /**
-   * Get program statistics (backward compatibility)
-   */
+  // Get program statistics (backward compatibility)
   async getProgramStats(programId: string): Promise<IApplicationStatistics> {
     try {
       const stats = await fundingApplicationsAPI.getApplicationStatistics(programId);
@@ -358,11 +339,8 @@ export const fundingProgramsAPI = {
 // `data` is a parsed JSON document or a CSV Blob depending on `format`.
 type ApplicationExportResult = { data: unknown; filename?: string };
 
-/**
- * Shared implementation for the public and admin application export endpoints.
- * Both build the same filter query and parse the download filename from the
- * `Content-Disposition` header; only the request path differs.
- */
+// Shared implementation for the public/admin application export endpoints: builds the same
+// filter query and parses the download filename from Content-Disposition; only the path differs.
 async function requestApplicationsExport(
   path: string,
   format: ExportFormat,
@@ -397,9 +375,7 @@ export const fundingApplicationsAPI = {
     return response.data;
   },
 
-  /**
-   * Update an existing application (for applicants and admins)
-   */
+  // Update an existing application (for applicants and admins)
   async updateApplication(
     applicationId: string,
     request: IApplicationUpdateRequest
@@ -408,9 +384,7 @@ export const fundingApplicationsAPI = {
     return response.data;
   },
 
-  /**
-   * Update application status (for admins)
-   */
+  // Update application status (for admins)
   async updateApplicationStatus(
     applicationId: string,
     request: IApplicationStatusUpdateRequest
@@ -422,10 +396,8 @@ export const fundingApplicationsAPI = {
     return response.data;
   },
 
-  /**
-   * Update post-approval data (for owners on first submit, admins/staff anytime)
-   * Admins can edit existing post-approval data with audit trail tracking
-   */
+  // Update post-approval data (for owners on first submit, admins/staff anytime); admins can
+  // edit existing post-approval data with audit trail tracking
   async updatePostApprovalData(
     applicationId: string,
     postApprovalData: Record<string, unknown>
@@ -437,9 +409,7 @@ export const fundingApplicationsAPI = {
     return response.data;
   },
 
-  /**
-   * Get applications for a program with filtering and pagination
-   */
+  // Get applications for a program with filtering and pagination
   async getApplicationsByProgram(
     programId: string,
     filters: IApplicationFilters = {}
@@ -453,13 +423,16 @@ export const fundingApplicationsAPI = {
     if (filters.reviewerAddresses?.length)
       params.append("reviewerAddresses", filters.reviewerAddresses.join(","));
 
-    const [data, error] = await fetchData<IPaginatedApplicationsResponse>(
-      `${INDEXER.V2.FUNDING_APPLICATIONS.BY_PROGRAM(programId)}?${params}`
-    );
-
-    if (error || !data) {
-      throw new Error(error || "Failed to fetch applications");
+    let data: IPaginatedApplicationsResponse;
+    try {
+      // TODO(#1775): add zod schema
+      data = await api.get<IPaginatedApplicationsResponse>(
+        `${INDEXER.V2.FUNDING_APPLICATIONS.BY_PROGRAM(programId)}?${params}`
+      );
+    } catch (error) {
+      throw new Error(httpErrorMessage(error) || "Failed to fetch applications");
     }
+    if (!data) throw new Error("Failed to fetch applications");
 
     if (!data.applications) {
       data.applications = [];
@@ -474,61 +447,55 @@ export const fundingApplicationsAPI = {
     return data;
   },
 
-  /**
-   * Get a specific application by ID
-   */
+  // Get a specific application by ID
   async getApplication(applicationId: string): Promise<IFundingApplication> {
-    const [data, error] = await fetchData<IFundingApplication>(
-      INDEXER.V2.FUNDING_APPLICATIONS.GET(applicationId)
-    );
-
-    if (error || !data) {
-      throw new Error(error || "Failed to fetch application");
+    let data: IFundingApplication;
+    try {
+      // TODO(#1775): add zod schema
+      const url = INDEXER.V2.FUNDING_APPLICATIONS.GET(applicationId);
+      data = await api.get<IFundingApplication>(url);
+    } catch (error) {
+      throw new Error(httpErrorMessage(error) || "Failed to fetch application");
     }
-
+    if (!data) throw new Error("Failed to fetch application");
     return data;
   },
 
-  /**
-   * Get application by reference number
-   */
+  // Get application by reference number
   async getApplicationByReference(referenceNumber: string): Promise<IFundingApplication> {
-    const [data, error] = await fetchData<IFundingApplication>(
-      INDEXER.V2.FUNDING_APPLICATIONS.GET(referenceNumber)
-    );
-
-    if (error || !data) {
-      throw new Error(error || "Failed to fetch application");
+    let data: IFundingApplication;
+    try {
+      // TODO(#1775): add zod schema
+      const url = INDEXER.V2.FUNDING_APPLICATIONS.GET(referenceNumber);
+      data = await api.get<IFundingApplication>(url);
+    } catch (error) {
+      throw new Error(httpErrorMessage(error) || "Failed to fetch application");
     }
-
+    if (!data) throw new Error("Failed to fetch application");
     return data;
   },
 
-  /**
-   * Get application by email and program
-   */
+  // Get application by email and program
   async getApplicationByEmail(
     programId: string,
     email: string
   ): Promise<IFundingApplication | null> {
-    const [data, error, , status] = await fetchData<IFundingApplication>(
-      INDEXER.V2.FUNDING_APPLICATIONS.BY_EMAIL(programId, email)
-    );
-
-    if (error) {
+    try {
+      // TODO(#1775): add zod schema
+      const data = await api.get<IFundingApplication>(
+        INDEXER.V2.FUNDING_APPLICATIONS.BY_EMAIL(programId, email)
+      );
+      return data || null;
+    } catch (error) {
       // Return null for 404 (no application found)
-      if (status === 404) {
+      if (error instanceof HttpError && error.status === 404) {
         return null;
       }
-      throw new Error(String(error));
+      throw new Error(httpErrorMessage(error));
     }
-
-    return data || null;
   },
 
-  /**
-   * Get application statistics for a program
-   */
+  // Get application statistics for a program
   async getApplicationStatistics(
     programId: string,
     filters: Pick<IApplicationFilters, "reviewerAddress" | "reviewerAddresses"> = {}
@@ -539,13 +506,16 @@ export const fundingApplicationsAPI = {
     const query = params.toString();
     const statisticsUrl = INDEXER.V2.FUNDING_APPLICATIONS.STATISTICS(programId);
 
-    const [data, error] = await fetchData<IApplicationStatistics>(
-      query ? `${statisticsUrl}?${query}` : statisticsUrl
-    );
-
-    if (error || !data) {
+    try {
+      // TODO(#1775): add zod schema
+      const data = await api.get<IApplicationStatistics>(
+        query ? `${statisticsUrl}?${query}` : statisticsUrl
+      );
+      if (!data) throw new Error("Empty statistics response");
+      return data;
+    } catch (error) {
       // Return default stats instead of throwing - stats are optional
-      console.warn(`Failed to fetch statistics for program ${programId}:`, error);
+      console.warn(`Failed to fetch statistics for program ${programId}:`, httpErrorMessage(error));
       return {
         totalApplications: 0,
         pendingApplications: 0,
@@ -555,13 +525,9 @@ export const fundingApplicationsAPI = {
         underReviewApplications: 0,
       };
     }
-
-    return data;
   },
 
-  /**
-   * Export applications data
-   */
+  // Export applications data
   async exportApplications(
     programId: string,
     format: ExportFormat = "json",
@@ -574,9 +540,7 @@ export const fundingApplicationsAPI = {
     );
   },
 
-  /**
-   * Export applications data for admins (full data including private fields)
-   */
+  // Export applications data for admins (full data including private fields)
   async exportApplicationsAdmin(
     programId: string,
     format: ExportFormat = "json",
@@ -589,26 +553,22 @@ export const fundingApplicationsAPI = {
     );
   },
 
-  /**
-   * Get application versions timeline
-   * Uses the reference number to get the version history timeline
-   */
+  // Get application versions timeline (uses the reference number to get the version history)
   async getApplicationVersionsTimeline(referenceNumber: string): Promise<IApplicationVersion[]> {
-    const [data, error] = await fetchData<IApplicationVersionTimeline>(
-      INDEXER.V2.FUNDING_APPLICATIONS.VERSIONS_TIMELINE(referenceNumber)
-    );
-
-    if (error || !data) {
-      throw new Error(error || "Failed to fetch version timeline");
+    let data: IApplicationVersionTimeline;
+    try {
+      // TODO(#1775): add zod schema
+      const url = INDEXER.V2.FUNDING_APPLICATIONS.VERSIONS_TIMELINE(referenceNumber);
+      data = await api.get<IApplicationVersionTimeline>(url);
+    } catch (error) {
+      throw new Error(httpErrorMessage(error) || "Failed to fetch version timeline");
     }
-
+    if (!data) throw new Error("Failed to fetch version timeline");
     return data.timeline;
   },
 
-  /**
-   * Get application versions by application ID (converts to reference number)
-   * This maintains backward compatibility with existing code
-   */
+  // Get application versions by application ID (converts to reference number); maintains
+  // backward compatibility with existing code
   async getApplicationVersions(applicationIdOrReference: string): Promise<IApplicationVersion[]> {
     // If it looks like a reference number (APP-XXXXX-XXXXX), use it directly
     if (applicationIdOrReference.startsWith("APP-")) {
@@ -625,13 +585,8 @@ export const fundingApplicationsAPI = {
     }
   },
 
-  /**
-   * Run AI evaluation on an existing application by reference number (Admin only).
-   * This evaluation is visible to applicants and helps them improve their application.
-   *
-   * @param referenceNumber - The application reference number
-   * @returns Promise resolving to evaluation results
-   */
+  // Run AI evaluation on an existing application by reference number (Admin only). Visible to
+  // applicants and helps them improve their application.
   async runAIEvaluation(referenceNumber: string): Promise<{
     success: boolean;
     referenceNumber: string;
@@ -643,10 +598,8 @@ export const fundingApplicationsAPI = {
     return response.data;
   },
 
-  /**
-   * Run internal AI evaluation on an application (Admin/Reviewer only). Hidden from applicants.
-   * Requires internalLangfusePromptId on the program's AI config.
-   */
+  // Run internal AI evaluation on an application (Admin/Reviewer only). Hidden from applicants.
+  // Requires internalLangfusePromptId on the program's AI config.
   async runInternalAIEvaluation(referenceNumber: string): Promise<{
     success: boolean;
     referenceNumber: string;
@@ -663,9 +616,7 @@ export const fundingApplicationsAPI = {
     return response.data;
   },
 
-  /**
-   * Delete a milestone from a funding application (Milestone reviewers only)
-   */
+  // Delete a milestone from a funding application (Milestone reviewers only)
   async deleteMilestone(
     referenceNumber: string,
     milestoneFieldLabel: string,

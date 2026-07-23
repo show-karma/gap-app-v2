@@ -6,9 +6,16 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type React from "react";
 
-vi.mock("@/utilities/fetchData", () => ({
-  __esModule: true,
-  default: vi.fn(),
+vi.mock("@/utilities/api/client", () => ({
+  api: {
+    get: vi.fn(),
+    post: vi.fn(),
+    put: vi.fn(),
+    patch: vi.fn(),
+    delete: vi.fn(),
+    request: vi.fn(),
+    getPaginated: vi.fn(),
+  },
 }));
 
 vi.mock("@/hooks/useAuth", () => ({
@@ -16,7 +23,7 @@ vi.mock("@/hooks/useAuth", () => ({
 }));
 
 import { PurchaseCreditsModal } from "@/src/features/standalone-evaluation/components/PurchaseCreditsModal";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 
 const buildClient = () =>
   new QueryClient({
@@ -57,12 +64,10 @@ describe("PurchaseCreditsModal", () => {
   });
 
   it("redirects to Stripe when a pack is selected", async () => {
-    (fetchData as vi.Mock).mockResolvedValueOnce([
-      { url: "https://checkout.stripe.com/x", sessionId: "cs_x" },
-      null,
-      null,
-      201,
-    ]);
+    (api.post as vi.Mock).mockResolvedValueOnce({
+      url: "https://checkout.stripe.com/x",
+      sessionId: "cs_x",
+    });
 
     const Wrapper = wrapper(qc);
     render(
@@ -76,7 +81,7 @@ describe("PurchaseCreditsModal", () => {
     });
     await userEvent.click(starterButton);
 
-    await waitFor(() => expect(fetchData).toHaveBeenCalled());
+    await waitFor(() => expect(api.post).toHaveBeenCalled());
     await waitFor(() => expect(window.location.href).toBe("https://checkout.stripe.com/x"));
   });
 });

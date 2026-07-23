@@ -381,3 +381,64 @@ describe("ProgressTimeline connector line geometry", () => {
     expect(pending).toHaveLength(3);
   });
 });
+
+describe("ProgressTimeline synthesis progress", () => {
+  const eventsThroughRanking: FastReportEvent[] = [
+    makeEvent("snapshot"),
+    makeEvent("pool_loaded", { count: 25 }),
+    makeEvent("compliance_complete", { scoredCount: 25, disqualifiedCount: 0 }),
+    makeEvent("contact_discovery_complete", { discovered: 0, cached: 25, failed: 0 }),
+    makeEvent("activity_complete", {
+      okCount: 25,
+      partialCount: 0,
+      failedCount: 0,
+      noSignalCount: 0,
+    }),
+    makeEvent("ranking_complete", { rankedCount: 25 }),
+  ];
+
+  it("should_translate_synthesis_started_into_the_final_writing_phase", () => {
+    const synthesis = makeEvent("synthesis_started", { candidateCount: 25 });
+    render(
+      <ProgressTimeline
+        errorCount={0}
+        events={[...eventsThroughRanking, synthesis]}
+        latest={synthesis}
+      />
+    );
+
+    expect(screen.getAllByText("Report synthesis")).toHaveLength(2);
+    expect(screen.getAllByText("Writing summaries for 25 candidates…")).toHaveLength(2);
+  });
+
+  it("should_mark_the_synthesis_stage_ready_when_the_report_finalizes", () => {
+    render(
+      <ProgressTimeline
+        errorCount={0}
+        events={[
+          ...eventsThroughRanking,
+          makeEvent("synthesis_started", { candidateCount: 25 }),
+          makeEvent("report_finalized"),
+        ]}
+        latest={makeEvent("report_finalized")}
+      />
+    );
+
+    expect(screen.getByText("All stages complete")).toBeInTheDocument();
+    expect(screen.getByText("Report ready")).toBeInTheDocument();
+  });
+
+  it("should_announce_candidate_details_instead_of_the_raw_event_name", () => {
+    const candidateUpdate = makeEvent("candidate_stage_complete", {
+      fundingOrganizationId: "org-1",
+      stage: "news",
+      status: "ok",
+      detail: "3 recent mentions found",
+    });
+    render(
+      <ProgressTimeline events={eventsThroughRanking} latest={candidateUpdate} errorCount={0} />
+    );
+
+    expect(screen.getByText("Candidate update: 3 recent mentions found")).toBeInTheDocument();
+  });
+});

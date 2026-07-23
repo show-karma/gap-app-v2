@@ -1,19 +1,26 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { keccak256, toHex } from "viem";
+import { z } from "zod";
 import { errorManager } from "@/components/Utilities/errorManager";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
+import { HttpError } from "@/utilities/api/errors";
 import { INDEXER } from "@/utilities/indexer";
 import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
 import { queryClient } from "@/utilities/query-client";
 
-interface InviteCode {
-  id: string;
-  hash: string;
-  signature: string;
-  createdAt: string;
-  updatedAt: string;
-}
+const InviteCodeSchema = z
+  .object({
+    id: z.string(),
+    hash: z.string(),
+    signature: z.string(),
+    createdAt: z.string(),
+    updatedAt: z.string(),
+  })
+  .passthrough();
+const InviteCodeListSchema = z.array(InviteCodeSchema);
+
+type InviteCode = z.infer<typeof InviteCodeSchema>;
 
 interface UseInviteLinkOptions {
   /**
@@ -47,20 +54,21 @@ export const useInviteLink = (
     queryFn: async () => {
       if (!projectIdOrSlug || !isEnabled) return null;
 
-      const [data, error, , status] = await fetchData(
-        INDEXER.PROJECT.INVITATION.GET_LINKS(projectIdOrSlug)
-      );
-      if (error) {
+      try {
+        const data = await api.get(INDEXER.PROJECT.INVITATION.GET_LINKS(projectIdOrSlug), {
+          schema: InviteCodeListSchema,
+        });
+        if (!data || data.length === 0) return null;
+        return data[0];
+      } catch (error) {
         // 403 is the expected project-admin denial — treat it as "no invite
         // link" data and stay silent rather than logging to errorManager.
-        if (status === 403) {
+        if (error instanceof HttpError && error.status === 403) {
           return null;
         }
         errorManager("Failed to get current invite code", error);
         return null;
       }
-      if (!data || data.length === 0) return null;
-      return data[0] as InviteCode;
     },
     enabled: !!projectIdOrSlug && isEnabled,
     ...defaultQueryOptions,
@@ -74,16 +82,10 @@ export const useInviteLink = (
       const messageToSign = Date.now();
       const hexedMessage = keccak256(toHex(messageToSign));
 
-      const [data, error] = await fetchData(
-        INDEXER.PROJECT.INVITATION.NEW_CODE(projectIdOrSlug),
-        "POST",
-        {
-          hash: hexedMessage,
-        }
-      );
-
-      if (error) throw error;
-      return data;
+      // TODO(#1775): add zod schema
+      return api.post(INDEXER.PROJECT.INVITATION.NEW_CODE(projectIdOrSlug), {
+        hash: hexedMessage,
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
@@ -102,13 +104,8 @@ export const useInviteLink = (
     mutationFn: async (inviteId: string) => {
       if (!projectIdOrSlug) throw new Error("Project ID is required");
 
-      const [response, error] = await fetchData(
-        INDEXER.PROJECT.INVITATION.REVOKE_CODE(projectIdOrSlug, inviteId),
-        "PUT"
-      );
-
-      if (error) throw error;
-      return response;
+      // TODO(#1775): add zod schema
+      return api.put(INDEXER.PROJECT.INVITATION.REVOKE_CODE(projectIdOrSlug, inviteId));
     },
     onSuccess: () => {
       toast.success("Invite code revoked successfully");

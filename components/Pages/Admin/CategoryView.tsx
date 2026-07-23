@@ -12,7 +12,7 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import { SelectDropdown } from "@/components/ui/select-dropdown";
 import { useGroupedIndicators } from "@/hooks/useGroupedIndicators";
 import type { Category, ImpactSegment } from "@/types/impactMeasurement";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { pickColor } from "@/utilities/pickColor";
@@ -106,15 +106,13 @@ export const CategoryView = ({
   const handleDeleteSegment = async (segmentId: string) => {
     try {
       setIsDeletingSegment(segmentId);
-      const [, error] = await fetchData(
-        INDEXER.CATEGORIES.IMPACT_SEGMENTS.DELETE(selectedCategory.id),
-        "DELETE",
-        {
-          segmentId,
-        }
-      );
-
-      if (error) throw error;
+      // DELETE with a body isn't supported by api.delete(); the indexer
+      // route disambiguates delete-vs-create via the body's segmentId on the
+      // same URL as CREATE_OR_UPDATE, so use the low-level request() escape
+      // hatch to forward it.
+      await api.request("DELETE", INDEXER.CATEGORIES.IMPACT_SEGMENTS.DELETE(selectedCategory.id), {
+        segmentId,
+      });
 
       toast.success("Activity/Outcome deleted successfully");
 

@@ -35,6 +35,7 @@ import {
   MenuSection,
   ResourcesContent,
 } from "./menu-components";
+import { NavbarAssistantButton } from "./navbar-assistant-button";
 import { useNavbarPermissions } from "./navbar-permissions-context";
 import { NavbarSearch } from "./navbar-search";
 
@@ -118,6 +119,7 @@ export function NavbarMobileMenu() {
     <div className="lg:hidden flex flex-row items-center gap-3 w-full">
       <Logo />
       <div className="flex flex-row items-center gap-2 ml-auto">
+        <NavbarAssistantButton compact />
         {!isLoggedIn ? (
           <Button variant="secondary" size="sm" onClick={() => login()} type="button">
             Sign in

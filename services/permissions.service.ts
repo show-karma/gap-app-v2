@@ -1,6 +1,7 @@
+import { api } from "@/utilities/api/client";
+import { HttpError } from "@/utilities/api/errors";
 import { createAuthenticatedApiClient } from "@/utilities/auth/api-client";
 import { envVars } from "@/utilities/enviromentVars";
-import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import type { FundingProgram } from "./fundingPlatformService";
 
@@ -8,6 +9,22 @@ const API_URL = envVars.NEXT_PUBLIC_GAP_INDEXER_URL;
 
 // Keep apiClient for batch POST operations
 const apiClient = createAuthenticatedApiClient(API_URL, 30000);
+
+/**
+ * Extracts the same human-readable error message the legacy `fetchData`
+ * adapter surfaced for an `HttpError`: prefer the server response body's
+ * `message`, then the original axios error's message, then the client's
+ * synthetic message. Falls back to a plain `Error.message` (or
+ * `String(error)`) for non-HTTP `ApiError`s.
+ */
+function httpErrorMessage(error: unknown): string {
+  if (error instanceof HttpError) {
+    const bodyMessage = (error.body as { message?: string } | undefined)?.message;
+    const causeMessage = (error.cause as { message?: string } | undefined)?.message;
+    return bodyMessage || causeMessage || error.message;
+  }
+  return error instanceof Error ? error.message : String(error);
+}
 
 /**
  * Permission check options
@@ -51,13 +68,20 @@ export class PermissionsService {
       throw new Error("Program ID is required for permission check");
     }
 
-    const [data, error] = await fetchData<PermissionCheckResponse>(
-      INDEXER.V2.FUNDING_PROGRAMS.CHECK_PERMISSION(programId, action)
-    );
-
-    if (error || !data) {
+    let data: PermissionCheckResponse | null;
+    try {
+      // TODO(#1775): add zod schema
+      data = await api.get<PermissionCheckResponse>(
+        INDEXER.V2.FUNDING_PROGRAMS.CHECK_PERMISSION(programId, action)
+      );
+    } catch (error) {
       console.error("Permission API Error:", error);
-      throw new Error(error || "Failed to check permission");
+      throw new Error(httpErrorMessage(error) || "Failed to check permission");
+    }
+
+    if (!data) {
+      console.error("Permission API Error:", "empty response");
+      throw new Error("Failed to check permission");
     }
 
     return data;
@@ -67,13 +91,18 @@ export class PermissionsService {
    * Get user's permissions for a resource
    */
   async getUserPermissions(resource?: string): Promise<UserPermissionsResponse> {
-    const [data, error] = await fetchData<UserPermissionsResponse>(
-      INDEXER.V2.USER.PERMISSIONS(resource)
-    );
-
-    if (error || !data) {
+    let data: UserPermissionsResponse | null;
+    try {
+      // TODO(#1775): add zod schema
+      data = await api.get<UserPermissionsResponse>(INDEXER.V2.USER.PERMISSIONS(resource));
+    } catch (error) {
       console.error("Permission API Error:", error);
-      throw new Error(error || "Failed to get user permissions");
+      throw new Error(httpErrorMessage(error) || "Failed to get user permissions");
+    }
+
+    if (!data) {
+      console.error("Permission API Error:", "empty response");
+      throw new Error("Failed to get user permissions");
     }
 
     return data;
@@ -83,13 +112,18 @@ export class PermissionsService {
    * Get programs where the user is a reviewer
    */
   async getReviewerPrograms(): Promise<FundingProgram[]> {
-    const [data, error] = await fetchData<FundingProgram[]>(
-      INDEXER.V2.FUNDING_PROGRAMS.MY_REVIEWER_PROGRAMS()
-    );
-
-    if (error || !data) {
+    let data: FundingProgram[] | null;
+    try {
+      // TODO(#1775): add zod schema
+      data = await api.get<FundingProgram[]>(INDEXER.V2.FUNDING_PROGRAMS.MY_REVIEWER_PROGRAMS());
+    } catch (error) {
       console.error("Permission API Error:", error);
-      throw new Error(error || "Failed to get reviewer programs");
+      throw new Error(httpErrorMessage(error) || "Failed to get reviewer programs");
+    }
+
+    if (!data) {
+      console.error("Permission API Error:", "empty response");
+      throw new Error("Failed to get reviewer programs");
     }
 
     return data;

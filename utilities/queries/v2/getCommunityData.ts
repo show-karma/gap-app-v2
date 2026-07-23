@@ -1,24 +1,57 @@
 import { cache } from "react";
+import { z } from "zod";
 import { errorManager } from "@/components/Utilities/errorManager";
 import type { Category } from "@/types/impactMeasurement";
 import type { Community, CommunityProjects, CommunityStats } from "@/types/v2/community";
 import { zeroUID } from "@/utilities/commons";
-import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
+import { api } from "../../api/client";
 
+// Deliberately NOT `orElse`: this loader is awaited unguarded (no `.catch`)
+// from ~30 server components/layouts under app/community/[communityId]/**.
+// The legacy `fetchData` adapter never threw, so every failure mode —
+// network blips AND non-2xx statuses — degraded to `null` here. Swallowing
+// only "expected" ApiErrors (via orElse) would let a plain HTTP 404/500 from
+// the indexer propagate as an unhandled rejection across those call sites,
+// which is a behavior change out of scope for this migration.
+// No schema — `details.name` and `uid` being absent/malformed is an expected,
+// business-meaningful degrade case handled below (not a contract violation),
+// so this stays untyped rather than risk a stricter-than-reality schema.
+// TODO(#1775): add zod schema once the "not found" response shape is confirmed.
 export const getCommunityDetails = cache(async (slug: string): Promise<Community | null> => {
   try {
-    const [data] = await fetchData(INDEXER.COMMUNITY.V2.GET(slug));
+    const data = await api.get<Community | null>(INDEXER.COMMUNITY.V2.GET(slug));
 
     if (!data || data?.uid === zeroUID || !data?.details?.name) {
       return null;
     }
 
-    return data as Community;
+    return data;
   } catch (_error) {
     return null;
   }
 });
+
+const CommunityStatsSchema = z
+  .object({
+    totalProjects: z.number(),
+    totalGrants: z.number(),
+    totalMilestones: z.number(),
+    projectUpdates: z.number(),
+    projectUpdatesBreakdown: z
+      .object({
+        projectMilestones: z.number(),
+        projectCompletedMilestones: z.number(),
+        projectUpdates: z.number(),
+        grantMilestones: z.number(),
+        grantCompletedMilestones: z.number(),
+        grantUpdates: z.number(),
+      })
+      .passthrough(),
+    totalTransactions: z.number(),
+    averageCompletion: z.number(),
+  })
+  .passthrough();
 
 /**
  * Fetches aggregate stats for a community.
@@ -33,17 +66,24 @@ export const getCommunityDetails = cache(async (slug: string): Promise<Community
  * it now rejects on failure.
  */
 export const getCommunityStats = cache(async (slug: string): Promise<CommunityStats> => {
-  const [data, error] = await fetchData(INDEXER.COMMUNITY.V2.STATS(slug));
-
-  if (error) {
-    throw new Error(`Failed to fetch community stats for "${slug}": ${error}`);
+  let data: CommunityStats | undefined;
+  try {
+    data = await api.get<CommunityStats>(INDEXER.COMMUNITY.V2.STATS(slug), {
+      schema: CommunityStatsSchema,
+    });
+  } catch (error) {
+    throw new Error(
+      `Failed to fetch community stats for "${slug}": ${
+        error instanceof Error ? error.message : String(error)
+      }`
+    );
   }
 
   if (!data) {
     throw new Error(`Community stats for "${slug}" returned an empty response`);
   }
 
-  return data as CommunityStats;
+  return data;
 });
 
 export const getCommunityProjects = async (
@@ -68,10 +108,15 @@ export const getCommunityProjects = async (
           : options.selectedProgramId
         : undefined,
     };
-    const [data] = await fetchData(INDEXER.COMMUNITY.V2.PROJECTS(slug, normalizedOptions));
+    // TODO(#1775): add zod schema — CommunityProjects nests a large
+    // CommunityProject shape (members/links/endorsements/etc.) not safe to
+    // re-derive strictly here.
+    const data = await api.get<CommunityProjects | null>(
+      INDEXER.COMMUNITY.V2.PROJECTS(slug, normalizedOptions)
+    );
 
     if (data) {
-      return data as CommunityProjects;
+      return data;
     }
 
     return {
@@ -121,11 +166,15 @@ export const getCommunityProjects = async (
  * Automatically merges outputs into impact_segments to avoid duplication.
  */
 export const getCommunityCategoriesOrThrow = async (communityId: string): Promise<Category[]> => {
-  const [data, error] = await fetchData(INDEXER.COMMUNITY.CATEGORIES(communityId));
-
-  if (error) {
+  let data: Category[];
+  try {
+    // TODO(#1775): add zod schema — Category nests optional impact_segments/
+    // outputs arrays (see types/impactMeasurement.ts) not safe to re-derive
+    // strictly here.
+    data = await api.get<Category[]>(INDEXER.COMMUNITY.CATEGORIES(communityId));
+  } catch (error) {
     errorManager(`Error fetching categories for community ${communityId}`, error);
-    throw new Error(error);
+    throw error;
   }
 
   if (!data?.length) {

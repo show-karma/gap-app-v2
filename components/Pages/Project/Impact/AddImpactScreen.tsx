@@ -19,7 +19,7 @@ import { useWallet } from "@/hooks/useWallet";
 import { useProjectImpacts } from "@/hooks/v2/useProjectImpacts";
 import { getProjectImpacts } from "@/services/project-impacts.service";
 import { useProjectStore } from "@/store";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { sanitizeObject } from "@/utilities/sanitize";
@@ -111,7 +111,7 @@ export const AddImpactScreen: FC = () => {
         .then(async (res) => {
           const txHash = res?.tx[0]?.hash;
           if (txHash) {
-            await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, newImpact.chainID), "POST", {});
+            await api.post(INDEXER.ATTESTATION_LISTENER(txHash, newImpact.chainID), {});
           }
           let retries = 1000;
           changeStepperStep("indexing");

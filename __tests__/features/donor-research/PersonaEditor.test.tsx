@@ -89,7 +89,7 @@ beforeEach(() => vi.clearAllMocks());
 
 const NARRATIVE = "An established local funder with a multi-decade focus on education access.";
 
-const saveButton = () => screen.getByRole("button", { name: /save persona/i });
+const saveButton = () => screen.getByRole("button", { name: /save profile/i });
 // The Accept button only exists while a refine suggestion awaits a decision.
 const acceptButton = () => screen.queryByRole("button", { name: /^accept$/i });
 
@@ -98,7 +98,7 @@ describe("PersonaEditor cold-mount states", () => {
     setup({ persona: null });
     renderWithProviders(<PersonaEditor handleId="h1" />);
 
-    expect(screen.getByLabelText("Persona source")).toHaveValue("");
+    expect(screen.getByLabelText("Donor preferences")).toHaveValue("");
     expect(acceptButton()).not.toBeInTheDocument();
     expect(saveButton()).toBeDisabled();
   });
@@ -113,7 +113,9 @@ describe("PersonaEditor cold-mount states", () => {
     });
     renderWithProviders(<PersonaEditor handleId="h1" />);
 
-    expect(screen.getByLabelText("Persona source")).toHaveValue("kickoff notes about this donor");
+    expect(screen.getByLabelText("Donor preferences")).toHaveValue(
+      "kickoff notes about this donor"
+    );
     expect(saveButton()).toBeDisabled();
   });
 
@@ -121,7 +123,7 @@ describe("PersonaEditor cold-mount states", () => {
     setup({ persona: makeDonorPersona() });
     renderWithProviders(<PersonaEditor handleId="h1" />);
 
-    expect(screen.getByLabelText("Persona source")).toHaveValue(NARRATIVE);
+    expect(screen.getByLabelText("Donor preferences")).toHaveValue(NARRATIVE);
     expect(acceptButton()).not.toBeInTheDocument();
     expect(saveButton()).toBeDisabled();
   });
@@ -160,18 +162,18 @@ describe("PersonaEditor refine → accept → save round-trip", () => {
     const refineBtn = screen.getByRole("button", { name: /^refine$/i });
     expect(refineBtn).toBeDisabled(); // empty source < 10 chars
 
-    await user.type(screen.getByLabelText("Persona source"), "Donor funds local education");
+    await user.type(screen.getByLabelText("Donor preferences"), "Donor funds local education");
     expect(refineBtn).toBeEnabled();
 
     await user.click(refineBtn);
 
     // Refine writes the suggestion straight into the (still editable) field;
     // chips/scalars wait for the Accept decision.
-    expect(screen.getByLabelText("Persona source")).toHaveValue(NARRATIVE);
-    expect(screen.getByLabelText("Persona source")).not.toHaveAttribute("readonly");
+    expect(screen.getByLabelText("Donor preferences")).toHaveValue(NARRATIVE);
+    expect(screen.getByLabelText("Donor preferences")).not.toHaveAttribute("readonly");
     expect(acceptButton()).toBeInTheDocument();
     expect(
-      screen.getByText("Recommended persona written to the input — accept or reject below")
+      screen.getByText("Recommended profile written to the input — accept or reject below")
     ).toBeInTheDocument();
     const chipsBefore = JSON.parse(screen.getByTestId("chips-json").textContent ?? "{}");
     expect(chipsBefore.orgMaturity.value).toBeNull();
@@ -183,7 +185,7 @@ describe("PersonaEditor refine → accept → save round-trip", () => {
 
     // Accept keeps the field text, applies chips, enables Save.
     expect(acceptButton()).not.toBeInTheDocument();
-    expect(screen.getByLabelText("Persona source")).toHaveValue(NARRATIVE);
+    expect(screen.getByLabelText("Donor preferences")).toHaveValue(NARRATIVE);
     const chipsAfter = JSON.parse(screen.getByTestId("chips-json").textContent ?? "{}");
     expect(chipsAfter.orgMaturity).toEqual({ value: "established", source: "extracted" });
     expect(saveButton()).toBeEnabled();
@@ -215,7 +217,7 @@ describe("PersonaEditor refine → accept → save round-trip", () => {
     expect(input.amountMax).toBe(20000);
     expect(input.cause).toBe("education");
     expect(input.geography).toBe("Greater Boston");
-    await waitFor(() => expect(toast.success).toHaveBeenCalledWith("Persona saved"));
+    await waitFor(() => expect(toast.success).toHaveBeenCalledWith("Profile saved"));
   });
 
   it("restores the pre-refine text on Reject and leaves the chips untouched", async () => {
@@ -226,16 +228,16 @@ describe("PersonaEditor refine → accept → save round-trip", () => {
     );
     renderWithProviders(<PersonaEditor handleId="h1" />);
 
-    await user.type(screen.getByLabelText("Persona source"), "Donor funds local education");
+    await user.type(screen.getByLabelText("Donor preferences"), "Donor funds local education");
     await user.click(screen.getByRole("button", { name: /^refine$/i }));
     // The suggestion replaced the field text…
-    expect(screen.getByLabelText("Persona source")).toHaveValue(NARRATIVE);
+    expect(screen.getByLabelText("Donor preferences")).toHaveValue(NARRATIVE);
 
     await user.click(screen.getByRole("button", { name: /^reject$/i }));
 
     // …and Reject puts the original text back.
     expect(acceptButton()).not.toBeInTheDocument();
-    expect(screen.getByLabelText("Persona source")).toHaveValue("Donor funds local education");
+    expect(screen.getByLabelText("Donor preferences")).toHaveValue("Donor funds local education");
     const chips = JSON.parse(screen.getByTestId("chips-json").textContent ?? "{}");
     expect(chips.orgMaturity.value).toBeNull();
     // Back to the input state: Refine returns, ready to try again.
@@ -277,10 +279,10 @@ describe("PersonaEditor refine → accept → save round-trip", () => {
     );
     renderWithProviders(<PersonaEditor handleId="h1" />);
 
-    await user.type(screen.getByLabelText("Persona source"), "Donor funds local education");
+    await user.type(screen.getByLabelText("Donor preferences"), "Donor funds local education");
     await user.click(screen.getByRole("button", { name: /^refine$/i }));
     // The suggestion is editable in place — tweak it before accepting.
-    await user.type(screen.getByLabelText("Persona source"), " Prefers spring grants.");
+    await user.type(screen.getByLabelText("Donor preferences"), " Prefers spring grants.");
     await user.click(screen.getByRole("button", { name: /^accept$/i }));
     await user.click(saveButton());
 
@@ -300,7 +302,7 @@ describe("PersonaEditor refine → accept → save round-trip", () => {
     );
     renderWithProviders(<PersonaEditor handleId="h1" />);
 
-    await user.type(screen.getByLabelText("Persona source"), "Raw notes, never refined");
+    await user.type(screen.getByLabelText("Donor preferences"), "Raw notes, never refined");
     await user.click(saveButton());
 
     const input = updateMutate.mock.calls[0][0] as {
@@ -322,7 +324,7 @@ describe("PersonaEditor save omits unset chips (S-001 regression)", () => {
     renderWithProviders(<PersonaEditor handleId="h1" />);
 
     // Typing source makes the editor dirty without touching any chip.
-    await user.type(screen.getByLabelText("Persona source"), "Donor notes with no chips set");
+    await user.type(screen.getByLabelText("Donor preferences"), "Donor notes with no chips set");
     await user.click(saveButton());
 
     expect(updateMutate).toHaveBeenCalledTimes(1);
@@ -351,6 +353,13 @@ describe("PersonaEditor save omits unset chips (S-001 regression)", () => {
 });
 
 describe("PersonaEditor error & empty-refine feedback (S-003)", () => {
+  it("renders an error state with Retry when the persona fetch fails (e.g. 429)", () => {
+    setup({ isError: true });
+    renderWithProviders(<PersonaEditor handleId="h1" />);
+    expect(screen.getByText("Couldn't load the profile.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /retry/i })).toBeInTheDocument();
+  });
+
   it("warns and shows no recommendation when refine extracts nothing", async () => {
     const user = userEvent.setup();
     const { refineMutate } = setup({ persona: makeDonorPersona() });
@@ -369,7 +378,7 @@ describe("PersonaEditor error & empty-refine feedback (S-003)", () => {
     renderWithProviders(<PersonaEditor handleId="h1" />);
 
     // The existing persona shows in the field before refine.
-    expect(screen.getByLabelText("Persona source")).toHaveValue(NARRATIVE);
+    expect(screen.getByLabelText("Donor preferences")).toHaveValue(NARRATIVE);
 
     await user.click(screen.getByRole("button", { name: /^refine$/i }));
 
@@ -378,10 +387,10 @@ describe("PersonaEditor error & empty-refine feedback (S-003)", () => {
     expect(screen.getByText(/add more detail and try again/i)).toBeInTheDocument();
     // The empty result must NOT open a review card or touch the field.
     expect(acceptButton()).not.toBeInTheDocument();
-    expect(screen.getByLabelText("Persona source")).toHaveValue(NARRATIVE);
+    expect(screen.getByLabelText("Donor preferences")).toHaveValue(NARRATIVE);
 
     // Typing clears the notice.
-    await user.type(screen.getByLabelText("Persona source"), " more detail");
+    await user.type(screen.getByLabelText("Donor preferences"), " more detail");
     expect(screen.queryByText(/add more detail and try again/i)).not.toBeInTheDocument();
   });
 
@@ -400,7 +409,7 @@ describe("PersonaEditor error & empty-refine feedback (S-003)", () => {
     await user.click(screen.getByText("edit-chip")); // dirty → enable Save
     await user.click(saveButton());
 
-    expect(toast.error).toHaveBeenCalledWith("Couldn't save the persona. Try again.");
+    expect(toast.error).toHaveBeenCalledWith("Couldn't save the profile. Try again.");
     expect(toast.error).not.toHaveBeenCalledWith(expect.stringMatching(/allowed values/i));
   });
 });

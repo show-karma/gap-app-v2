@@ -1,0 +1,57 @@
+import { useEffect, useState } from "react";
+import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
+import { api } from "@/utilities/api/client";
+import { chainNameDictionary } from "@/utilities/chainNameDictionary";
+import { INDEXER } from "@/utilities/indexer";
+import { cn } from "@/utilities/tailwind";
+
+interface ProgramCardProps {
+  programId: string;
+  chainID: number;
+  minimal?: boolean;
+}
+
+export const ProgramCard = ({ programId, chainID, minimal = false }: ProgramCardProps) => {
+  const [program, setProgram] = useState<GrantProgram | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadProgram() {
+      try {
+        setIsLoading(true);
+        // TODO(#1775): add zod schema
+        const result = await api.get<GrantProgram>(INDEXER.REGISTRY.FIND_BY_ID(programId, chainID));
+        setProgram(result);
+      } catch (error) {
+        console.error("Failed to load program:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    loadProgram();
+  }, [programId, chainID]);
+
+  if (isLoading) return <ProgramCardSkeleton />;
+  if (!program) return null;
+
+  return (
+    <div className="inline-flex items-center gap-2 text-xs bg-gray-100 dark:bg-zinc-800 px-2 py-1 rounded-full border border-gray-200 dark:border-zinc-700">
+      <span
+        className={cn("font-medium max-w-[150px]", minimal ? "w-max max-w-[full] truncate" : "")}
+      >
+        {program.metadata?.title || "Untitled Program"}
+      </span>
+      <span className="text-gray-500 dark:text-gray-400">Chain {chainNameDictionary(chainID)}</span>
+    </div>
+  );
+};
+
+export const ProgramCardSkeleton = () => {
+  return (
+    <div className="inline-flex items-center gap-2 text-xs bg-gray-100 dark:bg-zinc-800 px-2 py-1 rounded-full border border-gray-200 dark:border-zinc-700 animate-pulse">
+      <div className="h-3 w-24 bg-gray-200 dark:bg-zinc-700 rounded" />
+      <div className="h-3 w-12 bg-gray-200 dark:bg-zinc-700 rounded" />
+    </div>
+  );
+};

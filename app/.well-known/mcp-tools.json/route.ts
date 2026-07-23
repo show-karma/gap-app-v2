@@ -15,13 +15,13 @@ const UPSTREAM_TIMEOUT_MS = 5000;
 
 export async function GET() {
   try {
-    const res = await fetch(`${getIndexerBaseUrl()}/v2/mcp/tools`, {
+    const res = await fetch(`${getIndexerBaseUrl()}/mcp/tools`, {
       next: { revalidate: 3600 },
       signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
     });
 
     if (!res.ok) {
-      Sentry.captureException(new Error(`Upstream /v2/mcp/tools returned ${res.status}`), {
+      Sentry.captureException(new Error(`Upstream /mcp/tools returned ${res.status}`), {
         tags: { route: "well-known/mcp-tools" },
         extra: { status: res.status },
       });

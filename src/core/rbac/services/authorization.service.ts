@@ -1,5 +1,5 @@
 import { errorManager } from "@/components/Utilities/errorManager";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 import type { PermissionsResponse, ResourceContext } from "../types";
 import { isValidPermission, isValidReviewerType, isValidRole, Role } from "../types";
@@ -37,19 +37,28 @@ export interface GetPermissionsParams {
 
 export const authorizationService = {
   async getPermissions(params: GetPermissionsParams = {}): Promise<PermissionsResponse> {
-    const [response, error] = await fetchData<AuthPermissionsApiResponse>(
-      INDEXER.V2.AUTH.PERMISSIONS(params)
-    );
-
-    if (error || !response) {
-      errorManager("Failed to fetch user permissions", error || new Error("Empty response"), {
+    let response: AuthPermissionsApiResponse | null;
+    try {
+      // TODO(#1775): add zod schema
+      response = await api.get<AuthPermissionsApiResponse>(INDEXER.V2.AUTH.PERMISSIONS(params));
+    } catch (error) {
+      errorManager("Failed to fetch user permissions", error, {
         context: "authorization.service.getPermissions",
         params,
       });
       // Throw so React Query retries (up to 2x) and keeps isLoading=true during retries.
       // Previously returned DEFAULT_GUEST_PERMISSIONS, which React Query cached as "success"
       // for 5 minutes — causing persistent "Access Denied" even after the API recovered.
-      throw error || new Error("Failed to fetch permissions: empty response");
+      throw error;
+    }
+
+    if (!response) {
+      const emptyError = new Error("Failed to fetch permissions: empty response");
+      errorManager("Failed to fetch user permissions", emptyError, {
+        context: "authorization.service.getPermissions",
+        params,
+      });
+      throw emptyError;
     }
 
     const primaryRole = isValidRole(response.roles.primaryRole)

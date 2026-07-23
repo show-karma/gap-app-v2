@@ -12,7 +12,7 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import { useContactInfo } from "@/hooks/useContactInfo";
 import { useProjectStore } from "@/store";
 import { useIntroModalStore } from "@/store/modals/intro";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { shortAddress } from "@/utilities/shortAddress";
@@ -66,20 +66,18 @@ export const IntroDialog: FC = () => {
 
       if (!project || !data.email || !data.message) return;
 
-      const [response, error] = await fetchData(
-        INDEXER.PROJECT.REQUEST_INTRO(project.details?.slug as string),
-        "POST",
-        {
-          email: data.email,
-          telegram: data.telegram,
-          message: data.message,
-        },
-        {},
-        {},
-        false
-      );
-      if (!response || error) {
-        toast.error(`Error requesting intro: ${error}`);
+      try {
+        await api.post(
+          INDEXER.PROJECT.REQUEST_INTRO(project.details?.slug as string),
+          {
+            email: data.email,
+            telegram: data.telegram,
+            message: data.message,
+          },
+          { isAuthorized: false }
+        );
+      } catch (requestError) {
+        toast.error(`Error requesting intro: ${requestError}`);
       }
       closeModal();
       toast.success("Successfully requested intro!");

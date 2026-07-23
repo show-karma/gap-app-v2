@@ -14,7 +14,7 @@ import { type RegionOption, useCommunityRegions } from "@/hooks/useCommunityRegi
 import { useCommunityProjects } from "@/hooks/v2/useCommunityProjects";
 import { Link } from "@/src/components/navigation/Link";
 import type { CommunityProject } from "@/types/v2/community";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
@@ -223,7 +223,8 @@ export default function EditProjectsPage() {
     // Auto-save when region is selected
     setIsSaving(true);
     try {
-      await fetchData(INDEXER.PROJECT.REGIONS.UPDATE(uid), "PUT", {
+      // TODO(#1775): add zod schema
+      await api.put(INDEXER.PROJECT.REGIONS.UPDATE(uid), {
         regions: newRegion ? [newRegion] : [],
         communityUID: community?.uid,
       });

@@ -74,7 +74,7 @@ export const ApplicationListFilterBar: FC<ApplicationListFilterBarProps> = ({
           <option value="under_review">Under Review</option>
           <option value="revision_requested">Revision Requested</option>
           <option value="approved">Approved</option>
-          <option value="rejected">Rejected</option>
+          <option value="rejected">Declined</option>
         </select>
       </div>
 

@@ -1,26 +1,40 @@
 /**
  * @file Tests for useEnsureEmbeddedWallet
  * @description Guards against the duplicate-embedded-wallet bug: a new user must
- * get exactly one embedded wallet. Two creators race — Privy auto-provisions an
- * embedded wallet for email/social signups, and this hook also creates one — so
- * the hook (1) skips when a live embedded wallet already exists, (2) waits for
- * state to settle before creating, re-checking once Privy's wallet has had time
- * to appear, and (3) ignores stale connected-but-unlinked wallets (e.g. a
- * lingering MetaMask) when deciding to create.
+ * get exactly one embedded wallet.
+ *
+ * The second creator is NOT Privy. Both the dashboard and the client config say
+ * `create_on_login: "off"` (verified 2026-07-22), so Privy auto-provisioning —
+ * the hypothesis this file used to describe — cannot be the source. The real
+ * one is our own backend: `privyAuth` runs `getIdentityFromJWT` on every
+ * authenticated request, and that path calls `privy.createWallets()` for any
+ * social-login user without a wallet. A new signup's first API call mints a
+ * wallet server-side while this hook is still settling.
+ *
+ * So the hook (1) skips when a live embedded wallet exists, (2) settles before
+ * creating, (3) asks Privy's SERVER as the last word — client `useWallets()`
+ * cannot see an out-of-band creation — (4) holds a claim that survives the OAuth
+ * redirect and is shared across tabs, and (5) ignores stale connected-but-
+ * unlinked wallets (a lingering MetaMask) when deciding to create.
  */
 
 import type { User } from "@privy-io/react-auth";
 import { renderHook } from "@testing-library/react";
 import {
+  CLAIM_TTL_MS,
+  embeddedWalletClaimKey,
   RETRY_BASE_DELAY_MS,
+  resetInMemoryClaimsForTest,
   SETTLE_BEFORE_CREATE_MS,
   useEnsureEmbeddedWallet,
 } from "@/hooks/useEnsureEmbeddedWallet";
 
 const mockCreateWallet = vi.fn<() => Promise<unknown>>();
+const mockRefreshUser = vi.fn<() => Promise<User>>();
 
 vi.mock("@privy-io/react-auth", () => ({
   useCreateWallet: () => ({ createWallet: mockCreateWallet }),
+  useUser: () => ({ user: null, refreshUser: mockRefreshUser }),
 }));
 
 const mockGetLinkedWalletAddresses = vi.fn<() => string[]>();
@@ -37,11 +51,27 @@ vi.mock("@/components/Utilities/errorManager", () => ({
 
 const makeUser = (id: string): User => ({ id }) as User;
 
+/** A Privy user as the SERVER sees it, carrying an embedded wallet. */
+const makeUserWithEmbeddedWallet = (id: string): User =>
+  ({
+    id,
+    linkedAccounts: [
+      {
+        type: "wallet",
+        address: "0xserverCreated",
+        walletClientType: "privy",
+        connectorType: "embedded",
+      },
+    ],
+  }) as unknown as User;
+
 describe("useEnsureEmbeddedWallet", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockCreateWallet.mockResolvedValue({});
     mockGetLinkedWalletAddresses.mockReturnValue([]);
+    mockRefreshUser.mockImplementation(async () => makeUser("u-refreshed"));
+    window.localStorage.clear();
   });
 
   it("creates one wallet for a newly authenticated user without wallets", async () => {
@@ -136,6 +166,150 @@ describe("useEnsureEmbeddedWallet", () => {
 
       expect(mockCreateWallet).not.toHaveBeenCalled();
     } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  /**
+   * The duplicate that survived the settle-window fix. Verified against the
+   * Privy population on 2026-07-22: 27 accounts got a second embedded wallet
+   * after the fix shipped, four of them in the last week, with the two wallets
+   * created 0-2s apart.
+   *
+   * The second creator is not Privy — the dashboard and client config both say
+   * `create_on_login: "off"`. It is our own BACKEND: `privyAuth` middleware runs
+   * `getIdentityFromJWT` on EVERY authenticated request, and that helper calls
+   * `privy.createWallets()` when a social-login user has no wallet yet. A new
+   * signup's first API call therefore mints a wallet server-side while this
+   * hook is still inside its settle window.
+   *
+   * The settle re-check could never catch it: it reads client-side
+   * `useWallets()` state, which knows nothing about a wallet created
+   * out-of-band on the server. Only asking Privy's server closes it.
+   */
+  it("does not create when the server already made a wallet during the settle window", async () => {
+    vi.useFakeTimers();
+    try {
+      // Client state stays empty for the whole window — exactly the production
+      // shape, since a server-side creation never appears in useWallets().
+      mockRefreshUser.mockResolvedValue(makeUserWithEmbeddedWallet("u-server-made"));
+
+      renderHook(() => useEnsureEmbeddedWallet(true, true, makeUser("u-server-made"), 0, false));
+      await vi.advanceTimersByTimeAsync(SETTLE_BEFORE_CREATE_MS);
+
+      expect(mockCreateWallet).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("consults the server before creating, not just local wallet state", async () => {
+    vi.useFakeTimers();
+    try {
+      renderHook(() => useEnsureEmbeddedWallet(true, true, makeUser("u-asks"), 0, false));
+      await vi.advanceTimersByTimeAsync(SETTLE_BEFORE_CREATE_MS);
+
+      expect(mockRefreshUser).toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("still creates when the server confirms there is no wallet", async () => {
+    vi.useFakeTimers();
+    try {
+      mockRefreshUser.mockResolvedValue(makeUser("u-genuinely-empty"));
+
+      renderHook(() =>
+        useEnsureEmbeddedWallet(true, true, makeUser("u-genuinely-empty"), 0, false)
+      );
+      await vi.advanceTimersByTimeAsync(SETTLE_BEFORE_CREATE_MS);
+
+      expect(mockCreateWallet).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("creates anyway when the server cannot be reached", async () => {
+    vi.useFakeTimers();
+    try {
+      // Fail open: a user who genuinely has no wallet must still get one, or
+      // they cannot transact at all. The server check is a duplicate guard, not
+      // a gate.
+      mockRefreshUser.mockRejectedValue(new Error("network"));
+
+      renderHook(() => useEnsureEmbeddedWallet(true, true, makeUser("u-refresh-fails"), 0, false));
+      await vi.advanceTimersByTimeAsync(SETTLE_BEFORE_CREATE_MS);
+
+      expect(mockCreateWallet).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  /**
+   * The in-memory Set cannot survive Google's OAuth redirect, which reloads the
+   * page. A durable claim is what stops the post-redirect context from starting
+   * a second creation for a user whose first attempt is already in flight.
+   */
+  it("does not create again after a reload wipes the in-memory guard", async () => {
+    vi.useFakeTimers();
+    try {
+      const { unmount } = renderHook(() =>
+        useEnsureEmbeddedWallet(true, true, makeUser("u-reload"), 0, false)
+      );
+      await vi.advanceTimersByTimeAsync(SETTLE_BEFORE_CREATE_MS);
+      expect(mockCreateWallet).toHaveBeenCalledTimes(1);
+      unmount();
+
+      // Simulate the reload: the module-level Set is gone, localStorage is not.
+      resetInMemoryClaimsForTest();
+
+      renderHook(() => useEnsureEmbeddedWallet(true, true, makeUser("u-reload"), 0, false));
+      await vi.advanceTimersByTimeAsync(SETTLE_BEFORE_CREATE_MS);
+
+      expect(mockCreateWallet).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("allows a fresh attempt once the durable claim has expired", async () => {
+    vi.useFakeTimers();
+    try {
+      // A claim that outlived its window must not lock a walletless user out
+      // forever — e.g. the tab closed mid-creation and the wallet never landed.
+      window.localStorage.setItem(
+        embeddedWalletClaimKey("u-stale"),
+        String(Date.now() - CLAIM_TTL_MS - 1)
+      );
+
+      renderHook(() => useEnsureEmbeddedWallet(true, true, makeUser("u-stale"), 0, false));
+      await vi.advanceTimersByTimeAsync(SETTLE_BEFORE_CREATE_MS);
+
+      expect(mockCreateWallet).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("still creates when localStorage is unavailable", async () => {
+    vi.useFakeTimers();
+    const getItem = vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => {
+      throw new Error("private mode");
+    });
+    const setItem = vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+      throw new Error("private mode");
+    });
+    try {
+      renderHook(() => useEnsureEmbeddedWallet(true, true, makeUser("u-no-storage"), 0, false));
+      await vi.advanceTimersByTimeAsync(SETTLE_BEFORE_CREATE_MS);
+
+      expect(mockCreateWallet).toHaveBeenCalledTimes(1);
+    } finally {
+      getItem.mockRestore();
+      setItem.mockRestore();
       vi.useRealTimers();
     }
   });

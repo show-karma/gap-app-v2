@@ -5,6 +5,7 @@ export interface WhitelabelDomain {
   name: string;
   theme?: {
     primaryColor?: string;
+    buttonTextColor?: string;
     logoBackground?: string;
   };
 }
@@ -15,49 +16,57 @@ const DEFAULT_WHITELABEL_DOMAINS: WhitelabelDomain[] = [
     communitySlug: "optimism",
     tenantId: "optimism",
     name: "Optimism",
-    theme: { primaryColor: "#FF0420", logoBackground: "#FF0420" },
+    theme: {
+      primaryColor: "#FF0420",
+      buttonTextColor: "#FFFFFF",
+      logoBackground: "#FF0420",
+    },
   },
   {
     domain: "testapp.opgrants.io",
     communitySlug: "optimism",
     tenantId: "optimism",
     name: "Optimism (Test)",
-    theme: { primaryColor: "#FF0420", logoBackground: "#FF0420" },
+    theme: {
+      primaryColor: "#FF0420",
+      buttonTextColor: "#FFFFFF",
+      logoBackground: "#FF0420",
+    },
   },
   {
     domain: "founders.polygon.technology",
     communitySlug: "polygon",
     tenantId: "polygon",
     name: "Polygon",
-    theme: { primaryColor: "#8247E5" },
+    theme: { primaryColor: "#8247E5", buttonTextColor: "#FFFFFF" },
   },
   {
     domain: "foundersapp.polygon.technology",
     communitySlug: "polygon",
     tenantId: "polygon",
     name: "Polygon (Test)",
-    theme: { primaryColor: "#8247E5" },
+    theme: { primaryColor: "#8247E5", buttonTextColor: "#FFFFFF" },
   },
   {
     domain: "grantsapp.scroll.io",
     communitySlug: "scroll",
     tenantId: "scroll",
     name: "Scroll",
-    theme: { primaryColor: "#EBC28E" },
+    theme: { primaryColor: "#EBC28E", buttonTextColor: "#190602" },
   },
   {
     domain: "app.filpgf.io",
     communitySlug: "filecoin",
     tenantId: "filecoin",
     name: "Filecoin",
-    theme: { primaryColor: "#0090ff" },
+    theme: { primaryColor: "#0090ff", buttonTextColor: "#FFFFFF" },
   },
   {
     domain: "grants.filecoin.io",
     communitySlug: "filecoin",
     tenantId: "filecoin",
     name: "Filecoin (Legacy)",
-    theme: { primaryColor: "#0090ff" },
+    theme: { primaryColor: "#0090ff", buttonTextColor: "#FFFFFF" },
   },
 ];
 
@@ -96,6 +105,8 @@ function parseExtraWhitelabelDomainsFromEnv(): WhitelabelDomain[] {
 
       const primaryColor =
         typeof themeRecord?.primaryColor === "string" ? themeRecord.primaryColor : undefined;
+      const buttonTextColor =
+        typeof themeRecord?.buttonTextColor === "string" ? themeRecord.buttonTextColor : undefined;
       const logoBackground =
         typeof themeRecord?.logoBackground === "string" ? themeRecord.logoBackground : undefined;
 
@@ -106,9 +117,10 @@ function parseExtraWhitelabelDomainsFromEnv(): WhitelabelDomain[] {
           tenantId,
           name,
           theme:
-            primaryColor || logoBackground
+            primaryColor || buttonTextColor || logoBackground
               ? {
                   primaryColor,
+                  buttonTextColor,
                   logoBackground,
                 }
               : undefined,

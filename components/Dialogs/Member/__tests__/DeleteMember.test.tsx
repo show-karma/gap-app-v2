@@ -1,6 +1,5 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom";
-import type React from "react";
 import { useAccount } from "wagmi";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { DeleteMemberDialog } from "../DeleteMember";
@@ -39,64 +38,46 @@ vi.mock("next/dynamic", () => ({
 // Mock headlessui for simpler dialog handling in tests
 vi.mock("@headlessui/react", () => ({
   Dialog: Object.assign(
-    ({ children, ...props }: React.PropsWithChildren<Record<string, unknown>>) => (
+    ({ children, ...props }: any) => (
       <div data-testid="dialog" {...props}>
         {children}
       </div>
     ),
     {
-      Title: ({ children, ...props }: React.PropsWithChildren<Record<string, unknown>>) => (
+      Title: ({ children, ...props }: any) => (
         <h3 data-testid="dialog-title" {...props}>
           {children}
         </h3>
       ),
-      Panel: ({ children, ...props }: React.PropsWithChildren<Record<string, unknown>>) => (
+      Panel: ({ children, ...props }: any) => (
         <div data-testid="dialog-panel" {...props}>
           {children}
         </div>
       ),
     }
   ),
-  Transition: Object.assign(
-    ({ children, show }: React.PropsWithChildren<{ show?: boolean }>) => (show ? children : null),
-    {
-      Child: ({ children }: React.PropsWithChildren) => children,
-    }
-  ),
+  Transition: Object.assign(({ children, show }: any) => (show ? children : null), {
+    Child: ({ children }: any) => children,
+  }),
 }));
 
 // Radix tooltip mock
 vi.mock("@radix-ui/react-tooltip", () => ({
-  Provider: ({ children }: React.PropsWithChildren) => children,
-  Root: ({ children }: React.PropsWithChildren) => children,
-  Trigger: ({ children }: React.PropsWithChildren) => children,
-  Portal: ({ children }: React.PropsWithChildren) => children,
-  Content: ({ children }: React.PropsWithChildren) => <div>{children}</div>,
+  Provider: ({ children }: any) => children,
+  Root: ({ children }: any) => children,
+  Trigger: ({ children }: any) => children,
+  Portal: ({ children }: any) => children,
+  Content: ({ children }: any) => <div>{children}</div>,
 }));
 
 // Mock heroicons
 vi.mock("@heroicons/react/24/outline", () => ({
-  TrashIcon: ({ className }: { className?: string }) => (
-    <svg data-testid="trash-icon" className={className} />
-  ),
+  TrashIcon: ({ className }: any) => <svg data-testid="trash-icon" className={className} />,
 }));
 
 // Mock the Button component
 vi.mock("@/components/Utilities/Button", () => ({
-  Button: ({
-    children,
-    onClick,
-    disabled,
-    isLoading,
-    className,
-    ...props
-  }: React.PropsWithChildren<{
-    onClick?: React.MouseEventHandler<HTMLButtonElement>;
-    disabled?: boolean;
-    isLoading?: boolean;
-    className?: string;
-  }> &
-    Record<string, unknown>) => (
+  Button: ({ children, onClick, disabled, isLoading, className, ...props }: any) => (
     <button onClick={onClick} disabled={disabled} className={className} {...props}>
       {isLoading ? "Loading..." : children}
     </button>
@@ -106,7 +87,7 @@ vi.mock("@/components/Utilities/Button", () => ({
 // Mock error manager
 const mockErrorManager = vi.fn();
 vi.mock("@/components/Utilities/errorManager", () => ({
-  errorManager: (...args: unknown[]) => mockErrorManager(...args),
+  errorManager: (...args: any[]) => mockErrorManager(...args),
 }));
 
 // Mock attestation toast
@@ -146,11 +127,12 @@ vi.mock("@/hooks/useWallet", () => ({
   }),
 }));
 
-// Mock fetchData
-const mockFetchData = vi.fn();
-vi.mock("@/utilities/fetchData", () => ({
-  __esModule: true,
-  default: (...args: unknown[]) => mockFetchData(...args),
+// Mock the typed api client
+const mockApiPost = vi.fn();
+vi.mock("@/utilities/api/client", () => ({
+  api: {
+    post: (...args: any[]) => mockApiPost(...args),
+  },
 }));
 
 // Mock INDEXER
@@ -171,7 +153,7 @@ vi.mock("@/utilities/query-client", () => ({
 // Mock getProjectById - THIS IS THE KEY MOCK for reproducing the bug
 const mockGetProjectById = vi.fn();
 vi.mock("@/utilities/sdk", () => ({
-  getProjectById: (...args: unknown[]) => mockGetProjectById(...args),
+  getProjectById: (...args: any[]) => mockGetProjectById(...args),
 }));
 
 // Mock project store
@@ -281,7 +263,7 @@ describe("DeleteMemberDialog", () => {
       mockGetProjectById.mockResolvedValue(sdkProjectWithoutGhostMember);
 
       // Mock the V2 API call to remove the ghost member
-      mockFetchData.mockResolvedValue([{ success: true }, null]);
+      mockApiPost.mockResolvedValue({ success: true });
 
       // After cleanup, refreshProject returns project without the ghost member
       mockRefreshProject.mockResolvedValue({
@@ -327,7 +309,7 @@ describe("DeleteMemberDialog", () => {
       };
 
       mockGetProjectById.mockResolvedValue(sdkProjectWithoutGhostMember);
-      mockFetchData.mockResolvedValue([null, new Error("API error")]);
+      mockApiPost.mockRejectedValue(new Error("API error"));
 
       await openDialogAndConfirm(GHOST_MEMBER_ADDRESS);
 
@@ -369,7 +351,7 @@ describe("DeleteMemberDialog", () => {
       };
 
       mockGetProjectById.mockResolvedValue(sdkProjectWithMember);
-      mockFetchData.mockResolvedValue([null, null]);
+      mockApiPost.mockResolvedValue(null);
 
       // After revoke, refreshProject returns project without the member
       mockRefreshProject.mockResolvedValue({

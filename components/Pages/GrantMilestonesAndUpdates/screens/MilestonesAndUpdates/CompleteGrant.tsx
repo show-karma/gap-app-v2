@@ -20,7 +20,7 @@ import { useProjectStore } from "@/store";
 import { useGrantStore } from "@/store/grant";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
 import type { Grant } from "@/types/v2/grant";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { isFundingProgramGrant } from "@/utilities/funding-programs";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
@@ -195,11 +195,7 @@ export const GrantCompletion: FC = () => {
           const _fetchedProject = null;
           const txHash = res?.tx[0]?.hash;
           if (txHash) {
-            await fetchData(
-              INDEXER.ATTESTATION_LISTENER(txHash, grant?.chainID as number),
-              "POST",
-              {}
-            );
+            await api.post(INDEXER.ATTESTATION_LISTENER(txHash, grant?.chainID as number), {});
           }
           while (retries > 0) {
             // Fetch grants to check completion status

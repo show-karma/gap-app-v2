@@ -28,7 +28,7 @@ import { submitGranteeInvoice } from "@/src/features/payout-disbursement/service
 import { useProjectStore } from "@/store";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
 import type { GrantMilestone } from "@/types/v2/grant";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { hasAnyDirtyField } from "@/utilities/hasAnyDirtyField";
 import {
   deleteMilestoneImpactAnswers,
@@ -333,9 +333,8 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
           changeStepperStep("indexing");
           const txHash = res?.tx[0]?.hash;
           if (txHash) {
-            await fetchData(
+            await api.post(
               INDEXER.ATTESTATION_LISTENER(txHash, milestoneInstance?.chainID as number),
-              "POST",
               {}
             );
           }
@@ -454,9 +453,8 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
           changeStepperStep("indexing");
           const txHash = res?.tx[0]?.hash;
           if (txHash) {
-            await fetchData(
+            await api.post(
               INDEXER.ATTESTATION_LISTENER(txHash, milestoneInstance?.chainID as number),
-              "POST",
               {}
             );
           }

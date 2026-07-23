@@ -11,7 +11,7 @@ import { usePermissionsQuery } from "@/src/core/rbac/hooks/use-permissions";
 import { Role } from "@/src/core/rbac/types";
 import { useOwnerStore, useProjectStore } from "@/store";
 import type { Contact } from "@/types/project";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 import { telegramUsernameSchema } from "@/utilities/validation/telegram-username";
 import { Button } from "./Utilities/Button";
@@ -177,44 +177,32 @@ export const ContactInfoSubscription: FC<ContactInfoSubscriptionProps> = ({ cont
         data.telegram = data.telegram.replace(/@/g, "");
       }
       if (data.id === "0") {
-        await fetchData(
-          INDEXER.SUBSCRIPTION.CREATE(project?.details?.slug || (project?.uid as string)),
-          "POST",
-          { contacts: [data] },
-          {},
-          {},
-          true
-        ).then(([_res, error]) => {
-          if (!error) {
-            toast.success("Contact info created successfully");
-            refreshProject();
-            refreshContactInfo();
-            clear();
-          } else {
-            toast.error("Something went wrong. Please try again later.");
-            throw new Error("Something went wrong while creating contact info");
-          }
-        });
+        try {
+          // TODO(#1775): add zod schema
+          await api.post(
+            INDEXER.SUBSCRIPTION.CREATE(project?.details?.slug || (project?.uid as string)),
+            { contacts: [data] }
+          );
+          toast.success("Contact info created successfully");
+          refreshProject();
+          refreshContactInfo();
+          clear();
+        } catch (createError) {
+          toast.error("Something went wrong. Please try again later.");
+          throw createError;
+        }
       } else {
-        await fetchData(
+        // TODO(#1775): add zod schema
+        await api.put(
           INDEXER.SUBSCRIPTION.UPDATE(project?.details?.slug || (project?.uid as string), data.id),
-          "PUT",
-          data,
-          {},
-          {},
-          true
-        ).then(([_res, error]) => {
-          if (!error) {
-            toast.success("Contact info updated successfully");
-            refreshProject();
-            refreshContactInfo();
-            clear();
-          } else {
-            throw Error(error);
-          }
-        });
+          data
+        );
+        toast.success("Contact info updated successfully");
+        refreshProject();
+        refreshContactInfo();
+        clear();
       }
-    } catch (error) {
+    } catch (error: any) {
       errorManager(
         "Error while updating contact info",
         error,
@@ -237,23 +225,17 @@ export const ContactInfoSubscription: FC<ContactInfoSubscriptionProps> = ({ cont
   const deleteContact = async (id: string) => {
     setIsDeleteLoading(true);
     try {
-      await fetchData(
-        INDEXER.SUBSCRIPTION.DELETE(project?.details?.slug || (project?.uid as string)),
+      // DELETE with a body isn't exposed on api.delete(); use the low-level
+      // request() escape hatch (still throws on failure like the rest of the client).
+      await api.request(
         "DELETE",
-        { contacts: [id] },
-        {},
-        {},
-        true
-      ).then(([_res, error]) => {
-        if (!error) {
-          toast.success("Contact info deleted successfully");
-          refreshProject();
-          refreshContactInfo();
-        } else {
-          throw Error(error);
-        }
-      });
-    } catch (error) {
+        INDEXER.SUBSCRIPTION.DELETE(project?.details?.slug || (project?.uid as string)),
+        { contacts: [id] }
+      );
+      toast.success("Contact info deleted successfully");
+      refreshProject();
+      refreshContactInfo();
+    } catch (error: any) {
       errorManager(
         "Error deleting contact info",
         error,
@@ -287,7 +269,7 @@ export const ContactInfoSubscription: FC<ContactInfoSubscriptionProps> = ({ cont
   };
 
   return isAuthorized ? (
-    <div className="p-4 rounded-md border border-transparent dark:bg-zinc-800 dark:border flex flex-col gap-4 items-start">
+    <div className="px-4 py-4 rounded-md border border-transparent dark:bg-zinc-800 dark:border flex flex-col gap-4 items-start">
       <h3 className="text-xl font-bold leading-6 text-gray-900 dark:text-zinc-100">Contact Info</h3>
       <p className="text-zinc-600 dark:text-blue-100">
         We promise to never spam you. We will send notifications to inform you if your project
@@ -365,7 +347,7 @@ export const ContactInfoSubscription: FC<ContactInfoSubscriptionProps> = ({ cont
       </form>
     </div>
   ) : (
-    <div className="p-4 rounded-md border border-transparent dark:bg-zinc-800 dark:border flex flex-col gap-4 items-start">
+    <div className="px-4 py-4 rounded-md border border-transparent dark:bg-zinc-800 dark:border flex flex-col gap-4 items-start">
       <h3 className="text-xl font-bold leading-6 text-gray-900 dark:text-zinc-100">
         You are not authorized
       </h3>

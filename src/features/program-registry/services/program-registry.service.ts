@@ -1,5 +1,5 @@
 import type { Community } from "@/types/v2/community";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 import { sanitizeObject } from "@/utilities/sanitize";
 import type { UpdateProgramFormSchema } from "../schemas/admin-form";
@@ -15,14 +15,14 @@ import type {
  * Handles business logic for program creation and approval
  * Following Domain-Driven Design principles
  */
-export const ProgramRegistryService = {
+export class ProgramRegistryService {
   /**
    * Build program metadata from form data and community.
    * Default: anyoneCanJoin = true (open enrollment).
    * Both admin (CreateProgramModal) and public (AddProgram) forms now explicitly pass the value.
    * Includes adminEmails and financeEmails from form data.
    */
-  buildProgramMetadata(
+  static buildProgramMetadata(
     formData: CreateProgramFormData,
     community: Community,
     options?: { anyoneCanJoin?: boolean }
@@ -67,13 +67,13 @@ export const ProgramRegistryService = {
       adminEmails: formData.adminEmails,
       financeEmails: formData.financeEmails,
     };
-  },
+  }
 
   /**
    * Build metadata object for API update from form data and existing metadata.
    * Merges form changes into existing program metadata.
    */
-  buildUpdateMetadata(
+  static buildUpdateMetadata(
     formData: UpdateProgramFormSchema,
     existingMetadata: GrantProgram["metadata"]
   ): ProgramMetadata {
@@ -93,13 +93,13 @@ export const ProgramRegistryService = {
       ...existingMetadata,
       ...updatedFields,
     }) as ProgramMetadata;
-  },
+  }
 
   /**
    * Extract program ID from various response formats
    * Handles different API response structures (V1 and V2)
    */
-  extractProgramId(response: unknown): string | undefined {
+  static extractProgramId(response: unknown): string | undefined {
     if (!response) return undefined;
 
     // V2 format: { programId: "..." }
@@ -151,12 +151,12 @@ export const ProgramRegistryService = {
     }
 
     return undefined;
-  },
+  }
 
   /**
    * Extract MongoDB ID (for approve endpoint which still uses _id)
    */
-  extractMongoId(response: unknown): string | undefined {
+  static extractMongoId(response: unknown): string | undefined {
     if (!response) return undefined;
 
     // V2 format: { id: "..." } (MongoDB _id)
@@ -181,7 +181,7 @@ export const ProgramRegistryService = {
     }
 
     return undefined;
-  },
+  }
 
   /**
    * Create a program (V2 endpoint)
@@ -190,7 +190,7 @@ export const ProgramRegistryService = {
    * @param metadata - Program metadata
    * @param topLevelFields - Optional top-level fields (type, deadline, submissionUrl, typed metadata)
    */
-  async createProgram(
+  static async createProgram(
     _owner: string,
     chainId: number,
     metadata: ProgramMetadata | Record<string, unknown>,
@@ -205,18 +205,9 @@ export const ProgramRegistryService = {
       metadata,
     };
 
-    const [createResponse, createError] = await fetchData(
-      INDEXER.REGISTRY.V2.CREATE,
-      "POST",
-      request,
-      {},
-      {},
-      true
-    );
-
-    if (createError) {
-      throw new Error(createError);
-    }
+    // TODO(#1775): add zod schema — response shape varies (V1/V2, partial
+    // BE serialization), see extractProgramId below.
+    const createResponse = await api.post<unknown>(INDEXER.REGISTRY.V2.CREATE, request);
 
     // Extract programId from response if available (may be empty due to
     // BE response serialization stripping properties)
@@ -234,7 +225,7 @@ export const ProgramRegistryService = {
       success: true,
       requiresManualApproval,
     };
-  },
+  }
 
   /**
    * Update a program (V2 endpoint)
@@ -242,7 +233,7 @@ export const ProgramRegistryService = {
    * @param metadata - The program metadata
    * @param topLevelFields - Optional top-level fields (type, deadline, submissionUrl, typed metadata)
    */
-  async updateProgram(
+  static async updateProgram(
     programId: string,
     metadata: ProgramMetadata,
     topLevelFields?: Record<string, unknown>
@@ -253,25 +244,14 @@ export const ProgramRegistryService = {
       metadata,
     };
 
-    const [, updateError] = await fetchData(
-      INDEXER.REGISTRY.V2.UPDATE(programId),
-      "PUT",
-      request,
-      {},
-      {},
-      true
-    );
-
-    if (updateError) {
-      throw new Error(updateError);
-    }
-  },
+    await api.put(INDEXER.REGISTRY.V2.UPDATE(programId), request);
+  }
 
   /**
    * Approve/reject/pending a program (V2 endpoint)
    * Uses programId only (chainId removed from endpoint)
    */
-  async approveProgram(
+  static async approveProgram(
     programId: string,
     isValid: "accepted" | "rejected" | "pending" = "accepted"
   ): Promise<void> {
@@ -280,17 +260,6 @@ export const ProgramRegistryService = {
       isValid,
     };
 
-    const [_approveResponse, approveError] = await fetchData(
-      INDEXER.REGISTRY.V2.APPROVE,
-      "POST",
-      request,
-      {},
-      {},
-      true
-    );
-
-    if (approveError) {
-      throw new Error(approveError);
-    }
-  },
-};
+    await api.post(INDEXER.REGISTRY.V2.APPROVE, request);
+  }
+}

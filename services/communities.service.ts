@@ -1,6 +1,6 @@
 import { errorManager } from "@/components/Utilities/errorManager";
 import type { Community } from "@/types/v2/community";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 
 interface CommunitiesListResponse {
@@ -53,18 +53,24 @@ export const getCommunities = async (options?: {
 }): Promise<Community[]> => {
   const { page = 1, limit = 100, includeStats = false } = options ?? {};
 
-  const [data, error] = await fetchData<CommunitiesListResponse>(
-    INDEXER.COMMUNITY.LIST({ page, limit, includeStats })
-  );
-
-  if (error || !data) {
+  try {
+    // TODO(#1775): add zod schema
+    const data = await api.get<CommunitiesListResponse>(
+      INDEXER.COMMUNITY.LIST({ page, limit, includeStats })
+    );
+    if (!data) {
+      errorManager(`Communities API Error: ${null}`, null, {
+        context: "communities.service",
+      });
+      return [];
+    }
+    return data.payload ?? [];
+  } catch (error) {
     errorManager(`Communities API Error: ${error}`, error, {
       context: "communities.service",
     });
     return [];
   }
-
-  return data.payload ?? [];
 };
 
 // The batch endpoint authorizes and resolves each community with a live
@@ -104,20 +110,15 @@ const fetchCommunityAdminsChunk = async (communityUIDs: string[]): Promise<Commu
     const timeout = setTimeout(() => controller.abort(), ADMINS_BATCH_CHUNK_TIMEOUT_MS);
 
     try {
-      const [adminsResponse, adminsError] = await fetchData<CommunityAdminsBatchResponse>(
+      // TODO(#1775): add zod schema
+      const adminsResponse = await api.post<CommunityAdminsBatchResponse>(
         INDEXER.COMMUNITY.ADMINS_BATCH(),
-        "POST",
         { communityUIDs },
-        {},
-        {},
-        true,
-        false,
-        undefined,
-        controller.signal
+        { signal: controller.signal }
       );
 
       if (!adminsResponse?.data) {
-        throw new Error(adminsError || "Empty batch admins response");
+        throw new Error("Empty batch admins response");
       }
 
       return adminsResponse.data.map((item) => ({

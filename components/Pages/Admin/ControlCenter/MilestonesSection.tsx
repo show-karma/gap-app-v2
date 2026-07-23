@@ -72,6 +72,11 @@ const milestoneStatusConfig: Record<
     dotColor: "bg-amber-500",
     textColor: "text-amber-600 dark:text-amber-400",
   },
+  [MilestoneLifecycleStatus.CANCELLED]: {
+    label: MILESTONE_STATUS_LABEL[MilestoneLifecycleStatus.CANCELLED],
+    dotColor: "bg-gray-400 dark:bg-zinc-500",
+    textColor: "text-gray-500 line-through dark:text-zinc-500",
+  },
 };
 
 // ─── Component ───────────────────────────────────────────────────────────────

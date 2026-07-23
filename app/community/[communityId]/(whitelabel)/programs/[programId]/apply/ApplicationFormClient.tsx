@@ -11,7 +11,7 @@ import { useApplicationSubmit } from "@/src/features/applications/hooks/use-appl
 import type { ApplicationFormData } from "@/src/features/applications/types";
 import { useCanBypassClosedProgram } from "@/src/features/programs/hooks/use-can-bypass-closed-program";
 import type { ApplicationQuestion, IFormSchema } from "@/types/whitelabel-entities";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { PAGES } from "@/utilities/pages";
 import { useWhitelabel } from "@/utilities/whitelabel-context";
 
@@ -102,13 +102,16 @@ export function ApplicationFormClient({
   // Validate access code via API
   const validateAccessCode = useCallback(
     async (code: string): Promise<boolean> => {
-      const [result, err] = await fetchData<{ valid: boolean }>(
-        `/v2/funding-applications/${programId}/validate-access-code`,
-        "POST",
-        { accessCode: code }
-      );
-      if (err) return false;
-      return result?.valid === true;
+      try {
+        // TODO(#1775): add zod schema
+        const result = await api.post<{ valid: boolean }>(
+          `/v2/funding-applications/${programId}/validate-access-code`,
+          { accessCode: code }
+        );
+        return result?.valid === true;
+      } catch {
+        return false;
+      }
     },
     [programId]
   );

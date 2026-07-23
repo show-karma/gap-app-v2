@@ -1,10 +1,16 @@
-import fetchData from "@/utilities/fetchData";
+import { z } from "zod";
+import { api } from "@/utilities/api/client";
 
-interface GranteeEmail {
-  email: string;
-  projectName: string;
-  referenceNumber?: string;
-}
+const GranteeEmailSchema = z.object({
+  email: z.string(),
+  projectName: z.string(),
+  referenceNumber: z.string().optional(),
+});
+type GranteeEmail = z.infer<typeof GranteeEmailSchema>;
+
+const GranteeEmailsResponseSchema = z.object({
+  emails: z.array(GranteeEmailSchema),
+});
 
 interface SendEmailParams {
   programId: string;
@@ -13,11 +19,12 @@ interface SendEmailParams {
   body: string;
 }
 
-interface SendEmailResponse {
-  success: boolean;
-  sentCount: number;
-  failedCount: number;
-}
+const SendEmailResponseSchema = z.object({
+  success: z.boolean(),
+  sentCount: z.number(),
+  failedCount: z.number(),
+});
+type SendEmailResponse = z.infer<typeof SendEmailResponseSchema>;
 
 export async function getGranteeEmails(
   programId: string,
@@ -27,24 +34,21 @@ export async function getGranteeEmails(
   if (statuses && statuses.length > 0) {
     url += `?status=${statuses.join(",")}`;
   }
-  const [data, error] = await fetchData<{ emails: GranteeEmail[] }>(url);
-  if (error) throw new Error(error);
-  if (!data || !Array.isArray(data.emails)) {
-    throw new Error("Invalid response: expected emails array");
-  }
+  const data = await api.get(url, { schema: GranteeEmailsResponseSchema });
   return data.emails;
 }
 
 export async function sendEmailToGrantees(params: SendEmailParams): Promise<SendEmailResponse> {
-  const [data, error] = await fetchData<SendEmailResponse>("/v2/email-grantees/send", "POST", {
-    programId: params.programId,
-    recipients: params.recipients,
-    subject: params.subject,
-    body: params.body,
-  });
-  if (error) throw new Error(error);
-  if (!data) throw new Error("No response data received");
-  return data;
+  return api.post(
+    "/v2/email-grantees/send",
+    {
+      programId: params.programId,
+      recipients: params.recipients,
+      subject: params.subject,
+      body: params.body,
+    },
+    { schema: SendEmailResponseSchema }
+  );
 }
 
 export type { SendEmailParams };

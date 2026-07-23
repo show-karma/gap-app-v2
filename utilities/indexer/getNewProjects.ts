@@ -1,7 +1,7 @@
 import { errorManager } from "@/components/Utilities/errorManager";
 import type { SortByOptions, SortOrder } from "@/types/newProjects";
 import type { ProjectFromList } from "@/types/project";
-import fetchData, { type PageInfo } from "../fetchData";
+import { api } from "../api/client";
 import { INDEXER } from "../indexer";
 
 export const getNewProjects = async (
@@ -10,19 +10,17 @@ export const getNewProjects = async (
   sortBy: SortByOptions = "createdAt",
   sortOrder: SortOrder = "desc"
 ): Promise<{
-  projects: ProjectFromList[];
-  pageInfo: PageInfo | null;
+  projects: any[];
+  pageInfo: any;
   nextOffset: number;
 }> => {
   try {
-    const [data, error, pageInfo] = await fetchData<{ data: ProjectFromList[] }>(
+    // TODO(#1775): add zod schema
+    const { data, pageInfo } = await api.getPaginated<ProjectFromList[]>(
       INDEXER.PROJECTS.GET_ALL(page * pageSize, pageSize, sortBy, sortOrder)
     );
-    if (error) {
-      throw new Error("Something went wrong while fetching new projects");
-    }
     return {
-      projects: data?.data ?? [],
+      projects: data,
       pageInfo: pageInfo,
       nextOffset: page + 1,
     };

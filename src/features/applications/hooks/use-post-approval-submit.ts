@@ -4,7 +4,25 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
 import toast from "react-hot-toast";
 import type { Application } from "@/types/whitelabel-entities";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
+import { HttpError, isApiError } from "@/utilities/api/errors";
+
+/**
+ * Extracts the backend's `message` from an HttpError body when present,
+ * falling back to the ApiError's own message. Preserves the pre-migration
+ * `fetchData` behavior of surfacing the server's actual error text (instead
+ * of a generic "HTTP 400 PUT ..." string) to `parseErrorType`/toast copy.
+ */
+function toErrorMessage(err: unknown, fallback: string): string {
+  if (isApiError(err)) {
+    if (err instanceof HttpError) {
+      const bodyMessage = (err.body as { message?: string } | undefined)?.message;
+      return bodyMessage || err.message;
+    }
+    return err.message;
+  }
+  return err instanceof Error ? err.message : fallback;
+}
 
 enum PostApprovalErrorType {
   NETWORK = "NETWORK",
@@ -71,14 +89,17 @@ export function usePostApprovalSubmit(
 
   const submitMutation = useMutation({
     mutationFn: async (postApprovalData: Record<string, unknown>) => {
-      const [response, fetchError] = await fetchData<Application>(
-        `/v2/funding-applications/${referenceNumber}/post-approval`,
-        "PUT",
-        { postApprovalData }
-      );
-      if (fetchError || !response)
-        throw new Error(fetchError ?? "Failed to submit post-approval form");
-      return response;
+      try {
+        // TODO(#1775): add zod schema
+        const response = await api.put<Application>(
+          `/v2/funding-applications/${referenceNumber}/post-approval`,
+          { postApprovalData }
+        );
+        if (!response) throw new Error("Failed to submit post-approval form");
+        return response;
+      } catch (err) {
+        throw new Error(toErrorMessage(err, "Failed to submit post-approval form"));
+      }
     },
     onSuccess: () => {
       toast.success(

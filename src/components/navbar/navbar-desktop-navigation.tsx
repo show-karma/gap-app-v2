@@ -25,6 +25,7 @@ import {
   MenuSection,
   ResourcesContent,
 } from "./menu-components";
+import { NavbarAssistantButton } from "./navbar-assistant-button";
 import { NavbarAuthButtons } from "./navbar-auth-buttons";
 import { useNavbarPermissions } from "./navbar-permissions-context";
 import { NavbarSearch } from "./navbar-search";
@@ -180,6 +181,7 @@ export function NavbarDesktopNavigation() {
       {/* Right Side - shared between logged-in and logged-out states */}
       <div className="flex flex-row items-center gap-3">
         <ResourcesDropdown />
+        <NavbarAssistantButton />
         <ThemeToggleButton />
         {isLoggedIn ? <NavbarUserMenu /> : <NavbarAuthButtons />}
       </div>

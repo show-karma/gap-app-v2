@@ -1,15 +1,22 @@
 "use client";
 import { ArrowPathIcon } from "@heroicons/react/24/solid";
 import { useQuery } from "@tanstack/react-query";
+import { z } from "zod";
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 
-interface GlobalStat {
-  _id: string;
-  count: number;
-}
+// `_id` is the attestation schema name, but legacy/unnamed rows come back as
+// `_id: null` in production — the schema must tolerate them or the whole
+// widget errors on one bad row.
+const GlobalStatSchema = z.object({
+  _id: z.string().nullable(),
+  count: z.number(),
+});
+const GlobalStatArraySchema = z.array(GlobalStatSchema);
+
+type GlobalStat = { _id: string; count: number };
 
 export function GlobalCount() {
   const {
@@ -21,23 +28,23 @@ export function GlobalCount() {
   } = useQuery<GlobalStat[]>({
     queryKey: ["global-stats"],
     queryFn: async () => {
-      const [data, error] = await fetchData(INDEXER.GAP.GLOBAL_COUNT);
+      try {
+        const raw = await api.get(INDEXER.GAP.GLOBAL_COUNT, { schema: GlobalStatArraySchema });
 
-      if (error) {
+        const data: GlobalStat[] = raw.map((item) => ({
+          _id: item._id ?? "Unknown",
+          count: item.count,
+        }));
+        const total = data.reduce((acc: number, item: GlobalStat) => acc + item.count, 0);
+
+        return [
+          ...data.sort((a: GlobalStat, b: GlobalStat) => b.count - a.count),
+          { _id: "Total", count: total },
+        ];
+      } catch (error) {
         errorManager("Error fetching stats", error);
         throw new Error("Error fetching data");
       }
-
-      if (!data) {
-        throw new Error("No stats found");
-      }
-
-      const total = data.reduce((acc: number, item: GlobalStat) => acc + item.count, 0);
-
-      return [
-        ...data.sort((a: GlobalStat, b: GlobalStat) => b.count - a.count),
-        { _id: "Total", count: total },
-      ];
     },
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,

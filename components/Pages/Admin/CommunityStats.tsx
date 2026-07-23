@@ -1,15 +1,31 @@
 "use client";
 import { blo } from "blo";
-import Image from "next/image";
 import React, { useCallback, useEffect, useState } from "react";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { getCommunities } from "@/services/communities.service";
 import { layoutTheme } from "@/src/helper/theme";
 import { useOwnerStore } from "@/store/owner";
 import type { Community } from "@/types/v2/community";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
+
+interface RawCommunityStats {
+  projects?: number;
+  ProjectEdits?: number;
+  ProjectEndorsements?: number;
+  ProjectImpacts?: number;
+  ProjectImpactVerifieds?: number;
+  grants?: number;
+  GrantEdits?: number;
+  GrantUpdates?: number;
+  GrantUpdateStatuses?: number;
+  GrantCompleted?: number;
+  Milestones?: number;
+  MilestoneCompleted?: number;
+  MilestoneVerified?: number;
+  MemberOf?: number;
+}
 
 interface CommunityStatsData {
   projects: number;
@@ -53,13 +69,15 @@ export default function CommunityStats() {
   const fetchCommunityStats = useCallback(async (communities: Community[]) => {
     try {
       const statsPromises = communities.map(async (community) => {
-        const [data, error] = await fetchData<Record<string, number>>(
-          INDEXER.COMMUNITY.STATS(community.uid as string)
-        );
-        if (error) {
-          return { uid: community.uid, stats: {} };
+        try {
+          // TODO(#1775): add zod schema
+          const data = await api.get<RawCommunityStats>(
+            INDEXER.COMMUNITY.STATS(community.uid as string)
+          );
+          return { uid: community.uid, stats: data };
+        } catch {
+          return { uid: community.uid, stats: {} as RawCommunityStats };
         }
-        return { uid: community.uid, stats: data };
       });
 
       const statsResults = await Promise.all(statsPromises);
@@ -127,27 +145,33 @@ export default function CommunityStats() {
                 <table className="border-x border-x-zinc-300 border-y border-y-zinc-300 table-auto w-full">
                   <thead className="border-x border-x-zinc-300 border-y border-y-zinc-300">
                     <tr className="divide-x">
-                      <th className="whitespace-normal p-2 text-left">Img</th>
-                      <th className="whitespace-normal p-2 text-left">Name</th>
-                      <th className="whitespace-normal p-2 text-center">Projects</th>
-                      <th className="whitespace-normal p-2 text-center">Project Edits</th>
-                      <th className="whitespace-normal p-2 text-center">Endorsements</th>
-                      <th className="whitespace-normal p-2 text-center">Impacts</th>
-                      <th className="whitespace-normal p-2 text-center">Impact Verifications</th>
-                      <th className="whitespace-normal p-2 text-center">Grants</th>
-                      <th className="whitespace-normal p-2 text-center">Grant Edits</th>
-                      <th className="whitespace-normal p-2 text-center">Grant Updates</th>
-                      <th className="whitespace-normal p-2 text-center">
+                      <th className="whitespace-normal px-2 py-2 text-left">Img</th>
+                      <th className="whitespace-normal px-2 py-2 text-left">Name</th>
+                      <th className="whitespace-normal px-2 py-2 text-center">Projects</th>
+                      <th className="whitespace-normal px-2 py-2 text-center">Project Edits</th>
+                      <th className="whitespace-normal px-2 py-2 text-center">Endorsements</th>
+                      <th className="whitespace-normal px-2 py-2 text-center">Impacts</th>
+                      <th className="whitespace-normal px-2 py-2 text-center">
+                        Impact Verifications
+                      </th>
+                      <th className="whitespace-normal px-2 py-2 text-center">Grants</th>
+                      <th className="whitespace-normal px-2 py-2 text-center">Grant Edits</th>
+                      <th className="whitespace-normal px-2 py-2 text-center">Grant Updates</th>
+                      <th className="whitespace-normal px-2 py-2 text-center">
                         Grant Update Status Posts
                       </th>
-                      <th className="whitespace-normal p-2 text-center">Grants Completed</th>
-                      <th className="whitespace-normal p-2 text-center">Milestones</th>
-                      <th className="whitespace-normal p-2 text-center">Milestones Completed</th>
-                      <th className="whitespace-normal p-2 text-center">
+                      <th className="whitespace-normal px-2 py-2 text-center">Grants Completed</th>
+                      <th className="whitespace-normal px-2 py-2 text-center">Milestones</th>
+                      <th className="whitespace-normal px-2 py-2 text-center">
+                        Milestones Completed
+                      </th>
+                      <th className="whitespace-normal px-2 py-2 text-center">
                         Milestones Verifications
                       </th>
-                      <th className="whitespace-normal p-2 text-center">Members Added</th>
-                      <th className="whitespace-normal p-2 text-center">Total Attestations</th>
+                      <th className="whitespace-normal px-2 py-2 text-center">Members Added</th>
+                      <th className="whitespace-normal px-2 py-2 text-center">
+                        Total Attestations
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-x">
@@ -156,36 +180,41 @@ export default function CommunityStats() {
                       return (
                         <React.Fragment key={community.uid}>
                           <tr className="divide-x">
-                            <td className="p-2">
-                              <Image
+                            <td className="px-2 py-2">
+                              <img
                                 src={
                                   community.details?.imageURL || blo(community.uid as `0x${string}`)
                                 }
-                                width={100}
-                                height={64}
-                                unoptimized
                                 className="h-[64px] w-[100px] object-cover"
                                 alt={community.details?.name || community.uid}
                               />
                             </td>
-                            <td className="max-w-40 p-2">{community.details?.name}</td>
-                            <td className="p-2 text-center">{stats.projects || 0}</td>
-                            <td className="p-2 text-center">{stats.projectEdits || 0}</td>
-                            <td className="p-2 text-center">{stats.endorsements || 0}</td>
-                            <td className="p-2 text-center">{stats.impacts || 0}</td>
-                            <td className="p-2 text-center">{stats.impactVerifications || 0}</td>
-                            <td className="p-2 text-center">{stats.grants || 0}</td>
-                            <td className="p-2 text-center">{stats.grantEdits || 0}</td>
-                            <td className="p-2 text-center">{stats.grantUpdates || 0}</td>
-                            <td className="p-2 text-center">{stats.grantUpdateStatusPosts || 0}</td>
-                            <td className="p-2 text-center">{stats.grantsCompleted || 0}</td>
-                            <td className="p-2 text-center">{stats.milestones || 0}</td>
-                            <td className="p-2 text-center">{stats.milestonesCompleted || 0}</td>
-                            <td className="p-2 text-center">
+                            <td className="max-w-40 px-2 py-2">{community.details?.name}</td>
+                            <td className="px-2 py-2 text-center">{stats.projects || 0}</td>
+                            <td className="px-2 py-2 text-center">{stats.projectEdits || 0}</td>
+                            <td className="px-2 py-2 text-center">{stats.endorsements || 0}</td>
+                            <td className="px-2 py-2 text-center">{stats.impacts || 0}</td>
+                            <td className="px-2 py-2 text-center">
+                              {stats.impactVerifications || 0}
+                            </td>
+                            <td className="px-2 py-2 text-center">{stats.grants || 0}</td>
+                            <td className="px-2 py-2 text-center">{stats.grantEdits || 0}</td>
+                            <td className="px-2 py-2 text-center">{stats.grantUpdates || 0}</td>
+                            <td className="px-2 py-2 text-center">
+                              {stats.grantUpdateStatusPosts || 0}
+                            </td>
+                            <td className="px-2 py-2 text-center">{stats.grantsCompleted || 0}</td>
+                            <td className="px-2 py-2 text-center">{stats.milestones || 0}</td>
+                            <td className="px-2 py-2 text-center">
+                              {stats.milestonesCompleted || 0}
+                            </td>
+                            <td className="px-2 py-2 text-center">
                               {stats.milestonesVerifications || 0}
                             </td>
-                            <td className="p-2 text-center">{stats.membersAdded || 0}</td>
-                            <td className="p-2 text-center">{stats.totalAttestations || 0}</td>
+                            <td className="px-2 py-2 text-center">{stats.membersAdded || 0}</td>
+                            <td className="px-2 py-2 text-center">
+                              {stats.totalAttestations || 0}
+                            </td>
                           </tr>
                         </React.Fragment>
                       );
