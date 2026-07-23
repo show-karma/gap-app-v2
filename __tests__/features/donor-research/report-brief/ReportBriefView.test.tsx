@@ -1,11 +1,11 @@
 import { screen } from "@testing-library/react";
+import { renderWithProviders } from "@/__tests__/utils/render";
 import { useDonorAdvisor } from "@/hooks/useDonorAdvisor";
 import { useDonorReportStream } from "@/hooks/useDonorReportStream";
 import { useDonorReport } from "@/hooks/useDonorReports";
 import { useStaff } from "@/src/core/rbac/hooks/use-staff-bridge";
 import { ReportBrief } from "@/src/features/donor-research/components/report-brief/ReportBrief";
 import { ReportBriefView } from "@/src/features/donor-research/components/report-brief/ReportBriefView";
-import { renderWithProviders } from "../../../utils/render";
 
 vi.mock("@/hooks/useDonorAdvisor", () => ({ useDonorAdvisor: vi.fn() }));
 vi.mock("@/hooks/useDonorReportStream", () => ({ useDonorReportStream: vi.fn() }));
