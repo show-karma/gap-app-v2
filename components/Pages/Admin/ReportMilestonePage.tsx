@@ -137,7 +137,16 @@ export const ReportMilestonePage = ({ community, grantPrograms }: ReportMileston
     return Array.from(uids);
   }, [reportData.pendingMilestones, reportData.reports]);
 
-  const { allocationMap, grantTotalMap } = useMilestoneAllocationsByGrants(allGrantUIDs);
+  // Batch into a single community-wide request — this page fans out 50–200+
+  // grants and per-grant fetches burst past the indexer rate limit (GAP-FRONTEND-245).
+  const {
+    allocationMap,
+    grantTotalMap,
+    isError: isAllocationsError,
+    refetch: refetchAllocations,
+  } = useMilestoneAllocationsByGrants(allGrantUIDs, undefined, {
+    communityUID: community?.uid,
+  });
 
   useEffect(() => {
     if (isReviewersError) {
@@ -179,6 +188,27 @@ export const ReportMilestonePage = ({ community, grantPrograms }: ReportMileston
       </div>
 
       <StatsGrid stats={reportData.stats} isLoading={reportData.isStatsLoading} />
+
+      {/* Allocations come from one batched request, so a failure blanks every
+          amount at once. Without this the empty column is indistinguishable
+          from "no payouts configured". */}
+      {isAllocationsError && (
+        <div
+          role="alert"
+          className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-lg border border-orange-200 dark:border-orange-900/50 bg-orange-50 dark:bg-orange-900/20 px-4 py-3"
+        >
+          <p className="text-sm text-orange-800 dark:text-orange-300">
+            Payout amounts couldn&apos;t be loaded, so the allocation column may be blank. Milestone
+            data below is unaffected.
+          </p>
+          <Button
+            onClick={() => refetchAllocations()}
+            className="self-start sm:self-auto py-1.5 px-3 text-sm"
+          >
+            Retry
+          </Button>
+        </div>
+      )}
 
       <Tabs
         value={reportData.activeTab}

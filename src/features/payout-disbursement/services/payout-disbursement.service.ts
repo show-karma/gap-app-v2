@@ -9,7 +9,6 @@ import type {
   CommunityPayoutsResponse,
   CreateDisbursementsRequest,
   CreateDisbursementsResponse,
-  MilestonePaymentStatus,
   PaginatedDisbursementsResponse,
   PayoutDisbursement,
   PayoutGrantConfig,
@@ -20,6 +19,7 @@ import type {
   TotalDisbursedResponse,
   UpdateStatusRequest,
 } from "../types/payout-disbursement";
+import { rethrowFetchError } from "./rethrow-fetch-error";
 
 // NOTE(#1775): responses in this file are migrated with NO zod schema (the
 // `api` client's untyped escape hatch) to avoid introducing new
@@ -349,7 +349,7 @@ export const getPayoutConfigsByCommunityPublic = async (
     return data.configs;
   } catch (error: unknown) {
     errorManager(`Error fetching public payout configs for community ${communityUID}`, error);
-    throw new Error(`Failed to fetch payout configs: ${getErrorMessage(error)}`);
+    rethrowFetchError(error, "Failed to fetch payout configs");
   }
 };
 
@@ -413,7 +413,7 @@ export const getPayoutConfigByGrant = async (
     return data.config;
   } catch (error: unknown) {
     errorManager(`Error fetching payout config for grant ${grantUID}`, error);
-    throw new Error(`Failed to fetch payout config: ${getErrorMessage(error)}`);
+    rethrowFetchError(error, "Failed to fetch payout config");
   }
 };
 
@@ -436,7 +436,7 @@ export const getPayoutConfigByGrantPublic = async (
     return data.config;
   } catch (error: unknown) {
     errorManager(`Error fetching public payout config for grant ${grantUID}`, error);
-    throw new Error(`Failed to fetch payout config: ${getErrorMessage(error)}`);
+    rethrowFetchError(error, "Failed to fetch payout config");
   }
 };
 
